@@ -372,7 +372,7 @@ const guardBytes = 256 * hostarch.PageSize
 //   - ar must be page-aligned.
 func (mm *MemoryManager) unmapLocked(ctx context.Context, ar hostarch.AddrRange, droppedIDs []memmap.MappingIdentity) (vmaGapIterator, []memmap.MappingIdentity) {
 	if checkInvariants {
-		if !ar.WellFormed() || ar.Length() == 0 || !ar.IsPageAligned() {
+		if !ar.WellFormed() || ar.Length() == 0 || !hostarch.AddrRangeFunctions(ar).IsPageAligned() {
 			panic(fmt.Sprintf("invalid ar: %v", ar))
 		}
 	}
@@ -398,7 +398,7 @@ func (mm *MemoryManager) unmapLocked(ctx context.Context, ar hostarch.AddrRange,
 //   - ar must be page-aligned.
 func (mm *MemoryManager) removeVMAsLocked(ctx context.Context, ar hostarch.AddrRange, droppedIDs []memmap.MappingIdentity) (vmaGapIterator, []memmap.MappingIdentity) {
 	if checkInvariants {
-		if !ar.WellFormed() || ar.Length() == 0 || !ar.IsPageAligned() {
+		if !ar.WellFormed() || ar.Length() == 0 || !hostarch.AddrRangeFunctions(ar).IsPageAligned() {
 			panic(fmt.Sprintf("invalid ar: %v", ar))
 		}
 	}

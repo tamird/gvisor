@@ -15,6 +15,10 @@
 // Package segment is a test package.
 package segment
 
+import seg "gvisor.dev/gvisor/pkg/segment"
+
+type Range = seg.Range[int]
+
 type setFunctions struct{}
 
 // MinKey returns the minimum key for the set.

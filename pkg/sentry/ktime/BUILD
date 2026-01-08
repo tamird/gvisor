@@ -43,17 +43,6 @@ go_template_instance(
     },
 )
 
-go_template_instance(
-    name = "uint64_range",
-    out = "uint64_range.go",
-    package = "ktime",
-    prefix = "uint64",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uint64",
-    },
-)
-
 go_library(
     name = "ktime",
     srcs = [
@@ -64,7 +53,6 @@ go_library(
         "synthetic_timer.go",
         "synthetic_timer_list.go",
         "synthetic_timer_set.go",
-        "uint64_range.go",
     ],
     visibility = ["//pkg/sentry:internal"],
     deps = [
@@ -73,6 +61,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/gohacks",
+        "//pkg/segment",
         "//pkg/sync",
         "//pkg/waiter",
     ],

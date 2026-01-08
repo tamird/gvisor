@@ -1,3 +1,4 @@
+load("//tools:defs.bzl", "go_library")
 load("//tools/go_generics:defs.bzl", "go_template")
 
 package(
@@ -6,11 +7,12 @@ package(
     licenses = ["notice"],
 )
 
-go_template(
-    name = "generic_range",
+go_library(
+    name = "segment",
     srcs = ["range.go"],
-    types = [
-        "T",
+    stateify = False,
+    deps = [
+        "@org_golang_x_exp//constraints:go_default_library",
     ],
 )
 

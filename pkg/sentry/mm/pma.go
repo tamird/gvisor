@@ -227,7 +227,7 @@ func (mm *MemoryManager) getAllocationDirection(ar hostarch.AddrRange, vma *vma)
 //     getVecPMAsLocked; other clients should call one of those instead.
 func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIterator, ar hostarch.AddrRange, at hostarch.AccessType, callerIndirectCommit bool) (pmaIterator, pmaGapIterator, error) {
 	if checkInvariants {
-		if !ar.WellFormed() || ar.Length() == 0 || !ar.IsPageAligned() {
+		if !ar.WellFormed() || ar.Length() == 0 || !hostarch.AddrRangeFunctions(ar).IsPageAligned() {
 			panic(fmt.Sprintf("invalid ar: %v", ar))
 		}
 		if !vseg.Ok() {
@@ -285,7 +285,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					mayHuge := mm.mf.HugepagesEnabled() && !vma.growsDown && !vma.isStack
 					huge := false
 					if mayHuge {
-						if allocAR.IsHugePageAligned() {
+						if hostarch.AddrRangeFunctions(allocAR).IsHugePageAligned() {
 							huge = true
 						} else {
 							startHugeRoundUp, ok := allocAR.Start.HugeRoundUp()
@@ -460,7 +460,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 						return pstart, pseg.PrevGap(), err
 					}
 					// Copy contents.
-					huge := mm.mf.HugepagesEnabled() && copyAR.IsHugePageAligned()
+					huge := mm.mf.HugepagesEnabled() && hostarch.AddrRangeFunctions(copyAR).IsHugePageAligned()
 					reader := safemem.BlockSeqReader{Blocks: mm.internalMappingsLocked(pseg, copyAR)}
 					fr, err := mm.mf.Allocate(uint64(copyAR.Length()), pgalloc.AllocOpts{
 						Kind:       usage.Anonymous,
@@ -653,7 +653,7 @@ func (mm *MemoryManager) isPMACopyOnWriteLocked(vseg vmaIterator, pseg pmaIterat
 // Invalidate implements memmap.MappingSpace.Invalidate.
 func (mm *MemoryManager) Invalidate(ar hostarch.AddrRange, opts memmap.InvalidateOpts) {
 	if checkInvariants {
-		if !ar.WellFormed() || ar.Length() == 0 || !ar.IsPageAligned() {
+		if !ar.WellFormed() || ar.Length() == 0 || !hostarch.AddrRangeFunctions(ar).IsPageAligned() {
 			panic(fmt.Sprintf("invalid ar: %v", ar))
 		}
 	}
@@ -676,7 +676,7 @@ func (mm *MemoryManager) Invalidate(ar hostarch.AddrRange, opts memmap.Invalidat
 //   - ar must be page-aligned.
 func (mm *MemoryManager) invalidateLocked(ar hostarch.AddrRange, invalidatePrivate, invalidateShared bool) {
 	if checkInvariants {
-		if !ar.WellFormed() || ar.Length() == 0 || !ar.IsPageAligned() {
+		if !ar.WellFormed() || ar.Length() == 0 || !hostarch.AddrRangeFunctions(ar).IsPageAligned() {
 			panic(fmt.Sprintf("invalid ar: %v", ar))
 		}
 	}
@@ -739,7 +739,7 @@ func (mm *MemoryManager) invalidateLocked(ar hostarch.AddrRange, invalidatePriva
 //   - ar must be page-aligned.
 func (mm *MemoryManager) Pin(ctx context.Context, ar hostarch.AddrRange, at hostarch.AccessType, ignorePermissions bool) ([]PinnedRange, error) {
 	if checkInvariants {
-		if !ar.WellFormed() || ar.Length() == 0 || !ar.IsPageAligned() {
+		if !ar.WellFormed() || ar.Length() == 0 || !hostarch.AddrRangeFunctions(ar).IsPageAligned() {
 			panic(fmt.Sprintf("invalid ar: %v", ar))
 		}
 	}
@@ -826,10 +826,10 @@ func Unpin(prs []PinnedRange) {
 //   - oldAR and newAR must be page-aligned.
 func (mm *MemoryManager) movePMAsLocked(oldAR, newAR hostarch.AddrRange) {
 	if checkInvariants {
-		if !oldAR.WellFormed() || oldAR.Length() == 0 || !oldAR.IsPageAligned() {
+		if !oldAR.WellFormed() || oldAR.Length() == 0 || !hostarch.AddrRangeFunctions(oldAR).IsPageAligned() {
 			panic(fmt.Sprintf("invalid oldAR: %v", oldAR))
 		}
-		if !newAR.WellFormed() || newAR.Length() == 0 || !newAR.IsPageAligned() {
+		if !newAR.WellFormed() || newAR.Length() == 0 || !hostarch.AddrRangeFunctions(newAR).IsPageAligned() {
 			panic(fmt.Sprintf("invalid newAR: %v", newAR))
 		}
 		if oldAR.Length() > newAR.Length() {

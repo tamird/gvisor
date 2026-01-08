@@ -11,7 +11,6 @@ go_library(
         "accel.go",
         "accel_fd.go",
         "accel_fd_mmap.go",
-        "devaddr_range.go",
         "devaddr_set.go",
         "gasket_ioctl.go",
     ],
@@ -27,6 +26,7 @@ go_library(
         "//pkg/fdnotifier",
         "//pkg/hostarch",
         "//pkg/log",
+        "//pkg/segment",
         "//pkg/safemem",
         "//pkg/seccomp",
         "//pkg/sentry/arch",
@@ -37,23 +37,13 @@ go_library(
         "//pkg/sentry/memmap",
         "//pkg/sentry/mm",
         "//pkg/sentry/vfs",
+        "//pkg/segment",
         "//pkg/sync",
         "//pkg/usermem",
         "//pkg/waiter",
         "@org_golang_x_exp//constraints:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
-)
-
-go_template_instance(
-    name = "devaddr_range",
-    out = "devaddr_range.go",
-    package = "accel",
-    prefix = "DevAddr",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uint64",
-    },
 )
 
 go_template_instance(

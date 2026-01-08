@@ -65,17 +65,6 @@ go_template_instance(
 )
 
 go_template_instance(
-    name = "evictable_range",
-    out = "evictable_range.go",
-    package = "pgalloc",
-    prefix = "Evictable",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uint64",
-    },
-)
-
-go_template_instance(
     name = "evictable_range_set",
     out = "evictable_range_set.go",
     package = "pgalloc",
@@ -161,7 +150,6 @@ go_library(
         "apl_unloaded_set.go",
         "context.go",
         "debug.go",
-        "evictable_range.go",
         "evictable_range_set.go",
         "memacct_set.go",
         "memory_file_mutex.go",
@@ -184,6 +172,7 @@ go_library(
         "//pkg/log",
         "//pkg/ringdeque",
         "//pkg/safemem",
+        "//pkg/segment",
         "//pkg/sentry/arch",
         "//pkg/sentry/hostmm",
         "//pkg/sentry/memmap",

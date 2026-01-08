@@ -12,15 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package segment provides range types for segment handling.
 package segment
 
-// T is a required type parameter that must be an integral type.
-type T uint64
+import (
+	"fmt"
+
+	"golang.org/x/exp/constraints"
+)
 
 // A Range represents a contiguous range of T.
 //
 // +stateify savable
-type Range struct {
+type Range[T constraints.Integer] struct {
 	// Start is the inclusive start of the range.
 	Start T
 
@@ -28,32 +32,37 @@ type Range struct {
 	End T
 }
 
+// String implements fmt.Stringer.String.
+func (r Range[T]) String() string {
+	return fmt.Sprintf("[%#x, %#x)", r.Start, r.End)
+}
+
 // WellFormed returns true if r.Start <= r.End. All other methods on a Range
 // require that the Range is well-formed.
 //
 //go:nosplit
-func (r Range) WellFormed() bool {
+func (r Range[T]) WellFormed() bool {
 	return r.Start <= r.End
 }
 
 // Length returns the length of the range.
 //
 //go:nosplit
-func (r Range) Length() T {
+func (r Range[T]) Length() T {
 	return r.End - r.Start
 }
 
 // Contains returns true if r contains x.
 //
 //go:nosplit
-func (r Range) Contains(x T) bool {
+func (r Range[T]) Contains(x T) bool {
 	return r.Start <= x && x < r.End
 }
 
 // Overlaps returns true if r and r2 overlap.
 //
 //go:nosplit
-func (r Range) Overlaps(r2 Range) bool {
+func (r Range[T]) Overlaps(r2 Range[T]) bool {
 	return r.Start < r2.End && r2.Start < r.End
 }
 
@@ -61,7 +70,7 @@ func (r Range) Overlaps(r2 Range) bool {
 // contained within r.
 //
 //go:nosplit
-func (r Range) IsSupersetOf(r2 Range) bool {
+func (r Range[T]) IsSupersetOf(r2 Range[T]) bool {
 	return r.Start <= r2.Start && r.End >= r2.End
 }
 
@@ -70,7 +79,7 @@ func (r Range) IsSupersetOf(r2 Range) bool {
 // bounds, but for which Length() == 0.
 //
 //go:nosplit
-func (r Range) Intersect(r2 Range) Range {
+func (r Range[T]) Intersect(r2 Range[T]) Range[T] {
 	if r.Start < r2.Start {
 		r.Start = r2.Start
 	}
@@ -88,6 +97,6 @@ func (r Range) Intersect(r2 Range) Range {
 // non-zero length.
 //
 //go:nosplit
-func (r Range) CanSplitAt(x T) bool {
+func (r Range[T]) CanSplitAt(x T) bool {
 	return r.Contains(x) && r.Start < x
 }

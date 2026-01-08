@@ -38,6 +38,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/safemem"
+	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/sentry/hostmm"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
@@ -45,6 +46,8 @@ import (
 )
 
 const pagesPerHugePage = hostarch.HugePageSize / hostarch.PageSize
+
+type EvictableRange = segment.Range[uint64]
 
 // MemoryFile is a memmap.File whose pages may be allocated to arbitrary
 // users.

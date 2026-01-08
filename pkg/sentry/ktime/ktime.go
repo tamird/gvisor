@@ -23,7 +23,10 @@ import (
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/segment"
 )
+
+type uint64Range = segment.Range[uint64]
 
 // Time represents an instant in time with nanosecond precision.
 //

@@ -23,6 +23,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/safemem"
+	"gvisor.dev/gvisor/pkg/segment"
 )
 
 // Mappable represents a memory-mappable object, a mutable mapping from uint64
@@ -204,13 +205,7 @@ func (b *BusError) Error() string {
 }
 
 // MappableRange represents a range of uint64 offsets into a Mappable.
-//
-// type MappableRange <generated using go_generics>
-
-// String implements fmt.Stringer.String.
-func (mr MappableRange) String() string {
-	return fmt.Sprintf("[%#x, %#x)", mr.Start, mr.End)
-}
+type MappableRange = segment.Range[uint64]
 
 // MappingSpace represents a mutable mapping from hostarch.Addrs to (Mappable,
 // uint64 offset) pairs.
@@ -585,10 +580,4 @@ func (NoMapInternal) MemoryType() hostarch.MemoryType {
 }
 
 // FileRange represents a range of uint64 offsets into a File.
-//
-// type FileRange <generated using go_generics>
-
-// String implements fmt.Stringer.String.
-func (fr FileRange) String() string {
-	return fmt.Sprintf("[%#x, %#x)", fr.Start, fr.End)
-}
+type FileRange = segment.Range[uint64]

@@ -19,8 +19,11 @@ import (
 	"reflect"
 	"sort"
 
+	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
+
+type addrRange = segment.Range[uintptr]
 
 // objectEncodeState the type and identity of an object occupying a memory
 // address range. This is the value type for addrSet, and the intrusive entry

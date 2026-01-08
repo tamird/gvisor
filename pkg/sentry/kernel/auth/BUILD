@@ -19,17 +19,6 @@ go_template_instance(
 )
 
 go_template_instance(
-    name = "id_map_range",
-    out = "id_map_range.go",
-    package = "auth",
-    prefix = "idMap",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uint32",
-    },
-)
-
-go_template_instance(
     name = "id_map_set",
     out = "id_map_set.go",
     consts = {
@@ -79,7 +68,6 @@ go_library(
         "id.go",
         "id_map.go",
         "id_map_functions.go",
-        "id_map_range.go",
         "id_map_set.go",
         "key.go",
         "keyset_mutex.go",
@@ -101,6 +89,7 @@ go_library(
         "//pkg/rand",
         "//pkg/sentry/seccheck",
         "//pkg/sentry/seccheck/points:points_go_proto",
+        "//pkg/segment",
         "//pkg/sync",
         "//pkg/sync/locking",
     ],

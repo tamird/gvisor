@@ -8,7 +8,6 @@ licenses(["notice"])
 go_library(
     name = "vfio",
     srcs = [
-        "devaddr_range.go",
         "devaddr_set.go",
         "pci_device_fd.go",
         "pci_device_fd_mmap.go",
@@ -42,22 +41,12 @@ go_library(
         "//pkg/sentry/memmap",
         "//pkg/sentry/mm",
         "//pkg/sentry/vfs",
+        "//pkg/segment",
         "//pkg/sync",
         "//pkg/usermem",
         "//pkg/waiter",
         "@org_golang_x_sys//unix:go_default_library",
     ],
-)
-
-go_template_instance(
-    name = "devaddr_range",
-    out = "devaddr_range.go",
-    package = "vfio",
-    prefix = "DevAddr",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uint64",
-    },
 )
 
 go_template_instance(

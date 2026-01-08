@@ -7,17 +7,6 @@ package(
 )
 
 go_template_instance(
-    name = "lock_range",
-    out = "lock_range.go",
-    package = "lock",
-    prefix = "Lock",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uint64",
-    },
-)
-
-go_template_instance(
     name = "lock_set",
     out = "lock_set.go",
     consts = {
@@ -38,7 +27,6 @@ go_library(
     name = "lock",
     srcs = [
         "lock.go",
-        "lock_range.go",
         "lock_set.go",
         "lock_set_functions.go",
     ],
@@ -48,6 +36,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/log",
+        "//pkg/segment",
         "//pkg/sync",
         "//pkg/waiter",
         "@org_golang_x_sys//unix:go_default_library",

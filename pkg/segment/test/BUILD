@@ -8,16 +8,6 @@ package(
 )
 
 go_template_instance(
-    name = "int_range",
-    out = "int_range.go",
-    package = "segment",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "int",
-    },
-)
-
-go_template_instance(
     name = "int_set",
     out = "int_set.go",
     package = "segment",
@@ -52,11 +42,11 @@ go_library(
     testonly = 1,
     srcs = [
         "gap_set.go",
-        "int_range.go",
         "int_set.go",
         "set_functions.go",
     ],
     deps = [
+        "//pkg/segment",
         "//pkg/state",
     ],
 )

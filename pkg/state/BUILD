@@ -31,17 +31,6 @@ go_template_instance(
 )
 
 go_template_instance(
-    name = "addr_range",
-    out = "addr_range.go",
-    package = "state",
-    prefix = "addr",
-    template = "//pkg/segment:generic_range",
-    types = {
-        "T": "uintptr",
-    },
-)
-
-go_template_instance(
     name = "addr_set",
     out = "addr_set.go",
     consts = {
@@ -64,7 +53,6 @@ go_template_instance(
 go_library(
     name = "state",
     srcs = [
-        "addr_range.go",
         "addr_set.go",
         "debug.go",
         "decode.go",
@@ -85,6 +73,7 @@ go_library(
         "//visibility:public",
     ],
     deps = [
+        "//pkg/segment",
         "//pkg/state/wire",
     ],
 )

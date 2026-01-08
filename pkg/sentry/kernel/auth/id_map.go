@@ -18,6 +18,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/segment"
 )
 
 // MapFromKUID translates kuid, a UID in the root namespace, to a UID in ns.
@@ -63,6 +64,8 @@ func (ns *UserNamespace) mapID(m *idMapSet, id uint32) uint32 {
 	}
 	return NoID
 }
+
+type idMapRange = segment.Range[uint32]
 
 // allIDsMapped returns true if all IDs in the range [start, end) are mapped in
 // m.

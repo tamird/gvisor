@@ -50,7 +50,7 @@ func gasketMapBufferIoctl(ctx context.Context, t *kernel.Task, hostFd int32, fd 
 		return 0, linuxerr.EFAULT
 	}
 
-	if !ar.IsPageAligned() || (userIoctlParams.Size/hostarch.PageSize) == 0 {
+	if !hostarch.AddrRangeFunctions(ar).IsPageAligned() || (userIoctlParams.Size/hostarch.PageSize) == 0 {
 		return 0, linuxerr.EINVAL
 	}
 

@@ -1156,7 +1156,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 			pma := pseg.ValuePtr()
 			if pma.huge && !mm.isPMACopyOnWriteLocked(vseg, pseg) {
 				psegAR := pseg.Range().Intersect(vsegAR)
-				if !psegAR.IsHugePageAligned() {
+				if !hostarch.AddrRangeFunctions(psegAR).IsHugePageAligned() {
 					firstHugeStart := psegAR.Start.HugeRoundDown()
 					firstHugeEnd := firstHugeStart + hostarch.HugePageSize
 					lastWholeHugeEnd := psegAR.End.HugeRoundDown()
