@@ -17,6 +17,7 @@ package kernel
 import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/ilist"
 )
 
 // SessionID is the public identifier.
@@ -24,6 +25,15 @@ type SessionID ThreadID
 
 // ProcessGroupID is the public identifier.
 type ProcessGroupID ThreadID
+
+type processGroupEntry = ilist.Entry[*ProcessGroup]
+type sessionEntry = ilist.Entry[*Session]
+
+// +stateify savable
+type processGroupList = ilist.List[*ProcessGroup]
+
+// +stateify savable
+type sessionList = ilist.List[*Session]
 
 // Session contains a leader threadgroup and a list of ProcessGroups.
 //

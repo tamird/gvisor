@@ -23,6 +23,7 @@ import (
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/hostsyscall"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/platform"
 	"gvisor.dev/gvisor/pkg/sentry/platform/systrap/sysmsg"
@@ -33,6 +34,11 @@ const (
 	ackReset          uint64 = 0
 	stateChangedReset uint64 = 0
 )
+
+type contextEntry = ilist.Entry[*sharedContext]
+
+// +stateify savable
+type contextList = ilist.List[*sharedContext]
 
 // sharedContext is an abstraction for interactions that the sentry has to
 // perform with memory shared between it and the stub threads used for contexts.

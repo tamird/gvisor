@@ -18,18 +18,6 @@ go_template_instance(
 )
 
 go_template_instance(
-    name = "synthetic_timer_list",
-    out = "synthetic_timer_list.go",
-    package = "ktime",
-    prefix = "syntheticTimer",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*SyntheticTimer",
-        "Linker": "*SyntheticTimer",
-    },
-)
-
-go_template_instance(
     name = "synthetic_timer_set",
     out = "synthetic_timer_set.go",
     package = "ktime",
@@ -62,7 +50,6 @@ go_library(
         "sampled_timer.go",
         "seqatomic_sampled_clock_unsafe.go",
         "synthetic_timer.go",
-        "synthetic_timer_list.go",
         "synthetic_timer_set.go",
         "uint64_range.go",
     ],
@@ -73,6 +60,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/gohacks",
+        "//pkg/ilist",
         "//pkg/sync",
         "//pkg/waiter",
     ],

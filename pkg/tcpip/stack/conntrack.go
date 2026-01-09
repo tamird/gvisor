@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/hash/jenkins"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -39,6 +40,11 @@ import (
 
 // Our hash table has 16K buckets.
 const numBuckets = 1 << 14
+
+type tupleEntry = ilist.Entry[*tuple]
+
+// +stateify savable
+type tupleList = ilist.List[*tuple]
 
 const (
 	establishedTimeout   time.Duration = 5 * 24 * time.Hour

@@ -36,18 +36,6 @@ declare_mutex(
 )
 
 go_template_instance(
-    name = "amfl_list",
-    out = "amfl_list.go",
-    package = "pgalloc",
-    prefix = "asyncMemoryFileLoad",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*asyncMemoryFileLoad",
-        "Linker": "*asyncMemoryFileLoad",
-    },
-)
-
-go_template_instance(
     name = "apl_unloaded_set",
     out = "apl_unloaded_set.go",
     imports = {
@@ -154,7 +142,6 @@ go_template_instance(
 go_library(
     name = "pgalloc",
     srcs = [
-        "amfl_list.go",
         "amfls_mutex.go",
         "apfl_mutex.go",
         "apfs_mutex.go",
@@ -181,6 +168,7 @@ go_library(
         "//pkg/gohacks",
         "//pkg/goid",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/ringdeque",
         "//pkg/safemem",

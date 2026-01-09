@@ -19,12 +19,18 @@ import (
 	"io"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
+
+type segmentEntry = ilist.Entry[*segment]
+
+// +stateify savable
+type segmentList = ilist.List[*segment]
 
 // queueFlags are used to indicate which queue of an endpoint a particular segment
 // belongs to. This is used to track memory accounting correctly.

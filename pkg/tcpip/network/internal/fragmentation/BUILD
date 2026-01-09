@@ -1,21 +1,8 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "reassembler_list",
-    out = "reassembler_list.go",
-    package = "fragmentation",
-    prefix = "reassembler",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*reassembler",
-        "Linker": "*reassembler",
-    },
 )
 
 go_library(
@@ -23,7 +10,6 @@ go_library(
     srcs = [
         "fragmentation.go",
         "reassembler.go",
-        "reassembler_list.go",
     ],
     visibility = [
         "//pkg/tcpip/network/ipv4:__pkg__",
@@ -31,6 +17,7 @@ go_library(
     ],
     deps = [
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/sync",
         "//pkg/tcpip",

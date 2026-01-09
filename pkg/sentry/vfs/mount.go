@@ -26,9 +26,19 @@ import (
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/ilist"
+	"gvisor.dev/gvisor/pkg/ilist/ring"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 )
+
+type followerEntry = ilist.Entry[*Mount]
+
+// +stateify savable
+type followerList = ilist.List[*Mount]
+
+// +stateify savable
+type mountEntry = ring.Entry[*Mount]
 
 // MountMax is the maximum number of mounts allowed. In Linux this can be
 // configured by the user at /proc/sys/fs/mount-max, but the default is

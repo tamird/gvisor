@@ -28,25 +28,12 @@ go_template_instance(
     },
 )
 
-go_template_instance(
-    name = "waiter_list",
-    out = "waiter_list.go",
-    package = "futex",
-    prefix = "waiter",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Waiter",
-        "Linker": "*Waiter",
-    },
-)
-
 go_library(
     name = "futex",
     srcs = [
         "atomicptr_bucket_unsafe.go",
         "futex.go",
         "futex_mutex.go",
-        "waiter_list.go",
     ],
     visibility = ["//pkg/sentry:internal"],
     deps = [
@@ -54,6 +41,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/sentry/memmap",
         "//pkg/sync",

@@ -19,11 +19,17 @@ import (
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/nsfs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type taskEntry = ilist.Entry[*Task]
+
+// +stateify savable
+type taskList = ilist.List[*Task]
 
 // TasksLimit is the maximum number of threads for untrusted application.
 // Linux doesn't really limit this directly, rather it is limited by total

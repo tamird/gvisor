@@ -19,8 +19,12 @@ import (
 	"reflect"
 	"sort"
 
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
+
+type deferredEntry = ilist.Entry[*objectEncodeState]
+type deferredList = ilist.List[*objectEncodeState]
 
 // objectEncodeState the type and identity of an object occupying a memory
 // address range. This is the value type for addrSet, and the intrusive entry

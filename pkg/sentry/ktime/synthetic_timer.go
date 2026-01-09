@@ -20,8 +20,14 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 )
+
+type syntheticTimerEntry = ilist.Entry[*SyntheticTimer]
+
+// +stateify savable
+type syntheticTimerList = ilist.List[*SyntheticTimer]
 
 // SyntheticTimer implements Timer for SyntheticClocks.
 //

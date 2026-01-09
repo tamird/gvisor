@@ -55,6 +55,7 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/lisafs"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/refs"
@@ -93,6 +94,19 @@ const (
 	// Directfs options.
 	moptDirectfs = "directfs"
 )
+
+type stringEntry = ilist.Entry[*stringListElem]
+type dentryEntry = ilist.Entry[*dentryListElem]
+type specialFDEntry = ilist.Entry[*specialFileFD]
+
+// +stateify savable
+type stringList = ilist.List[*stringListElem]
+
+// +stateify savable
+type dentryList = ilist.List[*dentryListElem]
+
+// +stateify savable
+type specialFDList = ilist.List[*specialFileFD]
 
 // Valid values for the "cache" mount option.
 const (

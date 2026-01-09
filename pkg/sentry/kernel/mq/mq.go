@@ -23,6 +23,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
@@ -38,6 +39,11 @@ const (
 	WriteOnly
 	ReadWrite
 )
+
+type msgEntry = ilist.Entry[*Message]
+
+// +stateify savable
+type msgList = ilist.List[*Message]
 
 // MaxName is the maximum size for a queue name.
 const MaxName = 255

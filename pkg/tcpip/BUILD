@@ -1,34 +1,9 @@
 load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools:deps.bzl", "deps_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "sock_err_list",
-    out = "sock_err_list.go",
-    package = "tcpip",
-    prefix = "sockError",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*SockError",
-        "Linker": "*SockError",
-    },
-)
-
-go_template_instance(
-    name = "route_list",
-    out = "route_list.go",
-    package = "tcpip",
-    prefix = "Route",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Route",
-        "Linker": "*Route",
-    },
 )
 
 go_library(
@@ -36,8 +11,6 @@ go_library(
     srcs = [
         "errors.go",
         "errors_linux.go",
-        "route_list.go",
-        "sock_err_list.go",
         "socketops.go",
         "stdclock.go",
         "stdclock_state.go",
@@ -49,6 +22,7 @@ go_library(
     deps = [
         "//pkg/atomicbitops",
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/rand",
         "//pkg/sync",
         "//pkg/waiter",

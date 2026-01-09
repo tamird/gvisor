@@ -25,6 +25,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sleep"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -34,6 +35,11 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type endpointEntry = ilist.Entry[*Endpoint]
+
+// +stateify savable
+type endpointList = ilist.List[*Endpoint]
 
 // EndpointState represents the state of a TCP endpoint.
 type EndpointState tcpip.EndpointState

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -30,6 +31,13 @@ var viewPool = sync.Pool{
 		return &View{}
 	},
 }
+
+type viewEntry = ilist.Entry[*View]
+
+// ViewList is a list of Views.
+//
+// +stateify savable
+type ViewList = ilist.List[*View]
 
 // View is a window into a shared chunk. Views are held by Buffers in
 // viewLists to represent contiguous memory.
@@ -48,7 +56,7 @@ var viewPool = sync.Pool{
 //
 // +stateify savable
 type View struct {
-	ViewEntry `state:"nosave"`
+	viewEntry `state:"nosave"`
 	read      int
 	write     int
 	chunk     *chunk

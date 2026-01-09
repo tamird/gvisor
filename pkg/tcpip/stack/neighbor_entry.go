@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 )
@@ -27,6 +28,11 @@ const (
 	// be done immediately but asynchronously to avoid deadlock.
 	immediateDuration time.Duration = 0
 )
+
+type neighborEntryEntry = ilist.Entry[*neighborEntry]
+
+// +stateify savable
+type neighborEntryList = ilist.List[*neighborEntry]
 
 // NeighborEntry describes a neighboring device in the local network.
 //

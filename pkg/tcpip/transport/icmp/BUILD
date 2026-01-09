@@ -6,29 +6,17 @@ package(
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "icmp_packet_list",
-    out = "icmp_packet_list.go",
-    package = "icmp",
-    prefix = "icmpPacket",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*icmpPacket",
-        "Linker": "*icmpPacket",
-    },
-)
-
 go_library(
     name = "icmp",
     srcs = [
         "endpoint.go",
         "endpoint_state.go",
-        "icmp_packet_list.go",
         "protocol.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/sleep",
         "//pkg/sync",

@@ -19,22 +19,21 @@ import (
 )
 
 type testEntry struct {
-	Entry
+	Entry[*testEntry]
 	value int
 }
 
 type direct struct {
-	directEntry
+	Entry[*direct]
 	value int
 }
 
-func verifyEquality(t *testing.T, entries []testEntry, l *List) {
+func verifyEquality(t *testing.T, entries []testEntry, l *List[*testEntry]) {
 	t.Helper()
 
 	i := 0
 	for it := l.Front(); it != nil; it = it.Next() {
-		e := it.(*testEntry)
-		if e != &entries[i] {
+		if it != &entries[i] {
 			t.Errorf("Wrong entry at index %d", i)
 			return
 		}
@@ -48,8 +47,7 @@ func verifyEquality(t *testing.T, entries []testEntry, l *List) {
 
 	i = 0
 	for it := l.Back(); it != nil; it = it.Prev() {
-		e := it.(*testEntry)
-		if e != &entries[len(entries)-1-i] {
+		if it != &entries[len(entries)-1-i] {
 			t.Errorf("Wrong entry at index %d", i)
 			return
 		}
@@ -63,7 +61,7 @@ func verifyEquality(t *testing.T, entries []testEntry, l *List) {
 }
 
 func TestZeroEmpty(t *testing.T) {
-	var l List
+	var l List[*testEntry]
 	if l.Front() != nil {
 		t.Error("Front is non-nil")
 	}
@@ -73,14 +71,13 @@ func TestZeroEmpty(t *testing.T) {
 }
 
 func TestPushBack(t *testing.T) {
-	var l List
+	var l List[*testEntry]
 
 	// Test single entry insertion.
 	var entry testEntry
 	l.PushBack(&entry)
 
-	e := l.Front().(*testEntry)
-	if e != &entry {
+	if l.Front() != &entry {
 		t.Error("Wrong entry returned")
 	}
 
@@ -95,14 +92,13 @@ func TestPushBack(t *testing.T) {
 }
 
 func TestPushFront(t *testing.T) {
-	var l List
+	var l List[*testEntry]
 
 	// Test single entry insertion.
 	var entry testEntry
 	l.PushFront(&entry)
 
-	e := l.Front().(*testEntry)
-	if e != &entry {
+	if l.Front() != &entry {
 		t.Error("Wrong entry returned")
 	}
 
@@ -118,7 +114,7 @@ func TestPushFront(t *testing.T) {
 
 func TestRemove(t *testing.T) {
 	// Remove entry from single-element list.
-	var l List
+	var l List[*testEntry]
 	var entry testEntry
 	l.PushBack(&entry)
 	l.Remove(&entry)
@@ -149,7 +145,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestReset(t *testing.T) {
-	var l List
+	var l List[*testEntry]
 
 	// Resetting list of one element.
 	l.PushBack(&testEntry{})
@@ -184,7 +180,7 @@ func TestReset(t *testing.T) {
 }
 
 func BenchmarkIterateForward(b *testing.B) {
-	var l List
+	var l List[*testEntry]
 	for i := 0; i < 1000000; i++ {
 		l.PushBack(&testEntry{value: i})
 	}
@@ -192,13 +188,13 @@ func BenchmarkIterateForward(b *testing.B) {
 	for i := b.N; i > 0; i-- {
 		tmp := 0
 		for e := l.Front(); e != nil; e = e.Next() {
-			tmp += e.(*testEntry).value
+			tmp += e.value
 		}
 	}
 }
 
 func BenchmarkIterateBackward(b *testing.B) {
-	var l List
+	var l List[*testEntry]
 	for i := 0; i < 1000000; i++ {
 		l.PushBack(&testEntry{value: i})
 	}
@@ -206,13 +202,13 @@ func BenchmarkIterateBackward(b *testing.B) {
 	for i := b.N; i > 0; i-- {
 		tmp := 0
 		for e := l.Back(); e != nil; e = e.Prev() {
-			tmp += e.(*testEntry).value
+			tmp += e.value
 		}
 	}
 }
 
 func BenchmarkDirectIterateForward(b *testing.B) {
-	var l directList
+	var l List[*direct]
 	for i := 0; i < 1000000; i++ {
 		l.PushBack(&direct{value: i})
 	}
@@ -226,7 +222,7 @@ func BenchmarkDirectIterateForward(b *testing.B) {
 }
 
 func BenchmarkDirectIterateBackward(b *testing.B) {
-	var l directList
+	var l List[*direct]
 	for i := 0; i < 1000000; i++ {
 		l.PushBack(&direct{value: i})
 	}

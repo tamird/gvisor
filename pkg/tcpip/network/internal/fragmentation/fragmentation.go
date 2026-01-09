@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -77,6 +78,11 @@ type FragmentID struct {
 	// The protocol for the packet.
 	Protocol uint8
 }
+
+type reassemblerEntry = ilist.Entry[*reassembler]
+
+// +stateify savable
+type reassemblerList = ilist.List[*reassembler]
 
 // Fragmentation is the main structure that other modules
 // of the stack should use to implement IP Fragmentation.

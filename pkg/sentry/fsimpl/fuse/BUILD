@@ -6,18 +6,6 @@ package(default_applicable_licenses = ["//:license"])
 licenses(["notice"])
 
 go_template_instance(
-    name = "request_list",
-    out = "request_list.go",
-    package = "fuse",
-    prefix = "request",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Request",
-        "Linker": "*Request",
-    },
-)
-
-go_template_instance(
     name = "inode_refs",
     out = "inode_refs.go",
     package = "fuse",
@@ -68,7 +56,6 @@ go_library(
         "read_write.go",
         "register.go",
         "regular_file.go",
-        "request_list.go",
         "request_response.go",
         "save_restore.go",
         "seqatomic_time_unsafe.go",
@@ -81,6 +68,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/marshal",
         "//pkg/marshal/primitive",

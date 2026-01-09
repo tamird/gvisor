@@ -17,18 +17,6 @@ go_template_instance(
     },
 )
 
-go_template_instance(
-    name = "view_list",
-    out = "view_list.go",
-    package = "buffer",
-    prefix = "View",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*View",
-        "Linker": "*View",
-    },
-)
-
 go_library(
     name = "buffer",
     srcs = [
@@ -37,7 +25,6 @@ go_library(
         "chunk.go",
         "chunk_refs.go",
         "view.go",
-        "view_list.go",
         "view_unsafe.go",
     ],
     visibility = ["//visibility:public"],

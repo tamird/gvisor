@@ -27,18 +27,6 @@ declare_mutex(
     prefix = "objs",
 )
 
-go_template_instance(
-    name = "object_free_list",
-    out = "object_free_list.go",
-    package = "nvproxy",
-    prefix = "objectFree",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*object",
-        "Linker": "*object",
-    },
-)
-
 go_library(
     name = "nvproxy",
     srcs = [
@@ -52,7 +40,6 @@ go_library(
         "nvproxy.go",
         "nvproxy_unsafe.go",
         "object.go",
-        "object_free_list.go",
         "objs_mutex.go",
         "save_restore.go",
         "save_restore_impl.go",
@@ -77,6 +64,7 @@ go_library(
         "//pkg/errors/linuxerr",
         "//pkg/fdnotifier",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/marshal",
         "//pkg/marshal/primitive",

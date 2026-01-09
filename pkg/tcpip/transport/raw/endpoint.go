@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
@@ -40,6 +41,11 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/transport/internal/network"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type rawPacketEntry = ilist.Entry[*rawPacket]
+
+// +stateify savable
+type rawPacketList = ilist.List[*rawPacket]
 
 // +stateify savable
 type rawPacket struct {

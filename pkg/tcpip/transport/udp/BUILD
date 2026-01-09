@@ -6,18 +6,6 @@ package(
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "udp_packet_list",
-    out = "udp_packet_list.go",
-    package = "udp",
-    prefix = "udpPacket",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*udpPacket",
-        "Linker": "*udpPacket",
-    },
-)
-
 go_library(
     name = "udp",
     srcs = [
@@ -25,11 +13,11 @@ go_library(
         "endpoint_state.go",
         "forwarder.go",
         "protocol.go",
-        "udp_packet_list.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/sleep",
         "//pkg/sync",

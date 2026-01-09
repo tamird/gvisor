@@ -15,15 +15,10 @@
 // Package ring is an implementation of an intrusive circular linked list.
 package ring
 
-// Container is the type that holds the list entries.
-type Container any
-
 // Entry is an element in the circular linked list.
-//
-// +stateify savable
-type Entry struct {
-	next      *Entry
-	prev      *Entry
+type Entry[Container any] struct {
+	next      *Entry[Container]
+	prev      *Entry[Container]
 	container Container
 }
 
@@ -31,7 +26,7 @@ type Entry struct {
 // list).
 //
 //go:nosplit
-func (e *Entry) Init(container Container) {
+func (e *Entry[Container]) Init(container Container) {
 	e.next = e
 	e.prev = e
 	e.container = container
@@ -40,7 +35,7 @@ func (e *Entry) Init(container Container) {
 // Add adds new to old's ring.
 //
 //go:nosplit
-func (e *Entry) Add(new *Entry) {
+func (e *Entry[Container]) Add(new *Entry[Container]) {
 	next := e.next
 	prev := e
 
@@ -53,7 +48,7 @@ func (e *Entry) Add(new *Entry) {
 // Remove removes e from its ring and reinitializes it.
 //
 //go:nosplit
-func (e *Entry) Remove() {
+func (e *Entry[Container]) Remove() {
 	next := e.next
 	prev := e.prev
 
@@ -65,20 +60,20 @@ func (e *Entry) Remove() {
 // Empty returns true if there are no other elements in the ring.
 //
 //go:nosplit
-func (e *Entry) Empty() bool {
+func (e *Entry[Container]) Empty() bool {
 	return e.next == e
 }
 
 // Next returns the next containing object pointed to by the list.
 //
 //go:nosplit
-func (e *Entry) Next() Container {
+func (e *Entry[Container]) Next() Container {
 	return e.next.container
 }
 
 // Prev returns the previous containing object pointed to by the list.
 //
 //go:nosplit
-func (e *Entry) Prev() Container {
+func (e *Entry[Container]) Prev() Container {
 	return e.prev.container
 }

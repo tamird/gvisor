@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
@@ -30,6 +31,11 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/transport/internal/network"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type icmpPacketEntry = ilist.Entry[*icmpPacket]
+
+// +stateify savable
+type icmpPacketList = ilist.List[*icmpPacket]
 
 // +stateify savable
 type icmpPacket struct {

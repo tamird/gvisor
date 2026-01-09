@@ -19,10 +19,16 @@ import (
 	"bytes"
 	"fmt"
 
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
+
+type groPacketEntry = ilist.Entry[*groPacket]
+
+// +stateify savable
+type groPacketList = ilist.List[*groPacket]
 
 // There is room for improvement to the GRO engine:
 //   - We should save those headers in

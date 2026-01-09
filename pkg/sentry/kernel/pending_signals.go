@@ -18,6 +18,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/bits"
+	"gvisor.dev/gvisor/pkg/ilist"
 )
 
 const (
@@ -34,6 +35,11 @@ const (
 	// RLIMIT_SIGPENDING, which is by default max_threads/2.
 	rtSignalCap = 32
 )
+
+type pendingSignalEntry = ilist.Entry[*pendingSignal]
+
+// +stateify savable
+type pendingSignalList = ilist.List[*pendingSignal]
 
 // pendingSignals holds a collection of pending signals. The zero value of
 // pendingSignals is a valid empty collection.

@@ -7,18 +7,6 @@ package(
 )
 
 go_template_instance(
-    name = "context_list",
-    out = "context_list.go",
-    package = "systrap",
-    prefix = "context",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*sharedContext",
-        "Linker": "*sharedContext",
-    },
-)
-
-go_template_instance(
     name = "subprocess_refs",
     out = "subprocess_refs.go",
     package = "systrap",
@@ -32,7 +20,6 @@ go_template_instance(
 go_library(
     name = "systrap",
     srcs = [
-        "context_list.go",
         "context_queue.go",
         "context_queue_unsafe.go",
         "filters.go",
@@ -83,6 +70,7 @@ go_library(
         "//pkg/fd",
         "//pkg/hostarch",
         "//pkg/hostsyscall",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/memutil",
         "//pkg/metric",

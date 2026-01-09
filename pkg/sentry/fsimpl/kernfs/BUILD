@@ -7,18 +7,6 @@ package(default_applicable_licenses = ["//:license"])
 licenses(["notice"])
 
 go_template_instance(
-    name = "dentry_list",
-    out = "dentry_list.go",
-    package = "kernfs",
-    prefix = "dentry",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Dentry",
-        "Linker": "*Dentry",
-    },
-)
-
-go_template_instance(
     name = "fstree",
     out = "fstree.go",
     package = "kernfs",
@@ -27,18 +15,6 @@ go_template_instance(
     types = {
         "Dentry": "Dentry",
         "Filesystem": "Filesystem",
-    },
-)
-
-go_template_instance(
-    name = "slot_list",
-    out = "slot_list.go",
-    package = "kernfs",
-    prefix = "slot",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*slot",
-        "Linker": "*slot",
     },
 )
 
@@ -112,7 +88,6 @@ go_library(
     srcs = [
         "ancestry_mutex.go",
         "deferred_dec_refs_mutex.go",
-        "dentry_list.go",
         "dynamic_bytes_file.go",
         "fd_impl_util.go",
         "filesystem.go",
@@ -122,7 +97,6 @@ go_library(
         "kernfs.go",
         "mmap_util.go",
         "save_restore.go",
-        "slot_list.go",
         "static_directory_refs.go",
         "symlink.go",
         "synthetic_directory.go",
@@ -136,6 +110,7 @@ go_library(
         "//pkg/errors/linuxerr",
         "//pkg/fspath",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/refs",
         "//pkg/safemem",

@@ -36,6 +36,7 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/hostmm"
@@ -45,6 +46,11 @@ import (
 )
 
 const pagesPerHugePage = hostarch.HugePageSize / hostarch.PageSize
+
+type asyncMemoryFileLoadEntry = ilist.Entry[*asyncMemoryFileLoad]
+
+// +stateify savable
+type asyncMemoryFileLoadList = ilist.List[*asyncMemoryFileLoad]
 
 // MemoryFile is a memmap.File whose pages may be allocated to arbitrary
 // users.

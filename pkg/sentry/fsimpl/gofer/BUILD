@@ -17,42 +17,6 @@ go_template_instance(
 )
 
 go_template_instance(
-    name = "string_list",
-    out = "string_list.go",
-    package = "gofer",
-    prefix = "string",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*stringListElem",
-        "Linker": "*stringListElem",
-    },
-)
-
-go_template_instance(
-    name = "dentry_list",
-    out = "dentry_list.go",
-    package = "gofer",
-    prefix = "dentry",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*dentryListElem",
-        "Linker": "*dentryListElem",
-    },
-)
-
-go_template_instance(
-    name = "special_fd_list",
-    out = "special_fd_list.go",
-    package = "gofer",
-    prefix = "specialFD",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*specialFileFD",
-        "Linker": "*specialFileFD",
-    },
-)
-
-go_template_instance(
     name = "fstree",
     out = "fstree.go",
     package = "gofer",
@@ -67,7 +31,6 @@ go_template_instance(
 go_library(
     name = "gofer",
     srcs = [
-        "dentry_list.go",
         "directfs_inode.go",
         "directory.go",
         "filesystem.go",
@@ -82,9 +45,7 @@ go_library(
         "revalidate.go",
         "save_restore.go",
         "socket.go",
-        "special_fd_list.go",
         "special_file.go",
-        "string_list.go",
         "symlink.go",
         "time.go",
     ],
@@ -100,6 +61,7 @@ go_library(
         "//pkg/fspath",
         "//pkg/fsutil",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/lisafs",
         "//pkg/log",
         "//pkg/marshal",

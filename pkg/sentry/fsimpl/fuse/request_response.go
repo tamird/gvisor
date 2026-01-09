@@ -20,6 +20,7 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/marshal"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
@@ -84,6 +85,11 @@ func (r *fuseInitRes) SizeBytes() int {
 // Ordinary requests have even IDs, while interrupts IDs are odd.
 // Used to increment the unique ID for each FUSE request.
 var reqIDStep uint64 = 2
+
+type requestEntry = ilist.Entry[*Request]
+
+// +stateify savable
+type requestList = ilist.List[*Request]
 
 // Request represents a FUSE operation request that hasn't been sent to the
 // server yet.

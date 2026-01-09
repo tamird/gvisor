@@ -18,6 +18,7 @@ import (
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sync"
 )
@@ -40,6 +41,15 @@ func (f FDID) Ok() bool {
 type genericFD interface {
 	refs.RefCounter
 }
+
+type controlFDEntry = ilist.Entry[*ControlFD]
+type openFDEntry = ilist.Entry[*OpenFD]
+
+// +stateify savable
+type controlFDList = ilist.List[*ControlFD]
+
+// +stateify savable
+type openFDList = ilist.List[*OpenFD]
 
 // A ControlFD is the gateway to the backing filesystem tree node. It is an
 // unusual concept. This exists to provide a safe way to do path-based

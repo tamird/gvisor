@@ -42,53 +42,6 @@ declare_mutex(
 )
 
 go_template_instance(
-    name = "epoll_interest_list",
-    out = "epoll_interest_list.go",
-    package = "vfs",
-    prefix = "epollInterest",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*epollInterest",
-        "Linker": "*epollInterest",
-    },
-)
-
-go_template_instance(
-    name = "mount_ring",
-    out = "mount_ring.go",
-    package = "vfs",
-    prefix = "mount",
-    template = "//pkg/ilist:generic_ring",
-    types = {
-        "Container": "*Mount",
-    },
-)
-
-go_template_instance(
-    name = "mount_list",
-    out = "mount_list.go",
-    package = "vfs",
-    prefix = "follower",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Mount",
-        "Linker": "*Mount",
-    },
-)
-
-go_template_instance(
-    name = "event_list",
-    out = "event_list.go",
-    package = "vfs",
-    prefix = "event",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Event",
-        "Linker": "*Event",
-    },
-)
-
-go_template_instance(
     name = "file_description_refs",
     out = "file_description_refs.go",
     package = "vfs",
@@ -138,9 +91,7 @@ go_library(
         "device.go",
         "epoll.go",
         "epoll_instance_mutex.go",
-        "epoll_interest_list.go",
         "epoll_mutex.go",
-        "event_list.go",
         "file_description.go",
         "file_description_impl_util.go",
         "file_description_refs.go",
@@ -153,9 +104,7 @@ go_library(
         "inotify_mutex.go",
         "lock.go",
         "mount.go",
-        "mount_list.go",
         "mount_namespace_refs.go",
-        "mount_ring.go",
         "mount_unsafe.go",
         "namespace.go",
         "opath.go",
@@ -184,6 +133,8 @@ go_library(
         "//pkg/fspath",
         "//pkg/gohacks",
         "//pkg/hostarch",
+        "//pkg/ilist",
+        "//pkg/ilist/ring",
         "//pkg/log",
         "//pkg/refs",
         "//pkg/safemem",

@@ -23,6 +23,8 @@ type testContainer struct {
 	entry testEntry
 }
 
+type testEntry = Entry[*testContainer]
+
 func newContainer(value int) *testContainer {
 	c := &testContainer{value: value}
 	c.entry.Init(c)

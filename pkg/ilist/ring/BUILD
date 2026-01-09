@@ -6,19 +6,19 @@ package(
 )
 
 go_library(
-    name = "ilist",
+    name = "ring",
     srcs = [
-        "list.go",
+        "ring.go",
     ],
     stateify = False,
     visibility = ["//visibility:public"],
 )
 
 go_test(
-    name = "list_test",
+    name = "ring_test",
     size = "small",
     srcs = [
-        "list_test.go",
+        "ring_test.go",
     ],
-    library = ":ilist",
+    library = ":ring",
 )

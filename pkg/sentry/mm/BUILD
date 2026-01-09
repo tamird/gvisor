@@ -85,18 +85,6 @@ go_template_instance(
 )
 
 go_template_instance(
-    name = "io_list",
-    out = "io_list.go",
-    package = "mm",
-    prefix = "io",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*ioResult",
-        "Linker": "*ioResult",
-    },
-)
-
-go_template_instance(
     name = "aio_mappable_refs",
     out = "aio_mappable_refs.go",
     package = "mm",
@@ -130,7 +118,6 @@ go_library(
         "aio_mappable_refs.go",
         "debug.go",
         "io.go",
-        "io_list.go",
         "lifecycle.go",
         "mapping_mutex.go",
         "metadata.go",
@@ -154,6 +141,7 @@ go_library(
         "//pkg/context",
         "//pkg/errors/linuxerr",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/refs",
         "//pkg/safecopy",

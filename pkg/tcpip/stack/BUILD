@@ -156,30 +156,6 @@ declare_mutex(
 )
 
 go_template_instance(
-    name = "neighbor_entry_list",
-    out = "neighbor_entry_list.go",
-    package = "stack",
-    prefix = "neighborEntry",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*neighborEntry",
-        "Linker": "*neighborEntry",
-    },
-)
-
-go_template_instance(
-    name = "tuple_list",
-    out = "tuple_list.go",
-    package = "stack",
-    prefix = "tuple",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*tuple",
-        "Linker": "*tuple",
-    },
-)
-
-go_template_instance(
     name = "packet_buffer_refs",
     out = "packet_buffer_refs.go",
     package = "stack",
@@ -227,7 +203,6 @@ go_library(
         "neighbor_cache.go",
         "neighbor_cache_mutex.go",
         "neighbor_entry.go",
-        "neighbor_entry_list.go",
         "neighbor_entry_mutex.go",
         "neighborstate_string.go",
         "nftables_types.go",
@@ -255,7 +230,6 @@ go_library(
         "state_conn_mutex.go",
         "transport_demuxer.go",
         "transport_endpoints_mutex.go",
-        "tuple_list.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
