@@ -16,25 +16,12 @@ go_template_instance(
     },
 )
 
-go_template_instance(
-    name = "fstree",
-    out = "fstree.go",
-    package = "gofer",
-    prefix = "generic",
-    template = "//pkg/sentry/vfs/genericfstree:generic_fstree",
-    types = {
-        "Dentry": "dentry",
-        "Filesystem": "filesystem",
-    },
-)
-
 go_library(
     name = "gofer",
     srcs = [
         "directfs_inode.go",
         "directory.go",
         "filesystem.go",
-        "fstree.go",
         "gofer.go",
         "handle.go",
         "host_named_pipe.go",
@@ -87,6 +74,7 @@ go_library(
         "//pkg/sentry/socket/unix/transport",
         "//pkg/sentry/usage",
         "//pkg/sentry/vfs",
+        "//pkg/sentry/vfs/genericfstree",
         "//pkg/sync",
         "//pkg/syserr",
         "//pkg/unet",

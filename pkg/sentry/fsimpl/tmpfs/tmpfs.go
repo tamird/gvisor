@@ -48,6 +48,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sentry/vfs/memxattr"
 	"gvisor.dev/gvisor/pkg/sync"
 )
@@ -115,6 +116,13 @@ type filesystem struct {
 
 	// ovlWhiteout is the shared overlay whiteout device. It is protected by mu.
 	ovlWhiteout *deviceFile
+}
+
+var _ genericfstree.Filesystem = (*filesystem)(nil)
+
+// AncestryMu implements genericfstree.Filesystem.
+func (fs *filesystem) AncestryMu() genericfstree.RWMutex {
+	return &fs.ancestryMu
 }
 
 // Name implements vfs.FilesystemType.Name.
@@ -434,6 +442,23 @@ type dentry struct {
 	// because inode resources are released when all references are dropped.
 	// dentry therefore forwards reference counting directly to inode.
 	inode *inode
+}
+
+var _ genericfstree.Dentry[dentry] = (*dentry)(nil)
+
+// VfsDentry implements genericfstree.DentryLike.
+func (d *dentry) VfsDentry() *vfs.Dentry {
+	return &d.vfsd
+}
+
+// Parent implements genericfstree.DentryLike.
+func (d *dentry) Parent() *atomic.Pointer[dentry] {
+	return &d.parent
+}
+
+// Name implements genericfstree.DentryLike.
+func (d *dentry) Name() *string {
+	return &d.name
 }
 
 func (fs *filesystem) newDentry(inode *inode) *dentry {

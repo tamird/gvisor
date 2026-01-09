@@ -26,6 +26,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
 	"gvisor.dev/gvisor/pkg/sentry/socket/unix/transport"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -51,7 +52,7 @@ func (d *dentry) isDir() bool {
 // +checklocks:d.childrenMu
 func (d *dentry) cacheNewChildLocked(child *dentry, name string) {
 	d.IncRef() // reference held by child on its parent
-	genericSetParentAndName(d.inode.fs, child, d, name)
+	genericfstree.SetParentAndName(d.inode.fs, child, d, name)
 	if d.children == nil {
 		d.children = make(map[string]*dentry)
 	} else if c, ok := d.children[name]; ok {
@@ -248,7 +249,7 @@ func (d *dentry) getDirents(ctx context.Context) ([]vfs.Dirent, error) {
 
 	// It's not clear if 9P2000.L's readdir is expected to return "." and "..",
 	// so we generate them here.
-	parent := genericParentOrSelf(d)
+	parent := genericfstree.ParentOrSelf(d)
 	dirents := []vfs.Dirent{
 		{
 			Name:    ".",

@@ -49,6 +49,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -139,6 +140,13 @@ type filesystem struct {
 
 	// MaxFilenameLen is the maximum filename length allowed by the overlayfs.
 	maxFilenameLen uint64
+}
+
+var _ genericfstree.Filesystem = (*filesystem)(nil)
+
+// AncestryMu implements genericfstree.Filesystem.
+func (fs *filesystem) AncestryMu() genericfstree.RWMutex {
+	return &fs.ancestryMu
 }
 
 // +stateify savable
@@ -619,6 +627,23 @@ type dentry struct {
 	// dirInoHash is the entry hash in fs.dirInoCache. This is only set for
 	// directories.
 	dirInoHash layerDevNoAndIno
+}
+
+var _ genericfstree.Dentry[dentry] = (*dentry)(nil)
+
+// VfsDentry implements genericfstree.DentryLike.
+func (d *dentry) VfsDentry() *vfs.Dentry {
+	return &d.vfsd
+}
+
+// Parent implements genericfstree.DentryLike.
+func (d *dentry) Parent() *atomic.Pointer[dentry] {
+	return &d.parent
+}
+
+// Name implements genericfstree.DentryLike.
+func (d *dentry) Name() *string {
+	return &d.name
 }
 
 // newDentry creates a new dentry. The dentry initially has no references; it

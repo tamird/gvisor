@@ -23,6 +23,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/usermem"
 )
@@ -179,7 +180,7 @@ func (fd *GenericDirectoryFD) IterDirents(ctx context.Context, cb vfs.IterDirent
 
 	// Handle "..".
 	if fd.off == 1 {
-		parentInode := genericParentOrSelf(fd.dentry()).inode
+		parentInode := genericfstree.ParentOrSelf(fd.dentry()).inode
 		stat, err := parentInode.Stat(ctx, fd.filesystem(), opts)
 		if err != nil {
 			return err

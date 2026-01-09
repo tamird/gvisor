@@ -7,18 +7,6 @@ package(default_applicable_licenses = ["//:license"])
 licenses(["notice"])
 
 go_template_instance(
-    name = "fstree",
-    out = "fstree.go",
-    package = "tmpfs",
-    prefix = "generic",
-    template = "//pkg/sentry/vfs/genericfstree:generic_fstree",
-    types = {
-        "Dentry": "dentry",
-        "Filesystem": "filesystem",
-    },
-)
-
-go_template_instance(
     name = "inode_refs",
     out = "inode_refs.go",
     package = "tmpfs",
@@ -72,7 +60,6 @@ go_library(
         "directory.go",
         "filesystem.go",
         "filesystem_mutex.go",
-        "fstree.go",
         "inode_mutex.go",
         "inode_refs.go",
         "iter_mutex.go",
@@ -114,6 +101,7 @@ go_library(
         "//pkg/sentry/uniqueid",
         "//pkg/sentry/usage",
         "//pkg/sentry/vfs",
+        "//pkg/sentry/vfs/genericfstree",
         "//pkg/sentry/vfs/memxattr",
         "//pkg/sync",
         "//pkg/sync/locking",

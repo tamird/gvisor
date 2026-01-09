@@ -68,6 +68,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/socket/unix/transport"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/unet"
 )
@@ -274,6 +275,13 @@ type filesystem struct {
 
 	// released is nonzero once filesystem.Release has been called.
 	released atomicbitops.Int32
+}
+
+var _ genericfstree.Filesystem = (*filesystem)(nil)
+
+// AncestryMu implements genericfstree.Filesystem.
+func (fs *filesystem) AncestryMu() genericfstree.RWMutex {
+	return &fs.ancestryMu
 }
 
 // getOrCreateInode returns an inode for the given inoKey, to avoid creating
@@ -1154,6 +1162,23 @@ type dentry struct {
 	// container startup. This is used during restore, in case these mount points
 	// need to be recreated.
 	forMountpoint bool
+}
+
+var _ genericfstree.Dentry[dentry] = (*dentry)(nil)
+
+// VfsDentry implements genericfstree.DentryLike.
+func (d *dentry) VfsDentry() *vfs.Dentry {
+	return &d.vfsd
+}
+
+// Parent implements genericfstree.DentryLike.
+func (d *dentry) Parent() *atomic.Pointer[dentry] {
+	return &d.parent
+}
+
+// Name implements genericfstree.DentryLike.
+func (d *dentry) Name() *string {
+	return &d.name
 }
 
 // +stateify savable

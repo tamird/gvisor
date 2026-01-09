@@ -71,6 +71,7 @@ import (
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -141,6 +142,13 @@ type Filesystem struct {
 	// hostfs). Filesystem holds an extra reference on root to prevent it from
 	// being destroyed prematurely. This is immutable.
 	root *Dentry
+}
+
+var _ genericfstree.Filesystem = (*Filesystem)(nil)
+
+// AncestryMu implements genericfstree.Filesystem.
+func (fs *Filesystem) AncestryMu() genericfstree.RWMutex {
+	return &fs.ancestryMu
 }
 
 // deferDecRef defers dropping a dentry ref until the next call to
@@ -263,6 +271,23 @@ type Dentry struct {
 	// If deleted is non-zero, the file represented by this dentry has been
 	// deleted. deleted is accessed using atomic memory operations.
 	deleted atomicbitops.Uint32
+}
+
+var _ genericfstree.Dentry[Dentry] = (*Dentry)(nil)
+
+// VfsDentry implements genericfstree.DentryLike.
+func (d *Dentry) VfsDentry() *vfs.Dentry {
+	return &d.vfsd
+}
+
+// Parent implements genericfstree.DentryLike.
+func (d *Dentry) Parent() *atomic.Pointer[Dentry] {
+	return &d.parent
+}
+
+// Name implements genericfstree.DentryLike.
+func (d *Dentry) Name() *string {
+	return &d.name
 }
 
 // IncRef implements vfs.DentryImpl.IncRef.
@@ -639,7 +664,7 @@ func (d *Dentry) Inode() Inode {
 // filesystem.
 func (d *Dentry) FSLocalPath() string {
 	var b fspath.Builder
-	_ = genericPrependPath(d.fs, vfs.VirtualDentry{}, nil, d, &b)
+	_ = genericfstree.PrependPath(d.fs, vfs.VirtualDentry{}, nil, d, &b)
 	b.PrependByte('/')
 	return b.String()
 }
@@ -695,13 +720,6 @@ func (d *Dentry) WalkDentryTree(ctx context.Context, vfsObj *vfs.VirtualFilesyst
 
 	target.IncRef()
 	return target, nil
-}
-
-// Parent returns the parent of this Dentry. This is not safe in general, the
-// filesystem may concurrently move d elsewhere. The caller is responsible for
-// ensuring the returned result remains valid while it is used.
-func (d *Dentry) Parent() *Dentry {
-	return d.parent.Load()
 }
 
 // The Inode interface maps filesystem-level operations that operate on paths to

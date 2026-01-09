@@ -29,6 +29,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -75,6 +76,13 @@ type filesystem struct {
 
 	// ancestryMu is required by genericfstree.
 	ancestryMu sync.RWMutex `state:"nosave"`
+}
+
+var _ genericfstree.Filesystem = (*filesystem)(nil)
+
+// AncestryMu implements genericfstree.Filesystem.
+func (fs *filesystem) AncestryMu() genericfstree.RWMutex {
+	return &fs.ancestryMu
 }
 
 // InternalFilesystemOptions may be passed as
@@ -393,6 +401,23 @@ type dentry struct {
 	// dentry represents a directory.
 	// +checklocks:dirMu
 	childMap map[string]*dentry
+}
+
+var _ genericfstree.Dentry[dentry] = (*dentry)(nil)
+
+// VfsDentry implements genericfstree.DentryLike.
+func (d *dentry) VfsDentry() *vfs.Dentry {
+	return &d.vfsd
+}
+
+// Parent implements genericfstree.DentryLike.
+func (d *dentry) Parent() *atomic.Pointer[dentry] {
+	return &d.parent
+}
+
+// Name implements genericfstree.DentryLike.
+func (d *dentry) Name() *string {
+	return &d.name
 }
 
 // The caller is expected to handle dentry insertion into dentry tree.

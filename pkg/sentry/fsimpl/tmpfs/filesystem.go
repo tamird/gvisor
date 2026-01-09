@@ -26,6 +26,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/socket/unix/transport"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 )
 
 const (
@@ -586,7 +587,7 @@ func (fs *filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 	// mount point then we want to rename the mount point, not anything in the
 	// mounted filesystem.
 	if renamed.inode.isDir() {
-		if renamed == &newParentDir.dentry || genericIsAncestorDentry(fs, renamed, &newParentDir.dentry) {
+		if renamed == &newParentDir.dentry || genericfstree.IsAncestorDentry(fs, renamed, &newParentDir.dentry) {
 			return linuxerr.EINVAL
 		}
 		if oldParentDir != newParentDir {
@@ -967,12 +968,12 @@ func (fs *filesystem) PrependPath(ctx context.Context, vfsroot, vd vfs.VirtualDe
 			return vfs.PrependPathSyntheticError{}
 		}
 	}
-	return genericPrependPath(fs, vfsroot, vd.Mount(), d, b)
+	return genericfstree.PrependPath(fs, vfsroot, vd.Mount(), d, b)
 }
 
 // IsDescendant implements vfs.FilesystemImpl.IsDescendant.
 func (fs *filesystem) IsDescendant(vfsroot, vd vfs.VirtualDentry) bool {
-	return genericIsDescendant(fs, vfsroot.Dentry(), vd.Dentry().Impl().(*dentry))
+	return genericfstree.IsDescendant(fs, vfsroot.Dentry(), vd.Dentry().Impl().(*dentry))
 }
 
 // MountOptions implements vfs.FilesystemImpl.MountOptions.

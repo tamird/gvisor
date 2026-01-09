@@ -1,4 +1,4 @@
-load("//tools/go_generics:defs.bzl", "go_template")
+load("//tools:defs.bzl", "go_library")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -6,13 +6,14 @@ package(
     licenses = ["notice"],
 )
 
-go_template(
-    name = "generic_fstree",
+go_library(
+    name = "genericfstree",
     srcs = [
         "genericfstree.go",
     ],
-    types = [
-        "Dentry",
-        "Filesystem",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkg/fspath",
+        "//pkg/sentry/vfs",
     ],
 )

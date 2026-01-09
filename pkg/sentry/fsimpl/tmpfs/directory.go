@@ -21,6 +21,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 )
 
 // +stateify savable
@@ -60,7 +61,7 @@ func (fs *filesystem) newDirectory(kuid auth.KUID, kgid auth.KGID, mode linux.Fi
 //   - filesystem.mu must be locked for writing.
 //   - dir must not already contain a child with the given name.
 func (dir *directory) insertChildLocked(child *dentry, name string) {
-	genericSetParentAndName(dir.dentry.inode.fs, child, &dir.dentry, name)
+	genericfstree.SetParentAndName(dir.dentry.inode.fs, child, &dir.dentry, name)
 	if dir.childMap == nil {
 		dir.childMap = make(map[string]*dentry)
 	}
@@ -137,7 +138,7 @@ func (fd *directoryFD) IterDirents(ctx context.Context, cb vfs.IterDirentsCallba
 	}
 
 	if fd.off == 1 {
-		parentInode := genericParentOrSelf(&dir.dentry).inode
+		parentInode := genericfstree.ParentOrSelf(&dir.dentry).inode
 		if err := cb.Handle(vfs.Dirent{
 			Name:    "..",
 			Type:    parentInode.direntType(),

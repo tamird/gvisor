@@ -1,6 +1,5 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
 load("//tools:defs.bzl", "go_library")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
 
@@ -81,18 +80,6 @@ declare_mutex(
     prefix = "maps",
 )
 
-go_template_instance(
-    name = "fstree",
-    out = "fstree.go",
-    package = "overlay",
-    prefix = "generic",
-    template = "//pkg/sentry/vfs/genericfstree:generic_fstree",
-    types = {
-        "Dentry": "dentry",
-        "Filesystem": "filesystem",
-    },
-)
-
 go_library(
     name = "overlay",
     srcs = [
@@ -106,7 +93,6 @@ go_library(
         "dir_mutex.go",
         "directory.go",
         "filesystem.go",
-        "fstree.go",
         "maps_mutex.go",
         "overlay.go",
         "regular_file.go",
@@ -130,6 +116,7 @@ go_library(
         "//pkg/sentry/memmap",
         "//pkg/sentry/socket/unix/transport",
         "//pkg/sentry/vfs",
+        "//pkg/sentry/vfs/genericfstree",
         "//pkg/sync",
         "//pkg/sync/locking",
         "//pkg/usermem",

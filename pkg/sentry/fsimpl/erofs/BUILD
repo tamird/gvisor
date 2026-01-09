@@ -7,18 +7,6 @@ package(
 )
 
 go_template_instance(
-    name = "fstree",
-    out = "fstree.go",
-    package = "erofs",
-    prefix = "generic",
-    template = "//pkg/sentry/vfs/genericfstree:generic_fstree",
-    types = {
-        "Dentry": "dentry",
-        "Filesystem": "filesystem",
-    },
-)
-
-go_template_instance(
     name = "dentry_refs",
     out = "dentry_refs.go",
     package = "erofs",
@@ -47,7 +35,6 @@ go_library(
         "directory.go",
         "erofs.go",
         "filesystem.go",
-        "fstree.go",
         "inode_refs.go",
         "regular_file.go",
         "save_restore.go",
@@ -71,6 +58,7 @@ go_library(
         "//pkg/sentry/memmap",
         "//pkg/sentry/socket/unix/transport",
         "//pkg/sentry/vfs",
+        "//pkg/sentry/vfs/genericfstree",
         "//pkg/sync",
         "//pkg/usermem",
     ],

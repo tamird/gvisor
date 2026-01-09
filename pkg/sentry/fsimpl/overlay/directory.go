@@ -20,6 +20,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/fspath"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 )
 
 func (d *dentry) isDir() bool {
@@ -157,7 +158,7 @@ func (d *dentry) getDirentsLocked(ctx context.Context) ([]vfs.Dirent, error) {
 		return d.dirents, nil
 	}
 
-	parent := genericParentOrSelf(d)
+	parent := genericfstree.ParentOrSelf(d)
 	dirents := []vfs.Dirent{
 		{
 			Name:    ".",

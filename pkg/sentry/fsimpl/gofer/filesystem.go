@@ -35,6 +35,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
 	"gvisor.dev/gvisor/pkg/sentry/socket/unix/transport"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 )
 
 // Sync implements vfs.FilesystemImpl.Sync.
@@ -1441,7 +1442,7 @@ func (fs *filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 		return err
 	}
 	if renamed.isDir() {
-		if renamed == newParent || genericIsAncestorDentry(fs, renamed, newParent) {
+		if renamed == newParent || genericfstree.IsAncestorDentry(fs, renamed, newParent) {
 			return linuxerr.EINVAL
 		}
 		if oldParent != newParent {
@@ -1479,7 +1480,7 @@ func (fs *filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 			if !renamed.isDir() {
 				return linuxerr.EISDIR
 			}
-			if genericIsAncestorDentry(fs, replaced, renamed) {
+			if genericfstree.IsAncestorDentry(fs, replaced, renamed) {
 				return linuxerr.ENOTEMPTY
 			}
 		} else {
@@ -1773,12 +1774,12 @@ func (fs *filesystem) RemoveXattrAt(ctx context.Context, rp *vfs.ResolvingPath, 
 
 // PrependPath implements vfs.FilesystemImpl.PrependPath.
 func (fs *filesystem) PrependPath(ctx context.Context, vfsroot, vd vfs.VirtualDentry, b *fspath.Builder) error {
-	return genericPrependPath(fs, vfsroot, vd.Mount(), vd.Dentry().Impl().(*dentry), b)
+	return genericfstree.PrependPath(fs, vfsroot, vd.Mount(), vd.Dentry().Impl().(*dentry), b)
 }
 
 // IsDescendant implements vfs.FilesystemImpl.IsDescendant.
 func (fs *filesystem) IsDescendant(vfsroot, vd vfs.VirtualDentry) bool {
-	return genericIsDescendant(fs, vfsroot.Dentry(), vd.Dentry().Impl().(*dentry))
+	return genericfstree.IsDescendant(fs, vfsroot.Dentry(), vd.Dentry().Impl().(*dentry))
 }
 
 type mopt struct {

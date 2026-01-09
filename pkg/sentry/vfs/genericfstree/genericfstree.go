@@ -15,10 +15,6 @@
 // Package genericfstree provides tools for implementing vfs.FilesystemImpls
 // that follow a standard pattern for synchronizing Dentry parent and name.
 //
-// Clients using this package must use the go_template_instance rule in
-// tools/go_generics/defs.bzl to create an instantiation of this template
-// package, providing types to use in place of Filesystem and Dentry.
-//
 // TODO: As of this writing, every filesystem implementation with its own
 // dentry type uses at least part of genericfstree, suggesting that we may want
 // to merge its functionality into vfs.Dentry. However, this will incur the
@@ -28,44 +24,53 @@
 package genericfstree
 
 import (
+	"sync/atomic"
+
 	"gvisor.dev/gvisor/pkg/fspath"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 )
 
-// We need to define an interface instead of using atomic.Pointer because
-// the Dentry type gets removed during code generation and the compiler
-// complains about the unused sync/atomic type.
-type atomicptrDentry interface {
-	Load() *Dentry
-	Store(*Dentry)
+// RWMutex is a read/write mutex.
+//
+// TODO: tie this, fs, and dentry together.
+type RWMutex interface {
+	Lock()
+	Unlock()
+	RLock()
+	RUnlock()
 }
 
-// Filesystem is a required type parameter that is a struct with the given
-// fields.
-type Filesystem struct {
-	// ancestryMu makes parent and name writes atomic for all dentries in the
+// Filesystem is implemented by filesystems that expose an ancestry mutex.
+type Filesystem interface {
+	// AncestryMu makes parent and name writes atomic for all dentries in the
 	// filesystem.
-	ancestryMu sync.RWMutex
+	AncestryMu() RWMutex
 }
 
-// Dentry is a required type parameter that is a struct with the given fields.
-type Dentry struct {
-	// vfsd is the embedded vfs.Dentry corresponding to this vfs.DentryImpl.
-	vfsd vfs.Dentry
+// Dentry is implemented by dentry types that expose parent/name metadata.
+type Dentry[D any] interface {
+	// VfsDentry is the embedded vfs.Dentry corresponding to this Dentry.
+	VfsDentry() *vfs.Dentry
 
 	// parent is the parent of this Dentry in the filesystem's tree. If this
 	// Dentry is a filesystem root, parent is nil.
-	parent atomicptrDentry
+	Parent() *atomic.Pointer[D]
 
 	// name is the name of this Dentry in its parent. If this Dentry is a
 	// filesystem root, name is unspecified.
-	name string
+	Name() *string
+}
+
+// DentryPtr is a pointer to a dentry type that implements DentryLike.
+type DentryPtr[D any] interface {
+	Dentry[D]
+	~*D
 }
 
 // ParentOrSelf returns d.parent. If d.parent is nil, ParentOrSelf returns d.
-func ParentOrSelf(d *Dentry) *Dentry {
-	if parent := d.parent.Load(); parent != nil {
-		return parent
+func ParentOrSelf[D any, T DentryPtr[D]](d T) T {
+	if parent := d.Parent().Load(); parent != nil {
+		return T(parent)
 	}
 	return d
 }
@@ -77,58 +82,52 @@ func ParentOrSelf(d *Dentry) *Dentry {
 // goroutines (including concurrent calls to PrependPath or IsDescendant) when
 // its parent and name are changed, it is safe to either call SetParentAndName
 // or mutate d.parent and d.name directly.
-func SetParentAndName(fs *Filesystem, d, newParent *Dentry, newName string) {
-	fs.ancestryMu.Lock()
-	defer fs.ancestryMu.Unlock()
-	d.parent.Store(newParent)
-	d.name = newName
+func SetParentAndName[D any, T DentryPtr[D]](fs Filesystem, d, newParent T, newName string) {
+	mu := fs.AncestryMu()
+	mu.Lock()
+	defer mu.Unlock()
+	d.Parent().Store(newParent)
+	*d.Name() = newName
 }
 
 // IsAncestorDentry returns true if d is an ancestor of d2; that is, d is
 // either d2's parent or an ancestor of d2's parent.
-func IsAncestorDentry(fs *Filesystem, d, d2 *Dentry) bool {
+func IsAncestorDentry[D any, T DentryPtr[D]](fs Filesystem, d, d2 T) bool {
 	if d == d2 {
 		return false
 	}
-	return IsDescendant(fs, &d.vfsd, d2)
+	return IsDescendant(fs, d.VfsDentry(), d2)
 }
 
 // IsDescendant returns true if vd is a descendant of vfsroot or if vd and
 // vfsroot are the same dentry.
-func IsDescendant(fs *Filesystem, vfsroot *vfs.Dentry, d *Dentry) bool {
-	fs.ancestryMu.RLock()
-	defer fs.ancestryMu.RUnlock()
-	for d != nil && &d.vfsd != vfsroot {
-		d = d.parent.Load()
+func IsDescendant[D any, T DentryPtr[D]](fs Filesystem, vfsroot *vfs.Dentry, d T) bool {
+	mu := fs.AncestryMu()
+	mu.RLock()
+	defer mu.RUnlock()
+	for d != nil && d.VfsDentry() != vfsroot {
+		d = T(d.Parent().Load())
 	}
 	return d != nil
 }
 
 // PrependPath is a generic implementation of FilesystemImpl.PrependPath().
-func PrependPath(fs *Filesystem, vfsroot vfs.VirtualDentry, mnt *vfs.Mount, d *Dentry, b *fspath.Builder) error {
-	fs.ancestryMu.RLock()
-	defer fs.ancestryMu.RUnlock()
+func PrependPath[D any, T DentryPtr[D]](fs Filesystem, vfsroot vfs.VirtualDentry, mnt *vfs.Mount, d T, b *fspath.Builder) error {
+	mu := fs.AncestryMu()
+	mu.RLock()
+	defer mu.RUnlock()
 	for {
-		if mnt == vfsroot.Mount() && &d.vfsd == vfsroot.Dentry() {
+		if mnt == vfsroot.Mount() && d.VfsDentry() == vfsroot.Dentry() {
 			return vfs.PrependPathAtVFSRootError{}
 		}
-		if mnt != nil && &d.vfsd == mnt.Root() {
+		if mnt != nil && d.VfsDentry() == mnt.Root() {
 			return nil
 		}
-		parent := d.parent.Load()
+		parent := d.Parent().Load()
 		if parent == nil {
 			return vfs.PrependPathAtNonMountRootError{}
 		}
-		b.PrependComponent(d.name)
-		d = parent
+		b.PrependComponent(*d.Name())
+		d = T(parent)
 	}
-}
-
-// DebugPathname returns a pathname to d relative to its filesystem root.
-// DebugPathname does not correspond to any Linux function; it's used to
-// generate dentry pathnames for debugging.
-func DebugPathname(fs *Filesystem, d *Dentry) string {
-	var b fspath.Builder
-	_ = PrependPath(fs, vfs.VirtualDentry{}, nil, d, &b)
-	return b.String()
 }

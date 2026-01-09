@@ -26,6 +26,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/socket/unix/transport"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sentry/vfs/genericfstree"
 )
 
 // stepExistingLocked resolves rp.Component() in parent directory vfsd.
@@ -62,7 +63,7 @@ func (fs *Filesystem) stepExistingLocked(ctx context.Context, rp *vfs.ResolvingP
 			rp.Advance()
 			return d, false, nil
 		}
-		if err := rp.CheckMount(ctx, d.Parent().VFSDentry()); err != nil {
+		if err := rp.CheckMount(ctx, d.Parent().Load().VFSDentry()); err != nil {
 			return nil, false, err
 		}
 		rp.Advance()
@@ -1122,12 +1123,12 @@ func (fs *Filesystem) RemoveXattrAt(ctx context.Context, rp *vfs.ResolvingPath, 
 
 // PrependPath implements vfs.FilesystemImpl.PrependPath.
 func (fs *Filesystem) PrependPath(ctx context.Context, vfsroot, vd vfs.VirtualDentry, b *fspath.Builder) error {
-	return genericPrependPath(fs, vfsroot, vd.Mount(), vd.Dentry().Impl().(*Dentry), b)
+	return genericfstree.PrependPath(fs, vfsroot, vd.Mount(), vd.Dentry().Impl().(*Dentry), b)
 }
 
 // IsDescendant implements vfs.FilesystemImpl.IsDescendant.
 func (fs *Filesystem) IsDescendant(vfsroot, vd vfs.VirtualDentry) bool {
-	return genericIsDescendant(fs, vfsroot.Dentry(), vd.Dentry().Impl().(*Dentry))
+	return genericfstree.IsDescendant(fs, vfsroot.Dentry(), vd.Dentry().Impl().(*Dentry))
 }
 
 func (fs *Filesystem) deferDecRefVD(ctx context.Context, vd vfs.VirtualDentry) {
