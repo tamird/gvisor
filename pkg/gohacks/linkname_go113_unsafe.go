@@ -28,7 +28,7 @@ import (
 // Note that go:linkname silently doesn't work if the local name is exported,
 // necessitating an indirection for exported functions.
 
-// Memmove is runtime.memmove, exported for SeqAtomicLoad/SeqAtomicTryLoad<T>.
+// Memmove is runtime.memmove, exported for seqatomic.Load/TryLoad.
 //
 //go:nosplit
 func Memmove(to, from unsafe.Pointer, n uintptr) {

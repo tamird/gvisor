@@ -56,7 +56,7 @@ type SeqCountEpoch uint32
 // However, since reader critical sections may race with writer critical
 // sections, the Go race detector will (accurately) flag data races in readers
 // using this pattern. Most users of SeqCount will need to use
-// seqatomic.SeqAtomicLoad.
+// seqatomic.Load.
 func (s *SeqCount) BeginRead() SeqCountEpoch {
 	if epoch := atomic.LoadUint32(&s.epoch); epoch&1 == 0 {
 		return SeqCountEpoch(epoch)

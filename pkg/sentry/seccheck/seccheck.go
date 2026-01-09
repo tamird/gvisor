@@ -207,7 +207,7 @@ type State struct {
 
 	// sinks is the set of all registered Sinks in order of execution.
 	//
-	// sinks is accessed using instantiations of SeqAtomic functions.
+	// sinks is accessed using seqatomic functions.
 	// Mutation of sinks is serialized by registrationMu.
 	sinks []Sink
 
@@ -294,7 +294,7 @@ func (s *State) Enabled(p Point) bool {
 }
 
 func (s *State) getSinks() []Sink {
-	return seqatomic.SeqAtomicLoad(&s.registrationSeq, &s.sinks)
+	return seqatomic.Load(&s.registrationSeq, &s.sinks)
 }
 
 // Preconditions: s.registrationMu must be locked.

@@ -22,28 +22,28 @@ import (
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
-func TestSeqAtomicLoadUncontended(t *testing.T) {
+func TestLoadUncontended(t *testing.T) {
 	var seq sync.SeqCount
 	const want = 1
 	data := want
-	if got := SeqAtomicLoad(&seq, &data); got != want {
-		t.Errorf("SeqAtomicLoad: got %v, wanted %v", got, want)
+	if got := Load(&seq, &data); got != want {
+		t.Errorf("Load: got %v, wanted %v", got, want)
 	}
 }
 
-func TestSeqAtomicLoadAfterWrite(t *testing.T) {
+func TestLoadAfterWrite(t *testing.T) {
 	var seq sync.SeqCount
 	var data int
 	const want = 1
 	seq.BeginWrite()
 	data = want
 	seq.EndWrite()
-	if got := SeqAtomicLoad(&seq, &data); got != want {
-		t.Errorf("SeqAtomicLoad: got %v, wanted %v", got, want)
+	if got := Load(&seq, &data); got != want {
+		t.Errorf("Load: got %v, wanted %v", got, want)
 	}
 }
 
-func TestSeqAtomicLoadDuringWrite(t *testing.T) {
+func TestLoadDuringWrite(t *testing.T) {
 	var seq sync.SeqCount
 	var data int
 	const want = 1
@@ -53,65 +53,65 @@ func TestSeqAtomicLoadDuringWrite(t *testing.T) {
 		data = want
 		seq.EndWrite()
 	}()
-	if got := SeqAtomicLoad(&seq, &data); got != want {
-		t.Errorf("SeqAtomicLoad: got %v, wanted %v", got, want)
+	if got := Load(&seq, &data); got != want {
+		t.Errorf("Load: got %v, wanted %v", got, want)
 	}
 }
 
-func TestSeqAtomicTryLoadUncontended(t *testing.T) {
+func TestTryLoadUncontended(t *testing.T) {
 	var seq sync.SeqCount
 	const want = 1
 	data := want
 	epoch := seq.BeginRead()
-	if got, ok := SeqAtomicTryLoad(&seq, epoch, &data); !ok || got != want {
-		t.Errorf("SeqAtomicTryLoad: got (%v, %v), wanted (%v, true)", got, ok, want)
+	if got, ok := TryLoad(&seq, epoch, &data); !ok || got != want {
+		t.Errorf("TryLoad: got (%v, %v), wanted (%v, true)", got, ok, want)
 	}
 }
 
-func TestSeqAtomicTryLoadDuringWrite(t *testing.T) {
+func TestTryLoadDuringWrite(t *testing.T) {
 	var seq sync.SeqCount
 	var data int
 	epoch := seq.BeginRead()
 	seq.BeginWrite()
-	if got, ok := SeqAtomicTryLoad(&seq, epoch, &data); ok {
-		t.Errorf("SeqAtomicTryLoad: got (%v, true), wanted (_, false)", got)
+	if got, ok := TryLoad(&seq, epoch, &data); ok {
+		t.Errorf("TryLoad: got (%v, true), wanted (_, false)", got)
 	}
 	seq.EndWrite()
 }
 
-func TestSeqAtomicTryLoadAfterWrite(t *testing.T) {
+func TestTryLoadAfterWrite(t *testing.T) {
 	var seq sync.SeqCount
 	var data int
 	epoch := seq.BeginRead()
 	seq.BeginWrite()
 	seq.EndWrite()
-	if got, ok := SeqAtomicTryLoad(&seq, epoch, &data); ok {
-		t.Errorf("SeqAtomicTryLoad: got (%v, true), wanted (_, false)", got)
+	if got, ok := TryLoad(&seq, epoch, &data); ok {
+		t.Errorf("TryLoad: got (%v, true), wanted (_, false)", got)
 	}
 }
 
-func BenchmarkSeqAtomicLoadIntUncontended(b *testing.B) {
+func BenchmarkLoadIntUncontended(b *testing.B) {
 	var seq sync.SeqCount
 	const want = 42
 	data := want
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			if got := SeqAtomicLoad(&seq, &data); got != want {
-				b.Fatalf("SeqAtomicLoad: got %v, wanted %v", got, want)
+			if got := Load(&seq, &data); got != want {
+				b.Fatalf("Load: got %v, wanted %v", got, want)
 			}
 		}
 	})
 }
 
-func BenchmarkSeqAtomicTryLoadIntUncontended(b *testing.B) {
+func BenchmarkTryLoadIntUncontended(b *testing.B) {
 	var seq sync.SeqCount
 	const want = 42
 	data := want
 	b.RunParallel(func(pb *testing.PB) {
 		epoch := seq.BeginRead()
 		for pb.Next() {
-			if got, ok := SeqAtomicTryLoad(&seq, epoch, &data); !ok || got != want {
-				b.Fatalf("SeqAtomicTryLoad: got (%v, %v), wanted (%v, true)", got, ok, want)
+			if got, ok := TryLoad(&seq, epoch, &data); !ok || got != want {
+				b.Fatalf("TryLoad: got (%v, %v), wanted (%v, true)", got, ok, want)
 			}
 		}
 	})

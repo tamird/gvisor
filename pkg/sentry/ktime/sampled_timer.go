@@ -156,7 +156,7 @@ func (t *SampledTimer) Resume() {
 
 // Clock implements Timer.Clock.
 func (t *SampledTimer) Clock() Clock {
-	return seqatomic.SeqAtomicLoad(&t.clockSeq, &t.clock)
+	return seqatomic.Load(&t.clockSeq, &t.clock)
 }
 
 // Get implements Timer.Get.

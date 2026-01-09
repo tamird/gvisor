@@ -14,25 +14,25 @@ import (
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
-// SeqAtomicLoad returns a copy of *ptr, ensuring that the read does not race
+// Load returns a copy of *ptr, ensuring that the read does not race
 // with any writer critical sections in seq.
 //
 //go:nosplit
-func SeqAtomicLoad[Value any](seq *sync.SeqCount, ptr *Value) Value {
+func Load[Value any](seq *sync.SeqCount, ptr *Value) Value {
 	for {
-		if val, ok := SeqAtomicTryLoad(seq, seq.BeginRead(), ptr); ok {
+		if val, ok := TryLoad(seq, seq.BeginRead(), ptr); ok {
 			return val
 		}
 	}
 }
 
-// SeqAtomicTryLoad returns a copy of *ptr while in a reader critical section
+// TryLoad returns a copy of *ptr while in a reader critical section
 // in seq initiated by a call to seq.BeginRead() that returned epoch. If the
-// read would race with a writer critical section, SeqAtomicTryLoad returns
+// read would race with a writer critical section, TryLoad returns
 // (unspecified, false).
 //
 //go:nosplit
-func SeqAtomicTryLoad[Value any](seq *sync.SeqCount, epoch sync.SeqCountEpoch, ptr *Value) (val Value, ok bool) {
+func TryLoad[Value any](seq *sync.SeqCount, epoch sync.SeqCountEpoch, ptr *Value) (val Value, ok bool) {
 	if sync.RaceEnabled {
 		// runtime.RaceDisable() doesn't actually stop the race detector, so it
 		// can't help us here. Instead, call runtime.memmove directly, which is
@@ -46,23 +46,23 @@ func SeqAtomicTryLoad[Value any](seq *sync.SeqCount, epoch sync.SeqCountEpoch, p
 	return
 }
 
-// SeqAtomicStore sets *ptr to a copy of val, ensuring that any racing reader
+// Store sets *ptr to a copy of val, ensuring that any racing reader
 // critical sections are forced to retry.
 //
 //go:nosplit
-func SeqAtomicStore[Value any](seq *sync.SeqCount, ptr *Value, val Value) {
+func Store[Value any](seq *sync.SeqCount, ptr *Value, val Value) {
 	seq.BeginWrite()
-	SeqAtomicStoreSeqed(ptr, val)
+	StoreSeqed(ptr, val)
 	seq.EndWrite()
 }
 
-// SeqAtomicStoreSeqed sets *ptr to a copy of val.
+// StoreSeqed sets *ptr to a copy of val.
 //
 // Preconditions: ptr is protected by a SeqCount that will be in a writer
-// critical section throughout the call to SeqAtomicStore.
+// critical section throughout the call to Store.
 //
 //go:nosplit
-func SeqAtomicStoreSeqed[Value any](ptr *Value, val Value) {
+func StoreSeqed[Value any](ptr *Value, val Value) {
 	if sync.RaceEnabled {
 		gohacks.Memmove(unsafe.Pointer(ptr), unsafe.Pointer(&val), unsafe.Sizeof(val))
 	} else {

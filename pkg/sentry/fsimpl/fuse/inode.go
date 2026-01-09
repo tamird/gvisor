@@ -63,7 +63,7 @@ type inode struct {
 	generation uint64
 
 	// entryTime is the time at which the entry must be revalidated. Reading
-	// entryTime requires either using entryTimeSeq and SeqAtomicLoad, or that
+	// entryTime requires either using entryTimeSeq and seqatomic.Load, or that
 	// attrMu is locked. Writing entryTime requires that attrMu is locked
 	// and that entryTimeSeq is in a writer critical section.
 	entryTimeSeq sync.SeqCount `state:"nosave"`
@@ -192,7 +192,7 @@ func (i *inode) init(creds *auth.Credentials, devMajor, devMinor uint32, nodeid 
 // +checklocks:i.attrMu
 func (i *inode) updateEntryTime(entrySec, entryNSec int64) {
 	entryTime := ktime.FromTimespec(linux.Timespec{Sec: entrySec, Nsec: entryNSec})
-	seqatomic.SeqAtomicStore(&i.entryTimeSeq, &i.entryTime, i.fs.clock.Now().AddTime(entryTime))
+	seqatomic.Store(&i.entryTimeSeq, &i.entryTime, i.fs.clock.Now().AddTime(entryTime))
 }
 
 // CheckPermissions implements kernfs.Inode.CheckPermissions.
@@ -383,7 +383,7 @@ func (i *inode) Open(ctx context.Context, rp *vfs.ResolvingPath, d *kernfs.Dentr
 
 func (i *inode) Valid(ctx context.Context, parent *kernfs.Dentry, name string) bool {
 	now := i.fs.clock.Now()
-	if entryTime := seqatomic.SeqAtomicLoad(&i.entryTimeSeq, &i.entryTime); entryTime.After(now) {
+	if entryTime := seqatomic.Load(&i.entryTimeSeq, &i.entryTime); entryTime.After(now) {
 		return true
 	}
 
