@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/sync/seqatomic"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
@@ -155,7 +156,7 @@ func (t *SampledTimer) Resume() {
 
 // Clock implements Timer.Clock.
 func (t *SampledTimer) Clock() Clock {
-	return SeqAtomicLoadSampledClock(&t.clockSeq, &t.clock)
+	return seqatomic.SeqAtomicLoad(&t.clockSeq, &t.clock)
 }
 
 // Get implements Timer.Get.

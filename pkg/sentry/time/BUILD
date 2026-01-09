@@ -1,20 +1,8 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "seqatomic_parameters",
-    out = "seqatomic_parameters_unsafe.go",
-    package = "time",
-    suffix = "Parameters",
-    template = "//pkg/sync/seqatomic:generic_seqatomic",
-    types = {
-        "Value": "Parameters",
-    },
 )
 
 go_library(
@@ -30,7 +18,6 @@ go_library(
         "sampler.go",
         "sampler_amd64.go",
         "sampler_arm64.go",
-        "seqatomic_parameters_unsafe.go",
         "tsc_amd64.s",
         "tsc_arm64.s",
         "vdso.go",

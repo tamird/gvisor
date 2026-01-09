@@ -22,6 +22,7 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	pb "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto"
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/sync/seqatomic"
 )
 
 // A Point represents a checkpoint, a point at which a security check occurs.
@@ -293,7 +294,7 @@ func (s *State) Enabled(p Point) bool {
 }
 
 func (s *State) getSinks() []Sink {
-	return SeqAtomicLoadSinkSlice(&s.registrationSeq, &s.sinks)
+	return seqatomic.SeqAtomicLoad(&s.registrationSeq, &s.sinks)
 }
 
 // Preconditions: s.registrationMu must be locked.

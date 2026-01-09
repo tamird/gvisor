@@ -31,6 +31,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/sync/seqatomic"
 )
 
 // +stateify savable
@@ -62,8 +63,8 @@ type inode struct {
 	generation uint64
 
 	// entryTime is the time at which the entry must be revalidated. Reading
-	// entryTime requires either using entryTimeSeq and SeqAtomicLoadTime, or
-	// that attrMu is locked. Writing entryTime requires that attrMu is locked
+	// entryTime requires either using entryTimeSeq and SeqAtomicLoad, or that
+	// attrMu is locked. Writing entryTime requires that attrMu is locked
 	// and that entryTimeSeq is in a writer critical section.
 	entryTimeSeq sync.SeqCount `state:"nosave"`
 	entryTime    ktime.Time
@@ -191,7 +192,7 @@ func (i *inode) init(creds *auth.Credentials, devMajor, devMinor uint32, nodeid 
 // +checklocks:i.attrMu
 func (i *inode) updateEntryTime(entrySec, entryNSec int64) {
 	entryTime := ktime.FromTimespec(linux.Timespec{Sec: entrySec, Nsec: entryNSec})
-	SeqAtomicStoreTime(&i.entryTimeSeq, &i.entryTime, i.fs.clock.Now().AddTime(entryTime))
+	seqatomic.SeqAtomicStore(&i.entryTimeSeq, &i.entryTime, i.fs.clock.Now().AddTime(entryTime))
 }
 
 // CheckPermissions implements kernfs.Inode.CheckPermissions.
@@ -382,7 +383,7 @@ func (i *inode) Open(ctx context.Context, rp *vfs.ResolvingPath, d *kernfs.Dentr
 
 func (i *inode) Valid(ctx context.Context, parent *kernfs.Dentry, name string) bool {
 	now := i.fs.clock.Now()
-	if entryTime := SeqAtomicLoadTime(&i.entryTimeSeq, &i.entryTime); entryTime.After(now) {
+	if entryTime := seqatomic.SeqAtomicLoad(&i.entryTimeSeq, &i.entryTime); entryTime.After(now) {
 		return true
 	}
 

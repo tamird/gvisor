@@ -1,20 +1,8 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
 
 licenses(["notice"])
-
-go_template_instance(
-    name = "seqatomic_sinkslice",
-    out = "seqatomic_sinkslice_unsafe.go",
-    package = "seccheck",
-    suffix = "SinkSlice",
-    template = "//pkg/sync/seqatomic:generic_seqatomic",
-    types = {
-        "Value": "[]Sink",
-    },
-)
 
 go_library(
     name = "seccheck",
@@ -24,7 +12,6 @@ go_library(
         "metadata_amd64.go",
         "metadata_arm64.go",
         "seccheck.go",
-        "seqatomic_sinkslice_unsafe.go",
         "syscall.go",
     ],
     visibility = ["//:sandbox"],
@@ -42,6 +29,7 @@ go_library(
         "//pkg/sentry/ktime",
         "//pkg/sentry/seccheck/points:points_go_proto",
         "//pkg/sync",
+        "//pkg/sync/seqatomic",
         "@org_golang_google_protobuf//proto:go_default_library",
     ],
 )

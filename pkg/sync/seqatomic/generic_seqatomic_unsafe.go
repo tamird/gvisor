@@ -4,8 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd.
 
-// Package seqatomic doesn't exist. This file must be instantiated using the
-// go_template_instance rule in tools/go_generics/defs.bzl.
+// Package seqatomic provides atomic access for SeqCount-protected data.
 package seqatomic
 
 import (
@@ -15,14 +14,11 @@ import (
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
-// Value is a required type parameter.
-type Value struct{}
-
 // SeqAtomicLoad returns a copy of *ptr, ensuring that the read does not race
 // with any writer critical sections in seq.
 //
 //go:nosplit
-func SeqAtomicLoad(seq *sync.SeqCount, ptr *Value) Value {
+func SeqAtomicLoad[Value any](seq *sync.SeqCount, ptr *Value) Value {
 	for {
 		if val, ok := SeqAtomicTryLoad(seq, seq.BeginRead(), ptr); ok {
 			return val
@@ -36,7 +32,7 @@ func SeqAtomicLoad(seq *sync.SeqCount, ptr *Value) Value {
 // (unspecified, false).
 //
 //go:nosplit
-func SeqAtomicTryLoad(seq *sync.SeqCount, epoch sync.SeqCountEpoch, ptr *Value) (val Value, ok bool) {
+func SeqAtomicTryLoad[Value any](seq *sync.SeqCount, epoch sync.SeqCountEpoch, ptr *Value) (val Value, ok bool) {
 	if sync.RaceEnabled {
 		// runtime.RaceDisable() doesn't actually stop the race detector, so it
 		// can't help us here. Instead, call runtime.memmove directly, which is
@@ -54,7 +50,7 @@ func SeqAtomicTryLoad(seq *sync.SeqCount, epoch sync.SeqCountEpoch, ptr *Value) 
 // critical sections are forced to retry.
 //
 //go:nosplit
-func SeqAtomicStore(seq *sync.SeqCount, ptr *Value, val Value) {
+func SeqAtomicStore[Value any](seq *sync.SeqCount, ptr *Value, val Value) {
 	seq.BeginWrite()
 	SeqAtomicStoreSeqed(ptr, val)
 	seq.EndWrite()
@@ -66,7 +62,7 @@ func SeqAtomicStore(seq *sync.SeqCount, ptr *Value, val Value) {
 // critical section throughout the call to SeqAtomicStore.
 //
 //go:nosplit
-func SeqAtomicStoreSeqed(ptr *Value, val Value) {
+func SeqAtomicStoreSeqed[Value any](ptr *Value, val Value) {
 	if sync.RaceEnabled {
 		gohacks.Memmove(unsafe.Pointer(ptr), unsafe.Pointer(&val), unsafe.Sizeof(val))
 	} else {
