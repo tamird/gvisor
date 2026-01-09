@@ -7,18 +7,6 @@ package(default_applicable_licenses = ["//:license"])
 licenses(["notice"])
 
 go_template_instance(
-    name = "dentry_list",
-    out = "dentry_list.go",
-    package = "tmpfs",
-    prefix = "dentry",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*dentry",
-        "Linker": "*dentry",
-    },
-)
-
-go_template_instance(
     name = "fstree",
     out = "fstree.go",
     package = "tmpfs",
@@ -80,7 +68,6 @@ go_library(
     name = "tmpfs",
     srcs = [
         "ancestry_mutex.go",
-        "dentry_list.go",
         "device_file.go",
         "directory.go",
         "filesystem.go",
@@ -108,6 +95,7 @@ go_library(
         "//pkg/fspath",
         "//pkg/fsutil",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/refs",
         "//pkg/safemem",

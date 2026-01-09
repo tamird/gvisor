@@ -21,6 +21,7 @@ import (
 	"math"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
@@ -31,6 +32,11 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/transport/internal/network"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type udpPacketEntry = ilist.Entry[*udpPacket]
+
+// +stateify savable
+type udpPacketList = ilist.List[*udpPacket]
 
 // +stateify savable
 type udpPacket struct {

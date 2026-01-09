@@ -67,11 +67,17 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/fspath"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
 )
+
+type dentryEntry = ilist.Entry[*Dentry]
+
+// +stateify savable
+type dentryList = ilist.List[*Dentry]
 
 // Filesystem mostly implements vfs.FilesystemImpl for a generic in-memory
 // filesystem. Concrete implementations are expected to embed this in their own

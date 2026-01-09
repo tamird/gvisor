@@ -6,23 +6,10 @@ package(
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "gro_packet_list",
-    out = "gro_packet_list.go",
-    package = "gro",
-    prefix = "groPacket",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*groPacket",
-        "Linker": "*groPacket",
-    },
-)
-
 go_library(
     name = "gro",
     srcs = [
         "gro.go",
-        "gro_packet_list.go",
     ],
     visibility = ["//visibility:public"],
     deps = [

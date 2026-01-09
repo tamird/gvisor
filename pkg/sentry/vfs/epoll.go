@@ -18,10 +18,16 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type epollInterestEntry = ilist.Entry[*epollInterest]
+
+// +stateify savable
+type epollInterestList = ilist.List[*epollInterest]
 
 // epollCycleMu serializes attempts to register EpollInstances with other
 // EpollInstances in order to check for cycles.

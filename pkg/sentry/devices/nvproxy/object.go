@@ -18,10 +18,16 @@ import (
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/nvgpu"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/marshal"
 	"gvisor.dev/gvisor/pkg/sentry/mm"
 )
+
+type objectFreeEntry = ilist.Entry[*object]
+
+// +stateify savable
+type objectFreeList = ilist.List[*object]
 
 // object tracks a driver object.
 //

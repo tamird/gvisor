@@ -21,6 +21,7 @@ import (
 	"math"
 	"reflect"
 
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
@@ -87,6 +88,9 @@ type objectDecodeState struct {
 	pendingEntry odsListElem
 	leafEntry    odsListElem
 }
+
+type odsEntry = ilist.Entry[*odsListElem]
+type odsList = ilist.List[*odsListElem]
 
 type odsListElem struct {
 	ods *objectDecodeState

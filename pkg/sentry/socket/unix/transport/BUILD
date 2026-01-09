@@ -32,18 +32,6 @@ declare_mutex(
 )
 
 go_template_instance(
-    name = "transport_message_list",
-    out = "transport_message_list.go",
-    package = "transport",
-    prefix = "message",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*message",
-        "Linker": "*message",
-    },
-)
-
-go_template_instance(
     name = "queue_refs",
     out = "queue_refs.go",
     package = "transport",
@@ -82,7 +70,6 @@ go_library(
         "queue_refs.go",
         "save_restore.go",
         "stream_queue_receiver_mutex.go",
-        "transport_message_list.go",
         "unix.go",
     ],
     visibility = ["//:sandbox"],

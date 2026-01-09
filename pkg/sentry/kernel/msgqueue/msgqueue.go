@@ -21,6 +21,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/ipc"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
@@ -28,6 +29,11 @@ import (
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
+
+type msgEntry = ilist.Entry[*Message]
+
+// +stateify savable
+type msgList = ilist.List[*Message]
 
 const (
 	// System-wide limit for maximum number of queues.

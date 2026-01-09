@@ -35,18 +35,6 @@ declare_mutex(
     prefix = "lastError",
 )
 
-go_template_instance(
-    name = "packet_list",
-    out = "packet_list.go",
-    package = "packet",
-    prefix = "packet",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*packet",
-        "Linker": "*packet",
-    },
-)
-
 go_library(
     name = "packet",
     srcs = [
@@ -55,12 +43,12 @@ go_library(
         "endpoint_rcv_mutex.go",
         "endpoint_state.go",
         "last_error_mutex.go",
-        "packet_list.go",
         "packet_mmap_mutex.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/sleep",
         "//pkg/sync",

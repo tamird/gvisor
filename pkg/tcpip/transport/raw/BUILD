@@ -6,29 +6,17 @@ package(
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "raw_packet_list",
-    out = "raw_packet_list.go",
-    package = "raw",
-    prefix = "rawPacket",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*rawPacket",
-        "Linker": "*rawPacket",
-    },
-)
-
 go_library(
     name = "raw",
     srcs = [
         "endpoint.go",
         "endpoint_state.go",
         "protocol.go",
-        "raw_packet_list.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/sleep",
         "//pkg/sync",

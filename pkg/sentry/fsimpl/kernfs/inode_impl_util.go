@@ -22,11 +22,17 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
 )
+
+type slotEntry = ilist.Entry[*slot]
+
+// +stateify savable
+type slotList = ilist.List[*slot]
 
 // InodeNoopRefCount partially implements the Inode interface, specifically the
 // inodeRefs sub interface. InodeNoopRefCount implements a simple reference

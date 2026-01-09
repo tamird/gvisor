@@ -106,18 +106,6 @@ declare_rwmutex(
 )
 
 go_template_instance(
-    name = "tcp_segment_list",
-    out = "tcp_segment_list.go",
-    package = "tcp",
-    prefix = "segment",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*segment",
-        "Linker": "*segment",
-    },
-)
-
-go_template_instance(
     name = "tcp_segment_refs",
     out = "tcp_segment_refs.go",
     package = "tcp",
@@ -125,18 +113,6 @@ go_template_instance(
     template = "//pkg/refs:refs_template",
     types = {
         "T": "segment",
-    },
-)
-
-go_template_instance(
-    name = "tcp_endpoint_list",
-    out = "tcp_endpoint_list.go",
-    package = "tcp",
-    prefix = "endpoint",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Endpoint",
-        "Linker": "*Endpoint",
     },
 )
 
@@ -180,8 +156,6 @@ go_library(
         "snd.go",
         "snd_queue_mutex.go",
         "state.go",
-        "tcp_endpoint_list.go",
-        "tcp_segment_list.go",
         "tcp_segment_refs.go",
         "timer.go",
     ],
@@ -189,6 +163,7 @@ go_library(
     deps = [
         "//pkg/atomicbitops",
         "//pkg/buffer",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/rand",
         "//pkg/refs",

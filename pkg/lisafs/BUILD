@@ -51,30 +51,6 @@ go_template_instance(
     },
 )
 
-go_template_instance(
-    name = "control_fd_list",
-    out = "control_fd_list.go",
-    package = "lisafs",
-    prefix = "controlFD",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*ControlFD",
-        "Linker": "*ControlFD",
-    },
-)
-
-go_template_instance(
-    name = "open_fd_list",
-    out = "open_fd_list.go",
-    package = "lisafs",
-    prefix = "openFD",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*OpenFD",
-        "Linker": "*OpenFD",
-    },
-)
-
 go_library(
     name = "lisafs",
     srcs = [
@@ -84,7 +60,6 @@ go_library(
         "client_file.go",
         "communicator.go",
         "connection.go",
-        "control_fd_list.go",
         "control_fd_refs.go",
         "fd.go",
         "handlers.go",
@@ -92,7 +67,6 @@ go_library(
         "message.go",
         "node.go",
         "node_fd_refs.go",
-        "open_fd_list.go",
         "open_fd_refs.go",
         "sample_message.go",
         "server.go",
@@ -110,6 +84,7 @@ go_library(
         "//pkg/flipcall",
         "//pkg/fspath",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/marshal/primitive",
         "//pkg/p9",

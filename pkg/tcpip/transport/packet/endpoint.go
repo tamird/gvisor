@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
@@ -44,6 +45,11 @@ const (
 )
 
 var _ stack.MappablePacketEndpoint = (*endpoint)(nil)
+
+type packetEntry = ilist.Entry[*packet]
+
+// +stateify savable
+type packetList = ilist.List[*packet]
 
 // +stateify savable
 type packet struct {

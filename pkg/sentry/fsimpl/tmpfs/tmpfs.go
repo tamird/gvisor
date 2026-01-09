@@ -42,6 +42,7 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
@@ -53,6 +54,11 @@ import (
 
 // Name is the default filesystem name.
 const Name = "tmpfs"
+
+type dentryEntry = ilist.Entry[*dentry]
+
+// +stateify savable
+type dentryList = ilist.List[*dentry]
 
 // FilesystemType implements vfs.FilesystemType.
 //

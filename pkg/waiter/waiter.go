@@ -58,8 +58,14 @@
 package waiter
 
 import (
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 )
+
+type waiterEntry = ilist.Entry[*Entry]
+
+// +stateify savable
+type waiterList = ilist.List[*Entry]
 
 // EventMask represents io events as used in the poll() syscall.
 type EventMask uint64

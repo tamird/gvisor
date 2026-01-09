@@ -94,54 +94,6 @@ declare_mutex(
 )
 
 go_template_instance(
-    name = "pending_signals_list",
-    out = "pending_signals_list.go",
-    package = "kernel",
-    prefix = "pendingSignal",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*pendingSignal",
-        "Linker": "*pendingSignal",
-    },
-)
-
-go_template_instance(
-    name = "process_group_list",
-    out = "process_group_list.go",
-    package = "kernel",
-    prefix = "processGroup",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*ProcessGroup",
-        "Linker": "*ProcessGroup",
-    },
-)
-
-go_template_instance(
-    name = "session_list",
-    out = "session_list.go",
-    package = "kernel",
-    prefix = "session",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Session",
-        "Linker": "*Session",
-    },
-)
-
-go_template_instance(
-    name = "task_list",
-    out = "task_list.go",
-    package = "kernel",
-    prefix = "task",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*Task",
-        "Linker": "*Task",
-    },
-)
-
-go_template_instance(
     name = "fd_table_refs",
     out = "fd_table_refs.go",
     package = "kernel",
@@ -215,10 +167,8 @@ go_library(
         "kernel_restore.go",
         "kernel_state.go",
         "pending_signals.go",
-        "pending_signals_list.go",
         "pending_signals_state.go",
         "posixtimer.go",
-        "process_group_list.go",
         "process_group_refs.go",
         "ptrace.go",
         "ptrace_amd64.go",
@@ -227,7 +177,6 @@ go_library(
         "running_tasks_mutex.go",
         "seccheck.go",
         "seccomp.go",
-        "session_list.go",
         "session_refs.go",
         "sessions.go",
         "signal.go",
@@ -248,7 +197,6 @@ go_library(
         "task_identity.go",
         "task_image.go",
         "task_key.go",
-        "task_list.go",
         "task_log.go",
         "task_mutex.go",
         "task_net.go",
@@ -304,6 +252,7 @@ go_library(
         "//pkg/fspath",
         "//pkg/goid",
         "//pkg/hostarch",
+        "//pkg/ilist",
         "//pkg/log",
         "//pkg/marshal",
         "//pkg/marshal/primitive",

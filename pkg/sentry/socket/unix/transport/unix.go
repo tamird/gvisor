@@ -18,6 +18,7 @@ package transport
 import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/syserr"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -34,6 +35,11 @@ const (
 	// The maximum permitted size for the send/receive buffers.
 	maxBufferSize = 4 << 20 // 4 MiB 4 MiB (default in linux for net.core.wmem_max)
 )
+
+type messageEntry = ilist.Entry[*message]
+
+// +stateify savable
+type messageList = ilist.List[*message]
 
 // A RightsControlMessage is a control message containing FDs.
 //

@@ -17,6 +17,7 @@ package tcpip
 import (
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -131,6 +132,11 @@ type StackHandler interface {
 	// option values.
 	TransportProtocolOption(proto TransportProtocolNumber, option GettableTransportProtocolOption) Error
 }
+
+type sockErrorEntry = ilist.Entry[*SockError]
+
+// +stateify savable
+type sockErrorList = ilist.List[*SockError]
 
 // SocketOptions contains all the variables which store values for SOL_SOCKET,
 // SOL_IP, SOL_IPV6 and SOL_TCP level options.

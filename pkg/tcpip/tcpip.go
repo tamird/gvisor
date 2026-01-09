@@ -42,6 +42,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
+	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/rand"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/waiter"
@@ -1558,6 +1559,13 @@ func GetStackReceiveBufferLimits(so StackHandler) ReceiveBufferSizeOption {
 	}
 	return ss
 }
+
+type RouteEntry = ilist.Entry[*Route]
+
+// RouteList is a list of Routes.
+//
+// +stateify savable
+type RouteList = ilist.List[*Route]
 
 // Route is a row in the routing table. It specifies through which NIC (and
 // gateway) sets of packets should be routed. A row is considered viable if the

@@ -7,30 +7,6 @@ package(
 )
 
 go_template_instance(
-    name = "deferred_list",
-    out = "deferred_list.go",
-    package = "state",
-    prefix = "deferred",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*objectEncodeState",
-        "Linker": "*objectEncodeState",
-    },
-)
-
-go_template_instance(
-    name = "ods_list",
-    out = "ods_list.go",
-    package = "state",
-    prefix = "ods",
-    template = "//pkg/ilist:generic_list",
-    types = {
-        "Element": "*odsListElem",
-        "Linker": "*odsListElem",
-    },
-)
-
-go_template_instance(
     name = "addr_set",
     out = "addr_set.go",
     consts = {
@@ -57,10 +33,8 @@ go_library(
         "debug.go",
         "decode.go",
         "decode_unsafe.go",
-        "deferred_list.go",
         "encode.go",
         "encode_unsafe.go",
-        "ods_list.go",
         "state.go",
         "state_norace.go",
         "state_race.go",
@@ -73,6 +47,7 @@ go_library(
         "//visibility:public",
     ],
     deps = [
+        "//pkg/ilist",
         "//pkg/segment",
         "//pkg/state/wire",
     ],
