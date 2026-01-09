@@ -55,6 +55,10 @@ func resolveTypeName(typ ast.Expr) (field string, qualified string) {
 				qualified += "[" + rs.Len.(*ast.BasicLit).Value + "]"
 			}
 			typ = rs.Elt
+		case *ast.IndexExpr:
+			typ = rs.X
+		case *ast.IndexListExpr:
+			typ = rs.X
 		default:
 			// No more descent.
 			done = true
@@ -72,6 +76,19 @@ func resolveTypeName(typ ast.Expr) (field string, qualified string) {
 	field = typ.(*ast.Ident).Name
 	qualified = qualified + field
 	return
+}
+
+func typeParamNames(params *ast.FieldList) []string {
+	if params == nil {
+		return nil
+	}
+	var names []string
+	for _, field := range params.List {
+		for _, name := range field.Names {
+			names = append(names, name.Name)
+		}
+	}
+	return names
 }
 
 // extractStateTag pulls the relevant state tag.
@@ -235,7 +252,7 @@ func main() {
 	maybeEmitImports := sync.OnceFunc(func() {
 		// Emit the imports.
 		fmt.Fprint(outputFile, "import (\n")
-		fmt.Fprint(outputFile, " \"context\"\n")
+		fmt.Fprint(outputFile, "	\"context\"\n")
 		if *statePkg != "" {
 			fmt.Fprintf(outputFile, "	\"%s\"\n", *statePkg)
 		}
@@ -342,6 +359,10 @@ func main() {
 
 			for _, gs := range d.Specs {
 				ts := gs.(*ast.TypeSpec)
+				recvType := ts.Name.Name
+				if typeParams := typeParamNames(ts.TypeParams); len(typeParams) != 0 {
+					recvType = fmt.Sprintf("%s[%s]", recvType, strings.Join(typeParams, ", "))
+				}
 				recv, ok := receiverNames[ts.Name.Name]
 				if !ok {
 					// Maybe no methods were defined?
@@ -392,12 +413,12 @@ func main() {
 					}
 
 					// Generate the type name method.
-					fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, ts.Name.Name)
+					fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, recvType)
 					fmt.Fprintf(outputFile, "	return \"%s.%s\"\n", *fullPkg, ts.Name.Name)
 					fmt.Fprintf(outputFile, "}\n\n")
 
 					// Generate the fields method.
-					fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, ts.Name.Name)
+					fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, recvType)
 					fmt.Fprintf(outputFile, "	return []string{\n")
 					scanFields(x, scanFunctions{
 						normal: emitField,
@@ -415,7 +436,7 @@ func main() {
 						typeName:   ts.Name.Name,
 						methodName: "beforeSave",
 					}]; !ok && generateSaverLoader {
-						fmt.Fprintf(outputFile, "func (%s *%s) beforeSave() {}\n\n", recv, ts.Name.Name)
+						fmt.Fprintf(outputFile, "func (%s *%s) beforeSave() {}\n\n", recv, recvType)
 					}
 
 					// Generate the save method.
@@ -426,7 +447,7 @@ func main() {
 					// allows a manual implementation to be order-dependent.
 					if generateSaverLoader {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
-						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
+						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, recvType, statePrefix)
 						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
 						scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
 						scanFields(x, scanFunctions{value: emitSaveValue})
@@ -441,7 +462,7 @@ func main() {
 						methodName: "afterLoad",
 					}]
 					if !hasAfterLoad && generateSaverLoader {
-						fmt.Fprintf(outputFile, "func (%s *%s) afterLoad(context.Context) {}\n\n", recv, ts.Name.Name)
+						fmt.Fprintf(outputFile, "func (%s *%s) afterLoad(context.Context) {}\n\n", recv, recvType)
 					}
 
 					// Generate the load method.
@@ -449,7 +470,7 @@ func main() {
 					// N.B. See the comment above for the save method.
 					if generateSaverLoader {
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
-						fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
+						fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, recvType, statePrefix)
 						scanFields(x, scanFunctions{normal: emitLoad, wait: emitLoadWait})
 						scanFields(x, scanFunctions{value: emitLoadValue})
 						if hasAfterLoad {
@@ -463,18 +484,20 @@ func main() {
 					}
 
 					// Add to our registration.
-					emitRegister(ts.Name.Name)
+					if ts.TypeParams == nil {
+						emitRegister(ts.Name.Name)
+					}
 
 				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
 					maybeEmitImports()
 
 					// Generate the info methods.
-					fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, ts.Name.Name)
+					fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, recvType)
 					fmt.Fprintf(outputFile, "	return \"%s.%s\"\n", *fullPkg, ts.Name.Name)
 					fmt.Fprintf(outputFile, "}\n\n")
 
 					if !isIdentType {
-						fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, ts.Name.Name)
+						fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, recvType)
 						fmt.Fprintf(outputFile, "	return nil\n")
 						fmt.Fprintf(outputFile, "}\n\n")
 					} else {
@@ -493,23 +516,25 @@ func main() {
 							fmt.Fprintf(os.Stderr, "Cannot use `+stateify identtype` on a non-identifier/non-selector type definition (%v => %v of type %T); must be a type definition of an identical type.", ts.Name.Name, x, x)
 							os.Exit(1)
 						}
-						fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, ts.Name.Name)
+						fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, recvType)
 						fmt.Fprintf(outputFile, "	return (*%s)(%s).StateFields()\n", typeName, recv)
 						fmt.Fprintf(outputFile, "}\n\n")
 						if generateSaverLoader {
 							fmt.Fprintf(outputFile, "// +checklocksignore\n")
-							fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
+							fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, recvType, statePrefix)
 							fmt.Fprintf(outputFile, "	(*%s)(%s).StateSave(stateSinkObject)\n", typeName, recv)
 							fmt.Fprintf(outputFile, "}\n\n")
 							fmt.Fprintf(outputFile, "// +checklocksignore\n")
-							fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
+							fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, recvType, statePrefix)
 							fmt.Fprintf(outputFile, "	(*%s)(%s).StateLoad(ctx, stateSourceObject)\n", typeName, recv)
 							fmt.Fprintf(outputFile, "}\n\n")
 						}
 					}
 
 					// See above.
-					emitRegister(ts.Name.Name)
+					if ts.TypeParams == nil {
+						emitRegister(ts.Name.Name)
+					}
 				}
 			}
 		}
