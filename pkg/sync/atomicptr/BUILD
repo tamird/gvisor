@@ -7,7 +7,7 @@ package(
 
 go_library(
     name = "atomicptr",
-    srcs = ["generic_atomicptr_unsafe.go"],
+    srcs = ["atomicptr.go"],
     visibility = ["//:sandbox"],
 )
 
