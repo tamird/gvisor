@@ -1,6 +1,5 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -43,47 +42,6 @@ declare_mutex(
     prefix = "metadata",
 )
 
-go_template_instance(
-    name = "vma_set",
-    out = "vma_set.go",
-    consts = {
-        "minDegree": "8",
-        "trackGaps": "1",
-    },
-    imports = {
-        "hostarch": "gvisor.dev/gvisor/pkg/hostarch",
-    },
-    package = "mm",
-    prefix = "vma",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "hostarch.Addr",
-        "Range": "hostarch.AddrRange",
-        "Value": "vma",
-        "Functions": "vmaSetFunctions",
-    },
-)
-
-go_template_instance(
-    name = "pma_set",
-    out = "pma_set.go",
-    consts = {
-        "minDegree": "8",
-    },
-    imports = {
-        "hostarch": "gvisor.dev/gvisor/pkg/hostarch",
-    },
-    package = "mm",
-    prefix = "pma",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "hostarch.Addr",
-        "Range": "hostarch.AddrRange",
-        "Value": "pma",
-        "Functions": "pmaSetFunctions",
-    },
-)
-
 go_library(
     name = "mm",
     srcs = [
@@ -101,14 +59,12 @@ go_library(
         "metadata_mutex.go",
         "mm.go",
         "pma.go",
-        "pma_set.go",
         "procfs.go",
         "save_restore.go",
         "shm.go",
         "special_mappable.go",
         "syscalls.go",
         "vma.go",
-        "vma_set.go",
     ],
     visibility = ["//pkg/sentry:internal"],
     deps = [
@@ -132,6 +88,8 @@ go_library(
         "//pkg/sentry/platform",
         "//pkg/sentry/usage",
         "//pkg/sentry/vfs",
+        "//pkg/segment/set8",
+        "//pkg/segment/set8gaps",
         "//pkg/sync",
         "//pkg/sync/locking",
         "//pkg/usermem",

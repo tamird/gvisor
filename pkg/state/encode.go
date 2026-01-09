@@ -21,10 +21,17 @@ import (
 
 	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/segment"
+	"gvisor.dev/gvisor/pkg/segment/set10"
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 type addrRange = segment.Range[uintptr]
+
+// +stateify savable
+type addrSet = set10.Set[uintptr, *objectEncodeState, addrSetFunctions]
+
+type addrIterator = set10.Iterator[uintptr, *objectEncodeState, addrSetFunctions]
+type addrGapIterator = set10.GapIterator[uintptr, *objectEncodeState, addrSetFunctions]
 
 type deferredEntry = ilist.Entry[*objectEncodeState]
 type deferredList = ilist.List[*objectEncodeState]

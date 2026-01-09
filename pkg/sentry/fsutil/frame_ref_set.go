@@ -17,9 +17,23 @@ package fsutil
 import (
 	"math"
 
+	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
 )
+
+// FrameRefSet maps memmap.FileRanges to FrameRefSegInfos.
+//
+// +stateify savable
+type FrameRefSet struct {
+	segment.Set[uint64, FrameRefSegInfo, FrameRefSetFunctions]
+}
+
+// FrameRefIterator is an iterator over FrameRefSet segments.
+type FrameRefIterator = segment.Iterator[uint64, FrameRefSegInfo, FrameRefSetFunctions]
+
+// FrameRefGapIterator is an iterator over gaps in a FrameRefSet.
+type FrameRefGapIterator = segment.GapIterator[uint64, FrameRefSegInfo, FrameRefSetFunctions]
 
 // FrameRefSegInfo holds reference count and memory cgroup id of the segment.
 //

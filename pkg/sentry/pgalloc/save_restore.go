@@ -33,6 +33,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/ringdeque"
+	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/state/stateio"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
@@ -42,6 +43,12 @@ import (
 	"gvisor.dev/gvisor/pkg/syncevent"
 	"gvisor.dev/gvisor/pkg/timing"
 )
+
+// +stateify savable
+type aplUnloadedSet = segment.Set[uint64, aplUnloadedInfo, aplUnloadedSetFunctions]
+
+type aplUnloadedIterator = segment.Iterator[uint64, aplUnloadedInfo, aplUnloadedSetFunctions]
+type aplUnloadedGapIterator = segment.GapIterator[uint64, aplUnloadedInfo, aplUnloadedSetFunctions]
 
 // MarkSavable marks f as savable.
 func (f *MemoryFile) MarkSavable() {

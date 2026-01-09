@@ -12,34 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package segment provides tools for working with collections of segments. A
+// Package set provides tools for working with collections of segments. A
 // segment is a key-value mapping, where the key is a non-empty contiguous
 // range of values of type Key, and the value is a single value of type Value.
 //
-// Clients using this package must use the go_template_instance rule in
-// tools/go_generics/defs.bzl to create an instantiation of this
-// template package, providing types to use in place of Key, Range, Value, and
-// Functions. See pkg/segment/test/BUILD for a usage example.
-package segment
+// Users that need non-default set constants should use the specialized set
+// packages in pkg/segment (for example, set8 or set8gaps).
+package set
 
 import (
 	"bytes"
 	"fmt"
+
+	"golang.org/x/exp/constraints"
+	"gvisor.dev/gvisor/pkg/segment/rangetypes"
 )
-
-// Key is a required type parameter that must be an integral type.
-type Key uint64
-
-// Range is a required type parameter equivalent to Range<Key>.
-type Range any
-
-// Value is a required type parameter.
-type Value any
 
 // trackGaps is an optional parameter.
 //
 // If trackGaps is 1, the Set will track maximum gap size recursively,
-// enabling the GapIterator.{Prev,Next}LargeEnoughGap functions. In this
+// enabling the GapIterator[Key, Value, F].{Prev,Next}LargeEnoughGap functions. In this
 // case, Key must be an unsigned integer.
 //
 // trackGaps must be 0 or 1.
@@ -48,25 +40,25 @@ const trackGaps = 0
 var _ = uint8(trackGaps << 7) // Will fail if not zero or one.
 
 // dynamicGap is a type that disappears if trackGaps is 0.
-type dynamicGap [trackGaps]Key
+type dynamicGap[Key any] [trackGaps]Key
 
 // Get returns the value of the gap.
 //
 // Precondition: trackGaps must be non-zero.
-func (d *dynamicGap) Get() Key {
+func (d *dynamicGap[Key]) Get() Key {
 	return d[:][0]
 }
 
 // Set sets the value of the gap.
 //
 // Precondition: trackGaps must be non-zero.
-func (d *dynamicGap) Set(v Key) {
+func (d *dynamicGap[Key]) Set(v Key) {
 	d[:][0] = v
 }
 
 // Functions is a required type parameter that must be a struct implementing
 // the methods defined by Functions.
-type Functions interface {
+type Functions[Key constraints.Integer, Value any] interface {
 	// MinKey returns the minimum allowed key.
 	MinKey() Key
 
@@ -84,7 +76,7 @@ type Functions interface {
 	// Preconditions: r1.End == r2.Start.
 	//
 	// Postconditions: If merging succeeds, val1 and val2 are invalidated.
-	Merge(r1 Range, val1 Value, r2 Range, val2 Value) (Value, bool)
+	Merge(r1 rangetypes.Range[Key], val1 Value, r2 rangetypes.Range[Key], val2 Value) (Value, bool)
 
 	// Split splits a segment's value at a key within its range, such that the
 	// first returned value corresponds to the range [r.Start, split) and the
@@ -93,7 +85,7 @@ type Functions interface {
 	// Preconditions: r.Start < split < r.End.
 	//
 	// Postconditions: The original value val is invalidated.
-	Split(r Range, val Value, split Key) (Value, Value)
+	Split(r rangetypes.Range[Key], val Value, split Key) (Value, Value)
 }
 
 const (
@@ -113,24 +105,31 @@ const (
 	maxDegree = 2 * minDegree
 )
 
+func makeRange[Key constraints.Integer](start, end Key) rangetypes.Range[Key] {
+	return rangetypes.Range[Key]{
+		Start: start,
+		End:   end,
+	}
+}
+
 // A Set is a mapping of segments with non-overlapping Range keys. The zero
 // value for a Set is an empty set. Set values are not safely movable nor
 // copyable. Set is thread-compatible.
 //
 // +stateify savable
-type Set struct {
-	root node `state:".([]FlatSegment)"`
+type Set[Key constraints.Integer, Value any, F Functions[Key, Value]] struct {
+	root node[Key, Value, F] `state:".([]FlatSegment[Key,Value])"`
 }
 
 // IsEmpty returns true if the set contains no segments.
-func (s *Set) IsEmpty() bool {
+func (s *Set[Key, Value, F]) IsEmpty() bool {
 	return s.root.nrSegments == 0
 }
 
 // IsEmptyRange returns true iff no segments in the set overlap the given
 // range. This is semantically equivalent to s.SpanRange(r) == 0, but may be
 // more efficient.
-func (s *Set) IsEmptyRange(r Range) bool {
+func (s *Set[Key, Value, F]) IsEmptyRange(r rangetypes.Range[Key]) bool {
 	switch {
 	case r.Length() < 0:
 		panic(fmt.Sprintf("invalid range %v", r))
@@ -145,7 +144,7 @@ func (s *Set) IsEmptyRange(r Range) bool {
 }
 
 // Span returns the total size of all segments in the set.
-func (s *Set) Span() Key {
+func (s *Set[Key, Value, F]) Span() Key {
 	var sz Key
 	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
 		sz += seg.Range().Length()
@@ -155,7 +154,7 @@ func (s *Set) Span() Key {
 
 // SpanRange returns the total size of the intersection of segments in the set
 // with the given range.
-func (s *Set) SpanRange(r Range) Key {
+func (s *Set[Key, Value, F]) SpanRange(r rangetypes.Range[Key]) Key {
 	switch {
 	case r.Length() < 0:
 		panic(fmt.Sprintf("invalid range %v", r))
@@ -171,45 +170,45 @@ func (s *Set) SpanRange(r Range) Key {
 
 // FirstSegment returns the first segment in the set. If the set is empty,
 // FirstSegment returns a terminal iterator.
-func (s *Set) FirstSegment() Iterator {
+func (s *Set[Key, Value, F]) FirstSegment() Iterator[Key, Value, F] {
 	if s.root.nrSegments == 0 {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	return s.root.firstSegment()
 }
 
 // LastSegment returns the last segment in the set. If the set is empty,
 // LastSegment returns a terminal iterator.
-func (s *Set) LastSegment() Iterator {
+func (s *Set[Key, Value, F]) LastSegment() Iterator[Key, Value, F] {
 	if s.root.nrSegments == 0 {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	return s.root.lastSegment()
 }
 
 // FirstGap returns the first gap in the set.
-func (s *Set) FirstGap() GapIterator {
+func (s *Set[Key, Value, F]) FirstGap() GapIterator[Key, Value, F] {
 	n := &s.root
 	for n.hasChildren {
 		n = n.children[0]
 	}
-	return GapIterator{n, 0}
+	return GapIterator[Key, Value, F]{n, 0}
 }
 
 // LastGap returns the last gap in the set.
-func (s *Set) LastGap() GapIterator {
+func (s *Set[Key, Value, F]) LastGap() GapIterator[Key, Value, F] {
 	n := &s.root
 	for n.hasChildren {
 		n = n.children[n.nrSegments]
 	}
-	return GapIterator{n, n.nrSegments}
+	return GapIterator[Key, Value, F]{n, n.nrSegments}
 }
 
 // Find returns the segment or gap whose range contains the given key. If a
-// segment is found, the returned Iterator is non-terminal and the
-// returned GapIterator is terminal. Otherwise, the returned Iterator is
-// terminal and the returned GapIterator is non-terminal.
-func (s *Set) Find(key Key) (Iterator, GapIterator) {
+// segment is found, the returned Iterator[Key, Value, F] is non-terminal and the
+// returned GapIterator[Key, Value, F] is terminal. Otherwise, the returned Iterator[Key, Value, F] is
+// terminal and the returned GapIterator[Key, Value, F] is non-terminal.
+func (s *Set[Key, Value, F]) Find(key Key) (Iterator[Key, Value, F], GapIterator[Key, Value, F]) {
 	n := &s.root
 	for {
 		// Binary search invariant: the correct value of i lies within [lower,
@@ -220,7 +219,7 @@ func (s *Set) Find(key Key) (Iterator, GapIterator) {
 			i := lower + (upper-lower)/2
 			if r := n.keys[i]; key < r.End {
 				if key >= r.Start {
-					return Iterator{n, i}, GapIterator{}
+					return Iterator[Key, Value, F]{n, i}, GapIterator[Key, Value, F]{}
 				}
 				upper = i
 			} else {
@@ -229,7 +228,7 @@ func (s *Set) Find(key Key) (Iterator, GapIterator) {
 		}
 		i := lower
 		if !n.hasChildren {
-			return Iterator{}, GapIterator{n, i}
+			return Iterator[Key, Value, F]{}, GapIterator[Key, Value, F]{n, i}
 		}
 		n = n.children[i]
 	}
@@ -237,7 +236,7 @@ func (s *Set) Find(key Key) (Iterator, GapIterator) {
 
 // FindSegment returns the segment whose range contains the given key. If no
 // such segment exists, FindSegment returns a terminal iterator.
-func (s *Set) FindSegment(key Key) Iterator {
+func (s *Set[Key, Value, F]) FindSegment(key Key) Iterator[Key, Value, F] {
 	seg, _ := s.Find(key)
 	return seg
 }
@@ -245,7 +244,7 @@ func (s *Set) FindSegment(key Key) Iterator {
 // LowerBoundSegment returns the segment with the lowest range that contains a
 // key greater than or equal to min. If no such segment exists,
 // LowerBoundSegment returns a terminal iterator.
-func (s *Set) LowerBoundSegment(min Key) Iterator {
+func (s *Set[Key, Value, F]) LowerBoundSegment(min Key) Iterator[Key, Value, F] {
 	seg, gap := s.Find(min)
 	if seg.Ok() {
 		return seg
@@ -256,7 +255,7 @@ func (s *Set) LowerBoundSegment(min Key) Iterator {
 // UpperBoundSegment returns the segment with the highest range that contains a
 // key less than or equal to max. If no such segment exists, UpperBoundSegment
 // returns a terminal iterator.
-func (s *Set) UpperBoundSegment(max Key) Iterator {
+func (s *Set[Key, Value, F]) UpperBoundSegment(max Key) Iterator[Key, Value, F] {
 	seg, gap := s.Find(max)
 	if seg.Ok() {
 		return seg
@@ -267,14 +266,14 @@ func (s *Set) UpperBoundSegment(max Key) Iterator {
 // FindGap returns the gap containing the given key. If no such gap exists
 // (i.e. the set contains a segment containing that key), FindGap returns a
 // terminal iterator.
-func (s *Set) FindGap(key Key) GapIterator {
+func (s *Set[Key, Value, F]) FindGap(key Key) GapIterator[Key, Value, F] {
 	_, gap := s.Find(key)
 	return gap
 }
 
 // LowerBoundGap returns the gap with the lowest range that is greater than or
 // equal to min.
-func (s *Set) LowerBoundGap(min Key) GapIterator {
+func (s *Set[Key, Value, F]) LowerBoundGap(min Key) GapIterator[Key, Value, F] {
 	seg, gap := s.Find(min)
 	if gap.Ok() {
 		return gap
@@ -284,7 +283,7 @@ func (s *Set) LowerBoundGap(min Key) GapIterator {
 
 // UpperBoundGap returns the gap with the highest range that is less than or
 // equal to max.
-func (s *Set) UpperBoundGap(max Key) GapIterator {
+func (s *Set[Key, Value, F]) UpperBoundGap(max Key) GapIterator[Key, Value, F] {
 	seg, gap := s.Find(max)
 	if gap.Ok() {
 		return gap
@@ -297,7 +296,7 @@ func (s *Set) UpperBoundGap(max Key) GapIterator {
 // iterator.
 //
 // Precondition: trackGaps must be 1.
-func (s *Set) FirstLargeEnoughGap(minSize Key) GapIterator {
+func (s *Set[Key, Value, F]) FirstLargeEnoughGap(minSize Key) GapIterator[Key, Value, F] {
 	if trackGaps != 1 {
 		panic("set is not tracking gaps")
 	}
@@ -313,7 +312,7 @@ func (s *Set) FirstLargeEnoughGap(minSize Key) GapIterator {
 // iterator.
 //
 // Precondition: trackGaps must be 1.
-func (s *Set) LastLargeEnoughGap(minSize Key) GapIterator {
+func (s *Set[Key, Value, F]) LastLargeEnoughGap(minSize Key) GapIterator[Key, Value, F] {
 	if trackGaps != 1 {
 		panic("set is not tracking gaps")
 	}
@@ -329,7 +328,7 @@ func (s *Set) LastLargeEnoughGap(minSize Key) GapIterator {
 // no such gap exists, LowerBoundLargeEnoughGap returns a terminal iterator.
 //
 // Precondition: trackGaps must be 1.
-func (s *Set) LowerBoundLargeEnoughGap(min, minSize Key) GapIterator {
+func (s *Set[Key, Value, F]) LowerBoundLargeEnoughGap(min, minSize Key) GapIterator[Key, Value, F] {
 	if trackGaps != 1 {
 		panic("set is not tracking gaps")
 	}
@@ -345,7 +344,7 @@ func (s *Set) LowerBoundLargeEnoughGap(min, minSize Key) GapIterator {
 // such gap exists, UpperBoundLargeEnoughGap returns a terminal iterator.
 //
 // Precondition: trackGaps must be 1.
-func (s *Set) UpperBoundLargeEnoughGap(max, minSize Key) GapIterator {
+func (s *Set[Key, Value, F]) UpperBoundLargeEnoughGap(max, minSize Key) GapIterator[Key, Value, F] {
 	if trackGaps != 1 {
 		panic("set is not tracking gaps")
 	}
@@ -368,7 +367,8 @@ func (s *Set) UpperBoundLargeEnoughGap(max, minSize Key) GapIterator {
 // Merge, but may be more efficient. Note that there is no unchecked variant of
 // Insert since Insert must retrieve and inspect gap's predecessor and
 // successor segments regardless.
-func (s *Set) Insert(gap GapIterator, r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) Insert(gap GapIterator[Key, Value, F], r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
+	var f F
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
@@ -380,7 +380,7 @@ func (s *Set) Insert(gap GapIterator, r Range, val Value) Iterator {
 		panic(fmt.Sprintf("new segment %v overlaps successor %v", r, next.Range()))
 	}
 	if prev.Ok() && prev.End() == r.Start {
-		if mval, ok := (Functions{}).Merge(prev.Range(), prev.Value(), r, val); ok {
+		if mval, ok := f.Merge(prev.Range(), prev.Value(), r, val); ok {
 			shrinkMaxGap := trackGaps != 0 && gap.Range().Length() == gap.node.maxGap.Get()
 			prev.SetEndUnchecked(r.End)
 			prev.SetValue(mval)
@@ -389,7 +389,7 @@ func (s *Set) Insert(gap GapIterator, r Range, val Value) Iterator {
 			}
 			if next.Ok() && next.Start() == r.End {
 				val = mval
-				if mval, ok := (Functions{}).Merge(prev.Range(), val, next.Range(), next.Value()); ok {
+				if mval, ok := f.Merge(prev.Range(), val, next.Range(), next.Value()); ok {
 					prev.SetEndUnchecked(next.End())
 					prev.SetValue(mval)
 					return s.Remove(next).PrevSegment()
@@ -399,7 +399,7 @@ func (s *Set) Insert(gap GapIterator, r Range, val Value) Iterator {
 		}
 	}
 	if next.Ok() && next.Start() == r.End {
-		if mval, ok := (Functions{}).Merge(r, val, next.Range(), next.Value()); ok {
+		if mval, ok := f.Merge(r, val, next.Range(), next.Value()); ok {
 			shrinkMaxGap := trackGaps != 0 && gap.Range().Length() == gap.node.maxGap.Get()
 			next.SetStartUnchecked(r.Start)
 			next.SetValue(mval)
@@ -419,7 +419,7 @@ func (s *Set) Insert(gap GapIterator, r Range, val Value) Iterator {
 //
 // If the gap cannot accommodate the segment, or if r is invalid,
 // InsertWithoutMerging panics.
-func (s *Set) InsertWithoutMerging(gap GapIterator, r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) InsertWithoutMerging(gap GapIterator[Key, Value, F], r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
@@ -436,7 +436,7 @@ func (s *Set) InsertWithoutMerging(gap GapIterator, r Range, val Value) Iterator
 // Preconditions:
 //   - r.Start >= gap.Start().
 //   - r.End <= gap.End().
-func (s *Set) InsertWithoutMergingUnchecked(gap GapIterator, r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) InsertWithoutMergingUnchecked(gap GapIterator[Key, Value, F], r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
 	gap = gap.node.rebalanceBeforeInsert(gap)
 	splitMaxGap := trackGaps != 0 && (gap.node.nrSegments == 0 || gap.Range().Length() == gap.node.maxGap.Get())
 	copy(gap.node.keys[gap.index+1:], gap.node.keys[gap.index:gap.node.nrSegments])
@@ -447,7 +447,7 @@ func (s *Set) InsertWithoutMergingUnchecked(gap GapIterator, r Range, val Value)
 	if splitMaxGap {
 		gap.node.updateMaxGapLeaf()
 	}
-	return Iterator{gap.node, gap.index}
+	return Iterator[Key, Value, F]{gap.node, gap.index}
 }
 
 // InsertRange inserts the given segment into the set. If the new segment can
@@ -460,9 +460,9 @@ func (s *Set) InsertWithoutMergingUnchecked(gap GapIterator, r Range, val Value)
 // InsertRange panics.
 //
 // InsertRange searches the set to find the gap to insert into. If the caller
-// already has the appropriate GapIterator, or if the caller needs to do
+// already has the appropriate GapIterator[Key, Value, F], or if the caller needs to do
 // additional work between finding the gap and insertion, use Insert instead.
-func (s *Set) InsertRange(r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) InsertRange(r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
@@ -484,10 +484,10 @@ func (s *Set) InsertRange(r Range, val Value) Iterator {
 // InsertWithoutMergingRange panics.
 //
 // InsertWithoutMergingRange searches the set to find the gap to insert into.
-// If the caller already has the appropriate GapIterator, or if the caller
+// If the caller already has the appropriate GapIterator[Key, Value, F], or if the caller
 // needs to do additional work between finding the gap and insertion, use
 // InsertWithoutMerging instead.
-func (s *Set) InsertWithoutMergingRange(r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) InsertWithoutMergingRange(r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
@@ -511,18 +511,18 @@ func (s *Set) InsertWithoutMergingRange(r Range, val Value) Iterator {
 // nothing and returns a terminal iterator.
 //
 // TryInsertRange searches the set to find the gap to insert into. If the
-// caller already has the appropriate GapIterator, or if the caller needs to do
+// caller already has the appropriate GapIterator[Key, Value, F], or if the caller needs to do
 // additional work between finding the gap and insertion, use Insert instead.
-func (s *Set) TryInsertRange(r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) TryInsertRange(r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
 	seg, gap := s.Find(r.Start)
 	if seg.Ok() {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	if gap.End() < r.End {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	return s.Insert(gap, r, val)
 }
@@ -534,19 +534,19 @@ func (s *Set) TryInsertRange(r Range, val Value) Iterator {
 // does nothing and returns a terminal iterator.
 //
 // TryInsertWithoutMergingRange searches the set to find the gap to insert
-// into. If the caller already has the appropriate GapIterator, or if the
+// into. If the caller already has the appropriate GapIterator[Key, Value, F], or if the
 // caller needs to do additional work between finding the gap and insertion,
 // use InsertWithoutMerging instead.
-func (s *Set) TryInsertWithoutMergingRange(r Range, val Value) Iterator {
+func (s *Set[Key, Value, F]) TryInsertWithoutMergingRange(r rangetypes.Range[Key], val Value) Iterator[Key, Value, F] {
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
 	seg, gap := s.Find(r.Start)
 	if seg.Ok() {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	if gap.End() < r.End {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	return s.InsertWithoutMerging(gap, r, val)
 }
@@ -554,7 +554,8 @@ func (s *Set) TryInsertWithoutMergingRange(r Range, val Value) Iterator {
 // Remove removes the given segment and returns an iterator to the vacated gap.
 // All existing iterators (including seg, but not including the returned
 // iterator) are invalidated.
-func (s *Set) Remove(seg Iterator) GapIterator {
+func (s *Set[Key, Value, F]) Remove(seg Iterator[Key, Value, F]) GapIterator[Key, Value, F] {
+	var f F
 	// We only want to remove directly from a leaf node.
 	if seg.node.hasChildren {
 		// Since seg.node has children, the removed segment must have a
@@ -581,18 +582,18 @@ func (s *Set) Remove(seg Iterator) GapIterator {
 	}
 	copy(seg.node.keys[seg.index:], seg.node.keys[seg.index+1:seg.node.nrSegments])
 	copy(seg.node.values[seg.index:], seg.node.values[seg.index+1:seg.node.nrSegments])
-	Functions{}.ClearValue(&seg.node.values[seg.node.nrSegments-1])
+	f.ClearValue(&seg.node.values[seg.node.nrSegments-1])
 	seg.node.nrSegments--
 	if trackGaps != 0 {
 		seg.node.updateMaxGapLeaf()
 	}
-	return seg.node.rebalanceAfterRemove(GapIterator{seg.node, seg.index})
+	return seg.node.rebalanceAfterRemove(GapIterator[Key, Value, F]{seg.node, seg.index})
 }
 
 // RemoveAll removes all segments from the set. All existing iterators are
 // invalidated.
-func (s *Set) RemoveAll() {
-	s.root = node{}
+func (s *Set[Key, Value, F]) RemoveAll() {
+	s.root = node[Key, Value, F]{}
 }
 
 // RemoveRange removes all segments in the given range. An iterator to the
@@ -602,13 +603,13 @@ func (s *Set) RemoveAll() {
 // already has an iterator to either end of the range of segments to remove, or
 // if the caller needs to do additional work before removing each segment,
 // iterate segments and call Remove in a loop instead.
-func (s *Set) RemoveRange(r Range) GapIterator {
+func (s *Set[Key, Value, F]) RemoveRange(r rangetypes.Range[Key]) GapIterator[Key, Value, F] {
 	return s.RemoveRangeWith(r, nil)
 }
 
 // RemoveFullRange is equivalent to RemoveRange, except that if any key in the
 // given range does not correspond to a segment, RemoveFullRange panics.
-func (s *Set) RemoveFullRange(r Range) GapIterator {
+func (s *Set[Key, Value, F]) RemoveFullRange(r rangetypes.Range[Key]) GapIterator[Key, Value, F] {
 	return s.RemoveFullRangeWith(r, nil)
 }
 
@@ -626,7 +627,7 @@ func (s *Set) RemoveFullRange(r Range) GapIterator {
 // iterate segments and call Remove in a loop instead.
 //
 // N.B. f must not invalidate iterators into s.
-func (s *Set) RemoveRangeWith(r Range, f func(seg Iterator)) GapIterator {
+func (s *Set[Key, Value, F]) RemoveRangeWith(r rangetypes.Range[Key], f func(seg Iterator[Key, Value, F])) GapIterator[Key, Value, F] {
 	seg, gap := s.Find(r.Start)
 	if seg.Ok() {
 		seg = s.Isolate(seg, r)
@@ -648,7 +649,7 @@ func (s *Set) RemoveRangeWith(r Range, f func(seg Iterator)) GapIterator {
 // RemoveFullRangeWith is equivalent to RemoveRangeWith, except that if any key
 // in the given range does not correspond to a segment, RemoveFullRangeWith
 // panics.
-func (s *Set) RemoveFullRangeWith(r Range, f func(seg Iterator)) GapIterator {
+func (s *Set[Key, Value, F]) RemoveFullRangeWith(r rangetypes.Range[Key], f func(seg Iterator[Key, Value, F])) GapIterator[Key, Value, F] {
 	seg := s.FindSegment(r.Start)
 	if !seg.Ok() {
 		panic(fmt.Sprintf("missing segment at %v", r.Start))
@@ -676,7 +677,7 @@ func (s *Set) RemoveFullRangeWith(r Range, f func(seg Iterator)) GapIterator {
 // invalidated. Otherwise, Merge returns a terminal iterator.
 //
 // If first is not the predecessor of second, Merge panics.
-func (s *Set) Merge(first, second Iterator) Iterator {
+func (s *Set[Key, Value, F]) Merge(first, second Iterator[Key, Value, F]) Iterator[Key, Value, F] {
 	if first.NextSegment() != second {
 		panic(fmt.Sprintf("attempt to merge non-neighboring segments %v, %v", first.Range(), second.Range()))
 	}
@@ -690,9 +691,10 @@ func (s *Set) Merge(first, second Iterator) Iterator {
 //
 // Precondition: first is the predecessor of second: first.NextSegment() ==
 // second, first == second.PrevSegment().
-func (s *Set) MergeUnchecked(first, second Iterator) Iterator {
+func (s *Set[Key, Value, F]) MergeUnchecked(first, second Iterator[Key, Value, F]) Iterator[Key, Value, F] {
+	var f F
 	if first.End() == second.Start() {
-		if mval, ok := (Functions{}).Merge(first.Range(), first.Value(), second.Range(), second.Value()); ok {
+		if mval, ok := f.Merge(first.Range(), first.Value(), second.Range(), second.Value()); ok {
 			// N.B. This must be unchecked because until s.Remove(second), first
 			// overlaps second.
 			first.SetEndUnchecked(second.End())
@@ -701,7 +703,7 @@ func (s *Set) MergeUnchecked(first, second Iterator) Iterator {
 			return s.Remove(second).PrevSegment()
 		}
 	}
-	return Iterator{}
+	return Iterator[Key, Value, F]{}
 }
 
 // MergePrev attempts to merge the given segment with its predecessor if
@@ -714,7 +716,7 @@ func (s *Set) MergeUnchecked(first, second Iterator) Iterator {
 // its previously-mutated predecessor. In such cases, merging a mutated segment
 // with its unmutated successor would incorrectly cause the latter to be
 // skipped.
-func (s *Set) MergePrev(seg Iterator) Iterator {
+func (s *Set[Key, Value, F]) MergePrev(seg Iterator[Key, Value, F]) Iterator[Key, Value, F] {
 	if prev := seg.PrevSegment(); prev.Ok() {
 		if mseg := s.MergeUnchecked(prev, seg); mseg.Ok() {
 			seg = mseg
@@ -733,7 +735,7 @@ func (s *Set) MergePrev(seg Iterator) Iterator {
 // its previously-mutated successor. In such cases, merging a mutated segment
 // with its unmutated predecessor would incorrectly cause the latter to be
 // skipped.
-func (s *Set) MergeNext(seg Iterator) Iterator {
+func (s *Set[Key, Value, F]) MergeNext(seg Iterator[Key, Value, F]) Iterator[Key, Value, F] {
 	if next := seg.NextSegment(); next.Ok() {
 		if mseg := s.MergeUnchecked(seg, next); mseg.Ok() {
 			seg = mseg
@@ -751,7 +753,7 @@ func (s *Set) MergeNext(seg Iterator) Iterator {
 // a single segment in a way that may affect its mergeability. For the reasons
 // described by MergePrev and MergeNext, it is usually incorrect to use the
 // return value of Unisolate in a loop variable.
-func (s *Set) Unisolate(seg Iterator) Iterator {
+func (s *Set[Key, Value, F]) Unisolate(seg Iterator[Key, Value, F]) Iterator[Key, Value, F] {
 	if prev := seg.PrevSegment(); prev.Ok() {
 		if mseg := s.MergeUnchecked(prev, seg); mseg.Ok() {
 			seg = mseg
@@ -767,7 +769,7 @@ func (s *Set) Unisolate(seg Iterator) Iterator {
 
 // MergeAll merges all mergeable adjacent segments in the set. All existing
 // iterators are invalidated.
-func (s *Set) MergeAll() {
+func (s *Set[Key, Value, F]) MergeAll() {
 	seg := s.FirstSegment()
 	if !seg.Ok() {
 		return
@@ -789,7 +791,7 @@ func (s *Set) MergeAll() {
 // change the mergeability of modified segments; callers should prefer to use
 // MergePrev or MergeNext during the mutating loop instead (depending on the
 // direction of iteration), in order to avoid a redundant search.
-func (s *Set) MergeInsideRange(r Range) {
+func (s *Set[Key, Value, F]) MergeInsideRange(r rangetypes.Range[Key]) {
 	seg := s.LowerBoundSegment(r.Start)
 	if !seg.Ok() {
 		return
@@ -811,7 +813,7 @@ func (s *Set) MergeInsideRange(r Range) {
 // change the mergeability of modified segments; callers should prefer to use
 // MergePrev or MergeNext during the mutating loop instead (depending on the
 // direction of iteration), in order to avoid two redundant searches.
-func (s *Set) MergeOutsideRange(r Range) {
+func (s *Set[Key, Value, F]) MergeOutsideRange(r rangetypes.Range[Key]) {
 	first := s.FindSegment(r.Start)
 	if first.Ok() {
 		if prev := first.PrevSegment(); prev.Ok() {
@@ -834,7 +836,7 @@ func (s *Set) MergeOutsideRange(r Range) {
 // end of the segment's range, so splitting would produce a segment with zero
 // length, or because split falls outside the segment's range altogether),
 // Split panics.
-func (s *Set) Split(seg Iterator, split Key) (Iterator, Iterator) {
+func (s *Set[Key, Value, F]) Split(seg Iterator[Key, Value, F], split Key) (Iterator[Key, Value, F], Iterator[Key, Value, F]) {
 	if !seg.Range().CanSplitAt(split) {
 		panic(fmt.Sprintf("can't split %v at %v", seg.Range(), split))
 	}
@@ -846,12 +848,13 @@ func (s *Set) Split(seg Iterator, split Key) (Iterator, Iterator) {
 // seg, but not including the returned iterators) are invalidated.
 //
 // Preconditions: seg.Start() < key < seg.End().
-func (s *Set) SplitUnchecked(seg Iterator, split Key) (Iterator, Iterator) {
-	val1, val2 := (Functions{}).Split(seg.Range(), seg.Value(), split)
+func (s *Set[Key, Value, F]) SplitUnchecked(seg Iterator[Key, Value, F], split Key) (Iterator[Key, Value, F], Iterator[Key, Value, F]) {
+	var f F
+	val1, val2 := f.Split(seg.Range(), seg.Value(), split)
 	end2 := seg.End()
 	seg.SetEndUnchecked(split)
 	seg.SetValue(val1)
-	seg2 := s.InsertWithoutMergingUnchecked(seg.NextGap(), Range{split, end2}, val2)
+	seg2 := s.InsertWithoutMergingUnchecked(seg.NextGap(), makeRange(split, end2), val2)
 	// seg may now be invalid due to the Insert.
 	return seg2.PrevSegment(), seg2
 }
@@ -870,7 +873,7 @@ func (s *Set) SplitUnchecked(seg Iterator, split Key) (Iterator, Iterator) {
 // SplitAfter only needs to be invoked on the first.
 //
 // Preconditions: start < seg.End().
-func (s *Set) SplitBefore(seg Iterator, start Key) Iterator {
+func (s *Set[Key, Value, F]) SplitBefore(seg Iterator[Key, Value, F], start Key) Iterator[Key, Value, F] {
 	if seg.Range().CanSplitAt(start) {
 		_, seg = s.SplitUnchecked(seg, start)
 	}
@@ -891,7 +894,7 @@ func (s *Set) SplitBefore(seg Iterator, start Key) Iterator {
 // segment, while SplitAfter only needs to be invoked on the first.
 //
 // Preconditions: seg.Start() < end.
-func (s *Set) SplitAfter(seg Iterator, end Key) Iterator {
+func (s *Set[Key, Value, F]) SplitAfter(seg Iterator[Key, Value, F], end Key) Iterator[Key, Value, F] {
 	if seg.Range().CanSplitAt(end) {
 		seg, _ = s.SplitUnchecked(seg, end)
 	}
@@ -908,7 +911,7 @@ func (s *Set) SplitAfter(seg Iterator, end Key) Iterator {
 // split, making use of SplitBefore/SplitAfter complex.
 //
 // Preconditions: seg.Range().Overlaps(r).
-func (s *Set) Isolate(seg Iterator, r Range) Iterator {
+func (s *Set[Key, Value, F]) Isolate(seg Iterator[Key, Value, F], r rangetypes.Range[Key]) Iterator[Key, Value, F] {
 	if seg.Range().CanSplitAt(r.Start) {
 		_, seg = s.SplitUnchecked(seg, r.Start)
 	}
@@ -924,7 +927,7 @@ func (s *Set) Isolate(seg Iterator, r Range) Iterator {
 // range while iterating them in order of increasing keys. In such cases,
 // LowerBoundSegmentSplitBefore provides an iterator to the first segment to be
 // mutated, suitable as the initial value for a loop variable.
-func (s *Set) LowerBoundSegmentSplitBefore(min Key) Iterator {
+func (s *Set[Key, Value, F]) LowerBoundSegmentSplitBefore(min Key) Iterator[Key, Value, F] {
 	seg, gap := s.Find(min)
 	if seg.Ok() {
 		return s.SplitBefore(seg, min)
@@ -938,7 +941,7 @@ func (s *Set) LowerBoundSegmentSplitBefore(min Key) Iterator {
 // range while iterating them in order of decreasing keys. In such cases,
 // UpperBoundSegmentSplitAfter provides an iterator to the first segment to be
 // mutated, suitable as the initial value for a loop variable.
-func (s *Set) UpperBoundSegmentSplitAfter(max Key) Iterator {
+func (s *Set[Key, Value, F]) UpperBoundSegmentSplitAfter(max Key) Iterator[Key, Value, F] {
 	seg, gap := s.Find(max)
 	if seg.Ok() {
 		return s.SplitAfter(seg, max)
@@ -953,7 +956,7 @@ func (s *Set) UpperBoundSegmentSplitAfter(max Key) Iterator {
 // immediately.
 //
 // N.B. f must not invalidate iterators into s.
-func (s *Set) VisitRange(r Range, f func(seg Iterator) bool) {
+func (s *Set[Key, Value, F]) VisitRange(r rangetypes.Range[Key], f func(seg Iterator[Key, Value, F]) bool) {
 	for seg := s.LowerBoundSegment(r.Start); seg.Ok() && seg.Start() < r.End; seg = seg.NextSegment() {
 		if !f(seg) {
 			return
@@ -964,7 +967,7 @@ func (s *Set) VisitRange(r Range, f func(seg Iterator) bool) {
 // VisitFullRange is equivalent to VisitRange, except that if any key in r that
 // is visited before f returns false does not correspond to a segment,
 // VisitFullRange panics.
-func (s *Set) VisitFullRange(r Range, f func(seg Iterator) bool) {
+func (s *Set[Key, Value, F]) VisitFullRange(r rangetypes.Range[Key], f func(seg Iterator[Key, Value, F]) bool) {
 	pos := r.Start
 	seg := s.FindSegment(r.Start)
 	for {
@@ -992,7 +995,7 @@ func (s *Set) VisitFullRange(r Range, f func(seg Iterator) bool) {
 // MutateRange invalidates all existing iterators.
 //
 // N.B. f must not invalidate iterators into s.
-func (s *Set) MutateRange(r Range, f func(seg Iterator) bool) {
+func (s *Set[Key, Value, F]) MutateRange(r rangetypes.Range[Key], f func(seg Iterator[Key, Value, F]) bool) {
 	seg := s.LowerBoundSegmentSplitBefore(r.Start)
 	for seg.Ok() && seg.Start() < r.End {
 		seg = s.SplitAfter(seg, r.End)
@@ -1012,7 +1015,7 @@ func (s *Set) MutateRange(r Range, f func(seg Iterator) bool) {
 // MutateFullRange is equivalent to MutateRange, except that if any key in r
 // that is visited before f returns false does not correspond to a segment,
 // MutateFullRange panics.
-func (s *Set) MutateFullRange(r Range, f func(seg Iterator) bool) {
+func (s *Set[Key, Value, F]) MutateFullRange(r rangetypes.Range[Key], f func(seg Iterator[Key, Value, F]) bool) {
 	seg := s.FindSegment(r.Start)
 	if !seg.Ok() {
 		panic(fmt.Sprintf("missing segment at %v", r.Start))
@@ -1035,7 +1038,7 @@ func (s *Set) MutateFullRange(r Range, f func(seg Iterator) bool) {
 }
 
 // +stateify savable
-type node struct {
+type node[Key constraints.Integer, Value any, F Functions[Key, Value]] struct {
 	// An internal binary tree node looks like:
 	//
 	//   K
@@ -1057,7 +1060,7 @@ type node struct {
 
 	// parent is a pointer to this node's parent. If this node is root, parent
 	// is nil.
-	parent *node
+	parent *node[Key, Value, F]
 
 	// parentIndex is the index of this node in parent.children.
 	parentIndex int
@@ -1071,43 +1074,43 @@ type node struct {
 	// maximum gap among all the (nrSegments+1) gaps formed by its nrSegments keys
 	// including the 0th and nrSegments-th gap possibly shared with its upper-level
 	// nodes; if it's a non-leaf node, it's the max of all children's maxGap.
-	maxGap dynamicGap
+	maxGap dynamicGap[Key]
 
 	// Nodes store keys and values in separate arrays to maximize locality in
 	// the common case (scanning keys for lookup).
-	keys     [maxDegree - 1]Range
+	keys     [maxDegree - 1]rangetypes.Range[Key]
 	values   [maxDegree - 1]Value
-	children [maxDegree]*node
+	children [maxDegree]*node[Key, Value, F]
 }
 
 // firstSegment returns the first segment in the subtree rooted by n.
 //
 // Preconditions: n.nrSegments != 0.
-func (n *node) firstSegment() Iterator {
+func (n *node[Key, Value, F]) firstSegment() Iterator[Key, Value, F] {
 	for n.hasChildren {
 		n = n.children[0]
 	}
-	return Iterator{n, 0}
+	return Iterator[Key, Value, F]{n, 0}
 }
 
 // lastSegment returns the last segment in the subtree rooted by n.
 //
 // Preconditions: n.nrSegments != 0.
-func (n *node) lastSegment() Iterator {
+func (n *node[Key, Value, F]) lastSegment() Iterator[Key, Value, F] {
 	for n.hasChildren {
 		n = n.children[n.nrSegments]
 	}
-	return Iterator{n, n.nrSegments - 1}
+	return Iterator[Key, Value, F]{n, n.nrSegments - 1}
 }
 
-func (n *node) prevSibling() *node {
+func (n *node[Key, Value, F]) prevSibling() *node[Key, Value, F] {
 	if n.parent == nil || n.parentIndex == 0 {
 		return nil
 	}
 	return n.parent.children[n.parentIndex-1]
 }
 
-func (n *node) nextSibling() *node {
+func (n *node[Key, Value, F]) nextSibling() *node[Key, Value, F] {
 	if n.parent == nil || n.parentIndex == n.parent.nrSegments {
 		return nil
 	}
@@ -1117,7 +1120,7 @@ func (n *node) nextSibling() *node {
 // rebalanceBeforeInsert splits n and its ancestors if they are full, as
 // required for insertion, and returns an updated iterator to the position
 // represented by gap.
-func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
+func (n *node[Key, Value, F]) rebalanceBeforeInsert(gap GapIterator[Key, Value, F]) GapIterator[Key, Value, F] {
 	if n.nrSegments < maxDegree-1 {
 		return gap
 	}
@@ -1128,13 +1131,13 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 		// n is root. Move all segments before and after n's median segment
 		// into new child nodes adjacent to the median segment, which is now
 		// the only segment in root.
-		left := &node{
+		left := &node[Key, Value, F]{
 			nrSegments:  minDegree - 1,
 			parent:      n,
 			parentIndex: 0,
 			hasChildren: n.hasChildren,
 		}
-		right := &node{
+		right := &node[Key, Value, F]{
 			nrSegments:  minDegree - 1,
 			parent:      n,
 			parentIndex: 1,
@@ -1145,7 +1148,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 		copy(right.keys[:minDegree-1], n.keys[minDegree:])
 		copy(right.values[:minDegree-1], n.values[minDegree:])
 		n.keys[0], n.values[0] = n.keys[minDegree-1], n.values[minDegree-1]
-		zeroValueSlice(n.values[1:])
+		zeroValueSlice[Key, Value, F](n.values[1:])
 		if n.hasChildren {
 			copy(left.children[:minDegree], n.children[:minDegree])
 			copy(right.children[:minDegree], n.children[minDegree:])
@@ -1172,9 +1175,9 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 			return gap
 		}
 		if gap.index < minDegree {
-			return GapIterator{left, gap.index}
+			return GapIterator[Key, Value, F]{left, gap.index}
 		}
-		return GapIterator{right, gap.index - minDegree}
+		return GapIterator[Key, Value, F]{right, gap.index - minDegree}
 	}
 	// n is non-root. Move n's median segment into its parent node (which can't
 	// be full because we've already invoked n.parent.rebalanceBeforeInsert)
@@ -1187,7 +1190,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 	for i := n.parentIndex + 2; i < n.parent.nrSegments+2; i++ {
 		n.parent.children[i].parentIndex = i
 	}
-	sibling := &node{
+	sibling := &node[Key, Value, F]{
 		nrSegments:  minDegree - 1,
 		parent:      n.parent,
 		parentIndex: n.parentIndex + 1,
@@ -1197,7 +1200,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 	n.parent.nrSegments++
 	copy(sibling.keys[:minDegree-1], n.keys[minDegree:])
 	copy(sibling.values[:minDegree-1], n.values[minDegree:])
-	zeroValueSlice(n.values[minDegree-1:])
+	zeroValueSlice[Key, Value, F](n.values[minDegree-1:])
 	if n.hasChildren {
 		copy(sibling.children[:minDegree], n.children[minDegree:])
 		zeroNodeSlice(n.children[minDegree:])
@@ -1220,7 +1223,7 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 	if gap.index < minDegree {
 		return gap
 	}
-	return GapIterator{sibling, gap.index - minDegree}
+	return GapIterator[Key, Value, F]{sibling, gap.index - minDegree}
 }
 
 // rebalanceAfterRemove "unsplits" n and its ancestors if they are deficient
@@ -1229,7 +1232,8 @@ func (n *node) rebalanceBeforeInsert(gap GapIterator) GapIterator {
 //
 // Precondition: n is the only node in the tree that may currently violate a
 // B-tree invariant.
-func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
+func (n *node[Key, Value, F]) rebalanceAfterRemove(gap GapIterator[Key, Value, F]) GapIterator[Key, Value, F] {
+	var f F
 	for {
 		if n.nrSegments >= minDegree-1 {
 			return gap
@@ -1263,7 +1267,7 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 			n.values[0] = n.parent.values[n.parentIndex-1]
 			n.parent.keys[n.parentIndex-1] = sibling.keys[sibling.nrSegments-1]
 			n.parent.values[n.parentIndex-1] = sibling.values[sibling.nrSegments-1]
-			Functions{}.ClearValue(&sibling.values[sibling.nrSegments-1])
+			f.ClearValue(&sibling.values[sibling.nrSegments-1])
 			if n.hasChildren {
 				copy(n.children[1:], n.children[:n.nrSegments+1])
 				n.children[0] = sibling.children[sibling.nrSegments]
@@ -1283,10 +1287,10 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 				sibling.updateMaxGapLocal()
 			}
 			if gap.node == sibling && gap.index == sibling.nrSegments {
-				return GapIterator{n, 0}
+				return GapIterator[Key, Value, F]{n, 0}
 			}
 			if gap.node == n {
-				return GapIterator{n, gap.index + 1}
+				return GapIterator[Key, Value, F]{n, gap.index + 1}
 			}
 			return gap
 		}
@@ -1297,7 +1301,7 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 			n.parent.values[n.parentIndex] = sibling.values[0]
 			copy(sibling.keys[:sibling.nrSegments-1], sibling.keys[1:])
 			copy(sibling.values[:sibling.nrSegments-1], sibling.values[1:])
-			Functions{}.ClearValue(&sibling.values[sibling.nrSegments-1])
+			f.ClearValue(&sibling.values[sibling.nrSegments-1])
 			if n.hasChildren {
 				n.children[n.nrSegments+1] = sibling.children[0]
 				copy(sibling.children[:sibling.nrSegments], sibling.children[1:])
@@ -1318,9 +1322,9 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 			}
 			if gap.node == sibling {
 				if gap.index == 0 {
-					return GapIterator{n, n.nrSegments}
+					return GapIterator[Key, Value, F]{n, n.nrSegments}
 				}
-				return GapIterator{sibling, gap.index - 1}
+				return GapIterator[Key, Value, F]{sibling, gap.index - 1}
 			}
 			return gap
 		}
@@ -1355,10 +1359,10 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 			}
 			// No need to update maxGap of p as its content is not changed.
 			if gap.node == left {
-				return GapIterator{p, gap.index}
+				return GapIterator[Key, Value, F]{p, gap.index}
 			}
 			if gap.node == right {
-				return GapIterator{p, gap.index + left.nrSegments + 1}
+				return GapIterator[Key, Value, F]{p, gap.index + left.nrSegments + 1}
 			}
 			return gap
 		}
@@ -1366,7 +1370,7 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 		// two, into whichever of the two nodes comes first. This is the
 		// reverse of the non-root splitting case in
 		// node.rebalanceBeforeInsert.
-		var left, right *node
+		var left, right *node[Key, Value, F]
 		if n.parentIndex > 0 {
 			left = n.prevSibling()
 			right = n
@@ -1377,7 +1381,7 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 		// Fix up gap first since we need the old left.nrSegments, which
 		// merging will change.
 		if gap.node == right {
-			gap = GapIterator{left, gap.index + left.nrSegments + 1}
+			gap = GapIterator[Key, Value, F]{left, gap.index + left.nrSegments + 1}
 		}
 		left.keys[left.nrSegments] = p.keys[left.parentIndex]
 		left.values[left.nrSegments] = p.values[left.parentIndex]
@@ -1393,7 +1397,7 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 		left.nrSegments += right.nrSegments + 1
 		copy(p.keys[left.parentIndex:], p.keys[left.parentIndex+1:p.nrSegments])
 		copy(p.values[left.parentIndex:], p.values[left.parentIndex+1:p.nrSegments])
-		Functions{}.ClearValue(&p.values[p.nrSegments-1])
+		f.ClearValue(&p.values[p.nrSegments-1])
 		copy(p.children[left.parentIndex+1:], p.children[left.parentIndex+2:p.nrSegments+1])
 		for i := 0; i < p.nrSegments; i++ {
 			p.children[i].parentIndex = i
@@ -1414,7 +1418,7 @@ func (n *node) rebalanceAfterRemove(gap GapIterator) GapIterator {
 // necessary update.
 //
 // Preconditions: n must be a leaf node, trackGaps must be 1.
-func (n *node) updateMaxGapLeaf() {
+func (n *node[Key, Value, F]) updateMaxGapLeaf() {
 	if n.hasChildren {
 		panic(fmt.Sprintf("updateMaxGapLeaf should always be called on leaf node: %v", n))
 	}
@@ -1462,7 +1466,7 @@ func (n *node) updateMaxGapLeaf() {
 // propagation to ancestor nodes.
 //
 // Precondition: trackGaps must be 1.
-func (n *node) updateMaxGapLocal() {
+func (n *node[Key, Value, F]) updateMaxGapLocal() {
 	if !n.hasChildren {
 		// Leaf node iterates its gaps.
 		n.maxGap.Set(n.calculateMaxGapLeaf())
@@ -1476,10 +1480,10 @@ func (n *node) updateMaxGapLocal() {
 // max.
 //
 // Preconditions: n must be a leaf node.
-func (n *node) calculateMaxGapLeaf() Key {
-	max := GapIterator{n, 0}.Range().Length()
+func (n *node[Key, Value, F]) calculateMaxGapLeaf() Key {
+	max := GapIterator[Key, Value, F]{n, 0}.Range().Length()
 	for i := 1; i <= n.nrSegments; i++ {
-		if current := (GapIterator{n, i}).Range().Length(); current > max {
+		if current := (GapIterator[Key, Value, F]{n, i}).Range().Length(); current > max {
 			max = current
 		}
 	}
@@ -1490,7 +1494,7 @@ func (n *node) calculateMaxGapLeaf() Key {
 // and calculate the max.
 //
 // Preconditions: n must be a non-leaf node.
-func (n *node) calculateMaxGapInternal() Key {
+func (n *node[Key, Value, F]) calculateMaxGapInternal() Key {
 	max := n.children[0].maxGap.Get()
 	for i := 1; i <= n.nrSegments; i++ {
 		if current := n.children[i].maxGap.Get(); current > max {
@@ -1502,9 +1506,9 @@ func (n *node) calculateMaxGapInternal() Key {
 
 // searchFirstLargeEnoughGap returns the first gap having at least minSize length
 // in the subtree rooted by n. If not found, return a terminal gap iterator.
-func (n *node) searchFirstLargeEnoughGap(minSize Key) GapIterator {
+func (n *node[Key, Value, F]) searchFirstLargeEnoughGap(minSize Key) GapIterator[Key, Value, F] {
 	if n.maxGap.Get() < minSize {
-		return GapIterator{}
+		return GapIterator[Key, Value, F]{}
 	}
 	if n.hasChildren {
 		for i := 0; i <= n.nrSegments; i++ {
@@ -1514,7 +1518,7 @@ func (n *node) searchFirstLargeEnoughGap(minSize Key) GapIterator {
 		}
 	} else {
 		for i := 0; i <= n.nrSegments; i++ {
-			currentGap := GapIterator{n, i}
+			currentGap := GapIterator[Key, Value, F]{n, i}
 			if currentGap.Range().Length() >= minSize {
 				return currentGap
 			}
@@ -1525,9 +1529,9 @@ func (n *node) searchFirstLargeEnoughGap(minSize Key) GapIterator {
 
 // searchLastLargeEnoughGap returns the last gap having at least minSize length
 // in the subtree rooted by n. If not found, return a terminal gap iterator.
-func (n *node) searchLastLargeEnoughGap(minSize Key) GapIterator {
+func (n *node[Key, Value, F]) searchLastLargeEnoughGap(minSize Key) GapIterator[Key, Value, F] {
 	if n.maxGap.Get() < minSize {
-		return GapIterator{}
+		return GapIterator[Key, Value, F]{}
 	}
 	if n.hasChildren {
 		for i := n.nrSegments; i >= 0; i-- {
@@ -1537,7 +1541,7 @@ func (n *node) searchLastLargeEnoughGap(minSize Key) GapIterator {
 		}
 	} else {
 		for i := n.nrSegments; i >= 0; i-- {
-			currentGap := GapIterator{n, i}
+			currentGap := GapIterator[Key, Value, F]{n, i}
 			if currentGap.Range().Length() >= minSize {
 				return currentGap
 			}
@@ -1546,7 +1550,7 @@ func (n *node) searchLastLargeEnoughGap(minSize Key) GapIterator {
 	panic(fmt.Sprintf("invalid maxGap in %v", n))
 }
 
-// A Iterator is conceptually one of:
+// Iterator is conceptually one of:
 //
 //   - A pointer to a segment in a set; or
 //
@@ -1554,14 +1558,14 @@ func (n *node) searchLastLargeEnoughGap(minSize Key) GapIterator {
 //     iteration has been reached.
 //
 // Iterators are copyable values and are meaningfully equality-comparable. The
-// zero value of Iterator is a terminal iterator.
+// zero value of Iterator[Key, Value, F] is a terminal iterator.
 //
 // Unless otherwise specified, any mutation of a set invalidates all existing
 // iterators into the set.
-type Iterator struct {
+type Iterator[Key constraints.Integer, Value any, F Functions[Key, Value]] struct {
 	// node is the node containing the iterated segment. If the iterator is
 	// terminal, node is nil.
-	node *node
+	node *node[Key, Value, F]
 
 	// index is the index of the segment in node.keys/values.
 	index int
@@ -1569,24 +1573,24 @@ type Iterator struct {
 
 // Ok returns true if the iterator is not terminal. All other methods are only
 // valid for non-terminal iterators.
-func (seg Iterator) Ok() bool {
+func (seg Iterator[Key, Value, F]) Ok() bool {
 	return seg.node != nil
 }
 
 // Range returns the iterated segment's range key.
-func (seg Iterator) Range() Range {
+func (seg Iterator[Key, Value, F]) Range() rangetypes.Range[Key] {
 	return seg.node.keys[seg.index]
 }
 
 // Start is equivalent to Range().Start, but should be preferred if only the
 // start of the range is needed.
-func (seg Iterator) Start() Key {
+func (seg Iterator[Key, Value, F]) Start() Key {
 	return seg.node.keys[seg.index].Start
 }
 
 // End is equivalent to Range().End, but should be preferred if only the end of
 // the range is needed.
-func (seg Iterator) End() Key {
+func (seg Iterator[Key, Value, F]) End() Key {
 	return seg.node.keys[seg.index].End
 }
 
@@ -1598,7 +1602,7 @@ func (seg Iterator) End() Key {
 // - The new range must not overlap an existing one:
 //   - If seg.NextSegment().Ok(), then r.end <= seg.NextSegment().Start().
 //   - If seg.PrevSegment().Ok(), then r.start >= seg.PrevSegment().End().
-func (seg Iterator) SetRangeUnchecked(r Range) {
+func (seg Iterator[Key, Value, F]) SetRangeUnchecked(r rangetypes.Range[Key]) {
 	seg.node.keys[seg.index] = r
 }
 
@@ -1606,7 +1610,7 @@ func (seg Iterator) SetRangeUnchecked(r Range) {
 // cause the iterated segment to overlap another segment, or if the new range
 // is invalid, SetRange panics. This operation does not invalidate any
 // iterators.
-func (seg Iterator) SetRange(r Range) {
+func (seg Iterator[Key, Value, F]) SetRange(r rangetypes.Range[Key]) {
 	if r.Length() <= 0 {
 		panic(fmt.Sprintf("invalid segment range %v", r))
 	}
@@ -1625,7 +1629,7 @@ func (seg Iterator) SetRange(r Range) {
 // Preconditions: The new start must be valid:
 //   - start < seg.End()
 //   - If seg.PrevSegment().Ok(), then start >= seg.PrevSegment().End().
-func (seg Iterator) SetStartUnchecked(start Key) {
+func (seg Iterator[Key, Value, F]) SetStartUnchecked(start Key) {
 	seg.node.keys[seg.index].Start = start
 }
 
@@ -1633,7 +1637,7 @@ func (seg Iterator) SetStartUnchecked(start Key) {
 // cause the iterated segment to overlap another segment, or would result in an
 // invalid range, SetStart panics. This operation does not invalidate any
 // iterators.
-func (seg Iterator) SetStart(start Key) {
+func (seg Iterator[Key, Value, F]) SetStart(start Key) {
 	if start >= seg.End() {
 		panic(fmt.Sprintf("new start %v would invalidate segment range %v", start, seg.Range()))
 	}
@@ -1649,7 +1653,7 @@ func (seg Iterator) SetStart(start Key) {
 // Preconditions: The new end must be valid:
 //   - end > seg.Start().
 //   - If seg.NextSegment().Ok(), then end <= seg.NextSegment().Start().
-func (seg Iterator) SetEndUnchecked(end Key) {
+func (seg Iterator[Key, Value, F]) SetEndUnchecked(end Key) {
 	seg.node.keys[seg.index].End = end
 }
 
@@ -1657,7 +1661,7 @@ func (seg Iterator) SetEndUnchecked(end Key) {
 // the iterated segment to overlap another segment, or would result in an
 // invalid range, SetEnd panics. This operation does not invalidate any
 // iterators.
-func (seg Iterator) SetEnd(end Key) {
+func (seg Iterator[Key, Value, F]) SetEnd(end Key) {
 	if end <= seg.Start() {
 		panic(fmt.Sprintf("new end %v would invalidate segment range %v", end, seg.Range()))
 	}
@@ -1668,69 +1672,69 @@ func (seg Iterator) SetEnd(end Key) {
 }
 
 // Value returns a copy of the iterated segment's value.
-func (seg Iterator) Value() Value {
+func (seg Iterator[Key, Value, F]) Value() Value {
 	return seg.node.values[seg.index]
 }
 
 // ValuePtr returns a pointer to the iterated segment's value. The pointer is
 // invalidated if the iterator is invalidated. This operation does not
 // invalidate any iterators.
-func (seg Iterator) ValuePtr() *Value {
+func (seg Iterator[Key, Value, F]) ValuePtr() *Value {
 	return &seg.node.values[seg.index]
 }
 
 // SetValue mutates the iterated segment's value. This operation does not
 // invalidate any iterators.
-func (seg Iterator) SetValue(val Value) {
+func (seg Iterator[Key, Value, F]) SetValue(val Value) {
 	seg.node.values[seg.index] = val
 }
 
 // PrevSegment returns the iterated segment's predecessor. If there is no
 // preceding segment, PrevSegment returns a terminal iterator.
-func (seg Iterator) PrevSegment() Iterator {
+func (seg Iterator[Key, Value, F]) PrevSegment() Iterator[Key, Value, F] {
 	if seg.node.hasChildren {
 		return seg.node.children[seg.index].lastSegment()
 	}
 	if seg.index > 0 {
-		return Iterator{seg.node, seg.index - 1}
+		return Iterator[Key, Value, F]{seg.node, seg.index - 1}
 	}
 	if seg.node.parent == nil {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	return segmentBeforePosition(seg.node.parent, seg.node.parentIndex)
 }
 
 // NextSegment returns the iterated segment's successor. If there is no
 // succeeding segment, NextSegment returns a terminal iterator.
-func (seg Iterator) NextSegment() Iterator {
+func (seg Iterator[Key, Value, F]) NextSegment() Iterator[Key, Value, F] {
 	if seg.node.hasChildren {
 		return seg.node.children[seg.index+1].firstSegment()
 	}
 	if seg.index < seg.node.nrSegments-1 {
-		return Iterator{seg.node, seg.index + 1}
+		return Iterator[Key, Value, F]{seg.node, seg.index + 1}
 	}
 	if seg.node.parent == nil {
-		return Iterator{}
+		return Iterator[Key, Value, F]{}
 	}
 	return segmentAfterPosition(seg.node.parent, seg.node.parentIndex)
 }
 
 // PrevGap returns the gap immediately before the iterated segment.
-func (seg Iterator) PrevGap() GapIterator {
+func (seg Iterator[Key, Value, F]) PrevGap() GapIterator[Key, Value, F] {
 	if seg.node.hasChildren {
 		// Note that this isn't recursive because the last segment in a subtree
 		// must be in a leaf node.
 		return seg.node.children[seg.index].lastSegment().NextGap()
 	}
-	return GapIterator{seg.node, seg.index}
+	return GapIterator[Key, Value, F]{seg.node, seg.index}
 }
 
 // NextGap returns the gap immediately after the iterated segment.
-func (seg Iterator) NextGap() GapIterator {
+func (seg Iterator[Key, Value, F]) NextGap() GapIterator[Key, Value, F] {
 	if seg.node.hasChildren {
 		return seg.node.children[seg.index+1].firstSegment().PrevGap()
 	}
-	return GapIterator{seg.node, seg.index + 1}
+	return GapIterator[Key, Value, F]{seg.node, seg.index + 1}
 }
 
 // PrevNonEmpty returns the iterated segment's predecessor if it is adjacent,
@@ -1738,11 +1742,11 @@ func (seg Iterator) NextGap() GapIterator {
 // Functions.MinKey(), PrevNonEmpty will return two terminal iterators.
 // Otherwise, exactly one of the iterators returned by PrevNonEmpty will be
 // non-terminal.
-func (seg Iterator) PrevNonEmpty() (Iterator, GapIterator) {
+func (seg Iterator[Key, Value, F]) PrevNonEmpty() (Iterator[Key, Value, F], GapIterator[Key, Value, F]) {
 	if prev := seg.PrevSegment(); prev.Ok() && prev.End() == seg.Start() {
-		return prev, GapIterator{}
+		return prev, GapIterator[Key, Value, F]{}
 	}
-	return Iterator{}, seg.PrevGap()
+	return Iterator[Key, Value, F]{}, seg.PrevGap()
 }
 
 // NextNonEmpty returns the iterated segment's successor if it is adjacent, or
@@ -1750,14 +1754,14 @@ func (seg Iterator) PrevNonEmpty() (Iterator, GapIterator) {
 // Functions.MaxKey(), NextNonEmpty will return two terminal iterators.
 // Otherwise, exactly one of the iterators returned by NextNonEmpty will be
 // non-terminal.
-func (seg Iterator) NextNonEmpty() (Iterator, GapIterator) {
+func (seg Iterator[Key, Value, F]) NextNonEmpty() (Iterator[Key, Value, F], GapIterator[Key, Value, F]) {
 	if next := seg.NextSegment(); next.Ok() && next.Start() == seg.End() {
-		return next, GapIterator{}
+		return next, GapIterator[Key, Value, F]{}
 	}
-	return Iterator{}, seg.NextGap()
+	return Iterator[Key, Value, F]{}, seg.NextGap()
 }
 
-// A GapIterator is conceptually one of:
+// GapIterator is conceptually one of:
 //
 //   - A pointer to a position between two segments, before the first segment, or
 //     after the last segment in a set, called a *gap*; or
@@ -1766,86 +1770,88 @@ func (seg Iterator) NextNonEmpty() (Iterator, GapIterator) {
 //     iteration has been reached.
 //
 // Note that the gap between two adjacent segments exists (iterators to it are
-// non-terminal), but has a length of zero. GapIterator.IsEmpty returns true
+// non-terminal), but has a length of zero. GapIterator[Key, Value, F].IsEmpty returns true
 // for such gaps. An empty set contains a single gap, spanning the entire range
 // of the set's keys.
 //
 // GapIterators are copyable values and are meaningfully equality-comparable.
-// The zero value of GapIterator is a terminal iterator.
+// The zero value of GapIterator[Key, Value, F] is a terminal iterator.
 //
 // Unless otherwise specified, any mutation of a set invalidates all existing
 // iterators into the set.
-type GapIterator struct {
-	// The representation of a GapIterator is identical to that of an Iterator,
+type GapIterator[Key constraints.Integer, Value any, F Functions[Key, Value]] struct {
+	// The representation of a GapIterator[Key, Value, F] is identical to that of an Iterator[Key, Value, F],
 	// except that index corresponds to positions between segments in the same
 	// way as for node.children (see comment for node.nrSegments).
-	node  *node
+	node  *node[Key, Value, F]
 	index int
 }
 
 // Ok returns true if the iterator is not terminal. All other methods are only
 // valid for non-terminal iterators.
-func (gap GapIterator) Ok() bool {
+func (gap GapIterator[Key, Value, F]) Ok() bool {
 	return gap.node != nil
 }
 
 // Range returns the range spanned by the iterated gap.
-func (gap GapIterator) Range() Range {
-	return Range{gap.Start(), gap.End()}
+func (gap GapIterator[Key, Value, F]) Range() rangetypes.Range[Key] {
+	return makeRange(gap.Start(), gap.End())
 }
 
 // Start is equivalent to Range().Start, but should be preferred if only the
 // start of the range is needed.
-func (gap GapIterator) Start() Key {
+func (gap GapIterator[Key, Value, F]) Start() Key {
+	var f F
 	if ps := gap.PrevSegment(); ps.Ok() {
 		return ps.End()
 	}
-	return Functions{}.MinKey()
+	return f.MinKey()
 }
 
 // End is equivalent to Range().End, but should be preferred if only the end of
 // the range is needed.
-func (gap GapIterator) End() Key {
+func (gap GapIterator[Key, Value, F]) End() Key {
+	var f F
 	if ns := gap.NextSegment(); ns.Ok() {
 		return ns.Start()
 	}
-	return Functions{}.MaxKey()
+	return f.MaxKey()
 }
 
 // IsEmpty returns true if the iterated gap is empty (that is, the "gap" is
 // between two adjacent segments.)
-func (gap GapIterator) IsEmpty() bool {
+func (gap GapIterator[Key, Value, F]) IsEmpty() bool {
 	return gap.Range().Length() == 0
 }
 
 // PrevSegment returns the segment immediately before the iterated gap. If no
 // such segment exists, PrevSegment returns a terminal iterator.
-func (gap GapIterator) PrevSegment() Iterator {
+func (gap GapIterator[Key, Value, F]) PrevSegment() Iterator[Key, Value, F] {
 	return segmentBeforePosition(gap.node, gap.index)
 }
 
 // NextSegment returns the segment immediately after the iterated gap. If no
 // such segment exists, NextSegment returns a terminal iterator.
-func (gap GapIterator) NextSegment() Iterator {
+func (gap GapIterator[Key, Value, F]) NextSegment() Iterator[Key, Value, F] {
 	return segmentAfterPosition(gap.node, gap.index)
 }
 
 // PrevGap returns the iterated gap's predecessor. If no such gap exists,
 // PrevGap returns a terminal iterator.
-func (gap GapIterator) PrevGap() GapIterator {
+func (gap GapIterator[Key, Value, F]) PrevGap() GapIterator[Key, Value, F] {
 	seg := gap.PrevSegment()
 	if !seg.Ok() {
-		return GapIterator{}
+		return GapIterator[Key, Value, F]{}
 	}
 	return seg.PrevGap()
 }
 
 // NextGap returns the iterated gap's successor. If no such gap exists, NextGap
 // returns a terminal iterator.
-func (gap GapIterator) NextGap() GapIterator {
+func (gap GapIterator[Key, Value, F]) NextGap() GapIterator[Key, Value, F] {
 	seg := gap.NextSegment()
 	if !seg.Ok() {
-		return GapIterator{}
+		return GapIterator[Key, Value, F]{}
 	}
 	return seg.NextGap()
 }
@@ -1855,7 +1861,7 @@ func (gap GapIterator) NextGap() GapIterator {
 // include this gap itself).
 //
 // Precondition: trackGaps must be 1.
-func (gap GapIterator) NextLargeEnoughGap(minSize Key) GapIterator {
+func (gap GapIterator[Key, Value, F]) NextLargeEnoughGap(minSize Key) GapIterator[Key, Value, F] {
 	if trackGaps != 1 {
 		panic("set is not tracking gaps")
 	}
@@ -1873,7 +1879,7 @@ func (gap GapIterator) NextLargeEnoughGap(minSize Key) GapIterator {
 // to do the real recursions.
 //
 // Preconditions: gap is NOT the trailing gap of a non-leaf node.
-func (gap GapIterator) nextLargeEnoughGapHelper(minSize Key) GapIterator {
+func (gap GapIterator[Key, Value, F]) nextLargeEnoughGapHelper(minSize Key) GapIterator[Key, Value, F] {
 	for {
 		// Crawl up the tree if no large enough gap in current node or the
 		// current gap is the trailing one on leaf level.
@@ -1884,7 +1890,7 @@ func (gap GapIterator) nextLargeEnoughGapHelper(minSize Key) GapIterator {
 		// If no large enough gap throughout the whole set, return a terminal
 		// gap iterator.
 		if gap.node == nil {
-			return GapIterator{}
+			return GapIterator[Key, Value, F]{}
 		}
 		// Iterate subsequent gaps.
 		gap.index++
@@ -1914,7 +1920,7 @@ func (gap GapIterator) nextLargeEnoughGapHelper(minSize Key) GapIterator {
 // (does NOT include this gap itself).
 //
 // Precondition: trackGaps must be 1.
-func (gap GapIterator) PrevLargeEnoughGap(minSize Key) GapIterator {
+func (gap GapIterator[Key, Value, F]) PrevLargeEnoughGap(minSize Key) GapIterator[Key, Value, F] {
 	if trackGaps != 1 {
 		panic("set is not tracking gaps")
 	}
@@ -1932,7 +1938,7 @@ func (gap GapIterator) PrevLargeEnoughGap(minSize Key) GapIterator {
 // to do the real recursions.
 //
 // Preconditions: gap is NOT the first gap of a non-leaf node.
-func (gap GapIterator) prevLargeEnoughGapHelper(minSize Key) GapIterator {
+func (gap GapIterator[Key, Value, F]) prevLargeEnoughGapHelper(minSize Key) GapIterator[Key, Value, F] {
 	for {
 		// Crawl up the tree if no large enough gap in current node or the
 		// current gap is the first one on leaf level.
@@ -1943,7 +1949,7 @@ func (gap GapIterator) prevLargeEnoughGapHelper(minSize Key) GapIterator {
 		// If no large enough gap throughout the whole set, return a terminal
 		// gap iterator.
 		if gap.node == nil {
-			return GapIterator{}
+			return GapIterator[Key, Value, F]{}
 		}
 		// Iterate previous gaps.
 		gap.index--
@@ -1971,56 +1977,57 @@ func (gap GapIterator) prevLargeEnoughGapHelper(minSize Key) GapIterator {
 // segmentBeforePosition returns the predecessor segment of the position given
 // by n.children[i], which may or may not contain a child. If no such segment
 // exists, segmentBeforePosition returns a terminal iterator.
-func segmentBeforePosition(n *node, i int) Iterator {
+func segmentBeforePosition[Key constraints.Integer, Value any, F Functions[Key, Value]](n *node[Key, Value, F], i int) Iterator[Key, Value, F] {
 	for i == 0 {
 		if n.parent == nil {
-			return Iterator{}
+			return Iterator[Key, Value, F]{}
 		}
 		n, i = n.parent, n.parentIndex
 	}
-	return Iterator{n, i - 1}
+	return Iterator[Key, Value, F]{n, i - 1}
 }
 
 // segmentAfterPosition returns the successor segment of the position given by
 // n.children[i], which may or may not contain a child. If no such segment
 // exists, segmentAfterPosition returns a terminal iterator.
-func segmentAfterPosition(n *node, i int) Iterator {
+func segmentAfterPosition[Key constraints.Integer, Value any, F Functions[Key, Value]](n *node[Key, Value, F], i int) Iterator[Key, Value, F] {
 	for i == n.nrSegments {
 		if n.parent == nil {
-			return Iterator{}
+			return Iterator[Key, Value, F]{}
 		}
 		n, i = n.parent, n.parentIndex
 	}
-	return Iterator{n, i}
+	return Iterator[Key, Value, F]{n, i}
 }
 
-func zeroValueSlice(slice []Value) {
+func zeroValueSlice[Key constraints.Integer, Value any, F Functions[Key, Value]](slice []Value) {
+	var f F
 	// TODO(jamieliu): check if Go is actually smart enough to optimize a
 	// ClearValue that assigns nil to a memset here.
 	for i := range slice {
-		Functions{}.ClearValue(&slice[i])
+		f.ClearValue(&slice[i])
 	}
 }
 
-func zeroNodeSlice(slice []*node) {
+func zeroNodeSlice[Key constraints.Integer, Value any, F Functions[Key, Value]](slice []*node[Key, Value, F]) {
 	for i := range slice {
 		slice[i] = nil
 	}
 }
 
 // String stringifies a Set for debugging.
-func (s *Set) String() string {
+func (s *Set[Key, Value, F]) String() string {
 	return s.root.String()
 }
 
 // String stringifies a node (and all of its children) for debugging.
-func (n *node) String() string {
+func (n *node[Key, Value, F]) String() string {
 	var buf bytes.Buffer
 	n.writeDebugString(&buf, "")
 	return buf.String()
 }
 
-func (n *node) writeDebugString(buf *bytes.Buffer, prefix string) {
+func (n *node[Key, Value, F]) writeDebugString(buf *bytes.Buffer, prefix string) {
 	if n.hasChildren != (n.nrSegments > 0 && n.children[0] != nil) {
 		buf.WriteString(prefix)
 		buf.WriteString(fmt.Sprintf("WARNING: inconsistent value of hasChildren: got %v, want %v\n", n.hasChildren, !n.hasChildren))
@@ -2054,7 +2061,7 @@ func (n *node) writeDebugString(buf *bytes.Buffer, prefix string) {
 // an intermediate representation for save/restore and tests.
 //
 // +stateify savable
-type FlatSegment struct {
+type FlatSegment[Key any, Value any] struct {
 	Start Key
 	End   Key
 	Value Value
@@ -2062,10 +2069,10 @@ type FlatSegment struct {
 
 // ExportSlice returns a copy of all segments in the given set, in ascending
 // key order.
-func (s *Set) ExportSlice() []FlatSegment {
-	var fs []FlatSegment
+func (s *Set[Key, Value, F]) ExportSlice() []FlatSegment[Key, Value] {
+	var fs []FlatSegment[Key, Value]
 	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
-		fs = append(fs, FlatSegment{
+		fs = append(fs, FlatSegment[Key, Value]{
 			Start: seg.Start(),
 			End:   seg.End(),
 			Value: seg.Value(),
@@ -2081,14 +2088,14 @@ func (s *Set) ExportSlice() []FlatSegment {
 //   - fs must represent a valid set (the segments in fs must have valid
 //     lengths that do not overlap).
 //   - The segments in fs must be sorted in ascending key order.
-func (s *Set) ImportSlice(fs []FlatSegment) error {
+func (s *Set[Key, Value, F]) ImportSlice(fs []FlatSegment[Key, Value]) error {
 	if !s.IsEmpty() {
 		return fmt.Errorf("cannot import into non-empty set %v", s)
 	}
 	gap := s.FirstGap()
 	for i := range fs {
 		f := &fs[i]
-		r := Range{f.Start, f.End}
+		r := makeRange(f.Start, f.End)
 		if !gap.Range().IsSupersetOf(r) {
 			return fmt.Errorf("segment overlaps a preceding segment or is incorrectly sorted: %v => %v", r, f.Value)
 		}
@@ -2103,7 +2110,7 @@ func (s *Set) ImportSlice(fs []FlatSegment) error {
 //
 // This should be used only for testing, and has been added to this package for
 // templating convenience.
-func (s *Set) segmentTestCheck(expectedSegments int, segFunc func(int, Range, Value) error) error {
+func (s *Set[Key, Value, F]) segmentTestCheck(expectedSegments int, segFunc func(int, rangetypes.Range[Key], Value) error) error {
 	havePrev := false
 	prev := Key(0)
 	nrSegments := 0
@@ -2130,7 +2137,7 @@ func (s *Set) segmentTestCheck(expectedSegments int, segFunc func(int, Range, Va
 // countSegments counts the number of segments in the set.
 //
 // Similar to Check, this should only be used for testing.
-func (s *Set) countSegments() (segments int) {
+func (s *Set[Key, Value, F]) countSegments() (segments int) {
 	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
 		segments++
 	}

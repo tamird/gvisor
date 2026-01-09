@@ -7,11 +7,8 @@ package(
 )
 
 go_library(
-    name = "segment",
-    srcs = ["segment.go"],
+    name = "rangetypes",
+    srcs = ["range.go"],
     stateify = False,
-    deps = [
-        "//pkg/segment/rangetypes",
-        "@org_golang_x_exp//constraints:go_default_library",
-    ],
+    deps = ["@org_golang_x_exp//constraints:go_default_library"],
 )

@@ -1,33 +1,14 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "lock_set",
-    out = "lock_set.go",
-    consts = {
-        "minDegree": "3",
-    },
-    package = "lock",
-    prefix = "Lock",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "uint64",
-        "Range": "LockRange",
-        "Value": "Lock",
-        "Functions": "lockSetFunctions",
-    },
-)
-
 go_library(
     name = "lock",
     srcs = [
         "lock.go",
-        "lock_set.go",
         "lock_set_functions.go",
     ],
     visibility = ["//pkg/sentry:internal"],

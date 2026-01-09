@@ -45,15 +45,19 @@ func (mm *MemoryManager) DebugString(ctx context.Context) string {
 	mm.mappingMu.RLock()
 	defer mm.mappingMu.RUnlock()
 	b.WriteString("VMAs:\n")
-	for vseg := mm.vmas.FirstSegment(); vseg.Ok(); vseg = vseg.NextSegment() {
+	vseg := vmaIterator{mm.vmas.FirstSegment()}
+	for vseg.Ok() {
 		b.Write(mm.vmaMapsEntryLocked(ctx, vseg))
+		vseg = vmaIterator{vseg.NextSegment()}
 	}
 
 	mm.activeMu.RLock()
 	defer mm.activeMu.RUnlock()
 	b.WriteString("PMAs:\n")
-	for pseg := mm.pmas.FirstSegment(); pseg.Ok(); pseg = pseg.NextSegment() {
+	pseg := pmaIterator{mm.pmas.FirstSegment()}
+	for pseg.Ok() {
 		b.Write(pseg.debugStringEntryLocked())
+		pseg = pmaIterator{pseg.NextSegment()}
 	}
 
 	return string(b.Bytes())

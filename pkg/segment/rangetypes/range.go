@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package segment provides range types for segment handling.
-package segment
+// Package rangetypes provides range types for segment handling.
+package rangetypes
 
 import (
 	"fmt"

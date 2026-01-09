@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package segment
+package set
 
 import (
 	"context"
 )
 
-func (s *Set) saveRoot() []FlatSegment {
+func (s *Set[Key, Value, F]) saveRoot() []FlatSegment[Key, Value] {
 	fs := s.ExportSlice()
 	// The state package saves data in slice capacity beyond slice length; save
 	// it some time by cutting ours off.
@@ -26,7 +26,7 @@ func (s *Set) saveRoot() []FlatSegment {
 	return fs
 }
 
-func (s *Set) loadRoot(_ context.Context, fs []FlatSegment) {
+func (s *Set[Key, Value, F]) loadRoot(_ context.Context, fs []FlatSegment[Key, Value]) {
 	if err := s.ImportSlice(fs); err != nil {
 		panic(err)
 	}

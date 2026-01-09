@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/safecopy"
 	"gvisor.dev/gvisor/pkg/safemem"
+	"gvisor.dev/gvisor/pkg/segment/set8"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
@@ -45,7 +46,7 @@ func (mm *MemoryManager) existingPMAsLocked(ar hostarch.AddrRange, at hostarch.A
 		}
 	}
 
-	first := mm.pmas.FindSegment(ar.Start)
+	first := pmaIterator{mm.pmas.FindSegment(ar.Start)}
 	pseg := first
 	for pseg.Ok() {
 		pma := pseg.ValuePtr()
@@ -63,7 +64,8 @@ func (mm *MemoryManager) existingPMAsLocked(ar hostarch.AddrRange, at hostarch.A
 		if ar.End <= pseg.End() {
 			return first
 		}
-		pseg, _ = pseg.NextNonEmpty()
+		next, _ := pseg.NextNonEmpty()
+		pseg = pmaIterator{next}
 	}
 
 	// Ran out of pmas before reaching ar.End.
@@ -174,7 +176,7 @@ func (mm *MemoryManager) getVecPMAsLocked(ctx context.Context, ars hostarch.Addr
 		}
 		ar = hostarch.AddrRange{ar.Start.RoundDown(), end}
 
-		_, pend, perr := mm.getPMAsInternalLocked(ctx, mm.vmas.FindSegment(ar.Start), ar, at, callerIndirectCommit)
+		_, pend, perr := mm.getPMAsInternalLocked(ctx, vmaIterator{mm.vmas.FindSegment(ar.Start)}, ar, at, callerIndirectCommit)
 		if perr != nil {
 			return truncatedAddrRangeSeq(ars, arsit, pend.Start()), perr
 		}
@@ -255,7 +257,8 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 	hugeMaskAR := hugepageAligned(ar)
 	// The range in which we iterate vmas and pmas is still limited to ar, to
 	// ensure that we don't allocate or COW-break a pma we don't need.
-	pseg, pgap := mm.pmas.Find(ar.Start)
+	seg, pgap := mm.pmas.Find(ar.Start)
+	pseg := pmaIterator{seg}
 	pstart := pseg
 	for {
 		// Get pmas for this vma.
@@ -336,7 +339,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 						}
 					}
 					mm.addRSSLocked(allocAR)
-					pseg, pgap = mm.pmas.Insert(pgap, allocAR, pma{
+					seg, gap := mm.pmas.Insert(pgap, allocAR, pma{
 						file:           mm.mf,
 						off:            fr.Start,
 						translatePerms: hostarch.AnyAccess,
@@ -348,6 +351,8 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 						private: true,
 						huge:    huge,
 					}).NextNonEmpty()
+					pseg = pmaIterator{seg}
+					pgap = gap
 					pstart = pmaIterator{} // iterators invalidated
 				} else {
 					// Other mappings get pmas by translating.
@@ -396,7 +401,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 						// This is valid because memmap.Mappable.Translate is
 						// required to return Translations in increasing
 						// Translation.Source order.
-						pseg = mm.pmas.Insert(pgap, newpmaAR, newpma)
+						pseg = pmaIterator{mm.pmas.Insert(pgap, newpmaAR, newpma)}
 						pgap = pseg.NextGap()
 					}
 					// The error returned by Translate is only significant if
@@ -484,7 +489,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					// RSS.
 					copyAR.End = copyAR.Start + hostarch.Addr(fr.Length())
 					if copyAR != pseg.Range() {
-						pseg = mm.pmas.Isolate(pseg, copyAR)
+						pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, copyAR)}
 						pstart = pmaIterator{} // iterators invalidated
 					}
 					oldpma = pseg.ValuePtr()
@@ -500,15 +505,17 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					oldpma.huge = huge
 					oldpma.internalMappings = safemem.BlockSeq{}
 					// Try to merge the pma with its neighbors.
-					if prev := pseg.PrevSegment(); prev.Ok() {
-						if merged := mm.pmas.Merge(prev, pseg); merged.Ok() {
-							pseg = merged
+					prev := pmaIterator{pseg.PrevSegment()}
+					if prev.Ok() {
+						if merged := mm.pmas.Merge(prev.Iterator, pseg.Iterator); merged.Ok() {
+							pseg = pmaIterator{merged}
 							pstart = pmaIterator{} // iterators invalidated
 						}
 					}
-					if next := pseg.NextSegment(); next.Ok() {
-						if merged := mm.pmas.Merge(pseg, next); merged.Ok() {
-							pseg = merged
+					next := pmaIterator{pseg.NextSegment()}
+					if next.Ok() {
+						if merged := mm.pmas.Merge(pseg.Iterator, next.Iterator); merged.Ok() {
+							pseg = pmaIterator{merged}
 							pstart = pmaIterator{} // iterators invalidated
 						}
 					}
@@ -519,7 +526,9 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					}
 					// Ensure pseg and pgap are correct for the next iteration
 					// of the loop.
-					pseg, pgap = pseg.NextNonEmpty()
+					nextSeg, nextGap := pseg.NextNonEmpty()
+					pseg = pmaIterator{nextSeg}
+					pgap = nextGap
 				} else if !oldpma.translatePerms.SupersetOf(at) {
 					// Get new pmas (with sufficient permissions) by calling
 					// memmap.Mappable.Translate again.
@@ -548,10 +557,10 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					}
 					transMR := memmap.MappableRange{ts[0].Source.Start, ts[len(ts)-1].Source.End}
 					transAR := vseg.addrRangeOf(transMR)
-					pseg = mm.pmas.Isolate(pseg, transAR)
+					pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, transAR)}
 					unmapAR = joinAddrRanges(unmapAR, transAR)
 					pfdrs = appendPendingFileDecRef(pfdrs, pseg.ValuePtr().file, pseg.fileRange())
-					pgap = mm.pmas.Remove(pseg)
+					pgap = mm.pmas.Remove(pseg.Iterator)
 					pstart = pmaIterator{} // iterators invalidated
 					for _, t := range ts {
 						newpmaAR := vseg.addrRangeOf(t.Source)
@@ -568,7 +577,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 							newpma.needCOW = true
 						}
 						t.File.IncRef(t.FileRange(), memCgID)
-						pseg = mm.pmas.Insert(pgap, newpmaAR, newpma)
+						pseg = pmaIterator{mm.pmas.Insert(pgap, newpmaAR, newpma)}
 						pgap = pseg.NextGap()
 					}
 					// The error returned by Translate is only significant if
@@ -579,13 +588,16 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 					// Ensure pseg and pgap are correct for the next iteration
 					// of the loop.
 					if pgap.Range().Length() == 0 {
-						pseg, pgap = pgap.NextSegment(), pmaGapIterator{}
+						pseg = pmaIterator{pgap.NextSegment()}
+						pgap = pmaGapIterator{}
 					} else {
 						pseg = pmaIterator{}
 					}
 				} else {
 					// We have a usable pma; continue.
-					pseg, pgap = pseg.NextNonEmpty()
+					nextSeg, nextGap := pseg.NextNonEmpty()
+					pseg = pmaIterator{nextSeg}
+					pgap = nextGap
 				}
 
 			default:
@@ -599,7 +611,7 @@ func (mm *MemoryManager) getPMAsInternalLocked(ctx context.Context, vseg vmaIter
 			}
 			return pstart, pseg.PrevGap(), nil
 		}
-		vseg = vseg.NextSegment()
+		vseg = vmaIterator{vseg.NextSegment()}
 	}
 }
 
@@ -682,11 +694,11 @@ func (mm *MemoryManager) invalidateLocked(ar hostarch.AddrRange, invalidatePriva
 	}
 
 	var didUnmapAS bool
-	pseg := mm.pmas.LowerBoundSegment(ar.Start)
+	pseg := pmaIterator{mm.pmas.LowerBoundSegment(ar.Start)}
 	for pseg.Ok() && pseg.Start() < ar.End {
 		pma := pseg.ValuePtr()
 		if (invalidatePrivate && pma.private) || (invalidateShared && !pma.private) {
-			pseg = mm.pmas.Isolate(pseg, ar)
+			pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, ar)}
 			pma = pseg.ValuePtr()
 			if !didUnmapAS {
 				// Unmap all of ar, not just pseg.Range(), to minimize host
@@ -717,9 +729,9 @@ func (mm *MemoryManager) invalidateLocked(ar hostarch.AddrRange, invalidatePriva
 			}
 			mm.removeRSSLocked(pseg.Range())
 			pma.file.DecRef(pseg.fileRange())
-			pseg = mm.pmas.Remove(pseg).NextSegment()
+			pseg = pmaIterator{mm.pmas.Remove(pseg.Iterator).NextSegment()}
 		} else {
-			pseg = pseg.NextSegment()
+			pseg = pmaIterator{pseg.NextSegment()}
 		}
 	}
 }
@@ -780,7 +792,7 @@ func (mm *MemoryManager) Pin(ctx context.Context, ar hostarch.AddrRange, at host
 			File:   f,
 			Offset: fr.Start,
 		})
-		pseg = pseg.NextSegment()
+		pseg = pmaIterator{pseg.NextSegment()}
 	}
 	mm.activeMu.Unlock()
 
@@ -846,14 +858,14 @@ func (mm *MemoryManager) movePMAsLocked(oldAR, newAR hostarch.AddrRange) {
 		pma   pma
 	}
 	var movedPMAs []movedPMA
-	pseg := mm.pmas.LowerBoundSegment(oldAR.Start)
+	pseg := pmaIterator{mm.pmas.LowerBoundSegment(oldAR.Start)}
 	for pseg.Ok() && pseg.Start() < oldAR.End {
-		pseg = mm.pmas.Isolate(pseg, oldAR)
+		pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, oldAR)}
 		movedPMAs = append(movedPMAs, movedPMA{
 			oldAR: pseg.Range(),
 			pma:   pseg.Value(),
 		})
-		pseg = mm.pmas.Remove(pseg).NextSegment()
+		pseg = pmaIterator{mm.pmas.Remove(pseg.Iterator).NextSegment()}
 		// No RSS change is needed since we're re-inserting the same pmas
 		// below.
 	}
@@ -904,7 +916,7 @@ func (mm *MemoryManager) internalMappingsLocked(pseg pmaIterator, ar hostarch.Ad
 		if ar.End <= pseg.End() {
 			break
 		}
-		pseg = pseg.NextSegment()
+		pseg = pmaIterator{pseg.NextSegment()}
 	}
 	return safemem.BlockSeqFromSlice(ims)
 }
@@ -924,7 +936,7 @@ func (mm *MemoryManager) vecInternalMappingsLocked(ars hostarch.AddrRangeSeq) sa
 		if ar.Length() == 0 {
 			continue
 		}
-		for pims := mm.internalMappingsLocked(mm.pmas.FindSegment(ar.Start), ar); !pims.IsEmpty(); pims = pims.Tail() {
+		for pims := mm.internalMappingsLocked(pmaIterator{mm.pmas.FindSegment(ar.Start)}, ar); !pims.IsEmpty(); pims = pims.Tail() {
 			ims = append(ims, pims.Head())
 		}
 	}
@@ -949,6 +961,14 @@ func (mm *MemoryManager) addRSSLocked(ar hostarch.AddrRange) {
 func (mm *MemoryManager) removeRSSLocked(ar hostarch.AddrRange) {
 	mm.curRSS -= uint64(ar.Length())
 }
+
+// +stateify savable
+type pmaSet = set8.Set[hostarch.Addr, pma, pmaSetFunctions]
+
+type pmaIterator struct {
+	set8.Iterator[hostarch.Addr, pma, pmaSetFunctions]
+}
+type pmaGapIterator = set8.GapIterator[hostarch.Addr, pma, pmaSetFunctions]
 
 // pmaSetFunctions implements segment.Functions for pmaSet.
 type pmaSetFunctions struct{}
@@ -1014,10 +1034,11 @@ func (mm *MemoryManager) findOrSeekPrevUpperBoundPMA(addr hostarch.Addr, pgap pm
 	// Optimistically check if pgap.PrevSegment() is the PMA we're looking for,
 	// which is the case if findOrSeekPrevUpperBoundPMA is called to find the
 	// start of a range containing only a single PMA.
-	if pseg := pgap.PrevSegment(); pseg.Start() <= addr {
+	pseg := pmaIterator{pgap.PrevSegment()}
+	if pseg.Start() <= addr {
 		return pseg
 	}
-	return mm.pmas.UpperBoundSegment(addr)
+	return pmaIterator{mm.pmas.UpperBoundSegment(addr)}
 }
 
 // getInternalMappingsLocked ensures that pseg.ValuePtr().internalMappings is

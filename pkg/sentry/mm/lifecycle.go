@@ -144,13 +144,15 @@ func (mm *MemoryManager) Fork(ctx context.Context) (*MemoryManager, error) {
 	if dontforks {
 		defer mm.pmas.MergeInsideRange(mm.applicationAddrRange())
 	}
-	srcvseg := mm.vmas.FirstSegment()
+	srcvseg := vmaIterator{mm.vmas.FirstSegment()}
 	dstpgap := mm2.pmas.FirstGap()
 	var unmapAR hostarch.AddrRange
 	memCgID := pgalloc.MemoryCgroupIDFromContext(ctx)
-	for srcpseg := mm.pmas.FirstSegment(); srcpseg.Ok(); srcpseg = srcpseg.NextSegment() {
+	srcpseg := pmaIterator{mm.pmas.FirstSegment()}
+	for srcpseg.Ok() {
 		pma := srcpseg.ValuePtr()
 		if !pma.private {
+			srcpseg = pmaIterator{srcpseg.NextSegment()}
 			continue
 		}
 
@@ -167,8 +169,9 @@ func (mm *MemoryManager) Fork(ctx context.Context) (*MemoryManager, error) {
 				}
 			}
 
-			srcpseg = mm.pmas.Isolate(srcpseg, srcvseg.Range())
+			srcpseg = pmaIterator{mm.pmas.Isolate(srcpseg.Iterator, srcvseg.Range())}
 			if srcvseg.ValuePtr().dontfork {
+				srcpseg = pmaIterator{srcpseg.NextSegment()}
 				continue
 			}
 			pma = srcpseg.ValuePtr()
@@ -201,6 +204,7 @@ func (mm *MemoryManager) Fork(ctx context.Context) (*MemoryManager, error) {
 		addrRange := srcpseg.Range()
 		mm2.addRSSLocked(addrRange)
 		dstpgap = mm2.pmas.Insert(dstpgap, addrRange, *pma).NextGap()
+		srcpseg = pmaIterator{srcpseg.NextSegment()}
 	}
 	if unmapAR.Length() != 0 {
 		mm.unmapASLocked(unmapAR)

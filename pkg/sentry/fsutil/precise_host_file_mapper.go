@@ -21,8 +21,21 @@ import (
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/safemem"
+	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 )
+
+// +stateify savable
+type refsSet = segment.Set[uint64, uint64, refsSetFuncs]
+
+type refsIterator = segment.Iterator[uint64, uint64, refsSetFuncs]
+type refsGapIterator = segment.GapIterator[uint64, uint64, refsSetFuncs]
+
+// +stateify savable
+type mappingSet = segment.Set[uint64, mapping, mappingSetFuncs]
+
+type mappingIterator = segment.Iterator[uint64, mapping, mappingSetFuncs]
+type mappingGapIterator = segment.GapIterator[uint64, mapping, mappingSetFuncs]
 
 // PreciseHostFileMapper caches mappings of an arbitrary host file descriptor.
 // It is used by implementations of memmap.Mappable that represent a host file

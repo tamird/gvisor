@@ -73,7 +73,36 @@ func main() {
 		Name:  name,
 		Files: files,
 	}
-	f := ast.MergePackageFiles(pkg, ast.FilterUnassociatedComments|ast.FilterFuncDuplicates|ast.FilterImportDuplicates)
+	f := ast.MergePackageFiles(pkg, ast.FilterUnassociatedComments|ast.FilterImportDuplicates)
+
+	// Deduplicate functions while respecting receiver types.
+	seen := make(map[string]struct{})
+	deduped := make([]ast.Decl, 0, len(f.Decls))
+	for _, d := range f.Decls {
+		fn, ok := d.(*ast.FuncDecl)
+		if !ok {
+			deduped = append(deduped, d)
+			continue
+		}
+
+		var key string
+		if fn.Recv == nil || len(fn.Recv.List) != 1 {
+			key = "func:" + fn.Name.Name
+		} else {
+			var buf bytes.Buffer
+			if err := format.Node(&buf, fset, fn.Recv.List[0].Type); err != nil {
+				fatalf("formatting receiver: %v\n", err)
+			}
+			key = "method:" + fn.Name.Name + ":" + buf.String()
+		}
+
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		deduped = append(deduped, d)
+	}
+	f.Decls = deduped
 
 	// Create a new declaration slice with all imports at the top, merging any
 	// redundant imports.

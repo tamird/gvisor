@@ -21,6 +21,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/ilist"
+	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -69,6 +70,12 @@ type SyntheticClock struct {
 type syntheticTimerQueue struct {
 	timers syntheticTimerList
 }
+
+// +stateify savable
+type syntheticTimerSet = segment.Set[uint64, syntheticTimerQueue, syntheticTimerSetFunctions]
+
+type syntheticTimerIterator = segment.Iterator[uint64, syntheticTimerQueue, syntheticTimerSetFunctions]
+type syntheticTimerGapIterator = segment.GapIterator[uint64, syntheticTimerQueue, syntheticTimerSetFunctions]
 
 // NewSyntheticTimer returns an initialized heap-allocated SyntheticTimer.
 func NewSyntheticTimer(clock *SyntheticClock, listener Listener) *SyntheticTimer {

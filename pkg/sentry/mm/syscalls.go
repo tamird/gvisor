@@ -394,7 +394,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 	defer mm.mappingMu.Unlock()
 
 	// All cases require that a vma exists at oldAddr.
-	vseg := mm.vmas.FindSegment(oldAddr)
+	vseg := vmaIterator{mm.vmas.FindSegment(oldAddr)}
 	if !vseg.Ok() {
 		return 0, linuxerr.EFAULT
 	}
@@ -531,7 +531,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 		}
 
 		// unmapLocked may have invalidated vseg; look it up again.
-		vseg = mm.vmas.FindSegment(oldAddr)
+		vseg = vmaIterator{mm.vmas.FindSegment(oldAddr)}
 	}
 
 	oldAR := hostarch.AddrRange{oldAddr, oldEnd}
@@ -571,7 +571,7 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 		if vma.id != nil {
 			vma.id.IncRef()
 		}
-		vseg := mm.vmas.Insert(mm.vmas.FindGap(newAR.Start), newAR, vma)
+		vseg := vmaIterator{mm.vmas.Insert(mm.vmas.FindGap(newAR.Start), newAR, vma)}
 		mm.usageAS += uint64(newAR.Length())
 		if vma.isPrivateDataLocked() {
 			mm.dataAS += uint64(newAR.Length())
@@ -597,10 +597,10 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 	// 2. We can't call vma.mappable.RemoveMapping, because pmas are still at
 	// oldAR, so calling RemoveMapping could cause us to miss an invalidation
 	// overlapping oldAR.
-	vseg = mm.vmas.Isolate(vseg, oldAR)
+	vseg = vmaIterator{mm.vmas.Isolate(vseg.Iterator, oldAR)}
 	vma := vseg.ValuePtr().copy()
-	mm.vmas.Remove(vseg)
-	vseg = mm.vmas.Insert(mm.vmas.FindGap(newAR.Start), newAR, vma)
+	mm.vmas.Remove(vseg.Iterator)
+	vseg = vmaIterator{mm.vmas.Insert(mm.vmas.FindGap(newAR.Start), newAR, vma)}
 	mm.usageAS = mm.usageAS - uint64(oldAR.Length()) + uint64(newAR.Length())
 	if vma.isPrivateDataLocked() {
 		mm.dataAS = mm.dataAS - uint64(oldAR.Length()) + uint64(newAR.Length())
@@ -655,7 +655,7 @@ func (mm *MemoryManager) MProtect(addr hostarch.Addr, length uint64, realPerms h
 	// be growsDown, but does not require it to extend all the way to ar.Start;
 	// vmas after the first must be contiguous but need not be growsDown, like
 	// the non-growsDown case.
-	vseg := mm.vmas.LowerBoundSegment(ar.Start)
+	vseg := vmaIterator{mm.vmas.LowerBoundSegment(ar.Start)}
 	if !vseg.Ok() {
 		return linuxerr.ENOMEM
 	}
@@ -681,7 +681,7 @@ func (mm *MemoryManager) MProtect(addr hostarch.Addr, length uint64, realPerms h
 		mm.pmas.MergeInsideRange(ar)
 		mm.pmas.MergeOutsideRange(ar)
 	}()
-	pseg := mm.pmas.LowerBoundSegment(ar.Start)
+	pseg := pmaIterator{mm.pmas.LowerBoundSegment(ar.Start)}
 	var didUnmapAS bool
 	for {
 		// Check for permission validity before splitting vmas, for consistency
@@ -689,7 +689,7 @@ func (mm *MemoryManager) MProtect(addr hostarch.Addr, length uint64, realPerms h
 		if !vseg.ValuePtr().maxPerms.SupersetOf(effectivePerms) {
 			return linuxerr.EACCES
 		}
-		vseg = mm.vmas.Isolate(vseg, ar)
+		vseg = vmaIterator{mm.vmas.Isolate(vseg.Iterator, ar)}
 
 		// Update vma permissions.
 		vma := vseg.ValuePtr()
@@ -707,7 +707,7 @@ func (mm *MemoryManager) MProtect(addr hostarch.Addr, length uint64, realPerms h
 		// Propagate vma permission changes to pmas.
 		for pseg.Ok() && pseg.Start() < vseg.End() {
 			if pseg.Range().Overlaps(vseg.Range()) {
-				pseg = mm.pmas.Isolate(pseg, vseg.Range())
+				pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, vseg.Range())}
 				pma := pseg.ValuePtr()
 				if !effectivePerms.SupersetOf(pma.effectivePerms) && !didUnmapAS {
 					// Unmap all of ar, not just vseg.Range(), to minimize host
@@ -720,14 +720,15 @@ func (mm *MemoryManager) MProtect(addr hostarch.Addr, length uint64, realPerms h
 					pma.effectivePerms.Write = false
 				}
 			}
-			pseg = pseg.NextSegment()
+			pseg = pmaIterator{pseg.NextSegment()}
 		}
 
 		// Continue to the next vma.
 		if ar.End <= vseg.End() {
 			return nil
 		}
-		vseg, _ = vseg.NextNonEmpty()
+		nextSeg, _ := vseg.NextNonEmpty()
+		vseg = vmaIterator{nextSeg}
 		if !vseg.Ok() {
 			return linuxerr.ENOMEM
 		}
@@ -870,13 +871,13 @@ func (mm *MemoryManager) MLock(ctx context.Context, addr hostarch.Addr, length u
 
 	// Apply the new mlock mode to vmas.
 	var unmapped bool
-	vseg := mm.vmas.FindSegment(ar.Start)
+	vseg := vmaIterator{mm.vmas.FindSegment(ar.Start)}
 	for {
 		if !vseg.Ok() {
 			unmapped = true
 			break
 		}
-		vseg = mm.vmas.Isolate(vseg, ar)
+		vseg = vmaIterator{mm.vmas.Isolate(vseg.Iterator, ar)}
 		vma := vseg.ValuePtr()
 		prevMode := vma.mlockMode
 		vma.mlockMode = mode
@@ -888,7 +889,8 @@ func (mm *MemoryManager) MLock(ctx context.Context, addr hostarch.Addr, length u
 		if ar.End <= vseg.End() {
 			break
 		}
-		vseg, _ = vseg.NextNonEmpty()
+		nextSeg, _ := vseg.NextNonEmpty()
+		vseg = vmaIterator{nextSeg}
 	}
 	mm.vmas.MergeInsideRange(ar)
 	mm.vmas.MergeOutsideRange(ar)
@@ -903,7 +905,8 @@ func (mm *MemoryManager) MLock(ctx context.Context, addr hostarch.Addr, length u
 		// NextSegment below.
 		mm.activeMu.Lock()
 		mm.mappingMu.DowngradeLock()
-		for vseg := mm.vmas.FindSegment(ar.Start); vseg.Ok() && vseg.Start() < ar.End; vseg = vseg.NextSegment() {
+		vseg := vmaIterator{mm.vmas.FindSegment(ar.Start)}
+		for vseg.Ok() && vseg.Start() < ar.End {
 			if !vseg.ValuePtr().effectivePerms.Any() {
 				// Linux: mm/gup.c:__get_user_pages() returns EFAULT in this
 				// case, which is converted to ENOMEM by mlock.
@@ -924,13 +927,14 @@ func (mm *MemoryManager) MLock(ctx context.Context, addr hostarch.Addr, length u
 				}
 				return err
 			}
+			vseg = vmaIterator{vseg.NextSegment()}
 		}
 
 		// Map pmas into the active AddressSpace, if we have one.
 		mm.mappingMu.RUnlock()
 		if mm.as != nil {
 			mm.activeMu.DowngradeLock()
-			err := mm.mapASLocked(ctx, mm.pmas.LowerBoundSegment(ar.Start), ar, memmap.PlatformEffectCommit)
+			err := mm.mapASLocked(ctx, pmaIterator{mm.pmas.LowerBoundSegment(ar.Start)}, ar, memmap.PlatformEffectCommit)
 			mm.activeMu.RUnlock()
 			if err != nil {
 				return err
@@ -980,7 +984,8 @@ func (mm *MemoryManager) MLockAll(ctx context.Context, opts MLockAllOpts) error 
 				}
 			}
 		}
-		for vseg := mm.vmas.FirstSegment(); vseg.Ok(); vseg = vseg.NextSegment() {
+		vseg := vmaIterator{mm.vmas.FirstSegment()}
+		for vseg.Ok() {
 			vma := vseg.ValuePtr()
 			prevMode := vma.mlockMode
 			vma.mlockMode = opts.Mode
@@ -989,6 +994,7 @@ func (mm *MemoryManager) MLockAll(ctx context.Context, opts MLockAllOpts) error 
 			} else if opts.Mode == memmap.MLockNone && prevMode != memmap.MLockNone {
 				mm.lockedAS -= uint64(vseg.Range().Length())
 			}
+			vseg = vmaIterator{vseg.NextSegment()}
 		}
 	}
 
@@ -1004,17 +1010,19 @@ func (mm *MemoryManager) MLockAll(ctx context.Context, opts MLockAllOpts) error 
 		// Try to get usable pmas.
 		mm.activeMu.Lock()
 		mm.mappingMu.DowngradeLock()
-		for vseg := mm.vmas.FirstSegment(); vseg.Ok(); vseg = vseg.NextSegment() {
+		vseg := vmaIterator{mm.vmas.FirstSegment()}
+		for vseg.Ok() {
 			if vseg.ValuePtr().effectivePerms.Any() {
 				mm.getPMAsLocked(ctx, vseg, vseg.Range(), hostarch.NoAccess, true /* callerIndirectCommit */)
 			}
+			vseg = vmaIterator{vseg.NextSegment()}
 		}
 
 		// Map all pmas into the active AddressSpace, if we have one.
 		mm.mappingMu.RUnlock()
 		if mm.as != nil {
 			mm.activeMu.DowngradeLock()
-			mm.mapASLocked(ctx, mm.pmas.FirstSegment(), mm.applicationAddrRange(), memmap.PlatformEffectCommit)
+			mm.mapASLocked(ctx, pmaIterator{mm.pmas.FirstSegment()}, mm.applicationAddrRange(), memmap.PlatformEffectCommit)
 			mm.activeMu.RUnlock()
 		} else {
 			mm.activeMu.Unlock()
@@ -1029,7 +1037,7 @@ func (mm *MemoryManager) MLockAll(ctx context.Context, opts MLockAllOpts) error 
 func (mm *MemoryManager) NumaPolicy(addr hostarch.Addr) (linux.NumaPolicy, uint64, error) {
 	mm.mappingMu.RLock()
 	defer mm.mappingMu.RUnlock()
-	vseg := mm.vmas.FindSegment(addr)
+	vseg := vmaIterator{mm.vmas.FindSegment(addr)}
 	if !vseg.Ok() {
 		return 0, 0, linuxerr.EFAULT
 	}
@@ -1058,7 +1066,7 @@ func (mm *MemoryManager) SetNumaPolicy(addr hostarch.Addr, length uint64, policy
 		mm.vmas.MergeInsideRange(ar)
 		mm.vmas.MergeOutsideRange(ar)
 	}()
-	vseg := mm.vmas.LowerBoundSegment(ar.Start)
+	vseg := vmaIterator{mm.vmas.LowerBoundSegment(ar.Start)}
 	lastEnd := ar.Start
 	for {
 		if !vseg.Ok() || lastEnd < vseg.Start() {
@@ -1066,7 +1074,7 @@ func (mm *MemoryManager) SetNumaPolicy(addr hostarch.Addr, length uint64, policy
 			// range specified [sic] by addr and len." - mbind(2)
 			return linuxerr.EFAULT
 		}
-		vseg = mm.vmas.Isolate(vseg, ar)
+		vseg = vmaIterator{mm.vmas.Isolate(vseg.Iterator, ar)}
 		vma := vseg.ValuePtr()
 		vma.numaPolicy = policy
 		vma.numaNodemask = nodemask
@@ -1074,7 +1082,8 @@ func (mm *MemoryManager) SetNumaPolicy(addr hostarch.Addr, length uint64, policy
 		if ar.End <= lastEnd {
 			return nil
 		}
-		vseg, _ = vseg.NextNonEmpty()
+		nextSeg, _ := vseg.NextNonEmpty()
+		vseg = vmaIterator{nextSeg}
 	}
 }
 
@@ -1133,8 +1142,8 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 	//	copy-on-write), use MemoryFile.Decommit() instead to keep the allocated
 	//	huge page intact for future use.
 	didUnmapAS := false
-	pseg := mm.pmas.LowerBoundSegment(ar.Start)
-	vseg := mm.vmas.LowerBoundSegment(ar.Start)
+	pseg := pmaIterator{mm.pmas.LowerBoundSegment(ar.Start)}
+	vseg := vmaIterator{mm.vmas.LowerBoundSegment(ar.Start)}
 	if !vseg.Ok() {
 		return linuxerr.ENOMEM
 	}
@@ -1165,7 +1174,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 						if psegAR.End <= firstHugeEnd {
 							// All of psegAR falls within a single huge page.
 							mm.mf.Decommit(pseg.fileRangeOf(psegAR))
-							pseg = pseg.NextSegment()
+							pseg = pmaIterator{pseg.NextSegment()}
 							continue
 						}
 						if firstHugeEnd == lastWholeHugeEnd && lastWholeHugeEnd != psegAR.End {
@@ -1176,7 +1185,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 							// MemoryFile.Decommit() for the first and last
 							// huge pages respectively.
 							mm.mf.Decommit(pseg.fileRangeOf(psegAR))
-							pseg = pseg.NextSegment()
+							pseg = pmaIterator{pseg.NextSegment()}
 							continue
 						}
 						mm.mf.Decommit(pseg.fileRangeOf(hostarch.AddrRange{psegAR.Start, firstHugeEnd}))
@@ -1186,7 +1195,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 					// is either firstHugeStart or firstHugeEnd) and lastWholeHugeEnd
 					// normally.
 					if psegAR.Start < lastWholeHugeEnd {
-						pseg = mm.pmas.Isolate(pseg, hostarch.AddrRange{psegAR.Start, lastWholeHugeEnd})
+						pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, hostarch.AddrRange{psegAR.Start, lastWholeHugeEnd})}
 						pma = pseg.ValuePtr()
 						if !didUnmapAS {
 							// Unmap all of ar, not just pseg.Range(), to minimize host
@@ -1197,17 +1206,17 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 						}
 						pma.file.DecRef(pseg.fileRange())
 						mm.removeRSSLocked(pseg.Range())
-						pseg = mm.pmas.Remove(pseg).NextSegment()
+						pseg = pmaIterator{mm.pmas.Remove(pseg.Iterator).NextSegment()}
 					}
 					if lastWholeHugeEnd != psegAR.End {
 						// psegAR.End is not hugepage-aligned.
 						mm.mf.Decommit(pseg.fileRangeOf(hostarch.AddrRange{lastWholeHugeEnd, psegAR.End}))
-						pseg = pseg.NextSegment()
+						pseg = pmaIterator{pseg.NextSegment()}
 					}
 					continue
 				}
 			}
-			pseg = mm.pmas.Isolate(pseg, vsegAR)
+			pseg = pmaIterator{mm.pmas.Isolate(pseg.Iterator, vsegAR)}
 			pma = pseg.ValuePtr()
 			if !didUnmapAS {
 				// Unmap all of ar, not just pseg.Range(), to minimize host
@@ -1218,7 +1227,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 			}
 			pma.file.DecRef(pseg.fileRange())
 			mm.removeRSSLocked(pseg.Range())
-			pseg = mm.pmas.Remove(pseg).NextSegment()
+			pseg = pmaIterator{mm.pmas.Remove(pseg.Iterator).NextSegment()}
 		}
 		if ar.End <= vseg.End() {
 			break
@@ -1227,7 +1236,7 @@ func (mm *MemoryManager) Decommit(addr hostarch.Addr, length uint64) error {
 		if !vgap.IsEmpty() {
 			hadvgap = true
 		}
-		vseg = vgap.NextSegment()
+		vseg = vmaIterator{vgap.NextSegment()}
 	}
 
 	// "If there are some parts of the specified address space that are not
@@ -1270,7 +1279,7 @@ func (mm *MemoryManager) madviseMutateVMAs(addr hostarch.Addr, length uint64, f 
 	hadvgap := ar.Start < vseg.Start()
 	for vseg.Start() < ar.End {
 		vseg = mm.vmas.SplitAfter(vseg, ar.End)
-		err := f(vseg)
+		err := f(vmaIterator{vseg})
 		vseg = mm.vmas.MergePrev(vseg)
 		if err != nil {
 			mm.vmas.MergeNext(vseg)
@@ -1370,7 +1379,7 @@ func (mm *MemoryManager) MSync(ctx context.Context, addr hostarch.Addr, length u
 
 	mm.mappingMu.RLock()
 	// Can't defer mm.mappingMu.RUnlock(); see below.
-	vseg := mm.vmas.LowerBoundSegment(ar.Start)
+	vseg := vmaIterator{mm.vmas.LowerBoundSegment(ar.Start)}
 	if !vseg.Ok() {
 		mm.mappingMu.RUnlock()
 		return linuxerr.ENOMEM
@@ -1411,13 +1420,13 @@ func (mm *MemoryManager) MSync(ctx context.Context, addr hostarch.Addr, length u
 				break
 			}
 			mm.mappingMu.RLock()
-			vseg = mm.vmas.LowerBoundSegment(lastEnd)
+			vseg = vmaIterator{mm.vmas.LowerBoundSegment(lastEnd)}
 		} else {
 			if lastEnd >= ar.End {
 				mm.mappingMu.RUnlock()
 				break
 			}
-			vseg = vseg.NextSegment()
+			vseg = vmaIterator{vseg.NextSegment()}
 		}
 	}
 
@@ -1526,7 +1535,8 @@ func (mm *MemoryManager) FindVMAByName(ar hostarch.AddrRange, name string) (host
 	mm.mappingMu.RLock()
 	defer mm.mappingMu.RUnlock()
 
-	for vseg := mm.vmas.LowerBoundSegment(ar.Start); vseg.Ok(); vseg = vseg.NextSegment() {
+	vseg := vmaIterator{mm.vmas.LowerBoundSegment(ar.Start)}
+	for vseg.Ok() {
 		start := vseg.Start()
 		if !ar.Contains(start) {
 			break
@@ -1536,6 +1546,7 @@ func (mm *MemoryManager) FindVMAByName(ar hostarch.AddrRange, name string) (host
 		if vma.name == name {
 			return start, vma.off, nil
 		}
+		vseg = vmaIterator{vseg.NextSegment()}
 	}
 	return 0, 0, fmt.Errorf("could not find %q in %s", name, ar)
 }

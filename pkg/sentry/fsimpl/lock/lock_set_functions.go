@@ -16,9 +16,19 @@ package lock
 
 import (
 	"math"
+
+	"gvisor.dev/gvisor/pkg/segment"
 )
 
 // LockSet maps a set of Locks into a file.  The key is the file offset.
+//
+// +stateify savable
+type LockSet struct {
+	segment.Set[uint64, Lock, lockSetFunctions]
+}
+
+type LockIterator = segment.Iterator[uint64, Lock, lockSetFunctions]
+type LockGapIterator = segment.GapIterator[uint64, Lock, lockSetFunctions]
 
 type lockSetFunctions struct{}
 

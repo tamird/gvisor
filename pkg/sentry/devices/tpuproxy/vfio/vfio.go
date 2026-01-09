@@ -28,11 +28,18 @@ import (
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/segment"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
+	"gvisor.dev/gvisor/pkg/sentry/mm"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
 type DevAddrRange = segment.Range[uint64]
+
+// +stateify savable
+type DevAddrSet = segment.Set[uint64, mm.PinnedRange, devAddrSetFuncs]
+
+type DevAddrIterator = segment.Iterator[uint64, mm.PinnedRange, devAddrSetFuncs]
+type DevAddrGapIterator = segment.GapIterator[uint64, mm.PinnedRange, devAddrSetFuncs]
 
 const (
 	// VFIO_MINOR is the VFIO minor number from include/linux/miscdevice.h.

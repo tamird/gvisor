@@ -725,7 +725,7 @@ slowPath:
 func (mm *MemoryManager) getVecIOMappingsLocked(ars hostarch.AddrRangeSeq, at hostarch.AccessType) (safemem.BlockSeq, *ioBufTracker, error) {
 	if ars.NumRanges() == 1 {
 		ar := ars.Head()
-		return mm.getIOMappingsLocked(mm.pmas.FindSegment(ar.Start), ar, at)
+		return mm.getIOMappingsLocked(pmaIterator{mm.pmas.FindSegment(ar.Start)}, ar, at)
 	}
 
 	var ims []safemem.Block
@@ -737,7 +737,7 @@ func (mm *MemoryManager) getVecIOMappingsLocked(ars hostarch.AddrRangeSeq, at ho
 			continue
 		}
 		var err error
-		ims, t, unbufBytes, err = mm.getIOMappingsTrackedLocked(mm.pmas.FindSegment(ar.Start), ar, at, ims, t, unbufBytes)
+		ims, t, unbufBytes, err = mm.getIOMappingsTrackedLocked(pmaIterator{mm.pmas.FindSegment(ar.Start)}, ar, at, ims, t, unbufBytes)
 		if err != nil {
 			return safemem.BlockSeqFromSlice(ims), t, err
 		}
@@ -817,7 +817,8 @@ func (mm *MemoryManager) getIOMappingsTrackedLocked(pseg pmaIterator, ar hostarc
 		if ar.End <= pseg.End() {
 			return ims, t, unbufBytes, nil
 		}
-		pseg, _ = pseg.NextNonEmpty()
+		nextSeg, _ := pseg.NextNonEmpty()
+		pseg = pmaIterator{nextSeg}
 	}
 }
 

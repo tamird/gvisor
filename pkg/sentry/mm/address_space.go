@@ -248,7 +248,7 @@ func (mm *MemoryManager) mapASLocked(ctx context.Context, pseg pmaIterator, ar h
 				}
 			}
 		}
-		pseg = pseg.NextSegment()
+		pseg = pmaIterator{pseg.NextSegment()}
 	}
 	return nil
 }

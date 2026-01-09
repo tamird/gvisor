@@ -1,23 +1,8 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "synthetic_timer_set",
-    out = "synthetic_timer_set.go",
-    package = "ktime",
-    prefix = "syntheticTimer",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "uint64",
-        "Range": "uint64Range",
-        "Value": "syntheticTimerQueue",
-        "Functions": "syntheticTimerSetFunctions",
-    },
 )
 
 go_library(
@@ -27,7 +12,6 @@ go_library(
         "ktime.go",
         "sampled_timer.go",
         "synthetic_timer.go",
-        "synthetic_timer_set.go",
     ],
     visibility = ["//pkg/sentry:internal"],
     deps = [

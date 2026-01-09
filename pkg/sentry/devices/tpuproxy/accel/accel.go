@@ -34,6 +34,12 @@ import (
 
 type DevAddrRange = segment.Range[uint64]
 
+// +stateify savable
+type DevAddrSet = segment.Set[uint64, pinnedAccelMem, devAddrSetFuncs]
+
+type DevAddrIterator = segment.Iterator[uint64, pinnedAccelMem, devAddrSetFuncs]
+type DevAddrGapIterator = segment.GapIterator[uint64, pinnedAccelMem, devAddrSetFuncs]
+
 // accelDevice implements vfs.Device for /dev/accel[0-9]+.
 //
 // +stateify savable

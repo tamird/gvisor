@@ -1,27 +1,9 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "id_map_set",
-    out = "id_map_set.go",
-    consts = {
-        "minDegree": "3",
-    },
-    package = "auth",
-    prefix = "idMap",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "uint32",
-        "Range": "idMapRange",
-        "Value": "uint32",
-        "Functions": "idMapFunctions",
-    },
 )
 
 declare_mutex(
@@ -56,7 +38,6 @@ go_library(
         "id.go",
         "id_map.go",
         "id_map_functions.go",
-        "id_map_set.go",
         "key.go",
         "keyset_mutex.go",
         "keyset_transaction_mutex.go",

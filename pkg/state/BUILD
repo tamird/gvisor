@@ -1,35 +1,13 @@
 load("//tools:defs.bzl", "go_library")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-go_template_instance(
-    name = "addr_set",
-    out = "addr_set.go",
-    consts = {
-        "minDegree": "10",
-    },
-    imports = {
-        "reflect": "reflect",
-    },
-    package = "state",
-    prefix = "addr",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "uintptr",
-        "Range": "addrRange",
-        "Value": "*objectEncodeState",
-        "Functions": "addrSetFunctions",
-    },
-)
-
 go_library(
     name = "state",
     srcs = [
-        "addr_set.go",
         "debug.go",
         "decode.go",
         "decode_unsafe.go",
@@ -49,6 +27,7 @@ go_library(
     deps = [
         "//pkg/ilist",
         "//pkg/segment",
+        "//pkg/segment/set10",
         "//pkg/state/wire",
     ],
 )

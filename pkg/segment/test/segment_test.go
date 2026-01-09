@@ -19,6 +19,8 @@ import (
 	"math/rand"
 	"slices"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/segment/setgaps"
 )
 
 const (
@@ -59,59 +61,138 @@ func validate(nr int, r Range, v int) error {
 	return nil
 }
 
-// checkSetMaxGap returns an error if maxGap inside all nodes of s is not well
-// maintained.
-func checkSetMaxGap(s *gapSet) error {
-	n := s.root
-	return checkNodeMaxGap(&n)
+type segmentIter[Iter any] interface {
+	Ok() bool
+	Start() int
+	Range() Range
+	Value() int
+	NextSegment() Iter
 }
 
-// checkNodeMaxGap returns an error if maxGap inside the subtree rooted by n is
-// not well maintained.
-func checkNodeMaxGap(n *gapnode) error {
-	var max int
-	if !n.hasChildren {
-		max = n.calculateMaxGapLeaf()
-	} else {
-		for i := 0; i <= n.nrSegments; i++ {
-			child := n.children[i]
-			if err := checkNodeMaxGap(child); err != nil {
+func segmentTestCheck[Iter segmentIter[Iter], Set interface{ FirstSegment() Iter }](s Set, expectedSegments int, segFunc func(int, Range, int) error) error {
+	havePrev := false
+	prev := 0
+	nrSegments := 0
+	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
+		next := seg.Start()
+		if havePrev && prev >= next {
+			return fmt.Errorf("incorrect order: key %d (segment %d) >= key %d (segment %d)", prev, nrSegments-1, next, nrSegments)
+		}
+		if segFunc != nil {
+			if err := segFunc(nrSegments, seg.Range(), seg.Value()); err != nil {
 				return err
 			}
-			if temp := child.maxGap.Get(); i == 0 || temp > max {
-				max = temp
+		}
+		prev = next
+		havePrev = true
+		nrSegments++
+	}
+	if nrSegments != expectedSegments {
+		return fmt.Errorf("incorrect number of segments: got %d, wanted %d", nrSegments, expectedSegments)
+	}
+	return nil
+}
+
+func countSegments[Iter segmentIter[Iter], Set interface{ FirstSegment() Iter }](s Set) (segments int) {
+	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
+		segments++
+	}
+	return segments
+}
+
+// checkSetMaxGap verifies gap-search behavior for a range of min sizes.
+func checkSetMaxGap(s *gapSet) error {
+	type gapEntry struct {
+		gap    setgaps.GapIterator[int, int, gapSetFunctions]
+		length int
+	}
+
+	var gaps []gapEntry
+	for gap := s.FirstGap(); gap.Ok(); gap = gap.NextGap() {
+		gaps = append(gaps, gapEntry{
+			gap:    gap,
+			length: gap.Range().Length(),
+		})
+	}
+
+	sameGap := func(a, b setgaps.GapIterator[int, int, gapSetFunctions]) bool {
+		if a.Ok() != b.Ok() {
+			return false
+		}
+		if !a.Ok() {
+			return true
+		}
+		return a.Start() == b.Start() && a.End() == b.End()
+	}
+
+	wantNext := func(start int, minSize int) setgaps.GapIterator[int, int, gapSetFunctions] {
+		for i := start; i < len(gaps); i++ {
+			if gaps[i].length >= minSize {
+				return gaps[i].gap
 			}
 		}
+		return setgaps.GapIterator[int, int, gapSetFunctions]{}
 	}
-	if max != n.maxGap.Get() {
-		return fmt.Errorf("maxGap wrong in node\n%vexpected: %d got: %d", n, max, n.maxGap)
+	wantPrev := func(start int, minSize int) setgaps.GapIterator[int, int, gapSetFunctions] {
+		for i := start; i >= 0; i-- {
+			if gaps[i].length >= minSize {
+				return gaps[i].gap
+			}
+		}
+		return setgaps.GapIterator[int, int, gapSetFunctions]{}
+	}
+
+	maxInt := int(^uint(0) >> 1)
+	minSizes := map[int]struct{}{0: {}}
+	for _, g := range gaps {
+		minSizes[g.length] = struct{}{}
+		if g.length < maxInt {
+			minSizes[g.length+1] = struct{}{}
+		}
+	}
+
+	for minSize := range minSizes {
+		if got, want := s.FirstLargeEnoughGap(minSize), wantNext(0, minSize); !sameGap(got, want) {
+			return fmt.Errorf("FirstLargeEnoughGap(%d): got %v, wanted %v", minSize, got, want)
+		}
+		if got, want := s.LastLargeEnoughGap(minSize), wantPrev(len(gaps)-1, minSize); !sameGap(got, want) {
+			return fmt.Errorf("LastLargeEnoughGap(%d): got %v, wanted %v", minSize, got, want)
+		}
+		for i, g := range gaps {
+			if got, want := g.gap.NextLargeEnoughGap(minSize), wantNext(i, minSize); !sameGap(got, want) {
+				return fmt.Errorf("NextLargeEnoughGap(%d) from %v: got %v, wanted %v", minSize, g.gap.Range(), got, want)
+			}
+			if got, want := g.gap.PrevLargeEnoughGap(minSize), wantPrev(i, minSize); !sameGap(got, want) {
+				return fmt.Errorf("PrevLargeEnoughGap(%d) from %v: got %v, wanted %v", minSize, g.gap.Range(), got, want)
+			}
+		}
 	}
 	return nil
 }
 
 func TestAddRandom(t *testing.T) {
-	var s Set
+	var s IntSet
 	order := rand.Perm(testSize)
 	var nrInsertions int
 	for i, j := range order {
 		s.InsertWithoutMergingRange(Range{j, j + 1}, j+valueOffset)
 		nrInsertions++
-		if err := s.segmentTestCheck(nrInsertions, validate); err != nil {
+		if err := segmentTestCheck(&s, nrInsertions, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
 	}
-	if got, want := s.countSegments(), nrInsertions; got != want {
+	if got, want := countSegments(&s), nrInsertions; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Insertion order: %v", order[:nrInsertions])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 	}
 }
 
 func TestRemoveRandom(t *testing.T) {
-	var s Set
+	var s IntSet
 	for i := 0; i < testSize; i++ {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i+valueOffset)
 	}
@@ -125,17 +206,17 @@ func TestRemoveRandom(t *testing.T) {
 		}
 		s.Remove(seg)
 		nrRemovals++
-		if err := s.segmentTestCheck(testSize-nrRemovals, validate); err != nil {
+		if err := segmentTestCheck(&s, testSize-nrRemovals, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
 	}
-	if got, want := s.countSegments(), testSize-nrRemovals; got != want {
+	if got, want := countSegments(&s), testSize-nrRemovals; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Removal order: %v", order[:nrRemovals])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 		t.FailNow()
 	}
 }
@@ -147,7 +228,7 @@ func TestMaxGapAddRandom(t *testing.T) {
 	for i, j := range order {
 		s.InsertWithoutMergingRange(Range{j, j + 1}, j+valueOffset)
 		nrInsertions++
-		if err := s.segmentTestCheck(nrInsertions, validate); err != nil {
+		if err := segmentTestCheck(&s, nrInsertions, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
@@ -156,12 +237,12 @@ func TestMaxGapAddRandom(t *testing.T) {
 			break
 		}
 	}
-	if got, want := s.countSegments(), nrInsertions; got != want {
+	if got, want := countSegments(&s), nrInsertions; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Insertion order: %v", order[:nrInsertions])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 	}
 }
 
@@ -172,7 +253,7 @@ func TestMaxGapAddRandomWithRandomInterval(t *testing.T) {
 	for i, j := range order {
 		s.InsertWithoutMergingRange(Range{j, j + rand.Intn(intervalLength-1) + 1}, j+valueOffset)
 		nrInsertions++
-		if err := s.segmentTestCheck(nrInsertions, validate); err != nil {
+		if err := segmentTestCheck(&s, nrInsertions, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
@@ -181,12 +262,12 @@ func TestMaxGapAddRandomWithRandomInterval(t *testing.T) {
 			break
 		}
 	}
-	if got, want := s.countSegments(), nrInsertions; got != want {
+	if got, want := countSegments(&s), nrInsertions; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Insertion order: %v", order[:nrInsertions])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 	}
 }
 
@@ -200,12 +281,12 @@ func TestMaxGapAddRandomWithMerge(t *testing.T) {
 			break
 		}
 	}
-	if got, want := s.countSegments(), 1; got != want {
+	if got, want := countSegments(&s), 1; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Insertion order: %v", order)
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 	}
 }
 
@@ -225,7 +306,7 @@ func TestMaxGapRemoveRandom(t *testing.T) {
 		temprange := seg.Range()
 		s.Remove(seg)
 		nrRemovals++
-		if err := s.segmentTestCheck(testSize-nrRemovals, validate); err != nil {
+		if err := segmentTestCheck(&s, testSize-nrRemovals, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
@@ -234,12 +315,12 @@ func TestMaxGapRemoveRandom(t *testing.T) {
 			break
 		}
 	}
-	if got, want := s.countSegments(), testSize-nrRemovals; got != want {
+	if got, want := countSegments(&s), testSize-nrRemovals; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Removal order: %v", order[:nrRemovals])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 		t.FailNow()
 	}
 }
@@ -261,7 +342,7 @@ func TestMaxGapRemoveHalfRandom(t *testing.T) {
 		temprange := seg.Range()
 		s.Remove(seg)
 		nrRemovals++
-		if err := s.segmentTestCheck(testSize-nrRemovals, validate); err != nil {
+		if err := segmentTestCheck(&s, testSize-nrRemovals, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
@@ -270,12 +351,12 @@ func TestMaxGapRemoveHalfRandom(t *testing.T) {
 			break
 		}
 	}
-	if got, want := s.countSegments(), testSize-nrRemovals; got != want {
+	if got, want := countSegments(&s), testSize-nrRemovals; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
 		t.Logf("Removal order: %v", order[:nrRemovals])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 		t.FailNow()
 	}
 }
@@ -297,7 +378,7 @@ func TestMaxGapRemoveHalfRandomWithMerge(t *testing.T) {
 	}
 	if t.Failed() {
 		t.Logf("Removal order: %v", order[:nrRemovals])
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 		t.FailNow()
 	}
 }
@@ -347,7 +428,7 @@ func TestNextLargeEnoughGap(t *testing.T) {
 		t.Errorf("Search result not correct, got: %v, wanted: %v", gapArr1, gapArr2)
 	}
 	if t.Failed() {
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 		t.FailNow()
 	}
 }
@@ -397,27 +478,27 @@ func TestPrevLargeEnoughGap(t *testing.T) {
 		t.Errorf("Search result not correct, got: %v, wanted: %v", gapArr1, gapArr2)
 	}
 	if t.Failed() {
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 		t.FailNow()
 	}
 }
 
 func TestAddSequentialAdjacent(t *testing.T) {
-	var s Set
+	var s IntSet
 	var nrInsertions int
 	for i := 0; i < testSize; i++ {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i+valueOffset)
 		nrInsertions++
-		if err := s.segmentTestCheck(nrInsertions, validate); err != nil {
+		if err := segmentTestCheck(&s, nrInsertions, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
 	}
-	if got, want := s.countSegments(), nrInsertions; got != want {
+	if got, want := countSegments(&s), nrInsertions; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 	}
 
 	first := s.FirstSegment()
@@ -453,23 +534,23 @@ func TestAddSequentialAdjacent(t *testing.T) {
 }
 
 func TestAddSequentialNonAdjacent(t *testing.T) {
-	var s Set
+	var s IntSet
 	var nrInsertions int
 	for i := 0; i < testSize; i++ {
 		// The range here differs from TestAddSequentialAdjacent so that
 		// consecutive segments are not adjacent.
 		s.InsertWithoutMergingRange(Range{2 * i, 2*i + 1}, 2*i+valueOffset)
 		nrInsertions++
-		if err := s.segmentTestCheck(nrInsertions, validate); err != nil {
+		if err := segmentTestCheck(&s, nrInsertions, validate); err != nil {
 			t.Errorf("Iteration %d: %v", i, err)
 			break
 		}
 	}
-	if got, want := s.countSegments(), nrInsertions; got != want {
+	if got, want := countSegments(&s), nrInsertions; got != want {
 		t.Errorf("Wrong final number of segments: got %d, wanted %d", got, want)
 	}
 	if t.Failed() {
-		t.Logf("Set contents:\n%v", &s)
+		t.Logf("IntSet contents:\n%v", &s)
 	}
 
 	for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
@@ -510,14 +591,14 @@ func TestMerge(t *testing.T) {
 	}
 Tests:
 	for _, test := range tests {
-		var s Set
+		var s IntSet
 		for _, r := range test.initial {
 			s.InsertRange(r, 0)
 		}
 		var i int
 		for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
 			if i > len(test.final) {
-				t.Errorf("%s: Incorrect number of segments: got %d, wanted %d; set contents:\n%v", test.name, s.countSegments(), len(test.final), &s)
+				t.Errorf("%s: Incorrect number of segments: got %d, wanted %d; set contents:\n%v", test.name, countSegments(&s), len(test.final), &s)
 				continue Tests
 			}
 			if got, want := seg.Range(), test.final[i]; got != want {
@@ -566,7 +647,7 @@ func TestIsolate(t *testing.T) {
 	}
 Tests:
 	for _, test := range tests {
-		var s Set
+		var s IntSet
 		seg := s.Insert(s.FirstGap(), test.initial, 0)
 		seg = s.Isolate(seg, test.bounds)
 		if !test.bounds.IsSupersetOf(seg.Range()) {
@@ -575,7 +656,7 @@ Tests:
 		var i int
 		for seg := s.FirstSegment(); seg.Ok(); seg = seg.NextSegment() {
 			if i > len(test.final) {
-				t.Errorf("%s: Incorrect number of segments: got %d, wanted %d; set contents:\n%v", test.name, s.countSegments(), len(test.final), &s)
+				t.Errorf("%s: Incorrect number of segments: got %d, wanted %d; set contents:\n%v", test.name, countSegments(&s), len(test.final), &s)
 				continue Tests
 			}
 			if got, want := seg.Range(), test.final[i]; got != want {
@@ -593,9 +674,9 @@ Tests:
 func TestMutateRange(t *testing.T) {
 	tests := []struct {
 		name      string
-		initial   []FlatSegment
+		initial   []IntFlatSegment
 		increment Range
-		final     []FlatSegment
+		final     []IntFlatSegment
 	}{
 		{
 			name:      "MutateRange no-op in empty set",
@@ -603,22 +684,22 @@ func TestMutateRange(t *testing.T) {
 		},
 		{
 			name: "MutateRange modifies existing segment",
-			initial: []FlatSegment{
+			initial: []IntFlatSegment{
 				{100, 200, 0},
 			},
 			increment: Range{100, 200},
-			final: []FlatSegment{
+			final: []IntFlatSegment{
 				{100, 200, 1},
 			},
 		},
 		{
 			name: "MutateRange splits segments",
-			initial: []FlatSegment{
+			initial: []IntFlatSegment{
 				{50, 150, 0},
 				{150, 250, 2},
 			},
 			increment: Range{100, 200},
-			final: []FlatSegment{
+			final: []IntFlatSegment{
 				{50, 100, 0},
 				{100, 150, 1},
 				{150, 200, 3},
@@ -627,29 +708,29 @@ func TestMutateRange(t *testing.T) {
 		},
 		{
 			name: "MutateRange merges compatible segments",
-			initial: []FlatSegment{
+			initial: []IntFlatSegment{
 				{0, 100, 1},
 				{100, 200, 0},
 				{200, 300, 1},
 			},
 			increment: Range{100, 200},
-			final: []FlatSegment{
+			final: []IntFlatSegment{
 				{0, 300, 1},
 			},
 		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			var s Set
+			var s IntSet
 			if err := s.ImportSlice(test.initial); err != nil {
 				t.Fatalf("Failed to import initial set: %v", err)
 			}
-			s.MutateRange(test.increment, func(seg Iterator) bool {
+			s.MutateRange(test.increment, func(seg IntIterator) bool {
 				(*seg.ValuePtr())++
 				return true
 			})
 			if got := s.ExportSlice(); !slices.Equal(got, test.final) {
-				t.Errorf("Set mismatch after mutation: got %v, wanted %v", got, test.final)
+				t.Errorf("IntSet mismatch after mutation: got %v, wanted %v", got, test.final)
 			}
 		})
 	}
@@ -657,7 +738,7 @@ func TestMutateRange(t *testing.T) {
 
 func benchmarkAddSequential(b *testing.B, size int) {
 	for n := 0; n < b.N; n++ {
-		var s Set
+		var s IntSet
 		for i := 0; i < size; i++ {
 			s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 		}
@@ -669,7 +750,7 @@ func benchmarkAddRandom(b *testing.B, size int) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		var s Set
+		var s IntSet
 		for _, i := range order {
 			s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 		}
@@ -677,7 +758,7 @@ func benchmarkAddRandom(b *testing.B, size int) {
 }
 
 func benchmarkFindSequential(b *testing.B, size int) {
-	var s Set
+	var s IntSet
 	for i := 0; i < size; i++ {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 	}
@@ -693,7 +774,7 @@ func benchmarkFindSequential(b *testing.B, size int) {
 }
 
 func benchmarkFindRandom(b *testing.B, size int) {
-	var s Set
+	var s IntSet
 	for i := 0; i < size; i++ {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 	}
@@ -710,7 +791,7 @@ func benchmarkFindRandom(b *testing.B, size int) {
 }
 
 func benchmarkIteration(b *testing.B, size int) {
-	var s Set
+	var s IntSet
 	for i := 0; i < size; i++ {
 		s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 	}
@@ -729,7 +810,7 @@ func benchmarkIteration(b *testing.B, size int) {
 
 func benchmarkAddFindRemoveSequential(b *testing.B, size int) {
 	for n := 0; n < b.N; n++ {
-		var s Set
+		var s IntSet
 		for i := 0; i < size; i++ {
 			s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 		}
@@ -741,7 +822,7 @@ func benchmarkAddFindRemoveSequential(b *testing.B, size int) {
 			s.Remove(seg)
 		}
 		if !s.IsEmpty() {
-			b.Fatalf("Set not empty after all removals:\n%v", &s)
+			b.Fatalf("IntSet not empty after all removals:\n%v", &s)
 		}
 	}
 }
@@ -751,7 +832,7 @@ func benchmarkAddFindRemoveRandom(b *testing.B, size int) {
 
 	b.ResetTimer()
 	for n := 0; n < b.N; n++ {
-		var s Set
+		var s IntSet
 		for _, i := range order {
 			s.InsertWithoutMergingRange(Range{i, i + 1}, i)
 		}
@@ -763,7 +844,7 @@ func benchmarkAddFindRemoveRandom(b *testing.B, size int) {
 			s.Remove(seg)
 		}
 		if !s.IsEmpty() {
-			b.Fatalf("Set not empty after all removals:\n%v", &s)
+			b.Fatalf("IntSet not empty after all removals:\n%v", &s)
 		}
 	}
 }

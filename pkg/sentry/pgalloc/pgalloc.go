@@ -40,6 +40,8 @@ import (
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/segment"
+	"gvisor.dev/gvisor/pkg/segment/set10"
+	"gvisor.dev/gvisor/pkg/segment/set10gaps"
 	"gvisor.dev/gvisor/pkg/sentry/hostmm"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
@@ -54,6 +56,30 @@ type asyncMemoryFileLoadEntry = ilist.Entry[*asyncMemoryFileLoad]
 type asyncMemoryFileLoadList = ilist.List[*asyncMemoryFileLoad]
 
 type EvictableRange = segment.Range[uint64]
+
+// +stateify savable
+type evictableRangeSet = segment.Set[uint64, evictableRangeSetValue, evictableRangeSetFunctions]
+
+type evictableRangeIterator = segment.Iterator[uint64, evictableRangeSetValue, evictableRangeSetFunctions]
+type evictableRangeGapIterator = segment.GapIterator[uint64, evictableRangeSetValue, evictableRangeSetFunctions]
+
+// +stateify savable
+type memAcctSet = set10.Set[uint64, memAcctInfo, memAcctSetFunctions]
+
+type memAcctIterator = set10.Iterator[uint64, memAcctInfo, memAcctSetFunctions]
+type memAcctGapIterator = set10.GapIterator[uint64, memAcctInfo, memAcctSetFunctions]
+
+// +stateify savable
+type unfreeSet = set10gaps.Set[uint64, unfreeInfo, unfreeSetFunctions]
+
+type unfreeIterator = set10gaps.Iterator[uint64, unfreeInfo, unfreeSetFunctions]
+type unfreeGapIterator = set10gaps.GapIterator[uint64, unfreeInfo, unfreeSetFunctions]
+
+// +stateify savable
+type unwasteSet = set10gaps.Set[uint64, unwasteInfo, unwasteSetFunctions]
+
+type unwasteIterator = set10gaps.Iterator[uint64, unwasteInfo, unwasteSetFunctions]
+type unwasteGapIterator = set10gaps.GapIterator[uint64, unwasteInfo, unwasteSetFunctions]
 
 // MemoryFile is a memmap.File whose pages may be allocated to arbitrary
 // users.

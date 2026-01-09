@@ -81,8 +81,10 @@ func (mm *MemoryManager) ReadMapsDataInto(ctx context.Context, fn MapsCallbackFu
 	mm.mappingMu.RLock()
 	defer mm.mappingMu.RUnlock()
 
-	for vseg := mm.vmas.FirstSegment(); vseg.Ok(); vseg = vseg.NextSegment() {
+	vseg := vmaIterator{mm.vmas.FirstSegment()}
+	for vseg.Ok() {
 		mm.appendVMAMapsEntryLocked(ctx, vseg, fn)
+		vseg = vmaIterator{vseg.NextSegment()}
 	}
 
 	// We always emulate vsyscall, so advertise it here. Everything about a
@@ -137,8 +139,10 @@ func (mm *MemoryManager) ReadSmapsDataInto(ctx context.Context, buf *bytes.Buffe
 	mm.mappingMu.RLock()
 	defer mm.mappingMu.RUnlock()
 
-	for vseg := mm.vmas.FirstSegment(); vseg.Ok(); vseg = vseg.NextSegment() {
+	vseg := vmaIterator{mm.vmas.FirstSegment()}
+	for vseg.Ok() {
 		mm.vmaSmapsEntryIntoLocked(ctx, vseg, buf)
+		vseg = vmaIterator{vseg.NextSegment()}
 	}
 
 	// We always emulate vsyscall, so advertise it here. See
@@ -168,13 +172,15 @@ func (mm *MemoryManager) vmaSmapsEntryIntoLocked(ctx context.Context, vseg vmaIt
 	var rss uint64
 	var anon uint64
 	vsegAR := vseg.Range()
-	for pseg := mm.pmas.LowerBoundSegment(vsegAR.Start); pseg.Ok() && pseg.Start() < vsegAR.End; pseg = pseg.NextSegment() {
+	pseg := pmaIterator{mm.pmas.LowerBoundSegment(vsegAR.Start)}
+	for pseg.Ok() && pseg.Start() < vsegAR.End {
 		psegAR := pseg.Range().Intersect(vsegAR)
 		size := uint64(psegAR.Length())
 		rss += size
 		if pseg.ValuePtr().private {
 			anon += size
 		}
+		pseg = pmaIterator{pseg.NextSegment()}
 	}
 	mm.activeMu.RUnlock()
 

@@ -1,5 +1,4 @@
 load("//tools:defs.bzl", "go_library")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
 
@@ -11,7 +10,6 @@ go_library(
         "accel.go",
         "accel_fd.go",
         "accel_fd_mmap.go",
-        "devaddr_set.go",
         "gasket_ioctl.go",
     ],
     visibility = ["//pkg/sentry:internal"],
@@ -37,28 +35,10 @@ go_library(
         "//pkg/sentry/memmap",
         "//pkg/sentry/mm",
         "//pkg/sentry/vfs",
-        "//pkg/segment",
         "//pkg/sync",
         "//pkg/usermem",
         "//pkg/waiter",
         "@org_golang_x_exp//constraints:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
-)
-
-go_template_instance(
-    name = "devaddr_set",
-    out = "devaddr_set.go",
-    imports = {
-        "mm": "gvisor.dev/gvisor/pkg/sentry/mm",
-    },
-    package = "accel",
-    prefix = "DevAddr",
-    template = "//pkg/segment:generic_set",
-    types = {
-        "Key": "uint64",
-        "Range": "DevAddrRange",
-        "Value": "pinnedAccelMem",
-        "Functions": "devAddrSetFuncs",
-    },
 )

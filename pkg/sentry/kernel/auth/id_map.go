@@ -67,6 +67,12 @@ func (ns *UserNamespace) mapID(m *idMapSet, id uint32) uint32 {
 
 type idMapRange = segment.Range[uint32]
 
+// +stateify savable
+type idMapSet = segment.Set[uint32, uint32, idMapFunctions]
+
+type idMapIterator = segment.Iterator[uint32, uint32, idMapFunctions]
+type idMapGapIterator = segment.GapIterator[uint32, uint32, idMapFunctions]
+
 // allIDsMapped returns true if all IDs in the range [start, end) are mapped in
 // m.
 //

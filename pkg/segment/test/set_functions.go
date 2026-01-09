@@ -15,9 +15,21 @@
 // Package segment is a test package.
 package segment
 
-import seg "gvisor.dev/gvisor/pkg/segment"
+import (
+	"gvisor.dev/gvisor/pkg/segment"
+	"gvisor.dev/gvisor/pkg/segment/set"
+	"gvisor.dev/gvisor/pkg/segment/setgaps"
+)
 
-type Range = seg.Range[int]
+type Range = segment.Range[int]
+
+// IntSet is a segment set used by tests.
+// +stateify savable
+type IntSet = set.Set[int, int, setFunctions]
+
+type IntIterator = set.Iterator[int, int, setFunctions]
+type IntGapIterator = set.GapIterator[int, int, setFunctions]
+type IntFlatSegment = set.FlatSegment[int, int]
 
 type setFunctions struct{}
 
@@ -57,3 +69,6 @@ func (s gapSetFunctions) MinKey() int {
 func (s gapSetFunctions) MaxKey() int {
 	return s.setFunctions.MaxKey() / 2
 }
+
+// +stateify savable
+type gapSet = setgaps.Set[int, int, gapSetFunctions]
