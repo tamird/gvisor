@@ -19,10 +19,14 @@ import (
 
 	"gvisor.dev/gvisor/pkg/bitmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/sync/atomicptr"
 )
 
+type descriptorAtomicPtr = atomicptr.AtomicPtr[descriptor]
 type descriptorBucket [fdsPerBucket]descriptorAtomicPtr
+type descriptorBucketAtomicPtr = atomicptr.AtomicPtr[descriptorBucket]
 type descriptorBucketSlice []descriptorBucketAtomicPtr
+type descriptorBucketSliceAtomicPtr = atomicptr.AtomicPtr[descriptorBucketSlice]
 
 // descriptorTable is a two level table. The first level is a slice of
 // *descriptorBucket where each bucket is a slice of *descriptor.

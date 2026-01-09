@@ -35,6 +35,7 @@ import (
 	ktime "gvisor.dev/gvisor/pkg/sentry/time"
 	"gvisor.dev/gvisor/pkg/sighandling"
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/sync/atomicptr"
 )
 
 // machine contains state associated with the VM as a whole.
@@ -828,6 +829,8 @@ func (c *vCPU) setSystemTimeLegacy() error {
 		}
 	}
 }
+
+type machineAtomicPtr = atomicptr.AtomicPtr[machine]
 
 const machinePoolSize = 16
 

@@ -1,20 +1,8 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "atomicptr_machine",
-    out = "atomicptr_machine_unsafe.go",
-    package = "kvm",
-    prefix = "machine",
-    template = "//pkg/sync/atomicptr:generic_atomicptr",
-    types = {
-        "Value": "machine",
-    },
 )
 
 config_setting(
@@ -30,7 +18,6 @@ go_library(
         "address_space.go",
         "address_space_amd64.go",
         "address_space_arm64.go",
-        "atomicptr_machine_unsafe.go",
         "bluepill.go",
         "bluepill_allocator.go",
         "bluepill_amd64.go",
@@ -98,6 +85,7 @@ go_library(
         "//pkg/sigframe",
         "//pkg/sighandling",
         "//pkg/sync",
+        "//pkg/sync/atomicptr",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )

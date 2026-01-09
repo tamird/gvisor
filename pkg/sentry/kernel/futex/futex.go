@@ -23,6 +23,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
+	"gvisor.dev/gvisor/pkg/sync/atomicptr"
 )
 
 // KeyKind indicates the type of a Key.
@@ -65,6 +66,8 @@ type Key struct {
 	// Mappable.
 	Offset uint64
 }
+
+type AtomicPtrBucket = atomicptr.AtomicPtr[bucket]
 
 func (k *Key) release(t Target) {
 	if k.MappingIdentity != nil {

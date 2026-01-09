@@ -19,6 +19,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/sentry/seccheck"
 	pb "gvisor.dev/gvisor/pkg/sentry/seccheck/points/points_go_proto"
+	"gvisor.dev/gvisor/pkg/sync/atomicptr"
 )
 
 // Credentials contains information required to authorize privileged operations
@@ -59,6 +60,8 @@ type Credentials struct {
 	// The user namespace associated with the owner of the credentials.
 	UserNamespace *UserNamespace
 }
+
+type AtomicPtrCredentials = atomicptr.AtomicPtr[Credentials]
 
 // NewAnonymousCredentials returns a set of credentials with no capabilities in
 // any user namespace.

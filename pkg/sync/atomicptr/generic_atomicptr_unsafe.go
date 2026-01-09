@@ -4,18 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd.
 
-// Package seqatomic doesn't exist. This file must be instantiated using the
-// go_template_instance rule in tools/go_generics/defs.bzl.
-package seqatomic
+// Package atomicptr provides atomic pointers to values.
+package atomicptr
 
 import (
 	"context"
 	"sync/atomic"
 	"unsafe"
 )
-
-// Value is a required type parameter.
-type Value struct{}
 
 // An AtomicPtr is a pointer to a value of type Value that can be atomically
 // loaded and stored. The zero value of an AtomicPtr represents nil.
@@ -25,15 +21,15 @@ type Value struct{}
 // this case, do `dst.Store(src.Load())` instead.
 //
 // +stateify savable
-type AtomicPtr struct {
+type AtomicPtr[Value any] struct {
 	ptr unsafe.Pointer `state:".(*Value)"`
 }
 
-func (p *AtomicPtr) savePtr() *Value {
+func (p *AtomicPtr[Value]) savePtr() *Value {
 	return p.Load()
 }
 
-func (p *AtomicPtr) loadPtr(_ context.Context, v *Value) {
+func (p *AtomicPtr[Value]) loadPtr(_ context.Context, v *Value) {
 	p.Store(v)
 }
 
@@ -41,16 +37,16 @@ func (p *AtomicPtr) loadPtr(_ context.Context, v *Value) {
 // has been no previous call to Store.
 //
 //go:nosplit
-func (p *AtomicPtr) Load() *Value {
+func (p *AtomicPtr[Value]) Load() *Value {
 	return (*Value)(atomic.LoadPointer(&p.ptr))
 }
 
 // Store sets the value returned by Load to x.
-func (p *AtomicPtr) Store(x *Value) {
+func (p *AtomicPtr[Value]) Store(x *Value) {
 	atomic.StorePointer(&p.ptr, (unsafe.Pointer)(x))
 }
 
 // Swap atomically stores `x` into *p and returns the previous *p value.
-func (p *AtomicPtr) Swap(x *Value) *Value {
+func (p *AtomicPtr[Value]) Swap(x *Value) *Value {
 	return (*Value)(atomic.SwapPointer(&p.ptr, (unsafe.Pointer)(x)))
 }

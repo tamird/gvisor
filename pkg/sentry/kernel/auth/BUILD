@@ -8,17 +8,6 @@ package(
 )
 
 go_template_instance(
-    name = "atomicptr_credentials",
-    out = "atomicptr_credentials_unsafe.go",
-    package = "auth",
-    suffix = "Credentials",
-    template = "//pkg/sync/atomicptr:generic_atomicptr",
-    types = {
-        "Value": "Credentials",
-    },
-)
-
-go_template_instance(
     name = "id_map_set",
     out = "id_map_set.go",
     consts = {
@@ -60,7 +49,6 @@ declare_mutex(
 go_library(
     name = "auth",
     srcs = [
-        "atomicptr_credentials_unsafe.go",
         "auth.go",
         "capability_set.go",
         "context.go",
@@ -91,6 +79,7 @@ go_library(
         "//pkg/sentry/seccheck/points:points_go_proto",
         "//pkg/segment",
         "//pkg/sync",
+        "//pkg/sync/atomicptr",
         "//pkg/sync/locking",
     ],
 )

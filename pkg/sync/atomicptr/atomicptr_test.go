@@ -15,7 +15,7 @@ func newInt(val int) *int {
 }
 
 func TestAtomicPtr(t *testing.T) {
-	var p AtomicPtrInt
+	var p AtomicPtr[int]
 	if got := p.Load(); got != nil {
 		t.Errorf("initial value is %p (%v), wanted nil", got, got)
 	}
