@@ -1,6 +1,6 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template", "go_template_instance")
+load("//tools/go_generics:defs.bzl", "go_template")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -11,8 +11,6 @@ package(
 go_library(
     name = "locking",
     srcs = [
-        "atomicptrmap_ancestors_unsafe.go",
-        "atomicptrmap_goroutine_unsafe.go",
         "lockdep.go",
         "lockdep_norace.go",
         "locking.go",
@@ -25,34 +23,8 @@ go_library(
         "//pkg/goid",
         "//pkg/log",
         "//pkg/sync",
+        "//pkg/sync/atomicptrmap",
     ],
-)
-
-go_template_instance(
-    name = "atomicptrmap_goroutine",
-    out = "atomicptrmap_goroutine_unsafe.go",
-    package = "locking",
-    prefix = "goroutineLocks",
-    template = "//pkg/sync/atomicptrmap:generic_atomicptrmap",
-    types = {
-        "Key": "int64",
-        "Value": "goroutineLocks",
-    },
-)
-
-go_template_instance(
-    name = "atomicptrmap_ancestors",
-    out = "atomicptrmap_ancestors_unsafe.go",
-    imports = {
-        "reflect": "reflect",
-    },
-    package = "locking",
-    prefix = "ancestors",
-    template = "//pkg/sync/atomicptrmap:generic_atomicptrmap",
-    types = {
-        "Key": "*MutexClass",
-        "Value": "string",
-    },
 )
 
 go_template(

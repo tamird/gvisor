@@ -418,30 +418,6 @@ func (m *benchmarkableAtomicPtrMap) Delete(key int64) {
 	m.m.Store(key, nil)
 }
 
-// benchmarkableAtomicPtrMapSharded implements benchmarkableMap for testAtomicPtrMapSharded.
-type benchmarkableAtomicPtrMapSharded struct {
-	m testAtomicPtrMapSharded
-}
-
-func (m *benchmarkableAtomicPtrMapSharded) Load(key int64) *testValue {
-	return m.m.Load(key)
-}
-
-func (m *benchmarkableAtomicPtrMapSharded) Store(key int64, val *testValue) {
-	m.m.Store(key, val)
-}
-
-func (m *benchmarkableAtomicPtrMapSharded) LoadOrStore(key int64, val *testValue) (*testValue, bool) {
-	if prev := m.m.CompareAndSwap(key, nil, val); prev != nil {
-		return prev, true
-	}
-	return val, false
-}
-
-func (m *benchmarkableAtomicPtrMapSharded) Delete(key int64) {
-	m.m.Store(key, nil)
-}
-
 var mapImpls = [...]struct {
 	name string
 	ctor func() benchmarkableMap
@@ -462,12 +438,6 @@ var mapImpls = [...]struct {
 		name: "AtomicPtrMap",
 		ctor: func() benchmarkableMap {
 			return new(benchmarkableAtomicPtrMap)
-		},
-	},
-	{
-		name: "AtomicPtrMapSharded",
-		ctor: func() benchmarkableMap {
-			return new(benchmarkableAtomicPtrMapSharded)
 		},
 	},
 }

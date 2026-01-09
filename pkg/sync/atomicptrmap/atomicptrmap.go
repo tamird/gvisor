@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package atomicptrmap instantiates generic_atomicptrmap for testing.
+// Package atomicptrmap provides test aliases for AtomicPtrMap.
 package atomicptrmap
 
 type testValue struct {
 	val int
 }
+
+type testAtomicPtrMap = AtomicPtrMap[int64, testValue]

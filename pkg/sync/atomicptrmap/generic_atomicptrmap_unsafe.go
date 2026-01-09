@@ -12,23 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package atomicptrmap doesn't exist. This file must be instantiated using the
-// go_template_instance rule in tools/go_generics/defs.bzl.
+// Package atomicptrmap provides a generic atomic pointer map.
 package atomicptrmap
 
 import (
+	"reflect"
 	"sync/atomic"
 	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/gohacks"
 	"gvisor.dev/gvisor/pkg/sync"
 )
-
-// Key is a required type parameter.
-type Key struct{}
-
-// Value is a required type parameter.
-type Value struct{}
 
 const (
 	// ShardOrder is an optional parameter specifying the base-2 log of the
@@ -39,48 +33,55 @@ const (
 	ShardOrder = 0
 )
 
-// Hasher is an optional type parameter. If Hasher is provided, it must define
-// the Init and Hash methods. One Hasher will be shared by all AtomicPtrMaps.
-type Hasher struct {
-	defaultHasher
-}
-
-// defaultHasher is the default Hasher. This indirection exists because
-// defaultHasher must exist even if a custom Hasher is provided, to prevent the
-// Go compiler from complaining about defaultHasher's unused imports.
-type defaultHasher struct {
+// defaultHasher is the default hasher implementation.
+type defaultHasher[Key comparable, Value any] struct {
 	fn   func(unsafe.Pointer, uintptr) uintptr
 	seed uintptr
 }
 
-// Init initializes the Hasher.
-func (h *defaultHasher) Init() {
+// Init initializes the hasher.
+func (h *defaultHasher[Key, Value]) Init() {
 	h.fn = sync.MapKeyHasher(map[Key]*Value(nil))
 	h.seed = sync.RandUintptr()
 }
 
 // Hash returns the hash value for the given Key.
-func (h *defaultHasher) Hash(key Key) uintptr {
+func (h *defaultHasher[Key, Value]) Hash(key Key) uintptr {
 	return h.fn(gohacks.Noescape(unsafe.Pointer(&key)), h.seed)
 }
 
-var hasher Hasher
+var hasherCache sync.Map
 
-func init() {
-	hasher.Init()
+func getHasher[Key comparable, Value any]() *defaultHasher[Key, Value] {
+	type hasherKey struct {
+		keyType reflect.Type
+		valType reflect.Type
+	}
+	type hasherValue struct {
+		once sync.Once
+		h    defaultHasher[Key, Value]
+	}
+	key := hasherKey{
+		keyType: reflect.TypeOf((*Key)(nil)).Elem(),
+		valType: reflect.TypeOf((*Value)(nil)).Elem(),
+	}
+	entryIface, _ := hasherCache.LoadOrStore(key, &hasherValue{})
+	entry := entryIface.(*hasherValue)
+	entry.once.Do(entry.h.Init)
+	return &entry.h
 }
 
 // An AtomicPtrMap maps Keys to non-nil pointers to Values. AtomicPtrMap are
 // safe for concurrent use from multiple goroutines without additional
 // synchronization.
 //
-// The zero value of AtomicPtrMap is empty (maps all Keys to nil) and ready for
+// The zero value of AtomicPtrMap is empty (maps all keys to nil) and ready for
 // use. AtomicPtrMaps must not be copied after first use.
 //
 // sync.Map may be faster than AtomicPtrMap if most operations on the map are
 // concurrent writes to a fixed set of keys. AtomicPtrMap is usually faster in
 // other circumstances.
-type AtomicPtrMap struct {
+type AtomicPtrMap[Key comparable, Value any] struct {
 	// AtomicPtrMap is implemented as a hash table with the following
 	// properties:
 	//
@@ -92,19 +93,33 @@ type AtomicPtrMap struct {
 	//	* The table is optionally divided into shards indexed by hash to further
 	//		reduce unnecessary synchronization.
 
-	shards [1 << ShardOrder]apmShard
+	shards [1 << ShardOrder]apmShard[Key, Value]
+
+	hasherOnce sync.Once
+	hasher     *defaultHasher[Key, Value]
 }
 
-func (m *AtomicPtrMap) shard(hash uintptr) *apmShard {
+func (m *AtomicPtrMap[Key, Value]) shard(hash uintptr) *apmShard[Key, Value] {
 	// Go defines right shifts >= width of shifted unsigned operand as 0, so
 	// this is correct even if ShardOrder is 0 (although nogo complains because
 	// nogo is dumb).
-	const indexLSB = unsafe.Sizeof(uintptr(0))*8 - ShardOrder
+	indexLSB := unsafe.Sizeof(uintptr(0))*8 - ShardOrder
 	index := hash >> indexLSB
-	return (*apmShard)(unsafe.Pointer(uintptr(unsafe.Pointer(&m.shards)) + (index * unsafe.Sizeof(apmShard{}))))
+	return (*apmShard[Key, Value])(unsafe.Pointer(uintptr(unsafe.Pointer(&m.shards)) + (index * unsafe.Sizeof(apmShard[Key, Value]{}))))
 }
 
-type apmShard struct {
+func (m *AtomicPtrMap[Key, Value]) getHasher() *defaultHasher[Key, Value] {
+	m.hasherOnce.Do(func() {
+		m.hasher = getHasher[Key, Value]()
+	})
+	return m.hasher
+}
+
+func (m *AtomicPtrMap[Key, Value]) hash(key Key) uintptr {
+	return m.getHasher().Hash(key)
+}
+
+type apmShard[Key comparable, Value any] struct {
 	apmShardMutationData
 	_ [apmShardMutationDataPadding]byte
 	apmShardLookupData
@@ -147,7 +162,7 @@ const (
 	apmExpansionThresholdDen = 6
 )
 
-type apmSlot struct {
+type apmSlot[Key comparable, Value any] struct {
 	// slot states are indicated by val:
 	//
 	//	* Empty: val == nil; key is meaningless. May transition to full or
@@ -170,8 +185,8 @@ type apmSlot struct {
 	key Key
 }
 
-func apmSlotAt(slots unsafe.Pointer, pos uintptr) *apmSlot {
-	return (*apmSlot)(unsafe.Pointer(uintptr(slots) + pos*unsafe.Sizeof(apmSlot{})))
+func apmSlotAt[Key comparable, Value any](slots unsafe.Pointer, pos uintptr) *apmSlot[Key, Value] {
+	return (*apmSlot[Key, Value])(unsafe.Pointer(uintptr(slots) + pos*unsafe.Sizeof(apmSlot[Key, Value]{})))
 }
 
 var tombstoneObj byte
@@ -187,8 +202,8 @@ func evacuated() unsafe.Pointer {
 }
 
 // Load returns the Value stored in m for key.
-func (m *AtomicPtrMap) Load(key Key) *Value {
-	hash := hasher.Hash(key)
+func (m *AtomicPtrMap[Key, Value]) Load(key Key) *Value {
+	hash := m.hash(key)
 	shard := m.shard(hash)
 
 retry:
@@ -205,7 +220,7 @@ retry:
 	i := hash & mask
 	inc := uintptr(1)
 	for {
-		slot := apmSlotAt(slots, i)
+		slot := apmSlotAt[Key, Value](slots, i)
 		slotVal := atomic.LoadPointer(&slot.val)
 		if slotVal == nil {
 			// Empty slot; end of probe sequence.
@@ -227,24 +242,24 @@ retry:
 }
 
 // Store stores the Value val for key.
-func (m *AtomicPtrMap) Store(key Key, val *Value) {
+func (m *AtomicPtrMap[Key, Value]) Store(key Key, val *Value) {
 	m.maybeCompareAndSwap(key, false, nil, val)
 }
 
 // Swap stores the Value val for key and returns the previously-mapped Value.
-func (m *AtomicPtrMap) Swap(key Key, val *Value) *Value {
+func (m *AtomicPtrMap[Key, Value]) Swap(key Key, val *Value) *Value {
 	return m.maybeCompareAndSwap(key, false, nil, val)
 }
 
 // CompareAndSwap checks that the Value stored for key is oldVal; if it is, it
 // stores the Value newVal for key. CompareAndSwap returns the previous Value
 // stored for key, whether or not it stores newVal.
-func (m *AtomicPtrMap) CompareAndSwap(key Key, oldVal, newVal *Value) *Value {
+func (m *AtomicPtrMap[Key, Value]) CompareAndSwap(key Key, oldVal, newVal *Value) *Value {
 	return m.maybeCompareAndSwap(key, true, oldVal, newVal)
 }
 
-func (m *AtomicPtrMap) maybeCompareAndSwap(key Key, compare bool, typedOldVal, typedNewVal *Value) *Value {
-	hash := hasher.Hash(key)
+func (m *AtomicPtrMap[Key, Value]) maybeCompareAndSwap(key Key, compare bool, typedOldVal, typedNewVal *Value) *Value {
+	hash := m.hash(key)
 	shard := m.shard(hash)
 	oldVal := tombstone()
 	if typedOldVal != nil {
@@ -267,14 +282,14 @@ retry:
 			return nil
 		}
 		// Need to allocate a table before insertion.
-		shard.rehash(nil)
+		shard.rehash(nil, m.getHasher())
 		goto retry
 	}
 
 	i := hash & mask
 	inc := uintptr(1)
 	for {
-		slot := apmSlotAt(slots, i)
+		slot := apmSlotAt[Key, Value](slots, i)
 		slotVal := atomic.LoadPointer(&slot.val)
 		if slotVal == nil {
 			if (compare && oldVal != tombstone()) || newVal == tombstone() {
@@ -287,7 +302,7 @@ retry:
 				// Check if we need to rehash before dirtying a slot.
 				if dirty, capacity := shard.dirty+1, mask+1; dirty*apmRehashThresholdDen >= capacity*apmRehashThresholdNum {
 					shard.dirtyMu.Unlock()
-					shard.rehash(slots)
+					shard.rehash(slots, m.getHasher())
 					goto retry
 				}
 				slot.key = key
@@ -341,7 +356,7 @@ retry:
 // rehash is marked nosplit to avoid preemption during table copying.
 //
 //go:nosplit
-func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
+func (shard *apmShard[Key, Value]) rehash(oldSlots unsafe.Pointer, hasher *defaultHasher[Key, Value]) {
 	shard.rehashMu.Lock()
 	defer shard.rehashMu.Unlock()
 
@@ -370,7 +385,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 	}
 
 	// Allocate the new table.
-	newSlotsSlice := make([]apmSlot, newSize)
+	newSlotsSlice := make([]apmSlot[Key, Value], newSize)
 	newSlots := unsafe.Pointer(&newSlotsSlice[0])
 	newMask := newSize - 1
 
@@ -386,7 +401,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 		// Copy old entries to the new table.
 		oldMask := shard.mask
 		for i := uintptr(0); i <= oldMask; i++ {
-			oldSlot := apmSlotAt(oldSlots, i)
+			oldSlot := apmSlotAt[Key, Value](oldSlots, i)
 			val := atomic.SwapPointer(&oldSlot.val, evacuated())
 			if val == nil || val == tombstone() {
 				continue
@@ -395,7 +410,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 			j := hash & newMask
 			inc := uintptr(1)
 			for {
-				newSlot := apmSlotAt(newSlots, j)
+				newSlot := apmSlotAt[Key, Value](newSlots, j)
 				if newSlot.val == nil {
 					newSlot.val = val
 					newSlot.key = oldSlot.key
@@ -429,7 +444,7 @@ func (shard *apmShard) rehash(oldSlots unsafe.Pointer) {
 // that Key from any point during the Range call.
 //
 // f must not call other methods on m.
-func (m *AtomicPtrMap) Range(f func(key Key, val *Value) bool) {
+func (m *AtomicPtrMap[Key, Value]) Range(f func(key Key, val *Value) bool) {
 	for si := 0; si < len(m.shards); si++ {
 		shard := &m.shards[si]
 		if !shard.doRange(f) {
@@ -438,7 +453,7 @@ func (m *AtomicPtrMap) Range(f func(key Key, val *Value) bool) {
 	}
 }
 
-func (shard *apmShard) doRange(f func(key Key, val *Value) bool) bool {
+func (shard *apmShard[Key, Value]) doRange(f func(key Key, val *Value) bool) bool {
 	// We have to lock rehashMu because if we handled races with rehashing by
 	// retrying, f could see the same key twice.
 	shard.rehashMu.Lock()
@@ -449,7 +464,7 @@ func (shard *apmShard) doRange(f func(key Key, val *Value) bool) bool {
 	}
 	mask := shard.mask
 	for i := uintptr(0); i <= mask; i++ {
-		slot := apmSlotAt(slots, i)
+		slot := apmSlotAt[Key, Value](slots, i)
 		slotVal := atomic.LoadPointer(&slot.val)
 		if slotVal == nil || slotVal == tombstone() {
 			continue
@@ -468,7 +483,7 @@ func (shard *apmShard) doRange(f func(key Key, val *Value) bool) bool {
 //     calls.
 //
 //   - It is safe for f to call other methods on m.
-func (m *AtomicPtrMap) RangeRepeatable(f func(key Key, val *Value) bool) {
+func (m *AtomicPtrMap[Key, Value]) RangeRepeatable(f func(key Key, val *Value) bool) {
 	for si := 0; si < len(m.shards); si++ {
 		shard := &m.shards[si]
 
@@ -484,7 +499,7 @@ func (m *AtomicPtrMap) RangeRepeatable(f func(key Key, val *Value) bool) {
 		}
 
 		for i := uintptr(0); i <= mask; i++ {
-			slot := apmSlotAt(slots, i)
+			slot := apmSlotAt[Key, Value](slots, i)
 			slotVal := atomic.LoadPointer(&slot.val)
 			if slotVal == evacuated() {
 				goto retry

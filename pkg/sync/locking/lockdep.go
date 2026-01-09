@@ -24,6 +24,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/goid"
 	"gvisor.dev/gvisor/pkg/log"
+	"gvisor.dev/gvisor/pkg/sync/atomicptrmap"
 )
 
 // NewMutexClass allocates a new mutex class.
@@ -69,6 +70,10 @@ func (m *MutexClass) String() string {
 }
 
 type goroutineLocks map[*MutexClass]bool
+
+type goroutineLocksAtomicPtrMap = atomicptrmap.AtomicPtrMap[int64, goroutineLocks]
+
+type ancestorsAtomicPtrMap = atomicptrmap.AtomicPtrMap[*MutexClass, string]
 
 var routineLocks goroutineLocksAtomicPtrMap
 
