@@ -1,44 +1,19 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
 
 licenses(["notice"])
-
-go_template_instance(
-    name = "inode_refs",
-    out = "inode_refs.go",
-    package = "fuse",
-    prefix = "inode",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "inode",
-    },
-)
-
-go_template_instance(
-    name = "connection_refs",
-    out = "connection_refs.go",
-    package = "fuse",
-    prefix = "connection",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "connection",
-    },
-)
 
 go_library(
     name = "fuse",
     srcs = [
         "connection.go",
         "connection_control.go",
-        "connection_refs.go",
         "dev.go",
         "directory.go",
         "file.go",
         "fusefs.go",
         "inode.go",
-        "inode_refs.go",
         "read_write.go",
         "register.go",
         "regular_file.go",

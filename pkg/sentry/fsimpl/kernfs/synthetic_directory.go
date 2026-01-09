@@ -20,6 +20,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 )
@@ -41,6 +42,9 @@ type syntheticDirectory struct {
 
 	locks vfs.FileLocks
 }
+
+// +stateify savable
+type syntheticDirectoryRefs = refs.Refs[syntheticDirectory, refs.LoggingDisabled]
 
 var _ Inode = (*syntheticDirectory)(nil)
 

@@ -84,28 +84,6 @@ go_template_instance(
     },
 )
 
-go_template_instance(
-    name = "aio_mappable_refs",
-    out = "aio_mappable_refs.go",
-    package = "mm",
-    prefix = "aioMappable",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "aioMappable",
-    },
-)
-
-go_template_instance(
-    name = "special_mappable_refs",
-    out = "special_mappable_refs.go",
-    package = "mm",
-    prefix = "SpecialMappable",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "SpecialMappable",
-    },
-)
-
 go_library(
     name = "mm",
     srcs = [
@@ -115,7 +93,6 @@ go_library(
         "aio_context_mutex.go",
         "aio_context_state.go",
         "aio_manager_mutex.go",
-        "aio_mappable_refs.go",
         "debug.go",
         "io.go",
         "lifecycle.go",
@@ -129,7 +106,6 @@ go_library(
         "save_restore.go",
         "shm.go",
         "special_mappable.go",
-        "special_mappable_refs.go",
         "syscalls.go",
         "vma.go",
         "vma_set.go",

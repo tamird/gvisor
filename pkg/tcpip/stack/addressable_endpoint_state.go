@@ -17,6 +17,7 @@ package stack
 import (
 	"fmt"
 
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 )
@@ -768,6 +769,9 @@ type addressState struct {
 	// checklocks:mu
 	disp AddressDispatcher
 }
+
+// +stateify savable
+type addressStateRefs = refs.Refs[addressState, refs.LoggingDisabled]
 
 // AddressWithPrefix implements AddressEndpoint.
 func (a *addressState) AddressWithPrefix() tcpip.AddressWithPrefix {

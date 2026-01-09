@@ -18,6 +18,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/ilist"
+	"gvisor.dev/gvisor/pkg/refs"
 )
 
 // SessionID is the public identifier.
@@ -68,6 +69,9 @@ type Session struct {
 	// TaskSet.mu.
 	sessionEntry
 }
+
+// +stateify savable
+type SessionRefs = refs.Refs[Session, refs.LoggingDisabled]
 
 // DecRef drops a reference.
 //
@@ -122,6 +126,9 @@ type ProcessGroup struct {
 	// protected by TaskSet.mu.
 	processGroupEntry
 }
+
+// +stateify savable
+type ProcessGroupRefs = refs.Refs[ProcessGroup, refs.LoggingDisabled]
 
 // Originator returns the originator of the process group.
 func (pg *ProcessGroup) Originator() *ThreadGroup {

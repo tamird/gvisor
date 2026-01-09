@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/bitmap"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/lock"
 	"gvisor.dev/gvisor/pkg/sentry/limits"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
@@ -88,6 +89,9 @@ type FDTable struct {
 	// descriptorTable holds descriptors.
 	descriptorTable `state:".(map[int32]descriptor)"`
 }
+
+// +stateify savable
+type FDTableRefs = refs.Refs[FDTable, refs.LoggingDisabled]
 
 func (f *FDTable) saveDescriptorTable() map[int32]descriptor {
 	m := make(map[int32]descriptor)

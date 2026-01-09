@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 )
 
@@ -46,6 +47,9 @@ type FSContext struct {
 	// preventSharing is true for the duration of an associated Task's execve
 	preventSharing bool
 }
+
+// +stateify savable
+type FSContextRefs = refs.Refs[FSContext, refs.LoggingDisabled]
 
 // NewFSContext returns a new filesystem context.
 func NewFSContext(root, cwd vfs.VirtualDentry, umask uint) *FSContext {

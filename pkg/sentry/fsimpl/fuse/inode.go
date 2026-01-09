@@ -25,6 +25,7 @@ import (
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/marshal"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/kernfs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
@@ -115,6 +116,9 @@ type inode struct {
 	// +checklocks:attrMu
 	blockSize atomicbitops.Uint32 // 0 if unknown.
 }
+
+// +stateify savable
+type inodeRefs = refs.Refs[inode, refs.LoggingDisabled]
 
 func pidFromContext(ctx context.Context) uint32 {
 	kernelTask := kernel.TaskFromContext(ctx)

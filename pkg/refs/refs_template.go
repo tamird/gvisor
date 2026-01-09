@@ -12,33 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package refs_template defines a template that can be used by reference
-// counted objects. The template comes with leak checking capabilities.
-package refs_template
+// Package refs provides reference counting helpers with leak checking.
+package refs
 
 import (
 	"context"
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
-	"gvisor.dev/gvisor/pkg/refs"
 )
 
-// enableLogging indicates whether reference-related events should be logged (with
-// stack traces). This is false by default and should only be set to true for
-// debugging purposes, as it can generate an extremely large amount of output
-// and drastically degrade performance.
-const enableLogging = false
+type loggingPolicy interface {
+	enabled() bool
+}
 
-// T is the type of the reference counted object. It is only used to customize
-// debug output when leak checking.
-type T any
+// LoggingDisabled indicates that reference-related events should not be logged.
+// This should be the default, as logging can be extremely noisy and expensive.
+type LoggingDisabled struct{}
 
-// obj is used to customize logging. Note that we use a pointer to T so that
-// we do not copy the entire object when passed as a format parameter.
-var obj *T
+func (LoggingDisabled) enabled() bool { return false }
 
-// Refs implements refs.RefCounter. It keeps a reference count using atomic
+// LoggingEnabled indicates that reference-related events should be logged with
+// stack traces. This is intended for debugging only.
+type LoggingEnabled struct{}
+
+func (LoggingEnabled) enabled() bool { return true }
+
+// Refs implements RefCounter. It keeps a reference count using atomic
 // operations and calls the destructor when the count reaches zero.
 //
 // NOTE: Do not introduce additional fields to the Refs struct. It is used by
@@ -48,9 +48,7 @@ var obj *T
 // performance. If it does not offer enough flexibility for a particular object
 // (example: b/187877947), we should implement the RefCounter/CheckedObject
 // interfaces manually.
-//
-// +stateify savable
-type Refs struct {
+type Refs[T any, L loggingPolicy] struct {
 	// refCount is composed of two fields:
 	//
 	//	[32-bit speculative references]:[32-bit real references]
@@ -63,41 +61,43 @@ type Refs struct {
 
 // InitRefs initializes r with one reference and, if enabled, activates leak
 // checking.
-func (r *Refs) InitRefs() {
+func (r *Refs[T, L]) InitRefs() {
 	// We can use RacyStore because the refs can't be shared until after
 	// InitRefs is called, and thus it's safe to use non-atomic operations.
 	r.refCount.RacyStore(1)
-	refs.Register(r)
+	Register(r)
 }
 
 // RefType implements refs.CheckedObject.RefType.
-func (r *Refs) RefType() string {
+func (r *Refs[T, L]) RefType() string {
+	var obj *T
 	return fmt.Sprintf("%T", obj)[1:]
 }
 
 // LeakMessage implements refs.CheckedObject.LeakMessage.
-func (r *Refs) LeakMessage() string {
+func (r *Refs[T, L]) LeakMessage() string {
 	return fmt.Sprintf("[%s %p] reference count of %d instead of 0", r.RefType(), r, r.ReadRefs())
 }
 
 // LogRefs implements refs.CheckedObject.LogRefs.
-func (r *Refs) LogRefs() bool {
-	return enableLogging
+func (r *Refs[T, L]) LogRefs() bool {
+	var policy L
+	return policy.enabled()
 }
 
 // ReadRefs returns the current number of references. The returned count is
 // inherently racy and is unsafe to use without external synchronization.
-func (r *Refs) ReadRefs() int64 {
+func (r *Refs[T, L]) ReadRefs() int64 {
 	return r.refCount.Load()
 }
 
 // IncRef implements refs.RefCounter.IncRef.
 //
 //go:nosplit
-func (r *Refs) IncRef() {
+func (r *Refs[T, L]) IncRef() {
 	v := r.refCount.Add(1)
-	if enableLogging {
-		refs.LogIncRef(r, v)
+	if r.LogRefs() {
+		LogIncRef(r, v)
 	}
 	if v <= 1 {
 		panic(fmt.Sprintf("Incrementing non-positive count %p on %s", r, r.RefType()))
@@ -111,7 +111,7 @@ func (r *Refs) IncRef() {
 // other TryIncRef calls from genuine references held.
 //
 //go:nosplit
-func (r *Refs) TryIncRef() bool {
+func (r *Refs[T, L]) TryIncRef() bool {
 	const speculativeRef = 1 << 32
 	if v := r.refCount.Add(speculativeRef); int32(v) == 0 {
 		// This object has already been freed.
@@ -121,8 +121,8 @@ func (r *Refs) TryIncRef() bool {
 
 	// Turn into a real reference.
 	v := r.refCount.Add(-speculativeRef + 1)
-	if enableLogging {
-		refs.LogTryIncRef(r, v)
+	if r.LogRefs() {
+		LogTryIncRef(r, v)
 	}
 	return true
 }
@@ -139,17 +139,17 @@ func (r *Refs) TryIncRef() bool {
 //	A: TryIncRef [transform speculative to real]
 //
 //go:nosplit
-func (r *Refs) DecRef(destroy func()) {
+func (r *Refs[T, L]) DecRef(destroy func()) {
 	v := r.refCount.Add(-1)
-	if enableLogging {
-		refs.LogDecRef(r, v)
+	if r.LogRefs() {
+		LogDecRef(r, v)
 	}
 	switch {
 	case v < 0:
 		panic(fmt.Sprintf("Decrementing non-positive ref count %p, owned by %s", r, r.RefType()))
 
 	case v == 0:
-		refs.Unregister(r)
+		Unregister(r)
 		// Call the destructor.
 		if destroy != nil {
 			destroy()
@@ -157,8 +157,8 @@ func (r *Refs) DecRef(destroy func()) {
 	}
 }
 
-func (r *Refs) afterLoad(context.Context) {
+func (r *Refs[T, L]) afterLoad(context.Context) {
 	if r.ReadRefs() > 0 {
-		refs.Register(r)
+		Register(r)
 	}
 }

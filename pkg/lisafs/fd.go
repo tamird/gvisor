@@ -51,6 +51,15 @@ type controlFDList = ilist.List[*ControlFD]
 // +stateify savable
 type openFDList = ilist.List[*OpenFD]
 
+// +stateify savable
+type controlFDRefs = refs.Refs[ControlFD, refs.LoggingDisabled]
+
+// +stateify savable
+type openFDRefs = refs.Refs[OpenFD, refs.LoggingDisabled]
+
+// +stateify savable
+type boundSocketFDRefs = refs.Refs[BoundSocketFD, refs.LoggingDisabled]
+
 // A ControlFD is the gateway to the backing filesystem tree node. It is an
 // unusual concept. This exists to provide a safe way to do path-based
 // operations on the file. It performs operations that can modify the

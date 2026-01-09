@@ -94,6 +94,9 @@ type namespaceDefaultRefs struct {
 	destroy func(ctx context.Context)
 }
 
+// +stateify savable
+type namespaceRefs = refs.Refs[MountNamespace, refs.LoggingDisabled]
+
 func (r *namespaceDefaultRefs) DecRef(ctx context.Context) {
 	r.namespaceRefs.DecRef(
 		func() {

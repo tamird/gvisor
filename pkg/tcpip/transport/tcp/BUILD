@@ -1,6 +1,5 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -105,17 +104,6 @@ declare_rwmutex(
     prefix = "protocol",
 )
 
-go_template_instance(
-    name = "tcp_segment_refs",
-    out = "tcp_segment_refs.go",
-    package = "tcp",
-    prefix = "segment",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "segment",
-    },
-)
-
 go_library(
     name = "tcp",
     srcs = [
@@ -156,7 +144,6 @@ go_library(
         "snd.go",
         "snd_queue_mutex.go",
         "state.go",
-        "tcp_segment_refs.go",
         "timer.go",
     ],
     visibility = ["//visibility:public"],
