@@ -26,6 +26,7 @@
 package raw
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -45,7 +46,25 @@ import (
 type rawPacketEntry = ilist.Entry[*rawPacket]
 
 // +stateify savable
-type rawPacketList = ilist.List[*rawPacket]
+type rawPacketList struct {
+	ilist.List[*rawPacket] `state:".([]*rawPacket)"`
+}
+
+func (l *rawPacketList) saveList(ctx context.Context) ([]*rawPacket, error) {
+	entries := make([]*rawPacket, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *rawPacketList) loadList(ctx context.Context, entries []*rawPacket) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // +stateify savable
 type rawPacket struct {

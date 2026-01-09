@@ -50,4 +50,27 @@ func TestGenericStateifyRoundTrip(t *testing.T) {
 func TestGenericTypeInterfaces(t *testing.T) {
 	var _ state.Type = (*box[int])(nil)
 	var _ state.SaverLoader = (*box[int])(nil)
+	var _ state.Type = (*boxedInt)(nil)
+	var _ state.SaverLoader = (*boxedInt)(nil)
+}
+
+func TestGenericInstantiationRoundTrip(t *testing.T) {
+	value := 321
+	saved := genericRoot{
+		b: boxedInt(box[int]{Value: &value}),
+	}
+
+	var buf bytes.Buffer
+	if _, err := state.Save(context.Background(), &buf, &saved); err != nil {
+		t.Fatalf("Save failed: %v", err)
+	}
+
+	var restored genericRoot
+	if _, err := state.Load(context.Background(), &buf, &restored); err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+
+	if restored.b.Value == nil || *restored.b.Value != value {
+		t.Fatalf("restored boxed value = %d, want %d", restored.b.Value, value)
+	}
 }

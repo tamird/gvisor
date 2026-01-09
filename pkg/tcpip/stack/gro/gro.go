@@ -17,6 +17,7 @@ package gro
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/ilist"
@@ -28,7 +29,25 @@ import (
 type groPacketEntry = ilist.Entry[*groPacket]
 
 // +stateify savable
-type groPacketList = ilist.List[*groPacket]
+type groPacketList struct {
+	ilist.List[*groPacket] `state:".([]*groPacket)"`
+}
+
+func (l *groPacketList) saveList(ctx context.Context) ([]*groPacket, error) {
+	entries := make([]*groPacket, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *groPacketList) loadList(ctx context.Context, entries []*groPacket) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // There is room for improvement to the GRO engine:
 //   - We should save those headers in

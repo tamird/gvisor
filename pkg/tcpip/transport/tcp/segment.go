@@ -15,6 +15,7 @@
 package tcp
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -31,7 +32,25 @@ import (
 type segmentEntry = ilist.Entry[*segment]
 
 // +stateify savable
-type segmentList = ilist.List[*segment]
+type segmentList struct {
+	ilist.List[*segment] `state:".([]*segment)"`
+}
+
+func (l *segmentList) saveList(ctx context.Context) ([]*segment, error) {
+	entries := make([]*segment, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *segmentList) loadList(ctx context.Context, entries []*segment) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // queueFlags are used to indicate which queue of an endpoint a particular segment
 // belongs to. This is used to track memory accounting correctly.

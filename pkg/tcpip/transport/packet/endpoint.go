@@ -25,6 +25,7 @@
 package packet
 
 import (
+	"context"
 	"io"
 	"math"
 	"time"
@@ -49,7 +50,25 @@ var _ stack.MappablePacketEndpoint = (*endpoint)(nil)
 type packetEntry = ilist.Entry[*packet]
 
 // +stateify savable
-type packetList = ilist.List[*packet]
+type packetList struct {
+	ilist.List[*packet] `state:".([]*packet)"`
+}
+
+func (l *packetList) saveList(ctx context.Context) ([]*packet, error) {
+	entries := make([]*packet, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *packetList) loadList(ctx context.Context, entries []*packet) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // +stateify savable
 type packet struct {

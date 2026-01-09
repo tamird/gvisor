@@ -59,6 +59,7 @@
 package kernfs
 
 import (
+	stdcontext "context"
 	"fmt"
 	"sync/atomic"
 
@@ -77,7 +78,25 @@ import (
 type dentryEntry = ilist.Entry[*Dentry]
 
 // +stateify savable
-type dentryList = ilist.List[*Dentry]
+type dentryList struct {
+	ilist.List[*Dentry] `state:".([]*Dentry)"`
+}
+
+func (l *dentryList) saveList(ctx stdcontext.Context) ([]*Dentry, error) {
+	entries := make([]*Dentry, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *dentryList) loadList(ctx stdcontext.Context, entries []*Dentry) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // Filesystem mostly implements vfs.FilesystemImpl for a generic in-memory
 // filesystem. Concrete implementations are expected to embed this in their own

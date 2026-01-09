@@ -34,6 +34,7 @@ type Linker[Element any] interface {
 //	for e := l.Front(); e != nil; e = e.Next() {
 //		// do something with e.
 //	}
+//
 type List[Element interface {
 	comparable
 	Linker[Element]

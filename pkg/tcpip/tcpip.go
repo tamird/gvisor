@@ -30,6 +30,7 @@ package tcpip
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -1565,7 +1566,25 @@ type RouteEntry = ilist.Entry[*Route]
 // RouteList is a list of Routes.
 //
 // +stateify savable
-type RouteList = ilist.List[*Route]
+type RouteList struct {
+	ilist.List[*Route] `state:".([]*Route)"`
+}
+
+func (l *RouteList) saveList(ctx context.Context) ([]*Route, error) {
+	entries := make([]*Route, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *RouteList) loadList(ctx context.Context, entries []*Route) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // Route is a row in the routing table. It specifies through which NIC (and
 // gateway) sets of packets should be routed. A row is considered viable if the

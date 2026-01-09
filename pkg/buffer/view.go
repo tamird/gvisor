@@ -15,6 +15,7 @@
 package buffer
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -37,7 +38,24 @@ type viewEntry = ilist.Entry[*View]
 // ViewList is a list of Views.
 //
 // +stateify savable
-type ViewList = ilist.List[*View]
+type ViewList struct {
+	ilist.List[*View] `state:".([]*View)"`
+}
+
+func (l *ViewList) saveList() []*View {
+	var views []*View
+	for v := l.Front(); v != nil; v = v.Next() {
+		views = append(views, v)
+	}
+	return views
+}
+
+func (l *ViewList) loadList(_ context.Context, views []*View) {
+	l.Reset()
+	for _, v := range views {
+		l.PushBack(v)
+	}
+}
 
 // View is a window into a shared chunk. Views are held by Buffers in
 // viewLists to represent contiguous memory.

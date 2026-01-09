@@ -90,7 +90,9 @@ type objectDecodeState struct {
 }
 
 type odsEntry = ilist.Entry[*odsListElem]
-type odsList = ilist.List[*odsListElem]
+type odsList struct {
+	ilist.List[*odsListElem]
+}
 
 type odsListElem struct {
 	ods *objectDecodeState

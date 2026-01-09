@@ -17,6 +17,7 @@
 package fragmentation
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -82,7 +83,25 @@ type FragmentID struct {
 type reassemblerEntry = ilist.Entry[*reassembler]
 
 // +stateify savable
-type reassemblerList = ilist.List[*reassembler]
+type reassemblerList struct {
+	ilist.List[*reassembler] `state:".([]*reassembler)"`
+}
+
+func (l *reassemblerList) saveList(ctx context.Context) ([]*reassembler, error) {
+	entries := make([]*reassembler, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *reassemblerList) loadList(ctx context.Context, entries []*reassembler) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // Fragmentation is the main structure that other modules
 // of the stack should use to implement IP Fragmentation.

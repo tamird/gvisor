@@ -15,6 +15,7 @@
 package stack
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -32,7 +33,25 @@ const (
 type neighborEntryEntry = ilist.Entry[*neighborEntry]
 
 // +stateify savable
-type neighborEntryList = ilist.List[*neighborEntry]
+type neighborEntryList struct {
+	ilist.List[*neighborEntry] `state:".([]*neighborEntry)"`
+}
+
+func (l *neighborEntryList) saveList(ctx context.Context) ([]*neighborEntry, error) {
+	entries := make([]*neighborEntry, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *neighborEntryList) loadList(ctx context.Context, entries []*neighborEntry) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // NeighborEntry describes a neighboring device in the local network.
 //

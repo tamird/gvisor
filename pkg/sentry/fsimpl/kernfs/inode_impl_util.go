@@ -15,6 +15,7 @@
 package kernfs
 
 import (
+	stdcontext "context"
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -33,7 +34,25 @@ import (
 type slotEntry = ilist.Entry[*slot]
 
 // +stateify savable
-type slotList = ilist.List[*slot]
+type slotList struct {
+	ilist.List[*slot] `state:".([]*slot)"`
+}
+
+func (l *slotList) saveList(ctx stdcontext.Context) ([]*slot, error) {
+	entries := make([]*slot, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *slotList) loadList(ctx stdcontext.Context, entries []*slot) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // InodeNoopRefCount partially implements the Inode interface, specifically the
 // inodeRefs sub interface. InodeNoopRefCount implements a simple reference

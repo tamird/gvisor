@@ -15,6 +15,8 @@
 package tcpip
 
 import (
+	"context"
+
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/ilist"
@@ -136,7 +138,25 @@ type StackHandler interface {
 type sockErrorEntry = ilist.Entry[*SockError]
 
 // +stateify savable
-type sockErrorList = ilist.List[*SockError]
+type sockErrorList struct {
+	ilist.List[*SockError] `state:".([]*SockError)"`
+}
+
+func (l *sockErrorList) saveList(ctx context.Context) ([]*SockError, error) {
+	entries := make([]*SockError, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *sockErrorList) loadList(ctx context.Context, entries []*SockError) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // SocketOptions contains all the variables which store values for SOL_SOCKET,
 // SOL_IP, SOL_IPV6 and SOL_TCP level options.

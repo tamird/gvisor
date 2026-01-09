@@ -78,19 +78,6 @@ func resolveTypeName(typ ast.Expr) (field string, qualified string) {
 	return
 }
 
-func typeParamNames(params *ast.FieldList) []string {
-	if params == nil {
-		return nil
-	}
-	var names []string
-	for _, field := range params.List {
-		for _, name := range field.Names {
-			names = append(names, name.Name)
-		}
-	}
-	return names
-}
-
 // extractStateTag pulls the relevant state tag.
 func extractStateTag(tag *ast.BasicLit) string {
 	if tag == nil {
@@ -359,134 +346,31 @@ func main() {
 
 			for _, gs := range d.Specs {
 				ts := gs.(*ast.TypeSpec)
-				recvType := ts.Name.Name
-				if typeParams := typeParamNames(ts.TypeParams); len(typeParams) != 0 {
-					recvType = fmt.Sprintf("%s[%s]", recvType, strings.Join(typeParams, ", "))
+				if ts.TypeParams != nil {
+					fmt.Fprintf(os.Stderr, "Cannot use stateify annotations on generic type %s\n", ts.Name.Name)
+					os.Exit(1)
 				}
+				recvType := ts.Name.Name
+				typeName := ts.Name.Name
 				recv, ok := receiverNames[ts.Name.Name]
 				if !ok {
 					// Maybe no methods were defined?
 					recv = strings.ToLower(ts.Name.Name[:1])
 				}
+				if ts.Assign.IsValid() {
+					if generateTypeInfo && ts.TypeParams == nil {
+						emitRegister(ts.Name.Name)
+					}
+					continue
+				}
+				var structType *ast.StructType
 				switch x := ts.Type.(type) {
 				case *ast.StructType:
-					maybeEmitImports()
 					if isIdentType {
 						fmt.Fprintf(os.Stderr, "Cannot use `+stateify identtype` on a struct type (%v); must be a type definition of an identical type.", ts.Name.Name)
 						os.Exit(1)
 					}
-
-					// Record the slot for each field.
-					fieldCount := 0
-					fields := make(map[string]int)
-					emitField := func(name string) {
-						fmt.Fprintf(outputFile, "		\"%s\",\n", name)
-						fields[name] = fieldCount
-						fieldCount++
-					}
-					emitFieldValue := func(name string, _ string) {
-						emitField(name)
-					}
-					emitLoadValue := func(name, typName string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
-					}
-					emitLoad := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
-					}
-					emitLoadWait := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
-					}
-					emitSaveValue := func(name, typName string) {
-						// Emit typName to be more robust against code generation bugs,
-						// but instead of one line make two lines to silence ST1023
-						// finding (i.e. avoid nogo finding: "should omit type $typName
-						// from declaration; it will be inferred from the right-hand side")
-						fmt.Fprintf(outputFile, "	var %sValue %s\n", name, typName)
-						fmt.Fprintf(outputFile, "	%sValue = %s.save%s()\n", name, recv, camelCased(name))
-						fmt.Fprintf(outputFile, "	stateSinkObject.SaveValue(%d, %sValue)\n", fields[name], name)
-					}
-					emitSave := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
-					}
-					emitZeroCheck := func(name string) {
-						fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, recv, name, statePrefix, name, recv, name)
-					}
-
-					// Generate the type name method.
-					fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, recvType)
-					fmt.Fprintf(outputFile, "	return \"%s.%s\"\n", *fullPkg, ts.Name.Name)
-					fmt.Fprintf(outputFile, "}\n\n")
-
-					// Generate the fields method.
-					fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, recvType)
-					fmt.Fprintf(outputFile, "	return []string{\n")
-					scanFields(x, scanFunctions{
-						normal: emitField,
-						wait:   emitField,
-						value:  emitFieldValue,
-					})
-					fmt.Fprintf(outputFile, "	}\n")
-					fmt.Fprintf(outputFile, "}\n\n")
-
-					// Define beforeSave if a definition was not found. This prevents
-					// the code from compiling if a custom beforeSave was defined in a
-					// file not provided to this binary and prevents inherited methods
-					// from being called multiple times by overriding them.
-					if _, ok := simpleMethods[method{
-						typeName:   ts.Name.Name,
-						methodName: "beforeSave",
-					}]; !ok && generateSaverLoader {
-						fmt.Fprintf(outputFile, "func (%s *%s) beforeSave() {}\n\n", recv, recvType)
-					}
-
-					// Generate the save method.
-					//
-					// N.B. For historical reasons, we perform the value saves first,
-					// and perform the value loads last. There should be no dependency
-					// on this specific behavior, but the ability to specify slots
-					// allows a manual implementation to be order-dependent.
-					if generateSaverLoader {
-						fmt.Fprintf(outputFile, "// +checklocksignore\n")
-						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, recvType, statePrefix)
-						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
-						scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
-						scanFields(x, scanFunctions{value: emitSaveValue})
-						scanFields(x, scanFunctions{normal: emitSave, wait: emitSave})
-						fmt.Fprintf(outputFile, "}\n\n")
-					}
-
-					// Define afterLoad if a definition was not found. We do this for
-					// the same reason that we do it for beforeSave.
-					_, hasAfterLoad := simpleMethods[method{
-						typeName:   ts.Name.Name,
-						methodName: "afterLoad",
-					}]
-					if !hasAfterLoad && generateSaverLoader {
-						fmt.Fprintf(outputFile, "func (%s *%s) afterLoad(context.Context) {}\n\n", recv, recvType)
-					}
-
-					// Generate the load method.
-					//
-					// N.B. See the comment above for the save method.
-					if generateSaverLoader {
-						fmt.Fprintf(outputFile, "// +checklocksignore\n")
-						fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, recvType, statePrefix)
-						scanFields(x, scanFunctions{normal: emitLoad, wait: emitLoadWait})
-						scanFields(x, scanFunctions{value: emitLoadValue})
-						if hasAfterLoad {
-							// The call to afterLoad is made conditionally, because when
-							// AfterLoad is called, the object encodes a dependency on
-							// referred objects (i.e. fields). This means that afterLoad
-							// will not be called until the other afterLoads are called.
-							fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", recv)
-						}
-						fmt.Fprintf(outputFile, "}\n\n")
-					}
-
-					// Add to our registration.
-					if ts.TypeParams == nil {
-						emitRegister(ts.Name.Name)
-					}
+					structType = x
 
 				case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
 					maybeEmitImports()
@@ -535,6 +419,124 @@ func main() {
 					if ts.TypeParams == nil {
 						emitRegister(ts.Name.Name)
 					}
+				}
+
+				if structType == nil {
+					continue
+				}
+
+				maybeEmitImports()
+
+				// Record the slot for each field.
+				fieldCount := 0
+				fields := make(map[string]int)
+				emitField := func(name string) {
+					fmt.Fprintf(outputFile, "		\"%s\",\n", name)
+					fields[name] = fieldCount
+					fieldCount++
+				}
+				emitFieldValue := func(name string, _ string) {
+					emitField(name)
+				}
+				emitLoadValue := func(name, typName string) {
+					fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
+				}
+				emitLoad := func(name string) {
+					fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
+				}
+				emitLoadWait := func(name string) {
+					fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
+				}
+				emitSaveValue := func(name, typName string) {
+					// Emit typName to be more robust against code generation bugs,
+					// but instead of one line make two lines to silence ST1023
+					// finding (i.e. avoid nogo finding: "should omit type $typName
+					// from declaration; it will be inferred from the right-hand side")
+					fmt.Fprintf(outputFile, "	var %sValue %s\n", name, typName)
+					fmt.Fprintf(outputFile, "	%sValue = %s.save%s()\n", name, recv, camelCased(name))
+					fmt.Fprintf(outputFile, "	stateSinkObject.SaveValue(%d, %sValue)\n", fields[name], name)
+				}
+				emitSave := func(name string) {
+					fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
+				}
+				emitZeroCheck := func(name string) {
+					fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, recv, name, statePrefix, name, recv, name)
+				}
+
+				// Generate the type name method.
+				fmt.Fprintf(outputFile, "func (%s *%s) StateTypeName() string {\n", recv, recvType)
+				fmt.Fprintf(outputFile, "	return \"%s.%s\"\n", *fullPkg, typeName)
+				fmt.Fprintf(outputFile, "}\n\n")
+
+				// Generate the fields method.
+				fmt.Fprintf(outputFile, "func (%s *%s) StateFields() []string {\n", recv, recvType)
+				fmt.Fprintf(outputFile, "	return []string{\n")
+				scanFields(structType, scanFunctions{
+					normal: emitField,
+					wait:   emitField,
+					value:  emitFieldValue,
+				})
+				fmt.Fprintf(outputFile, "	}\n")
+				fmt.Fprintf(outputFile, "}\n\n")
+
+				// Define beforeSave if a definition was not found. This prevents
+				// the code from compiling if a custom beforeSave was defined in a
+				// file not provided to this binary and prevents inherited methods
+				// from being called multiple times by overriding them.
+				if _, ok := simpleMethods[method{
+					typeName:   typeName,
+					methodName: "beforeSave",
+				}]; !ok && generateSaverLoader {
+					fmt.Fprintf(outputFile, "func (%s *%s) beforeSave() {}\n\n", recv, recvType)
+				}
+
+				// Generate the save method.
+				//
+				// N.B. For historical reasons, we perform the value saves first,
+				// and perform the value loads last. There should be no dependency
+				// on this specific behavior, but the ability to specify slots
+				// allows a manual implementation to be order-dependent.
+				if generateSaverLoader {
+					fmt.Fprintf(outputFile, "// +checklocksignore\n")
+					fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, recvType, statePrefix)
+					fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
+					scanFields(structType, scanFunctions{zerovalue: emitZeroCheck})
+					scanFields(structType, scanFunctions{value: emitSaveValue})
+					scanFields(structType, scanFunctions{normal: emitSave, wait: emitSave})
+					fmt.Fprintf(outputFile, "}\n\n")
+				}
+
+				// Define afterLoad if a definition was not found. We do this for
+				// the same reason that we do it for beforeSave.
+				_, hasAfterLoad := simpleMethods[method{
+					typeName:   typeName,
+					methodName: "afterLoad",
+				}]
+				if !hasAfterLoad && generateSaverLoader {
+					fmt.Fprintf(outputFile, "func (%s *%s) afterLoad(context.Context) {}\n\n", recv, recvType)
+				}
+
+				// Generate the load method.
+				//
+				// N.B. See the comment above for the save method.
+				if generateSaverLoader {
+					fmt.Fprintf(outputFile, "// +checklocksignore\n")
+					fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, recvType, statePrefix)
+					scanFields(structType, scanFunctions{normal: emitLoad, wait: emitLoadWait})
+					scanFields(structType, scanFunctions{value: emitLoadValue})
+					if hasAfterLoad {
+						// The call to afterLoad is made conditionally, because when
+						// AfterLoad is called, the object encodes a dependency on
+						// referred objects (i.e. fields). This means that afterLoad
+						// will not be called until the other afterLoads are called.
+						fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", recv)
+					}
+					fmt.Fprintf(outputFile, "}\n\n")
+				}
+
+				// Add to our registration.
+				if ts.TypeParams == nil {
+					emitRegister(typeName)
 				}
 			}
 		}

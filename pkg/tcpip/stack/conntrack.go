@@ -15,6 +15,7 @@
 package stack
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"math"
@@ -44,7 +45,25 @@ const numBuckets = 1 << 14
 type tupleEntry = ilist.Entry[*tuple]
 
 // +stateify savable
-type tupleList = ilist.List[*tuple]
+type tupleList struct {
+	ilist.List[*tuple] `state:".([]*tuple)"`
+}
+
+func (l *tupleList) saveList(ctx context.Context) ([]*tuple, error) {
+	entries := make([]*tuple, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *tupleList) loadList(ctx context.Context, entries []*tuple) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 const (
 	establishedTimeout   time.Duration = 5 * 24 * time.Hour

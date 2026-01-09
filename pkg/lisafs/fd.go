@@ -15,6 +15,8 @@
 package lisafs
 
 import (
+	stdcontext "context"
+
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
@@ -46,10 +48,44 @@ type controlFDEntry = ilist.Entry[*ControlFD]
 type openFDEntry = ilist.Entry[*OpenFD]
 
 // +stateify savable
-type controlFDList = ilist.List[*ControlFD]
+type controlFDList struct {
+	ilist.List[*ControlFD] `state:".([]*ControlFD)"`
+}
+
+func (l *controlFDList) saveList() []*ControlFD {
+	var fds []*ControlFD
+	for fd := l.Front(); fd != nil; fd = fd.Next() {
+		fds = append(fds, fd)
+	}
+	return fds
+}
+
+func (l *controlFDList) loadList(_ stdcontext.Context, fds []*ControlFD) {
+	l.Reset()
+	for _, fd := range fds {
+		l.PushBack(fd)
+	}
+}
 
 // +stateify savable
-type openFDList = ilist.List[*OpenFD]
+type openFDList struct {
+	ilist.List[*OpenFD] `state:".([]*OpenFD)"`
+}
+
+func (l *openFDList) saveList() []*OpenFD {
+	var fds []*OpenFD
+	for fd := l.Front(); fd != nil; fd = fd.Next() {
+		fds = append(fds, fd)
+	}
+	return fds
+}
+
+func (l *openFDList) loadList(_ stdcontext.Context, fds []*OpenFD) {
+	l.Reset()
+	for _, fd := range fds {
+		l.PushBack(fd)
+	}
+}
 
 // +stateify savable
 type controlFDRefs = refs.Refs[ControlFD, refs.LoggingDisabled]

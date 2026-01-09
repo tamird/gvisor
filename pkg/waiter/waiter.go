@@ -58,6 +58,8 @@
 package waiter
 
 import (
+	"context"
+
 	"gvisor.dev/gvisor/pkg/ilist"
 	"gvisor.dev/gvisor/pkg/sync"
 )
@@ -65,7 +67,25 @@ import (
 type waiterEntry = ilist.Entry[*Entry]
 
 // +stateify savable
-type waiterList = ilist.List[*Entry]
+type waiterList struct {
+	ilist.List[*Entry] `state:".([]*Entry)"`
+}
+
+func (l *waiterList) saveList(ctx context.Context) ([]*Entry, error) {
+	entries := make([]*Entry, 0, l.Len())
+	for entry := l.Front(); entry != nil; entry = entry.Next() {
+		entries = append(entries, entry)
+	}
+	return entries, nil
+}
+
+func (l *waiterList) loadList(ctx context.Context, entries []*Entry) error {
+	l.Reset()
+	for _, entry := range entries {
+		l.PushBack(entry)
+	}
+	return nil
+}
 
 // EventMask represents io events as used in the poll() syscall.
 type EventMask uint64
