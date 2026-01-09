@@ -990,6 +990,9 @@ type inode struct {
 	impl any // immutable
 }
 
+// +stateify savable
+type inodeRefs = refs.Refs[inode, refs.LoggingDisabled]
+
 func (i *inode) init(impl any) {
 	i.refs.InitRefs()
 	i.pf.inode = i

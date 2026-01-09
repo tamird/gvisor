@@ -1,20 +1,8 @@
 load("//tools:defs.bzl", "go_library", "go_test")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "chunk_refs",
-    out = "chunk_refs.go",
-    package = "buffer",
-    prefix = "chunk",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "chunk",
-    },
 )
 
 go_library(
@@ -23,7 +11,6 @@ go_library(
         "buffer.go",
         "buffer_state.go",
         "chunk.go",
-        "chunk_refs.go",
         "view.go",
         "view_unsafe.go",
     ],

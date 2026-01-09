@@ -20,6 +20,7 @@ import (
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/ilist"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
 	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/usage"
@@ -255,6 +256,9 @@ type aioMappable struct {
 	mf *pgalloc.MemoryFile `state:"nosave"`
 	fr memmap.FileRange
 }
+
+// +stateify savable
+type aioMappableRefs = refs.Refs[aioMappable, refs.LoggingDisabled]
 
 var aioRingBufferSize = uint64(hostarch.Addr(linux.AIORingSize).MustRoundUp())
 

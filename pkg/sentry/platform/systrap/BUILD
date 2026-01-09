@@ -1,20 +1,8 @@
 load("//tools:defs.bzl", "go_library")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
-)
-
-go_template_instance(
-    name = "subprocess_refs",
-    out = "subprocess_refs.go",
-    package = "systrap",
-    prefix = "subprocess",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "subprocess",
-    },
 )
 
 go_library(
@@ -41,7 +29,6 @@ go_library(
         "subprocess_linux.go",
         "subprocess_linux_unsafe.go",
         "subprocess_pool.go",
-        "subprocess_refs.go",
         "subprocess_unsafe.go",
         "syscall_thread.go",
         "syscall_thread_amd64.go",

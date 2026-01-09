@@ -28,6 +28,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostsyscall"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/pool"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/seccomp"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/memmap"
@@ -179,6 +180,9 @@ type subprocess struct {
 	// dead indicates whether the subprocess is alive or not.
 	dead atomicbitops.Bool
 }
+
+// +stateify savable
+type subprocessRefs = refs.Refs[subprocess, refs.LoggingDisabled]
 
 var seccompNotifyIsSupported = false
 

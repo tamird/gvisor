@@ -18,6 +18,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/ilist"
+	"gvisor.dev/gvisor/pkg/refs"
 )
 
 // SessionID is the public identifier.
@@ -39,7 +40,7 @@ type sessionList = ilist.List[*Session]
 //
 // +stateify savable
 type Session struct {
-	SessionRefs
+	sessionRefs
 
 	// leader is the originator of the Session.
 	//
@@ -69,11 +70,14 @@ type Session struct {
 	sessionEntry
 }
 
+// +stateify savable
+type sessionRefs = refs.Refs[Session, refs.LoggingDisabled]
+
 // DecRef drops a reference.
 //
 // Precondition: callers must hold TaskSet.mu for writing.
 func (s *Session) DecRef() {
-	s.SessionRefs.DecRef(func() {
+	s.sessionRefs.DecRef(func() {
 		// Remove translations from the leader.
 		for ns := s.leader.pidns; ns != nil; ns = ns.parent {
 			id := ns.sids[s]
@@ -90,7 +94,7 @@ func (s *Session) DecRef() {
 //
 // +stateify savable
 type ProcessGroup struct {
-	refs ProcessGroupRefs
+	refs processGroupRefs
 
 	// originator is the originator of the group.
 	//
@@ -122,6 +126,9 @@ type ProcessGroup struct {
 	// protected by TaskSet.mu.
 	processGroupEntry
 }
+
+// +stateify savable
+type processGroupRefs = refs.Refs[ProcessGroup, refs.LoggingDisabled]
 
 // Originator returns the originator of the process group.
 func (pg *ProcessGroup) Originator() *ThreadGroup {

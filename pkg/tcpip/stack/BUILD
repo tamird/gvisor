@@ -1,6 +1,5 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex", "declare_rwmutex")
 load("//tools:defs.bzl", "go_library", "go_test", "most_shards")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -155,33 +154,10 @@ declare_mutex(
     prefix = "packetsPendingLinkResolution",
 )
 
-go_template_instance(
-    name = "packet_buffer_refs",
-    out = "packet_buffer_refs.go",
-    package = "stack",
-    prefix = "packetBuffer",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "PacketBuffer",
-    },
-)
-
-go_template_instance(
-    name = "address_state_refs",
-    out = "address_state_refs.go",
-    package = "stack",
-    prefix = "addressState",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "addressState",
-    },
-)
-
 go_library(
     name = "stack",
     srcs = [
         "address_state_mutex.go",
-        "address_state_refs.go",
         "addressable_endpoint_state.go",
         "addressable_endpoint_state_mutex.go",
         "bridge.go",
@@ -212,7 +188,6 @@ go_library(
         "nud.go",
         "packet_buffer.go",
         "packet_buffer_list.go",
-        "packet_buffer_refs.go",
         "packet_buffer_unsafe.go",
         "packet_endpoint_list_mutex.go",
         "packet_eps_mutex.go",

@@ -1,6 +1,5 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex")
 load("//tools:defs.bzl", "go_library")
-load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -31,28 +30,6 @@ declare_mutex(
     prefix = "endpoint",
 )
 
-go_template_instance(
-    name = "queue_refs",
-    out = "queue_refs.go",
-    package = "transport",
-    prefix = "queue",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "queue",
-    },
-)
-
-go_template_instance(
-    name = "host_connected_endpoint_refs",
-    out = "host_connected_endpoint_refs.go",
-    package = "transport",
-    prefix = "HostConnectedEndpoint",
-    template = "//pkg/refs:refs_template",
-    types = {
-        "T": "HostConnectedEndpoint",
-    },
-)
-
 go_library(
     name = "transport",
     srcs = [
@@ -62,12 +39,10 @@ go_library(
         "connectionless_state.go",
         "endpoint_mutex.go",
         "host.go",
-        "host_connected_endpoint_refs.go",
         "host_iovec.go",
         "host_unsafe.go",
         "queue.go",
         "queue_mutex.go",
-        "queue_refs.go",
         "save_restore.go",
         "stream_queue_receiver_mutex.go",
         "unix.go",

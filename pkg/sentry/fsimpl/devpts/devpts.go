@@ -26,6 +26,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/fsimpl/kernfs"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
@@ -246,6 +247,9 @@ type rootInode struct {
 	// nextIdx is the next pty index to use. Must be accessed atomically.
 	nextIdx uint32
 }
+
+// +stateify savable
+type rootInodeRefs = refs.Refs[rootInode, refs.LoggingDisabled]
 
 var _ kernfs.Inode = (*rootInode)(nil)
 
