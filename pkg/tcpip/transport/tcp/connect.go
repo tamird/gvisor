@@ -277,7 +277,7 @@ func (h *handshake) resetToSynRcvd(iss seqnum.Value, irs seqnum.Value, opts head
 // checkAck checks if the ACK number, if present, of a segment received during
 // a TCP 3-way handshake is valid.
 func (h *handshake) checkAck(s *segment) bool {
-	return !(s.flags.Contains(header.TCPFlagAck) && s.ackNumber != h.iss+1)
+	return !s.flags.Contains(header.TCPFlagAck) || s.ackNumber == h.iss+1
 }
 
 // synSentState handles a segment received when the TCP 3-way handshake is in

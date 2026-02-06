@@ -142,7 +142,7 @@ func (ts Timespec) ToDuration() time.Duration {
 
 // Valid returns whether the timespec contains valid values.
 func (ts Timespec) Valid() bool {
-	return !(ts.Sec < 0 || ts.Nsec < 0 || ts.Nsec >= int64(time.Second))
+	return ts.Sec >= 0 && ts.Nsec >= 0 && ts.Nsec < int64(time.Second)
 }
 
 // NsecToTimespec translates nanoseconds to Timespec.

@@ -313,7 +313,7 @@ func (fs *filesystem) lookupLocked(ctx context.Context, parent *dentry, name str
 			Name: _OVL_XATTR_OPAQUE,
 			Size: 1,
 		})
-		return !(err == nil && opaqueVal == "y")
+		return err != nil || opaqueVal != "y"
 	})
 
 	if lookupErr != nil {

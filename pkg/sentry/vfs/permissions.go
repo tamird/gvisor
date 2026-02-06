@@ -204,14 +204,14 @@ func CheckSetStat(ctx context.Context, creds *auth.Credentials, opts *SetStatOpt
 		}
 	}
 	if stat.Mask&linux.STATX_UID != 0 {
-		if !((creds.EffectiveKUID == kuid && auth.KUID(stat.UID) == kuid) ||
-			creds.HasCapabilityOnFile(linux.CAP_CHOWN, kuid, kgid)) {
+		if (creds.EffectiveKUID != kuid || auth.KUID(stat.UID) != kuid) &&
+			!creds.HasCapabilityOnFile(linux.CAP_CHOWN, kuid, kgid) {
 			return linuxerr.EPERM
 		}
 	}
 	if stat.Mask&linux.STATX_GID != 0 {
-		if !((creds.EffectiveKUID == kuid && creds.InGroup(auth.KGID(stat.GID))) ||
-			creds.HasCapabilityOnFile(linux.CAP_CHOWN, kuid, kgid)) {
+		if (creds.EffectiveKUID != kuid || !creds.InGroup(auth.KGID(stat.GID))) &&
+			!creds.HasCapabilityOnFile(linux.CAP_CHOWN, kuid, kgid) {
 			return linuxerr.EPERM
 		}
 	}

@@ -365,7 +365,7 @@ func commonGenerateTCP(ctx context.Context, buf *bytes.Buffer, k *kernel.Kernel,
 		if !ok {
 			panic(fmt.Sprintf("Found non-socket file in socket table: %+v", s))
 		}
-		if fa, stype, _ := sops.Type(); !(family == fa && stype == linux.SOCK_STREAM) {
+		if fa, stype, _ := sops.Type(); family != fa || stype != linux.SOCK_STREAM {
 			s.DecRef(ctx)
 			// Not tcp4 sockets.
 			continue

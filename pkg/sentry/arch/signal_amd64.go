@@ -98,7 +98,7 @@ func (c *Context64) SignalSetup(st *Stack, act *linux.SigAction, info *linux.Sig
 	// (But this doesn't apply if we're starting at the top of the signal
 	// stack, in which case there is no following stack frame.)
 	sp := st.Bottom
-	if !(alt.IsEnabled() && sp == alt.Top()) {
+	if !alt.IsEnabled() || sp != alt.Top() {
 		sp -= 128
 	}
 

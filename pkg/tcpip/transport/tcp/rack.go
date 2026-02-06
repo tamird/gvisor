@@ -241,7 +241,7 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 //
 // +checklocks:s.ep.mu
 func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
-	if !(s.ep.SACKPermitted && s.rc.tlpRxtOut) {
+	if !s.ep.SACKPermitted || !s.rc.tlpRxtOut {
 		return
 	}
 

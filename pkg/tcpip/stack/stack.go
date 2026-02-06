@@ -1575,7 +1575,7 @@ func (s *Stack) FindRoute(id tcpip.NICID, localAddr, remoteAddr tcpip.Address, n
 	isLocalBroadcast := remoteAddr == header.IPv4Broadcast
 	isMulticast := header.IsV4MulticastAddress(remoteAddr) || header.IsV6MulticastAddress(remoteAddr)
 	isLoopback := header.IsV4LoopbackAddress(remoteAddr) || header.IsV6LoopbackAddress(remoteAddr)
-	needRoute := !(isLocalBroadcast || isMulticast || isLinkLocal || isLoopback)
+	needRoute := !isLocalBroadcast && !isMulticast && !isLinkLocal && !isLoopback
 
 	if s.handleLocal && !isMulticast && !isLocalBroadcast {
 		if r := s.findLocalRouteRLocked(id, localAddr, remoteAddr, netProto); r != nil {
