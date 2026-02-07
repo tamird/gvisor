@@ -44,7 +44,7 @@ func (c *vCPU) dieArchSetup(context *arch.SignalContext64, guestRegs *userRegs, 
 	// If the vCPU is in user mode, we set the stack to the stored stack
 	// value in the vCPU itself. We don't want to unwind the user stack.
 	if guestRegs.Regs.Pstate&ring0.PsrModeMask == ring0.UserFlagsSet {
-		regs := c.CPU.Registers()
+		regs := c.Registers()
 		context.Regs[0] = regs.Regs[0]
 		context.Sp = regs.Sp
 		context.Regs[29] = regs.Regs[29] // stack base address

@@ -39,13 +39,13 @@ type Endpoint struct {
 // a link-layer header set if one is required for the link.
 func New(lower stack.LinkEndpoint) stack.LinkEndpoint {
 	e := &Endpoint{}
-	e.Endpoint.Init(lower, e)
+	e.Init(lower, e)
 	return e
 }
 
 // DeliverNetworkPacket implements stack.NetworkDispatcher.
 func (e *Endpoint) DeliverNetworkPacket(protocol tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
-	e.Endpoint.DeliverLinkPacket(protocol, pkt)
+	e.DeliverLinkPacket(protocol, pkt)
 
 	e.Endpoint.DeliverNetworkPacket(protocol, pkt)
 }
@@ -53,7 +53,7 @@ func (e *Endpoint) DeliverNetworkPacket(protocol tcpip.NetworkProtocolNumber, pk
 // WritePackets implements stack.LinkEndpoint.
 func (e *Endpoint) WritePackets(pkts stack.PacketBufferList) (int, tcpip.Error) {
 	for _, pkt := range pkts.AsSlice() {
-		e.Endpoint.DeliverLinkPacket(pkt.NetworkProtocolNumber, pkt)
+		e.DeliverLinkPacket(pkt.NetworkProtocolNumber, pkt)
 	}
 
 	return e.Endpoint.WritePackets(pkts)

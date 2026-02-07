@@ -93,7 +93,7 @@ func newRootPIDsController(fs *filesystem) *pidsController {
 		max:         pidLimitUnlimited,
 		pendingPool: make(map[*kernel.Task]int64),
 	}
-	c.controllerCommon.init(kernel.CgroupControllerPIDs, fs)
+	c.init(kernel.CgroupControllerPIDs, fs)
 	return c
 }
 
@@ -106,7 +106,7 @@ func (c *pidsController) Clone() controller {
 		max:         pidLimitUnlimited,
 		pendingPool: make(map[*kernel.Task]int64),
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 

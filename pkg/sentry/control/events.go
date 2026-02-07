@@ -36,7 +36,7 @@ type Events struct {
 // and establishes it as a new emitter for the sentry eventchannel. Any existing
 // emitters are replaced on a subsequent attach.
 func (e *Events) AttachDebugEmitter(o *EventsOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return errors.New("no output writer provided")
 	}
 

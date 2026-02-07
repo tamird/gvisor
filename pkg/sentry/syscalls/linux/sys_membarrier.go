@@ -33,7 +33,7 @@ func Membarrier(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uint
 			return 0, nil, linuxerr.EINVAL
 		}
 		var supportedCommands uintptr
-		if t.Kernel().Platform.HaveGlobalMemoryBarrier() {
+		if t.Kernel().HaveGlobalMemoryBarrier() {
 			supportedCommands |= linux.MEMBARRIER_CMD_GLOBAL |
 				linux.MEMBARRIER_CMD_GLOBAL_EXPEDITED |
 				linux.MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED |
@@ -49,18 +49,18 @@ func Membarrier(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uint
 		if flags != 0 {
 			return 0, nil, linuxerr.EINVAL
 		}
-		if !t.Kernel().Platform.HaveGlobalMemoryBarrier() {
+		if !t.Kernel().HaveGlobalMemoryBarrier() {
 			return 0, nil, linuxerr.EINVAL
 		}
 		if cmd == linux.MEMBARRIER_CMD_PRIVATE_EXPEDITED && !t.MemoryManager().IsMembarrierPrivateEnabled() {
 			return 0, nil, linuxerr.EPERM
 		}
-		return 0, nil, t.Kernel().Platform.GlobalMemoryBarrier()
+		return 0, nil, t.Kernel().GlobalMemoryBarrier()
 	case linux.MEMBARRIER_CMD_REGISTER_GLOBAL_EXPEDITED:
 		if flags != 0 {
 			return 0, nil, linuxerr.EINVAL
 		}
-		if !t.Kernel().Platform.HaveGlobalMemoryBarrier() {
+		if !t.Kernel().HaveGlobalMemoryBarrier() {
 			return 0, nil, linuxerr.EINVAL
 		}
 		// no-op
@@ -69,7 +69,7 @@ func Membarrier(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uint
 		if flags != 0 {
 			return 0, nil, linuxerr.EINVAL
 		}
-		if !t.Kernel().Platform.HaveGlobalMemoryBarrier() {
+		if !t.Kernel().HaveGlobalMemoryBarrier() {
 			return 0, nil, linuxerr.EINVAL
 		}
 		t.MemoryManager().EnableMembarrierPrivate()

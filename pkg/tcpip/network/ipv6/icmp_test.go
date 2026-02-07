@@ -145,7 +145,7 @@ func (t *testInterface) WritePacket(r *stack.Route, pkt *stack.PacketBuffer) tcp
 	pkt.EgressRoute = r.Fields()
 	var pkts stack.PacketBufferList
 	pkts.PushBack(pkt)
-	_, err := t.LinkEndpoint.WritePackets(pkts)
+	_, err := t.WritePackets(pkts)
 	return err
 }
 
@@ -154,7 +154,7 @@ func (t *testInterface) WritePacketToRemote(remoteLinkAddr tcpip.LinkAddress, pk
 	pkt.EgressRoute.RemoteLinkAddress = remoteLinkAddr
 	var pkts stack.PacketBufferList
 	pkts.PushBack(pkt)
-	_, err := t.LinkEndpoint.WritePackets(pkts)
+	_, err := t.WritePackets(pkts)
 	return err
 }
 

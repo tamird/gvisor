@@ -247,7 +247,7 @@ func (m *machine) createVCPU(id int) (*vCPU, error) {
 		fd:      int(fd),
 		machine: m,
 	}
-	c.CPU.Init(&m.kernel, c.id, c)
+	c.Init(&m.kernel, c.id, c)
 	m.vCPUsByID[c.id] = c
 
 	// Ensure the signal mask is correct.

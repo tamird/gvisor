@@ -303,7 +303,7 @@ func (i *inode) Open(ctx context.Context, rp *vfs.ResolvingPath, d *kernfs.Dentr
 		return nil, linuxerr.EINVAL
 	}
 
-	fd.LockFD.Init(&i.locks)
+	fd.Init(&i.locks)
 	// FOPEN_KEEP_CACHE is the default flag for noOpen.
 	fd.OpenFlag = linux.FOPEN_KEEP_CACHE
 
@@ -575,8 +575,8 @@ func (i *inode) newEntry(ctx context.Context, name string, fileType linux.FileMo
 		childI, ok := child.(*inode)
 		if ok {
 			childI.fh.new = true
-			childI.fh.handle = out.FUSEOpenOut.Fh
-			childI.fh.flags = out.FUSEOpenOut.OpenFlag
+			childI.fh.handle = out.Fh
+			childI.fh.flags = out.OpenFlag
 		}
 	}
 	return child, nil

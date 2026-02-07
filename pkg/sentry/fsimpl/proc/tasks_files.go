@@ -132,7 +132,7 @@ type dynamicBytesFileSetAttr struct {
 
 // SetStat implements kernfs.Inode.SetStat.
 func (d *dynamicBytesFileSetAttr) SetStat(ctx context.Context, fs *vfs.Filesystem, creds *auth.Credentials, opts vfs.SetStatOptions) error {
-	return d.DynamicBytesFile.InodeAttrs.SetStat(ctx, fs, creds, opts)
+	return d.InodeAttrs.SetStat(ctx, fs, creds, opts)
 }
 
 // cpuStats contains the breakdown of CPU time for /proc/stat.

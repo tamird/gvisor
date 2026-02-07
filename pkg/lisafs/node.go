@@ -131,7 +131,7 @@ func (n *Node) DecRef(context.Context) {
 //
 // Postconditions: A ref on n is transferred to the caller.
 func (n *Node) InitLocked(name string, parent *Node) {
-	n.nodeRefs.InitRefs()
+	n.InitRefs()
 	n.name = name
 	n.parent = parent
 	if parent != nil {

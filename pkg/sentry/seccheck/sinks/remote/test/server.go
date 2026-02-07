@@ -60,8 +60,8 @@ func NewServer() (*Server, error) {
 		version: wire.CurrentVersion,
 		cond:    sync.Cond{L: &sync.Mutex{}},
 	}
-	s.CommonServer.Init(filepath.Join(dir, "remote.sock"), s)
-	if err := s.CommonServer.Start(); err != nil {
+	s.Init(filepath.Join(dir, "remote.sock"), s)
+	if err := s.Start(); err != nil {
 		_ = os.RemoveAll(dir)
 		return nil, err
 	}

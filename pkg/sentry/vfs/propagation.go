@@ -184,7 +184,7 @@ func (vfs *VirtualFilesystem) setPropagation(mnt *Mount, propFlags uint32) {
 		mnt.isShared = false
 	}
 	// Transfer all of mnt's followers to the new leader.
-	for f := mnt.followerList.Front(); f != nil; f = f.followerEntry.Next() {
+	for f := mnt.followerList.Front(); f != nil; f = f.Next() {
 		f.leader = leader
 	}
 	// Remove mnt from its current follower list and add it to the new leader.
@@ -353,7 +353,7 @@ func nextFollowerPeerGroup(mnt *Mount, start *Mount) *Mount {
 				}
 				// If mnt is shared+slave, its next follower will be the same as its
 				// next peer.
-			} else if mnt.isFollower() && mnt.followerEntry.Next() != next {
+			} else if mnt.isFollower() && mnt.Next() != next {
 				break
 			}
 			mnt = next
@@ -366,14 +366,14 @@ func nextFollowerPeerGroup(mnt *Mount, start *Mount) *Mount {
 		// the parent.
 		for {
 			leader := mnt.leader
-			if mnt.followerEntry.Next() != nil {
-				return mnt.followerEntry.Next()
+			if mnt.Next() != nil {
+				return mnt.Next()
 			}
 			mnt = leader.sharedEntry.Next()
 			if leader.groupID == start.groupID {
 				break
 			}
-			if leader.followerEntry.Next() == mnt {
+			if leader.Next() == mnt {
 				break
 			}
 			mnt = leader
@@ -401,8 +401,8 @@ func nextPropMount(mnt, start *Mount) *Mount {
 				return nil
 			}
 			return next
-		} else if m.followerEntry.Next() != nil {
-			return m.followerEntry.Next()
+		} else if m.Next() != nil {
+			return m.Next()
 		}
 		m = leader
 	}

@@ -555,7 +555,7 @@ func TestDADResolve(t *testing.T) {
 				Endpoint:     channel.New(int(test.dupAddrDetectTransmits), 1280, linkAddr1),
 				headerLength: test.linkHeaderLen,
 			}
-			e.Endpoint.LinkEPCapabilities |= stack.CapabilityResolutionRequired
+			e.LinkEPCapabilities |= stack.CapabilityResolutionRequired
 
 			clock := faketime.NewManualClock()
 			s := stack.New(stack.Options{
@@ -5799,7 +5799,7 @@ func TestRouterSolicitation(t *testing.T) {
 						Endpoint:     channel.New(int(test.maxRtrSolicit), 1280, test.linkAddr),
 						headerLength: test.linkHeaderLen,
 					}
-					e.Endpoint.LinkEPCapabilities |= stack.CapabilityResolutionRequired
+					e.LinkEPCapabilities |= stack.CapabilityResolutionRequired
 					waitForPkt := func(timeout time.Duration) {
 						t.Helper()
 

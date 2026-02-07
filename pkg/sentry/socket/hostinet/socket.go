@@ -156,7 +156,7 @@ func newSocket(t *kernel.Task, family int, stype linux.SockType, protocol int, f
 		protocol: protocol,
 		fd:       fd,
 	}
-	s.LockFD.Init(&vfs.FileLocks{})
+	s.Init(&vfs.FileLocks{})
 	if err := fdnotifier.AddFD(int32(fd), &s.queue); err != nil {
 		return nil, syserr.FromError(err)
 	}

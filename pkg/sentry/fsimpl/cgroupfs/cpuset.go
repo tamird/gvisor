@@ -60,7 +60,7 @@ func newCPUSetController(k *kernel.Kernel, fs *filesystem) *cpusetController {
 		maxCpus: uint32(k.ApplicationCores()),
 		maxMems: 1, // We always report a single NUMA node.
 	}
-	c.controllerCommon.init(kernel.CgroupControllerCPUSet, fs)
+	c.init(kernel.CgroupControllerCPUSet, fs)
 	return c
 }
 
@@ -76,7 +76,7 @@ func (c *cpusetController) Clone() controller {
 		cpus:    &cpus,
 		mems:    &mems,
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 

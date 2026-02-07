@@ -102,7 +102,7 @@ type context struct {
 // NewContext implements platform.Platform.NewContext.
 func (*PTrace) NewContext(ctx pkgcontext.Context) platform.Context {
 	c := new(context)
-	c.archContext.init(ctx)
+	c.init(ctx)
 	return c
 }
 

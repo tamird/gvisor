@@ -156,7 +156,7 @@ type taskAsyncContext struct {
 
 // Value implements context.Context.Value.
 func (t *taskAsyncContext) Value(key any) any {
-	return t.fallbackTask.contextValue(key, false /* isTaskGoroutine */)
+	return t.contextValue(key, false /* isTaskGoroutine */)
 }
 
 // AsyncContext returns a context.Context representing t. The returned

@@ -51,7 +51,7 @@ func setTLS(value uint64)
 //go:nosplit
 func bluepillArchEnter(context *arch.SignalContext64) (c *vCPU) {
 	c = vCPUPtr(uintptr(context.Regs[8]))
-	regs := c.CPU.Registers()
+	regs := c.Registers()
 	regs.Regs = context.Regs
 	regs.Sp = context.Sp
 	regs.Pc = context.Pc
@@ -67,7 +67,7 @@ func bluepillArchEnter(context *arch.SignalContext64) (c *vCPU) {
 //
 //go:nosplit
 func bluepillArchExit(c *vCPU, context *arch.SignalContext64) {
-	regs := c.CPU.Registers()
+	regs := c.Registers()
 	context.Regs = regs.Regs
 	context.Sp = regs.Sp
 	context.Pc = regs.Pc

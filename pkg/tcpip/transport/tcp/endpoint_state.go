@@ -206,7 +206,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		e.mu.Lock()
 		defer e.mu.Unlock()
 		if !saveRestoreEnabled {
-			addr, _, err := e.checkV4MappedLocked(tcpip.FullAddress{Addr: e.BindAddr, Port: e.TransportEndpointInfo.ID.LocalPort}, true /* bind */)
+			addr, _, err := e.checkV4MappedLocked(tcpip.FullAddress{Addr: e.BindAddr, Port: e.ID.LocalPort}, true /* bind */)
 			if err != nil {
 				panic("unable to parse BindAddr: " + err.String())
 			}
@@ -239,15 +239,15 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 	case epState.connected():
 		bind()
 		if e.connectingAddress.BitLen() == 0 {
-			e.connectingAddress = e.TransportEndpointInfo.ID.RemoteAddress
+			e.connectingAddress = e.ID.RemoteAddress
 			// This endpoint is accepted by netstack but not yet by
 			// the app. If the endpoint is IPv6 but the remote
 			// address is IPv4, we need to connect as IPv6 so that
 			// dual-stack mode can be properly activated.
-			if e.NetProto == header.IPv6ProtocolNumber && e.TransportEndpointInfo.ID.RemoteAddress.BitLen() != header.IPv6AddressSizeBits {
+			if e.NetProto == header.IPv6ProtocolNumber && e.ID.RemoteAddress.BitLen() != header.IPv6AddressSizeBits {
 				e.connectingAddress = tcpip.AddrFrom16Slice(append(
 					[]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff},
-					e.TransportEndpointInfo.ID.RemoteAddress.AsSlice()...,
+					e.ID.RemoteAddress.AsSlice()...,
 				))
 			}
 		}
@@ -256,10 +256,10 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 		e.scoreboard.Reset()
 		if saveRestoreEnabled {
 			// Unregister the endpoint before registering again during Connect.
-			e.stack.UnregisterTransportEndpoint(e.effectiveNetProtos, header.TCPProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
+			e.stack.UnregisterTransportEndpoint(e.effectiveNetProtos, header.TCPProtocolNumber, e.ID, e, e.boundPortFlags, e.boundBindToDevice)
 		}
 		e.mu.Lock()
-		err := e.connect(tcpip.FullAddress{NIC: e.boundNICID, Addr: e.connectingAddress, Port: e.TransportEndpointInfo.ID.RemotePort}, false /* handshake */)
+		err := e.connect(tcpip.FullAddress{NIC: e.boundNICID, Addr: e.connectingAddress, Port: e.ID.RemotePort}, false /* handshake */)
 		if _, ok := err.(*tcpip.ErrConnectStarted); !ok {
 			log.Warningf("TCP endpoint connect failed for connected endpoint with ID: %+v err: %v", id, err)
 			e.mu.Unlock()
@@ -326,7 +326,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			connectedLoading.Wait()
 			listenLoading.Wait()
 			bind()
-			err := e.Connect(tcpip.FullAddress{NIC: e.boundNICID, Addr: e.connectingAddress, Port: e.TransportEndpointInfo.ID.RemotePort})
+			err := e.Connect(tcpip.FullAddress{NIC: e.boundNICID, Addr: e.connectingAddress, Port: e.ID.RemotePort})
 			if _, ok := err.(*tcpip.ErrConnectStarted); !ok {
 				log.Warningf("TCP endpoint connect failed for connecting endpoint with ID: %+v err: %v", id, err)
 				e.Close()
@@ -345,7 +345,7 @@ func (e *Endpoint) Restore(s *stack.Stack) {
 			bind()
 			e.mu.Lock()
 			e.setEndpointState(epState)
-			r, err := e.stack.FindRoute(e.boundNICID, e.TransportEndpointInfo.ID.LocalAddress, e.TransportEndpointInfo.ID.RemoteAddress, e.effectiveNetProtos[0], false /* multicastLoop */)
+			r, err := e.stack.FindRoute(e.boundNICID, e.ID.LocalAddress, e.ID.RemoteAddress, e.effectiveNetProtos[0], false /* multicastLoop */)
 			if err != nil {
 				e.mu.Unlock()
 				log.Warningf("FindRoute failed when restoring endpoint w/ ID: %+v err: %v", id, err)

@@ -52,5 +52,5 @@ func (e K8sJSONEmitter) Emit(depth int, level Level, timestamp time.Time, format
 	if err != nil {
 		panic(err)
 	}
-	e.Writer.Write(b)
+	e.Write(b)
 }

@@ -102,7 +102,7 @@ func newSpecialFileFD(h handle, mnt *vfs.Mount, d *dentry, flags uint32, creds *
 		seekable:      seekable,
 		haveQueue:     haveQueue,
 	}
-	fd.LockFD.Init(&d.inode.locks)
+	fd.Init(&d.inode.locks)
 	if haveQueue {
 		if err := fdnotifier.AddFD(h.fd, &fd.queue); err != nil {
 			return nil, err

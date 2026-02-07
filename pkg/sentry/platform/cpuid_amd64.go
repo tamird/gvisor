@@ -58,7 +58,7 @@ func TryCPUIDEmulate(ctx context.Context, mm MemoryManager, ac *arch.Context64) 
 		return false
 	}
 	fs := cpuid.FromContext(ctx)
-	out := fs.Function.Query(cpuid.In{
+	out := fs.Query(cpuid.In{
 		Eax: uint32(s.Regs.Rax),
 		Ecx: uint32(s.Regs.Rcx),
 	})

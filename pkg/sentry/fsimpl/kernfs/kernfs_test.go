@@ -81,7 +81,7 @@ type file struct {
 func (fs *filesystem) newFile(ctx context.Context, creds *auth.Credentials, content string) kernfs.Inode {
 	f := &file{}
 	f.content = content
-	f.DynamicBytesFile.Init(ctx, creds, 0 /* devMajor */, 0 /* devMinor */, fs.NextIno(), f, 0777)
+	f.Init(ctx, creds, 0 /* devMajor */, 0 /* devMinor */, fs.NextIno(), f, 0777)
 	return f
 }
 
@@ -117,9 +117,9 @@ type readonlyDir struct {
 func (fs *filesystem) newReadonlyDir(ctx context.Context, creds *auth.Credentials, mode linux.FileMode, contents map[string]kernfs.Inode) kernfs.Inode {
 	dir := &readonlyDir{}
 	dir.attrs.Init(ctx, creds, 0 /* devMajor */, 0 /* devMinor */, fs.NextIno(), linux.ModeDirectory|mode)
-	dir.OrderedChildren.Init(kernfs.OrderedChildrenOptions{})
+	dir.Init(kernfs.OrderedChildrenOptions{})
 	dir.InitRefs()
-	dir.IncLinks(dir.OrderedChildren.Populate(contents))
+	dir.IncLinks(dir.Populate(contents))
 	return dir
 }
 
@@ -158,10 +158,10 @@ func (fs *filesystem) newDir(ctx context.Context, creds *auth.Credentials, mode 
 	dir := &dir{}
 	dir.fs = fs
 	dir.attrs.Init(ctx, creds, 0 /* devMajor */, 0 /* devMinor */, fs.NextIno(), linux.ModeDirectory|mode)
-	dir.OrderedChildren.Init(kernfs.OrderedChildrenOptions{Writable: true})
+	dir.Init(kernfs.OrderedChildrenOptions{Writable: true})
 	dir.InitRefs()
 
-	dir.IncLinks(dir.OrderedChildren.Populate(contents))
+	dir.IncLinks(dir.Populate(contents))
 	return dir
 }
 
@@ -182,7 +182,7 @@ func (d *dir) DecRef(ctx context.Context) {
 func (d *dir) NewDir(ctx context.Context, name string, opts vfs.MkdirOptions) (kernfs.Inode, error) {
 	creds := auth.CredentialsFromContext(ctx)
 	dir := d.fs.newDir(ctx, creds, opts.Mode, nil)
-	if err := d.OrderedChildren.Insert(name, dir); err != nil {
+	if err := d.Insert(name, dir); err != nil {
 		dir.DecRef(ctx)
 		return nil, err
 	}
@@ -194,7 +194,7 @@ func (d *dir) NewDir(ctx context.Context, name string, opts vfs.MkdirOptions) (k
 func (d *dir) NewFile(ctx context.Context, name string, opts vfs.OpenOptions) (kernfs.Inode, error) {
 	creds := auth.CredentialsFromContext(ctx)
 	f := d.fs.newFile(ctx, creds, "")
-	if err := d.OrderedChildren.Insert(name, f); err != nil {
+	if err := d.Insert(name, f); err != nil {
 		f.DecRef(ctx)
 		return nil, err
 	}

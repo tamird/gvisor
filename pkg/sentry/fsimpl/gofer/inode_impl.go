@@ -551,7 +551,7 @@ func (d *dentry) restoreFile(ctx context.Context, opts *vfs.CompleteRestoreOptio
 		inode, err := controlFD.Walk(ctx, d.name)
 		if err != nil {
 			if !d.isDir() || !d.forMountpoint {
-				return fmt.Errorf("failed to walk %q of type %x: %w", genericDebugPathname(it.fs, d), it.inode.fileType(), err)
+				return fmt.Errorf("failed to walk %q of type %x: %w", genericDebugPathname(it.fs, d), it.fileType(), err)
 			}
 
 			// Recreate directories that were created during volume mounting, since
@@ -577,7 +577,7 @@ func (d *dentry) restoreFile(ctx context.Context, opts *vfs.CompleteRestoreOptio
 		})
 		if err != nil {
 			if !d.isDir() || !d.forMountpoint {
-				return fmt.Errorf("failed to walk %q of type %x: %w", genericDebugPathname(it.fs, d), it.inode.fileType(), err)
+				return fmt.Errorf("failed to walk %q of type %x: %w", genericDebugPathname(it.fs, d), it.fileType(), err)
 			}
 
 			// Recreate directories that were created during volume mounting, since

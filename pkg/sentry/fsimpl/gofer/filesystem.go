@@ -1135,7 +1135,7 @@ func (d *dentry) open(ctx context.Context, rp *vfs.ResolvingPath, opts *vfs.Open
 			}
 		}
 		fd := &directoryFD{}
-		fd.LockFD.Init(&d.inode.locks)
+		fd.Init(&d.inode.locks)
 		if err := fd.vfsfd.Init(fd, opts.Flags, rp.Credentials(), mnt, &d.vfsd, &vfs.FileDescriptionOptions{}); err != nil {
 			return nil, err
 		}

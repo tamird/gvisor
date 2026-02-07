@@ -87,7 +87,7 @@ func newTestFD(ctx context.Context, vfsObj *VirtualFilesystem, statusFlags uint3
 	defer vd.DecRef(ctx)
 	var fd testFD
 	fd.fileDescription.vfsfd.Init(&fd, statusFlags, auth.CredentialsFromContext(ctx), vd.Mount(), vd.Dentry(), &FileDescriptionOptions{})
-	fd.DynamicBytesFileDescriptionImpl.Init(&fd.fileDescription.vfsfd, data)
+	fd.Init(&fd.fileDescription.vfsfd, data)
 	return &fd.fileDescription.vfsfd
 }
 

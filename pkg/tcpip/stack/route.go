@@ -211,7 +211,7 @@ func makeRoute(netProto tcpip.NetworkProtocolNumber, gateway, localAddr, remoteA
 		return r
 	}
 
-	if r.outgoingNIC.NetworkLinkEndpoint.Capabilities()&CapabilityResolutionRequired != 0 {
+	if r.outgoingNIC.Capabilities()&CapabilityResolutionRequired != 0 {
 		if linkRes, ok := r.outgoingNIC.linkAddrResolvers[r.NetProto()]; ok {
 			r.linkRes = linkRes
 		}
@@ -257,7 +257,7 @@ func makeRouteInner(netProto tcpip.NetworkProtocolNumber, localAddr, remoteAddr 
 		routeInfo: routeInfo{
 			NetProto:         netProto,
 			LocalAddress:     localAddr,
-			LocalLinkAddress: outgoingNIC.NetworkLinkEndpoint.LinkAddress(),
+			LocalLinkAddress: outgoingNIC.LinkAddress(),
 			RemoteAddress:    remoteAddr,
 			Loop:             loop,
 		},
@@ -323,7 +323,7 @@ func (r *Route) RequiresTXTransportChecksum() bool {
 	if r.local() {
 		return false
 	}
-	return r.outgoingNIC.NetworkLinkEndpoint.Capabilities()&CapabilityTXChecksumOffload == 0
+	return r.outgoingNIC.Capabilities()&CapabilityTXChecksumOffload == 0
 }
 
 // HasGVisorGSOCapability returns true if the route supports gVisor GSO.
@@ -344,7 +344,7 @@ func (r *Route) HasHostGSOCapability() bool {
 
 // HasSaveRestoreCapability returns true if the route supports save/restore.
 func (r *Route) HasSaveRestoreCapability() bool {
-	return r.outgoingNIC.NetworkLinkEndpoint.Capabilities()&CapabilitySaveRestore != 0
+	return r.outgoingNIC.Capabilities()&CapabilitySaveRestore != 0
 }
 
 // GSOMaxSize returns the maximum GSO packet size.

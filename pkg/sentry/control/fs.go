@@ -75,10 +75,10 @@ func (f *Fs) mountNamespaceForContainer(containerID string) (*vfs.MountNamespace
 // TarRootfsUpperLayer is a RPC stub which serializes the rootfs upper layer to
 // a tar file. When the rootfs is not an overlayfs, it returns an error.
 func (f *Fs) TarRootfsUpperLayer(o *TarRootfsUpperLayerOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) != 1 {
+	if len(o.Files) != 1 {
 		return ErrInvalidFiles
 	}
-	outFD := o.FilePayload.Files[0]
+	outFD := o.Files[0]
 	defer outFD.Close()
 
 	ctx := f.Kernel.SupervisorContext()

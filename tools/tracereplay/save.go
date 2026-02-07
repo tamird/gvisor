@@ -38,7 +38,7 @@ var _ server.ClientHandler = (*Save)(nil)
 // NewSave creates a new Save instance.
 func NewSave(endpoint, dir, prefix string) *Save {
 	s := &Save{dir: dir, prefix: prefix}
-	s.CommonServer.Init(endpoint, s)
+	s.Init(endpoint, s)
 	return s
 }
 

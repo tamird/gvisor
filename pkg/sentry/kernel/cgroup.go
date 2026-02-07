@@ -127,7 +127,7 @@ type Cgroup struct {
 // decRef drops a reference on the cgroup. This must happen outside a Task.mu
 // critical section.
 func (c *Cgroup) decRef() {
-	c.Dentry.DecRef(context.Background())
+	c.DecRef(context.Background())
 }
 
 // Path returns the absolute path of c, relative to its hierarchy root.
@@ -137,7 +137,7 @@ func (c *Cgroup) Path() string {
 
 // Walk returns the cgroup at p, starting from c.
 func (c *Cgroup) Walk(ctx context.Context, vfsObj *vfs.VirtualFilesystem, p fspath.Path) (Cgroup, error) {
-	d, err := c.Dentry.WalkDentryTree(ctx, vfsObj, p)
+	d, err := c.WalkDentryTree(ctx, vfsObj, p)
 	if err != nil {
 		return Cgroup{}, err
 	}

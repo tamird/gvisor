@@ -53,7 +53,7 @@ func (i IPv6RawPayloadHeader) Equal(b IPv6RawPayloadHeader) bool {
 // Needed to use cmp.Equal on IPv6RawPayloadHeader as it contains unexported
 // fields.
 func (a IPv6HopByHopOptionsExtHdr) Equal(b IPv6HopByHopOptionsExtHdr) bool {
-	return bytes.Equal(a.ipv6OptionsExtHdr.buf.AsSlice(), b.ipv6OptionsExtHdr.buf.AsSlice())
+	return bytes.Equal(a.buf.AsSlice(), b.buf.AsSlice())
 }
 
 // Equal returns true of a and b are equivalent.
@@ -63,7 +63,7 @@ func (a IPv6HopByHopOptionsExtHdr) Equal(b IPv6HopByHopOptionsExtHdr) bool {
 // Needed to use cmp.Equal on IPv6RawPayloadHeader as it contains unexported
 // fields.
 func (a IPv6DestinationOptionsExtHdr) Equal(b IPv6DestinationOptionsExtHdr) bool {
-	return bytes.Equal(a.ipv6OptionsExtHdr.buf.AsSlice(), b.ipv6OptionsExtHdr.buf.AsSlice())
+	return bytes.Equal(a.buf.AsSlice(), b.buf.AsSlice())
 }
 
 func TestIPv6UnknownExtHdrOption(t *testing.T) {

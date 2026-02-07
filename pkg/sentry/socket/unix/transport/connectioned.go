@@ -278,7 +278,7 @@ func (e *connectionedEndpoint) Close(ctx context.Context) {
 					if clientEP, ok := ce.endpoint.(*connectionedEndpoint); ok {
 						clientEP.SocketOptions().SetLastError(&tcpip.ErrConnectionReset{})
 						// Notify waiter queue about error events so epoll detects EPOLLERR.
-						clientEP.Queue.Notify(waiter.EventErr)
+						clientEP.Notify(waiter.EventErr)
 					}
 				}
 			}
@@ -638,7 +638,7 @@ func (e *connectionedEndpoint) OnSetSendBufferSize(v int64) (newSz int64) {
 	e.Lock()
 	defer e.Unlock()
 	if e.Connected() {
-		return e.baseEndpoint.connected.SetSendBufferSize(v)
+		return e.connected.SetSendBufferSize(v)
 	}
 	return v
 }

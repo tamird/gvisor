@@ -30,7 +30,7 @@ type savedPendingSignal struct {
 func (p *pendingSignals) saveSignals() []savedPendingSignal {
 	var pending []savedPendingSignal
 	for _, q := range p.signals {
-		for ps := q.pendingSignalList.Front(); ps != nil; ps = ps.Next() {
+		for ps := q.Front(); ps != nil; ps = ps.Next() {
 			pending = append(pending, savedPendingSignal{
 				si:    ps.SignalInfo,
 				timer: ps.timer,

@@ -285,5 +285,5 @@ func (c *Context64) PtracePokeUser(addr, data uintptr) error {
 
 // FloatingPointData returns the state of the floating-point unit.
 func (c *Context64) FloatingPointData() *fpu.State {
-	return &c.State.fpState
+	return &c.fpState
 }

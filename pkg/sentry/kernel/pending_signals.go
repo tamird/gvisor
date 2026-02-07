@@ -92,7 +92,7 @@ func (p *pendingSignals) enqueue(info *linux.SignalInfo, timer *IntervalTimer) b
 	} else if q.length >= rtSignalCap {
 		return false
 	}
-	q.pendingSignalList.PushBack(&pendingSignal{SignalInfo: info, timer: timer})
+	q.PushBack(&pendingSignal{SignalInfo: info, timer: timer})
 	q.length++
 	p.pendingSet.Store(p.pendingSet.RacyLoad() | uint64(linux.SignalSetOf(sig)))
 	return true
@@ -120,11 +120,11 @@ func (p *pendingSignals) dequeue(mask linux.SignalSet) *linux.SignalInfo {
 
 func (p *pendingSignals) dequeueSpecific(sig linux.Signal) *linux.SignalInfo {
 	q := &p.signals[sig.Index()]
-	ps := q.pendingSignalList.Front()
+	ps := q.Front()
 	if ps == nil {
 		return nil
 	}
-	q.pendingSignalList.Remove(ps)
+	q.Remove(ps)
 	q.length--
 	if q.length == 0 {
 		p.pendingSet.Store(p.pendingSet.RacyLoad() &^ uint64(linux.SignalSetOf(sig)))
@@ -138,12 +138,12 @@ func (p *pendingSignals) dequeueSpecific(sig linux.Signal) *linux.SignalInfo {
 // discardSpecific causes all pending signals with number sig to be discarded.
 func (p *pendingSignals) discardSpecific(sig linux.Signal) {
 	q := &p.signals[sig.Index()]
-	for ps := q.pendingSignalList.Front(); ps != nil; ps = ps.Next() {
+	for ps := q.Front(); ps != nil; ps = ps.Next() {
 		if ps.timer != nil {
 			ps.timer.signalRejectedLocked()
 		}
 	}
-	q.pendingSignalList.Reset()
+	q.Reset()
 	q.length = 0
 	p.pendingSet.Store(p.pendingSet.RacyLoad() &^ uint64(linux.SignalSetOf(sig)))
 }

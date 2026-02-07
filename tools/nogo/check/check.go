@@ -331,7 +331,7 @@ type errorImporter struct {
 
 // Import implements types.Importer.Import.
 func (i *errorImporter) Import(path string) (*types.Package, error) {
-	pkg, err := i.importer.importPackage(path)
+	pkg, err := i.importPackage(path)
 	if err != nil {
 		i.lastErr = err
 	}

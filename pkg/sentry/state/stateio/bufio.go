@@ -33,7 +33,7 @@ func NewBufioReadCloser(rc io.ReadCloser) *BufioReadCloser {
 	brc := &BufioReadCloser{
 		Closer: rc,
 	}
-	brc.Reader.Reset(rc)
+	brc.Reset(rc)
 	return brc
 }
 
@@ -50,11 +50,11 @@ func NewBufioWriteCloser(wc io.WriteCloser) *BufioWriteCloser {
 	bwc := &BufioWriteCloser{
 		Closer: wc,
 	}
-	bwc.Writer.Reset(wc)
+	bwc.Reset(wc)
 	return bwc
 }
 
 // Close implements io.Closer.Close.
 func (bwc *BufioWriteCloser) Close() error {
-	return errors.Join(bwc.Writer.Flush(), bwc.Closer.Close())
+	return errors.Join(bwc.Flush(), bwc.Closer.Close())
 }

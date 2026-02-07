@@ -49,7 +49,7 @@ type OldRSeqCriticalRegion struct {
 
 // RSeqAvailable returns true if t supports (old and new) restartable sequences.
 func (t *Task) RSeqAvailable() bool {
-	return (t.k.useHostCores || t.k.Platform.HasCPUNumbers()) && t.k.Platform.DetectsCPUPreemption()
+	return (t.k.useHostCores || t.k.HasCPUNumbers()) && t.k.DetectsCPUPreemption()
 }
 
 // SetRSeq registers addr as this thread's rseq structure.

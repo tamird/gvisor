@@ -101,7 +101,7 @@ func (fs *filesystem) CompleteRestore(ctx context.Context, opts vfs.CompleteRest
 	}
 	kernelSub["iommu_groups"] = fs.newDir(ctx, creds, defaultSysDirMode, iommuGroups)
 
-	fs.root.OrderedChildren.Populate(map[string]kernfs.Inode{
+	fs.root.Populate(map[string]kernfs.Inode{
 		"class":   fs.newDir(ctx, creds, defaultSysDirMode, classSub),
 		"devices": fs.newDir(ctx, creds, defaultSysDirMode, devicesSub),
 		"bus":     fs.newDir(ctx, creds, defaultSysDirMode, busSub),
@@ -111,9 +111,9 @@ func (fs *filesystem) CompleteRestore(ctx context.Context, opts vfs.CompleteRest
 }
 
 func removeSysDir(ctx context.Context, root *dir, name string) error {
-	dir, err := root.OrderedChildren.Lookup(ctx, name)
+	dir, err := root.Lookup(ctx, name)
 	if err != nil {
 		return err
 	}
-	return root.OrderedChildren.RmDir(ctx, name, dir)
+	return root.RmDir(ctx, name, dir)
 }

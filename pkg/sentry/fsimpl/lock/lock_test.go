@@ -31,20 +31,20 @@ func equals(e0, e1 []entry) bool {
 		return false
 	}
 	for i := range e0 {
-		for k := range e0[i].Lock.Readers {
-			if _, ok := e1[i].Lock.Readers[k]; !ok {
+		for k := range e0[i].Readers {
+			if _, ok := e1[i].Readers[k]; !ok {
 				return false
 			}
 		}
-		for k := range e1[i].Lock.Readers {
-			if _, ok := e0[i].Lock.Readers[k]; !ok {
+		for k := range e1[i].Readers {
+			if _, ok := e0[i].Readers[k]; !ok {
 				return false
 			}
 		}
 		if !reflect.DeepEqual(e0[i].LockRange, e1[i].LockRange) {
 			return false
 		}
-		if e0[i].Lock.Writer != e1[i].Lock.Writer {
+		if e0[i].Writer != e1[i].Writer {
 			return false
 		}
 	}
@@ -59,7 +59,7 @@ func fill(entries []entry) LockSet {
 		if e.Readers == nil {
 			e.Readers = make(map[UniqueID]OwnerInfo)
 		}
-		gap := l.FindGap(e.LockRange.Start)
+		gap := l.FindGap(e.Start)
 		if !gap.Ok() {
 			panic("cannot insert into existing segment")
 		}

@@ -85,7 +85,7 @@ func TestNestedLinkEndpoint(t *testing.T) {
 		nestedEP parentEndpoint
 		disp     counterDispatcher
 	)
-	nestedEP.Endpoint.Init(&childEP, &nestedEP)
+	nestedEP.Init(&childEP, &nestedEP)
 
 	if childEP.IsAttached() {
 		t.Error("On init, childEP.IsAttached() = true, want = false")
@@ -140,7 +140,7 @@ func TestSetLinkAddress(t *testing.T) {
 		disp    counterDispatcher
 	)
 	addrs := []tcpip.LinkAddress{"abc", "def"}
-	ep.Endpoint.Init(&childEP, &disp)
+	ep.Init(&childEP, &disp)
 	for _, addr := range addrs {
 		ep.SetLinkAddress(addr)
 
@@ -157,9 +157,9 @@ func TestMTU(t *testing.T) {
 		disp    counterDispatcher
 	)
 	mtus := []uint32{1500, 2000}
-	ep.Endpoint.Init(&childEP, &disp)
+	ep.Init(&childEP, &disp)
 	for _, mtu := range mtus {
-		ep.Endpoint.SetMTU(mtu)
+		ep.SetMTU(mtu)
 
 		if want, v := mtu, ep.MTU(); want != v {
 			t.Errorf("LinkAddress() = %v, want %v", v, want)

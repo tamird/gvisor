@@ -2286,7 +2286,7 @@ func (rp *resolvingPath) done() bool {
 
 func (rp *resolvingPath) copy() resolvingPath {
 	return resolvingPath{
-		ResolvingPath: rp.ResolvingPath.Copy(),
+		ResolvingPath: rp.Copy(),
 		excludeLast:   rp.excludeLast,
 	}
 }

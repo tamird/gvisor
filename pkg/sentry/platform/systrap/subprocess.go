@@ -341,7 +341,7 @@ func (s *subprocess) handlePtraceSyscallRequest(req any) {
 // with SECCOMP_FILTER_FLAG_NEW_LISTENER.
 func newSubprocess(create func() (*thread, error), memoryFile *pgalloc.MemoryFile, seccompNotify bool) (*subprocess, error) {
 	if sp := globalPool.fetchAvailable(); sp != nil {
-		sp.subprocessRefs.InitRefs()
+		sp.InitRefs()
 		sp.usertrap = usertrap.New()
 		return sp, nil
 	}
@@ -361,7 +361,7 @@ func newSubprocess(create func() (*thread, error), memoryFile *pgalloc.MemoryFil
 		memoryFile:        memoryFile,
 		sysmsgThreads:     make(map[uint32]*sysmsgThread),
 	}
-	sp.subprocessRefs.InitRefs()
+	sp.InitRefs()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 

@@ -132,7 +132,7 @@ func setSaveOptsForLocalCheckpointFiles(o *SaveOpts, saveOpts *state.SaveOpts) e
 	if o.HavePagesFile {
 		wantFiles += 2
 	}
-	if gotFiles := len(o.FilePayload.Files); gotFiles != wantFiles {
+	if gotFiles := len(o.Files); gotFiles != wantFiles {
 		return fmt.Errorf("got %d files, wanted %d", gotFiles, wantFiles)
 	}
 

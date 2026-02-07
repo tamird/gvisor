@@ -153,7 +153,7 @@ func (c *vCPU) initArchState() error {
 	}
 
 	// sp_el1
-	data = c.CPU.StackTop()
+	data = c.StackTop()
 	reg.id = _KVM_ARM64_REGS_SP_EL1
 	if err := c.setOneRegister(&reg); err != nil {
 		return err

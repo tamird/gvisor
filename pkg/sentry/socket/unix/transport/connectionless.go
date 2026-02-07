@@ -251,7 +251,7 @@ func (e *connectionlessEndpoint) OnSetSendBufferSize(v int64) (newSz int64) {
 	e.Lock()
 	defer e.Unlock()
 	if e.Connected() {
-		return e.baseEndpoint.connected.SetSendBufferSize(v)
+		return e.connected.SetSendBufferSize(v)
 	}
 	return v
 }

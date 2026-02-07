@@ -65,7 +65,7 @@ func newCPUAcctController(fs *filesystem) *cpuacctController {
 	c := &cpuacctController{
 		taskCommittedCharges: make(map[*kernel.Task]usage.CPUStats),
 	}
-	c.controllerCommon.init(kernel.CgroupControllerCPUAcct, fs)
+	c.init(kernel.CgroupControllerCPUAcct, fs)
 	return c
 }
 
@@ -74,7 +74,7 @@ func (c *cpuacctController) Clone() controller {
 	new := &cpuacctController{
 		taskCommittedCharges: make(map[*kernel.Task]usage.CPUStats),
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 

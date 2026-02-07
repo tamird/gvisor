@@ -128,7 +128,7 @@ func (fd *ControlFD) Init(c *Connection, node *Node, mode linux.FileMode, impl C
 	fd.impl = impl
 	fd.ftype = mode.FileType()
 	// Initialize fd with 1 ref which is transferred to c via c.insertFD().
-	fd.controlFDRefs.InitRefs()
+	fd.InitRefs()
 	// Make fd reachable/discoverable.
 	fd.id = c.insertFD(fd)
 	node.insertFD(fd)
@@ -270,7 +270,7 @@ func (fd *OpenFD) DecRef(context.Context) {
 // Init must be called before first use of fd.
 func (fd *OpenFD) Init(cfd *ControlFD, flags uint32, impl OpenFDImpl) {
 	// Initialize fd with 1 ref which is transferred to c via c.insertFD().
-	fd.openFDRefs.InitRefs()
+	fd.InitRefs()
 	fd.controlFD = cfd
 	fd.id = cfd.conn.insertFD(fd)
 	accessMode := flags & unix.O_ACCMODE
@@ -324,7 +324,7 @@ func (fd *BoundSocketFD) DecRef(context.Context) {
 // Init must be called before first use of fd.
 func (fd *BoundSocketFD) Init(cfd *ControlFD, impl BoundSocketFDImpl) {
 	// Initialize fd with 1 ref which is transferred to c via c.insertFD().
-	fd.boundSocketFDRefs.InitRefs()
+	fd.InitRefs()
 	fd.controlFD = cfd
 	fd.id = cfd.conn.insertFD(fd)
 	fd.impl = impl

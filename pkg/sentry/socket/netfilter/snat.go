@@ -200,9 +200,9 @@ func (st *snatTargetMakerR1) unmarshal(buf []byte, filter stack.IPHeaderFilter) 
 	}
 	switch st.NetworkProtocol {
 	case header.IPv4ProtocolNumber:
-		target.SNATTarget.Addr = tcpip.AddrFrom4Slice(natRange.MinAddr[:4])
+		target.Addr = tcpip.AddrFrom4Slice(natRange.MinAddr[:4])
 	case header.IPv6ProtocolNumber:
-		target.SNATTarget.Addr = tcpip.AddrFrom16(natRange.MinAddr)
+		target.Addr = tcpip.AddrFrom16(natRange.MinAddr)
 	default:
 		panic(fmt.Sprintf("invalid protocol number: %d", st.NetworkProtocol))
 	}
@@ -289,9 +289,9 @@ func (st *snatTargetMakerR2) unmarshal(buf []byte, filter stack.IPHeaderFilter) 
 	}
 	switch st.NetworkProtocol {
 	case header.IPv4ProtocolNumber:
-		target.SNATTarget.Addr = tcpip.AddrFrom4Slice(natRange.MinAddr[:4])
+		target.Addr = tcpip.AddrFrom4Slice(natRange.MinAddr[:4])
 	case header.IPv6ProtocolNumber:
-		target.SNATTarget.Addr = tcpip.AddrFrom16(natRange.MinAddr)
+		target.Addr = tcpip.AddrFrom16(natRange.MinAddr)
 	default:
 		panic(fmt.Sprintf("invalid protocol number: %d", st.NetworkProtocol))
 	}

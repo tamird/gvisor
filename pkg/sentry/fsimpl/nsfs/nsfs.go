@@ -60,7 +60,7 @@ func NewFilesystem(vfsObj *vfs.VirtualFilesystem) (*vfs.Filesystem, error) {
 		devMinor: devMinor,
 	}
 	fs.Filesystem.VFSFilesystem().Init(vfsObj, filesystemType{}, fs)
-	return fs.Filesystem.VFSFilesystem(), nil
+	return fs.VFSFilesystem(), nil
 }
 
 // Release implements vfs.FilesystemImpl.Release.
@@ -110,7 +110,7 @@ func NewInode(ctx context.Context, mnt *vfs.Mount, namespace vfs.Namespace) *Ino
 		namespace: namespace,
 		mnt:       mnt,
 	}
-	i.InodeAttrs.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.Filesystem.NextIno(), nsfsMode)
+	i.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), nsfsMode)
 	i.InitRefs()
 	return i
 }
@@ -187,7 +187,7 @@ func (fd *namespaceFD) Release(ctx context.Context) {
 func (i *Inode) Open(ctx context.Context, rp *vfs.ResolvingPath, d *kernfs.Dentry, opts vfs.OpenOptions) (*vfs.FileDescription, error) {
 	fd := &namespaceFD{inode: i}
 	i.IncRef()
-	fd.LockFD.Init(&i.locks)
+	fd.Init(&i.locks)
 	if err := fd.vfsfd.Init(fd, opts.Flags, rp.Credentials(), rp.Mount(), d.VFSDentry(), &vfs.FileDescriptionOptions{}); err != nil {
 		return nil, err
 	}

@@ -173,7 +173,7 @@ func (b *BridgeEndpoint) AddNIC(n *nic) tcpip.Error {
 		nic:    n,
 		bridge: b,
 	}
-	n.NetworkLinkEndpoint.Attach(port)
+	n.Attach(port)
 	b.ports[n.id] = port
 
 	if b.maxHeaderLength.Load() < uint32(n.MaxHeaderLength()) {
@@ -195,7 +195,7 @@ func (b *BridgeEndpoint) DelNIC(nic *nic) tcpip.Error {
 		}
 	}
 	delete(b.ports, nic.id)
-	nic.NetworkLinkEndpoint.Attach(nic)
+	nic.Attach(nic)
 	return nil
 }
 

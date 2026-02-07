@@ -89,7 +89,7 @@ func (*testIPv6Endpoint) HandlePacket(*PacketBuffer) {}
 
 // Close implements NetworkEndpoint.Close.
 func (e *testIPv6Endpoint) Close() {
-	e.AddressableEndpointState.Cleanup()
+	e.Cleanup()
 }
 
 // NetworkProtocolNumber implements NetworkEndpoint.NetworkProtocolNumber.
@@ -139,7 +139,7 @@ func (p *testIPv6Protocol) NewEndpoint(nic NetworkInterface, _ TransportDispatch
 		nic:      nic,
 		protocol: p,
 	}
-	e.AddressableEndpointState.Init(e, AddressableEndpointStateOptions{HiddenWhileDisabled: false})
+	e.Init(e, AddressableEndpointStateOptions{HiddenWhileDisabled: false})
 	return e
 }
 

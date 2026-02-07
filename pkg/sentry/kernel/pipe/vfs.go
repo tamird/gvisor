@@ -144,7 +144,7 @@ func (vp *VFSPipe) newFD(mnt *vfs.Mount, vfsd *vfs.Dentry, statusFlags uint32, l
 	fd := &VFSPipeFD{
 		pipe: &vp.pipe,
 	}
-	fd.LockFD.Init(locks)
+	fd.Init(locks)
 	if err := fd.vfsfd.Init(fd, statusFlags, creds, mnt, vfsd, &vfs.FileDescriptionOptions{
 		DenyPRead:         true,
 		DenyPWrite:        true,

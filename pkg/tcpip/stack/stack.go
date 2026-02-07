@@ -1121,7 +1121,7 @@ func (s *Stack) SetNICAddress(id tcpip.NICID, addr tcpip.LinkAddress) tcpip.Erro
 	if !ok {
 		return &tcpip.ErrUnknownNICID{}
 	}
-	nic.NetworkLinkEndpoint.SetLinkAddress(addr)
+	nic.SetLinkAddress(addr)
 	return nil
 }
 
@@ -1147,7 +1147,7 @@ func (s *Stack) SetNICMTU(id tcpip.NICID, mtu uint32) tcpip.Error {
 	if !ok {
 		return &tcpip.ErrUnknownNICID{}
 	}
-	nic.NetworkLinkEndpoint.SetMTU(mtu)
+	nic.SetMTU(mtu)
 	return nil
 }
 
@@ -1229,14 +1229,14 @@ func (s *Stack) nicInfo(nic *nic, id tcpip.NICID) *NICInfo {
 
 	info := NICInfo{
 		Name:                nic.name,
-		LinkAddress:         nic.NetworkLinkEndpoint.LinkAddress(),
+		LinkAddress:         nic.LinkAddress(),
 		ProtocolAddresses:   nic.primaryAddresses(),
 		Flags:               flags,
-		MTU:                 nic.NetworkLinkEndpoint.MTU(),
+		MTU:                 nic.MTU(),
 		Stats:               nic.stats.local,
 		NetworkStats:        netStats,
 		Context:             nic.context,
-		ARPHardwareType:     nic.NetworkLinkEndpoint.ARPHardwareType(),
+		ARPHardwareType:     nic.ARPHardwareType(),
 		Forwarding:          make(map[tcpip.NetworkProtocolNumber]bool),
 		MulticastForwarding: make(map[tcpip.NetworkProtocolNumber]bool),
 	}
@@ -2042,7 +2042,7 @@ func (s *Stack) Wait() {
 		// Remove NIC to ensure that qDisc goroutines are correctly
 		// terminated on stack teardown.
 		act, _ := s.removeNICLocked(id, true /* closeLinkEndpoint */)
-		n.NetworkLinkEndpoint.Wait()
+		n.Wait()
 		if act != nil {
 			deferActs = append(deferActs, act)
 		}

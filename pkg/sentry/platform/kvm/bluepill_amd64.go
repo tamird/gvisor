@@ -31,7 +31,7 @@ func bluepillArchVCPU(context *arch.SignalContext64) *vCPU {
 //go:nosplit
 func bluepillArchEnter(context *arch.SignalContext64) *vCPU {
 	c := vCPUPtr(uintptr(context.Rax))
-	regs := c.CPU.Registers()
+	regs := c.Registers()
 	regs.R8 = context.R8
 	regs.R9 = context.R9
 	regs.R10 = context.R10
@@ -64,8 +64,8 @@ func bluepillArchEnter(context *arch.SignalContext64) *vCPU {
 //go:nosplit
 func (c *vCPU) archExitSanityCheck(context *arch.SignalContext64) {
 	kernelStartAddress := uint64(ring0.KernelStartAddress)
-	faultAddr := uint64(c.CPU.FaultAddr())
-	vector := uint64(c.CPU.Vector())
+	faultAddr := uint64(c.FaultAddr())
+	vector := uint64(c.Vector())
 	rsp := c.CPU.Registers().Rsp
 	rip := c.CPU.Registers().Rip
 	rbp := c.CPU.Registers().Rbp
@@ -155,7 +155,7 @@ func (c *vCPU) KernelException(vector ring0.Vector) {
 //
 //go:nosplit
 func bluepillArchExit(c *vCPU, context *arch.SignalContext64) {
-	regs := c.CPU.Registers()
+	regs := c.Registers()
 	context.R8 = regs.R8
 	context.R9 = regs.R9
 	context.R10 = regs.R10

@@ -317,8 +317,8 @@ func (p *pool) stop() {
 // handleResult calls the callback.
 func handleResult(r result, callback func(*chunk) error) error {
 	defer func() {
-		r.chunk.compressed.Reset()
-		bufPool.Put(r.chunk.compressed)
+		r.compressed.Reset()
+		bufPool.Put(r.compressed)
 		chunkPool.Put(r.chunk)
 	}()
 	if r.err != nil {

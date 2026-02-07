@@ -166,7 +166,7 @@ func New(t *kernel.Task, skType linux.SockType, protocol Protocol) (*Socket, *sy
 		sendBufferSize: defaultSendBufferSize,
 		netns:          t.GetNetworkNamespace(),
 	}
-	fd.LockFD.Init(&vfs.FileLocks{})
+	fd.Init(&vfs.FileLocks{})
 	return fd, nil
 }
 

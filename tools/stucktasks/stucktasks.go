@@ -137,7 +137,7 @@ func analyzeStackDump(scanner *bufio.Scanner, out io.Writer, stuckIds map[uint]s
 		// Sort with the most occurring stacks first, then start with the longest stacks (likely
 		// to be the more relevant for deadlocks).
 		if sorted[i].count == sorted[j].count {
-			return len(sorted[i].stack.lines) > len(sorted[j].stack.lines)
+			return len(sorted[i].lines) > len(sorted[j].lines)
 		}
 		return sorted[i].count > sorted[j].count
 	})

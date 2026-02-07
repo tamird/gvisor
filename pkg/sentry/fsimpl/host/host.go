@@ -217,7 +217,7 @@ func newInode(ctx context.Context, fs *filesystem, hostFD int, savable bool, res
 	}
 
 	i.InitRefs()
-	i.CachedMappable.Init(hostFD)
+	i.Init(hostFD)
 
 	// If the hostFD can return EWOULDBLOCK when set to non-blocking, do so and
 	// handle blocking behavior in the sentry.
@@ -623,7 +623,7 @@ func (i *inode) SetStat(ctx context.Context, fs *vfs.Filesystem, creds *auth.Cre
 			oldpgend, _ := hostarch.PageRoundUp(oldSize)
 			newpgend, _ := hostarch.PageRoundUp(s.Size)
 			if oldpgend != newpgend {
-				i.CachedMappable.InvalidateRange(memmap.MappableRange{newpgend, oldpgend})
+				i.InvalidateRange(memmap.MappableRange{newpgend, oldpgend})
 			}
 		}
 	}
@@ -707,7 +707,7 @@ func (i *inode) open(ctx context.Context, d *kernfs.Dentry, mnt *vfs.Mount, file
 		}
 
 		fd := &fileDescription{inode: i}
-		fd.LockFD.Init(&i.locks)
+		fd.Init(&i.locks)
 		vfsfd := &fd.vfsfd
 		if err := vfsfd.Init(fd, flags, auth.CredentialsFromContext(ctx), mnt, d.VFSDentry(), &vfs.FileDescriptionOptions{}); err != nil {
 			return nil, err
@@ -730,7 +730,7 @@ func (i *inode) OpenTTY(ctx context.Context, mnt *vfs.Mount, d *vfs.Dentry, opts
 	fd := &TTYFileDescription{
 		fileDescription: fileDescription{inode: i},
 	}
-	fd.LockFD.Init(&i.locks)
+	fd.Init(&i.locks)
 	vfsfd := &fd.vfsfd
 	if err := vfsfd.Init(fd, flags, auth.CredentialsFromContext(ctx), mnt, d, &vfs.FileDescriptionOptions{}); err != nil {
 		return nil, err
@@ -1020,7 +1020,7 @@ func (f *fileDescription) ConfigureMMap(_ context.Context, opts *memmap.MMapOpts
 		return linuxerr.ENODEV
 	}
 	i := f.inode
-	i.CachedMappable.InitFileMapperOnce()
+	i.InitFileMapperOnce()
 	return vfs.GenericConfigureMMap(&f.vfsfd, i, opts)
 }
 

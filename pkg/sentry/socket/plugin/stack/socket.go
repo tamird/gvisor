@@ -91,7 +91,7 @@ func newSocket(t *kernel.Task, family int, skType linux.SockType, protocol int, 
 		eventInfo: plugin.EventInfo{Wq: wq},
 	}
 
-	sop.LockFD.Init(&vfs.FileLocks{})
+	sop.Init(&vfs.FileLocks{})
 
 	vfsfd := &sop.vfsfd
 	if err := vfsfd.Init(sop, linux.O_RDWR|(flags&linux.O_NONBLOCK), t.Credentials(), mnt, d, &vfs.FileDescriptionOptions{

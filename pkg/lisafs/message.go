@@ -718,7 +718,7 @@ func (o *OpenCreateAtReq) SizeBytes() int {
 
 // MarshalBytes implements marshal.Marshallable.MarshalBytes.
 func (o *OpenCreateAtReq) MarshalBytes(dst []byte) []byte {
-	dst = o.createCommon.MarshalUnsafe(dst)
+	dst = o.MarshalUnsafe(dst)
 	dst = o.Flags.MarshalUnsafe(dst)
 	return o.Name.MarshalBytes(dst)
 }
@@ -729,7 +729,7 @@ func (o *OpenCreateAtReq) CheckedUnmarshal(src []byte) ([]byte, bool) {
 	if o.SizeBytes() > len(src) {
 		return src, false
 	}
-	srcRemain := o.createCommon.UnmarshalUnsafe(src)
+	srcRemain := o.UnmarshalUnsafe(src)
 	srcRemain = o.Flags.UnmarshalUnsafe(srcRemain)
 	if srcRemain, ok := o.Name.CheckedUnmarshal(srcRemain); ok {
 		return srcRemain, true
@@ -993,7 +993,7 @@ func (m *MkdirAtReq) SizeBytes() int {
 
 // MarshalBytes implements marshal.Marshallable.MarshalBytes.
 func (m *MkdirAtReq) MarshalBytes(dst []byte) []byte {
-	dst = m.createCommon.MarshalUnsafe(dst)
+	dst = m.MarshalUnsafe(dst)
 	return m.Name.MarshalBytes(dst)
 }
 
@@ -1003,7 +1003,7 @@ func (m *MkdirAtReq) CheckedUnmarshal(src []byte) ([]byte, bool) {
 	if m.SizeBytes() > len(src) {
 		return src, false
 	}
-	srcRemain := m.createCommon.UnmarshalUnsafe(src)
+	srcRemain := m.UnmarshalUnsafe(src)
 	if srcRemain, ok := m.Name.CheckedUnmarshal(srcRemain); ok {
 		return srcRemain, true
 	}
@@ -1042,7 +1042,7 @@ func (m *MknodAtReq) SizeBytes() int {
 
 // MarshalBytes implements marshal.Marshallable.MarshalBytes.
 func (m *MknodAtReq) MarshalBytes(dst []byte) []byte {
-	dst = m.createCommon.MarshalUnsafe(dst)
+	dst = m.MarshalUnsafe(dst)
 	dst = m.Minor.MarshalUnsafe(dst)
 	dst = m.Major.MarshalUnsafe(dst)
 	return m.Name.MarshalBytes(dst)
@@ -1054,7 +1054,7 @@ func (m *MknodAtReq) CheckedUnmarshal(src []byte) ([]byte, bool) {
 	if m.SizeBytes() > len(src) {
 		return src, false
 	}
-	srcRemain := m.createCommon.UnmarshalUnsafe(src)
+	srcRemain := m.UnmarshalUnsafe(src)
 	srcRemain = m.Minor.UnmarshalUnsafe(srcRemain)
 	srcRemain = m.Major.UnmarshalUnsafe(srcRemain)
 	if srcRemain, ok := m.Name.CheckedUnmarshal(srcRemain); ok {
@@ -1351,7 +1351,7 @@ func (b *BindAtReq) SizeBytes() int {
 
 // MarshalBytes implements marshal.Marshallable.MarshalBytes.
 func (b *BindAtReq) MarshalBytes(dst []byte) []byte {
-	dst = b.createCommon.MarshalUnsafe(dst)
+	dst = b.MarshalUnsafe(dst)
 	dst = b.SockType.MarshalUnsafe(dst)
 	return b.Name.MarshalBytes(dst)
 }
@@ -1362,7 +1362,7 @@ func (b *BindAtReq) CheckedUnmarshal(src []byte) ([]byte, bool) {
 	if b.SizeBytes() > len(src) {
 		return src, false
 	}
-	srcRemain := b.createCommon.UnmarshalUnsafe(src)
+	srcRemain := b.UnmarshalUnsafe(src)
 	srcRemain = b.SockType.UnmarshalUnsafe(srcRemain)
 	if srcRemain, ok := b.Name.CheckedUnmarshal(srcRemain); ok {
 		return srcRemain, ok

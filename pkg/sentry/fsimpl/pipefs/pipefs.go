@@ -65,7 +65,7 @@ func NewFilesystem(vfsObj *vfs.VirtualFilesystem) (*vfs.Filesystem, error) {
 		devMinor: devMinor,
 	}
 	fs.Filesystem.VFSFilesystem().Init(vfsObj, filesystemType{}, fs)
-	return fs.Filesystem.VFSFilesystem(), nil
+	return fs.VFSFilesystem(), nil
 }
 
 // Release implements vfs.FilesystemImpl.Release.
@@ -112,7 +112,7 @@ func newInode(ctx context.Context, fs *filesystem) *inode {
 	creds := auth.CredentialsFromContext(ctx)
 	return &inode{
 		pipe:  pipe.NewVFSPipe(false /* isNamed */, pipe.DefaultPipeSize),
-		ino:   fs.Filesystem.NextIno(),
+		ino:   fs.NextIno(),
 		uid:   creds.EffectiveKUID,
 		gid:   creds.EffectiveKGID,
 		ctime: ktime.NowFromContext(ctx),

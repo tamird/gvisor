@@ -1109,15 +1109,15 @@ func (e *Endpoint) closeNoShutdownLocked() {
 	// in Listen() when trying to register.
 	if e.EndpointState() == StateListen && e.isPortReserved {
 		if e.isRegistered {
-			e.stack.StartTransportEndpointCleanup(e.effectiveNetProtos, ProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
+			e.stack.StartTransportEndpointCleanup(e.effectiveNetProtos, ProtocolNumber, e.ID, e, e.boundPortFlags, e.boundBindToDevice)
 			e.isRegistered = false
 		}
 
 		portRes := ports.Reservation{
 			Networks:     e.effectiveNetProtos,
 			Transport:    ProtocolNumber,
-			Addr:         e.TransportEndpointInfo.ID.LocalAddress,
-			Port:         e.TransportEndpointInfo.ID.LocalPort,
+			Addr:         e.ID.LocalAddress,
+			Port:         e.ID.LocalPort,
 			Flags:        e.boundPortFlags,
 			BindToDevice: e.boundBindToDevice,
 			Dest:         e.boundDest,
@@ -1219,7 +1219,7 @@ func (e *Endpoint) cleanupLocked() {
 	e.keepalive.timer.cleanup()
 
 	if e.isRegistered {
-		e.stack.StartTransportEndpointCleanup(e.effectiveNetProtos, ProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
+		e.stack.StartTransportEndpointCleanup(e.effectiveNetProtos, ProtocolNumber, e.ID, e, e.boundPortFlags, e.boundBindToDevice)
 		e.isRegistered = false
 	}
 
@@ -1227,8 +1227,8 @@ func (e *Endpoint) cleanupLocked() {
 		portRes := ports.Reservation{
 			Networks:     e.effectiveNetProtos,
 			Transport:    ProtocolNumber,
-			Addr:         e.TransportEndpointInfo.ID.LocalAddress,
-			Port:         e.TransportEndpointInfo.ID.LocalPort,
+			Addr:         e.ID.LocalAddress,
+			Port:         e.ID.LocalPort,
 			Flags:        e.boundPortFlags,
 			BindToDevice: e.boundBindToDevice,
 			Dest:         e.boundDest,
@@ -1648,7 +1648,7 @@ func (e *Endpoint) queueSegment(p tcpip.Payloader, opts tcpip.WriteOptions) (*se
 
 	// Add data to the send queue.
 	size := int(buf.Size())
-	s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buf)
+	s := newOutgoingSegment(e.ID, e.stack.Clock(), buf)
 	e.sndQueueInfo.SndBufUsed += size
 	e.snd.writeList.PushBack(s)
 
@@ -1844,7 +1844,7 @@ func (e *Endpoint) OnSetReceiveBufferSize(rcvBufSz, oldSz int64) (newSz int64, p
 
 // OnSetSendBufferSize implements tcpip.SocketOptionsHandler.OnSetSendBufferSize.
 func (e *Endpoint) OnSetSendBufferSize(sz int64) int64 {
-	e.sndQueueInfo.TCPSndBufState.AutoTuneSndBufDisabled.Store(1)
+	e.sndQueueInfo.AutoTuneSndBufDisabled.Store(1)
 	return sz
 }
 
@@ -2161,8 +2161,8 @@ func (e *Endpoint) getTCPInfo() tcpip.TCPInfoOption {
 		// the connection did not send and receive data, then RTT will
 		// be zero.
 		snd.rtt.Lock()
-		info.RTT = snd.rtt.TCPRTTState.SRTT
-		info.RTTVar = snd.rtt.TCPRTTState.RTTVar
+		info.RTT = snd.rtt.SRTT
+		info.RTTVar = snd.rtt.RTTVar
 		snd.rtt.Unlock()
 
 		info.RTO = snd.RTO
@@ -2214,7 +2214,7 @@ func (e *Endpoint) GetSockOpt(opt tcpip.GettableSocketOption) tcpip.Error {
 	case *tcpip.OriginalDestinationOption:
 		e.LockUser()
 		ipt := e.stack.IPTables()
-		addr, port, err := ipt.OriginalDst(e.TransportEndpointInfo.ID, e.NetProto, ProtocolNumber)
+		addr, port, err := ipt.OriginalDst(e.ID, e.NetProto, ProtocolNumber)
 		e.UnlockUser()
 		if err != nil {
 			return err
@@ -2234,7 +2234,7 @@ func (e *Endpoint) GetSockOpt(opt tcpip.GettableSocketOption) tcpip.Error {
 // addr to its canonical form.
 // +checklocks:e.mu
 func (e *Endpoint) checkV4MappedLocked(addr tcpip.FullAddress, bind bool) (tcpip.FullAddress, tcpip.NetworkProtocolNumber, tcpip.Error) {
-	unwrapped, netProto, err := e.TransportEndpointInfo.AddrNetProtoLocked(addr, e.ops.GetV6Only(), bind)
+	unwrapped, netProto, err := e.AddrNetProtoLocked(addr, e.ops.GetV6Only(), bind)
 	if err != nil {
 		return tcpip.FullAddress{}, 0, err
 	}
@@ -2267,9 +2267,9 @@ func (e *Endpoint) Connect(addr tcpip.FullAddress) tcpip.Error {
 // +checklocks:e.mu
 func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.NetworkProtocolNumber, nicID tcpip.NICID) tcpip.Error {
 	netProtos := []tcpip.NetworkProtocolNumber{netProto}
-	if e.TransportEndpointInfo.ID.LocalPort != 0 {
+	if e.ID.LocalPort != 0 {
 		// The endpoint is bound to a port, attempt to register it.
-		err := e.stack.RegisterTransportEndpoint(netProtos, ProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice)
+		err := e.stack.RegisterTransportEndpoint(netProtos, ProtocolNumber, e.ID, e, e.boundPortFlags, e.boundBindToDevice)
 		if err != nil {
 			return err
 		}
@@ -2278,7 +2278,7 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 		// one. Make sure that it isn't one that will result in the same
 		// address/port for both local and remote (otherwise this
 		// endpoint would be trying to connect to itself).
-		sameAddr := e.TransportEndpointInfo.ID.LocalAddress == e.TransportEndpointInfo.ID.RemoteAddress
+		sameAddr := e.ID.LocalAddress == e.ID.RemoteAddress
 
 		var twReuse tcpip.TCPTimeWaitReuseOption
 		if err := e.stack.TransportProtocolOption(ProtocolNumber, &twReuse); err != nil {
@@ -2289,21 +2289,21 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 		if twReuse == tcpip.TCPTimeWaitReuseLoopbackOnly {
 			switch netProto {
 			case header.IPv4ProtocolNumber:
-				reuse = header.IsV4LoopbackAddress(e.TransportEndpointInfo.ID.LocalAddress) && header.IsV4LoopbackAddress(e.TransportEndpointInfo.ID.RemoteAddress)
+				reuse = header.IsV4LoopbackAddress(e.ID.LocalAddress) && header.IsV4LoopbackAddress(e.ID.RemoteAddress)
 			case header.IPv6ProtocolNumber:
-				reuse = e.TransportEndpointInfo.ID.LocalAddress == header.IPv6Loopback && e.TransportEndpointInfo.ID.RemoteAddress == header.IPv6Loopback
+				reuse = e.ID.LocalAddress == header.IPv6Loopback && e.ID.RemoteAddress == header.IPv6Loopback
 			}
 		}
 
 		bindToDevice := tcpip.NICID(e.ops.GetBindToDevice())
 		if _, err := e.stack.PickEphemeralPort(e.stack.SecureRNG(), func(p uint16) (bool, tcpip.Error) {
-			if sameAddr && p == e.TransportEndpointInfo.ID.RemotePort {
+			if sameAddr && p == e.ID.RemotePort {
 				return false, nil
 			}
 			portRes := ports.Reservation{
 				Networks:     netProtos,
 				Transport:    ProtocolNumber,
-				Addr:         e.TransportEndpointInfo.ID.LocalAddress,
+				Addr:         e.ID.LocalAddress,
 				Port:         p,
 				Flags:        e.portFlags,
 				BindToDevice: bindToDevice,
@@ -2313,7 +2313,7 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 				if _, ok := err.(*tcpip.ErrPortInUse); !ok || !reuse {
 					return false, nil
 				}
-				transEPID := e.TransportEndpointInfo.ID
+				transEPID := e.ID
 				transEPID.LocalPort = p
 				// Check if an endpoint is registered with demuxer in TIME-WAIT and if
 				// we can reuse it. If we can't find a transport endpoint then we just
@@ -2350,7 +2350,7 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 				portRes := ports.Reservation{
 					Networks:     netProtos,
 					Transport:    ProtocolNumber,
-					Addr:         e.TransportEndpointInfo.ID.LocalAddress,
+					Addr:         e.ID.LocalAddress,
 					Port:         p,
 					Flags:        e.portFlags,
 					BindToDevice: bindToDevice,
@@ -2361,13 +2361,13 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 				}
 			}
 
-			id := e.TransportEndpointInfo.ID
+			id := e.ID
 			id.LocalPort = p
 			if err := e.stack.RegisterTransportEndpoint(netProtos, ProtocolNumber, id, e, e.portFlags, bindToDevice); err != nil {
 				portRes := ports.Reservation{
 					Networks:     netProtos,
 					Transport:    ProtocolNumber,
-					Addr:         e.TransportEndpointInfo.ID.LocalAddress,
+					Addr:         e.ID.LocalAddress,
 					Port:         p,
 					Flags:        e.portFlags,
 					BindToDevice: bindToDevice,
@@ -2382,7 +2382,7 @@ func (e *Endpoint) registerEndpoint(addr tcpip.FullAddress, netProto tcpip.Netwo
 
 			// Port picking successful. Save the details of
 			// the selected port.
-			e.TransportEndpointInfo.ID = id
+			e.ID = id
 			e.isPortReserved = true
 			e.boundBindToDevice = bindToDevice
 			e.boundPortFlags = e.portFlags
@@ -2452,15 +2452,15 @@ func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
 	}
 
 	// Find a route to the desired destination.
-	r, err := e.stack.FindRoute(nicID, e.TransportEndpointInfo.ID.LocalAddress, addr.Addr, netProto, false /* multicastLoop */)
+	r, err := e.stack.FindRoute(nicID, e.ID.LocalAddress, addr.Addr, netProto, false /* multicastLoop */)
 	if err != nil {
 		return err
 	}
 	defer r.Release()
 
-	e.TransportEndpointInfo.ID.LocalAddress = r.LocalAddress()
-	e.TransportEndpointInfo.ID.RemoteAddress = r.RemoteAddress()
-	e.TransportEndpointInfo.ID.RemotePort = addr.Port
+	e.ID.LocalAddress = r.LocalAddress()
+	e.ID.RemoteAddress = r.RemoteAddress()
+	e.ID.RemotePort = addr.Port
 
 	oldState := e.EndpointState()
 	e.setEndpointState(StateConnecting)
@@ -2487,7 +2487,7 @@ func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
 		portRes := ports.Reservation{
 			Networks:  []tcpip.NetworkProtocolNumber{header.IPv4ProtocolNumber},
 			Transport: ProtocolNumber,
-			Port:      e.TransportEndpointInfo.ID.LocalPort,
+			Port:      e.ID.LocalPort,
 		}
 		e.stack.ReleasePort(portRes)
 	}
@@ -2500,7 +2500,7 @@ func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
 		e.segmentQueue.mu.Lock()
 		for _, l := range []segmentList{e.segmentQueue.list, e.snd.writeList.writeList} {
 			for s := l.Front(); s != nil; s = s.Next() {
-				s.id = e.TransportEndpointInfo.ID
+				s.id = e.ID
 			}
 		}
 		e.segmentQueue.mu.Unlock()
@@ -2587,7 +2587,7 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 			}
 
 			// Queue fin segment.
-			s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buffer.Buffer{})
+			s := newOutgoingSegment(e.ID, e.stack.Clock(), buffer.Buffer{})
 			e.snd.writeList.PushBack(s)
 			// Mark endpoint as closed.
 			e.sndQueueInfo.SndClosed = true
@@ -2688,7 +2688,7 @@ func (e *Endpoint) listen(backlog int) tcpip.Error {
 	// inbound segment queue by the TCP processor.
 	e.setEndpointState(StateListen)
 	// Register the endpoint.
-	if err := e.stack.RegisterTransportEndpoint(e.effectiveNetProtos, ProtocolNumber, e.TransportEndpointInfo.ID, e, e.boundPortFlags, e.boundBindToDevice); err != nil {
+	if err := e.stack.RegisterTransportEndpoint(e.effectiveNetProtos, ProtocolNumber, e.ID, e, e.boundPortFlags, e.boundBindToDevice); err != nil {
 		e.transitionToStateCloseLocked()
 		return err
 	}
@@ -2791,7 +2791,7 @@ func (e *Endpoint) bindLocked(addr tcpip.FullAddress) (err tcpip.Error) {
 		if nic == 0 {
 			return &tcpip.ErrBadLocalAddress{}
 		}
-		e.TransportEndpointInfo.ID.LocalAddress = addr.Addr
+		e.ID.LocalAddress = addr.Addr
 	}
 
 	bindToDevice := tcpip.NICID(e.ops.GetBindToDevice())
@@ -2805,7 +2805,7 @@ func (e *Endpoint) bindLocked(addr tcpip.FullAddress) (err tcpip.Error) {
 		Dest:         tcpip.FullAddress{},
 	}
 	port, err := e.stack.ReservePort(e.stack.SecureRNG(), portRes, func(p uint16) (bool, tcpip.Error) {
-		id := e.TransportEndpointInfo.ID
+		id := e.ID
 		id.LocalPort = p
 		// CheckRegisterTransportEndpoint should only return an error if there is a
 		// listening endpoint bound with the same id and portFlags and bindToDevice
@@ -2831,7 +2831,7 @@ func (e *Endpoint) bindLocked(addr tcpip.FullAddress) (err tcpip.Error) {
 	e.boundNICID = nic
 	e.isPortReserved = true
 	e.effectiveNetProtos = netProtos
-	e.TransportEndpointInfo.ID.LocalPort = port
+	e.ID.LocalPort = port
 
 	// Mark endpoint as bound.
 	e.setEndpointState(StateBound)
@@ -2845,8 +2845,8 @@ func (e *Endpoint) GetLocalAddress() (tcpip.FullAddress, tcpip.Error) {
 	defer e.UnlockUser()
 
 	return tcpip.FullAddress{
-		Addr: e.TransportEndpointInfo.ID.LocalAddress,
-		Port: e.TransportEndpointInfo.ID.LocalPort,
+		Addr: e.ID.LocalAddress,
+		Port: e.ID.LocalPort,
 		NIC:  e.boundNICID,
 	}, nil
 }
@@ -2865,8 +2865,8 @@ func (e *Endpoint) GetRemoteAddress() (tcpip.FullAddress, tcpip.Error) {
 
 func (e *Endpoint) getRemoteAddress() tcpip.FullAddress {
 	return tcpip.FullAddress{
-		Addr: e.TransportEndpointInfo.ID.RemoteAddress,
-		Port: e.TransportEndpointInfo.ID.RemotePort,
+		Addr: e.ID.RemoteAddress,
+		Port: e.ID.RemotePort,
 		NIC:  e.boundNICID,
 	}
 }
@@ -2915,13 +2915,13 @@ func (e *Endpoint) onICMPError(err tcpip.Error, transErr stack.TransportError, p
 			Payload: pkt.Data().AsRange().ToView(),
 			Dst: tcpip.FullAddress{
 				NIC:  pkt.NICID,
-				Addr: e.TransportEndpointInfo.ID.RemoteAddress,
-				Port: e.TransportEndpointInfo.ID.RemotePort,
+				Addr: e.ID.RemoteAddress,
+				Port: e.ID.RemotePort,
 			},
 			Offender: tcpip.FullAddress{
 				NIC:  pkt.NICID,
-				Addr: e.TransportEndpointInfo.ID.LocalAddress,
-				Port: e.TransportEndpointInfo.ID.LocalPort,
+				Addr: e.ID.LocalAddress,
+				Port: e.ID.LocalPort,
 			},
 			NetProto: pkt.NetworkProtocolNumber,
 		})
@@ -3175,7 +3175,7 @@ func (e *Endpoint) maxOptionSize() (size int) {
 // +checklocks:e.mu
 func (e *Endpoint) completeStateLocked(s *TCPEndpointState) {
 	s.TCPEndpointStateInner = e.TCPEndpointStateInner
-	s.ID = TCPEndpointID(e.TransportEndpointInfo.ID)
+	s.ID = TCPEndpointID(e.ID)
 	s.SegTime = e.stack.Clock().NowMonotonic()
 	s.Receiver = e.rcv.TCPReceiverState
 	s.Sender = e.snd.TCPSenderState
@@ -3321,7 +3321,7 @@ func (e *Endpoint) computeTCPSendBufferSize() int64 {
 
 	// Auto tuning is disabled when the user explicitly sets the send
 	// buffer size with SO_SNDBUF option.
-	if disabled := e.sndQueueInfo.TCPSndBufState.AutoTuneSndBufDisabled.Load(); disabled == 1 {
+	if disabled := e.sndQueueInfo.AutoTuneSndBufDisabled.Load(); disabled == 1 {
 		return curSndBufSz
 	}
 

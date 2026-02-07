@@ -310,7 +310,7 @@ func (ts *TaskSet) newTask(ctx context.Context, cfg *TaskConfig) (*Task, error) 
 
 	// As a final step, initialize the platform context. This may require
 	// other pieces to be initialized as the task is used the context.
-	t.p = cfg.Kernel.Platform.NewContext(t.AsyncContext())
+	t.p = cfg.Kernel.NewContext(t.AsyncContext())
 
 	return t, nil
 }

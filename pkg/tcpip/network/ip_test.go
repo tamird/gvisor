@@ -644,10 +644,10 @@ func TestIPv4Send(t *testing.T) {
 	defer pkt.DecRef()
 
 	// Issue the write.
-	nic.testObject.protocol = 123
-	nic.testObject.srcAddr = localIPv4Addr
-	nic.testObject.dstAddr = remoteIPv4Addr
-	nic.testObject.contents = payload
+	nic.protocol = 123
+	nic.srcAddr = localIPv4Addr
+	nic.dstAddr = remoteIPv4Addr
+	nic.contents = payload
 
 	r, err := buildIPv4Route(ctx, localIPv4Addr, remoteIPv4Addr)
 	if err != nil {
@@ -698,10 +698,10 @@ func TestReceive(t *testing.T) {
 				}
 
 				// Give packet to ipv4 endpoint, dispatcher will validate that it's ok.
-				nic.testObject.protocol = 10
-				nic.testObject.srcAddr = remoteIPv4Addr
-				nic.testObject.dstAddr = localIPv4Addr
-				nic.testObject.contents = view[header.IPv4MinimumSize:totalLen]
+				nic.protocol = 10
+				nic.srcAddr = remoteIPv4Addr
+				nic.dstAddr = localIPv4Addr
+				nic.contents = view[header.IPv4MinimumSize:totalLen]
 
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(view),
@@ -734,10 +734,10 @@ func TestReceive(t *testing.T) {
 				}
 
 				// Give packet to ipv6 endpoint, dispatcher will validate that it's ok.
-				nic.testObject.protocol = 10
-				nic.testObject.srcAddr = remoteIPv6Addr
-				nic.testObject.dstAddr = localIPv6Addr
-				nic.testObject.contents = view[header.IPv6MinimumSize:][:payloadLen]
+				nic.protocol = 10
+				nic.srcAddr = remoteIPv6Addr
+				nic.dstAddr = localIPv6Addr
+				nic.contents = view[header.IPv6MinimumSize:][:payloadLen]
 
 				pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 					Payload: buffer.MakeWithData(view),
@@ -786,11 +786,11 @@ func TestReceive(t *testing.T) {
 				t.Fatalf("got s.Stats().IP.PacketsReceived.Value() = %d, want = 0", got)
 			}
 			test.handlePacket(t, ep, &nic)
-			if nic.testObject.dataCalls != 1 {
-				t.Errorf("Bad number of data calls: got %d, want 1", nic.testObject.dataCalls)
+			if nic.dataCalls != 1 {
+				t.Errorf("Bad number of data calls: got %d, want 1", nic.dataCalls)
 			}
-			if nic.testObject.rawCalls != 1 {
-				t.Errorf("Bad number of raw calls: got %d, want 1", nic.testObject.rawCalls)
+			if nic.rawCalls != 1 {
+				t.Errorf("Bad number of raw calls: got %d, want 1", nic.rawCalls)
 			}
 			if got := stat.Value(); got != 1 {
 				t.Errorf("got s.Stats().IP.PacketsReceived.Value() = %d, want = 1", got)
@@ -939,11 +939,11 @@ func TestIPv4ReceiveControl(t *testing.T) {
 
 			// Give packet to IPv4 endpoint, dispatcher will validate that
 			// it's ok.
-			nic.testObject.protocol = 10
-			nic.testObject.srcAddr = remoteIPv4Addr
-			nic.testObject.dstAddr = localIPv4Addr
-			nic.testObject.contents = view[dataOffset:]
-			nic.testObject.transErr = c.transErr
+			nic.protocol = 10
+			nic.srcAddr = remoteIPv4Addr
+			nic.dstAddr = localIPv4Addr
+			nic.contents = view[dataOffset:]
+			nic.transErr = c.transErr
 
 			addressableEndpoint, ok := ep.(stack.AddressableEndpoint)
 			if !ok {
@@ -959,8 +959,8 @@ func TestIPv4ReceiveControl(t *testing.T) {
 			pkt := truncatedPacket(view, c.trunc, header.IPv4MinimumSize)
 			ep.HandlePacket(pkt)
 			pkt.DecRef()
-			if want := c.expectedCount; nic.testObject.controlCalls != want {
-				t.Fatalf("Bad number of control calls for %q case: got %v, want %v", c.name, nic.testObject.controlCalls, want)
+			if want := c.expectedCount; nic.controlCalls != want {
+				t.Fatalf("Bad number of control calls for %q case: got %v, want %v", c.name, nic.controlCalls, want)
 			}
 		})
 	}
@@ -1023,10 +1023,10 @@ func TestIPv4FragmentationReceive(t *testing.T) {
 	}
 
 	// Give packet to ipv4 endpoint, dispatcher will validate that it's ok.
-	nic.testObject.protocol = 10
-	nic.testObject.srcAddr = remoteIPv4Addr
-	nic.testObject.dstAddr = localIPv4Addr
-	nic.testObject.contents = append(frag1[header.IPv4MinimumSize:totalLen], frag2[header.IPv4MinimumSize:totalLen]...)
+	nic.protocol = 10
+	nic.srcAddr = remoteIPv4Addr
+	nic.dstAddr = localIPv4Addr
+	nic.contents = append(frag1[header.IPv4MinimumSize:totalLen], frag2[header.IPv4MinimumSize:totalLen]...)
 
 	addressableEndpoint, ok := ep.(stack.AddressableEndpoint)
 	if !ok {
@@ -1046,11 +1046,11 @@ func TestIPv4FragmentationReceive(t *testing.T) {
 	ep.HandlePacket(pkt)
 	pkt.DecRef()
 
-	if nic.testObject.dataCalls != 0 {
-		t.Fatalf("Bad number of data calls: got %d, want 0", nic.testObject.dataCalls)
+	if nic.dataCalls != 0 {
+		t.Fatalf("Bad number of data calls: got %d, want 0", nic.dataCalls)
 	}
-	if nic.testObject.rawCalls != 0 {
-		t.Errorf("Bad number of raw calls: got %d, want 0", nic.testObject.rawCalls)
+	if nic.rawCalls != 0 {
+		t.Errorf("Bad number of raw calls: got %d, want 0", nic.rawCalls)
 	}
 
 	// Send second segment.
@@ -1060,11 +1060,11 @@ func TestIPv4FragmentationReceive(t *testing.T) {
 	ep.HandlePacket(pkt)
 	pkt.DecRef()
 
-	if nic.testObject.dataCalls != 1 {
-		t.Fatalf("Bad number of data calls: got %d, want 1", nic.testObject.dataCalls)
+	if nic.dataCalls != 1 {
+		t.Fatalf("Bad number of data calls: got %d, want 1", nic.dataCalls)
 	}
-	if nic.testObject.rawCalls != 1 {
-		t.Errorf("Bad number of raw calls: got %d, want 1", nic.testObject.rawCalls)
+	if nic.rawCalls != 1 {
+		t.Errorf("Bad number of raw calls: got %d, want 1", nic.rawCalls)
 	}
 }
 
@@ -1099,10 +1099,10 @@ func TestIPv6Send(t *testing.T) {
 	})
 	defer pkt.DecRef()
 	// Issue the write.
-	nic.testObject.protocol = 123
-	nic.testObject.srcAddr = localIPv6Addr
-	nic.testObject.dstAddr = remoteIPv6Addr
-	nic.testObject.contents = payload
+	nic.protocol = 123
+	nic.srcAddr = localIPv6Addr
+	nic.dstAddr = remoteIPv6Addr
+	nic.contents = payload
 
 	r, err := buildIPv6Route(ctx, localIPv6Addr, remoteIPv6Addr)
 	if err != nil {
@@ -1296,11 +1296,11 @@ func TestIPv6ReceiveControl(t *testing.T) {
 
 			// Give packet to IPv6 endpoint, dispatcher will validate that
 			// it's ok.
-			nic.testObject.protocol = 10
-			nic.testObject.srcAddr = remoteIPv6Addr
-			nic.testObject.dstAddr = localIPv6Addr
-			nic.testObject.contents = view[dataOffset:]
-			nic.testObject.transErr = c.transErr
+			nic.protocol = 10
+			nic.srcAddr = remoteIPv6Addr
+			nic.dstAddr = localIPv6Addr
+			nic.contents = view[dataOffset:]
+			nic.transErr = c.transErr
 
 			// Set ICMPv6 checksum.
 			icmp.SetChecksum(header.ICMPv6Checksum(header.ICMPv6ChecksumParams{
@@ -1322,8 +1322,8 @@ func TestIPv6ReceiveControl(t *testing.T) {
 			pkt := truncatedPacket(view, c.trunc, header.IPv6MinimumSize)
 			ep.HandlePacket(pkt)
 			pkt.DecRef()
-			if want := c.expectedCount; nic.testObject.controlCalls != want {
-				t.Fatalf("Bad number of control calls for %q case: got %v, want %v", c.name, nic.testObject.controlCalls, want)
+			if want := c.expectedCount; nic.controlCalls != want {
+				t.Fatalf("Bad number of control calls for %q case: got %v, want %v", c.name, nic.controlCalls, want)
 			}
 		})
 	}

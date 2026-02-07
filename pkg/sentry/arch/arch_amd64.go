@@ -115,7 +115,7 @@ func (c *Context64) Arch() Arch {
 
 // FloatingPointData returns the state of the floating-point unit.
 func (c *Context64) FloatingPointData() *fpu.State {
-	return &c.State.fpState
+	return &c.fpState
 }
 
 // Fork returns an exact copy of this context.

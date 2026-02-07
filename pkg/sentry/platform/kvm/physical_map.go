@@ -186,7 +186,7 @@ func fillAddressSpace() (specialRegions []specialVirtualRegion) {
 			if vr.shared {
 				ps = "s"
 			}
-			log.Warningf("%x-%x %v%s %08x %s", vr.region.virtual, vr.region.virtual+vr.region.length, vr.accessType, ps, vr.offset, vr.filename)
+			log.Warningf("%x-%x %v%s %08x %s", vr.virtual, vr.virtual+vr.length, vr.accessType, ps, vr.offset, vr.filename)
 		})
 		if err != nil {
 			log.Warningf("Failed to get all VMAs: %v", err)

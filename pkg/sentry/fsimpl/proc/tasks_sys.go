@@ -173,7 +173,7 @@ var _ dynamicInode = (*mmapMinAddrData)(nil)
 
 // Generate implements vfs.DynamicBytesSource.Generate.
 func (d *mmapMinAddrData) Generate(ctx context.Context, buf *bytes.Buffer) error {
-	fmt.Fprintf(buf, "%d\n", d.k.Platform.MinUserAddress())
+	fmt.Fprintf(buf, "%d\n", d.k.MinUserAddress())
 	return nil
 }
 

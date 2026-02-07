@@ -182,7 +182,7 @@ func (fstype *FilesystemType) newFilesystem(ctx context.Context, vfsObj *vfs.Vir
 	root := &rootInode{
 		replicas: make(map[uint32]*replicaInode),
 	}
-	root.InodeAttrs.InitWithIDs(ctx, opts.uid, opts.gid, linux.UNNAMED_MAJOR, devMinor, 1, linux.ModeDirectory|opts.mode)
+	root.InitWithIDs(ctx, opts.uid, opts.gid, linux.UNNAMED_MAJOR, devMinor, 1, linux.ModeDirectory|opts.mode)
 	root.OrderedChildren.Init(kernfs.OrderedChildrenOptions{})
 	root.InitRefs()
 
@@ -194,10 +194,10 @@ func (fstype *FilesystemType) newFilesystem(ctx context.Context, vfsObj *vfs.Vir
 	master := &masterInode{
 		root: root,
 	}
-	master.InodeAttrs.InitWithIDs(ctx, opts.uid, opts.gid, linux.UNNAMED_MAJOR, devMinor, 2, linux.ModeCharacterDevice|opts.ptmxMode)
+	master.InitWithIDs(ctx, opts.uid, opts.gid, linux.UNNAMED_MAJOR, devMinor, 2, linux.ModeCharacterDevice|opts.ptmxMode)
 
 	// Add the master as a child of the root.
-	links := root.OrderedChildren.Populate(map[string]kernfs.Inode{
+	links := root.Populate(map[string]kernfs.Inode{
 		"ptmx": master,
 	})
 	root.IncLinks(links)
@@ -278,7 +278,7 @@ func (i *rootInode) allocateTerminal(ctx context.Context, creds *auth.Credential
 	}
 	// Linux always uses pty index + 3 as the inode id. See
 	// fs/devpts/inode.c:devpts_pty_new().
-	replica.InodeAttrs.Init(ctx, creds, i.InodeAttrs.DevMajor(), i.InodeAttrs.DevMinor(), uint64(idx+3), linux.ModeCharacterDevice|0600)
+	replica.Init(ctx, creds, i.DevMajor(), i.DevMinor(), uint64(idx+3), linux.ModeCharacterDevice|0600)
 	i.replicas[idx] = replica
 
 	return t, nil
@@ -339,7 +339,7 @@ func (i *rootInode) Lookup(ctx context.Context, name string) (kernfs.Inode, erro
 func (i *rootInode) IterDirents(ctx context.Context, mnt *vfs.Mount, cb vfs.IterDirentsCallback, offset, relOffset int64) (int64, error) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
-	i.InodeAttrs.TouchAtime(ctx, mnt)
+	i.TouchAtime(ctx, mnt)
 	if relOffset >= int64(len(i.replicas)) {
 		return offset, nil
 	}
@@ -352,7 +352,7 @@ func (i *rootInode) IterDirents(ctx context.Context, mnt *vfs.Mount, cb vfs.Iter
 		dirent := vfs.Dirent{
 			Name:    strconv.FormatUint(uint64(id), 10),
 			Type:    linux.DT_CHR,
-			Ino:     i.replicas[uint32(id)].InodeAttrs.Ino(),
+			Ino:     i.replicas[uint32(id)].Ino(),
 			NextOff: offset + 1,
 		}
 		if err := cb.Handle(dirent); err != nil {

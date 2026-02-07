@@ -147,7 +147,7 @@ func (fs *filesystem) newLisafsDentry(ctx context.Context, ino *lisafs.Inode) (*
 				},
 				controlFD: fs.client.NewFD(ino.ControlFD),
 			}
-			temp.i.inode.init(&temp.i)
+			temp.i.init(&temp.i)
 			inode := &temp.i.inode
 			if ino.Stat.Mask&linux.STATX_UID != 0 {
 				inode.uid = atomicbitops.FromUint32(dentryUID(lisafs.UID(ino.Stat.UID)))
@@ -275,38 +275,38 @@ func (i *lisafsInode) updateMetadataLocked(ctx context.Context, h handle) error 
 // +checklocks:i.inode.metadataMu
 func (i *lisafsInode) updateMetadataFromStatxLocked(stat *linux.Statx) {
 	if stat.Mask&linux.STATX_TYPE != 0 {
-		if got, want := stat.Mode&linux.FileTypeMask, i.inode.fileType(); uint32(got) != want {
+		if got, want := stat.Mode&linux.FileTypeMask, i.fileType(); uint32(got) != want {
 			panic(fmt.Sprintf("lisafsInode file type changed from %#o to %#o", want, got))
 		}
 	}
 	if stat.Mask&linux.STATX_MODE != 0 {
-		i.inode.mode.Store(uint32(stat.Mode))
+		i.mode.Store(uint32(stat.Mode))
 	}
 	if stat.Mask&linux.STATX_UID != 0 {
-		i.inode.uid.Store(dentryUID(lisafs.UID(stat.UID)))
+		i.uid.Store(dentryUID(lisafs.UID(stat.UID)))
 	}
 	if stat.Mask&linux.STATX_GID != 0 {
-		i.inode.gid.Store(dentryGID(lisafs.GID(stat.GID)))
+		i.gid.Store(dentryGID(lisafs.GID(stat.GID)))
 	}
 	if stat.Blksize != 0 {
-		i.inode.blockSize.Store(stat.Blksize)
+		i.blockSize.Store(stat.Blksize)
 	}
 	// Don't override newer client-defined timestamps with old server-defined
 	// ones.
-	if stat.Mask&linux.STATX_ATIME != 0 && i.inode.atimeDirty.Load() == 0 {
-		i.inode.atime.Store(dentryTimestamp(stat.Atime))
+	if stat.Mask&linux.STATX_ATIME != 0 && i.atimeDirty.Load() == 0 {
+		i.atime.Store(dentryTimestamp(stat.Atime))
 	}
-	if stat.Mask&linux.STATX_MTIME != 0 && i.inode.mtimeDirty.Load() == 0 {
-		i.inode.mtime.Store(dentryTimestamp(stat.Mtime))
+	if stat.Mask&linux.STATX_MTIME != 0 && i.mtimeDirty.Load() == 0 {
+		i.mtime.Store(dentryTimestamp(stat.Mtime))
 	}
 	if stat.Mask&linux.STATX_CTIME != 0 {
-		i.inode.ctime.Store(dentryTimestamp(stat.Ctime))
+		i.ctime.Store(dentryTimestamp(stat.Ctime))
 	}
 	if stat.Mask&linux.STATX_BTIME != 0 {
-		i.inode.btime.Store(dentryTimestamp(stat.Btime))
+		i.btime.Store(dentryTimestamp(stat.Btime))
 	}
 	if stat.Mask&linux.STATX_NLINK != 0 {
-		i.inode.nlink.Store(stat.Nlink)
+		i.nlink.Store(stat.Nlink)
 	}
 	if stat.Mask&linux.STATX_SIZE != 0 {
 		i.updateSizeLocked(stat.Size)
@@ -676,8 +676,8 @@ func doRevalidationLisafs(ctx context.Context, vfsObj *vfs.VirtualFilesystem, st
 
 	// Lock metadata on all dentries *before* getting attributes for them.
 	if state.refreshStart {
-		start.inode.metadataMu.Lock()
-		defer start.inode.metadataMu.Unlock()
+		start.metadataMu.Lock()
+		defer start.metadataMu.Unlock()
 	}
 	for _, d := range state.dentries {
 		d.inode.metadataMu.Lock()

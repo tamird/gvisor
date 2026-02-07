@@ -555,7 +555,7 @@ func (d *dir) newDirWithOwner(ctx context.Context, ownerCreds *auth.Credentials,
 		return nil, linuxerr.EINVAL
 	}
 	mode := opts.Mode.Permissions() | linux.ModeDirectory
-	return d.OrderedChildren.Inserter(name, func() kernfs.Inode {
+	return d.Inserter(name, func() kernfs.Inode {
 		d.IncLinks(1)
 		return d.fs.newCgroupInode(ctx, ownerCreds, d.cgi, mode)
 	})
@@ -599,7 +599,7 @@ func (d *dir) Unlink(ctx context.Context, name string, child kernfs.Inode) error
 func (d *dir) hasChildrenLocked() bool {
 	// Subdirs take a link on the parent, so checks if there are any direct
 	// children cgroups. Exclude the dir's self link and the link from ".".
-	if d.InodeAttrs.Links()-2 > 0 {
+	if d.Links()-2 > 0 {
 		return true
 	}
 	return len(d.cgi.ts) > 0
@@ -627,7 +627,7 @@ func (d *dir) RmDir(ctx context.Context, name string, child kernfs.Inode) error 
 	if !ok {
 		return linuxerr.ENOTDIR
 	}
-	if cgi.dir.hasChildrenLocked() {
+	if cgi.hasChildrenLocked() {
 		return linuxerr.ENOTEMPTY
 	}
 
@@ -639,13 +639,13 @@ func (d *dir) RmDir(ctx context.Context, name string, child kernfs.Inode) error 
 
 	err := d.OrderedChildren.RmDir(ctx, name, child)
 	if err == nil {
-		d.InodeAttrs.DecLinks()
+		d.DecLinks()
 	}
 	return err
 }
 
 func (d *dir) forEachChildDir(fn func(*dir)) {
-	d.OrderedChildren.ForEachChild(func(_ string, i kernfs.Inode) {
+	d.ForEachChild(func(_ string, i kernfs.Inode) {
 		if childI, ok := i.(*cgroupInode); ok {
 			fn(&childI.dir)
 		}

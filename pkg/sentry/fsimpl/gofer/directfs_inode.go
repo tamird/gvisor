@@ -162,7 +162,7 @@ func (fs *filesystem) newDirectfsDentry(controlFD int) (*dentry, error) {
 				},
 				controlFD: controlFD,
 			}
-			temp.i.inode.init(&temp.i)
+			temp.i.init(&temp.i)
 			return &temp.i.inode
 		})
 
@@ -294,24 +294,24 @@ func (i *directfsInode) updateMetadataLocked(h handle) error {
 // except that it takes a unix.Stat_t argument.
 // +checklocks:i.inode.metadataMu
 func (i *directfsInode) updateMetadataFromStatLocked(stat *unix.Stat_t) error {
-	if got, want := stat.Mode&unix.S_IFMT, i.inode.fileType(); got != want {
+	if got, want := stat.Mode&unix.S_IFMT, i.fileType(); got != want {
 		panic(fmt.Sprintf("directfsInode file type changed from %#o to %#o", want, got))
 	}
-	i.inode.mode.Store(stat.Mode)
-	i.inode.uid.Store(stat.Uid)
-	i.inode.gid.Store(stat.Gid)
-	i.inode.blockSize.Store(uint32(stat.Blksize))
+	i.mode.Store(stat.Mode)
+	i.uid.Store(stat.Uid)
+	i.gid.Store(stat.Gid)
+	i.blockSize.Store(uint32(stat.Blksize))
 	// Don't override newer client-defined timestamps with old host-defined
 	// ones.
-	if i.inode.atimeDirty.Load() == 0 {
-		i.inode.atime.Store(dentryTimestampFromUnix(stat.Atim))
+	if i.atimeDirty.Load() == 0 {
+		i.atime.Store(dentryTimestampFromUnix(stat.Atim))
 	}
-	if i.inode.mtimeDirty.Load() == 0 {
-		i.inode.mtime.Store(dentryTimestampFromUnix(stat.Mtim))
+	if i.mtimeDirty.Load() == 0 {
+		i.mtime.Store(dentryTimestampFromUnix(stat.Mtim))
 	}
-	i.inode.ctime.Store(dentryTimestampFromUnix(stat.Ctim))
-	i.inode.nlink.Store(uint32(stat.Nlink))
-	i.inode.updateSizeLocked(uint64(stat.Size))
+	i.ctime.Store(dentryTimestampFromUnix(stat.Ctim))
+	i.nlink.Store(uint32(stat.Nlink))
+	i.updateSizeLocked(uint64(stat.Size))
 	return nil
 }
 

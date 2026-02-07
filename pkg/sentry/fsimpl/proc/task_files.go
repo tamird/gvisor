@@ -273,7 +273,7 @@ type commInode struct {
 
 func (fs *filesystem) newComm(ctx context.Context, task *kernel.Task, ino uint64, perm linux.FileMode) kernfs.Inode {
 	inode := &commInode{task: task}
-	inode.DynamicBytesFile.Init(ctx, task.Credentials(), linux.UNNAMED_MAJOR, fs.devMinor, ino, &commData{task: task}, perm)
+	inode.Init(ctx, task.Credentials(), linux.UNNAMED_MAJOR, fs.devMinor, ino, &commData{task: task}, perm)
 	return inode
 }
 
@@ -444,7 +444,7 @@ func (f *memInode) init(ctx context.Context, creds *auth.Credentials, devMajor, 
 	if perm&^linux.PermissionsMask != 0 {
 		panic(fmt.Sprintf("Only permission mask must be set: %x", perm&linux.PermissionsMask))
 	}
-	f.InodeAttrs.Init(ctx, creds, devMajor, devMinor, ino, linux.ModeRegular|perm)
+	f.Init(ctx, creds, devMajor, devMinor, ino, linux.ModeRegular|perm)
 }
 
 // Open implements kernfs.Inode.Open.
@@ -892,7 +892,7 @@ func (fs *filesystem) newStatusInode(ctx context.Context, task *kernel.Task, pid
 		task:  task,
 		pidns: pidns,
 	}
-	inode.InodeAttrs.Init(ctx, task.Credentials(), linux.UNNAMED_MAJOR, fs.devMinor, ino, linux.ModeRegular|perm)
+	inode.Init(ctx, task.Credentials(), linux.UNNAMED_MAJOR, fs.devMinor, ino, linux.ModeRegular|perm)
 	return &taskOwnedInode{Inode: inode, owner: task}
 }
 
@@ -1485,7 +1485,7 @@ func (i *namespaceInode) Init(ctx context.Context, creds *auth.Credentials, devM
 func (i *namespaceInode) Open(ctx context.Context, rp *vfs.ResolvingPath, d *kernfs.Dentry, opts vfs.OpenOptions) (*vfs.FileDescription, error) {
 	fd := &namespaceFD{inode: i}
 	i.IncRef()
-	fd.LockFD.Init(&i.locks)
+	fd.Init(&i.locks)
 	if err := fd.vfsfd.Init(fd, opts.Flags, rp.Credentials(), rp.Mount(), d.VFSDentry(), &vfs.FileDescriptionOptions{}); err != nil {
 		return nil, err
 	}

@@ -166,8 +166,8 @@ func (s *sender) shouldSchedulePTO() bool {
 func (s *sender) schedulePTO() {
 	pto := time.Second
 	s.rtt.Lock()
-	if s.rtt.TCPRTTState.SRTTInited && s.rtt.TCPRTTState.SRTT > 0 {
-		pto = s.rtt.TCPRTTState.SRTT * 2
+	if s.rtt.SRTTInited && s.rtt.SRTT > 0 {
+		pto = s.rtt.SRTT * 2
 		if s.Outstanding == 1 {
 			pto += wcDelayedACKTimeout
 		}
@@ -343,7 +343,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 	// RACK.reo_wnd = RACK.min_RTT / 4 * RACK.reo_wnd_incr
 	// RACK.reo_wnd = min(RACK.reo_wnd, SRTT)
 	snd.rtt.Lock()
-	srtt := snd.rtt.TCPRTTState.SRTT
+	srtt := snd.rtt.SRTT
 	snd.rtt.Unlock()
 	rc.ReoWnd = time.Duration((int64(rc.minRTT) / 4) * int64(rc.ReoWndIncr))
 	if srtt < rc.ReoWnd {

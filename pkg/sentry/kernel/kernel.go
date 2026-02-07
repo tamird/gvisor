@@ -1866,26 +1866,26 @@ func (ctx *supervisorContext) Value(key any) any {
 	case CtxKernel:
 		return ctx.Kernel
 	case CtxPIDNamespace:
-		return ctx.Kernel.tasks.Root
+		return ctx.tasks.Root
 	case CtxUTSNamespace:
-		utsns := ctx.Kernel.rootUTSNamespace
+		utsns := ctx.rootUTSNamespace
 		utsns.IncRef()
 		return utsns
 	case ipc.CtxIPCNamespace:
-		ipcns := ctx.Kernel.rootIPCNamespace
+		ipcns := ctx.rootIPCNamespace
 		ipcns.IncRef()
 		return ipcns
 	case auth.CtxCredentials:
 		// The supervisor context is global root.
-		return auth.NewRootCredentials(ctx.Kernel.rootUserNamespace)
+		return auth.NewRootCredentials(ctx.rootUserNamespace)
 	case vfs.CtxRoot:
-		if ctx.Kernel.globalInit == nil || ctx.Kernel.globalInit.Leader() == nil {
+		if ctx.globalInit == nil || ctx.globalInit.Leader() == nil {
 			return vfs.VirtualDentry{}
 		}
 		root := ctx.Kernel.GlobalInit().Leader().MountNamespace().Root(ctx)
 		return root
 	case vfs.CtxMountNamespace:
-		if ctx.Kernel.globalInit == nil || ctx.Kernel.globalInit.Leader() == nil {
+		if ctx.globalInit == nil || ctx.globalInit.Leader() == nil {
 			return nil
 		}
 		mntns := ctx.Kernel.GlobalInit().Leader().MountNamespace()
@@ -1894,24 +1894,24 @@ func (ctx *supervisorContext) Value(key any) any {
 	case inet.CtxStack:
 		return ctx.Kernel.RootNetworkNamespace().Stack()
 	case ktime.CtxRealtimeClock:
-		return ctx.Kernel.RealtimeClock()
+		return ctx.RealtimeClock()
 	case limits.CtxLimits:
 		// No limits apply.
 		return limits.NewLimitSet()
 	case pgalloc.CtxMemoryFile:
-		return ctx.Kernel.mf
+		return ctx.mf
 	case platform.CtxPlatform:
 		return ctx.Kernel
 	case uniqueid.CtxGlobalUniqueID:
-		return ctx.Kernel.UniqueID()
+		return ctx.UniqueID()
 	case uniqueid.CtxGlobalUniqueIDProvider:
 		return ctx.Kernel
 	case uniqueid.CtxInotifyCookie:
-		return ctx.Kernel.GenerateInotifyCookie()
+		return ctx.GenerateInotifyCookie()
 	case unimpl.CtxEvents:
 		return ctx.Kernel
 	case cpuid.CtxFeatureSet:
-		return ctx.Kernel.featureSet
+		return ctx.featureSet
 	default:
 		return nil
 	}

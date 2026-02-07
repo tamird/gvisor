@@ -100,7 +100,7 @@ func NewFileDescription(ep transport.Endpoint, stype linux.SockType, flags uint3
 		namespace: ns,
 	}
 	sock.InitRefs()
-	sock.LockFD.Init(locks)
+	sock.Init(locks)
 	vfsfd := &sock.vfsfd
 	if err := vfsfd.Init(sock, flags, creds, mnt, d, &vfs.FileDescriptionOptions{
 		DenyPRead:         true,

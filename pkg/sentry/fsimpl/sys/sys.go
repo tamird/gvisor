@@ -371,7 +371,7 @@ func (fs *filesystem) newDir(ctx context.Context, creds *auth.Credentials, mode 
 	d.InodeAttrs.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), linux.ModeDirectory|0755)
 	d.OrderedChildren.Init(kernfs.OrderedChildrenOptions{})
 	d.InitRefs()
-	d.IncLinks(d.OrderedChildren.Populate(contents))
+	d.IncLinks(d.Populate(contents))
 	return d
 }
 
@@ -380,7 +380,7 @@ func (fs *filesystem) newCgroupDir(ctx context.Context, creds *auth.Credentials,
 	d.InodeAttrs.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), linux.ModeDirectory|0755)
 	d.OrderedChildren.Init(kernfs.OrderedChildrenOptions{})
 	d.InitRefs()
-	d.IncLinks(d.OrderedChildren.Populate(contents))
+	d.IncLinks(d.Populate(contents))
 	return d
 }
 
@@ -442,7 +442,7 @@ func (c *cpuFile) Generate(ctx context.Context, buf *bytes.Buffer) error {
 
 func (fs *filesystem) newCPUFile(ctx context.Context, creds *auth.Credentials, maxCores uint, mode linux.FileMode) kernfs.Inode {
 	c := &cpuFile{maxCores: maxCores}
-	c.DynamicBytesFile.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), c, mode)
+	c.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), c, mode)
 	return c
 }
 

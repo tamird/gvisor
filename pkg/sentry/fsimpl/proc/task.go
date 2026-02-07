@@ -114,7 +114,7 @@ func (fs *filesystem) newTaskInode(ctx context.Context, task *kernel.Task, pidns
 	inode := &taskOwnedInode{Inode: taskInode, owner: task}
 
 	taskInode.OrderedChildren.Init(kernfs.OrderedChildrenOptions{})
-	links := taskInode.OrderedChildren.Populate(contents)
+	links := taskInode.Populate(contents)
 	taskInode.IncLinks(links)
 
 	return inode, nil

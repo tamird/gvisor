@@ -59,7 +59,7 @@ func newCPUController(fs *filesystem, defaults map[string]int64) *cpuController 
 		delete(defaults, "cpu.shares")
 	}
 
-	c.controllerCommon.init(kernel.CgroupControllerCPU, fs)
+	c.init(kernel.CgroupControllerCPU, fs)
 	return c
 }
 
@@ -70,7 +70,7 @@ func (c *cpuController) Clone() controller {
 		cfsQuota:  atomicbitops.FromInt64(c.cfsQuota.Load()),
 		shares:    atomicbitops.FromInt64(c.shares.Load()),
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 

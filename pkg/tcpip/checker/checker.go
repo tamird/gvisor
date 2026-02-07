@@ -1763,7 +1763,7 @@ func IPv6ExtHdr(headers ...IPv6ExtHdrChecker) NetworkChecker {
 		}
 
 		payloadIterator := header.MakeIPv6PayloadIterator(
-			header.IPv6ExtensionHeaderIdentifier(extHdrs.IPv6.NextHeader()),
+			header.IPv6ExtensionHeaderIdentifier(extHdrs.NextHeader()),
 			buffer.MakeWithData(extHdrs.IPv6.Payload()),
 		)
 		defer payloadIterator.Release()

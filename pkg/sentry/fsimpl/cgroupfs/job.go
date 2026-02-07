@@ -35,7 +35,7 @@ var _ controller = (*jobController)(nil)
 
 func newJobController(fs *filesystem) *jobController {
 	c := &jobController{}
-	c.controllerCommon.init(kernel.CgroupControllerJob, fs)
+	c.init(kernel.CgroupControllerJob, fs)
 	return c
 }
 
@@ -44,7 +44,7 @@ func (c *jobController) Clone() controller {
 	new := &jobController{
 		id: atomicbitops.FromInt64(c.id.Load()),
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 

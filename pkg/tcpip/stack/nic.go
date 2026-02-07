@@ -161,7 +161,7 @@ func (*delegatingQueueingDiscipline) Close() {}
 func (qDisc *delegatingQueueingDiscipline) WritePacket(pkt *PacketBuffer) tcpip.Error {
 	var pkts PacketBufferList
 	pkts.PushBack(pkt)
-	_, err := qDisc.LinkWriter.WritePackets(pkts)
+	_, err := qDisc.WritePackets(pkts)
 	return err
 }
 
@@ -218,7 +218,7 @@ func newNIC(stack *Stack, id tcpip.NICID, ep LinkEndpoint, opts NICOptions) *nic
 		}
 	}
 
-	nic.NetworkLinkEndpoint.Attach(nic)
+	nic.Attach(nic)
 
 	return nic
 }
@@ -334,7 +334,7 @@ func (n *nic) remove(closeLinkEndpoint bool) (func(), tcpip.Error) {
 	var deferAct func()
 	// Prevent packets from going down to the link before shutting the link down.
 	n.qDisc.Close()
-	n.NetworkLinkEndpoint.Attach(nil)
+	n.Attach(nil)
 	if closeLinkEndpoint {
 		ep := n.NetworkLinkEndpoint
 		ep.SetOnCloseAction(nil)
@@ -359,7 +359,7 @@ func (n *nic) Promiscuous() bool {
 
 // IsLoopback implements NetworkInterface.
 func (n *nic) IsLoopback() bool {
-	return n.NetworkLinkEndpoint.Capabilities()&CapabilityLoopback != 0
+	return n.Capabilities()&CapabilityLoopback != 0
 }
 
 // WritePacket implements NetworkEndpoint.
@@ -406,12 +406,12 @@ func (n *nic) WritePacketToRemote(remoteLinkAddr tcpip.LinkAddress, pkt *PacketB
 }
 
 func (n *nic) writePacket(pkt *PacketBuffer) tcpip.Error {
-	n.NetworkLinkEndpoint.AddHeader(pkt)
+	n.AddHeader(pkt)
 	return n.writeRawPacket(pkt)
 }
 
 func (n *nic) writeRawPacketWithLinkHeaderInPayload(pkt *PacketBuffer) tcpip.Error {
-	if !n.NetworkLinkEndpoint.ParseHeader(pkt) {
+	if !n.ParseHeader(pkt) {
 		return &tcpip.ErrMalformedHeader{}
 	}
 	return n.writeRawPacket(pkt)
@@ -772,7 +772,7 @@ func (n *nic) DeliverNetworkPacket(protocol tcpip.NetworkProtocolNumber, pkt *Pa
 		return
 	}
 
-	pkt.RXChecksumValidated = n.NetworkLinkEndpoint.Capabilities()&CapabilityRXChecksumOffload != 0
+	pkt.RXChecksumValidated = n.Capabilities()&CapabilityRXChecksumOffload != 0
 
 	if n.deliverLinkPackets {
 		n.DeliverLinkPacket(protocol, pkt)

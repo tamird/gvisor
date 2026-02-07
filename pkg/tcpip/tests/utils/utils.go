@@ -195,7 +195,7 @@ var (
 // See ethernet.Endpoint for more details.
 func NewEthernetEndpoint(ep stack.LinkEndpoint) *EndpointWithDestinationCheck {
 	var e EndpointWithDestinationCheck
-	e.Endpoint.Init(ethernet.New(ep), &e)
+	e.Init(ethernet.New(ep), &e)
 	return &e
 }
 
@@ -210,7 +210,7 @@ var _ stack.LinkEndpoint = (*EndpointWithDestinationCheck)(nil)
 
 // DeliverNetworkPacket implements stack.NetworkDispatcher.
 func (e *EndpointWithDestinationCheck) DeliverNetworkPacket(proto tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
-	if dst := header.Ethernet(pkt.LinkHeader().Slice()).DestinationAddress(); dst == e.Endpoint.LinkAddress() || dst == header.EthernetBroadcastAddress || header.IsMulticastEthernetAddress(dst) {
+	if dst := header.Ethernet(pkt.LinkHeader().Slice()).DestinationAddress(); dst == e.LinkAddress() || dst == header.EthernetBroadcastAddress || header.IsMulticastEthernetAddress(dst) {
 		e.Endpoint.DeliverNetworkPacket(proto, pkt)
 	}
 }

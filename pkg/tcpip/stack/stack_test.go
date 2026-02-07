@@ -215,7 +215,7 @@ func (*fakeNetworkEndpoint) WriteHeaderIncludedPacket(*stack.Route, *stack.Packe
 }
 
 func (f *fakeNetworkEndpoint) Close() {
-	f.AddressableEndpointState.Cleanup()
+	f.Cleanup()
 }
 
 // Stats implements NetworkEndpoint.
@@ -280,7 +280,7 @@ func (f *fakeNetworkProtocol) NewEndpoint(nic stack.NetworkInterface, dispatcher
 		proto:      f,
 		dispatcher: dispatcher,
 	}
-	e.AddressableEndpointState.Init(e, stack.AddressableEndpointStateOptions{HiddenWhileDisabled: false})
+	e.Init(e, stack.AddressableEndpointStateOptions{HiddenWhileDisabled: false})
 	return e
 }
 

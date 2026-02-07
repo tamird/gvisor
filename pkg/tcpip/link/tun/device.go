@@ -167,7 +167,7 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 			isTap:    prefix == "tap",
 		}
 		endpoint.InitRefs()
-		endpoint.Endpoint.LinkEPCapabilities = linkCaps
+		endpoint.LinkEPCapabilities = linkCaps
 		if endpoint.name == "" {
 			endpoint.name = fmt.Sprintf("%s%d", prefix, id)
 		}

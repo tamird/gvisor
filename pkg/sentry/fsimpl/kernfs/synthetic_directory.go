@@ -77,7 +77,7 @@ func (dir *syntheticDirectory) NewDir(ctx context.Context, name string, opts vfs
 		return nil, linuxerr.EPERM
 	}
 	subdirI := newSyntheticDirectory(ctx, auth.CredentialsFromContext(ctx), opts.Mode&linux.PermissionsMask)
-	if err := dir.OrderedChildren.Insert(name, subdirI); err != nil {
+	if err := dir.Insert(name, subdirI); err != nil {
 		subdirI.DecRef(ctx)
 		return nil, err
 	}

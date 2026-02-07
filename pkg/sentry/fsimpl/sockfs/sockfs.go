@@ -69,7 +69,7 @@ func NewFilesystem(vfsObj *vfs.VirtualFilesystem) (*vfs.Filesystem, error) {
 		devMinor: devMinor,
 	}
 	fs.Filesystem.VFSFilesystem().Init(vfsObj, filesystemType{}, fs)
-	return fs.Filesystem.VFSFilesystem(), nil
+	return fs.VFSFilesystem(), nil
 }
 
 // Release implements vfs.FilesystemImpl.Release.
@@ -81,7 +81,7 @@ func (fs *filesystem) Release(ctx context.Context) {
 // PrependPath implements vfs.FilesystemImpl.PrependPath.
 func (fs *filesystem) PrependPath(ctx context.Context, vfsroot, vd vfs.VirtualDentry, b *fspath.Builder) error {
 	inode := vd.Dentry().Impl().(*kernfs.Dentry).Inode().(*inode)
-	b.PrependComponent(fmt.Sprintf("socket:[%d]", inode.InodeAttrs.Ino()))
+	b.PrependComponent(fmt.Sprintf("socket:[%d]", inode.Ino()))
 	return vfs.PrependPathSyntheticError{}
 }
 
@@ -122,7 +122,7 @@ func NewDentry(ctx context.Context, mnt *vfs.Mount) *vfs.Dentry {
 	// File mode matches net/socket.c:sock_alloc.
 	filemode := linux.FileMode(linux.S_IFSOCK | 0777)
 	i := &inode{}
-	i.InodeAttrs.Init(ctx, auth.CredentialsFromContext(ctx), linux.UNNAMED_MAJOR, fs.devMinor, fs.Filesystem.NextIno(), filemode)
+	i.Init(ctx, auth.CredentialsFromContext(ctx), linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), filemode)
 
 	d := &kernfs.Dentry{}
 	d.Init(&fs.Filesystem, i)

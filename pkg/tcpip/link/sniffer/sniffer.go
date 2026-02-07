@@ -89,7 +89,7 @@ func New(lower stack.LinkEndpoint) *Endpoint {
 // "NIC:en0/send udp [...]".
 func NewWithPrefix(lower stack.LinkEndpoint, logPrefix string) *Endpoint {
 	sniffer := &Endpoint{logPrefix: logPrefix}
-	sniffer.Endpoint.Init(lower, sniffer)
+	sniffer.Init(lower, sniffer)
 	return sniffer
 }
 
@@ -135,7 +135,7 @@ func NewWithWriter(lower stack.LinkEndpoint, writer io.Writer, snapLen uint32) (
 		writer:     writer,
 		maxPCAPLen: snapLen,
 	}
-	sniffer.Endpoint.Init(lower, sniffer)
+	sniffer.Init(lower, sniffer)
 	return sniffer, nil
 }
 

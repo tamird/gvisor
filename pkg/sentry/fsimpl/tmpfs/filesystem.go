@@ -458,7 +458,7 @@ func (d *dentry) open(ctx context.Context, rp *vfs.ResolvingPath, opts *vfs.Open
 	switch impl := d.inode.impl.(type) {
 	case *regularFile:
 		var fd regularFileFD
-		fd.LockFD.Init(&d.inode.locks)
+		fd.Init(&d.inode.locks)
 		mnt := rp.Mount()
 		if err := fd.vfsfd.Init(&fd, opts.Flags, rp.Credentials(), mnt, &d.vfsd, &vfs.FileDescriptionOptions{AllowDirectIO: true}); err != nil {
 			return nil, err
@@ -494,7 +494,7 @@ func (d *dentry) open(ctx context.Context, rp *vfs.ResolvingPath, opts *vfs.Open
 			return nil, linuxerr.EINVAL
 		}
 		var fd directoryFD
-		fd.LockFD.Init(&d.inode.locks)
+		fd.Init(&d.inode.locks)
 		if err := fd.vfsfd.Init(&fd, opts.Flags, rp.Credentials(), rp.Mount(), &d.vfsd, &vfs.FileDescriptionOptions{AllowDirectIO: true}); err != nil {
 			return nil, err
 		}

@@ -65,7 +65,7 @@ func newMemoryController(fs *filesystem, defaults map[string]int64) *memoryContr
 	consumeDefault("memory.soft_limit_in_bytes", &c.softLimitBytes)
 	consumeDefault("memory.move_charge_at_immigrate", &c.moveChargeAtImmigrate)
 
-	c.controllerCommon.init(kernel.CgroupControllerMemory, fs)
+	c.init(kernel.CgroupControllerMemory, fs)
 	return c
 }
 
@@ -76,7 +76,7 @@ func (c *memoryController) Clone() controller {
 		softLimitBytes:        atomicbitops.FromInt64(c.softLimitBytes.Load()),
 		moveChargeAtImmigrate: atomicbitops.FromInt64(c.moveChargeAtImmigrate.Load()),
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 

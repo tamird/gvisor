@@ -91,11 +91,11 @@ type CPUProfileOpts struct {
 
 // CPU is an RPC stub which collects a CPU profile.
 func (p *Profile) CPU(o *CPUProfileOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return nil // Allowed.
 	}
 
-	output := o.FilePayload.Files[0]
+	output := o.Files[0]
 	defer output.Close()
 
 	p.cpuMu.Lock()
@@ -129,11 +129,11 @@ type HeapProfileOpts struct {
 
 // Heap generates a heap profile.
 func (p *Profile) Heap(o *HeapProfileOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return nil // Allowed.
 	}
 
-	output := o.FilePayload.Files[0]
+	output := o.Files[0]
 	defer output.Close()
 
 	// Wait for the given delay.
@@ -157,11 +157,11 @@ type GoroutineProfileOpts struct {
 
 // Goroutine dumps out the stack trace for all running goroutines.
 func (p *Profile) Goroutine(o *GoroutineProfileOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return nil // Allowed.
 	}
 
-	output := o.FilePayload.Files[0]
+	output := o.Files[0]
 	defer output.Close()
 
 	return pprof.Lookup("goroutine").WriteTo(output, 2)
@@ -181,11 +181,11 @@ type BlockProfileOpts struct {
 
 // Block dumps a blocking profile.
 func (p *Profile) Block(o *BlockProfileOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return nil // Allowed.
 	}
 
-	output := o.FilePayload.Files[0]
+	output := o.Files[0]
 	defer output.Close()
 
 	p.blockMu.Lock()
@@ -223,11 +223,11 @@ type MutexProfileOpts struct {
 
 // Mutex dumps a mutex profile.
 func (p *Profile) Mutex(o *MutexProfileOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return nil // Allowed.
 	}
 
-	output := o.FilePayload.Files[0]
+	output := o.Files[0]
 	defer output.Close()
 
 	p.mutexMu.Lock()
@@ -261,11 +261,11 @@ type TraceProfileOpts struct {
 
 // Trace is an RPC stub which starts collection of an execution trace.
 func (p *Profile) Trace(o *TraceProfileOpts, _ *struct{}) error {
-	if len(o.FilePayload.Files) < 1 {
+	if len(o.Files) < 1 {
 		return nil // Allowed.
 	}
 
-	output, err := fd.NewFromFile(o.FilePayload.Files[0])
+	output, err := fd.NewFromFile(o.Files[0])
 	if err != nil {
 		return err
 	}

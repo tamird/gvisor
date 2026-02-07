@@ -29,7 +29,7 @@ var _ stack.LinkEndpoint = (*Endpoint)(nil)
 // New returns an ethernet link endpoint that wraps an inner link endpoint.
 func New(ep stack.LinkEndpoint) *Endpoint {
 	var e Endpoint
-	e.Endpoint.Init(ep, &e)
+	e.Init(ep, &e)
 	return &e
 }
 

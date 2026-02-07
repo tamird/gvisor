@@ -177,7 +177,7 @@ func (fs *filesystem) newCgroupInode(ctx context.Context, creds *auth.Credential
 		ts:          make(map[*kernel.Task]struct{}),
 		controllers: make(map[kernel.CgroupControllerType]controller),
 	}
-	c.dir.cgi = c
+	c.cgi = c
 
 	k := kernel.KernelFromContext(ctx)
 	r := k.CgroupRegistry()
@@ -209,9 +209,9 @@ func (fs *filesystem) newCgroupInode(ctx context.Context, creds *auth.Credential
 		}
 	}
 
-	c.dir.InodeAttrs.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), mode)
-	c.dir.OrderedChildren.Init(kernfs.OrderedChildrenOptions{Writable: true})
-	c.dir.IncLinks(c.dir.OrderedChildren.Populate(contents))
+	c.InodeAttrs.Init(ctx, creds, linux.UNNAMED_MAJOR, fs.devMinor, fs.NextIno(), mode)
+	c.OrderedChildren.Init(kernfs.OrderedChildrenOptions{Writable: true})
+	c.IncLinks(c.Populate(contents))
 
 	fs.numCgroups.Add(1)
 

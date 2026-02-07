@@ -252,7 +252,7 @@ func NewTCPConn(wq *waiter.Queue, ep tcpip.Endpoint) *TCPConn {
 		wq: wq,
 		ep: ep,
 	}
-	c.deadlineTimer.init()
+	c.init()
 	return c
 }
 
@@ -557,7 +557,7 @@ func NewUDPConn(wq *waiter.Queue, ep tcpip.Endpoint) *UDPConn {
 		ep: ep,
 		wq: wq,
 	}
-	c.deadlineTimer.init()
+	c.init()
 	return c
 }
 

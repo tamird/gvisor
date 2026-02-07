@@ -148,7 +148,7 @@ func (f *fwdTestNetworkEndpoint) WriteHeaderIncludedPacket(r *Route, pkt *Packet
 
 // Close implements stack.LinkEndpoint.
 func (f *fwdTestNetworkEndpoint) Close() {
-	f.AddressableEndpointState.Cleanup()
+	f.Cleanup()
 }
 
 // Stats implements stack.NetworkEndpoint.
@@ -202,7 +202,7 @@ func (f *fwdTestNetworkProtocol) NewEndpoint(nic NetworkInterface, dispatcher Tr
 		proto:      f,
 		dispatcher: dispatcher,
 	}
-	e.AddressableEndpointState.Init(e, AddressableEndpointStateOptions{HiddenWhileDisabled: false})
+	e.Init(e, AddressableEndpointStateOptions{HiddenWhileDisabled: false})
 	return e
 }
 

@@ -52,7 +52,7 @@ type regularFileFD struct {
 
 func newRegularFileFD(mnt *vfs.Mount, d *dentry, flags uint32, creds *auth.Credentials) (*regularFileFD, error) {
 	fd := &regularFileFD{}
-	fd.LockFD.Init(&d.inode.locks)
+	fd.Init(&d.inode.locks)
 	if err := fd.vfsfd.Init(fd, flags, creds, mnt, &d.vfsd, &vfs.FileDescriptionOptions{
 		AllowDirectIO: true,
 	}); err != nil {

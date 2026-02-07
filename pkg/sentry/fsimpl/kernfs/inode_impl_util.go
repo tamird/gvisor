@@ -749,7 +749,7 @@ func NewStaticDir(ctx context.Context, creds *auth.Credentials, devMajor, devMin
 	inode.InitRefs()
 
 	inode.OrderedChildren.Init(OrderedChildrenOptions{})
-	links := inode.OrderedChildren.Populate(children)
+	links := inode.Populate(children)
 	inode.IncLinks(links)
 
 	return inode

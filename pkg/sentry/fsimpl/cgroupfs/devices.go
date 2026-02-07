@@ -321,7 +321,7 @@ func newDevicesController(fs *filesystem) *devicesController {
 		defaultAllow: true,
 		deviceRules:  make(map[deviceID]permission),
 	}
-	c.controllerCommon.init(kernel.CgroupControllerDevices, fs)
+	c.init(kernel.CgroupControllerDevices, fs)
 	return c
 }
 
@@ -337,7 +337,7 @@ func (c *devicesController) Clone() controller {
 		defaultAllow: c.defaultAllow,
 		deviceRules:  newRules,
 	}
-	new.controllerCommon.cloneFromParent(c)
+	new.cloneFromParent(c)
 	return new
 }
 
