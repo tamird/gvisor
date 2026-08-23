@@ -186,10 +186,14 @@ func testMixedAtomicGlobal() {
 func testUnannotatedGlobalAtomics(out **int32) {
 	_ = unannotatedAtomicGlobal.RacyLoad()
 	unannotatedAtomicGlobal.RacyStore(1)
-	_ = atomic.LoadInt32(&unannotatedRawGlobal)
+	defer unannotatedAtomicGlobal.Store(1)
+	_ = atomic.LoadInt32(&unannotatedRawGlobal)       // +checklocksfail=unexpected call to atomic function
+	defer atomic.StoreInt32(&unannotatedRawGlobal, 1) // +checklocksfail=unexpected call to atomic function
+	go atomic.StoreInt32(&unannotatedRawGlobal, 1)    // +checklocksfail=unexpected call to atomic function
 
 	globalRWMu.RLock()
-	_ = atomic.LoadInt32(&guardedRawGlobal)
+	_ = atomic.LoadInt32(&guardedRawGlobal) // +checklocksfail=unexpected call to atomic function
+	atomic.StoreInt32(&guardedRawGlobal, 1) // +checklocksfail=unexpected call to atomic function
 	*out = &guardedRawGlobal
 	globalRWMu.RUnlock()
 }

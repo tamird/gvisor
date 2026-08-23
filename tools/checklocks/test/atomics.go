@@ -51,11 +51,13 @@ func testAtomicAccess(tc *atomicStruct, v chan int32) {
 	tc.pointer.Store(nil)
 	defer tc.pointer.Store(nil)
 	defer atomic.StoreInt32(&tc.accessedAtomically, 1)
-	go tc.pointer.Store(nil) // +checklocksfail=illegal use
+	go tc.pointer.Store(nil)
 }
 
 func testAtomicAccessInvalid(tc *atomicStruct, v chan int32) {
-	v <- atomic.LoadInt32(&tc.accessedNormally) // +checklocksfail
+	v <- atomic.LoadInt32(&tc.accessedNormally)      // +checklocksfail
+	defer atomic.StoreInt32(&tc.accessedNormally, 1) // +checklocksfail=unexpected call to atomic function
+	go atomic.StoreInt32(&tc.accessedNormally, 1)    // +checklocksfail=unexpected call to atomic function
 }
 
 func testNormalAccessInvalid(tc *atomicStruct, v chan int32, p chan *int32) {
@@ -124,6 +126,7 @@ func testAtomicMixedValidLockedWrite(tc *atomicMixedStruct, v chan int32, p chan
 func testAtomicMixedReadLocked(tc *atomicMixedStruct) {
 	tc.mu.RLock()
 	defer tc.pointer.Store(nil) // +checklocksfail=illegal use
+	go tc.pointer.Store(nil)    // +checklocksfail=illegal use
 	_ = atomic.LoadInt32(&tc.accessedMixed)
 	_ = tc.accessedMixed
 	_ = tc.wrapper.Load()
@@ -170,6 +173,7 @@ func testAtomicWrapper(tc *atomicStruct, v chan int32) {
 	v <- tc.wrapper.Load()
 	v <- tc.wrapper.Add(33)
 	tc.wrapper.Store(44)
+	defer tc.wrapper.Store(44)
 	v <- tc.bitops.RacyLoad()
 	v <- tc.bitops.RacyAdd(33)
 	tc.bitops.RacyStore(44)

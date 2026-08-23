@@ -126,15 +126,15 @@ func functionPackage(fn *ssa.Function) *types.Package {
 func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar atomicRules) {
 	allowNonAtomicRead := ar == mixedAtomic || ar == readOnlyMixedAtomic
 	switch x := inst.(type) {
-	case *ssa.Call, *ssa.Defer:
-		if _, deferred := x.(*ssa.Defer); deferred {
-			// Pure atomic access does not depend on lock state. Guarded
-			// deferred accesses would need their locks checked at execution,
-			// not registration, so keep rejecting those conservatively.
-			if ar != readWriteAtomic {
+	case *ssa.Call, *ssa.Defer, *ssa.Go:
+		if _, immediate := x.(*ssa.Call); !immediate {
+			// Values combining atomic and mutex requirements need their locks
+			// checked at execution, not argument evaluation. Conservatively
+			// reject deferred and goroutine calls for those values.
+			if ar != readWriteAtomic && ar != nonAtomic {
 				break
 			}
-			// Deferred uses previously reached the force-aware fallback.
+			// Honor force annotations as for other unsupported uses below.
 			if _, ok := pc.forced[pc.positionKey(inst.Pos())]; ok {
 				return
 			}
@@ -512,13 +512,10 @@ func (a globalAccess) Referrers() *[]ssa.Instruction {
 
 // checkGlobalAccess checks the validity of a global access.
 func (pc *passContext) checkGlobalAccess(inst ssa.Instruction, g *ssa.Global, ls *lockState, isWrite bool) {
-	var lgf lockGuardFacts
-	pc.importLockGuardFacts(g.Object(), &lgf)
 	pc.checkGuards(globalAccess{
 		Instruction: inst,
-		// Only explicitly annotated globals opt into atomic-use checking.
 		// Direct writes are diagnosed separately by checkGuards.
-		checkAtomic: !isWrite && lgf.AtomicDisposition == atomicRequired,
+		checkAtomic: !isWrite,
 	}, g, g, g.Object(), ls, isWrite)
 }
 

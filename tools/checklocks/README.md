@@ -31,7 +31,7 @@ the combination is discussed.
 
 ### Atomic Access Enforcement
 
-Individual struct members may be noted as requiring atomic access. These
+Struct fields and global variables may be noted as requiring atomic access. These
 annotations are of the form `+checkatomic`, for example:
 
 ```go
@@ -48,8 +48,7 @@ An atomic call must use the annotated address as its receiver or atomic
 location. Storing that address as the payload of another atomic value does not
 make accesses through the stored pointer atomic.
 
-For global variables, atomic-use checking applies only when `+checkatomic` is
-present, for example:
+The same annotation applies to global variables:
 
 ```go
 var (
@@ -57,6 +56,11 @@ var (
   globalValue atomicbitops.Int32
 )
 ```
+
+Without `+checkatomic`, calls to raw atomic functions such as `atomic.LoadInt32`
+are rejected for both fields and globals. Methods of typed atomic wrappers, such
+as `atomic.Int32` and `atomicbitops.Int32`, are allowed without an annotation.
+This applies to direct, deferred, and goroutine calls alike.
 
 ## Lock Enforcement
 
@@ -118,8 +122,7 @@ hold both mutexes for writing, so it excludes readers using either guard.
 The modifier applies only to fields, requires at least one `+checklocks` guard,
 and takes no arguments. Only value reads and immediately following loads
 qualify. Retaining an address or passing it to a function requires all guards
-exclusively, as with other guarded address uses; the modifier does not add
-alias lifetime tracking.
+exclusively; the modifier does not add alias lifetime tracking.
 With `+checkatomic`, atomic reads remain allowed without any guard. Holding
 any guard additionally permits an immediate non-atomic load, including a direct
 `atomicbitops.RacyLoad` call. This permission requires the field address's sole
@@ -296,9 +299,10 @@ The non-atomic `atomicbitops.RacyLoad` method follows the mixed read rule above.
 the lock held, because other readers may access the field atomically without
 locking. The exceptions for newly allocated objects still apply.
 
-Deferred atomic calls are supported for pure atomic fields and globals. Deferred
-calls on values with both atomic and mutex requirements remain unsupported: their
-locks would need to be checked when the calls execute, not when they are deferred.
+Deferred and goroutine atomic calls are supported for pure atomic fields and
+globals. These calls remain unsupported on values with both atomic and mutex
+requirements: their locks would need to be checked when the calls execute, not
+when their arguments are evaluated.
 
 ## Ignoring and Forcing
 
