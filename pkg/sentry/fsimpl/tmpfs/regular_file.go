@@ -44,15 +44,14 @@ type regularFile struct {
 	inode inode
 
 	// memoryUsageKind is the memory accounting category under which pages backing
-	// this regularFile's contents are accounted.
+	// this regularFile's contents are accounted. Immutable after construction.
 	memoryUsageKind usage.MemoryKind
 
-	// mapsMu protects mappings.
 	mapsMu sync.Mutex `state:"nosave"`
 
 	// mappings tracks mappings of the file into memmap.MappingSpaces.
 	//
-	// Protected by mapsMu.
+	// +checklocks:mapsMu
 	mappings memmap.MappingSet
 
 	// writableMappingPages tracks how many pages of virtual memory are mapped
@@ -63,21 +62,20 @@ type regularFile struct {
 	// mappings from many VMAs. We count pages rather than bytes to slightly
 	// mitigate this.
 	//
-	// Protected by mapsMu.
+	// +checklocks:mapsMu
 	writableMappingPages uint64
 
-	// dataMu protects the fields below.
 	dataMu sync.RWMutex `state:"nosave"`
 
 	// data maps offsets into the file to offsets into memFile that store
 	// the file's data.
 	//
-	// Protected by dataMu.
+	// +checklocks:dataMu
 	data fsutil.FileRangeSet
 
 	// seals represents file seals on this inode.
 	//
-	// Protected by dataMu.
+	// +checklocks:dataMu
 	seals uint32
 
 	// Note on struct alignment: seals (4 bytes) leaves 4 bytes of padding
@@ -100,15 +98,18 @@ type regularFile struct {
 	memfd bool
 
 	// huge is true if pages in this file may be hugepage-backed.
-	// Fits in padding.
+	// Immutable after construction; fits in padding.
 	huge bool
 
 	// size is the size of data.
 	//
-	// Protected by both dataMu and inode.mu; reading it requires holding
-	// either mutex, while writing requires holding both AND using atomics.
 	// Readers that do not require consistency (like Stat) may read the
 	// value atomically without holding either lock.
+	//
+	// +checklocks:dataMu
+	// +checklocks:inode.mu
+	// +checklocksreadany
+	// +checkatomic
 	size atomicbitops.Uint64
 }
 
@@ -175,7 +176,9 @@ func NewZeroFile(ctx context.Context, creds *auth.Credentials, mount *vfs.Mount,
 	rf := fd.inode().impl.(*regularFile)
 	rf.memoryUsageKind = usage.Anonymous
 	rf.huge = true
-	rf.size.Store(size)
+	// The unlinked file and its FD are still private to this caller;
+	// checklocks cannot infer ownership of the returned allocation.
+	rf.size.Store(size) // +checklocksignore
 	return &fd.vfsfd, err
 }
 
@@ -191,13 +194,19 @@ func NewMemfd(ctx context.Context, creds *auth.Credentials, mount *vfs.Mount, al
 	rf := fd.inode().impl.(*regularFile)
 	rf.memfd = true
 	if allowSeals {
-		rf.seals = 0
+		// This new unlinked file is still private to this caller;
+		// checklocks cannot infer ownership of the returned allocation.
+		rf.seals = 0 // +checklocksignore
 	}
 	return &fd.vfsfd, nil
 }
 
 // truncate grows or shrinks the file to the given size. It unconditionally
 // updates mtime and ctime.
+//
+// +checklocksexclude:rf.inode.mu
+// +checklocksexclude:rf.mapsMu
+// +checklocksexclude:rf.dataMu
 func (rf *regularFile) truncate(newSize uint64) error {
 	rf.inode.mu.Lock()
 	defer rf.inode.mu.Unlock()
@@ -208,10 +217,12 @@ func (rf *regularFile) truncate(newSize uint64) error {
 	return nil
 }
 
-// Preconditions:
-//   - rf.inode.mu must be held.
-//   - rf.dataMu must be locked for writing.
-//   - newSize > rf.size.
+// growLocked grows the file while holding both metadata and data locks.
+//
+// Preconditions: newSize > rf.size.
+//
+// +checklocks:rf.inode.mu
+// +checklocks:rf.dataMu
 func (rf *regularFile) growLocked(newSize uint64) error {
 	// Can we grow the file?
 	if rf.seals&linux.F_SEAL_GROW != 0 {
@@ -224,7 +235,9 @@ func (rf *regularFile) growLocked(newSize uint64) error {
 // truncateNoTimeUpdateLocked grows or shrinks the file to the given size.
 // Callers are responsible for updating timestamps.
 //
-// Preconditions: rf.inode.mu must be held.
+// +checklocks:rf.inode.mu
+// +checklocksexclude:rf.mapsMu
+// +checklocksexclude:rf.dataMu
 func (rf *regularFile) truncateNoTimeUpdateLocked(newSize uint64) error {
 	oldSize := rf.size.RacyLoad()
 	if newSize == oldSize {
@@ -272,6 +285,9 @@ func (rf *regularFile) truncateNoTimeUpdateLocked(newSize uint64) error {
 }
 
 // AddMapping implements memmap.Mappable.AddMapping.
+//
+// +checklocksexclude:rf.mapsMu
+// +checklocksexclude:rf.dataMu
 func (rf *regularFile) AddMapping(ctx context.Context, ms memmap.MappingSpace, ar hostarch.AddrRange, offset uint64, writable bool) error {
 	rf.mapsMu.Lock()
 	defer rf.mapsMu.Unlock()
@@ -299,6 +315,8 @@ func (rf *regularFile) AddMapping(ctx context.Context, ms memmap.MappingSpace, a
 }
 
 // RemoveMapping implements memmap.Mappable.RemoveMapping.
+//
+// +checklocksexclude:rf.mapsMu
 func (rf *regularFile) RemoveMapping(ctx context.Context, ms memmap.MappingSpace, ar hostarch.AddrRange, offset uint64, writable bool) {
 	rf.mapsMu.Lock()
 	defer rf.mapsMu.Unlock()
@@ -318,11 +336,16 @@ func (rf *regularFile) RemoveMapping(ctx context.Context, ms memmap.MappingSpace
 }
 
 // CopyMapping implements memmap.Mappable.CopyMapping.
+//
+// +checklocksexclude:rf.mapsMu
+// +checklocksexclude:rf.dataMu
 func (rf *regularFile) CopyMapping(ctx context.Context, ms memmap.MappingSpace, srcAR, dstAR hostarch.AddrRange, offset uint64, writable bool) error {
 	return rf.AddMapping(ctx, ms, dstAR, offset, writable)
 }
 
 // Translate implements memmap.Mappable.Translate.
+//
+// +checklocksexclude:rf.dataMu
 func (rf *regularFile) Translate(ctx context.Context, required, optional memmap.MappableRange, at hostarch.AccessType) ([]memmap.Translation, error) {
 	memCgID := pgalloc.MemoryCgroupIDFromContext(ctx)
 	mayHuge := rf.huge && rf.inode.fs.mf.HugepagesEnabled()
@@ -438,9 +461,11 @@ func (*regularFile) InvalidateUnsavable(context.Context) error {
 type regularFileFD struct {
 	fileDescription
 
-	// off is the file offset. off is accessed using atomic memory operations.
-	// offMu serializes operations that may mutate off.
-	off   int64
+	// off is the current file offset.
+	//
+	// +checklocks:offMu
+	off int64
+
 	offMu sync.Mutex `state:"nosave"`
 }
 
@@ -450,6 +475,10 @@ func (fd *regularFileFD) Release(context.Context) {
 }
 
 // Allocate implements vfs.FileDescriptionImpl.Allocate.
+//
+// Preconditions: the file's inode.mu and dataMu must not be held.
+// The regularFile is recovered through fd.inode().impl, so checklocks
+// cannot express these exclusions as receiver field paths.
 func (fd *regularFileFD) Allocate(ctx context.Context, mode, offset, length uint64) error {
 	f := fd.inode().impl.(*regularFile)
 	memCgID := pgalloc.MemoryCgroupIDFromContext(ctx)
@@ -491,10 +520,14 @@ func (fd *regularFileFD) Allocate(ctx context.Context, mode, offset, length uint
 	return nil
 }
 
+// allocateLocked allocates file data while holding the inode lock.
+//
 // Preconditions:
-// - rf.inode.mu is locked.
-// - required must be page-aligned.
-// - required.Start < newSize <= required.End.
+//   - required must be page-aligned.
+//   - required.Start < newSize <= required.End.
+//
+// +checklocks:rf.inode.mu
+// +checklocksexclude:rf.dataMu
 func (rf *regularFile) allocateLocked(ctx context.Context, mode, newSize uint64, required memmap.MappableRange, memCgID uint32) error {
 	rf.dataMu.Lock()
 	defer rf.dataMu.Unlock()
@@ -542,6 +575,11 @@ func (rf *regularFile) allocateLocked(ctx context.Context, mode, newSize uint64,
 }
 
 // PRead implements vfs.FileDescriptionImpl.PRead.
+//
+// Preconditions: the file's inode.mu and dataMu must not be held.
+// The regularFile is recovered through fd.inode().impl, so checklocks
+// cannot express these exclusions as receiver field paths.
+// This method may be called with fd.offMu held.
 func (fd *regularFileFD) PRead(ctx context.Context, dst usermem.IOSequence, offset int64, opts vfs.ReadOptions) (int64, error) {
 	start := fsmetric.StartReadWait()
 	defer fsmetric.FinishReadWait(fsmetric.TmpfsReadWait, start)
@@ -573,6 +611,12 @@ func (fd *regularFileFD) PRead(ctx context.Context, dst usermem.IOSequence, offs
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.
+//
+// Preconditions: the file's inode.mu and dataMu must not be held.
+// The regularFile is recovered through fd.inode().impl, so checklocks
+// cannot express these exclusions as receiver field paths.
+//
+// +checklocksexclude:fd.offMu
 func (fd *regularFileFD) Read(ctx context.Context, dst usermem.IOSequence, opts vfs.ReadOptions) (int64, error) {
 	fd.offMu.Lock()
 	n, err := fd.PRead(ctx, dst, fd.off, opts)
@@ -582,6 +626,11 @@ func (fd *regularFileFD) Read(ctx context.Context, dst usermem.IOSequence, opts 
 }
 
 // PWrite implements vfs.FileDescriptionImpl.PWrite.
+//
+// Preconditions: the file's inode.mu and dataMu must not be held.
+// The regularFile is recovered through fd.inode().impl, so checklocks
+// cannot express these exclusions as receiver field paths.
+// This method may be called with fd.offMu held.
 func (fd *regularFileFD) PWrite(ctx context.Context, src usermem.IOSequence, offset int64, opts vfs.WriteOptions) (int64, error) {
 	n, _, err := fd.pwrite(ctx, src, offset, opts)
 	return n, err
@@ -589,6 +638,11 @@ func (fd *regularFileFD) PWrite(ctx context.Context, src usermem.IOSequence, off
 
 // pwrite returns the number of bytes written, final offset and error. The
 // final offset should be ignored by PWrite.
+//
+// Preconditions: the file's inode.mu and dataMu must not be held.
+// The regularFile is recovered through fd.inode().impl, so checklocks
+// cannot express these exclusions as receiver field paths.
+// This method may be called with fd.offMu held.
 func (fd *regularFileFD) pwrite(ctx context.Context, src usermem.IOSequence, offset int64, opts vfs.WriteOptions) (written, finalOff int64, err error) {
 	if offset < 0 {
 		return 0, offset, linuxerr.EINVAL
@@ -644,6 +698,12 @@ func (fd *regularFileFD) pwrite(ctx context.Context, src usermem.IOSequence, off
 }
 
 // Write implements vfs.FileDescriptionImpl.Write.
+//
+// Preconditions: the file's inode.mu and dataMu must not be held.
+// The regularFile is recovered through fd.inode().impl, so checklocks
+// cannot express these exclusions as receiver field paths.
+//
+// +checklocksexclude:fd.offMu
 func (fd *regularFileFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.WriteOptions) (int64, error) {
 	fd.offMu.Lock()
 	n, off, err := fd.pwrite(ctx, src, fd.off, opts)
@@ -653,6 +713,8 @@ func (fd *regularFileFD) Write(ctx context.Context, src usermem.IOSequence, opts
 }
 
 // Seek implements vfs.FileDescriptionImpl.Seek.
+//
+// +checklocksexclude:fd.offMu
 func (fd *regularFileFD) Seek(ctx context.Context, offset int64, whence int32) (int64, error) {
 	fd.offMu.Lock()
 	defer fd.offMu.Unlock()
@@ -727,6 +789,12 @@ func putRegularFileReadWriter(rw *regularFileReadWriter) {
 }
 
 // ReadToBlocks implements safemem.Reader.ReadToBlocks.
+//
+// ReadToBlocks does not acquire rw.file.inode.mu and may be called with
+// that mutex held. The safemem.Reader interface cannot express the
+// receiver-specific dataMu exclusion below.
+//
+// +checklocksexclude:rw.file.dataMu
 func (rw *regularFileReadWriter) ReadToBlocks(dsts safemem.BlockSeq) (uint64, error) {
 	rw.file.dataMu.RLock()
 	defer rw.file.dataMu.RUnlock()
@@ -786,7 +854,13 @@ func (rw *regularFileReadWriter) ReadToBlocks(dsts safemem.BlockSeq) (uint64, er
 
 // WriteFromBlocks implements safemem.Writer.WriteFromBlocks.
 //
-// Preconditions: rw.file.inode.mu must be held.
+// The safemem.Writer interface cannot express this receiver-specific lock
+// contract. pwrite and tar restore call CopyInTo synchronously while
+// holding the file's inode mutex but not its data mutex. WriteFromBlocks
+// acquires the data mutex.
+//
+// +checklocks:rw.file.inode.mu
+// +checklocksexclude:rw.file.dataMu
 func (rw *regularFileReadWriter) WriteFromBlocks(srcs safemem.BlockSeq) (uint64, error) {
 	if srcs.IsEmpty() {
 		return 0, nil
@@ -943,6 +1017,10 @@ func (rw *regularFileReadWriter) writeToMF(fr memmap.FileRange, srcs safemem.Blo
 }
 
 // GetSeals returns the current set of seals on a memfd inode.
+//
+// Preconditions: the regular file's dataMu must not be held. The owner
+// is recovered through VFS implementation interfaces, so checklocks
+// cannot name it from fd.
 func GetSeals(fd *vfs.FileDescription) (uint32, error) {
 	f, ok := fd.Impl().(*regularFileFD)
 	if !ok {
@@ -955,6 +1033,10 @@ func GetSeals(fd *vfs.FileDescription) (uint32, error) {
 }
 
 // AddSeals adds new file seals to a memfd inode.
+//
+// Preconditions: the regular file's mapsMu and dataMu must not be held.
+// The owner is recovered through VFS implementation interfaces, so
+// checklocks cannot name these locks from fd.
 func AddSeals(fd *vfs.FileDescription, val uint32) error {
 	f, ok := fd.Impl().(*regularFileFD)
 	if !ok {

@@ -32,18 +32,25 @@ type directory struct {
 	inode  inode
 
 	// childMap maps the names of the directory's children to their dentries.
-	// childMap is protected by filesystem.mu.
+	//
+	// +checklocks:dentry.inode.fs.mu
 	childMap map[string]*dentry
 
 	// numChildren is len(childMap), but accessed using atomic memory
 	// operations to avoid locking in inode.statTo().
+	//
+	// +checklocks:dentry.inode.fs.mu
+	// +checkatomic
 	numChildren atomicbitops.Int64
+
+	iterMu iterMutex `state:"nosave"`
 
 	// childList is a list containing (1) child dentries and (2) fake dentries
 	// (with inode == nil) that represent the iteration position of
 	// directoryFDs. childList is used to support directoryFD.IterDirents()
-	// efficiently. childList is protected by iterMu.
-	iterMu    iterMutex `state:"nosave"`
+	// efficiently.
+	//
+	// +checklocks:iterMu
 	childList dentryList
 }
 
@@ -63,9 +70,13 @@ func (fs *filesystem) newDirectory(kuid auth.KUID, kgid auth.KGID, mode linux.Fi
 	return dir, nil
 }
 
-// Preconditions:
-//   - filesystem.mu must be locked for writing.
-//   - dir must not already contain a child with the given name.
+// insertChildLocked inserts child into dir under the given name.
+//
+// Preconditions: dir must not already contain a child with the given name.
+//
+// +checklocks:dir.dentry.inode.fs.mu
+// +checklocksexclude:dir.dentry.inode.fs.ancestryMu
+// +checklocksexclude:dir.iterMu
 func (dir *directory) insertChildLocked(child *dentry, name string) {
 	genericSetParentAndName(dir.dentry.inode.fs, child, &dir.dentry, name)
 	if dir.childMap == nil {
@@ -78,7 +89,10 @@ func (dir *directory) insertChildLocked(child *dentry, name string) {
 	dir.iterMu.Unlock()
 }
 
-// Preconditions: filesystem.mu must be locked for writing.
+// removeChildLocked removes child from dir.
+//
+// +checklocks:dir.dentry.inode.fs.mu
+// +checklocksexclude:dir.iterMu
 func (dir *directory) removeChildLocked(child *dentry) {
 	delete(dir.childMap, child.name)
 	dir.numChildren.Add(-1)
@@ -102,12 +116,20 @@ type directoryFD struct {
 	fileDescription
 	vfs.DirectoryFileDescriptionDefaultImpl
 
-	// Protected by directory.iterMu.
+	// iter and off are protected by the owning directory's iterMu during
+	// live use. The directory is recovered through VFS interfaces, so
+	// checklocks cannot express that owner as a field path from fd.
+	// Release may inspect and reset iter after the last FD reference is
+	// gone; unlinking from the shared childList still requires iterMu.
 	iter *dentry
 	off  int64
 }
 
 // Release implements vfs.FileDescriptionImpl.Release.
+//
+// Preconditions: the directory's iterMu must not be held. The owner
+// is recovered through VFS interfaces, so checklocks cannot name it
+// from fd.
 func (fd *directoryFD) Release(ctx context.Context) {
 	if fd.iter != nil {
 		dir := fd.inode().impl.(*directory)
@@ -119,6 +141,14 @@ func (fd *directoryFD) Release(ctx context.Context) {
 }
 
 // IterDirents implements vfs.FileDescriptionImpl.IterDirents.
+//
+// Preconditions: the directory's iterMu, its inode.mu, and its
+// filesystem's mu must not be held. These owners are recovered through
+// VFS interfaces, so checklocks cannot name their paths from fd.
+//
+// cb.Handle runs synchronously with fs.mu read-locked and dir.iterMu
+// held, after touchAtime returns without inode.mu held. The callback
+// must not re-enter operations that acquire either held mutex.
 func (fd *directoryFD) IterDirents(ctx context.Context, cb vfs.IterDirentsCallback) error {
 	fs := fd.filesystem()
 	dir := fd.inode().impl.(*directory)
@@ -187,6 +217,10 @@ func (fd *directoryFD) IterDirents(ctx context.Context, cb vfs.IterDirentsCallba
 }
 
 // Seek implements vfs.FileDescriptionImpl.Seek.
+//
+// Preconditions: the directory's iterMu must not be held. The owner
+// is recovered through VFS interfaces, so checklocks cannot name it
+// from fd.
 func (fd *directoryFD) Seek(ctx context.Context, offset int64, whence int32) (int64, error) {
 	dir := fd.inode().impl.(*directory)
 	dir.iterMu.Lock()

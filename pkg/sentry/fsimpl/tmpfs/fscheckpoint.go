@@ -41,7 +41,13 @@ func MemoryFileOf(vfsfs *vfs.Filesystem) *pgalloc.MemoryFile {
 // separately save and restore the contents of the filesystem's MemoryFile. If
 // vfsfs is not a tmpfs filesystem, FSCheckpointWrite returns an error.
 //
-// Preconditions: The Kernel must be paused and quiesced.
+// Preconditions:
+//   - The Kernel must be paused and quiesced.
+//   - The underlying tmpfs filesystem's mu must not be held.
+//
+// The filesystem is recovered through vfsfs.Impl(), so checklocks cannot
+// name that mutex from vfsfs. Kernel quiescence does not imply that the
+// mutex is held.
 func FSCheckpointWrite(ctx context.Context, vfsfs *vfs.Filesystem, dst io.Writer) error {
 	fs, _ := vfsfs.Impl().(*filesystem)
 	if fs == nil {
@@ -73,6 +79,7 @@ type fsckptRegularFileSegment struct {
 	Value uint64
 }
 
+// +checklocksexclude:rf.dataMu
 func (cb *fsckptTarWriterCallbacks) checkpointRegularFile(rf *regularFile) *fsckptRegularFile {
 	crf := cb.regularFiles[rf]
 	if crf == nil {
@@ -93,11 +100,13 @@ func (cb *fsckptTarWriterCallbacks) checkpointRegularFile(rf *regularFile) *fsck
 	return crf
 }
 
+// +checklocksexclude:rf.dataMu
 func (cb *fsckptTarWriterCallbacks) regularFileSize(rf *regularFile) int64 {
 	crf := cb.checkpointRegularFile(rf)
 	return 8 /* size */ + int64(len(crf.data))*int64((*fsckptRegularFileSegment)(nil).SizeBytes())
 }
 
+// +checklocksexclude:rf.dataMu
 func (cb *fsckptTarWriterCallbacks) regularFileWrite(ctx context.Context, rf *regularFile, tw *tar.Writer) error {
 	crf := cb.checkpointRegularFile(rf)
 	var buf [8]byte
@@ -142,6 +151,8 @@ func (cb *fsckptTarReaderCallbacks) regularFileRead(ctx context.Context, hdr *ta
 	return nil
 }
 
+// +checklocksexclude:rf.inode.mu
+// +checklocksexclude:rf.dataMu
 func (cb *fsckptTarReaderCallbacks) regularFileSetContents(ctx context.Context, hdr *tar.Header, rf *regularFile) error {
 	crf := cb.regularFiles[hdr]
 	rf.inode.mu.Lock()

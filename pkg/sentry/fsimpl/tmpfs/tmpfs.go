@@ -18,15 +18,13 @@
 // Lock order:
 //
 //	filesystem.mu
-//		inode.mu
-//		  regularFileFD.offMu
+//		regularFileFD.offMu or directory.iterMu
+//		  inode.mu
 //		    *** "memmap.Mappable/MappingIdentity locks" below this point
 //		    regularFile.mapsMu
 //		      *** "memmap.Mappable locks taken by Translate" below this point
 //		      regularFile.dataMu
-//		        fs.pagesUsedMu
 //		    filesystem.ancestryMu
-//		  directory.iterMu
 package tmpfs
 
 import (
@@ -75,6 +73,10 @@ type FilesystemType struct{}
 
 // filesystem implements vfs.FilesystemImpl.
 //
+// Non-nil root and ovlWhiteout inodes belong to this filesystem.
+//
+// +checklocksalias:root.inode.fs.mu=mu
+// +checklocksalias:ovlWhiteout.inode.fs.mu=mu
 // +stateify savable
 type filesystem struct {
 	vfsfs vfs.Filesystem
@@ -104,7 +106,8 @@ type filesystem struct {
 	// required by genericfstree.
 	ancestryMu sync.RWMutex `state:"nosave"`
 
-	nextInoMinusOne atomicbitops.Uint64 // accessed using atomic memory operations
+	// +checkatomic
+	nextInoMinusOne atomicbitops.Uint64
 
 	root *dentry
 
@@ -120,16 +123,22 @@ type filesystem struct {
 	maxInodes uint64
 
 	// pagesUsed is the number of pages used by this filesystem.
+	//
+	// +checkatomic
 	pagesUsed atomicbitops.Uint64
 
 	// inodesUsed is the number of inodes used by this filesystem.
+	//
+	// +checkatomic
 	inodesUsed atomicbitops.Uint64
 
 	// allowXattrPrefix is a set of xattr namespace prefixes that this
 	// tmpfs mount will allow. It is immutable.
 	allowXattrPrefix map[string]struct{}
 
-	// ovlWhiteout is the shared overlay whiteout device. It is protected by mu.
+	// ovlWhiteout is the shared overlay whiteout device.
+	//
+	// +checklocks:mu
 	ovlWhiteout *deviceFile
 }
 
@@ -458,6 +467,8 @@ func (fstype FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.Virt
 }
 
 // Release implements vfs.FilesystemImpl.Release.
+//
+// +checklocksexclude:fs.mu
 func (fs *filesystem) Release(ctx context.Context) {
 	fs.vfsfs.VirtualFilesystem().PutAnonBlockDevMinor(fs.devMinor)
 	fs.mu.Lock()
@@ -488,16 +499,20 @@ func (fs *filesystem) Release(ctx context.Context) {
 // do not need to trigger DecRef on the mount point itself or any child mount;
 // these are taken care of by the destructor of the enclosing MountNamespace.
 //
-// Precondition: filesystem.mu is held.
+// +checklocks:d.inode.fs.mu
 func (d *dentry) releaseChildrenLocked(ctx context.Context) {
 	dir := d.inode.impl.(*directory)
-	for _, child := range dir.childMap {
+	// dir implements d.inode, and its children belong to d.inode.fs.
+	// checklocks cannot follow the implementation/map-entry owner aliases.
+	for _, child := range dir.childMap { // +checklocksignore
 		if child.inode.isDir() {
-			child.releaseChildrenLocked(ctx)
-			child.inode.decLinksLocked(ctx) // link for child/.
-			dir.inode.decLinksLocked(ctx)   // link for child/..
+			child.releaseChildrenLocked(ctx) // +checklocksignore
+			// Drop child/. and child/.. links.
+			child.inode.decLinksLocked(ctx) // +checklocksignore
+			dir.inode.decLinksLocked(ctx)   // +checklocksignore
 		}
-		child.inode.decLinksLocked(ctx) // link for child
+		// Drop the parent's entry for child.
+		child.inode.decLinksLocked(ctx) // +checklocksignore
 	}
 }
 
@@ -533,17 +548,28 @@ func (fs *filesystem) statFS() linux.Statfs {
 type dentry struct {
 	vfsd vfs.Dentry
 
-	// parent is this dentry's parent directory. Each referenced dentry holds a
-	// reference on parent.dentry. If this dentry is a filesystem root, parent
-	// is nil. parent is protected by filesystem.mu.
+	// parent is this dentry's parent directory, or nil for a filesystem root.
+	// Directory inodes hold a counted reference on their parent; see inode.
+	//
+	// Shared parent/name changes hold both inode.fs.mu and inode.fs.ancestryMu.
+	// Reads of name require either mutex; parent alone may be loaded atomically.
+	// The shared writer and ancestry walkers come from genericfstree, whose
+	// fs parameter checklocks cannot equate to d.inode.fs. The template also
+	// lacks tmpfs's fs.mu requirement, so these writer/name guards remain in
+	// prose.
+	//
+	// +checkatomic
 	parent atomic.Pointer[dentry] `state:".(*dentry)"`
 
 	// name is the name of this dentry in its parent. If this dentry is a
-	// filesystem root, name is the empty string. name is protected by
-	// filesystem.mu.
+	// filesystem root, name is the empty string. It shares parent's ownership
+	// contract above.
 	name string
 
 	// dentryEntry (ugh) links dentries into their parent directory.childList.
+	// The list-owning directory's iterMu protects these links, including
+	// inode-nil iterator nodes. Generated list methods do not carry that
+	// owner contract.
 	dentryEntry
 
 	// inode is the inode represented by this dentry. Multiple Dentries may
@@ -582,6 +608,8 @@ func (d *dentry) DecRef(ctx context.Context) {
 }
 
 // InotifyWithParent implements vfs.DentryImpl.InotifyWithParent.
+//
+// +checklocksexclude:d.inode.fs.ancestryMu
 func (d *dentry) InotifyWithParent(ctx context.Context, events, cookie uint32, et vfs.EventType) {
 	if d.inode.isDir() {
 		events |= linux.IN_ISDIR
@@ -631,20 +659,42 @@ type inode struct {
 	// TODO(b/148380782): Support xattrs other than user.*
 	xattrs memxattr.SimpleExtendedAttributes
 
-	// Inode metadata. Writing multiple fields atomically requires holding
-	// mu, otherwise atomic operations can be used.
-	mu         inodeMutex                   `state:"nosave"`
-	mode       atomicbitops.Uint32          // file type and mode
-	accessACL  atomic.Pointer[vfs.PosixACL] `state:".(*vfs.PosixACL)"`
-	defaultACL atomic.Pointer[vfs.PosixACL] `state:".(*vfs.PosixACL)"`
-	nlink      atomicbitops.Uint32          // protected by filesystem.mu instead of inode.mu
-	uid        atomicbitops.Uint32          // auth.KUID, but stored as raw uint32 for sync/atomic
-	gid        atomicbitops.Uint32          // auth.KGID, but ...
-	ino        uint64                       // immutable
+	// mu serializes mode/accessACL updates and other compound metadata changes.
+	// Individual updates use atomics; ctime and defaultACL also have live
+	// updates that do not acquire mu.
+	mu inodeMutex `state:"nosave"`
 
+	// +checkatomic
+	mode atomicbitops.Uint32 // file type and mode
+
+	// +checkatomic
+	accessACL atomic.Pointer[vfs.PosixACL] `state:".(*vfs.PosixACL)"`
+
+	// +checkatomic
+	defaultACL atomic.Pointer[vfs.PosixACL] `state:".(*vfs.PosixACL)"`
+
+	// +checklocks:fs.mu
+	// +checkatomic
+	nlink atomicbitops.Uint32
+
+	// +checkatomic
+	uid atomicbitops.Uint32 // auth.KUID, but stored as raw uint32 for sync/atomic
+
+	// +checkatomic
+	gid atomicbitops.Uint32 // auth.KGID, but ...
+
+	ino uint64 // immutable
+
+	// +checkatomic
 	atime atomicbitops.Int64 // nanoseconds
+
+	// +checkatomic
 	btime atomicbitops.Int64 // nanoseconds
+
+	// +checkatomic
 	ctime atomicbitops.Int64 // nanoseconds
+
+	// +checkatomic
 	mtime atomicbitops.Int64 // nanoseconds
 
 	locks vfs.FileLocks
@@ -661,6 +711,8 @@ const maxLinks = math.MaxUint32
 // Returns ENOSPC if the maximum inode count has been exhausted and no more inodes can be allocated.
 //
 // If parentDir is not nil, the setgid bit and default ACL will be inherited from parentDir.
+//
+// Preconditions: i is uninitialized and unpublished.
 func (i *inode) init(impl any, fs *filesystem, kuid auth.KUID, kgid auth.KGID, mode linux.FileMode, parentDir *directory) error {
 	if mode.FileType() == 0 {
 		panic("file type is required in FileMode")
@@ -680,7 +732,7 @@ func (i *inode) init(impl any, fs *filesystem, kuid auth.KUID, kgid auth.KGID, m
 	}
 
 	// Inherit the parent's default mode and ACL as appropriate
-	i.mode = atomicbitops.FromUint32(uint32(mode))
+	i.mode.Store(uint32(mode))
 	if parentDir != nil && mode.FileType() != linux.ModeSymlink {
 		parentDefaultACL := parentDir.inode.defaultACL.Load()
 
@@ -698,7 +750,7 @@ func (i *inode) init(impl any, fs *filesystem, kuid auth.KUID, kgid auth.KGID, m
 				i.accessACL.Store(&newACL)
 			}
 			newMode := (uint16(equivMode) & linux.PermissionsMask) | (uint16(mode) &^ linux.PermissionsMask)
-			i.mode = atomicbitops.FromUint32(uint32(newMode))
+			i.mode.Store(uint32(newMode))
 
 			if mode.IsDir() {
 				i.defaultACL.Store(parentDefaultACL)
@@ -708,15 +760,15 @@ func (i *inode) init(impl any, fs *filesystem, kuid auth.KUID, kgid auth.KGID, m
 	}
 
 	i.fs = fs
-	i.uid = atomicbitops.FromUint32(uint32(kuid))
-	i.gid = atomicbitops.FromUint32(uint32(kgid))
+	i.uid.Store(uint32(kuid))
+	i.gid.Store(uint32(kgid))
 	i.ino = fs.nextInoMinusOne.Add(1)
 	// Tmpfs creation sets atime, btime, ctime, and mtime to current time.
 	now := fs.clock.Now().Nanoseconds()
-	i.atime = atomicbitops.FromInt64(now)
-	i.btime = atomicbitops.FromInt64(now)
-	i.ctime = atomicbitops.FromInt64(now)
-	i.mtime = atomicbitops.FromInt64(now)
+	i.atime.Store(now)
+	i.btime.Store(now)
+	i.ctime.Store(now)
+	i.mtime.Store(now)
 	// i.nlink initialized by caller
 	i.impl = impl
 	i.refs.InitRefs()
@@ -727,9 +779,10 @@ func (i *inode) init(impl any, fs *filesystem, kuid auth.KUID, kgid auth.KGID, m
 // incLinksLocked increments i's link count.
 //
 // Preconditions:
-//   - filesystem.mu must be locked for writing.
 //   - i.nlink != 0.
 //   - i.nlink < maxLinks.
+//
+// +checklocks:i.fs.mu
 func (i *inode) incLinksLocked() {
 	if i.nlink.RacyLoad() == 0 {
 		panic("tmpfs.inode.incLinksLocked() called with no existing links")
@@ -743,9 +796,9 @@ func (i *inode) incLinksLocked() {
 // decLinksLocked decrements i's link count. If the link count reaches 0, we
 // remove a reference on i as well.
 //
-// Preconditions:
-//   - filesystem.mu must be locked for writing.
-//   - i.nlink != 0.
+// Preconditions: i.nlink != 0.
+//
+// +checklocks:i.fs.mu
 func (i *inode) decLinksLocked(ctx context.Context) {
 	if i.nlink.RacyLoad() == 0 {
 		panic("tmpfs.inode.decLinksLocked() called with no existing links")
@@ -778,10 +831,9 @@ func (i *inode) decRef(ctx context.Context) {
 				impl.inode.fs.unaccountPages(1)
 			}
 		case *regularFile:
-			// Release memory used by regFile to store data. Since regFile is
-			// no longer usable, we don't need to grab any locks or update any
-			// metadata.
-			pagesDec := impl.data.DropAll(i.fs.mf)
+			// All file and mapping references are gone, so data is private
+			// to this destructor. checklocks cannot express that lifetime.
+			pagesDec := impl.data.DropAll(i.fs.mf) // +checklocksignore
 			impl.inode.fs.unaccountPages(pagesDec)
 		}
 
@@ -842,6 +894,13 @@ func (i *inode) statTo(stat *linux.Statx) {
 	}
 }
 
+// setStat updates inode metadata.
+//
+// Resizing a regular file also requires that its mapsMu and dataMu are
+// not held. i.impl is an interface, so checklocks cannot name those
+// implementation-owned locks from i.
+//
+// +checklocksexclude:i.mu
 func (i *inode) setStat(ctx context.Context, creds *auth.Credentials, opts *vfs.SetStatOptions) error {
 	stat := &opts.Stat
 	if stat.Mask == 0 {
@@ -865,7 +924,9 @@ func (i *inode) setStat(ctx context.Context, creds *auth.Credentials, opts *vfs.
 	if mask&linux.STATX_SIZE != 0 {
 		switch impl := i.impl.(type) {
 		case *regularFile:
-			if err := impl.truncateNoTimeUpdateLocked(stat.Size); err != nil {
+			// newRegularFile sets i.impl to the regularFile containing i.
+			// Thus i.mu is impl.inode.mu; checklocks cannot recover this alias.
+			if err := impl.truncateNoTimeUpdateLocked(stat.Size); err != nil { // +checklocksignore
 				return err
 			}
 			needsMtimeBump = true
@@ -1012,6 +1073,7 @@ func (i *inode) isDir() bool {
 	return mode.FileType() == linux.S_IFDIR
 }
 
+// +checklocksexclude:i.mu
 func (i *inode) touchAtime(mnt *vfs.Mount) {
 	if mnt.Options().Flags.NoATime {
 		return
@@ -1027,6 +1089,8 @@ func (i *inode) touchAtime(mnt *vfs.Mount) {
 }
 
 // Preconditions: The caller has called vfs.Mount.CheckBeginWrite().
+//
+// +checklocksexclude:i.mu
 func (i *inode) touchCtime() {
 	now := i.fs.clock.Now().Nanoseconds()
 	i.mu.Lock()
@@ -1035,6 +1099,8 @@ func (i *inode) touchCtime() {
 }
 
 // Preconditions: The caller has called vfs.Mount.CheckBeginWrite().
+//
+// +checklocksexclude:i.mu
 func (i *inode) touchCMtime() {
 	now := i.fs.clock.Now().Nanoseconds()
 	i.mu.Lock()
@@ -1043,9 +1109,9 @@ func (i *inode) touchCMtime() {
 	i.mu.Unlock()
 }
 
-// Preconditions:
-//   - The caller has called vfs.Mount.CheckBeginWrite().
-//   - inode.mu must be locked.
+// Preconditions: The caller has called vfs.Mount.CheckBeginWrite().
+//
+// +checklocks:i.mu
 func (i *inode) touchCMtimeLocked() {
 	now := i.fs.clock.Now().Nanoseconds()
 	i.mtime.Store(now)
@@ -1099,6 +1165,7 @@ func (i *inode) getXattr(creds *auth.Credentials, opts *vfs.GetXattrOptions) (st
 	return i.xattrs.GetXattr(creds, mode, kuid, opts)
 }
 
+// +checklocksexclude:i.mu
 func (i *inode) setXattr(creds *auth.Credentials, opts *vfs.SetXattrOptions) error {
 	if err := i.checkXattrPrefix(opts.Name); err != nil {
 		return err
@@ -1127,6 +1194,7 @@ func (i *inode) setXattr(creds *auth.Credentials, opts *vfs.SetXattrOptions) err
 	return i.xattrs.SetXattr(creds, mode, kuid, kgid, opts)
 }
 
+// +checklocksexclude:i.mu
 func (i *inode) removeXattr(creds *auth.Credentials, name string) error {
 	if err := i.checkXattrPrefix(name); err != nil {
 		return err
@@ -1154,6 +1222,7 @@ func (i *inode) removeXattr(creds *auth.Credentials, name string) error {
 	return i.xattrs.RemoveXattr(creds, mode, kuid, name)
 }
 
+// +checklocksexclude:i.mu
 func (i *inode) setPosixACL(creds *auth.Credentials, t vfs.ACLType, acl *vfs.PosixACL, clearSGID bool) (*vfs.PosixACL, linux.FileMode, error) {
 	kuid := auth.KUID(i.uid.Load())
 	kgid := auth.KGID(i.gid.Load())
@@ -1209,6 +1278,12 @@ func (i *inode) setPosixACL(creds *auth.Credentials, t vfs.ACLType, acl *vfs.Pos
 
 // fileDescription is embedded by tmpfs implementations of
 // vfs.FileDescriptionImpl.
+//
+// SetStat, SetXattr, RemoveXattr, and SetPosixACL may acquire the inode's
+// mu, which callers must not hold. SetStat may also acquire a regular
+// file's mapsMu and dataMu, which must likewise not be held. These owners
+// are recovered through VFS dentry and implementation interfaces, so
+// checklocks cannot express the exclusions as fileDescription field paths.
 //
 // +stateify savable
 type fileDescription struct {
