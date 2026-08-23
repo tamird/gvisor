@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package atomicfields exposes atomic fields to a consumer that does not
-// directly import their types' packages.
-package atomicfields
+// Package atomic exposes atomic fields to a consumer that does not directly
+// import their types' packages. Its name deliberately matches sync/atomic to
+// test that checklocks identifies atomic operations by package path, not name.
+package atomic
 
 import (
 	"sync"
@@ -24,6 +25,8 @@ import (
 )
 
 type Values struct {
+	// +checkatomic
+	Raw uint64
 	// +checkatomic
 	Standard atomic.Pointer[int]
 	// +checkatomic
@@ -42,6 +45,11 @@ type Values struct {
 
 type WrappedAtomic struct {
 	atomicbitops.Uint64
+}
+
+// Load deliberately performs a non-atomic read despite its package and name.
+func Load[T any](p *T) T {
+	return *p
 }
 
 var globalMu sync.Mutex

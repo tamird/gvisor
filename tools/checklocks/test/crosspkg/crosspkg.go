@@ -18,7 +18,7 @@ package crosspkg
 import (
 	"sync"
 
-	"gvisor.dev/gvisor/tools/checklocks/test/atomicfields"
+	atomicfields "gvisor.dev/gvisor/tools/checklocks/test/atomicfields"
 )
 
 var (
@@ -51,9 +51,11 @@ type ReadAnyGuard[T any] struct {
 	Value T // +checklocksreadany
 }
 
-// Do not import atomic or atomicbitops here: these methods must be resolved
-// from type information for a transitive dependency, not a direct SSA import.
+// Do not import sync/atomic or gvisor.dev/gvisor/pkg/atomicbitops here: their
+// methods must be resolved from type information for a transitive dependency,
+// not a direct SSA import.
 func readIndirectAtomics(v *atomicfields.Values) {
+	_ = atomicfields.Load(&v.Raw) // +checklocksfail=non-atomic function
 	_ = v.Standard.Load()
 	_ = v.Bitops.Load()
 	v.Standard.Store(nil)

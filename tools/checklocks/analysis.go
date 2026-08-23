@@ -171,7 +171,7 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 		if obj := fn.Object(); obj != nil && pc.pass.ImportObjectFact(obj, &lff) && lff.Ignore {
 			return
 		}
-		if name := pkg.Name(); name != "atomic" && name != "atomicbitops" {
+		if path := pkg.Path(); path != "sync/atomic" && path != "gvisor.dev/gvisor/pkg/atomicbitops" {
 			if ar != nonAtomic {
 				// This is an illegal call to a non-atomic package function.
 				pc.maybeFail(inst.Pos(), "dispatch to non-atomic function with atomic-only field")
@@ -195,7 +195,7 @@ func (pc *passContext) checkAtomicCall(inst ssa.Instruction, value ssa.Value, ar
 				pc.maybeFail(inst.Pos(), "unexpected call to atomic function")
 			}
 		}
-		if pkg.Name() == "atomicbitops" && strings.HasPrefix(fn.Name(), "Racy") {
+		if pkg.Path() == "gvisor.dev/gvisor/pkg/atomicbitops" && strings.HasPrefix(fn.Name(), "Racy") {
 			// Racy methods are non-atomic. Mixed access permits non-atomic
 			// reads under the lock, but writes must remain atomic for
 			// concurrent lock-free readers.
