@@ -86,7 +86,7 @@ func (t TaskExitState) String() string {
 // killLocked marks t as killed by enqueueing a SIGKILL, without causing the
 // thread-group-affecting side effects SIGKILL usually has.
 //
-// Preconditions: The signal mutex must be locked.
+// +checklocks:t.tg.signalHandlers.mu
 func (t *Task) killLocked() {
 	// Clear killable stops.
 	if t.stop != nil && t.stop.Killable() {
@@ -129,6 +129,9 @@ func (t *Task) killedLocked() bool {
 // PrepareExit indicates an exit with the given status.
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) PrepareExit(ws linux.WaitStatus) {
 	t.tg.pidns.owner.mu.RLock()
 	defer t.tg.pidns.owner.mu.RUnlock()
@@ -183,7 +186,9 @@ func (t *Task) prepareGroupExitLocked(ws linux.WaitStatus) {
 	t.exitStatus = ws
 	for sibling := t.tg.tasks.Front(); sibling != nil; sibling = sibling.Next() {
 		if sibling != t {
-			sibling.killLocked()
+			// The list contains tasks in t.tg; checklocks cannot infer
+			// that sibling uses the signal mutex required by this helper.
+			sibling.killLocked() // +checklocksignore
 		}
 	}
 }
@@ -192,6 +197,11 @@ func (t *Task) prepareGroupExitLocked(ws linux.WaitStatus) {
 // Kill does not wait for tasks to exit.
 //
 // Kill has no analogue in Linux; it's provided for save/restore only.
+//
+// Callers must not hold signal mutexes for tasks in ts.Root.tids. checklocks
+// cannot express exclusions for this dynamically selected set.
+//
+// +checklocksexclude:ts.mu
 func (ts *TaskSet) Kill(ws linux.WaitStatus) {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
@@ -242,6 +252,9 @@ func (*runExit) execute(t *Task) taskRunState {
 // +stateify savable
 type runExitMain struct{}
 
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.leader.parent.tg.signalHandlers.mu
 func (*runExitMain) execute(t *Task) taskRunState {
 	t.traceExitEvent()
 
@@ -363,6 +376,10 @@ func (*runExitMain) execute(t *Task) taskRunState {
 // group that it is no longer eligible to participate in group activities. It
 // returns true if t is the last task in its thread group to call
 // exitThreadGroup.
+//
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.leader.parent.tg.signalHandlers.mu
 func (t *Task) exitThreadGroup() bool {
 	t.tg.pidns.owner.mu.Lock()
 	defer t.tg.pidns.owner.mu.Unlock()
@@ -393,6 +410,11 @@ func (t *Task) exitThreadGroup() bool {
 	return last
 }
 
+// Callers must not hold Task.mu for any child in t.children, or signal
+// mutexes for the selected children, reparenting target, notification
+// recipients or thread groups visited by orphan checks. checklocks cannot
+// express exclusions for these dynamically selected owners.
+//
 // Preconditions: The TaskSet mutex must be locked for writing.
 func (t *Task) exitChildrenLocked() {
 	newParent := t.findReparentTargetLocked()
@@ -632,6 +654,10 @@ func (t *Task) reparentLocked(parent *Task) {
 // +stateify savable
 type runExitNotify struct{}
 
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
+// +checklocksexclude:t.parent.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.leader.parent.tg.signalHandlers.mu
 func (*runExitNotify) execute(t *Task) taskRunState {
 	t.tg.pidns.owner.mu.Lock()
 	defer t.tg.pidns.owner.mu.Unlock()
@@ -662,9 +688,17 @@ func (*runExitNotify) execute(t *Task) taskRunState {
 // handling of SIGCHLD, regardless of what the exited task's thread group's
 // termination signal is.
 //
+// Callers must not hold the signal mutex of the tracer returned by Tracer,
+// including the leader's tracer when notification recurses, or of a thread
+// group visited by the process-group orphan check. checklocks cannot express
+// exclusions for these dynamically selected owners.
+//
 // Preconditions: The TaskSet mutex must be locked for writing.
 //
 // +checklocksexclude:t.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
+// +checklocksexclude:t.parent.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.leader.parent.tg.signalHandlers.mu
 func (t *Task) exitNotifyLocked(fromPtraceDetach bool) {
 	if t.exitStateLocked() != TaskExitZombie {
 		return
@@ -908,6 +942,8 @@ func getExitNotifyParentSeccheckInfo(t *Task) (seccheck.FieldSet, *pb.ExitNotify
 
 // ExitStatus returns t's exit status, which is only guaranteed to be
 // meaningful if t.ExitState() != TaskExitNone.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) ExitStatus() linux.WaitStatus {
 	sh := t.tg.signalLock()
 	defer sh.mu.Unlock()
@@ -916,6 +952,9 @@ func (t *Task) ExitStatus() linux.WaitStatus {
 
 // ExitStatus returns the exit status that would be returned by a consuming
 // wait*() on tg.
+//
+// +checklocksexclude:tg.pidns.owner.mu
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) ExitStatus() linux.WaitStatus {
 	tg.pidns.owner.mu.RLock()
 	defer tg.pidns.owner.mu.RUnlock()
@@ -1203,6 +1242,10 @@ func (t *Task) waitParentLocked(opts *WaitOptions, parent *Task) (*WaitResult, b
 }
 
 // Preconditions: The TaskSet mutex must be locked for writing.
+//
+// +checklocksexclude:target.tg.signalHandlers.mu
+// +checklocksexclude:target.parent.tg.signalHandlers.mu
+// +checklocksexclude:target.tg.leader.parent.tg.signalHandlers.mu
 func (t *Task) waitCollectZombieLocked(target *Task, opts *WaitOptions, asPtracer bool) *WaitResult {
 	if asPtracer && !target.exitTracerNotified {
 		return nil
@@ -1278,6 +1321,8 @@ func (t *Task) updateRSSLocked() {
 }
 
 // Preconditions: The TaskSet mutex must be locked for writing.
+//
+// +checklocksexclude:target.tg.signalHandlers.mu
 func (t *Task) waitCollectChildGroupStopLocked(target *Task, opts *WaitOptions) *WaitResult {
 	target.tg.signalHandlers.mu.Lock()
 	defer target.tg.signalHandlers.mu.Unlock()
@@ -1300,6 +1345,8 @@ func (t *Task) waitCollectChildGroupStopLocked(target *Task, opts *WaitOptions) 
 }
 
 // Preconditions: The TaskSet mutex must be locked for writing.
+//
+// +checklocksexclude:target.tg.signalHandlers.mu
 func (t *Task) waitCollectGroupContinueLocked(target *Task, opts *WaitOptions) *WaitResult {
 	target.tg.signalHandlers.mu.Lock()
 	defer target.tg.signalHandlers.mu.Unlock()

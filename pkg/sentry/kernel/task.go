@@ -151,18 +151,19 @@ type Task struct {
 
 	// signalMask is the set of signals whose delivery is currently blocked.
 	//
-	// signalMask is accessed using atomic memory operations, and is protected
-	// by the signal mutex (such that reading signalMask is safe if either the
-	// signal mutex is locked or if atomic memory operations are used, while
-	// writing signalMask requires both). signalMask is owned by the task
-	// goroutine.
+	// signalMask is owned by the task goroutine.
+	//
+	// +checkatomic
+	// +checklocks:tg.signalHandlers.mu
 	signalMask atomicbitops.Uint64
 
-	// If the task goroutine is currently executing Task.sigtimedwait,
+	// If the task goroutine is currently executing Task.Sigtimedwait,
 	// realSignalMask is the previous value of signalMask, which has temporarily
-	// been replaced by Task.sigtimedwait. Otherwise, realSignalMask is 0.
+	// been replaced by Task.Sigtimedwait. Otherwise, realSignalMask is 0.
 	//
-	// realSignalMask is exclusive to the task goroutine.
+	// realSignalMask is owned by the task goroutine.
+	//
+	// +checklocks:tg.signalHandlers.mu
 	realSignalMask linux.SignalSet
 
 	// If haveSavedSignalMask is true, savedSignalMask is the signal mask that

@@ -334,6 +334,8 @@ func (k *Kernel) runCPUClockTicker() {
 
 // StateStatus returns a string representation of the task's current state,
 // appropriate for /proc/[pid]/status.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) StateStatus() string {
 	switch s := t.TaskGoroutineState(); s {
 	case TaskGoroutineNonexistent, TaskGoroutineRunningSys:

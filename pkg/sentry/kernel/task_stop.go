@@ -101,14 +101,19 @@ type TaskStop interface {
 // Preconditions:
 //   - The caller must be running on the task goroutine.
 //   - The task must not already be in an internal stop (i.e. t.stop == nil).
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) beginInternalStop(s TaskStop) {
 	t.tg.signalHandlers.mu.Lock()
 	defer t.tg.signalHandlers.mu.Unlock()
 	t.beginInternalStopLocked(s)
 }
 
-// Preconditions: Same as beginInternalStop, plus:
-//   - The signal mutex must be locked.
+// Preconditions:
+//   - The caller must be running on the task goroutine.
+//   - The task must not already be in an internal stop (i.e. t.stop == nil).
+//
+// +checklocks:t.tg.signalHandlers.mu
 func (t *Task) beginInternalStopLocked(s TaskStop) {
 	if t.stop != nil {
 		panic(fmt.Sprintf("Attempting to enter internal stop %#v when already in internal stop %#v", s, t.stop))
@@ -126,9 +131,9 @@ func (t *Task) beginInternalStopLocked(s TaskStop) {
 // t.stop, which is why there is no endInternalStop that locks the signal mutex
 // for you.
 //
-// Preconditions:
-//   - The signal mutex must be locked.
-//   - The task must be in an internal stop (i.e. t.stop != nil).
+// Precondition: The task must be in an internal stop (i.e. t.stop != nil).
+//
+// +checklocks:t.tg.signalHandlers.mu
 func (t *Task) endInternalStopLocked() {
 	if t.stop == nil {
 		panic("Attempting to leave non-existent internal stop")
@@ -145,26 +150,34 @@ func (t *Task) endInternalStopLocked() {
 
 // BeginExternalStop indicates the start of an external stop that applies to t.
 // BeginExternalStop does not wait for t's task goroutine to stop.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) BeginExternalStop() {
 	sh := t.tg.signalLock()
 	defer sh.mu.Unlock()
-	t.beginStopLocked()
+	// signalLock returned t.tg's current handler with sh.mu held;
+	// checklocks does not relate that result to the thread-group field.
+	t.beginStopLocked() // +checklocksignore
 	t.interrupt()
 }
 
 // EndExternalStop indicates the end of an external stop started by a previous
 // call to Task.BeginExternalStop. EndExternalStop does not wait for t's task
 // goroutine to resume.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) EndExternalStop() {
 	sh := t.tg.signalLock()
 	defer sh.mu.Unlock()
-	t.endStopLocked()
+	// signalLock returned t.tg's current handler with sh.mu held;
+	// checklocks does not relate that result to the thread-group field.
+	t.endStopLocked() // +checklocksignore
 }
 
 // beginStopLocked increments t.stopCount to indicate that a new internal or
 // external stop applies to t.
 //
-// Preconditions: The signal mutex must be locked.
+// +checklocks:t.tg.signalHandlers.mu
 func (t *Task) beginStopLocked() {
 	if newval := t.stopCount.Add(1); newval <= 0 {
 		// Most likely overflow.
@@ -175,7 +188,7 @@ func (t *Task) beginStopLocked() {
 // endStopLocked decrements t.stopCount to indicate that an existing internal
 // or external stop no longer applies to t.
 //
-// Preconditions: The signal mutex must be locked.
+// +checklocks:t.tg.signalHandlers.mu
 func (t *Task) endStopLocked() {
 	if newval := t.stopCount.Add(-1); newval < 0 {
 		panic(fmt.Sprintf("Invalid stopCount: %d", newval))

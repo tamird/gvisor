@@ -149,6 +149,9 @@ func (pg *ProcessGroup) incRefWithParent(parentPG *ProcessGroup) {
 //
 // parentPG is per incRefWithParent.
 //
+// This operation may check for orphaned groups. Callers must not hold signal
+// mutexes for thread groups currently in pg; see handleOrphan.
+//
 // Precondition: callers must hold TaskSet.mu for writing.
 func (pg *ProcessGroup) decRefWithParent(parentPG *ProcessGroup) {
 	// See incRefWithParent regarding parent == nil.
@@ -189,6 +192,10 @@ func (tg *ThreadGroup) parentPG() *ProcessGroup {
 // handleOrphan checks whether the process group is an orphan and has any
 // stopped jobs. If yes, then appropriate signals are delivered to each thread
 // group within the process group.
+//
+// Callers must not hold signal mutexes for thread groups currently in pg.
+// The originator need not remain a member, and checklocks cannot express
+// exclusions for the dynamically selected members.
 //
 // Precondition: callers must hold TaskSet.mu for writing.
 func (pg *ProcessGroup) handleOrphan() {
@@ -257,6 +264,9 @@ func (pg *ProcessGroup) SendSignal(info *linux.SignalInfo) error {
 //
 // EPERM may be returned if either the given ThreadGroup is already a Session
 // leader, or a ProcessGroup already exists for the ThreadGroup's ID.
+//
+// +checklocksexclude:tg.pidns.owner.mu
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) CreateSession(ctx context.Context) (SessionID, error) {
 	tg.pidns.owner.mu.Lock()
 	tg.signalHandlers.mu.Lock()
@@ -378,6 +388,9 @@ func (tg *ThreadGroup) createSession() (SessionID, *TTY, error) {
 //
 // An EPERM error will be returned if the ThreadGroup belongs to a different
 // Session, is a Session leader or the group already exists.
+//
+// +checklocksexclude:tg.pidns.owner.mu
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) CreateProcessGroup() error {
 	tg.pidns.owner.mu.Lock()
 	defer tg.pidns.owner.mu.Unlock()
@@ -447,6 +460,9 @@ func (tg *ThreadGroup) CreateProcessGroup() error {
 //
 // This function will return EPERM if the Sessions are not the same or the
 // group does not exist.
+//
+// +checklocksexclude:pidns.owner.mu
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) JoinProcessGroup(pidns *PIDNamespace, pgid ProcessGroupID) error {
 	pidns.owner.mu.Lock()
 	defer pidns.owner.mu.Unlock()

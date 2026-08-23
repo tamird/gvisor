@@ -211,6 +211,9 @@ func (*siblingExitStop) Killable() bool { return true }
 // acquired and the new TaskImage has been loaded.
 //
 // Enters the execStop state to wait for other tasks in the thread group to exit.
+//
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (r *runExecveAfterExecveCredsLock) execveWithImage(t *Task, newImage *TaskImage, newCreds *auth.Credentials, secureExec bool) taskRunState {
 	cu := cleanup.Make(func() {
 		newImage.release(t)
@@ -251,7 +254,9 @@ func (r *runExecveAfterExecveCredsLock) execveWithImage(t *Task, newImage *TaskI
 		// if they exited via _exit(2) with exit code 0." - ptrace(2)
 		for sibling := t.tg.tasks.Front(); sibling != nil; sibling = sibling.Next() {
 			if t != sibling {
-				sibling.killLocked()
+				// The list contains tasks in t.tg; checklocks cannot infer
+				// that sibling uses the signal mutex held above.
+				sibling.killLocked() // +checklocksignore
 			}
 		}
 		// The last sibling to exit will wake t.
@@ -273,6 +278,10 @@ type runExecveAfterSiblingExitStop struct {
 }
 
 // +checklocksexclude:t.mu
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
+// +checklocksexclude:t.parent.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.leader.parent.tg.signalHandlers.mu
 func (r *runExecveAfterSiblingExitStop) execute(t *Task) taskRunState {
 	defer t.releaseExecveCredsLocks()
 	t.traceExecEvent(r.image)

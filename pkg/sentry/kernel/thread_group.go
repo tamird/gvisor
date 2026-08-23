@@ -73,7 +73,10 @@ type ThreadGroup struct {
 	// pendingSignals is the set of pending signals that may be handled by any
 	// task in this thread group.
 	//
-	// pendingSignals is protected by the signal mutex.
+	// Queue access requires the signal mutex. Task.PendingSignals only loads
+	// the atomic pendingSet bitmap without it.
+	//
+	// +checklocks:signalHandlers.mu
 	pendingSignals pendingSignals
 
 	// If groupStopDequeued is true, a task in the thread group has dequeued a
@@ -81,12 +84,12 @@ type ThreadGroup struct {
 	//
 	// groupStopDequeued is analogous to Linux's JOBCTL_STOP_DEQUEUED.
 	//
-	// groupStopDequeued is protected by the signal mutex.
+	// +checklocks:signalHandlers.mu
 	groupStopDequeued bool
 
 	// groupStopSignal is the signal that caused a group stop to be initiated.
 	//
-	// groupStopSignal is protected by the signal mutex.
+	// +checklocks:signalHandlers.mu
 	groupStopSignal linux.Signal
 
 	// groupStopPendingCount is the number of active tasks in the thread group
@@ -95,7 +98,7 @@ type ThreadGroup struct {
 	// groupStopPendingCount is analogous to Linux's
 	// signal_struct::group_stop_count.
 	//
-	// groupStopPendingCount is protected by the signal mutex.
+	// +checklocks:signalHandlers.mu
 	groupStopPendingCount int
 
 	// If groupStopComplete is true, groupStopPendingCount transitioned from
@@ -103,7 +106,7 @@ type ThreadGroup struct {
 	//
 	// groupStopComplete is analogous to Linux's SIGNAL_STOP_STOPPED.
 	//
-	// groupStopComplete is protected by the signal mutex.
+	// +checklocks:signalHandlers.mu
 	groupStopComplete bool
 
 	// If groupStopWaitable is true, the thread group is indicating a waitable
@@ -112,7 +115,7 @@ type ThreadGroup struct {
 	// Linux represents the analogous state as SIGNAL_STOP_STOPPED being set
 	// and group_exit_code being non-zero.
 	//
-	// groupStopWaitable is protected by the signal mutex.
+	// +checklocks:signalHandlers.mu
 	groupStopWaitable bool
 
 	// If groupContNotify is true, then a SIGCONT has recently ended a group
@@ -131,9 +134,10 @@ type ThreadGroup struct {
 	//
 	//	- !groupContNotify is represented by neither flag being set.
 	//
-	// groupContNotify and groupContInterrupted are protected by the signal
-	// mutex.
-	groupContNotify      bool
+	// +checklocks:signalHandlers.mu
+	groupContNotify bool
+
+	// +checklocks:signalHandlers.mu
 	groupContInterrupted bool
 
 	// If groupContWaitable is true, the thread group is indicating a waitable
@@ -141,20 +145,22 @@ type ThreadGroup struct {
 	//
 	// groupContWaitable is analogous to Linux's SIGNAL_STOP_CONTINUED.
 	//
-	// groupContWaitable is protected by the signal mutex.
+	// +checklocks:signalHandlers.mu
 	groupContWaitable bool
 
 	// exiting is true if all tasks in the ThreadGroup should exit. exiting is
 	// analogous to Linux's SIGNAL_GROUP_EXIT.
 	//
-	// exiting is protected by the signal mutex. exiting can only transition
-	// from false to true.
+	// exiting can only transition from false to true.
+	//
+	// +checklocks:signalHandlers.mu
 	exiting bool
 
 	// exitStatus is the thread group's exit status.
 	//
-	// While exiting is false, exitStatus is protected by the signal mutex.
 	// When exiting becomes true, exitStatus becomes immutable.
+	//
+	// +checklocks:signalHandlers.mu
 	exitStatus linux.WaitStatus
 
 	// terminationSignal is the signal that this thread group's leader will
@@ -337,7 +343,17 @@ func (k *Kernel) NewThreadGroup(pidns *PIDNamespace, sh *SignalHandlers, termina
 
 // signalLock atomically locks tg.SignalHandlers().mu and returns the
 // SignalHandlers.
-func (tg *ThreadGroup) signalLock() *SignalHandlers {
+//
+// Exec replaces signalHandlers while holding the previous handler's mutex.
+// Retrying a stale snapshot therefore keeps the returned handler current
+// until its mutex is unlocked. The caller must unlock the returned handler.
+//
+// checklocks tracks the acquired result mutex, but not the snapshot and
+// retry equality that associates it with tg.signalHandlers.
+//
+// +checklocksexclude:tg.signalHandlers.mu
+// +checklocksacquire:locked.mu
+func (tg *ThreadGroup) signalLock() (locked *SignalHandlers) {
 	sh := tg.SignalHandlers()
 	for {
 		sh.mu.Lock()
@@ -434,6 +450,8 @@ func (tg *ThreadGroup) walkDescendantThreadGroupsLocked(visitor func(*ThreadGrou
 // controlling terminal. No reference is taken; the returned TTY is only safe
 // to use while the caller can otherwise guarantee it stays alive. Callers that
 // open the TTY must use GetTTY instead.
+//
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) TTY() *TTY {
 	sh := tg.signalLock()
 	defer sh.mu.Unlock()
@@ -443,6 +461,8 @@ func (tg *ThreadGroup) TTY() *TTY {
 // GetTTY returns the thread group's controlling terminal with a
 // reference taken on it, or nil if there is no controlling terminal. The
 // caller must DecRef the returned TTY when done with it.
+//
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) GetTTY() *TTY {
 	sh := tg.signalLock()
 	defer sh.mu.Unlock()
@@ -455,9 +475,15 @@ func (tg *ThreadGroup) GetTTY() *TTY {
 
 // SetControllingTTY sets tty as the controlling terminal of tg.
 //
+// During a steal, callers must not hold signal mutexes for any group in the
+// previous controller's session. The controller may change before tty.mu is
+// acquired, and its session peers are selected from the TaskSet; checklocks
+// cannot express this complete dynamically selected set.
+//
 // +checklocksexclude:tty.mu
 // +checklocksexclude:tg.pidns.owner.mu
 // +checklocksexclude:tg.signalHandlers.mu
+// +checklocksexclude:tty.tg.signalHandlers.mu
 func (tg *ThreadGroup) SetControllingTTY(ctx context.Context, tty *TTY, steal bool, isReadable bool) error {
 	var toDecRef []*TTY
 	defer func() {
@@ -767,6 +793,8 @@ func (tg *ThreadGroup) SigsegvLock() {
 }
 
 // SigsegvUnlock ends the effect of one preceding call to SigsegvLock.
+//
+// +checklocksexclude:tg.signalHandlers.mu
 func (tg *ThreadGroup) SigsegvUnlock() {
 	sh := tg.signalLock()
 	defer sh.mu.Unlock()
@@ -774,7 +802,9 @@ func (tg *ThreadGroup) SigsegvUnlock() {
 		for t := tg.tasks.Front(); t != nil; t = t.Next() {
 			if _, ok := t.stop.(*sigsegvLockStop); ok {
 				t.Infof("Resuming execution due to SigsegvUnlock")
-				t.endInternalStopLocked()
+				// signalLock holds tg's current signal mutex, and t is
+				// in tg; checklocks cannot infer either owner identity.
+				t.endInternalStopLocked() // +checklocksignore
 			}
 		}
 	} else if count < 0 {

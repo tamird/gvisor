@@ -72,6 +72,7 @@ func (it *IntervalTimer) DestroyTimer() {
 	it.timer = nil
 }
 
+// +checklocksexclude:it.target.tg.signalHandlers.mu
 func (it *IntervalTimer) timerSettingChanged() {
 	if it.target == nil {
 		return
@@ -114,6 +115,8 @@ func (it *IntervalTimer) signalRejectedLocked() {
 }
 
 // NotifyTimer implements ktime.TimerListener.NotifyTimer.
+//
+// +checklocksexclude:it.target.tg.signalHandlers.mu
 func (it *IntervalTimer) NotifyTimer(exp uint64) {
 	if it.target == nil {
 		return

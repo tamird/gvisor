@@ -363,6 +363,8 @@ func (s *ptraceStop) Killable() bool {
 // Preconditions:
 //   - The TaskSet mutex must be locked.
 //   - The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) beginPtraceStopLocked() bool {
 	t.tg.signalHandlers.mu.Lock()
 	defer t.tg.signalHandlers.mu.Unlock()
@@ -383,7 +385,12 @@ func (t *Task) beginPtraceStopLocked() bool {
 	return true
 }
 
+// Callers must not hold the signal mutex of the tracer returned by Tracer.
+// checklocks cannot express an exclusion for that dynamically loaded task.
+//
 // Preconditions: The TaskSet mutex must be locked.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) ptraceTrapLocked(code int32) {
 	// This is unconditional in ptrace_stop().
 	t.tg.signalHandlers.mu.Lock()
@@ -410,6 +417,8 @@ func (t *Task) ptraceTrapLocked(code int32) {
 // Preconditions:
 //   - The TaskSet mutex must be locked.
 //   - The caller must be running on the task goroutine of t's tracer.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) ptraceFreeze() bool {
 	t.tg.signalHandlers.mu.Lock()
 	defer t.tg.signalHandlers.mu.Unlock()
@@ -431,6 +440,8 @@ func (t *Task) ptraceFreeze() bool {
 // ptraceFreeze.
 //
 // Preconditions: t must be in a frozen ptraceStop.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) ptraceUnfreeze() {
 	// t.tg.signalHandlers is stable because t is in a frozen ptrace-stop,
 	// preventing its thread group from completing execve.
@@ -439,9 +450,9 @@ func (t *Task) ptraceUnfreeze() {
 	t.ptraceUnfreezeLocked()
 }
 
-// Preconditions:
-//   - t must be in a frozen ptraceStop.
-//   - t's signal mutex must be locked.
+// Preconditions: t must be in a frozen ptraceStop.
+//
+// +checklocks:t.tg.signalHandlers.mu
 func (t *Task) ptraceUnfreezeLocked() {
 	// Do this even if the task has been killed to ensure a panic if t.stop is
 	// nil or not a ptraceStop.
@@ -459,6 +470,9 @@ func (t *Task) ptraceUnfreezeLocked() {
 //
 // Postconditions: If ptraceUnstop returns nil, t will no longer be in a ptrace
 // stop.
+//
+// +checklocksexclude:t.tg.pidns.owner.mu
+// +checklocksexclude:t.tg.signalHandlers.mu
 func (t *Task) ptraceUnstop(mode ptraceSyscallMode, singlestep bool, sig linux.Signal) error {
 	if sig != 0 && !sig.IsValid() {
 		return linuxerr.EIO
@@ -574,6 +588,10 @@ func (t *Task) ptraceDetach(target *Task, sig linux.Signal) error {
 
 // exitPtraceLocked is called in the exit path to detach all of t's tracees.
 //
+// Callers must not hold signal mutexes for tasks in t.ptraceTracees or their
+// notification and process-group orphan-check targets. checklocks cannot
+// express exclusions for this dynamically selected set.
+//
 // Preconditions: The TaskSet mutex must be locked for writing.
 func (t *Task) exitPtraceLocked() {
 	for target := range t.ptraceTracees {
@@ -605,6 +623,10 @@ func (t *Task) exitPtraceLocked() {
 // ptrace-stopped.
 //
 // Preconditions: The TaskSet mutex must be locked for writing.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
+// +checklocksexclude:t.parent.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.leader.parent.tg.signalHandlers.mu
 func (t *Task) forgetTracerLocked() {
 	t.ptraceOpts = ptraceOptions{}
 	t.ptraceSyscallMode = ptraceSyscallNone
@@ -643,11 +665,17 @@ func (t *Task) forgetTracerLocked() {
 // ptraceSignalLocked is called after signal dequeueing to check if t should
 // enter ptrace signal-delivery-stop.
 //
+// This helper drops t's signal mutex before notifying its tracer. Callers
+// must not also hold a distinct signal mutex for the tracer returned by
+// Tracer; checklocks cannot express this conditional returned-owner
+// exclusion.
+//
 // Preconditions:
 //   - The signal mutex must be locked.
 //   - The caller must be running on the task goroutine.
 //
 // +checklocks:t.tg.signalHandlers.mu
+// +checklocksexclude:t.tg.pidns.owner.mu
 func (t *Task) ptraceSignalLocked(info *linux.SignalInfo) bool {
 	if linux.Signal(info.Signo) == linux.SIGKILL {
 		return false
