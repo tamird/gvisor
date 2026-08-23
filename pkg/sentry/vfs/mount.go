@@ -73,6 +73,14 @@ type mountLockFlags struct {
 // Mount is analogous to Linux's struct mount. (gVisor does not distinguish
 // between struct mount and struct vfsmount.)
 //
+// Published mount-tree metadata, options and intrusive propagation links
+// are protected by vfs.mountMu. key also supports sequence-checked reads,
+// and refs and writers are atomic. Mounts connected by parent keys, child
+// maps or propagation links belong to the same VFS. Field guards and
+// owner-rooted helper annotations are deferred together: checklocks does
+// not yet establish that common owner across separate arguments,
+// collection members and returned VirtualDentry values.
+//
 // +stateify savable
 type Mount struct {
 	// vfs, fs, root are immutable. References are held on fs and root.
@@ -105,7 +113,9 @@ type Mount struct {
 
 	// The lower 63 bits of refs are a reference count. The MSB of refs is set
 	// if the Mount has been eagerly umounted, as by umount(2) without the
-	// MNT_DETACH flag. refs is accessed using atomic memory operations.
+	// MNT_DETACH flag.
+	//
+	// +checkatomic
 	refs atomicbitops.Int64
 
 	// children is the set of all Mounts for which Mount.key.parent is this
@@ -148,7 +158,8 @@ type Mount struct {
 	// The lower 63 bits of writers is the number of calls to
 	// Mount.CheckBeginWrite() that have not yet been paired with a call to
 	// Mount.EndWrite(). The MSB of writers is set if MS_RDONLY is in effect.
-	// writers is accessed using atomic memory operations.
+	//
+	// +checkatomic
 	writers atomicbitops.Int64
 }
 
@@ -165,7 +176,9 @@ func newMount(vfs *VirtualFilesystem, fs *Filesystem, root *Dentry, mntns *Mount
 		refs:     atomicbitops.FromInt64(1),
 	}
 	if opts.ReadOnly {
-		mnt.setReadOnlyLocked(true)
+		// mnt was allocated above and is not yet shared, so no writers can
+		// prevent setting the read-only flag.
+		_ = mnt.setReadOnlyLocked(true)
 	}
 	mnt.sharedEntry.Init(mnt)
 	refs.Register(mnt)
@@ -173,6 +186,8 @@ func newMount(vfs *VirtualFilesystem, fs *Filesystem, root *Dentry, mntns *Mount
 }
 
 // Options returns a copy of the MountOptions currently applicable to mnt.
+//
+// +checklocksexclude:mnt.vfs.mountMu
 func (mnt *Mount) Options() MountOptions {
 	mnt.vfs.lockMounts()
 	defer mnt.vfs.unlockMounts(context.Background())
@@ -185,9 +200,7 @@ func (mnt *Mount) Options() MountOptions {
 // canChangeLockedFlags returns false if applying opts to mnt would clear any
 // of mnt's locked flags.
 //
-// Preconditions:
-//   - `vfs.mountMu` must be locked.
-//   - `opts` is non-nil.
+// Preconditions: mnt.vfs.mountMu is held. opts is non-nil.
 func (mnt *Mount) canChangeLockedFlags(opts *MountOptions) bool {
 	locked := mnt.lockedFlags
 	switch {
@@ -205,9 +218,7 @@ func (mnt *Mount) canChangeLockedFlags(opts *MountOptions) bool {
 
 // setMountOptions sets mnt's options to the given opts.
 //
-// Preconditions:
-//   - `vfs.mountMu` must be locked.
-//   - `opts` is non-nil.
+// Preconditions: mnt.vfs.mountMu is held. opts is non-nil.
 func (mnt *Mount) setMountOptions(opts *MountOptions) error {
 	if err := mnt.setReadOnlyLocked(opts.ReadOnly); err != nil {
 		return err
@@ -217,6 +228,8 @@ func (mnt *Mount) setMountOptions(opts *MountOptions) error {
 }
 
 // MountFlags returns a bit mask that indicates mount options.
+//
+// +checklocksexclude:mnt.vfs.mountMu
 func (mnt *Mount) MountFlags() uint64 {
 	mnt.vfs.lockMounts()
 	defer mnt.vfs.unlockMounts(context.Background())
@@ -239,10 +252,16 @@ func (mnt *Mount) MountFlags() uint64 {
 	return flags
 }
 
+// isFollower reports whether mnt has a propagation leader.
+//
+// Preconditions: mnt.vfs.mountMu is held.
 func (mnt *Mount) isFollower() bool {
 	return mnt.leader != nil
 }
 
+// neverConnected reports whether mnt has no mount namespace.
+//
+// Preconditions: mnt.vfs.mountMu is held.
 func (mnt *Mount) neverConnected() bool {
 	return mnt.ns == nil
 }
@@ -250,6 +269,9 @@ func (mnt *Mount) neverConnected() bool {
 // coveringMount returns a mount that completely covers mnt if it exists and nil
 // otherwise. A mount that covers another is one that is the only child of its
 // parent and whose mountpoint is its parent's root.
+//
+// Preconditions: mnt.vfs.mountMu is held. Children reached through the
+// map belong to the same VFS.
 func (mnt *Mount) coveringMount() *Mount {
 	if len(mnt.children) != 1 {
 		return nil
@@ -283,6 +305,8 @@ func (vfs *VirtualFilesystem) validInMountNS(ctx context.Context, mnt *Mount) bo
 // Note that only the filesystem-specific mount options from opts are used by
 // this function, mount flags are ignored. To set mount flags, pass them to a
 // corresponding ConnectMountAt.
+//
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) NewFilesystem(ctx context.Context, creds *auth.Credentials, source, fsTypeName string, opts *MountOptions) (*Filesystem, *Dentry, error) {
 	rft := vfs.getFilesystemType(fsTypeName)
 	if rft == nil {
@@ -309,6 +333,8 @@ func (vfs *VirtualFilesystem) NewDisconnectedMount(fs *Filesystem, root *Dentry,
 // MountDisconnected creates a Filesystem configured by the given arguments,
 // then returns a Mount representing it. The new Mount is not associated with
 // any MountNamespace and is not connected to any other Mounts.
+//
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) MountDisconnected(ctx context.Context, creds *auth.Credentials, source string, fsTypeName string, opts *MountOptions) (*Mount, error) {
 	fs, root, err := vfs.NewFilesystem(ctx, creds, source, fsTypeName, opts)
 	if err != nil {
@@ -321,10 +347,25 @@ func (vfs *VirtualFilesystem) MountDisconnected(ctx context.Context, creds *auth
 // peers and followers. This method consumes the reference on mp. It is analogous to
 // fs/namespace.c:attach_recursive_mnt() in Linux. The mount point mp must have its dentry locked
 // before calling attachTreeLocked.
+//
 // If tryMove is set to true, mnt is detached from its parent mount before performing the attach
 // operation.
 //
+// The dentry lock is consumed on both success and failure. checklocks cannot
+// express lockMountpoint's success-only acquisition or preserve the lock's
+// identity through all VirtualDentry copies and cleanup callbacks.
+//
+// mnt, mp.mount, and the propagated mounts belong to vfs. Their mount
+// namespaces and descendants share vfs.mountMu; checklocks cannot infer
+// those owner identities through the traversal and propagation results.
+//
+// Notifications also reach namespaces of propagated mounts through
+// parent and propagation results. Callers must not hold any affected
+// namespace's poller queue mutex; the mp entry exclusion names only the
+// primary namespace, not that whole collection.
+//
 // +checklocks:vfs.mountMu
+// +checklocksexclude:mp.mount.ns.Poller.queue.mu
 func (vfs *VirtualFilesystem) attachTreeLocked(ctx context.Context, mnt *Mount, mp VirtualDentry, tryMove bool) error {
 	cleanup := cleanup.Make(func() {
 		vfs.cleanupGroupIDs(mnt.submountsLocked()) // +checklocksforce
@@ -408,6 +449,9 @@ func (vfs *VirtualFilesystem) attachTreeLocked(ctx context.Context, mnt *Mount, 
 	return nil
 }
 
+// Preconditions: mnt belongs to vfs. Its descendants share that VFS;
+// collection membership does not give checklocks this owner equality.
+//
 // +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) lockMountTree(mnt *Mount) {
 	for _, m := range mnt.submountsLocked() {
@@ -437,6 +481,8 @@ func (vfs *VirtualFilesystem) mountHasLockedChildren(mnt *Mount, vd VirtualDentr
 // ConnectMountAt connects mnt at the path represented by target.
 //
 // Preconditions: mnt must be disconnected.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) ConnectMountAt(ctx context.Context, creds *auth.Credentials, mnt *Mount, target *PathOperation) error {
 	// We can't hold vfs.mountMu while calling FilesystemImpl methods due to
 	// lock ordering.
@@ -468,6 +514,8 @@ func (vfs *VirtualFilesystem) ConnectMountAt(ctx context.Context, creds *auth.Cr
 // The path lookups for source and target checks traversal permissions against creds.
 //
 // Roughly analogous to Linux fs/namespace.c:do_move_mount().
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) MoveMountAt(ctx context.Context, creds *auth.Credentials, taskMountNs *MountNamespace, source *PathOperation, target *PathOperation) error {
 	// Lookup the source path
 	sourceVd, err := vfs.GetDentryAt(ctx, creds, source, &GetDentryOptions{CheckSearchable: true})
@@ -585,7 +633,11 @@ func (vfs *VirtualFilesystem) MoveMountAt(ctx context.Context, creds *auth.Crede
 // on vd and returns a VirtualDentry with an extra reference. It is analogous to
 // fs/namespace.c:do_lock_mount() in Linux.
 //
+// On failure no dentry lock is held. checklocks cannot express this
+// success-only returned-lock effect or track the changing dentry through vd.
+//
 // +checklocks:vfs.mountMu
+// +checklocksexclude:vd.dentry.mu
 func (vfs *VirtualFilesystem) lockMountpoint(vd VirtualDentry) (VirtualDentry, error) {
 	vd.dentry.mu.Lock()
 	for {
@@ -627,6 +679,8 @@ func (vfs *VirtualFilesystem) lockMountpoint(vd VirtualDentry) (VirtualDentry, e
 // mount options.  If mount options are nil, mnt's options are copied. The clone
 // is added to mnt's peer group if mnt is shared. If not the clone is in a
 // shared peer group by itself.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) CloneMountAt(mnt *Mount, root *Dentry, mopts *MountOptions) (*Mount, error) {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(context.Background())
@@ -637,6 +691,9 @@ func (vfs *VirtualFilesystem) CloneMountAt(mnt *Mount, root *Dentry, mopts *Moun
 // root, with a propagation type specified by cloneType. The returned mount has
 // an extra reference. If mopts is nil, use the options found in mnt.
 // This method is analogous to fs/namespace.c:clone_mnt() in Linux.
+//
+// Preconditions: mnt belongs to vfs. Its descendants share that VFS;
+// collection membership does not give checklocks this owner equality.
 //
 // +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) cloneMount(mnt *Mount, root *Dentry, mopts *MountOptions, cloneType int) (*Mount, error) {
@@ -740,6 +797,8 @@ func (vfs *VirtualFilesystem) cloneMountTree(ctx context.Context, mnt *Mount, ro
 // BindAt creates a clone of the source path's parent mount and mounts it at
 // the target path. The new mount's root dentry is one pointed to by the source
 // path.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) BindAt(ctx context.Context, creds *auth.Credentials, source, target *PathOperation, recursive bool) error {
 	sourceVd, err := vfs.GetDentryAt(ctx, creds, source, &GetDentryOptions{})
 	if err != nil {
@@ -821,6 +880,15 @@ func (vfs *VirtualFilesystem) BindAt(ctx context.Context, creds *auth.Credential
 }
 
 // RemountAt changes the mountflags and data of an existing mount without having to unmount and remount the filesystem.
+//
+// Preconditions: pop must describe a path in vfs; all mounts reached while
+// resolving pop must belong to vfs.
+//
+// The resolved mount's namespace is notified synchronously. Callers must
+// not hold its poller queue mutex. The mount is returned by path lookup,
+// so checklocks cannot name that namespace from this method's arguments.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) RemountAt(ctx context.Context, creds *auth.Credentials, pop *PathOperation, opts *MountOptions) error {
 	vd, err := vfs.getMountpoint(ctx, creds, pop)
 	if err != nil {
@@ -852,6 +920,9 @@ func (vfs *VirtualFilesystem) RemountAt(ctx context.Context, creds *auth.Credent
 //
 // This method returns the mounted Mount without a reference, for convenience
 // during VFS setup when there is no chance of racing with unmount.
+//
+// +checklocksexclude:vfs.fsTypesMu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) MountAt(ctx context.Context, creds *auth.Credentials, source string, target *PathOperation, fsTypeName string, opts *MountOptions) (*Mount, error) {
 	mnt, err := vfs.MountDisconnected(ctx, creds, source, fsTypeName, opts)
 	if err != nil {
@@ -865,6 +936,8 @@ func (vfs *VirtualFilesystem) MountAt(ctx context.Context, creds *auth.Credentia
 }
 
 // UmountAt removes the Mount at the given path.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) UmountAt(ctx context.Context, creds *auth.Credentials, pop *PathOperation, opts *UmountOptions) error {
 	if opts.Flags&^(linux.MNT_FORCE|linux.MNT_DETACH) != 0 {
 		return linuxerr.EINVAL
@@ -982,14 +1055,23 @@ func (vfs *VirtualFilesystem) shouldUmount(mnt *Mount, opts *umountRecursiveOpti
 // umountTreeLocked marks mnt and its descendants as umounted.
 //
 // umountTreeLocked is analogous to Linux's fs/namespace.c:umount_tree().
+//
+// Preconditions: mnt belongs to vfs. Its descendants share that VFS;
+// collection membership does not give checklocks this owner equality.
+//
+// Affected namespaces are collected for notification after unmounting.
+// Callers must not hold any of their poller queue mutexes. The entry
+// exclusion names mnt's initial namespace, not every descendant or
+// propagation namespace that the collection may contain.
+//
 // +checklocks:vfs.mountMu
+// +checklocksexclude:mnt.ns.Poller.queue.mu
 func (vfs *VirtualFilesystem) umountTreeLocked(mnt *Mount, opts *umountRecursiveOptions) {
 	if opts.propagate {
 		vfs.unlockPropagationMounts(mnt)
 	}
 	umountMnts := mnt.submountsLocked()
-	// Collect affected namespaces before umounting, since ns pointers may be
-	// cleared during disconnect.
+	// Collect the namespaces affected by unmounting.
 	affectedNS := make(map[*MountNamespace]struct{})
 	for _, m := range umountMnts {
 		affectedNS[m.ns] = struct{}{}
@@ -1055,7 +1137,12 @@ func (vfs *VirtualFilesystem) umount(mnt *Mount) {
 // changeMountpoint disconnects mnt from its current mount point and connects
 // it to mp. It must be called from a vfs.mounts.seq writer critical section.
 //
+// mp identifies the destination namespace notified by this operation.
+// Its dentry mutex is acquired here and released before notification.
+//
 // +checklocks:vfs.mountMu
+// +checklocksexclude:mp.mount.ns.Poller.queue.mu
+// +checklocksexclude:mp.dentry.mu
 func (vfs *VirtualFilesystem) changeMountpoint(mnt *Mount, mp VirtualDentry) {
 	mp.dentry.mu.Lock()
 	vfs.delayDecRef(vfs.disconnectLocked(mnt))
@@ -1068,8 +1155,7 @@ func (vfs *VirtualFilesystem) changeMountpoint(mnt *Mount, mp VirtualDentry) {
 
 // migrateChildrenNs recursively migrates mnt's children into newNs.
 //
-// Preconditions:
-//   - vfs.mountMu must be locked.
+// +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) migrateChildrenNs(mnt *Mount, newNs *MountNamespace) {
 	for c := range mnt.children {
 		vd := c.getKey()
@@ -1092,12 +1178,17 @@ func (vfs *VirtualFilesystem) migrateChildrenNs(mnt *Mount, newNs *MountNamespac
 // connectLocked makes vd the mount parent/point for mnt. It consumes
 // references held by vd.
 //
+// checklocks does not preserve the dentry lock's identity through the
+// returned and copied VirtualDentry values used by callers, so the dentry
+// precondition remains in prose.
+//
 // Preconditions:
-//   - vfs.mountMu must be locked.
 //   - vfs.mounts.seq must be in a writer critical section.
-//   - d.mu must be locked.
+//   - vd.dentry.mu must be locked.
 //   - mnt.parent() == nil or mnt.parent().children doesn't contain mnt.
 //     i.e. mnt must not already be connected.
+//
+// +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) connectLocked(mnt *Mount, vd VirtualDentry, mntns *MountNamespace) {
 	if checkInvariants {
 		if mnt.parent() != nil && mnt.parent().children != nil {
@@ -1126,13 +1217,14 @@ func (vfs *VirtualFilesystem) connectLocked(mnt *Mount, vd VirtualDentry, mntns 
 	vfs.maybeResolveMountPromise(vd)
 }
 
-// disconnectLocked makes vd have no mount parent/point and returns its old
+// disconnectLocked makes mnt have no mount parent/point and returns its old
 // mount parent/point with a reference held.
 //
 // Preconditions:
-//   - vfs.mountMu must be locked.
 //   - vfs.mounts.seq must be in a writer critical section.
 //   - mnt.parent() != nil.
+//
+// +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) disconnectLocked(mnt *Mount) VirtualDentry {
 	vd := mnt.getKey()
 	if checkInvariants {
@@ -1194,6 +1286,12 @@ func (mnt *Mount) IncRef() {
 }
 
 // DecRef decrements mnt's reference count.
+//
+// Dropping the last reference calls destroy synchronously and may acquire
+// mnt.vfs.mountMu. A caller holding that mutex must not drop the last
+// reference; the entry exclusion conservatively checks all calls.
+//
+// +checklocksexclude:mnt.vfs.mountMu
 func (mnt *Mount) DecRef(ctx context.Context) {
 	r := mnt.refs.Add(-1)
 	if mnt.LogRefs() {
@@ -1205,6 +1303,11 @@ func (mnt *Mount) DecRef(ctx context.Context) {
 	}
 }
 
+// destroy releases the last mount reference. It queues filesystem,
+// dentry, and child-mount references for unlockMounts, which releases
+// mountMu before dispatching their potentially different destructors.
+//
+// +checklocksexclude:mnt.vfs.mountMu
 func (mnt *Mount) destroy(ctx context.Context) {
 	mnt.vfs.lockMounts()
 	defer mnt.vfs.unlockMounts(ctx)
@@ -1405,6 +1508,8 @@ retryFirst:
 // namespace, and moves the current root to the location pointed to by
 // putOldPop. If the operation is successful, it returns virtual dentries for
 // the new root and the old root with an extra reference taken.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) PivotRoot(ctx context.Context, creds *auth.Credentials, newRootPop *PathOperation, putOldPop *PathOperation) (newRoot, oldRoot VirtualDentry, err error) {
 	newRoot, err = vfs.GetDentryAt(ctx, creds, newRootPop, &GetDentryOptions{CheckSearchable: true})
 	if err != nil {
@@ -1501,9 +1606,14 @@ func (vfs *VirtualFilesystem) PivotRoot(ctx context.Context, creds *auth.Credent
 }
 
 // SetMountReadOnly sets the mount as ReadOnly.
+//
+// Preconditions: mnt belongs to vfs.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) SetMountReadOnly(mnt *Mount, ro bool) error {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(context.Background())
+	// mnt belongs to vfs, whose mountMu is held.
 	return mnt.setReadOnlyLocked(ro)
 }
 
@@ -1527,7 +1637,9 @@ func (mnt *Mount) EndWrite() {
 	mnt.writers.Add(-1)
 }
 
-// Preconditions: VirtualFilesystem.mountMu must be locked.
+// setReadOnlyLocked changes the read-only flag.
+//
+// Preconditions: mnt.vfs.mountMu is held, or mnt is not yet shared.
 func (mnt *Mount) setReadOnlyLocked(ro bool) error {
 	if oldRO := mnt.writers.Load() < 0; oldRO == ro {
 		return nil
@@ -1545,15 +1657,15 @@ func (mnt *Mount) setReadOnlyLocked(ro bool) error {
 }
 
 // ReadOnly returns true if mount is readonly.
+//
+// +checklocksexclude:mnt.vfs.mountMu
 func (mnt *Mount) ReadOnly() bool {
 	mnt.vfs.lockMounts()
 	defer mnt.vfs.unlockMounts(context.Background())
 	return mnt.writers.Load() < 0
 }
 
-// ReadOnlyLocked returns true if mount is readonly.
-//
-// Preconditions: VirtualFilesystem.mountMu must be locked.
+// ReadOnlyLocked is equivalent to ReadOnly with mnt.vfs.mountMu held.
 func (mnt *Mount) ReadOnlyLocked() bool {
 	return mnt.writers.Load() < 0
 }
@@ -1564,10 +1676,10 @@ func (mnt *Mount) Filesystem() *Filesystem {
 	return mnt.fs
 }
 
-// submountsLocked returns this Mount and all Mounts that are descendents of
-// it.
+// submountsLocked returns this Mount and all Mounts that are descendants
+// of it. Children reached through the map belong to the same VFS.
 //
-// Precondition: mnt.vfs.mountMu must be held.
+// Preconditions: mnt.vfs.mountMu is held.
 func (mnt *Mount) submountsLocked() []*Mount {
 	mounts := []*Mount{mnt}
 	for m := range mnt.children {
@@ -1577,9 +1689,10 @@ func (mnt *Mount) submountsLocked() []*Mount {
 }
 
 // countSubmountsLocked returns mnt's total number of descendants including
-// uncommitted descendants.
+// uncommitted descendants. Children reached through the map belong to the
+// same VFS.
 //
-// Precondition: mnt.vfs.mountMu must be held.
+// Preconditions: mnt.vfs.mountMu is held.
 func (mnt *Mount) countSubmountsLocked() uint32 {
 	mounts := uint32(1)
 	for m := range mnt.children {
@@ -1597,6 +1710,12 @@ func (mnt *Mount) Root() *Dentry {
 // GenerateProcMounts emits the contents of /proc/[pid]/mounts for vfs to buf.
 //
 // Preconditions: taskRootDir.Ok().
+//
+// taskRootDir.mount and its descendants must belong to vfs. The
+// collected mounts keep references after mountMu is released; their
+// common VFS owner is not inferred from the returned collection.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) GenerateProcMounts(ctx context.Context, taskRootDir VirtualDentry, buf *bytes.Buffer) error {
 	rootMnt := taskRootDir.mount
 
@@ -1673,6 +1792,13 @@ func (vfs *VirtualFilesystem) GenerateProcMounts(ctx context.Context, taskRootDi
 // buf.
 //
 // Preconditions: taskRootDir.Ok().
+//
+// taskRootDir.mount and its descendants must belong to vfs. The
+// collected mounts keep references after mountMu is released; their
+// common VFS owner is not inferred from the returned collection.
+//
+// +checklocksexclude:vfs.fsTypesMu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) GenerateProcMountInfo(ctx context.Context, taskRootDir VirtualDentry, buf *bytes.Buffer) error {
 	rootMnt := taskRootDir.mount
 
@@ -1809,6 +1935,8 @@ func (vfs *VirtualFilesystem) GenerateProcMountInfo(ctx context.Context, taskRoo
 		fmt.Fprintf(buf, "none ")
 
 		// (11) Superblock options, and final newline.
+		// mnt comes from taskRootDir's subtree and belongs to vfs. Neither
+		// mountMu nor fsTypesMu is held on entry to superBlockOpts.
 		fmt.Fprintf(buf, "%s\n", superBlockOpts(pathFromRoot, mnt))
 	}
 	return nil
@@ -1823,6 +1951,9 @@ func manglePath(p string) string {
 
 // superBlockOpts returns the super block options string for the mount at
 // the given path.
+//
+// +checklocksexclude:mnt.vfs.fsTypesMu
+// +checklocksexclude:mnt.vfs.mountMu
 func superBlockOpts(mountPath string, mnt *Mount) string {
 	// Compose super block options by combining global mount flags with
 	// FS-specific mount options.
@@ -1855,6 +1986,7 @@ func superBlockOpts(mountPath string, mnt *Mount) string {
 	return opts
 }
 
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) generateOptionalTags(ctx context.Context, mnt *Mount, root VirtualDentry) string {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(ctx)
@@ -1886,6 +2018,8 @@ func (vfs *VirtualFilesystem) generateOptionalTags(ctx context.Context, mnt *Mou
 // GetAllMounts returns a slice containing every Mount in vfs, regardless of
 // namespace. A reference is held on each returned Mount, which must be dropped
 // by the caller when no longer needed.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) GetAllMounts(ctx context.Context) []*Mount {
 	var mnts []*Mount
 	vfs.lockMounts()

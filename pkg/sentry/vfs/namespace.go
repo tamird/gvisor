@@ -43,7 +43,10 @@ type MountNamespace struct {
 	// vfs is immutable.
 	vfs *VirtualFilesystem
 
-	// root is the MountNamespace's root mount.
+	// root is the namespace-owned root mount. It is immutable after
+	// construction for non-anonymous namespaces. For anonymous namespaces,
+	// transfer may clear root while vfs.mountMu is held; callers reading it
+	// without mountMu must exclude transfer.
 	root *Mount
 
 	// mountpoints maps all Dentries which are mount points in this namespace
@@ -58,12 +61,19 @@ type MountNamespace struct {
 	// MountNamespace; this is required to ensure that
 	// VFS.PrepareDeleteDentry() and VFS.PrepareRemoveDentry() operate
 	// correctly on unreferenced MountNamespaces.
+	//
+	// Callers also reach this namespace through mounts in the same VFS.
+	// Namespace field guards and owner-rooted helper annotations are deferred
+	// together until checklocks can establish that common owner across mount
+	// and namespace values.
 	mountpoints map[*Dentry]uint32
 
-	// mounts is the total number of mounts in this mount namespace.
+	// mounts is the total number of mounts in this mount namespace. It is
+	// protected by VirtualFilesystem.mountMu.
 	mounts uint32
 
 	// pending is the total number of pending mounts in this mount namespace.
+	// It is protected by VirtualFilesystem.mountMu.
 	pending uint32
 
 	// anon indicates whether the mount namespace is anonymous.
@@ -108,6 +118,8 @@ func (vfs *VirtualFilesystem) newMountNamespace(owner *auth.UserNamespace, anon 
 // MountNamespace.
 //
 // If nsfs is nil, the default reference counter is used.
+//
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) NewMountNamespace(
 	ctx context.Context,
 	creds *auth.Credentials,
@@ -192,6 +204,8 @@ type NamespaceInodeGetter interface {
 //
 // If `root` or `cwd` have mounts in the old namespace, they will be replaced
 // with proper mounts from the new namespace.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) CloneMountNamespace(
 	ctx context.Context,
 	uns *auth.UserNamespace,
@@ -228,6 +242,8 @@ func (vfs *VirtualFilesystem) CloneMountNamespace(
 
 // CloneTreeToAnonNS implements open_tree(2)'s OPEN_TREE_CLONE. It makes a copy of the existing
 // mount tree at fromVd, placing it at the root of a new anonymous mount namespace.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) CloneTreeToAnonNS(
 	ctx context.Context,
 	taskMountNs *MountNamespace,
@@ -300,6 +316,13 @@ func (vfs *VirtualFilesystem) CloneTreeToAnonNS(
 }
 
 // Destroy implements nsfs.Namespace.Destroy.
+//
+// The root and its descendants belong to mntns. This teardown does not
+// propagate, so its notifications use mntns.Poller. Queued reference release
+// is delayed until after mountMu has been released.
+//
+// +checklocksexclude:mntns.vfs.mountMu
+// +checklocksexclude:mntns.Poller.queue.mu
 func (mntns *MountNamespace) Destroy(ctx context.Context) {
 	vfs := mntns.vfs
 	vfs.lockMounts()
@@ -345,6 +368,9 @@ func (mntns *MountNamespace) Anon() bool {
 // mount.
 // May return an empty virtual dentry if mntns is an anonymous mount namespace and its root
 // has been moved to another mountpoint.
+//
+// Preconditions: for an anonymous namespace, Root must not run concurrently
+// with transfer of its root to another namespace.
 func (mntns *MountNamespace) Root(ctx context.Context) VirtualDentry {
 	if mntns.root == nil {
 		return VirtualDentry{}
@@ -369,6 +395,9 @@ func (mntns *MountNamespace) Root(ctx context.Context) VirtualDentry {
 	return vd
 }
 
+// checkMountCount accounts for the mount subtree being added to mntns.
+//
+// Preconditions: mntns.vfs.mountMu is held. mnt belongs to mntns.vfs.
 func (mntns *MountNamespace) checkMountCount(ctx context.Context, mnt *Mount) error {
 	if mntns.mounts > MountMax {
 		return linuxerr.ENOSPC
@@ -398,6 +427,12 @@ func (mntns *MountNamespace) anonCanBeOperatedOn(by *MountNamespace) bool {
 
 // notify notifies poll waiters of a mount namespace change.
 // Analogous to Linux's touch_mnt_namespace().
+//
+// A nil receiver is allowed. Otherwise notification invokes the poller's
+// listeners synchronously; they must not re-enter operations that acquire
+// the same waiter queue's mutex.
+//
+// +checklocksexclude:mntns.Poller.queue.mu
 func (mntns *MountNamespace) notify() {
 	if mntns == nil {
 		return

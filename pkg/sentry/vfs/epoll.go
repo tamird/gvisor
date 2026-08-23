@@ -46,11 +46,12 @@ type EpollInstance struct {
 
 	// interest is the set of file descriptors that are registered with the
 	// EpollInstance for monitoring.
+	//
+	// +checklocks:interestMu
 	interest map[epollInterestKey]*epollInterest
 
-	// readyMu protects ready, readySeq, epollInterest.ready, and
-	// epollInterest.epollInterestEntry. ready is analogous to Linux's struct
-	// eventpoll::lock.
+	// readyMu protects ready, readySeq, and readiness notifications.
+	// It is analogous to Linux's struct eventpoll::lock.
 	readyMu epollReadyInstanceMutex `state:"nosave"`
 
 	// ready is the set of file descriptors that may be "ready" for I/O. Note
@@ -61,12 +62,16 @@ type EpollInstance struct {
 	// process fails to notice that additional file descriptors are ready
 	// because it focuses on a set of file descriptors that are already known
 	// to be ready." - epoll_wait(2)
+	//
+	// +checklocks:readyMu
 	ready epollInterestList
 
 	// readySeq is used to detect calls to epollInterest.NotifyEvent() while
-	// Readiness() or ReadEvents() are running with readyMu unlocked. readySeq
-	// is protected by both interestMu and readyMu; reading requires either
-	// mutex to be locked, but mutation requires both mutexes to be locked.
+	// Readiness() or ReadEvents() are running with readyMu unlocked.
+	//
+	// +checklocks:interestMu
+	// +checklocks:readyMu
+	// +checklocksreadany
 	readySeq uint32
 }
 
@@ -92,8 +97,10 @@ type epollInterest struct {
 	// key is the file to which this epollInterest applies. key is immutable.
 	key epollInterestKey
 
-	// waiter is registered with key.file. entry is protected by
-	// epoll.interestMu.
+	// waiter is registered with key.file. epoll.interestMu serializes its
+	// registration and reinitialization, but not notification callbacks.
+	// The fields below use epoll's mutexes. checklocks cannot relate their
+	// owner reached through list/map entries to the caller's locked instance.
 	waiter waiter.Entry
 
 	// mask is the event mask associated with this registration, including
@@ -101,9 +108,11 @@ type epollInterest struct {
 	// deleted. mask is protected by epoll.interestMu.
 	mask uint32
 
-	// ready is true if epollInterestEntry is linked into epoll.ready. readySeq
-	// is the value of epoll.readySeq when NotifyEvent() was last called.
-	// ready, epollInterestEntry, and readySeq are protected by epoll.readyMu.
+	// ready is true if epollInterestEntry is on epoll.ready or a local scan
+	// list owned under epoll.interestMu. readySeq is epoll.readySeq when
+	// NotifyEvent was last called. Both scalar fields use epoll.readyMu.
+	// Moving entries to a scan list leaves ready true so notifications do
+	// not alter the links while the scanner runs without epoll.readyMu.
 	ready bool
 	epollInterestEntry
 	readySeq uint32
@@ -132,6 +141,13 @@ func (vfs *VirtualFilesystem) NewEpollInstanceFD(ctx context.Context) (*FileDesc
 }
 
 // Release implements FileDescriptionImpl.Release.
+//
+// Each watched file's EventUnregister runs under ep.interestMu, and its
+// epollMu is acquired when removing the registration. Callers must not
+// hold those file mutexes. Map-derived files and implementation callbacks
+// do not provide a single receiver field path for these exclusions.
+//
+// +checklocksexclude:ep.interestMu
 func (ep *EpollInstance) Release(ctx context.Context) {
 	// Unregister all polled fds.
 	ep.interestMu.Lock()
@@ -148,6 +164,10 @@ func (ep *EpollInstance) Release(ctx context.Context) {
 }
 
 // Readiness implements waiter.Waitable.Readiness.
+//
+// +checklocksexclude:ep.interestMu
+// +checklocksexclude:ep.readyMu
+// +checklocksexclude:ep.q.mu
 func (ep *EpollInstance) Readiness(mask waiter.EventMask) waiter.EventMask {
 	if mask&waiter.ReadableEvents == 0 {
 		return 0
@@ -209,12 +229,16 @@ func (ep *EpollInstance) Readiness(mask waiter.EventMask) waiter.EventMask {
 }
 
 // EventRegister implements waiter.Waitable.EventRegister.
+//
+// +checklocksexclude:ep.q.mu
 func (ep *EpollInstance) EventRegister(e *waiter.Entry) error {
 	ep.q.EventRegister(e)
 	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
+//
+// +checklocksexclude:ep.q.mu
 func (ep *EpollInstance) EventUnregister(e *waiter.Entry) {
 	ep.q.EventUnregister(e)
 }
@@ -233,6 +257,12 @@ func (ep *EpollInstance) Seek(ctx context.Context, offset int64, whence int32) (
 // AddInterest implements the semantics of EPOLL_CTL_ADD.
 //
 // Preconditions: A reference must be held on file.
+//
+// +checklocksexclude:ep.interestMu
+// +checklocksexclude:ep.readyMu
+// +checklocksexclude:ep.q.mu
+// +checklocksexclude:epollCycleMu
+// +checklocksexclude:file.epollMu
 func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event linux.EpollEvent) error {
 	if !file.Epollable() {
 		return linuxerr.EPERM
@@ -294,10 +324,14 @@ func (ep *EpollInstance) AddInterest(file *FileDescription, num int32, event lin
 	return nil
 }
 
+// +checklocks:epollCycleMu
+// +checklocksexclude:ep.interestMu
 func (ep *EpollInstance) mightPoll(ep2 *EpollInstance) bool {
 	return ep.mightPollRecursive(ep2, 4) // Linux: fs/eventpoll.c:EP_MAX_NESTS
 }
 
+// +checklocks:epollCycleMu
+// +checklocksexclude:ep.interestMu
 func (ep *EpollInstance) mightPollRecursive(ep2 *EpollInstance, remainingRecursion int) bool {
 	ep.interestMu.Lock()
 	defer ep.interestMu.Unlock()
@@ -322,6 +356,10 @@ func (ep *EpollInstance) mightPollRecursive(ep2 *EpollInstance, remainingRecursi
 // ModifyInterest implements the semantics of EPOLL_CTL_MOD.
 //
 // Preconditions: A reference must be held on file.
+//
+// +checklocksexclude:ep.interestMu
+// +checklocksexclude:ep.readyMu
+// +checklocksexclude:ep.q.mu
 func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event linux.EpollEvent) error {
 	ep.interestMu.Lock()
 	defer ep.interestMu.Unlock()
@@ -359,6 +397,10 @@ func (ep *EpollInstance) ModifyInterest(file *FileDescription, num int32, event 
 // DeleteInterest implements the semantics of EPOLL_CTL_DEL.
 //
 // Preconditions: A reference must be held on file.
+//
+// +checklocksexclude:ep.interestMu
+// +checklocksexclude:ep.readyMu
+// +checklocksexclude:file.epollMu
 func (ep *EpollInstance) DeleteInterest(file *FileDescription, num int32) error {
 	ep.interestMu.Lock()
 	defer ep.interestMu.Unlock()
@@ -386,6 +428,13 @@ func (ep *EpollInstance) DeleteInterest(file *FileDescription, num int32) error 
 }
 
 // NotifyEvent implements waiter.EventListener.NotifyEvent.
+//
+// NotifyEvent may run with epoll.interestMu held. It releases readyMu
+// before synchronously notifying epoll.q's listeners. Listener callbacks
+// must not re-enter operations that acquire the same queue's mutex.
+//
+// +checklocksexclude:epi.epoll.readyMu
+// +checklocksexclude:epi.epoll.q.mu
 func (epi *epollInterest) NotifyEvent(waiter.EventMask) {
 	newReady := false
 	epi.epoll.readyMu.Lock()
@@ -401,7 +450,8 @@ func (epi *epollInterest) NotifyEvent(waiter.EventMask) {
 	}
 }
 
-// Preconditions: ep.interestMu must be locked.
+// +checklocks:ep.interestMu
+// +checklocksexclude:ep.readyMu
 func (ep *EpollInstance) removeLocked(epi *epollInterest) {
 	delete(ep.interest, epi.key)
 	epi.mask = 0
@@ -415,6 +465,10 @@ func (ep *EpollInstance) removeLocked(epi *epollInterest) {
 
 // ReadEvents appends up to maxReady events to events and returns the updated
 // slice of events.
+//
+// +checklocksexclude:ep.interestMu
+// +checklocksexclude:ep.readyMu
+// +checklocksexclude:ep.q.mu
 func (ep *EpollInstance) ReadEvents(events []linux.EpollEvent, maxEvents int) []linux.EpollEvent {
 	// We can't call FileDescription.Readiness() while holding ep.readyMu.
 	// Instead, hold ep.interestMu to prevent changes to the set of

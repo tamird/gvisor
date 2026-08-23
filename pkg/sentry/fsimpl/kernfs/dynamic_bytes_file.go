@@ -180,26 +180,36 @@ func (fd *DynamicBytesFD) VFSFileDescription() *vfs.FileDescription {
 }
 
 // Seek implements vfs.FileDescriptionImpl.Seek.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *DynamicBytesFD) Seek(ctx context.Context, offset int64, whence int32) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.Seek(ctx, offset, whence)
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *DynamicBytesFD) Read(ctx context.Context, dst usermem.IOSequence, opts vfs.ReadOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.Read(ctx, dst, opts)
 }
 
 // PRead implements vfs.FileDescriptionImpl.PRead.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *DynamicBytesFD) PRead(ctx context.Context, dst usermem.IOSequence, offset int64, opts vfs.ReadOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.PRead(ctx, dst, offset, opts)
 }
 
 // Write implements vfs.FileDescriptionImpl.Write.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *DynamicBytesFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.WriteOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.Write(ctx, src, opts)
 }
 
 // PWrite implements vfs.FileDescriptionImpl.PWrite.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *DynamicBytesFD) PWrite(ctx context.Context, src usermem.IOSequence, offset int64, opts vfs.WriteOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.PWrite(ctx, src, offset, opts)
 }
@@ -226,7 +236,9 @@ func (fd *DynamicBytesFD) SetStat(context.Context, vfs.SetStatOptions) error {
 type PollableDynamicBytesFD struct {
 	DynamicBytesFD
 
-	poller       *vfs.DynamicBytesPoller
+	poller *vfs.DynamicBytesPoller // immutable after Init
+
+	// +checkatomic
 	pollSnapshot atomicbitops.Uint64
 }
 
@@ -261,12 +273,16 @@ func (fd *PollableDynamicBytesFD) Readiness(mask waiter.EventMask) waiter.EventM
 }
 
 // EventRegister implements waiter.Waitable.EventRegister.
+//
+// +checklocksexclude:fd.poller.queue.mu
 func (fd *PollableDynamicBytesFD) EventRegister(e *waiter.Entry) error {
 	fd.poller.EventRegister(e)
 	return nil
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
+//
+// +checklocksexclude:fd.poller.queue.mu
 func (fd *PollableDynamicBytesFD) EventUnregister(e *waiter.Entry) {
 	fd.poller.EventUnregister(e)
 }

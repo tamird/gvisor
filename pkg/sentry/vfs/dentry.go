@@ -64,16 +64,22 @@ type Dentry struct {
 
 	// dead is true if the file represented by this Dentry has been deleted (by
 	// CommitDeleteDentry or CommitRenameReplaceDentry) or invalidated (by
-	// InvalidateDentry). dead is protected by mu.
+	// InvalidateDentry).
+	//
+	// +checklocks:mu
 	dead bool
 
 	// evictable is set by the VFS layer or filesystems like overlayfs as a hint
 	// that this dentry will not be accessed hence forth. So filesystems that
 	// cache dentries locally can use this hint to release the dentry when all
-	// references are dropped. evictable is protected by mu.
+	// references are dropped.
+	//
+	// +checklocks:mu
 	evictable bool
 
 	// mounts is the number of Mounts for which this Dentry is Mount.point.
+	//
+	// +checkatomic
 	mounts atomicbitops.Uint32
 
 	// impl is the DentryImpl associated with this Dentry. impl is immutable.
@@ -158,6 +164,8 @@ func (d *Dentry) DecRef(ctx context.Context) {
 
 // IsDead returns true if d has been deleted or invalidated by its owning
 // filesystem.
+//
+// +checklocksexclude:d.mu
 func (d *Dentry) IsDead() bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -165,6 +173,8 @@ func (d *Dentry) IsDead() bool {
 }
 
 // IsEvictable returns true if d is evictable from filesystem dentry cache.
+//
+// +checklocksexclude:d.mu
 func (d *Dentry) IsEvictable() bool {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -172,6 +182,8 @@ func (d *Dentry) IsEvictable() bool {
 }
 
 // MarkEvictable marks d as evictable.
+//
+// +checklocksexclude:d.mu
 func (d *Dentry) MarkEvictable() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -207,6 +219,7 @@ func (d *Dentry) OnZeroWatches(ctx context.Context) {
 // represented by d. If PrepareDeleteDentry succeeds, the caller must call
 // AbortDeleteDentry or CommitDeleteDentry depending on the deletion's outcome.
 // +checklocksacquire:d.mu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) PrepareDeleteDentry(mntns *MountNamespace, d *Dentry) error {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(context.Background())
@@ -230,6 +243,7 @@ func (vfs *VirtualFilesystem) AbortDeleteDentry(d *Dentry) {
 // succeeds. If d is mounted, the method returns a list of Virtual Dentries
 // mounted on d that the caller is responsible for DecRefing.
 // +checklocksrelease:d.mu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) CommitDeleteDentry(ctx context.Context, d *Dentry) []refs.RefCounter {
 	d.dead = true
 	d.mu.Unlock()
@@ -244,6 +258,9 @@ func (vfs *VirtualFilesystem) CommitDeleteDentry(ctx context.Context, d *Dentry)
 // of a file on a remote filesystem on which the file has already been
 // deleted). If d is mounted, the method returns a list of Virtual Dentries
 // mounted on d that the caller is responsible for DecRefing.
+//
+// +checklocksexclude:d.mu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) InvalidateDentry(ctx context.Context, d *Dentry) []refs.RefCounter {
 	d.mu.Lock()
 	d.dead = true
@@ -266,6 +283,7 @@ func (vfs *VirtualFilesystem) InvalidateDentry(ctx context.Context, d *Dentry) [
 //
 // +checklocksacquire:from.mu
 // +checklocksacquire:to.mu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) PrepareRenameDentry(mntns *MountNamespace, from, to *Dentry) error {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(context.Background())
@@ -304,6 +322,7 @@ func (vfs *VirtualFilesystem) AbortRenameDentry(from, to *Dentry) {
 // Preconditions: PrepareRenameDentry was previously called on from and to.
 // +checklocksrelease:from.mu
 // +checklocksrelease:to.mu
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) CommitRenameReplaceDentry(ctx context.Context, from, to *Dentry) []refs.RefCounter {
 	from.mu.Unlock()
 	if to != nil {
@@ -334,6 +353,8 @@ func (vfs *VirtualFilesystem) CommitRenameExchangeDentry(from, to *Dentry) {
 //
 // forgetDeadMountpoint is analogous to Linux's
 // fs/namespace.c:__detach_mounts().
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) forgetDeadMountpoint(ctx context.Context, d *Dentry) []refs.RefCounter {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(ctx)

@@ -64,6 +64,8 @@ type FilesystemImplSaveRestoreExtension interface {
 }
 
 // PrepareSave prepares all filesystems for serialization.
+//
+// +checklocksexclude:vfs.filesystemsMu
 func (vfs *VirtualFilesystem) PrepareSave(ctx context.Context) error {
 	fss := vfs.GetFilesystems()
 	defer func() {
@@ -83,6 +85,8 @@ func (vfs *VirtualFilesystem) PrepareSave(ctx context.Context) error {
 
 // BeforeResume is called before the kernel is resumed after save and allows
 // filesystems to clean up S/R state.
+//
+// +checklocksexclude:vfs.filesystemsMu
 func (vfs *VirtualFilesystem) BeforeResume(ctx context.Context) {
 	for _, fs := range vfs.GetFilesystems() {
 		if ext, ok := fs.impl.(FilesystemImplSaveRestoreExtension); ok {
@@ -94,6 +98,8 @@ func (vfs *VirtualFilesystem) BeforeResume(ctx context.Context) {
 
 // CompleteRestore completes restoration from checkpoint for all filesystems
 // after deserialization.
+//
+// +checklocksexclude:vfs.filesystemsMu
 func (vfs *VirtualFilesystem) CompleteRestore(ctx context.Context, opts *CompleteRestoreOptions) error {
 	fss := vfs.GetFilesystems()
 	defer func() {
@@ -181,7 +187,15 @@ func (mnt *Mount) afterLoad(goContext.Context) {
 	}
 }
 
-// afterLoad is called by stateify.
+// afterLoad is called by stateify during exclusive restore.
+//
+// The restored waiter is initialized with epi as its listener. Its
+// synchronous notification calls epi.NotifyEvent, which acquires the
+// epoll instance's ready and waiter-queue mutexes. Interface dispatch
+// does not express that listener-specific lock contract.
+//
+// +checklocksexclude:epi.epoll.readyMu
+// +checklocksexclude:epi.epoll.q.mu
 func (epi *epollInterest) afterLoad(goContext.Context) {
 	// Mark all epollInterests as ready after restore so that the next call to
 	// EpollInstance.ReadEvents() rechecks their readiness.
@@ -190,7 +204,12 @@ func (epi *epollInterest) afterLoad(goContext.Context) {
 	}
 }
 
-// afterLoad is called by stateify.
+// afterLoad initializes compatibility state during exclusive restore.
+//
+// The generated StateLoad callback is exempt from checklocks. Restore
+// owns vfs exclusively rather than physically holding dynCharDevMajorMu.
+//
+// +checklocks:vfs.dynCharDevMajorMu
 func (vfs *VirtualFilesystem) afterLoad(goContext.Context) {
 	if vfs.dynCharDevMajorShared == nil {
 		vfs.dynCharDevMajorShared = make(map[SharedDynamicCharDevMajorKey]uint32)

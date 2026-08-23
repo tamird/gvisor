@@ -85,6 +85,8 @@ type RegisterFilesystemTypeOptions struct {
 
 // RegisterFilesystemType registers the given FilesystemType in vfs with the
 // given name.
+//
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) RegisterFilesystemType(name string, fsType FilesystemType, opts *RegisterFilesystemTypeOptions) error {
 	vfs.fsTypesMu.Lock()
 	defer vfs.fsTypesMu.Unlock()
@@ -100,12 +102,15 @@ func (vfs *VirtualFilesystem) RegisterFilesystemType(name string, fsType Filesys
 
 // MustRegisterFilesystemType is equivalent to RegisterFilesystemType but
 // panics on failure.
+//
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) MustRegisterFilesystemType(name string, fsType FilesystemType, opts *RegisterFilesystemTypeOptions) {
 	if err := vfs.RegisterFilesystemType(name, fsType, opts); err != nil {
 		panic(fmt.Sprintf("failed to register filesystem type %T: %v", fsType, err))
 	}
 }
 
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) getFilesystemType(name string) *registeredFilesystemType {
 	vfs.fsTypesMu.RLock()
 	defer vfs.fsTypesMu.RUnlock()
@@ -120,6 +125,8 @@ func (vfs *VirtualFilesystem) getFilesystemType(name string) *registeredFilesyst
 
 // GenerateProcFilesystems emits the contents of /proc/filesystems for vfs to
 // buf.
+//
+// +checklocksexclude:vfs.fsTypesMu
 func (vfs *VirtualFilesystem) GenerateProcFilesystems(buf *bytes.Buffer) {
 	vfs.fsTypesMu.RLock()
 	defer vfs.fsTypesMu.RUnlock()

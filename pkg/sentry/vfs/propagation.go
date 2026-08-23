@@ -101,6 +101,8 @@ func (vfs *VirtualFilesystem) abortUncommitedMount(ctx context.Context, mnt *Mou
 
 // SetMountPropagationAt changes the propagation type of the mount pointed to by
 // pop.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) SetMountPropagationAt(ctx context.Context, creds *auth.Credentials, pop *PathOperation, propFlag uint32) error {
 	recursive := propFlag&linux.MS_REC != 0
 	propFlag &= propagationFlags
@@ -118,6 +120,10 @@ func (vfs *VirtualFilesystem) SetMountPropagationAt(ctx context.Context, creds *
 }
 
 // SetMountPropagation changes the propagation type of the mount.
+//
+// Preconditions: mnt and its descendants belong to vfs.
+//
+// +checklocksexclude:vfs.mountMu
 func (vfs *VirtualFilesystem) SetMountPropagation(mnt *Mount, propFlag uint32, recursive bool) error {
 	vfs.lockMounts()
 	defer vfs.unlockMounts(context.Background())
@@ -263,6 +269,10 @@ func (vfs *VirtualFilesystem) peers(m1, m2 *Mount) bool {
 // propagateMount propagates state.srcMount to dstMount at dstPoint.
 // This method is analogous to fs/pnode.c:propagate_one() in Linux.
 //
+// dstMnt and the propagated clone belong to vfs. The destination namespace
+// therefore uses the same held mountMu; checklocks cannot infer that
+// identity from the propagation state and namespace links.
+//
 // +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) propagateMount(ctx context.Context, dstMnt *Mount, dstPoint *Dentry, state *propState) error {
 	// Skip newly added mounts.
@@ -339,6 +349,9 @@ func (vfs *VirtualFilesystem) propagateMount(ctx context.Context, dstMnt *Mount,
 // first mount in each follower peer group under mnt. Once all the groups
 // have been iterated through the method returns nil. This method is analogous
 // to fs/pnode.c:next_group() in Linux.
+//
+// Preconditions: start.vfs.mountMu is held. mnt and all mounts reached
+// through peer, follower and leader links belong to start.vfs.
 func nextFollowerPeerGroup(mnt *Mount, start *Mount) *Mount {
 	for {
 		// If mnt has any followers, this loop returns that follower. Otherwise mnt
@@ -392,6 +405,9 @@ func nextFollowerPeerGroup(mnt *Mount, start *Mount) *Mount {
 // returns nil when there are no more mounts in the tree. Otherwise, it returns
 // the next mount in the tree. It is analogous to fs/pnode.c:propagation_next()
 // in Linux.
+//
+// Preconditions: start.vfs.mountMu is held. mnt and all mounts reached
+// through peer, follower and leader links belong to start.vfs.
 func nextPropMount(mnt, start *Mount) *Mount {
 	m := mnt
 	if !m.neverConnected() && !m.followerList.Empty() {
@@ -487,6 +503,9 @@ func (vfs *VirtualFilesystem) cleanupGroupIDs(mnts []*Mount) {
 // allocMountGroupIDs allocates a new group id for mnt. If recursive is true, it
 // also allocates a new group id for all mounts children. It is analogous to
 // fs/namespace.c:invent_group_ids() in Linux.
+//
+// Preconditions: mnt and its descendants belong to vfs. checklocks cannot
+// infer the common VFS owner of the collected submounts.
 //
 // +checklocks:vfs.mountMu
 func (vfs *VirtualFilesystem) allocMountGroupIDs(mnt *Mount, recursive bool) error {

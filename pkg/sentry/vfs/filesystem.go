@@ -49,6 +49,11 @@ type Filesystem struct {
 }
 
 // Init must be called before first use of fs.
+//
+// The new fs is private, but insertion acquires the shared VFS's
+// filesystemsMu. The caller must not already hold that mutex.
+//
+// +checklocksexclude:vfsObj.filesystemsMu
 func (fs *Filesystem) Init(vfsObj *VirtualFilesystem, fsType FilesystemType, impl FilesystemImpl) {
 	fs.InitRefs()
 	fs.vfs = vfsObj
@@ -75,6 +80,13 @@ func (fs *Filesystem) Impl() FilesystemImpl {
 }
 
 // DecRef decrements fs' reference count.
+//
+// Dropping the last reference runs the callback synchronously. It removes
+// fs from the VFS registry before calling the implementation's Release,
+// with filesystemsMu unlocked. Interface-dispatched reference releases do
+// not expose this concrete owner's exclusion to checklocks.
+//
+// +checklocksexclude:fs.vfs.filesystemsMu
 func (fs *Filesystem) DecRef(ctx context.Context) {
 	fs.FilesystemRefs.DecRef(func() {
 		fs.vfs.filesystemsMu.Lock()

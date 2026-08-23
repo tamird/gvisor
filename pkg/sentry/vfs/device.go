@@ -58,7 +58,9 @@ type devTuple struct {
 
 // A Device backs device special files.
 type Device interface {
-	// Open returns a FileDescription representing this device.
+	// Open returns a FileDescription representing this device. When called
+	// by OpenDeviceSpecialFile, the registering VFS's devicesMu is held for
+	// reading. Open must not re-enter that VFS's device-registry operations.
 	Open(ctx context.Context, mnt *Mount, d *Dentry, opts OpenOptions) (*FileDescription, error)
 }
 
@@ -87,6 +89,8 @@ type RegisterDeviceOptions struct {
 
 // RegisterDevice registers the given Device in vfs with the given major and
 // minor device numbers.
+//
+// +checklocksexclude:vfs.devicesMu
 func (vfs *VirtualFilesystem) RegisterDevice(kind DeviceKind, major, minor uint32, dev Device, opts *RegisterDeviceOptions) error {
 	tup := devTuple{kind, major, minor}
 	vfs.devicesMu.Lock()
@@ -102,6 +106,11 @@ func (vfs *VirtualFilesystem) RegisterDevice(kind DeviceKind, major, minor uint3
 }
 
 // ForEachDevice calls the given callback for each registered device.
+//
+// cb runs synchronously with vfs.devicesMu held for writing. It must not
+// re-enter operations that acquire this VFS's device-registry mutex.
+//
+// +checklocksexclude:vfs.devicesMu
 func (vfs *VirtualFilesystem) ForEachDevice(cb func(pathname string, kind DeviceKind, major, minor uint32, perms uint16) error) error {
 	vfs.devicesMu.Lock()
 	defer vfs.devicesMu.Unlock()
@@ -115,6 +124,8 @@ func (vfs *VirtualFilesystem) ForEachDevice(cb func(pathname string, kind Device
 
 // IsDeviceRegistered returns true if a device that matches the
 // (kind, major, minor) tuple is registered.
+//
+// +checklocksexclude:vfs.devicesMu
 func (vfs *VirtualFilesystem) IsDeviceRegistered(kind DeviceKind, major, minor uint32) bool {
 	vfs.devicesMu.RLock()
 	defer vfs.devicesMu.RUnlock()
@@ -124,6 +135,8 @@ func (vfs *VirtualFilesystem) IsDeviceRegistered(kind DeviceKind, major, minor u
 
 // GetRegisteredDevice returns the device registered for the given (kind,
 // major, minor) tuple.
+//
+// +checklocksexclude:vfs.devicesMu
 func (vfs *VirtualFilesystem) GetRegisteredDevice(kind DeviceKind, major, minor uint32) Device {
 	tup := devTuple{kind, major, minor}
 	vfs.devicesMu.RLock()
@@ -137,6 +150,12 @@ func (vfs *VirtualFilesystem) GetRegisteredDevice(kind DeviceKind, major, minor 
 
 // OpenDeviceSpecialFile returns a FileDescription representing the given
 // device.
+//
+// Device.Open runs synchronously with vfs.devicesMu held for reading.
+// It must not re-enter operations that acquire this VFS's device-registry
+// mutex. The Device interface does not identify the registering VFS.
+//
+// +checklocksexclude:vfs.devicesMu
 func (vfs *VirtualFilesystem) OpenDeviceSpecialFile(ctx context.Context, mnt *Mount, d *Dentry, kind DeviceKind, major, minor uint32, opts *OpenOptions) (*FileDescription, error) {
 	tup := devTuple{kind, major, minor}
 	vfs.devicesMu.RLock()
@@ -150,13 +169,18 @@ func (vfs *VirtualFilesystem) OpenDeviceSpecialFile(ctx context.Context, mnt *Mo
 
 // GetDynamicCharDevMajor allocates and returns an unused major device number
 // for a character device or set of character devices.
+//
+// +checklocksexclude:vfs.dynCharDevMajorMu
 func (vfs *VirtualFilesystem) GetDynamicCharDevMajor() (uint32, error) {
 	vfs.dynCharDevMajorMu.Lock()
 	defer vfs.dynCharDevMajorMu.Unlock()
 	return vfs.getDynamicCharDevMajorLocked()
 }
 
-// Preconditions: vfs.dynCharDevMajorMu must be locked.
+// getDynamicCharDevMajorLocked is equivalent to GetDynamicCharDevMajor with
+// vfs.dynCharDevMajorMu already held.
+//
+// +checklocks:vfs.dynCharDevMajorMu
 func (vfs *VirtualFilesystem) getDynamicCharDevMajorLocked() (uint32, error) {
 	// Compare Linux's fs/char_dev.c:find_dynamic_major().
 	for major := uint32(254); major >= 234; major-- {
@@ -203,6 +227,8 @@ const (
 //
 // Callers must not pass the returned major number to
 // PutDynamicCharDevMajor().
+//
+// +checklocksexclude:vfs.dynCharDevMajorMu
 func (vfs *VirtualFilesystem) GetSharedDynamicCharDevMajor(key SharedDynamicCharDevMajorKey) (uint32, error) {
 	vfs.dynCharDevMajorMu.Lock()
 	defer vfs.dynCharDevMajorMu.Unlock()
@@ -219,6 +245,8 @@ func (vfs *VirtualFilesystem) GetSharedDynamicCharDevMajor(key SharedDynamicChar
 
 // PutDynamicCharDevMajor deallocates a major device number returned by a
 // previous call to GetDynamicCharDevMajor.
+//
+// +checklocksexclude:vfs.dynCharDevMajorMu
 func (vfs *VirtualFilesystem) PutDynamicCharDevMajor(major uint32) {
 	vfs.dynCharDevMajorMu.Lock()
 	defer vfs.dynCharDevMajorMu.Unlock()
@@ -227,6 +255,8 @@ func (vfs *VirtualFilesystem) PutDynamicCharDevMajor(major uint32) {
 
 // GetAnonBlockDevMinor allocates and returns an unused minor device number for
 // an "anonymous" block device with major number UNNAMED_MAJOR.
+//
+// +checklocksexclude:vfs.anonBlockDevMinorMu
 func (vfs *VirtualFilesystem) GetAnonBlockDevMinor() (uint32, error) {
 	vfs.anonBlockDevMinorMu.Lock()
 	defer vfs.anonBlockDevMinorMu.Unlock()
@@ -245,6 +275,8 @@ func (vfs *VirtualFilesystem) GetAnonBlockDevMinor() (uint32, error) {
 
 // PutAnonBlockDevMinor deallocates a minor device number returned by a
 // previous call to GetAnonBlockDevMinor.
+//
+// +checklocksexclude:vfs.anonBlockDevMinorMu
 func (vfs *VirtualFilesystem) PutAnonBlockDevMinor(minor uint32) {
 	vfs.anonBlockDevMinorMu.Lock()
 	defer vfs.anonBlockDevMinorMu.Unlock()
@@ -255,6 +287,8 @@ func (vfs *VirtualFilesystem) PutAnonBlockDevMinor(minor uint32) {
 }
 
 // GenerateProcDevices emits the contents of /proc/devices for vfs to buf.
+//
+// +checklocksexclude:vfs.devicesMu
 func (vfs *VirtualFilesystem) GenerateProcDevices(buf *bytes.Buffer) error {
 	type registeredDeviceGroup struct {
 		lowestMinorByName map[string]uint32

@@ -264,12 +264,16 @@ type DynamicBytesPoller struct {
 	queue waiter.Queue
 
 	// seq is a counter that increases monotonically when
-	// the dynamic bytes file data is updated
+	// the dynamic bytes file data is updated.
+	//
+	// +checkatomic
 	seq atomicbitops.Uint64
 }
 
 // Notify is called to indicate that the data in the dynamic bytes file
 // should be reported to userspace as having changed.
+//
+// +checklocksexclude:p.queue.mu
 func (p *DynamicBytesPoller) Notify() {
 	p.seq.Add(1)
 	p.queue.Notify(waiter.ReadableEvents | DynamicBytesPollEvents)
@@ -277,12 +281,16 @@ func (p *DynamicBytesPoller) Notify() {
 
 // EventRegister passes through a waiter to the DynamicBytesPoller's
 // underlying queue.
+//
+// +checklocksexclude:p.queue.mu
 func (p *DynamicBytesPoller) EventRegister(e *waiter.Entry) {
 	p.queue.EventRegister(e)
 }
 
 // EventUnregister passes through a waiter unregistration to the
 // DynamicBytesPoller's underlying queue.
+//
+// +checklocksexclude:p.queue.mu
 func (p *DynamicBytesPoller) EventUnregister(e *waiter.Entry) {
 	p.queue.EventUnregister(e)
 }
@@ -297,7 +305,12 @@ func (p *DynamicBytesPoller) Seq() uint64 {
 //
 // +stateify savable
 type DynamicBytesSource interface {
-	// Generate writes the file's contents to buf.
+	// Generate writes the file's contents to buf. It is called
+	// synchronously with the requesting file description's mutex held.
+	// buf and its backing bytes are borrowed for this call; Generate must
+	// not retain a mutable alias. It must not re-enter Read, PRead, Write,
+	// PWrite, or Seek on the same file description. Offset remains safe.
+	// This interface cannot name the requesting file's mutex.
 	Generate(ctx context.Context, buf *bytes.Buffer) error
 }
 
@@ -326,7 +339,10 @@ func (s *StaticData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 type WritableDynamicBytesSource interface {
 	DynamicBytesSource
 
-	// Write sends writes to the source.
+	// Write sends writes to the source. It is called synchronously with
+	// the requesting file description's mutex held. It must not re-enter
+	// Read, PRead, Write, PWrite, or Seek on that file description; Offset
+	// remains safe. The implementation interface hides the mutex owner.
 	Write(ctx context.Context, fd *FileDescription, src usermem.IOSequence, offset int64) (int64, error)
 }
 
@@ -343,20 +359,48 @@ type WritableDynamicBytesSource interface {
 //
 // +stateify savable
 type DynamicBytesFileDescriptionImpl struct {
-	vfsfd    *FileDescription   // immutable
-	data     DynamicBytesSource // immutable
-	mu       sync.Mutex         `state:"nosave"` // protects the following fields
-	buf      bytes.Buffer       `state:".([]byte)"`
-	off      atomicbitops.Int64
-	lastRead int64 // offset at which the last Read, PRead, or Seek ended
+	vfsfd *FileDescription   // immutable
+	data  DynamicBytesSource // immutable
+	mu    sync.Mutex         `state:"nosave"`
+
+	// buf caches the generated data.
+	//
+	// +checklocks:mu
+	buf bytes.Buffer `state:".([]byte)"`
+
+	// off is the current file offset. Offset reads it without locking to avoid
+	// taking file-description locks from DynamicBytesSource.Generate callbacks.
+	//
+	// +checkatomic
+	// +checklocks:mu
+	off atomicbitops.Int64
+
+	// lastRead is the offset at which the last Read, PRead, or Seek ended.
+	//
+	// +checklocks:mu
+	lastRead int64
 }
 
+// saveBuf returns the buffer for stateify.
+//
+// Generated StateSave is exempt from checklocks and does not hold fd.mu.
+// Its caller must prevent changes through serialization of the returned
+// slice; a lock held only inside this getter would not protect that alias.
+//
+// +checklocks:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) saveBuf() []byte {
 	return fd.buf.Bytes()
 }
 
+// loadBuf restores the buffer before the file is in use.
+//
+// StateLoad passes this call through a LoadValue callback. Generated
+// restore callbacks are exempt from checklocks and own the file
+// exclusively; the framework does not physically hold fd.mu.
+//
+// +checklocks:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) loadBuf(_ goContext.Context, p []byte) {
-	fd.buf.Write(p)
+	_, _ = fd.buf.Write(p)
 }
 
 // Init must be called before first use.
@@ -365,7 +409,7 @@ func (fd *DynamicBytesFileDescriptionImpl) Init(vfsfd *FileDescription, data Dyn
 	fd.data = data
 }
 
-// Preconditions: fd.mu must be locked.
+// +checklocks:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) preadLocked(ctx context.Context, dst usermem.IOSequence, offset int64, opts *ReadOptions) (int64, error) {
 	// Regenerate the buffer if it's empty, or before pread() at a new offset.
 	// Compare fs/seq_file.c:seq_read() => traverse().
@@ -391,6 +435,8 @@ func (fd *DynamicBytesFileDescriptionImpl) preadLocked(ctx context.Context, dst 
 }
 
 // PRead implements FileDescriptionImpl.PRead.
+//
+// +checklocksexclude:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) PRead(ctx context.Context, dst usermem.IOSequence, offset int64, opts ReadOptions) (int64, error) {
 	fd.mu.Lock()
 	n, err := fd.preadLocked(ctx, dst, offset, &opts)
@@ -399,6 +445,8 @@ func (fd *DynamicBytesFileDescriptionImpl) PRead(ctx context.Context, dst userme
 }
 
 // Read implements FileDescriptionImpl.Read.
+//
+// +checklocksexclude:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) Read(ctx context.Context, dst usermem.IOSequence, opts ReadOptions) (int64, error) {
 	fd.mu.Lock()
 	n, err := fd.preadLocked(ctx, dst, fd.off.Load(), &opts)
@@ -408,6 +456,8 @@ func (fd *DynamicBytesFileDescriptionImpl) Read(ctx context.Context, dst usermem
 }
 
 // Seek implements FileDescriptionImpl.Seek.
+//
+// +checklocksexclude:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) Seek(ctx context.Context, offset int64, whence int32) (int64, error) {
 	fd.mu.Lock()
 	defer fd.mu.Unlock()
@@ -439,7 +489,7 @@ func (fd *DynamicBytesFileDescriptionImpl) Seek(ctx context.Context, offset int6
 	return offset, nil
 }
 
-// Preconditions: fd.mu must be locked.
+// +checklocks:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) pwriteLocked(ctx context.Context, src usermem.IOSequence, offset int64, opts WriteOptions) (int64, error) {
 	if opts.Flags&^(linux.RWF_HIPRI|linux.RWF_DSYNC|linux.RWF_SYNC) != 0 {
 		return 0, linuxerr.EOPNOTSUPP
@@ -465,6 +515,8 @@ func (fd *DynamicBytesFileDescriptionImpl) pwriteLocked(ctx context.Context, src
 }
 
 // PWrite implements FileDescriptionImpl.PWrite.
+//
+// +checklocksexclude:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) PWrite(ctx context.Context, src usermem.IOSequence, offset int64, opts WriteOptions) (int64, error) {
 	fd.mu.Lock()
 	n, err := fd.pwriteLocked(ctx, src, offset, opts)
@@ -473,6 +525,8 @@ func (fd *DynamicBytesFileDescriptionImpl) PWrite(ctx context.Context, src userm
 }
 
 // Write implements FileDescriptionImpl.Write.
+//
+// +checklocksexclude:fd.mu
 func (fd *DynamicBytesFileDescriptionImpl) Write(ctx context.Context, src usermem.IOSequence, opts WriteOptions) (int64, error) {
 	fd.mu.Lock()
 	n, err := fd.pwriteLocked(ctx, src, fd.off.Load(), opts)

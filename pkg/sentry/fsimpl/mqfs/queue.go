@@ -82,26 +82,36 @@ func (fd *queueFD) Init(m *vfs.Mount, d *kernfs.Dentry, data vfs.DynamicBytesSou
 }
 
 // Seek implements vfs.FileDescriptionImpl.Seek.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *queueFD) Seek(ctx context.Context, offset int64, whence int32) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.Seek(ctx, offset, whence)
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *queueFD) Read(ctx context.Context, dst usermem.IOSequence, opts vfs.ReadOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.Read(ctx, dst, opts)
 }
 
 // PRead implements vfs.FileDescriptionImpl.PRead.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *queueFD) PRead(ctx context.Context, dst usermem.IOSequence, offset int64, opts vfs.ReadOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.PRead(ctx, dst, offset, opts)
 }
 
 // Write implements vfs.FileDescriptionImpl.Write.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *queueFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.WriteOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.Write(ctx, src, opts)
 }
 
 // PWrite implements vfs.FileDescriptionImpl.PWrite.
+//
+// +checklocksexclude:fd.DynamicBytesFileDescriptionImpl.mu
 func (fd *queueFD) PWrite(ctx context.Context, src usermem.IOSequence, offset int64, opts vfs.WriteOptions) (int64, error) {
 	return fd.DynamicBytesFileDescriptionImpl.PWrite(ctx, src, offset, opts)
 }
