@@ -51,6 +51,8 @@ func (t *Task) HasRootCapability(cp linux.Capability) bool {
 // SetUID implements the semantics of setuid(2).
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetUID(uid auth.UID) error {
 	// setuid considers -1 to be invalid.
 	if !uid.Ok() {
@@ -83,6 +85,8 @@ func (t *Task) SetUID(uid auth.UID) error {
 // SetREUID implements the semantics of setreuid(2).
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetREUID(r, e auth.UID) error {
 	// "Supplying a value of -1 for either the real or effective user ID forces
 	// the system to leave that ID unchanged." - setreuid(2)
@@ -127,6 +131,8 @@ func (t *Task) SetREUID(r, e auth.UID) error {
 // SetRESUID implements the semantics of the setresuid(2) syscall.
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetRESUID(r, e, s auth.UID) error {
 	// "Unprivileged user processes may change the real UID, effective UID, and
 	// saved set-user-ID, each to one of: the current real UID, the current
@@ -163,6 +169,8 @@ func (t *Task) SetRESUID(r, e, s auth.UID) error {
 }
 
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) setKUIDsUnchecked(newR, newE, newS auth.KUID) {
 	creds := t.Credentials().Fork() // The credentials object is immutable. See doc for creds.
 	root := creds.UserNamespace.MapToKUID(auth.RootUID)
@@ -220,7 +228,7 @@ func (t *Task) setKUIDsUnchecked(newR, newE, newS auth.KUID) {
 		t.MemoryManager().SetDumpability(mm.NotDumpable)
 
 		// Not documented, but compare Linux's kernel/cred.c:commit_creds().
-		t.parentDeathSignal = 0
+		t.SetParentDeathSignal(0)
 	}
 	t.creds.Store(creds)
 }
@@ -228,6 +236,8 @@ func (t *Task) setKUIDsUnchecked(newR, newE, newS auth.KUID) {
 // SetGID implements the semantics of setgid(2).
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetGID(gid auth.GID) error {
 	if !gid.Ok() {
 		return linuxerr.EINVAL
@@ -252,6 +262,8 @@ func (t *Task) SetGID(gid auth.GID) error {
 // SetREGID implements the semantics of setregid(2).
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetREGID(r, e auth.GID) error {
 	creds := t.Credentials()
 	newR := creds.RealKGID
@@ -287,6 +299,8 @@ func (t *Task) SetREGID(r, e auth.GID) error {
 // SetRESGID implements the semantics of the setresgid(2) syscall.
 //
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetRESGID(r, e, s auth.GID) error {
 	var err error
 
@@ -317,6 +331,8 @@ func (t *Task) SetRESGID(r, e, s auth.GID) error {
 }
 
 // Preconditions: The caller must be running on the task goroutine.
+//
+// +checklocksexclude:t.mu
 func (t *Task) setKGIDsUnchecked(newR, newE, newS auth.KGID) {
 	creds := t.Credentials().Fork() // The credentials object is immutable. See doc for creds.
 	oldE := creds.EffectiveKGID
@@ -334,7 +350,7 @@ func (t *Task) setKGIDsUnchecked(newR, newE, newS auth.KGID) {
 
 		// Not documented, but compare Linux's
 		// kernel/cred.c:commit_creds().
-		t.parentDeathSignal = 0
+		t.SetParentDeathSignal(0)
 	}
 	t.creds.Store(creds)
 }

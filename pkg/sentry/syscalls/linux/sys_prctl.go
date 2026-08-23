@@ -30,6 +30,8 @@ import (
 // Prctl implements linux syscall prctl(2).
 // It has a list of subfunctions which operate on the process. The arguments are
 // all based on each subfunction.
+//
+// +checklocksexclude:t.mu
 func Prctl(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, *kernel.SyscallControl, error) {
 	option := args[0].Int()
 

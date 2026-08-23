@@ -1347,6 +1347,8 @@ func (t *Task) exitStateLocked() TaskExitState {
 }
 
 // ParentDeathSignal returns t's parent death signal.
+//
+// +checklocksexclude:t.mu
 func (t *Task) ParentDeathSignal() linux.Signal {
 	t.mu.Lock()
 	defer t.mu.Unlock()
@@ -1354,6 +1356,8 @@ func (t *Task) ParentDeathSignal() linux.Signal {
 }
 
 // SetParentDeathSignal sets t's parent death signal.
+//
+// +checklocksexclude:t.mu
 func (t *Task) SetParentDeathSignal(sig linux.Signal) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
