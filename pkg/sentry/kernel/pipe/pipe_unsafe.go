@@ -26,8 +26,11 @@ import (
 // The caller should unlock the second pipe first.
 //
 // Preconditions: x != y.
+//
 // +checklocksacquire:x.mu
 // +checklocksacquire:y.mu
+// +checklocksexclude:x.mu
+// +checklocksexclude:y.mu
 func lockTwoPipes(x, y *Pipe) (*Pipe, *Pipe) {
 	// Lock the two pipes in order of increasing address.
 	if uintptr(unsafe.Pointer(x)) < uintptr(unsafe.Pointer(y)) {

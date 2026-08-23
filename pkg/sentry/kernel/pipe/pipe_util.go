@@ -33,6 +33,9 @@ import (
 // the old fs architecture.
 
 // Release cleans up the pipe's state.
+//
+// +checklocksexclude:p.mu
+// +checklocksexclude:p.queue.mu
 func (p *Pipe) Release(context.Context) {
 	p.rClose()
 	p.wClose()
@@ -42,6 +45,9 @@ func (p *Pipe) Release(context.Context) {
 }
 
 // Read reads from the Pipe into dst.
+//
+// +checklocksexclude:p.mu
+// +checklocksexclude:p.queue.mu
 func (p *Pipe) Read(ctx context.Context, dst usermem.IOSequence) (int64, error) {
 	n, err := p.read(dst.NumBytes(), func(srcs safemem.BlockSeq) (uint64, error) {
 		var done uint64
@@ -63,6 +69,7 @@ func (p *Pipe) Read(ctx context.Context, dst usermem.IOSequence) (int64, error) 
 	return n, err
 }
 
+// +checklocksexclude:p.mu
 func (p *Pipe) read(count int64, f func(srcs safemem.BlockSeq) (uint64, error), removeFromSrc bool) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -74,6 +81,9 @@ func (p *Pipe) read(count int64, f func(srcs safemem.BlockSeq) (uint64, error), 
 }
 
 // WriteTo writes to w from the Pipe.
+//
+// +checklocksexclude:p.mu
+// +checklocksexclude:p.queue.mu
 func (p *Pipe) WriteTo(ctx context.Context, w io.Writer, count int64, dup bool) (int64, error) {
 	n, err := p.read(count, func(srcs safemem.BlockSeq) (uint64, error) {
 		return safemem.FromIOWriter{w}.WriteFromBlocks(srcs)
@@ -85,6 +95,9 @@ func (p *Pipe) WriteTo(ctx context.Context, w io.Writer, count int64, dup bool) 
 }
 
 // Write writes to the Pipe from src.
+//
+// +checklocksexclude:p.mu
+// +checklocksexclude:p.queue.mu
 func (p *Pipe) Write(ctx context.Context, src usermem.IOSequence) (int64, error) {
 	n, err := p.write(src.NumBytes(), func(dsts safemem.BlockSeq) (uint64, error) {
 		var done uint64
@@ -112,6 +125,7 @@ func (p *Pipe) Write(ctx context.Context, src usermem.IOSequence) (int64, error)
 	return n, err
 }
 
+// +checklocksexclude:p.mu
 func (p *Pipe) write(count int64, f func(safemem.BlockSeq) (uint64, error)) (int64, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -119,6 +133,9 @@ func (p *Pipe) write(count int64, f func(safemem.BlockSeq) (uint64, error)) (int
 }
 
 // ReadFrom reads from r to the Pipe.
+//
+// +checklocksexclude:p.mu
+// +checklocksexclude:p.queue.mu
 func (p *Pipe) ReadFrom(ctx context.Context, r io.Reader, count int64) (int64, error) {
 	n, err := p.write(count, func(dsts safemem.BlockSeq) (uint64, error) {
 		return safemem.FromIOReader{r}.ReadToBlocks(dsts)
@@ -130,11 +147,15 @@ func (p *Pipe) ReadFrom(ctx context.Context, r io.Reader, count int64) (int64, e
 }
 
 // Readiness returns the ready events in the underlying pipe.
+//
+// +checklocksexclude:p.mu
 func (p *Pipe) Readiness(mask waiter.EventMask) waiter.EventMask {
 	return p.rwReadiness() & mask
 }
 
 // Ioctl implements ioctls on the Pipe.
+//
+// +checklocksexclude:p.mu
 func (p *Pipe) Ioctl(ctx context.Context, io usermem.IO, sysno uintptr, args arch.SyscallArguments) (uintptr, error) {
 	// Switch on ioctl request.
 	switch int(args[1].Int()) {

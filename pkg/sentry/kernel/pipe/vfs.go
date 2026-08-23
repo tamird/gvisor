@@ -42,9 +42,7 @@ type VFSPipe struct {
 
 // NewVFSPipe returns an initialized VFSPipe.
 func NewVFSPipe(isNamed bool, sizeBytes int64) *VFSPipe {
-	var vp VFSPipe
-	initPipe(&vp.pipe, isNamed, sizeBytes)
-	return &vp
+	return &VFSPipe{pipe: newPipe(isNamed, sizeBytes)}
 }
 
 // Pipe returns the underlying Pipe object.
@@ -55,6 +53,9 @@ func (vp *VFSPipe) Pipe() *Pipe {
 // ReaderWriterPair returns read-only and write-only FDs for vp.
 //
 // Preconditions: statusFlags should not contain an open access mode.
+//
+// +checklocksexclude:vp.pipe.mu
+// +checklocksexclude:vp.pipe.queue.mu
 func (vp *VFSPipe) ReaderWriterPair(ctx context.Context, mnt *vfs.Mount, vfsd *vfs.Dentry, statusFlags uint32) (*vfs.FileDescription, *vfs.FileDescription, error) {
 	creds := auth.CredentialsFromContext(ctx)
 	// Connected pipes share the same locks.
@@ -79,6 +80,9 @@ func (*VFSPipe) Allocate(context.Context, uint64, uint64, uint64) error {
 }
 
 // Open opens the pipe represented by vp.
+//
+// +checklocksexclude:vp.pipe.mu
+// +checklocksexclude:vp.pipe.queue.mu
 func (vp *VFSPipe) Open(ctx context.Context, mnt *vfs.Mount, vfsd *vfs.Dentry, statusFlags uint32, locks *vfs.FileLocks) (*vfs.FileDescription, error) {
 	readable := vfs.MayReadFileWithOpenFlags(statusFlags)
 	writable := vfs.MayWriteFileWithOpenFlags(statusFlags)
@@ -144,7 +148,6 @@ func (vp *VFSPipe) Open(ctx context.Context, mnt *vfs.Mount, vfsd *vfs.Dentry, s
 	return fd, nil
 }
 
-// Preconditions: vp.mu must be held.
 func (vp *VFSPipe) newFD(mnt *vfs.Mount, vfsd *vfs.Dentry, statusFlags uint32, locks *vfs.FileLocks, creds *auth.Credentials) (*vfs.FileDescription, error) {
 	fd := &VFSPipeFD{
 		pipe: &vp.pipe,
@@ -176,7 +179,9 @@ type VFSPipeFD struct {
 	pipe *Pipe
 
 	// lastAddr is the last hostarch.Addr at which a call to a
-	// VFSPipeFD.(usermem.IO) method ended. lastAddr is protected by pipe.mu.
+	// VFSPipeFD.(usermem.IO) method ended.
+	//
+	// +checklocks:pipe.mu
 	lastAddr hostarch.Addr
 }
 
@@ -186,6 +191,9 @@ func (fd *VFSPipeFD) Pipe() *Pipe {
 }
 
 // Release implements vfs.FileDescriptionImpl.Release.
+//
+// +checklocksexclude:fd.pipe.mu
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) Release(context.Context) {
 	var event waiter.EventMask
 	if fd.vfsfd.IsReadable() {
@@ -207,6 +215,8 @@ func (fd *VFSPipeFD) Release(context.Context) {
 }
 
 // Readiness implements waiter.Waitable.Readiness.
+//
+// +checklocksexclude:fd.pipe.mu
 func (fd *VFSPipeFD) Readiness(mask waiter.EventMask) waiter.EventMask {
 	switch {
 	case fd.vfsfd.IsReadable() && fd.vfsfd.IsWritable():
@@ -226,6 +236,9 @@ func (fd *VFSPipeFD) Allocate(ctx context.Context, mode, offset, length uint64) 
 }
 
 // EventRegister implements waiter.Waitable.EventRegister.
+//
+// +checklocksexclude:fd.pipe.mu
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) EventRegister(e *waiter.Entry) error {
 	fd.pipe.EventRegister(e)
 
@@ -235,6 +248,8 @@ func (fd *VFSPipeFD) EventRegister(e *waiter.Entry) error {
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
+//
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) EventUnregister(e *waiter.Entry) {
 	fd.pipe.EventUnregister(e)
 }
@@ -245,21 +260,31 @@ func (fd *VFSPipeFD) Epollable() bool {
 }
 
 // Read implements vfs.FileDescriptionImpl.Read.
+//
+// +checklocksexclude:fd.pipe.mu
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) Read(ctx context.Context, dst usermem.IOSequence, _ vfs.ReadOptions) (int64, error) {
 	return fd.pipe.Read(ctx, dst)
 }
 
 // Write implements vfs.FileDescriptionImpl.Write.
+//
+// +checklocksexclude:fd.pipe.mu
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) Write(ctx context.Context, src usermem.IOSequence, _ vfs.WriteOptions) (int64, error) {
 	return fd.pipe.Write(ctx, src)
 }
 
 // Ioctl implements vfs.FileDescriptionImpl.Ioctl.
+//
+// +checklocksexclude:fd.pipe.mu
 func (fd *VFSPipeFD) Ioctl(ctx context.Context, uio usermem.IO, sysno uintptr, args arch.SyscallArguments) (uintptr, error) {
 	return fd.pipe.Ioctl(ctx, uio, sysno, args)
 }
 
 // PipeSize implements fcntl(F_GETPIPE_SZ).
+//
+// +checklocksexclude:fd.pipe.mu
 func (fd *VFSPipeFD) PipeSize() int64 {
 	// Inline Pipe.FifoSize() since we don't have a fs.File.
 	fd.pipe.mu.Lock()
@@ -268,11 +293,16 @@ func (fd *VFSPipeFD) PipeSize() int64 {
 }
 
 // SetPipeSize implements fcntl(F_SETPIPE_SZ).
+//
+// +checklocksexclude:fd.pipe.mu
 func (fd *VFSPipeFD) SetPipeSize(size int64) (int64, error) {
 	return fd.pipe.SetFifoSize(size)
 }
 
 // SpliceToNonPipe performs a splice operation from fd to a non-pipe file.
+//
+// +checklocksexclude:fd.pipe.mu
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) SpliceToNonPipe(ctx context.Context, out *vfs.FileDescription, off, count int64) (int64, error) {
 	fd.pipe.mu.Lock()
 
@@ -315,6 +345,9 @@ func (fd *VFSPipeFD) SpliceToNonPipe(ctx context.Context, out *vfs.FileDescripti
 }
 
 // SpliceFromNonPipe performs a splice operation from a non-pipe file to fd.
+//
+// +checklocksexclude:fd.pipe.mu
+// +checklocksexclude:fd.pipe.queue.mu
 func (fd *VFSPipeFD) SpliceFromNonPipe(ctx context.Context, in *vfs.FileDescription, off, count int64) (int64, error) {
 	dst := usermem.IOSequence{
 		IO:    fd,
@@ -341,10 +374,10 @@ func (fd *VFSPipeFD) SpliceFromNonPipe(ctx context.Context, in *vfs.FileDescript
 }
 
 // CopyIn implements usermem.IO.CopyIn. Note that it is the caller's
-// responsibility to call fd.pipe.Notify(waiter.WritableEvents) after the read
-// is completed.
+// responsibility to call fd.pipe.queue.Notify(waiter.WritableEvents) after
+// the read is completed.
 //
-// Preconditions: fd.pipe.mu must be locked.
+// +checklocks:fd.pipe.mu
 func (fd *VFSPipeFD) CopyIn(ctx context.Context, addr hostarch.Addr, dst []byte, opts usermem.IOOpts) (int, error) {
 	if addr != fd.lastAddr {
 		log.Traceback("Non-sequential VFSPipeFD.CopyIn: lastAddr=%#x addr=%#x", fd.lastAddr, addr)
@@ -361,7 +394,7 @@ func (fd *VFSPipeFD) CopyIn(ctx context.Context, addr hostarch.Addr, dst []byte,
 // responsibility to call fd.pipe.queue.Notify(waiter.ReadableEvents) after the
 // write is completed.
 //
-// Preconditions: fd.pipe.mu must be locked.
+// +checklocks:fd.pipe.mu
 func (fd *VFSPipeFD) CopyOut(ctx context.Context, addr hostarch.Addr, src []byte, opts usermem.IOOpts) (int, error) {
 	if addr != fd.lastAddr {
 		log.Traceback("Non-sequential VFSPipeFD.CopyOut: lastAddr=%#x addr=%#x", fd.lastAddr, addr)
@@ -376,7 +409,7 @@ func (fd *VFSPipeFD) CopyOut(ctx context.Context, addr hostarch.Addr, src []byte
 
 // ZeroOut implements usermem.IO.ZeroOut.
 //
-// Preconditions: fd.pipe.mu must be locked.
+// +checklocks:fd.pipe.mu
 func (fd *VFSPipeFD) ZeroOut(ctx context.Context, addr hostarch.Addr, toZero int64, opts usermem.IOOpts) (int64, error) {
 	if addr != fd.lastAddr {
 		log.Traceback("Non-sequential VFSPipeFD.ZeroOut: lastAddr=%#x addr=%#x", fd.lastAddr, addr)
@@ -393,7 +426,7 @@ func (fd *VFSPipeFD) ZeroOut(ctx context.Context, addr hostarch.Addr, toZero int
 // responsibility to call fd.pipe.consumeLocked() and
 // fd.pipe.queue.Notify(waiter.WritableEvents) after the read is completed.
 //
-// Preconditions: fd.pipe.mu must be locked.
+// +checklocks:fd.pipe.mu
 func (fd *VFSPipeFD) CopyInTo(ctx context.Context, ars hostarch.AddrRangeSeq, dst safemem.Writer, opts usermem.IOOpts) (int64, error) {
 	total := int64(0)
 	for !ars.IsEmpty() {
@@ -419,7 +452,7 @@ func (fd *VFSPipeFD) CopyInTo(ctx context.Context, ars hostarch.AddrRangeSeq, ds
 // responsibility to call fd.pipe.queue.Notify(waiter.ReadableEvents) after the
 // write is completed.
 //
-// Preconditions: fd.pipe.mu must be locked.
+// +checklocks:fd.pipe.mu
 func (fd *VFSPipeFD) CopyOutFrom(ctx context.Context, ars hostarch.AddrRangeSeq, src safemem.Reader, opts usermem.IOOpts) (int64, error) {
 	total := int64(0)
 	for !ars.IsEmpty() {
@@ -461,6 +494,11 @@ func (fd *VFSPipeFD) LoadUint32(ctx context.Context, addr hostarch.Addr, opts us
 // the number of bytes moved.
 //
 // Preconditions: count > 0.
+//
+// +checklocksexclude:dst.pipe.mu
+// +checklocksexclude:src.pipe.mu
+// +checklocksexclude:dst.pipe.queue.mu
+// +checklocksexclude:src.pipe.queue.mu
 func Splice(ctx context.Context, dst, src *VFSPipeFD, count int64) (int64, error) {
 	return spliceOrTee(ctx, dst, src, count, true /* removeFromSrc */)
 }
@@ -469,11 +507,21 @@ func Splice(ctx context.Context, dst, src *VFSPipeFD, count int64) (int64, error
 // removing the read bytes from src. It returns the number of bytes copied.
 //
 // Preconditions: count > 0.
+//
+// +checklocksexclude:dst.pipe.mu
+// +checklocksexclude:src.pipe.mu
+// +checklocksexclude:dst.pipe.queue.mu
+// +checklocksexclude:src.pipe.queue.mu
 func Tee(ctx context.Context, dst, src *VFSPipeFD, count int64) (int64, error) {
 	return spliceOrTee(ctx, dst, src, count, false /* removeFromSrc */)
 }
 
 // Preconditions: count > 0.
+//
+// +checklocksexclude:dst.pipe.mu
+// +checklocksexclude:src.pipe.mu
+// +checklocksexclude:dst.pipe.queue.mu
+// +checklocksexclude:src.pipe.queue.mu
 func spliceOrTee(ctx context.Context, dst, src *VFSPipeFD, count int64, removeFromSrc bool) (int64, error) {
 	if dst.pipe == src.pipe {
 		return 0, linuxerr.EINVAL
@@ -481,14 +529,18 @@ func spliceOrTee(ctx context.Context, dst, src *VFSPipeFD, count int64, removeFr
 
 	firstLocked, secondLocked := lockTwoPipes(dst.pipe, src.pipe)
 	n, err := dst.pipe.writeLocked(count, func(dsts safemem.BlockSeq) (uint64, error) {
-		n, err := src.pipe.peekLocked(0, int64(dsts.NumBytes()), func(srcs safemem.BlockSeq) (uint64, error) {
+		// writeLocked invokes this callback synchronously with both pipe locks
+		// still held. checklocks does not carry their state into passed callbacks.
+		n, err := src.pipe.peekLocked(0, int64(dsts.NumBytes()), func(srcs safemem.BlockSeq) (uint64, error) { // +checklocksignore
 			return safemem.CopySeq(dsts, srcs)
 		})
 		if n > 0 && removeFromSrc {
-			src.pipe.consumeLocked(n)
+			src.pipe.consumeLocked(n) // +checklocksignore
 		}
 		return uint64(n), err
 	})
+	// These returned pointers alias dst.pipe and src.pipe in lock order.
+	// checklocks cannot relate the aliases to its acquired-lock facts.
 	secondLocked.mu.NestedUnlock(pipeLockPipe)
 	firstLocked.mu.Unlock()
 
