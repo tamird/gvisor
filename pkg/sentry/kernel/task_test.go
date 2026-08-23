@@ -306,3 +306,52 @@ func TestCreateSessionSharedSignalHandlers(t *testing.T) {
 		t.Error("parent did not create a new session")
 	}
 }
+
+// testTTYOperations has no backend resources. SetControllingTTY only uses
+// its reference operations; OpenTTY is intentionally unavailable.
+type testTTYOperations struct {
+	TTYOperations
+}
+
+func (testTTYOperations) IncRef() {}
+
+func (testTTYOperations) DecRef(context.Context) {}
+
+func TestSetControllingTTYSharedSignalHandlers(t *testing.T) {
+	userns := auth.NewRootUserNamespace()
+	ctx := auth.ContextWithCredentials(context.Background(), auth.NewRootCredentials(userns))
+	pidns := newPIDNamespace(nil, nil, userns)
+	ts := newTaskSet(pidns)
+	sh := NewSignalHandlers()
+
+	// Model the relevant state after a CLONE_VM|CLONE_SIGHAND child
+	// calls setsid: two session leaders with the same signal handlers.
+	newSessionLeader := func(id ThreadID) *ThreadGroup {
+		tg := &ThreadGroup{
+			threadGroupNode: threadGroupNode{pidns: pidns},
+			signalHandlers:  sh,
+		}
+		tg.processGroup = &ProcessGroup{session: &Session{leader: tg}}
+		ts.Root.tgids[tg] = id
+		return tg
+	}
+	oldOwner := newSessionLeader(1)
+	newOwner := newSessionLeader(2)
+	tty := NewTTY(0, testTTYOperations{})
+	if err := oldOwner.SetControllingTTY(ctx, tty, false /* steal */, true /* isReadable */); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := newOwner.SetControllingTTY(ctx, tty, true /* steal */, true /* isReadable */); err != nil {
+		t.Fatal(err)
+	}
+	if got := oldOwner.TTY(); got != nil {
+		t.Errorf("old owner's controlling TTY = %p, want nil", got)
+	}
+	if got := newOwner.TTY(); got != tty {
+		t.Errorf("new owner's controlling TTY = %p, want %p", got, tty)
+	}
+	if got := tty.ThreadGroup(); got != newOwner {
+		t.Errorf("TTY controller = %p, want %p", got, newOwner)
+	}
+}

@@ -501,23 +501,20 @@ func (tg *ThreadGroup) SetControllingTTY(ctx context.Context, tty *TTY, steal bo
 			return linuxerr.EPERM
 		}
 		// Steal the TTY away. Unlike TIOCNOTTY, don't send signals.
+		// Different sessions may share signal handlers, so release our
+		// signal mutex before taking each old owner's signal mutex.
+		tg.signalHandlers.mu.Unlock()
 		for othertg := range tg.pidns.owner.Root.tgids {
-			// This won't deadlock by locking tg.signalHandlers
-			// because at this point:
-			//	- We only lock signalHandlers if it's in the same
-			//		session as the tty's controlling thread group.
-			//	- We know that the calling thread group is not in
-			//		the same session as the tty's controlling thread
-			//		group.
 			if othertg.processGroup.session == tty.tg.processGroup.session {
-				othertg.signalHandlers.mu.NestedLock(signalHandlersLockTg)
+				othertg.signalHandlers.mu.Lock()
 				if othertg.tty != nil {
 					toDecRef = append(toDecRef, othertg.tty)
 				}
 				othertg.tty = nil
-				othertg.signalHandlers.mu.NestedUnlock(signalHandlersLockTg)
+				othertg.signalHandlers.mu.Unlock()
 			}
 		}
+		tg.signalHandlers.mu.Lock()
 	}
 
 	if !isReadable && !hasAdmin {
