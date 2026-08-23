@@ -120,3 +120,35 @@ func TestTaskCPU(t *testing.T) {
 	}
 
 }
+
+func TestExitNotifyParentSeccheckInfoConcurrentGroupExit(t *testing.T) {
+	// kernel_test configures no optional seccheck context fields, so the
+	// reader needs only these ownership links and the group's signal state.
+	k := &Kernel{tasks: newTaskSet(&PIDNamespace{})}
+	tg := &ThreadGroup{
+		threadGroupNode: threadGroupNode{pidns: k.tasks.Root},
+		signalHandlers:  NewSignalHandlers(),
+	}
+	task := &Task{
+		taskNode: taskNode{tg: tg},
+		k:        k,
+	}
+	tg.leader = task
+	tg.tasks.PushBack(task)
+	wantStatus := linux.WaitStatusTerminationSignal(linux.SIGKILL)
+
+	task.k.tasks.mu.RLock()
+	defer task.k.tasks.mu.RUnlock()
+	var wg sync.WaitGroup
+	wg.Go(func() { task.PrepareGroupExit(wantStatus) })
+	// Read before Wait so the wait group does not order the status accesses.
+	_, info := getExitNotifyParentSeccheckInfo(task)
+	wg.Wait()
+	if got := info.ExitStatus; got != 0 && got != int32(wantStatus) {
+		t.Errorf("concurrent exit status = %d, want 0 or %d", got, wantStatus)
+	}
+	_, info = getExitNotifyParentSeccheckInfo(task)
+	if got := info.ExitStatus; got != int32(wantStatus) {
+		t.Errorf("exit status after group exit = %d, want %d", got, wantStatus)
+	}
+}

@@ -878,11 +878,21 @@ func (t *Task) exitNotificationSignal(sig linux.Signal, receiver *Task) *linux.S
 }
 
 // Preconditions: The TaskSet mutex must be locked.
+//
+// Checking this precondition also requires annotating exitNotifyLocked's
+// caller contracts and the equivalence of t.k.tasks.mu and
+// t.tg.pidns.owner.mu.
+//
+// +checklocksexclude:t.tg.signalHandlers.mu
 func getExitNotifyParentSeccheckInfo(t *Task) (seccheck.FieldSet, *pb.ExitNotifyParentInfo) {
 	fields := seccheck.Global.GetFieldSet(seccheck.PointExitNotifyParent)
 
+	// Signal delivery can still change a Zombie's group exit status.
+	t.tg.signalHandlers.mu.Lock()
+	exitStatus := int32(t.tg.exitStatus)
+	t.tg.signalHandlers.mu.Unlock()
 	info := &pb.ExitNotifyParentInfo{
-		ExitStatus: int32(t.tg.exitStatus),
+		ExitStatus: exitStatus,
 	}
 	if !fields.Context.Empty() {
 		info.ContextData = &pb.ContextData{}
