@@ -462,6 +462,7 @@ go_test(
         "//pkg/sentry/limits",
         "//pkg/sentry/mm",
         "//pkg/sentry/pgalloc",
+        "//pkg/sentry/platform",
         "//pkg/sentry/time",
         "//pkg/sentry/usage",
         "//pkg/sentry/vfs",

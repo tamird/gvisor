@@ -19,9 +19,13 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
+	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/sched"
 	"gvisor.dev/gvisor/pkg/sentry/mm"
+	"gvisor.dev/gvisor/pkg/sentry/platform"
 )
 
 func TestParentDeathSignalClearedOnCredentialChange(t *testing.T) {
@@ -150,5 +154,76 @@ func TestExitNotifyParentSeccheckInfoConcurrentGroupExit(t *testing.T) {
 	_, info = getExitNotifyParentSeccheckInfo(task)
 	if got := info.ExitStatus; got != int32(wantStatus) {
 		t.Errorf("exit status after group exit = %d, want %d", got, wantStatus)
+	}
+}
+
+type pullFullStateErrorContext struct {
+	platform.Context
+}
+
+func (*pullFullStateErrorContext) PullFullState(platform.AddressSpace, *arch.Context64) error {
+	return linuxerr.EIO
+}
+
+type pullFullStateErrorPlatform struct {
+	platform.Platform
+}
+
+func (*pullFullStateErrorPlatform) SupportsAddressSpaceIO() bool { return false }
+
+func (*pullFullStateErrorPlatform) NewAddressSpace() (platform.AddressSpace, error) {
+	return &pullFullStateErrorAddressSpace{}, nil
+}
+
+type pullFullStateErrorAddressSpace struct {
+	platform.AddressSpace
+}
+
+func (*pullFullStateErrorAddressSpace) Release() {}
+
+func TestRunInterruptPullFullStateError(t *testing.T) {
+	// PullFullState returns an error without accessing application memory.
+	// Construct a valid, empty MemoryManager without backing memory or a live
+	// platform address space. Unexpected platform operations fail through the
+	// nil embedded interfaces above.
+	memoryManager, err := mm.NewMemoryManager(&pullFullStateErrorPlatform{}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer memoryManager.DecUsers(context.Background())
+
+	tg := &ThreadGroup{signalHandlers: NewSignalHandlers()}
+	task := &Task{
+		taskNode: taskNode{tg: tg},
+		image: TaskImage{
+			Arch:          new(arch.Context64),
+			MemoryManager: memoryManager,
+		},
+		p: &pullFullStateErrorContext{},
+	}
+	tg.tasks.PushBack(task)
+	tg.signalHandlers.mu.Lock()
+	queued := task.pendingSignals.enqueue(SignalInfoPriv(linux.SIGUSR1), nil)
+	tg.signalHandlers.mu.Unlock()
+	if !queued {
+		t.Fatal("failed to enqueue signal")
+	}
+
+	if next := (*runInterrupt)(nil).execute(task); next != (*runExit)(nil) {
+		t.Fatalf("runInterrupt returned %T, want *runExit", next)
+	}
+
+	// The error path must release the signal mutex before entering runExit.
+	tg.signalHandlers.mu.Lock()
+	defer tg.signalHandlers.mu.Unlock()
+	if !tg.exiting {
+		t.Error("thread group is not exiting")
+	}
+	wantStatus := linux.WaitStatusTerminationSignal(linux.SIGILL)
+	if got := tg.exitStatus; got != wantStatus {
+		t.Errorf("thread group exit status = %v, want %v", got, wantStatus)
+	}
+	if got := task.exitStatus; got != wantStatus {
+		t.Errorf("task exit status = %v, want %v", got, wantStatus)
 	}
 }
