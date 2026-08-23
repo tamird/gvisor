@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "go_library")
+load("//tools/nogo:defs.bzl", "nogo_config", "nogo_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -36,4 +37,19 @@ go_library(
         "//pkg/atomicbitops",
         "//tools/checklocks/test/crosspkg",
     ],
+)
+
+nogo_config(
+    name = "inferred_config",
+    srcs = ["inferred.yaml"],
+)
+
+# Production filters suppress inference hints. Check the inference fixture
+# without those filters so unexpected hints and missing expectations fail CI.
+nogo_test(
+    name = "inferred_nogo",
+    srcs = ["inferred.go"],
+    config = ":inferred_config",
+    tags = ["nogo"],
+    deps = [":test"],
 )

@@ -352,6 +352,9 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 	var (
 		lgf         lockGuardFacts
 		guardsFound int
+		// guardsResolved contains canonical keys for declared guards,
+		// regardless of whether they are held in the required mode.
+		guardsResolved = make(map[string]struct{})
 		// guardsHeld maps resolved names to exclusive (true) or shared (false).
 		guardsHeld = make(map[string]bool)
 	)
@@ -375,6 +378,7 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 			continue
 		}
 		s, ok := ls.isHeld(r, isWrite)
+		guardsResolved[s] = struct{}{}
 		if ok {
 			_, exclusive := ls.isHeld(r, true)
 			guardsHeld[s] = exclusive
@@ -463,9 +467,8 @@ func (pc *passContext) checkGuards(inst almostInst, value, from ssa.Value, acces
 			if info.object == nil || accessObj == info.object {
 				continue
 			}
-			// Has this already been held?
-			if _, ok := guardsHeld[s]; ok {
-				oo.counts[info.object]++
+			// Do not infer a guard already declared for this access.
+			if _, ok := guardsResolved[s]; ok {
 				continue
 			}
 			// Is this a global? Record directly.
@@ -1052,7 +1055,7 @@ func (pc *passContext) checkInferred() {
 		var lgf lockGuardFacts
 		pc.importLockGuardFacts(obj, &lgf)
 		for other, count := range oo.counts {
-			// Is this already a guard?
+			// Do not suggest an annotation that is already present.
 			if _, ok := lgf.GuardedBy[other.Name()]; ok {
 				continue
 			}

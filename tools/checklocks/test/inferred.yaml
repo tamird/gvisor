@@ -1,0 +1,10 @@
+groups:
+  - name: inferred
+    regex: '^tools/checklocks/test/inferred\.go:'
+    default: false
+  - name: other
+    regex: '.*'
+    default: false
+analyzers:
+  checklocks:
+    inferred: # Enabled.
