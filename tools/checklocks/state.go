@@ -393,6 +393,7 @@ func (l *lockState) String() string {
 		// Include the exclusive status of each lock.
 		keys = append(keys, fmt.Sprintf("%s %s", k, exclusiveStr(info.exclusive)))
 	}
+	slices.Sort(keys)
 	return strings.Join(keys, ",")
 }
 
