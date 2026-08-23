@@ -273,7 +273,11 @@ func (tg *ThreadGroup) CreateSession(ctx context.Context) (SessionID, error) {
 // had a controlling terminal, it is returned so that the caller can drop the
 // bond reference outside of the locks.
 //
-// Precondition: callers must hold TaskSet.mu and the signal mutex for writing.
+// The signal mutex may be temporarily released to process orphaned groups.
+//
+// Precondition: callers must hold TaskSet.mu for writing.
+//
+// +checklocks:tg.signalHandlers.mu
 func (tg *ThreadGroup) createSession() (SessionID, *TTY, error) {
 	// Get the ID for this thread in the current namespace.
 	id := tg.pidns.tgids[tg]
@@ -325,19 +329,20 @@ func (tg *ThreadGroup) createSession() (SessionID, *TTY, error) {
 
 	// Leave the current group, and assign the new one.
 	if tg.processGroup != nil {
+		// Other thread groups may share tg.signalHandlers. Drop the signal
+		// mutex before orphan checks; TaskSet.mu keeps the pointer stable.
+		tg.signalHandlers.mu.Unlock()
 		oldParentPG := tg.parentPG()
 		tg.forEachChildThreadGroupLocked(func(childTG *ThreadGroup) {
 			childTG.processGroup.incRefWithParent(pg)
 			childTG.processGroup.decRefWithParent(oldParentPG)
 		})
-		// If tg.processGroup is an orphan, decRefWithParent will lock
-		// the signal mutex of each thread group in tg.processGroup.
-		// However, tg's signal mutex may already be locked at this
-		// point. We change tg's process group before calling
-		// decRefWithParent to avoid locking tg's signal mutex twice.
+		// Leave the old process group before checking whether its
+		// remaining members have any stopped jobs.
 		oldPG := tg.processGroup
 		tg.processGroup = pg
 		oldPG.decRefWithParent(oldParentPG)
+		tg.signalHandlers.mu.Lock()
 	} else {
 		// The current process group may be nil only in the case of an
 		// unparented thread group (i.e. the init process). This would

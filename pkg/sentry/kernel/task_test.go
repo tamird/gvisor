@@ -227,3 +227,82 @@ func TestRunInterruptPullFullStateError(t *testing.T) {
 		t.Errorf("task exit status = %v, want %v", got, wantStatus)
 	}
 }
+
+func TestCreateSessionSharedSignalHandlers(t *testing.T) {
+	ctx := context.Background()
+	pidns := newPIDNamespace(nil, nil, nil)
+	ts := newTaskSet(pidns)
+	var leaders []*Task
+	defer func() {
+		ts.mu.Lock()
+		defer ts.mu.Unlock()
+		for i := len(leaders) - 1; i >= 0; i-- {
+			leader := leaders[i]
+			delete(pidns.tgids, leader.tg)
+			delete(pidns.tasks, pidns.tids[leader])
+			delete(pidns.tids, leader)
+			if pg := leader.tg.processGroup; pg != nil {
+				pg.decRefWithParent(leader.tg.parentPG())
+			}
+		}
+	}()
+
+	// These operations need only thread and namespace metadata. No tasks
+	// run or enter a group stop, so no platform context is needed.
+	newTask := func(id ThreadID, parent *Task, sh *SignalHandlers) *Task {
+		ts.mu.Lock()
+		defer ts.mu.Unlock()
+		tg := &ThreadGroup{
+			threadGroupNode: threadGroupNode{pidns: pidns},
+			signalHandlers:  sh,
+		}
+		leader := &Task{taskNode: taskNode{
+			tg:       tg,
+			parent:   parent,
+			children: make(map[*Task]struct{}),
+		}}
+		tg.leader = leader
+		tg.tasks.PushBack(leader)
+		pidns.tgids[tg] = id
+		pidns.tids[leader] = id
+		pidns.tasks[id] = leader
+		if parent != nil {
+			parent.children[leader] = struct{}{}
+			tg.processGroup = parent.tg.processGroup
+			tg.processGroup.incRefWithParent(tg.processGroup)
+		}
+		leaders = append(leaders, leader)
+		return leader
+	}
+
+	root := newTask(1, nil, NewSignalHandlers())
+	if _, err := root.tg.CreateSession(ctx); err != nil {
+		t.Fatal(err)
+	}
+	parent := newTask(2, root, NewSignalHandlers())
+	// This is the topology produced by CLONE_VM|CLONE_SIGHAND without
+	// CLONE_THREAD or CLONE_PARENT.
+	child := newTask(3, parent, parent.tg.signalHandlers)
+	if err := child.tg.CreateProcessGroup(); err != nil {
+		t.Fatal(err)
+	}
+	childPG := child.tg.ProcessGroup()
+	if childPG.IsOrphan() {
+		t.Fatal("child process group is already orphaned")
+	}
+
+	// Leaving the session orphans the child's process group. The orphan
+	// check must not reacquire the shared signal mutex held for parent.
+	if _, err := parent.tg.CreateSession(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if !childPG.IsOrphan() {
+		t.Error("child process group was not orphaned")
+	}
+	if child.tg.Session() != root.tg.Session() {
+		t.Error("child left the original session")
+	}
+	if parent.tg.Session() == root.tg.Session() {
+		t.Error("parent did not create a new session")
+	}
+}
