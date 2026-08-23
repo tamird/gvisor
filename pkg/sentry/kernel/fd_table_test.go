@@ -249,10 +249,16 @@ func TestDescriptorFlags(t *testing.T) {
 			t.Fatalf("fdTable.NewFDAt(2, r, FDFlags{}) displaced FD")
 		}
 
+		// Growing the bucket slice must preserve earlier files and flags.
+		if _, err := fdTable.NewFDAt(ctx, fdsPerBucket, fd, FDFlags{}); err != nil {
+			t.Fatalf("NewFDAt(%d): %v", fdsPerBucket, err)
+		}
+
 		newFile, flags := fdTable.Get(2)
 		if newFile == nil {
-			t.Fatalf("fdTable.Get(2): got a %v, wanted nil", newFile)
+			t.Fatal("fdTable.Get(2): got nil after table growth")
 		}
+		defer newFile.DecRef(ctx)
 
 		if !flags.CloseOnExec {
 			t.Fatalf("new File flags %v don't match original %d\n", flags, 0)

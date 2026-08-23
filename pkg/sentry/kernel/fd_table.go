@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"sync/atomic"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/abi/linux"
@@ -90,8 +91,12 @@ type FDTable struct {
 	// +checklocks:mu
 	fdBitmap bitmap.Bitmap `state:"nosave"`
 
-	// descriptorTable holds descriptors.
-	descriptorTable `state:".(map[int32]descriptor)"`
+	// descriptorTable is a two-level table of atomically accessed pointers.
+	// Published slice headers and descriptors are immutable.
+	//
+	// +checkatomic
+	// +checklocks:mu
+	descriptorTable atomic.Pointer[descriptorBucketSlice] `state:".(map[int32]descriptor)"`
 }
 
 // saveDescriptorTable implements stateify's descriptorTable save hook.

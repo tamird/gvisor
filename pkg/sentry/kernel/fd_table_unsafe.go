@@ -16,27 +16,18 @@ package kernel
 
 import (
 	"math"
+	"sync/atomic"
 
 	"gvisor.dev/gvisor/pkg/bitmap"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 )
 
-type descriptorBucket [fdsPerBucket]descriptorAtomicPtr
-type descriptorBucketSlice []descriptorBucketAtomicPtr
-
-// descriptorTable is a two level table. The first level is a slice of
-// *descriptorBucket where each bucket is a slice of *descriptor.
-//
-// All objects are updated atomically.
-type descriptorTable struct {
-	// slice is loaded and stored atomically. Changes to the slice also require
-	// FDTable.mu once the table is shared.
-	//
-	// checklocks only recognizes atomic methods in atomic and atomicbitops,
-	// not the pointer methods generated in package kernel. descriptorTable
-	// also has no path back to the enclosing FDTable.mu for a writer guard.
-	slice descriptorBucketSliceAtomicPtr `state:".(map[int32]*descriptor)"`
-}
+// descriptorBucket and descriptorBucketSlice hold atomic pointers for the two
+// levels of an FDTable. Element writes require the enclosing FDTable.mu, except
+// during private construction and restore. checklocks cannot attach +checkatomic
+// to indexed elements or resolve their owner guard back to that enclosing mutex.
+type descriptorBucket [fdsPerBucket]atomic.Pointer[descriptor]
+type descriptorBucketSlice []atomic.Pointer[descriptorBucket]
 
 // initNoLeakCheck initializes the table without enabling leak checking.
 //
@@ -46,7 +37,7 @@ type descriptorTable struct {
 // +checklocks:f.mu
 func (f *FDTable) initNoLeakCheck() {
 	var slice descriptorBucketSlice // Empty slice.
-	f.slice.Store(&slice)
+	f.descriptorTable.Store(&slice)
 }
 
 // init initializes the table with leak checking.
@@ -74,7 +65,7 @@ const (
 //
 //go:nosplit
 func (f *FDTable) get(fd int32) (*vfs.FileDescription, FDFlags, bool) {
-	slice := *f.slice.Load()
+	slice := *f.descriptorTable.Load()
 	bucketN := fd >> fdsPerBucketShift
 	if bucketN >= int32(len(slice)) {
 		return nil, FDFlags{}, false
@@ -93,7 +84,7 @@ func (f *FDTable) get(fd int32) (*vfs.FileDescription, FDFlags, bool) {
 // CurrentMaxFDs returns the number of file descriptors that may be stored in f
 // without reallocation.
 func (f *FDTable) CurrentMaxFDs() int {
-	slice := *f.slice.Load()
+	slice := *f.descriptorTable.Load()
 	return len(slice) * fdsPerBucket
 }
 
@@ -108,7 +99,7 @@ func (f *FDTable) CurrentMaxFDs() int {
 //
 // +checklocks:f.mu
 func (f *FDTable) set(fd int32, file *vfs.FileDescription, flags FDFlags) *vfs.FileDescription {
-	slicePtr := f.slice.Load()
+	slicePtr := f.descriptorTable.Load()
 
 	bucketN := fd >> fdsPerBucketShift
 	// Grow the table as required.
@@ -121,9 +112,13 @@ func (f *FDTable) set(fd int32, file *vfs.FileDescription, flags FDFlags) *vfs.F
 				newLen = int(MaxFdLimit)
 			}
 		}
-		newSlice := append(*slicePtr, make([]descriptorBucketAtomicPtr, newLen-length)...)
+		// Atomic pointers must not be copied after first use.
+		newSlice := make(descriptorBucketSlice, newLen)
+		for i := range length {
+			newSlice[i].Store((*slicePtr)[i].Load())
+		}
 		slicePtr = &newSlice
-		f.slice.Store(slicePtr)
+		f.descriptorTable.Store(slicePtr)
 	}
 
 	slice := *slicePtr
