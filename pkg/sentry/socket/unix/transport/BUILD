@@ -112,9 +112,13 @@ go_library(
 go_test(
     name = "transport_test",
     size = "small",
-    srcs = ["queue_test.go"],
+    srcs = [
+        "connectioned_test.go",
+        "queue_test.go",
+    ],
     library = ":transport",
     deps = [
+        "//pkg/abi/linux",
         "//pkg/context",
         "//pkg/syserr",
     ],

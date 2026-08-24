@@ -344,7 +344,13 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 	}
 
 	// Check if ce is e to avoid a deadlock.
-	if ce, ok := ce.(*connectionedEndpoint); ok && ce == e {
+	connectingEP, ok := ce.(*connectionedEndpoint)
+	if ok && connectingEP == e {
+		return syserr.ErrInvalidEndpointState
+	}
+	// Stream connections exchange concrete peer credentials. Reject other
+	// implementations before taking locks or publishing an accepted endpoint.
+	if e.stype == linux.SOCK_STREAM && !ok {
 		return syserr.ErrInvalidEndpointState
 	}
 
@@ -418,10 +424,6 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 		}
 		readQueue.IncRef()
 		if e.stype == linux.SOCK_STREAM {
-			connectingEP, ok := ce.(*connectionedEndpoint)
-			if !ok {
-				return syserr.ErrInvalidEndpointState
-			}
 			// ce is locked through ConnectingEndpoint, and the listener
 			// lock prevents Accept from returning ne. checklocks cannot
 			// relate the interface lock or prove pending-child ownership.
