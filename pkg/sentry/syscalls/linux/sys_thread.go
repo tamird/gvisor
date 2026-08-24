@@ -1104,6 +1104,8 @@ func PIDFDOpen(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintp
 }
 
 // PIDFDGetFD implements linux system call pidfd_getfd(2).
+//
+// +checklocksexclude:t.fdTable.mu
 func PIDFDGetFD(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, *kernel.SyscallControl, error) {
 	pidFD := args[0].Int()
 	targetFD := args[1].Int()

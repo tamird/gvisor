@@ -417,6 +417,7 @@ go_test(
         "//pkg/abi",
         "//pkg/context",
         "//pkg/errors/linuxerr",
+        "//pkg/goid",
         "//pkg/hostarch",
         "//pkg/sentry/arch",
         "//pkg/sentry/contexttest",

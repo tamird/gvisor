@@ -132,6 +132,8 @@ func (t *Task) pidFDOpen(pid *pid, isThread bool, nonBlock bool) (*vfs.FileDescr
 //
 // Callers must not hold the mutex of the task selected by pidfd.
 // checklocks cannot name that task from the descriptor number.
+//
+// +checklocksexclude:t.fdTable.mu
 func (t *Task) PIDFDGetFD(pidfd int32, targetfd int32, flags uint32) (uintptr, error) {
 	file := t.GetFile(pidfd)
 	if file == nil {
@@ -151,7 +153,10 @@ func (t *Task) PIDFDGetFD(pidfd int32, targetfd int32, flags uint32) (uintptr, e
 		return 0, linuxerr.EPERM
 	}
 
+	// Keep the target's FD table stable until GetFile acquires a file reference.
+	target.mu.Lock()
 	targetFile := target.GetFile(targetfd)
+	target.mu.Unlock()
 	if targetFile == nil {
 		return 0, linuxerr.EBADF
 	}

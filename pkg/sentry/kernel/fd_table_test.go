@@ -19,6 +19,8 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/context"
+	"gvisor.dev/gvisor/pkg/errors/linuxerr"
+	"gvisor.dev/gvisor/pkg/goid"
 	"gvisor.dev/gvisor/pkg/sentry/contexttest"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/pipe"
@@ -331,6 +333,75 @@ func TestExecvePipeProcInfoConcurrentUnshare(t *testing.T) {
 		_, info = execveSeccheckInfo(reader, nil, nil, nil, "", "")
 		if info.PipeInputProc != nil {
 			t.Fatal("stdin pipe peer found after unsharing an empty table")
+		}
+	})
+}
+
+func TestPIDFDGetFDConcurrentUnshare(t *testing.T) {
+	runTest(t, func(ctx context.Context, fdTable *FDTable, fd *vfs.FileDescription, limitSet *limits.LimitSet) {
+		k := fdTable.k
+		tg := &ThreadGroup{limits: limitSet}
+		caller := &Task{k: k, fdTable: fdTable}
+		caller.tg = tg
+		caller.goid.Store(goid.Get())
+
+		oldTable := k.NewFDTable()
+		defer oldTable.DecRef(ctx)
+		oldTable.IncRef() // The target owns a separate reference.
+		target := &Task{k: k, fdTable: oldTable}
+		target.tg = tg
+		defer func() { target.fdTable.DecRef(ctx) }()
+		if _, err := oldTable.NewFDAt(ctx, 1, fd, FDFlags{}); err != nil {
+			t.Fatal(err)
+		}
+
+		pfd := &pidFD{isThread: true, pid: &pid{}}
+		pfd.pid.t.Store(target)
+		if err := pfd.vfsFD.Init(pfd, 0, auth.CredentialsFromContext(ctx), fd.Mount(), fd.Dentry(), &vfs.FileDescriptionOptions{UseDentryMetadata: true}); err != nil {
+			t.Fatal(err)
+		}
+		defer pfd.vfsFD.DecRef(ctx)
+		if _, err := fdTable.NewFDAt(ctx, 0, &pfd.vfsFD, FDFlags{}); err != nil {
+			t.Fatal(err)
+		}
+
+		checkDup := func(n uintptr) {
+			t.Helper()
+			file, flags := fdTable.Get(int32(n))
+			if file == nil {
+				t.Fatalf("duplicated FD %d is missing", n)
+			}
+			defer file.DecRef(ctx)
+			if file != fd || !flags.CloseOnExec {
+				t.Errorf("duplicated FD %d = (%p, %+v), want (%p, close-on-exec)", n, file, flags, fd)
+			}
+			fdTable.Remove(ctx, int32(n)).DecRef(ctx)
+		}
+		n, err := caller.PIDFDGetFD(0, 1, 0)
+		if err != nil {
+			t.Fatalf("PIDFDGetFD before unshare: %v", err)
+		}
+		checkDup(n)
+
+		// The same-group CanTrace path takes no target mutex. Fork(0) copies
+		// no file references, and retaining oldTable prevents its destruction
+		// from ordering the lookup after the pointer replacement.
+		var wg sync.WaitGroup
+		// Join after the conflicting accesses, before releasing any references.
+		defer wg.Wait()
+		wg.Go(func() {
+			target.goid.Store(goid.Get())
+			target.UnshareFdTable(0)
+		})
+		n, err = caller.PIDFDGetFD(0, 1, 0)
+		if err == nil {
+			checkDup(n)
+		} else if !linuxerr.Equals(linuxerr.EBADF, err) {
+			t.Fatalf("PIDFDGetFD during unshare: %v", err)
+		}
+		wg.Wait()
+		if _, err := caller.PIDFDGetFD(0, 1, 0); !linuxerr.Equals(linuxerr.EBADF, err) {
+			t.Fatalf("PIDFDGetFD after unshare: got %v, want EBADF", err)
 		}
 	})
 }
