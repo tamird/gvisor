@@ -143,6 +143,11 @@ func findTPUTasks(k *kernel.Kernel) []*tpuTaskInfo {
 	return infos
 }
 
+// Preconditions: All tasks in tpuTasks must belong to k. The caller must not
+// hold any of their Task.mu locks; checklocks cannot express exclusions for
+// the individual tasks in the slice.
+//
+// +checklocksexclude:k.tasks.mu
 func controlTPUTasks(k *kernel.Kernel, action tpu_pb.ControlAction, tpuTasks []*tpuTaskInfo) error {
 	sctx := k.SupervisorContext()
 	if len(tpuTasks) == 0 {
@@ -157,17 +162,28 @@ func controlTPUTasks(k *kernel.Kernel, action tpu_pb.ControlAction, tpuTasks []*
 
 	for _, info := range tpuTasks {
 		t := info.task
-		fdTable := t.FDTable()
-		if fdTable == nil {
+		var reqFile, rspFile *vfs.FileDescription
+		hasFDTable := false
+		// Exec can replace the task's FD table. Keep it stable until Get has
+		// acquired the file references used below.
+		t.WithMuLocked(func(t *kernel.Task) {
+			fdTable := t.FDTable()
+			if fdTable == nil {
+				return
+			}
+			hasFDTable = true
+			reqFile, _ = fdTable.Get(info.reqWriteFd)
+			if reqFile != nil {
+				rspFile, _ = fdTable.Get(info.rspReadFd)
+			}
+		})
+		if !hasFDTable {
 			return fmt.Errorf("task %d has no FD table", t.ThreadID())
 		}
-
-		reqFile, _ := fdTable.Get(info.reqWriteFd)
 		if reqFile == nil {
 			return fmt.Errorf("failed to get reqWriteFd %d for task %d", info.reqWriteFd, t.ThreadID())
 		}
 
-		rspFile, _ := fdTable.Get(info.rspReadFd)
 		if rspFile == nil {
 			reqFile.DecRef(sctx)
 			return fmt.Errorf("failed to get rspReadFd %d for task %d", info.rspReadFd, t.ThreadID())
@@ -195,6 +211,7 @@ func controlTPUTasks(k *kernel.Kernel, action tpu_pb.ControlAction, tpuTasks []*
 	return nil
 }
 
+// +checklocksexclude:info.task.tg.pidns.owner.mu
 func controlTPUTask(sctx context.Context, info *tpuTaskInfo, action tpu_pb.ControlAction, reqFile, rspFile *vfs.FileDescription) error {
 	t := info.task
 
