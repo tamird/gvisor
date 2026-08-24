@@ -36,11 +36,22 @@ type queue struct {
 	readerWaiters *waiter.Queue
 	writerWaiters *waiter.Queue
 
-	mu       queueMutex `state:"nosave"`
-	closed   atomicbitops.Bool
-	unread   bool
-	used     int64
-	limit    int64
+	mu queueMutex `state:"nosave"`
+
+	// +checklocks:mu
+	// +checkatomic
+	closed atomicbitops.Bool
+
+	// +checklocks:mu
+	unread bool
+
+	// +checklocks:mu
+	used int64
+
+	// +checklocks:mu
+	limit int64
+
+	// +checklocks:mu
 	dataList messageList
 }
 
@@ -50,6 +61,8 @@ type queue struct {
 // Both the read and write queues must be notified after closing:
 // q.readerWaiters.Notify(waiter.ReadableEvents)
 // q.writerWaiters.Notify(waiter.WritableEvents)
+//
+// +checklocksexclude:q.mu
 func (q *queue) Close() {
 	q.mu.Lock()
 	q.closed.Store(true)
@@ -65,6 +78,8 @@ func (q *queue) isClosed() bool {
 // Both the read and write queues must be notified after resetting:
 // q.readerWaiters.Notify(waiter.ReadableEvents)
 // q.writerWaiters.Notify(waiter.WritableEvents)
+//
+// +checklocksexclude:q.mu
 func (q *queue) Reset(ctx context.Context) {
 	q.mu.Lock()
 	dataList := q.dataList
@@ -78,6 +93,8 @@ func (q *queue) Reset(ctx context.Context) {
 }
 
 // DecRef implements RefCounter.DecRef.
+//
+// +checklocksexclude:q.mu
 func (q *queue) DecRef(ctx context.Context) {
 	q.queueRefs.DecRef(func() {
 		// We don't need to notify after resetting because no one cares about
@@ -87,6 +104,8 @@ func (q *queue) DecRef(ctx context.Context) {
 }
 
 // IsReadable determines if q is currently readable.
+//
+// +checklocksexclude:q.mu
 func (q *queue) IsReadable() bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -100,11 +119,15 @@ func (q *queue) IsReadable() bool {
 // free.
 //
 // See net/unix/af_unix.c:unix_writeable.
+//
+// +checklocks:q.mu
 func (q *queue) bufWritable() bool {
 	return 4*q.used < q.limit
 }
 
 // IsWritable determines if q is currently writable.
+//
+// +checklocksexclude:q.mu
 func (q *queue) IsWritable() bool {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -130,6 +153,8 @@ func (q *queue) IsWritable() bool {
 //
 // If notify is true, readerWaiters.Notify must be called:
 // q.readerWaiters.Notify(waiter.ReadableEvents)
+//
+// +checklocksexclude:q.mu
 func (q *queue) Enqueue(ctx context.Context, data [][]byte, c ControlMessages, from Address, discardEmpty bool, truncate bool) (l int64, notify bool, err *syserr.Error) {
 	q.mu.Lock()
 
@@ -207,6 +232,8 @@ func (q *queue) Enqueue(ctx context.Context, data [][]byte, c ControlMessages, f
 //
 // If notify is true, writerWaiters.Notify must be called:
 // q.writerWaiters.Notify(waiter.WritableEvents)
+//
+// +checklocksexclude:q.mu
 func (q *queue) Dequeue() (e *message, notify bool, err *syserr.Error) {
 	q.mu.Lock()
 
@@ -235,6 +262,8 @@ func (q *queue) Dequeue() (e *message, notify bool, err *syserr.Error) {
 }
 
 // Peek returns the first entry in the data queue, if one exists.
+//
+// +checklocksexclude:q.mu
 func (q *queue) Peek() (*message, *syserr.Error) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -254,6 +283,8 @@ func (q *queue) Peek() (*message, *syserr.Error) {
 
 // QueuedSize returns the number of bytes currently in the queue, that is, the
 // number of readable bytes.
+//
+// +checklocksexclude:q.mu
 func (q *queue) QueuedSize() int64 {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -261,6 +292,8 @@ func (q *queue) QueuedSize() int64 {
 }
 
 // MaxQueueSize returns the maximum number of bytes storable in the queue.
+//
+// +checklocksexclude:q.mu
 func (q *queue) MaxQueueSize() int64 {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -268,6 +301,8 @@ func (q *queue) MaxQueueSize() int64 {
 }
 
 // SetMaxQueueSize sets the maximum number of bytes storable in the queue.
+//
+// +checklocksexclude:q.mu
 func (q *queue) SetMaxQueueSize(v int64) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -276,6 +311,8 @@ func (q *queue) SetMaxQueueSize(v int64) {
 
 // CloseUnread sets flag to indicate that the peer is closed (not shutdown)
 // with unread data. So if read on this queue shall return ECONNRESET error.
+//
+// +checklocksexclude:q.mu
 func (q *queue) CloseUnread() {
 	q.mu.Lock()
 	defer q.mu.Unlock()

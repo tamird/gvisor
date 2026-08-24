@@ -43,6 +43,8 @@ type AbstractSocketNamespace struct {
 	// TryIncRef() must be called in case the socket is concurrently being
 	// destroyed. It is the responsibility of the socket to remove itself from the
 	// abstract socket namespace when it is destroyed.
+	//
+	// +checklocks:mu
 	endpoints map[string]abstractEndpoint
 }
 
@@ -59,12 +61,16 @@ func (e *boundEndpoint) Release(ctx context.Context) {
 	e.BoundEndpoint.Release(ctx)
 }
 
-func (a *AbstractSocketNamespace) init() {
-	a.endpoints = make(map[string]abstractEndpoint)
+func newAbstractSocketNamespace() AbstractSocketNamespace {
+	return AbstractSocketNamespace{
+		endpoints: make(map[string]abstractEndpoint),
+	}
 }
 
 // BoundEndpoint retrieves the endpoint bound to the given name. The return
 // value is nil if no endpoint was bound.
+//
+// +checklocksexclude:a.mu
 func (a *AbstractSocketNamespace) BoundEndpoint(name string) transport.BoundEndpoint {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -86,6 +92,8 @@ func (a *AbstractSocketNamespace) BoundEndpoint(name string) transport.BoundEndp
 //
 // When the last reference managed by socket is dropped, ep may be removed from the
 // namespace.
+//
+// +checklocksexclude:a.mu
 func (a *AbstractSocketNamespace) Bind(ctx context.Context, path string, ep transport.BoundEndpoint, socket refs.TryRefCounter) (string, *syserr.Error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -125,6 +133,8 @@ func (a *AbstractSocketNamespace) Bind(ctx context.Context, path string, ep tran
 
 // Remove removes the specified socket at name from the abstract socket
 // namespace, if it has not yet been replaced.
+//
+// +checklocksexclude:a.mu
 func (a *AbstractSocketNamespace) Remove(name string, socket refs.TryRefCounter) {
 	a.mu.Lock()
 	defer a.mu.Unlock()

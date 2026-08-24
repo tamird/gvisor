@@ -51,12 +51,18 @@ func NewConnectionless(ctx context.Context) Endpoint {
 }
 
 // isBound returns true iff the endpoint is bound.
+//
+// +checklocks:e.endpointMutex
 func (e *connectionlessEndpoint) isBound() bool {
 	return e.path != ""
 }
 
 // Close puts the endpoint in a closed state and frees all resources associated
-// with it.
+// with it. The caller must exclude operations using the Receiver being
+// released, including RecvMsg calls that retained it before Close took the
+// lock.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) Close(ctx context.Context) {
 	e.Lock()
 	peer := e.peer
@@ -75,6 +81,8 @@ func (e *connectionlessEndpoint) Close(ctx context.Context) {
 		peer.Release(ctx)
 	}
 	r.NotifyStateChange()
+	// Close's caller excludes other uses of r; detaching it above alone does
+	// not wait for an in-flight RecvMsg to finish.
 	r.Release(ctx)
 }
 
@@ -84,6 +92,8 @@ func (e *connectionlessEndpoint) BidirectionalConnect(ctx context.Context, ce Co
 }
 
 // UnidirectionalConnect implements BoundEndpoint.UnidirectionalConnect.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) UnidirectionalConnect(ctx context.Context) (Sender, *syserr.Error) {
 	e.Lock()
 	r := e.receiver
@@ -103,6 +113,14 @@ func (e *connectionlessEndpoint) UnidirectionalConnect(ctx context.Context) (Sen
 
 // SendMsg writes data and a control message to the specified endpoint.
 // This method does not block if the data cannot be written.
+//
+// Preconditions: if to is backed by a connectionlessEndpoint, the caller
+// must not hold that endpoint's endpointMutex.
+//
+// UnidirectionalConnect acquires that mutex; BoundEndpoint does not expose
+// its concrete identity to checklocks.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) SendMsg(ctx context.Context, data [][]byte, c ControlMessages, to BoundEndpoint) (int64, func(), *syserr.Error) {
 	if to == nil {
 		return e.baseEndpoint.SendMsg(ctx, data, c, nil)
@@ -136,6 +154,14 @@ func (e *connectionlessEndpoint) Type() linux.SockType {
 }
 
 // Connect attempts to connect directly to server.
+//
+// Preconditions: if server is backed by a connectionlessEndpoint, the caller
+// must not hold that endpoint's endpointMutex.
+//
+// UnidirectionalConnect acquires that mutex; BoundEndpoint does not expose
+// its concrete identity to checklocks.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) Connect(ctx context.Context, server BoundEndpoint) *syserr.Error {
 	peer, err := server.UnidirectionalConnect(ctx)
 	if err != nil {
@@ -155,6 +181,8 @@ func (e *connectionlessEndpoint) Connect(ctx context.Context, server BoundEndpoi
 // Shutdown implements Endpoint.Shutdown. The peer of a datagram socket is
 // unaffected by the socket shutting down its write side: only local sends
 // start failing (see unix_shutdown() in net/unix/af_unix.c).
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) Shutdown(flags tcpip.ShutdownFlags) *syserr.Error {
 	closePeerRead := false
 	return e.shutdown(flags, closePeerRead)
@@ -186,6 +214,8 @@ func (e *connectionlessEndpoint) SetPeerCreds(creds CredentialsControlMessage) {
 //
 // Bind will fail only if the socket is connected, bound or the passed address
 // is invalid (the empty string).
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) Bind(addr Address) *syserr.Error {
 	e.Lock()
 	defer e.Unlock()
@@ -204,6 +234,8 @@ func (e *connectionlessEndpoint) Bind(addr Address) *syserr.Error {
 
 // Readiness returns the current readiness of the endpoint. For example, if
 // waiter.EventIn is set, the endpoint is immediately readable.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 	e.Lock()
 	defer e.Unlock()
@@ -237,6 +269,8 @@ func (e *connectionlessEndpoint) Readiness(mask waiter.EventMask) waiter.EventMa
 }
 
 // State implements socket.Socket.State.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) State() uint32 {
 	e.Lock()
 	defer e.Unlock()
@@ -252,6 +286,8 @@ func (e *connectionlessEndpoint) State() uint32 {
 }
 
 // OnSetSendBufferSize implements tcpip.SocketOptionsHandler.OnSetSendBufferSize.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionlessEndpoint) OnSetSendBufferSize(v int64) (newSz int64) {
 	e.Lock()
 	defer e.Unlock()

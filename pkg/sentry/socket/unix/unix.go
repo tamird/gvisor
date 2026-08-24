@@ -121,6 +121,9 @@ func NewFileDescription(ep transport.Endpoint, stype linux.SockType, flags uint3
 func (s *Socket) DecRef(ctx context.Context) {
 	s.socketRefs.DecRef(func() {
 		kernel.KernelFromContext(ctx).DeleteSocket(&s.vfsfd)
+		// In-flight file operations retain the file description, and
+		// abstract-namespace lookups retain the Socket. At zero references,
+		// neither can still be using the endpoint's Receiver.
 		s.ep.Close(ctx)
 		if s.abstractBound {
 			s.namespace.AbstractSockets().Remove(s.abstractName, s)
@@ -400,6 +403,7 @@ func (*provider) Socket(t *kernel.Task, stype linux.SockType, protocol int) (*vf
 
 	f, err := NewSockfsFile(t, ep, stype)
 	if err != nil {
+		// The endpoint has not been returned to a caller.
 		ep.Close(t)
 		return nil, err
 	}
@@ -424,12 +428,14 @@ func (*provider) Pair(t *kernel.Task, stype linux.SockType, protocol int) (*vfs.
 	ep1, ep2 := transport.NewPair(t, stype, t.Kernel())
 	s1, err := NewSockfsFile(t, ep1, stype)
 	if err != nil {
+		// Neither endpoint has been returned to a caller.
 		ep1.Close(t)
 		ep2.Close(t)
 		return nil, nil, err
 	}
 	s2, err := NewSockfsFile(t, ep2, stype)
 	if err != nil {
+		// Both endpoints are still private; s1's final reference releases ep1.
 		s1.DecRef(t)
 		ep2.Close(t)
 		return nil, nil, err

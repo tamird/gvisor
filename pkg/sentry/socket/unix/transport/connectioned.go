@@ -112,19 +112,27 @@ type connectionedEndpoint struct {
 	// will store the peer's credentials. The use of this option is possible
 	// only for connected `AF_UNIX` stream sockets and for `AF_UNIX` stream and
 	// datagram socket pairs created using socketpair(2)
+	//
+	// During connection setup, the accepted endpoint's credentials are
+	// initialized under the listener's lock, which prevents Accept from
+	// returning it.
+	//
+	// +checklocks:endpointMutex
 	peerCreds CredentialsControlMessage
 
 	// acceptedChan is per the TCP endpoint implementation. Note that the
 	// sockets in this channel are _already in the connected state_, and
 	// have another associated connectionedEndpoint.
 	//
-	// If nil, then no listen call has been made.
+	// If nil, the endpoint is not listening.
+	//
+	// +checklocks:endpointMutex
 	acceptedChan chan *connectionedEndpoint `state:".([]*connectionedEndpoint)"`
 
 	// boundSocketFD corresponds to a bound socket on the host filesystem
 	// that may listen and accept incoming connections.
 	//
-	// boundSocketFD is protected by baseEndpoint.mu.
+	// +checklocks:endpointMutex
 	boundSocketFD BoundSocketFD
 }
 
@@ -162,21 +170,23 @@ func NewPair(ctx context.Context, stype linux.SockType, uid uniqueid.Provider) (
 	q2 := &queue{readerWaiters: b.WaitQueue, writerWaiters: a.WaitQueue, limit: defaultBufferSize}
 	q2.InitRefs()
 
+	// newConnectioned returned private endpoints; neither is published before
+	// this function returns. checklocks cannot track those returned allocations.
 	if stype == linux.SOCK_STREAM {
-		a.receiver = &streamQueueReceiver{queueReceiver: queueReceiver{q1}}
-		b.receiver = &streamQueueReceiver{queueReceiver: queueReceiver{q2}}
+		a.receiver = &streamQueueReceiver{queueReceiver: queueReceiver{q1}} // +checklocksignore
+		b.receiver = &streamQueueReceiver{queueReceiver: queueReceiver{q2}} // +checklocksignore
 	} else {
-		a.receiver = &queueReceiver{q1}
-		b.receiver = &queueReceiver{q2}
+		a.receiver = &queueReceiver{q1} // +checklocksignore
+		b.receiver = &queueReceiver{q2} // +checklocksignore
 	}
 
 	q2.IncRef()
-	a.peer = &queueSender{
+	a.peer = &queueSender{ // +checklocksignore
 		endpoint:   b,
 		writeQueue: q2,
 	}
 	q1.IncRef()
-	b.peer = &queueSender{
+	b.peer = &queueSender{ // +checklocksignore
 		endpoint:   a,
 		writeQueue: q1,
 	}
@@ -216,17 +226,24 @@ func (e *connectionedEndpoint) WaiterQueue() *waiter.Queue {
 
 // isBound returns true iff the connectionedEndpoint is bound (but not
 // listening).
+//
+// +checklocks:e.endpointMutex
 func (e *connectionedEndpoint) isBound() bool {
 	return e.path != "" && e.acceptedChan == nil
 }
 
 // Listening implements ConnectingEndpoint.Listening.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Listening() bool {
 	e.Lock()
 	defer e.Unlock()
 	return e.ListeningLocked()
 }
 
+// ListeningLocked implements ConnectingEndpoint.ListeningLocked.
+//
+// +checklocks:e.endpointMutex
 func (e *connectionedEndpoint) ListeningLocked() bool {
 	return e.acceptedChan != nil
 }
@@ -237,6 +254,11 @@ func (e *connectionedEndpoint) ListeningLocked() bool {
 // The socket will be a fresh state after a call to close and may be reused.
 // That is, close may be used to "unbind" or "disconnect" the socket in error
 // paths.
+//
+// The caller must exclude operations using the Receiver being released,
+// including RecvMsg calls that retained it before Close acquired the lock.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Close(ctx context.Context) {
 	var acceptedChan chan *connectionedEndpoint
 	e.Lock()
@@ -283,6 +305,8 @@ func (e *connectionedEndpoint) Close(ctx context.Context) {
 				}
 			}
 			n.Unlock()
+			// n remained in the listener's queue when it was closed, so
+			// Accept never returned its Receiver to a caller.
 			n.Close(ctx)
 		}
 	}
@@ -293,21 +317,27 @@ func (e *connectionedEndpoint) Close(ctx context.Context) {
 	e.ResetBoundSocketFD(ctx)
 	if r != nil {
 		r.NotifyStateChange()
+		// Close's caller excludes other uses of r; detaching it above alone
+		// does not wait for an in-flight RecvMsg to finish.
 		r.Release(ctx)
 	}
 }
 
-func (e *connectionedEndpoint) swapPeerCredsLocked(ctx context.Context, cend ConnectingEndpoint, ne *connectionedEndpoint) *syserr.Error {
-	ce, ok := cend.(*connectionedEndpoint)
-	if !ok {
-		return syserr.ErrInvalidEndpointState
-	}
-	// Swap peer credentials between the two endpoints.
-	ne.peerCreds, ce.peerCreds = ce.peerCreds, ne.peerCreds
-	return nil
+// swapPeerCredsLocked exchanges credentials with other while both endpoints
+// are locked.
+//
+// +checklocks:e.endpointMutex
+// +checklocks:other.endpointMutex
+func (e *connectionedEndpoint) swapPeerCredsLocked(other *connectionedEndpoint) {
+	e.peerCreds, other.peerCreds = other.peerCreds, e.peerCreds
 }
 
 // BidirectionalConnect implements BoundEndpoint.BidirectionalConnect.
+//
+// The caller must not hold ce's lock. ConnectingEndpoint does not expose
+// its concrete mutex identity to checklocks.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce ConnectingEndpoint, returnConnect func(Receiver, Sender)) *syserr.Error {
 	if ce.Type() != e.stype {
 		return syserr.ErrWrongProtocolForSocket
@@ -388,9 +418,14 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 		}
 		readQueue.IncRef()
 		if e.stype == linux.SOCK_STREAM {
-			if err := e.swapPeerCredsLocked(ctx, ce, ne); err != nil {
-				return err
+			connectingEP, ok := ce.(*connectionedEndpoint)
+			if !ok {
+				return syserr.ErrInvalidEndpointState
 			}
+			// ce is locked through ConnectingEndpoint, and the listener
+			// lock prevents Accept from returning ne. checklocks cannot
+			// relate the interface lock or prove pending-child ownership.
+			connectingEP.swapPeerCredsLocked(ne) // +checklocksignore
 			returnConnect(&streamQueueReceiver{queueReceiver: queueReceiver{readQueue: readQueue}}, peer)
 		} else {
 			returnConnect(&queueReceiver{readQueue: readQueue}, peer)
@@ -409,6 +444,7 @@ func (e *connectionedEndpoint) BidirectionalConnect(ctx context.Context, ce Conn
 		// Busy; return EAGAIN per spec.
 		e.NestedUnlock(endpointLockHigherid)
 		ce.Unlock()
+		// The enqueue failed; ne's Receiver was never exposed to Accept.
 		ne.Close(ctx)
 		return syserr.ErrTryAgain
 	}
@@ -421,13 +457,23 @@ func (e *connectionedEndpoint) UnidirectionalConnect(ctx context.Context) (Sende
 
 // Connect attempts to directly connect to another Endpoint.
 // Implements Endpoint.Connect.
+//
+// Preconditions: if server is backed by a connectionedEndpoint, the caller
+// must not hold that endpoint's endpointMutex.
+//
+// BidirectionalConnect acquires that mutex; BoundEndpoint does not expose
+// its concrete identity to checklocks.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Connect(ctx context.Context, server BoundEndpoint) *syserr.Error {
-	returnConnect := func(r Receiver, ce Sender) {
-		e.receiver = r
-		e.peer = ce
+	returnConnect := func(r Receiver, peer Sender) {
+		// BidirectionalConnect calls this synchronously with e locked.
+		// checklocks cannot propagate that lock through the callback.
+		e.receiver = r // +checklocksignore
+		e.peer = peer  // +checklocksignore
 		// Make sure the newly created connected endpoint's write queue is updated
 		// to reflect this endpoint's send buffer size.
-		if bufSz := e.peer.SetSendBufferSize(e.ops.GetSendBufferSize()); bufSz != e.ops.GetSendBufferSize() {
+		if bufSz := peer.SetSendBufferSize(e.ops.GetSendBufferSize()); bufSz != e.ops.GetSendBufferSize() {
 			e.ops.SetSendBufferSize(bufSz, false /* notify */)
 			e.ops.SetReceiveBufferSize(bufSz, false /* notify */)
 		}
@@ -437,6 +483,8 @@ func (e *connectionedEndpoint) Connect(ctx context.Context, server BoundEndpoint
 }
 
 // Listen starts listening on the connection.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Listen(ctx context.Context, backlog int) *syserr.Error {
 	e.Lock()
 	defer e.Unlock()
@@ -475,6 +523,8 @@ func (e *connectionedEndpoint) Listen(ctx context.Context, backlog int) *syserr.
 }
 
 // Accept accepts a new connection.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Accept(ctx context.Context, peerAddr *Address) (Endpoint, *syserr.Error) {
 	e.Lock()
 
@@ -504,9 +554,11 @@ func (e *connectionedEndpoint) Accept(ctx context.Context, peerAddr *Address) (E
 	return ne, nil
 }
 
-// Preconditions:
-//   - e.Listening()
-//   - e is locked.
+// getAcceptedEndpointLocked accepts a connection with the endpoint locked.
+//
+// Preconditions: the endpoint must be listening.
+//
+// +checklocks:e.endpointMutex
 func (e *connectionedEndpoint) getAcceptedEndpointLocked(ctx context.Context) (*connectionedEndpoint, *syserr.Error) {
 	// Accept connections from within the sentry first, since this avoids
 	// an RPC to the gofer on the common path.
@@ -548,6 +600,8 @@ func (e *connectionedEndpoint) getAcceptedEndpointLocked(ctx context.Context) (*
 //
 // Bind will fail only if the socket is connected, bound or the passed address
 // is invalid (the empty string).
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Bind(addr Address) *syserr.Error {
 	e.Lock()
 	defer e.Unlock()
@@ -566,6 +620,8 @@ func (e *connectionedEndpoint) Bind(addr Address) *syserr.Error {
 
 // SendMsg writes data and a control message to the endpoint's peer.
 // This method does not block if the data cannot be written.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) SendMsg(ctx context.Context, data [][]byte, c ControlMessages, to BoundEndpoint) (int64, func(), *syserr.Error) {
 	// Stream sockets do not support specifying the endpoint. Seqpacket
 	// sockets ignore the passed endpoint.
@@ -575,6 +631,7 @@ func (e *connectionedEndpoint) SendMsg(ctx context.Context, data [][]byte, c Con
 	return e.baseEndpoint.SendMsg(ctx, data, c, to)
 }
 
+// +checklocks:e.endpointMutex
 func (e *connectionedEndpoint) isBoundSocketReadable() bool {
 	if e.boundSocketFD == nil {
 		return false
@@ -586,6 +643,8 @@ func (e *connectionedEndpoint) isBoundSocketReadable() bool {
 // side closes the peer's read side only for stream and seqpacket sockets;
 // the peer of a datagram (or raw, which Linux treats as datagram)
 // socketpair is unaffected (see unix_shutdown() in net/unix/af_unix.c).
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) Shutdown(flags tcpip.ShutdownFlags) *syserr.Error {
 	closePeerRead := e.stype == linux.SOCK_STREAM || e.stype == linux.SOCK_SEQPACKET
 	return e.shutdown(flags, closePeerRead)
@@ -594,6 +653,9 @@ func (e *connectionedEndpoint) Shutdown(flags tcpip.ShutdownFlags) *syserr.Error
 // Readiness returns the current readiness of the connectionedEndpoint. For
 // example, if waiter.EventIn is set, the connectionedEndpoint is immediately
 // readable.
+//
+// +checklocksexclude:e.endpointMutex
+// +checklocksexclude:e.lastErrorMu
 func (e *connectionedEndpoint) Readiness(mask waiter.EventMask) waiter.EventMask {
 	e.Lock()
 	defer e.Unlock()
@@ -641,6 +703,8 @@ func (e *connectionedEndpoint) Readiness(mask waiter.EventMask) waiter.EventMask
 }
 
 // State implements socket.Socket.State.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) State() uint32 {
 	e.Lock()
 	defer e.Unlock()
@@ -652,6 +716,8 @@ func (e *connectionedEndpoint) State() uint32 {
 }
 
 // OnSetSendBufferSize implements tcpip.SocketOptionsHandler.OnSetSendBufferSize.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) OnSetSendBufferSize(v int64) (newSz int64) {
 	e.Lock()
 	defer e.Unlock()
@@ -664,7 +730,9 @@ func (e *connectionedEndpoint) OnSetSendBufferSize(v int64) (newSz int64) {
 // WakeupWriters implements tcpip.SocketOptionsHandler.WakeupWriters.
 func (e *connectionedEndpoint) WakeupWriters() {}
 
-// SetBoundSocketFD implement HostBountEndpoint.SetBoundSocketFD.
+// SetBoundSocketFD implements HostBoundEndpoint.SetBoundSocketFD.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) SetBoundSocketFD(ctx context.Context, bsFD BoundSocketFD) error {
 	e.Lock()
 	defer e.Unlock()
@@ -677,7 +745,9 @@ func (e *connectionedEndpoint) SetBoundSocketFD(ctx context.Context, bsFD BoundS
 	return nil
 }
 
-// SetBoundSocketFD implement HostBountEndpoint.ResetBoundSocketFD.
+// ResetBoundSocketFD implements HostBoundEndpoint.ResetBoundSocketFD.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) ResetBoundSocketFD(ctx context.Context) {
 	e.Lock()
 	defer e.Unlock()
@@ -690,6 +760,8 @@ func (e *connectionedEndpoint) ResetBoundSocketFD(ctx context.Context) {
 }
 
 // EventRegister implements waiter.Waitable.EventRegister.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
 	if err := e.baseEndpoint.EventRegister(we); err != nil {
 		return err
@@ -705,6 +777,8 @@ func (e *connectionedEndpoint) EventRegister(we *waiter.Entry) error {
 }
 
 // EventUnregister implements waiter.Waitable.EventUnregister.
+//
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
 	e.baseEndpoint.EventUnregister(we)
 
@@ -716,16 +790,19 @@ func (e *connectionedEndpoint) EventUnregister(we *waiter.Entry) {
 	}
 }
 
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) GetAcceptConn() bool {
 	return e.Listening()
 }
 
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) PeerCreds() CredentialsControlMessage {
 	e.Lock()
 	defer e.Unlock()
 	return e.peerCreds
 }
 
+// +checklocksexclude:e.endpointMutex
 func (e *connectionedEndpoint) SetPeerCreds(creds CredentialsControlMessage) {
 	e.Lock()
 	defer e.Unlock()
