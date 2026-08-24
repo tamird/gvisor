@@ -417,7 +417,9 @@ func TestFindAllocatable64K(t *testing.T) {
 					f.unfreeSmall.RemoveRange(chunkFR) // +checklocksignore
 				}
 			}
-			f.chunks.Store(&chunks)
+			// f remains local to this fixture; checklocks does not track that
+			// ownership through initFields.
+			f.chunks.Store(&chunks) // +checklocksignore
 			// The synchronous callbacks below only initialize this private
 			// fixture; checklocks cannot track that ownership into them.
 			for _, es := range test.existing {

@@ -225,6 +225,8 @@ type MemoryFile struct {
 
 	// If asyncPageLoad is non-nil, it tracks the state of in-progress or
 	// failed async page loading.
+	//
+	// +checkatomic
 	asyncPageLoad atomic.Pointer[asyncMemoryFileLoad]
 
 	// file is the backing file. The file pointer is immutable.
@@ -239,8 +241,10 @@ type MemoryFile struct {
 	// After construction, stores to chunks require mu. Published slice headers
 	// and membership are immutable; chunk mappings follow the lifecycle below.
 	//
-	// The current checker cannot validate this field's generic atomic.Pointer
-	// operations.
+	// The annotations cover pointer access, not the pointed-to elements.
+	//
+	// +checkatomic
+	// +checklocks:mu
 	chunks atomic.Pointer[[]chunkInfo]
 }
 
