@@ -233,6 +233,8 @@ func setSaveOptsForCheckpointGofer(o *SaveOpts, saveOpts *state.SaveOpts) error 
 }
 
 // Save saves the running system.
+//
+// +checklocksexclude:s.Kernel.tasks.mu
 func (s *State) Save(o *SaveOpts, _ *struct{}) error {
 	saveOpts, err := ConvertToStateSaveOpts(o)
 	if err != nil {
@@ -244,6 +246,8 @@ func (s *State) Save(o *SaveOpts, _ *struct{}) error {
 }
 
 // SaveWithOpts saves the running system with the given options.
+//
+// +checklocksexclude:s.Kernel.tasks.mu
 func (s *State) SaveWithOpts(saveOpts *state.SaveOpts, execOpts *SaveRestoreExecOpts) error {
 	if err := preSave(s.Kernel, saveOpts, execOpts); err != nil {
 		return err
@@ -260,6 +264,8 @@ func (s *State) SaveWithOpts(saveOpts *state.SaveOpts, execOpts *SaveRestoreExec
 }
 
 // preSave is called before saving the kernel.
+//
+// +checklocksexclude:k.tasks.mu
 func preSave(k *kernel.Kernel, o *state.SaveOpts, execOpts *SaveRestoreExecOpts) error {
 	if err := preSaveTPU(k); err != nil {
 		return err
@@ -280,6 +286,8 @@ func preSave(k *kernel.Kernel, o *state.SaveOpts, execOpts *SaveRestoreExecOpts)
 // PostResume is called after resuming the kernel.
 //
 // Precondition: The kernel should be running.
+//
+// +checklocksexclude:k.tasks.mu
 func PostResume(k *kernel.Kernel, timeline *timing.Timeline) error {
 	if k.IsPaused() {
 		// The kernel is still paused (double-pause can happen with Docker which
@@ -306,6 +314,8 @@ func PostResume(k *kernel.Kernel, timeline *timing.Timeline) error {
 // PostRestore is called after restoring the kernel.
 //
 // Precondition: The kernel should be running.
+//
+// +checklocksexclude:k.tasks.mu
 func PostRestore(k *kernel.Kernel, timeline *timing.Timeline) error {
 	if k.IsPaused() {
 		// The kernel is still paused (double-pause can happen with Docker which

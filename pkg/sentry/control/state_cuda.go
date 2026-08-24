@@ -47,6 +47,7 @@ const (
 	cudaCheckpointSequentialKey = "cuda-checkpoint-sequential"
 )
 
+// +checklocksexclude:k.tasks.mu
 func preSaveCuda(k *kernel.Kernel, o *state.SaveOpts) error {
 	if o.CudaCheckpointPath == "" {
 		return nil
@@ -92,6 +93,8 @@ func preSaveCuda(k *kernel.Kernel, o *state.SaveOpts) error {
 // cudaProcs returns a list of all CUDA processes in the sandbox. It selects
 // them by collecting processes whose FD table has an open file descriptor to
 // any CUDA device.
+//
+// +checklocksexclude:k.tasks.mu
 func cudaProcs(sctx context.Context, k *kernel.Kernel, cudaCheckpointPath string, nvidiaDriverVersionMajor int) []*kernel.ThreadGroup {
 	var procs []*kernel.ThreadGroup
 	k.TaskSet().ForEachThreadGroup(func(tg *kernel.ThreadGroup, tgLeader *kernel.Task) {
@@ -246,6 +249,10 @@ func invokeCudaCheckpoint(sctx context.Context, k *kernel.Kernel, proc *Proc, cu
 	}, cu.Release(), nil
 }
 
+// filterCudaProcsUsingThreadName filters cudaProcs by CUDA thread names.
+//
+// Callers must not hold any input group's TaskSet mutex. checklocks cannot
+// name the owner locks of individual groups in the slice.
 func filterCudaProcsUsingThreadName(sctx context.Context, cudaProcs []*kernel.ThreadGroup) []*kernel.ThreadGroup {
 	log.Debugf("Filtering CUDA processes using thread name")
 	cudaThreadRegex := regexp.MustCompile(`^cuda[0-9a-f]{11}$`)

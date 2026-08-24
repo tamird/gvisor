@@ -599,6 +599,7 @@ func (r *restorer) restore(l *Loader) error {
 	return nil
 }
 
+// +checklocksexclude:k.tasks.mu
 func (r *restorer) postRestore(k *kernel.Kernel, timeline *timing.Timeline, timer *timing.Timer) {
 	defer timer.Log()
 	defer timeline.End()
@@ -679,6 +680,7 @@ func (r *restorer) calculateWallTimeSavings(s *Savings) error {
 	return nil
 }
 
+// +checklocksexclude:l.k.tasks.mu
 func (l *Loader) save(o *control.SaveOpts) (err error) {
 	saveOpts, err := control.ConvertToStateSaveOpts(o)
 	if err != nil {
@@ -690,6 +692,8 @@ func (l *Loader) save(o *control.SaveOpts) (err error) {
 }
 
 // saveWithOpts saves the kernel with the given options.
+//
+// +checklocksexclude:l.k.tasks.mu
 func (l *Loader) saveWithOpts(saveOpts *state.SaveOpts, execOpts *control.SaveRestoreExecOpts) (err error) {
 	defer func() {
 		// This closure is required to capture the final value of err.

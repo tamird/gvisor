@@ -525,6 +525,8 @@ func (cm *containerManager) ExecuteAsync(args *control.ExecArgs, pid *int32) err
 }
 
 // Checkpoint pauses a sandbox and saves its state.
+//
+// +checklocksexclude:cm.l.k.tasks.mu
 func (cm *containerManager) Checkpoint(o *control.SaveOpts, _ *struct{}) error {
 	log.Debugf("containerManager.Checkpoint")
 	return cm.l.save(o)
@@ -905,6 +907,8 @@ func (cm *containerManager) Pause(_, _ *struct{}) error {
 }
 
 // Resume resumes all tasks.
+//
+// +checklocksexclude:cm.l.k.tasks.mu
 func (cm *containerManager) Resume(_, _ *struct{}) error {
 	cm.l.k.Unpause()
 	return control.PostResume(cm.l.k, nil)

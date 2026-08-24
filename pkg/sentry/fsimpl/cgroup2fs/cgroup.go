@@ -878,6 +878,9 @@ func (c *cgroup) hasControllersEnabledLocked() bool {
 // attachProcess handles writes to cgroup.procs.
 // nsRoot is the root cgroup of the cgroupns of the task at the time of the
 // opening of the cgroup.procs fd.
+//
+// If ctx contains a task, callers must not hold its TaskSet mutex.
+// checklocks cannot name the owner lock of a task obtained from ctx.
 func (c *cgroup) attachProcess(ctx context.Context, creds *auth.Credentials, nsRoot *cgroup, pid int64) error {
 	c.fs.treeMu.Lock()
 	defer c.fs.treeMu.Unlock()
@@ -918,7 +921,10 @@ func (c *cgroup) attachProcess(ctx context.Context, creds *auth.Credentials, nsR
 			tasks:    make(map[*kernel.Task]struct{}),
 			oldNodes: make(map[*kernel.Task]*cgroup),
 		}
-		targetTask.ThreadGroup().ForEachTaskLocked(func(t *kernel.Task) bool {
+		// The two ThreadGroup calls return targetTask's immutable group;
+		// WithTaskSetRLock holds its TaskSet read lock for this synchronous
+		// callback. checklocks cannot carry that lock state here.
+		targetTask.ThreadGroup().ForEachTaskLocked(func(t *kernel.Task) bool { // +checklocksignore
 			if t.ExitState() < kernel.TaskExitInitiated {
 				if tn, _ := t.Cgroup2().(*cgroup); tn != c {
 					actx.tasks[t] = struct{}{}

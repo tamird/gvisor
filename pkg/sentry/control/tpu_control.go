@@ -48,6 +48,7 @@ type tpuTaskInfo struct {
 	rspReadFd  int32
 }
 
+// +checklocksexclude:k.tasks.mu
 func preSaveTPU(k *kernel.Kernel) error {
 	tpuTasks := findTPUTasks(k)
 	if len(tpuTasks) == 0 {
@@ -66,10 +67,12 @@ func preSaveTPU(k *kernel.Kernel) error {
 	return nil
 }
 
+// +checklocksexclude:k.tasks.mu
 func postRestoreTPU(k *kernel.Kernel) error {
 	return postResumeTPU(k)
 }
 
+// +checklocksexclude:k.tasks.mu
 func postResumeTPU(k *kernel.Kernel) error {
 	tpuTasksVal := k.PopCheckpointState(tpuTasksStateKey)
 	var tpuTasks []*tpuTaskInfo
@@ -97,8 +100,9 @@ func postResumeTPU(k *kernel.Kernel) error {
 	return nil
 }
 
+// +checklocksexclude:k.tasks.mu
 func findTPUTasks(k *kernel.Kernel) []*tpuTaskInfo {
-	var infos []*tpuTaskInfo
+	var tasks []*kernel.Task
 	sctx := k.SupervisorContext()
 	k.TaskSet().ForEachThreadGroup(func(tg *kernel.ThreadGroup, tgLeader *kernel.Task) {
 		hasTPU := false
@@ -116,16 +120,26 @@ func findTPUTasks(k *kernel.Kernel) []*tpuTaskInfo {
 			return
 		}
 
-		tg.ForEachTask(func(t *kernel.Task) bool {
-			tpuInfo, err := extractTPUTaskInfo(t)
-			if err != nil {
-				log.Warningf("Failed to extract TPU task info for task %d: %v", t.ThreadID(), err)
-				return true
-			}
-			infos = append(infos, tpuInfo)
+		// ForEachThreadGroup invokes this callback synchronously with
+		// k.TaskSet() read-locked, and tg belongs to that TaskSet.
+		// checklocks cannot carry the lock state into this callback.
+		tg.ForEachTaskLocked(func(t *kernel.Task) bool { // +checklocksignore
+			tasks = append(tasks, t)
 			return true
 		})
 	})
+
+	// Extract task info after releasing the TaskSet lock: error reporting
+	// calls Task.ThreadID, which acquires it.
+	var infos []*tpuTaskInfo
+	for _, t := range tasks {
+		tpuInfo, err := extractTPUTaskInfo(t)
+		if err != nil {
+			log.Warningf("Failed to extract TPU task info for task %d: %v", t.ThreadID(), err)
+			continue
+		}
+		infos = append(infos, tpuInfo)
+	}
 	return infos
 }
 
@@ -291,6 +305,8 @@ func isTPUDevice(file *vfs.FileDescription) bool {
 	return vfio.IsVFIOFD(impl)
 }
 
+// +checklocksexclude:t.mu
+// +checklocksexclude:t.tg.pidns.owner.mu
 func extractTPUTaskInfo(t *kernel.Task) (*tpuTaskInfo, error) {
 	name := t.Name()
 	if !strings.HasPrefix(name, tpuThreadNamePrefix) {

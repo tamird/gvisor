@@ -603,16 +603,20 @@ func (tg *ThreadGroup) MemberIDs(pidns *PIDNamespace) []ThreadID {
 	return tasks
 }
 
-// ForEachTask invokes f() on each task in tg.
+// ForEachTask invokes f() on each task in tg while holding the TaskSet
+// mutex for reading.
+//
+// +checklocksexclude:tg.pidns.owner.mu
 func (tg *ThreadGroup) ForEachTask(f func(t *Task) bool) {
 	tg.pidns.owner.mu.RLock()
 	defer tg.pidns.owner.mu.RUnlock()
 	tg.ForEachTaskLocked(f)
 }
 
-// ForEachTaskLocked invokes f() on each task in tg.
+// ForEachTaskLocked invokes f() on each task in tg without acquiring the
+// TaskSet mutex.
 //
-// Preconditions: The TaskSet mutex must be locked (for reading or writing).
+// +checklocksread:tg.pidns.owner.mu
 func (tg *ThreadGroup) ForEachTaskLocked(f func(t *Task) bool) {
 	for t := tg.tasks.Front(); t != nil; t = t.Next() {
 		if !f(t) {
@@ -622,6 +626,8 @@ func (tg *ThreadGroup) ForEachTaskLocked(f func(t *Task) bool) {
 }
 
 // WithTaskSetRLock executes the given function f while holding the TaskSet's read lock.
+//
+// +checklocksexclude:tg.pidns.owner.mu
 func (tg *ThreadGroup) WithTaskSetRLock(f func()) {
 	tg.pidns.owner.mu.RLock()
 	defer tg.pidns.owner.mu.RUnlock()
