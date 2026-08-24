@@ -232,6 +232,7 @@ func TestCreateSessionSharedSignalHandlers(t *testing.T) {
 	ctx := context.Background()
 	pidns := newPIDNamespace(nil, nil, nil)
 	ts := newTaskSet(pidns)
+	k := &Kernel{tasks: ts}
 	var leaders []*Task
 	defer func() {
 		ts.mu.Lock()
@@ -242,21 +243,24 @@ func TestCreateSessionSharedSignalHandlers(t *testing.T) {
 			delete(pidns.tasks, pidns.tids[leader])
 			delete(pidns.tids, leader)
 			if pg := leader.tg.processGroup; pg != nil {
-				pg.decRefWithParent(leader.tg.parentPG())
+				// Every leader and process-group originator was created in pidns.
+				// checklocks cannot connect these collection members to ts.mu.
+				pg.decRefWithParent(leader.tg.parentPG()) // +checklocksignore
 			}
 		}
 	}()
 
 	// These operations need only thread and namespace metadata. No tasks
 	// run or enter a group stop, so no platform context is needed.
-	newTask := func(id ThreadID, parent *Task, sh *SignalHandlers) *Task {
+	newTask := func(id, parentID ThreadID, sh *SignalHandlers) *Task {
 		ts.mu.Lock()
 		defer ts.mu.Unlock()
+		parent := pidns.tasks[parentID]
 		tg := &ThreadGroup{
 			threadGroupNode: threadGroupNode{pidns: pidns},
 			signalHandlers:  sh,
 		}
-		leader := &Task{taskNode: taskNode{
+		leader := &Task{k: k, taskNode: taskNode{
 			tg:       tg,
 			parent:   parent,
 			children: make(map[*Task]struct{}),
@@ -269,20 +273,22 @@ func TestCreateSessionSharedSignalHandlers(t *testing.T) {
 		if parent != nil {
 			parent.children[leader] = struct{}{}
 			tg.processGroup = parent.tg.processGroup
-			tg.processGroup.incRefWithParent(tg.processGroup)
+			// parent comes from pidns.tasks, so its process group belongs to ts.
+			// checklocks cannot infer this map-member ownership.
+			tg.processGroup.incRefWithParent(tg.processGroup) // +checklocksignore
 		}
 		leaders = append(leaders, leader)
 		return leader
 	}
 
-	root := newTask(1, nil, NewSignalHandlers())
+	root := newTask(1, 0, NewSignalHandlers())
 	if _, err := root.tg.CreateSession(ctx); err != nil {
 		t.Fatal(err)
 	}
-	parent := newTask(2, root, NewSignalHandlers())
+	parent := newTask(2, 1, NewSignalHandlers())
 	// This is the topology produced by CLONE_VM|CLONE_SIGHAND without
 	// CLONE_THREAD or CLONE_PARENT.
-	child := newTask(3, parent, parent.tg.signalHandlers)
+	child := newTask(3, 2, parent.tg.signalHandlers)
 	if err := child.tg.CreateProcessGroup(); err != nil {
 		t.Fatal(err)
 	}
@@ -331,7 +337,7 @@ func TestSetControllingTTYSharedSignalHandlers(t *testing.T) {
 			threadGroupNode: threadGroupNode{pidns: pidns},
 			signalHandlers:  sh,
 		}
-		tg.processGroup = &ProcessGroup{session: &Session{leader: tg}}
+		tg.processGroup = &ProcessGroup{originator: tg, session: &Session{leader: tg}}
 		ts.Root.tgids[tg] = id
 		return tg
 	}

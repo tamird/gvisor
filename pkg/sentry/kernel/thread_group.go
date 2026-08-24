@@ -35,8 +35,12 @@ import (
 // ThreadGroup is a superset of Linux's struct signal_struct.
 //
 // A nonnil leader always belongs to this thread group.
+// A nonnil processGroup belongs to the same TaskSet, including after
+// reassignment.
 //
 // +checklocksalias:leader.tg.signalHandlers.mu=signalHandlers.mu
+// +checklocksalias:leader.tg.pidns.owner.mu=pidns.owner.mu
+// +checklocksalias:processGroup.originator.pidns.owner.mu=pidns.owner.mu
 // +stateify savable
 type ThreadGroup struct {
 	threadGroupNode
@@ -166,7 +170,7 @@ type ThreadGroup struct {
 	// terminationSignal is the signal that this thread group's leader will
 	// send to its parent when it exits.
 	//
-	// terminationSignal is protected by the TaskSet mutex.
+	// +checklocks:pidns.owner.mu
 	terminationSignal linux.Signal
 
 	// liveGoroutines is the number of non-exited task goroutines in the thread
@@ -413,9 +417,10 @@ func (tg *ThreadGroup) Release(ctx context.Context) {
 	tg.pidns.DecRef(ctx)
 }
 
-// forEachChildThreadGroupLocked indicates over all child ThreadGroups.
+// forEachChildThreadGroupLocked visits each immediate child ThreadGroup.
+// The callback runs synchronously and must not release the TaskSet mutex.
 //
-// Precondition: TaskSet.mu must be held.
+// +checklocksread:tg.pidns.owner.mu
 func (tg *ThreadGroup) forEachChildThreadGroupLocked(fn func(*ThreadGroup)) {
 	tg.walkDescendantThreadGroupsLocked(func(child *ThreadGroup) bool {
 		fn(child)
@@ -431,7 +436,9 @@ func (tg *ThreadGroup) forEachChildThreadGroupLocked(fn func(*ThreadGroup)) {
 //
 // This corresponds to Linux's walk_process_tree.
 //
-// Precondition: TaskSet.mu must be held.
+// The visitor runs synchronously and must not release the TaskSet mutex.
+//
+// +checklocksread:tg.pidns.owner.mu
 func (tg *ThreadGroup) walkDescendantThreadGroupsLocked(visitor func(*ThreadGroup) bool) {
 	for t := tg.tasks.Front(); t != nil; t = t.Next() {
 		for child := range t.children {
@@ -440,7 +447,9 @@ func (tg *ThreadGroup) walkDescendantThreadGroupsLocked(visitor func(*ThreadGrou
 					// Don't recurse below child.
 					continue
 				}
-				child.tg.walkDescendantThreadGroupsLocked(visitor)
+				// Members' children share tg's locked TaskSet; checklocks
+				// cannot infer that relationship from the children map.
+				child.tg.walkDescendantThreadGroupsLocked(visitor) // +checklocksignore
 			}
 		}
 	}
@@ -734,10 +743,11 @@ func (tg *ThreadGroup) SetForegroundProcessGroupID(ctx context.Context, tty *TTY
 // Recursion stops if we find another subreaper process, which is either a
 // ThreadGroup with isChildSubreaper bit set, or a ThreadGroup with PID=1
 // inside a PID namespace.
+//
+// +checklocksexclude:tg.pidns.owner.mu
 func (tg *ThreadGroup) SetChildSubreaper(isSubreaper bool) {
-	ts := tg.TaskSet()
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
+	tg.pidns.owner.mu.Lock()
+	defer tg.pidns.owner.mu.Unlock()
 	tg.isChildSubreaper = isSubreaper
 	tg.walkDescendantThreadGroupsLocked(func(child *ThreadGroup) bool {
 		// Is this child PID 1 in its PID namespace, or already a

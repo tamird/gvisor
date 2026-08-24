@@ -421,11 +421,17 @@ func (ts *TaskSet) newTask(ctx context.Context, cfg *TaskConfig) (*Task, error) 
 	if isFirstTask = tg.leader == nil; isFirstTask {
 		// New thread group.
 		tg.leader = t
-		if parentPG := tg.parentPG(); parentPG == nil {
-			tg.createSession()
+		// cfg.ThreadGroup belongs to the locked ts by precondition;
+		// checklocks cannot relate the two owner paths.
+		if parentPG := tg.parentPG(); parentPG == nil { // +checklocksignore
+			// allocateTID excluded existing session/process-group IDs,
+			// and this new thread group has no controlling terminal.
+			_, _, _ = tg.createSession() // +checklocksignore
 		} else {
 			// Inherit the process group and terminal.
-			parentPG.incRefWithParent(parentPG)
+			// The inherited group also belongs to ts; checklocks cannot
+			// follow that ownership through parentPG's returned value.
+			parentPG.incRefWithParent(parentPG) // +checklocksignore
 			tg.processGroup = parentPG
 			tg.tty = inhTTY
 			inhTTY = nil // Neuter the deferred DecRef, ref transferred to tg.tty.

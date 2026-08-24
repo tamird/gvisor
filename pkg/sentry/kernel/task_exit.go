@@ -415,7 +415,7 @@ func (t *Task) exitThreadGroup() bool {
 // recipients or thread groups visited by orphan checks. checklocks cannot
 // express exclusions for these dynamically selected owners.
 //
-// Preconditions: The TaskSet mutex must be locked for writing.
+// +checklocks:t.tg.pidns.owner.mu
 func (t *Task) exitChildrenLocked() {
 	newParent := t.findReparentTargetLocked()
 	if newParent == nil {
@@ -454,7 +454,9 @@ func (t *Task) exitChildrenLocked() {
 			c.sendSignalLocked(siginfo, true /* group */)
 			c.tg.signalHandlers.mu.Unlock()
 		}
-		c.reparentLocked(newParent)
+		// Children belong to t's locked TaskSet; checklocks cannot infer
+		// that relationship from membership in t.children.
+		c.reparentLocked(newParent) // +checklocksignore
 		if newParent != nil {
 			newParent.children[c] = struct{}{}
 		}
@@ -521,7 +523,9 @@ func (tg *ThreadGroup) anyNonExitingTaskLocked() *Task {
 
 // reparentLocked changes t's parent. The new parent may be nil.
 //
-// Preconditions: The TaskSet mutex must be locked for writing.
+// Preconditions: A nonnil parent belongs to t's TaskSet.
+//
+// +checklocks:t.tg.pidns.owner.mu
 func (t *Task) reparentLocked(parent *Task) {
 	oldParent := t.parent
 	t.parent = parent
@@ -693,8 +697,7 @@ func (*runExitNotify) execute(t *Task) taskRunState {
 // group visited by the process-group orphan check. checklocks cannot express
 // exclusions for these dynamically selected owners.
 //
-// Preconditions: The TaskSet mutex must be locked for writing.
-//
+// +checklocks:t.tg.pidns.owner.mu
 // +checklocksexclude:t.mu
 // +checklocksexclude:t.tg.signalHandlers.mu
 // +checklocksexclude:t.parent.tg.signalHandlers.mu
@@ -895,7 +898,10 @@ func (t *Task) execOnDestroyActions() {
 	}()
 }
 
-// Preconditions: The TaskSet mutex must be locked.
+// Preconditions: t must have reached TaskExitZombie, and receiver must
+// belong to t's TaskSet.
+//
+// +checklocksread:t.tg.pidns.owner.mu
 func (t *Task) exitNotificationSignal(sig linux.Signal, receiver *Task) *linux.SignalInfo {
 	info := &linux.SignalInfo{
 		Signo: int32(sig),
@@ -913,12 +919,7 @@ func (t *Task) exitNotificationSignal(sig linux.Signal, receiver *Task) *linux.S
 	return info
 }
 
-// Preconditions: The TaskSet mutex must be locked.
-//
-// Checking this precondition also requires annotating exitNotifyLocked's
-// caller contracts and the equivalence of t.k.tasks.mu and
-// t.tg.pidns.owner.mu.
-//
+// +checklocksread:t.tg.pidns.owner.mu
 // +checklocksexclude:t.tg.signalHandlers.mu
 func getExitNotifyParentSeccheckInfo(t *Task) (seccheck.FieldSet, *pb.ExitNotifyParentInfo) {
 	fields := seccheck.Global.GetFieldSet(seccheck.PointExitNotifyParent)
@@ -1058,7 +1059,9 @@ type WaitOptions struct {
 	NonBlock bool
 }
 
-// Preconditions: The TaskSet mutex must be locked (for reading or writing).
+// Preconditions: pidns belongs to t's TaskSet.
+//
+// +checklocksread:t.tg.pidns.owner.mu
 func (o *WaitOptions) matchesTask(t *Task, pidns *PIDNamespace, tracee bool) bool {
 	if o.SpecificTID != 0 && o.SpecificTID != pidns.tids[t] {
 		return false
@@ -1161,19 +1164,23 @@ func (t *Task) waitOnce(opts *WaitOptions) (*WaitResult, error) {
 	return nil, linuxerr.ECHILD
 }
 
-// Preconditions: The TaskSet mutex must be locked for writing.
+// Preconditions: parent belongs to t's thread group.
+//
+// +checklocks:t.tg.pidns.owner.mu
 func (t *Task) waitParentLocked(opts *WaitOptions, parent *Task) (*WaitResult, bool) {
 	anyWaitableTasks := false
 
 	for child := range parent.children {
-		if !opts.matchesTask(child, parent.tg.pidns, false) {
+		// parent is in t's thread group, so its children belong to t's
+		// locked TaskSet. checklocks cannot follow map membership.
+		if !opts.matchesTask(child, parent.tg.pidns, false) { // +checklocksignore
 			continue
 		}
 		// Non-leaders don't notify parents on exit and aren't eligible to
 		// be waited on.
 		if opts.Events&EventExit != 0 && child == child.tg.leader && !child.exitParentAcked {
 			anyWaitableTasks = true
-			if wr := t.waitCollectZombieLocked(child, opts, false); wr != nil {
+			if wr := t.waitCollectZombieLocked(child, opts, false); wr != nil { // +checklocksignore
 				return wr, anyWaitableTasks
 			}
 		}
@@ -1209,13 +1216,15 @@ func (t *Task) waitParentLocked(opts *WaitOptions, parent *Task) (*WaitResult, b
 		}
 	}
 	for tracee := range parent.ptraceTracees {
-		if !opts.matchesTask(tracee, parent.tg.pidns, true) {
+		// parent is in t's thread group, so its tracees belong to t's
+		// locked TaskSet. checklocks cannot follow map membership.
+		if !opts.matchesTask(tracee, parent.tg.pidns, true) { // +checklocksignore
 			continue
 		}
 		// Non-leaders do notify tracers on exit.
 		if opts.Events&EventExit != 0 && !tracee.exitTracerAcked {
 			anyWaitableTasks = true
-			if wr := t.waitCollectZombieLocked(tracee, opts, true); wr != nil {
+			if wr := t.waitCollectZombieLocked(tracee, opts, true); wr != nil { // +checklocksignore
 				return wr, anyWaitableTasks
 			}
 		}
@@ -1241,8 +1250,9 @@ func (t *Task) waitParentLocked(opts *WaitOptions, parent *Task) (*WaitResult, b
 	return nil, anyWaitableTasks
 }
 
-// Preconditions: The TaskSet mutex must be locked for writing.
+// Preconditions: t and target belong to the same TaskSet.
 //
+// +checklocks:target.tg.pidns.owner.mu
 // +checklocksexclude:target.tg.signalHandlers.mu
 // +checklocksexclude:target.parent.tg.signalHandlers.mu
 // +checklocksexclude:target.tg.leader.parent.tg.signalHandlers.mu
