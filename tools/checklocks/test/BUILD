@@ -40,16 +40,19 @@ go_library(
 )
 
 nogo_config(
-    name = "inferred_config",
-    srcs = ["inferred.yaml"],
+    name = "strict_config",
+    srcs = ["strict.yaml"],
 )
 
-# Production filters suppress inference hints. Check the inference fixture
-# without those filters so unexpected hints and missing expectations fail CI.
+# Production filters suppress inference hints and incompatible return states.
+# Check these fixtures without those filters so diagnostic regressions fail CI.
 nogo_test(
-    name = "inferred_nogo",
-    srcs = ["inferred.go"],
-    config = ":inferred_config",
+    name = "strict_nogo",
+    srcs = [
+        "aliases.go",
+        "inferred.go",
+    ],
+    config = ":strict_config",
     tags = ["nogo"],
     deps = [":test"],
 )

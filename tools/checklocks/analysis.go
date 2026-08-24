@@ -966,7 +966,7 @@ func (pc *passContext) checkBasicBlock(fn *ssa.Function, block *ssa.BasicBlock, 
 		// the lock state to ensure that Releases and Acquires are
 		// respected.
 		if pls := pc.checkBasicBlock(fn, succ, lff, ls, seen, rg); pls != nil {
-			if rls != nil && !rls.isCompatible(pls) {
+			if rls != nil && !rls.hasSameLocks(pls) {
 				if _, ok := pc.forced[pc.positionKey(fn.Pos())]; !ok && !lff.Ignore {
 					pc.maybeFail(fn.Pos(), "incompatible return states (first: %s, second: %s)", rls.String(), pls.String())
 				}
