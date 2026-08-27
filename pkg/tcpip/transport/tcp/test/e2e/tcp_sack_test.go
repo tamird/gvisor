@@ -788,6 +788,36 @@ func verifySpuriousRecoveryMetric(t *testing.T, c *context.Context, numSpuriousR
 	}
 }
 
+// verifyRecoveryUndo verifies that on exit from a loss recovery that was
+// detected spurious (RFC3522), the RFC4015 response restored the congestion
+// control state instead of leaving the loss-based reduction in place:
+// Ssthresh back at wantSsthresh, the pre-recovery pipe estimate, and SndCwnd
+// at FlightSize + min(bytes_acked, IW), which is wantCwnd when the exit ACK
+// leaves nothing in flight.
+func verifyRecoveryUndo(t *testing.T, c *context.Context, wantSsthresh, wantCwnd int) {
+	t.Helper()
+
+	pollFn := func() error {
+		info := tcpip.TCPInfoOption{}
+		if err := c.EP.GetSockOpt(&info); err != nil {
+			return fmt.Errorf("c.EP.GetSockOpt(&%T) = %s", info, err)
+		}
+		if got, want := info.CcState, tcpip.Open; got != want {
+			return fmt.Errorf("got info.CcState = %v, want = %v", got, want)
+		}
+		if got, want := info.SndSsthresh, uint32(wantSsthresh); got != want {
+			return fmt.Errorf("Ssthresh was not restored on spurious recovery exit: got info.SndSsthresh = %d, want = %d", got, want)
+		}
+		if got, want := info.SndCwnd, uint32(wantCwnd); got != want {
+			return fmt.Errorf("SndCwnd was not reset on spurious recovery exit: got info.SndCwnd = %d, want = %d", got, want)
+		}
+		return nil
+	}
+	if err := testutil.Poll(pollFn, 1*time.Second); err != nil {
+		t.Error(err)
+	}
+}
+
 func checkReceivedPacket(t *testing.T, c *context.Context, tcpHdr header.TCP, bytesRead uint32, b *buffer.View, data []byte) {
 	payloadLen := uint32(len(tcpHdr.Payload()))
 	checker.IPv4(t, b,
@@ -930,12 +960,29 @@ func testSpuriousRecoveryWithRTO(t *testing.T, timestamps bool, ackOptions func(
 	if got := stats.SpuriousRTORecovery.Value(); got != want {
 		t.Errorf("SpuriousRTORecovery counter = %d, want %d", got, want)
 	}
+	if !wantSpurious {
+		return
+	}
+
+	// Acknowledge all outstanding data to exit RTO recovery and verify
+	// that the RFC4015 response restored the congestion control state.
+	c.SendAck(seqnum.Value(context.TestInitialSequenceNumber).Add(1), numPackets*maxPayload)
+	// No loss had reduced ssthresh before the timeout, so RFC4015's
+	// max(FlightSize, ssthresh) keeps it unlimited.
+	verifyRecoveryUndo(t, c, tcp.InitialSsthresh, numPackets-1)
 }
 
 func TestSACKDetectSpuriousRecoveryWithDupACK(t *testing.T) {
 	numAck := 0
 	probeDone := make(chan struct{})
 	probe := func(s *tcp.TCPEndpointState) {
+		select {
+		case <-probeDone:
+			// The ACK that exits recovery arrives after detection
+			// has already been verified.
+			return
+		default:
+		}
 		if numAck < 3 {
 			numAck++
 			return
@@ -1025,6 +1072,12 @@ func TestSACKDetectSpuriousRecoveryWithDupACK(t *testing.T) {
 	<-probeDone
 
 	verifySpuriousRecoveryMetric(t, c, 1 /* numSpuriousRecovery */, 0 /* numSpuriousRTO */)
+
+	// Acknowledge all outstanding data to exit SACK recovery and verify
+	// that the RFC4015 response restored the congestion control state.
+	// Two of the covered packets were already SACKed and out of flight.
+	c.SendAck(seq, numPackets*maxPayload)
+	verifyRecoveryUndo(t, c, tcp.InitialCwnd, numPackets-1-2)
 }
 
 func TestNoSpuriousRecoveryWithDSACK(t *testing.T) {
@@ -1137,4 +1190,174 @@ func TestMain(m *testing.M) {
 	time.Sleep(1 * time.Second)
 	refs.DoLeakCheck()
 	os.Exit(code)
+}
+
+// TestEifelFiniteApplicationFlight times out an application-limited flight
+// of two packets, after an earlier genuine timeout set a finite ssthresh of 2
+// and cwnd grew back to 10. If an ACK for an original transmission shows that
+// the timeout was spurious, RFC 4015 restores ssthresh to
+// max(FlightSize, ssthresh) = 2, not to cwnd. In the repair_ack control the
+// ACKs echo the retransmissions, so the timeout stays genuine.
+func TestEifelFiniteApplicationFlight(t *testing.T) {
+	for _, scenario := range []string{"original_ack", "repair_ack"} {
+		t.Run(scenario, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			observed := make(chan tcp.TCPSenderState, 32)
+			c := context.NewWithOpts(t, context.Options{
+				MTU: mtu, EnableV4: true, Clock: clock,
+				Probe: func(s *tcp.TCPEndpointState) { observed <- s.Sender },
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, 0)
+			cc := tcpip.CongestionControlOption("reno")
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &cc); err != nil {
+				t.Fatal(err)
+			}
+			peer := e2e.CreateConnectedWithSACKAndTS(c)
+			clock.Advance(time.Duration(uint32(1000)-peer.RecentTS) * time.Millisecond)
+			data := make([]byte, 200*maxPayload)
+			for i := range data {
+				data[i] = byte(i)
+			}
+			info := func() tcpip.TCPInfoOption {
+				t.Helper()
+				var result tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&result); err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}
+			packet := func(offset int) uint32 {
+				t.Helper()
+				v := c.GetPacket()
+				defer v.Release()
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				checkReceivedPacket(t, c, h, uint32(offset), v, data)
+				if len(h.Payload()) != maxPayload || !h.ParsedOptions().TS {
+					t.Fatalf("offset %d: payload=%d TS=%t", offset, len(h.Payload()), h.ParsedOptions().TS)
+				}
+				return h.ParsedOptions().TSVal
+			}
+			sent := 0
+			send := func(count int) uint32 {
+				t.Helper()
+				end := sent + count*maxPayload
+				if end > len(data) {
+					t.Fatal("packet budget exceeded")
+				}
+				if n, err := c.EP.Write(bytes.NewReader(data[sent:end]), tcpip.WriteOptions{}); err != nil || int(n) != end-sent {
+					t.Fatalf("write = (%d,%v), want (%d,nil)", n, err, end-sent)
+				}
+				var ts uint32
+				for sent < end {
+					ts = packet(sent)
+					sent += maxPayload
+				}
+				return ts
+			}
+			peerTS := uint32(10)
+			ack := func(n int, echo uint32) tcp.TCPSenderState {
+				t.Helper()
+				peerTS++
+				want := c.IRS.Add(1 + seqnum.Size(n))
+				c.SendPacket(nil, &context.Headers{
+					SrcPort: context.TestPort, DstPort: c.Port, Flags: header.TCPFlagAck,
+					SeqNum: peer.NextSeqNum, AckNum: want, RcvWnd: 30000,
+					TCPOpts: timestampOption(peerTS, echo),
+				})
+				deadline := time.NewTimer(time.Second)
+				defer deadline.Stop()
+				for {
+					select {
+					case s := <-observed:
+						if s.SndUna == want {
+							if s.SndNxt != c.IRS.Add(1+seqnum.Size(sent)) || s.Outstanding != (sent-n)/maxPayload {
+								t.Fatalf("wrong remaining flight: UNA=%d NXT=%d outstanding=%d want=%d", s.SndUna, s.SndNxt, s.Outstanding, (sent-n)/maxPayload)
+							}
+							return s
+						}
+					case <-deadline.C:
+						t.Fatal("ACK was not processed")
+					}
+				}
+			}
+			rto := func(offset int, original uint32, wantTimeouts uint64) uint32 {
+				t.Helper()
+				wait := info().RTO
+				if wait < time.Millisecond || wait > time.Minute {
+					t.Fatalf("unexpected RTO %s", wait)
+				}
+				clock.Advance(wait + time.Millisecond)
+				repair := packet(offset)
+				if repair <= original || info().CcState != tcpip.RTORecovery || c.Stack().Stats().TCP.Timeouts.Value() != wantTimeouts {
+					t.Fatalf("missing real timeout: original=%d repair=%d state=%v timeouts=%d", original, repair, info().CcState, c.Stack().Stats().TCP.Timeouts.Value())
+				}
+				return repair
+			}
+
+			// Lose one original and acknowledge its repair. This creates a real,
+			// finite ssthresh; the initial sentinel is never the measured case.
+			original := send(1)
+			repair := rto(0, original, 1)
+			state := ack(sent, repair)
+			if state.Ssthresh != 2 || state.SpuriousRecovery || info().CcState != tcpip.Open {
+				t.Fatalf("genuine recovery: threshold=%d spurious=%t state=%v", state.Ssthresh, state.SpuriousRecovery, info().CcState)
+			}
+			// Grow through ordinary Reno congestion avoidance, without assigning
+			// sender fields or invoking recovery helpers from the test.
+			for round := 0; state.SndCwnd < tcp.InitialCwnd && round < 16; round++ {
+				clock.Advance(time.Millisecond)
+				ts := send(state.SndCwnd)
+				clock.Advance(time.Millisecond)
+				state = ack(sent, ts)
+			}
+			if state.SndCwnd != tcp.InitialCwnd || state.Ssthresh != 2 || info().CcState != tcpip.Open {
+				t.Fatalf("precondition: cwnd=%d threshold=%d state=%v", state.SndCwnd, state.Ssthresh, info().CcState)
+			}
+			before := state
+			offset := sent
+			clock.Advance(time.Millisecond)
+			original = send(2)
+			if got := info().SndCwnd; got != uint32(before.SndCwnd) {
+				t.Fatalf("window changed before RTO: %d", got)
+			}
+			// The preceding ACK drained every byte. These two packets form
+			// an application-limited flight, equal to the finite threshold.
+			// ACK only the first to meet RFC 3522 step 5 without prior DSACK.
+			repair = rto(offset, original, 2)
+			echo, wantSpurious := original, uint64(1)
+			if scenario == "repair_ack" {
+				echo, wantSpurious = repair, 0
+			}
+			ack(offset+maxPayload, echo)
+			stats := c.Stack().Stats().TCP
+			if stats.SpuriousRecovery.Value() != wantSpurious || stats.SpuriousRTORecovery.Value() != wantSpurious || info().CcState != tcpip.RTORecovery {
+				t.Fatalf("wrong partial recovery path: spurious=%d RTOspurious=%d state=%v", stats.SpuriousRecovery.Value(), stats.SpuriousRTORecovery.Value(), info().CcState)
+			}
+			// The first advancing ACK lets go-back-N send the second packet
+			// again, and the repair_ack control echoes that repair. In
+			// original_ack the timeout was spurious, and a sender that
+			// implements RFC 4015 step (8) does not resend, so only check
+			// the resend if there is one.
+			if scenario == "repair_ack" {
+				tailRepair := packet(offset + maxPayload)
+				if tailRepair < repair {
+					t.Fatalf("second repair timestamp %d precedes first %d", tailRepair, repair)
+				}
+				echo = tailRepair
+			} else if v := c.GetPacketNonBlocking(); v != nil {
+				h := header.TCP(header.IPv4(v.AsSlice()).Payload())
+				checkReceivedPacket(t, c, h, uint32(offset+maxPayload), v, data)
+				v.Release()
+			}
+			state = ack(sent, echo)
+			if stats.SpuriousRecovery.Value() != wantSpurious || stats.SpuriousRTORecovery.Value() != wantSpurious || info().CcState != tcpip.Open {
+				t.Fatalf("wrong recovery path: spurious=%d RTOspurious=%d state=%v", stats.SpuriousRecovery.Value(), stats.SpuriousRTORecovery.Value(), info().CcState)
+			}
+			if state.Ssthresh != before.Ssthresh {
+				t.Errorf("finite application-limited threshold = %d, want max(2,%d)=%d", state.Ssthresh, before.Ssthresh, before.Ssthresh)
+			}
+		})
+	}
 }
