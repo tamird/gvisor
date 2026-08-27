@@ -283,6 +283,12 @@ func (s *sender) detectTLPRecovery(ack seqnum.Value, rcvdSeg *segment) {
 			// Step 2. Either the original packet or the retransmission (in the
 			// form of a probe) was lost. Invoke a congestion control response
 			// equivalent to fast recovery.
+			//
+			// RFC 8985 calls for this response, so leave the RFC4015
+			// response nothing to restore. enterRecovery records
+			// RetransmitTS now, an RTT after the probe was sent, so Eifel
+			// can find this recovery spurious.
+			s.pipePrev = 0
 			s.cc.HandleLossDetected()
 			s.enterRecovery()
 			s.leaveRecovery()
@@ -452,6 +458,7 @@ func (rc *rackControl) reorderTimerExpired() tcpip.Error {
 
 	fastRetransmit := false
 	if !rc.snd.FastRecovery.Active {
+		rc.snd.capturePipePrev()
 		rc.snd.cc.HandleLossDetected()
 		rc.snd.enterRecovery()
 		fastRetransmit = true
