@@ -15,9 +15,7 @@
 // Package crosspkg is a second package for testing.
 package crosspkg
 
-import (
-	"sync"
-)
+import "sync"
 
 var (
 	// +checklocks:FooMu
@@ -33,3 +31,55 @@ type GenericGuard[T any] struct {
 	// +checklocks:Mu
 	Value T
 }
+
+var globalMu sync.Mutex
+
+var globalStruct struct {
+	mu sync.Mutex
+}
+
+var (
+	// +checklocks:globalMu
+	PrivateValue int
+)
+
+// PrivateState exposes a field protected by a private global's mutex field.
+type PrivateState struct {
+	// +checklocks:globalStruct.mu
+	Value int
+}
+
+// Keep acquisition and release out of line so export data does not include
+// the private globals merely because an importer might inline these bodies.
+//
+// +checklocksacquire:globalMu
+//
+//go:noinline
+func LockPrivate() { globalMu.Lock() }
+
+// +checklocksrelease:globalMu
+//
+//go:noinline
+func UnlockPrivate() { globalMu.Unlock() }
+
+// +checklocks:globalMu
+func RequirePrivate() {}
+
+// +checklocksexclude:globalMu
+func ExcludePrivate() {}
+
+// +checklocksacquire:globalStruct.mu
+//
+//go:noinline
+func LockPrivateStruct() { globalStruct.mu.Lock() }
+
+// +checklocksrelease:globalStruct.mu
+//
+//go:noinline
+func UnlockPrivateStruct() { globalStruct.mu.Unlock() }
+
+// +checklocks:globalStruct.mu
+func RequirePrivateStruct() {}
+
+// +checklocksexclude:globalStruct.mu
+func ExcludePrivateStruct() {}

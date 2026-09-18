@@ -24,6 +24,7 @@ go_library(
         "locker.go",
         "methods.go",
         "parameters.go",
+        "private_globals.go",
         "return.go",
         "rwmutex.go",
         "test.go",

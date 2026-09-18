@@ -368,7 +368,7 @@ func (l *lockState) valueAndObject(v ssa.Value) (string, types.Object) {
 	case *ssa.Parameter:
 		return fmt.Sprintf("{param:%s}", x.Name()), x.Object()
 	case *ssa.Global:
-		return fmt.Sprintf("{global:%s}", x.Name()), x.Object()
+		return globalLockKey(x.Pkg.Pkg.Path(), x.Name()), x.Object()
 	case *ssa.FreeVar:
 		// FreeVar does not have a corresponding source-level object
 		// that we can return here.
