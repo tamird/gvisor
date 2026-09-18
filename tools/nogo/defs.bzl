@@ -135,6 +135,7 @@ NogoInfo = provider(
     "information for nogo analysis",
     fields = {
         "facts": "serialized package facts",
+        "transitive_facts": "depset of structs with importpath and file fields for package facts",
         "raw_findings": "raw package findings (if relevant)",
         "importpath": "package import path",
         "binaries": "package binary files",
@@ -177,6 +178,8 @@ def _nogo_config(ctx, deps):
     ]
     inputs = []
     raw_findings = []
+    fact_deps = []
+    direct_facts = {}
     for dep in deps:
         extras = nogo_extra_proto_deps(dep)
         for importpath, a_file, x_file in extras:
@@ -198,7 +201,8 @@ def _nogo_config(ctx, deps):
         a_file, x_file = _select_objfile(info.binaries)
         args.append("-archive=%s=%s" % (info.importpath, a_file.path))
         args.append("-import=%s=%s" % (info.importpath, x_file.path))
-        args.append("-facts=%s=%s" % (info.importpath, info.facts.path))
+        fact_deps.append(info.transitive_facts)
+        direct_facts[info.importpath] = info.facts
 
         # Collect all findings; duplicates are resolved at the end.
         raw_findings.extend(info.raw_findings)
@@ -206,7 +210,14 @@ def _nogo_config(ctx, deps):
         # Ensure the above are available as inputs.
         inputs.append(a_file)
         inputs.append(x_file)
-        inputs.append(info.facts)
+
+    # Exported types can expose objects outside direct imports. Flatten facts
+    # only for this action, preferring direct facts to match its binary imports.
+    facts = {fact.importpath: fact.file for fact in depset(transitive = fact_deps, order = "postorder").to_list()}
+    facts.update(direct_facts)
+    for importpath, facts_file in facts.items():
+        args.append("-facts=%s=%s" % (importpath, facts_file.path))
+        inputs.append(facts_file)
 
     return (go_ctx, args, inputs, raw_findings)
 
@@ -322,6 +333,11 @@ def _nogo_aspect_impl(target, ctx):
     return [
         NogoInfo(
             facts = facts_file,
+            transitive_facts = depset(
+                direct = [struct(importpath = importpath, file = facts_file)],
+                transitive = [dep[NogoInfo].transitive_facts for dep in deps if hasattr(dep[NogoInfo], "facts")],
+                order = "postorder",
+            ),
             raw_findings = raw_findings + [findings_file],
             importpath = importpath,
             binaries = target.files.to_list(),

@@ -55,19 +55,6 @@ var (
 	releaseTagsErr error
 )
 
-// Hack! factFacts only provides facts loaded from directly imported packages
-// for efficiency (see importer.cache). In general, if you need a fact from a
-// package that isn't otherwise imported, the expectation is that you will add
-// a dummy import/use of the desired package to ensure it is a dependency.
-//
-// Unfortunately, some packages need facts from internal packages. Since
-// internal packages cannot be imported we explicitly import in this tool to
-// ensure the facts are available to ImportPackageFact.
-var internalPackages = []string{
-	// Required by pkg/sync for internal/abi.MapType.
-	"internal/abi",
-}
-
 // shouldInclude indicates whether the file should be included.
 func shouldInclude(path string) (bool, error) {
 	tagsOnce.Do(func() {
@@ -187,9 +174,7 @@ func (i *importer) loadBundles() error {
 
 // loadFacts returns all package facts for the given name.
 //
-// This should be called only from importPackage, as this may deserialize a
-// facts file (which is an expensive operation). Callers should generally rely
-// on fastFacts to access facts for packages that have already been imported.
+// Callers should use fastFacts, which caches the deserialized result.
 func (i *importer) loadFacts(pkg *types.Package) (*facts.Package, error) {
 	// Attempt to load from the fact map.
 	filename, ok := flags.FactMap[pkg.Path()]
@@ -233,10 +218,13 @@ func (i *importer) loadFacts(pkg *types.Package) (*facts.Package, error) {
 func (i *importer) fastFacts(pkg *types.Package) *facts.Package {
 	i.mu.Lock()
 	e, ok := i.cache[pkg.Path()]
-	i.mu.Unlock()
 	if !ok {
-		return nil
+		// Export data can expose objects from packages that were never
+		// directly imported. Cache their facts without importing them.
+		e = new(importerEntry)
+		i.cache[pkg.Path()] = e
 	}
+	i.mu.Unlock()
 
 	e.factsMu.Lock()
 	defer e.factsMu.Unlock()
@@ -747,16 +735,6 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 	return astPackage, findings, astFacts, nil
 }
 
-func (i *importer) hardImportPackages(pkgs []string) error {
-	for _, pkg := range internalPackages {
-		_, err := i.Import(pkg)
-		if err != nil {
-			return fmt.Errorf("error importing %s: %w", pkg, err)
-		}
-	}
-	return nil
-}
-
 // Package runs all analyzer on a single package.
 func Package(path string, srcs []string) (FindingSet, facts.Serializer, error) {
 	i := &importer{
@@ -764,11 +742,6 @@ func Package(path string, srcs []string) (FindingSet, facts.Serializer, error) {
 		cache:     make(map[string]*importerEntry),
 		imports:   make(map[string]*types.Package),
 		analyzers: allAnalyzers,
-	}
-
-	// See comment on internalPackages.
-	if err := i.hardImportPackages(internalPackages); err != nil {
-		return nil, nil, err
 	}
 
 	_, findings, facts, err := i.checkPackage(path, srcs)
@@ -803,11 +776,6 @@ func TemplateFuncs(path string, srcs []string) (map[string]any, any, error) {
 		cache:     make(map[string]*importerEntry),
 		imports:   make(map[string]*types.Package),
 		analyzers: renderAnalyzers,
-	}
-
-	// See comment on internalPackages.
-	if err := i.hardImportPackages(internalPackages); err != nil {
-		return nil, nil, err
 	}
 
 	pkg, _, localFacts, err := i.checkPackage(path, srcs)

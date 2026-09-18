@@ -85,7 +85,8 @@ lock must refer to one of:
 Global lock identities include their declaring package. A private global can
 therefore guard exported fields and functions: callers can acquire and release
 it through functions with `+checklocksacquire` and `+checklocksrelease`, even
-though they cannot name the lock directly.
+though they cannot name the lock directly. These contracts also apply through
+types exposed by an intermediate package.
 
 Like atomic access enforcement, checks may be elided on newly allocated objects.
 

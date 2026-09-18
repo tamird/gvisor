@@ -170,10 +170,6 @@ func findPackage(pkg *types.Package, pkgName string) (*types.Package, error) {
 	// This is needed for referencing internal/ packages which we cannot
 	// directly import, but can be reached indirectly (e.g., internal/abi
 	// is reachable from runtime).
-	//
-	// N.B. nogo/check.importer only loads facts on direct import, so
-	// ImportPackageFact may fail without an explicit import. See hack in
-	// nogo/check.Package.
 	visited := map[*types.Package]struct{}{}
 	var visit func(pkg *types.Package) *types.Package
 	visit = func(pkg *types.Package) *types.Package {

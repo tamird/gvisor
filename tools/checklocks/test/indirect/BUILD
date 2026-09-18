@@ -6,11 +6,9 @@ package(
 )
 
 go_library(
-    name = "crosspkg",
-    srcs = ["crosspkg.go"],
-    # See next level up.
+    name = "indirect",
+    srcs = ["indirect.go"],
     marshal = False,
     stateify = False,
-    visibility = ["//tools/checklocks/test:__pkg__"],
-    deps = ["//tools/checklocks/test/indirect"],
+    visibility = ["//tools/checklocks/test/crosspkg:__pkg__"],
 )

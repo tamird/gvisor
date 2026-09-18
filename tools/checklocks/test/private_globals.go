@@ -44,7 +44,7 @@ func testPrivateGlobal(v *crosspkg.PrivateState) {
 	crosspkg.ExcludePrivateStruct()
 }
 
-func testPrivateGlobalNamesArePackageQualified() {
+func testPrivateGlobalNamesArePackageQualified(v *crosspkg.IndirectState) {
 	globalMu.Lock()
 	crosspkg.RequirePrivate() // +checklocksfail=must hold globalMu
 	crosspkg.ExcludePrivate()
@@ -54,6 +54,11 @@ func testPrivateGlobalNamesArePackageQualified() {
 	crosspkg.RequirePrivateStruct() // +checklocksfail=must hold globalStruct.mu
 	crosspkg.ExcludePrivateStruct()
 	globalStruct.mu.Unlock()
+
+	crosspkg.LockPrivate()
+	v.RequirePrivate() // +checklocksfail=must hold globalMu
+	v.ExcludePrivate()
+	crosspkg.UnlockPrivate()
 }
 
 var FooMu sync.Mutex
@@ -62,6 +67,19 @@ func testExportedGlobalNamesArePackageQualified() {
 	FooMu.Lock()
 	crosspkg.Foo = 1 // +checklocksfail=invalid field access
 	FooMu.Unlock()
+}
+
+func testIndirectPrivateGlobal(v *crosspkg.IndirectState) {
+	v.RequirePrivate() // +checklocksfail=must hold globalMu
+	v.Value = 1        // +checklocksfail=invalid field access
+	v.ExcludePrivate()
+	v.LockPrivate()
+	v.RequirePrivate()
+	v.Value = 1
+	v.ExcludePrivate() // +checklocksfail=must not hold globalMu
+	v.UnlockPrivate()
+	v.RequirePrivate() // +checklocksfail=must hold globalMu
+	v.ExcludePrivate()
 }
 
 type invalidGlobalMutex = sync.Mutex

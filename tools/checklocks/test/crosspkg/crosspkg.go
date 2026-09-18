@@ -15,7 +15,11 @@
 // Package crosspkg is a second package for testing.
 package crosspkg
 
-import "sync"
+import (
+	"sync"
+
+	"gvisor.dev/gvisor/tools/checklocks/test/indirect"
+)
 
 var (
 	// +checklocks:FooMu
@@ -83,3 +87,6 @@ func RequirePrivateStruct() {}
 
 // +checklocksexclude:globalStruct.mu
 func ExcludePrivateStruct() {}
+
+// IndirectState exposes guards from a package the test does not directly import.
+type IndirectState = indirect.State
