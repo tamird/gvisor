@@ -33,3 +33,32 @@ type GenericGuard[T any] struct {
 	// +checklocks:Mu
 	Value T
 }
+
+// Integers delegates to a private constructor. The consumer can only learn
+// about the returned closure through facts exported on this public function.
+func Integers() func(func(int) bool) {
+	return integers()
+}
+
+func integers() func(func(int) bool) {
+	return func(yield func(int) bool) {
+		for value := 0; value < 3; value++ {
+			if !yield(value) {
+				return
+			}
+		}
+	}
+}
+
+// TransientUnlockSeq returns a callable with a lock precondition. An empty
+// constructor contract must not be mistaken for a proof about that callable.
+func TransientUnlockSeq() func(func(int) bool) {
+	return transientUnlockSeq
+}
+
+// +checklocks:FooMu
+func transientUnlockSeq(yield func(int) bool) {
+	FooMu.Unlock()
+	yield(1)
+	FooMu.Lock()
+}

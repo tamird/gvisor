@@ -29,6 +29,23 @@ import (
 type lockInfo struct {
 	exclusive bool
 	object    types.Object
+
+	// dependencies are canonical addresses whose loaded contents selected
+	// this mutex. They retain provenance even when a load evaluates to a
+	// constant, and are immutable once attached to a state.
+	dependencies map[string]struct{}
+}
+
+func (info lockInfo) mergeDependencies(other lockInfo) lockInfo {
+	if len(other.dependencies) == 0 || maps.Equal(info.dependencies, other.dependencies) {
+		return info
+	}
+	info.dependencies = maps.Clone(info.dependencies)
+	if info.dependencies == nil {
+		info.dependencies = make(map[string]struct{})
+	}
+	maps.Copy(info.dependencies, other.dependencies)
+	return info
 }
 
 // valueIdentity preserves the identity resolved when a value was evaluated.
@@ -157,8 +174,9 @@ func (l *lockState) lockField(rv resolvedValue, exclusive bool) (string, bool) {
 	}
 	l.modify()
 	l.lockedMutexes[s] = lockInfo{
-		exclusive: exclusive,
-		object:    obj,
+		exclusive:    exclusive,
+		object:       obj,
+		dependencies: l.lockDependencies(rv),
 	}
 	return s, true
 }
@@ -277,10 +295,16 @@ func (l *lockState) returnFrom(other *lockState) {
 // intersect retains only facts established on both normal return paths.
 func (l *lockState) intersect(other *lockState) {
 	l.modify()
-	maps.DeleteFunc(l.lockedMutexes, func(key string, info lockInfo) bool {
+	for key, info := range l.lockedMutexes {
 		otherInfo, ok := other.lockedMutexes[key]
-		return !ok || info.exclusive != otherInfo.exclusive
-	})
+		if !ok || info.exclusive != otherInfo.exclusive {
+			delete(l.lockedMutexes, key)
+		} else {
+			// Either path may have used a mutable selector to acquire
+			// the same mutex, so retain both dependency sets.
+			l.lockedMutexes[key] = info.mergeDependencies(otherInfo)
+		}
+	}
 	maps.DeleteFunc(l.aliases, func(key, value string) bool { return other.aliases[key] != value })
 	maps.DeleteFunc(l.bindings, func(key, value ssa.Value) bool { return other.bindings[key] != value })
 	maps.DeleteFunc(l.stored, func(key string, value valueIdentity) bool { return other.stored[key] != value })
@@ -290,7 +314,9 @@ func (l *lockState) intersect(other *lockState) {
 // equivalent includes the facts and pending work that can affect analysis of
 // subsequent instructions, not just the locks currently held.
 func (l *lockState) equivalent(other *lockState) bool {
-	return l.isCompatible(other) && maps.Equal(l.aliases, other.aliases) &&
+	return maps.EqualFunc(l.lockedMutexes, other.lockedMutexes, func(a, b lockInfo) bool {
+		return a.exclusive == b.exclusive && maps.Equal(a.dependencies, b.dependencies)
+	}) && maps.Equal(l.aliases, other.aliases) &&
 		maps.Equal(l.bindings, other.bindings) && maps.Equal(l.stored, other.stored) &&
 		maps.Equal(l.loaded, other.loaded) && slices.Equal(l.defers, other.defers)
 }
@@ -308,6 +334,7 @@ func (l *lockState) addAlias(left, right resolvedValue) {
 	if leftInfo, ok := l.lockedMutexes[leftRoot]; ok {
 		if rightInfo, ok := l.lockedMutexes[rightRoot]; ok {
 			leftInfo.exclusive = leftInfo.exclusive || rightInfo.exclusive
+			leftInfo = leftInfo.mergeDependencies(rightInfo)
 		}
 		l.lockedMutexes[rightRoot] = leftInfo
 		delete(l.lockedMutexes, leftRoot)
@@ -366,7 +393,10 @@ func (l *lockState) valueAndObject(v ssa.Value) (string, types.Object) {
 	v = l.bound(v)
 	switch x := v.(type) {
 	case *ssa.Parameter:
-		return fmt.Sprintf("{param:%s}", x.Name()), x.Object()
+		// Inline bindings were resolved above. Unbound parameters from
+		// different functions must not alias merely because names match,
+		// including an iterator's synthetic yield and its enclosing caller.
+		return fmt.Sprintf("{param:%s:%p}", x.Name(), x), x.Object()
 	case *ssa.Global:
 		return fmt.Sprintf("{global:%s}", x.Name()), x.Object()
 	case *ssa.FreeVar:

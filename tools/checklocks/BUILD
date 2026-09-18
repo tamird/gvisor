@@ -13,6 +13,7 @@ go_library(
         "checklocks.go",
         "facts.go",
         "importfacts.go",
+        "iterators.go",
         "state.go",
     ],
     nogo = False,

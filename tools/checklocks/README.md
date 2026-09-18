@@ -309,3 +309,24 @@ It should be expected that this annotation is also rare. If the field is not
 protected by the mutex, it suggests that the critical section could be made
 smaller by restructuring the code or the structure instead of applying the
 ignore annotation.
+
+## Range-over-function loops
+
+A range body may use locks held by the enclosing function when the analyzer can
+prove that its iterator invokes the body synchronously without changing those
+locks. This proof is inferred from source and exported for iterator constructors,
+including constructors that delegate to private helpers. Mutable captured cells
+must be private to the iterator, and writes to external storage are excluded
+from the proof. It covers, for example, `strings.SplitSeq`. Unknown iterator
+values do not lend caller locks to the body.
+
+Each body invocation must preserve its incoming lock state. Assignments that
+change values containing locks or guarded fields, including pointers to those
+values and indices selecting them, are rejected because the body can execute
+repeatedly or not at all. Ordinary scalar writes and writes to
+collections of scalar values remain supported. Calls that can mutate such lock
+identities are rejected unless their bodies are analyzed inline; this includes
+unknown dynamic calls and named helpers receiving values containing locks or
+guarded fields. Defers directly inside the body are not supported because Go
+runs them when the enclosing function returns, rather than when the callback
+returns.

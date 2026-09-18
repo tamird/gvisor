@@ -393,6 +393,9 @@ func (pc *passContext) checkGlobalAccess(inst ssa.Instruction, g *ssa.Global, ls
 }
 
 func (pc *passContext) checkCall(call callCommon, lff *lockFunctionFacts, ls *lockState) {
+	if pc.checkRangeCall(call, lff, ls) {
+		return
+	}
 	// See: https://godoc.org/golang.org/x/tools/go/ssa#CallCommon
 	//
 	// "invoke" mode: Method is non-nil, and Value is the underlying value.
@@ -679,6 +682,9 @@ type callCommon interface {
 // checkInstruction checks the legality the single instruction based on the
 // current lockState.
 func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionFacts, ls *lockState) (*ssa.Return, *lockState) {
+	if pc.rangeDepth > 0 && !lff.Ignore && pc.changesRangeLockIdentity(inst, ls) {
+		pc.maybeFail(inst.Pos(), "range body changes a lock identity")
+	}
 	// Record any observed globals, and check for violations. The global
 	// value is not itself an instruction, but we check all referrers to
 	// see where they are consumed.
@@ -736,6 +742,10 @@ func (pc *passContext) checkInstruction(inst ssa.Instruction, lff *lockFunctionF
 		}
 	case *ssa.MakeClosure:
 		if refs := x.Referrers(); refs != nil {
+			if rangeYield(x.Fn.(*ssa.Function)) {
+				// The iterator determines the lock state at callback execution.
+				return nil, nil
+			}
 			var (
 				calls    int
 				nonCalls int
@@ -784,8 +794,9 @@ func (pc *passContext) checkBasicBlock(fn *ssa.Function, block *ssa.BasicBlock, 
 	}
 
 	// Prevent recursion through changing lock states or pending defers. A
-	// matching cached entry can be revisited when it loses value facts: each
-	// such visit removes facts, so this converges even across loop backedges.
+	// matching cached entry can lose value facts or gain lock-dependency
+	// constraints. Both changes are monotonic over the finite SSA facts, so
+	// revisiting these entries converges across loop backedges.
 	if rg == nil {
 		rg = make(map[*ssa.BasicBlock]struct{})
 	}
@@ -824,6 +835,7 @@ func (pc *passContext) checkBasicBlock(fn *ssa.Function, block *ssa.BasicBlock, 
 	for _, inst := range block.Instrs {
 		rv, rls = pc.checkInstruction(inst, lff, ls)
 		if rls != nil {
+			pc.checkRangeReturn(fn, lff, rls)
 			// Inline calls transfer their locks back to the caller. Only
 			// standalone analysis checks a function's exit contract.
 			if inline {

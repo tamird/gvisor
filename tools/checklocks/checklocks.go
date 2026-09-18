@@ -47,6 +47,7 @@ var Analyzer = &analysis.Analyzer{
 		(*lockGuardFacts)(nil),
 		(*lockFunctionFacts)(nil),
 		(*lockTypeFacts)(nil),
+		(*iteratorFacts)(nil),
 	},
 }
 
@@ -76,6 +77,9 @@ type passContext struct {
 	forced           map[positionKey]struct{}
 	functions        map[*ssa.Function]struct{}
 	escapedFunctions map[*ssa.Function]struct{}
+	iterators        map[*ssa.Function]*iteratorFacts
+	rangeEntries     map[*ssa.Function]*lockState
+	rangeDepth       int
 	observations     map[types.Object]*objectObservations
 }
 
@@ -147,6 +151,8 @@ func run(pass *analysis.Pass) (any, error) {
 		forced:           make(map[positionKey]struct{}),
 		functions:        make(map[*ssa.Function]struct{}),
 		escapedFunctions: make(map[*ssa.Function]struct{}),
+		iterators:        make(map[*ssa.Function]*iteratorFacts),
+		rangeEntries:     make(map[*ssa.Function]*lockState),
 	}
 
 	// Find all line failure annotations.
@@ -184,6 +190,9 @@ func run(pass *analysis.Pass) (any, error) {
 
 	// Scan all code looking for invalid accesses.
 	state := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
+	for _, fn := range state.SrcFuncs {
+		pc.iteratorFunctionFacts(fn)
+	}
 	for _, fn := range state.SrcFuncs {
 		// Import function facts generated above.
 		//
