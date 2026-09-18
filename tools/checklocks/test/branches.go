@@ -39,7 +39,7 @@ func testConsistentBranching(tc *oneGuardStruct) {
 	}
 }
 
-func testInconsistentBranching(tc *oneGuardStruct) { // +checklocksfail=incompatible return states|incompatible return states|unexpected locks held
+func testInconsistentBranching(tc *oneGuardStruct) { // +checklocksfail=incompatible return states|unexpected locks held
 	// We traverse the control flow graph in all consistent ways. We cannot
 	// determine however, that the first if block and second if block will
 	// evaluate to the same condition. Therefore, there are two consistent
