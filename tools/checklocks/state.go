@@ -379,6 +379,12 @@ func (l *lockState) valueAndObject(v ssa.Value) (string, types.Object) {
 	case *ssa.ChangeType:
 		// Ditto, disregard.
 		return l.valueAndObject(x.X)
+	case *ssa.MakeInterface:
+		// Boxing preserves the identity of the contained value.
+		return l.valueAndObject(x.X)
+	case *ssa.ChangeInterface:
+		// Changing the interface type preserves its dynamic value.
+		return l.valueAndObject(x.X)
 	case *ssa.UnOp:
 		if value, ok := l.loaded[x]; ok {
 			return value.key, value.object

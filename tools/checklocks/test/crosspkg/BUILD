@@ -7,7 +7,10 @@ package(
 
 go_library(
     name = "crosspkg",
-    srcs = ["crosspkg.go"],
+    srcs = [
+        "crosspkg.go",
+        "pointer_globals.go",
+    ],
     # See next level up.
     marshal = False,
     stateify = False,

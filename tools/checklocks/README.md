@@ -87,6 +87,10 @@ therefore guard exported fields and functions: callers can acquire and release
 it through functions with `+checklocksacquire` and `+checklocksrelease`, even
 though they cannot name the lock directly.
 
+Globals may hold mutex pointers, pointers to structs containing mutexes, or
+`sync.Locker` interfaces. Annotations identify the lock held by the variable's
+current value, including a value assigned earlier in the analyzed function.
+
 Like atomic access enforcement, checks may be elided on newly allocated objects.
 
 ### Function Annotations

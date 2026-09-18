@@ -111,6 +111,9 @@ type resolvedValue struct {
 	value     ssa.Value
 	fieldList fieldList
 
+	// deref loads the base variable before traversing its fields.
+	deref bool
+
 	// key identifies an imported global whose declaration or package is absent
 	// from SSA. It is synthesized where the declaration's type is available.
 	key string
@@ -140,8 +143,15 @@ func (rv *resolvedValue) valueAndObject(ls *lockState) (string, types.Object) {
 	// N.B. obj.Type() and typ should be equal, but a check is omitted
 	// since, 1) we automatically chase through pointers during field
 	// resolution, and 2) obj may be nil if there is no source object.
-	s, obj := ls.valueAndObject(rv.value)
+	var s string
+	var obj types.Object
 	typ := rv.value.Type()
+	if rv.deref {
+		s, obj = ls.loadValueAndObject(rv.value)
+		typ = typ.Underlying().(*types.Pointer).Elem()
+	} else {
+		s, obj = ls.valueAndObject(rv.value)
+	}
 	for _, entry := range rv.fieldList {
 		s, obj = entry.synthesize(s, typ, ls)
 		typ = obj.Type()
@@ -196,6 +206,9 @@ type globalGuard struct {
 	// FieldList is the traversal path from object.
 	FieldList fieldList
 
+	// Deref loads a global pointer or interface before traversing FieldList.
+	Deref bool
+
 	// Key preserves the complete lock identity when export data omits the
 	// private global or the caller does not directly import its package.
 	Key string
@@ -219,7 +232,9 @@ func (g *globalGuard) resolveCommon(pc *passContext, ls *lockState) resolvedValu
 	}
 	if pkg != nil {
 		if v, ok := pkg.Members[g.ObjectName].(ssa.Value); ok {
-			return makeResolvedValue(v, g.FieldList)
+			rv := makeResolvedValue(v, g.FieldList)
+			rv.deref = g.Deref
+			return rv
 		}
 	}
 	return resolvedValue{key: g.Key}
@@ -569,15 +584,22 @@ func (ltf *lockTypeFacts) addTypeAlias(pc *passContext, ts *ast.TypeSpec, struct
 	})
 }
 
+// holdsReference reports whether a variable's value is a pointer or interface.
+func holdsReference(obj types.Object) bool {
+	switch types.Unalias(obj.Type()).Underlying().(type) {
+	case *types.Pointer, *types.Interface:
+		return true
+	default:
+		return false
+	}
+}
+
 // fieldEntryFor returns the fieldList value for the given object.
 func (pc *passContext) fieldEntryFor(fieldObj types.Object, index int) fieldEntry {
-	// Return the resolution path.
-	switch types.Unalias(fieldObj.Type()).Underlying().(type) {
-	case *types.Pointer, *types.Interface:
+	if holdsReference(fieldObj) {
 		return &fieldStructPtr{Field: index}
-	default:
-		return &fieldStruct{Field: index}
 	}
+	return &fieldStruct{Field: index}
 }
 
 // findField resolves a field in a single struct.
@@ -813,6 +835,13 @@ func (pc *passContext) findGlobalGuard(pos token.Pos, guardName string) (*global
 		return nil, nil, false
 	}
 	key := globalLockKey(pc.pass.Pkg.Path(), globalObj.Name())
+	deref := holdsReference(globalObj)
+	if deref {
+		// SSA globals are addresses of variables. Pointer and interface
+		// values must be loaded before they can identify a lock.
+		key = fmt.Sprintf("*(%s)", key)
+	}
+	// Unlike an SSA global's type, this is already the loaded value's type.
 	typ := globalObj.Type()
 	ls := newLockState()
 	for _, entry := range fl {
@@ -824,6 +853,7 @@ func (pc *passContext) findGlobalGuard(pos token.Pos, guardName string) (*global
 		ObjectName:  parts[0],
 		PackageName: pc.pass.Pkg.Path(),
 		FieldList:   fl,
+		Deref:       deref,
 		Key:         key,
 	}, lockObj, true
 }
