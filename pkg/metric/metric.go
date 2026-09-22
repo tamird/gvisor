@@ -16,10 +16,13 @@
 package metric
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	re "regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -278,10 +281,15 @@ type FieldValue struct {
 	Value string
 }
 
-// fieldMapperMapThreshold is the number of field values after which we switch
-// to using map lookups when looking up field values.
-// This value was determined using benchmarks to see which is fastest.
-const fieldMapperMapThreshold = 48
+// fieldMapperSearchThreshold is the number of field values after which we
+// switch from linear to binary search when looking up field values.
+const fieldMapperSearchThreshold = 48
+
+// fieldValueIndex associates a retained field value with its declaration index.
+type fieldValueIndex struct {
+	value *FieldValue
+	index int
+}
 
 // Field contains the field name and allowed values for the metric which is
 // used in registration of the metric.
@@ -289,19 +297,15 @@ type Field struct {
 	// name is the metric field name.
 	name string
 
-	// values is the list of values for the field.
-	// `values` is always populated but not always used for lookup. It depends
-	// on the number of allowed field values. `values` is used for lookups on
-	// fields with small numbers of field values.
+	// values holds the field values in declaration order. Its indices define
+	// metric keys and are also used by valuesSorted for lookup.
 	values []*FieldValue
 
-	// valuesPtrMap is a map version of `values`. For each item in `values`,
-	// its pointer is mapped to its index within `values`.
-	// `valuesPtrMap` is used for fields with large numbers of possible values.
-	// For fields with small numbers of field values, it is nil.
-	// This map allows doing faster string matching than a normal string map,
-	// as it avoids the string hashing step that normal string maps need to do.
-	valuesPtrMap map[*FieldValue]int
+	// valuesSorted contains field values and their declaration indices, sorted
+	// by pointer address.
+	// It supports binary search without changing declaration order or calling
+	// map runtime helpers, which can split the stack. For small fields it is nil.
+	valuesSorted []fieldValueIndex
 }
 
 // toProto returns the proto definition of this field, for use in metric
@@ -325,29 +329,30 @@ func (f Field) toProto() *pb.MetricMetadata_Field {
 // package-level `var`s during metric modifications.
 func NewField(name string, allowedValues ...*FieldValue) Field {
 	// Verify that all string values have a unique value.
-	strMap := make(map[string]bool, len(allowedValues))
-	for _, v := range allowedValues {
-		if strMap[v.Value] {
+	valueIndices := make(map[string]fieldValueIndex, len(allowedValues))
+	for i, v := range allowedValues {
+		if _, ok := valueIndices[v.Value]; ok {
 			panic(fmt.Sprintf("found duplicate field value: %q", v))
 		}
-		strMap[v.Value] = true
+		// Storing v in the map also ensures that caller-local FieldValues
+		// escape to the heap, where stack growth cannot change their order.
+		valueIndices[v.Value] = fieldValueIndex{value: v, index: i}
 	}
 
-	if useMap := len(allowedValues) > fieldMapperMapThreshold; !useMap {
+	if len(allowedValues) <= fieldMapperSearchThreshold {
 		return Field{
 			name:   name,
 			values: allowedValues,
 		}
 	}
 
-	valuesPtrMap := make(map[*FieldValue]int, len(allowedValues))
-	for i, v := range allowedValues {
-		valuesPtrMap[v] = i
-	}
+	valuesSorted := slices.SortedFunc(maps.Values(valueIndices), func(a, b fieldValueIndex) int {
+		return cmp.Compare(fieldValueAddress(a.value), fieldValueAddress(b.value))
+	})
 	return Field{
 		name:         name,
 		values:       allowedValues,
-		valuesPtrMap: valuesPtrMap,
+		valuesSorted: valuesSorted,
 	}
 }
 
@@ -398,30 +403,42 @@ func (m *fieldMapper) lookupSingle(fieldIndex int, fieldValue *FieldValue, idx, 
 	field := m.fields[fieldIndex]
 	numValues := len(field.values)
 
-	// Are we doing a linear search?
-	if field.valuesPtrMap == nil {
+	valIdx := -1
+	if field.valuesSorted == nil {
 		// We scan by pointers only. This means the caller must pass the same
 		// FieldValue pointer as the one used in `NewField`.
-		for valIdx, allowedVal := range field.values {
+		for i, allowedVal := range field.values {
 			if fieldValue == allowedVal {
-				remainingCombinationBucket /= numValues
-				idx += remainingCombinationBucket * valIdx
-				return idx, remainingCombinationBucket
+				valIdx = i
+				break
 			}
 		}
+	} else {
+		// slices.BinarySearchFunc can split the stack, so keep the search
+		// within this nosplit function.
+		low, high := 0, len(field.valuesSorted)
+		for low < high {
+			mid := low + (high-low)/2
+			if fieldValueAddress(field.valuesSorted[mid].value) < fieldValueAddress(fieldValue) {
+				low = mid + 1
+			} else {
+				high = mid
+			}
+		}
+		if low < len(field.valuesSorted) {
+			entry := field.valuesSorted[low]
+			if entry.value == fieldValue {
+				valIdx = entry.index
+			}
+		}
+	}
+
+	if valIdx < 0 {
 		panic("invalid field value or did not reuse the same FieldValue pointer as passed in NewField")
 	}
-
-	// Match using FieldValue pointer.
-	// This avoids the string hashing step that string maps otherwise do.
-	valIdx, found := field.valuesPtrMap[fieldValue]
-	if found {
-		remainingCombinationBucket /= numValues
-		idx += remainingCombinationBucket * valIdx
-		return idx, remainingCombinationBucket
-	}
-
-	panic("invalid field value or did not reuse the same FieldValue pointer as passed in NewField")
+	remainingCombinationBucket /= numValues
+	idx += remainingCombinationBucket * valIdx
+	return idx, remainingCombinationBucket
 }
 
 // lookupConcat looks up a key within the fieldMapper where the fields are
