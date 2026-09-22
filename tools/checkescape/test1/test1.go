@@ -211,3 +211,117 @@ func Split() {
 func splitRec() {
 	Split()
 }
+
+// MapLookup calls the runtime even though the caller cannot split its stack.
+// +mustescape:local,stack
+// +checkescape:hard
+//
+//go:noinline
+//go:nosplit
+func MapLookup(m map[uint64]int, key uint64) int {
+	return m[key]
+}
+
+// MapLookupOK uses the comma-ok form and pointer keys used by metric fields.
+// +mustescape:local,stack
+// +checkescape:hard
+//
+//go:noinline
+//go:nosplit
+func MapLookupOK(m map[*int]int, key *int) (int, bool) {
+	value, ok := m[key]
+	return value, ok
+}
+
+// +mustescape:stack
+//
+//go:noinline
+//go:nosplit
+func mapLookupRec(m map[uint64]int, key uint64) int {
+	return MapLookup(m, key)
+}
+
+// MapUpdate can both grow the map and split the stack.
+// +mustescape:local,builtin,stack
+//
+//go:noinline
+//go:nosplit
+func MapUpdate(m map[int]int, key, value int) {
+	m[key] = value
+}
+
+// MapDelete can split the stack without allocating map storage.
+// +mustescape:local,stack
+// +checkescape:hard
+//
+//go:noinline
+//go:nosplit
+func MapDelete(m map[int]int, key int) {
+	delete(m, key)
+}
+
+// MapClear can split the stack without allocating map storage.
+// +mustescape:local,stack
+// +checkescape:hard
+//
+//go:noinline
+//go:nosplit
+func MapClear(m map[int]int) {
+	clear(m)
+}
+
+// MapRange invokes runtime iterator helpers.
+// +mustescape:local,stack
+// +checkescape:hard
+//
+//go:noinline
+//go:nosplit
+func MapRange(m map[int]int) int {
+	var sum int
+	for _, value := range m {
+		sum += value
+	}
+	return sum
+}
+
+// String iteration shares SSA instructions with map iteration.
+// +checkescape:all
+//
+//go:noinline
+//go:nosplit
+func stringRange(s string) int {
+	var sum int
+	for _, value := range s {
+		sum += int(value)
+	}
+	return sum
+}
+
+// Clearing a slice does not call the map runtime.
+// +checkescape:all
+//
+//go:noinline
+//go:nosplit
+func clearSlice(s []int) {
+	clear(s)
+}
+
+// +checkescape:all
+//
+//go:noinline
+//go:nosplit
+func clearPointerSlice(s []*int) {
+	clear(s)
+}
+
+// +checkescape:all
+//
+//go:noinline
+//go:nosplit
+func exemptMapRange(m map[int]int) int {
+	var sum int
+	for _, value := range m { // escapes: Test an exemption on an implicit runtime call.
+		sum += value
+	}
+	return sum
+}

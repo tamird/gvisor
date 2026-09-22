@@ -465,6 +465,10 @@ func loadObjdump(binary io.Reader) (map[string]map[string]struct{}, error) {
 		"runtime.retpolineSI":    {},
 		"runtime.stackcheck":     {},
 		"runtime.settls":         {},
+
+		// Clearing slice storage neither allocates nor splits the stack.
+		"runtime.memclrNoHeapPointers": {},
+		"runtime.memclrHasPointers":    {},
 	}
 	// addrsAllowed lists every address that can be jumped to within the
 	// funcsAllowed functions.
@@ -672,9 +676,15 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 		}
 	}
 	callSite := func(inst ssa.Instruction) CallSite {
+		var site poser = inst
+		if next, ok := inst.(*ssa.Next); ok {
+			// Next has no position of its own. Both iterator initialization
+			// and advancement are attributed to the range expression.
+			site = next.Iter
+		}
 		return CallSite{
-			LocalPos: inst.Pos(),
-			Resolved: linePosition(inst, inst.Parent()),
+			LocalPos: site.Pos(),
+			Resolved: linePosition(site, inst.Parent()),
 		}
 	}
 	hasCall := func(inst poser) (string, bool) {
@@ -770,7 +780,16 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 				return
 			case *ssa.Builtin:
 				// Ignore elided escapes.
-				if _, has := hasCall(inst); !has {
+				call, has := hasCall(inst)
+				if !has {
+					return
+				}
+
+				// Map deletion and clearing call runtime helpers that may
+				// split the stack. Slice clearing uses the allowed memclr
+				// helpers, so it has no call left to report here.
+				if x.Name() == "delete" || x.Name() == "clear" {
+					es.Add(stackSplit, call, cs)
 					return
 				}
 
@@ -811,6 +830,21 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 			es.Add(builtin, "makeclosure", cs)
 		case *ssa.MakeChan:
 			es.Add(builtin, "makechan", cs)
+		case *ssa.Lookup, *ssa.MapUpdate:
+			// Map operations lower to runtime calls rather than SSA calls.
+			// The runtime can split the stack even in a nosplit caller.
+			if call, has := hasCall(inst); has {
+				es.Add(stackSplit, call, cs)
+				if _, ok := inst.(*ssa.MapUpdate); ok {
+					es.Add(builtin, "mapassign", cs)
+				}
+			}
+		case *ssa.Next:
+			if !x.IsString {
+				if call, has := hasCall(x.Iter); has {
+					es.Add(stackSplit, call, cs)
+				}
+			}
 		}
 		return
 	}

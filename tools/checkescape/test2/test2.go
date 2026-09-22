@@ -98,3 +98,11 @@ func dynamicCrossPkg(f func()) {
 func splitCrosssPkt() {
 	test1.Split()
 }
+
+// +mustescape:stack
+//
+//go:noinline
+//go:nosplit
+func mapLookupCrossPkg(m map[uint64]int, key uint64) int {
+	return test1.MapLookup(m, key)
+}
