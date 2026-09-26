@@ -7,6 +7,7 @@ load("@io_bazel_rules_go//go:def.bzl", "GoLibrary", _go_binary = "go_binary", _g
 load("@io_bazel_rules_go//go/private:context.bzl", "CGO_ATTRS", "CGO_FRAGMENTS", "CGO_TOOLCHAINS")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
+load("//tools/bazeldefs:go_static.bzl", _static_go_binary = "go_binary", _static_go_test = "go_test")
 
 gazelle = _gazelle
 
@@ -14,6 +15,14 @@ go_path = _go_path
 go_reset_target = _go_reset_target
 go_cov = native.genrule
 cov_available = True
+
+# Runtime data binaries inherit their parent's musl platform, but rules_go
+# resets the parent's static mode across data edges. Give these binaries their
+# own static attribute so that build tools can still reset to their usual mode.
+_DEFAULT_STATIC = select({
+    Label("@llvm//constraints/libc:musl"): "on",
+    "//conditions:default": "auto",
+})
 
 def _go_proto_or_grpc_library(go_library_func, name, **kwargs):
     if "importpath" in kwargs:
@@ -66,8 +75,7 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         # no-op option, will need to do transitions when sanitizer configs are defined.
         kwargs.pop("noasan")
 
-    if static:
-        kwargs["static"] = "on"
+    kwargs["static"] = "on" if static else _DEFAULT_STATIC
     if pure:
         kwargs["pure"] = "on"
     gc_goopts = select({
@@ -83,7 +91,8 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    _go_binary(
+    binary_rule = _static_go_binary if static else _go_binary
+    binary_rule(
         name = name,
         x_defs = x_defs,
         gc_goopts = gc_goopts,
@@ -127,8 +136,7 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
     """
     if pure:
         kwargs["pure"] = "on"
-    if static:
-        kwargs["static"] = "on"
+    kwargs["static"] = "on" if static else _DEFAULT_STATIC
     if library:
         kwargs["embed"] = [library]
     base_gotags = kwargs.pop("gotags", [])
@@ -140,7 +148,8 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    _go_test(
+    test_rule = _static_go_test if static else _go_test
+    test_rule(
         name = name,
         **kwargs
     )
@@ -160,6 +169,7 @@ def go_rule(rule, implementation, **kwargs):
         "_go_context_data": attr.label(default = "@io_bazel_rules_go//:go_context_data"),
         "_stdlib": attr.label(default = "@io_bazel_rules_go//:stdlib"),
     })
+
     # go_context requires the C++ context in race/cgo configurations. rules_go
     # only exposes the required declarations through go/private/context.bzl.
     kwargs["attrs"].update(CGO_ATTRS)

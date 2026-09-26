@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y curl gnupg2 git \
         software-properties-common \
         pkg-config libffi-dev patch diffutils libssl-dev iptables kmod \
         clang clangd crossbuild-essential-amd64 erofs-utils busybox-static \
-        libbpf-dev iproute2 netcat-openbsd libnuma-dev
+        libbpf-dev iproute2 netcat-openbsd
 
 # This package is needed to build eBPF on amd64, but not on arm64 where it
 # doesn't exist.
