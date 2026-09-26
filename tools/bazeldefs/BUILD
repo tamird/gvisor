@@ -80,6 +80,18 @@ platform(
     visibility = ["//visibility:public"],
 )
 
+RBE_IMAGE = "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02"
+
+platform(
+    name = "rbe_linux_amd64",
+    exec_properties = {
+        "Arch": "amd64",
+        "OSFamily": "linux",
+        "container-image": RBE_IMAGE,
+    },
+    parents = [":linux_amd64"],
+)
+
 config_setting(
     name = "amd64",
     constraint_values = [

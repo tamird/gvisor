@@ -1,0 +1,22 @@
+# Upload this pipeline manually after provisioning the authentication file
+# described in rbe.md. The default pipeline does not include these steps.
+_templates:
+  rbe: &rbe
+    timeout_in_minutes: 55
+    retry:
+      automatic: false
+    agents:
+      arch: "amd64"
+      queue: "default"
+
+env:
+  BUILDKITE_CLEAN_CHECKOUT: true
+  BUILDKITE_RBE: true
+
+steps:
+  - <<: *rbe
+    label: "BuildBuddy pilot (AMD64)"
+    command: bash .buildkite/scripts/rbe.sh rbe-amd64
+  - <<: *rbe
+    label: "BuildBuddy pilot (ARM64 cross-build)"
+    command: bash .buildkite/scripts/rbe.sh rbe-arm64
