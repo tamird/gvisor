@@ -56,6 +56,18 @@
 // Local exemptions can be made by a comment of the form "// escapes: reason."
 // This must appear on the line of the escape and will also apply to callers of
 // the function as well (for non-local escape analysis).
+//
+// Instructions are analyzed for their possible effects before compiled code is
+// used to rule out eliminated calls. Generic declarations are analyzed for all
+// permitted type arguments, including instantiations compiled only by importing
+// packages. Their archives cannot prove that allocations or compiler-generated
+// calls were eliminated. Operations
+// whose implementation cannot be established from the type constraints count as
+// dynamic escapes; possible boxing and conversion allocations also count as heap
+// escapes. Materialized generic locals conservatively count as heap allocations,
+// since larger type arguments can exceed the compiler's stack-allocation limit.
+// An explicit go:nosplit directive rules out only the declaration's own
+// stack-splitting prologue.
 package checkescape
 
 import (
@@ -355,9 +367,9 @@ func MergeAll(others []Escapes) (es Escapes) {
 
 // loadObjdump reads the objdump output.
 //
-// This records if there is a call any function for every source line. It is
-// used only to remove false positives for escape analysis. The call will be
-// elided if escape analysis is able to put the object on the heap exclusively.
+// This records compiled source lines and their calls. It is used to rule out
+// operations that the compiler eliminated or implemented without a call, such
+// as an allocation placed on the stack.
 //
 // Note that the map uses <basename.go>:<line> because that is all that is
 // provided in the objdump format. Since this is all local, it is sufficient.
@@ -500,15 +512,31 @@ func loadObjdump(binary io.Reader) (map[string]map[string]struct{}, error) {
 		//
 		// Lines look like this (including the first space):
 		//  gohacks_unsafe.go:33  0xa39                   488b442408              MOVQ 0x8(SP), AX
-		if len(fields) >= 5 && line[0] == ' ' {
-			if !strings.Contains(fields[3], "CALL") {
+		if len(fields) >= 4 && line[0] == ' ' {
+			site := fields[0]
+			// An empty entry distinguishes compiled code without calls from
+			// source that is absent from this archive, including RET-only bodies.
+			if _, ok := m[site]; !ok {
+				m[site] = nil
+			}
+			if len(fields) < 5 || !strings.Contains(fields[3], "CALL") {
 				continue
 			}
-			site := fields[0]
 			target := strings.TrimSuffix(fields[4], "(SB)")
 			target, err := fixOffset(fields, target)
 			if err != nil {
 				return nil, err
+			}
+
+			// Object files may print an address placeholder followed by the
+			// call's relocation. Retain its symbol when available, both for
+			// diagnostics and for comparison with directly called SSA functions.
+			for _, field := range fields[5:] {
+				for _, kind := range []string{"]R_CALL:", "]R_CALLARM64:"} {
+					if _, symbol, ok := strings.Cut(field, kind); ok && !strings.Contains(symbol, "+") {
+						target = strings.TrimSuffix(symbol, "<1>")
+					}
+				}
 			}
 
 			// Ignore strings containing allowed functions.
@@ -536,8 +564,8 @@ func loadObjdump(binary io.Reader) (map[string]map[string]struct{}, error) {
 				}
 			}
 
-			calls, ok := m[site]
-			if !ok {
+			calls := m[site]
+			if calls == nil {
 				calls = make(map[string]struct{})
 				m[site] = calls
 			}
@@ -653,6 +681,126 @@ func findReasons(pass *analysis.Pass, fdecl *ast.FuncDecl) ([]EscapeReason, bool
 	return reasons, local, testReasons
 }
 
+// isGeneric includes closures in generic functions, whose compilation also
+// depends on their enclosing function's type arguments.
+func isGeneric(fn *ssa.Function) bool {
+	for ; fn != nil; fn = fn.Parent() {
+		if fn.TypeParams().Len() > 0 || fn.Signature.RecvTypeParams().Len() > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// genericCallee finds the declaration whose facts describe fn. Besides generic
+// instantiations, SSA creates thunks for method expressions. Only a thunk that
+// forwards its receiver and arguments unchanged is equivalent to the declared
+// method: receiver adaptations may introduce a separate compiler wrapper whose
+// stack behavior is not covered by the method's nosplit directive.
+// Go reuses the method's instantiation wrapper when the receiver matches:
+// https://github.com/golang/go/blob/go1.26.3/src/cmd/compile/internal/noder/reader.go#L2913
+func genericCallee(fn *ssa.Function) *ssa.Function {
+	if origin := fn.Origin(); origin != nil {
+		return origin
+	}
+	obj, ok := fn.Object().(*types.Func)
+	if !ok || obj.Origin() == obj || fn.Signature.Recv() != nil || len(fn.Blocks) != 1 {
+		return fn
+	}
+	recv := obj.Type().(*types.Signature).Recv()
+	if recv == nil || len(fn.Params) == 0 || !types.Identical(fn.Params[0].Type(), recv.Type()) {
+		return fn
+	}
+	var call *ssa.Call
+	var origin *ssa.Function
+	for _, inst := range fn.Blocks[0].Instrs {
+		switch inst := inst.(type) {
+		case *ssa.Call:
+			if call != nil || len(inst.Call.Args) != len(fn.Params) {
+				return fn
+			}
+			for i, arg := range inst.Call.Args {
+				if arg != fn.Params[i] {
+					return fn
+				}
+			}
+			callee := inst.Call.StaticCallee()
+			if callee == nil {
+				return fn
+			}
+			origin = callee.Origin()
+			if origin == nil || origin.Object() != obj.Origin() {
+				return fn
+			}
+			call = inst
+		case *ssa.Extract:
+			if call == nil || inst.Tuple != call {
+				return fn
+			}
+		case *ssa.Return, *ssa.DebugRef:
+		default:
+			return fn
+		}
+	}
+	if origin != nil {
+		return origin
+	}
+	return fn
+}
+
+// allTypes proves a property for every type permitted by typ. A union requires
+// every term to satisfy the property; an intersection needs only one embedded
+// restriction that proves it. This is a sufficient proof, not type-set expansion.
+func allTypes(typ types.Type, property func(types.Type) bool) bool {
+	typ = types.Unalias(typ)
+	if param, ok := typ.(*types.TypeParam); ok {
+		return allTypes(param.Constraint(), property)
+	}
+	switch typ := typ.Underlying().(type) {
+	case *types.Union:
+		for i := 0; i < typ.Len(); i++ {
+			if !allTypes(typ.Term(i).Type(), property) {
+				return false
+			}
+		}
+		return true
+	case *types.Interface:
+		for i := 0; i < typ.NumEmbeddeds(); i++ {
+			if allTypes(typ.EmbeddedType(i), property) {
+				return true
+			}
+		}
+		return false
+	default:
+		return property(typ)
+	}
+}
+
+func isNumeric(typ types.Type) bool {
+	basic, ok := typ.(*types.Basic)
+	return ok && basic.Info()&types.IsNumeric != 0
+}
+
+func isScalar(typ types.Type) bool {
+	switch typ.(type) {
+	case *types.Basic, *types.Pointer, *types.Chan:
+		return true
+	default:
+		return false
+	}
+}
+
+func isDirectInterfaceValue(typ types.Type) bool {
+	switch typ := typ.(type) {
+	case *types.Pointer, *types.Chan, *types.Map, *types.Signature:
+		return true // Already represented by a pointer.
+	case *types.Basic:
+		return typ.Kind() == types.UnsafePointer
+	default:
+		return false
+	}
+}
+
 // run performs the analysis.
 func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 	// Note that if this analysis fails, then we don't actually
@@ -672,25 +820,204 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 		}
 	}
 	callSite := func(inst ssa.Instruction) CallSite {
+		pos := inst.Pos()
+		if !pos.IsValid() {
+			pos = inst.Parent().Pos()
+		}
 		return CallSite{
-			LocalPos: inst.Pos(),
+			LocalPos: pos,
 			Resolved: linePosition(inst, inst.Parent()),
 		}
 	}
+	var loadFunc func(*ssa.Function) Escapes // Used recursively below.
+	loadCallee := func(x *ssa.Function, cs CallSite) (es Escapes) {
+		// buildssa represents instantiations as wrappers with no Pkg.
+		// Analyze and import facts for the generic declaration instead.
+		x = genericCallee(x)
+		// Is this a local function? If yes, call the
+		// function to load the local function. The
+		// local escapes are the escapes found in the
+		// local function.
+		if x.Pkg != nil && x.Pkg.Pkg == pass.Pkg {
+			es.MergeWithCall(loadFunc(x), cs)
+			return
+		}
+
+		// If this package is the atomic package, the implementation
+		// may be replaced by intrinsics that don't have analysis.
+		if x.Pkg != nil && x.Pkg.Pkg.Path() == "sync/atomic" {
+			return
+		}
+
+		// Recursively collect information.
+		var funcEscapes Escapes
+		obj := x.Object()
+		if obj == nil || !pass.ImportObjectFact(obj, &funcEscapes) {
+			// If this is the unix or syscall
+			// package, and the function is
+			// RawSyscall, we can also ignore this
+			// case.
+			pkgIsUnixOrSyscall := x.Pkg != nil && (x.Pkg.Pkg.Name() == "unix" || x.Pkg.Pkg.Name() == "syscall")
+			methodIsRawSyscall := x.Name() == "RawSyscall" || x.Name() == "RawSyscall6"
+			if pkgIsUnixOrSyscall && methodIsRawSyscall {
+				return
+			}
+
+			// Unable to import the dependency; we must
+			// declare these as escaping.
+			name := x.String()
+			if obj != nil {
+				name = obj.String()
+			}
+			message := fmt.Sprintf("no analysis for %q", name)
+			es.Add(unknownPackage, message, cs)
+			return
+		}
+
+		// The escapes of this instruction are the
+		// escapes of the called function directly.
+		// Note that this may record many escapes.
+		es.MergeWithCall(funcEscapes, cs)
+		return
+	}
+	// A nil entry means that the function has no usable source body. A
+	// non-nil empty set proves that its compiled body contains no calls.
+	bodyCalls := make(map[*ssa.Function]map[string]struct{})
+	functionCalls := func(fn *ssa.Function) map[string]struct{} {
+		if calls, ok := bodyCalls[fn]; ok {
+			return calls
+		}
+		bodyCalls[fn] = nil
+		if fn == nil {
+			return nil
+		}
+		syntax := fn.Syntax()
+		switch syntax := syntax.(type) {
+		case *ast.FuncDecl:
+			if syntax.Body == nil {
+				return nil
+			}
+		case *ast.FuncLit:
+		default:
+			return nil
+		}
+		start := pass.Fset.Position(syntax.Pos())
+		end := pass.Fset.Position(syntax.End())
+		if start.Filename == "" || start.Filename != end.Filename || start.Line == 0 || end.Line < start.Line {
+			return nil
+		}
+		found := make(map[string]struct{})
+		covered := false
+		for line := start.Line; line <= end.Line; line++ {
+			p := LinePosition{Filename: start.Filename, Line: line}
+			if lineCalls, ok := calls[p.Simplified()]; ok {
+				covered = true
+				maps.Copy(found, lineCalls)
+			}
+		}
+		if !covered {
+			return nil
+		}
+		bodyCalls[fn] = found
+		return found
+	}
+	type callEvidence struct {
+		detail   string
+		possible bool
+	}
+	implicitCalls := make(map[*ssa.Function]callEvidence)
 	hasCall := func(inst poser) (string, bool) {
+		var fn *ssa.Function
+		switch inst := inst.(type) {
+		case *ssa.Function:
+			fn = inst
+		case ssa.Instruction:
+			fn = inst.Parent()
+		}
+		if isGeneric(fn) {
+			// A generic body may only be compiled in an importing package.
+			// Even when this package instantiates it, other type arguments
+			// may produce different code. Absence of a call in this archive
+			// therefore cannot establish that an escape was eliminated.
+			if inst == fn {
+				// An explicit nosplit directive applies to every instantiation.
+				// Closures have no such directive, even inside nosplit functions.
+				if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {
+					for _, comment := range decl.Doc.List {
+						if comment.Text == "//go:nosplit" {
+							return "", false
+						}
+					}
+				}
+			}
+			return "(possible in a generic function)", true
+		}
 		if callsErr != nil {
 			// See above: we don't have access to the binary
 			// itself, so need to include every possible call.
 			return fmt.Sprintf("(possible, %s)", callsErr), true
 		}
-		p := linePosition(inst, nil)
-		s, ok := calls[p.Simplified()]
-		if !ok {
-			return "", false
+		if inst.Pos().IsValid() {
+			p := linePosition(inst, nil)
+			s := calls[p.Simplified()]
+			return strings.Join(slices.Sorted(maps.Keys(s)), " or "), len(s) != 0
 		}
-		// Join all calls together.
-		return strings.Join(slices.Sorted(maps.Keys(s)), " or "), true
+		// Implicit conversions have no SSA source position. A later use may
+		// be on a different line from the conversion, so it cannot establish
+		// that the compiler removed its call. Use the enclosing source body.
+		if evidence, ok := implicitCalls[fn]; ok {
+			return evidence.detail, evidence.possible
+		}
+		body := functionCalls(fn)
+		if body == nil {
+			return "(possible, no source position)", true
+		}
+		remaining := maps.Clone(body)
+		// Stack-growth prologues are reported separately as stackSplit. They
+		// are not evidence of a call implementing this implicit operation.
+		delete(remaining, "runtime.morestack")
+		delete(remaining, "runtime.morestack_noctxt")
+		delete(remaining, "runtime.morestackc")
+		// A directly called function with no compiled calls cannot explain
+		// an escape from this implicit operation. Use only immutable code
+		// evidence: recursively computed summaries can still be provisional.
+		for _, block := range fn.Blocks {
+			for _, other := range block.Instrs {
+				call, ok := other.(*ssa.Call)
+				if !ok {
+					continue
+				}
+				callee := call.Call.StaticCallee()
+				if callee == nil || callee.Pkg == nil || callee.Pkg.Pkg != pass.Pkg || isGeneric(callee) || callee.Parent() != nil {
+					continue
+				}
+				if calls := functionCalls(callee); calls == nil || len(calls) != 0 {
+					continue
+				}
+				var name string
+				if callee.Signature.Recv() != nil {
+					// SSA spells a method (pkg.T).M; the compiler uses pkg.T.M
+					// or pkg.(*T).M. Use its receiver relative to its own package.
+					recv := callee.Signature.Recv().Type()
+					name = types.TypeString(recv, types.RelativeTo(pass.Pkg))
+					if _, pointer := recv.(*types.Pointer); pointer {
+						name = "(" + name + ")"
+					}
+					name += "." + callee.Name()
+				} else {
+					name = callee.Name()
+				}
+				delete(remaining, pass.Pkg.Path()+"."+name)
+			}
+		}
+		evidence := callEvidence{possible: len(remaining) != 0}
+		if evidence.possible {
+			evidence.detail = "(possible, calls in enclosing function: " + strings.Join(slices.Sorted(maps.Keys(remaining)), " or ") + ")"
+		}
+		implicitCalls[fn] = evidence
+		return evidence.detail, evidence.possible
 	}
+
 	state := pass.ResultOf[buildssa.Analyzer].(*buildssa.SSA)
 
 	// Build the exception list.
@@ -709,12 +1036,13 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 		}
 	}
 
-	var loadFunc func(*ssa.Function) Escapes // Used below.
 	analyzeInstruction := func(inst ssa.Instruction) (es Escapes) {
 		cs := callSite(inst)
 		if _, ok := exemptions[cs.Resolved]; ok {
 			return // No escape.
 		}
+		var from, to types.Type
+		mayAllocate := false
 		switch x := inst.(type) {
 		case *ssa.Call:
 			if x.Call.IsInvoke() {
@@ -728,56 +1056,25 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 			}
 			switch x := x.Call.Value.(type) {
 			case *ssa.Function:
-				// Is this a local function? If yes, call the
-				// function to load the local function. The
-				// local escapes are the escapes found in the
-				// local function.
-				if x.Pkg != nil && x.Pkg.Pkg == pass.Pkg {
-					es.MergeWithCall(loadFunc(x), cs)
-					return
-				}
-
-				// If this package is the atomic package, the implementation
-				// may be replaced by intrinsics that don't have analysis.
-				if x.Pkg != nil && x.Pkg.Pkg.Path() == "sync/atomic" {
-					return
-				}
-
-				// Recursively collect information.
-				var funcEscapes Escapes
-				if !pass.ImportObjectFact(x.Object(), &funcEscapes) {
-					// If this is the unix or syscall
-					// package, and the function is
-					// RawSyscall, we can also ignore this
-					// case.
-					pkgIsUnixOrSyscall := x.Pkg != nil && (x.Pkg.Pkg.Name() == "unix" || x.Pkg.Pkg.Name() == "syscall")
-					methodIsRawSyscall := x.Name() == "RawSyscall" || x.Name() == "RawSyscall6"
-					if pkgIsUnixOrSyscall && methodIsRawSyscall {
-						return
-					}
-
-					// Unable to import the dependency; we must
-					// declare these as escaping.
-					message := fmt.Sprintf("no analysis for %q", x.Object().String())
-					es.Add(unknownPackage, message, cs)
-					return
-				}
-
-				// The escapes of this instruction are the
-				// escapes of the called function directly.
-				// Note that this may record many escapes.
-				es.MergeWithCall(funcEscapes, cs)
-				return
+				return loadCallee(x, cs)
 			case *ssa.Builtin:
-				// Ignore elided escapes.
-				if _, has := hasCall(inst); !has {
-					return
-				}
-
 				// Check if the builtin is escaping.
 				for _, name := range escapingBuiltins {
 					if x.Name() == name {
-						es.Add(builtin, name, cs)
+						if _, has := hasCall(inst); has {
+							es.Add(builtin, name, cs)
+						}
+						return
+					}
+				}
+				switch x.Name() {
+				case "len", "cap", "real", "imag", "complex", "panic":
+					return
+				case "min", "max":
+					if allTypes(inst.(*ssa.Call).Type(), func(typ types.Type) bool {
+						basic, ok := typ.(*types.Basic)
+						return ok && basic.Info()&types.IsInteger != 0
+					}) {
 						return
 					}
 				}
@@ -788,10 +1085,12 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 				// this refers to using static analysis alone.
 				call, _ := hasCall(inst)
 				es.Add(dynamicCall, call, cs)
+				return
 			}
 		case *ssa.Alloc:
-			// Ignore non-heap allocations.
-			if !x.Heap {
+			// A generic local that does not otherwise escape can still exceed
+			// the compiler's stack-allocation limit after instantiation.
+			if !x.Heap && !isGeneric(inst.Parent()) {
 				return
 			}
 
@@ -801,17 +1100,134 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 				return
 			}
 
-			// This is a real heap allocation.
+			// This is a heap allocation, or a possible one in a generic body.
 			es.Add(allocation, call, cs)
+			return
 		case *ssa.MakeMap:
 			es.Add(builtin, "makemap", cs)
+			return
 		case *ssa.MakeSlice:
 			es.Add(builtin, "makeslice", cs)
+			return
 		case *ssa.MakeClosure:
 			es.Add(builtin, "makeclosure", cs)
+			return
 		case *ssa.MakeChan:
 			es.Add(builtin, "makechan", cs)
+			return
+		case *ssa.Phi, *ssa.Extract, *ssa.If, *ssa.Jump, *ssa.Return,
+			*ssa.Field, *ssa.FieldAddr, *ssa.Index, *ssa.IndexAddr, *ssa.Slice,
+			*ssa.Store, *ssa.SliceToArrayPointer, *ssa.DebugRef:
+			return
+		case *ssa.ChangeType:
+			// SSA may treat a type parameter and an interface with the same
+			// underlying constraint as representation-preserving. Concrete
+			// instantiations can still need storage for the interface value.
+			_, fromTypeParam := types.Unalias(x.X.Type()).(*types.TypeParam)
+			_, toTypeParam := types.Unalias(x.Type()).(*types.TypeParam)
+			_, toInterface := x.Type().Underlying().(*types.Interface)
+			if !fromTypeParam || toTypeParam || !toInterface || allTypes(x.X.Type(), isDirectInterfaceValue) {
+				return
+			}
+			mayAllocate = true
+		case *ssa.Panic:
+			return // Panic paths, like bounds-check failures, are not checked.
+		case *ssa.UnOp:
+			if x.Op != token.ARROW {
+				return
+			}
+		case *ssa.BinOp:
+			if x.Op == token.EQL || x.Op == token.NEQ {
+				isNil := func(v ssa.Value) bool {
+					c, ok := v.(*ssa.Const)
+					return ok && c.IsNil()
+				}
+				if isNil(x.X) || isNil(x.Y) || allTypes(x.X.Type(), isScalar) {
+					return
+				}
+			} else if allTypes(x.X.Type(), func(typ types.Type) bool {
+				basic, ok := typ.(*types.Basic)
+				if !ok {
+					return false
+				}
+				switch x.Op {
+				case token.ADD:
+					return basic.Info()&types.IsNumeric != 0
+				case token.QUO:
+					return basic.Info()&types.IsComplex == 0
+				default:
+					return true
+				}
+			}) {
+				return
+			}
+			mayAllocate = x.Op == token.ADD // String concatenation.
+		case *ssa.Convert:
+			from, to = x.X.Type(), x.Type()
+		case *ssa.MultiConvert:
+			from, to = x.X.Type(), x.Type()
+		case *ssa.MakeInterface:
+			if allTypes(x.X.Type(), isDirectInterfaceValue) {
+				return
+			}
+			mayAllocate = true // The interface may need storage for its value.
+		case *ssa.ChangeInterface:
+			if x.Type().Underlying().(*types.Interface).Empty() {
+				return // Dropping methods only changes the interface header.
+			}
+		case *ssa.TypeAssert:
+			if allTypes(x.AssertedType, isScalar) {
+				return // A concrete type check and copy, excluding its panic path.
+			}
 		}
+		if from != nil {
+			if allTypes(from, isNumeric) && allTypes(to, isNumeric) {
+				return
+			}
+			// Converting pointers to addresses is representation-preserving. The
+			// reverse conversion can invoke checkptr, so remains conservative.
+			pointer := func(typ types.Type) bool {
+				_, ok := typ.(*types.Pointer)
+				return ok
+			}
+			unsafePointer := func(typ types.Type) bool {
+				basic, ok := typ.(*types.Basic)
+				return ok && basic.Kind() == types.UnsafePointer
+			}
+			uintptrType := func(typ types.Type) bool {
+				basic, ok := typ.(*types.Basic)
+				return ok && basic.Kind() == types.Uintptr
+			}
+			if (allTypes(from, pointer) && allTypes(to, unsafePointer)) ||
+				(allTypes(from, unsafePointer) && allTypes(to, uintptrType)) {
+				return
+			}
+			// String and slice conversions may need backing storage. Pointer
+			// conversions can require checkptr calls, but do not allocate.
+			withoutStorage := func(typ types.Type) bool {
+				switch typ := typ.(type) {
+				case *types.Basic:
+					return typ.Info()&types.IsString == 0
+				case *types.Slice:
+					return false
+				default:
+					return true
+				}
+			}
+			mayAllocate = !allTypes(from, withoutStorage) || !allTypes(to, withoutStorage)
+		}
+		// The same operations can require compiler-generated calls in concrete
+		// and generic bodies. Only complete code for the operation can prove
+		// that such a call was eliminated.
+		call, has := hasCall(inst)
+		if !has {
+			return
+		}
+		detail := fmt.Sprintf("compiler implementation of %q: %s", inst.String(), call)
+		if mayAllocate {
+			es.Add(allocation, detail, cs)
+		}
+		es.Add(dynamicCall, detail, cs)
 		return
 	}
 
