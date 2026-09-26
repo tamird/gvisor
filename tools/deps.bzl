@@ -25,20 +25,28 @@ def _deps_check_impl(target, ctx):
             if DepsInfo in dep:
                 nodes.update(dep[DepsInfo].nodes)
 
-    if hasattr(ctx.rule.attr, "actual_binary"):
-        dep = ctx.rule.attr.actual_binary
-        if dep and DepsInfo in dep:
+    # Follow executable wrappers, including with_cfg's exports chain. Its
+    # transitioning alias exposes a singleton list; its frontend uses a label.
+    for attr_name in ("actual_binary", "exports"):
+        wrapped = getattr(ctx.rule.attr, attr_name, None)
+        if wrapped == None:
+            continue
+        if type(wrapped) != "list":
+            wrapped = [wrapped]
+        for dep in wrapped:
+            if DepsInfo not in dep:
+                continue
             nodes.update(dep[DepsInfo].nodes)
 
             # Map target (the wrapper target) as depending on the wrapped target's deps.
             if dep in dep[DepsInfo].nodes:
-                nodes[target] = dep[DepsInfo].nodes[dep]
+                nodes.setdefault(target, []).extend(dep[DepsInfo].nodes[dep])
 
     return [DepsInfo(nodes = nodes)]
 
 _deps_check = aspect(
     implementation = _deps_check_impl,
-    attr_aspects = ["deps", "actual_binary"],
+    attr_aspects = ["deps", "actual_binary", "exports"],
 )
 
 def _workspace_of(label):
@@ -141,9 +149,9 @@ def _deps_test_impl(ctx):
 # be specified directly, or prefixes can be used to allow entire packages or
 # directory trees.
 #
-# This recursively checks the "deps" attribute of each target, dependencies
-# expressed other ways are not checked. For example, protobuf targets pull in
-# protobuf code, but aren't analyzed by deps_test.
+# This recursively checks "deps", following "actual_binary" and "exports"
+# wrappers. Other dependency attributes are not checked. For example, protobuf
+# targets pull in protobuf code, but aren't analyzed by deps_test.
 deps_test = rule(
     implementation = _deps_test_impl,
     attrs = {

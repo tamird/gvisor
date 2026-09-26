@@ -11,10 +11,10 @@
   sha256: 1692f77d1739bacf3f94337188b78583cf09bab7e420d2dc6c5605a4f86785a1
   license: Apache-2.0
 - dependency: bazel_skylib
-  version: https://github.com/bazelbuild/bazel-skylib/releases/download/1.8.2/bazel-skylib-1.8.2.tar.gz
-  retrieved: "2026-08-27"
-  commit: bce8d7f8de2e48033e771f9ccdd721edf9df84e8
-  sha256: 6e78f0e57de26801f6f564fa7c4a48dc8b36873e416257a92bbb0937eeac8446
+  version: https://github.com/bazelbuild/bazel-skylib/releases/download/1.9.0/bazel-skylib-1.9.0.tar.gz
+  retrieved: "2026-09-26"
+  commit: 53f6d0dfe32d2f71e14d27b9ccf00688c156da22
+  sha256: 3b5b49006181f5f8ff626ef8ddceaa95e9bb8ad294f7b5d7b11ea9f7ddaf8c59
   license: Apache-2.0
 - dependency: buildkite_pipeline_schema
   version: https://raw.githubusercontent.com/buildkite/pipeline-schema/f7a0894074d194bcf19eec5411fec0528f7f4180/schema.json
@@ -1005,6 +1005,12 @@
   license:
     - Apache-2.0
     - MIT
+- dependency: llvm
+  version: https://github.com/hermeticbuild/hermetic-llvm/releases/download/v0.8.23/hermetic-llvm-v0.8.23.tar.gz
+  retrieved: "2026-09-26"
+  commit: 5a9583802e7dd3ac64225147189b3d508ff8b7d5
+  sha256: 38b89cc894355f2618145c96b66bd7c08211cdb54dce5e8041925d10d9e4fed2
+  license: MIT
 - dependency: llvm-raw
   version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
   retrieved: "2026-08-27"
@@ -1038,10 +1044,10 @@
   sha256: 26dc6db523ee943af51fdfc292658a2dbe7046735654f1dc839745988f0fe26b
   license: Apache-2.0
 - dependency: rules_cc
-  version: https://github.com/bazelbuild/rules_cc/releases/download/0.2.16/rules_cc-0.2.16.tar.gz
-  retrieved: "2026-08-27"
-  commit: 6fd317b2ae0534a29db7085605b0262849e62f93
-  sha256: 458b658277ba51b4730ea7a2020efdf1c6dcadf7d30de72e37f4308277fa8c01
+  version: https://github.com/bazelbuild/rules_cc/releases/download/0.2.25/rules_cc-0.2.25.tar.gz
+  retrieved: "2026-09-26"
+  commit: 77064f0caa37d0fb2232f54feb5fba275aeebbd3
+  sha256: bd7124a844d0403b4b353bcea34d6c8b2ba88dc26881c26c9ee668da89b71846
   license: Apache-2.0
 - dependency: rules_go
   version: https://github.com/bazel-contrib/rules_go/releases/download/v0.62.0/rules_go-v0.62.0.zip
@@ -1062,10 +1068,10 @@
   sha256: d20c951960ed77cb7b341c2a59488534e494d5ad1d30c4818c736d57772a9fef
   license: Apache-2.0
 - dependency: rules_python
-  version: https://github.com/bazel-contrib/rules_python/releases/download/1.7.0/rules_python-1.7.0.tar.gz
-  retrieved: "2026-08-27"
-  commit: d3ea893113375b0c0f788c3315d8a8f488d69af6
-  sha256: f609f341d6e9090b981b3f45324d05a819fd7a5a56434f849c761971ce2c47da
+  version: https://github.com/bazel-contrib/rules_python/releases/download/1.8.0/rules_python-1.8.0.tar.gz
+  retrieved: "2026-09-26"
+  commit: 060bfebdb36103427e4ac9bd6c071eb0c804fa3d
+  sha256: 0558021abbd244f3e2b51120a7ec4bded37c6cb02c372aaa188da9ba375560d8
   license: Apache-2.0
 - dependency: sigs.k8s.io/json
   version: v0.0.0-20241010143419-9aa6b5e7a4b3
@@ -1090,6 +1096,12 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: with_cfg.bzl
+  version: https://github.com/fmeum/with_cfg.bzl/releases/download/v0.12.0/with_cfg.bzl-v0.12.0.tar.gz
+  retrieved: "2026-09-26"
+  commit: c4279c6f29b67db5c4d6b1e3c6aeea39d48291b7
+  sha256: 23c39c6dfca14dbd1607025c736c8bf4843f31958c0a87fbdb2c7d206585fea4
+  license: Apache-2.0
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"
@@ -1097,8 +1109,8 @@
   sha256: 49535f3c3370004309da50194c09bbfc528d4702424dd46e7d56a278a3dfc15d
   license: Apache-2.0
 - dependency: zstd
-  version: https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz
-  retrieved: "2026-08-27"
-  commit: 63779c798237346c2b245c546c40b72a5a5913fe
-  sha256: 9c4396cc829cfae319a6e2615202e82aad41372073482fce286fac78646d3ee4
+  version: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
+  retrieved: "2026-09-26"
+  commit: f8745da6ff1ad1e7bab384bd1f9d742439278e99
+  sha256: eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3
   license: BSD-3-Clause
