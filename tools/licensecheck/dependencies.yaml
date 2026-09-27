@@ -1027,10 +1027,10 @@
     - BSD-3-Clause
     - CC0-1.0
 - dependency: llvm
-  version: https://github.com/hermeticbuild/hermetic-llvm/releases/download/v0.8.23/hermetic-llvm-v0.8.23.tar.gz
-  retrieved: "2026-09-26"
-  commit: 5a9583802e7dd3ac64225147189b3d508ff8b7d5
-  sha256: 38b89cc894355f2618145c96b66bd7c08211cdb54dce5e8041925d10d9e4fed2
+  version: https://github.com/hermeticbuild/hermetic-llvm/releases/download/v0.8.24/hermetic-llvm-v0.8.24.tar.gz
+  retrieved: "2026-09-27"
+  commit: 39e71f9391895169b05ccd62cbb1956ae5322ff3
+  sha256: 64d421959bba30cb3bcdd1e57a01b8ef2f12b93db3d1ab4a34fe5f4d2ca78aa4
   license: MIT
 - dependency: llvm-raw
   version: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.2/llvm-project-23.1.2.src.tar.xz
