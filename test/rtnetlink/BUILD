@@ -8,6 +8,7 @@ package(
 syscall_test(
     size = "small",
     container = True,
+    network_tools = True,
     overlay = True,
     save = False,
     test = "//test/rtnetlink/linux:veth_test",
@@ -17,6 +18,7 @@ syscall_test(
 syscall_test(
     size = "small",
     container = True,
+    network_tools = True,
     overlay = True,
     save = False,
     test = "//test/rtnetlink/linux:bridge_test",
@@ -26,6 +28,7 @@ syscall_test(
 syscall_test(
     size = "small",
     container = True,
+    network_tools = True,
     overlay = True,
     save = False,
     test = "//test/rtnetlink/linux:setlink_test",
@@ -35,6 +38,7 @@ syscall_test(
 syscall_test(
     size = "small",
     container = True,
+    network_tools = True,
     overlay = True,
     save = False,
     test = "//test/rtnetlink/linux:route_test",
