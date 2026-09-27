@@ -191,6 +191,18 @@ def _syscall_test(
     if platform == "ptrace":
         runner_args.append("--trace")
 
+    # These runners create nested user and mount namespaces. Default to an
+    # isolated VM for remote execution; the execution platform still supplies
+    # the image and CPU/OS properties. KVM needs a separate worker contract.
+    if platform in ("native", "systrap"):
+        kwargs.setdefault("exec_properties", select({
+            "//tools/bazeldefs:rbe": {
+                "dockerUser": "root",
+                "workload-isolation-type": "firecracker",
+            },
+            "//conditions:default": {},
+        }))
+
     # Call the rule above.
     _runner_test(
         name = name,
