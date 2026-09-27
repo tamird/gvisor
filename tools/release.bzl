@@ -85,11 +85,14 @@ def _release_files_impl(ctx):
     commands = []
 
     # Top-level binaries
-    bins = [(target, _single_file(target).basename) for target in ctx.attr.bins]
-    bins.append((ctx.attr.runsc, "runsc"))
-    for target, name in bins:
+    bins = [
+        (target, ctx.actions.declare_file("%s/%s" % (ctx.label.name, _single_file(target).basename)))
+        for target in ctx.attr.bins
+    ]
+    runsc = ctx.actions.declare_file("%s/runsc" % ctx.label.name)
+    bins.append((ctx.attr.runsc, runsc))
+    for target, out in bins:
         src = _single_file(target)
-        out = ctx.actions.declare_file("%s/%s" % (ctx.label.name, name))
         inputs.append(src)
         outputs.append(out)
         commands.append('cp -f "%s" "%s"' % (src.path, out.path))
@@ -111,6 +114,7 @@ def _release_files_impl(ctx):
 
     runfiles = ctx.runfiles(files = outputs)
     return [DefaultInfo(
+        executable = runsc,
         files = depset(outputs),
         default_runfiles = runfiles,
         data_runfiles = runfiles,
@@ -118,6 +122,7 @@ def _release_files_impl(ctx):
 
 release_files = rule(
     implementation = _release_files_impl,
+    executable = True,
     attrs = {
         "bins": attr.label_list(
             doc = "Binaries placed at the top level of the layout.",
@@ -139,7 +144,7 @@ release_files = rule(
     },
     doc = "Assembles release binaries in the layout they are installed in: " +
           "`runsc` and each of `bins` at the top level and `sidecars` under a " +
-          "`gvisor-bin/` directory.",
+          "`gvisor-bin/` directory. The executable is the staged `runsc`.",
 )
 
 def instrumented_release_tars(name, flavor, bins = [], visibility = None):

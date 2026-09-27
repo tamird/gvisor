@@ -1,6 +1,6 @@
 """Defines a rule for syscall test targets."""
 
-load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms")
+load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "platform_capabilities", "platforms", "save_restore_platforms")
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
@@ -195,13 +195,7 @@ def _syscall_test(
     # isolated VM for remote execution; the execution platform still supplies
     # the image and CPU/OS properties. KVM needs a separate worker contract.
     if platform in ("native", "systrap"):
-        kwargs.setdefault("exec_properties", select({
-            "//tools/bazeldefs:rbe": {
-                "dockerUser": "root",
-                "workload-isolation-type": "firecracker",
-            },
-            "//conditions:default": {},
-        }))
+        kwargs.setdefault("exec_properties", namespace_test_exec_properties())
 
     # Call the rule above.
     _runner_test(

@@ -15,6 +15,23 @@ Each Nogo target already checks both supported architectures. This command
 does not execute ARM64 runtime tests. `make nogo-tests` uses the same selection
 configuration.
 
+The source-built release smoke test starts a sandbox and runs `true`:
+
+```sh
+bazel test --config=rbe --config=x86_64 //:release_smoke_test
+bazel test --config=rbe --config=x86_64 --config=race //:release_smoke_test
+```
+
+Its declared release fileset selects matching runsc and Sentry instrumentation,
+and strict sidecar lookup checks the installed file layout. Remote runs use the
+unprivileged `nobody` identity in Firecracker to exercise rootless namespace
+setup. The race variant preserves the public smoke lane's rseq setting.
+
+The existing Make smoke targets retain their installed-binary interface,
+including staged bundles and custom runtime or sidecar selections. The Bazel
+target qualifies the source-built release without installing it on the
+coordinator or using the builder image.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 
