@@ -69,13 +69,13 @@ bzl_library(
     visibility = ["//visibility:private"],
     deps = [
         ":defs_bzl",
-        ":go_static_bzl",
+        ":go_variants_bzl",
     ],
 )
 
 bzl_library(
-    name = "go_static_bzl",
-    srcs = ["go_static.bzl"],
+    name = "go_variants_bzl",
+    srcs = ["go_variants.bzl"],
     visibility = ["//visibility:private"],
     deps = [":defs_bzl"],
 )
