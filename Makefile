@@ -462,15 +462,23 @@ root-tests: load-basic_alpine $(RUNTIME_BIN)
 # Standard integration targets.
 INTEGRATION_TARGETS := //test/image:image_test //test/e2e:integration_test
 
+# Installed mode retains staged/custom runtime selection and daemon reload.
+# Owned mode uses declared Bazel inputs and a private daemon in each test action.
+DOCKER_TEST_SETUP ?= installed
+ifeq ($(DOCKER_TEST_SETUP),owned)
+docker-tests:
+	@$(call test,--config=docker $(PARTITIONS) //test/docker:owned_tests)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 docker-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME),) # Clear flags.
-	@$(call install_runtime_noreload,$(RUNTIME)-docker,--net-raw --allow-packet-socket-write) # Used by TestDocker*.
-	@$(call install_runtime_noreload,$(RUNTIME)-fdlimit,--fdlimit=2000) # Used by TestRlimitNoFile.
-	@$(call install_runtime_noreload,$(RUNTIME)-dcache,--fdlimit=2000 --dcache=100) # Used by TestDentryCacheLimit.
-	@$(call install_runtime_noreload,$(RUNTIME)-host-uds,--host-uds=all) # Used by TestHostSocketConnect.
-	@$(call install_runtime_noreload,$(RUNTIME)-overlay,--overlay2=all:self) # Used by TestOverlay*.
-	@$(call install_runtime,$(RUNTIME)-cgroupv2,--in-sandbox-cgroup=v2) # Used by TestSystemd* and TestPIDFDSelftests.
-	@$(call test_runtime_cached,$(RUNTIME),$(INTEGRATION_TARGETS) --test_env=TEST_SAVE_RESTORE_NETSTACK=true //test/e2e:integration_runtime_test //test/e2e:runtime_in_docker_test)
+	@$(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)")
+	@sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
+	@$(reload_docker)
+	@$(call wait_for_runtime,$(RUNTIME))
+	@$(call test_runtime_cached,$(RUNTIME),--config=docker //test/docker:installed_tests)
+else
+docker-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
 .PHONY: docker-tests
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)

@@ -24,7 +24,6 @@ package integration
 import (
 	"bytes"
 	"context"
-	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -48,12 +47,6 @@ import (
 const (
 	memInfoCmd = "cat /proc/meminfo | grep MemTotal: | awk '{print $2}'"
 )
-
-func TestMain(m *testing.M) {
-	flag.Parse()
-	dockerutil.EnsureSupportedDockerVersion()
-	os.Exit(m.Run())
-}
 
 func TestDisallowRootfsTarAnnotation(t *testing.T) {
 	ctx := context.Background()
@@ -142,8 +135,8 @@ func TestCheckpointRestore(t *testing.T) {
 	if !testutil.IsCheckpointSupported() {
 		t.Skip("Checkpoint is not supported.")
 	}
-	dockerutil.EnsureDockerExperimentalEnabled()
-	if !dockerutil.IsRestoreSupported() {
+	dockerutil.EnsureDockerExperimentalEnabled(t)
+	if !dockerutil.IsRestoreSupported(t) {
 		t.Skip("Restore is not supported.")
 	}
 
@@ -1221,7 +1214,7 @@ func TestCheckpointResume(t *testing.T) {
 	if !testutil.IsCheckpointSupported() {
 		t.Skip("Checkpoint is not supported.")
 	}
-	dockerutil.EnsureDockerExperimentalEnabled()
+	dockerutil.EnsureDockerExperimentalEnabled(t)
 
 	ctx := context.Background()
 	d := dockerutil.MakeContainer(ctx, t)
@@ -1318,8 +1311,8 @@ func testCheckpointRestoreTCPConnection(t *testing.T, fName string, numConn int,
 	if !testutil.IsCheckpointSupported() {
 		t.Skip("Checkpoint is not supported.")
 	}
-	dockerutil.EnsureDockerExperimentalEnabled()
-	if !dockerutil.IsRestoreSupported() {
+	dockerutil.EnsureDockerExperimentalEnabled(t)
+	if !dockerutil.IsRestoreSupported(t) {
 		t.Skip("Restore is not supported.")
 	}
 

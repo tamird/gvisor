@@ -16,7 +16,6 @@ package integration
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"net/http"
 	"testing"
@@ -28,10 +27,6 @@ import (
 
 // defaultWait is the default wait time used for tests.
 const defaultWait = time.Minute
-
-// The ordinary integration target uses its preconfigured daemon. The focused
-// source qualification target supplies a declared image to its private daemon.
-var dockerImageArchive = flag.String("docker_image_archive", "", "start a private Docker daemon and load this image archive")
 
 // httpRequestSucceeds sends a request to a given url and checks that the status is OK.
 func httpRequestSucceeds(client http.Client, server string, port int) error {
@@ -50,13 +45,6 @@ func httpRequestSucceeds(client http.Client, server string, port int) error {
 
 // TestLifeCycle tests a basic Create/Start/Stop docker container life cycle.
 func TestLifeCycle(t *testing.T) {
-	if *dockerImageArchive != "" {
-		runsc, err := testutil.FindFile("release/runsc")
-		if err != nil {
-			t.Fatal(err)
-		}
-		dockerutil.StartDaemon(t, runsc, *dockerImageArchive)
-	}
 	ctx := context.Background()
 	d := dockerutil.MakeContainer(ctx, t)
 	defer d.CleanUp(ctx)

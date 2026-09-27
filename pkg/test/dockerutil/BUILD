@@ -1,3 +1,5 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("//test/docker:config.bzl", "RUNTIME_VARIANTS")
 load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
@@ -27,9 +29,11 @@ go_library(
         "gpu.go",
         "network.go",
         "profile.go",
+        "runtime.go",
     ],
     embedsrcs = [
         ":run_sniffer_bin",  # keep
+        ":runtime_variants",  # keep
     ],
     nogo = False,
     visibility = ["//:sandbox"],
@@ -48,6 +52,12 @@ go_library(
         "@com_github_docker_go_connections//nat:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+write_file(
+    name = "runtime_variants",
+    out = "runtime_variants.json",
+    content = [json.encode(RUNTIME_VARIANTS)],
 )
 
 go_test(

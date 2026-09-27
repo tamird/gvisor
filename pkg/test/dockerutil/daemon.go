@@ -18,6 +18,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
+	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,165 +30,184 @@ import (
 
 	"github.com/docker/docker/client"
 
-	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
 
-// StartDaemon starts a private Docker daemon, registers the source-built runsc,
-// and loads a declared Docker image archive. It requires root and Docker tools.
-// The daemon and its state belong to t; tests using it must not run in parallel.
-// Existing dockerutil callers continue using their configured daemon unless
-// they explicitly call StartDaemon.
-func StartDaemon(t *testing.T, runsc, imageArchive string) {
-	t.Helper()
-	runsc, err := filepath.Abs(runsc)
+var dockerTestConfig = flag.String("docker_test_config", "", "declared runtime and image inputs for a private Docker test daemon")
+
+// daemonInputs is written by the Docker test configuration rule. All paths are
+// relative to the test's runfiles root.
+type daemonInputs struct {
+	Runsc  string   `json:"runsc"`
+	Images []string `json:"images"`
+}
+
+// RunTests runs a Docker integration suite. Callers must parse flags first.
+// Without --docker_test_config, it retains the installed-daemon interface.
+// Otherwise setup precedes the version check, and cleanup follows all tests,
+// including parallel tests. Only the caller's TestMain exits the process.
+func RunTests(m *testing.M) (status int) {
+	if *dockerTestConfig == "" {
+		EnsureSupportedDockerVersion()
+		return m.Run()
+	}
+	data, err := os.ReadFile(*dockerTestConfig)
 	if err != nil {
-		t.Fatal(err)
+		log.Printf("read Docker test configuration: %v", err)
+		return 1
+	}
+	var inputs daemonInputs
+	if err := json.Unmarshal(data, &inputs); err != nil {
+		log.Printf("decode Docker test configuration: %v", err)
+		return 1
+	}
+	if inputs.Runsc == "" || len(inputs.Images) == 0 {
+		log.Print("Docker test configuration must declare a runtime and image archives")
+		return 1
+	}
+	d := &testDaemon{}
+	defer func() {
+		if err := d.close(status != 0); err != nil {
+			log.Printf("clean up private Docker daemon: %v", err)
+			if status == 0 {
+				status = 1
+			}
+		}
+	}()
+	if err := d.start(inputs); err != nil {
+		log.Printf("start private Docker daemon: %v", err)
+		return 1
+	}
+	if err := checkSupportedDockerVersion(); err != nil {
+		log.Printf("check private Docker version: %v", err)
+		return 1
+	}
+	return m.Run()
+}
+
+// testDaemon owns suite-wide environment and runtime state. It is initialized
+// before m.Run and closed after m.Run, never concurrently with a test.
+type testDaemon struct {
+	root       string
+	dataRoot   string
+	logs       *os.File
+	cmd        *exec.Cmd
+	done       chan struct{}
+	waitErr    error
+	env        map[string]*string
+	oldRuntime string
+	oldConfig  string
+	configured bool
+}
+
+func (d *testDaemon) start(inputs daemonInputs) error {
+	runsc, err := filepath.Abs(inputs.Runsc)
+	if err != nil {
+		return err
 	}
 	sidecars := filepath.Join(filepath.Dir(runsc), "gvisor-bin")
-	if st, err := os.Stat(sidecars); err != nil || !st.IsDir() {
-		t.Fatalf("declared sidecars at %q are unavailable: %v", sidecars, err)
+	st, err := os.Stat(sidecars)
+	if err != nil {
+		return fmt.Errorf("inspect declared sidecars at %q: %w", sidecars, err)
 	}
-	// Override ambient installations even when FindRunsc was called earlier.
-	t.Setenv("GVISOR_SIDECAR_BINARIES_DIR", sidecars)
-
+	if !st.IsDir() {
+		return fmt.Errorf("declared sidecar path %q is not a directory", sidecars)
+	}
 	// Both dockerd and containerd put Unix sockets below this directory. Bazel's
 	// TMPDIR can exceed sockaddr_un's path limit, so keep the owned root short.
-	root, err := os.MkdirTemp("/tmp", "gvisor-docker-")
+	d.root, err = os.MkdirTemp("/tmp", "gvisor-docker-")
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
-	t.Cleanup(func() {
-		specutils.UnmountNullNetNS(root)
-		if err := os.RemoveAll(root); err != nil {
-			t.Errorf("remove private Docker state: %v", err)
-		}
-	})
-	// Keep bulk image data in the test workspace, which has a separate disk
-	// budget from the worker's small root filesystem.
-	dataRoot, err := os.MkdirTemp(testutil.TmpDir(), "docker-data-")
-	if err != nil {
-		t.Fatal(err)
+	// Firecracker sizes its root disk from EstimatedFreeDiskBytes; the action
+	// workspace only has fixed writable slack beyond its declared inputs.
+	d.dataRoot = filepath.Join(d.root, "data")
+	if err := os.Mkdir(d.dataRoot, 0700); err != nil {
+		return err
 	}
-	t.Cleanup(func() {
-		if err := os.RemoveAll(dataRoot); err != nil {
-			t.Errorf("remove private Docker image data: %v", err)
-		}
-	})
 	logDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
 	if logDir == "" {
-		logDir = root
+		logDir = d.root
 	}
-	logs, err := os.Create(filepath.Join(logDir, "dockerd.log"))
+	d.logs, err = os.Create(filepath.Join(logDir, "dockerd.log"))
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
-	t.Cleanup(func() {
-		if err := logs.Close(); err != nil {
-			t.Errorf("close dockerd log: %v", err)
-		}
-		if t.Failed() {
-			output, err := os.ReadFile(logs.Name())
-			if err != nil {
-				t.Errorf("read dockerd log: %v", err)
-			} else {
-				t.Logf("dockerd output:\n%s", output)
-			}
-		}
-	})
 
-	host := "unix://" + filepath.Join(root, "docker.sock")
-	configPath := filepath.Join(root, "daemon.json")
+	runtimeName := *runtime
+	if runtimeName == "" {
+		runtimeName = "runsc"
+	}
+	runtimes, err := runtimeDefinitions(runsc, runtimeName, []string{
+		// Keep the reusable gofer namespace under fixture ownership.
+		"--shared-root=" + d.root,
+		"--sidecar-usage-policy=STRICT",
+		"--debug",
+		"--debug-log=" + filepath.Join(logDir, "runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log"),
+	})
+	if err != nil {
+		return err
+	}
+	host := "unix://" + filepath.Join(d.root, "docker.sock")
+	configPath := filepath.Join(d.root, "daemon.json")
 	cfg, err := json.Marshal(map[string]any{
 		"hosts":     []string{host},
-		"data-root": dataRoot,
-		"exec-root": filepath.Join(root, "exec"),
-		"pidfile":   filepath.Join(root, "docker.pid"),
-		// The test does not require a particular backing filesystem or systemd.
+		"data-root": d.dataRoot,
+		"exec-root": filepath.Join(d.root, "exec"),
+		"pidfile":   filepath.Join(d.root, "docker.pid"),
+		// The tests do not require a particular backing filesystem or systemd.
 		"storage-driver":  "vfs",
 		"exec-opts":       []string{"native.cgroupdriver=cgroupfs"},
-		"default-runtime": "runsc",
+		"default-runtime": runtimeName,
 		"experimental":    true,
-		"runtimes": map[string]any{
-			"runsc": map[string]any{
-				"path": runsc,
-				"runtimeArgs": []string{
-					"--platform=systrap",
-					// Keep the reusable gofer namespace under fixture ownership.
-					"--shared-root=" + root,
-					"--allow-suid",
-					"--TESTONLY-test-name-env=RUNSC_TEST_NAME",
-					"--sidecar-usage-policy=STRICT",
-					"--debug",
-					"--debug-log=" + filepath.Join(logDir, "runsc.%TIMESTAMP%.%COMMAND%.log"),
-				},
-			},
-		},
+		"runtimes":        runtimes,
 	})
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	if err := os.WriteFile(configPath, cfg, 0600); err != nil {
-		t.Fatal(err)
+		return err
 	}
-	t.Setenv("DOCKER_HOST", host)
-	t.Setenv("DOCKER_TLS_VERIFY", "")
-	t.Setenv("DOCKER_CERT_PATH", "")
-	t.Setenv("DOCKER_CONTEXT", "")
-	t.Setenv("DOCKER_API_VERSION", "")
-	oldRuntime, oldConfig := *runtime, *config
-	*runtime, *config = "runsc", configPath
-	t.Cleanup(func() { *runtime, *config = oldRuntime, oldConfig })
+	d.env = make(map[string]*string)
+	for key, value := range map[string]string{
+		"GVISOR_SIDECAR_BINARIES_DIR": sidecars,
+		"DOCKER_HOST":                 host,
+		"DOCKER_TLS_VERIFY":           "",
+		"DOCKER_CERT_PATH":            "",
+		"DOCKER_CONTEXT":              "",
+		"DOCKER_API_VERSION":          "",
+	} {
+		if old, ok := os.LookupEnv(key); ok {
+			d.env[key] = &old
+		} else {
+			d.env[key] = nil
+		}
+		if err := os.Setenv(key, value); err != nil {
+			return err
+		}
+	}
+	d.oldRuntime, d.oldConfig = *runtime, *config
+	*runtime, *config = runtimeName, configPath
+	d.configured = true
 
-	cmd := exec.Command("dockerd", "--config-file", configPath)
-	cmd.Stdout, cmd.Stderr = logs, logs
-	// Keep daemon descendants in a separate group so a failed shutdown cannot
-	// leave its containerd process behind in the test action.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if err := cmd.Start(); err != nil {
-		t.Fatalf("start dockerd: %v", err)
+	d.cmd = exec.Command("dockerd", "--config-file", configPath)
+	d.cmd.Stdout, d.cmd.Stderr = d.logs, d.logs
+	// Stop descendants as well if the daemon fails during startup or shutdown.
+	d.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if err := d.cmd.Start(); err != nil {
+		return fmt.Errorf("start dockerd: %w", err)
 	}
-	done := make(chan struct{})
-	var waitErr error
+	d.done = make(chan struct{})
 	go func() {
-		waitErr = cmd.Wait()
-		close(done)
+		d.waitErr = d.cmd.Wait()
+		close(d.done)
 	}()
-	// Registered after the directory cleanup: stop and reap before removing state.
-	t.Cleanup(func() {
-		select {
-		case <-done:
-			t.Errorf("dockerd exited before cleanup: %v", waitErr)
-		default:
-			if err := cmd.Process.Signal(syscall.SIGTERM); err != nil && !errors.Is(err, os.ErrProcessDone) {
-				t.Errorf("stop dockerd: %v", err)
-			}
-			select {
-			case <-done:
-			case <-time.After(15 * time.Second):
-				t.Error("dockerd did not stop within 15 seconds")
-				if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
-					t.Errorf("kill dockerd process group: %v", err)
-				}
-				<-done
-			}
-			if waitErr != nil {
-				t.Errorf("wait for dockerd: %v", waitErr)
-			}
-		}
-		// Reap the direct child above even if it failed during startup; kill
-		// any descendants left by an abnormal daemon exit as well.
-		if err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
-			t.Errorf("clean up dockerd process group: %v", err)
-		}
-	})
-
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		t.Fatal(err)
+		return err
 	}
 	defer cli.Close()
-	ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	tick := time.NewTicker(100 * time.Millisecond)
 	defer tick.Stop()
@@ -197,29 +219,106 @@ func StartDaemon(t *testing.T, runsc, imageArchive string) {
 			break
 		}
 		select {
-		case <-done:
-			t.Fatalf("dockerd exited during startup: %v", waitErr)
+		case <-d.done:
+			return fmt.Errorf("dockerd exited during startup: %v", d.waitErr)
 		case <-ctx.Done():
-			t.Fatalf("wait for dockerd: %v (last ping: %v)", ctx.Err(), err)
+			return fmt.Errorf("wait for dockerd: %w (last ping: %v)", ctx.Err(), err)
 		case <-tick.C:
 		}
 	}
 	info, err := cli.Info(ctx)
 	if err != nil {
-		t.Fatalf("get private daemon info: %v", err)
+		return fmt.Errorf("get private daemon info: %w", err)
 	}
-	if info.DockerRootDir != dataRoot || info.DefaultRuntime != "runsc" {
-		t.Fatalf("wrong daemon: data root=%q, default runtime=%q", info.DockerRootDir, info.DefaultRuntime)
+	if info.DockerRootDir != d.dataRoot || info.DefaultRuntime != runtimeName {
+		return fmt.Errorf("wrong daemon: data root=%q, default runtime=%q", info.DockerRootDir, info.DefaultRuntime)
 	}
-	t.Logf("Private Docker %s, storage=%s, cgroup=%s/%s, root=%s; runsc=%s, strict sidecars=%s", info.ServerVersion, info.Driver, info.CgroupDriver, info.CgroupVersion, info.DockerRootDir, runsc, sidecars)
+	log.Printf("Private Docker %s, storage=%s, cgroup=%s/%s, root=%s; runsc=%s, strict sidecars=%s", info.ServerVersion, info.Driver, info.CgroupDriver, info.CgroupVersion, info.DockerRootDir, runsc, sidecars)
+	var fs syscall.Statfs_t
+	if err := syscall.Statfs(d.dataRoot, &fs); err != nil {
+		return fmt.Errorf("inspect private image filesystem: %w", err)
+	}
+	log.Printf("Private image filesystem: capacity=%d bytes, available=%d bytes", fs.Blocks*uint64(fs.Bsize), fs.Bavail*uint64(fs.Bsize))
+	for _, archive := range inputs.Images {
+		if err := loadImageArchive(archive); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
-	loadCtx, loadCancel := context.WithTimeout(t.Context(), 2*time.Minute)
-	defer loadCancel()
-	// The existing Docker CLI handles both HTTP and streamed image-load errors.
-	// It only loads this declared archive; there is no registry pull here.
-	output, err := exec.CommandContext(loadCtx, dockerCLIPath(), "load", "--input", imageArchive).CombinedOutput()
+func loadImageArchive(archive string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	// The existing Docker CLI handles HTTP and streamed image-load errors.
+	// Only declared archives are loaded; the fixture does not pull images.
+	output, err := exec.CommandContext(ctx, dockerCLIPath(), "load", "--input", archive).CombinedOutput()
 	if err != nil {
-		t.Fatalf("load declared image archive %q: %v\n%s", imageArchive, err, output)
+		return fmt.Errorf("load declared image archive %q: %w\n%s", archive, err, output)
 	}
-	t.Logf("Loaded declared image archive %s:\n%s", imageArchive, output)
+	log.Printf("Loaded declared image archive %s:\n%s", archive, output)
+	return nil
+}
+
+func (d *testDaemon) close(failed bool) error {
+	var errs []error
+	if d.done != nil {
+		select {
+		case <-d.done:
+			errs = append(errs, fmt.Errorf("dockerd exited before cleanup: %v", d.waitErr))
+		default:
+			if err := d.cmd.Process.Signal(syscall.SIGTERM); err != nil && !errors.Is(err, os.ErrProcessDone) {
+				errs = append(errs, fmt.Errorf("stop dockerd: %w", err))
+			}
+			select {
+			case <-d.done:
+			case <-time.After(15 * time.Second):
+				errs = append(errs, errors.New("dockerd did not stop within 15 seconds"))
+				if err := syscall.Kill(-d.cmd.Process.Pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
+					errs = append(errs, fmt.Errorf("kill dockerd process group: %w", err))
+				}
+				<-d.done
+			}
+			if d.waitErr != nil {
+				errs = append(errs, fmt.Errorf("wait for dockerd: %w", d.waitErr))
+			}
+		}
+		if err := syscall.Kill(-d.cmd.Process.Pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
+			errs = append(errs, fmt.Errorf("clean up dockerd process group: %w", err))
+		}
+	}
+	if d.logs != nil {
+		if err := d.logs.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("close dockerd log: %w", err))
+		}
+		if failed || len(errs) != 0 {
+			if output, err := os.ReadFile(d.logs.Name()); err != nil {
+				errs = append(errs, fmt.Errorf("read dockerd log: %w", err))
+			} else {
+				log.Printf("dockerd output:\n%s", output)
+			}
+		}
+	}
+	// The daemon is stopped and reaped before unmounting or removing owned state.
+	if d.root != "" {
+		specutils.UnmountNullNetNS(d.root)
+		if err := os.RemoveAll(d.root); err != nil {
+			errs = append(errs, fmt.Errorf("remove private Docker state: %w", err))
+		}
+	}
+	if d.configured {
+		*runtime, *config = d.oldRuntime, d.oldConfig
+	}
+	for key, value := range d.env {
+		var err error
+		if value == nil {
+			err = os.Unsetenv(key)
+		} else {
+			err = os.Setenv(key, *value)
+		}
+		if err != nil {
+			errs = append(errs, fmt.Errorf("restore environment %q: %w", key, err))
+		}
+	}
+	return errors.Join(errs...)
 }

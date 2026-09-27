@@ -51,24 +51,43 @@ including staged bundles and custom runtime or sidecar selections. The Bazel
 target qualifies the source-built release without installing it on the
 coordinator or using the builder image.
 
-The first Docker cohort reuses the existing nginx container lifecycle test:
+The maintained Docker lane has an explicit action-owned setup:
 
 ```sh
-bazel test --config=rbe --config=x86_64 //test/e2e:docker_lifecycle_test
+bazel test --config=rbe --config=x86_64 --config=docker \
+  //test/docker:owned_tests
 ```
 
-This target declares the source-built release and a digest-pinned archive of
-`images/basic/nginx`. Its TestRunner uses the pinned provider runtime image in
-a root Firecracker VM, starts a private Docker daemon, loads the archive, and
-runs the existing create/start/HTTP/stop/remove case with strict sidecar lookup.
-The daemon keeps Docker's bridge networking and uses the `vfs` storage driver
-without requiring an overlay backing filesystem. Logs are test outputs, and
-cleanup stops the daemon before deleting its private state.
+The suite selects the same four test source sets as `make docker-tests`, with
+all seven runtime configurations from `test/docker/config.bzl`. Each test
+binary starts one private Docker daemon before its tests, loads only that
+suite's declared image archives, and stops the daemon after all parallel tests
+finish. The source-built release retains strict sidecar lookup. The former
+single-case lifecycle target is covered by the maintained integration suite.
 
-The image archive is currently AMD64 only. This qualifies one base-runtime
-case, not the complete Docker, runtime-variant, or cgroup matrix. The existing
-integration target and Make users retain their installed-daemon interface and
-do not acquire the new image input.
+The archives pin the existing `tools/images.mk` source-hash tags by digest in
+`MODULE.bazel`, for AMD64 and ARM64. Updating an image requires rebuilding its
+existing Dockerfile and refreshing its corresponding digest. Image names and
+cohorts are owned by `test/docker/config.bzl`; no alternate workloads are used.
+Docker-in-Docker cases still pull and build images over the network. They are
+not hermetic tests, and their external failures remain visible.
+
+Owned tests request root Firecracker workers with the pinned provider image
+that supplies Docker, external networking and IPv6. They use VFS and request
+root disk space for expanded images and writable container copies; the action
+workspace holds the declared archives. These resource estimates need runtime
+qualification. Test logs identify the actual Docker version, storage and
+cgroup mode. ARM64 Firecracker capacity and cgroup v1 remain separate gaps;
+providing ARM64 image pins does not qualify either environment.
+
+Default `make docker-tests` and the original four test labels retain installed
+Docker, staged bundles, custom `RUNTIME_BIN`/`RUNSC_TARGET`, `RUNTIME_ARGS`,
+copy/sudo/reload behavior and partition variables. The installation adapter
+uses the same runtime table as the owned daemon. `make docker-tests
+DOCKER_TEST_SETUP=owned` selects the declared-input suite instead; installed
+runtime overrides do not apply in that explicit mode. Direct owned runs should
+set `PARTITION` and `TOTAL_PARTITIONS` through `--test_env` when partitioning;
+`--config=docker` preserves the lane's TCP save/restore setting.
 
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
