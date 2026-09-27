@@ -1,6 +1,6 @@
 """Defines a rule for syscall test targets."""
 
-load("//tools:defs.bzl", "default_platform", "namespace_test_exec_properties", "platform_capabilities", "platforms", "save_restore_platforms")
+load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
@@ -84,6 +84,7 @@ def _syscall_test(
         nftables = False,
         kvm_use_cpu_nums = True,
         in_sandbox_cgroup = "v1",
+        network_tools = False,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -191,11 +192,8 @@ def _syscall_test(
     if platform == "ptrace":
         runner_args.append("--trace")
 
-    # These runners create nested user and mount namespaces. Default to an
-    # isolated VM for remote execution; the execution platform still supplies
-    # the image and CPU/OS properties. KVM needs a separate worker contract.
-    if platform in ("native", "ptrace", "systrap"):
-        kwargs.setdefault("exec_properties", namespace_test_exec_properties())
+    # Preserve explicit caller properties, including configurable values.
+    kwargs.setdefault("exec_properties", syscall_test_exec_properties(platform, network_tools))
 
     # Call the rule above.
     _runner_test(
@@ -239,6 +237,7 @@ def syscall_test_variants(
         nftables = False,
         kvm_use_cpu_nums = False,
         in_sandbox_cgroup = "v1",
+        network_tools = False,
         **kwargs):
     """Generates syscall tests for all variants.
 
@@ -269,6 +268,7 @@ def syscall_test_variants(
       nftables: if nftables is true, enable nftables.
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
+      network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: additional test arguments.
     """
     for platform, platform_tags in all_platforms():
@@ -298,6 +298,7 @@ def syscall_test_variants(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
 
@@ -325,6 +326,7 @@ def syscall_test_variants(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
 
@@ -354,6 +356,7 @@ def syscall_test_variants(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
     if not use_tmpfs:
@@ -381,6 +384,7 @@ def syscall_test_variants(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
     if add_fusefs:
@@ -406,6 +410,7 @@ def syscall_test_variants(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
 
@@ -435,6 +440,7 @@ def syscall_test(
         perf = False,
         kvm_use_cpu_nums = False,
         in_sandbox_cgroup = "v1",
+        network_tools = False,
         **kwargs):
     """syscall_test is a macro that will create targets for all platforms.
 
@@ -464,6 +470,7 @@ def syscall_test(
       perf: test is a benchmark.
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
+      network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: additional test arguments.
     """
     if not tags:
@@ -495,6 +502,7 @@ def syscall_test(
             one_sandbox = one_sandbox,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
 
@@ -524,6 +532,7 @@ def syscall_test(
         nftables = nftables,
         kvm_use_cpu_nums = kvm_use_cpu_nums,
         in_sandbox_cgroup = in_sandbox_cgroup,
+        network_tools = network_tools,
         **kwargs
     )
 
@@ -557,6 +566,7 @@ def syscall_test(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
 
@@ -586,6 +596,7 @@ def syscall_test(
                 netstack_sr = True,  # netstack_sr, generate all tests with netstack s/r.
                 nftables = nftables,
                 kvm_use_cpu_nums = kvm_use_cpu_nums,
+                network_tools = network_tools,
                 **kwargs
             )
 
@@ -616,5 +627,6 @@ def syscall_test(
             nftables = nftables,
             kvm_use_cpu_nums = kvm_use_cpu_nums,
             in_sandbox_cgroup = in_sandbox_cgroup,
+            network_tools = network_tools,
             **kwargs
         )
