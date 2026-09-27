@@ -116,7 +116,7 @@ go_test(
     name = "nvproxy_driver_abi_test",
     size = "large",
     srcs = ["nvproxy_driver_parity_test.go"],
-    data = ["//tools/nvidia_driver_differ:driver_ast_parser"],
+    data = ["//tools/nvidia_driver_differ:driver_abi"],
     deps = [
         ":nvproxy",
         "//pkg/abi/nvgpu",
