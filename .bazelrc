@@ -15,6 +15,10 @@
 # Ensure a strong hash function.
 startup --host_jvm_args=-Dbazel.DigestFunction=SHA256
 
+# Start Python programs with the declared interpreter, without requiring a host
+# Python interpreter to bootstrap it.
+build --@rules_python//python/config_settings:bootstrap_impl=script
+
 # Build C with GNU17 and C++ with C++17.
 build --conlyopt=-std=gnu17 --cxxopt=-std=c++17
 build --host_conlyopt=-std=gnu17 --host_cxxopt=-std=c++17
