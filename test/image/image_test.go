@@ -888,5 +888,5 @@ func testDockerComposeRun(ctx context.Context, t *testing.T, d *dockerutil.Conta
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	os.Exit(dockerutil.RunTests(m))
+	os.Exit(dockerutil.RunTests(m.Run))
 }

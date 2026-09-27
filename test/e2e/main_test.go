@@ -24,5 +24,5 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	os.Exit(dockerutil.RunTests(m))
+	os.Exit(dockerutil.RunTests(m.Run))
 }

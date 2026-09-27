@@ -1,3 +1,4 @@
+load("//test/docker:defs.bzl", "docker_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
@@ -20,9 +21,9 @@ go_library(
     ],
 )
 
-go_test(
+docker_test(
     name = "root_test",
-    size = "small",
+    size = "large",
     srcs = [
         "cgroup_test.go",
         "chroot_test.go",
@@ -31,11 +32,11 @@ go_test(
         "runsc_test.go",
         "sandboxposture_test.go",
     ],
+    cohort = "root",
     data = [
         "//:release",
     ],
     library = ":root",
-    local = True,
     pure = True,
     tags = [
         "manual",

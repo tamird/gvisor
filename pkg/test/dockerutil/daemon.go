@@ -25,7 +25,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"syscall"
-	"testing"
 	"time"
 
 	"github.com/docker/docker/client"
@@ -45,44 +44,43 @@ type daemonInputs struct {
 // RunTests runs a Docker integration suite. Callers must parse flags first.
 // Without --docker_test_config, it retains the installed-daemon interface.
 // Otherwise setup precedes the version check, and cleanup follows all tests,
-// including parallel tests. Only the caller's TestMain exits the process.
-func RunTests(m *testing.M) (status int) {
-	if *dockerTestConfig == "" {
-		EnsureSupportedDockerVersion()
-		return m.Run()
-	}
-	data, err := os.ReadFile(*dockerTestConfig)
-	if err != nil {
-		log.Printf("read Docker test configuration: %v", err)
-		return 1
-	}
-	var inputs daemonInputs
-	if err := json.Unmarshal(data, &inputs); err != nil {
-		log.Printf("decode Docker test configuration: %v", err)
-		return 1
-	}
-	if inputs.Runsc == "" || len(inputs.Images) == 0 {
-		log.Print("Docker test configuration must declare a runtime and image archives")
-		return 1
-	}
-	d := &testDaemon{}
-	defer func() {
-		if err := d.close(status != 0); err != nil {
-			log.Printf("clean up private Docker daemon: %v", err)
-			if status == 0 {
-				status = 1
-			}
+// including parallel tests. The run callback may initialize suite state from
+// the selected daemon before calling m.Run. Only TestMain exits the process.
+func RunTests(run func() int) (status int) {
+	if *dockerTestConfig != "" {
+		data, err := os.ReadFile(*dockerTestConfig)
+		if err != nil {
+			log.Printf("read Docker test configuration: %v", err)
+			return 1
 		}
-	}()
-	if err := d.start(inputs); err != nil {
-		log.Printf("start private Docker daemon: %v", err)
-		return 1
+		var inputs daemonInputs
+		if err := json.Unmarshal(data, &inputs); err != nil {
+			log.Printf("decode Docker test configuration: %v", err)
+			return 1
+		}
+		if inputs.Runsc == "" || len(inputs.Images) == 0 {
+			log.Print("Docker test configuration must declare a runtime and image archives")
+			return 1
+		}
+		d := &testDaemon{}
+		defer func() {
+			if err := d.close(status != 0); err != nil {
+				log.Printf("clean up private Docker daemon: %v", err)
+				if status == 0 {
+					status = 1
+				}
+			}
+		}()
+		if err := d.start(inputs); err != nil {
+			log.Printf("start private Docker daemon: %v", err)
+			return 1
+		}
 	}
 	if err := checkSupportedDockerVersion(); err != nil {
-		log.Printf("check private Docker version: %v", err)
+		log.Printf("check Docker version: %v", err)
 		return 1
 	}
-	return m.Run()
+	return run()
 }
 
 // testDaemon owns suite-wide environment and runtime state. It is initialized

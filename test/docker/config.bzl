@@ -15,6 +15,10 @@ RUNTIME_VARIANTS = {
 # Image names are the existing Docker test inputs, grouped by their consuming
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
+    "root": [
+        "basic/alpine",
+        "basic/ubuntu",
+    ],
     "integration": [
         "basic/alpine",
         "basic/filecap",
