@@ -1,4 +1,22 @@
-"""List of platforms."""
+"""Platforms and remote test requirements."""
+
+# The compilation image has no CA bundle. BuildBuddy's runtime image includes
+# system trust for tests that contact external services over HTTPS.
+# https://www.buildbuddy.io/docs/config-all-options/
+_RBE_TEST_IMAGE = "docker://gcr.io/flame-public/buildbuddy-ci-runner@sha256:8cf614fc4695789bea8321446402e7d6f84f6be09b8d39ec93caa508fa3e3cfc"
+
+def network_test_exec_properties():
+    """Returns remote test properties for external HTTPS access."""
+    return select({
+        Label("//tools/bazeldefs:rbe"): {
+            "test.container-image": _RBE_TEST_IMAGE,
+            "test.dockerUser": "nobody",
+            "test.network": "external",
+            "test.nonroot-workspace": "true",
+            "test.workload-isolation-type": "oci",
+        },
+        "//conditions:default": {},
+    })
 
 def namespace_test_exec_properties(user = "root"):
     """Defaults for remote tests that create nested Linux namespaces.
