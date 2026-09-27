@@ -16,11 +16,9 @@ go_test(
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    # Requires docker and runsc to be configured before the test runs.
+    local = True,
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/abi/linux",
@@ -43,11 +41,9 @@ go_test(
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    # Requires docker and runsc to be configured before the test runs.
+    local = True,
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/cleanup",
@@ -68,11 +64,9 @@ go_test(
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    # Requires docker and runsc to be configured before the test runs.
+    local = True,
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
@@ -90,11 +84,9 @@ go_test(
     # runsc is needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    # Requires docker and runsc to be configured before the test runs.
+    local = True,
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
