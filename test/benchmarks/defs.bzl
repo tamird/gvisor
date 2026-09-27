@@ -4,13 +4,14 @@ load("//tools:defs.bzl", "go_test")
 
 def benchmark_test(name, tags = [], use_for_pgo = True, **kwargs):
     tags = tags + [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
         "manual",
         "gvisor_benchmark",
     ]
     if use_for_pgo:
         tags = tags + ["gvisor_pgo_benchmark"]
+
+    # Requires docker and runsc at execution time, not during compilation.
+    kwargs["local"] = True
     go_test(
         name,
         tags = tags,
