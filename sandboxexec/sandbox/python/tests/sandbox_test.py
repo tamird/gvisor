@@ -157,7 +157,7 @@ class SandboxTest(unittest.TestCase):
 
           try:
             bundle_dir = sb.bundle_dir
-            expected_bundle_dir = os.path.join(temp_dir, sandbox_id)
+            expected_bundle_dir = os.path.join(sb._state_dir, sandbox_id)
             self.assertEqual(bundle_dir, expected_bundle_dir)
 
             config_path = os.path.join(bundle_dir, "config.json")
@@ -276,8 +276,18 @@ class SandboxTest(unittest.TestCase):
 
     # Custom runtime directory should not be deleted on close.
     with tempfile.TemporaryDirectory() as custom_dir:
-      sb = sandbox.Sandbox(runtime_dir=custom_dir)
-      sb.close()
+      with sandbox.Sandbox(runtime_dir=custom_dir, sandbox_id="shared") as first:
+        with sandbox.Sandbox(
+            runtime_dir=custom_dir, sandbox_id="shared"
+        ) as second:
+          self.assertNotEqual(first._state_dir, second._state_dir)
+          self.assertNotEqual(first.bundle_dir, second.bundle_dir)
+          first.close()
+          self.assertFalse(os.path.exists(first._state_dir), first._state_dir)
+          stdout, _ = second.exec("echo", "still running")
+          self.assertEqual(stdout.strip(), "still running")
+          self.assertTrue(os.path.exists(second._state_dir), second._state_dir)
+        self.assertFalse(os.path.exists(second._state_dir), second._state_dir)
       self.assertTrue(os.path.exists(custom_dir))
 
   def test_close_idempotent(self):
@@ -286,6 +296,33 @@ class SandboxTest(unittest.TestCase):
     # Repeating close() should be a safe no-op.
     sb.close()
 
+  def test_close_retries_cleanup_failure(self):
+    sb = sandbox.Sandbox()
+    self.addCleanup(sb.close)
+    with mock.patch.object(
+        sandbox, "_unmount_null_netns", side_effect=OSError("unmount failed")
+    ):
+      with self.assertRaisesRegex(sandbox.Error, "unmount failed"):
+        sb.close()
+    sb.close()
+    self.assertFalse(os.path.exists(sb._runtime_dir), sb._runtime_dir)
+
+  def test_close_preserves_state_after_delete_failure(self):
+    sb = sandbox.Sandbox()
+    self.addCleanup(sb.close)
+    with mock.patch(
+        "subprocess.run",
+        side_effect=subprocess.CalledProcessError(
+            1, "runsc delete", stderr="delete failed"
+        ),
+    ):
+      with self.assertRaisesRegex(sandbox.Error, "delete failed"):
+        sb.close()
+    self.assertTrue(os.path.isdir(sb._state_dir), sb._state_dir)
+    self.assertTrue(os.path.isdir(sb.bundle_dir), sb.bundle_dir)
+    sb.close()
+    self.assertFalse(os.path.exists(sb._runtime_dir), sb._runtime_dir)
+
   @mock.patch("tempfile.mkdtemp")
   def test_runtime_dir_creation_error(self, mock_mkdtemp):
     mock_mkdtemp.side_effect = OSError("mock disk error")
@@ -293,16 +330,11 @@ class SandboxTest(unittest.TestCase):
       sandbox.Sandbox()
     self.assertIn("failed to create runtime directory", str(ctx.exception))
 
-  @mock.patch("os.makedirs")
-  def test_state_dir_creation_error(self, mock_makedirs):
-    def side_effect(path, **_kwargs):
-      if path.endswith("state"):
-        raise OSError("mock permission denied")
-
-    mock_makedirs.side_effect = side_effect
+  def test_state_dir_creation_error(self):
     with tempfile.TemporaryDirectory() as runtime_dir:
-      with self.assertRaises(sandbox.Error) as ctx:
-        sandbox.Sandbox(runtime_dir=runtime_dir)
+      with mock.patch("tempfile.mkdtemp", side_effect=OSError("permission denied")):
+        with self.assertRaises(sandbox.Error) as ctx:
+          sandbox.Sandbox(runtime_dir=runtime_dir)
       self.assertIn(
           "failed to create sandbox state directory", str(ctx.exception)
       )
@@ -312,7 +344,7 @@ class SandboxTest(unittest.TestCase):
       # Bypass __init__ to test _create_bundle logic
       sb = sandbox.Sandbox.__new__(sandbox.Sandbox)
       sb._id = "test-bundle"
-      sb._runtime_dir = temp_dir
+      sb._state_dir = temp_dir
       sb._network = "none"
       with mock.patch("os.makedirs") as mock_makedirs:
         mock_makedirs.side_effect = OSError("mock disk error")
