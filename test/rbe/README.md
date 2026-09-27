@@ -15,6 +15,25 @@ Each Nogo target already checks both supported architectures. This command
 does not execute ARM64 runtime tests. `make nogo-tests` uses the same selection
 configuration.
 
+The complete existing unit selection is shared with `make unit-tests`:
+
+```sh
+bazel test --config=rbe --config=x86_64 --config=unit \
+  --strip=never --incompatible_sandbox_hermetic_tmp=false --keep_going \
+  --test_env=CGROUPV2=true
+```
+
+Run this command from the workspace root without additional target arguments.
+`test/unit.targets` owns the package roots and four existing exclusions; the
+configuration retains the Nogo, KVM and plugin filters. It also retains the
+non-test targets built by the existing wildcard selection.
+
+The public unit matrix runs on AMD64 with cgroup v1 and v2, and on ARM64.
+`CGROUPV2` preserves Make's environment marker; setting it does not select or
+verify a remote worker's cgroup mode. The command above starts AMD64
+qualification, not the complete architecture/cgroup matrix. This lane has no
+separate race variant in the public pipeline.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 
