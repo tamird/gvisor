@@ -18,6 +18,7 @@ This module provides a Python API for creating gVisor sandboxes and executing
 commands inside them.
 """
 
+import ctypes
 import dataclasses
 import enum
 import json
@@ -32,6 +33,23 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 class Error(Exception):
   """Base exception for Sandbox operations."""
+
+
+def _unmount_null_netns(state_dir: str) -> None:
+  """Detaches namespace mounts before removing an owned runsc state directory."""
+  path = os.path.join(state_dir, "null-netns")
+  # A namespace mount has a different device from its parent directory. Check
+  # before calling umount2, since an unprivileged caller may have no mount.
+  if not os.path.ismount(path):
+    return
+  umount2 = ctypes.CDLL(None, use_errno=True).umount2
+  umount2.argtypes = (ctypes.c_char_p, ctypes.c_int)
+  umount2.restype = ctypes.c_int
+  # Concurrent gofer starts may stack namespace mounts on the same path.
+  while os.path.ismount(path):
+    if umount2(os.fsencode(path), 2) != 0:  # MNT_DETACH
+      error = ctypes.get_errno()
+      raise OSError(error, os.strerror(error), path)
 
 
 class MountType(str, enum.Enum):
@@ -361,23 +379,15 @@ class Sandbox:
       if os.geteuid() != 0 and self._network == NetworkMode.SANDBOX.value:
         raise Error("sandbox networking requires running as root")
 
-      self._state_dir = os.path.join(self._runtime_dir, "state")
       try:
-        os.makedirs(self._state_dir, mode=0o700, exist_ok=True)
+        os.makedirs(self._runtime_dir, mode=0o700, exist_ok=True)
+        # Each instance owns its state and namespace mounts, including when
+        # several sandboxes share a caller-provided runtime directory.
+        self._state_dir = tempfile.mkdtemp(
+            prefix="state-", dir=self._runtime_dir
+        )
       except OSError as e:
         raise Error(f"failed to create sandbox state directory: {e}") from e
-
-      # Verify permissions (mode might be different if directory already
-      # existed).
-      try:
-        stat_info = os.stat(self._state_dir)
-        if (stat_info.st_mode & 0o777) != 0o700:
-          os.chmod(self._state_dir, 0o700)
-      except OSError as e:
-        raise Error(
-            "sandbox state directory has incorrect permissions and failed to"
-            f" chmod: {e}"
-        ) from e
 
       self._bundle_dir = self._create_bundle()
 
@@ -394,7 +404,7 @@ class Sandbox:
       # grandchild process. If we use pipes (e.g. capture_output=True), Python's
       # subprocess.run will hang waiting for the pipes to close. Writing to a
       # file avoids this hang while still allowing us to capture errors.
-      stderr_path = os.path.join(self._runtime_dir, "runsc-stderr.log")
+      stderr_path = os.path.join(self._state_dir, "runsc-stderr.log")
       try:
         with open(stderr_path, "w+b") as stderr_file:
           subprocess.run(
@@ -418,8 +428,11 @@ class Sandbox:
             "failed to create sandbox via subprocess: exit code"
             f" {e.returncode}, stderr: {stderr_content}"
         ) from e
-    except Exception:
-      self.close()
+    except Exception as error:
+      try:
+        self.close()
+      except Error as cleanup_error:
+        raise error from cleanup_error
       raise
 
   def __enter__(self) -> "Sandbox":
@@ -458,7 +471,7 @@ class Sandbox:
     Raises:
       Error: If bundle creation fails.
     """
-    bundle_dir = os.path.join(self._runtime_dir, self._id)
+    bundle_dir = os.path.join(self._state_dir, self._id)
     rootfs_dir = os.path.join(bundle_dir, "rootfs")
     try:
       os.makedirs(rootfs_dir, mode=0o755, exist_ok=True)
@@ -516,6 +529,9 @@ class Sandbox:
         })
 
     linux = {
+        # Container IDs are scoped to a runsc state directory, but cgroup
+        # paths are shared by the host. Do not reuse the caller's ID here.
+        "cgroupsPath": "/sandboxexec-" + self._generate_id(),
         "namespaces": namespaces,
     }
     if os.geteuid() != 0:
@@ -604,33 +620,48 @@ class Sandbox:
       raise Error(f"exec failed: {e.stderr}") from e
 
   def close(self):
-    """Kills the sandbox processes and cleans up directories."""
+    """Kills the sandbox processes and cleans up owned mounts and directories.
+
+    Raises:
+      Error: If cleanup fails. Calling close again retries the cleanup.
+    """
     if self._closed:
       return
-    self._closed = True
 
     if self._state_dir:
-      kill_args = ["--root", self._state_dir, "kill", self._id, "SIGKILL"]
-      subprocess.run(
-          [self._runsc_path] + kill_args, capture_output=True, check=False
-      )
-
       delete_args = ["--root", self._state_dir, "delete", "--force", self._id]
-      delete_result = subprocess.run(
-          [self._runsc_path] + delete_args, capture_output=True, check=False
+      try:
+        subprocess.run(
+            [self._runsc_path] + delete_args,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+      except subprocess.CalledProcessError as error:
+        raise Error(f"failed to delete sandbox: {error.stderr}") from error
+      except OSError as error:
+        raise Error(f"failed to delete sandbox: {error}") from error
+
+    cleanup_errors: List[OSError] = []
+    if self._state_dir:
+      try:
+        _unmount_null_netns(self._state_dir)
+      except OSError as error:
+        cleanup_errors.append(error)
+
+    directories = [self._state_dir]
+    if self._owns_runtime_dir:
+      directories.append(self._runtime_dir)
+    for directory in directories:
+      if not directory or not os.path.exists(directory):
+        continue
+      try:
+        shutil.rmtree(directory)
+      except OSError as error:
+        cleanup_errors.append(error)
+    if cleanup_errors:
+      raise Error(
+          "failed to clean up sandbox: "
+          + "; ".join(str(error) for error in cleanup_errors)
       )
-      if delete_result.returncode != 0:
-        # We might want to log this, but we continue cleanup anyway.
-        pass
-
-    if self._bundle_dir and os.path.exists(self._bundle_dir):
-      try:
-        shutil.rmtree(self._bundle_dir)
-      except OSError:
-        pass
-
-    if self._owns_runtime_dir and os.path.exists(self._runtime_dir):
-      try:
-        shutil.rmtree(self._runtime_dir)
-      except OSError:
-        pass
+    self._closed = True
