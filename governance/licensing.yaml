@@ -64,6 +64,85 @@ exceptions:
       distributed with gVisor. The LLVM exception only relaxes
       Apache-2.0's requirements, and the MIT match comes from third-party
       notices embedded in LICENSE.TXT.
+  - dependency: nvidia_driver_535_129_03
+    license: &nvidia_driver_licenses
+      - GPL-2.0-only
+      - MIT
+    exception_rationale: &nvidia_driver_rationale >-
+      These snapshots supply headers for the existing NVIDIA ABI parity test.
+      COPYING licenses individual files under MIT unless otherwise noted and
+      describes linked Linux kernel modules as MIT/GPLv2. The build only parses
+      headers into ABI JSON; it does not build or distribute an NVIDIA kernel
+      module or link driver code into gVisor.
+  - dependency: nvidia_driver_535_183_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_247_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_261_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_274_02
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_288_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_309_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_550_90_12
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_124_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_133_20
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_172_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_195_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_105_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_126_09
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_126_20
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_159_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_159_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_167_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_173_02
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_178_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_65_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_590_48_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_610_57_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_615_71_09
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
   - dependency: plugin_dpdk
     license:
       - BSD-3-Clause
