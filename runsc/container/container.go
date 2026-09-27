@@ -1540,7 +1540,11 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *boot.Pod
 	// Don't forward GOMAXPROCS defaults that apply to this process (in
 	// particular, containerd-shim-runsc-v1 passes GOMAXPROCS=2 in
 	// v1.service.newCommand()).
-	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool { return strings.HasPrefix(env, "GOMAXPROCS=") })
+	// Also exclude filesystem coverage collectors that cannot run under the
+	// gofer's seccomp policy.
+	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool {
+		return strings.HasPrefix(env, "GOMAXPROCS=") || specutils.IsGoCoverageEnv(env)
+	})
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		// Detach from session. Otherwise, signals sent to the foreground process
 		// will also be forwarded by this process, resulting in duplicate signals.
