@@ -42,6 +42,11 @@ build --build_tag_filters=-nogo
 # Keep the complete Nogo lane's selection shared with make nogo-tests.
 test:nogo --test_tag_filters=nogo --build_tests_only
 
+# Keep the existing unit lane's roots, exclusions and filters shared with Make.
+test:unit --target_pattern_file=test/unit.targets
+test:unit --test_tag_filters=-nogo,-requires-kvm
+test:unit --build_tag_filters=-network_plugins
+
 # BuildBuddy's hosted coordinator supplies this configuration and authentication.
 # Both compilation and test actions execute remotely; the execution platform
 # owns the runtime image so per-test properties retain its image and architecture.
