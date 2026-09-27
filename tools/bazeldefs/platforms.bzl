@@ -7,12 +7,14 @@ def namespace_test_exec_properties(user = "root"):
       user: Identity to use inside the remote test VM.
 
     Returns:
-      Per-test properties; the execution platform supplies the image and CPU/OS.
+      Test-runner properties; compilation keeps the execution platform's defaults.
     """
     return select({
         Label("//tools/bazeldefs:rbe"): {
-            "dockerUser": user,
-            "workload-isolation-type": "firecracker",
+            "test.dockerUser": user,
+            # Firecracker otherwise boots with ipv6.disable=1.
+            "test.network-enable-ipv6": "true",
+            "test.workload-isolation-type": "firecracker",
         },
         "//conditions:default": {},
     })

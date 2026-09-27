@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -76,6 +76,8 @@ go_test(
         "network_test.go",
         "sandbox_test.go",
     ],
+    # The network fixtures create namespaces, interfaces, and IPv6 routes.
+    exec_properties = namespace_test_exec_properties(),
     library = ":sandbox",
     deps = [
         "//pkg/control/server",
