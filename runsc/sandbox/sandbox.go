@@ -913,8 +913,9 @@ type sandboxProcessEnvOptions struct {
 func sandboxProcessEnv(conf *config.Config, opts sandboxProcessEnvOptions) []string {
 	var env []string
 	if conf.TestOnlyAllowRunAsCurrentUserWithoutChroot {
-		// --TESTONLY-unsafe-nonroot is set, so keep env.
-		env = os.Environ()
+		// --TESTONLY-unsafe-nonroot is set, so keep env except for filesystem
+		// coverage collectors. The sandbox reports coverage through a donated FD.
+		env = slices.DeleteFunc(os.Environ(), specutils.IsGoCoverageEnv)
 	} else {
 		// Setting cmd.Env = nil causes cmd to inherit the current process's env.
 		// Clear it, except for TMPDIR which must match the parent runsc process

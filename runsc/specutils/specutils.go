@@ -859,6 +859,14 @@ func GetOOMScoreAdj(pid int) (int, error) {
 	return strconv.Atoi(strings.TrimSpace(string(data)))
 }
 
+// IsGoCoverageEnv reports whether env configures filesystem-based Go coverage
+// collection. These collectors perform filesystem operations that violate the
+// Sentry and gofer's seccomp policies. Both variables must be excluded because
+// rules_go sets GOCOVERDIR when COVERAGE_DIR is set in each covered binary.
+func IsGoCoverageEnv(env string) bool {
+	return strings.HasPrefix(env, "COVERAGE_DIR=") || strings.HasPrefix(env, "GOCOVERDIR=")
+}
+
 // EnvVar looks for a variable value in the env slice assuming the following
 // format: "NAME=VALUE". If a variable is defined multiple times, the last
 // value is used.
