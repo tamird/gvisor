@@ -3,6 +3,7 @@
 load("@bazel_skylib//:bzl_library.bzl", _bzl_library = "bzl_library")
 load("@bazel_skylib//rules:build_test.bzl", _build_test = "build_test")
 load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag")
+load("@bazel_skylib//rules:native_binary.bzl", _native_test = "native_test")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 load("@com_google_protobuf//bazel:proto_library.bzl", _proto_library = "proto_library")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
@@ -11,6 +12,7 @@ build_test = _build_test
 bzl_library = _bzl_library
 bool_flag = _bool_flag
 BuildSettingInfo = _BuildSettingInfo
+native_test = _native_test
 more_shards = 4
 most_shards = 8
 version = "//tools/bazeldefs:version"

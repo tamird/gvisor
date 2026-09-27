@@ -7,10 +7,10 @@ change for Google-internal and bazel-compatible rules.
 
 load("//tools:arch.bzl", "arch_genrule", "arch_transition_impl")
 load("//tools/bazeldefs:cc.bzl", _cc_binary = "cc_binary", _cc_flags_supplier = "cc_flags_supplier", _cc_grpc_library = "cc_grpc_library", _cc_library = "cc_library", _cc_linker = "cc_linker", _cc_nm = "cc_nm", _cc_objcopy = "cc_objcopy", _cc_proto_library = "cc_proto_library", _cc_test = "cc_test", _gbenchmark = "gbenchmark", _gbenchmark_internal = "gbenchmark_internal", _grpcpp = "grpcpp", _gtest = "gtest", _select_gtest = "select_gtest")
-load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _coreutil = "coreutil", _default_net_util = "default_net_util", _more_shards = "more_shards", _most_shards = "most_shards", _proto_library = "proto_library", _select_arch = "select_arch", _select_system = "select_system", _short_path = "short_path", _version = "version")
+load("//tools/bazeldefs:defs.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _bpf_program = "bpf_program", _build_test = "build_test", _bzl_library = "bzl_library", _coreutil = "coreutil", _default_net_util = "default_net_util", _more_shards = "more_shards", _most_shards = "most_shards", _native_test = "native_test", _proto_library = "proto_library", _select_arch = "select_arch", _select_system = "select_system", _short_path = "short_path", _version = "version")
 load("//tools/bazeldefs:go.bzl", _cov_available = "cov_available", _gazelle = "gazelle", _go_binary = "go_binary", _go_binary_nogo_dep = "go_binary_nogo_dep", _go_cov = "go_cov", _go_grpc_and_proto_libraries = "go_grpc_and_proto_libraries", _go_imports = "go_imports", _go_library = "go_library", _go_path = "go_path", _go_proto_library = "go_proto_library", _go_reset_target = "go_reset_target", _go_test = "go_test", _gotsan_flag_values = "gotsan_flag_values", _gotsan_values = "gotsan_values", _select_goarch = "select_goarch", _select_goos = "select_goos")
 load("//tools/bazeldefs:pkg.bzl", _pkg_deb = "pkg_deb", _pkg_tar = "pkg_tar")
-load("//tools/bazeldefs:platforms.bzl", _default_platform = "default_platform", _platform_capabilities = "platform_capabilities", _platforms = "platforms", _save_restore_platforms = "save_restore_platforms")
+load("//tools/bazeldefs:platforms.bzl", _default_platform = "default_platform", _namespace_test_exec_properties = "namespace_test_exec_properties", _platform_capabilities = "platform_capabilities", _platforms = "platforms", _save_restore_platforms = "save_restore_platforms")
 load("//tools/bazeldefs:tags.bzl", _go_suffixes = "go_suffixes", _local_test_tags = "local_test_tags")
 load("//tools/go_hostlayout:defs.bzl", "go_host_layout_struct_test")
 load("//tools/go_marshal:defs.bzl", "go_marshal", "marshal_deps", "marshal_test_deps")
@@ -29,6 +29,7 @@ short_path = _short_path
 coreutil = _coreutil
 more_shards = _more_shards
 most_shards = _most_shards
+native_test = _native_test
 version = _version
 
 # C++ rules.
@@ -68,6 +69,7 @@ pkg_tar = _pkg_tar
 
 # Platform options.
 default_platform = _default_platform
+namespace_test_exec_properties = _namespace_test_exec_properties
 platforms = _platforms
 platform_capabilities = _platform_capabilities
 save_restore_platforms = _save_restore_platforms

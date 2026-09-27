@@ -1,5 +1,5 @@
 load("@rules_license//rules:license.bzl", "license")
-load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
+load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
@@ -32,6 +32,34 @@ release_files(
     runsc = RELEASE_RUNSC,
     sidecars = RELEASE_SIDECARS,
     visibility = ["//visibility:public"],
+)
+
+native_test(
+    name = "release_smoke_test",
+    # Race builds start multiple instrumented runtime processes.
+    size = "large",
+    src = ":release",
+    # Remote execution may materialize the native_test executable as a file.
+    # Keep it beside the declared sidecars without relying on symlink identity.
+    out = "release/smoke_test.exe",
+    args = [
+        "--alsologtostderr",
+        "--network=none",
+        "--debug",
+        "--TESTONLY-unsafe-nonroot=true",
+        "--rootless",
+        # Exercise the declared release layout, never embedded sidecar copies.
+        "--sidecar-usage-policy=STRICT",
+        "do",
+        "true",
+    ],
+    env = select({
+        "//tools:gotsan": {"GLIBC_TUNABLES": "glibc.pthread.rseq=0"},
+        "//conditions:default": {},
+    }),
+    # A privileged identity would skip rootless capability acquisition.
+    exec_properties = namespace_test_exec_properties(user = "nobody"),
+    tags = ["manual"],
 )
 
 nogo_config(

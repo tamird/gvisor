@@ -1,5 +1,22 @@
 """List of platforms."""
 
+def namespace_test_exec_properties(user = "root"):
+    """Defaults for remote tests that create nested Linux namespaces.
+
+    Args:
+      user: Identity to use inside the remote test VM.
+
+    Returns:
+      Per-test properties; the execution platform supplies the image and CPU/OS.
+    """
+    return select({
+        Label("//tools/bazeldefs:rbe"): {
+            "dockerUser": user,
+            "workload-isolation-type": "firecracker",
+        },
+        "//conditions:default": {},
+    })
+
 # Platform to associated tags.
 platforms = {
     "ptrace": [],
