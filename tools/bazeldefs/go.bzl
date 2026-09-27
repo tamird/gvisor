@@ -7,13 +7,12 @@ load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "g
 load("@io_bazel_rules_go//go/private:context.bzl", "CGO_ATTRS", "CGO_FRAGMENTS", "CGO_TOOLCHAINS")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
-load("//tools/bazeldefs:go_static.bzl", _static_go_binary = "go_binary", _static_go_test = "go_test")
+load("//tools/bazeldefs:go_variants.bzl", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
 
 gazelle = _gazelle
 
 go_path = _go_path
 go_reset_target = _go_reset_target
-go_cov = native.genrule
 cov_available = True
 
 # Runtime data binaries inherit their parent's musl platform, but rules_go
@@ -71,6 +70,25 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         x_defs: additional definitions.
         **kwargs: rest of the arguments are passed to _go_binary.
     """
+    _go_binary_with_rule(
+        _static_go_binary if static else _go_binary,
+        name = name,
+        static = static,
+        pure = pure,
+        x_defs = x_defs,
+        **kwargs
+    )
+
+def go_cov(name, static = False, **kwargs):
+    """Build a coverage binary with the same options as go_binary."""
+    _go_binary_with_rule(
+        _static_go_cov if static else _go_cov,
+        name = name,
+        static = static,
+        **kwargs
+    )
+
+def _go_binary_with_rule(binary_rule, name, static = False, pure = False, x_defs = None, **kwargs):
     if "noasan" in kwargs:
         # no-op option, will need to do transitions when sanitizer configs are defined.
         kwargs.pop("noasan")
@@ -91,7 +109,6 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    binary_rule = _static_go_binary if static else _go_binary
     binary_rule(
         name = name,
         x_defs = x_defs,

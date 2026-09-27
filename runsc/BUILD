@@ -81,46 +81,35 @@ sh_test(
 
 go_cov(
     name = "runsc_coverage",
-    srcs = [
-        "main.go",
-        "//:go.mod",
-        "//:go.sum",
-        "//:gopath",
-        "//tools:build_cover.sh",
-        "//tools:go-allow-internal.patch",
+    srcs = ["main.go"],
+    out = "runsc_cov",
+    gotags = [
+        "kcov",
+        "opensource",
     ],
-    outs = ["runsc_cov"],
-    cmd =
-        "\"$(location //tools:build_cover.sh)\" " +
-        "\"$(location //runsc:runsc_cov)\" " +
-        "\"$(location //:gopath)\" " +
-        "\"$(location //:go.mod)\" " +
-        "\"$(location //:go.sum)\" " +
-        "\"$(location main.go)\" " +
-        "\"$(location //tools:go-allow-internal.patch)\" " +
-        "\"false\" ",
+    pure = True,
+    race = "off",
     visibility = ["//debian:__pkg__"],
+    deps = [
+        "//runsc/cli/maincli",
+        "//runsc/version",
+    ],
 )
 
 go_cov(
     name = "runsc_race_coverage",
-    srcs = [
-        "main.go",
-        "//:go.mod",
-        "//:go.sum",
-        "//:gopath",
-        "//tools:build_cover.sh",
-        "//tools:go-allow-internal.patch",
+    srcs = ["main.go"],
+    out = "runsc_race_cov",
+    gotags = [
+        "kcov",
+        "lockdep",
+        "opensource",
     ],
-    outs = ["runsc_race_cov"],
-    cmd =
-        "\"$(location //tools:build_cover.sh)\" " +
-        "\"$(location //runsc:runsc_race_cov)\" " +
-        "\"$(location //:gopath)\" " +
-        "\"$(location //:go.mod)\" " +
-        "\"$(location //:go.sum)\" " +
-        "\"$(location main.go)\" " +
-        "\"$(location //tools:go-allow-internal.patch)\" " +
-        "\"true\" ",
+    race = "on",
+    static = True,
     visibility = ["//debian:__pkg__"],
+    deps = [
+        "//runsc/cli/maincli",
+        "//runsc/version",
+    ],
 )
