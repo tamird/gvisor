@@ -41,7 +41,9 @@ def _cc_flags_supplier_impl(ctx):
         ctx = ctx,
         cc_toolchain = toolchain,
         requested_features = ctx.features,
-        unsupported_features = ctx.disabled_features,
+        # Freestanding consumers do not link a coverage runtime. Keep native
+        # instrumentation disabled when the surrounding Go build uses coverage.
+        unsupported_features = ctx.disabled_features + ["coverage"],
     )
     cxx = ctx.attr.language == "c++"
     action = ACTION_NAMES.cpp_compile if cxx else ACTION_NAMES.c_compile
