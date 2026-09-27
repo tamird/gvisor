@@ -1,8 +1,18 @@
 load("//tools:defs.bzl", "cc_binary", "go_binary", "go_test")
+load(":defs.bzl", "driver_abi")
+load(":driver_sources.bzl", "DRIVER_SOURCES")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+exports_files(["driver_source.BUILD"])
+
+driver_abi(
+    name = "driver_abi",
+    sources = DRIVER_SOURCES,
+    visibility = ["//pkg/sentry/devices/nvproxy:__pkg__"],
 )
 
 cc_binary(

@@ -57,3 +57,34 @@ struct MODIFIED_FIELD_EXAMPLE
 ```
 
 [A deeper dive into how this tool works can be found here.](https://github.com/google/gvisor/blob/master/g3doc/proposals/nvidia_driver_differ.md)
+
+## Updating pinned driver sources
+
+The ABI parity test reads JSON produced by
+`//tools/nvidia_driver_differ:driver_abi`. Each extraction action uses a pinned
+driver archive and the selected target C++ toolchain's flags, sysroot and Clang
+resource headers. The parser runs on the execution platform; the definitions
+describe the target architecture. Tests need neither Git nor system headers.
+The standalone `run_differ` command continues to fetch the versions it compares.
+
+`//tools/nvidia_driver_differ/sources:update` derives the public source pins from
+`nvproxy.SupportedDrivers()`. Run this Bazel target after changing the supported
+driver registry. It updates its marked block in `MODULE.bazel` and generates
+`driver_sources.bzl`; neither output has a separate hand-maintained version list.
+The `--workspace` argument selects the checkout to update and defaults to Bazel's
+`BUILD_WORKSPACE_DIRECTORY`.
+
+The updater uses Git to list all public tags in one successful request, then
+resolves annotated tags to their commits and hashes the source archives. Only
+versions absent from that advertisement are recorded as unavailable; repository
+access failures and archive download errors stop the update. Git is needed only
+by this update command and the standalone differ, not by ABI extraction actions.
+The parity test requires the generated index to cover the complete supported
+version registry. Versions with no public source tag appear as explicit skipped
+subtests; missing index entries and extraction failures fail the test or build.
+Review the generated changes and regenerate the canonical dependency license
+inventory before submitting them.
+
+The separate `nvproxy_driver_checksums_test` still checks live upstream installer
+downloads without test-result caching. The `nvproxy_driver_parity_test` suite
+selects both ABI and installer checks.
