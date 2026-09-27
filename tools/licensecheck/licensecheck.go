@@ -91,6 +91,7 @@ const (
 	mit         License = "MIT"
 	mpl2        License = "MPL-2.0"
 	unlicense   License = "Unlicense"
+	zlib        License = "Zlib"
 	// noAssertion is the SPDX token for dependencies to which no software
 	// license applies, e.g. a certificate bundle.
 	noAssertion License = "NOASSERTION"
@@ -112,6 +113,7 @@ var knownLicenses = map[License]bool{
 	mit:         true,
 	mpl2:        true,
 	unlicense:   true,
+	zlib:        true,
 	noAssertion: true,
 }
 
@@ -860,6 +862,11 @@ func classify(text string) (Licenses, error) {
 	}
 	if strings.Contains(t, "this is free and unencumbered software") {
 		ids = append(ids, unlicense)
+	}
+	if strings.Contains(t, "the origin of this software must not be misrepresented") &&
+		strings.Contains(t, "altered source versions must be plainly marked as such") &&
+		strings.Contains(t, "this notice may not be removed or altered from any source distribution") {
+		ids = append(ids, zlib)
 	}
 	if len(ids) == 0 {
 		return nil, errors.New("cannot classify license text")
