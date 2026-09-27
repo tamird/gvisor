@@ -39,6 +39,20 @@ build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tld
 # by default for all tests.
 build --build_tag_filters=-nogo
 
+# Keep the complete Nogo lane's selection shared with make nogo-tests.
+test:nogo --test_tag_filters=nogo --build_tests_only
+
+# BuildBuddy's hosted coordinator supplies this configuration and authentication.
+# Both compilation and test actions execute remotely; the execution platform
+# owns the runtime image so per-test properties retain its image and architecture.
+build:rbe --config=buildbuddy_remote_executor
+build:rbe --define=rbe=true
+build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
+build:rbe --spawn_strategy=remote
+build:rbe --noremote_local_fallback
+build:rbe --remote_cache_compression
+test:rbe --strategy=TestRunner=remote
+
 # Set flags for x86_64.
 build:x86_64 --cpu=k8
 build:x86_64 --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo
