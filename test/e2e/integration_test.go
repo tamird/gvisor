@@ -46,9 +46,6 @@ import (
 )
 
 const (
-	// defaultWait is the default wait time used for tests.
-	defaultWait = time.Minute
-
 	memInfoCmd = "cat /proc/meminfo | grep MemTotal: | awk '{print $2}'"
 )
 
@@ -56,57 +53,6 @@ func TestMain(m *testing.M) {
 	flag.Parse()
 	dockerutil.EnsureSupportedDockerVersion()
 	os.Exit(m.Run())
-}
-
-// httpRequestSucceeds sends a request to a given url and checks that the status is OK.
-func httpRequestSucceeds(client http.Client, server string, port int) error {
-	url := fmt.Sprintf("http://%s:%d", server, port)
-	// Ensure that content is being served.
-	resp, err := client.Get(url)
-	if err != nil {
-		return fmt.Errorf("error reaching http server: %v", err)
-	}
-	if want := http.StatusOK; resp.StatusCode != want {
-		return fmt.Errorf("wrong response code, got: %d, want: %d", resp.StatusCode, want)
-	}
-	return nil
-}
-
-// TestLifeCycle tests a basic Create/Start/Stop docker container life cycle.
-func TestLifeCycle(t *testing.T) {
-	ctx := context.Background()
-	d := dockerutil.MakeContainer(ctx, t)
-	defer d.CleanUp(ctx)
-
-	// Start the container.
-	port := 80
-	if err := d.Create(ctx, dockerutil.RunOpts{
-		Image: "basic/nginx",
-	}); err != nil {
-		t.Fatalf("docker create failed: %v", err)
-	}
-	if err := d.Start(ctx); err != nil {
-		t.Fatalf("docker start failed: %v", err)
-	}
-
-	ip, err := d.FindIP(ctx, false)
-	if err != nil {
-		t.Fatalf("docker.FindIP failed: %v", err)
-	}
-	if err := testutil.WaitForHTTP(ip.String(), port, defaultWait); err != nil {
-		t.Fatalf("WaitForHTTP() timeout: %v", err)
-	}
-	client := http.Client{Timeout: defaultWait}
-	if err := httpRequestSucceeds(client, ip.String(), port); err != nil {
-		t.Errorf("http request failed: %v", err)
-	}
-
-	if err := d.Stop(ctx); err != nil {
-		t.Fatalf("docker stop failed: %v", err)
-	}
-	if err := d.Remove(ctx); err != nil {
-		t.Fatalf("docker rm failed: %v", err)
-	}
 }
 
 func TestDisallowRootfsTarAnnotation(t *testing.T) {

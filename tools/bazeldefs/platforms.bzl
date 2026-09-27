@@ -18,6 +18,18 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
+def docker_test_exec_properties():
+    """Returns a remote VM with Docker tools for a test-owned daemon."""
+    return select({
+        Label("//tools/bazeldefs:rbe"): {
+            "test.container-image": _RBE_TEST_IMAGE,
+            "test.dockerUser": "root",
+            "test.network": "external",
+            "test.workload-isolation-type": "firecracker",
+        },
+        "//conditions:default": {},
+    })
+
 def namespace_test_exec_properties(user = "root"):
     """Defaults for remote tests that create nested Linux namespaces.
 

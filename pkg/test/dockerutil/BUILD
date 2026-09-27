@@ -21,6 +21,7 @@ go_library(
     testonly = 1,
     srcs = [
         "container.go",
+        "daemon.go",
         "dockerutil.go",
         "exec.go",
         "gpu.go",
@@ -36,6 +37,7 @@ go_library(
         "//pkg/sync",
         "//pkg/test/testutil",
         "//runsc/cgroup",
+        "//runsc/specutils",
         "@com_github_docker_docker//api/types:go_default_library",
         "@com_github_docker_docker//api/types/checkpoint:go_default_library",
         "@com_github_docker_docker//api/types/container:go_default_library",

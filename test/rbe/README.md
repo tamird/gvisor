@@ -51,6 +51,25 @@ including staged bundles and custom runtime or sidecar selections. The Bazel
 target qualifies the source-built release without installing it on the
 coordinator or using the builder image.
 
+The first Docker cohort reuses the existing nginx container lifecycle test:
+
+```sh
+bazel test --config=rbe --config=x86_64 //test/e2e:docker_lifecycle_test
+```
+
+This target declares the source-built release and a digest-pinned archive of
+`images/basic/nginx`. Its TestRunner uses the pinned provider runtime image in
+a root Firecracker VM, starts a private Docker daemon, loads the archive, and
+runs the existing create/start/HTTP/stop/remove case with strict sidecar lookup.
+The daemon keeps Docker's bridge networking and uses the `vfs` storage driver
+without requiring an overlay backing filesystem. Logs are test outputs, and
+cleanup stops the daemon before deleting its private state.
+
+The image archive is currently AMD64 only. This qualifies one base-runtime
+case, not the complete Docker, runtime-variant, or cgroup matrix. The existing
+integration target and Make users retain their installed-daemon interface and
+do not acquire the new image input.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 
@@ -72,6 +91,6 @@ is not evidence of remote test execution. Keep logs in the hosted invocation;
 do not upload raw build-event files containing authentication options.
 
 This slice does not cover the complete unit/syscall matrix, KVM, GPU, native
-ARM64, Docker/containerd services, or kernel/cgroup variants. Firecracker alone
+ARM64, the complete Docker/containerd lanes, or kernel/cgroup variants. Firecracker alone
 does not provide those capabilities. Missing capacity or failed tests must
 remain visible failures rather than local fallback or additional exclusions.

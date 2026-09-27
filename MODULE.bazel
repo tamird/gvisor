@@ -8,6 +8,7 @@ bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_oci", version = "2.3.0")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "llvm", version = "0.8.23")
@@ -78,6 +79,18 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
+
+### Docker lifecycle test image
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+# images/basic/nginx, built by tools/images.mk as 50bce377ccf85d18.
+oci.pull(
+    name = "docker_test_nginx",
+    digest = "sha256:9dfaa0193570244f1c406fd82ff616ee12e749d067d6f4aeb49d250e93bd20bb",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/nginx_x86_64",
+    platforms = ["linux/amd64"],
+)
+use_repo(oci, "docker_test_nginx", "docker_test_nginx_linux_amd64")
 
 ### Linux headers
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
