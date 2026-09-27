@@ -29,7 +29,7 @@ import (
 // If you suspect the Sentry is getting killed due to a seccomp violation,
 // change this to `true` to get a panic stack trace when there is a
 // violation.
-const debugFilter = false
+const debugFilter = true
 
 // Options is a re-export of the config Options type under this package.
 type Options = config.Options
