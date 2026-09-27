@@ -194,7 +194,7 @@ def _syscall_test(
     # These runners create nested user and mount namespaces. Default to an
     # isolated VM for remote execution; the execution platform still supplies
     # the image and CPU/OS properties. KVM needs a separate worker contract.
-    if platform in ("native", "systrap"):
+    if platform in ("native", "ptrace", "systrap"):
         kwargs.setdefault("exec_properties", namespace_test_exec_properties())
 
     # Call the rule above.
