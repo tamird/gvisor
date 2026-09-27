@@ -1,5 +1,6 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex")
 load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "network_test_exec_properties")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
@@ -130,6 +131,7 @@ go_test(
     name = "nvproxy_driver_checksums_test",
     size = "large",
     srcs = ["nvproxy_driver_checksums_test.go"],
+    exec_properties = network_test_exec_properties(),
     # Verify the current upstream installers on every invocation.
     tags = [
         "external",
