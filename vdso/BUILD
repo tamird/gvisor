@@ -3,16 +3,13 @@
 #   normal system VDSO (time, gettimeofday, clock_gettimeofday) but which uses
 #   timekeeping parameters managed by the sandbox kernel.
 
-# Placeholder: load py_test
 load("//tools:arch.bzl", "select_arch")
-load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain")
+load("//tools:defs.bzl", "cc_flags_supplier", "cc_toolchain", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
-
-exports_files(["check_vdso.py"])
 
 genrule(
     name = "vdso",
@@ -69,13 +66,10 @@ cc_flags_supplier(
     features = ["-pie"],
 )
 
-py_test(
+go_test(
     name = "vdso_test",
-    srcs = ["check_vdso.py"],
-    args = [
-        "--check-data",
-        "--vdso=$(location :vdso)",
-    ],
+    srcs = ["vdso_test.go"],
+    args = ["--vdso=$(location :vdso)"],
     data = [":vdso"],
-    main = "check_vdso.py",
+    rundir = ".",
 )
