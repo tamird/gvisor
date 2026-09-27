@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
@@ -163,8 +164,6 @@ func (r *Runner) runParserConfig(config []ClangASTConfig) (*OutputJSON, error) {
 // ParseDriver checks out the git repo for the given version, and runs the driver_ast_parser on the
 // source code.
 func (r *Runner) ParseDriver(version nvconf.DriverVersion) (*OutputJSON, error) {
-	// Create a temp directory to run the parser in.
-	// This is needed to set up compile_commands.json, since it needs to be named that exactly.
 	dir, err := os.MkdirTemp(r.dir, "run_differ_*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temporary directory: %w", err)
@@ -176,9 +175,41 @@ func (r *Runner) ParseDriver(version nvconf.DriverVersion) (*OutputJSON, error) 
 		return nil, fmt.Errorf("failed to clone git repo: %w", err)
 	}
 
-	config, err := CreateIncludeFiles(dir, *source, r.nonUVMIoctls, r.uvmIoctls)
+	return r.ParseSourceDirectory(source.Directory, nil)
+}
+
+// ParseSourceDirectory parses an existing driver source tree. compilerArgs is
+// the compiler and its arguments, before includes and the source filename. If
+// empty, the standalone differ's default Clang configuration is used.
+//
+// Relative compiler paths are interpreted from the caller's working directory,
+// preserving Bazel's execution-root-relative target, sysroot and resource paths.
+func (r *Runner) ParseSourceDirectory(sourceDir string, compilerArgs []string) (*OutputJSON, error) {
+	sourceDir, err := filepath.Abs(sourceDir)
+	if err != nil {
+		return nil, fmt.Errorf("resolve source directory: %w", err)
+	}
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("get compiler working directory: %w", err)
+	}
+	// Keep compile_commands.json beside the generated translation units, where
+	// ClangTool discovers it, independently of the declared source tree.
+	dir, err := os.MkdirTemp(r.dir, "run_differ_*")
+	if err != nil {
+		return nil, fmt.Errorf("create parser working directory: %w", err)
+	}
+	defer os.RemoveAll(dir)
+	config, err := CreateIncludeFiles(dir, DriverSourceDir{Directory: sourceDir}, r.nonUVMIoctls, r.uvmIoctls)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create include files: %w", err)
+	}
+	for i := range config {
+		config[i].Directory = workingDir
+		if len(compilerArgs) != 0 {
+			args := append([]string(nil), compilerArgs...)
+			config[i].Arguments = append(args, config[i].Arguments[1:]...)
+		}
 	}
 
 	if err := CreateCompileCommandsFile(dir, config); err != nil {
