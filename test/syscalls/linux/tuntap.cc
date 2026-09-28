@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -202,8 +203,9 @@ std::string CreateArpPacket(const uint8_t srcmac[ETH_ALEN],
 TEST(TuntapStaticTest, NetTunExists) {
   struct stat statbuf;
   ASSERT_THAT(stat(kDevNetTun, &statbuf), SyscallSucceeds());
-  // Check that it's a character device with rw-rw-rw- permissions.
-  EXPECT_EQ(statbuf.st_mode, S_IFCHR | 0666);
+  // Device permissions depend on userspace policy, such as udev rules.
+  EXPECT_TRUE(S_ISCHR(statbuf.st_mode));
+  EXPECT_EQ(statbuf.st_rdev, makedev(10, 200));
 }
 
 class TuntapTest : public ::testing::Test {
