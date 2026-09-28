@@ -283,11 +283,10 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 }
 
 func loadImageArchive(archive string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
-	defer cancel()
 	// The existing Docker CLI handles HTTP and streamed image-load errors.
 	// Only declared archives are loaded; the fixture does not pull images.
-	output, err := exec.CommandContext(ctx, dockerCLIPath(), "load", "--input", archive).CombinedOutput()
+	// Image imports share the test action's timeout budget.
+	output, err := exec.Command(dockerCLIPath(), "load", "--input", archive).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("load declared image archive %q: %w\n%s", archive, err, output)
 	}
