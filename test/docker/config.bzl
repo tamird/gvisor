@@ -1,5 +1,7 @@
 """Shared configuration for the Docker integration suites."""
 
+load("//tools/bazeldefs:platforms.bzl", "platforms")
+
 # Runtime suffixes used by MakeContainerWithRuntime. Both the private test
 # daemon and the installed-runtime adapter consume this same table.
 RUNTIME_VARIANTS = {
@@ -31,6 +33,18 @@ POSTURE_VARIANTS = [
     struct(name = "kvm", args = ["--platform=kvm"], tags = ["requires-kvm"]),
 ]
 
+# Match benchmark-platforms' public runtime selection and profiling flags.
+# Native runc is selected through the test flag, never registered as runsc.
+STARTUP_VARIANTS = [
+    struct(
+        name = platform,
+        args = ["--platform=" + platform, "--profile"],
+        tags = platforms[platform] + (["requires-kvm"] if platform == "kvm" else []),
+    )
+    for platform in sorted(platforms)
+    if "internal" not in platforms[platform] and platform != "slimvm"
+] + [struct(name = "runc", args = [], test_args = ["--runtime=runc"])]
+
 # The Go runtime adapter consumes names and arguments as JSON, without the
 # build-only tags on individual variants.
 RUNTIME_SUITES = {
@@ -46,6 +60,7 @@ RUNTIME_SUITES = {
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
     "uds_proxy": ["basic/alpine"],
+    "startup": ["benchmarks/alpine"],
     "posture": ["basic/alpine"],
     "portforward": [
         "basic/nginx",

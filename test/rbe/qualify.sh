@@ -17,23 +17,24 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup syscalls)
 
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh amd64
-       test/rbe/qualify.sh LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
-Run the implemented Linux AMD64 remote lanes using the configured Bazel RBE
-connection. This is partial public CI coverage. Existing failures remain errors.
+Run Linux remote lanes using the configured Bazel RBE connection. The default
+architecture is AMD64. This is partial public CI coverage; selecting an
+architecture does not guarantee worker support. Existing failures remain errors.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
 
 gaps() {
   cat <<'GAPS'
-Unqualified by this profile: KVM and slimvm; native ARM64; cgroup v1, the
+Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
 host systemd cgroup manager and alternate host kernels; the full save/restore
 and coverage matrices; containerd, networking, GPU, and network-plugin lanes.
 GAPS
@@ -51,10 +52,24 @@ fi
 if [[ $# == 1 && $1 == amd64 ]]; then
   set -- "${lanes[@]}"
 fi
+arch=amd64
+if [[ $1 == --arch=* ]]; then
+  arch=${1#--arch=}
+  shift
+fi
+case "$arch" in
+  amd64) architecture_options=(--config=rbe --config=x86_64) ;;
+  arm64) architecture_options=(--config=rbe-arm64 --config=aarch64) ;;
+  *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
+esac
+if (( $# == 0 )); then
+  usage >&2
+  exit 2
+fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -65,8 +80,11 @@ if [[ $(uname -s) != Linux ]]; then
 fi
 cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
 
-printf 'Selected Linux AMD64 remote lanes: %s\n' "$*"
+printf 'Selected Linux %s remote lanes: %s\n' "$arch" "$*"
 gaps
+if [[ $arch == arm64 ]]; then
+  printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
+fi
 
 run_lane() {
   local lane=$1
@@ -104,12 +122,16 @@ run_lane() {
       options=(--config=docker --test_tag_filters=-requires-kvm)
       targets=(//test/root:sandbox_posture_test_owned)
       ;;
+    startup)
+      options=(--test_tag_filters=-requires-kvm)
+      targets=(//test/benchmarks/base:startup_test_owned)
+      ;;
     syscalls)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror
         '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
       ;;
   esac
-  bazel test --config=rbe --config=x86_64 \
+  bazel test "${architecture_options[@]}" \
     --strip=never --incompatible_sandbox_hermetic_tmp=false \
     --keep_going --test_output=errors "${options[@]}" "${targets[@]}"
 }

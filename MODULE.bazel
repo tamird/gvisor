@@ -386,6 +386,22 @@ oci.pull(
     platforms = ["linux/arm64"],
 )
 
+# images/benchmarks/alpine, built by tools/images.mk as 829c17d03dbb05e4.
+oci.pull(
+    name = "docker_image_benchmarks_alpine_amd64",
+    digest = "sha256:6457d53fb065d6f250e1504b9bc42d5b6c65941d57532c072d929dd0628977d0",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/alpine_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/alpine, built by tools/images.mk as 829c17d03dbb05e4.
+oci.pull(
+    name = "docker_image_benchmarks_alpine_arm64",
+    digest = "sha256:3d1fcff05d91c3bccdd4663da08223fa91aa15eaeeb23a0208b825cd00a7068d",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/alpine_aarch64",
+    platforms = ["linux/arm64"],
+)
+
 # images/image-test/ruby, built by tools/images.mk as 94a1ba1eb5504e9a.
 oci.pull(
     name = "docker_image_image_test_ruby_amd64",
@@ -521,6 +537,10 @@ use_repo(
     "docker_image_basic_ubuntu_amd64_linux_amd64",
     "docker_image_basic_ubuntu_arm64",
     "docker_image_basic_ubuntu_arm64_linux_arm64",
+    "docker_image_benchmarks_alpine_amd64",
+    "docker_image_benchmarks_alpine_amd64_linux_amd64",
+    "docker_image_benchmarks_alpine_arm64",
+    "docker_image_benchmarks_alpine_arm64_linux_arm64",
     "docker_image_image_test_ruby_amd64",
     "docker_image_image_test_ruby_amd64_linux_amd64",
     "docker_image_image_test_ruby_arm64",

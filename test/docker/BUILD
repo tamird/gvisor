@@ -14,6 +14,7 @@ bzl_library(
     name = "config_bzl",
     srcs = ["config.bzl"],
     visibility = ["//:sandbox"],
+    deps = ["//tools/bazeldefs:platforms_bzl"],
 )
 
 bzl_library(
