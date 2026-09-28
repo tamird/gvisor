@@ -40,7 +40,10 @@ def _runner_test_impl(ctx):
         collect_default = True,
         collect_data = True,
     )
-    return [DefaultInfo(executable = runner, runfiles = runfiles)]
+    return [
+        DefaultInfo(executable = runner, runfiles = runfiles),
+        testing.ExecutionInfo(ctx.attr.execution_requirements),
+    ]
 
 _runner_test = rule(
     attrs = {
@@ -53,6 +56,9 @@ _runner_test = rule(
         "runner_args": attr.string_list(),
         "data": attr.label_list(
             allow_files = True,
+        ),
+        "execution_requirements": attr.string_dict(
+            doc = "Additional TestRunner execution requirements.",
         ),
     },
     test = True,
