@@ -5,6 +5,30 @@ on a BuildBuddy hosted Linux AMD64 coordinator against a published commit; its
 `buildbuddy_remote_executor` configuration supplies the connection and
 authentication. No custom gVisor builder image is required.
 
+The CI-neutral entry point runs the implemented AMD64 lanes on that coordinator:
+
+```sh
+test/rbe/qualify.sh amd64
+```
+
+Use `test/rbe/qualify.sh --list` to see the lanes and unqualified environments,
+or pass lane names to run a smaller selection, for example
+`test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
+failure if any lane fails, including fixture cleanup after the test cases pass.
+This profile does not replace the full public CI matrix. In particular, it
+excludes KVM posture and syscall variants, slimvm and syscall save/restore;
+existing failures in selected tests remain failures. The host systemd cgroup
+manager is also unqualified; container image tests that boot systemd do not
+exercise that host service. All variants remain available through their owning
+Bazel targets.
+
+The dispatcher uses the existing Nogo and unit configurations, the declared
+runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
+The lanes use separate Bazel invocations to preserve their different selections
+and instrumentation. Connection settings and credentials come from Bazel's
+configuration; the script does not install tools or start a builder container.
+Normal Bazel caching remains enabled.
+
 The complete existing Nogo lane uses its normal tag-based selection:
 
 ```sh
@@ -120,11 +144,7 @@ there. The five non-KVM configurations can be qualified explicitly:
 
 ```sh
 bazel test --config=rbe --config=x86_64 --config=docker \
-  //test/root:sandbox_posture_test_default_owned \
-  //test/root:sandbox_posture_test_hostnet_owned \
-  //test/root:sandbox_posture_test_hostnet_raw_owned \
-  //test/root:sandbox_posture_test_nodirectfs_owned \
-  //test/root:sandbox_posture_test_nodirectfs_hostnet_owned
+  --test_tag_filters=-requires-kvm //test/root:sandbox_posture_test_owned
 ```
 
 This selects ten test cases and leaves the two cases in

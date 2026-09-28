@@ -26,14 +26,18 @@ POSTURE_VARIANTS = [
     struct(name = "hostnet_raw", args = ["--network=host", "--net-raw"]),
     struct(name = "nodirectfs", args = ["--directfs=false"]),
     struct(name = "nodirectfs_hostnet", args = ["--directfs=false", "--network=host"]),
-    struct(name = "kvm", args = ["--platform=kvm"]),
+    struct(name = "kvm", args = ["--platform=kvm"], tags = ["requires-kvm"]),
 ]
 
-# The Go runtime adapter consumes these same configurations as JSON.
+# The Go runtime adapter consumes names and arguments as JSON, without the
+# build-only tags on individual variants.
 RUNTIME_SUITES = {
-    "docker": [struct(name = name, args = args) for name, args in RUNTIME_VARIANTS.items()],
-    "portforward": PORTFORWARD_VARIANTS,
-    "posture": POSTURE_VARIANTS,
+    suite: [struct(name = variant.name, args = variant.args) for variant in variants]
+    for suite, variants in {
+        "docker": [struct(name = name, args = args) for name, args in RUNTIME_VARIANTS.items()],
+        "portforward": PORTFORWARD_VARIANTS,
+        "posture": POSTURE_VARIANTS,
+    }.items()
 }
 
 # Image names are the existing Docker test inputs, grouped by their consuming
