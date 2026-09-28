@@ -66,7 +66,6 @@ go_test(
     size = "small",
     srcs = ["exec_test.go"],
     library = ":dockerutil",
-    nogo = False,
     deps = ["@com_github_docker_docker//client:go_default_library"],
 )
 
