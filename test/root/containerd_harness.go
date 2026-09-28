@@ -16,14 +16,18 @@ package root
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/docker/docker/api/types/mount"
+	"gvisor.dev/gvisor/pkg/test/criutil"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/flag"
@@ -34,6 +38,8 @@ var (
 		"containerd version to test against; must be baked into the harness image")
 	harnessImage = flag.String("harness_image", "containerd/harness",
 		"harness image, relative to images/")
+	harnessImageConfig = flag.String("harness_image_config", "",
+		"declared CRI image archives and sandbox image for the selected containerd version")
 	harnessTestImages = flag.String("harness_test_images",
 		"basic/alpine,basic/python,basic/busybox,basic/symlink-resolv,basic/httpd,basic/ubuntu",
 		"images to stage into the harness; must match the load-* deps of containerd-test-% in the Makefile")
@@ -42,10 +48,19 @@ var (
 )
 
 const (
-	harnessEnv = "GVISOR_CONTAINERD_HARNESS"
-	runtimeDir = "/runtime"
-	imageDir   = "/cri-images"
+	harnessEnv      = "GVISOR_CONTAINERD_HARNESS"
+	sandboxImageEnv = "GVISOR_CRI_SANDBOX_IMAGE"
+	runtimeDir      = "/runtime"
+	imageDir        = "/cri-images"
 )
+
+// harnessImages is written by the containerd test rule. Archive paths are
+// relative to the outer test's runfiles root; image names retain CRI's tags.
+type harnessImages struct {
+	ContainerdVersion string            `json:"containerd_version"`
+	SandboxImage      string            `json:"sandbox_image"`
+	Images            map[string]string `json:"images"`
+}
 
 func inHarness() bool {
 	return os.Getenv(harnessEnv) != ""
@@ -119,18 +134,14 @@ func launch(ctx context.Context, logger testutil.Logger) (code int, retErr error
 		ReadOnly: true,
 	})
 
-	// Stage the test images.
-	staged := filepath.Join(dir, "images")
-	if err := stageImages(staged, logger); err != nil {
+	// Declared archives are mounted directly; installed runs export the images
+	// from their selected Docker daemon into the invocation's staging directory.
+	imageMounts, sandboxImage, err := stageImages(filepath.Join(dir, "images"), logger)
+	if err != nil {
 		return 1, err
 	}
+	mounts = append(mounts, imageMounts...)
 	mounts = append(mounts,
-		mount.Mount{
-			Type:     mount.TypeBind,
-			Source:   staged,
-			Target:   imageDir,
-			ReadOnly: true,
-		},
 		mount.Mount{
 			Type:   mount.TypeBind,
 			Source: "/sys/fs/cgroup",
@@ -158,7 +169,8 @@ func launch(ctx context.Context, logger testutil.Logger) (code int, retErr error
 			harnessEnv + "=1",
 			"CONTAINERD_VERSION=" + *containerdVersion,
 			"RUNTIME=" + runtime,
-			"GVISOR_CRI_IMAGE_DIR=" + imageDir,
+			criutil.ImageDirEnv + "=" + imageDir,
+			sandboxImageEnv + "=" + sandboxImage,
 			"GVISOR_SIDECAR_BINARIES_DIR=" + runtimeDir + "/gvisor-bin",
 			"TEST_TMPDIR=",
 		},
@@ -169,7 +181,7 @@ func launch(ctx context.Context, logger testutil.Logger) (code int, retErr error
 	binName := filepath.Base(self)
 	args := []string{filepath.Join(runtimeDir, binName)}
 	flag.CommandLine.Visit(func(f *flag.Flag) {
-		if f.Name != "runtime" && f.Name != "config_path" {
+		if f.Name != "runtime" && f.Name != "config_path" && f.Name != "docker_test_config" && f.Name != "harness_image_config" {
 			args = append(args, "--"+f.Name+"="+f.Value.String())
 		}
 	})
@@ -286,33 +298,62 @@ func writeDaemonConfig(p, runtime string) error {
 	return os.WriteFile(p, []byte(body), 0644)
 }
 
-// stageImages stages the images listed in harnessTestImages into the harness.
-// Each invocation exports the images currently loaded in its selected daemon.
-func stageImages(dir string, logger testutil.Logger) error {
+// stageImages prepares the mounts consumed by criutil.Import. Declared inputs
+// bypass Docker; installed runs export their currently loaded images.
+func stageImages(dir string, logger testutil.Logger) ([]mount.Mount, string, error) {
+	if *harnessImageConfig != "" {
+		data, err := os.ReadFile(*harnessImageConfig)
+		if err != nil {
+			return nil, "", err
+		}
+		var inputs harnessImages
+		if err := json.Unmarshal(data, &inputs); err != nil {
+			return nil, "", err
+		}
+		if inputs.ContainerdVersion != *containerdVersion {
+			return nil, "", fmt.Errorf("image configuration is for containerd %q, selected %q", inputs.ContainerdVersion, *containerdVersion)
+		}
+		if inputs.SandboxImage == "" || inputs.Images[inputs.SandboxImage] == "" {
+			return nil, "", fmt.Errorf("image configuration must declare its sandbox image archive")
+		}
+		var mounts []mount.Mount
+		for _, image := range slices.Sorted(maps.Keys(inputs.Images)) {
+			archive, err := filepath.Abs(inputs.Images[image])
+			if err != nil {
+				return nil, "", err
+			}
+			archive, err = filepath.EvalSymlinks(archive)
+			if err != nil {
+				return nil, "", fmt.Errorf("locating declared image %q: %w", image, err)
+			}
+			mounts = append(mounts, mount.Mount{
+				Type:     mount.TypeBind,
+				Source:   archive,
+				Target:   filepath.Join(imageDir, criutil.ImageArchiveName(image)),
+				ReadOnly: true,
+			})
+		}
+		return mounts, inputs.SandboxImage, nil
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
+		return nil, "", err
 	}
 	for _, image := range strings.Split(*harnessTestImages, ",") {
 		image = strings.TrimSpace(image)
 		if image == "" {
 			continue
 		}
-		p := filepath.Join(dir, tarNameForImage(image))
+		p := filepath.Join(dir, criutil.ImageArchiveName(image))
 		f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
-			return err
+			return nil, "", err
 		}
 		saveErr := dockerutil.Save(logger, image, f)
 		closeErr := f.Close()
 		if err := errors.Join(saveErr, closeErr); err != nil {
-			return fmt.Errorf("staging %q (is it loaded? try `make load-%s`): %w",
+			return nil, "", fmt.Errorf("staging %q (is it loaded? try `make load-%s`): %w",
 				image, strings.ReplaceAll(image, "/", "_"), err)
 		}
 	}
-	return nil
-}
-
-// tarNameForImage returns the name of the tar file for the given image.
-func tarNameForImage(image string) string {
-	return strings.ReplaceAll(image, "/", "_") + ".tar"
+	return []mount.Mount{{Type: mount.TypeBind, Source: dir, Target: imageDir, ReadOnly: true}}, "", nil
 }

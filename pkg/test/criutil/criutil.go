@@ -253,7 +253,8 @@ func (cc *Crictl) RmPod(podID string) error {
 // ImageDirEnv is the environment variable naming the image tarball directory.
 const ImageDirEnv = "GVISOR_CRI_IMAGE_DIR"
 
-func tarNameForImage(image string) string {
+// ImageArchiveName returns the filename used to stage and import an image.
+func ImageArchiveName(image string) string {
 	return strings.ReplaceAll(image, "/", "_") + ".tar"
 }
 
@@ -261,7 +262,7 @@ func tarNameForImage(image string) string {
 // directory of pre-exported tarballs if ImageDirEnv is set.
 func (cc *Crictl) Import(image string) error {
 	if dir := os.Getenv(ImageDirEnv); dir != "" {
-		tarball := path.Join(dir, tarNameForImage(image))
+		tarball := path.Join(dir, ImageArchiveName(image))
 		out, err := cc.runCmd(ResolvePath("ctr"),
 			fmt.Sprintf("--connect-timeout=%s", 30*time.Second),
 			fmt.Sprintf("--address=%s", cc.endpoint),

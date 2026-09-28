@@ -1,10 +1,22 @@
 load("//test/docker:config.bzl", "PORTFORWARD_VARIANTS", "POSTURE_VARIANTS")
 load("//test/docker:defs.bzl", "docker_test")
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "bzl_library", "go_library")
+load(":defs.bzl", "containerd_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+bzl_library(
+    name = "defs_bzl",
+    srcs = ["defs.bzl"],
+    deps = [
+        "//test/docker:config_bzl",
+        "//test/docker:defs_bzl",
+        "//tools:arch_bzl",
+        "@rules_oci//oci:defs",
+    ],
 )
 
 go_library(
@@ -15,6 +27,7 @@ go_library(
         "root.go",
     ],
     deps = [
+        "//pkg/test/criutil",
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "//runsc/flag",
@@ -78,7 +91,7 @@ docker_test(
     deps = _ROOT_TEST_DEPS,
 )
 
-go_test(
+containerd_test(
     name = "crictl_test",
     size = "large",
     srcs = [
@@ -90,7 +103,6 @@ go_test(
         "//:release",
     ],
     library = ":root",
-    local = True,
     pure = True,
     tags = [
         "manual",

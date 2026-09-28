@@ -60,6 +60,7 @@ RUNTIME_SUITES = {
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
     "uds_proxy": ["basic/alpine"],
+    "containerd": ["containerd/harness"],
     "startup": ["benchmarks/alpine"],
     "posture": ["basic/alpine"],
     "portforward": [
@@ -105,6 +106,16 @@ COHORT_IMAGES = {
         "image-test/ruby",
     ],
 }
+
+# These archives are imported directly by CRI inside the containerd harness.
+CONTAINERD_IMAGES = [
+    "basic/alpine",
+    "basic/python",
+    "basic/busybox",
+    "basic/symlink-resolv",
+    "basic/httpd",
+    "basic/ubuntu",
+]
 
 # This existing systemd case only runs on AMD64.
 AMD64_RUNTIME_IMAGES = ["arch-systemd"]

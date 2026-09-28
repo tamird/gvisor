@@ -465,14 +465,126 @@ oci.pull(
     image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/ubi10-init_aarch64",
     platforms = ["linux/arm64"],
 )
+
+# images/basic/busybox, built by tools/images.mk as e543895a65b5dc10.
+oci.pull(
+    name = "docker_image_basic_busybox_amd64",
+    digest = "sha256:fd4a8673d0344c3a7f427fe4440d4b8dfd4fa59cfabbd9098f9eb0cb4ba905d0",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/busybox_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/busybox, built by tools/images.mk as e543895a65b5dc10.
+oci.pull(
+    name = "docker_image_basic_busybox_arm64",
+    digest = "sha256:1ee006886991ad4689838d3a288e0dd3fd29b70e276622f16b67a8922831a853",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/busybox_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/symlink-resolv, built by tools/images.mk as f4809d7ee58d11e9.
+oci.pull(
+    name = "docker_image_basic_symlink_resolv_amd64",
+    digest = "sha256:5f81a982bc4b820e349b2fe129976d1bf568ea106cc33e7e841914878f7f7d29",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/symlink-resolv_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/symlink-resolv, built by tools/images.mk as f4809d7ee58d11e9.
+oci.pull(
+    name = "docker_image_basic_symlink_resolv_arm64",
+    digest = "sha256:519013f25f3f9cab7cbb051cc066abddb0751966dd902ec6a75532c40eb990e3",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/symlink-resolv_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/containerd/harness, built by tools/images.mk as d3fd80d086e6cc9d.
+oci.pull(
+    name = "docker_image_containerd_harness_amd64",
+    digest = "sha256:c8cebcddad5d504164606147c1dedbcf7c61110aec29f3d9d466f0993c61044d",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/containerd/harness_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/containerd/harness, built by tools/images.mk as d3fd80d086e6cc9d.
+oci.pull(
+    name = "docker_image_containerd_harness_arm64",
+    digest = "sha256:026c01d447a29d95b6397e23262653da708b3f3a9f17abc7aa985d24a66d9191",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/containerd/harness_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# Default sandbox image registry.k8s.io/pause:3.8.
+oci.pull(
+    name = "containerd_pause_3_8_amd64",
+    digest = "sha256:f5944f2d1daf66463768a1503d0c8c5e8dde7c1674d3f85abc70cef9c7e32e95",
+    image = "registry.k8s.io/pause",
+    platforms = ["linux/amd64"],
+)
+
+# Default sandbox image registry.k8s.io/pause:3.8.
+oci.pull(
+    name = "containerd_pause_3_8_arm64",
+    digest = "sha256:566af08540f378a70a03588f3963b035f33c49ebab3e4e13a4f5edbcd78c6689",
+    image = "registry.k8s.io/pause",
+    platforms = ["linux/arm64"],
+)
+
+# Default sandbox image registry.k8s.io/pause:3.10.
+oci.pull(
+    name = "containerd_pause_3_10_amd64",
+    digest = "sha256:7c38f24774e3cbd906d2d33c38354ccf787635581c122965132c9bd309754d4a",
+    image = "registry.k8s.io/pause",
+    platforms = ["linux/amd64"],
+)
+
+# Default sandbox image registry.k8s.io/pause:3.10.
+oci.pull(
+    name = "containerd_pause_3_10_arm64",
+    digest = "sha256:e50b7059b633caf3c1449b8da680d11845cda4506b513ee7a2de00725f0a34a7",
+    image = "registry.k8s.io/pause",
+    platforms = ["linux/arm64"],
+)
+
+# Default sandbox image registry.k8s.io/pause:3.10.1.
+oci.pull(
+    name = "containerd_pause_3_10_1_amd64",
+    digest = "sha256:e5b941ef8f71de54dc3a13398226c269ba217d06650a21bd3afcf9d890cf1f41",
+    image = "registry.k8s.io/pause",
+    platforms = ["linux/amd64"],
+)
+
+# Default sandbox image registry.k8s.io/pause:3.10.1.
+oci.pull(
+    name = "containerd_pause_3_10_1_arm64",
+    digest = "sha256:e9c466420bcaeede00f46ecfa0ca8cd854c549f2f13330e2723173d88f2de70f",
+    image = "registry.k8s.io/pause",
+    platforms = ["linux/arm64"],
+)
 use_repo(
     oci,
+    "containerd_pause_3_10_1_amd64",
+    "containerd_pause_3_10_1_amd64_linux_amd64",
+    "containerd_pause_3_10_1_arm64",
+    "containerd_pause_3_10_1_arm64_linux_arm64",
+    "containerd_pause_3_10_amd64",
+    "containerd_pause_3_10_amd64_linux_amd64",
+    "containerd_pause_3_10_arm64",
+    "containerd_pause_3_10_arm64_linux_arm64",
+    "containerd_pause_3_8_amd64",
+    "containerd_pause_3_8_amd64_linux_amd64",
+    "containerd_pause_3_8_arm64",
+    "containerd_pause_3_8_arm64_linux_arm64",
     "docker_image_arch_systemd_amd64",
     "docker_image_arch_systemd_amd64_linux_amd64",
     "docker_image_basic_alpine_amd64",
     "docker_image_basic_alpine_amd64_linux_amd64",
     "docker_image_basic_alpine_arm64",
     "docker_image_basic_alpine_arm64_linux_arm64",
+    "docker_image_basic_busybox_amd64",
+    "docker_image_basic_busybox_amd64_linux_amd64",
+    "docker_image_basic_busybox_arm64",
+    "docker_image_basic_busybox_arm64_linux_arm64",
     "docker_image_basic_docker_amd64",
     "docker_image_basic_docker_amd64_linux_amd64",
     "docker_image_basic_docker_arm64",
@@ -521,6 +633,10 @@ use_repo(
     "docker_image_basic_sudo_amd64_linux_amd64",
     "docker_image_basic_sudo_arm64",
     "docker_image_basic_sudo_arm64_linux_arm64",
+    "docker_image_basic_symlink_resolv_amd64",
+    "docker_image_basic_symlink_resolv_amd64_linux_amd64",
+    "docker_image_basic_symlink_resolv_arm64",
+    "docker_image_basic_symlink_resolv_arm64_linux_arm64",
     "docker_image_basic_tcpdump_amd64",
     "docker_image_basic_tcpdump_amd64_linux_amd64",
     "docker_image_basic_tcpdump_arm64",
@@ -541,6 +657,10 @@ use_repo(
     "docker_image_benchmarks_alpine_amd64_linux_amd64",
     "docker_image_benchmarks_alpine_arm64",
     "docker_image_benchmarks_alpine_arm64_linux_arm64",
+    "docker_image_containerd_harness_amd64",
+    "docker_image_containerd_harness_amd64_linux_amd64",
+    "docker_image_containerd_harness_arm64",
+    "docker_image_containerd_harness_arm64_linux_arm64",
     "docker_image_image_test_ruby_amd64",
     "docker_image_image_test_ruby_amd64_linux_amd64",
     "docker_image_image_test_ruby_arm64",
