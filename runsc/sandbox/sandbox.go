@@ -1225,9 +1225,9 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 					cmd.Args = append(cmd.Args, fmt.Sprintf("--gid=%d", gid))
 				}
 			} else {
-				specutils.SetUIDGIDMappings(cmd, args.Spec)
-				// We need to set UID and GID to have capabilities in a new user namespace.
-				cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 0, Gid: 0}
+				if err := ConfigureCmdForUserNamespace(cmd, args.Spec, userns); err != nil {
+					return err
+				}
 			}
 		} else {
 			if rootlessEUID {
@@ -2626,6 +2626,33 @@ func (s *Sandbox) fixPidns(spec *specs.Spec) {
 		}
 	}
 	panic("unreachable")
+}
+
+// ConfigureCmdForUserNamespace configures a privileged caller's command to
+// create or join the specified user namespace.
+func ConfigureCmdForUserNamespace(cmd *exec.Cmd, spec *specs.Spec, userns specs.LinuxNamespace) error {
+	specutils.SetUIDGIDMappings(cmd, spec)
+	uid, gid := uint32(0), uint32(0)
+	if userns.Path == "" {
+		uid, gid = SandboxUserGroupIDs(spec)
+	}
+	cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uid, Gid: gid}
+	if uid == 0 {
+		return nil
+	}
+
+	// A fresh user namespace grants all capabilities, but execve drops them
+	// for a nonzero UID. Preserve the same bootstrap capabilities as a root
+	// exec; the gofer and Sentry apply their final capability sets after setup.
+	lastCap, err := capability.LastCap()
+	if err != nil {
+		return fmt.Errorf("reading the last supported capability: %w", err)
+	}
+	cmd.SysProcAttr.AmbientCaps = make([]uintptr, int(lastCap)+1)
+	for c := range cmd.SysProcAttr.AmbientCaps {
+		cmd.SysProcAttr.AmbientCaps[c] = uintptr(c)
+	}
+	return nil
 }
 
 // ConfigureCmdForRootless configures cmd to donate a socket FD that can be
