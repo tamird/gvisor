@@ -3373,6 +3373,7 @@ cc_library(
         ":socket_netlink_route_util",
         ":socket_netlink_util",
         "//test/util:capability_util",
+        "//test/util:cleanup",
         "//test/util:file_descriptor",
         "//test/util:posix_error",
         "//test/util:socket_util",
