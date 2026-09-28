@@ -805,8 +805,10 @@ func TestDeleteInterface(t *testing.T) {
 }
 
 func TestProductName(t *testing.T) {
-	want, err := os.ReadFile("/sys/devices/virtual/dmi/id/product_name")
-	if err != nil {
+	const filename = "/sys/devices/virtual/dmi/id/product_name"
+	want, err := os.ReadFile(filename)
+	missing := os.IsNotExist(err)
+	if err != nil && !missing {
 		t.Fatal(err)
 	}
 
@@ -815,7 +817,14 @@ func TestProductName(t *testing.T) {
 	defer d.CleanUp(ctx)
 
 	opts := dockerutil.RunOpts{Image: "basic/alpine"}
-	got, err := d.Run(ctx, opts, "cat", "/sys/devices/virtual/dmi/id/product_name")
+	if missing {
+		// runsc omits the guest DMI file when the host has no product name.
+		if output, err := d.Run(ctx, opts, "/bin/sh", "-c", "test ! -e "+filename); err != nil {
+			t.Fatalf("checking absent product name: %v\n%s", err, output)
+		}
+		return
+	}
+	got, err := d.Run(ctx, opts, "cat", filename)
 	if err != nil {
 		t.Fatalf("docker run failed: %v", err)
 	}
