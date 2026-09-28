@@ -26,8 +26,8 @@ import (
 //go:embed runtime_variants.json
 var runtimeVariantsJSON []byte
 
-// runtimeDefinition is Docker's configured runtime executable and arguments.
-type runtimeDefinition struct {
+// RuntimeDefinition is Docker's configured runtime executable and arguments.
+type RuntimeDefinition struct {
 	Path string   `json:"path"`
 	Args []string `json:"runtimeArgs"`
 }
@@ -52,13 +52,13 @@ func RuntimeVariants(suite string) ([]RuntimeVariant, error) {
 	return variants, nil
 }
 
-func runtimeDefinitions(runsc, name string, baseArgs []string, variants []RuntimeVariant) map[string]runtimeDefinition {
-	runtimes := make(map[string]runtimeDefinition, len(variants))
+func runtimeDefinitions(runsc, name string, baseArgs []string, variants []RuntimeVariant) map[string]RuntimeDefinition {
+	runtimes := make(map[string]RuntimeDefinition, len(variants))
 	for _, variant := range variants {
 		args := append(slices.Clone(baseArgs), "--allow-suid")
 		args = append(args, variant.Args...)
 		args = append(args, "--TESTONLY-test-name-env=RUNSC_TEST_NAME")
-		runtimes[name+variant.Name] = runtimeDefinition{Path: runsc, Args: args}
+		runtimes[name+variant.Name] = RuntimeDefinition{Path: runsc, Args: args}
 	}
 	return runtimes
 }

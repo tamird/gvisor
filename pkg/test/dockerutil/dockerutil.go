@@ -169,43 +169,23 @@ func IsRestoreSupported(t testing.TB) bool {
 
 // RuntimePath returns the binary path for the current runtime.
 func RuntimePath() (string, error) {
-	rs, err := runtimeMap()
+	r, err := NamedRuntime(Runtime())
 	if err != nil {
 		return "", err
 	}
-
-	p, ok := rs["path"].(string)
-	if !ok {
-		// The runtime does not declare a path.
-		return "", fmt.Errorf("runtime does not declare a path: %v", rs)
+	if r.Path == "" {
+		return "", fmt.Errorf("runtime %q does not declare a path", Runtime())
 	}
-	return p, nil
+	return r.Path, nil
 }
 
 // RuntimeArgs returns the arguments for the current runtime.
 func RuntimeArgs() ([]string, error) {
-	rs, err := runtimeMap()
+	r, err := NamedRuntime(Runtime())
 	if err != nil {
 		return nil, err
 	}
-	argsAny, ok := rs["runtimeArgs"]
-	if !ok {
-		// The runtime does not have any arguments.
-		return nil, nil
-	}
-	argsAnySlice, ok := argsAny.([]any)
-	if !ok {
-		return nil, fmt.Errorf("runtime arguments should be a list of strings, got: %q (type: %T)", argsAny, argsAny)
-	}
-	args := make([]string, 0, len(argsAnySlice))
-	for i, argAny := range argsAnySlice {
-		arg, ok := argAny.(string)
-		if !ok {
-			return nil, fmt.Errorf("runtime arguments should be a list of strings, got: %q (index %d is %q which has unexpected type %T)", argsAny, i, argAny, argAny)
-		}
-		args = append(args, arg)
-	}
-	return args, nil
+	return r.Args, nil
 }
 
 // IsGVisorRuntime returns whether the default container runtime used by
@@ -288,40 +268,24 @@ func CgroupfsParent() (string, error) {
 	return cfg.Parent, nil
 }
 
-func runtimeMap() (map[string]any, error) {
-	// Read the configuration data; the file must exist.
-	configBytes, err := os.ReadFile(*config)
+// NamedRuntime reads a registered runtime from the selected Docker configuration.
+// The name is independent of the runtime selected for outer test containers.
+func NamedRuntime(name string) (RuntimeDefinition, error) {
+	data, err := os.ReadFile(*config)
 	if err != nil {
-		return nil, err
+		return RuntimeDefinition{}, err
 	}
-
-	// Unmarshal the configuration.
-	c := make(map[string]any)
-	if err := json.Unmarshal(configBytes, &c); err != nil {
-		return nil, err
+	var cfg struct {
+		Runtimes map[string]*RuntimeDefinition `json:"runtimes"`
 	}
-
-	// Decode the expected configuration.
-	r, ok := c["runtimes"]
-	if !ok {
-		return nil, fmt.Errorf("no runtimes declared: %v", c)
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return RuntimeDefinition{}, fmt.Errorf("decode Docker runtimes: %w", err)
 	}
-	rs, ok := r.(map[string]any)
-	if !ok {
-		// The runtimes are not a map.
-		return nil, fmt.Errorf("unexpected format: %v", rs)
+	r, ok := cfg.Runtimes[name]
+	if !ok || r == nil {
+		return RuntimeDefinition{}, fmt.Errorf("runtime %q not declared in %q", name, *config)
 	}
-	r, ok = rs[*runtime]
-	if !ok {
-		// The expected runtime is not declared.
-		return nil, fmt.Errorf("runtime %q not found: %v", *runtime, rs)
-	}
-	rs, ok = r.(map[string]any)
-	if !ok {
-		// The runtime is not a map.
-		return nil, fmt.Errorf("unexpected format: %v", r)
-	}
-	return rs, nil
+	return *r, nil
 }
 
 // Save exports a container image to the given Writer.
