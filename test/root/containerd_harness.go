@@ -16,6 +16,7 @@ package root
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -55,7 +56,7 @@ func useHarness() bool {
 }
 
 // runInHarness runs the test in a containerd harness.
-// Returns the exit code of the harness.
+// Returns a nonzero status on setup, execution or cleanup failure.
 func runInHarness(ctx context.Context) int {
 	logger := testutil.DefaultLogger("harness")
 
@@ -70,8 +71,8 @@ func runInHarness(ctx context.Context) int {
 }
 
 // launch launches the containerd harness.
-// Returns the exit code of the harness and an error if the harness failed to launch.
-func launch(ctx context.Context, logger testutil.Logger) (int, error) {
+// Returns its status and any setup, execution or cleanup error.
+func launch(ctx context.Context, logger testutil.Logger) (code int, retErr error) {
 	self, err := os.Executable()
 	if err != nil {
 		return 1, fmt.Errorf("cannot locate test binary: %w", err)
@@ -80,12 +81,23 @@ func launch(ctx context.Context, logger testutil.Logger) (int, error) {
 		return 1, fmt.Errorf("cannot resolve test binary: %w", err)
 	}
 
-	// Stage the runtime and test binary into the containerd harness.
-	runtimeHostDir, err := stageRuntime(self)
+	// All staged inputs belong to this invocation, including partial setup.
+	dir, err := os.MkdirTemp("", "containerd-harness-")
 	if err != nil {
 		return 1, err
 	}
-	defer os.RemoveAll(runtimeHostDir)
+	defer func() { retErr = errors.Join(retErr, os.RemoveAll(dir)) }()
+
+	runtime := dockerutil.Runtime()
+	if runtime == "" {
+		runtime = "runsc"
+	}
+
+	// Stage the runtime and test binary into the containerd harness.
+	runtimeHostDir := filepath.Join(dir, "runtime")
+	if err := stageRuntime(runtimeHostDir, self); err != nil {
+		return 1, err
+	}
 
 	var mounts []mount.Mount
 	mounts = append(mounts, mount.Mount{
@@ -95,12 +107,11 @@ func launch(ctx context.Context, logger testutil.Logger) (int, error) {
 		ReadOnly: true,
 	})
 
-	// Stage the containerd daemon config.
-	daemonJSON, err := writeDaemonConfig()
-	if err != nil {
+	// Translate the selected runtime's path for the test inside the harness.
+	daemonJSON := filepath.Join(dir, "daemon.json")
+	if err := writeDaemonConfig(daemonJSON, runtime); err != nil {
 		return 1, err
 	}
-	defer os.RemoveAll(filepath.Dir(daemonJSON))
 	mounts = append(mounts, mount.Mount{
 		Type:     mount.TypeBind,
 		Source:   daemonJSON,
@@ -109,8 +120,8 @@ func launch(ctx context.Context, logger testutil.Logger) (int, error) {
 	})
 
 	// Stage the test images.
-	staged, err := stageImages(logger)
-	if err != nil {
+	staged := filepath.Join(dir, "images")
+	if err := stageImages(staged, logger); err != nil {
 		return 1, err
 	}
 	mounts = append(mounts,
@@ -129,13 +140,8 @@ func launch(ctx context.Context, logger testutil.Logger) (int, error) {
 		mount.Mount{Type: mount.TypeVolume, Target: "/var/lib"},
 	)
 
-	runtime := os.Getenv("RUNTIME")
-	if runtime == "" {
-		runtime = "runsc"
-	}
-
 	d := dockerutil.MakeNativeContainer(ctx, logger)
-	defer d.CleanUp(ctx)
+	defer func() { retErr = errors.Join(retErr, d.CleanUp(ctx)) }()
 
 	opts := dockerutil.RunOpts{
 		Image:        *harnessImage,
@@ -158,9 +164,20 @@ func launch(ctx context.Context, logger testutil.Logger) (int, error) {
 		},
 	}
 
-	// Launch the harness with the this test binary and args.
+	// Forward effective flags, replacing paths and runtime selection that the
+	// outer invocation may have supplied separately or through its environment.
 	binName := filepath.Base(self)
-	args := append([]string{filepath.Join(runtimeDir, binName)}, os.Args[1:]...)
+	args := []string{filepath.Join(runtimeDir, binName)}
+	flag.CommandLine.Visit(func(f *flag.Flag) {
+		if f.Name != "runtime" && f.Name != "config_path" {
+			args = append(args, "--"+f.Name+"="+f.Value.String())
+		}
+	})
+	args = append(args, "--runtime="+runtime, "--config_path=/etc/docker/daemon.json")
+	if positional := flag.CommandLine.Args(); len(positional) != 0 {
+		args = append(args, "--")
+		args = append(args, positional...)
+	}
 	logger.Logf("launching harness: containerd %s, runtime %s", *containerdVersion, runtime)
 
 	if err := d.Create(ctx, opts, args...); err != nil {
@@ -170,36 +187,35 @@ func launch(ctx context.Context, logger testutil.Logger) (int, error) {
 		return 1, fmt.Errorf("starting harness container: %w", err)
 	}
 
-	streamDone := make(chan struct{})
+	streamCtx, cancelStream := context.WithCancel(ctx)
+	defer cancelStream()
+	streamDone := make(chan error, 1)
 	go func() {
-		defer close(streamDone)
-		_ = d.StreamOutput(ctx, os.Stdout, os.Stderr)
+		streamDone <- d.StreamOutput(streamCtx, os.Stdout, os.Stderr)
 	}()
 
 	waitErr := d.Wait(ctx)
-	<-streamDone
+	var inspectErr error
 	if waitErr != nil {
-		return 1, fmt.Errorf("harness container failed: %w", waitErr)
+		// Preserve complete logs for an exited test, including a failed one.
+		// If it may still be running, stop following so cleanup can run.
+		state, err := d.Status(ctx)
+		inspectErr = err
+		if err != nil || state.Running {
+			cancelStream()
+		}
+	}
+	if err := errors.Join(waitErr, inspectErr, <-streamDone); err != nil {
+		return 1, fmt.Errorf("running harness container: %w", err)
 	}
 	return 0, nil
 }
 
-func stageRuntime(self string) (string, error) {
-	// Create a temporary directory for the runtime and test binary.
-	dir, err := os.MkdirTemp("", "harness-runtime")
-	if err != nil {
-		return "", err
-	}
-	if err := os.Chmod(dir, 0755); err != nil {
-		os.RemoveAll(dir)
-		return "", err
-	}
-
+func stageRuntime(dir, self string) error {
 	// Copy the release tree into the temporary directory.
 	root, err := testutil.FindFile("release")
 	if err != nil {
-		os.RemoveAll(dir)
-		return "", fmt.Errorf("cannot locate release tree: %w", err)
+		return fmt.Errorf("cannot locate release tree: %w", err)
 	}
 
 	count := 0
@@ -225,30 +241,22 @@ func stageRuntime(self string) (string, error) {
 		return copyFile(real, target, 0755)
 	})
 	if err != nil {
-		os.RemoveAll(dir)
-		return "", fmt.Errorf("copying release files: %w", err)
+		return fmt.Errorf("copying release files: %w", err)
 	}
 	if count == 0 {
-		os.RemoveAll(dir)
-		return "", fmt.Errorf("release tree %q is empty", root)
+		return fmt.Errorf("release tree %q is empty", root)
 	}
 
-	// Copy the test binary into the temporary directory.
-	selfReal, err := filepath.EvalSymlinks(self)
-	if err != nil {
-		os.RemoveAll(dir)
-		return "", fmt.Errorf("cannot resolve test binary: %w", err)
-	}
+	// The caller already resolved the test binary's symlinks.
 	binName := filepath.Base(self)
-	if err := copyFile(selfReal, filepath.Join(dir, binName), 0755); err != nil {
-		os.RemoveAll(dir)
-		return "", fmt.Errorf("copying test binary: %w", err)
+	if err := copyFile(self, filepath.Join(dir, binName), 0755); err != nil {
+		return fmt.Errorf("copying test binary: %w", err)
 	}
 
-	return dir, nil
+	return nil
 }
 
-func copyFile(src, dst string, mode os.FileMode) error {
+func copyFile(src, dst string, mode os.FileMode) (retErr error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -263,7 +271,7 @@ func copyFile(src, dst string, mode os.FileMode) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func() { retErr = errors.Join(retErr, out.Close()) }()
 
 	if _, err := io.Copy(out, in); err != nil {
 		return err
@@ -271,64 +279,37 @@ func copyFile(src, dst string, mode os.FileMode) error {
 	return out.Sync()
 }
 
-// writeDaemonConfig writes a containerd daemon config to a temporary directory.
-// Returns the path to the config file.
-func writeDaemonConfig() (string, error) {
-	dir, err := os.MkdirTemp("", "harness-docker")
-	if err != nil {
-		return "", err
-	}
-	runtime := os.Getenv("RUNTIME")
-	if runtime == "" {
-		runtime = "runsc"
-	}
+// writeDaemonConfig gives the inner test the selected runtime's staged path.
+func writeDaemonConfig(p, runtime string) error {
 	body := fmt.Sprintf(`{"runtimes": {%q: {"path": %q}}}`,
 		runtime, filepath.Join(runtimeDir, "runsc"))
-	p := filepath.Join(dir, "daemon.json")
-	if err := os.WriteFile(p, []byte(body), 0644); err != nil {
-		return "", err
-	}
-	return p, nil
+	return os.WriteFile(p, []byte(body), 0644)
 }
 
 // stageImages stages the images listed in harnessTestImages into the harness.
-// Saves each image to a tar file in the cache directory so it can be mounted into the containerd
-// harness. // Returns the directory containing the staged images.
-func stageImages(logger testutil.Logger) (string, error) {
-	cacheDir := filepath.Join(os.TempDir(), "gvisor-cri-images")
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return "", err
+// Each invocation exports the images currently loaded in its selected daemon.
+func stageImages(dir string, logger testutil.Logger) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
 	}
-	// Stage each image into the harness's cache directory.
 	for _, image := range strings.Split(*harnessTestImages, ",") {
 		image = strings.TrimSpace(image)
 		if image == "" {
 			continue
 		}
-		p := filepath.Join(cacheDir, tarNameForImage(image))
-		if fi, err := os.Stat(p); err == nil && fi.Size() > 0 {
-			continue
-		}
-		tmpFile := p + ".tmp"
-		f, err := os.OpenFile(tmpFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		p := filepath.Join(dir, tarNameForImage(image))
+		f, err := os.OpenFile(p, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		if err != nil {
-			return "", err
+			return err
 		}
-		if err := dockerutil.Save(logger, image, f); err != nil {
-			f.Close()
-			os.Remove(tmpFile)
-			return "", fmt.Errorf("staging %q (is it loaded? try `make load-%s`): %w",
+		saveErr := dockerutil.Save(logger, image, f)
+		closeErr := f.Close()
+		if err := errors.Join(saveErr, closeErr); err != nil {
+			return fmt.Errorf("staging %q (is it loaded? try `make load-%s`): %w",
 				image, strings.ReplaceAll(image, "/", "_"), err)
 		}
-		if err := f.Close(); err != nil {
-			os.Remove(tmpFile)
-			return "", err
-		}
-		if err := os.Rename(tmpFile, p); err != nil {
-			return "", err
-		}
 	}
-	return cacheDir, nil
+	return nil
 }
 
 // tarNameForImage returns the name of the tar file for the given image.
