@@ -649,8 +649,14 @@ TEST_F(TuntapTest, TUNNoPacketInfo) {
     ASSERT_NE(pfd.revents & POLLIN, 0);
 
     ping_ip_pkt ping_resp = {};
-    ASSERT_THAT(read(fd.get(), &ping_resp, sizeof(ping_req)),
-                SyscallSucceedsWithValue(sizeof(ping_req)));
+    const ssize_t n = read(fd.get(), &ping_resp, sizeof(ping_resp));
+    if (n < 0 && errno == EINTR) {
+      continue;
+    }
+    ASSERT_THAT(n, SyscallSucceeds());
+    if (n != static_cast<ssize_t>(sizeof(ping_resp))) {
+      continue;
+    }
 
     // Process ping response packet.
     if (!memcmp(&ping_resp.ip.saddr, &ping_req.ip.daddr, kIPLen) &&
