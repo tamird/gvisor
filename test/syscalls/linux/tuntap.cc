@@ -298,21 +298,26 @@ TEST_F(TuntapTest, CreateWithExclFlag) {
   memset(&ifr_set, 0, sizeof(ifr_set));
   ifr_set.ifr_flags = (unsigned)IFF_TAP | IFF_TUN_EXCL;
   strncpy(ifr_set.ifr_name, kTapName, IFNAMSIZ);
-  EXPECT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set),
+  ASSERT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set),
               SyscallSucceedsWithValue(0));
 
   struct ifreq ifr_get;
   memset(&ifr_get, 0, sizeof(ifr_get));
-  EXPECT_THAT(ioctl(fd.get(), TUNGETIFF, &ifr_get),
+  ASSERT_THAT(ioctl(fd.get(), TUNGETIFF, &ifr_get),
               SyscallSucceedsWithValue(0));
 
   struct ifreq ifr_expect = ifr_set;
-  // See __tun_chr_ioctl() in net/drivers/tun.c.
+  // IFF_TUN_EXCL controls creation, not the interface's persistent flags.
+  ifr_expect.ifr_flags &= ~IFF_TUN_EXCL;
   ifr_expect.ifr_flags |= IFF_NOFILTER;
 
   EXPECT_THAT(DumpLinkNames(),
               IsPosixErrorOkAndHolds(::testing::Contains(kTapName)));
   EXPECT_THAT(memcmp(&ifr_expect, &ifr_get, sizeof(ifr_get)), ::testing::Eq(0));
+
+  // This descriptor is already attached to an interface.
+  EXPECT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set),
+              SyscallFailsWithErrno(EEXIST));
 
   FileDescriptor fd2 = ASSERT_NO_ERRNO_AND_VALUE(Open(kDevNetTun, O_RDWR));
 
@@ -320,7 +325,7 @@ TEST_F(TuntapTest, CreateWithExclFlag) {
   ifr_set.ifr_flags = (unsigned)IFF_TAP | IFF_TUN_EXCL;
   strncpy(ifr_set.ifr_name, kTapName, IFNAMSIZ);
   EXPECT_THAT(ioctl(fd2.get(), TUNSETIFF, &ifr_set),
-              SyscallFailsWithErrno(EEXIST));
+              SyscallFailsWithErrno(EBUSY));
 }
 
 TEST_F(TuntapTest, CreateInterface) {
