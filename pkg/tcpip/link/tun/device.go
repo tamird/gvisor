@@ -124,7 +124,7 @@ func (d *Device) SetIff(ctx context.Context, s *stack.Stack, name string, flags 
 	defer d.mu.Unlock()
 
 	if d.endpoint != nil {
-		return linuxerr.EINVAL
+		return linuxerr.EEXIST
 	}
 
 	// Input validation.
@@ -202,7 +202,7 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 				// Race detected: A NIC has been created in between.
 				continue
 			}
-			return nil, linuxerr.EEXIST
+			return nil, linuxerr.EBUSY
 		default:
 			endpoint.DecRef(ctx)
 			return nil, linuxerr.EINVAL
