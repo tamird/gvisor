@@ -153,6 +153,22 @@ partial result as a passing full posture gate. Default `make
 sandbox-posture-tests` retains the complete six-configuration installed workflow
 using the same configuration table, staged/custom runtime and caller arguments.
 
+The bwrap lane runs the existing integration suite directly:
+
+```sh
+test/rbe/qualify.sh bwrap
+```
+
+Its declared release provides runsc and its sidecar binaries. The test requests
+a root Firecracker worker for nested namespaces and cgroups, inheriting the
+pinned Ubuntu image and its standard shell, coreutils and hostname utilities.
+It binds that worker filesystem into the sandbox and uses a test-owned runtime
+directory. No Docker daemon or container image archive is needed. The complete
+test selection retains its existing unsupported user-namespace joining case.
+`make bwrap-tests` continues to pass its staged or custom `--runsc` executable.
+The public CI also runs this suite on ARM64; that worker lane remains
+unqualified by this AMD64 profile.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 
