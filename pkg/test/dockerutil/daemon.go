@@ -90,6 +90,7 @@ func RunTests(run func() int) (status int) {
 type testDaemon struct {
 	root       string
 	dataRoot   string
+	execRoot   string
 	logs       *os.File
 	cmd        *exec.Cmd
 	done       chan struct{}
@@ -120,6 +121,7 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	if err != nil {
 		return err
 	}
+	d.execRoot = filepath.Join(d.root, "exec")
 	// Firecracker sizes its root disk from EstimatedFreeDiskBytes; the action
 	// workspace only has fixed writable slack beyond its declared inputs.
 	d.dataRoot = filepath.Join(d.root, "data")
@@ -154,7 +156,7 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	cfg, err := json.Marshal(map[string]any{
 		"hosts":     []string{host},
 		"data-root": d.dataRoot,
-		"exec-root": filepath.Join(d.root, "exec"),
+		"exec-root": d.execRoot,
 		"pidfile":   filepath.Join(d.root, "docker.pid"),
 		// The tests do not require a particular backing filesystem or systemd.
 		"storage-driver":  "vfs",
@@ -327,6 +329,11 @@ func (d *testDaemon) close(failed bool) error {
 	// The daemon is stopped and reaped before unmounting or removing owned state.
 	if d.root != "" {
 		specutils.UnmountNullNetNS(d.root)
+		// Docker retains the default network namespace bind mount after the
+		// last host-network container exits and the daemon shuts down.
+		if err := syscall.Unmount(filepath.Join(d.execRoot, "netns", "default"), 0); err != nil && !errors.Is(err, syscall.ENOENT) && !errors.Is(err, syscall.EINVAL) {
+			errs = append(errs, fmt.Errorf("unmount private Docker default network namespace: %w", err))
+		}
 		if err := os.RemoveAll(d.root); err != nil {
 			errs = append(errs, fmt.Errorf("remove private Docker state: %w", err))
 		}
