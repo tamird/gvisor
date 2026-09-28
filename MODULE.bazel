@@ -8,6 +8,7 @@ bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
+bazel_dep(name = "rules_oci", version = "2.3.0")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "llvm", version = "0.8.24")
@@ -101,6 +102,442 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
+
+### Docker integration test images
+oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
+
+# images/arch-systemd, built by tools/images.mk as ad890a55561e4450.
+oci.pull(
+    name = "docker_image_arch_systemd_amd64",
+    digest = "sha256:374fc03834d32b587f2efc675332e389adacb7f07aec5f157f1c885e129800bb",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/arch-systemd_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/alpine, built by tools/images.mk as 1ce68c8160724eb9.
+oci.pull(
+    name = "docker_image_basic_alpine_amd64",
+    digest = "sha256:cb8a924afdf0229ef7515d9e5b3024e23b3eb03ddbba287f4a19c6ac90b8d221",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/alpine_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/alpine, built by tools/images.mk as 1ce68c8160724eb9.
+oci.pull(
+    name = "docker_image_basic_alpine_arm64",
+    digest = "sha256:597bd5c319cc09d6bb295b4ef23cac50ec7c373fff5fe923cfd246ec09967b31",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/alpine_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/docker, built by tools/images.mk as 9a49fc89adf655e5.
+oci.pull(
+    name = "docker_image_basic_docker_amd64",
+    digest = "sha256:1f106b293f835ae795c2a83d36e38ea96132fac20515915555b7212a7d688802",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/docker_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/docker, built by tools/images.mk as 9a49fc89adf655e5.
+oci.pull(
+    name = "docker_image_basic_docker_arm64",
+    digest = "sha256:b7057d9317bbbef47e1263c5f06a56c3960fe90bb433f30bd0259e4ec820937c",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/docker_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/filecap, built by tools/images.mk as 72fa130b72eb92ed.
+oci.pull(
+    name = "docker_image_basic_filecap_amd64",
+    digest = "sha256:9bdfa0f8660aa40733df7d1a71bacd7749d02840e6aa365e63d99c0f1b93a7dd",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/filecap_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/filecap, built by tools/images.mk as 72fa130b72eb92ed.
+oci.pull(
+    name = "docker_image_basic_filecap_arm64",
+    digest = "sha256:c1a425cea6aaaf087b6e7d0866a8d4d60d1e844de2cb4d59c853989a699e909b",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/filecap_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/httpd, built by tools/images.mk as 1d03d6745a9f3364.
+oci.pull(
+    name = "docker_image_basic_httpd_amd64",
+    digest = "sha256:53729354a74c9c146aa8726a8906e833755066ada1a478782f4dfb2ea6994b5d",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/httpd_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/httpd, built by tools/images.mk as 1d03d6745a9f3364.
+oci.pull(
+    name = "docker_image_basic_httpd_arm64",
+    digest = "sha256:ff6fa7a6b5a5bced73af205464d763570d345c03a4869c30855a706ca84a1138",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/httpd_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/integrationtest, built by tools/images.mk as b1f8a96174637690.
+oci.pull(
+    name = "docker_image_basic_integrationtest_amd64",
+    digest = "sha256:dba6fe78c206c93cb88a6a461090810434ec43339b6baa8448428cd28c22af43",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/integrationtest_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/integrationtest, built by tools/images.mk as b1f8a96174637690.
+oci.pull(
+    name = "docker_image_basic_integrationtest_arm64",
+    digest = "sha256:b141ca854fd9f7314139d8a9ead4cf56bed326ba21e157056d45eb9d85d45e8e",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/integrationtest_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/libacl, built by tools/images.mk as e81b085f4cf04126.
+oci.pull(
+    name = "docker_image_basic_libacl_amd64",
+    digest = "sha256:669ecd4652001fd5ade93cd7fad0ce3d00227de73513188c760c35997cfce873",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/libacl_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/libacl, built by tools/images.mk as e81b085f4cf04126.
+oci.pull(
+    name = "docker_image_basic_libacl_arm64",
+    digest = "sha256:14bb6c5134f173e4b13b68ec41d4abaf44226fcecf713af25773e2658bae1a70",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/libacl_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/mysql, built by tools/images.mk as b1a860c75ff18c2f.
+oci.pull(
+    name = "docker_image_basic_mysql_amd64",
+    digest = "sha256:3698683c6e6caf67e7adc8b7e80ae31b41f2fe94a2d0068c5757855bbda82de5",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/mysql_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/mysql, built by tools/images.mk as b1a860c75ff18c2f.
+oci.pull(
+    name = "docker_image_basic_mysql_arm64",
+    digest = "sha256:7928c9cc88f3c3557cdf321e32bbce94a14c3330f6e9ccc9546d6b20298b1e6e",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/mysql_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/nginx, built by tools/images.mk as 50bce377ccf85d18.
+oci.pull(
+    name = "docker_image_basic_nginx_amd64",
+    digest = "sha256:9dfaa0193570244f1c406fd82ff616ee12e749d067d6f4aeb49d250e93bd20bb",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/nginx_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/nginx, built by tools/images.mk as 50bce377ccf85d18.
+oci.pull(
+    name = "docker_image_basic_nginx_arm64",
+    digest = "sha256:c7b88bdee5395e627c8c1c94cd44640fa1ec7e1acdcd0828b2007ad5facbb9d0",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/nginx_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/pidfd-tests, built by tools/images.mk as 8a1a53b3aba6aa2d.
+oci.pull(
+    name = "docker_image_basic_pidfd_tests_amd64",
+    digest = "sha256:9e3444b8ca6e2e3c47c1f5a7459efd57226fb00a5413f7d15a79371814108876",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/pidfd-tests_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/pidfd-tests, built by tools/images.mk as 8a1a53b3aba6aa2d.
+oci.pull(
+    name = "docker_image_basic_pidfd_tests_arm64",
+    digest = "sha256:0c5d5baf7c4be25e43553ca2fe92eeeea15b9ceb570379f0066ef508fe4c0226",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/pidfd-tests_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/python, built by tools/images.mk as c15e1a6a382d57c6.
+oci.pull(
+    name = "docker_image_basic_python_amd64",
+    digest = "sha256:3b5636d485357def5da38852e5f718d0a14f5fb61a236d0b77d19949903a70eb",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/python_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/python, built by tools/images.mk as c15e1a6a382d57c6.
+oci.pull(
+    name = "docker_image_basic_python_arm64",
+    digest = "sha256:0af2867ba0e0e5af7be88f7a0630e50e6fa16300519c4c668ba279986118f5b7",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/python_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/redis, built by tools/images.mk as fe58fa2c7e2ea01a.
+oci.pull(
+    name = "docker_image_basic_redis_amd64",
+    digest = "sha256:37dc3caa4eb82d0dc8b395ab743bcbaa8080ccf6df52626efc06c271219fc4f6",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/redis_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/redis, built by tools/images.mk as fe58fa2c7e2ea01a.
+oci.pull(
+    name = "docker_image_basic_redis_arm64",
+    digest = "sha256:c4765824712be4c601fc538e1fa325b32bb2787e88ecb347a31653eacf5dfaae",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/redis_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/rust, built by tools/images.mk as 07c89b2a8eb5619e.
+oci.pull(
+    name = "docker_image_basic_rust_amd64",
+    digest = "sha256:bcf33d0b1e208858ee1e421722711ac4c034c15ed158d811f2b604b66059857c",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/rust_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/rust, built by tools/images.mk as 07c89b2a8eb5619e.
+oci.pull(
+    name = "docker_image_basic_rust_arm64",
+    digest = "sha256:d2e5a8500535e296c8acf9bd37bac45546ec9a621b7e18d66ba5d5a65c4f11f4",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/rust_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/sudo, built by tools/images.mk as 1fcc86240460d8a9.
+oci.pull(
+    name = "docker_image_basic_sudo_amd64",
+    digest = "sha256:b3d0b74c37eeec266b9bd38a9b8311287fdf3db5cefa7afc1e3efe9005f366a5",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/sudo_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/sudo, built by tools/images.mk as 1fcc86240460d8a9.
+oci.pull(
+    name = "docker_image_basic_sudo_arm64",
+    digest = "sha256:30b4e95ee6a3c6366587cb4b7a26a78101a3e2f880a20abfb05c03b0204a79a4",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/sudo_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/tcpdump, built by tools/images.mk as b317f9d1178f1965.
+oci.pull(
+    name = "docker_image_basic_tcpdump_amd64",
+    digest = "sha256:e9ae643b3a2bc56fda040cf51a78a440782c74263b1f9ebfdd40b65a6f9587a7",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/tcpdump_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/tcpdump, built by tools/images.mk as b317f9d1178f1965.
+oci.pull(
+    name = "docker_image_basic_tcpdump_arm64",
+    digest = "sha256:b892bf4a2482beeaae305bd1992e6b407dcb83d3a1a2888db644f9452fb898d8",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/tcpdump_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/tmpfile, built by tools/images.mk as e9479424110b835a.
+oci.pull(
+    name = "docker_image_basic_tmpfile_amd64",
+    digest = "sha256:342b536cfbec7c8a19be25879456ef34db04f9bd19026e18292495768ed774a4",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/tmpfile_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/tmpfile, built by tools/images.mk as e9479424110b835a.
+oci.pull(
+    name = "docker_image_basic_tmpfile_arm64",
+    digest = "sha256:3a2c15c36e05c37b1eade0598c7f19c8a1aa51e1bf4cebd39e177f0ae6971a45",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/tmpfile_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/tomcat, built by tools/images.mk as adfed0fa8b43767c.
+oci.pull(
+    name = "docker_image_basic_tomcat_amd64",
+    digest = "sha256:47274bc304687e21217ca6a33e3244c43c6d5cfaceade76c4b478023f2aca3b2",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/tomcat_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/tomcat, built by tools/images.mk as adfed0fa8b43767c.
+oci.pull(
+    name = "docker_image_basic_tomcat_arm64",
+    digest = "sha256:4f6ab20a775c1582d1a25f1487a0d50f45eca32a8c0ec7eb135de2507026e0b1",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/tomcat_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/basic/ubuntu, built by tools/images.mk as dbd077b85f595c83.
+oci.pull(
+    name = "docker_image_basic_ubuntu_amd64",
+    digest = "sha256:881afbae521c910f764f7187dbfbca3cc10c26f8bafa458c76dda009a901c29d",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/ubuntu_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/ubuntu, built by tools/images.mk as dbd077b85f595c83.
+oci.pull(
+    name = "docker_image_basic_ubuntu_arm64",
+    digest = "sha256:5ed16aa332467821529d451800e6fe599d83e30471e91b096752f8696d9bf6e9",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/ubuntu_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/image-test/ruby, built by tools/images.mk as 94a1ba1eb5504e9a.
+oci.pull(
+    name = "docker_image_image_test_ruby_amd64",
+    digest = "sha256:81fbfaf6b818a34e12e2347df34d4150b06937e41e5ad6bc047c84b44eb3324c",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/image-test/ruby_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/image-test/ruby, built by tools/images.mk as 94a1ba1eb5504e9a.
+oci.pull(
+    name = "docker_image_image_test_ruby_arm64",
+    digest = "sha256:84952c54b8d2ccabb6cb15e29b6e16d1ea928103109e35f320cfec6a61c02ec6",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/image-test/ruby_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/systemd-integ, built by tools/images.mk as 7ae0ad9691b7827e.
+oci.pull(
+    name = "docker_image_systemd_integ_amd64",
+    digest = "sha256:3682659091e3e184d61555a6840c197002e5f5fe05e1f63443eabe582064b84b",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/systemd-integ_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/systemd-integ, built by tools/images.mk as 7ae0ad9691b7827e.
+oci.pull(
+    name = "docker_image_systemd_integ_arm64",
+    digest = "sha256:6464fa323c79d09fb9b995d389381f1503f609580ef08ac4f8f69f285cdae3aa",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/systemd-integ_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/systemd-services, built by tools/images.mk as d25b4a32a69238ac.
+oci.pull(
+    name = "docker_image_systemd_services_amd64",
+    digest = "sha256:6da278f8fd241754861a2059396dd7647ff92a5700d2cb67146c556abbbc6326",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/systemd-services_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/systemd-services, built by tools/images.mk as d25b4a32a69238ac.
+oci.pull(
+    name = "docker_image_systemd_services_arm64",
+    digest = "sha256:eb9a8c3f2a59b77755627903e1139061d53fa047a937ebccf7b5faed933180c9",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/systemd-services_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/ubi10-init, built by tools/images.mk as 71a0847b48a6c08c.
+oci.pull(
+    name = "docker_image_ubi10_init_amd64",
+    digest = "sha256:63830301bcc3f82d6c661c3bb5798efe0e8ecfa964f82533f6376a7b93ae10d5",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/ubi10-init_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/ubi10-init, built by tools/images.mk as 71a0847b48a6c08c.
+oci.pull(
+    name = "docker_image_ubi10_init_arm64",
+    digest = "sha256:53ff736e313e7966e6505dcc265f41e14302083a3c19c0f4423c23c8e36dc3cb",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/ubi10-init_aarch64",
+    platforms = ["linux/arm64"],
+)
+use_repo(
+    oci,
+    "docker_image_arch_systemd_amd64",
+    "docker_image_arch_systemd_amd64_linux_amd64",
+    "docker_image_basic_alpine_amd64",
+    "docker_image_basic_alpine_amd64_linux_amd64",
+    "docker_image_basic_alpine_arm64",
+    "docker_image_basic_alpine_arm64_linux_arm64",
+    "docker_image_basic_docker_amd64",
+    "docker_image_basic_docker_amd64_linux_amd64",
+    "docker_image_basic_docker_arm64",
+    "docker_image_basic_docker_arm64_linux_arm64",
+    "docker_image_basic_filecap_amd64",
+    "docker_image_basic_filecap_amd64_linux_amd64",
+    "docker_image_basic_filecap_arm64",
+    "docker_image_basic_filecap_arm64_linux_arm64",
+    "docker_image_basic_httpd_amd64",
+    "docker_image_basic_httpd_amd64_linux_amd64",
+    "docker_image_basic_httpd_arm64",
+    "docker_image_basic_httpd_arm64_linux_arm64",
+    "docker_image_basic_integrationtest_amd64",
+    "docker_image_basic_integrationtest_amd64_linux_amd64",
+    "docker_image_basic_integrationtest_arm64",
+    "docker_image_basic_integrationtest_arm64_linux_arm64",
+    "docker_image_basic_libacl_amd64",
+    "docker_image_basic_libacl_amd64_linux_amd64",
+    "docker_image_basic_libacl_arm64",
+    "docker_image_basic_libacl_arm64_linux_arm64",
+    "docker_image_basic_mysql_amd64",
+    "docker_image_basic_mysql_amd64_linux_amd64",
+    "docker_image_basic_mysql_arm64",
+    "docker_image_basic_mysql_arm64_linux_arm64",
+    "docker_image_basic_nginx_amd64",
+    "docker_image_basic_nginx_amd64_linux_amd64",
+    "docker_image_basic_nginx_arm64",
+    "docker_image_basic_nginx_arm64_linux_arm64",
+    "docker_image_basic_pidfd_tests_amd64",
+    "docker_image_basic_pidfd_tests_amd64_linux_amd64",
+    "docker_image_basic_pidfd_tests_arm64",
+    "docker_image_basic_pidfd_tests_arm64_linux_arm64",
+    "docker_image_basic_python_amd64",
+    "docker_image_basic_python_amd64_linux_amd64",
+    "docker_image_basic_python_arm64",
+    "docker_image_basic_python_arm64_linux_arm64",
+    "docker_image_basic_redis_amd64",
+    "docker_image_basic_redis_amd64_linux_amd64",
+    "docker_image_basic_redis_arm64",
+    "docker_image_basic_redis_arm64_linux_arm64",
+    "docker_image_basic_rust_amd64",
+    "docker_image_basic_rust_amd64_linux_amd64",
+    "docker_image_basic_rust_arm64",
+    "docker_image_basic_rust_arm64_linux_arm64",
+    "docker_image_basic_sudo_amd64",
+    "docker_image_basic_sudo_amd64_linux_amd64",
+    "docker_image_basic_sudo_arm64",
+    "docker_image_basic_sudo_arm64_linux_arm64",
+    "docker_image_basic_tcpdump_amd64",
+    "docker_image_basic_tcpdump_amd64_linux_amd64",
+    "docker_image_basic_tcpdump_arm64",
+    "docker_image_basic_tcpdump_arm64_linux_arm64",
+    "docker_image_basic_tmpfile_amd64",
+    "docker_image_basic_tmpfile_amd64_linux_amd64",
+    "docker_image_basic_tmpfile_arm64",
+    "docker_image_basic_tmpfile_arm64_linux_arm64",
+    "docker_image_basic_tomcat_amd64",
+    "docker_image_basic_tomcat_amd64_linux_amd64",
+    "docker_image_basic_tomcat_arm64",
+    "docker_image_basic_tomcat_arm64_linux_arm64",
+    "docker_image_basic_ubuntu_amd64",
+    "docker_image_basic_ubuntu_amd64_linux_amd64",
+    "docker_image_basic_ubuntu_arm64",
+    "docker_image_basic_ubuntu_arm64_linux_arm64",
+    "docker_image_image_test_ruby_amd64",
+    "docker_image_image_test_ruby_amd64_linux_amd64",
+    "docker_image_image_test_ruby_arm64",
+    "docker_image_image_test_ruby_arm64_linux_arm64",
+    "docker_image_systemd_integ_amd64",
+    "docker_image_systemd_integ_amd64_linux_amd64",
+    "docker_image_systemd_integ_arm64",
+    "docker_image_systemd_integ_arm64_linux_arm64",
+    "docker_image_systemd_services_amd64",
+    "docker_image_systemd_services_amd64_linux_amd64",
+    "docker_image_systemd_services_arm64",
+    "docker_image_systemd_services_arm64_linux_arm64",
+    "docker_image_ubi10_init_amd64",
+    "docker_image_ubi10_init_amd64_linux_amd64",
+    "docker_image_ubi10_init_arm64",
+    "docker_image_ubi10_init_arm64_linux_arm64",
+)
 
 ### Linux headers
 # Select current UAPI declarations independently of libc and test platforms.
