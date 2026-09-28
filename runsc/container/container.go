@@ -27,7 +27,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -1689,9 +1688,9 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *boot.Pod
 	if !rootlessEUID {
 		if userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec); ok {
 			nss = append(nss, userNS)
-			specutils.SetUIDGIDMappings(cmd, c.Spec)
-			// We need to set UID and GID to have capabilities in a new user namespace.
-			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 0, Gid: 0}
+			if err := sandbox.ConfigureCmdForUserNamespace(cmd, c.Spec, userNS); err != nil {
+				return nil, nil, nil, nil, err
+			}
 		}
 	} else {
 		userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec)
