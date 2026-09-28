@@ -20,6 +20,7 @@ package criutil
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -61,7 +62,7 @@ func ResolvePath(executable string) string {
 	}
 
 	// Try to find via the path.
-	guess, _ := exec.LookPath(executable)
+	guess, err := exec.LookPath(executable)
 	if err == nil {
 		return guess
 	}
@@ -303,18 +304,11 @@ func (cc *Crictl) importFromDocker(image string) error {
 		return err
 	}
 
-	// Save the image on the other end.
-	if err := dockerutil.Save(cc.logger, image, w); err != nil {
-		cmd.Wait()
-		return err
-	}
-
-	// Close our pipe reference & see if it was loaded.
-	if err := w.Close(); err != nil {
-		return w.Close()
-	}
-
-	return cmd.Wait()
+	saveErr := dockerutil.Save(cc.logger, image, w)
+	// The importer may wait for EOF even when saving the image fails.
+	closeErr := w.Close()
+	waitErr := cmd.Wait()
+	return errors.Join(saveErr, closeErr, waitErr)
 }
 
 // StartContainer pulls the given image ands starts the container in the
