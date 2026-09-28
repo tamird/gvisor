@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "bzl_library", "go_binary")
-load(":config.bzl", "DOCKER_TESTS")
+load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS")
 load(":defs.bzl", "docker_image_archives")
 
 package(
@@ -8,7 +8,10 @@ package(
     licenses = ["notice"],
 )
 
-docker_image_archives(name = "images")
+docker_image_archives(
+    name = "images",
+    extra_images = CONTAINERD_IMAGES,
+)
 
 bzl_library(
     name = "config_bzl",

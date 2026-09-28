@@ -35,8 +35,9 @@ func TestMain(m *testing.M) {
 	}
 
 	if useHarness() {
-		dockerutil.EnsureSupportedDockerVersion()
-		code := runInHarness(context.Background())
+		code := dockerutil.RunTests(func() int {
+			return runInHarness(context.Background())
+		})
 		if code == 0 {
 			if f := os.Getenv("TEST_PREMATURE_EXIT_FILE"); f != "" {
 				_ = os.Remove(f)

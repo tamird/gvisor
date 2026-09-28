@@ -57,6 +57,7 @@ RUNTIME_SUITES = {
 # Image names are the existing Docker test inputs, grouped by their consuming
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
+    "containerd": ["containerd/harness"],
     "startup": ["benchmarks/alpine"],
     "posture": ["basic/alpine"],
     "portforward": [
@@ -102,6 +103,16 @@ COHORT_IMAGES = {
         "image-test/ruby",
     ],
 }
+
+# These archives are imported directly by CRI inside the containerd harness.
+CONTAINERD_IMAGES = [
+    "basic/alpine",
+    "basic/python",
+    "basic/busybox",
+    "basic/symlink-resolv",
+    "basic/httpd",
+    "basic/ubuntu",
+]
 
 # This existing systemd case only runs on AMD64.
 AMD64_RUNTIME_IMAGES = ["arch-systemd"]
