@@ -21,7 +21,6 @@ import (
 
 	"github.com/moby/sys/capability"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
@@ -30,7 +29,6 @@ import (
 // supported docker version, required capabilities, and configures the executable
 // path for runsc.
 func TestMain(m *testing.M) {
-	config.RegisterFlags(flag.CommandLine)
 	if !flag.CommandLine.Parsed() {
 		flag.Parse()
 	}
