@@ -231,6 +231,39 @@ test selection retains its existing unsupported user-namespace joining case.
 The public CI also runs this suite on ARM64; that worker lane remains
 unqualified by this AMD64 profile.
 
+The language runtime lanes retain the five public AMD64 suites: PHP 8.3.7,
+Java 21, Go 1.22, Node 22.2.0 and Python 3.12.3. DirectFS matches presubmit;
+goferfs matches the continuous matrix:
+
+```sh
+test/rbe/qualify.sh language-directfs
+test/rbe/qualify.sh language-goferfs
+```
+
+Each action starts the shared private Docker daemon and loads its language's
+declared archive, pinned to the existing `tools/images.mk` source-hash image.
+The original image entrypoint is retained, including Node's `dumb-init`.
+The declared release and proctor run the existing tests with systrap and
+`--watchdog-action=panic`. Installed `make %-runtime-tests` entrypoints still
+accept their current runtime, image, partition and test controls.
+
+The owned suites schedule the public CI partitions inside Bazel. Each partition
+keeps the existing four or eight Bazel shards, batch size, exclusions and runner
+timeout; the dispatcher retains Make's 1800-second action timeout. Java's forty
+partitions cannot be collapsed into one test target because Bazel limits each
+target to fifty shards. Each complete mode schedules 456 actions across 64
+partition targets. No external `PARTITION` or `TOTAL_PARTITIONS` setting is
+needed for these owned suites. Selecting a concrete partition target, such as
+`//test/runtimes:go1.22_directfs_1_owned`, provides only partial coverage.
+
+`RUNTIME_TESTS_FILTER`, `RUNTIME_TESTS_PER_TEST_TIMEOUT`,
+`RUNTIME_TESTS_RUNS_PER_TEST`, `RUNTIME_TESTS_FLAKY_IS_ERROR` and
+`RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT` retain their Make defaults and meanings.
+An explicit test filter replaces the exclusion list as before. Filtered or
+partition-only results do not qualify a complete language lane. These published
+images and public jobs are AMD64-only; selecting an ARM64 language lane fails
+explicitly. Passing a bounded cohort does not qualify all language partitions.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 

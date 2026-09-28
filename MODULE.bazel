@@ -418,6 +418,46 @@ oci.pull(
     platforms = ["linux/arm64"],
 )
 
+# images/runtimes/go1.22, built by tools/images.mk as 554d28f5e3db7cfa.
+oci.pull(
+    name = "docker_image_runtimes_go1.22_amd64",
+    digest = "sha256:420458255f43ecad02efc8dbb3446c0dc09a34bfaeaec2dacdf7ee84b2bc8f47",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/go1.22_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/runtimes/java21, built by tools/images.mk as 9f025a576ab7b95d.
+oci.pull(
+    name = "docker_image_runtimes_java21_amd64",
+    digest = "sha256:c5a1419701eea132bc82193018a09a91296a8d9e96492495a72dd84040e0bb47",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/java21_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/runtimes/nodejs22.2.0, built by tools/images.mk as 0ff5c9981b4fd7e7.
+oci.pull(
+    name = "docker_image_runtimes_nodejs22.2.0_amd64",
+    digest = "sha256:35f519bc1da54d1e66f704fc8b09b59869eccc3586b6cfb522a049d7826eda83",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/nodejs22.2.0_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/runtimes/php8.3.7, built by tools/images.mk as b40e3971ed3fb957.
+oci.pull(
+    name = "docker_image_runtimes_php8.3.7_amd64",
+    digest = "sha256:94465ec1f8b54c044bb390281a41567b0857354295779fb9a734cf4aca34b0b1",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/php8.3.7_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/runtimes/python3.12.3, built by tools/images.mk as 7a7d668f713e8d7c.
+oci.pull(
+    name = "docker_image_runtimes_python3.12.3_amd64",
+    digest = "sha256:207921e49c91b81de35ec3ac8d82839c0a7566a9650f2c4584929aa1e946a540",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/runtimes/python3.12.3_x86_64",
+    platforms = ["linux/amd64"],
+)
+
 # images/systemd-integ, built by tools/images.mk as 7ae0ad9691b7827e.
 oci.pull(
     name = "docker_image_systemd_integ_amd64",
@@ -665,6 +705,16 @@ use_repo(
     "docker_image_image_test_ruby_amd64_linux_amd64",
     "docker_image_image_test_ruby_arm64",
     "docker_image_image_test_ruby_arm64_linux_arm64",
+    "docker_image_runtimes_go1.22_amd64",
+    "docker_image_runtimes_go1.22_amd64_linux_amd64",
+    "docker_image_runtimes_java21_amd64",
+    "docker_image_runtimes_java21_amd64_linux_amd64",
+    "docker_image_runtimes_nodejs22.2.0_amd64",
+    "docker_image_runtimes_nodejs22.2.0_amd64_linux_amd64",
+    "docker_image_runtimes_php8.3.7_amd64",
+    "docker_image_runtimes_php8.3.7_amd64_linux_amd64",
+    "docker_image_runtimes_python3.12.3_amd64",
+    "docker_image_runtimes_python3.12.3_amd64_linux_amd64",
     "docker_image_systemd_integ_amd64",
     "docker_image_systemd_integ_amd64_linux_amd64",
     "docker_image_systemd_integ_arm64",
