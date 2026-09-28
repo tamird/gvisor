@@ -431,12 +431,30 @@ cuda-12-8-tests: load-basic_alpine load-gpu_cuda-tests-12-8 $(RUNTIME_BIN)
 	@$(call sudo,test/gpu:cuda_12_8_test,--runtime=$(RUNTIME) -test.v $(ARGS))
 .PHONY: cuda-tests
 
+# Installed mode preserves staged/custom runtimes; owned mode declares inputs.
+DOCKER_TEST_SETUP ?= installed
+ifeq ($(DOCKER_TEST_SETUP),owned)
+portforward-tests:
+	@$(call test,--config=docker //test/root:portforward_test_owned)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME),--network=sandbox)
-	@$(call sudo,test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS))
-	@$(call install_runtime,$(RUNTIME),--network=host)
-	@$(call sudo,test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS))
-.PHONY: portforward-test
+	@set -e; \
+	VARIANTS="$$( $(call run,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=portforward --list-variants) )"; \
+	for VARIANT in $$VARIANTS; do \
+	  export VARIANT; \
+	  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=portforward --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
+	  sudo rm -rf "$(RUNTIME_LOG_DIR)"; \
+	  mkdir -p "$(RUNTIME_LOG_DIR)"; \
+	  chmod 0777 "$(RUNTIME_LOG_DIR)"; \
+	  $(reload_docker) || exit $$?; \
+	  $(call wait_for_runtime,$(RUNTIME)) || exit $$?; \
+	  $(call sudo,--remote_download_outputs=toplevel test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS)) || exit $$?; \
+	done
+else
+portforward-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
+.PHONY: portforward-tests
 
 POSTURE_TEST_ARGS := -test.run=TestSandboxPosture -test.v
 sandbox-posture-tests: load-basic_alpine $(RUNTIME_BIN)
@@ -464,7 +482,6 @@ INTEGRATION_TARGETS := //test/image:image_test //test/e2e:integration_test
 
 # Installed mode retains staged/custom runtime selection and daemon reload.
 # Owned mode uses declared Bazel inputs and a private daemon in each test action.
-DOCKER_TEST_SETUP ?= installed
 ifeq ($(DOCKER_TEST_SETUP),owned)
 docker-tests:
 	@$(call test,--config=docker $(PARTITIONS) //test/docker:owned_tests)

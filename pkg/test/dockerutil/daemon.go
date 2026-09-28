@@ -39,8 +39,9 @@ var dockerTestConfig = flag.String("docker_test_config", "", "declared runtime a
 // daemonInputs is written by the Docker test configuration rule. All paths are
 // relative to the test's runfiles root.
 type daemonInputs struct {
-	Runsc  string   `json:"runsc"`
-	Images []string `json:"images"`
+	Runsc       string   `json:"runsc"`
+	Images      []string `json:"images"`
+	RuntimeArgs []string `json:"runtime_args"`
 }
 
 // RunTests runs a Docker integration suite. Callers must parse flags first.
@@ -139,16 +140,17 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	if runtimeName == "" {
 		runtimeName = "runsc"
 	}
-	runtimes, err := runtimeDefinitions(runsc, runtimeName, []string{
+	variants, err := RuntimeVariants("docker")
+	if err != nil {
+		return err
+	}
+	runtimes := runtimeDefinitions(runsc, runtimeName, append([]string{
 		// Keep the reusable gofer namespace under fixture ownership.
 		"--shared-root=" + d.root,
 		"--sidecar-usage-policy=STRICT",
 		"--debug",
 		"--debug-log=" + filepath.Join(logDir, "runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log"),
-	})
-	if err != nil {
-		return err
-	}
+	}, inputs.RuntimeArgs...), variants)
 	host := "unix://" + filepath.Join(d.root, "docker.sock")
 	configPath := filepath.Join(d.root, "daemon.json")
 	cfg, err := json.Marshal(map[string]any{

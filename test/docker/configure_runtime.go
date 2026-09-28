@@ -18,6 +18,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
@@ -30,11 +31,39 @@ func main() {
 	runsc := flags.String("runsc", "", "runtime executable selected by Make")
 	name := flags.String("name", "", "base runtime name")
 	configPath := flags.String("config", "", "Docker daemon configuration to update")
+	suite := flags.String("suite", "docker", "declared runtime configuration set")
+	variant := flags.String("variant", "", "install only this configuration under --name")
+	listVariants := flags.Bool("list-variants", false, "list the suite's configuration names without installing")
 	flags.Parse(os.Args[1:])
+	variants, err := dockerutil.RuntimeVariants(*suite)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if *listVariants {
+		for _, variant := range variants {
+			fmt.Println(variant.Name)
+		}
+		return
+	}
+	if *variant != "" {
+		var selected []dockerutil.RuntimeVariant
+		for _, v := range variants {
+			if v.Name == *variant {
+				selected = []dockerutil.RuntimeVariant{{Args: v.Args}}
+				break
+			}
+		}
+		if selected == nil {
+			log.Fatalf("unknown %s runtime configuration %q", *suite, *variant)
+		}
+		variants = selected
+	} else if *suite != "docker" {
+		log.Fatal("--variant is required for this suite")
+	}
 	if *runsc == "" || *name == "" || *configPath == "" {
 		log.Fatal("--runsc, --name, and --config are required")
 	}
-	if err := dockerutil.InstallRuntimeVariants(*runsc, *name, *configPath, flags.Args()); err != nil {
+	if err := dockerutil.InstallRuntimeVariants(*runsc, *name, *configPath, flags.Args(), variants); err != nil {
 		log.Fatal(err)
 	}
 }

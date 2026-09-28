@@ -89,6 +89,21 @@ runtime overrides do not apply in that explicit mode. Direct owned runs should
 set `PARTITION` and `TOTAL_PARTITIONS` through `--test_env` when partitioning;
 `--config=docker` preserves the lane's TCP save/restore setting.
 
+The complete AMD64 port-forward lane uses the same owned daemon and declared
+Redis/nginx archives. Its two existing tests run in separate sandbox-network
+and host-network actions:
+
+```sh
+bazel test --config=rbe --config=x86_64 --config=docker //test/root:portforward_test_owned
+```
+
+`make portforward-tests DOCKER_TEST_SETUP=owned` selects that suite. Default
+`make portforward-tests` still installs each mode under the selected `RUNTIME`
+using the caller's binary, arguments and daemon configuration. Both paths use
+`PORTFORWARD_VARIANTS` in `test/docker/config.bzl`; the original installed test
+remains the only Nogo owner. Declared ARM64 images do not supply ARM64
+Firecracker capacity.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 

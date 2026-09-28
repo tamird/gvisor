@@ -1,3 +1,4 @@
+load("//test/docker:config.bzl", "PORTFORWARD_VARIANTS")
 load("//test/docker:defs.bzl", "docker_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 
@@ -91,11 +92,12 @@ go_test(
     ],
 )
 
-go_test(
+docker_test(
     name = "portforward_test",
     srcs = ["portforward_test.go"],
-    local = True,
+    cohort = "portforward",
     pure = True,
+    runtime_variants = PORTFORWARD_VARIANTS,
     tags = [
         "manual",
     ],
@@ -103,6 +105,7 @@ go_test(
     deps = [
         "//pkg/cleanup",
         "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
         "//runsc/config",
         "//runsc/flag",
         "//runsc/specutils",

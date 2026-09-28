@@ -1,5 +1,5 @@
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
-load("//test/docker:config.bzl", "RUNTIME_VARIANTS")
+load("//test/docker:config.bzl", "RUNTIME_SUITES")
 load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
@@ -58,7 +58,7 @@ go_library(
 write_file(
     name = "runtime_variants",
     out = "runtime_variants.json",
-    content = [json.encode(RUNTIME_VARIANTS)],
+    content = [json.encode(RUNTIME_SUITES)],
 )
 
 go_test(

@@ -42,6 +42,7 @@ def _daemon_config_impl(ctx):
     ctx.actions.write(output, json.encode({
         "runsc": runtime.short_path,
         "images": [archive.short_path for archive in ctx.files.images],
+        "runtime_args": ctx.attr.runtime_args,
     }))
     runfiles = ctx.runfiles(files = [runtime] + ctx.files.images)
     runfiles = runfiles.merge(ctx.attr.runtime[DefaultInfo].default_runfiles)
@@ -52,33 +53,23 @@ _daemon_config = rule(
     attrs = {
         "runtime": attr.label(default = "//:release", executable = True, cfg = "target"),
         "images": attr.label_list(allow_files = True),
+        "runtime_args": attr.string_list(),
     },
 )
 
-def docker_test(name, cohort, data = [], **kwargs):
+def docker_test(name, cohort, data = [], runtime_variants = None, **kwargs):
     """Runs an existing Go suite against installed or declared Docker inputs.
 
     Args:
       name: Existing test target name.
       cohort: Key in COHORT_IMAGES identifying the suite's image inputs.
       data: Other existing runtime inputs.
+      runtime_variants: Optional named runtime arguments for separate owned actions.
       **kwargs: Remaining go_test arguments.
     """
-    images = sorted(COHORT_IMAGES[cohort])
-    amd64 = images + (AMD64_RUNTIME_IMAGES if cohort == "runtime" else [])
-    config = name + "_docker_config"
-    _daemon_config(
-        name = config,
-        testonly = True,
-        images = select_arch(
-            amd64 = ["//test/docker:images_" + _image_name(image) + "_amd64_tar" for image in amd64],
-            arm64 = ["//test/docker:images_" + _image_name(image) + "_arm64_tar" for image in images],
-        ),
-        tags = ["manual"],
-    )
 
     # Bazel's native local attribute is nonconfigurable. Keep the installed
-    # entrypoint and generate the owned variant from the same source/deps.
+    # entrypoint and generate owned variants from the same source/deps.
     # Only the installed target creates a Nogo target: analysis does not need
     # the owned daemon's runtime image archives.
     go_test(
@@ -87,15 +78,42 @@ def docker_test(name, cohort, data = [], **kwargs):
         local = True,
         **kwargs
     )
-    go_test(
-        name = name + "_owned",
-        nogo = False,
-        args = ["--docker_test_config=$(rootpath :" + config + ")"],
-        data = data + [":" + config],
-        rundir = ".",
-        # VFS retains expanded layers and copies container root filesystems.
-        exec_properties = docker_test_exec_properties(
-            free_disk = "30GB" if cohort == "image" else "20GB",
-        ),
-        **kwargs
-    )
+
+    images = sorted(COHORT_IMAGES[cohort])
+    amd64 = images + (AMD64_RUNTIME_IMAGES if cohort == "runtime" else [])
+    tests = []
+    variants = runtime_variants if runtime_variants != None else [struct(name = "", args = [])]
+    for variant in variants:
+        prefix = name + ("_" + variant.name if variant.name else "")
+        config = prefix + "_docker_config"
+        _daemon_config(
+            name = config,
+            testonly = True,
+            runtime_args = variant.args,
+            images = select_arch(
+                amd64 = ["//test/docker:images_" + _image_name(image) + "_amd64_tar" for image in amd64],
+                arm64 = ["//test/docker:images_" + _image_name(image) + "_arm64_tar" for image in images],
+            ),
+            tags = ["manual"],
+        )
+        test = prefix + "_owned"
+        go_test(
+            name = test,
+            nogo = False,
+            args = ["--docker_test_config=$(rootpath :" + config + ")"],
+            data = data + [":" + config],
+            rundir = ".",
+            # VFS retains expanded layers and copies container root filesystems.
+            exec_properties = docker_test_exec_properties(
+                free_disk = "30GB" if cohort == "image" else "20GB",
+            ),
+            **kwargs
+        )
+        tests.append(test)
+    if runtime_variants != None:
+        native.test_suite(
+            name = name + "_owned",
+            tests = tests,
+            tags = ["manual"],
+            visibility = kwargs.get("visibility"),
+        )

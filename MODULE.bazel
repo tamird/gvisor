@@ -251,6 +251,22 @@ oci.pull(
     platforms = ["linux/arm64"],
 )
 
+# images/basic/redis, built by tools/images.mk as fe58fa2c7e2ea01a.
+oci.pull(
+    name = "docker_image_basic_redis_amd64",
+    digest = "sha256:37dc3caa4eb82d0dc8b395ab743bcbaa8080ccf6df52626efc06c271219fc4f6",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/redis_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/redis, built by tools/images.mk as fe58fa2c7e2ea01a.
+oci.pull(
+    name = "docker_image_basic_redis_arm64",
+    digest = "sha256:c4765824712be4c601fc538e1fa325b32bb2787e88ecb347a31653eacf5dfaae",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/redis_aarch64",
+    platforms = ["linux/arm64"],
+)
+
 # images/basic/rust, built by tools/images.mk as 07c89b2a8eb5619e.
 oci.pull(
     name = "docker_image_basic_rust_amd64",
@@ -454,6 +470,10 @@ use_repo(
     "docker_image_basic_python_amd64_linux_amd64",
     "docker_image_basic_python_arm64",
     "docker_image_basic_python_arm64_linux_arm64",
+    "docker_image_basic_redis_amd64",
+    "docker_image_basic_redis_amd64_linux_amd64",
+    "docker_image_basic_redis_arm64",
+    "docker_image_basic_redis_arm64_linux_arm64",
     "docker_image_basic_rust_amd64",
     "docker_image_basic_rust_amd64_linux_amd64",
     "docker_image_basic_rust_arm64",

@@ -12,9 +12,26 @@ RUNTIME_VARIANTS = {
     "-cgroupv2": ["--in-sandbox-cgroup=v2"],
 }
 
+# Port forwarding is qualified with both runtime network implementations. The
+# installed-runtime adapter and owned Bazel actions use these same modes.
+PORTFORWARD_VARIANTS = [
+    struct(name = "sandbox", args = ["--network=sandbox"]),
+    struct(name = "host", args = ["--network=host"]),
+]
+
+# The Go runtime adapter consumes these same configurations as JSON.
+RUNTIME_SUITES = {
+    "docker": [struct(name = name, args = args) for name, args in RUNTIME_VARIANTS.items()],
+    "portforward": PORTFORWARD_VARIANTS,
+}
+
 # Image names are the existing Docker test inputs, grouped by their consuming
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
+    "portforward": [
+        "basic/nginx",
+        "basic/redis",
+    ],
     "root": [
         "basic/alpine",
         "basic/ubuntu",
