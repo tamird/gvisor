@@ -50,6 +50,7 @@
 #include "gtest/gtest.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
+#include "absl/time/time.h"
 #include "test/syscalls/linux/socket_netlink_route_util.h"
 #include "test/syscalls/linux/socket_netlink_util.h"
 #include "test/util/capability_util.h"
@@ -61,6 +62,7 @@
 #include "test/util/posix_error.h"
 #include "test/util/socket_util.h"
 #include "test/util/test_util.h"
+#include "test/util/timer_util.h"
 
 namespace gvisor {
 namespace testing {
@@ -451,7 +453,7 @@ PosixErrorOr<TunTapInterface> OpenAndAttachTunTap(const std::string& dev_name,
   ASSIGN_OR_RETURN_ERRNO(auto nlsk, NetlinkBoundSocket(NETLINK_ROUTE));
   const struct in_addr dev_ipv4_addr = {.s_addr = dev_addr};
   // Interface setup.
-  EXPECT_NO_ERRNO(LinkAddLocalAddr(nlsk, link.index, AF_INET, /*prefixlen=*/24,
+  RETURN_IF_ERRNO(LinkAddLocalAddr(nlsk, link.index, AF_INET, /*prefixlen=*/24,
                                    &dev_ipv4_addr, sizeof(dev_ipv4_addr)));
 
   if (!IsRunningOnGvisor()) {
@@ -611,32 +613,36 @@ TEST_F(TuntapTest, SendUdpTriggersArpResolution) {
 TEST_F(TuntapTest, TUNNoPacketInfo) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
 
-  // Interface creation.
-  FileDescriptor fd = ASSERT_NO_ERRNO_AND_VALUE(Open(kDevNetTun, O_RDWR));
-
-  struct ifreq ifr_set = {};
-  ifr_set.ifr_flags = IFF_TUN | IFF_NO_PI;
-  strncpy(ifr_set.ifr_name, kTunName, IFNAMSIZ);
-  EXPECT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set), SyscallSucceeds());
-
-  // Interface setup.
-  auto link = ASSERT_NO_ERRNO_AND_VALUE(GetLinkByName(kTunName));
-  const struct in_addr dev_ipv4_addr = {.s_addr = kTapIPAddr};
-  FileDescriptor nlsk =
-      ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
-  EXPECT_NO_ERRNO(LinkAddLocalAddr(nlsk, link.index, AF_INET, 24,
-                                   &dev_ipv4_addr, sizeof(dev_ipv4_addr)));
+  const auto& [fd, link] = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
+      kTunName, kTapIPAddr, false /* tap */, true /* no_pi */));
 
   ping_ip_pkt ping_req = CreatePingIPPacket(kTapPeerIPAddr, kTapIPAddr);
 
   // Send ICMP query
-  EXPECT_THAT(write(fd.get(), &ping_req, sizeof(ping_req)),
+  ASSERT_THAT(write(fd.get(), &ping_req, sizeof(ping_req)),
               SyscallSucceedsWithValue(sizeof(ping_req)));
 
-  // Receive loop to process inbound packets.
+  // Bound the response wait even if unrelated packets keep arriving.
+  MonotonicTimer timer;
+  timer.Start();
   while (1) {
+    const auto timeout_ms =
+        absl::ToInt64Milliseconds(absl::Seconds(10) - timer.Duration());
+    ASSERT_GT(timeout_ms, 0) << "Timed out waiting for ICMP echo reply";
+    struct pollfd pfd = {
+        .fd = fd.get(),
+        .events = POLLIN,
+    };
+    const int ready = poll(&pfd, 1, timeout_ms);
+    if (ready < 0 && errno == EINTR) {
+      continue;
+    }
+    ASSERT_THAT(ready, SyscallSucceedsWithValue(1))
+        << "Waiting for ICMP echo reply";
+    ASSERT_NE(pfd.revents & POLLIN, 0);
+
     ping_ip_pkt ping_resp = {};
-    EXPECT_THAT(read(fd.get(), &ping_resp, sizeof(ping_req)),
+    ASSERT_THAT(read(fd.get(), &ping_resp, sizeof(ping_req)),
                 SyscallSucceedsWithValue(sizeof(ping_req)));
 
     // Process ping response packet.
