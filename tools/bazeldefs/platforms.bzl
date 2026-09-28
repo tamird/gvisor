@@ -43,17 +43,21 @@ def docker_test_exec_properties(free_disk):
         "//conditions:default": {},
     })
 
-def namespace_test_exec_properties(user = "root"):
+def namespace_test_exec_properties(user = "root", image = None):
     """Defaults for remote tests that create nested Linux namespaces.
 
     Args:
       user: Identity to use inside the remote test VM.
+      image: Optional image supplying the test's runtime tools.
 
     Returns:
       Test-runner properties; compilation keeps the execution platform's defaults.
     """
+    properties = _namespace_exec_properties(user)
+    if image != None:
+        properties["test.container-image"] = image
     return select({
-        Label("//tools/bazeldefs:rbe"): _namespace_exec_properties(user),
+        Label("//tools/bazeldefs:rbe"): properties,
         "//conditions:default": {},
     })
 

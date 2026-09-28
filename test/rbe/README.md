@@ -193,6 +193,32 @@ separate master-only performance benchmark jobs retain their soft-fail policy.
 The installed `startup_test` entrypoint and `make benchmark-platforms` retain
 their custom runtime selection and full benchmark arguments.
 
+The rootless Podman lane runs the public smoke workload with DirectFS disabled
+and enabled:
+
+```sh
+test/rbe/qualify.sh podman
+```
+
+The full `//test/podman:podman_test` owner runs directly as the `nonroot` user in
+a Firecracker worker using the existing pinned `basic/podmantest` image. It
+loads the declared Alpine archive and uses the source-built release with strict
+sidecar lookup; it does not install packages, pull a workload image, or start a
+Docker daemon. Podman retains its default rootless networking and the test
+requires cgroup v2 and actual subordinate UID/GID mappings. Private HOME and
+runtime/storage directories avoid the image's permissive
+`ignore_chown_errors` configuration and isolate cleanup from other containers.
+
+The installed `test/podman/run.sh` adapter retains its host package and runtime
+setup and delegates to the same smoke commands. By default that body owns both
+DirectFS modes; `RUNTIME_ARGS` retains the original single configured run and
+its shell quoting, including explicit `--directfs` selection.
+It can also run directly with an installed runtime and image archive, as
+described by `test/podman/smoke.sh`'s usage. Both architecture images are pinned,
+but ARM64 Firecracker capacity remains unqualified. Image tools, strict rootless
+storage and default networking must work on the actual worker; failures are not
+converted to skips or host-network runs.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 
