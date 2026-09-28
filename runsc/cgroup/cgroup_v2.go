@@ -101,27 +101,26 @@ func (c *cgroupV2) createCgroupPaths() (bool, error) {
 	//	* /sys/fs/cgroup/cgroup.subtree_control
 	//	* /sys/fs/cgroup/foo/cgroup.subtree_control
 	val := "+" + strings.Join(c.Controllers, " +")
-	elements := strings.Split(c.Path, "/")
 	current := c.Mountpoint
 	created := false
 
-	for i, e := range elements {
-		current = filepath.Join(current, e)
-		if i > 0 {
-			if err := os.Mkdir(current, 0o755); err != nil {
-				if !os.IsExist(err) {
-					return false, err
-				}
-			} else {
-				created = true
-				c.Own = append(c.Own, current)
-			}
+	for _, e := range strings.Split(c.Path, "/") {
+		if e == "" || e == "." {
+			continue
 		}
-		// enable all known controllers for subtree
-		if i < len(elements)-1 {
-			if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+		// Enable the parent before creating its child, regardless of whether
+		// Path has a leading slash. Never create or own the mount point itself.
+		if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+			return false, err
+		}
+		current = filepath.Join(current, e)
+		if err := os.Mkdir(current, 0o755); err != nil {
+			if !os.IsExist(err) {
 				return false, err
 			}
+		} else {
+			created = true
+			c.Own = append(c.Own, current)
 		}
 	}
 	return created, nil

@@ -422,6 +422,9 @@ func TestInstallPrecreatedCgroupV2SetsMemorySwap(t *testing.T) {
 		t.Fatalf("error creating temporary directory: %v", err)
 	}
 	defer os.RemoveAll(dir)
+	if err := os.WriteFile(filepath.Join(dir, subtreeControl), nil, 0o666); err != nil {
+		t.Fatalf("os.WriteFile(%q): %v", subtreeControl, err)
+	}
 
 	cg := &cgroupV2{
 		Mountpoint:  dir,
