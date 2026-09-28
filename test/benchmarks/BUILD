@@ -11,4 +11,5 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = ["//test/docker:defs_bzl"],
 )

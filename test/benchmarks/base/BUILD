@@ -1,4 +1,5 @@
 load("//test/benchmarks:defs.bzl", "benchmark_test")
+load("//test/docker:config.bzl", "STARTUP_VARIANTS")
 load("//tools:defs.bzl", "go_library")
 
 package(
@@ -21,6 +22,13 @@ go_library(
 benchmark_test(
     name = "startup_test",
     srcs = ["startup_test.go"],
+    cohort = "startup",
+    owned_args = [
+        "-test.v",
+        "-test.bench=BenchmarkStartupEmpty",
+        "-test.benchtime=1ns",
+    ],
+    runtime_variants = STARTUP_VARIANTS,
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [

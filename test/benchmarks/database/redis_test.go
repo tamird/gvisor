@@ -149,6 +149,5 @@ func doBenchmarkRedis(b *testing.B, ops []string) {
 }
 
 func TestMain(m *testing.M) {
-	harness.Init()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(m.Run))
 }
