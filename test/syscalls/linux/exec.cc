@@ -1231,8 +1231,11 @@ TEST(ExecTest, SUIDExecDoesntGainUIDWithPtracerAttached) {
   const pid_t tracee_pid = fork();
   if (tracee_pid == 0) {
     TEST_PCHECK(close(sockets[1]) == 0);
-    TEST_PCHECK(prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == 0);
-    // Indicate that the prctl has been set.
+    // PR_SET_PTRACER is a Yama extension. Without Yama the option is
+    // unrecognized (EINVAL); see prctl(2) and PR_SET_PTRACER(2const).
+    const int ret = prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY);
+    TEST_PCHECK(ret == 0 || (ret == -1 && errno == EINVAL));
+    // Let the tracer proceed after the optional Yama setup.
     TEST_PCHECK(WriteFd(sockets[0], "x", 1) == 1);
 
     // Wait until tracer has attached before execing.
@@ -1252,7 +1255,7 @@ TEST(ExecTest, SUIDExecDoesntGainUIDWithPtracerAttached) {
 
   const pid_t tracer_pid = fork();
   if (tracer_pid == 0) {
-    // Wait until tracee has called prctl, or else we won't be able to attach.
+    // Wait for the tracee to finish optional Yama setup.
     char done;
     TEST_PCHECK(ReadFd(sockets[1], &done, 1) == 1);
 
