@@ -240,7 +240,9 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 	}
 
 	prev := c.Spec.Linux.Resources
-	// Retain existing values if not set
+	// Retain existing values when an update leaves them unspecified. Docker
+	// sends zero-valued pointers for some unchanged limits; preserve those
+	// limits without discarding meaningful zeros such as CPU.Idle.
 	if prev.CPU != nil {
 		if r.CPU.Burst == nil {
 			r.CPU.Burst = prev.CPU.Burst
@@ -260,25 +262,26 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		if r.CPU.RealtimeRuntime == nil {
 			r.CPU.RealtimeRuntime = prev.CPU.RealtimeRuntime
 		}
-		if r.CPU.Shares == nil {
+		if r.CPU.Shares == nil || *r.CPU.Shares == 0 {
 			r.CPU.Shares = prev.CPU.Shares
 		}
 	}
 
 	if prev.Memory != nil {
-		if r.Memory.Limit == nil {
+		if r.Memory.Limit == nil || *r.Memory.Limit == 0 {
 			r.Memory.Limit = prev.Memory.Limit
 		}
-		if r.Memory.Reservation == nil {
+		if r.Memory.Reservation == nil || *r.Memory.Reservation == 0 {
 			r.Memory.Reservation = prev.Memory.Reservation
 		}
+		// Zero swap with unlimited memory requests unlimited swap.
 		if r.Memory.Swap == nil {
 			r.Memory.Swap = prev.Memory.Swap
 		}
 	}
 
 	if prev.BlockIO != nil {
-		if r.BlockIO.Weight == nil {
+		if r.BlockIO.Weight == nil || *r.BlockIO.Weight == 0 {
 			r.BlockIO.Weight = prev.BlockIO.Weight
 		}
 	}
