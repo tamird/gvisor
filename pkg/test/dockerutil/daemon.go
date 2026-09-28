@@ -28,7 +28,9 @@ import (
 	"time"
 
 	"github.com/docker/docker/client"
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 
+	"gvisor.dev/gvisor/runsc/cgroup"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
 
@@ -96,6 +98,7 @@ type testDaemon struct {
 	oldRuntime string
 	oldConfig  string
 	configured bool
+	cgroup     cgroup.Cgroup
 }
 
 func (d *testDaemon) start(inputs daemonInputs) error {
@@ -192,6 +195,25 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	d.cmd.Stdout, d.cmd.Stderr = d.logs, d.logs
 	// Stop descendants as well if the daemon fails during startup or shutdown.
 	d.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	if cgroup.IsOnlyV2() {
+		// The v2 root omits memory.swap.max, so Docker mistakes it for a
+		// kernel without swap limits. Start only the daemon in an owned child;
+		// v1 exposes its controller files at the root and needs no relocation.
+		d.cgroup, err = cgroup.NewFromPath("/"+filepath.Base(d.root), false)
+		if err != nil {
+			return fmt.Errorf("create Docker cgroup: %w", err)
+		}
+		if err := d.cgroup.Install(&specs.LinuxResources{}); err != nil {
+			return fmt.Errorf("install Docker cgroup: %w", err)
+		}
+		fd, err := d.cgroup.CloneIntoCgroup()
+		if err != nil {
+			return fmt.Errorf("open Docker cgroup for child creation: %w", err)
+		}
+		defer fd.Close()
+		d.cmd.SysProcAttr.UseCgroupFD = true
+		d.cmd.SysProcAttr.CgroupFD = int(fd.Fd())
+	}
 	if err := d.cmd.Start(); err != nil {
 		return fmt.Errorf("start dockerd: %w", err)
 	}
@@ -283,6 +305,11 @@ func (d *testDaemon) close(failed bool) error {
 		}
 		if err := syscall.Kill(-d.cmd.Process.Pid, syscall.SIGKILL); err != nil && !errors.Is(err, syscall.ESRCH) {
 			errs = append(errs, fmt.Errorf("clean up dockerd process group: %w", err))
+		}
+	}
+	if d.cgroup != nil {
+		if err := d.cgroup.Uninstall(); err != nil {
+			errs = append(errs, fmt.Errorf("remove Docker cgroup: %w", err))
 		}
 	}
 	if d.logs != nil {

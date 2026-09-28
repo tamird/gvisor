@@ -50,6 +50,7 @@ go_library(
         "@com_github_docker_docker//client:go_default_library",
         "@com_github_docker_docker//pkg/stdcopy:go_default_library",
         "@com_github_docker_go_connections//nat:go_default_library",
+        "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
