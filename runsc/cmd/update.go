@@ -116,8 +116,8 @@ other options are ignored.
 
 	f.StringVar(&u.cpuBurst, "cpu-burst", "", "CPU CFS hardcap burst limit (in usecs). Allowed accumulated cpu time additionally for burst a given period")
 	f.StringVar(&u.cpuIdle, "cpu-idle", "", "set cgroup SCHED_IDLE or not, 0: default behavior, 1: SCHED_IDLE")
-	f.StringVar(&u.cpuPeriod, "cpu-period", "", "CPU CFS period to be used for hardcapping (in usecs). 0 to use system default")
-	f.StringVar(&u.cpuQuota, "cpu-quota", "", "CPU CFS hardcap limit (in usecs). Allowed cpu time in a given period")
+	f.StringVar(&u.cpuPeriod, "cpu-period", "", "CPU CFS period to be used for hardcapping (in usecs). 0 to leave unchanged")
+	f.StringVar(&u.cpuQuota, "cpu-quota", "", "CPU CFS hardcap limit (in usecs). -1 for unlimited, 0 to leave unchanged")
 	f.StringVar(&u.cpuRtPeriod, "cpu-rt-period", "", "CPU realtime period to be used for hardcapping (in usecs). 0 to use system default")
 	f.StringVar(&u.cpuRtRuntime, "cpu-rt-runtime", "", "CPU realtime hardcap limit (in usecs). Allowed cpu time in a given period")
 	f.StringVar(&u.cpuShares, "cpu-share", "", "CPU shares (relative weight vs. other containers)")
@@ -248,10 +248,10 @@ func (u *Update) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		if r.CPU.Idle == nil {
 			r.CPU.Idle = prev.CPU.Idle
 		}
-		if r.CPU.Period == nil {
+		if r.CPU.Period == nil || *r.CPU.Period == 0 {
 			r.CPU.Period = prev.CPU.Period
 		}
-		if r.CPU.Quota == nil {
+		if r.CPU.Quota == nil || *r.CPU.Quota == 0 {
 			r.CPU.Quota = prev.CPU.Quota
 		}
 		if r.CPU.RealtimePeriod == nil {
