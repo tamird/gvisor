@@ -44,15 +44,24 @@ namespace {
 class AffinityTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    EXPECT_THAT(
+    ASSERT_THAT(
         // Needs use the raw syscall to get the actual size.
         cpuset_size_ = syscall(SYS_sched_getaffinity, /*pid=*/0,
-                               sizeof(cpu_set_t), &mask_),
+                               sizeof(cpu_set_t), &original_mask_),
         SyscallSucceeds());
+    mask_ = original_mask_;
     // Lots of tests rely on having more than 1 logical processor available.
     EXPECT_GT(CPU_COUNT(&mask_), 1);
     EXPECT_GT(cpuset_size_, 0);
     EXPECT_LE(cpuset_size_, sizeof(cpu_set_t));
+  }
+
+  void TearDown() override {
+    if (cpuset_size_ > 0) {
+      EXPECT_THAT(
+          sched_setaffinity(/*pid=*/0, sizeof(cpu_set_t), &original_mask_),
+          SyscallSucceeds());
+    }
   }
 
   static PosixError ClearLowestBit(cpu_set_t* mask, size_t cpus) {
@@ -68,7 +77,8 @@ class AffinityTest : public ::testing::Test {
 
   PosixError ClearLowestBit() { return ClearLowestBit(&mask_, CPU_SETSIZE); }
 
-  // Stores the initial cpu mask for this process.
+  // Tests mutate mask_, so keep the original thread affinity for restoration.
+  cpu_set_t original_mask_ = {};
   cpu_set_t mask_ = {};
   int cpuset_size_ = 0;
 };
