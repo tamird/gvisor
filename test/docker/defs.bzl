@@ -66,7 +66,7 @@ def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variant
       data: Other existing runtime inputs.
       args: Arguments shared by the installed and owned test entrypoints.
       nogo: Whether this target owns static analysis of the test sources.
-      runtime_variants: Optional named runtime arguments for separate owned actions.
+      runtime_variants: Optional named runtime arguments and tags for owned actions.
       **kwargs: Remaining go_test arguments.
     """
 
@@ -101,6 +101,8 @@ def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variant
             tags = ["manual"],
         )
         test = prefix + "_owned"
+        owned_kwargs = dict(kwargs)
+        owned_kwargs["tags"] = kwargs.get("tags", []) + getattr(variant, "tags", [])
         go_test(
             name = test,
             nogo = False,
@@ -111,7 +113,7 @@ def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variant
             exec_properties = docker_test_exec_properties(
                 free_disk = "30GB" if cohort == "image" else "20GB",
             ),
-            **kwargs
+            **owned_kwargs
         )
         tests.append(test)
     if runtime_variants != None:
