@@ -653,9 +653,7 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":podman: Podman"
-    commands:
-      - sudo RUNTIME_ARGS=--directfs=false ./test/podman/run.sh
-      - sudo RUNTIME_ARGS=--directfs=true ./test/podman/run.sh
+    command: sudo ./test/podman/run.sh
     agents:
       <<: *ubuntu_agents
       cgroup: "v2"
