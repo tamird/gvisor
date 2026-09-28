@@ -502,26 +502,34 @@ func (*cpu2) set(spec *specs.LinuxResources, path string) error {
 		}
 	}
 
-	if spec.CPU.Period != nil || spec.CPU.Quota != nil {
-		v := maxLimitStr
-		if spec.CPU.Quota != nil && *spec.CPU.Quota > 0 {
-			v = strconv.FormatInt(*spec.CPU.Quota, 10)
-		}
-
-		var period uint64
-		if spec.CPU.Period != nil && *spec.CPU.Period != 0 {
-			period = *spec.CPU.Period
-		} else {
-			period = defaultPeriod
-		}
-
-		v += " " + strconv.FormatUint(period, 10)
-		if err := setValue(path, cpuLimitCgroup, v); err != nil {
+	// As with cgroup v1, zero fields leave existing limits unchanged. Both
+	// values share cpu.max in v2, so retain the other field on partial updates.
+	hasQuota := spec.CPU.Quota != nil && *spec.CPU.Quota != 0
+	hasPeriod := spec.CPU.Period != nil && *spec.CPU.Period != 0
+	if !hasQuota && !hasPeriod {
+		return nil
+	}
+	var quota int64
+	var period uint64
+	if !hasQuota || !hasPeriod {
+		oldQuota, oldPeriod, err := readCPUQuotaAndPeriod(path)
+		if err != nil {
 			return err
 		}
+		quota, period = oldQuota, uint64(oldPeriod)
 	}
-
-	return nil
+	if hasQuota {
+		quota = *spec.CPU.Quota
+	}
+	if hasPeriod {
+		period = *spec.CPU.Period
+	}
+	v := maxLimitStr
+	if quota > 0 {
+		v = strconv.FormatInt(quota, 10)
+	}
+	v += " " + strconv.FormatUint(period, 10)
+	return setValue(path, cpuLimitCgroup, v)
 }
 
 type cpuset2 struct {
