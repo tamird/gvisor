@@ -62,7 +62,7 @@ var (
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
 	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
 	overlay            = flag.Bool("overlay", false, "wrap filesystem mounts with writable tmpfs overlay")
-	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Implicitly enabled if network=host, or if using network namespaces")
+	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Native tests already run with isolated networking when permitted; this flag also remaps the current user to root")
 	setupContainerPath = flag.String("setup-container", "", "path to setup_container binary (for use with --container)")
 	trace              = flag.Bool("trace", false, "enables all trace points")
 	directfs           = flag.Bool("directfs", false, "enables directfs (for all gofer mounts)")
@@ -235,7 +235,8 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 	cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &unix.SysProcAttr{}
 
-	if specutils.HasCapabilities(capability.CAP_SYS_ADMIN) {
+	hasSysAdmin := specutils.HasCapabilities(capability.CAP_SYS_ADMIN)
+	if hasSysAdmin {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUTS
 	}
 
@@ -247,18 +248,25 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 		// setup_container takes in its target argv as positional arguments.
 		cmd.Path = getSetupContainerPath()
 		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
-		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER | unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
-		// Set current user/group as root inside the namespace.
-		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getuid(), Size: 1},
-		}
-		cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getgid(), Size: 1},
-		}
-		cmd.SysProcAttr.GidMappingsEnableSetgroups = false
-		cmd.SysProcAttr.Credential = &syscall.Credential{
-			Uid: 0,
-			Gid: 0,
+		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
+		// Preserve privileged native tests' existing UID/GID mappings: mapping
+		// only the current user prevents tests from switching to another ID.
+		// Non-root callers still need a user namespace, since their effective
+		// capabilities may be lost when executing setup_container.
+		if *container || os.Geteuid() != 0 || !hasSysAdmin {
+			cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER
+			// Set current user/group as root inside the namespace.
+			cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getuid(), Size: 1},
+			}
+			cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getgid(), Size: 1},
+			}
+			cmd.SysProcAttr.GidMappingsEnableSetgroups = false
+			cmd.SysProcAttr.Credential = &syscall.Credential{
+				Uid: 0,
+				Gid: 0,
+			}
 		}
 	}
 
