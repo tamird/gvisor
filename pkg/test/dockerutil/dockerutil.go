@@ -132,7 +132,7 @@ func checkSupportedDockerVersion() error {
 		return err
 	}
 	if major < 17 || (major == 17 && minor < 9) {
-		return fmt.Errorf("Docker version 17.09.0 or greater is required, found: %02d.%02d", major, minor)
+		return fmt.Errorf("unsupported Docker version %02d.%02d: requires 17.09.0 or later", major, minor)
 	}
 	return nil
 }
