@@ -601,6 +601,15 @@ oci.pull(
     image = "registry.k8s.io/pause",
     platforms = ["linux/arm64"],
 )
+
+# The default node image shipped with kind v0.33.0.
+# https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0
+oci.pull(
+    name = "docker_image_kubernetes_node_amd64",
+    digest = "sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5",
+    image = "docker.io/kindest/node",
+    platforms = ["linux/amd64"],
+)
 use_repo(
     oci,
     "containerd_pause_3_10_1_amd64",
@@ -705,6 +714,8 @@ use_repo(
     "docker_image_image_test_ruby_amd64_linux_amd64",
     "docker_image_image_test_ruby_arm64",
     "docker_image_image_test_ruby_arm64_linux_arm64",
+    "docker_image_kubernetes_node_amd64",
+    "docker_image_kubernetes_node_amd64_linux_amd64",
     "docker_image_runtimes_go1.22_amd64",
     "docker_image_runtimes_go1.22_amd64_linux_amd64",
     "docker_image_runtimes_java21_amd64",
@@ -784,6 +795,14 @@ foreign_cc_tools.explicit()
 foreign_cc_tools.make(
     mode = "source",
     version = "4.4.1",
+)
+
+http_file(
+    name = "kind_linux_amd64",
+    downloaded_file_path = "kind",
+    executable = True,
+    sha256 = "aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d",
+    urls = ["https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64"],
 )
 
 http_file(
