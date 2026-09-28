@@ -431,27 +431,47 @@ cuda-12-8-tests: load-basic_alpine load-gpu_cuda-tests-12-8 $(RUNTIME_BIN)
 	@$(call sudo,test/gpu:cuda_12_8_test,--runtime=$(RUNTIME) -test.v $(ARGS))
 .PHONY: cuda-tests
 
-portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME),--network=sandbox)
-	@$(call sudo,test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS))
-	@$(call install_runtime,$(RUNTIME),--network=host)
-	@$(call sudo,test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS))
-.PHONY: portforward-test
+# Installed mode preserves staged/custom runtimes; owned mode declares inputs.
+DOCKER_TEST_SETUP ?= installed
 
-POSTURE_TEST_ARGS := -test.run=TestSandboxPosture -test.v
+# Install and run each declared configuration with the caller's runtime.
+# Arguments: suite, runtime name, test target, additional test arguments.
+installed_docker_variants = \
+	set -e; \
+	VARIANTS="$$( $(call run,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --list-variants) )"; \
+	for VARIANT in $$VARIANTS; do \
+	  export VARIANT; \
+	  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(2)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
+	  sudo rm -rf "$(RUNTIME_LOG_DIR)"; \
+	  mkdir -p "$(RUNTIME_LOG_DIR)"; \
+	  chmod 0777 "$(RUNTIME_LOG_DIR)"; \
+	  $(reload_docker) || exit $$?; \
+	  $(call wait_for_runtime,$(2)) || exit $$?; \
+	  $(call sudo,--remote_download_outputs=toplevel $(3),--runtime=$(2) --config_path="$(DOCKER_DAEMON_CONFIG_PATH)" -test.v $(4) $(ARGS)) || exit $$?; \
+	done
+
+ifeq ($(DOCKER_TEST_SETUP),owned)
+portforward-tests:
+	@$(call test,--config=docker //test/root:portforward_test_owned)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
+portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
+	@$(call installed_docker_variants,portforward,$(RUNTIME),test/root:portforward_test,)
+else
+portforward-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
+.PHONY: portforward-tests
+
+ifeq ($(DOCKER_TEST_SETUP),owned)
+sandbox-posture-tests:
+	@$(call test,--config=docker //test/root:sandbox_posture_test_owned)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 sandbox-posture-tests: load-basic_alpine $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-posture,) # Clear flags.
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-hostnet,--network=host)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-hostnet --network=host $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-hostnet-raw,--network=host --net-raw)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-hostnet-raw --network=host --net-raw $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-nodirectfs,--directfs=false)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-nodirectfs --directfs=false $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-nodirectfs-hostnet,--directfs=false --network=host)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-nodirectfs-hostnet --directfs=false --network=host $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-kvm,--platform=kvm)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-kvm --platform=kvm $(POSTURE_TEST_ARGS) $(ARGS))
+	@$(call installed_docker_variants,posture,$(RUNTIME)-posture,test/root:sandbox_posture_test,-test.run=TestSandboxPosture)
+else
+sandbox-posture-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
 .PHONY: sandbox-posture-tests
 
 root-tests: load-basic_alpine $(RUNTIME_BIN)
@@ -462,15 +482,22 @@ root-tests: load-basic_alpine $(RUNTIME_BIN)
 # Standard integration targets.
 INTEGRATION_TARGETS := //test/image:image_test //test/e2e:integration_test
 
+# Installed mode retains staged/custom runtime selection and daemon reload.
+# Owned mode uses declared Bazel inputs and a private daemon in each test action.
+ifeq ($(DOCKER_TEST_SETUP),owned)
+docker-tests:
+	@$(call test,--config=docker $(PARTITIONS) //test/docker:owned_tests)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 docker-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME),) # Clear flags.
-	@$(call install_runtime_noreload,$(RUNTIME)-docker,--net-raw --allow-packet-socket-write) # Used by TestDocker*.
-	@$(call install_runtime_noreload,$(RUNTIME)-fdlimit,--fdlimit=2000) # Used by TestRlimitNoFile.
-	@$(call install_runtime_noreload,$(RUNTIME)-dcache,--fdlimit=2000 --dcache=100) # Used by TestDentryCacheLimit.
-	@$(call install_runtime_noreload,$(RUNTIME)-host-uds,--host-uds=all) # Used by TestHostSocketConnect.
-	@$(call install_runtime_noreload,$(RUNTIME)-overlay,--overlay2=all:self) # Used by TestOverlay*.
-	@$(call install_runtime,$(RUNTIME)-cgroupv2,--in-sandbox-cgroup=v2) # Used by TestSystemd* and TestPIDFDSelftests.
-	@$(call test_runtime_cached,$(RUNTIME),$(INTEGRATION_TARGETS) --test_env=TEST_SAVE_RESTORE_NETSTACK=true //test/e2e:integration_runtime_test //test/e2e:runtime_in_docker_test)
+	@$(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)")
+	@sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
+	@$(reload_docker)
+	@$(call wait_for_runtime,$(RUNTIME))
+	@$(call test_runtime_cached,$(RUNTIME),--config=docker //test/docker:installed_tests)
+else
+docker-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
 .PHONY: docker-tests
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)

@@ -30,6 +30,7 @@ import (
 	"github.com/google/subcommands"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/runsc/cmd/util"
 	"gvisor.dev/gvisor/runsc/config"
@@ -321,54 +322,117 @@ func (c *Do) setupNet(cid string, spec *specs.Spec) (func(), error) {
 	}
 	veth, peer := deviceNames(cid)
 
-	cmds := []string{
-		fmt.Sprintf("ip link add %s mtu %v type veth peer name %s", veth, mtu, peer),
+	var cu cleanup.Cleanup
+	defer cu.Clean()
+	cmds := []struct{ setup, undo string }{
+		// A private chain identifies this invocation's NAT rule without
+		// xt_comment. Acquire it before changing any other network state.
+		{
+			fmt.Sprintf("iptables -t nat -N %s", cid),
+			fmt.Sprintf("iptables -t nat -X %s", cid),
+		},
+
+		// Create the namespace first so cleanup deletes the veth pair before
+		// deleting the namespace that will contain one end of it.
+		{
+			fmt.Sprintf("ip netns add %s", cid),
+			fmt.Sprintf("ip netns delete %s", cid),
+		},
+		{
+			fmt.Sprintf("ip link add %s mtu %v type veth peer name %s", veth, mtu, peer),
+			fmt.Sprintf("ip link delete %s", peer),
+		},
 
 		// Setup device outside the namespace.
-		fmt.Sprintf("ip addr add %s/24 dev %s", peerIP, peer),
-		fmt.Sprintf("ip link set %s up", peer),
+		{
+			fmt.Sprintf("ip addr add %s/24 dev %s", peerIP, peer),
+			"",
+		},
+		{
+			fmt.Sprintf("ip link set %s up", peer),
+			"",
+		},
 
 		// Setup device inside the namespace.
-		fmt.Sprintf("ip netns add %s", cid),
-		fmt.Sprintf("ip link set %s netns %s", veth, cid),
-		fmt.Sprintf("ip netns exec %s ip addr add %s/24 dev %s", cid, c.ip, veth),
-		fmt.Sprintf("ip netns exec %s ip link set %s up", cid, veth),
-		fmt.Sprintf("ip netns exec %s ip link set lo up", cid),
-		fmt.Sprintf("ip netns exec %s ip route add default via %s", cid, peerIP),
+		{
+			fmt.Sprintf("ip link set %s netns %s", veth, cid),
+			"",
+		},
+		{
+			fmt.Sprintf("ip netns exec %s ip addr add %s/24 dev %s", cid, c.ip, veth),
+			"",
+		},
+		{
+			fmt.Sprintf("ip netns exec %s ip link set %s up", cid, veth),
+			"",
+		},
+		{
+			fmt.Sprintf("ip netns exec %s ip link set lo up", cid),
+			"",
+		},
+		{
+			fmt.Sprintf("ip netns exec %s ip route add default via %s", cid, peerIP),
+			"",
+		},
 
 		// Enable network access.
-		"sysctl -w net.ipv4.ip_forward=1",
-		fmt.Sprintf("iptables -t nat -A POSTROUTING -s %s -o %s -m comment --comment runsc-%s -j MASQUERADE", c.ip, dev, peer),
-		fmt.Sprintf("iptables -A FORWARD -i %s -o %s -j ACCEPT", dev, peer),
-		fmt.Sprintf("iptables -A FORWARD -o %s -i %s -j ACCEPT", dev, peer),
+		{
+			"sysctl -w net.ipv4.ip_forward=1",
+			"",
+		},
+		{
+			fmt.Sprintf("iptables -t nat -A %s -j MASQUERADE", cid),
+			fmt.Sprintf("iptables -t nat -D %s -j MASQUERADE", cid),
+		},
+		{
+			fmt.Sprintf("iptables -t nat -A POSTROUTING -s %s -o %s -j %s", c.ip, dev, cid),
+			fmt.Sprintf("iptables -t nat -D POSTROUTING -s %s -o %s -j %s", c.ip, dev, cid),
+		},
+		{
+			fmt.Sprintf("iptables -A FORWARD -i %s -o %s -j ACCEPT", dev, peer),
+			fmt.Sprintf("iptables -D FORWARD -i %s -o %s -j ACCEPT", dev, peer),
+		},
+		{
+			fmt.Sprintf("iptables -A FORWARD -o %s -i %s -j ACCEPT", dev, peer),
+			fmt.Sprintf("iptables -D FORWARD -o %s -i %s -j ACCEPT", dev, peer),
+		},
 	}
 
 	for _, cmd := range cmds {
-		log.Debugf("Run %q", cmd)
-		args := strings.Split(cmd, " ")
-		cmd := exec.Command(args[0], args[1:]...)
-		if err := cmd.Run(); err != nil {
-			c.cleanupNet(cid, dev, "", "", "")
-			return nil, fmt.Errorf("failed to run %q: %v", cmd, err)
+		log.Debugf("Run %q", cmd.setup)
+		args := strings.Split(cmd.setup, " ")
+		if err := exec.Command(args[0], args[1:]...).Run(); err != nil {
+			return nil, fmt.Errorf("failed to run %q: %w", cmd.setup, err)
+		}
+		if cmd.undo != "" {
+			// Only undo successfully acquired resources, including when setup
+			// fails because a namespace, link, or chain already exists.
+			cu.Add(func() {
+				log.Debugf("Run %q", cmd.undo)
+				args := strings.Split(cmd.undo, " ")
+				if err := exec.Command(args[0], args[1:]...).Run(); err != nil {
+					log.Warningf("Failed to run %q: %v", cmd.undo, err)
+				}
+			})
 		}
 	}
 
 	resolvPath, err := makeFile("/etc/resolv.conf", "nameserver 8.8.8.8\n", spec)
 	if err != nil {
-		c.cleanupNet(cid, dev, "", "", "")
 		return nil, err
 	}
+	cu.Add(func() { tryRemove(resolvPath) })
 	hostnamePath, err := makeFile("/etc/hostname", cid+"\n", spec)
 	if err != nil {
-		c.cleanupNet(cid, dev, resolvPath, "", "")
 		return nil, err
 	}
+	cu.Add(func() { tryRemove(hostnamePath) })
 	hosts := fmt.Sprintf("127.0.0.1\tlocalhost\n%s\t%s\n", c.ip, cid)
 	hostsPath, err := makeFile("/etc/hosts", hosts, spec)
 	if err != nil {
-		c.cleanupNet(cid, dev, resolvPath, hostnamePath, "")
 		return nil, err
 	}
+	cu.Add(func() { tryRemove(hostsPath) })
 
 	netns := specs.LinuxNamespace{
 		Type: specs.NetworkNamespace,
@@ -376,39 +440,7 @@ func (c *Do) setupNet(cid string, spec *specs.Spec) (func(), error) {
 	}
 	addNamespace(spec, netns)
 
-	return func() { c.cleanupNet(cid, dev, resolvPath, hostnamePath, hostsPath) }, nil
-}
-
-// cleanupNet tries to cleanup the network setup in setupNet.
-//
-// It may be called when setupNet is only partially complete, in which case it
-// will cleanup as much as possible, logging warnings for the rest.
-//
-// Unfortunately none of this can be automatically cleaned up on process exit,
-// we must do so explicitly.
-func (c *Do) cleanupNet(cid, dev, resolvPath, hostnamePath, hostsPath string) {
-	_, peer := deviceNames(cid)
-
-	cmds := []string{
-		fmt.Sprintf("ip link delete %s", peer),
-		fmt.Sprintf("ip netns delete %s", cid),
-		fmt.Sprintf("iptables -t nat -D POSTROUTING -s %s -o %s -m comment --comment runsc-%s -j MASQUERADE", c.ip, dev, peer),
-		fmt.Sprintf("iptables -D FORWARD -i %s -o %s -j ACCEPT", dev, peer),
-		fmt.Sprintf("iptables -D FORWARD -o %s -i %s -j ACCEPT", dev, peer),
-	}
-
-	for _, cmd := range cmds {
-		log.Debugf("Run %q", cmd)
-		args := strings.Split(cmd, " ")
-		c := exec.Command(args[0], args[1:]...)
-		if err := c.Run(); err != nil {
-			log.Warningf("Failed to run %q: %v", cmd, err)
-		}
-	}
-
-	tryRemove(resolvPath)
-	tryRemove(hostnamePath)
-	tryRemove(hostsPath)
+	return cu.Release(), nil
 }
 
 func deviceNames(cid string) (string, string) {

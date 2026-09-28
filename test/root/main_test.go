@@ -21,7 +21,6 @@ import (
 
 	"github.com/moby/sys/capability"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
@@ -30,7 +29,6 @@ import (
 // supported docker version, required capabilities, and configures the executable
 // path for runsc.
 func TestMain(m *testing.M) {
-	config.RegisterFlags(flag.CommandLine)
 	if !flag.CommandLine.Parsed() {
 		flag.Parse()
 	}
@@ -40,14 +38,14 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	dockerutil.EnsureSupportedDockerVersion()
-
-	// Configure exe for tests.
-	path, err := dockerutil.RuntimePath()
-	if err != nil {
-		panic(err.Error())
-	}
-	specutils.ExePath = path
-
-	os.Exit(m.Run())
+	os.Exit(dockerutil.RunTests(func() int {
+		// Resolve the runtime after the selected daemon has been configured.
+		path, err := dockerutil.RuntimePath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Configure runsc for root tests: %v\n", err)
+			return 1
+		}
+		specutils.ExePath = path
+		return m.Run()
+	}))
 }
