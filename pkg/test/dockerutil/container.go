@@ -522,15 +522,28 @@ func (c *Container) ID() string {
 
 // RootDirectory returns an educated guess about the container's root directory.
 func (c *Container) RootDirectory() (string, error) {
+	configBytes, err := os.ReadFile(*config)
+	if err != nil {
+		return "", err
+	}
+	var cfg struct {
+		ExecRoot string `json:"exec-root"`
+	}
+	if err := json.Unmarshal(configBytes, &cfg); err != nil {
+		return "", err
+	}
+	if cfg.ExecRoot == "" {
+		cfg.ExecRoot = "/var/run/docker"
+	}
 	// The root directory of this container's runtime.
-	rootDir := fmt.Sprintf("/var/run/docker/runtime-%s/moby", c.runtime)
-	_, err := os.Stat(rootDir)
+	rootDir := filepath.Join(cfg.ExecRoot, "runtime-"+c.runtime, "moby")
+	_, err = os.Stat(rootDir)
 	if err == nil {
 		return rootDir, nil
 	}
 	// In docker v20+, due to https://github.com/moby/moby/issues/42345 the
 	// rootDir seems to always be the following.
-	const defaultDir = "/var/run/docker/runtime-runc/moby"
+	defaultDir := filepath.Join(cfg.ExecRoot, "runtime-runc/moby")
 	_, derr := os.Stat(defaultDir)
 	if derr == nil {
 		return defaultDir, nil
