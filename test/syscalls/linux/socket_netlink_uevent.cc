@@ -54,7 +54,7 @@ TEST(NetlinkUeventTest, DetachNoFilter) {
   FileDescriptor fd =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_KOBJECT_UEVENT));
 
-  int opt;
+  int opt = 0;
   EXPECT_THAT(
       setsockopt(fd.get(), SOL_SOCKET, SO_DETACH_FILTER, &opt, sizeof(opt)),
       SyscallFailsWithErrno(ENOENT));
@@ -75,7 +75,7 @@ TEST(NetlinkUeventTest, AttachFilter) {
       setsockopt(fd.get(), SOL_SOCKET, SO_ATTACH_FILTER, &prog, sizeof(prog)),
       SyscallSucceeds());
 
-  int opt;
+  int opt = 0;
   EXPECT_THAT(
       setsockopt(fd.get(), SOL_SOCKET, SO_DETACH_FILTER, &opt, sizeof(opt)),
       SyscallSucceeds());
