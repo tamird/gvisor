@@ -61,3 +61,5 @@ bzl_library(
         "//:sandbox",
     ],
 )
+
+exports_files(["llvm-linux-header-default.patch"])

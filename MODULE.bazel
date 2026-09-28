@@ -41,6 +41,13 @@ single_version_override(
     version = "0.62.0",
 )
 
+# Temporary upstream candidate; remove when hermetic-llvm releases header defaults.
+single_version_override(
+    module_name = "llvm",
+    patch_strip = 1,
+    patches = ["//tools:llvm-linux-header-default.patch"],
+)
+
 archive_override(
     module_name = "grpc",
     integrity = "sha256-MdbAHDv6CjWEUyZlcV5IdwPrENdrswtIdeV9E5wTu/k=",
@@ -96,7 +103,9 @@ python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
 ### Linux headers
+# Select current UAPI declarations independently of libc and test platforms.
 kernel_headers = use_extension("@llvm//kernel/extension:kernel_headers.bzl", "kernel_headers")
+kernel_headers.configure(default_version = "6.18")
 use_repo(kernel_headers, "kernel_headers")
 
 ### Repo rules
