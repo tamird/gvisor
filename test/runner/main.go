@@ -153,6 +153,11 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 	}
 	defer os.RemoveAll(tmpDir)
 
+	// Tests that change users still need access to their scratch directory.
+	if err := os.Chmod(tmpDir, 0777); err != nil {
+		t.Fatalf("could not chmod temp dir: %v", err)
+	}
+
 	// Replace TEST_TMPDIR in the current environment with something
 	// unique.
 	env := os.Environ()
