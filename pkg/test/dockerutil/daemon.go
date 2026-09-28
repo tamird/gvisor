@@ -155,8 +155,8 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		"data-root": d.dataRoot,
 		"exec-root": filepath.Join(d.root, "exec"),
 		"pidfile":   filepath.Join(d.root, "docker.pid"),
-		// The tests do not require a particular backing filesystem or systemd.
-		"storage-driver":  "vfs",
+		// Share image layers instead of copying every parent layer with VFS.
+		"storage-driver":  "overlay2",
 		"exec-opts":       []string{"native.cgroupdriver=cgroupfs"},
 		"default-runtime": runtimeName,
 		"experimental":    true,

@@ -73,12 +73,13 @@ Docker-in-Docker cases still pull and build images over the network. They are
 not hermetic tests, and their external failures remain visible.
 
 Owned tests request root Firecracker workers with the pinned provider image
-that supplies Docker, external networking and IPv6. They use VFS and request
-root disk space for expanded images and writable container copies; the action
-workspace holds the declared archives. These resource estimates need runtime
-qualification. Test logs identify the actual Docker version, storage and
-cgroup mode. ARM64 Firecracker capacity and cgroup v1 remain separate gaps;
-providing ARM64 image pins does not qualify either environment.
+that supplies Docker, external networking and IPv6. They use the host
+OverlayFS driver and request root disk space for expanded image layers and
+container writes; the action workspace holds the declared archives. These
+resource estimates need runtime qualification. Test logs identify the actual
+Docker version, storage and cgroup mode. ARM64 Firecracker capacity and
+cgroup v1 remain separate gaps; providing ARM64 image pins does not qualify
+either environment.
 
 Default `make docker-tests` and the original four test labels retain installed
 Docker, staged bundles, custom `RUNTIME_BIN`/`RUNSC_TARGET`, `RUNTIME_ARGS`,

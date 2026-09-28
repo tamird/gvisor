@@ -93,7 +93,7 @@ def docker_test(name, cohort, data = [], **kwargs):
         args = ["--docker_test_config=$(rootpath :" + config + ")"],
         data = data + [":" + config],
         rundir = ".",
-        # VFS retains expanded layers and copies container root filesystems.
+        # Image layers and container writes use the explicitly sized root disk.
         exec_properties = docker_test_exec_properties(
             free_disk = "30GB" if cohort == "image" else "20GB",
         ),
