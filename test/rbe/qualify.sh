@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -69,7 +69,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -128,6 +128,9 @@ run_lane() {
       ;;
     containerd)
       targets=(//test/root:crictl_test_owned)
+      ;;
+    bwrap)
+      targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test)
       ;;
     syscalls)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror
