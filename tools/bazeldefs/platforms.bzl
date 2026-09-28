@@ -23,6 +23,26 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
+def docker_test_exec_properties(free_disk):
+    """Returns a remote VM with Docker tools for a test-owned daemon.
+
+    Args:
+      free_disk: Root filesystem space for expanded images and container copies.
+    """
+    return select({
+        Label("//tools/bazeldefs:rbe"): {
+            "test.EstimatedCPU": "4",
+            "test.EstimatedMemory": "4GB",
+            "test.EstimatedFreeDiskBytes": free_disk,
+            "test.container-image": _RBE_TEST_IMAGE,
+            "test.dockerUser": "root",
+            "test.network": "external",
+            "test.network-enable-ipv6": "true",
+            "test.workload-isolation-type": "firecracker",
+        },
+        "//conditions:default": {},
+    })
+
 def namespace_test_exec_properties(user = "root"):
     """Defaults for remote tests that create nested Linux namespaces.
 

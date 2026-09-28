@@ -82,62 +82,88 @@ func dockerCLIPath() string {
 }
 
 // PrintDockerConfig prints the whole Docker configuration file to the log.
-func PrintDockerConfig() {
+func PrintDockerConfig(t testing.TB) {
+	t.Helper()
 	configBytes, err := os.ReadFile(*config)
 	if err != nil {
-		log.Fatalf("Cannot read Docker config at %v: %v", *config, err)
+		t.Fatalf("Cannot read Docker config at %v: %v", *config, err)
 	}
-	log.Printf("Docker config (from %v):\n--------\n%v\n--------\n", *config, string(configBytes))
+	t.Logf("Docker config (from %v):\n--------\n%v\n--------\n", *config, string(configBytes))
 }
 
-func getDockerVersion() (int, int) {
-	cmd := exec.Command(dockerCLIPath(), "version", "--format", "{{.Server.Version}}")
+func dockerVersion() (int, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, dockerCLIPath(), "version", "--format", "{{.Server.Version}}")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("error running %q: %s: %s", cmd, err, stderr.String())
+		return 0, 0, fmt.Errorf("error running %q: %w: %s", cmd, err, stderr.String())
 	}
 	version := strings.TrimSpace(stdout.String())
 	parts := strings.Split(version, ".")
 	if len(parts) < 3 {
-		log.Fatalf("invalid %q output: %s", cmd, version)
+		return 0, 0, fmt.Errorf("invalid %q output: %s", cmd, version)
 	}
-	major, _ := strconv.Atoi(parts[0])
-	minor, _ := strconv.Atoi(parts[1])
-	return major, minor
+	major, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid Docker major version %q: %w", version, err)
+	}
+	minor, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid Docker minor version %q: %w", version, err)
+	}
+	return major, minor, nil
 }
 
 // EnsureSupportedDockerVersion checks if correct docker is installed.
 //
 // This logs directly to stderr, as it is typically called from a Main wrapper.
 func EnsureSupportedDockerVersion() {
-	major, minor := getDockerVersion()
-	if major < 17 || (major == 17 && minor < 9) {
-		log.Fatalf("Docker version 17.09.0 or greater is required, found: %02d.%02d", major, minor)
+	if err := checkSupportedDockerVersion(); err != nil {
+		log.Fatal(err)
 	}
 }
 
+func checkSupportedDockerVersion() error {
+	major, minor, err := dockerVersion()
+	if err != nil {
+		return err
+	}
+	if major < 17 || (major == 17 && minor < 9) {
+		return fmt.Errorf("Docker version 17.09.0 or greater is required, found: %02d.%02d", major, minor)
+	}
+	return nil
+}
+
 // EnsureDockerExperimentalEnabled ensures that Docker has experimental features enabled.
-func EnsureDockerExperimentalEnabled() {
-	cmd := exec.Command(dockerCLIPath(), "version", "--format={{.Server.Experimental}}")
+func EnsureDockerExperimentalEnabled(t testing.TB) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, dockerCLIPath(), "version", "--format={{.Server.Experimental}}")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("error running %q: %s: %s", cmd, err, stderr.String())
+		t.Fatalf("error running %q: %s: %s", cmd, err, stderr.String())
 	}
 	if strings.TrimSpace(stdout.String()) != "true" {
-		PrintDockerConfig()
-		log.Fatalf("Docker is running without experimental features enabled.")
+		PrintDockerConfig(t)
+		t.Fatal("Docker is running without experimental features enabled.")
 	}
 }
 
 // IsRestoreSupported returns true if the docker version supports restore.
 // Docker restore broke starting v28 due to
 // https://github.com/moby/moby/issues/50750.
-func IsRestoreSupported() bool {
-	major, _ := getDockerVersion()
+func IsRestoreSupported(t testing.TB) bool {
+	t.Helper()
+	major, _, err := dockerVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
 	return major <= 27
 }
 
