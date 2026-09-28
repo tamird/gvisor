@@ -104,6 +104,34 @@ using the caller's binary, arguments and daemon configuration. Both paths use
 remains the only Nogo owner. Declared ARM64 images do not supply ARM64
 Firecracker capacity.
 
+The sandbox-posture lane declares the six existing configurations from
+`make sandbox-posture-tests` in `POSTURE_VARIANTS`: default, host networking,
+host networking with raw sockets, no directfs, no directfs with host networking,
+and KVM. Every configuration runs the existing `TestSandboxPostureDocker` and
+`TestSandboxPostureDo` cases; their expected state comes from the selected
+runtime's declared arguments. The ordinary root suite remains unfiltered.
+
+The full target is `//test/root:sandbox_posture_test_owned`, also selected by
+`make sandbox-posture-tests DOCKER_TEST_SETUP=owned`. It requires a worker that
+can run KVM as well as create namespaces. The managed Firecracker worker has
+not been qualified for nested KVM, so the full posture gate remains unsupported
+there. The five non-KVM configurations can be qualified explicitly:
+
+```sh
+bazel test --config=rbe --config=x86_64 --config=docker \
+  //test/root:sandbox_posture_test_default_owned \
+  //test/root:sandbox_posture_test_hostnet_owned \
+  //test/root:sandbox_posture_test_hostnet_raw_owned \
+  //test/root:sandbox_posture_test_nodirectfs_owned \
+  //test/root:sandbox_posture_test_nodirectfs_hostnet_owned
+```
+
+This selects ten test cases and leaves the two cases in
+`//test/root:sandbox_posture_test_kvm_owned` unqualified. Do not report that
+partial result as a passing full posture gate. Default `make
+sandbox-posture-tests` retains the complete six-configuration installed workflow
+using the same configuration table, staged/custom runtime and caller arguments.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 

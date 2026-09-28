@@ -1,4 +1,4 @@
-load("//test/docker:config.bzl", "PORTFORWARD_VARIANTS")
+load("//test/docker:config.bzl", "PORTFORWARD_VARIANTS", "POSTURE_VARIANTS")
 load("//test/docker:defs.bzl", "docker_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 
@@ -22,43 +22,60 @@ go_library(
     ],
 )
 
+_ROOT_TEST_SRCS = [
+    "cgroup_test.go",
+    "chroot_test.go",
+    "main_test.go",
+    "oom_score_adj_test.go",
+    "runsc_test.go",
+    "sandboxposture_test.go",
+]
+
+_ROOT_TEST_DEPS = [
+    "//pkg/cleanup",
+    "//pkg/test/dockerutil",
+    "//pkg/test/sandboxposture",
+    "//pkg/test/testutil",
+    "//runsc/cgroup",
+    "//runsc/config",
+    "//runsc/container",
+    "//runsc/flag",
+    "//runsc/specutils",
+    "@com_github_cenkalti_backoff//:go_default_library",
+    "@com_github_docker_docker//api/types/container:go_default_library",
+    "@com_github_moby_sys_capability//:go_default_library",
+    "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
+    "@org_golang_x_sys//unix:go_default_library",
+]
+
 docker_test(
     name = "root_test",
     size = "large",
-    srcs = [
-        "cgroup_test.go",
-        "chroot_test.go",
-        "main_test.go",
-        "oom_score_adj_test.go",
-        "runsc_test.go",
-        "sandboxposture_test.go",
-    ],
+    srcs = _ROOT_TEST_SRCS,
     cohort = "root",
-    data = [
-        "//:release",
-    ],
+    data = ["//:release"],
     library = ":root",
     pure = True,
-    tags = [
-        "manual",
-    ],
+    tags = ["manual"],
     visibility = ["//:sandbox"],
-    deps = [
-        "//pkg/cleanup",
-        "//pkg/test/dockerutil",
-        "//pkg/test/sandboxposture",
-        "//pkg/test/testutil",
-        "//runsc/cgroup",
-        "//runsc/config",
-        "//runsc/container",
-        "//runsc/flag",
-        "//runsc/specutils",
-        "@com_github_cenkalti_backoff//:go_default_library",
-        "@com_github_docker_docker//api/types/container:go_default_library",
-        "@com_github_moby_sys_capability//:go_default_library",
-        "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
-    ],
+    deps = _ROOT_TEST_DEPS,
+)
+
+docker_test(
+    name = "sandbox_posture_test",
+    size = "large",
+    srcs = _ROOT_TEST_SRCS,
+    args = ["-test.run=TestSandboxPosture"],
+    cohort = "posture",
+    data = ["//:release"],
+    library = ":root",
+    # root_test owns analysis of these same sources.
+    nogo = False,
+    pure = True,
+    runtime_variants = POSTURE_VARIANTS,
+    tags = ["manual"],
+    visibility = ["//:sandbox"],
+    deps = _ROOT_TEST_DEPS,
 )
 
 go_test(

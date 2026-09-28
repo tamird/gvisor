@@ -57,13 +57,15 @@ _daemon_config = rule(
     },
 )
 
-def docker_test(name, cohort, data = [], runtime_variants = None, **kwargs):
+def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variants = None, **kwargs):
     """Runs an existing Go suite against installed or declared Docker inputs.
 
     Args:
       name: Existing test target name.
       cohort: Key in COHORT_IMAGES identifying the suite's image inputs.
       data: Other existing runtime inputs.
+      args: Arguments shared by the installed and owned test entrypoints.
+      nogo: Whether this target owns static analysis of the test sources.
       runtime_variants: Optional named runtime arguments for separate owned actions.
       **kwargs: Remaining go_test arguments.
     """
@@ -74,8 +76,10 @@ def docker_test(name, cohort, data = [], runtime_variants = None, **kwargs):
     # the owned daemon's runtime image archives.
     go_test(
         name = name,
+        args = args,
         data = data,
         local = True,
+        nogo = nogo,
         **kwargs
     )
 
@@ -100,7 +104,7 @@ def docker_test(name, cohort, data = [], runtime_variants = None, **kwargs):
         go_test(
             name = test,
             nogo = False,
-            args = ["--docker_test_config=$(rootpath :" + config + ")"],
+            args = ["--docker_test_config=$(rootpath :" + config + ")"] + args,
             data = data + [":" + config],
             rundir = ".",
             # VFS retains expanded layers and copies container root filesystems.

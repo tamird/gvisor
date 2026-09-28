@@ -433,43 +433,45 @@ cuda-12-8-tests: load-basic_alpine load-gpu_cuda-tests-12-8 $(RUNTIME_BIN)
 
 # Installed mode preserves staged/custom runtimes; owned mode declares inputs.
 DOCKER_TEST_SETUP ?= installed
+
+# Install and run each declared configuration with the caller's runtime.
+# Arguments: suite, runtime name, test target, additional test arguments.
+installed_docker_variants = \
+	set -e; \
+	VARIANTS="$$( $(call run,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --list-variants) )"; \
+	for VARIANT in $$VARIANTS; do \
+	  export VARIANT; \
+	  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(2)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
+	  sudo rm -rf "$(RUNTIME_LOG_DIR)"; \
+	  mkdir -p "$(RUNTIME_LOG_DIR)"; \
+	  chmod 0777 "$(RUNTIME_LOG_DIR)"; \
+	  $(reload_docker) || exit $$?; \
+	  $(call wait_for_runtime,$(2)) || exit $$?; \
+	  $(call sudo,--remote_download_outputs=toplevel $(3),--runtime=$(2) --config_path="$(DOCKER_DAEMON_CONFIG_PATH)" -test.v $(4) $(ARGS)) || exit $$?; \
+	done
+
 ifeq ($(DOCKER_TEST_SETUP),owned)
 portforward-tests:
 	@$(call test,--config=docker //test/root:portforward_test_owned)
 else ifeq ($(DOCKER_TEST_SETUP),installed)
 portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
-	@set -e; \
-	VARIANTS="$$( $(call run,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=portforward --list-variants) )"; \
-	for VARIANT in $$VARIANTS; do \
-	  export VARIANT; \
-	  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=portforward --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
-	  sudo rm -rf "$(RUNTIME_LOG_DIR)"; \
-	  mkdir -p "$(RUNTIME_LOG_DIR)"; \
-	  chmod 0777 "$(RUNTIME_LOG_DIR)"; \
-	  $(reload_docker) || exit $$?; \
-	  $(call wait_for_runtime,$(RUNTIME)) || exit $$?; \
-	  $(call sudo,--remote_download_outputs=toplevel test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS)) || exit $$?; \
-	done
+	@$(call installed_docker_variants,portforward,$(RUNTIME),test/root:portforward_test,)
 else
 portforward-tests:
 	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
 endif
 .PHONY: portforward-tests
 
-POSTURE_TEST_ARGS := -test.run=TestSandboxPosture -test.v
+ifeq ($(DOCKER_TEST_SETUP),owned)
+sandbox-posture-tests:
+	@$(call test,--config=docker //test/root:sandbox_posture_test_owned)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 sandbox-posture-tests: load-basic_alpine $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-posture,) # Clear flags.
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-hostnet,--network=host)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-hostnet $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-hostnet-raw,--network=host --net-raw)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-hostnet-raw $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-nodirectfs,--directfs=false)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-nodirectfs $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-nodirectfs-hostnet,--directfs=false --network=host)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-nodirectfs-hostnet $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-kvm,--platform=kvm)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-kvm $(POSTURE_TEST_ARGS) $(ARGS))
+	@$(call installed_docker_variants,posture,$(RUNTIME)-posture,test/root:sandbox_posture_test,-test.run=TestSandboxPosture)
+else
+sandbox-posture-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
 .PHONY: sandbox-posture-tests
 
 root-tests: load-basic_alpine $(RUNTIME_BIN)

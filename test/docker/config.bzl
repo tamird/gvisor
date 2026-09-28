@@ -19,15 +19,27 @@ PORTFORWARD_VARIANTS = [
     struct(name = "host", args = ["--network=host"]),
 ]
 
+# Preserve the full matrix from Make's sandbox-posture-tests, including KVM.
+POSTURE_VARIANTS = [
+    struct(name = "default", args = []),
+    struct(name = "hostnet", args = ["--network=host"]),
+    struct(name = "hostnet_raw", args = ["--network=host", "--net-raw"]),
+    struct(name = "nodirectfs", args = ["--directfs=false"]),
+    struct(name = "nodirectfs_hostnet", args = ["--directfs=false", "--network=host"]),
+    struct(name = "kvm", args = ["--platform=kvm"]),
+]
+
 # The Go runtime adapter consumes these same configurations as JSON.
 RUNTIME_SUITES = {
     "docker": [struct(name = name, args = args) for name, args in RUNTIME_VARIANTS.items()],
     "portforward": PORTFORWARD_VARIANTS,
+    "posture": POSTURE_VARIANTS,
 }
 
 # Image names are the existing Docker test inputs, grouped by their consuming
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
+    "posture": ["basic/alpine"],
     "portforward": [
         "basic/nginx",
         "basic/redis",
