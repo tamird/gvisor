@@ -9,18 +9,33 @@ package(
 )
 
 # Shared by ordinary and namespace-dependent remote test actions.
+_RBE_EXEC_PROPERTIES = {
+    "OSFamily": "linux",
+    "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    "workload-isolation-type": "oci",
+}
+
 platform(
     name = "rbe_linux_amd64",
     constraint_values = [
         "@platforms//cpu:x86_64",
         "@platforms//os:linux",
     ],
-    exec_properties = {
-        "Arch": "amd64",
-        "OSFamily": "linux",
-        "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
-        "workload-isolation-type": "oci",
-    },
+    exec_properties = dict(
+        _RBE_EXEC_PROPERTIES,
+        Arch = "amd64",
+    ),
+)
+
+# C++ test execution can select the host platform. Retain the Go cgo constraints
+# there while supplying the same remote routing as compilation actions.
+platform(
+    name = "rbe_linux_arm64",
+    exec_properties = dict(
+        _RBE_EXEC_PROPERTIES,
+        Arch = "arm64",
+    ),
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_arm64_cgo"],
 )
 
 config_setting(

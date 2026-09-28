@@ -1,12 +1,12 @@
 """Platforms and remote test requirements."""
 
-# The compilation image has no CA bundle. BuildBuddy's runtime image includes
-# system trust for tests that contact external services over HTTPS.
+# BuildBuddy's AMD64 runtime image supplies Docker tools for owned daemons.
 # https://www.buildbuddy.io/docs/config-all-options/
-_RBE_TEST_IMAGE = "docker://gcr.io/flame-public/buildbuddy-ci-runner@sha256:8cf614fc4695789bea8321446402e7d6f84f6be09b8d39ec93caa508fa3e3cfc"
+_RBE_DOCKER_IMAGE = "docker://gcr.io/flame-public/buildbuddy-ci-runner@sha256:8cf614fc4695789bea8321446402e7d6f84f6be09b8d39ec93caa508fa3e3cfc"
 
-# Ubuntu-based networking runtime with iproute2 and OpenBSD netcat. The image
-# provenance identifies this source revision; no compiler tools are added.
+# AMD64/ARM64 networking runtime with CA trust, iproute2 and OpenBSD netcat.
+# The compilation image has no CA bundle. This image's provenance identifies
+# the source revision below; no compiler tools are added.
 # https://github.com/istio/istio/blob/1d6649895/docker/Dockerfile.base
 _RBE_NETWORK_TOOLS_IMAGE = "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
 
@@ -14,7 +14,7 @@ def network_test_exec_properties():
     """Returns remote test properties for external HTTPS access."""
     return select({
         Label("//tools/bazeldefs:rbe"): {
-            "test.container-image": _RBE_TEST_IMAGE,
+            "test.container-image": _RBE_NETWORK_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
             "test.network": "external",
             "test.nonroot-workspace": "true",
@@ -34,7 +34,7 @@ def docker_test_exec_properties(free_disk):
             "test.EstimatedCPU": "4",
             "test.EstimatedMemory": "4GB",
             "test.EstimatedFreeDiskBytes": free_disk,
-            "test.container-image": _RBE_TEST_IMAGE,
+            "test.container-image": _RBE_DOCKER_IMAGE,
             "test.dockerUser": "root",
             "test.network": "external",
             "test.network-enable-ipv6": "true",

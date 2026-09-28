@@ -29,6 +29,17 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; the script does not install tools or start a builder container.
 Normal Bazel caching remains enabled.
 
+Select native ARM64 execution with `--arch=arm64`, for example:
+
+```sh
+test/rbe/qualify.sh --arch=arm64 unit
+```
+
+This uses the same lane selection and filters as AMD64. The `rbe-arm64`
+configuration selects ARM64 build tools and execution workers; `aarch64`
+selects the target architecture. Selecting an architecture does not establish
+worker support or qualify the other lanes.
+
 The complete existing Nogo lane uses its normal tag-based selection:
 
 ```sh
@@ -43,8 +54,7 @@ The complete existing unit selection is shared with `make unit-tests`:
 
 ```sh
 bazel test --config=rbe --config=x86_64 --config=unit \
-  --strip=never --incompatible_sandbox_hermetic_tmp=false --keep_going \
-  --test_env=CGROUPV2=true
+  --strip=never --incompatible_sandbox_hermetic_tmp=false --keep_going
 ```
 
 Run this command from the workspace root without additional target arguments.
@@ -52,11 +62,21 @@ Run this command from the workspace root without additional target arguments.
 configuration retains the Nogo, KVM and plugin filters. It also retains the
 non-test targets built by the existing wildcard selection.
 
-The public unit matrix runs on AMD64 with cgroup v1 and v2, and on ARM64.
-`CGROUPV2` preserves Make's environment marker; setting it does not select or
-verify a remote worker's cgroup mode. The command above starts AMD64
-qualification, not the complete architecture/cgroup matrix. This lane has no
-separate race variant in the public pipeline.
+The public unit matrix runs on AMD64 with cgroup v1 and v2, and on ARM64. The
+commands above do not qualify the complete architecture/cgroup matrix. This
+lane has no separate race variant in the public pipeline.
+
+ARM64 unit qualification retains the full canonical selection. Three owners
+require Firecracker workers and remain unqualified without ARM64 capacity:
+
+- `//runsc/sandbox:sandbox_test`
+- `//sandboxexec/sandbox:sandbox_test`
+- `//sandboxexec/sandbox/python:sandbox_py_test`
+
+Their unavailable workers remain errors; passing OCI tests alone does not make
+the full ARM64 unit gate pass. HTTPS tests use the existing multiarch networking
+image for CA trust. Docker suites retain the separate AMD64 provider image that
+supplies their daemon tools.
 
 The source-built release smoke test starts a sandbox and runs `true`:
 
@@ -173,7 +193,8 @@ test results and execution records. A cached result or a coordinator-local test
 is not evidence of remote test execution. Keep logs in the hosted invocation;
 do not upload raw build-event files containing authentication options.
 
-This slice does not cover the complete unit/syscall matrix, KVM, GPU, native
-ARM64, the complete Docker/containerd lanes, or kernel/cgroup variants. Firecracker alone
-does not provide those capabilities. Missing capacity or failed tests must
-remain visible failures rather than local fallback or additional exclusions.
+This slice does not cover the complete unit/syscall matrix, KVM, GPU, the full
+ARM64 matrix, the complete Docker/containerd lanes, or kernel/cgroup variants.
+Firecracker alone does not provide those capabilities. Missing capacity or failed
+tests must remain visible failures rather than local fallback or additional
+exclusions.
