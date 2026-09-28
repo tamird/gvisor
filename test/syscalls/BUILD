@@ -1025,12 +1025,14 @@ syscall_test(
 )
 
 syscall_test(
+    # The RBE worker supplies the namespaces needed by these tests.
+    execution_requirements = select({
+        "//tools/bazeldefs:rbe": {},
+        "//conditions:default": {"local": ""},
+    }),
     nftables = True,
     save = False,
-    tags = [
-        "local",
-        "notap",
-    ],
+    tags = ["notap"],
     test = "//test/syscalls/linux:socket_netlink_netfilter_test",
 )
 
