@@ -16,6 +16,7 @@
 #include <linux/if.h>
 #include <linux/sockios.h>
 #include <sys/ioctl.h>
+#include <sys/mount.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -34,8 +35,17 @@
 namespace gvisor {
 namespace testing {
 
-// SetupContainer sets up the networking settings in the current container.
+// SetupContainer isolates mounts and initializes networking. The caller must
+// have created a new mount namespace.
 PosixError SetupContainer() {
+  // A mount namespace in the same user namespace retains shared mounts. Prevent
+  // test mounts from propagating back to the caller's namespace.
+  if (mount(nullptr, "/", nullptr, MS_REC | MS_PRIVATE, nullptr) == -1) {
+    const int err = errno;
+    std::cerr << "Cannot make mounts private: " << strerror(err) << std::endl;
+    return PosixError(err);
+  }
+
   const PosixErrorOr<bool> have_net_admin = HaveCapability(CAP_NET_ADMIN);
   if (!have_net_admin.ok()) {
     std::cerr << "Cannot determine if we have CAP_NET_ADMIN." << std::endl;
@@ -75,8 +85,8 @@ PosixError SetupContainer() {
 
 using ::gvisor::testing::SetupContainer;
 
-// Binary setup_container initializes the container environment in which tests
-// with container=True will run, then execs the actual test binary.
+// Binary setup_container initializes the isolated environment created by the
+// test runner, then execs the actual test binary.
 // Usage:
 //   ./setup_container test_binary [arguments forwarded to test_binary...]
 int main(int argc, char* argv[], char* envp[]) {
