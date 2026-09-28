@@ -268,6 +268,5 @@ func doFioBenchmark(b *testing.B, testCases []tools.Fio) {
 
 // TestMain is the main method for package fs.
 func TestMain(m *testing.M) {
-	harness.Init()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(m.Run))
 }

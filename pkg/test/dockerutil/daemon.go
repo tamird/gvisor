@@ -146,7 +146,9 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	if err != nil {
 		return err
 	}
-	runtimes := runtimeDefinitions(runsc, runtimeName, append([]string{
+	// Registration describes the declared runsc binary; --runtime selects what
+	// containers use. Docker reserves "runc" for its built-in native runtime.
+	runtimes := runtimeDefinitions(runsc, "runsc", append([]string{
 		// Keep the reusable gofer namespace under fixture ownership.
 		"--shared-root=" + d.root,
 		"--sidecar-usage-policy=STRICT",
@@ -266,7 +268,7 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	if info.DockerRootDir != d.dataRoot || info.DefaultRuntime != runtimeName {
 		return fmt.Errorf("wrong daemon: data root=%q, default runtime=%q", info.DockerRootDir, info.DefaultRuntime)
 	}
-	log.Printf("Private Docker %s, storage=%s, cgroup=%s/%s, root=%s; runsc=%s, strict sidecars=%s", info.ServerVersion, info.Driver, info.CgroupDriver, info.CgroupVersion, info.DockerRootDir, runsc, sidecars)
+	log.Printf("Private Docker %s, runtime=%s, storage=%s, cgroup=%s/%s, root=%s; runsc=%s, strict sidecars=%s", info.ServerVersion, info.DefaultRuntime, info.Driver, info.CgroupDriver, info.CgroupVersion, info.DockerRootDir, runsc, sidecars)
 	var fs syscall.Statfs_t
 	if err := syscall.Statfs(d.dataRoot, &fs); err != nil {
 		return fmt.Errorf("inspect private image filesystem: %w", err)

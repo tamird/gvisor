@@ -57,18 +57,21 @@ _daemon_config = rule(
     },
 )
 
-def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variants = None, **kwargs):
+def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo = True, runtime_variants = None, **kwargs):
     """Runs an existing Go suite against installed or declared Docker inputs.
 
     Args:
       name: Existing test target name.
-      cohort: Key in COHORT_IMAGES identifying the suite's image inputs.
+      cohort: Optional key in COHORT_IMAGES identifying owned image inputs.
       data: Other existing runtime inputs.
       args: Arguments shared by the installed and owned test entrypoints.
+      owned_args: Additional arguments for owned test entrypoints only.
       nogo: Whether this target owns static analysis of the test sources.
-      runtime_variants: Optional named runtime arguments and tags for owned actions.
+      runtime_variants: Optional named runtime arguments, test_args and tags for owned actions.
       **kwargs: Remaining go_test arguments.
     """
+    if cohort == None and (owned_args or runtime_variants != None):
+        fail("owned arguments and runtime variants require an image cohort")
 
     # Bazel's native local attribute is nonconfigurable. Keep the installed
     # entrypoint and generate owned variants from the same source/deps.
@@ -82,6 +85,9 @@ def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variant
         nogo = nogo,
         **kwargs
     )
+
+    if cohort == None:
+        return
 
     images = sorted(COHORT_IMAGES[cohort])
     amd64 = images + (AMD64_RUNTIME_IMAGES if cohort == "runtime" else [])
@@ -106,7 +112,7 @@ def docker_test(name, cohort, data = [], args = [], nogo = True, runtime_variant
         go_test(
             name = test,
             nogo = False,
-            args = ["--docker_test_config=$(rootpath :" + config + ")"] + args,
+            args = ["--docker_test_config=$(rootpath :" + config + ")"] + args + owned_args + getattr(variant, "test_args", []),
             data = data + [":" + config],
             rundir = ".",
             # Image layers and container writes use the explicitly sized root disk.

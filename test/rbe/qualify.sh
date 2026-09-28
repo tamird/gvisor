@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -54,7 +54,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -103,6 +103,10 @@ run_lane() {
     posture)
       options=(--config=docker --test_tag_filters=-requires-kvm)
       targets=(//test/root:sandbox_posture_test_owned)
+      ;;
+    startup)
+      options=(--test_tag_filters=-requires-kvm)
+      targets=(//test/benchmarks/base:startup_test_owned)
       ;;
     syscalls)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror

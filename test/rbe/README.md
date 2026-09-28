@@ -16,7 +16,7 @@ or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
 This profile does not replace the full public CI matrix. In particular, it
-excludes KVM posture and syscall variants, slimvm and syscall save/restore;
+excludes KVM posture, startup and syscall variants, slimvm and syscall save/restore;
 existing failures in selected tests remain failures. The host systemd cgroup
 manager is also unqualified; container image tests that boot systemd do not
 exercise that host service. All variants remain available through their owning
@@ -152,6 +152,26 @@ This selects ten test cases and leaves the two cases in
 partial result as a passing full posture gate. Default `make
 sandbox-posture-tests` retains the complete six-configuration installed workflow
 using the same configuration table, staged/custom runtime and caller arguments.
+
+The startup lane runs the existing presubmit benchmark smoke workload:
+
+```sh
+test/rbe/qualify.sh startup
+```
+
+It selects `BenchmarkStartupEmpty` with `-test.benchtime=1ns` on ptrace, systrap
+and native runc. Each action owns its Docker daemon, declared runsc binary and
+the existing `benchmarks/alpine` image. Runtime variants come from the public
+platform definitions, with the same `--profile` setting as Make. The full
+`//test/benchmarks/base:startup_test_owned` suite also declares KVM; that variant
+remains unqualified on hosted Firecracker workers and is excluded by this
+profile's `-requires-kvm` filter.
+
+This is a functional smoke check, with no benchmark uploads or performance
+qualification. Failures remain errors, as in the presubmit pipeline. The
+separate master-only performance benchmark jobs retain their soft-fail policy.
+The installed `startup_test` entrypoint and `make benchmark-platforms` retain
+their custom runtime selection and full benchmark arguments.
 
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:

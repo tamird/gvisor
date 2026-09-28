@@ -98,7 +98,8 @@ func doTensorflowTest(b *testing.B, workloads map[string]string) {
 }
 
 func TestMain(m *testing.M) {
-	harness.Init()
-	harness.SetFixedBenchmarks()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(func() int {
+		harness.SetFixedBenchmarks()
+		return m.Run()
+	}))
 }
