@@ -289,3 +289,28 @@ ARM64 matrix, the complete Docker/containerd lanes, or kernel/cgroup variants.
 Firecracker alone does not provide those capabilities. Missing capacity or failed
 tests must remain visible failures rather than local fallback or additional
 exclusions.
+
+The Kubernetes smoke lane owns one kind cluster inside the shared Docker
+fixture:
+
+```sh
+test/rbe/qualify.sh kubernetes
+```
+
+The `//test/kubernetes/tests:kind_test` owner declares kind 0.33.0, its
+Kubernetes 1.37.0 node image, the existing Alpine archive and the source-built
+release. It does not download tools or
+pull workload images during the test. The native runc node runs the normal
+kind bridge and CNI; a gVisor RuntimeClass selects the declared runsc and
+strict sidecars for the existing hello workload. The native sanity check and
+hello use the same declared-image policy. The test deletes its unique cluster
+before the shared fixture stops Docker, and cleanup failures fail the test.
+
+The original `hello_test` remains usable with an external cluster through
+`kubectlctx`, without requiring Docker. `make kubernetes-smoke-test` retains
+its existing local setup. Migrating that adapter requires a supported way to
+run the owned daemon as root while preserving caller-owned builds, declared
+runfiles and process cleanup; the current Make builder does not supply it.
+The first kind lane is AMD64 only; ARM64 kind execution and worker capacity
+remain unqualified. The real nested cluster, networking and resource
+requirements still need hosted validation.
