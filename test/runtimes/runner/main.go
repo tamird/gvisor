@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/runtimes/runner/lib"
 )
@@ -41,9 +42,13 @@ var (
 
 func main() {
 	flag.Parse()
+	os.Exit(dockerutil.RunTests(run))
+}
+
+func run() int {
 	if *lang == "" || *image == "" {
 		fmt.Fprintf(os.Stderr, "lang and image flags must not be empty\n")
-		os.Exit(1)
+		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
 		PerTestTimeout:    *perTestTimeout,
@@ -56,7 +61,7 @@ func main() {
 		excludeFilter, err := lib.ExcludeFilter(*excludeFile)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error getting exclude list: %s\n", err.Error())
-			os.Exit(1)
+			return 1
 		}
 		filter = excludeFilter
 	}
@@ -69,5 +74,5 @@ func main() {
 			return tests[test]
 		}
 	}
-	os.Exit(lib.RunTests(*lang, *image, filter, *batchSize, *timeout, proctorSettings))
+	return lib.RunTests(*lang, *image, filter, *batchSize, *timeout, proctorSettings)
 }

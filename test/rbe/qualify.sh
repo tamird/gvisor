@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap language-directfs language-goferfs syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -69,7 +69,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|language-directfs|language-goferfs|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -131,6 +131,19 @@ run_lane() {
       ;;
     bwrap)
       targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test)
+      ;;
+    language-directfs|language-goferfs)
+      if [[ $arch != amd64 ]]; then
+        printf 'Language runtime images are declared only for AMD64.\n' >&2
+        return 1
+      fi
+      options=(--test_timeout=1800
+        "--test_env=RUNTIME_TESTS_FILTER=${RUNTIME_TESTS_FILTER:-}"
+        "--test_env=RUNTIME_TESTS_PER_TEST_TIMEOUT=${RUNTIME_TESTS_PER_TEST_TIMEOUT:-20m}"
+        "--test_env=RUNTIME_TESTS_RUNS_PER_TEST=${RUNTIME_TESTS_RUNS_PER_TEST:-1}"
+        "--test_env=RUNTIME_TESTS_FLAKY_IS_ERROR=${RUNTIME_TESTS_FLAKY_IS_ERROR:-true}"
+        "--test_env=RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT=${RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT:-true}")
+      targets=("//test/runtimes:${lane#language-}_tests")
       ;;
     syscalls)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror

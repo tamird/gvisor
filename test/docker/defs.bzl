@@ -9,6 +9,28 @@ load(":config.bzl", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")
 
+def docker_image_archive(name, image, architecture):
+    """Declares a Docker archive of an existing image pinned in MODULE.
+
+    Args:
+      name: Archive target name; the tarball is exposed as name + "_tar".
+      image: Image name relative to gvisor.dev/images.
+      architecture: Architecture of the declared image.
+    """
+    repository = "docker_image_" + _image_name(image) + "_" + architecture
+    oci_load(
+        name = name,
+        image = "@" + repository,
+        repo_tags = ["gvisor.dev/images/" + image + ":latest"],
+        tags = ["manual"],
+    )
+    native.filegroup(
+        name = name + "_tar",
+        srcs = [":" + name],
+        output_group = "tarball",
+        tags = ["manual"],
+    )
+
 def docker_image_archives(name, extra_images = []):
     """Declares Docker-format archives of the suite images pinned in MODULE.
 
@@ -23,19 +45,10 @@ def docker_image_archives(name, extra_images = []):
         image_name = _image_name(image)
         architectures = ["amd64"] if image in AMD64_RUNTIME_IMAGES else ["amd64", "arm64"]
         for arch in architectures:
-            repository = "docker_image_" + image_name + "_" + arch
-            target = name + "_" + image_name + "_" + arch
-            oci_load(
-                name = target,
-                image = "@" + repository,
-                repo_tags = ["gvisor.dev/images/" + image + ":latest"],
-                tags = ["manual"],
-            )
-            native.filegroup(
-                name = target + "_tar",
-                srcs = [":" + target],
-                output_group = "tarball",
-                tags = ["manual"],
+            docker_image_archive(
+                name = name + "_" + image_name + "_" + arch,
+                image = image,
+                architecture = arch,
             )
 
 def _daemon_config_impl(ctx):
@@ -50,8 +63,9 @@ def _daemon_config_impl(ctx):
     runfiles = runfiles.merge(ctx.attr.runtime[DefaultInfo].default_runfiles)
     return [DefaultInfo(files = depset([output]), runfiles = runfiles)]
 
-_daemon_config = rule(
+docker_daemon_config = rule(
     implementation = _daemon_config_impl,
+    doc = "Declares the release, image archives and runtime arguments for an owned Docker daemon.",
     attrs = {
         "runtime": attr.label(default = "//:release", executable = True, cfg = "target"),
         "images": attr.label_list(allow_files = True),
@@ -98,7 +112,7 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
     for variant in variants:
         prefix = name + ("_" + variant.name if variant.name else "")
         config = prefix + "_docker_config"
-        _daemon_config(
+        docker_daemon_config(
             name = config,
             testonly = True,
             runtime_args = variant.args,
