@@ -57,13 +57,20 @@ test:docker --test_env=TEST_SAVE_RESTORE_NETSTACK=true
 # BuildBuddy's hosted coordinator supplies this configuration and authentication.
 # Both compilation and test actions execute remotely; the execution platform
 # owns the runtime image so per-test properties retain its image and architecture.
-build:rbe --config=buildbuddy_remote_executor
-build:rbe --define=rbe=true
+build:rbe-common --config=buildbuddy_remote_executor
+build:rbe-common --define=rbe=true
+build:rbe-common --spawn_strategy=remote
+build:rbe-common --noremote_local_fallback
+build:rbe-common --remote_cache_compression
+test:rbe-common --strategy=TestRunner=remote
+
+build:rbe --config=rbe-common
 build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
-build:rbe --spawn_strategy=remote
-build:rbe --noremote_local_fallback
-build:rbe --remote_cache_compression
-test:rbe --strategy=TestRunner=remote
+
+# Select ARM64 tools as well as ARM64 execution workers.
+build:rbe-arm64 --config=rbe-common
+build:rbe-arm64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64
+build:rbe-arm64 --host_platform=//tools/bazeldefs:rbe_linux_arm64
 
 # Set flags for x86_64.
 build:x86_64 --cpu=k8

@@ -186,6 +186,5 @@ func BenchmarkSizeNode(b *testing.B) {
 
 // TestMain is the main method for package network.
 func TestMain(m *testing.M) {
-	harness.Init()
-	os.Exit(m.Run())
+	os.Exit(harness.Run(m.Run))
 }
