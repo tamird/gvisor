@@ -596,6 +596,13 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
 	// Create the crictl interface.
 	cc := criutil.NewCrictl(t, sockAddr)
 	cu.Add(cc.CleanUp)
+	// Each fresh containerd needs its version's sandbox image before CRI can
+	// create pods. Declared harness inputs supply it through the ordinary import.
+	if image := os.Getenv(sandboxImageEnv); image != "" {
+		if err := cc.Import(image); err != nil {
+			t.Fatalf("importing sandbox image %q: %v", image, err)
+		}
+	}
 
 	return cc, cu.Release(), nil
 }

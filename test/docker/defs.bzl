@@ -9,14 +9,16 @@ load(":config.bzl", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")
 
-def docker_image_archives(name):
+def docker_image_archives(name, extra_images = []):
     """Declares Docker-format archives of the suite images pinned in MODULE.
 
     Args:
       name: Prefix for the archive targets.
+      extra_images: Archives consumed directly without loading them into Docker.
     """
     images = {image: True for cohort in COHORT_IMAGES.values() for image in cohort}
     images.update({image: True for image in AMD64_RUNTIME_IMAGES})
+    images.update({image: True for image in extra_images})
     for image in sorted(images):
         image_name = _image_name(image)
         architectures = ["amd64"] if image in AMD64_RUNTIME_IMAGES else ["amd64", "arm64"]
@@ -67,7 +69,7 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
       args: Arguments shared by the installed and owned test entrypoints.
       owned_args: Additional arguments for owned test entrypoints only.
       nogo: Whether this target owns static analysis of the test sources.
-      runtime_variants: Optional named runtime arguments, test_args and tags for owned actions.
+      runtime_variants: Optional named runtime arguments, test_args, data and tags for owned actions.
       **kwargs: Remaining go_test arguments.
     """
     if cohort == None and (owned_args or runtime_variants != None):
@@ -113,7 +115,7 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
             name = test,
             nogo = False,
             args = ["--docker_test_config=$(rootpath :" + config + ")"] + args + owned_args + getattr(variant, "test_args", []),
-            data = data + [":" + config],
+            data = data + [":" + config] + getattr(variant, "data", []),
             rundir = ".",
             # Image layers and container writes use the explicitly sized root disk.
             exec_properties = docker_test_exec_properties(

@@ -193,6 +193,28 @@ separate master-only performance benchmark jobs retain their soft-fail policy.
 The installed `startup_test` entrypoint and `make benchmark-platforms` retain
 their custom runtime selection and full benchmark arguments.
 
+The containerd lane runs the full existing CRI tests against containerd 1.7.31,
+2.0.8, 2.1.7 and 2.2.3:
+
+```sh
+test/rbe/qualify.sh containerd
+```
+
+Each version owns an outer Docker daemon that loads only the existing
+`containerd/harness` image. The harness receives the source-built release and
+imports the six declared workload archives directly through CRI's existing
+image import path. It also imports the selected containerd version's default
+pause image before creating pods. All archives are pinned for AMD64 and ARM64;
+the selected version and archive contents are test action inputs.
+
+The full suite is `//test/root:crictl_test_owned`. The installed `crictl_test`
+target and `make containerd-tests` retain custom runtime selection, Docker
+image export and the existing version flags. Harness output, test status and
+both container and daemon cleanup failures reach the outer test result.
+These tests require the worker's namespace, cgroup and CNI kernel support;
+missing capabilities remain failures. ARM64 Firecracker capacity and the
+separate shim-grouping performance lane remain unqualified.
+
 The small infrastructure smoke suite covers ordinary Go and C++ test actions
 plus a syscall test on native Linux and gVisor's systrap platform:
 

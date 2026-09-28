@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture startup syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -36,7 +36,7 @@ gaps() {
   cat <<'GAPS'
 Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
 host systemd cgroup manager and alternate host kernels; the full save/restore
-and coverage matrices; containerd, networking, GPU, and network-plugin lanes.
+and coverage matrices; networking, GPU, and network-plugin lanes.
 GAPS
 }
 
@@ -69,7 +69,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -125,6 +125,9 @@ run_lane() {
     startup)
       options=(--test_tag_filters=-requires-kvm)
       targets=(//test/benchmarks/base:startup_test_owned)
+      ;;
+    containerd)
+      targets=(//test/root:crictl_test_owned)
       ;;
     syscalls)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror
