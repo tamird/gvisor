@@ -155,7 +155,7 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	}, inputs.RuntimeArgs...), variants)
 	host := "unix://" + filepath.Join(d.root, "docker.sock")
 	configPath := filepath.Join(d.root, "daemon.json")
-	cfg, err := json.Marshal(map[string]any{
+	daemonConfig := map[string]any{
 		"hosts":     []string{host},
 		"data-root": d.dataRoot,
 		"exec-root": d.execRoot,
@@ -166,7 +166,15 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		"default-runtime": runtimeName,
 		"experimental":    true,
 		"runtimes":        runtimes,
-	})
+	}
+	var cgroupParent string
+	if cgroup.IsOnlyV2() {
+		// The fixture owns this shared parent for the entire suite. Individual
+		// runtimes must not try to remove it while sibling containers use it.
+		cgroupParent = "/" + filepath.Base(d.root)
+		daemonConfig["cgroup-parent"] = cgroupParent
+	}
+	cfg, err := json.Marshal(daemonConfig)
 	if err != nil {
 		return err
 	}
@@ -197,13 +205,14 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 
 	d.cmd = exec.Command("dockerd", "--config-file", configPath)
 	d.cmd.Stdout, d.cmd.Stderr = d.logs, d.logs
-	// Stop descendants as well if the daemon fails during startup or shutdown.
+	// Give cleanup a separate process group to stop during startup or shutdown.
 	d.cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-	if cgroup.IsOnlyV2() {
+	if cgroupParent != "" {
 		// The v2 root omits memory.swap.max, so Docker mistakes it for a
-		// kernel without swap limits. Start only the daemon in an owned child;
+		// kernel without swap limits. Put the daemon in its own leaf, leaving
+		// the owned parent empty so controllers can serve container siblings.
 		// v1 exposes its controller files at the root and needs no relocation.
-		d.cgroup, err = cgroup.NewFromPath("/"+filepath.Base(d.root), false)
+		d.cgroup, err = cgroup.NewFromPath(filepath.Join(cgroupParent, "daemon"), false)
 		if err != nil {
 			return fmt.Errorf("create Docker cgroup: %w", err)
 		}
