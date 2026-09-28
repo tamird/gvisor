@@ -19,19 +19,22 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 )
 
 func main() {
-	runsc := flag.String("runsc", "", "runtime executable selected by Make")
-	name := flag.String("name", "", "base runtime name")
-	configPath := flag.String("config", "", "Docker daemon configuration to update")
-	flag.Parse()
+	// Imported test helpers register their own flags on flag.CommandLine.
+	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	runsc := flags.String("runsc", "", "runtime executable selected by Make")
+	name := flags.String("name", "", "base runtime name")
+	configPath := flags.String("config", "", "Docker daemon configuration to update")
+	flags.Parse(os.Args[1:])
 	if *runsc == "" || *name == "" || *configPath == "" {
 		log.Fatal("--runsc, --name, and --config are required")
 	}
-	if err := dockerutil.InstallRuntimeVariants(*runsc, *name, *configPath, flag.Args()); err != nil {
+	if err := dockerutil.InstallRuntimeVariants(*runsc, *name, *configPath, flags.Args()); err != nil {
 		log.Fatal(err)
 	}
 }
