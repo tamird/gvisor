@@ -5,6 +5,12 @@ package(
     licenses = ["notice"],
 )
 
+filegroup(
+    name = "go_export_sources",
+    srcs = glob(["*.go"]),
+    visibility = ["//:__pkg__"],
+)
+
 go_binary(
     name = "runsc",
     srcs = ["main.go"],
