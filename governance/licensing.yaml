@@ -28,6 +28,12 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: gawk
+    license: GPL-3.0-or-later
+    exception_rationale: >-
+      The source-built executable is used by rules_distroless to process
+      tar metadata when constructing the release test's tool image. It is
+      neither linked into nor included in the gVisor release artifacts.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-

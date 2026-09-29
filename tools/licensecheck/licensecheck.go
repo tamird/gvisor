@@ -85,6 +85,7 @@ const (
 	cc0         License = "CC0-1.0"
 	gpl2        License = "GPL-2.0-only"
 	gpl3        License = "GPL-3.0-only"
+	gpl3OrLater License = "GPL-3.0-or-later"
 	isc         License = "ISC"
 	lgpl21      License = "LGPL-2.1-only"
 	lgpl3       License = "LGPL-3.0-only"
@@ -107,6 +108,7 @@ var knownLicenses = map[License]bool{
 	cc0:         true,
 	gpl2:        true,
 	gpl3:        true,
+	gpl3OrLater: true,
 	isc:         true,
 	lgpl21:      true,
 	lgpl3:       true,
