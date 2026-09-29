@@ -174,6 +174,38 @@ TEST_P(MremapParamTest, InPlace_ExpansionFailure) {
   EXPECT_THAT(InForkedProcess(rest), IsPosixErrorOkAndHolds(0));
 }
 
+TEST(MremapTest, InPlace_ExpansionPreservesDataAndZeroesNewPages) {
+  Mapping const m = ASSERT_NO_ERRNO_AND_VALUE(
+      MmapAnon(3 * kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE));
+  memset(m.ptr(), 'a', 3 * kPageSize);
+
+  const auto rest = [&] {
+    // Keep the vacated addresses free from concurrent mappings while growing.
+    TEST_PCHECK(MunmapSafe(reinterpret_cast<void*>(m.addr() + kPageSize),
+                           2 * kPageSize) == 0);
+    MaybeSave();
+
+    char* const data = static_cast<char*>(m.ptr());
+    for (size_t pages = 2; pages <= 3; ++pages) {
+      void* addr =
+          MremapSafe(m.ptr(), (pages - 1) * kPageSize, pages * kPageSize, 0);
+      TEST_PCHECK_MSG(addr != MAP_FAILED, "mremap failed");
+      TEST_CHECK(addr == m.ptr());
+      MaybeSave();
+
+      for (size_t i = 0; i < (pages - 1) * kPageSize; ++i) {
+        TEST_CHECK(data[i] == static_cast<char>('a' + i / kPageSize));
+      }
+      for (size_t i = (pages - 1) * kPageSize; i < pages * kPageSize; ++i) {
+        TEST_CHECK(data[i] == 0);
+        data[i] = static_cast<char>('a' + pages - 1);
+      }
+    }
+  };
+
+  EXPECT_THAT(InForkedProcess(rest), IsPosixErrorOkAndHolds(0));
+}
+
 TEST_P(MremapParamTest, MayMove_Expansion) {
   Mapping const m =
       ASSERT_NO_ERRNO_AND_VALUE(MmapAnon(3 * kPageSize, PROT_NONE, GetParam()));
