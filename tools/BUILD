@@ -63,3 +63,9 @@ bzl_library(
 )
 
 exports_files(["llvm-linux-header-default.patch"])
+
+exports_files([
+    "make_apt.sh",
+    "make_release.sh",
+    "make_test_key.sh",
+])

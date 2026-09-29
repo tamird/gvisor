@@ -1282,6 +1282,12 @@
   commit: 77064f0caa37d0fb2232f54feb5fba275aeebbd3
   sha256: bd7124a844d0403b4b353bcea34d6c8b2ba88dc26881c26c9ee668da89b71846
   license: Apache-2.0
+- dependency: rules_distroless
+  version: https://github.com/bazel-contrib/rules_distroless/releases/download/v0.9.4/rules_distroless-v0.9.4.tar.gz
+  retrieved: "2026-09-29"
+  commit: b9da1141985c4a84f696326006e0d85659c40747
+  sha256: 5d43f4f44f0f0fb614194a07a6dcf7b29338cfc8ab7f6129ad1e4403c1ad1c73
+  license: Apache-2.0
 - dependency: rules_foreign_cc
   version: https://github.com/bazel-contrib/rules_foreign_cc/releases/download/0.16.0/rules_foreign_cc-0.16.0.tar.gz
   retrieved: "2026-09-26"

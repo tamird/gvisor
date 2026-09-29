@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website syscalls)
+lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -38,8 +38,7 @@ gaps() {
   cat <<'GAPS'
 Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
 host systemd cgroup manager and alternate host kernels; the full save/restore
-and coverage matrices; GPU and network-plugin lanes;
-release repository generation and staged-binary consistency.
+and coverage matrices; GPU and network-plugin lanes; staged-binary consistency.
 GAPS
 }
 
@@ -72,7 +71,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|syscalls) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -110,6 +109,13 @@ run_lane() {
     release-artifacts)
       command=build
       targets=(//debian:debian //debian:gvisor-release-tar-bz2 //debian:gvisor-release-tar-zstd)
+      ;;
+    release-repository)
+      if [[ $arch != amd64 ]]; then
+        printf 'Release repository tools run on AMD64 and check both package architectures.\n' >&2
+        return 2
+      fi
+      targets=(//test/release:repository_test)
       ;;
     docker)
       options=(--config=docker)
@@ -181,7 +187,12 @@ run_lane() {
       ;;
   esac
   if [[ $command == test ]]; then
-    options+=(--strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors)
+    # The repository test consumes the public release packages, whose owning
+    # build keeps Bazel's default stripping policy.
+    if [[ $lane != release-repository ]]; then
+      options+=(--strip=never)
+    fi
+    options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
