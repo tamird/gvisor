@@ -1,7 +1,8 @@
+load("@bazel_skylib//rules:native_binary.bzl", native_binary_test = "native_test")
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
-load("//tools/actionlint:defs.bzl", "actionlint_test")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -125,15 +126,17 @@ yaml_test(
     schema = "//tools/nogo/config:schema.json",
 )
 
+GITHUB_WORKFLOWS = glob(
+    [
+        ".github/workflows/**/*.yaml",
+        ".github/workflows/**/*.yml",
+    ],
+    allow_empty = True,
+) or fail("No GitHub workflow YAML files were found")
+
 filegroup(
     name = "github_workflows",
-    srcs = glob(
-        [
-            ".github/workflows/**/*.yaml",
-            ".github/workflows/**/*.yml",
-        ],
-        allow_empty = True,
-    ),
+    srcs = GITHUB_WORKFLOWS,
 )
 
 yaml_test(
@@ -142,19 +145,34 @@ yaml_test(
     schema = "@github_workflow_schema//file",
 )
 
-actionlint_test(
+# actionlint discovers project configuration and local actions by finding .git.
+# It only stats the marker; Git metadata and history are not needed.
+write_file(
+    name = "actionlint_project_marker",
+    out = ".git",
+    content = [],
+)
+
+# A real runfiles tree is needed for project/configuration discovery. On
+# Windows, enable Bazel symlink support and pass --enable_runfiles.
+native_binary_test(
     name = "github_actions_test",
-    srcs = [":github_workflows"],
+    src = "//tools/actionlint",
+    args = [
+        "-no-color",
+        "-oneline",
+        "-shellcheck=",
+        "-pyflakes=",
+    ] + ['"$(rootpath %s)"' % workflow for workflow in GITHUB_WORKFLOWS],
     # These optional configuration files may be absent.
     # buildifier: disable=constant-glob
-    data = glob(
+    data = GITHUB_WORKFLOWS + [":actionlint_project_marker"] + glob(
         [
             ".github/actionlint.yaml",
             ".github/actionlint.yml",
         ],
         allow_empty = True,
     ),
-    target_compatible_with = ["@platforms//os:linux"],
 )
 
 filegroup(
