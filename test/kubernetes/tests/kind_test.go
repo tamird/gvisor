@@ -76,9 +76,24 @@ func diagnoseKindNetfilter(t *testing.T, node string) {
 		return
 	}
 	t.Logf("Netfilter diagnostic: fresh native endpoint on network %q, image %q", network, kindNodeImage)
-	for _, tool := range []string{"iptables-legacy", "ip6tables-legacy", "iptables-nft", "ip6tables-nft"} {
-		if err := kindCommand(ctx, t, tool, "--version"); err != nil {
-			t.Errorf("host netfilter version: %v", err)
+	// Docker invokes the generic iptables executable from the outer PATH.
+	// Keep that path when executing: resolving a multicall symlink can change
+	// argv[0] dispatch. The resolved path is evidence only.
+	tools := make(map[string]string)
+	for _, tool := range []string{"iptables", "iptables-save", "nsenter"} {
+		path, err := exec.LookPath(tool)
+		if err != nil {
+			t.Errorf("find host diagnostic tool %s: %v", tool, err)
+			continue
+		}
+		tools[tool] = path
+		resolved, err := filepath.EvalSymlinks(path)
+		if err != nil {
+			t.Errorf("resolve host diagnostic tool %s: %v", path, err)
+		}
+		t.Logf("Host diagnostic tool %s: path=%q resolved=%q", tool, path, resolved)
+		if err := kindCommand(ctx, t, path, "--version"); err != nil {
+			t.Errorf("host diagnostic version: %v", err)
 		}
 	}
 	d := dockerutil.MakeNativeContainer(ctx, t)
@@ -114,27 +129,38 @@ done
 rm -f "$errors"
 exit "$status"
 `
-	outputText, err := d.Run(ctx, dockerutil.RunOpts{
+	// Keep this endpoint alive while both userspaces read its rules. Only the
+	// network namespace is entered, so nsenter uses the outer executable and
+	// libraries. Deferred cleanup owns termination; sleep bounds its lifetime.
+	if err := d.Spawn(ctx, dockerutil.RunOpts{
 		Image:        "kubernetes/node:latest",
 		Entrypoint:   []string{"/bin/sh"},
 		Privileged:   true,
 		NetworkMode:  network,
 		CgroupnsMode: "private",
-	}, "-c", commands)
-	if err != nil && ctx.Err() != nil {
-		logCtx, logCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		partial, logErr := d.Logs(logCtx)
-		logCancel()
-		if partial != "" {
-			outputText = partial
-		}
-		if logErr != nil {
-			t.Errorf("collect partial netfilter diagnostic logs: %v", logErr)
+	}, "-c", "exec sleep 120"); err != nil {
+		t.Errorf("start native diagnostic endpoint: %v", err)
+		return
+	}
+	state, err := d.Status(ctx)
+	if err != nil {
+		t.Errorf("inspect native diagnostic endpoint: %v", err)
+		return
+	}
+	if !state.Running || state.Pid <= 0 {
+		t.Errorf("diagnostic endpoint is not running: %+v", state)
+		return
+	}
+	t.Logf("Comparing netfilter readers on endpoint %s, host PID %d", d.ID(), state.Pid)
+	if tools["nsenter"] != "" && tools["iptables-save"] != "" {
+		if err := kindCommand(ctx, t, tools["nsenter"], "--target", fmt.Sprint(state.Pid), "--net", "--", tools["iptables-save"]); err != nil {
+			t.Errorf("save endpoint rules with host iptables: %v", err)
 		}
 	}
-	t.Logf("Native node-image netfilter diagnostic:\n%s", outputText)
-	if err != nil {
-		t.Errorf("netfilter diagnostic: %v", err)
+	// The Docker CLI captures partial output even if its context expires. Both
+	// readers run while the endpoint is alive; no rule is restored or modified.
+	if err := kindCommand(ctx, t, "docker", "exec", d.ID(), "/bin/sh", "-c", commands); err != nil {
+		t.Errorf("read endpoint rules with node tools: %v", err)
 	}
 }
 
