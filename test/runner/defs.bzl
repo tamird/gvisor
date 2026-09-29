@@ -91,6 +91,7 @@ def _syscall_test(
         kvm_use_cpu_nums = True,
         in_sandbox_cgroup = "v1",
         network_tools = False,
+        memory = None,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -199,7 +200,7 @@ def _syscall_test(
         runner_args.append("--trace")
 
     # Preserve explicit caller properties, including configurable values.
-    kwargs.setdefault("exec_properties", syscall_test_exec_properties(platform, network_tools))
+    kwargs.setdefault("exec_properties", syscall_test_exec_properties(platform, network_tools, memory))
 
     # Call the rule above.
     _runner_test(
@@ -275,7 +276,7 @@ def syscall_test_variants(
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
-      **kwargs: additional test arguments.
+      **kwargs: Additional test arguments; memory sets a remote memory budget.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -477,7 +478,7 @@ def syscall_test(
       kvm_use_cpu_nums: use cpu numbers in kvm platform.
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
-      **kwargs: additional test arguments.
+      **kwargs: Additional test arguments; memory sets a remote memory budget.
     """
     if not tags:
         tags = []

@@ -428,6 +428,8 @@ syscall_test(
 )
 
 syscall_test(
+    # The test populates 512 MiB; save/restore and the executor need memory too.
+    memory = "2GB",
     test = "//test/syscalls/linux:memory_accounting_test",
 )
 
