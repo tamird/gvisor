@@ -369,7 +369,7 @@ check_buildifier() {
 }
 
 check_actions() {
-  bazel test --test_output=errors //:github_actions_test
+  bazel test --enable_runfiles --test_output=errors //:github_actions_test
 }
 
 check_spelling() {
