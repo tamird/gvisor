@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows syscalls)
+lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export python-release workflows syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -71,7 +71,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|syscalls) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|python-release|workflows|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -179,6 +179,9 @@ run_lane() {
         return 2
       fi
       targets=(//tools/go_export:all_test)
+      ;;
+    python-release)
+      targets=(//sandboxexec/sandbox/python:distribution_test //tools/python_distribution:version_test)
       ;;
     workflows)
       targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test)

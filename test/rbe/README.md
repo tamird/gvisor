@@ -29,6 +29,17 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; the script does not install tools or start a builder container.
 Normal Bazel caching remains enabled.
 
+The `python-release` lane builds the canonical source distribution and a wheel
+from it with declared Python tools, verifies their source payload and metadata,
+and imports an isolated installation. It also tests the release adapter's
+version selection with controlled registry responses. The default version comes
+from `pyproject.toml`; an explicit release version can be selected with
+`--//sandboxexec/sandbox/python:release_version=2026.09.29.0` when invoking the
+owning Bazel distribution target. `make artifacts-python` resolves its existing
+`RELEASE_NAME` input and copies those declared outputs. These checks use Python
+3.11 and do not establish compatibility with every supported interpreter or
+execute upload, manifest publication, or sandbox integration tests.
+
 The `workflows` lane runs the declared actionlint check and the existing GitHub
 and Buildkite schema tests. Actionlint uses the same workflow inputs as the
 GitHub schema check; `tools/lint.sh actions` invokes that same Bazel owner.
