@@ -1,4 +1,4 @@
-# Remote test qualification
+# Remote CI qualification
 
 This is partial qualification of the remote execution environment. Run Bazel
 on a BuildBuddy hosted Linux AMD64 coordinator against a published commit; its
@@ -29,16 +29,17 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; the script does not install tools or start a builder container.
 Normal Bazel caching remains enabled.
 
-Select native ARM64 execution with `--arch=arm64`, for example:
+Select ARM64 targets with `--arch=arm64`, for example:
 
 ```sh
 test/rbe/qualify.sh --arch=arm64 unit
 ```
 
-This uses the same lane selection and filters as AMD64. The `rbe-arm64`
+Test lanes use the same selection and filters as AMD64. Their `rbe-arm64`
 configuration selects ARM64 build tools and execution workers; `aarch64`
-selects the target architecture. Selecting an architecture does not establish
-worker support or qualify the other lanes.
+selects the target architecture. The `release-artifacts` build lane instead
+uses AMD64 execution workers for either target architecture. Selecting an
+architecture does not establish worker support or qualify the other lanes.
 
 The complete existing Nogo lane uses its normal tag-based selection:
 
@@ -94,6 +95,28 @@ The existing Make smoke targets retain their installed-binary interface,
 including staged bundles and custom runtime or sidecar selections. The Bazel
 target qualifies the source-built release without installing it on the
 coordinator or using the builder image.
+
+The release artifact lane builds the three packages selected by the public
+release test's `make artifacts/<architecture>` steps:
+
+```sh
+test/rbe/qualify.sh --arch=amd64 release-artifacts
+test/rbe/qualify.sh --arch=arm64 release-artifacts
+```
+
+Each invocation runs `bazel build` for `//debian:debian`,
+`//debian:gvisor-release-tar-bz2` and `//debian:gvisor-release-tar-zstd`.
+The existing package rules own the Debian metadata, compression and sidecar
+layout. Both invocations use `--config=rbe` for AMD64 execution, paired with
+`--config=x86_64` or `--config=aarch64` for the selected target architecture.
+The lane preserves the public release test's default compilation mode; it
+does not execute the ARM64 binaries or qualify native ARM64 runtime tests.
+
+Building these artifacts is only part of the public release test. Its
+`make release` step also generates the release repository with a temporary
+signing key; that workflow remains unqualified. The separate staged-binary
+check requires the real staged archive and also remains unqualified. This
+lane does not sign or publish artifacts.
 
 The maintained Docker lane has an explicit action-owned setup:
 

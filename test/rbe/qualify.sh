@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap packetimpact language-directfs language-goferfs kubernetes podman syscalls)
+lanes=(nogo unit smoke smoke-race release-artifacts docker root portforward posture startup containerd bwrap packetimpact language-directfs language-goferfs kubernetes podman syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -26,8 +26,10 @@ Usage: test/rbe/qualify.sh amd64
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
-architecture is AMD64. This is partial public CI coverage; selecting an
-architecture does not guarantee worker support. Existing failures remain errors.
+target architecture is AMD64. Tests use matching execution workers; release
+artifacts cross-build on AMD64 workers. This is partial public CI coverage;
+selecting an architecture does not guarantee worker support. Existing failures
+remain errors.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -36,7 +38,8 @@ gaps() {
   cat <<'GAPS'
 Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
 host systemd cgroup manager and alternate host kernels; the full save/restore
-and coverage matrices; packetdrill, iptables, nftables, GPU, and network-plugin lanes.
+and coverage matrices; packetdrill, iptables, nftables, GPU, and network-plugin lanes;
+release repository generation and staged-binary consistency.
 GAPS
 }
 
@@ -58,8 +61,8 @@ if [[ $1 == --arch=* ]]; then
   shift
 fi
 case "$arch" in
-  amd64) architecture_options=(--config=rbe --config=x86_64) ;;
-  arm64) architecture_options=(--config=rbe-arm64 --config=aarch64) ;;
+  amd64) architecture_config=x86_64 ;;
+  arm64) architecture_config=aarch64 ;;
   *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
 esac
 if (( $# == 0 )); then
@@ -69,7 +72,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|language-directfs|language-goferfs|kubernetes|podman|syscalls) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|language-directfs|language-goferfs|kubernetes|podman|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -80,14 +83,12 @@ if [[ $(uname -s) != Linux ]]; then
 fi
 cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
 
-printf 'Selected Linux %s remote lanes: %s\n' "$arch" "$*"
+printf 'Selected remote lanes for Linux %s: %s\n' "$arch" "$*"
 gaps
-if [[ $arch == arm64 ]]; then
-  printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
-fi
 
 run_lane() {
   local lane=$1
+  local command=test execution_config=rbe
   local -a options=() targets=()
   case "$lane" in
     nogo)
@@ -105,6 +106,10 @@ run_lane() {
     smoke-race)
       options=(--config=race)
       targets=(//:release_smoke_test)
+      ;;
+    release-artifacts)
+      command=build
+      targets=(//debian:debian //debian:gvisor-release-tar-bz2 //debian:gvisor-release-tar-zstd)
       ;;
     docker)
       options=(--config=docker)
@@ -164,9 +169,16 @@ run_lane() {
         '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
       ;;
   esac
-  bazel test "${architecture_options[@]}" \
-    --strip=never --incompatible_sandbox_hermetic_tmp=false \
-    --keep_going --test_output=errors "${options[@]}" "${targets[@]}"
+  if [[ $command == test ]]; then
+    options+=(--strip=never --test_output=errors)
+    if [[ $arch == arm64 ]]; then
+      execution_config=rbe-arm64
+      printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
+    fi
+  fi
+  bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
+    --incompatible_sandbox_hermetic_tmp=false \
+    --keep_going "${options[@]}" "${targets[@]}"
 }
 
 status=0
