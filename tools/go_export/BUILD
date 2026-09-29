@@ -1,6 +1,7 @@
 load("@rules_python//python:defs.bzl", "py_binary")
+load("@with_cfg.bzl//:with_cfg.bzl", "original_settings")
 load("//tools:defs.bzl", "build_test")
-load(":defs.bzl", "module_build")
+load(":defs.bzl", "cgo_module_build", "module_build")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -35,8 +36,12 @@ _NETSTACK_PACKAGES = [
     "./pkg/waiter",
 ]
 
-module_build(
+original_settings(name = "cgo_original_settings")
+
+cgo_module_build(
     name = "linux_amd64",
+    # with_cfg resets explicit attributes, not the underlying rule's defaults.
+    archive = "//:go_export",
     cgo = True,
     goarch = "amd64",
     goos = "linux",
