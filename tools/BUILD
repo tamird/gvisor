@@ -69,3 +69,8 @@ exports_files([
     "make_release.sh",
     "make_test_key.sh",
 ])
+
+exports_files(
+    ["make_python_release.sh"],
+    visibility = ["//tools/python_distribution:__pkg__"],
+)

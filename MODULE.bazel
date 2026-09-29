@@ -104,6 +104,16 @@ python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
 
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    download_only = True,
+    experimental_index_url = "https://pypi.org/simple",
+    hub_name = "python_distribution_deps",
+    python_version = "3.11",
+    requirements_lock = "//tools/python_distribution:requirements.txt",
+)
+use_repo(pip, "python_distribution_deps")
+
 ### Release repository test tools
 # Keep all package resolution at an immutable snapshot. No package installation
 # or network access is required while the release scripts run.

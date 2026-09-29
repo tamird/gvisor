@@ -34,6 +34,18 @@ exceptions:
       The source-built executable is used by rules_distroless to process
       tar metadata when constructing the release test's tool image. It is
       neither linked into nor included in the gVisor release artifacts.
+  - dependency: pypi/setuptools-84.0.0-py3-none-any.whl
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - LGPL-3.0-only
+      - MIT
+    exception_rationale: >-
+      Setuptools is the declared build backend for the Python distribution,
+      used only by the Bazel execution tool. Its wheel bundles autocommand
+      under LGPLv3 alongside permissively licensed dependencies. These
+      tools are not distribution runtime requirements or payload files;
+      the artifact verifier checks the source-only wheel payload.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
