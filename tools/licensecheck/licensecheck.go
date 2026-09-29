@@ -18,10 +18,10 @@
 // mod` in the dockerized build environment): the root module's direct
 // bazel_deps, the http_archive/http_file repos declared in MODULE.bazel, and
 // the Go repos imported from the go_deps extension, unioned with go.mod's
-// requirements. Fetch downloads each dependency's license text, from the Go
-// module proxy for Go modules and from GitHub for everything else, classifies
-// it, and records it in a YAML file. Verify checks that the YAML file has an
-// entry for every dependency, without fetching any licenses.
+// requirements, and the wheels exposed by imported pip hubs. Fetch downloads
+// each dependency's license text from the Go module proxy, pinned wheels, or
+// GitHub, classifies it, and records it in a YAML file. Verify checks that the
+// YAML file has an entry for every dependency, without fetching any licenses.
 //
 // Entries whose license cannot be fetched automatically (e.g.
 // @google_root_pem) are maintained by hand: Fetch preserves an existing entry
@@ -44,6 +44,7 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -178,6 +179,7 @@ type depKind int
 const (
 	kindGoModule depKind = iota
 	kindArchive
+	kindWheel
 )
 
 // dep is a single external dependency.
@@ -185,8 +187,8 @@ type dep struct {
 	name    string
 	kind    depKind
 	version string // kindGoModule.
-	url     string // kindArchive.
-	sha256  string // kindArchive: the hash Bazel pins for the archive.
+	url     string // kindArchive or kindWheel.
+	sha256  string // kindArchive or kindWheel: Bazel's pinned artifact hash.
 }
 
 // source identifies the audited version of a dependency: the Go module
@@ -389,6 +391,8 @@ func enumerate(p Paths) ([]dep, error) {
 			// http_archive/http_file declared directly in MODULE.bazel.
 		case strings.HasSuffix(u.Key, "%go_deps"):
 			// Go repos imported from the gazelle go_deps extension.
+		case strings.HasSuffix(u.Key, "%pip"):
+			// Imported pip hubs own the wheel selection, including variants.
 		default:
 			// Toolchain extensions (crosstool, llvm_zlib, python, go_sdk,
 			// ...) are not audited.
@@ -425,7 +429,10 @@ func enumerate(p Paths) ([]dep, error) {
 		goVersions[r.Mod.Path] = r.Mod.Version
 	}
 
-	var deps []dep
+	deps, err := enumerateWheels(repos)
+	if err != nil {
+		return nil, err
+	}
 	for _, r := range refs {
 		repo, ok := repos[r.ref]
 		if !ok {
@@ -451,6 +458,8 @@ func enumerate(p Paths) ([]dep, error) {
 		case "local_repository", "new_local_repository":
 			// Local paths are part of the gVisor checkout, not external
 			// dependencies.
+		case "hub_repository", "whl_library":
+			// Already expanded by enumerateWheels.
 		default:
 			return nil, fmt.Errorf("unsupported repository rule %s for %s", repo.rule, r.name)
 		}
@@ -551,7 +560,11 @@ func parseShowRepos(out string) (map[string]repoInfo, error) {
 			if m := repoAttrRE.FindStringSubmatch(line); m != nil {
 				var values []string
 				for _, q := range quotedRE.FindAllStringSubmatch(m[2], -1) {
-					values = append(values, q[1])
+					value, err := strconv.Unquote(q[0])
+					if err != nil {
+						return nil, fmt.Errorf("invalid string in %s attribute %s: %w", ref, m[1], err)
+					}
+					values = append(values, value)
 				}
 				info.attrs[m[1]] = values
 			}
@@ -646,6 +659,17 @@ type fetched struct {
 func fetchLicense(d dep) (*fetched, error) {
 	if d.kind == kindGoModule {
 		return fetchGoModule(d.name, d.version)
+	}
+	if d.kind == kindWheel {
+		body, err := httpGet(d.url, nil)
+		if err != nil {
+			return nil, err
+		}
+		licenses, err := wheelLicenses(body, d.sha256)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", d.url, err)
+		}
+		return &fetched{sha256: d.sha256, license: licenses}, nil
 	}
 	f, err := fetchGitHub(d.url)
 	if err != nil {
