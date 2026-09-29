@@ -50,7 +50,6 @@ declare -ra KNOWN_CHECKS=("${ALL_CHECKS[@]}" "${OPTIONAL_CHECKS[@]}")
 declare -r CODESPELL_VERSION="2.3.0"
 declare -r CPPLINT_VERSION="1.4.0"
 declare -r CLANG_FORMAT_VERSION="23.1.1"
-declare -r CLANG_TIDY_VERSION="22.1.8"
 declare -r GOFMT_MINIMUM_GO_VERSION="1.27"
 # Keep in sync with images/default/Dockerfile.
 declare -r BUILDIFIER_VERSION="8.5.1"
@@ -67,16 +66,12 @@ case "$(uname -m)" in
     declare -r BUILDIFIER_SHA256="887377fc64d23a850f4d18a077b5db05b19913f4b99b270d193f3c7334b5a9a7"
     declare -r CLANG_FORMAT_URL="https://files.pythonhosted.org/packages/42/ef/3f8e215916e79ecd435b5bc20810443f80fce3fb8bbfe6d2783ceb775c1b/clang_format-${CLANG_FORMAT_VERSION}-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     declare -r CLANG_FORMAT_SHA256="64900462c1203cee2fec364536c2dda708baf0619e15b52ceda926648cc82f56"
-    declare -r CLANG_TIDY_URL="https://files.pythonhosted.org/packages/82/19/0f2668f8f5e2452b096a2b898f2b6bcecbceb6dd0c7f75d1755ce1f18d8b/clang_tidy-${CLANG_TIDY_VERSION}-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
-    declare -r CLANG_TIDY_SHA256="1a3de07ba82d4403d8b692ae63a5520d4db5c606014c92c24bbcef9259057bf1"
     ;;
   aarch64|arm64)
     declare -r BUILDIFIER_ARCH="arm64"
     declare -r BUILDIFIER_SHA256="947bf6700d708026b2057b09bea09abbc3cafc15d9ecea35bb3885c4b09ccd04"
     declare -r CLANG_FORMAT_URL="https://files.pythonhosted.org/packages/0e/b6/1a162e427d912b88653a66e99a22414d798eb885b761ffddb74dbc13963f/clang_format-${CLANG_FORMAT_VERSION}-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"
     declare -r CLANG_FORMAT_SHA256="09af54d2ef51680b34e36ed71b9f510bd399fb7b10b29a2a40843cd0e0344228"
-    declare -r CLANG_TIDY_URL="https://files.pythonhosted.org/packages/ac/b7/61ed8c319f2d9ddb9762a550a6fee434bdef7bdc46d5a4b50929f1c90ec0/clang_tidy-${CLANG_TIDY_VERSION}-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"
-    declare -r CLANG_TIDY_SHA256="1eaddaa7415e8c5e39aeefbfd15174f1ab2a671c86f7ebb200eb523cf9465559"
     ;;
   *)
     echo "lint: unsupported architecture $(uname -m)" >&2
@@ -157,21 +152,6 @@ install_clang_format() {
     mv "${dir}/clang_format/data/bin/clang-format" "${bin}"
     chmod +x "${bin}"
     rm -rf "${dir}" "${wheel}"
-  fi
-  echo "${bin}"
-}
-
-install_clang_tidy() {
-  local -r dir="${CACHE_DIR}/clang-tidy-${CLANG_TIDY_VERSION}"
-  local -r bin="${dir}/clang_tidy/data/bin/clang-tidy"
-  if [[ ! -x "${bin}" ]]; then
-    local -r wheel="${CACHE_DIR}/clang-tidy.whl"
-    fetch "${CLANG_TIDY_URL}" "${CLANG_TIDY_SHA256}" "${wheel}"
-    rm -rf "${dir}.tmp" && mkdir -p "${dir}.tmp"
-    unzip -q "${wheel}" -d "${dir}.tmp"
-    chmod +x "${dir}.tmp/clang_tidy/data/bin/clang-tidy"
-    rm -rf "${dir}" && mv "${dir}.tmp" "${dir}"
-    rm -f "${wheel}"
   fi
   echo "${bin}"
 }
@@ -307,26 +287,8 @@ check_clang_format() {
 }
 
 check_clang_tidy() {
-  if [[ ! -f "${REPO_DIR}/.clang-tidy" ]]; then
-    echo "lint: .clang-tidy is missing from the repository root" >&2
-    return 1
-  fi
-  local -r database="${REPO_DIR}/compile_commands.json"
-  if [[ ! -f "${database}" ]]; then
-    if ! command -v bazel > /dev/null 2>&1; then
-      echo "lint: ${database} is missing and bazel is not on PATH" >&2
-      echo "lint: run tools/gen_compile_commands.py to create it" >&2
-      return 1
-    fi
-    python3 "${REPO_DIR}/tools/gen_compile_commands.py" >&2 || return 1
-  fi
-  local clang_tidy
-  clang_tidy="$(install_clang_tidy)"
-  python3 "${REPO_DIR}/tools/clang_tidy/clang_tidy.py" \
-    --clang-tidy="${clang_tidy}" \
-    --config-file="${REPO_DIR}/.clang-tidy" \
-    --database="${database}" \
-    --jobs="$(nproc 2> /dev/null || echo 1)"
+  bazel build --aspects=//tools/clang_tidy:clang_tidy.bzl%clang_tidy \
+    --output_groups=clang_tidy //test/... //tools/...
 }
 
 # Native rule loads (native-sh-test, native-sh-binary, native-proto) are
