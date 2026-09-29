@@ -4,17 +4,18 @@
 # https://www.buildbuddy.io/docs/config-all-options/
 _RBE_DOCKER_IMAGE = "docker://gcr.io/flame-public/buildbuddy-ci-runner@sha256:8cf614fc4695789bea8321446402e7d6f84f6be09b8d39ec93caa508fa3e3cfc"
 
-# AMD64/ARM64 networking runtime with CA trust, iproute2 and OpenBSD netcat.
+# AMD64/ARM64 networking runtime with CA trust, iptables-nft, iproute2 and
+# OpenBSD netcat.
 # The compilation image has no CA bundle. This image's provenance identifies
 # the source revision below; no compiler tools are added.
 # https://github.com/istio/istio/blob/1d6649895/docker/Dockerfile.base
-_RBE_NETWORK_TOOLS_IMAGE = "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
+RBE_NETWORK_TOOLS_IMAGE = "docker://docker.io/istio/base@sha256:cab6852ff5ae39349136f41af6ee892a228c8fb9634ec25e7550bd9b517a7a93"
 
 def network_test_exec_properties():
     """Returns remote test properties for external HTTPS access."""
     return select({
         Label("//tools/bazeldefs:rbe"): {
-            "test.container-image": _RBE_NETWORK_TOOLS_IMAGE,
+            "test.container-image": RBE_NETWORK_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
             "test.network": "external",
             "test.nonroot-workspace": "true",
@@ -43,17 +44,21 @@ def docker_test_exec_properties(free_disk):
         "//conditions:default": {},
     })
 
-def namespace_test_exec_properties(user = "root"):
+def namespace_test_exec_properties(user = "root", image = None):
     """Defaults for remote tests that create nested Linux namespaces.
 
     Args:
       user: Identity to use inside the remote test VM.
+      image: Optional image supplying the test's runtime tools.
 
     Returns:
       Test-runner properties; compilation keeps the execution platform's defaults.
     """
+    properties = _namespace_exec_properties(user)
+    if image != None:
+        properties["test.container-image"] = image
     return select({
-        Label("//tools/bazeldefs:rbe"): _namespace_exec_properties(user),
+        Label("//tools/bazeldefs:rbe"): properties,
         "//conditions:default": {},
     })
 
@@ -81,7 +86,7 @@ def syscall_test_exec_properties(platform, network_tools = False):
     if platform in ("native", "ptrace", "systrap"):
         properties.update(_namespace_exec_properties("root"))
     if network_tools:
-        properties["test.container-image"] = _RBE_NETWORK_TOOLS_IMAGE
+        properties["test.container-image"] = RBE_NETWORK_TOOLS_IMAGE
     return select({
         Label("//tools/bazeldefs:rbe"): properties,
         "//conditions:default": {},
