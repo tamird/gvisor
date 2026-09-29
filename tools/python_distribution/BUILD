@@ -7,7 +7,10 @@ package(
     licenses = ["notice"],
 )
 
-exports_files(["requirements.txt"])
+exports_files([
+    "installer-requirements.txt",
+    "requirements.txt",
+])
 
 bzl_library(
     name = "defs_bzl",

@@ -86,6 +86,16 @@ pip.parse(
 )
 use_repo(pip, "python_distribution_deps")
 
+# Fork-only installation smoke; excluded from the production build-tool lock.
+pip.parse(
+    download_only = True,
+    experimental_index_url = "https://pypi.org/simple",
+    hub_name = "python_install_smoke_deps",
+    python_version = "3.11",
+    requirements_lock = "//tools/python_distribution:installer-requirements.txt",
+)
+use_repo(pip, "python_install_smoke_deps")
+
 ### Crosstool
 coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
 use_repo(coral_crosstool_extension, "coral_crosstool")
