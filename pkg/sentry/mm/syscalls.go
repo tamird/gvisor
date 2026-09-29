@@ -482,8 +482,15 @@ func (mm *MemoryManager) MRemap(ctx context.Context, oldAddr hostarch.Addr, oldS
 			NameMut:         vma.nameMut,
 		}, droppedIDs)
 		if err == nil {
-			if vma.mlockMode == memmap.MLockEager {
+			vma = vseg.ValuePtr()
+			switch {
+			case vma.mlockMode == memmap.MLockEager:
 				mm.populateVMA(ctx, vseg, ar, memmap.PlatformEffectCommit)
+			case vma.private && vma.mappable == nil && vma.mlockMode == memmap.MLockNone && ar.Length() <= hostarch.HugePageSize:
+				// Apply MMap's small anonymous population policy to the new
+				// tail. As in MMap, ignore population errors; later accesses
+				// will retry them. Keep lazy-locked mappings demand-paged.
+				mm.populateVMA(ctx, vseg, ar, memmap.PlatformEffectDefault)
 			}
 			return oldAddr, nil
 		}
