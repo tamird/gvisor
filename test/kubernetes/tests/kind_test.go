@@ -103,12 +103,18 @@ func TestKindHello(t *testing.T) {
 	t.Setenv("KIND_EXPERIMENTAL_PROVIDER", "docker")
 	t.Setenv("KIND_EXPERIMENTAL_DOCKER_NETWORK", "")
 	t.Setenv("KUBECONFIG", kubeconfig)
+	logDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if logDir == "" {
+		logDir = work
+	}
 	// Deletion also covers a partially created cluster. It has a fresh deadline
 	// because test/setup cancellation must not prevent resource cleanup.
 	t.Cleanup(func() {
 		if t.Failed() {
 			logCtx, logCancel := context.WithTimeout(context.Background(), 30*time.Second)
-			_ = kindCommand(logCtx, t, "docker", "exec", node, "journalctl", "--no-pager", "-u", "containerd")
+			if err := kindCommand(logCtx, t, kind, "export", "logs", "--name", name, filepath.Join(logDir, name)); err != nil {
+				t.Errorf("export kind logs: %v", err)
+			}
 			logCancel()
 		}
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
@@ -139,7 +145,9 @@ containerdConfigPatches:
 	if err := os.WriteFile(configPath, []byte(config), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := kindCommand(ctx, t, kind, "create", "cluster", "--name", name, "--image", kindNodeImage, "--config", configPath, "--kubeconfig", kubeconfig, "--wait", "5m"); err != nil {
+	// Keep failed nodes until our cleanup can export their boot logs and delete
+	// them. kind's default failure cleanup would discard that evidence first.
+	if err := kindCommand(ctx, t, kind, "create", "cluster", "--name", name, "--image", kindNodeImage, "--config", configPath, "--kubeconfig", kubeconfig, "--wait", "5m", "--retain"); err != nil {
 		t.Fatal(err)
 	}
 	for _, component := range []string{"runsc", "containerd-shim-runsc-v1", "gvisor-bin"} {

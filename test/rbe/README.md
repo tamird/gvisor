@@ -319,8 +319,8 @@ test/rbe/qualify.sh kubernetes
 
 The `//test/kubernetes/tests:kind_test` owner declares kind 0.33.0, its
 Kubernetes 1.37.0 node image, the existing Alpine archive and the source-built
-release. It does not download tools or
-pull workload images during the test. The native runc node runs the normal
+release. It does not download tools or pull workload images during the test.
+The native runc node runs the normal
 kind bridge and CNI; a gVisor RuntimeClass selects the declared runsc and
 strict sidecars for the existing hello workload. The native sanity check and
 hello use the same declared-image policy. The test deletes its unique cluster
@@ -334,3 +334,7 @@ runfiles and process cleanup; the current Make builder does not supply it.
 The first kind lane is AMD64 only; ARM64 kind execution and worker capacity
 remain unqualified. The real nested cluster, networking and resource
 requirements still need hosted validation.
+
+The portable Go binary retains both-architecture Nogo analysis. The native
+test wrapper owns the AMD64 runtime inputs and does not forward Go coverage
+metadata, so Kubernetes Go coverage remains unqualified.
