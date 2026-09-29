@@ -17,10 +17,12 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cctype>
 #include <cstdint>
 #include <cstring>
@@ -35,7 +37,9 @@
 #include "absl/strings/str_join.h"
 #include "absl/types/optional.h"
 #include "test/syscalls/linux/ip_socket_test_util.h"
+#include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/logging.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
 #include "test/util/socket_util.h"
@@ -72,8 +76,21 @@ TEST(PingSocket, ICMPPortExhaustion) {
           },
   };
 
-  std::vector<FileDescriptor> sockets;
   constexpr int kSockets = 65536;
+  // Reach ICMP identifier exhaustion before the descriptor limit, leaving room
+  // for descriptors already open in the test process.
+  constexpr rlim_t kMinFdLimit = 2 * kSockets;
+  struct rlimit original_limit;
+  ASSERT_THAT(getrlimit(RLIMIT_NOFILE, &original_limit), SyscallSucceeds());
+  const struct rlimit limit = {
+      .rlim_cur = std::max(original_limit.rlim_cur, kMinFdLimit),
+      .rlim_max = std::max(original_limit.rlim_max, kMinFdLimit),
+  };
+  ASSERT_THAT(setrlimit(RLIMIT_NOFILE, &limit), SyscallSucceeds());
+  const Cleanup restore_limit([original_limit] {
+    TEST_PCHECK(setrlimit(RLIMIT_NOFILE, &original_limit) == 0);
+  });
+  std::vector<FileDescriptor> sockets;
   for (int i = 0; i < kSockets; i++) {
     auto s =
         ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_DGRAM, IPPROTO_ICMP));
@@ -84,8 +101,9 @@ TEST(PingSocket, ICMPPortExhaustion) {
       continue;
     }
     ASSERT_THAT(ret, SyscallFailsWithErrno(EAGAIN));
-    break;
+    return;
   }
+  FAIL() << "Connected " << kSockets << " ping sockets without exhausting IDs";
 }
 
 TEST(PingSocket, PayloadTooLarge) {
