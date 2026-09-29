@@ -602,6 +602,54 @@ oci.pull(
     platforms = ["linux/arm64"],
 )
 
+# tools/images.mk source tag d0192fdf762f979d.
+oci.pull(
+    name = "docker_image_iptables_amd64",
+    digest = "sha256:bedd27aee31fec295ee6efc104888765b43868f25a3d07a4d3b1566d6275314a",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/iptables_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# tools/images.mk source tag d0192fdf762f979d.
+oci.pull(
+    name = "docker_image_iptables_arm64",
+    digest = "sha256:31d2d383801c4d14db0b609cd9813489db3f92b1dfa73ff041f89345750685b5",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/iptables_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# tools/images.mk source tag d41691144091653b.
+oci.pull(
+    name = "docker_image_nftables_amd64",
+    digest = "sha256:82ed7220e94860976c689e14e99d983f7c6ee570c9747fe92fa6e57a4b5e482d",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/nftables_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# tools/images.mk source tag d41691144091653b.
+oci.pull(
+    name = "docker_image_nftables_arm64",
+    digest = "sha256:c9848fc62b8c68b3a03c37bf8b2d50ee5566bb5524cabc402889ff841066a91a",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/nftables_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# tools/images.mk source tag be0f1508a1fe1c86.
+oci.pull(
+    name = "docker_image_packetdrill_amd64",
+    digest = "sha256:94dfba104f7889a267fb54a94c5d55c73177f3c758fc6c5223dcb6f243f7ee5d",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/packetdrill_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# tools/images.mk source tag be0f1508a1fe1c86.
+oci.pull(
+    name = "docker_image_packetdrill_arm64",
+    digest = "sha256:af893eb825aaee84009bd385a33b8e6edafafe8213dd0d5107a5ad82b9bff046",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/packetdrill_aarch64",
+    platforms = ["linux/arm64"],
+)
+
 # The default node image shipped with kind v0.33.0.
 # https://github.com/kubernetes-sigs/kind/releases/tag/v0.33.0
 oci.pull(
@@ -714,8 +762,20 @@ use_repo(
     "docker_image_image_test_ruby_amd64_linux_amd64",
     "docker_image_image_test_ruby_arm64",
     "docker_image_image_test_ruby_arm64_linux_arm64",
+    "docker_image_iptables_amd64",
+    "docker_image_iptables_amd64_linux_amd64",
+    "docker_image_iptables_arm64",
+    "docker_image_iptables_arm64_linux_arm64",
     "docker_image_kubernetes_node_amd64",
     "docker_image_kubernetes_node_amd64_linux_amd64",
+    "docker_image_nftables_amd64",
+    "docker_image_nftables_amd64_linux_amd64",
+    "docker_image_nftables_arm64",
+    "docker_image_nftables_arm64_linux_arm64",
+    "docker_image_packetdrill_amd64",
+    "docker_image_packetdrill_amd64_linux_amd64",
+    "docker_image_packetdrill_arm64",
+    "docker_image_packetdrill_arm64_linux_arm64",
     "docker_image_runtimes_go1.22_amd64",
     "docker_image_runtimes_go1.22_amd64_linux_amd64",
     "docker_image_runtimes_java21_amd64",

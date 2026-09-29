@@ -23,6 +23,19 @@ PORTFORWARD_VARIANTS = [
     struct(name = "host", args = ["--network=host"]),
 ]
 
+# Runtime modes used by the installed and owned netfilter suites.
+NETFILTER_VARIANTS = {
+    "iptables": struct(name = "iptables", args = ["--net-raw"]),
+    "reproduce": struct(name = "reproduce", args = ["--net-raw", "--reproduce-nftables"]),
+    "nftables": struct(name = "nftables", args = ["--net-raw", "--TESTONLY-nftables"]),
+}
+
+# Nftables conformance runs against both the sentry and native Linux.
+NFTABLES_VARIANTS = [
+    NETFILTER_VARIANTS["nftables"],
+    struct(name = "native", args = [], test_args = ["--runtime=runc"]),
+]
+
 # Preserve the full matrix from Make's sandbox-posture-tests, including KVM.
 POSTURE_VARIANTS = [
     struct(name = "default", args = []),
@@ -53,6 +66,7 @@ RUNTIME_SUITES = {
         "docker": [struct(name = name, args = args) for name, args in RUNTIME_VARIANTS.items()],
         "portforward": PORTFORWARD_VARIANTS,
         "posture": POSTURE_VARIANTS,
+        "netfilter": NETFILTER_VARIANTS.values(),
     }.items()
 }
 
@@ -60,6 +74,9 @@ RUNTIME_SUITES = {
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
     "uds_proxy": ["basic/alpine"],
+    "iptables": ["iptables"],
+    "nftables": ["nftables"],
+    "packetdrill": ["packetdrill"],
     "containerd": ["containerd/harness"],
     "startup": ["benchmarks/alpine"],
     "posture": ["basic/alpine"],
