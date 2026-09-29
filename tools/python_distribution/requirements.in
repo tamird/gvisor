@@ -1,0 +1,9 @@
+# Build and verify the distributions with their existing PEP 517 backend.
+# Update the lock with:
+# uv pip compile --no-config --python-version 3.11 --universal --only-binary :all: \
+#   --generate-hashes tools/python_distribution/requirements.in \
+#   -o tools/python_distribution/requirements.txt
+build==1.6.1
+installer==1.0.1
+setuptools==84.0.0
+wheel==0.48.0

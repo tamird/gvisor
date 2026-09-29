@@ -66,3 +66,8 @@ exports_files([
     "build_cover.sh",
     "go-allow-internal.patch",
 ])
+
+exports_files(
+    ["make_python_release.sh"],
+    visibility = ["//tools/python_distribution:__pkg__"],
+)
