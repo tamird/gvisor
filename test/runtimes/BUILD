@@ -25,6 +25,9 @@ _RUNTIMES = {
     "nodejs22.2.0": dict(
         exclude_file = "exclude/nodejs22.2.0.csv",
         lang = "nodejs",
+        # The pinned large-Blob test holds a 2GiB buffer and a Blob; its
+        # sandbox was OOM-killed with the default 4GB VM budget.
+        memory = "8GB",
         partitions = 10,
         shard_count = most_shards,
     ),
