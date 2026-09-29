@@ -569,6 +569,8 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    # ICMP identifier exhaustion retains up to 65,535 connected sockets.
+    memory = "1GB",
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
     test = "//test/syscalls/linux:ping_socket_test",
