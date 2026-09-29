@@ -935,21 +935,9 @@ RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
 RELEASE_NOTES     :=
-GPG_TEST_OPTIONS  := $(shell if gpg --pinentry-mode loopback --version >/dev/null 2>&1; then echo --pinentry-mode loopback; fi)
-
 $(RELEASE_KEY):
 	@echo "WARNING: Generating a key for testing ($@); don't use this."
-	@T=$$(mktemp --tmpdir keyring.XXXXXX); \
-	C=$$(mktemp --tmpdir config.XXXXXX); \
-	echo Key-Type: DSA >> $$C && \
-	echo Key-Length: 1024 >> $$C && \
-	echo Name-Real: Test >> $$C && \
-	echo Name-Email: test@example.com >> $$C && \
-	echo Expire-Date: 0 >> $$C && \
-	echo %commit >> $$C && \
-	gpg --batch $(GPG_TEST_OPTIONS) --passphrase '' --no-default-keyring --secret-keyring $$T --no-tty --gen-key $$C && \
-	gpg --batch $(GPG_TEST_OPTIONS) --export-secret-keys --no-default-keyring --secret-keyring $$T > $@; \
-	rc=$$?; rm -f $$T $$C; exit $$rc
+	@tools/make_test_key.sh "$@"
 
 $(RELEASE_ARTIFACTS)/%:
 	@mkdir -p $@
