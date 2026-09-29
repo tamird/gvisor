@@ -9,6 +9,7 @@ bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_oci", version = "2.3.0")
+bazel_dep(name = "rules_distroless", version = "0.9.4")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "llvm", version = "0.8.24")
@@ -102,6 +103,51 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
+
+### Release repository test tools
+# Keep all package resolution at an immutable snapshot. No package installation
+# or network access is required while the release scripts run.
+release_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+release_apt.sources_list(
+    architectures = ["amd64"],
+    components = [
+        "main",
+        "universe",
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
+)
+release_apt.install(
+    dependency_set = "release_tools",
+    packages = [
+        "apt-utils",
+        "bash",
+        "bzip2",
+        "coreutils",
+        "diffutils",
+        "dpkg",
+        "dpkg-sig",
+        "file",
+        "gnupg",
+        "grep",
+        "gzip",
+        "mawk",
+        "tar",
+        "xz-utils",
+        "zstd",
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+use_repo(release_apt, "release_tools")
 
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
