@@ -92,7 +92,7 @@ declare FIX=0
 fetch() {
   local -r url="$1" want="$2" out="$3"
   local tmp
-  tmp="$(mktemp "${out}.XXXXXX")" || return 1
+  tmp="$(mktemp "${out}.XXXXXX")"
   if ! curl --fail --silent --show-error --location --retry 3 \
       --max-time 300 --output "${tmp}" "${url}"; then
     rm -f "${tmp}"
@@ -100,7 +100,7 @@ fetch() {
     return 1
   fi
   local got
-  got="$(sha256sum "${tmp}" | cut -d' ' -f1)" || return 1
+  got="$(sha256sum "${tmp}" | cut -d' ' -f1)"
   if [[ "${got}" != "${want}" ]]; then
     rm -f "${tmp}"
     echo "lint: checksum mismatch for ${url}" >&2
@@ -115,8 +115,8 @@ install_buildifier() {
   local -r bin="${CACHE_DIR}/buildifier-${BUILDIFIER_VERSION}"
   if [[ ! -x "${bin}" ]]; then
     fetch "https://github.com/bazelbuild/buildtools/releases/download/v${BUILDIFIER_VERSION}/buildifier-linux-${BUILDIFIER_ARCH}" \
-      "${BUILDIFIER_SHA256}" "${bin}" || return 1
-    chmod +x "${bin}" || return 1
+      "${BUILDIFIER_SHA256}" "${bin}"
+    chmod +x "${bin}"
   fi
   echo "${bin}"
 }
@@ -125,11 +125,12 @@ install_codespell() {
   local -r dir="${CACHE_DIR}/codespell-${CODESPELL_VERSION}"
   if [[ ! -d "${dir}" ]]; then
     local -r wheel="${CACHE_DIR}/codespell.whl"
-    fetch "${CODESPELL_URL}" "${CODESPELL_SHA256}" "${wheel}" || return 1
-    rm -rf "${dir}.tmp" && mkdir -p "${dir}.tmp" || return 1
-    unzip -q "${wheel}" -d "${dir}.tmp" || return 1
-    mv "${dir}.tmp" "${dir}" || return 1
-    rm -f "${wheel}" || return 1
+    fetch "${CODESPELL_URL}" "${CODESPELL_SHA256}" "${wheel}"
+    rm -rf "${dir}.tmp"
+    mkdir -p "${dir}.tmp"
+    unzip -q "${wheel}" -d "${dir}.tmp"
+    mv "${dir}.tmp" "${dir}"
+    rm -f "${wheel}"
   fi
   echo "${dir}"
 }
@@ -138,11 +139,12 @@ install_cpplint() {
   local -r dir="${CACHE_DIR}/cpplint-${CPPLINT_VERSION}"
   if [[ ! -d "${dir}" ]]; then
     local -r wheel="${CACHE_DIR}/cpplint.whl"
-    fetch "${CPPLINT_URL}" "${CPPLINT_SHA256}" "${wheel}" || return 1
-    rm -rf "${dir}.tmp" && mkdir -p "${dir}.tmp" || return 1
-    unzip -q "${wheel}" -d "${dir}.tmp" || return 1
-    mv "${dir}.tmp" "${dir}" || return 1
-    rm -f "${wheel}" || return 1
+    fetch "${CPPLINT_URL}" "${CPPLINT_SHA256}" "${wheel}"
+    rm -rf "${dir}.tmp"
+    mkdir -p "${dir}.tmp"
+    unzip -q "${wheel}" -d "${dir}.tmp"
+    mv "${dir}.tmp" "${dir}"
+    rm -f "${wheel}"
   fi
   echo "${dir}"
 }
@@ -152,12 +154,13 @@ install_clang_format() {
   if [[ ! -x "${bin}" ]]; then
     local -r wheel="${CACHE_DIR}/clang-format.whl"
     local -r dir="${CACHE_DIR}/clang-format.d"
-    fetch "${CLANG_FORMAT_URL}" "${CLANG_FORMAT_SHA256}" "${wheel}" || return 1
-    rm -rf "${dir}" && mkdir -p "${dir}" || return 1
-    unzip -q "${wheel}" -d "${dir}" || return 1
-    mv "${dir}/clang_format/data/bin/clang-format" "${bin}" || return 1
-    chmod +x "${bin}" || return 1
-    rm -rf "${dir}" "${wheel}" || return 1
+    fetch "${CLANG_FORMAT_URL}" "${CLANG_FORMAT_SHA256}" "${wheel}"
+    rm -rf "${dir}"
+    mkdir -p "${dir}"
+    unzip -q "${wheel}" -d "${dir}"
+    mv "${dir}/clang_format/data/bin/clang-format" "${bin}"
+    chmod +x "${bin}"
+    rm -rf "${dir}" "${wheel}"
   fi
   echo "${bin}"
 }
@@ -167,12 +170,14 @@ install_clang_tidy() {
   local -r bin="${dir}/clang_tidy/data/bin/clang-tidy"
   if [[ ! -x "${bin}" ]]; then
     local -r wheel="${CACHE_DIR}/clang-tidy.whl"
-    fetch "${CLANG_TIDY_URL}" "${CLANG_TIDY_SHA256}" "${wheel}" || return 1
-    rm -rf "${dir}.tmp" && mkdir -p "${dir}.tmp" || return 1
-    unzip -q "${wheel}" -d "${dir}.tmp" || return 1
-    chmod +x "${dir}.tmp/clang_tidy/data/bin/clang-tidy" || return 1
-    rm -rf "${dir}" && mv "${dir}.tmp" "${dir}" || return 1
-    rm -f "${wheel}" || return 1
+    fetch "${CLANG_TIDY_URL}" "${CLANG_TIDY_SHA256}" "${wheel}"
+    rm -rf "${dir}.tmp"
+    mkdir -p "${dir}.tmp"
+    unzip -q "${wheel}" -d "${dir}.tmp"
+    chmod +x "${dir}.tmp/clang_tidy/data/bin/clang-tidy"
+    rm -rf "${dir}"
+    mv "${dir}.tmp" "${dir}"
+    rm -f "${wheel}"
   fi
   echo "${bin}"
 }
@@ -196,9 +201,9 @@ version_at_least() {
 go_toolchain() {
   local version
   version="$(awk '$1 == "toolchain" { sub(/^go/, "", $2); print $2; exit }' \
-      "${REPO_DIR}/go.mod")" || return 1
+      "${REPO_DIR}/go.mod")"
   if [[ -z "${version}" ]]; then
-    version="$(awk '$1 == "go" { print $2; exit }' "${REPO_DIR}/go.mod")" || return 1
+    version="$(awk '$1 == "go" { print $2; exit }' "${REPO_DIR}/go.mod")"
   fi
   if [[ -z "${version}" ]]; then
     echo "lint: no go or toolchain directive in ${REPO_DIR}/go.mod" >&2
@@ -219,7 +224,7 @@ install_gofmt() {
     return 1
   fi
   local toolchain
-  toolchain="$(go_toolchain)" || return 1
+  toolchain="$(go_toolchain)"
   local goroot
   if ! goroot="$(GOTOOLCHAIN="${toolchain}" go env GOROOT)"; then
     echo "lint: failed to resolve Go toolchain ${toolchain}" >&2
@@ -255,13 +260,13 @@ report() {
 
 check_gofmt() {
   local gofmt
-  gofmt="$(install_gofmt)" || return 1
+  gofmt="$(install_gofmt)"
   if [[ "${FIX}" -eq 1 ]]; then
     go_files | xargs -0 "${gofmt}" -w -l
-    return $?
+    return 0
   fi
   local unformatted
-  unformatted="$(go_files | xargs -0 "${gofmt}" -l)" || return 1
+  unformatted="$(go_files | xargs -0 "${gofmt}" -l)"
   if [[ -n "${unformatted}" ]]; then
     # -d shows what would change; -l alone only names the files.
     echo "${unformatted}" | xargs -d '\n' "${gofmt}" -d
@@ -280,12 +285,12 @@ check_clang_format() {
     return 1
   fi
   local clang_format
-  clang_format="$(install_clang_format)" || return 1
+  clang_format="$(install_clang_format)"
   # clang-format is single-threaded and each file is independent.
   local -r jobs="$(nproc 2>/dev/null || echo 1)"
   if [[ "${FIX}" -eq 1 ]]; then
     cc_files | xargs -0 -P "${jobs}" -n 32 "${clang_format}" -i
-    return $?
+    return 0
   fi
   # --dry-run reports one diagnostic per hunk; collapse it to a file list.
   local warnings status=0
@@ -320,10 +325,10 @@ check_clang_tidy() {
       echo "lint: run tools/gen_compile_commands.py to create it" >&2
       return 1
     fi
-    python3 "${REPO_DIR}/tools/gen_compile_commands.py" >&2 || return 1
+    python3 "${REPO_DIR}/tools/gen_compile_commands.py" >&2
   fi
   local clang_tidy
-  clang_tidy="$(install_clang_tidy)" || return 1
+  clang_tidy="$(install_clang_tidy)"
   python3 "${REPO_DIR}/tools/clang_tidy/clang_tidy.py" \
     --clang-tidy="${clang_tidy}" \
     --config-file="${REPO_DIR}/.clang-tidy" \
@@ -335,11 +340,11 @@ check_clang_tidy() {
 # excluded because rules_shell / proto_library.bzl loads are not used here.
 check_buildifier() {
   local buildifier
-  buildifier="$(install_buildifier)" || return 1
+  buildifier="$(install_buildifier)"
   local -r warnings="-duplicated-name,-list-append,-native-py,-native-sh-binary,-native-sh-library,-native-sh-test,-native-proto"
   if [[ "${FIX}" -eq 1 ]]; then
     bazel_files | xargs -0 "${buildifier}" --mode=fix --lint=fix --warnings="${warnings}"
-    return $?
+    return 0
   fi
   local output status=0
   output="$(bazel_files | xargs -0 "${buildifier}" --mode=check --lint=warn --warnings="${warnings}" 2>&1)" || status=$?
@@ -376,7 +381,7 @@ check_actions() {
 
 check_spelling() {
   local codespell_dir
-  codespell_dir="$(install_codespell)" || return 1
+  codespell_dir="$(install_codespell)"
   # Source is included, so identifiers codespell reads as prose (offsetP,
   # FillIn, ...) need entries in tools/.codespellrc.
   { doc_files && go_files && cc_files; } |
@@ -386,7 +391,7 @@ check_spelling() {
 
 check_cpplint() {
   local cpplint_dir
-  cpplint_dir="$(install_cpplint)" || return 1
+  cpplint_dir="$(install_cpplint)"
   local -r jobs="$(nproc 2>/dev/null || echo 1)"
   cc_files |
     PYTHONPATH="${cpplint_dir}" xargs -0 -P "${jobs}" -n 32 python3 -W ignore::DeprecationWarning -m cpplint \
@@ -409,10 +414,18 @@ contains() {
 run_check() {
   local -r name="$1" fn="$2" desc="$3"
   echo "==> ${desc}" >&2
-  local status=0
-  # This conditional disables errexit inside checks and their helpers. Each
-  # command whose failure matters must therefore return it explicitly.
-  "${fn}" || status=$?
+  # A conditional call would disable errexit throughout the check. Capture an
+  # unconditional subshell instead, so one failed check does not stop the rest.
+  local status
+  set +e
+  (
+    set -eE
+    # Bash clears errexit in command substitutions; inherit this trap into them.
+    trap 'exit "$?"' ERR
+    "${fn}"
+  )
+  status=$?
+  set -e
   report "${name}" "${status}"
 }
 

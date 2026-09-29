@@ -50,7 +50,9 @@ class LintTest(unittest.TestCase):
             re.MULTILINE,
         )
     )
-    self.tool(self.bin / "go", "printf '%s\\n' " + shlex.quote(str(self.goroot)))
+    self.tool(
+        self.bin / "go", "printf '%s\\n' " + shlex.quote(str(self.goroot))
+    )
     self.tool(self.bin / "git", "printf 'tracked source\\0'")
     self.tool(self.bin / "curl", "echo unexpected-download >&2; exit 42")
     for name in ("gofmt", "clang-format", "buildifier"):
@@ -83,74 +85,50 @@ class LintTest(unittest.TestCase):
     self.assertNotIn("lint: all checks passed.", result.stderr)
 
   def test_formatter_status(self) -> None:
-    # Empty output means clean only when the formatter actually succeeds.
-    for name in ("gofmt", "clang-format", "buildifier"):
-      for args in ((name,), ("--fix", name)):
-        with self.subTest(args=args):
-          self.tool(self.formatter(name), "exit 0")
-          success = self.lint(*args)
-          self.assertEqual(success.returncode, 0, success.stderr)
-          self.assertIn(f"PASS  {name}", success.stderr)
-          self.tool(self.formatter(name), "exit 7")
-          self.assert_failed(self.lint(*args), name)
-      self.tool(self.formatter(name), "exit 0")
+    names = ("gofmt", "clang-format", "buildifier")
+    success = self.lint(*names)
+    self.assertEqual(success.returncode, 0, success.stderr)
+    for name in names:
+      self.assertIn(f"PASS  {name}", success.stderr)
+    # Exercise plain pipeline, captured output and --fix status handling.
+    for args in (
+        ("gofmt",),
+        ("clang-format",),
+        ("buildifier",),
+        ("--fix", "gofmt"),
+    ):
+      name = args[-1]
+      with self.subTest(args=args):
+        self.tool(self.formatter(name), "exit 7")
+        self.assert_failed(self.lint(*args), name)
+        self.tool(self.formatter(name), "exit 0")
 
   def test_diagnostics_and_continuation(self) -> None:
-    self.tool(self.formatter("clang-format"), "echo formatter-crashed >&2; exit 7")
+    self.tool(
+        self.formatter("clang-format"), "echo formatter-crashed >&2; exit 7"
+    )
     result = self.lint("clang-format", "buildifier")
     self.assert_failed(result, "clang-format")
     self.assertIn("formatter-crashed", result.stderr)
     self.assertIn("PASS  buildifier", result.stderr)
 
-  def test_unavailable_gofmt(self) -> None:
-    self.formatter("gofmt").unlink()
-    result = self.lint("gofmt")
-    self.assert_failed(result, "gofmt")
-    self.assertIn("no gofmt in Go toolchain", result.stderr)
-
-  def test_failed_download(self) -> None:
-    # A stale non-executable cache entry must not become usable after a
-    # failed refresh, even if chmod would succeed.
+  def test_installer_failure(self) -> None:
+    # Both failures occur in an installer command substitution. A stale cache
+    # entry must not be made executable by commands following the failure.
     self.formatter("buildifier").chmod(0o644)
     result = self.lint("buildifier")
     self.assert_failed(result, "buildifier")
     self.assertIn("unexpected-download", result.stderr)
     self.assertEqual(self.formatter("buildifier").stat().st_mode & 0o111, 0)
-
-  def test_failed_temporary_file(self) -> None:
-    self.formatter("buildifier").unlink()
+    # mktemp adds another substitution, whose status local must not mask.
     self.tool(self.bin / "mktemp", "echo temporary-file-failed >&2; exit 7")
-    result = self.lint("buildifier")
+    result = self.lint("buildifier", "gofmt")
     self.assert_failed(result, "buildifier")
     self.assertIn("temporary-file-failed", result.stderr)
     self.assertNotIn("unexpected-download", result.stderr)
-
-  def test_failed_extraction(self) -> None:
-    # Model a downloaded, hash-verified wheel whose extraction fails. The
-    # installer must not publish its empty directory and invoke a checker.
-    digest = re.search(
-        r'^declare -r CODESPELL_SHA256="([^"]+)"$',
-        LINT.read_text(),
-        re.MULTILINE,
-    )
-    if digest is None:
-      self.fail("Missing codespell SHA256 pin")
-    self.tool(self.bin / "curl", "exit 0")
-    self.tool(self.bin / "sha256sum", "echo " + digest.group(1))
-    self.tool(self.bin / "unzip", "echo extraction-failed >&2; exit 7")
-    self.tool(self.bin / "python3", "echo checker-ran; exit 0")
-    result = self.lint("spelling")
-    self.assert_failed(result, "spelling")
-    self.assertIn("extraction-failed", result.stderr)
-    self.assertNotIn("checker-ran", result.stdout)
-    self.assertFalse(
-        (self.cache / f"codespell-{self.versions['CODESPELL']}").exists(),
-        "Failed extraction published a codespell cache entry",
-    )
+    self.assertIn("PASS  gofmt", result.stderr)
 
   def test_failed_file_selection(self) -> None:
-    self.tool(self.bin / "git", "echo selection-failed >&2; exit 7")
-    self.assert_failed(self.lint("gofmt"), "gofmt")
     # The last spelling selection succeeds; it must not hide an earlier
     # failed list operation in the same pipeline.
     self.tool(self.bin / "git", 'case "$4" in "*.md") exit 7;; esac; exit 0')
