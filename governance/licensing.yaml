@@ -53,3 +53,15 @@ exceptions:
       distributed with gVisor. The LLVM exception only relaxes
       Apache-2.0's requirements, and the MIT match comes from third-party
       notices embedded in LICENSE.TXT.
+  - dependency: pypi/setuptools-84.0.0-py3-none-any.whl
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - LGPL-3.0-only
+      - MIT
+    exception_rationale: >-
+      Setuptools is the declared build backend for the Python distribution,
+      used only by the Bazel execution tool. Its wheel bundles autocommand
+      under LGPLv3 alongside permissively licensed dependencies. These
+      tools are not distribution runtime requirements or payload files.
+      The distribution action stages only the declared project sources.

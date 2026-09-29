@@ -1,5 +1,7 @@
+load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@rules_python//python:py_library.bzl", "py_library")
 load("@rules_python//python:py_test.bzl", "py_test")
+load("//tools/python_distribution:defs.bzl", "python_distribution")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -19,6 +21,21 @@ py_library(
 exports_files(
     ["gvisor/sandbox.py"],
     visibility = ["//:__subpackages__"],
+)
+
+string_flag(
+    name = "release_version",
+    build_setting_default = "",
+)
+
+python_distribution(
+    name = "dist",
+    srcs = ["README.md"] + glob([
+        "gvisor/*.py",
+        "tests/*.py",
+    ]),
+    pyproject = "pyproject.toml",
+    version = ":release_version",
 )
 
 py_test(

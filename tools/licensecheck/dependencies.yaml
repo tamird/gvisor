@@ -1037,6 +1037,54 @@
   commit: 4eb9011f3e6d551d067d87c89f082261164fac31
   sha256: 26dc6db523ee943af51fdfc292658a2dbe7046735654f1dc839745988f0fe26b
   license: Apache-2.0
+- dependency: pypi/build-1.6.1-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/ad/9b/9fb3585dabcd73a1b2a6267f63f62649347c9e6d072c9fde365b105abb2c/build-1.6.1-py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: ecd351a4be9d35a9eaaba244a7687143c9c7d4aea6ac964e7e7ddab20cbcf4e7
+  license: MIT
+- dependency: pypi/colorama-0.4.6-py2.py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: 4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
+  license: BSD-3-Clause
+- dependency: pypi/installer-1.0.1-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/26/48/bedf3ba4163e7db392c9d4cbdfc8217423196c8fccbe5a404a0f094fde63/installer-1.0.1-py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: 011d045df8b954ced7dde3a7e42ae4418da40ecda7990f2d11d5ed7c146fd98b
+  license: MIT
+- dependency: pypi/packaging-26.3-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+  license:
+    - Apache-2.0
+    - BSD-2-Clause
+- dependency: pypi/pyproject_hooks-1.3.3-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/85/11/044d1ae1b4ec0d7af88ee5bc91e081be1022533032b906a7bdabdbb60977/pyproject_hooks-1.3.3-py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: 5fc53fdac9f7bd63fbcdc868fb5f90b4784d78a53a3d3388cd738b807441a20b
+  license: MIT
+- dependency: pypi/setuptools-84.0.0-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/95/9c/c510029fc6ef33a6275cd2c5d3cecd6613dfd6aa401d57c54f1c18852ccf/setuptools-84.0.0-py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: 51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670
+  license:
+    - Apache-2.0
+    - BSD-2-Clause
+    - LGPL-3.0-only
+    - MIT
+- dependency: pypi/wheel-0.48.0-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/2e/29/69cfbb602cd91690c55d38ba9fe53e6a7e76a6fa647bf38f19c138d25449/wheel-0.48.0-py3-none-any.whl
+  retrieved: "2026-09-29"
+  commit: ""
+  sha256: 3217dcc807155e45db462d7ef2431f5ddda0d7273b700d05a67b271ceb1287ab
+  license: MIT
 - dependency: rules_cc
   version: https://github.com/bazelbuild/rules_cc/releases/download/0.2.17/rules_cc-0.2.17.tar.gz
   retrieved: "2026-09-10"
