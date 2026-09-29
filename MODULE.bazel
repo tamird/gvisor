@@ -917,6 +917,20 @@ http_file(
     urls = ["https://raw.githubusercontent.com/buildkite/pipeline-schema/f7a0894074d194bcf19eec5411fec0528f7f4180/schema.json"],
 )
 
+http_archive(
+    name = "actionlint_linux_amd64",
+    build_file_content = 'exports_files(["actionlint"])',
+    sha256 = "023070a287cd8cccd71515fedc843f1985bf96c436b7effaecce67290e7e0757",
+    urls = ["https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz"],
+)
+
+http_archive(
+    name = "actionlint_linux_arm64",
+    build_file_content = 'exports_files(["actionlint"])',
+    sha256 = "401942f9c24ed71e4fe71b76c7d638f66d8633575c4016efd2977ce7c28317d0",
+    urls = ["https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_arm64.tar.gz"],
+)
+
 http_file(
     name = "github_workflow_schema",
     sha256 = "7499ccb3e75975504ea1ee7c70291e0c9f6c1f684678091d013061fe263e3ddb",
