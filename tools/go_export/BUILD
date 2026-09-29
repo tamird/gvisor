@@ -1,6 +1,6 @@
 load("@rules_python//python:defs.bzl", "py_binary")
 load("@with_cfg.bzl//:with_cfg.bzl", "original_settings")
-load("//tools:defs.bzl", "build_test")
+load("//tools:defs.bzl", "build_test", "go_binary", "go_test")
 load(":defs.bzl", "cgo_module_build", "module_build")
 
 package(
@@ -8,10 +8,21 @@ package(
     licenses = ["notice"],
 )
 
-py_binary(
+go_binary(
     name = "assemble",
-    srcs = ["assemble.py"],
+    srcs = ["main.go"],
     visibility = ["//:__pkg__"],
+    deps = ["@org_golang_x_mod//modfile:go_default_library"],
+)
+
+go_test(
+    name = "assemble_test",
+    size = "small",
+    srcs = [
+        "main.go",
+        "main_test.go",
+    ],
+    deps = ["@org_golang_x_mod//modfile:go_default_library"],
 )
 
 py_binary(
