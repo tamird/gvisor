@@ -1,19 +1,26 @@
+load("@rules_oci//oci:defs.bzl", "oci_image")
 load("//images:defs.bzl", "docker_image")
+load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load("//tools/yamltest:defs.bzl", "yaml_test")
-load("//website:defs.bzl", "doc", "docs")
+load("//website:defs.bzl", "doc", "docs", "website_files")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
+# Both the installed import adapter and the remote artifact use this metadata.
+_WEBSITE_ENTRYPOINT = ["/server"]
+
+_WEBSITE_PORTS = ["8080/tcp"]
+
 docker_image(
     name = "website",
     data = ":files",
     statements = [
-        "EXPOSE 8080/tcp",
-        'ENTRYPOINT ["/server"]',
+        "EXPOSE " + " ".join(_WEBSITE_PORTS),
+        "ENTRYPOINT " + json.encode(_WEBSITE_ENTRYPOINT),
     ],
     tags = [
         "local",
@@ -22,59 +29,35 @@ docker_image(
     ],
 )
 
-# files is the full file system of the generated container.
-#
-# It must collect the all tarballs (produced by the rules below), and run it
-# through the Dockerfile to generate the site. Note that this checks all links,
-# and therefore requires all static content to be present as well.
-#
-# Note that this rule violates most aspects of hermetic builds. However, this
-# works much more reliably than depending on the container_image rules from
-# bazel itself, which are convoluted and seem to have a hard time even finding
-# the toolchain.
-genrule(
+# The same scratch filesystem used by docker import, packaged without a daemon.
+oci_image(
+    name = "image",
+    architecture = select_arch(
+        amd64 = "amd64",
+        arm64 = "arm64",
+    ),
+    entrypoint = _WEBSITE_ENTRYPOINT,
+    exposed_ports = _WEBSITE_PORTS,
+    os = "linux",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    tars = [":files"],
+    workdir = "/",
+)
+
+website_files(
     name = "files",
-    srcs = [
+    archives = [
         ":config",
         ":css",
         ":docs",
-        ":static",
         ":syscallmd",
         "//website/blog:posts",
-        "//website/cmd/server",
-        "@google_root_pem//file",
     ],
-    outs = ["files.tgz"],
-    cmd = "set -x; " +
-          "T=$$(mktemp -d); " +
-          "mkdir -p $$T/input && " +
-          "mkdir -p $$T/output/_site && " +
-          "tar -xf $(location :config)    -C $$T/input && " +
-          "tar -xf $(location :css)       -C $$T/input && " +
-          "tar -xf $(location :docs)      -C $$T/input && " +
-          "tar -xf $(location :syscallmd) -C $$T/input && " +
-          "tar -xf $(location //website/blog:posts) -C $$T/input && " +
-          "find $$T/input -type f -exec chmod u+rw {} \\; && " +
-          "docker run -i --user $$(id -u):$$(id -g) " +
-          "-v $$(readlink -m $$T/input):/input " +
-          "-v $$(readlink -m $$T/output/_site):/output " +
-          "gvisor.dev/images/jekyll && " +
-          "tar -xf $(location :static) -C $$T/output/_site && " +
-          "docker run -i --user $$(id -u):$$(id -g) " +
-          "-v $$(readlink -m $$T/output/_site):/output " +
-          "gvisor.dev/images/jekyll " +
-          "ruby /checks.rb " +
-          "/output && " +
-          "cp $(location //website/cmd/server) $$T/output/server && " +
-          "mkdir -p $$T/output/etc/ssl && " +
-          "cp $(location @google_root_pem//file) $$T/output/etc/ssl/cert.pem && " +
-          "tar -zcf $@ -C $$T/output . && " +
-          "rm -rf $$T",
-    tags = [
-        "local",
-        "manual",
-        "no-sandbox",
-    ],
+    ca_certificate = "@google_root_pem//file",
+    server = "//website/cmd/server",
+    static = ":static",
+    tags = ["manual"],
 )
 
 # static are the purely static parts of the site. These are effectively copied
@@ -224,6 +207,10 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
+    deps = [
+        "//tools:defs_bzl",
+        "@bazel_skylib//lib:shell",
+    ],
 )
 
 yaml_test(

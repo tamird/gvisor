@@ -16,7 +16,10 @@
 
 set -euxo pipefail
 
+input=${1:-/input}
+output=${2:-/output}
+
 # Generate the syntax highlighting css file.
-/usr/gem/bin/rougify style github >/input/_sass/syntax.css
+/usr/gem/bin/rougify style github >"$input/_sass/syntax.css"
 # Build website including pages irrespective of date.
-/usr/gem/bin/jekyll build --future -t -s /input -d /output
+/usr/gem/bin/jekyll build --future -t -s "$input" -d "$output"
