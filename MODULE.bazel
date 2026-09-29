@@ -898,6 +898,15 @@ go_sdk.from_file(
     patch_strip = 1,
     patches = ["//tools:go_types_memoize.patch"],
 )
+use_repo(go_sdk, "go_host_compatible_sdk_label")
+
+module_proxy = use_repo_rule("//tools/go_export:repositories.bzl", "module_proxy")
+
+module_proxy(
+    name = "exported_go_modules",
+    go_mod = "//:go.mod",
+    go_sum = "//:go.sum",
+)
 
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")

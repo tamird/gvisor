@@ -428,3 +428,12 @@ The installed `make website-build`, `website-server`, `website-push` and
 `website-deploy` adapters retain their Docker import and selected image name.
 The remote lane builds the artifact; it does not publish or deploy it. The
 public website job is AMD64, and this lane makes no ARM64 qualification claim.
+
+The `go-export` lane builds the published Go module on Linux AMD64, then
+cross-builds the public netstack package selection for Darwin ARM64, Windows
+AMD64, FreeBSD AMD64, OpenBSD AMD64 and Linux MIPS. All compilation runs in
+Bazel actions using the declared SDK; native Linux retains cgo and the selected
+C toolchain. Dependencies come from the original `go.mod` and `go.sum`, fetched
+at repository resolution and supplied as a local module proxy. Build actions
+cannot fetch modules or modify either manifest. This lane uses the same export
+archive as `tools/go_branch.sh` without modifying Git branches.
