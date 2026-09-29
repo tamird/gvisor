@@ -1075,6 +1075,11 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 	// https://github.com/golang/tools/blob/v0.45.0/go/ssa/builder.go#L343-L353
 	// https://github.com/golang/tools/blob/v0.45.0/go/ssa/builder.go#L715-L719
 	makePositions := make(map[token.Pos]struct{})
+	nosplitComments := make(map[token.Pos]struct{})
+	readFile := pass.ReadFile
+	if readFile == nil {
+		readFile = os.ReadFile
+	}
 	for _, f := range pass.Files {
 		ast.Inspect(f, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
@@ -1090,11 +1095,38 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 			}
 			return true
 		})
+		var source []byte
 		for _, cg := range f.Comments {
 			for _, c := range cg.List {
 				p := pass.Fset.Position(c.Slash)
 				if strings.HasPrefix(strings.ToLower(c.Text), exempt) {
 					exemptions[LinePosition{Filename: p.Filename, Line: p.Line}] = c.Text[len(exempt):]
+				}
+				verb, _, _ := strings.Cut(c.Text, " ")
+				if verb != "//go:nosplit" {
+					continue
+				}
+				// The AST strips every CR; the compiler strips only a final
+				// CR and ends the pragma verb at the first ASCII space.
+				// Recover the raw line so an interior CR cannot grant nosplit.
+				// https://github.com/golang/go/blob/2dc996f71/src/cmd/compile/internal/syntax/parser.go#L169-L181
+				// https://github.com/golang/go/blob/2dc996f71/src/cmd/compile/internal/noder/noder.go#L334-L339
+				file := pass.Fset.File(c.Pos())
+				if source == nil {
+					var err error
+					source, err = readFile(file.Name())
+					if err != nil {
+						return nil, fmt.Errorf("reading nosplit directives from %q: %w", file.Name(), err)
+					}
+				}
+				offset := file.Offset(c.Pos())
+				if offset >= len(source) {
+					return nil, fmt.Errorf("nosplit comment offset %d exceeds source size %d in %q", offset, len(source), file.Name())
+				}
+				line, _, _ := bytes.Cut(source[offset:], []byte{'\n'})
+				verb, _, _ = strings.Cut(strings.TrimSuffix(string(line), "\r"), " ")
+				if verb == "//go:nosplit" {
+					nosplitComments[c.Pos()] = struct{}{}
 				}
 			}
 		}
@@ -1259,7 +1291,7 @@ func run(pass *analysis.Pass, binary io.Reader) (any, error) {
 			// or closures, which have no directive of their own.
 			if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {
 				for _, comment := range decl.Doc.List {
-					if comment.Text == "//go:nosplit" {
+					if _, ok := nosplitComments[comment.Pos()]; ok {
 						return nil
 					}
 				}
