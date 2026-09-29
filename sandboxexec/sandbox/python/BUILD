@@ -65,6 +65,7 @@ native_test(
         "$(rootpaths :distribution_sources)",
     ],
     data = [
+        "pyproject.toml",
         ":dist",
         ":distribution_sources",
         ":distribution_version",
