@@ -23,16 +23,17 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
-def docker_test_exec_properties(free_disk):
+def docker_test_exec_properties(free_disk, memory = None):
     """Returns a remote VM with Docker tools for a test-owned daemon.
 
     Args:
       free_disk: Root filesystem space for expanded images and container copies.
+      memory: Test VM memory budget; defaults to 4GB.
     """
     return select({
         Label("//tools/bazeldefs:rbe"): {
             "test.EstimatedCPU": "4",
-            "test.EstimatedMemory": "4GB",
+            "test.EstimatedMemory": memory if memory != None else "4GB",
             "test.EstimatedFreeDiskBytes": free_disk,
             "test.container-image": _RBE_DOCKER_IMAGE,
             "test.dockerUser": "root",

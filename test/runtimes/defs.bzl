@@ -85,12 +85,13 @@ _runtime_test = rule(
     test = True,
 )
 
-def runtime_test(name, partitions, **kwargs):
+def runtime_test(name, partitions, memory = None, **kwargs):
     """Declares installed and owned entrypoints for a language runtime.
 
     Args:
       name: Existing runtime image and installed target name.
       partitions: Number of public CI partitions, each retaining its Bazel shards.
+      memory: Optional memory budget for each owned test VM.
       **kwargs: Existing language, batch, exclusion and shard settings.
     """
     if partitions < 1:
@@ -139,7 +140,10 @@ def runtime_test(name, partitions, **kwargs):
                     "--partition=" + str(partition),
                     "--total_partitions=" + str(partitions),
                 ],
-                exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+                exec_properties = docker_test_exec_properties(
+                    free_disk = "20GB",
+                    memory = memory,
+                ),
                 target_compatible_with = ["@platforms//cpu:x86_64"],
                 tags = ["manual"],
                 **kwargs
