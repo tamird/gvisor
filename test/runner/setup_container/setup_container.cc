@@ -23,10 +23,12 @@
 #include <cstring>
 #include <iostream>
 #include <ostream>
+#include <string>
 
 #include "test/syscalls/linux/socket_netlink_util.h"
 #include "test/util/capability_util.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
 #include "test/util/linux_capability_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/socket_util.h"
@@ -34,7 +36,8 @@
 namespace gvisor {
 namespace testing {
 
-// SetupContainer sets up the networking settings in the current container.
+// SetupContainer initializes networking in a new network namespace created by
+// the caller.
 PosixError SetupContainer() {
   const PosixErrorOr<bool> have_net_admin = HaveCapability(CAP_NET_ADMIN);
   if (!have_net_admin.ok()) {
@@ -42,6 +45,16 @@ PosixError SetupContainer() {
     return have_net_admin.error();
   }
   if (have_net_admin.ValueOrDie()) {
+    // New network namespaces deny ping sockets by default. Permit the test's
+    // effective group, which is mapped even when running in a user namespace.
+    const std::string group = std::to_string(getegid());
+    const PosixError ping_error =
+        SetContents("/proc/sys/net/ipv4/ping_group_range", group + " " + group);
+    if (!ping_error.ok()) {
+      std::cerr << "Cannot allow ping sockets: " << ping_error << std::endl;
+      return ping_error;
+    }
+
     PosixErrorOr<FileDescriptor> sockfd = Socket(AF_INET, SOCK_DGRAM, 0);
     if (!sockfd.ok()) {
       std::cerr << "Cannot open socket." << std::endl;
