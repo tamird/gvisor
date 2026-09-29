@@ -569,6 +569,8 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    # Host-network sockets also need descriptors in the sentry.
+    args = ["--host-nofile=131072"],
     # ICMP identifier exhaustion retains up to 65,535 connected sockets.
     memory = "1GB",
     # Takes too long under gotsan to run.
