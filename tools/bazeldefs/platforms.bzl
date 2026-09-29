@@ -71,12 +71,13 @@ def _namespace_exec_properties(user):
         "test.workload-isolation-type": "firecracker",
     }
 
-def syscall_test_exec_properties(platform, network_tools = False):
+def syscall_test_exec_properties(platform, network_tools = False, memory = None):
     """Returns defaults for remote syscall test execution.
 
     Args:
       platform: Native or runsc platform used by the test runner.
       network_tools: Supply iproute2 and OpenBSD netcat in the test image.
+      memory: Optional remote test memory budget.
 
     Returns:
       Test-runner properties; compilation keeps the execution platform's defaults.
@@ -88,6 +89,8 @@ def syscall_test_exec_properties(platform, network_tools = False):
         properties.update(_namespace_exec_properties("root"))
     if network_tools:
         properties["test.container-image"] = RBE_NETWORK_TOOLS_IMAGE
+    if memory != None:
+        properties["test.EstimatedMemory"] = memory
     return select({
         Label("//tools/bazeldefs:rbe"): properties,
         "//conditions:default": {},
