@@ -1,4 +1,3 @@
-load("@rules_python//python:defs.bzl", "py_binary")
 load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
 
 package(
@@ -64,9 +63,3 @@ bzl_library(
 )
 
 exports_files(["llvm-linux-header-default.patch"])
-
-py_binary(
-    name = "go_export",
-    srcs = ["go_export.py"],
-    visibility = ["//:__pkg__"],
-)

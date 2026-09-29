@@ -8,6 +8,12 @@ package(
 )
 
 py_binary(
+    name = "assemble",
+    srcs = ["assemble.py"],
+    visibility = ["//:__pkg__"],
+)
+
+py_binary(
     name = "compile",
     srcs = ["compile.py"],
 )
