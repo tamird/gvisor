@@ -61,7 +61,7 @@ for arch in amd64 arm64; do
   package=/input/artifacts/$arch/runsc.deb
   version=$(dpkg --field "$package" Version)
   signed=/work/repo/pool/$version/binary-$arch/runsc.deb
-  dpkg-sig -g "--homedir $verify_home" --verify "$signed" | tee "/reports/$arch-signature.txt"
+  GNUPGHOME="$verify_home" dpkg-sig --verify "$signed" | tee "/reports/$arch-signature.txt"
   grep -q '^GOODSIG ' "/reports/$arch-signature.txt"
   packages=$release/main/binary-$arch/Packages
   test "$(grep -c '^Package:' "$packages")" -eq 1
