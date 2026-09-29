@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows syscalls)
+lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -71,7 +71,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|syscalls) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -191,9 +191,13 @@ run_lane() {
       command=build
       targets=(//website:image)
       ;;
-    syscalls)
-      options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror
-        '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
+    syscalls|syscalls-save|syscalls-resume)
+      options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror)
+      case "$lane" in
+        syscalls) options+=('--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm') ;;
+        syscalls-save) options+=(--test_tag_filters=save_restore) ;;
+        syscalls-resume) options+=(--test_tag_filters=save_resume) ;;
+      esac
       ;;
   esac
   if [[ $command == test ]]; then
