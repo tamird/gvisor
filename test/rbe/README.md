@@ -231,6 +231,26 @@ test selection retains its existing unsupported user-namespace joining case.
 The public CI also runs this suite on ARM64; that worker lane remains
 unqualified by this AMD64 profile.
 
+The packetimpact lane selects the same complete suite as `make packetimpact-tests`:
+
+```sh
+test/rbe/qualify.sh packetimpact
+```
+
+`//test/packetimpact/tests:all_tests` runs each testbench against both native Linux
+and gVisor. Its existing timeouts, multi-DUT cases and expected netstack failures
+remain owned by `test/packetimpact/runner/defs.bzl`. The runner declares its
+testbench, POSIX server and source-built release with sidecars, and creates its
+own user and network namespaces, veth links and packet captures.
+
+Remote wrappers request root Firecracker workers with IPv6 and the existing
+pinned networking image, which supplies `iptables-nft` and `ip6tables-nft` for
+the runner's TCP filtering. Worker namespace and nftables support remain runtime
+requirements. The public step specifies Ubuntu, cgroup v2 and a modern kernel,
+without an explicit architecture selector. This profile starts with AMD64;
+ARM64 Firecracker capacity and the other network conformance lanes remain
+unqualified.
+
 The language runtime lanes retain the five public AMD64 suites: PHP 8.3.7,
 Java 21, Go 1.22, Node 22.2.0 and Python 3.12.3. DirectFS matches presubmit;
 goferfs matches the continuous matrix:
