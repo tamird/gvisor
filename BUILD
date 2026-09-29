@@ -275,3 +275,8 @@ exports_files([
     "go.sum",
     "go.mod",
 ])
+
+exports_files(
+    [".clang-format"],
+    visibility = ["//tools:__pkg__"],
+)
