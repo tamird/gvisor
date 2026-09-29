@@ -3,8 +3,7 @@
 load("@bazel_gazelle//:def.bzl", _gazelle = "gazelle")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@io_bazel_rules_go//go:def.bzl", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_test = "go_test")
-load("@io_bazel_rules_go//go/private:context.bzl", "CGO_ATTRS", "CGO_FRAGMENTS", "CGO_TOOLCHAINS")
+load("@io_bazel_rules_go//go:def.bzl", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
 load("//tools/bazeldefs:go_variants.bzl", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
@@ -175,7 +174,7 @@ def go_rule(rule, implementation, **kwargs):
     """Wraps a rule definition with Go attributes.
 
     Args:
-      rule: rule function (typically rule or aspect).
+      rule: rule or aspect function.
       implementation: implementation function.
       **kwargs: other arguments to pass to rule.
 
@@ -186,14 +185,11 @@ def go_rule(rule, implementation, **kwargs):
         "_go_context_data": attr.label(default = "@io_bazel_rules_go//:go_context_data"),
         "_stdlib": attr.label(default = "@io_bazel_rules_go//:stdlib"),
     })
-
-    # go_context requires the C++ context in race/cgo configurations. rules_go
-    # only exposes the required declarations through go/private/context.bzl.
-    kwargs["attrs"].update(CGO_ATTRS)
-    kwargs.setdefault("fragments", []).extend(CGO_FRAGMENTS)
-    kwargs.setdefault("toolchains", []).extend(CGO_TOOLCHAINS)
-    kwargs.setdefault("toolchains", []).append("@io_bazel_rules_go//go:toolchain")
-    return rule(implementation, **kwargs)
+    if rule == aspect:
+        # Nogo analyzes Go sources without invoking the C/C++ toolchain.
+        kwargs.setdefault("toolchains", []).append("@io_bazel_rules_go//go:toolchain")
+        return aspect(implementation, **kwargs)
+    return _go_rule(implementation, **kwargs)
 
 def go_embed_libraries(target):
     if hasattr(target.attr, "embed"):
@@ -215,7 +211,7 @@ def go_context(ctx, goos = None, goarch = None):
     # We don't change anything for the standard library analysis. All Go files
     # are available in all instances. Note that this includes the standard
     # library sources, which are analyzed by nogo.
-    go_ctx = _go_context(ctx)
+    go_ctx = _go_context(ctx, maybe_needs_cc_toolchain = False)
 
     nogo_args = []
     if go_ctx.mode.race:
