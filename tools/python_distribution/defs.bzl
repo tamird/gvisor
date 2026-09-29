@@ -23,7 +23,7 @@ def _python_distribution_impl(ctx):
     args = ctx.actions.args()
     args.add("--pyproject", ctx.file.pyproject)
     args.add("--version-file", version)
-    args.add("--output", dist)
+    args.add("--output", dist.path)
     args.add_all(ctx.files.srcs)
     ctx.actions.run(
         executable = ctx.attr._builder[DefaultInfo].files_to_run,
