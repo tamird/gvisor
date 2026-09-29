@@ -459,3 +459,18 @@ C toolchain. Dependencies come from the original `go.mod` and `go.sum`, fetched
 at repository resolution and supplied as a local module proxy. Build actions
 cannot fetch modules or modify either manifest. This lane uses the same export
 archive as `tools/go_branch.sh` without modifying Git branches.
+
+The save/restore and save/resume syscall lanes use the same generated tests and
+positive tags as the public continuous jobs:
+
+```sh
+test/rbe/qualify.sh syscalls-save
+test/rbe/qualify.sh --arch=arm64 syscalls-resume
+```
+
+These reuse `test/syscalls.targets` and the runner's supported platform selection.
+They do not change the default `syscalls` lane, which excludes save variants.
+The public jobs exercise save/restore on AMD64 and save/resume on ARM64. ARM64
+namespace execution still requires Firecracker capacity; the lane must fail
+when those workers are unavailable. Declaring a lane does not establish that
+its tests pass or complete the full save/restore matrix.
