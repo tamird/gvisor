@@ -1019,6 +1019,6 @@ lint-fix: ## Reformats sources in place.
 	@tools/lint.sh --fix
 .PHONY: lint-fix
 
-lint-cc: ensure-bazel-server ## Runs clang-tidy over the C++ sources; needs bazel for compile_commands.json.
+lint-cc: ensure-bazel-server ## Runs clang-tidy with the declared C++ compile inputs.
 	@$(call wrapper,tools/lint.sh clang-tidy)
 .PHONY: lint-cc
