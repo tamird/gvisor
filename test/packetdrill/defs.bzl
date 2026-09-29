@@ -1,5 +1,8 @@
 """Defines a rule for packetdrill test targets."""
 
+load("@bazel_skylib//lib:shell.bzl", "shell")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+
 def _packetdrill_test_impl(ctx):
     test_runner = ctx.executable._test_runner
     runner = ctx.actions.declare_file("%s-runner" % ctx.label.name)
@@ -7,6 +10,13 @@ def _packetdrill_test_impl(ctx):
     script_paths = []
     for script in ctx.files.scripts:
         script_paths.append(script.short_path)
+    command = [test_runner.short_path]
+    if ctx.file.docker_config:
+        command = [
+            ctx.executable._docker_wrapper.short_path,
+            "--docker_test_config=" + ctx.file.docker_config.short_path,
+            "--",
+        ] + command
     runner_content = "\n".join([
         "#!/bin/bash",
         # This test will run part in a distinct user namespace. This can cause
@@ -16,7 +26,7 @@ def _packetdrill_test_impl(ctx):
         "find . -type f -exec chmod a+rx {} \\;",
         "find . -type d -exec chmod a+rx {} \\;",
         "%s %s --init_script %s \"$@\" -- %s\n" % (
-            test_runner.short_path,
+            " ".join([shell.quote(arg) for arg in command]),
             " ".join(ctx.attr.flags),
             ctx.files._init_script[0].short_path,
             " ".join(script_paths),
@@ -33,6 +43,10 @@ def _packetdrill_test_impl(ctx):
         collect_default = True,
         collect_data = True,
     )
+    if ctx.file.docker_config:
+        runfiles = runfiles.merge(ctx.runfiles(files = [ctx.executable._docker_wrapper, ctx.file.docker_config]))
+        runfiles = runfiles.merge(ctx.attr._docker_wrapper[DefaultInfo].default_runfiles)
+        runfiles = runfiles.merge(ctx.attr.docker_config[DefaultInfo].default_runfiles)
     return [DefaultInfo(executable = runner, runfiles = runfiles)]
 
 _packetdrill_test = rule(
@@ -55,6 +69,8 @@ _packetdrill_test = rule(
             mandatory = True,
             allow_files = True,
         ),
+        "docker_config": attr.label(allow_single_file = True),
+        "_docker_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "target"),
     },
     test = True,
     implementation = _packetdrill_test_impl,
@@ -67,20 +83,25 @@ PACKETDRILL_TAGS = [
 ]
 
 def packetdrill_linux_test(name, **kwargs):
-    if "tags" not in kwargs:
-        kwargs["tags"] = PACKETDRILL_TAGS
-    _packetdrill_test(
-        name = name,
-        flags = ["--dut_platform", "linux"],
-        **kwargs
-    )
+    _packetdrill_variants(name, "linux", **kwargs)
 
 def packetdrill_netstack_test(name, **kwargs):
-    if "tags" not in kwargs:
-        kwargs["tags"] = PACKETDRILL_TAGS
+    _packetdrill_variants(name, "netstack", **kwargs)
+
+def _packetdrill_variants(name, platform, **kwargs):
+    tags = kwargs.pop("tags", PACKETDRILL_TAGS)
     _packetdrill_test(
         name = name,
-        flags = ["--dut_platform", "netstack"],
+        flags = ["--dut_platform", platform],
+        tags = tags,
+        **kwargs
+    )
+    _packetdrill_test(
+        name = name + "_owned",
+        docker_config = "//test/packetdrill:docker_config",
+        exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+        flags = ["--dut_platform", platform],
+        tags = [tag for tag in tags if tag != "local"],
         **kwargs
     )
 

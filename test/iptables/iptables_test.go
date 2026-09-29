@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
 	"slices"
 	"sync"
 	"testing"
@@ -31,6 +32,11 @@ import (
 )
 
 var iptablesNFT = flag.Bool("iptables-nft", false, "run tests using iptables-nft instead of iptables-legacy")
+
+func TestMain(m *testing.M) {
+	flag.Parse()
+	os.Exit(dockerutil.RunTests(m.Run))
+}
 
 func isNFTMode() bool {
 	return *iptablesNFT
