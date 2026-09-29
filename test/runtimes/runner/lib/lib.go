@@ -18,11 +18,13 @@ package lib
 import (
 	"context"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -104,6 +106,38 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 	if err := d.Spawn(ctx, opts, "/proctor/proctor", "--pause"); err != nil {
 		return nil, fmt.Errorf("docker run failed: %v", err)
 	}
+	// Fork-only diagnostic: record PHP's own elapsed value after its original
+	// assertion. The timed loop, assertion, expected output and skip logic stay
+	// byte-for-byte intact. The private record dies with this container.
+	concatTiming := lang == "php" && image == "php8.3.7"
+	if concatTiming {
+		setupCtx, cancelSetup := context.WithTimeout(ctx, 30*time.Second)
+		output, err := d.Exec(setupCtx, dockerutil.ExecOpts{Privileged: true, User: "0"}, "sapi/cli/php", "-r", `
+$path = 'Zend/tests/concat_003.phpt';
+$expected = 'd8059182096368485e2943948c2d50520a213e4b35962631d5e82f9f846eb985';
+if (hash_file('sha256', $path) !== $expected) {
+    fwrite(STDERR, "Unexpected original concat_003.phpt hash\n");
+    exit(1);
+}
+if (!mkdir('/proctor/concat-timing', 0700)) {
+    exit(1);
+}
+$original = file_get_contents($path);
+$anchor = 'var_dump($t < $t_max);';
+$addition = 'file_put_contents("/proctor/concat-timing/elapsed.json", json_encode(["elapsed_seconds" => $t, "limit_seconds" => $t_max]) . "\n");';
+$updated = str_replace($anchor, $anchor . "\n" . $addition, $original, $count);
+if ($count !== 1 || file_put_contents($path, $updated) !== strlen($updated)) {
+    fwrite(STDERR, "Could not instrument concat_003.phpt\n");
+    exit(1);
+}
+echo "PHP timing diagnostic: original SHA256 $expected\n";
+`)
+		cancelSetup()
+		if err != nil {
+			return nil, fmt.Errorf("PHP timing diagnostic setup failed: %v\n%s", err, output)
+		}
+		fmt.Print(output)
+	}
 
 	done := make(chan struct{})
 	go func() {
@@ -163,6 +197,7 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 			// No tests to add to this batch.
 			continue
 		}
+		collectConcatTiming := concatTiming && slices.Contains(tcs, "Zend/tests/concat_003.phpt")
 		itests = append(itests, testing.InternalTest{
 			Name: strings.Join(tcs, ", "),
 			F: func(t *testing.T) {
@@ -195,17 +230,38 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 
 				select {
 				case <-done:
-					if err == nil {
-						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
-						return
+					if collectConcatTiming {
+						readCtx, cancelRead := context.WithTimeout(ctx, 10*time.Second)
+						measurement, readErr := d.Exec(readCtx, dockerutil.ExecOpts{Privileged: true, User: "0"}, "cat", "/proctor/concat-timing/elapsed.json")
+						cancelRead()
+						var timing struct {
+							ElapsedSeconds *float64 `json:"elapsed_seconds"`
+							LimitSeconds   *float64 `json:"limit_seconds"`
+						}
+						decodeErr := json.Unmarshal([]byte(measurement), &timing)
+						if readErr != nil || decodeErr != nil || timing.ElapsedSeconds == nil || timing.LimitSeconds == nil || *timing.ElapsedSeconds < 0 || *timing.LimitSeconds != 1.0 {
+							t.Errorf("PHP concat timing requires a nonnegative elapsed value and limit 1.0: read=%v, decode=%v, record=%q", readErr, decodeErr, measurement)
+						} else {
+							fmt.Printf("PHP concat timing: %s\n", measurement)
+							if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" {
+								if writeErr := os.WriteFile(filepath.Join(dir, "concat-timing.json"), []byte(measurement), 0644); writeErr != nil {
+									t.Errorf("Could not save PHP concat timing: %v", writeErr)
+								}
+							}
+						}
 					}
-					// Keep the complete batch output even if the test log is truncated.
-					if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" {
+					// Also retain successful output for the instrumented batch so
+					// a PHP PASS can be distinguished from a PHP SKIP.
+					if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" && (err != nil || collectConcatTiming) {
 						name := filepath.Join(dir, fmt.Sprintf("batch-%d.log", i))
 						contents := fmt.Sprintf("Batch:\n%s\nOutput:\n%s\n", strings.Join(tcs, "\n"), output)
 						if err := os.WriteFile(name, []byte(contents), 0644); err != nil {
 							t.Errorf("Could not save batch output: %v", err)
 						}
+					}
+					if err == nil {
+						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
+						return
 					}
 					t.Fatalf("FAIL: (%v):\nBatch:\n%s\nOutput:\n%s\n", time.Since(now), strings.Join(tcs, "\n"), output)
 				// Add one minute to let proctor handle timeout.
