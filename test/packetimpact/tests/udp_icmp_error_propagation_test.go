@@ -305,6 +305,7 @@ func TestICMPErrorDuringUDPRecv(t *testing.T) {
 					t.Fatalf("did not receive message from DUT: %s", err)
 				}
 
+				icmpReceived := make(chan struct{})
 				var wg sync.WaitGroup
 				wg.Add(2)
 				go func() {
@@ -312,6 +313,7 @@ func TestICMPErrorDuringUDPRecv(t *testing.T) {
 
 					if wantErrno != unix.Errno(0) {
 						ret, _, err := dut.RecvWithErrno(context.Background(), t, remoteFD, 100, 0)
+						close(icmpReceived)
 						if ret != -1 {
 							t.Errorf("recv during ICMP error succeeded unexpectedly, expected (%[1]d) %[1]v", wantErrno)
 							return
@@ -342,6 +344,16 @@ func TestICMPErrorDuringUDPRecv(t *testing.T) {
 				time.Sleep(2 * time.Second)
 
 				sendICMPError(t, &conn, icmpErr, udp)
+
+				if wantErrno != unix.Errno(0) {
+					// The error must wake recv without an incoming UDP packet.
+					// Sending data first could hide a missing error notification.
+					select {
+					case <-icmpReceived:
+					case <-time.After(5 * time.Second):
+						t.Error("recv did not return the ICMP error before receiving UDP data")
+					}
+				}
 
 				conn.Send(t, testbench.UDP{DstPort: &cleanPort})
 				conn.Send(t, testbench.UDP{})
