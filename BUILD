@@ -1,6 +1,7 @@
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/actionlint:defs.bzl", "actionlint_test")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -124,10 +125,30 @@ yaml_test(
     schema = "//tools/nogo/config:schema.json",
 )
 
+filegroup(
+    name = "github_workflows",
+    srcs = glob([
+        ".github/workflows/**/*.yaml",
+        ".github/workflows/**/*.yml",
+    ]),
+)
+
 yaml_test(
     name = "github_workflows_test",
-    srcs = glob([".github/workflows/*.yml"]),
+    srcs = [":github_workflows"],
     schema = "@github_workflow_schema//file",
+)
+
+actionlint_test(
+    name = "github_actions_test",
+    srcs = [":github_workflows"],
+    # These optional configuration files may be absent.
+    # buildifier: disable=constant-glob
+    data = glob([
+        ".github/actionlint.yaml",
+        ".github/actionlint.yml",
+    ]),
+    target_compatible_with = ["@platforms//os:linux"],
 )
 
 filegroup(
