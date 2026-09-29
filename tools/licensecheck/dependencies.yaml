@@ -997,6 +997,12 @@
   commit: 3ea5e8cea73810f6d2951b37183cf91e19f63455
   sha256: 3d787d888485d08fda514dcc2c78461f0ad3dc70d489f0d84fb54e45fbf1deff
   license: Apache-2.0
+- dependency: kind_linux_amd64
+  version: https://github.com/kubernetes-sigs/kind/releases/download/v0.33.0/kind-linux-amd64
+  retrieved: "2026-09-28"
+  commit: 407a9675e6d9af1200b5f57f9ca52ec6cdacce74
+  sha256: aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d
+  license: Apache-2.0
 - dependency: kythe_release
   version: https://github.com/kythe/kythe/releases/download/v0.0.74/kythe-v0.0.74.tar.gz
   retrieved: "2026-08-27"
