@@ -127,10 +127,13 @@ yaml_test(
 
 filegroup(
     name = "github_workflows",
-    srcs = glob([
-        ".github/workflows/**/*.yaml",
-        ".github/workflows/**/*.yml",
-    ]),
+    srcs = glob(
+        [
+            ".github/workflows/**/*.yaml",
+            ".github/workflows/**/*.yml",
+        ],
+        allow_empty = True,
+    ),
 )
 
 yaml_test(
@@ -144,10 +147,13 @@ actionlint_test(
     srcs = [":github_workflows"],
     # These optional configuration files may be absent.
     # buildifier: disable=constant-glob
-    data = glob([
-        ".github/actionlint.yaml",
-        ".github/actionlint.yml",
-    ]),
+    data = glob(
+        [
+            ".github/actionlint.yaml",
+            ".github/actionlint.yml",
+        ],
+        allow_empty = True,
+    ),
     target_compatible_with = ["@platforms//os:linux"],
 )
 
