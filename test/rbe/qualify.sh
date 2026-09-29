@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website syscalls)
+lanes=(nogo unit smoke smoke-race release-artifacts docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -72,7 +72,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|syscalls) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -166,6 +166,13 @@ run_lane() {
       ;;
     podman)
       targets=(//test/podman:podman_test)
+      ;;
+    go-export)
+      if [[ $arch != amd64 ]]; then
+        printf 'The exported-module matrix runs on AMD64 workers.\n' >&2
+        return 2
+      fi
+      targets=(//tools/go_export:all_test)
       ;;
     website)
       if [[ $arch != amd64 ]]; then
