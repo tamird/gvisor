@@ -20,6 +20,7 @@ usage() {
   echo "usage: $0 <command> [args...]" >&2
   echo "Commands:" >&2
   echo "  build <dest-dir> [release-name]" >&2
+  echo "  version [release-name]" >&2
   echo "  upload-wheel <target-dir>" >&2
   echo "  all <dest-dir> <target-dir> [release-name]" >&2
   exit 1
@@ -28,68 +29,35 @@ usage() {
 # get_next_ar_version queries Artifact Registry for today's gvisor versions
 # and returns YYYY.MM.DD.<max_rev + 1>, or YYYY.MM.DD.0 if none exist.
 get_next_ar_version() {
-  local -r today="$(date +%Y.%m.%d)"
-  local versions=""
-
-  echo "=== [Version Discovery] Checking Artifact Registry for today's versions (${today}) ===" >&2
-
-  # Query AR via gcloud CLI
-  if command -v gcloud >/dev/null 2>&1; then
-    echo "Querying versions via: gcloud artifacts versions list --package=gvisor --repository=gvisor--pypi --location=us --project=oss-exit-gate-prod" >&2
-    versions=$(gcloud artifacts versions list \
-      --package=gvisor \
-      --repository=gvisor--pypi \
-      --location=us \
-      --project=oss-exit-gate-prod \
-      --format="value(version)" 2>/dev/null || true)
+  # Published PEP 440 versions have no zero padding in their date components.
+  local today
+  today=$(date +%Y.%m.%d | sed -E 's/[.]0([0-9])/.\1/g')
+  local versions max_rev
+  if ! command -v gcloud >/dev/null 2>&1; then
+    echo "Automatic version discovery requires gcloud; provide an explicit release name instead." >&2
+    return 1
   fi
+  versions=$(gcloud artifacts versions list \
+    --package=gvisor \
+    --repository=gvisor--pypi \
+    --location=us \
+    --project=oss-exit-gate-prod \
+    --format="value(version)")
 
-  if [[ -n "${versions}" ]]; then
-    echo "Found existing versions in Artifact Registry:" >&2
-    echo "${versions}" >&2
-  else
-    echo "No existing versions found in Artifact Registry for today (${today})." >&2
-  fi
-
-  # Find the highest revision for today
-  local max_rev=""
-  if [[ -n "${versions}" ]]; then
-    max_rev=$(echo "${versions}" | grep -E "^${today}\.[0-9]+$" | sed "s/^${today}\.//" | sort -n | tail -n 1)
-  fi
-
-  if [[ -n "${max_rev}" ]]; then
-    local -r next_rev=$((max_rev + 1))
-    echo "Highest existing revision: ${max_rev}. Next revision: ${next_rev}." >&2
-    echo "${today}.${next_rev}"
-  else
-    echo "Starting at revision 0 for today: ${today}.0" >&2
-    echo "${today}.0"
-  fi
+  max_rev=$(printf '%s\n' "${versions}" | sed -nE "s/^${today//./[.]}[.]([0-9]+)$/\1/p" | sort -n | tail -n 1)
+  printf '%s.%s\n' "${today}" "$(( ${max_rev:--1} + 1 ))"
 }
 
-# update_version converts release-YYYYMMDD.x to PEP 440 CalVer format YYYY.MM.DD.x
-# or resolves auto version from AR, and updates pyproject.toml in-place.
-update_version() {
+# resolve_version converts release-YYYYMMDD.x to CalVer format YYYY.MM.DD.x
+# or resolves the next version from AR. The build backend normalizes it under
+# PEP 440.
+resolve_version() {
   local -r release_name="${1:-}"
-  local wheel_version=""
-
-  echo "=== [Version Injection] Updating pyproject.toml version ==="
   if [[ "${release_name}" == "auto" ]] || [[ -z "${release_name}" ]]; then
-    echo "Resolving next dynamic version from Artifact Registry..."
-    wheel_version=$(get_next_ar_version)
-  elif [[ "${release_name}" =~ ^([0-9]{4})\.([0-9]{2})\.([0-9]{2})\.(.*)$ ]]; then
-    # Already in YYYY.MM.DD.x format
-    wheel_version="${release_name}"
+    get_next_ar_version
   else
     # Convert release-YYYYMMDD.x or YYYYMMDD.x to YYYY.MM.DD.x
-    wheel_version=$(echo "${release_name#release-}" | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})\.(.*)$/\1.\2.\3.\4/')
-  fi
-
-  if [[ -n "${wheel_version}" ]]; then
-    echo "Updating pyproject.toml version to: ${wheel_version}"
-    sed -i "s/^version = \".*\"/version = \"${wheel_version}\"/" pyproject.toml
-    echo "pyproject.toml version is now:"
-    grep "^version = " pyproject.toml || true
+    printf '%s\n' "${release_name#release-}" | sed -E 's/^([0-9]{4})([0-9]{2})([0-9]{2})\.(.*)$/\1.\2.\3.\4/'
   fi
 }
 
@@ -98,39 +66,11 @@ build_wheel_sdist() {
   local -r dest_dir="$1"
   local -r release_name="${2:-}"
 
-  echo "=== [Build] Building Python SandboxExec Wheel & SDist ==="
   mkdir -p "${dest_dir}"
-  local -r abs_dest_dir="$(cd "${dest_dir}" && pwd)"
-  cd "$(dirname "$0")/../sandboxexec/sandbox/python"
-  echo "Working directory: $(pwd)"
-  echo "Target destination directory: ${abs_dest_dir}"
-
-  update_version "${release_name}"
-
-  # Build wheel and sdist (with fallback to --no-isolation or uv build)
-  echo "Building distribution packages..."
-  if python3 -m build 2>/dev/null; then
-    echo "Successfully built wheel and sdist with python3 -m build."
-  elif python3 -m build --no-isolation 2>/dev/null; then
-    echo "Successfully built wheel and sdist with python3 -m build --no-isolation."
-  elif command -v uv >/dev/null 2>&1; then
-    echo "python3 -m build not available, building with uv build..."
-    uv build
-  else
-    echo "ERROR: Neither python3 -m build nor uv build found to build Python artifacts." >&2
-    return 1
-  fi
-
-  echo "Generated artifacts in dist/:"
-  ls -lh dist/
-
-  echo "Copying artifacts to ${abs_dest_dir}..."
-  cp -f dist/*.whl "${abs_dest_dir}/"
-  cp -f dist/*.tar.gz "${abs_dest_dir}/"
-
-  echo "Staged Python artifacts in ${abs_dest_dir}:"
-  ls -lh "${abs_dest_dir}"
-  echo "=== [Build] Python build complete! ==="
+  local abs_dest_dir
+  abs_dest_dir="$(cd "${dest_dir}" && pwd)"
+  make -C "$(dirname "$0")/.." artifacts-python \
+    "RELEASE_NAME=${release_name}" "PYTHON_RELEASE_DEST=${abs_dest_dir}"
 }
 
 # ensure_twine_prerequisites checks if twine is available on the system.
@@ -218,6 +158,12 @@ main() {
   shift
 
   case "${cmd}" in
+    version)
+      if [[ "$#" -gt 1 ]]; then
+        usage
+      fi
+      resolve_version "${1:-}"
+      ;;
     build)
       if [[ "$#" -lt 1 ]]; then
         usage

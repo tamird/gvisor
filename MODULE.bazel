@@ -116,9 +116,27 @@ http_archive(
 )
 
 ### Python
+PYTHON_VERSION = "3.11"
+
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
-python.defaults(python_version = "3.11")
-python.toolchain(python_version = "3.11")
+python.defaults(python_version = PYTHON_VERSION)
+python.toolchain(python_version = PYTHON_VERSION)
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    # Reject source archives instead of building wheels during dependency fetching.
+    # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L520-L550
+    download_only = True,
+    # Select Bazel's downloader instead of pip so the license audit can see the
+    # wheels' URLs and hashes in Bazel's resolved repository records.
+    # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L216-L241
+    # https://github.com/bazel-contrib/rules_python/blob/d3ea89311/python/private/pypi/hub_builder.bzl#L557-L559
+    experimental_index_url = "https://pypi.org/simple",
+    hub_name = "python_distribution_deps",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//tools/python_distribution:requirements.txt",
+)
+use_repo(pip, "python_distribution_deps")
 
 ### Release repository test tools
 # Keep all package resolution at an immutable snapshot. No package installation
