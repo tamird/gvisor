@@ -120,6 +120,20 @@ func WriteMounts(mountsFD int, mounts []specs.Mount) error {
 // configuration and subsequent entries correspond to spec mounts with
 // mount configs.
 func SetupRootFS(spec *specs.Spec, conf *config.Config, mountConfs []specutils.GoferMountConf, devIoFD int, mountOpener MountOpener, containerID string, bundleDir string) error {
+	rootfsConf := mountConfs[0]
+	hasCreateContainerHooks := spec.Hooks != nil && len(spec.Hooks.CreateContainer) > 0
+	if rootfsConf.ShouldUseLisafs() && hasCreateContainerHooks {
+		root, err := filepath.EvalSymlinks(spec.Root.Path)
+		if err != nil {
+			return fmt.Errorf("resolving rootfs for createContainer hooks: %w", err)
+		}
+		// Hook preparation requires a self-bind mount, which cannot safely
+		// overmount the process root. Check aliases before changing any mounts.
+		if root == "/" {
+			return fmt.Errorf("createContainer hooks are not supported with rootfs %q resolving to /", spec.Root.Path)
+		}
+	}
+
 	// Convert all shared mounts into slaves to be sure that nothing will be
 	// propagated outside of our namespace.
 	procPath := "/proc"
@@ -172,8 +186,6 @@ func SetupRootFS(spec *specs.Spec, conf *config.Config, mountConfs []specutils.G
 		procPath = "/proc/fs/proc"
 	}
 
-	rootfsConf := mountConfs[0]
-	hasCreateContainerHooks := spec.Hooks != nil && len(spec.Hooks.CreateContainer) > 0
 	if rootfsConf.ShouldUseLisafs() {
 		if !hasCreateContainerHooks {
 			// Prepare the root at its named staging path. When spec.Root.Path
