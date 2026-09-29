@@ -385,3 +385,23 @@ runsc release. The shell tests share the Go suites' daemon lifecycle and report
 command and cleanup failures. Kernel netfilter support remains a worker
 requirement; missing features are errors. Native ARM64 images are declared,
 but ARM64 Firecracker capacity remains unqualified.
+
+The AMD64 website lane builds and checks the complete website filesystem and
+packages its deployable image without a Docker daemon on the coordinator:
+
+```sh
+test/rbe/qualify.sh website
+```
+
+`//website:files` uses the existing published Jekyll tool image, pinned by digest
+for remote execution, and the declared source build and HTMLProofer scripts.
+It retains the generated documentation, future-dated pages, static overlay and
+local-link checks from `make website-build`. `//website:image` packages the
+same scratch filesystem with the Linux server, CA certificate, `/server`
+entrypoint and port 8080. The image contains the website payload, not the
+Jekyll tool environment.
+
+The installed `make website-build`, `website-server`, `website-push` and
+`website-deploy` adapters retain their Docker import and selected image name.
+The remote lane builds the artifact; it does not publish or deploy it. The
+public website job is AMD64, and this lane makes no ARM64 qualification claim.
