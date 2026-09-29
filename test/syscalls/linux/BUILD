@@ -3381,6 +3381,7 @@ cc_library(
         "//test/util:cleanup",
         "//test/util:file_descriptor",
         "//test/util:posix_error",
+        "//test/util:save_util",
         "//test/util:socket_util",
         "//test/util:test_util",
     ],
