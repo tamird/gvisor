@@ -112,11 +112,27 @@ layout. Both invocations use `--config=rbe` for AMD64 execution, paired with
 The lane preserves the public release test's default compilation mode; it
 does not execute the ARM64 binaries or qualify native ARM64 runtime tests.
 
-Building these artifacts is only part of the public release test. Its
-`make release` step also generates the release repository with a temporary
-signing key; that workflow remains unqualified. The separate staged-binary
-check requires the real staged archive and also remains unqualified. This
-lane does not sign or publish artifacts.
+Building these artifacts is only part of the public release test. The release
+repository lane also exercises its `make release` scripts:
+
+```sh
+test/rbe/qualify.sh release-repository
+```
+
+The AMD64 test cross-builds the same three packages for both architectures and
+runs `tools/make_release.sh` and `tools/make_apt.sh` with an ephemeral test key.
+Make and the test share the key-generation script. The test verifies both Debian
+package signatures, signed APT metadata and raw archive checksums; only public
+verification metadata is retained as test output. The packages keep the public
+build's default compilation and stripping settings.
+
+A declared OCI image supplies the release tools from an immutable Ubuntu Jammy
+APT snapshot. The existing private Docker fixture owns the daemon, and native
+runc executes the scripts with networking disabled. Only the declared scripts
+and packages are mounted: no Git metadata or publishing script is present, so
+the canonical release script generates its master repository. The test neither
+publishes artifacts nor exercises tagged or nightly publication. The separate
+staged-binary check requires the real staged archive and remains unqualified.
 
 The maintained Docker lane has an explicit action-owned setup:
 
