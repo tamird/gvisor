@@ -10,6 +10,10 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//test/packetimpact:__subpackages__"],
+    deps = [
+        "//tools:defs_bzl",
+        "//tools/bazeldefs:platforms_bzl",
+    ],
 )
 
 go_binary(
