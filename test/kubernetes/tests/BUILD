@@ -1,5 +1,5 @@
 load("//test/docker:defs.bzl", "docker_daemon_config", "docker_image_archive")
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "native_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
@@ -45,9 +45,30 @@ docker_daemon_config(
 )
 
 go_test(
-    name = "kind_test",
+    name = "kind_test_binary",
     size = "large",
     srcs = ["kind_test.go"],
+    library = ":hello",
+    rundir = ".",
+    tags = ["manual"],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
+        "//test/kubernetes/k8sctx",
+        "//test/kubernetes/testcluster",
+        "@io_k8s_api//node/v1:go_default_library",
+        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
+        "@io_k8s_client_go//kubernetes:go_default_library",
+        "@io_k8s_client_go//tools/clientcmd:go_default_library",
+    ],
+)
+
+# Keep runtime-only architecture constraints outside Nogo's portable Go graph.
+native_test(
+    name = "kind_test",
+    size = "large",
+    src = ":kind_test_binary",
     args = [
         "--docker_test_config=$(rootpath :kind_docker_config)",
         "--runtime=runc",
@@ -59,21 +80,11 @@ go_test(
         "//test/docker:images_basic_alpine_amd64_tar",
         "@kind_linux_amd64//file",
     ],
+    # Preserve rules_go's runfiles-directory initialization in the executable.
+    env = {"GO_TEST_RUN_FROM_BAZEL": "1"},
     exec_properties = docker_test_exec_properties(free_disk = "20GB"),
-    library = ":hello",
-    rundir = ".",
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
-    deps = [
-        "//pkg/test/dockerutil",
-        "//pkg/test/testutil",
-        "//test/kubernetes/k8sctx",
-        "//test/kubernetes/testcluster",
-        "@io_k8s_api//node/v1:go_default_library",
-        "@io_k8s_apimachinery//pkg/apis/meta/v1:go_default_library",
-        "@io_k8s_client_go//kubernetes:go_default_library",
-        "@io_k8s_client_go//tools/clientcmd:go_default_library",
-    ],
 )
 
 go_library(
