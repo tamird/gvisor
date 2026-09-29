@@ -28,6 +28,7 @@ bzl_library(
         "//tools:arch_bzl",
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
+        "@bazel_skylib//lib:shell",
         "@rules_oci//oci:defs",
     ],
 )

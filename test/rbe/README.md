@@ -364,3 +364,24 @@ requirements still need hosted validation.
 The portable Go binary retains both-architecture Nogo analysis. The native
 test wrapper owns the AMD64 runtime inputs and does not forward Go coverage
 metadata, so Kubernetes Go coverage remains unqualified.
+
+The networking lanes reuse the existing iptables, nftables and packetdrill
+suites with declared image archives and a private Docker daemon:
+
+```sh
+test/rbe/qualify.sh iptables nftables packetdrill
+```
+
+The iptables lane includes the legacy client, nftables-compatible client and
+Docker DNS-rule reproduction check. The nftables lane runs the existing Go
+suite under both runc and runsc, plus the native netfilter syscall binary in
+the nftables image. Their private bridges use the IPv6 configuration documented
+by those suites. Runtime modes are shared with the installed Make adapters.
+Existing unsupported nftables cases retain their explicit skips.
+
+Packetdrill retains all seven scripts against Linux and netstack. The wire
+server and Linux DUT explicitly use runc; the netstack DUT uses the declared
+runsc release. The shell tests share the Go suites' daemon lifecycle and report
+command and cleanup failures. Kernel netfilter support remains a worker
+requirement; missing features are errors. Native ARM64 images are declared,
+but ARM64 Firecracker capacity remains unqualified.

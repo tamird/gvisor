@@ -180,6 +180,12 @@ configure = $(call configure_noreload,$(1),$(2)) && $(reload_docker) && $(call w
 # Helpers for above. Requires $(RUNTIME_BIN) dependency.
 install_runtime = $(call configure,$(1),$(2) --TESTONLY-test-name-env=RUNSC_TEST_NAME)
 install_runtime_noreload = $(call configure_noreload,$(1),$(2) --TESTONLY-test-name-env=RUNSC_TEST_NAME)
+# Install one mode shared with a declared Docker test. Arguments: suite, mode,
+# installed runtime name.
+install_runtime_variant = \
+  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --variant=$(2) --runsc="$(RUNTIME_BIN)" --name="$(3)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") && \
+  sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)" && \
+  $(reload_docker) && $(call wait_for_runtime,$(3))
 # Don't use cached results, otherwise multiple runs using different runtimes
 # may be skipped, if all other inputs are the same.
 test_runtime = $(call test,--test_env=RUNTIME=$(1) --nocache_test_results $(PARTITIONS) $(2))
@@ -546,9 +552,9 @@ iptables-tests: load-iptables $(RUNTIME_BIN)
 	@sudo modprobe ip6table_nat
 	@# FIXME(b/218923513): Need to fix permissions issues.
 	@#$(call test,--test_env=RUNTIME=runc -- //test/iptables:iptables_test)
-	@$(call install_runtime,$(RUNTIME),--net-raw)
+	@$(call install_runtime_variant,netfilter,iptables,$(RUNTIME))
 	@$(call test_runtime,$(RUNTIME),--test_env=TEST_NET_RAW=true -- //test/iptables:iptables_test)
-	@$(call install_runtime,$(RUNTIME)-nftables,--net-raw --reproduce-nftables)
+	@$(call install_runtime_variant,netfilter,reproduce,$(RUNTIME)-nftables)
 	@$(call test_runtime,$(RUNTIME)-nftables,--test_env=TEST_NET_RAW=true --test_output=all -- //test/iptables:nftables_test)
 .PHONY: iptables-tests
 
@@ -556,7 +562,7 @@ iptables-tests: load-iptables $(RUNTIME_BIN)
 iptables-nft-tests: load-iptables $(RUNTIME_BIN)
 	@sudo modprobe nfnetlink
 	@sudo modprobe nf_tables
-	@$(call install_runtime,$(RUNTIME)-nftables,--net-raw --TESTONLY-nftables)
+	@$(call install_runtime_variant,netfilter,nftables,$(RUNTIME)-nftables)
 	@$(call test_runtime,$(RUNTIME)-nftables,--test_env=TEST_NET_RAW=true -- //test/iptables:iptables_nft_test)
 .PHONY: iptables-nft-tests
 
@@ -564,7 +570,7 @@ nftables-tests: load-nftables $(RUNTIME_BIN)
 	@sudo modprobe nfnetlink
 	@sudo modprobe nf_tables
 	@$(call test,--test_env=RUNTIME=runc -- //test/nftables:nftables_test) # run with runc
-	@$(call install_runtime,$(RUNTIME),--net-raw --TESTONLY-nftables)
+	@$(call install_runtime_variant,netfilter,nftables,$(RUNTIME))
 	@$(call test_runtime,$(RUNTIME),--test_env=TEST_NET_RAW=true -- //test/nftables:nftables_test) # run with runsc
 .PHONY: nftables-tests
 

@@ -1,5 +1,6 @@
 """Declared inputs and execution requirements for the maintained Docker suites."""
 
+load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "go_test")
@@ -58,6 +59,7 @@ def _daemon_config_impl(ctx):
         "runsc": runtime.short_path,
         "images": [archive.short_path for archive in ctx.files.images],
         "runtime_args": ctx.attr.runtime_args,
+        "ipv6": ctx.attr.ipv6,
     }))
     runfiles = ctx.runfiles(files = [runtime] + ctx.files.images)
     runfiles = runfiles.merge(ctx.attr.runtime[DefaultInfo].default_runfiles)
@@ -70,10 +72,11 @@ docker_daemon_config = rule(
         "runtime": attr.label(default = "//:release", executable = True, cfg = "target"),
         "images": attr.label_list(allow_files = True),
         "runtime_args": attr.string_list(),
+        "ipv6": attr.bool(doc = "Enable the default Docker bridge's IPv6 subnet."),
     },
 )
 
-def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo = True, runtime_variants = None, **kwargs):
+def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo = True, runtime_variants = None, ipv6 = False, **kwargs):
     """Runs an existing Go suite against installed or declared Docker inputs.
 
     Args:
@@ -84,10 +87,11 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
       owned_args: Additional arguments for owned test entrypoints only.
       nogo: Whether this target owns static analysis of the test sources.
       runtime_variants: Optional named runtime arguments, test_args, data and tags for owned actions.
+      ipv6: Whether the owned daemon provides IPv6 on its default bridge.
       **kwargs: Remaining go_test arguments.
     """
-    if cohort == None and (owned_args or runtime_variants != None):
-        fail("owned arguments and runtime variants require an image cohort")
+    if cohort == None and (owned_args or runtime_variants != None or ipv6):
+        fail("owned arguments, runtime variants and IPv6 require an image cohort")
 
     # Bazel's native local attribute is nonconfigurable. Keep the installed
     # entrypoint and generate owned variants from the same source/deps.
@@ -116,6 +120,7 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
             name = config,
             testonly = True,
             runtime_args = variant.args,
+            ipv6 = ipv6,
             images = select_arch(
                 amd64 = ["//test/docker:images_" + _image_name(image) + "_amd64_tar" for image in amd64],
                 arm64 = ["//test/docker:images_" + _image_name(image) + "_arm64_tar" for image in images],
@@ -145,3 +150,38 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
             tags = ["manual"],
             visibility = kwargs.get("visibility"),
         )
+
+def _docker_command_test_impl(ctx):
+    command = ctx.executable.command
+    wrapper = ctx.executable._wrapper
+    config = ctx.file.docker_config
+    arguments = [
+        "--docker_test_config=" + config.short_path,
+        "--",
+        command.short_path,
+    ] + [ctx.expand_location(arg, targets = ctx.attr.data) for arg in ctx.attr.command_args]
+    runner = ctx.actions.declare_file(ctx.label.name + "-runner")
+    ctx.actions.write(runner, "\n".join([
+        "#!/bin/bash",
+        "exec %s %s \"$@\"" % (shell.quote(wrapper.short_path), " ".join([shell.quote(arg) for arg in arguments])),
+        "",
+    ]), is_executable = True)
+    runfiles = ctx.runfiles(files = [command, wrapper, config] + ctx.files.data)
+    for target in [ctx.attr.command, ctx.attr._wrapper, ctx.attr.docker_config] + ctx.attr.data:
+        dependency_runfiles = target[DefaultInfo].default_runfiles
+        if dependency_runfiles:
+            runfiles = runfiles.merge(dependency_runfiles)
+    return [DefaultInfo(executable = runner, runfiles = runfiles)]
+
+docker_command_test = rule(
+    implementation = _docker_command_test_impl,
+    doc = "Runs a declared command with the shared private Docker test daemon.",
+    test = True,
+    attrs = {
+        "command": attr.label(mandatory = True, executable = True, cfg = "target", allow_files = True),
+        "command_args": attr.string_list(doc = "Command arguments, with location expansion against data."),
+        "data": attr.label_list(allow_files = True),
+        "docker_config": attr.label(mandatory = True, allow_single_file = True),
+        "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "target"),
+    },
+)

@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap packetimpact language-directfs language-goferfs kubernetes podman syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -36,7 +36,7 @@ gaps() {
   cat <<'GAPS'
 Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
 host systemd cgroup manager and alternate host kernels; the full save/restore
-and coverage matrices; packetdrill, iptables, nftables, GPU, and network-plugin lanes.
+and coverage matrices; GPU and network-plugin lanes.
 GAPS
 }
 
@@ -69,7 +69,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|language-directfs|language-goferfs|kubernetes|podman|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -134,6 +134,9 @@ run_lane() {
       ;;
     packetimpact)
       targets=(//test/packetimpact/tests:all_tests)
+      ;;
+    iptables|nftables|packetdrill)
+      targets=("//test/$lane:owned_tests")
       ;;
     language-directfs|language-goferfs)
       if [[ $arch != amd64 ]]; then

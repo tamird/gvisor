@@ -42,6 +42,7 @@ type daemonInputs struct {
 	Runsc       string   `json:"runsc"`
 	Images      []string `json:"images"`
 	RuntimeArgs []string `json:"runtime_args"`
+	IPv6        bool     `json:"ipv6"`
 }
 
 // RunTests runs a Docker integration suite. Callers must parse flags first.
@@ -168,6 +169,12 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		"default-runtime": runtimeName,
 		"experimental":    true,
 		"runtimes":        runtimes,
+	}
+	if inputs.IPv6 {
+		// Match the bridge configuration required by the iptables/nftables
+		// suites. Each owned daemon runs in its own test network namespace.
+		daemonConfig["ipv6"] = true
+		daemonConfig["fixed-cidr-v6"] = "2001:db8:1::/64"
 	}
 	var cgroupParent string
 	if cgroup.IsOnlyV2() {
