@@ -29,6 +29,12 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; the script does not install tools or start a builder container.
 Normal Bazel caching remains enabled.
 
+The `workflows` lane runs the declared actionlint check and the existing GitHub
+and Buildkite schema tests. Actionlint uses the same workflow inputs as the
+GitHub schema check; `tools/lint.sh actions` invokes that same Bazel owner.
+Other source linters, governance checks, license headers and CodeQL remain
+outside this lane.
+
 Select ARM64 targets with `--arch=arm64`, for example:
 
 ```sh
