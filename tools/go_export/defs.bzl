@@ -3,6 +3,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_context")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:go.bzl", "go_rule")
 
 def _module_build_impl(ctx):
@@ -57,3 +58,11 @@ module_build = go_rule(
         "_proxy_root": attr.label(default = "@exported_go_modules//:modules/cache/download/ROOT", allow_single_file = True),
     },
 )
+
+# The exported Linux build includes cgo even when gVisor is built in pure mode.
+# Keep the source archive in the caller's configuration: changing its Go mode
+# would regenerate sources instead of checking the same exported module.
+cgo_module_build, _cgo_module_build_reset = with_cfg(module_build).set(
+    Label("@io_bazel_rules_go//go/config:pure"),
+    False,
+).resettable(Label(":cgo_original_settings")).reset_on_attrs("archive").build()
