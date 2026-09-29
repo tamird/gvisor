@@ -59,6 +59,85 @@ func kindCommand(ctx context.Context, t *testing.T, executable string, args ...s
 	return nil
 }
 
+// diagnoseKindNetfilter is a fork-only comparison using a fresh endpoint on the
+// failed node's Docker network. It does not inspect the stopped node's namespace.
+func diagnoseKindNetfilter(t *testing.T, node string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	output, err := exec.CommandContext(ctx, "docker", "inspect", "--format={{.HostConfig.NetworkMode}}", node).CombinedOutput()
+	if err != nil {
+		t.Errorf("inspect failed node network: %v: %s", err, output)
+		return
+	}
+	network := strings.TrimSpace(string(output))
+	if network != "kind" {
+		t.Errorf("diagnostic requires the actual kind network, got %q", network)
+		return
+	}
+	t.Logf("Netfilter diagnostic: fresh native endpoint on network %q, image %q", network, kindNodeImage)
+	for _, tool := range []string{"iptables-legacy", "ip6tables-legacy", "iptables-nft", "ip6tables-nft"} {
+		if err := kindCommand(ctx, t, tool, "--version"); err != nil {
+			t.Errorf("host netfilter version: %v", err)
+		}
+	}
+	d := dockerutil.MakeNativeContainer(ctx, t)
+	if d == nil {
+		t.Error("create native diagnostic client")
+		return
+	}
+	defer func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cleanupCancel()
+		if err := d.CleanUp(cleanupCtx); err != nil {
+			t.Errorf("clean up netfilter diagnostic container: %v", err)
+		}
+	}()
+	const commands = `set -u
+status=0
+errors=$(mktemp)
+run() {
+  printf '\nBEGIN stdout: %s\n' "$*"
+  if timeout 5 "$@" 2>"$errors"; then rc=0; else rc=$?; status=1; fi
+  printf '\nEND stdout: status=%s\nBEGIN stderr\n' "$rc"
+  cat "$errors"
+  printf '\nEND stderr\n'
+}
+run uname -a
+run cat /etc/resolv.conf
+run grep -E '^nameserver[[:space:]]+127\.0\.0\.11([[:space:]]|$)' /etc/resolv.conf
+run cat /proc/net/ip_tables_names /proc/net/ip_tables_matches /proc/net/ip_tables_targets
+for tool in iptables-legacy ip6tables-legacy iptables-nft ip6tables-nft; do
+  run "$tool" --version
+  run "$tool-save"
+done
+rm -f "$errors"
+exit "$status"
+`
+	outputText, err := d.Run(ctx, dockerutil.RunOpts{
+		Image:        "kubernetes/node:latest",
+		Entrypoint:   []string{"/bin/sh"},
+		Privileged:   true,
+		NetworkMode:  network,
+		CgroupnsMode: "private",
+	}, "-c", commands)
+	if err != nil && ctx.Err() != nil {
+		logCtx, logCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		partial, logErr := d.Logs(logCtx)
+		logCancel()
+		if partial != "" {
+			outputText = partial
+		}
+		if logErr != nil {
+			t.Errorf("collect partial netfilter diagnostic logs: %v", logErr)
+		}
+	}
+	t.Logf("Native node-image netfilter diagnostic:\n%s", outputText)
+	if err != nil {
+		t.Errorf("netfilter diagnostic: %v", err)
+	}
+}
+
 // TestKindHello runs the maintained Kubernetes smoke test on a private cluster.
 // The outer nodes use native runc; the RuntimeClass selects the declared runsc.
 func TestKindHello(t *testing.T) {
@@ -103,6 +182,7 @@ func TestKindHello(t *testing.T) {
 	t.Setenv("KIND_EXPERIMENTAL_PROVIDER", "docker")
 	t.Setenv("KIND_EXPERIMENTAL_DOCKER_NETWORK", "")
 	t.Setenv("KUBECONFIG", kubeconfig)
+	t.Setenv("UNSANDBOXED_RUNTIME", "runc")
 	logDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
 	if logDir == "" {
 		logDir = work
@@ -111,6 +191,7 @@ func TestKindHello(t *testing.T) {
 	// because test/setup cancellation must not prevent resource cleanup.
 	t.Cleanup(func() {
 		if t.Failed() {
+			diagnoseKindNetfilter(t, node)
 			logCtx, logCancel := context.WithTimeout(context.Background(), 30*time.Second)
 			if err := kindCommand(logCtx, t, kind, "export", "logs", "--name", name, filepath.Join(logDir, name)); err != nil {
 				t.Errorf("export kind logs: %v", err)
