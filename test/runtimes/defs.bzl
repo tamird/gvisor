@@ -123,7 +123,7 @@ def runtime_test(name, partitions, memory = None, **kwargs):
                 "--platform=systrap",
                 "--watchdog-action=panic",
                 "--directfs=" + ("true" if directfs else "false"),
-            ],
+            ] + (["--profile=true"] if name == "php8.3.7" else []),
             tags = ["manual"],
         )
         tests = []

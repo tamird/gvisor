@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -67,11 +68,51 @@ type Filter func(test string) bool
 // RunTests is a helper that is called by main. It exists so that we can run
 // deferred functions before exiting. It returns an exit code that should be
 // passed to os.Exit.
-func RunTests(lang, image string, filter Filter, batchSize int, timeout time.Duration, proctorSettings ProctorSettings) int {
+func RunTests(lang, image string, filter Filter, batchSize int, timeout time.Duration, proctorSettings ProctorSettings) (status int) {
+	// Fork-only diagnostic: reuse Docker profiling and retain its files with
+	// the existing timing record. Native runs are outside this profile.
+	profileDir := ""
+	if lang == "php" && image == "php8.3.7" {
+		outputDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+		if outputDir == "" || dockerutil.Runtime() != "runsc" {
+			fmt.Fprintln(os.Stderr, "PHP profile requires undeclared outputs and runtime runsc")
+			return 1
+		}
+		profileDir = filepath.Join(outputDir, "concat-profiles")
+		for name, value := range map[string]string{
+			"pprof-cpu": "true",
+			"go-trace":  "true",
+			"pprof-dir": profileDir,
+		} {
+			if err := flag.Set(name, value); err != nil {
+				fmt.Fprintf(os.Stderr, "enable PHP profile: %v\n", err)
+				return 1
+			}
+		}
+	}
 	// Construct the shared docker instance.
 	ctx := context.Background()
 	d := dockerutil.MakeContainer(ctx, testutil.DefaultLogger(lang))
-	defer d.CleanUp(ctx)
+	defer func() {
+		cleanupErr := d.CleanUp(ctx)
+		if profileDir == "" {
+			return
+		}
+		if cleanupErr != nil {
+			fmt.Fprintf(os.Stderr, "clean up PHP profile container: %v\n", cleanupErr)
+			status = 1
+		}
+		// The existing profiler warns on errors; this diagnostic requires both
+		// artifacts after cleanup has stopped and joined the profile process.
+		for _, name := range []string{"cpu.pprof", "sentry.trace"} {
+			path := filepath.Join(profileDir, "runsc", lang, "runtimes", image, name)
+			info, err := os.Stat(path)
+			if err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
+				fmt.Fprintf(os.Stderr, "PHP profile %s missing or empty: %v\n", path, err)
+				status = 1
+			}
+		}
+	}()
 
 	if err := testutil.TouchShardStatusFile(); err != nil {
 		fmt.Fprintf(os.Stderr, "error touching status shard file: %v\n", err)
@@ -124,7 +165,7 @@ if (!mkdir('/proctor/concat-timing', 0700)) {
 }
 $original = file_get_contents($path);
 $anchor = 'var_dump($t < $t_max);';
-$addition = 'file_put_contents("/proctor/concat-timing/elapsed.json", json_encode(["elapsed_seconds" => $t, "limit_seconds" => $t_max]) . "\n");';
+$addition = 'file_put_contents("/proctor/concat-timing/elapsed.json", json_encode(["elapsed_seconds" => $t, "limit_seconds" => $t_max, "pid" => getmypid(), "start_unix_seconds" => $time]) . "\n");';
 $updated = str_replace($anchor, $anchor . "\n" . $addition, $original, $count);
 if ($count !== 1 || file_put_contents($path, $updated) !== strlen($updated)) {
     fwrite(STDERR, "Could not instrument concat_003.phpt\n");
@@ -235,12 +276,14 @@ echo "PHP timing diagnostic: original SHA256 $expected\n";
 						measurement, readErr := d.Exec(readCtx, dockerutil.ExecOpts{Privileged: true, User: "0"}, "cat", "/proctor/concat-timing/elapsed.json")
 						cancelRead()
 						var timing struct {
-							ElapsedSeconds *float64 `json:"elapsed_seconds"`
-							LimitSeconds   *float64 `json:"limit_seconds"`
+							ElapsedSeconds   *float64 `json:"elapsed_seconds"`
+							LimitSeconds     *float64 `json:"limit_seconds"`
+							PID              *int     `json:"pid"`
+							StartUnixSeconds *float64 `json:"start_unix_seconds"`
 						}
 						decodeErr := json.Unmarshal([]byte(measurement), &timing)
-						if readErr != nil || decodeErr != nil || timing.ElapsedSeconds == nil || timing.LimitSeconds == nil || *timing.ElapsedSeconds < 0 || *timing.LimitSeconds != 1.0 {
-							t.Errorf("PHP concat timing requires a nonnegative elapsed value and limit 1.0: read=%v, decode=%v, record=%q", readErr, decodeErr, measurement)
+						if readErr != nil || decodeErr != nil || timing.ElapsedSeconds == nil || timing.LimitSeconds == nil || *timing.ElapsedSeconds < 0 || *timing.LimitSeconds != 1.0 || timing.PID == nil || *timing.PID <= 0 || timing.StartUnixSeconds == nil || *timing.StartUnixSeconds <= 0 {
+							t.Errorf("PHP concat timing requires elapsed>=0, limit1, positive PID and start time: read=%v, decode=%v, record=%q", readErr, decodeErr, measurement)
 						} else {
 							fmt.Printf("PHP concat timing: %s\n", measurement)
 							if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" {
