@@ -58,7 +58,7 @@ index 68a1d3b9..53c38cb2 100644
 +        ),
      ]
  
- go_tool_library = rule(
+ go_tool_library = go_rule(
 diff --git a/go/private/rules/test.bzl b/go/private/rules/test.bzl
 index dcb4eb63..660505b4 100644
 --- a/go/private/rules/test.bzl
