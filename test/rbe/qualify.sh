@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap language-directfs language-goferfs syscalls)
+lanes=(nogo unit smoke smoke-race docker root portforward posture startup containerd bwrap language-directfs language-goferfs website syscalls)
 
 usage() {
   cat <<'USAGE'
@@ -69,7 +69,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|language-directfs|language-goferfs|syscalls) ;;
+    nogo|unit|smoke|smoke-race|docker|root|portforward|posture|startup|containerd|bwrap|language-directfs|language-goferfs|website|syscalls) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -87,7 +87,7 @@ if [[ $arch == arm64 ]]; then
 fi
 
 run_lane() {
-  local lane=$1
+  local lane=$1 command=test
   local -a options=() targets=()
   case "$lane" in
     nogo)
@@ -145,14 +145,24 @@ run_lane() {
         "--test_env=RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT=${RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT:-true}")
       targets=("//test/runtimes:${lane#language-}_tests")
       ;;
+    website)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public website lane is qualified only for AMD64.\n' >&2
+        return 2
+      fi
+      command=build
+      targets=(//website:image)
+      ;;
     syscalls)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror
         '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
       ;;
   esac
-  bazel test "${architecture_options[@]}" \
-    --strip=never --incompatible_sandbox_hermetic_tmp=false \
-    --keep_going --test_output=errors "${options[@]}" "${targets[@]}"
+  if [[ $command == test ]]; then
+    options+=(--strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors)
+  fi
+  bazel "$command" "${architecture_options[@]}" \
+    --keep_going "${options[@]}" "${targets[@]}"
 }
 
 status=0
