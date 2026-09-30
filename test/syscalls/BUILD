@@ -1376,6 +1376,9 @@ syscall_test(
 )
 
 syscall_test(
+    # Linux sizes its host thread limit from guest RAM. The thousand-thread
+    # case also needs ptrace tracer and tracee threads.
+    memory = "1GB",
     test = "//test/syscalls/linux:processes_test",
 )
 
