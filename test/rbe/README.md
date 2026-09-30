@@ -8,10 +8,13 @@ authentication. No custom gVisor builder image is required.
 The CI-neutral entry point runs the implemented AMD64 lanes on that coordinator:
 
 ```sh
-test/rbe/qualify.sh amd64
+test/rbe/qualify.sh --header-base="$BASE_COMMIT" amd64
 ```
 
-Use `test/rbe/qualify.sh --list` to see the lanes and unqualified environments,
+Set `BASE_COMMIT` to the explicit comparison commit for license headers and
+provide complete local Git history. The dispatcher does not choose or fetch a
+comparison base. Use `test/rbe/qualify.sh --list` to see the lanes and
+unqualified environments,
 or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
@@ -27,14 +30,32 @@ The dispatcher uses the existing Nogo and unit configurations, the declared
 runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
 The lanes use separate Bazel invocations to preserve their different selections
 and instrumentation. Connection settings and credentials come from Bazel's
-configuration; the script does not install tools or start a builder container.
-Normal Bazel caching remains enabled.
+configuration; no builder container is started. Normal Bazel caching remains
+enabled.
 
 The `workflows` lane runs the declared actionlint check and the existing GitHub
 and Buildkite schema tests. Actionlint uses the same workflow inputs as the
 GitHub schema check; `tools/lint.sh actions` invokes that same Bazel owner.
-Other source linters, governance checks, license headers and CodeQL remain
-outside this lane.
+The separate `lint` lane calls `make lint DOCKER_BUILD=false`: five existing
+formatting and spelling checks run on the hosted coordinator, while actionlint
+runs as its declared remote test. The existing lint installer retains its tool
+versions, tracked-file selection, configuration discovery and canonical caches.
+The dispatcher supplies the declared Go SDK to bootstrap that installer. The
+`lint-cc` lane calls `make lint-cc DOCKER_BUILD=false`, retaining its configured
+compile actions and declared remote clang-tidy tool.
+
+The `governance` lane remotely builds the existing generator, then invokes
+`make governance-check DOCKER_BUILD=false` in the checkout. This retains its
+directory validation and generated-file comparison. These three source lanes
+require the hosted AMD64 coordinator. Their scoped Bazel configuration preserves
+the caller's rc files and does not introduce a cache or output base.
+
+The `license-headers` lane passes `--header-base` to the existing
+`tools/check_license_headers.sh` owner. It retains that owner's added-file
+selection and exclusions. The `python-distributions` lane builds
+`//sandboxexec/sandbox/python:dist` with the canonical metadata's version;
+registry version discovery, installation and publication are separate work.
+CodeQL remains owned by its scheduled GitHub workflow and is not covered here.
 
 Select ARM64 targets with `--arch=arm64`, for example:
 
