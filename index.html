@@ -31,9 +31,9 @@
           <button data-type="branch" aria-pressed="true"><i class="shape branch"></i>Branches</button>
           <button data-type="issue" aria-pressed="true"><i class="shape issue"></i>External</button>
         </div>
-        <div class="view-switch" aria-label="View"><button id="graph-view" aria-pressed="true">Map</button><button id="list-view" aria-pressed="false">List</button></div>
+        <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true">DAG</button><button id="graph-view" aria-pressed="false">Map</button><button id="list-view" aria-pressed="false">List</button></div>
       </div>
-      <div class="map-bar"><div><span id="visible-count">Loading the registry…</span><span class="dot-separator">·</span><label class="connected-option"><input id="connected-only" type="checkbox">Connected only</label><span class="dot-separator">·</span><label class="connected-option"><input id="show-resolved" type="checkbox">Show resolved PRs</label></div><button id="clear-focus" hidden>Clear focus <span aria-hidden="true">×</span></button></div>
+      <section id="ranking" class="ranking" aria-label="Dependency impact ranking"></section><p id="dag-note" class="dag-note">PREREQUISITES → DEPENDENTS <span>Active dependency chains only. Dashed integration membership is available in Map view.</span></p><p id="dag-warning" class="dag-warning" role="alert" hidden></p><div class="map-bar"><div><span id="visible-count">Loading the registry…</span><span class="dot-separator">·</span><label class="connected-option"><input id="connected-only" type="checkbox" disabled>Connected only</label><span class="dot-separator">·</span><label class="connected-option"><input id="show-resolved" type="checkbox" disabled>Show resolved PRs</label></div><button id="clear-focus" hidden>Clear focus <span aria-hidden="true">×</span></button></div>
       <div class="workspace-body">
         <section class="map-pane" aria-label="Dependency graph">
           <div class="graph-stage" id="graph-stage">

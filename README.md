@@ -63,6 +63,23 @@ status is cached in this browser only and can be removed by clearing site data.
 
 ### Interface
 
+The default **DAG** view lays out active prerequisites from left to right.
+Its **Most blocking PRs** ranking counts unique downstream open PRs (including
+drafts), over the complete active model, independently of display filters.
+The count includes direct and indirect descendants; the direct count is shown
+separately. A diamond counts the same descendant once. Only `depends_on` and
+`blocked_by` edges contribute; `includes` edges never contribute. Merged and
+closed PRs, and explicitly resolved blockers, cut blocking paths. A closed
+provider issue with unverified deployment remains unresolved capacity.
+
+External capacity blockers are ranked separately, including a zero open-PR
+count when they affect only branches. Branch-only work does not inflate a PR's
+score. These counts measure recorded dependency reach, not severity, effort,
+or merge readiness. Selecting a ranking focuses its connected dependency chain.
+Cycles produce an explicit warning instead of a fabricated topological order.
+The grouped **Map** retains integration membership and isolated work, and
+**List** offers the complete text view.
+
 Search titles, numbers, refs, or summaries. Filter by workstream and item type,
 show connected work only, or use the list view. Select an item to see source
 links and incoming/outgoing relationships; **Focus this connected work** follows

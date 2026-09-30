@@ -5,7 +5,7 @@ const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-v1";
 const CACHE_AGE = 15 * 60 * 1000;
 const types = new Set(["pr", "branch", "issue"]);
-let registry, model, selected = null, focus = null, view = "map";
+let registry, model, selected = null, focus = null, view = "dag";
 let camera = { x: 18, y: 18, scale: 1 }, bounds = { width: 900, height: 600 };
 let refreshing = false, lastAttempt = 0, drag = null, moved = false;
 
@@ -53,12 +53,28 @@ function status(node) {
   return ({ branch: "Not yet a PR", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
 }
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
+function activeDependencyEdges() {
+  const active = new Set(model.nodes.filter((node) => !resolved(node) && node.status !== "resolved").map((node) => node.id));
+  return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
+}
+function displayEdges() { return view === "dag" ? activeDependencyEdges() : model.edges; }
+function impact(id) {
+  const edges = activeDependencyEdges(), nodes = nodeMap(), seen = new Set([id]), queue = [id];
+  const direct = new Set(edges.filter((edge) => edge.from === id && edge.to !== id && nodes.get(edge.to)?.type === "pr").map((edge) => edge.to));
+  while (queue.length) {
+    const current = queue.shift();
+    for (const edge of edges) if (edge.from === current && !seen.has(edge.to)) { seen.add(edge.to); queue.push(edge.to); }
+  }
+  seen.delete(id);
+  return { direct: direct.size, prs: [...seen].filter((other) => nodes.get(other)?.type === "pr").length,
+    branches: [...seen].filter((other) => nodes.get(other)?.type === "branch").length };
+}
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
 function neighbors(id, recursive = false) {
   const result = new Set([id]), queue = [id];
   while (queue.length) {
     const next = queue.shift();
-    for (const edge of model.edges) {
+    for (const edge of displayEdges()) {
       const other = edge.from === next ? edge.to : edge.to === next ? edge.from : null;
       if (other && !result.has(other)) { result.add(other); if (recursive) queue.push(other); }
     }
@@ -68,12 +84,12 @@ function neighbors(id, recursive = false) {
 function visibleNodes() {
   const search = $("search").value.toLowerCase().trim();
   const group = $("group-filter").value;
-  const connected = new Set(model.edges.flatMap((edge) => [edge.from, edge.to]));
+  const connected = new Set(displayEdges().flatMap((edge) => [edge.from, edge.to]));
   const focused = focus ? neighbors(focus, true) : null;
   return model.nodes.filter((node) => types.has(node.type)
-    && (!resolved(node) || $("show-resolved").checked)
+    && (!resolved(node) || (view !== "dag" && $("show-resolved").checked))
     && (!group || node.group === group)
-    && (!$("connected-only").checked || connected.has(node.id))
+    && (!(view === "dag" || $("connected-only").checked) || connected.has(node.id))
     && (!focused || focused.has(node.id))
     && (!search || `${node.title} ${node.number || ""} ${node.ref || ""} ${node.summary || ""}`.toLowerCase().includes(search)));
 }
@@ -109,13 +125,11 @@ function wrap(text, length = 29, maxLines = 3) {
   }
   return lines;
 }
-function drawGraph(nodes) {
-  const content = $("graph-content");
-  content.replaceChildren();
+function mapLayout(nodes, content) {
   const degree = (id) => model.edges.filter((edge) => edge.from === id || edge.to === id).length;
   const groups = model.groups.map((group) => ({ ...group, nodes: nodes.filter((node) => node.group === group.id)
     .sort((a, b) => degree(b.id) - degree(a.id) || a.title.localeCompare(b.title)) })).filter((group) => group.nodes.length);
-  const positions = new Map(), cardWidth = 246, cardHeight = 112, laneWidth = 274, gap = 22;
+  const positions = new Map(), cardHeight = 112, laneWidth = 274, gap = 22;
   const columns = Math.min(3, groups.length);
   let rowY = 0;
   for (let index = 0; index < groups.length; index += columns) {
@@ -130,10 +144,67 @@ function drawGraph(nodes) {
     });
     rowY += rowHeight + 26;
   }
-  bounds = { width: Math.max(columns * (laneWidth + gap) - gap, 1), height: Math.max(rowY - 26, 1) };
+  return { positions, width: Math.max(columns * (laneWidth + gap) - gap, 1), height: Math.max(rowY - 26, 1) };
+}
+function dagLayout(nodes, content) {
+  const ids = new Set(nodes.map((node) => node.id));
+  const edges = activeDependencyEdges().filter((edge) => ids.has(edge.from) && ids.has(edge.to));
+  const indegree = new Map(nodes.map((node) => [node.id, 0])), depth = new Map(nodes.map((node) => [node.id, 0]));
+  for (const edge of edges) indegree.set(edge.to, indegree.get(edge.to) + 1);
+  const queue = nodes.filter((node) => !indegree.get(node.id)).map((node) => node.id);
+  let visited = 0;
+  while (queue.length) {
+    const id = queue.shift(); visited++;
+    for (const edge of edges) if (edge.from === id) {
+      depth.set(edge.to, Math.max(depth.get(edge.to), depth.get(id) + 1));
+      indegree.set(edge.to, indegree.get(edge.to) - 1);
+      if (!indegree.get(edge.to)) queue.push(edge.to);
+    }
+  }
+  if (visited !== nodes.length) throw new Error("A dependency cycle is recorded. Use Map or List to inspect it; a DAG cannot represent this data.");
+  const remaining = new Set(ids), components = [];
+  while (remaining.size) {
+    const first = remaining.values().next().value, members = new Set([first]), pending = [first]; remaining.delete(first);
+    while (pending.length) {
+      const id = pending.shift();
+      for (const edge of edges) {
+        const other = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
+        if (other && remaining.has(other)) { remaining.delete(other); members.add(other); pending.push(other); }
+      }
+    }
+    components.push([...members]);
+  }
+  const byId = nodeMap(), score = (component) => Math.max(...component.filter((id) => byId.get(id).type === "pr").map((id) => impact(id).prs), 0);
+  components.sort((a, b) => score(b) - score(a) || b.length - a.length);
+  const positions = new Map(); let y = 44, width = 1;
+  for (const [index, members] of components.entries()) {
+    const columns = new Map();
+    for (const id of members) { const level = depth.get(id); if (!columns.has(level)) columns.set(level, []); columns.get(level).push(id); }
+    const height = Math.max(...[...columns.values()].map((column) => column.length)) * 138;
+    const componentWidth = (Math.max(...columns.keys()) + 1) * 314 - 54;
+    width = Math.max(width, componentWidth);
+    const prs = members.filter((id) => byId.get(id).type === "pr").length;
+    content.append(svg("text", { class: "group-heading", x: 0, y: y - 15 }, `${prs ? "PR DEPENDENCY CHAIN" : "BRANCH & CAPACITY CHAIN"} ${index + 1} · ${prs} OPEN PR${prs === 1 ? "" : "S"}`));
+    for (const [level, column] of columns) {
+      column.sort((a, b) => impact(b).prs - impact(a).prs || byId.get(a).title.localeCompare(byId.get(b).title));
+      const offset = (height - column.length * 138) / 2;
+      column.forEach((id, row) => positions.set(id, { x: level * 314, y: y + offset + row * 138 }));
+    }
+    y += height + 65;
+  }
+  return { positions, width, height: Math.max(y - 30, 1) };
+}
+function drawGraph(nodes) {
+  const content = $("graph-content"); content.replaceChildren();
+  $("dag-warning").hidden = true;
+  let layout;
+  try { layout = view === "dag" ? dagLayout(nodes, content) : mapLayout(nodes, content); }
+  catch (error) { $("dag-warning").textContent = error.message; $("dag-warning").hidden = false; return; }
+  const { positions } = layout, cardWidth = 246, cardHeight = 112;
+  bounds = layout;
   const related = selected ? neighbors(selected) : null;
   const edges = svg("g", { "aria-hidden": "true" });
-  for (const edge of model.edges) {
+  for (const edge of displayEdges()) {
     const from = positions.get(edge.from), to = positions.get(edge.to);
     if (!from || !to) continue;
     let d;
@@ -158,7 +229,9 @@ function drawGraph(nodes) {
     group.append(svg("text", { class: "node-label", x: 14, y: 22 }, label(node)));
     wrap(node.title).forEach((line, index) => group.append(svg("text", { class: "node-title", x: 14, y: 44 + index * 16 }, line)));
     group.append(svg("circle", { class: `node-dot ${node.status}`, cx: 17, cy: 96, r: 2.5 }));
-    group.append(svg("text", { class: "node-status", x: 25, y: 99 }, status(node).slice(0, 37)));
+    const downstream = impact(node.id);
+    const subtitle = view === "dag" ? `${downstream.prs} downstream PR${downstream.prs === 1 ? "" : "s"} · ${downstream.direct} direct` : status(node).slice(0, 37);
+    group.append(svg("text", { class: "node-status", x: 25, y: 99 }, subtitle));
     group.append(svg("title", {}, `${node.title}\n${status(node)}`));
     group.addEventListener("click", () => { if (!moved) select(node.id); });
     group.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });
@@ -199,6 +272,11 @@ function drawDetails() {
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(element("span", "", label(node)), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
+  if (!resolved(node)) {
+    const downstream = impact(node.id), impactBox = element("div", "detail-impact");
+    impactBox.append(element("strong", "", downstream.prs), element("span", "", `unique downstream open PR${downstream.prs === 1 ? "" : "s"} · ${downstream.direct} direct`));
+    details.append(impactBox);
+  }
   if (node.summary) details.append(element("p", "detail-description", node.summary));
   if (node.promotedFrom) details.append(element("p", "detail-meta", `Now proposed upstream from ${node.promotedFrom}. Curated branch relationships are preserved.`));
   details.append(link(`Open ${node.type === "pr" ? "pull request" : node.type === "branch" ? "branch" : "source"} ↗`, node.url, "primary-link"));
@@ -227,22 +305,57 @@ function drawDetails() {
     }
     details.append(section);
   }
-  if (count) details.append(button("Focus this connected work ↗", () => { focus = node.id; $("search").value = ""; $("group-filter").value = ""; render(true, true); }, "focus-button"));
-  else details.append(element("p", "detail-description", "No dependency is recorded for this item. This is not a merge-readiness assessment."));
+  if (count && displayEdges().some((edge) => edge.from === node.id || edge.to === node.id)) details.append(button("Focus this connected work ↗", () => focusWork(node.id), "focus-button"));
+  else details.append(element("p", "detail-description", count ? "This item has no active dependency chain in this view. Integration membership and resolved work remain available in Map view." : "No dependency is recorded for this item. This is not a merge-readiness assessment."));
 }
 function select(id) {
   const focusedNode = document.activeElement?.getAttribute("data-node");
   selected = id;
   history.replaceState(null, "", id ? `#${encodeURIComponent(id)}` : location.pathname + location.search);
   render();
-  if (focusedNode) document.querySelector(`${view === "map" ? "#graph" : "#list"} [data-node="${CSS.escape(focusedNode)}"]`)?.focus();
+  if (focusedNode) document.querySelector(`${view !== "list" ? "#graph" : "#list"} [data-node="${CSS.escape(focusedNode)}"]`)?.focus();
+}
+function focusWork(id) {
+  focus = id; selected = id; $("search").value = ""; $("group-filter").value = "";
+  for (const type of ["pr", "branch", "issue"]) types.add(type);
+  document.querySelectorAll("[data-type]").forEach((node) => node.setAttribute("aria-pressed", "true"));
+  history.replaceState(null, "", `#${encodeURIComponent(id)}`);
+  render(true, true);
+}
+function drawRanking() {
+  const panel = $("ranking"); panel.replaceChildren(); panel.hidden = view !== "dag";
+  if (view !== "dag") return;
+  const heading = element("div", "ranking-heading");
+  heading.append(element("h2", "", "Most blocking PRs"), element("p", "", "Unique downstream open PRs, across all active dependencies. Drafts count; integration membership does not."));
+  panel.append(heading);
+  const ranked = model.nodes.filter((node) => node.type === "pr" && !resolved(node)).map((node) => ({ node, impact: impact(node.id) }))
+    .sort((a, b) => b.impact.prs - a.impact.prs || b.impact.direct - a.impact.direct || a.node.number - b.node.number);
+  const leaders = ranked.filter((item) => item.impact.prs > 0).slice(0, 5), cards = element("div", "ranking-cards");
+  for (const [index, item] of leaders.entries()) {
+    const card = button("", () => focusWork(item.node.id), "ranking-card");
+    card.append(element("span", "rank-index", String(index + 1).padStart(2, "0")), element("strong", "rank-value", item.impact.prs),
+      element("span", "rank-label", "downstream PRs"), element("span", "rank-title", `#${item.node.number} · ${item.node.title}`),
+      element("span", "rank-direct", `${item.impact.direct} direct · ${item.impact.prs - item.impact.direct} indirect · focus ↗`));
+    cards.append(card);
+  }
+  panel.append(cards);
+  const zero = ranked.filter((item) => item.impact.prs === 0).length;
+  panel.append(element("p", "ranking-note", `${zero} open PRs have no recorded downstream open PRs. This measures recorded dependency reach, not severity, effort, or merge readiness.`));
+  const external = model.nodes.filter((node) => node.type === "issue" && activeDependencyEdges().some((edge) => edge.from === node.id))
+    .map((node) => ({ node, impact: impact(node.id) })).sort((a, b) => b.impact.prs - a.impact.prs || b.impact.branches - a.impact.branches);
+  if (external.length) {
+    const section = element("details", "external-ranking"), summary = element("summary", "", `${external.length} external capacity blockers · ranked separately`);
+    section.append(summary);
+    for (const item of external) section.append(button(`${item.node.title} · ${item.impact.prs} downstream PRs · ${item.impact.branches} branches`, () => focusWork(item.node.id), "external-rank"));
+    panel.append(section);
+  }
 }
 function render(reposition = false, fit = false) {
   const nodes = visibleNodes();
   $("visible-count").textContent = `${nodes.length} of ${model.nodes.length} items${focus ? " · focused work" : ""}`;
   $("clear-focus").hidden = !focus;
   $("empty").hidden = nodes.length !== 0;
-  drawGraph(nodes); drawList(nodes); drawDetails();
+  drawGraph(nodes); drawList(nodes); drawDetails(); drawRanking();
   if (reposition) resetCamera(fit);
   $("summary").replaceChildren();
   for (const [type, title] of [["pr", "Open pull requests"], ["branch", "Working branches"], ["issue", "External items"]]) {
@@ -351,9 +464,11 @@ function initialize() {
     const type = node.dataset.type; types.has(type) ? types.delete(type) : types.add(type);
     node.setAttribute("aria-pressed", types.has(type)); render(true);
   }));
-  for (const next of ["map", "list"]) $(next === "map" ? "graph-view" : "list-view").addEventListener("click", () => {
-    view = next; $("graph-stage").hidden = next !== "map"; $("list").hidden = next !== "list";
-    $("graph-view").setAttribute("aria-pressed", next === "map"); $("list-view").setAttribute("aria-pressed", next === "list");
+  for (const next of ["dag", "map", "list"]) $(next === "map" ? "graph-view" : `${next}-view`).addEventListener("click", () => {
+    view = next; focus = null; $("graph-stage").hidden = next === "list"; $("list").hidden = next !== "list";
+    $("graph-view").setAttribute("aria-pressed", next === "map"); $("list-view").setAttribute("aria-pressed", next === "list"); $("dag-view").setAttribute("aria-pressed", next === "dag");
+    $("show-resolved").disabled = next === "dag"; $("connected-only").disabled = next === "dag";
+    $("dag-note").hidden = next !== "dag"; render(true);
   });
   $("clear-focus").addEventListener("click", () => { focus = null; render(true); });
   $("reset-filters").addEventListener("click", resetFilters);

@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T20:30:36.293275+00:00",
+    "updatedAt": "2026-09-30T20:33:47.544910+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1022,7 +1022,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Current integration branch. Ordinary systrap passes 653 of 655 owners; remaining runtime failures and worker capabilities stay visible."
+      "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The newer MQ permission tests expose two further gVisor failures; current combined-head coverage is not established by that baseline."
     },
     {
       "id": "branch:rbe-remote-concurrency",
