@@ -40,4 +40,4 @@ export MAKE="${make}"
 cd "${work}"
 "${make}" -f "${makefile}" \
   ARCH=@@ARCH@@ PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
-  CRANE="${crane_command}" test-cpu-images
+  CRANE="${crane_command}" test-@@IMAGE_CLASS@@-images
