@@ -16,7 +16,10 @@ package licensecheck
 
 import (
 	_ "embed"
+	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -35,6 +38,145 @@ var (
 	//go:embed testdata/llvm.txt
 	llvmText string
 )
+
+func TestParseGitRefs(t *testing.T) {
+	const (
+		first  = "1111111111111111111111111111111111111111"
+		second = "2222222222222222222222222222222222222222"
+		tag    = "refs/tags/v1"
+		branch = "refs/heads/v1"
+	)
+	for _, test := range []struct {
+		name, output, want string
+		refs               []string
+		wantErr            bool
+	}{
+		{
+			name: "lightweight tag", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n", want: first,
+		},
+		{
+			name: "peeled tag", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "^{}\n", want: second,
+		},
+		{
+			name: "branch", refs: []string{tag, branch},
+			output: first + "\t" + branch + "\n", want: first,
+		},
+		{
+			name: "same peeled tag and branch", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "^{}\n" + second + "\t" + branch + "\n", want: second,
+		},
+		{
+			name: "conflicting tag and branch", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + branch + "\n",
+		},
+		{
+			name: "qualified branch", refs: []string{branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + branch + "\n", want: second,
+		},
+		{
+			name: "ref tail is not exact", refs: []string{tag, branch},
+			output: first + "\trefs/tags/nested/" + tag + "\n",
+		},
+		{
+			name: "missing", refs: []string{tag, branch},
+		},
+		{
+			name: "invalid object ID", refs: []string{tag},
+			output: "1234\t" + tag + "\n", wantErr: true,
+		},
+		{
+			name: "missing separator", refs: []string{tag},
+			output: first + " " + tag + "\n", wantErr: true,
+		},
+		{
+			name: "duplicate ref", refs: []string{tag},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "\n", wantErr: true,
+		},
+		{
+			name: "missing tag record", refs: []string{tag},
+			output: first + "\t" + tag + "^{}\n", wantErr: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := parseGitRefs(test.output, test.refs)
+			if (err != nil) != test.wantErr || got != test.want {
+				t.Errorf("parseGitRefs = (%q, %v), want (%q, error=%t)", got, err, test.want, test.wantErr)
+			}
+		})
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+func TestFetchGitHubResolvedLicense(t *testing.T) {
+	const commit = "1234567890abcdef1234567890abcdef12345678"
+	const license = `MIT License
+
+Copyright (c) 2026 Example Authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+`
+	oldClient := httpClient
+	t.Cleanup(func() { httpClient = oldClient })
+	t.Setenv("GITHUB_TOKEN", "")
+	for _, ref := range []string{commit[:12], commit} {
+		t.Run(ref, func(t *testing.T) {
+			apiURL := "https://api.github.com/repos/example/project/commits/" + ref
+			licenseURL := "https://raw.githubusercontent.com/example/project/" + commit + "/LICENSE"
+			var requests []string
+			httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+				url := r.URL.String()
+				requests = append(requests, url)
+				var body string
+				switch url {
+				case apiURL:
+					body = commit
+				case licenseURL:
+					body = license
+				default:
+					return nil, fmt.Errorf("unexpected license request %s", url)
+				}
+				return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body))}, nil
+			})}
+			got, err := fetchGitHub("https://github.com/example/project/archive/" + ref + ".tar.gz")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got.commit != commit || !slices.Equal(got.license, Licenses{"MIT"}) {
+				t.Errorf("fetchGitHub = %+v, want commit %s and MIT", got, commit)
+			}
+			want := []string{licenseURL}
+			if ref != commit {
+				want = append([]string{apiURL}, want...)
+			}
+			if !slices.Equal(requests, want) {
+				t.Errorf("requests = %v, want %v", requests, want)
+			}
+		})
+	}
+}
 
 func TestClassify(t *testing.T) {
 	apache, _, ok := strings.Cut(llvmText, "---- LLVM Exceptions to the Apache 2.0 License ----")
