@@ -147,7 +147,7 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
       cohort: Default COHORT_IMAGES key; individual variants may override it.
       data: Other existing runtime inputs.
       args: Arguments shared by all variants.
-      runtime_variants: Optional runtime arguments, cohort, test_args, data and tags.
+      runtime_variants: Optional runtime label, arguments, cohort, test_args, data and tags.
         An empty name preserves the default owned test instead of an aggregate suite.
       ipv6: Whether the owned daemon provides IPv6 on its default bridge.
       memory: Optional test VM memory budget; defaults to the fixture's 4GB.
@@ -168,6 +168,7 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
         docker_daemon_config(
             name = config,
             testonly = True,
+            runtime = getattr(variant, "runtime", Label("//:release")),
             runtime_args = variant.args,
             ipv6 = ipv6,
             images = select_arch(

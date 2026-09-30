@@ -509,7 +509,7 @@ endif
 .PHONY: docker-tests
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-dpdk,--network=plugin)
+	@$(call install_runtime_variant,plugin-network,plugin_network,$(RUNTIME)-dpdk)
 	@$(call test_runtime_cached,$(RUNTIME)-dpdk, --test_arg=-test.run=ConnectToSelf $(INTEGRATION_TARGETS))
 
 plugin-network-tests: RUNSC_TARGET=--config plugin-tldk //runsc:runsc-plugin-stack

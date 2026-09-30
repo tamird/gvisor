@@ -1,4 +1,4 @@
-load("//test/docker:config.bzl", "INTEGRATION_VARIANTS")
+load("//test/docker:config.bzl", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
 load("//test/docker:defs.bzl", "docker_test")
 load("//tools:defs.bzl", "go_library")
 
@@ -21,7 +21,7 @@ docker_test(
         "//:release",
     ],
     library = ":image",
-    runtime_variants = INTEGRATION_VARIANTS,
+    runtime_variants = INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT],
     tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [

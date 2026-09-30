@@ -31,6 +31,15 @@ INTEGRATION_VARIANTS = [
     ),
 ]
 
+# The public plugin lane uses its own runtime and only ConnectToSelf cases.
+PLUGIN_NETWORK_VARIANT = struct(
+    name = "plugin_network",
+    args = ["--network=plugin"],
+    runtime = Label("//:plugin_release"),
+    tags = ["network_plugins"],
+    test_args = ["-test.run=ConnectToSelf"],
+)
+
 # Port forwarding is qualified with both runtime network implementations. The
 # installed-runtime adapter and owned Bazel actions use these same modes.
 PORTFORWARD_VARIANTS = [
@@ -85,6 +94,7 @@ RUNTIME_SUITES = {
             for variant in INTEGRATION_VARIANTS
             if variant.name
         ],
+        "plugin-network": [PLUGIN_NETWORK_VARIANT],
         "portforward": PORTFORWARD_VARIANTS,
         "posture": POSTURE_VARIANTS,
         "netfilter": NETFILTER_VARIANTS.values(),
