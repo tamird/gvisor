@@ -180,7 +180,13 @@ type objdumpAnalyzer struct {
 
 // Run implements nogo.binaryAnalyzer.Run.
 func (ob *objdumpAnalyzer) Run(pass *analysis.Pass, binary io.Reader) (any, error) {
-	return run(pass, binary)
+	return run(pass, binary, false)
+}
+
+// RunBenchmark measures the same analysis but rejects missing compiled evidence.
+// This entry point exists only on the diagnostic benchmark branches.
+func (ob *objdumpAnalyzer) RunBenchmark(pass *analysis.Pass, binary io.Reader) (any, error) {
+	return run(pass, binary, true)
 }
 
 // Legacy implements nogo.analyzer.Legacy.
@@ -979,11 +985,19 @@ func isDirectInterfaceValue(typ types.Type) bool {
 }
 
 // run performs the analysis.
-func run(pass *analysis.Pass, binary io.Reader) (any, error) {
+func run(pass *analysis.Pass, binary io.Reader, benchmark bool) (any, error) {
 	// Note that if this analysis fails, then we don't actually
 	// fail the analyzer itself. We simply report every possible
 	// escape. In most cases this will work just fine.
 	calls, callsErr := loadObjdump(binary)
+	if benchmark {
+		if callsErr != nil {
+			return nil, callsErr
+		}
+		if len(calls.lines) == 0 || len(calls.functions) == 0 {
+			return nil, fmt.Errorf("benchmark archive contains no usable compiled evidence")
+		}
+	}
 	allEscapes := make(map[string][]Escapes)
 	mergedEscapes := make(map[string]Escapes)
 	linePosition := func(inst, parent poser) LinePosition {
