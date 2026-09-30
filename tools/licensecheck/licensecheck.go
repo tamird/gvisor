@@ -699,6 +699,7 @@ func fetchLicense(d dep) (*fetched, error) {
 var licenseFileNames = []string{
 	"LICENSE", "LICENSE.txt", "LICENSE.md", "LICENSE.TXT", "LICENSE.MIT",
 	"LICENSE-APACHE-2.0.txt", "LICENCE", "COPYING", "License", "license.md",
+	"License.txt", "license",
 }
 
 var pseudoVersionRE = regexp.MustCompile(`\d{14}-([0-9a-f]{12})$`)
