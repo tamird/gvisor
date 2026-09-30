@@ -982,6 +982,7 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    args = ["--host-nofile=131072"],
     shard_count = more_shards,
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
