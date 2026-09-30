@@ -2671,7 +2671,7 @@ TEST(NetlinkRouteTest, LinkMulticastGroupBasic) {
   const Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
   ASSERT_NO_ERRNO(LinkChangeFlags(link.index, 0, IFF_UP));
   auto restore_flags = Cleanup([&]() {
-    EXPECT_NO_ERRNO(LinkChangeFlags(link.index, link.flags, IFF_UP));
+    EXPECT_NO_ERRNO(LinkChangeFlags(link.index, link.flags & IFF_UP, IFF_UP));
   });
 
   // nlsk_bound_group joins RTMGRP_LINK via bind().
@@ -2894,7 +2894,7 @@ TEST(NetlinkRouteTest, LinkMulticastGroupNoop) {
   const Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
   ASSERT_NO_ERRNO(LinkChangeFlags(link.index, 0, IFF_UP));
   auto restore_flags = Cleanup([&]() {
-    EXPECT_NO_ERRNO(LinkChangeFlags(link.index, link.flags, IFF_UP));
+    EXPECT_NO_ERRNO(LinkChangeFlags(link.index, link.flags & IFF_UP, IFF_UP));
   });
 
   struct sockaddr_nl mcast_addr = {};
@@ -2947,8 +2947,8 @@ TEST(NetlinkRouteTest, LinkMulticastGroupEnobufs) {
   const Link original_link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
   ASSERT_NO_ERRNO(LinkChangeFlags(original_link.index, 0, IFF_UP));
   auto restore_flags = Cleanup([&]() {
-    EXPECT_NO_ERRNO(
-        LinkChangeFlags(original_link.index, original_link.flags, IFF_UP));
+    EXPECT_NO_ERRNO(LinkChangeFlags(original_link.index,
+                                    original_link.flags & IFF_UP, IFF_UP));
   });
 
   struct sockaddr_nl mcast_addr = {};
