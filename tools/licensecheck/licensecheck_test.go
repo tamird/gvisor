@@ -138,6 +138,82 @@ func TestModuleLicenses(t *testing.T) {
 	}
 }
 
+func TestParseGitRefs(t *testing.T) {
+	const (
+		first  = "1111111111111111111111111111111111111111"
+		second = "2222222222222222222222222222222222222222"
+		tag    = "refs/tags/v1"
+		branch = "refs/heads/v1"
+	)
+	for _, test := range []struct {
+		name, output, want string
+		refs               []string
+		wantErr            string
+	}{
+		{
+			name: "lightweight tag", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n", want: first,
+		},
+		{
+			name: "peeled tag", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "^{}\n", want: second,
+		},
+		{
+			name: "branch", refs: []string{tag, branch},
+			output: first + "\t" + branch + "\n", want: first,
+		},
+		{
+			name: "same peeled tag and branch", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "^{}\n" + second + "\t" + branch + "\n", want: second,
+		},
+		{
+			name: "conflicting tag and branch", refs: []string{tag, branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + branch + "\n",
+		},
+		{
+			name: "qualified branch", refs: []string{branch},
+			output: first + "\t" + tag + "\n" + second + "\t" + branch + "\n", want: second,
+		},
+		{
+			name: "ref tail is not exact", refs: []string{tag, branch},
+			output: first + "\trefs/tags/nested/" + tag + "\n",
+		},
+		{
+			name: "missing", refs: []string{tag, branch},
+		},
+		{
+			name: "invalid object ID", refs: []string{tag},
+			output: "1234\t" + tag + "\n", wantErr: "unexpected git ls-remote record",
+		},
+		{
+			name: "missing separator", refs: []string{tag},
+			output: first + " " + tag + "\n", wantErr: "unexpected git ls-remote record",
+		},
+		{
+			name: "duplicate ref", refs: []string{tag},
+			output: first + "\t" + tag + "\n" + second + "\t" + tag + "\n", wantErr: "duplicate git ls-remote ref",
+		},
+		{
+			name: "missing tag record", refs: []string{tag},
+			output: first + "\t" + tag + "^{}\n", wantErr: "has no tag record",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := parseGitRefs(test.output, test.refs)
+			if got != test.want {
+				t.Errorf("parseGitRefs() = %q, want %q", got, test.want)
+			}
+			if test.wantErr == "" {
+				if err != nil {
+					t.Fatal(err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+				t.Errorf("parseGitRefs() error = %v, want %q", err, test.wantErr)
+			}
+		})
+	}
+}
+
 func TestClassify(t *testing.T) {
 	for _, test := range []struct {
 		name, text string
