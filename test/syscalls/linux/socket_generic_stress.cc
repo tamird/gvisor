@@ -122,10 +122,15 @@ class PersistentListenerConnectStressTest : public SocketPairTest {
     if (socks.ok()) {
       return socks;
     }
+    fprintf(stderr, "socket-stress diagnostic: errno=%d, delay_used=%d\n",
+            socks.error().errno_value(), slept_);
     if (!slept_ && socks.error().errno_value() == EADDRNOTAVAIL) {
       absl::SleepFor(absl::Milliseconds(1500));
       slept_ = true;
-      return NewSocketPair();
+      auto retry = NewSocketPair();
+      fprintf(stderr, "socket-stress diagnostic: delayed retry errno=%d\n",
+              retry.ok() ? 0 : retry.error().errno_value());
+      return retry;
     }
     return socks;
   }
@@ -137,6 +142,7 @@ class PersistentListenerConnectStressTest : public SocketPairTest {
 TEST_P(PersistentListenerConnectStressTest, ShutdownCloseFirst) {
   const int nports = ASSERT_NO_ERRNO_AND_VALUE(MaybeLimitEphemeralPorts());
   for (int i = 0; i < nports * 2; i++) {
+    SCOPED_TRACE(i);
     std::unique_ptr<SocketPair> sockets =
         ASSERT_NO_ERRNO_AND_VALUE(NewSocketSleep());
     ASSERT_THAT(shutdown(sockets->first_fd(), SHUT_RDWR), SyscallSucceeds());
