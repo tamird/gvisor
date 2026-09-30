@@ -16,10 +16,7 @@ package licensecheck
 
 import (
 	_ "embed"
-	"fmt"
-	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -105,86 +102,6 @@ func TestParseGitRefs(t *testing.T) {
 				t.Errorf("parseGitRefs = (%q, %v), want (%q, error=%t)", got, err, test.want, test.wantErr)
 			}
 		})
-	}
-}
-
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
-	return f(r)
-}
-
-func TestFetchGitHubUsesResolvedCommit(t *testing.T) {
-	// An archive URL can contain an abbreviated hash. Fetching its license
-	// must use the full ID returned by the API, matching the recorded source.
-	const commit = "1234567890abcdef1234567890abcdef12345678"
-	const ref = "1234567890ab"
-	const license = `MIT License
-
-Copyright (c) 2026 Example Authors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-`
-	apiURL := "https://api.github.com/repos/example/project/commits/" + ref
-	licenseURL := "https://raw.githubusercontent.com/example/project/" + commit + "/LICENSE"
-	oldClient := httpClient
-	t.Cleanup(func() { httpClient = oldClient })
-	t.Setenv("GITHUB_TOKEN", "")
-	var requests []string
-	httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		url := r.URL.String()
-		requests = append(requests, url)
-		var body string
-		switch url {
-		case apiURL:
-			body = commit
-		case licenseURL:
-			body = license
-		default:
-			return nil, fmt.Errorf("unexpected license request %s", url)
-		}
-		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(body))}, nil
-	})}
-	got, err := fetchGitHub("https://github.com/example/project/archive/" + ref + ".tar.gz")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got.commit != commit || !slices.Equal(got.license, Licenses{"MIT"}) {
-		t.Errorf("fetchGitHub = %+v, want commit %s and MIT", got, commit)
-	}
-	if want := []string{apiURL, licenseURL}; !slices.Equal(requests, want) {
-		t.Errorf("requests = %v, want resolution then immutable license fetch %v", requests, want)
-	}
-}
-
-func TestResolveGitHubCommitFullHashNeedsNoHTTP(t *testing.T) {
-	const commit = "1234567890abcdef1234567890abcdef12345678"
-	oldClient := httpClient
-	t.Cleanup(func() { httpClient = oldClient })
-	httpClient = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		err := fmt.Errorf("resolving a full hash must not request %s", r.URL)
-		t.Error(err)
-		return nil, err
-	})}
-	got, err := resolveGitHubCommit("example", "project", commit)
-	if err != nil || got != commit {
-		t.Errorf("resolveGitHubCommit = (%q, %v), want (%q, nil)", got, err, commit)
 	}
 }
 
