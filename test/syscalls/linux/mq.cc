@@ -204,6 +204,8 @@ TEST(MqTest, NoQueueExists) {
 
 // Test trying to re-open a queue with invalid permissions.
 TEST(MqTest, OpenNoAccess) {
+  AutoCapability dacOverride(CAP_DAC_OVERRIDE, false);
+  AutoCapability dacReadSearch(CAP_DAC_READ_SEARCH, false);
   PosixQueue queue = ASSERT_NO_ERRNO_AND_VALUE(
       MqOpen(O_RDWR | O_CREAT | O_EXCL, 0000, nullptr));
 
@@ -214,6 +216,8 @@ TEST(MqTest, OpenNoAccess) {
 
 // Test trying to re-open a read-only queue for write.
 TEST(MqTest, OpenReadAccess) {
+  AutoCapability dacOverride(CAP_DAC_OVERRIDE, false);
+  AutoCapability dacReadSearch(CAP_DAC_READ_SEARCH, false);
   PosixQueue queue = ASSERT_NO_ERRNO_AND_VALUE(
       MqOpen(O_RDWR | O_CREAT | O_EXCL, 0400, nullptr));
 
@@ -224,6 +228,8 @@ TEST(MqTest, OpenReadAccess) {
 
 // Test trying to re-open a write-only queue for read.
 TEST(MqTest, OpenWriteAccess) {
+  AutoCapability dacOverride(CAP_DAC_OVERRIDE, false);
+  AutoCapability dacReadSearch(CAP_DAC_READ_SEARCH, false);
   PosixQueue queue = ASSERT_NO_ERRNO_AND_VALUE(
       MqOpen(O_RDWR | O_CREAT | O_EXCL, 0200, nullptr));
 
