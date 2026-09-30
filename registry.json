@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T22:32:01.860597+00:00",
+    "updatedAt": "2026-09-30T22:48:06.801771+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
-    "edgeDirection": "Prerequisite \u2192 dependent. Integration membership is listed in details and excluded from dependency reach.",
+    "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
     "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Historical Docker, stress and Buildkite pilots are omitted; their branches/evidence are preserved. Landed prerequisites are not active blockers."
   },
   "groups": [
@@ -950,15 +950,16 @@
       "summary": "Current branch contains 179 qualification commits. Extract the three-line declaration, with syscall memory forwarding plus #15131 host-nofile support as real prerequisites. No dependency on the independent processes budget is needed. Obtain contributor review. All8 hostnet shards/33 cases pass with131072 descriptors and1GB; native port-allocation failure is separate."
     },
     {
-      "id": "branch:cgroup-unit-fixtures",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15163",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "cgroup-unit-fixtures",
-      "title": "Make cgroup unit fixtures self-contained",
-      "url": "https://github.com/tamird/gvisor/tree/cgroup-unit-fixtures",
+      "title": "Keep cgroup unit tests independent of the host",
+      "url": "https://github.com/google/gvisor/pull/15163",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Refresh the independent one-commit proposal on current master and present exact source/record plus existing default/race evidence. Contributor review is pending. Integrated default and race cgroup units passed; host cgroup/DBus dependencies removed from unit fixtures."
+      "status": "open",
+      "summary": "Contributor-reviewed and published. Integrated default and race cgroup units passed; host cgroup and DBus dependencies are removed from unit fixtures.",
+      "number": 15163
     },
     {
       "id": "branch:network-test-fixtures",
@@ -968,19 +969,20 @@
       "title": "Declare network test setup",
       "url": "https://github.com/tamird/gvisor/tree/network-test-fixtures",
       "group": "tests",
-      "status": "review pending",
-      "summary": "The independent setup-error and thread-namespace correction is ready for contributor review. Its owning Go sandbox suite passes under root. Separate Python root/nobody results are not credited to this Go fixture change; route and cleanup corrections retain their separate scope."
+      "status": "validation pending",
+      "summary": "Contributor-approved subject to immediate cleanup-owned unlock. The signed correction is published and the complete qualified sandbox_test owner is validating. Prior owning Go namespace-suite evidence is root-only; separate Python nobody results are not credited to this fixture."
     },
     {
-      "id": "branch:docker-test-flags",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15164",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "docker-test-flags",
-      "title": "Parse Docker test flags before use",
-      "url": "https://github.com/tamird/gvisor/tree/docker-test-flags",
+      "title": "Parse Docker test flags before checking the client",
+      "url": "https://github.com/google/gvisor/pull/15164",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Present the one-commit18-TestMain initialization correction and before/after client-override proof. Contributor review is pending. Both entrypoints reproduce before and pass after; existing declared Docker client interface is upstream."
+      "status": "open",
+      "summary": "Contributor-reviewed and published. Corrects flag initialization in 18 TestMain functions. Both affected client entrypoints reproduce before and pass after using the existing declared Docker client interface.",
+      "number": 15164
     },
     {
       "id": "branch:rbe-qualification-next",
@@ -1067,15 +1069,16 @@
       "summary": "Actual root AMD64 worker returns ENOENT for /dev/vhost-net. Plugin build passes, plugin runtime remains blocked."
     },
     {
-      "id": "branch:mq-permission-capabilities",
-      "type": "branch",
+      "id": "pr:15159",
+      "type": "pr",
       "ref": "mq-permission-capabilities",
-      "repo": "tamird/gvisor",
+      "repo": "google/gvisor",
       "title": "Match Linux message-queue unlink permissions",
       "group": "tests",
-      "status": "review pending",
-      "url": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities",
-      "summary": "Present the independent sticky-root/unlink ownership fix with17-case three-owner proof and existing Nogo. Contributor review is pending. Native/directfs/shared17PASS each, zero skips; source peers closed."
+      "status": "open",
+      "url": "https://github.com/google/gvisor/pull/15159",
+      "summary": "Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks.",
+      "number": 15159
     },
     {
       "id": "pr:15155",
@@ -1090,15 +1093,16 @@
       "number": 15155
     },
     {
-      "id": "branch:netfilter-nonraw-sockopts",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15160",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "netfilter-nonraw-sockopts",
       "title": "Allow netfilter options on non-raw sockets",
-      "url": "https://github.com/tamird/gvisor/tree/netfilter-nonraw-sockopts",
+      "url": "https://github.com/google/gvisor/pull/15160",
       "group": "runtime",
-      "status": "review pending",
-      "summary": "Present the independent production+regression correction. Keep native OriginalDstErrors and missing mark/CT extensions separate. Contributor review is pending. IPv4 systrap36PASS each; IPv6 allthree21PASS; NogoARM64/AMD64PASS."
+      "status": "open",
+      "summary": "Contributor-reviewed and published. Both IPv4 systrap owners pass 36 cases; all three IPv6 owners pass 21 cases; Nogo passes ARM64 and AMD64. Native OriginalDstErrors and missing mark/CT extensions remain separate failures.",
+      "number": 15160
     },
     {
       "id": "branch:mq-dac-permissions",
@@ -1112,15 +1116,16 @@
       "summary": "The DAC capability correction passes all 19 cases on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. MQ and mqfs Nogo also pass. The before run passed natively and failed the two intended capability cases in each gVisor configuration. Ready for contributor review; no PR is open."
     },
     {
-      "id": "branch:netlink-membership-copy",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15161",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "netlink-membership-copy",
       "title": "Copy netlink memberships in complete words",
-      "url": "https://github.com/tamird/gvisor/tree/netlink-membership-copy",
+      "url": "https://github.com/google/gvisor/pull/15161",
       "group": "runtime",
-      "status": "review pending",
-      "summary": "Present independent complete-word copy fix with before/after short-length regression and full-owner result. No dependency on loopback fixture fix. Contributor review is pending. With the independent rename fixture fix, complete owners pass: native 62 cases with 11 existing skips; both gVisor variants 67 cases with 6 existing skips each. Netlink Nogo passes ARM64 and AMD64."
+      "status": "open",
+      "summary": "Contributor-reviewed and published. Short-buffer regression fails before and passes after. With the independent rename fixture fix, complete owners pass: native 62 cases with 11 existing skips; both gVisor variants 67 cases with 6 existing skips each. Netlink Nogo passes ARM64 and AMD64.",
+      "number": 15161
     },
     {
       "id": "pr:15156",
@@ -1178,6 +1183,30 @@
       "group": "rbe",
       "status": "extraction needed",
       "summary": "The processes and socket-stress declarations require this optional memory argument and test.EstimatedMemory forwarding, absent from current upstream. The memory-accounting correction passed its scoped runtime validation. Extract/review the supplier with its shared RBE property interface before publishing dependent declarations."
+    },
+    {
+      "group": "runtime",
+      "id": "pr:15162",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "devpts-mount-options",
+      "title": "Apply devpts mount options to slave PTYs",
+      "url": "https://github.com/google/gvisor/pull/15162",
+      "status": "open",
+      "number": 15162,
+      "summary": "Contributor-reviewed and published. SetMode passes native and fails then passes both gVisor variants. Each complete gVisor PTY owner passes 113 cases with one existing skip; devpts unit and Nogo pass. Native PTY timing remains a separate failure."
+    },
+    {
+      "group": "tests",
+      "id": "pr:15165",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "socket-stress-port-reuse",
+      "title": "Retry each exhausted stress-test connection",
+      "url": "https://github.com/google/gvisor/pull/15165",
+      "status": "open",
+      "number": 15165,
+      "summary": "Contributor-reviewed and published. Preserves one delayed retry per connection. Complete native, directfs and shared stress owners each pass 33 cases with zero skips across eight shards; all 24 remote attempts are uncached."
     }
   ],
   "edges": [
@@ -1392,7 +1421,7 @@
       "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
     },
     {
-      "from": "branch:cgroup-unit-fixtures",
+      "from": "pr:15163",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
@@ -1406,7 +1435,7 @@
       "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
     },
     {
-      "from": "branch:docker-test-flags",
+      "from": "pr:15164",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
@@ -1455,7 +1484,7 @@
       "evidence": "https://app.buildbuddy.io/invocation/48832ad6-fa3c-45d3-9e5a-e72055a6366a"
     },
     {
-      "from": "branch:mq-permission-capabilities",
+      "from": "pr:15159",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the validated MQ test setup and unlink-permissions correction.",
@@ -1475,14 +1504,14 @@
       ]
     },
     {
-      "from": "branch:mq-permission-capabilities",
+      "from": "pr:15159",
       "to": "branch:mq-dac-permissions",
       "type": "depends_on",
       "reason": "The DAC capability correction builds on the message-queue unlink-permissions correction.",
       "evidence": "https://github.com/tamird/gvisor/commit/c09cf4487"
     },
     {
-      "from": "branch:netlink-membership-copy",
+      "from": "pr:15161",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the validated membership-copy correction; this is integration membership, not a blocking dependency.",
@@ -1560,6 +1589,20 @@
       "reason": "The jobs default extends rbe-common, which is introduced by the shared RBE configuration and absent upstream.",
       "evidence": "https://github.com/tamird/gvisor/commit/35496ce44",
       "from": "branch:rbe-public-qualification"
+    },
+    {
+      "from": "pr:15162",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes this validated correction; integration membership does not imply a blocking dependency.",
+      "evidence": "https://github.com/tamird/gvisor/commit/65006316a"
+    },
+    {
+      "from": "pr:15165",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes this validated correction; integration membership does not imply a blocking dependency.",
+      "evidence": "https://github.com/tamird/gvisor/commit/65006316a"
     }
   ]
 }
