@@ -1,12 +1,12 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T22:01:35.870130+00:00",
+    "updatedAt": "2026-09-30T22:27:07.933547+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
-    "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
-    "dependencyNotes": "Dependencies are curated from PR descriptions and the validated workstream. A node without an edge has no recorded dependency; it is not automatically ready to merge. Landed prerequisites15050,15047,15041,14352,14827 were checked and omitted."
+    "edgeDirection": "Prerequisite \u2192 dependent. Integration membership is listed in details and excluded from dependency reach.",
+    "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Historical Docker, stress and Buildkite pilots are omitted; their branches/evidence are preserved. Landed prerequisites are not active blockers."
   },
   "groups": [
     {
@@ -838,15 +838,16 @@
       "summary": "BPF migration on the combined toolchain change."
     },
     {
-      "id": "branch:plugin-toolchain-build",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15153",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "plugin-toolchain-build",
       "title": "Build plugins with the selected C toolchain",
-      "url": "https://github.com/tamird/gvisor/tree/plugin-toolchain-build",
+      "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
-      "status": "branch",
-      "summary": "Standalone revalidation passes: both static AMD64 binaries build and report their versions, the archive-backed Cgo backtrace regression passes uncached, and the canonical license audit passes all 184 dependencies with an unchanged generated catalog. This is GNU compatibility on a hosted coordinator, not a new hermetic remote-action result. The merged #15047 prerequisite no longer blocks publication. Ready for final contributor review; no PR is open."
+      "status": "open",
+      "summary": "Open after the contributor-approved documentation revision at 0c229c451. Patch payloads are byte-identical to validated 827c20885: both static AMD64 binaries and archive-backed Cgo backtrace pass, and the canonical audit accepts all 184 dependencies. GNU compatibility was checked on the hosted coordinator; no new hermetic remote-action result is claimed. Initial PR checks are running.",
+      "number": 15153
     },
     {
       "id": "branch:hermetic-linux-headers",
@@ -856,8 +857,8 @@
       "title": "Select newer Linux headers",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-linux-headers",
       "group": "bazel",
-      "status": "branch",
-      "summary": "Header selection for the hermetic toolchain; includes a temporary upstream API patch."
+      "status": "extraction needed",
+      "summary": "Uses the LLVM migration and 0.8.24 header supplier API, absent upstream. Record the dependency on hermetic-toolchains; isolate the LLVM update/header patch stack and obtain contributor review. Do not open the current 10-commit branch as an independent change. Integrated native/GNU/musl/BPF/static-parent compile and 212-entry audit evidence is retained."
     },
     {
       "id": "branch:builder-without-cross-compilers",
@@ -900,8 +901,8 @@
       "title": "Declare clang-tidy in Bazel",
       "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy",
       "group": "release",
-      "status": "branch",
-      "summary": "Toolchain-driven lint owner prepared for remote CI."
+      "status": "refresh needed",
+      "summary": "Old direct-include failures are superseded: #15119 merged and full clang gate 4e78 passed. Refresh this one-commit proposal against current master, reconcile generated catalog/policy with current source, and present the complete tool migration for contributor review. No known unresolved source failure remains. Full lint 369 reports/360 owners passed on integrated source; five fresh Actions, remaining reports reused. Standalone source f4f includes scoped tool-license exceptions."
     },
     {
       "id": "branch:syscall-overlay-xml",
@@ -922,8 +923,8 @@
       "title": "Wait for resumed container logs",
       "url": "https://github.com/tamird/gvisor/tree/checkpoint-resume-poll",
       "group": "tests",
-      "status": "branch",
-      "summary": "Independent correction; exact existing checkpoint regression passed remotely. Contributor review before upstream submission remains pending."
+      "status": "review pending",
+      "summary": "Present the existing single-commit polling fix and focused regression result; no dependency or additional unchanged run is justified. Contributor review is pending. Focused original checkpoint regression e422 passed; integrated, source reviewed."
     },
     {
       "id": "branch:syscall-processes-memory",
@@ -933,8 +934,8 @@
       "title": "Declare process-test worker memory",
       "url": "https://github.com/tamird/gvisor/tree/syscall-processes-memory",
       "group": "tests",
-      "status": "branch",
-      "summary": "Measured guest thread-cap failure fixed by the target-owned worker budget."
+      "status": "extraction needed",
+      "summary": "Current branch contains 178 qualification commits. Extract the three-line budget on the smallest supported source base. Its memory argument requires the unpublished syscall memory forwarding from rbe-syscall-memory; upstream syscall_test has no memory parameter. Present supplier and declaration for contributor review. Original 300MB guest reached 1816/1816 threads; original five-case ptrace owner passes at1GB without observer."
     },
     {
       "id": "branch:syscall-socket-stress-resources",
@@ -944,8 +945,8 @@
       "title": "Declare socket-stress resources",
       "url": "https://github.com/tamird/gvisor/tree/syscall-socket-stress-resources",
       "group": "tests",
-      "status": "branch",
-      "summary": "Validated: the complete host-network owner passed all 8 shards and 33 cases after the descriptor and worker-memory declaration."
+      "status": "extraction needed",
+      "summary": "Current branch contains 179 qualification commits. Extract the three-line declaration, with syscall memory forwarding plus #15131 host-nofile support as real prerequisites. No dependency on the independent processes budget is needed. Obtain contributor review. All8 hostnet shards/33 cases pass with131072 descriptors and1GB; native port-allocation failure is separate."
     },
     {
       "id": "branch:cgroup-unit-fixtures",
@@ -955,8 +956,8 @@
       "title": "Make cgroup unit fixtures self-contained",
       "url": "https://github.com/tamird/gvisor/tree/cgroup-unit-fixtures",
       "group": "tests",
-      "status": "branch",
-      "summary": "Removes host dependencies from the existing cgroup unit tests."
+      "status": "review pending",
+      "summary": "Refresh the independent one-commit proposal on current master and present exact source/record plus existing default/race evidence. Contributor review is pending. Integrated default and race cgroup units passed; host cgroup/DBus dependencies removed from unit fixtures."
     },
     {
       "id": "branch:network-test-fixtures",
@@ -966,8 +967,8 @@
       "title": "Declare network test setup",
       "url": "https://github.com/tamird/gvisor/tree/network-test-fixtures",
       "group": "tests",
-      "status": "branch",
-      "summary": "Preserves namespace setup errors and supplies the required worker environment."
+      "status": "review pending",
+      "summary": "Present the independent setup-error/thread-namespace correction with its retained root/nobody evidence. Preserve separate route and cleanup corrections; no need to make them artificial dependencies of fail-fast setup. Contributor review is pending. Integrated root/nobody tests passed; branch itself is one-file standalone fix."
     },
     {
       "id": "branch:docker-test-flags",
@@ -977,41 +978,8 @@
       "title": "Parse Docker test flags before use",
       "url": "https://github.com/tamird/gvisor/tree/docker-test-flags",
       "group": "tests",
-      "status": "branch",
-      "summary": "Independent TestMain initialization correction prepared during remote qualification."
-    },
-    {
-      "id": "branch:rbe-docker-qualification",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "rbe-docker-qualification",
-      "title": "Own Docker test services and inputs",
-      "url": "https://github.com/tamird/gvisor/tree/rbe-docker-qualification",
-      "group": "rbe",
-      "status": "branch",
-      "summary": "Declared runtime/images and a private daemon fixture; later fixes are consolidated into the qualification branch."
-    },
-    {
-      "id": "branch:rbe-remote-stress",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "rbe-remote-stress",
-      "title": "Remote stress testing",
-      "url": "https://github.com/tamird/gvisor/tree/rbe-remote-stress",
-      "group": "rbe",
-      "status": "branch",
-      "summary": "Repeated Go and syscall test cohorts on remote workers."
-    },
-    {
-      "id": "branch:buildkite-rbe",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "buildkite-rbe",
-      "title": "Builder-free Buildkite pilot",
-      "url": "https://github.com/tamird/gvisor/tree/buildkite-rbe",
-      "group": "rbe",
-      "status": "branch",
-      "summary": "Opt-in build/Nogo pilot; does not replace the full public matrix."
+      "status": "review pending",
+      "summary": "Present the one-commit18-TestMain initialization correction and before/after client-override proof. Contributor review is pending. Both entrypoints reproduce before and pass after; existing declared Docker client interface is upstream."
     },
     {
       "id": "branch:rbe-qualification-next",
@@ -1032,8 +1000,8 @@
       "title": "Set remote action concurrency",
       "url": "https://github.com/tamird/gvisor/tree/rbe-remote-concurrency",
       "group": "rbe",
-      "status": "branch",
-      "summary": "Use the qualified32-action default instead of coordinator CPU count."
+      "status": "extraction needed",
+      "summary": "Current branch contains188 qualification commits. Extract provider configuration/default32-job change with its owning RBE config; no runtime revalidation needed for the already-proven flag placement. Obtain contributor review for source/config publication. Explicit32-job plugin proof and subsequent full-lane runs pass; source/record reviewed."
     },
     {
       "id": "external:kernel",
@@ -1104,9 +1072,9 @@
       "repo": "tamird/gvisor",
       "title": "Match Linux message-queue unlink permissions",
       "group": "tests",
-      "status": "branch",
+      "status": "review pending",
       "url": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities",
-      "summary": "The unlink-permissions correction passes all 17 cases on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. The unchanged production Nogo check also passed. The revised sticky directory mode and ownership checks match Linux and include a foreign-owner regression."
+      "summary": "Present the independent sticky-root/unlink ownership fix with17-case three-owner proof and existing Nogo. Contributor review is pending. Native/directfs/shared17PASS each, zero skips; source peers closed."
     },
     {
       "id": "branch:iptables-replace-counters",
@@ -1116,8 +1084,8 @@
       "title": "Fix iptables replacement counter counts",
       "url": "https://github.com/tamird/gvisor/tree/iptables-replace-counters",
       "group": "tests",
-      "status": "branch",
-      "summary": "LargeReplacePayload passes on native Linux and both ordinary systrap owners after using the replaced table’s entry count. Both systrap owners pass all 17 cases. Native retains four separate socket-option/extension failures and two existing skips."
+      "status": "review pending",
+      "summary": "Present the independent counter-count fixture correction. Keep unrelated native socket/extension failures visible; they do not block this case-specific correction. Contributor review is pending. LargeReplacePayload passes native and both systrap owners; full systrap17PASS each."
     },
     {
       "id": "branch:netfilter-nonraw-sockopts",
@@ -1127,8 +1095,8 @@
       "title": "Allow netfilter options on non-raw sockets",
       "url": "https://github.com/tamird/gvisor/tree/netfilter-nonraw-sockopts",
       "group": "runtime",
-      "status": "branch",
-      "summary": "Both IPv4 systrap owners pass all 36 cases; native and both systrap IPv6 owners pass all 21 cases. Netstack Nogo passes ARM64 and AMD64. Native IPv4 retains three unrelated failures: OriginalDstErrors and missing mark revision 1 / CT revision 0 extensions, plus two existing skips."
+      "status": "review pending",
+      "summary": "Present the independent production+regression correction. Keep native OriginalDstErrors and missing mark/CT extensions separate. Contributor review is pending. IPv4 systrap36PASS each; IPv6 allthree21PASS; NogoARM64/AMD64PASS."
     },
     {
       "id": "branch:mq-dac-permissions",
@@ -1149,8 +1117,8 @@
       "title": "Copy netlink memberships in complete words",
       "url": "https://github.com/tamird/gvisor/tree/netlink-membership-copy",
       "group": "runtime",
-      "status": "branch",
-      "summary": "Native Linux passes the regression; the old gVisor implementation failed short output lengths 1, 2, 3, 5, 6, and 7. With this correction and the independent rename fixture fix, complete owners pass: native 62 cases with 11 existing skips, and both ordinary systrap variants 67 cases with 6 existing skips each. Netlink Nogo passes ARM64 and AMD64."
+      "status": "review pending",
+      "summary": "Present independent complete-word copy fix with before/after short-length regression and full-owner result. No dependency on loopback fixture fix. Contributor review is pending. With the independent rename fixture fix, complete owners pass: native 62 cases with 11 existing skips; both gVisor variants 67 cases with 6 existing skips each. Netlink Nogo passes ARM64 and AMD64."
     },
     {
       "id": "branch:netlink-loopback-rename",
@@ -1160,8 +1128,8 @@
       "title": "Lower loopback before testing rename events",
       "url": "https://github.com/tamird/gvisor/tree/netlink-loopback-rename",
       "group": "tests",
-      "status": "branch",
-      "summary": "The fixture lowers loopback before checking rename events and preserves cleanup. With the independent membership-copy correction, complete owners have no failures: native 62 passing cases and 11 existing skips; both ordinary systrap variants 67 passing cases and 6 existing skips each. No dependency between the two fixes is recorded."
+      "status": "review pending",
+      "summary": "Present independent lower-before-rename fixture correction with full-owner result. No dependency on membership-copy fix. Contributor review is pending. With the independent membership-copy fix, all three complete owners pass with the existing skips and no failures."
     },
     {
       "id": "branch:mount-fd-reconfigure-expectations",
@@ -1171,8 +1139,41 @@
       "title": "Check Linux filesystem reconfiguration effects",
       "url": "https://github.com/tamird/gvisor/tree/mount-fd-reconfigure-expectations",
       "group": "tests",
-      "status": "branch",
-      "summary": "The corrected FsConfigTest.FsConfigReconfigureSucceeds case passes once uncached on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. The prior native result failed the inode-limit and read-only expectations. The correction is included in the qualification branch. This targeted result does not establish a full mount-test pass or cover the separate Linux 6.15 detached-mount cases."
+      "status": "review pending",
+      "summary": "Present the independent expectation correction and precise single-case native/directfs/shared proof. Do not claim whole-owner or Linux6.15 detached-mount coverage. Contributor review is pending. Three actual uncached passes, no skips; prior exactcase has two expectation failures."
+    },
+    {
+      "id": "branch:llvm-0-8-24",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "llvm-0-8-24",
+      "title": "Update the LLVM supplier to 0.8.24",
+      "url": "https://github.com/tamird/gvisor/tree/llvm-0-8-24",
+      "group": "bazel",
+      "status": "extraction needed",
+      "summary": "The Linux-header selection uses this supplier version atop the combined LLVM migration. Extract and review this stack before independent header publication; integrated validation does not establish contributor approval."
+    },
+    {
+      "id": "branch:rbe-public-qualification",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-public-qualification",
+      "title": "Extract the shared RBE configuration",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-public-qualification",
+      "group": "rbe",
+      "status": "extraction needed",
+      "summary": "This published integration owns rbe-common and the syscall worker-property interface used by later memory/concurrency declarations. It is not a standalone ready PR. Extract the provider configuration and worker interface for contributor review; public runtime qualification remains partial."
+    },
+    {
+      "id": "branch:rbe-syscall-memory",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-syscall-memory",
+      "title": "Forward syscall worker memory budgets",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-syscall-memory",
+      "group": "rbe",
+      "status": "extraction needed",
+      "summary": "The processes and socket-stress declarations require this optional memory argument and test.EstimatedMemory forwarding, absent from current upstream. The memory-accounting correction passed its scoped runtime validation. Extract/review the supplier with its shared RBE property interface before publishing dependent declarations."
     }
   ],
   "edges": [
@@ -1275,7 +1276,7 @@
       "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
     },
     {
-      "from": "branch:plugin-toolchain-build",
+      "from": "pr:15153",
       "to": "branch:hermetic-toolchains",
       "type": "depends_on",
       "reason": "The plugin migration incorporates the declared plugin build inputs.",
@@ -1339,13 +1340,6 @@
     },
     {
       "from": "branch:hermetic-linux-headers",
-      "to": "branch:rbe-qualification-next",
-      "type": "includes",
-      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
-      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
-    },
-    {
-      "from": "branch:rbe-docker-qualification",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
@@ -1513,6 +1507,55 @@
         "https://github.com/tamird/gvisor/commit/7fa3b2874",
         "https://app.buildbuddy.io/invocation/0fee36f7-37fa-48fe-a3a7-3de20fa99729"
       ]
+    },
+    {
+      "to": "branch:llvm-0-8-24",
+      "type": "depends_on",
+      "reason": "The supplier update changes the LLVM module introduced by the combined toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/commit/478b6de32",
+      "from": "branch:hermetic-toolchains"
+    },
+    {
+      "to": "branch:hermetic-linux-headers",
+      "type": "depends_on",
+      "reason": "The header-default patch and extension invocation target the LLVM 0.8.24 supplier API.",
+      "evidence": "https://github.com/tamird/gvisor/commit/7f92492a5",
+      "from": "branch:llvm-0-8-24"
+    },
+    {
+      "to": "branch:rbe-syscall-memory",
+      "type": "depends_on",
+      "reason": "Memory forwarding extends the shared syscall worker-property interface declared by this RBE configuration.",
+      "evidence": "https://github.com/tamird/gvisor/commit/a6e088701",
+      "from": "branch:rbe-public-qualification"
+    },
+    {
+      "to": "branch:syscall-processes-memory",
+      "type": "depends_on",
+      "reason": "The memory declaration requires the optional syscall memory argument and execution-property forwarding, absent upstream.",
+      "evidence": "https://github.com/tamird/gvisor/commit/7c25f6380",
+      "from": "branch:rbe-syscall-memory"
+    },
+    {
+      "to": "branch:syscall-socket-stress-resources",
+      "type": "depends_on",
+      "reason": "The memory declaration requires the optional syscall memory argument and execution-property forwarding, absent upstream.",
+      "evidence": "https://github.com/tamird/gvisor/commit/4330034f0",
+      "from": "branch:rbe-syscall-memory"
+    },
+    {
+      "to": "branch:syscall-socket-stress-resources",
+      "type": "depends_on",
+      "reason": "The existing --host-nofile runner flag raises the host limit before entering user namespaces.",
+      "evidence": "https://github.com/tamird/gvisor/commit/4330034f0",
+      "from": "pr:15131"
+    },
+    {
+      "to": "branch:rbe-remote-concurrency",
+      "type": "depends_on",
+      "reason": "The jobs default extends rbe-common, which is introduced by the shared RBE configuration and absent upstream.",
+      "evidence": "https://github.com/tamird/gvisor/commit/35496ce44",
+      "from": "branch:rbe-public-qualification"
     }
   ]
 }
