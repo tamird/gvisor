@@ -20,10 +20,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -351,6 +354,9 @@ func (d *testDaemon) close(failed bool) error {
 	}
 	if d.cgroup != nil {
 		if err := d.cgroup.Uninstall(); err != nil {
+			// This fork-only diagnostic preserves the removal error. A stopped
+			// daemon does not establish that its owned descendants are empty.
+			logDockerCgroupState(filepath.Dir(d.cgroup.MakePath("")))
 			errs = append(errs, fmt.Errorf("remove Docker cgroup: %w", err))
 		}
 	}
@@ -393,4 +399,70 @@ func (d *testDaemon) close(failed bool) error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// logDockerCgroupState observes only the fixture-owned parent after removal
+// fails. Limit both traversal and output; do not kill tasks or retry cleanup.
+func logDockerCgroupState(parent string) {
+	const maxBytes = 4096
+	read := func(path string) []byte {
+		file, err := os.Open(path)
+		if err != nil {
+			log.Printf("Docker cleanup diagnostic %q: %v", path, err)
+			return nil
+		}
+		defer file.Close()
+		data, err := io.ReadAll(io.LimitReader(file, maxBytes+1))
+		if err != nil {
+			log.Printf("Docker cleanup diagnostic %q: %v", path, err)
+			return nil
+		}
+		if len(data) > maxBytes {
+			log.Printf("Docker cleanup diagnostic %q truncated at %d bytes: %q", path, maxBytes, data[:maxBytes])
+			return nil
+		}
+		log.Printf("Docker cleanup diagnostic %q: %q", path, data)
+		return data
+	}
+	const maxDirectories = 32
+	const maxProcesses = 32
+	directories, processes := 0, 0
+	seen := make(map[int]struct{})
+	if err := filepath.WalkDir(parent, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			log.Printf("Docker cleanup diagnostic %q: %v", path, err)
+			return filepath.SkipDir
+		}
+		if !entry.IsDir() {
+			return nil
+		}
+		if directories == maxDirectories {
+			log.Printf("Docker cleanup diagnostic directory limit %d reached", maxDirectories)
+			return filepath.SkipAll
+		}
+		directories++
+		read(filepath.Join(path, "cgroup.events"))
+		for _, value := range strings.Fields(string(read(filepath.Join(path, "cgroup.procs")))) {
+			pid, err := strconv.Atoi(value)
+			if err != nil || pid <= 0 {
+				log.Printf("Docker cleanup diagnostic invalid PID %q", value)
+				continue
+			}
+			if _, ok := seen[pid]; ok {
+				continue
+			}
+			if processes == maxProcesses {
+				log.Printf("Docker cleanup diagnostic process limit %d reached", maxProcesses)
+				break
+			}
+			seen[pid] = struct{}{}
+			processes++
+			// stat identifies the process, parent and group without disclosing
+			// command-line arguments or environment. Tasks may exit meanwhile.
+			read(filepath.Join("/proc", value, "stat"))
+		}
+		return nil
+	}); err != nil {
+		log.Printf("Docker cleanup diagnostic traversal: %v", err)
+	}
 }
