@@ -68,6 +68,16 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: kythe_release
+    license:
+      - Apache-2.0
+      - NCSA
+    exception_rationale: >-
+      Kythe is Apache-2.0; its LICENSE also includes the legacy LLVM
+      University of Illinois/NCSA grant for incorporated LLVM code. That
+      grant permits redistribution with copyright notices, conditions and
+      disclaimers retained, and prohibits using contributors' names for
+      endorsement without permission.
   - dependency: libpluginstack
     license:
       - Apache-2.0
@@ -82,22 +92,26 @@ exceptions:
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception
-      - MIT
+      - NCSA
     exception_rationale: >-
       LLVM is part of the NVIDIA GPU test toolchain only and is not
       distributed with gVisor. The LLVM exception only relaxes
-      Apache-2.0's requirements, and the MIT match comes from third-party
-      notices embedded in LICENSE.TXT.
+      Apache-2.0's requirements. LICENSE.TXT also includes LLVM's legacy
+      University of Illinois/NCSA grant, which permits redistribution with
+      copyright notices, conditions and disclaimers retained and prohibits
+      using contributors' names for endorsement without permission.
   - dependency: nvidia_driver_535_129_03
     license: &nvidia_driver_licenses
-      - GPL-2.0-only
+      - GPL-2.0
       - MIT
     exception_rationale: &nvidia_driver_rationale >-
       These snapshots supply headers for the existing NVIDIA ABI parity test.
       COPYING licenses individual files under MIT unless otherwise noted and
       describes linked Linux kernel modules as MIT/GPLv2. The build only parses
       headers into ABI JSON; it does not build or distribute an NVIDIA kernel
-      module or link driver code into gVisor.
+      module or link driver code into gVisor. The scanner's GPL-2.0 identifier
+      describes the included license text; it does not assert a later-version
+      grant.
   - dependency: nvidia_driver_535_183_06
     license: *nvidia_driver_licenses
     exception_rationale: *nvidia_driver_rationale
@@ -180,11 +194,14 @@ exceptions:
     license:
       - Apache-2.0
       - BSD-2-Clause
-      - LGPL-3.0-only
+      - LGPL-3.0
       - MIT
     exception_rationale: >-
       Setuptools is the declared build backend for the Python distribution,
       used only by the Bazel execution tool. Its wheel bundles autocommand
-      under LGPLv3 alongside permissively licensed dependencies. These
-      tools are not distribution runtime requirements or payload files.
+      under LGPLv3 or later, as stated in all six vendored source files,
+      alongside permissively licensed dependencies. The scanner's LGPL-3.0
+      identifier describes the included license text without narrowing that
+      grant. These tools are not distribution runtime requirements or payload
+      files.
       The distribution action stages only the declared project sources.
