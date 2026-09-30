@@ -100,8 +100,9 @@ function matches(node) {
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
 function graphNodes() {
   const chains = components(), filtering = $("search").value.trim() || $("group-filter").value;
-  const visible = chains.filter((chain) => filtering ? [...chain.ids].some((id) => matches(nodeMap().get(id))) : !focus || chain.ids.has(focus));
-  const ids = new Set(visible.flatMap((chain) => [...chain.ids]));
+  if (!filtering && !focus) return tableNodes();
+  const ids = new Set((filtering ? tableNodes() : model.nodes.filter((node) => node.id === focus)).map((node) => node.id));
+  for (const chain of chains) if ([...chain.ids].some((id) => ids.has(id))) for (const id of chain.ids) ids.add(id);
   return model.nodes.filter((node) => ids.has(node.id));
 }
 function applyCamera() { $("graph-content").setAttribute("transform", `translate(${camera.x},${camera.y}) scale(${camera.scale})`); }
@@ -143,7 +144,10 @@ function dagLayout(nodes, content) {
   }
   if (queue.length !== nodes.length) throw new Error("A recorded dependency cycle cannot be drawn as a DAG. Inspect its relationships in Table.");
   const chains = components().filter((chain) => ids.has(chain.id)), positions = new Map();
-  const padding = chains.length > 1 ? 12 : 0, heading = chains.length > 1 ? 28 : 0;
+  const connected = new Set(chains.flatMap((chain) => [...chain.ids]));
+  const isolates = nodes.filter((node) => !connected.has(node.id));
+  const grouped = chains.length > 1 || isolates.length > 0;
+  const padding = grouped ? 12 : 0, heading = grouped ? 28 : 0;
   const panels = chains.map((chain) => {
     const columns = new Map();
     for (const id of chain.ids) { const level = depth.get(id); if (!columns.has(level)) columns.set(level, []); columns.get(level).push(id); }
@@ -151,20 +155,25 @@ function dagLayout(nodes, content) {
       width: Math.max(...columns.keys()) * CARD.column + CARD.width + 2 * padding,
       height: Math.max(...[...columns.values()].map((column) => column.length)) * CARD.row - (CARD.row - CARD.height) + heading + 2 * padding };
   });
-  // Pack whole chains into the available width at a readable scale. Filling
-  // gaps beside earlier chains avoids a single tall strip of tiny nodes.
-  const available = Math.max(1, ($("graph-stage").clientWidth - 48) / READABLE_SCALE);
-  const packingWidth = Math.max(available, ...panels.map((panel) => panel.width));
-  const placed = [], gap = 24;
+  // Independent items fill the gaps around whole chains. Choose a canvas
+  // shape close to the viewport instead of building one long vertical strip.
+  isolates.sort((a, b) => a.type.localeCompare(b.type) || (a.number || 0) - (b.number || 0) || a.title.localeCompare(b.title));
+  for (const node of isolates) panels.push({ node, width: CARD.width, height: CARD.height });
+  const box = $("graph-stage").getBoundingClientRect(), gap = 16;
+  const area = panels.reduce((total, panel) => total + (panel.width + gap) * (panel.height + gap), 0);
+  const aspect = Math.max(.5, box.width / Math.max(box.height - 44, 1));
+  const packingWidth = Math.max((box.width - 48) / READABLE_SCALE, Math.sqrt(area * aspect), 1, ...panels.map((panel) => panel.width));
+  const placed = [];
   for (const panel of panels) {
-    const xs = [0, ...placed.map((other) => other.x + other.width + gap)].sort((a, b) => a - b);
-    const ys = [0, ...placed.map((other) => other.y + other.height + gap)].sort((a, b) => a - b);
-    const spot = ys.flatMap((y) => xs.map((x) => ({ x, y }))).find(({ x, y }) =>
-      x + panel.width <= packingWidth && placed.every((other) =>
-        x + panel.width + gap <= other.x || other.x + other.width + gap <= x ||
-        y + panel.height + gap <= other.y || other.y + other.height + gap <= y));
+    const candidates = [{ x: 0, y: 0 }, ...placed.flatMap((other) => [
+      { x: other.x + other.width + gap, y: other.y }, { x: other.x, y: other.y + other.height + gap },
+      { x: 0, y: other.y + other.height + gap }])].sort((a, b) => a.y - b.y || a.x - b.x);
+    const spot = candidates.find(({ x, y }) => x + panel.width <= packingWidth && placed.every((other) =>
+      x + panel.width + gap <= other.x || other.x + other.width + gap <= x ||
+      y + panel.height + gap <= other.y || other.y + other.height + gap <= y));
     Object.assign(panel, spot); placed.push(panel);
-    if (chains.length > 1) {
+    if (panel.node) { positions.set(panel.node.id, spot); continue; }
+    if (grouped) {
       const backdrop = svg("g", { "data-chain": panel.chain.id });
       backdrop.append(svg("rect", { class: "chain-panel", x: panel.x, y: panel.y, width: panel.width, height: panel.height, rx: 6 }),
         svg("text", { class: "chain-heading", x: panel.x + padding, y: panel.y + padding + 12 }, wrap(panel.chain.title, Math.floor((panel.width - 2 * padding) / 7), 1)[0]));
@@ -273,8 +282,12 @@ function drawDetails() {
     }
     details.append(section);
   }
-  if (activeDependencyEdges().some((edge) => edge.from === node.id || edge.to === node.id)) details.append(button("Show dependency chain", () => focusWork(node.id), "focus-button"));
-  else details.append(element("p", "detail-description", "No active dependencies recorded. Integration membership is shown above; it is not a blocking relationship."));
+  const chain = components().find((chain) => chain.ids.has(node.id));
+  const focused = view === "dag" && focus && (chain ? chain.ids.has(focus) : focus === node.id) && !$("search").value.trim() && !$("group-filter").value;
+  const focusButton = button(focused ? (chain ? "Showing this dependency chain" : "Showing this item") :
+    (chain ? "Focus dependency chain" : "Focus item in DAG"), () => focusWork(node.id), "focus-button");
+  focusButton.id = "focus-work"; focusButton.disabled = Boolean(focused); details.append(focusButton);
+  if (!chain) details.append(element("p", "detail-description", "No active dependencies recorded. Integration membership is shown above; it is not a blocking relationship."));
 }
 function select(id) {
   const previous = document.activeElement?.getAttribute("data-node"); selected = id;
@@ -308,27 +321,23 @@ function drawRanking() {
 }
 function drawChainSelector() {
   const select = $("chain-filter"); select.replaceChildren();
-  const all = element("option", "", "All connected work"); all.value = ""; select.append(all);
+  const all = element("option", "", "All work"); all.value = ""; select.append(all);
   for (const chain of components()) { const option = element("option", "", `${chain.title} (${chain.ids.size})`); option.value = chain.id; select.append(option); }
-  select.value = components().find((chain) => chain.ids.has(focus))?.id || "";
+  const chain = components().find((chain) => chain.ids.has(focus));
+  const isolated = !chain && nodeMap().get(focus);
+  if (isolated) { const option = element("option", "", `${label(isolated)} · ${isolated.title}`); option.value = isolated.id; select.append(option); }
+  select.value = chain?.id || isolated?.id || "";
   select.disabled = Boolean($("search").value.trim() || $("group-filter").value);
 }
 function render(reposition = false) {
   const dag = view === "dag";
   $("dag-pane").hidden = !dag; $("table-pane").hidden = dag; $("ranking").hidden = !dag;
   $("dag-view").setAttribute("aria-pressed", dag); $("table-view").setAttribute("aria-pressed", !dag);
-  $("chain-control").hidden = !dag; $("resolved-control").hidden = dag;
+  $("chain-control").hidden = !dag;
   const nodes = dag ? graphNodes() : tableNodes();
-  const connected = new Set(activeDependencyEdges().flatMap((edge) => [edge.from, edge.to]));
-  const matched = tableNodes(), isolatedMatches = matched.filter((node) => !connected.has(node.id));
-  $("visible-count").textContent = dag ? `${nodes.length} / ${connected.size} connected items · prerequisite → dependent` : `${nodes.length} items · click a title for relationships`;
-  $("filter-note").textContent = dag && ($("search").value.trim() || $("group-filter").value) ? "Matching chains with dependency context" : "";
-  const notice = $("isolated-notice"); notice.replaceChildren(); notice.hidden = !dag || !($("search").value.trim() || $("group-filter").value) || !isolatedMatches.length;
-  if (!notice.hidden) notice.append(document.createTextNode(`${isolatedMatches.length} matching item${isolatedMatches.length === 1 ? " has" : "s have"} no active dependencies. `), button("View in Table", () => setView("table")));
+  $("visible-count").textContent = dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
+  $("filter-note").textContent = dag && ($("search").value.trim() || $("group-filter").value) ? "Matches with dependency context" : "";
   $("empty").hidden = nodes.length !== 0;
-  $("empty-title").textContent = dag && isolatedMatches.length ? "No dependency chain for this search" : "No matching work";
-  $("empty-text").textContent = dag && isolatedMatches.length ? "The matching work is available in Table. No dependency is recorded for it." : "Try another search or reset the filters.";
-  $("empty-table").hidden = !dag || !isolatedMatches.length;
   if (dag) { drawGraph(nodes); drawRanking(); drawChainSelector(); } else drawTable(nodes);
   drawDetails();
   $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items`;
@@ -357,8 +366,7 @@ function applyLive(snapshot) {
     groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
   if (aliases.has(selected)) selected = aliases.get(selected);
   if (aliases.has(focus)) focus = aliases.get(focus);
-  const chains = components();
-  if (focus && !chains.some((chain) => chain.ids.has(focus))) focus = chains[0]?.id || null;
+  if (focus && !model.nodes.some((node) => node.id === focus && !resolved(node))) focus = null;
   render(true);
   setFreshness(`${snapshot.partial ? "Partial GitHub refresh" : "GitHub status checked"} · ${date(snapshot.checkedAt)}`, snapshot.partial, !snapshot.partial);
   $("freshness-detail").textContent = snapshot.partial
@@ -433,7 +441,6 @@ function initialize() {
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; history.replaceState(null, "", location.pathname + location.search); render(true); });
   for (const next of ["dag", "table"]) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
-  $("empty-table").addEventListener("click", () => setView("table"));
   document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => {
     const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
@@ -477,7 +484,7 @@ async function start() {
     for (const group of model.groups) { const option = element("option", "", group.label); option.value = group.id; $("group-filter").append(option); }
     $("registry-age").textContent = `Registry reviewed ${date(registry.meta.updatedAt)}`;
     selected = decodeURIComponent(location.hash.slice(1)) || null;
-    focus = components().find((chain) => chain.ids.has(selected))?.id || components()[0]?.id || null;
+    focus = selected && model.nodes.some((node) => node.id === selected) ? selected : null;
     initialize(); render(true); refresh();
   } catch (error) { $("visible-count").textContent = "Registry unavailable"; setFreshness(error.message, true); }
 }

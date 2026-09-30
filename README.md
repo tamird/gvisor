@@ -43,7 +43,7 @@ curated relationships. Closed, unmerged proposals leave the working branch in
 the registry. Newly discovered work without a matching branch is shown in
 **New · not yet grouped** until someone curates it.
 
-Merged and closed PRs hide by default; Table’s **Show resolved** reveals retained
+Merged and closed PRs hide by default; **Show resolved** reveals retained
 resolved entries. Prerequisite details still show their resolved status. Draft
 status is preserved. Review decisions, where present, are explicitly snapshot
 values rather than a live review assessment.
@@ -63,13 +63,17 @@ status is cached in this browser only and can be removed by clearing site data.
 
 ### Interface
 
-The dashboard has two views. **Dependency DAG** contains only nodes connected
-by active `depends_on` or `blocked_by` relationships. It opens on the leading
-blocker's chain at a readable scale. The chain selector provides every connected
-component and **All connected work**. Independent chains pack into columns
-across the available width, with labels kept at readable size. Drag to explore
-when they exceed the viewport; Fit deliberately shows the complete overview.
-Isolated items never become graph rows.
+The dashboard has two views. **Dependency DAG** opens on all active tracked
+work, including independent PRs and branches. Connected chains retain their
+left-to-right prerequisite order; independent nodes pack around them across a
+canvas shaped for the viewport. Labels start at readable size. Drag to explore
+when the graph exceeds the viewport, or use Fit for the complete overview.
+
+Select a node for details; its separate native ↗ link opens the source. The
+focus selector and **Focus dependency chain** narrow the graph to one chain.
+For an independent item, **Focus item in DAG** shows that item. The action is
+labeled as already showing the chain or item when it is focused. Choose
+**All work** or Reset to restore the complete graph.
 
 The compact **Most blocking PRs** rail counts unique downstream open PRs,
 including drafts, over the complete active model. Filters and chain selection
@@ -88,8 +92,7 @@ an item is selected and preserve all curated relationships, including integratio
 membership, reasons, and evidence links.
 
 Search titles, numbers, refs, or summaries; filter by workstream. In DAG, matching
-chains retain their dependency context. Isolated matches are explicitly identified
-with a path to Table. The visible ↗ on every node is a native source anchor,
+chains retain their dependency context, and independent matches appear as nodes. The visible ↗ on every node is a native source anchor,
 supporting keyboard activation, new tabs, and normal browser link actions.
 The separate node control selects details. Relationship titles navigate the
 selection, with an adjacent source link.

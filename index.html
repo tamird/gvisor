@@ -8,8 +8,8 @@
   <meta name="description" content="Which gVisor PR blocks the most work? Explore recorded dependency chains and a compact, sortable inventory.">
   <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=compact-3">
-  <script src="app.js?v=compact-3" defer></script>
+  <link rel="stylesheet" href="style.css?v=compact-4">
+  <script src="app.js?v=compact-4" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -23,16 +23,15 @@
       <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button></div>
       <label class="search"><span class="sr-only">Search work</span><input id="search" type="search" placeholder="Search title, PR #, or branch" autocomplete="off"><kbd>/</kbd></label>
       <label><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>
-      <label id="resolved-control" class="resolved-control" hidden><input id="show-resolved" type="checkbox"> Show resolved</label>
+      <label id="resolved-control" class="resolved-control"><input id="show-resolved" type="checkbox"> Show resolved</label>
       <button id="toolbar-reset" class="subtle">Reset</button>
     </div>
     <div class="workspace-body">
       <aside id="ranking" class="ranking" aria-label="Global dependency ranking"></aside>
       <section class="work-pane" aria-label="Work inventory">
         <div class="pane-bar"><span id="visible-count">Loading…</span><span id="filter-note"></span></div>
-        <div id="isolated-notice" class="notice" role="status" hidden></div>
         <section id="dag-pane" aria-label="Dependency DAG">
-          <label id="chain-control" class="chain-control"><span>Chain</span><select id="chain-filter" aria-label="Dependency chain"></select></label>
+          <label id="chain-control" class="chain-control"><span>Focus</span><select id="chain-filter" aria-label="Graph focus"></select></label>
           <p id="dag-warning" class="notice warning" role="alert" hidden></p>
           <div id="graph-stage" class="graph-stage">
             <svg id="graph" tabindex="0" role="group" aria-label="Prerequisite to dependent graph. Drag to pan; use zoom controls or arrow keys."><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="graph-content"></g></svg>
@@ -50,7 +49,7 @@
             <th scope="col" aria-sort="none"><button data-sort="group">Workstream</button></th>
           </tr></thead><tbody></tbody></table>
         </section>
-        <div id="empty" class="empty" hidden><h2 id="empty-title">No matching work</h2><p id="empty-text">Try another search or reset the filters.</p><div><button id="empty-table" hidden>View in Table</button><button id="reset-filters">Reset filters</button></div></div>
+        <div id="empty" class="empty" hidden><h2 id="empty-title">No matching work</h2><p id="empty-text">Try another search or reset the filters.</p><div><button id="reset-filters">Reset filters</button></div></div>
       </section>
       <aside id="details" class="details" aria-label="Selected item details" aria-live="polite" hidden></aside>
     </div>
