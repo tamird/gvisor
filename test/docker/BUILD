@@ -1,6 +1,6 @@
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
-load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS")
+load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
 load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command")
 
 package(
@@ -137,6 +137,6 @@ test_suite(
         tags = ["manual"],
         tests = [target + "_" + variant.name + "_owned" for target in INTEGRATION_TESTS],
     )
-    for variant in INTEGRATION_VARIANTS
+    for variant in INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT]
     if variant.name
 ]

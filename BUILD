@@ -2,7 +2,7 @@ load("@bazel_skylib//rules:native_binary.bzl", native_binary_test = "native_test
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
-load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "SIDECARS", "release_files")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -34,6 +34,19 @@ release_files(
     ],
     runsc = RELEASE_RUNSC,
     sidecars = RELEASE_SIDECARS,
+    visibility = ["//visibility:public"],
+)
+
+# Match Make's plugin runtime: the normal sidecars plus its plugin sentry.
+release_files(
+    name = "plugin_release",
+    bins = ["//shim:containerd-shim-runsc-v1"],
+    runsc = "//runsc:runsc-plugin-stack",
+    sidecars = SIDECARS | {
+        "//runsc/cmd/sentry:gvisor_sentry_plugin_stack": "gvisor_sentry_plugin_stack",
+    },
+    tags = ["manual", "network_plugins"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
     visibility = ["//visibility:public"],
 )
 

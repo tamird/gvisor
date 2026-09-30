@@ -90,7 +90,17 @@ test/rbe/qualify.sh plugin-build
 ```
 
 This builds `//runsc:runsc-plugin-stack` with `-c opt --config=plugin-tldk`.
-Plugin network execution remains a separate, unqualified runtime lane.
+The separate AMD64 runtime lane preserves `make plugin-network-tests`:
+
+```sh
+test/rbe/qualify.sh plugin-network
+```
+
+It uses the plugin runtime and sentry sidecar with `--network=plugin`, and
+retains the `ConnectToSelf` filter on the image and integration suites. Only
+the integration suite currently contains a matching test. As in Make, this
+lane leaves the runtime platform at its default; its public agent's KVM
+capability requirement does not set `--platform=kvm`.
 
 The full graph was qualified with Bazel 8.5.0 on a 16 GiB hosted coordinator
 using an 8 GiB JVM heap (`--host_jvm_args=-Xmx8g`). Apply this as a coordinator
