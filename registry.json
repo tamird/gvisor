@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T21:25:38.947499+00:00",
+    "updatedAt": "2026-09-30T21:44:16.711712+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1129,6 +1129,39 @@
       "group": "runtime",
       "status": "branch",
       "summary": "Both IPv4 systrap owners pass all 36 cases; native and both systrap IPv6 owners pass all 21 cases. Netstack Nogo passes ARM64 and AMD64. Native IPv4 retains three unrelated failures: OriginalDstErrors and missing mark revision 1 / CT revision 0 extensions, plus two existing skips."
+    },
+    {
+      "id": "branch:mq-dac-permissions",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "mq-dac-permissions",
+      "title": "Honor DAC capabilities in mq_open",
+      "url": "https://github.com/tamird/gvisor/tree/mq-dac-permissions",
+      "group": "runtime",
+      "status": "branch",
+      "summary": "The DAC capability correction passes all 19 cases on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. MQ and mqfs Nogo also pass. The before run passed natively and failed the two intended capability cases in each gVisor configuration. Ready for contributor review; no PR is open."
+    },
+    {
+      "id": "branch:netlink-membership-copy",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "netlink-membership-copy",
+      "title": "Copy netlink memberships in complete words",
+      "url": "https://github.com/tamird/gvisor/tree/netlink-membership-copy",
+      "group": "runtime",
+      "status": "branch",
+      "summary": "Native Linux passes the regression; the old gVisor implementation failed short output lengths 1, 2, 3, 5, 6, and 7. With this correction and the independent rename fixture fix, complete owners pass: native 62 cases with 11 existing skips, and both ordinary systrap variants 67 cases with 6 existing skips each. Netlink Nogo passes ARM64 and AMD64."
+    },
+    {
+      "id": "branch:netlink-loopback-rename",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "netlink-loopback-rename",
+      "title": "Lower loopback before testing rename events",
+      "url": "https://github.com/tamird/gvisor/tree/netlink-loopback-rename",
+      "group": "tests",
+      "status": "branch",
+      "summary": "The fixture lowers loopback before checking rename events and preserves cleanup. With the independent membership-copy correction, complete owners have no failures: native 62 passing cases and 11 existing skips; both ordinary systrap variants 67 passing cases and 6 existing skips each. No dependency between the two fixes is recorded."
     }
   ],
   "edges": [
@@ -1431,6 +1464,13 @@
         "https://github.com/tamird/gvisor/commit/3de647529",
         "https://app.buildbuddy.io/invocation/06edeb15-b4f2-4e83-a4e4-a044d978bc36"
       ]
+    },
+    {
+      "from": "branch:mq-permission-capabilities",
+      "to": "branch:mq-dac-permissions",
+      "type": "depends_on",
+      "reason": "The DAC capability correction builds on the message-queue unlink-permissions correction.",
+      "evidence": "https://github.com/tamird/gvisor/commit/c09cf4487"
     }
   ]
 }
