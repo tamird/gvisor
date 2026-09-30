@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Compiles an exported module without network or ambient build tools."""
+"""Observes exported-module dependencies for this fork-only diagnostic."""
 
 import argparse
-import json
 import os
 from pathlib import Path
 import shlex
@@ -134,21 +133,17 @@ def main() -> None:
             GOTMPDIR=str(work / "tmp"),
         )
         Path(env["GOTMPDIR"]).mkdir()
-        subprocess.run(
-            [str(go), "build", "-mod=readonly", "-buildvcs=false", "-p=4", *args.packages],
+        result = subprocess.run(
+            [str(go), "list", "-deps", "-json=ImportPath,Module", "-mod=readonly", *args.packages],
             cwd=source,
             env=env,
             check=True,
+            stdout=subprocess.PIPE,
         )
         for name, original in originals.items():
             if (source / name).read_bytes() != original:
-                raise ValueError(f"go build changed {name}; update the module metadata first")
-    output.write_text(json.dumps({
-        "goos": args.goos,
-        "goarch": args.goarch,
-        "cgo": bool(args.cc),
-        "packages": args.packages,
-    }, indent=2) + "\n")
+                raise ValueError(f"go list changed {name}; update the module metadata first")
+    output.write_bytes(result.stdout)
 
 
 if __name__ == "__main__":
