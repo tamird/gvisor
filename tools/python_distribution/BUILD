@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
 load("@python_distribution_deps//:requirements.bzl", "requirement")
 load("@rules_python//python/entry_points:py_console_script_binary.bzl", "py_console_script_binary")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
@@ -8,6 +9,13 @@ package(
 )
 
 exports_files(["requirements.txt"])
+
+native_test(
+    name = "version_test",
+    src = "version_test.sh",
+    args = ["$(rootpath //tools:make_python_release.sh)"],
+    data = ["//tools:make_python_release.sh"],
+)
 
 bzl_library(
     name = "defs_bzl",

@@ -92,9 +92,17 @@ func build() error {
 	}
 	cmd := exec.Command(command, "--no-isolation", "--outdir", out, project)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	cmd.Env = append(os.Environ(), "HOME="+work, "PYTHONNOUSERSITE=1", "PIP_NO_INDEX=1",
-		// Wheel's standard timestamp input; no sdist reproducibility claim.
-		"SOURCE_DATE_EPOCH=315532800")
+	cmd.Env = append(os.Environ(),
+		// Keep setuptools from reading an undeclared ~/.pydistutils.cfg.
+		// https://github.com/pypa/setuptools/blob/72e919a8b/setuptools/_distutils/dist.py#L401-L410
+		"HOME="+work,
+		// Exclude user-installed packages from frontend and backend imports.
+		// https://github.com/python/cpython/blob/cd1c3a634/Doc/using/cmdline.rst#L786-L789
+		"PYTHONNOUSERSITE=1",
+		// Give wheel entries ZIP's earliest timestamp instead of the build time.
+		// https://github.com/pypa/setuptools/blob/72e919a8b/setuptools/_vendor/wheel/wheelfile.py#L48-L55
+		"SOURCE_DATE_EPOCH=315532800",
+	)
 	return cmd.Run()
 }
 

@@ -905,8 +905,8 @@ $(RELEASE_ARTIFACTS)/%:
 PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
 artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
 	@mkdir -p "$(PYTHON_RELEASE_DEST)"
-	@python_release_version=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")) && \
-	export python_release_version && \
+	@set -e; \
+	python_release_version=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")); \
 	$(call build_paths,--//sandboxexec/sandbox/python:release_version="$$python_release_version" //sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/")
 .PHONY: artifacts-python
 

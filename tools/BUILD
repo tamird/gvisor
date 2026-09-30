@@ -65,4 +65,5 @@ bzl_library(
 exports_files([
     "build_cover.sh",
     "go-allow-internal.patch",
+    "make_python_release.sh",
 ])

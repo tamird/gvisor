@@ -36,7 +36,7 @@ usage() {
 get_next_ar_version() {
   # Published PEP 440 versions have no zero padding in their date components.
   local today
-  today=$(date +%Y.%m.%d | sed -E 's/[.]0([0-9])/.\1/g') || return
+  today=$(date +%Y.%m.%d | sed -E 's/[.]0([0-9])/.\1/g')
   local versions max_rev
   if ! command -v gcloud >/dev/null 2>&1; then
     echo "Automatic version discovery requires gcloud; provide an explicit release name instead." >&2
@@ -47,14 +47,15 @@ get_next_ar_version() {
     --repository=gvisor--pypi \
     --location=us \
     --project=oss-exit-gate-prod \
-    --format="value(version)") || return
+    --format="value(version)")
 
-  max_rev=$(printf '%s\n' "${versions}" | sed -nE "s/^${today//./[.]}[.]([0-9]+)$/\1/p" | sort -n | tail -n 1) || return
+  max_rev=$(printf '%s\n' "${versions}" | sed -nE "s/^${today//./[.]}[.]([0-9]+)$/\1/p" | sort -n | tail -n 1)
   printf '%s.%s\n' "${today}" "$(( ${max_rev:--1} + 1 ))"
 }
 
 # resolve_version converts release-YYYYMMDD.x to CalVer format YYYY.MM.DD.x
-# or resolves the next version from AR. Bazel normalizes it under PEP 440.
+# or resolves the next version from AR. The build backend normalizes it under
+# PEP 440.
 resolve_version() {
   local -r release_name="${1:-}"
   if [[ "${release_name}" == "auto" ]] || [[ -z "${release_name}" ]]; then
@@ -71,7 +72,8 @@ build_wheel_sdist() {
   local -r release_name="${2:-}"
 
   mkdir -p "${dest_dir}"
-  local -r abs_dest_dir="$(cd "${dest_dir}" && pwd)"
+  local abs_dest_dir
+  abs_dest_dir="$(cd "${dest_dir}" && pwd)"
   make -C "$(dirname "$0")/.." artifacts-python \
     "RELEASE_NAME=${release_name}" "PYTHON_RELEASE_DEST=${abs_dest_dir}"
 }
