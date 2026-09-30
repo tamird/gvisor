@@ -9,6 +9,7 @@ go_library(
     name = "licensecheck",
     srcs = [
         "licensecheck.go",
+        "modules.go",
         "wheels.go",
     ],
     marshal = False,
@@ -27,6 +28,7 @@ go_test(
     size = "small",
     srcs = [
         "licensecheck_test.go",
+        "modules_test.go",
         "wheels_test.go",
     ],
     data = [

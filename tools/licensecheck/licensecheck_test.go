@@ -158,7 +158,7 @@ freely, subject to the following restrictions:
 
 func TestVerifyProblems(t *testing.T) {
 	deps := []dep{
-		{name: "example.com/mod", kind: kindGoModule, version: "v1.2.0"},
+		{name: "example.com/mod", kind: kindGoModule, version: "v1.2.0", modulePath: "example.com/mod"},
 		{name: "some-archive", kind: kindArchive, url: "https://github.com/a/b/archive/refs/tags/v3.tar.gz", sha256: "cafe"},
 	}
 	entries := []Entry{
