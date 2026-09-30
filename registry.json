@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T21:52:05.773506+00:00",
+    "updatedAt": "2026-09-30T22:01:35.870130+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1172,7 +1172,7 @@
       "url": "https://github.com/tamird/gvisor/tree/mount-fd-reconfigure-expectations",
       "group": "tests",
       "status": "branch",
-      "summary": "Check the inode limit and read-only flag that Linux applies during tmpfs reconfiguration, while preserving gVisor’s tracked expectations. The standalone correction is published and included in the qualification branch; targeted validation is being prepared."
+      "summary": "The corrected FsConfigTest.FsConfigReconfigureSucceeds case passes once uncached on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. The prior native result failed the inode-limit and read-only expectations. The correction is included in the qualification branch. This targeted result does not establish a full mount-test pass or cover the separate Linux 6.15 detached-mount cases."
     }
   ],
   "edges": [
@@ -1507,10 +1507,11 @@
       "from": "branch:mount-fd-reconfigure-expectations",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "The qualification branch includes the published fixture correction for targeted validation; this does not claim a passing result.",
+      "reason": "The qualification branch includes the validated reconfiguration fixture correction; this is integration membership, not a blocking dependency.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/451728834",
-        "https://github.com/tamird/gvisor/commit/7fa3b2874"
+        "https://github.com/tamird/gvisor/commit/7fa3b2874",
+        "https://app.buildbuddy.io/invocation/0fee36f7-37fa-48fe-a3a7-3de20fa99729"
       ]
     }
   ]
