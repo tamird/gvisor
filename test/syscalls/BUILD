@@ -983,6 +983,8 @@ syscall_test(
     size = "medium",
     add_hostinet = True,
     args = ["--host-nofile=131072"],
+    # The host file table must hold the full ephemeral-port range.
+    memory = "1GB",
     shard_count = more_shards,
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
