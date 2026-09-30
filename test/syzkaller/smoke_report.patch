@@ -1,0 +1,15 @@
+diff --git a/tools/gvisor-smoke-test.sh b/tools/gvisor-smoke-test.sh
+--- a/tools/gvisor-smoke-test.sh
++++ b/tools/gvisor-smoke-test.sh
+@@ -9,4 +9,10 @@
+ cleanup() {
++  local status=$?
++  # Smoke mode writes the full crash report here before exiting.
++  if [[ -n "${TEST_UNDECLARED_OUTPUTS_DIR:-}" && -f "$workdir/workdir/report.json" ]]; then
++    sudo -E cp "$workdir/workdir/report.json" "$TEST_UNDECLARED_OUTPUTS_DIR/syzkaller-report.json" || status=1
++  fi
+   while sudo -E umount "$workdir/workdir/gvisor_root/null-netns" 2>/dev/null; do true; done
+-  sudo -E rm -rf "$workdir"
++  sudo -E rm -rf "$workdir" || status=1
++  exit "$status"
+ }
