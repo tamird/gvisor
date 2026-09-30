@@ -139,6 +139,7 @@ NogoInfo = provider(
         "importpath": "package import path",
         "binaries": "package binary files",
         "srcs": "srcs (for go_test support)",
+        "profiles": "fork-only declared checkescape profile outputs",
         "deps": "deps (for go_test support)",
     },
 )
@@ -299,12 +300,26 @@ def _nogo_aspect_impl(target, ctx):
     # Build the argument file, and the runner.
     facts_file = ctx.actions.declare_file(ctx.label.name + ".facts")
     findings_file = ctx.actions.declare_file(ctx.label.name + ".findings")
+    profiles = []
+    env = go_ctx.env
+    profile_mode = ctx.var.get("checkescape_profile", "")
+    if profile_mode not in ("", "cpu", "allocs"):
+        fail("checkescape_profile must be cpu or allocs")
+    if importpath == "gvisor.dev/gvisor/pkg/tcpip/header" and go_ctx.goarch == "amd64" and profile_mode:
+        profile = ctx.actions.declare_file(ctx.label.name + ".checkescape." + profile_mode + ".pprof")
+        profiles.append(profile)
+        env = dict(env, CHECKESCAPE_PROFILE_MODE = profile_mode, CHECKESCAPE_PROFILE_OUTPUT = profile.path)
+        if profile_mode == "allocs":
+            baseline = ctx.actions.declare_file(ctx.label.name + ".checkescape.allocs.baseline.pprof")
+            profiles.append(baseline)
+            env["CHECKESCAPE_PROFILE_BASELINE"] = baseline.path
+            env["GODEBUG"] = ",".join([value for value in [env.get("GODEBUG", ""), "memprofilerate=1"] if value])
     ctx.actions.run(
         inputs = inputs + srcs,
-        outputs = [findings_file, facts_file],
+        outputs = [findings_file, facts_file] + profiles,
         tools = depset(go_ctx.runfiles.to_list() + ctx.files._nogo),
         executable = ctx.files._nogo[0],
-        env = go_ctx.env,
+        env = env,
         mnemonic = "GoStaticAnalysis",
         progress_message = "Analyzing %s" % target.label,
         # See above.
@@ -327,6 +342,7 @@ def _nogo_aspect_impl(target, ctx):
             binaries = target.files.to_list(),
             srcs = srcs,
             deps = deps,
+            profiles = profiles,
         ),
     ]
 
@@ -364,6 +380,7 @@ def _nogo_test_impl(ctx):
     runner_content = ["#!/bin/bash"]
     runner_footer = list()
     all_findings = list()
+    profiles = []
 
     # Collect all architecture-targets.
     for (arch, deps) in ctx.split_attr.deps.items():
@@ -371,6 +388,7 @@ def _nogo_test_impl(ctx):
         if len(deps) != 1:
             fail("nogo_test requires exactly one dep.")
         raw_findings = deps[0][NogoInfo].raw_findings
+        profiles.extend(getattr(deps[0][NogoInfo], "profiles", []))
 
         # Build a step that applies the configuration.
         config_srcs = ctx.attr.config[NogoConfigInfo].srcs
@@ -415,6 +433,7 @@ def _nogo_test_impl(ctx):
         # pays attention to the mnemoic above, so this must be
         # what is expected by the tooling.
         nogo_findings = depset(all_findings),
+        checkescape_profiles = depset(profiles),
     )]
 
 nogo_test = rule(

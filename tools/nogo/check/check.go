@@ -704,8 +704,8 @@ func (i *importer) checkPackage(path string, srcs []string) (*types.Package, Fin
 				if loadErr != nil {
 					err = loadErr
 				} else {
-					if a.Name == "checkescape" && benchmarkCheckescapePackage(path) {
-						err = benchmarkCheckescape(found, p, rc)
+					if a.Name == "checkescape" && profileCheckescapePackage(path) {
+						err = profileCheckescape(found, p, rc)
 					}
 					if err == nil {
 						result, err = ba.Run(p, rc)
