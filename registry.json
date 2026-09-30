@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T20:24:07.965973+00:00",
+    "updatedAt": "2026-09-30T20:28:42.697682+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -945,7 +945,7 @@
       "url": "https://github.com/tamird/gvisor/tree/syscall-socket-stress-resources",
       "group": "tests",
       "status": "branch",
-      "summary": "Descriptor and worker-memory declaration; complete host-network owner validation running."
+      "summary": "Validated: the complete host-network owner passed all 8 shards and 33 cases after the descriptor and worker-memory declaration."
     },
     {
       "id": "branch:cgroup-unit-fixtures",
@@ -1022,7 +1022,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Current integration branch. Full systrap passes652/655 owners; remaining runtime failures and worker capabilities stay visible."
+      "summary": "Current integration branch. Ordinary systrap passes 653 of 655 owners; remaining runtime failures and worker capabilities stay visible."
     },
     {
       "id": "branch:rbe-remote-concurrency",
