@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    build-all|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -138,10 +138,10 @@ run_source_lane() (
       make lint-cc DOCKER_BUILD=false
       ;;
     governance)
-      # Make runs the generator in the checkout for directory validation.
-      # Materialize its remotely built executable for the build_paths adapter.
-      bazel build --remote_download_outputs=toplevel //governance/tools/maintainers:maintainers_gen || exit "$?"
       make governance-check DOCKER_BUILD=false
+      ;;
+    license-check)
+      make license-check DOCKER_BUILD=false
       ;;
   esac
 )
@@ -156,7 +156,7 @@ run_lane() {
       options=(--build_tag_filters=-network_plugins)
       targets=(//...)
       ;;
-    lint|lint-cc|governance)
+    lint|lint-cc|governance|license-check)
       if [[ $arch != amd64 ]]; then
         printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
         return 2

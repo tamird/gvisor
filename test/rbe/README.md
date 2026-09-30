@@ -44,11 +44,13 @@ The dispatcher supplies the declared Go SDK to bootstrap that installer. The
 `lint-cc` lane calls `make lint-cc DOCKER_BUILD=false`, retaining its configured
 compile actions and declared remote clang-tidy tool.
 
-The `governance` lane remotely builds the existing generator, then invokes
-`make governance-check DOCKER_BUILD=false` in the checkout. This retains its
-directory validation and generated-file comparison. These three source lanes
-require the hosted AMD64 coordinator. Their scoped Bazel configuration preserves
-the caller's rc files and does not introduce a cache or output base.
+The `governance` lane calls `make governance-check DOCKER_BUILD=false` in the
+checkout, retaining the generator's directory validation and generated-file
+comparison. The `license-check` lane calls `make license-check DOCKER_BUILD=false`
+to compare the checked-in license catalog with the current dependency graph and
+license policy. These four source lanes require the hosted AMD64 coordinator.
+Their scoped Bazel configuration preserves the caller's rc files and does not
+introduce a cache or output base.
 
 The `license-headers` lane passes `--header-base` to the existing
 `tools/check_license_headers.sh` owner. It retains that owner's added-file
@@ -116,8 +118,9 @@ require Firecracker workers and remain unqualified without ARM64 capacity:
 
 Their unavailable workers remain errors; passing OCI tests alone does not make
 the full ARM64 unit gate pass. HTTPS tests use the existing multiarch networking
-image for CA trust. Docker suites retain the separate AMD64 provider image that
-supplies their daemon tools.
+image for CA trust. Docker suites use a separate provider image that declares
+both Linux architectures and supplies their daemon tools. ARM64 Firecracker
+execution remains unqualified.
 
 The source-built release smoke test starts a sandbox and runs `true`:
 
