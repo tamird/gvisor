@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T20:28:42.697682+00:00",
+    "updatedAt": "2026-09-30T20:30:36.293275+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1106,7 +1106,7 @@
       "group": "tests",
       "status": "branch",
       "url": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities",
-      "summary": "Independent six-line test setup correction; native and systrap regression is running."
+      "summary": "Linux passes all 16 cases; both systrap owners fail 3 permission cases during mq_unlink cleanup. A gVisor unlink permission defect is under investigation."
     }
   ],
   "edges": [
