@@ -48,6 +48,7 @@ type FilesystemType struct {
 	root *vfs.Dentry
 }
 
+// +stateify savable
 type fileSystemOpts struct {
 	mode     linux.FileMode
 	ptmxMode linux.FileMode
@@ -64,10 +65,10 @@ func (*FilesystemType) Name() string {
 func (fstype *FilesystemType) GetFilesystem(ctx context.Context, vfsObj *vfs.VirtualFilesystem, creds *auth.Credentials, source string, opts vfs.GetFilesystemOptions) (*vfs.Filesystem, *vfs.Dentry, error) {
 	mopts := vfs.GenericParseMountOptions(opts.Data)
 	fsOpts := fileSystemOpts{
-		mode:     0555,
+		mode:     0600,
 		ptmxMode: 0666,
-		uid:      creds.EffectiveKUID,
-		gid:      creds.EffectiveKGID,
+		uid:      auth.NoID,
+		gid:      auth.NoID,
 	}
 	if modeStr, ok := mopts["mode"]; ok {
 		delete(mopts, "mode")
@@ -180,9 +181,10 @@ func (fstype *FilesystemType) newFilesystem(ctx context.Context, vfsObj *vfs.Vir
 
 	// Construct the root directory. This is always inode id 1.
 	root := &rootInode{
+		opts:     opts,
 		replicas: make(map[uint32]*replicaInode),
 	}
-	root.InodeAttrs.InitWithIDs(ctx, opts.uid, opts.gid, linux.UNNAMED_MAJOR, devMinor, 1, linux.ModeDirectory|opts.mode)
+	root.InodeAttrs.InitWithIDs(ctx, creds.UserNamespace.MapToKUID(auth.RootUID), creds.UserNamespace.MapToKGID(auth.RootGID), linux.UNNAMED_MAJOR, devMinor, 1, linux.ModeDirectory|0755)
 	root.OrderedChildren.Init(kernfs.OrderedChildrenOptions{})
 	root.InitRefs()
 
@@ -194,7 +196,7 @@ func (fstype *FilesystemType) newFilesystem(ctx context.Context, vfsObj *vfs.Vir
 	master := &masterInode{
 		root: root,
 	}
-	master.InodeAttrs.InitWithIDs(ctx, opts.uid, opts.gid, linux.UNNAMED_MAJOR, devMinor, 2, linux.ModeCharacterDevice|opts.ptmxMode)
+	master.InodeAttrs.Init(ctx, creds, linux.UNNAMED_MAJOR, devMinor, 2, linux.ModeCharacterDevice|opts.ptmxMode)
 
 	// Add the master as a child of the root.
 	links := root.OrderedChildren.Populate(map[string]kernfs.Inode{
@@ -233,6 +235,9 @@ type rootInode struct {
 	rootInodeRefs
 
 	locks vfs.FileLocks
+
+	// opts contains the immutable mount options used to create replica inodes.
+	opts fileSystemOpts
 
 	// master is the master pty inode. Immutable.
 	master *masterInode
@@ -281,9 +286,16 @@ func (i *rootInode) allocateTerminal(ctx context.Context, creds *auth.Credential
 		root: i,
 		t:    t,
 	}
+	uid, gid := creds.EffectiveKUID, creds.EffectiveKGID
+	if i.opts.uid.Ok() {
+		uid = i.opts.uid
+	}
+	if i.opts.gid.Ok() {
+		gid = i.opts.gid
+	}
 	// Linux always uses pty index + 3 as the inode id. See
 	// fs/devpts/inode.c:devpts_pty_new().
-	replica.InodeAttrs.Init(ctx, creds, i.InodeAttrs.DevMajor(), i.InodeAttrs.DevMinor(), uint64(idx+3), linux.ModeCharacterDevice|0600)
+	replica.InodeAttrs.InitWithIDs(ctx, uid, gid, i.InodeAttrs.DevMajor(), i.InodeAttrs.DevMinor(), uint64(idx+3), linux.ModeCharacterDevice|i.opts.mode)
 	i.replicas[idx] = replica
 
 	return t, nil
