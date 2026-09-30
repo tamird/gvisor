@@ -82,6 +82,14 @@ default compilation and stripping settings. Bazel's wildcard selection omits
 manual and incompatible targets; this lane builds test executables but does
 not run them. The separate runtime lanes remain necessary.
 
+The full graph was qualified with Bazel 8.5.0 on a 16 GiB hosted coordinator
+using an 8 GiB JVM heap (`--host_jvm_args=-Xmx8g`). Apply this as a coordinator
+Bazel startup option, before the subcommand. It sizes Bazel's server heap;
+remote action resource requests remain separate. Keep this setting in the
+coordinator configuration rather than the shared project rc. The default heap
+exhausted during the full build; these are tested settings, and minimum memory has
+not been measured.
+
 The complete existing Nogo lane uses its normal tag-based selection:
 
 ```sh
