@@ -188,41 +188,40 @@ TEST(NetlinkRouteTest, ListMembershipsLargeBuffer) {
       std::all_of(buf.begin() + len, buf.end(), [](char c) { return c == 0; }));
 }
 
-// A buffer smaller than the value is truncated to optlen bytes, but optlen is
-// still updated to the full size.
+// Short buffers receive only complete uint32_t words, but optlen is still
+// updated to the full size.
 TEST(NetlinkRouteTest, ListMembershipsTruncated) {
   SKIP_IF(IsRunningWithHostinet());
 
   FileDescriptor fd =
       ASSERT_NO_ERRNO_AND_VALUE(netlinkRouteSocketInLinkGroup());
 
-  // Fetch the real length
   socklen_t len = 0;
-  EXPECT_THAT(getsockopt(fd.get(), SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS,
+  ASSERT_THAT(getsockopt(fd.get(), SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS,
                          nullptr, &len),
               SyscallSucceeds());
+  ASSERT_GE(len, sizeof(uint32_t));
+  ASSERT_EQ(len % sizeof(uint32_t), 0);
+  std::vector<char> full(len);
+  socklen_t full_len = len;
+  ASSERT_THAT(getsockopt(fd.get(), SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS,
+                         full.data(), &full_len),
+              SyscallSucceeds());
+  ASSERT_EQ(full_len, len);
 
-  // Make a smaller buffer
-  ASSERT_GE(len, 2);
-  socklen_t new_len = len / 2;
-  std::vector<char> buf(new_len, 0);
-
-  int ret = getsockopt(fd.get(), SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS,
-                       buf.data(), &new_len);
-  const bool was_efault = Value(ret, SyscallFailsWithErrno(EFAULT));
-
-  // Strangely, this EFAULTs on native, but only on our testing infrastructure.
-  // Seems like something is intercepting the getsockopt() call. Skip it for
-  // now.
-  SKIP_IF(was_efault && !IsRunningOnGvisor());
-
-  EXPECT_THAT(ret, SyscallSucceeds());
-
-  EXPECT_EQ(new_len, len);
-  // First len / 2 elements were set (some may be zero, so all we can do is test
-  // that they're not *all* 0).
-  EXPECT_FALSE(!buf.empty() && std::all_of(buf.begin(), buf.end(),
-                                           [](char c) { return c == 0; }));
+  for (socklen_t available = 0; available < len; ++available) {
+    SCOPED_TRACE(available);
+    std::vector<char> buf(len, 'x');
+    socklen_t result_len = available;
+    ASSERT_THAT(getsockopt(fd.get(), SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS,
+                           buf.data(), &result_len),
+                SyscallSucceeds());
+    EXPECT_EQ(result_len, len);
+    const size_t copied = available / sizeof(uint32_t) * sizeof(uint32_t);
+    EXPECT_TRUE(std::equal(full.begin(), full.begin() + copied, buf.begin()));
+    EXPECT_TRUE(std::all_of(buf.begin() + copied, buf.end(),
+                            [](char c) { return c == 'x'; }));
+  }
 }
 
 // Validates the responses to RTM_GETLINK + NLM_F_DUMP.
@@ -2667,6 +2666,14 @@ TEST(NetlinkRouteTest, LinkMulticastGroupBasic) {
   // TODO(gvisor.dev/issue/4595): enable cooperative save tests.
   const DisableSave ds;
 
+  // Renaming an up interface fails on older kernels. Change its state before
+  // joining the multicast group so the setup event cannot enter the test.
+  const Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
+  ASSERT_NO_ERRNO(LinkChangeFlags(link.index, 0, IFF_UP));
+  auto restore_flags = Cleanup([&]() {
+    EXPECT_NO_ERRNO(LinkChangeFlags(link.index, link.flags, IFF_UP));
+  });
+
   // nlsk_bound_group joins RTMGRP_LINK via bind().
   struct sockaddr_nl addr = {};
   addr.nl_family = AF_NETLINK;
@@ -2683,20 +2690,19 @@ TEST(NetlinkRouteTest, LinkMulticastGroupBasic) {
   ASSERT_THAT(setsockopt(nlsk_sockopt_group.get(), SOL_NETLINK,
                          NETLINK_ADD_MEMBERSHIP, &group, sizeof(group)),
               SyscallSucceeds());
-  int64_t res_groups;
+  uint32_t res_groups = 0;
   socklen_t res_groups_len = sizeof(res_groups);
   EXPECT_THAT(
       getsockopt(nlsk_sockopt_group.get(), SOL_NETLINK,
                  NETLINK_LIST_MEMBERSHIPS, &res_groups, &res_groups_len),
       SyscallSucceeds());
-  EXPECT_EQ(res_groups_len, sizeof(res_groups));
+  EXPECT_GE(res_groups_len, sizeof(res_groups));
   EXPECT_EQ(res_groups, RTMGRP_LINK);
 
   FileDescriptor control_fd =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
 
   // Change the name of the loopback interface.
-  const Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
   std::string old_loopback_name = link.name;
   NameRequest name_request = GetNameRequest(link, "lo_test", kSeq);
   ASSERT_NO_ERRNO(NetlinkRequestAckOrError(control_fd, kSeq, &name_request,
@@ -2883,6 +2889,14 @@ TEST(NetlinkRouteTest, LinkMulticastGroupNoop) {
   // TODO(gvisor.dev/issue/4595): enable cooperative save tests.
   const DisableSave ds;
 
+  // Renaming an up interface fails on older kernels. Change its state before
+  // joining the multicast group so the setup event cannot enter the test.
+  const Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
+  ASSERT_NO_ERRNO(LinkChangeFlags(link.index, 0, IFF_UP));
+  auto restore_flags = Cleanup([&]() {
+    EXPECT_NO_ERRNO(LinkChangeFlags(link.index, link.flags, IFF_UP));
+  });
+
   struct sockaddr_nl mcast_addr = {};
   mcast_addr.nl_family = AF_NETLINK;
   mcast_addr.nl_groups = RTMGRP_LINK;
@@ -2890,7 +2904,6 @@ TEST(NetlinkRouteTest, LinkMulticastGroupNoop) {
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE, &mcast_addr));
 
   // Issue a request to set the name of the loopback interface to the same name.
-  const Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
   NameRequest name_request = GetNameRequest(link, link.name.c_str(), kSeq);
   FileDescriptor control_nlsk =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
@@ -2929,6 +2942,15 @@ TEST(NetlinkRouteTest, LinkMulticastGroupEnobufs) {
     GTEST_SKIP() << "gVisor never returns ENOBUFS.";
   }
 
+  // Renaming an up interface fails on older kernels. Change its state before
+  // joining the multicast group so the setup event cannot enter the test.
+  const Link original_link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
+  ASSERT_NO_ERRNO(LinkChangeFlags(original_link.index, 0, IFF_UP));
+  auto restore_flags = Cleanup([&]() {
+    EXPECT_NO_ERRNO(
+        LinkChangeFlags(original_link.index, original_link.flags, IFF_UP));
+  });
+
   struct sockaddr_nl mcast_addr = {};
   mcast_addr.nl_family = AF_NETLINK;
   mcast_addr.nl_groups = RTMGRP_LINK;
@@ -2949,7 +2971,13 @@ TEST(NetlinkRouteTest, LinkMulticastGroupEnobufs) {
   // Generate enough link events to overflow poor nlsk's receive buffer.
   FileDescriptor control_nlsk =
       ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
-  Link link = ASSERT_NO_ERRNO_AND_VALUE(LoopbackLink());
+  auto restore_name = Cleanup([&]() {
+    NameRequest request =
+        GetNameRequest(original_link, original_link.name.c_str(), kSeq);
+    EXPECT_NO_ERRNO(NetlinkRequestAckOrError(control_nlsk, kSeq, &request,
+                                             request.hdr.nlmsg_len));
+  });
+  Link link = original_link;
   constexpr int kMinimumNewlinkMsgSize = 32;
   const int num_msgs = recv_buf_size / kMinimumNewlinkMsgSize;
   for (int i = 0; i < num_msgs || link.name != "lo"; ++i) {
