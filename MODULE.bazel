@@ -1432,6 +1432,7 @@ use_repo(
     "co_honnef_go_tools",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",
+    "com_github_chzyer_readline",
     "com_github_cilium_ebpf",
     "com_github_containerd_cgroups_v3",
     "com_github_containerd_console",
@@ -1798,6 +1799,11 @@ go_deps.module(
     path = "github.com/google/pprof",
     sum = "h1:xRmpO92tb8y+Z85iUOMOicpCfaYcv7o3Cg3wKrIpg8g=",
     version = "v0.0.0-20240711041743-f6c9dda6c6da",
+)
+go_deps.module(
+    path = "github.com/chzyer/readline",
+    sum = "h1:upd/6fQk4src78LMRzh5vItIt361/o4uq553V8B5sGI=",
+    version = "v1.5.1",
 )
 go_deps.module(
     path = "github.com/prometheus/common",
