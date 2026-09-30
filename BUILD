@@ -3,6 +3,7 @@ load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
 load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -63,6 +64,44 @@ native_test(
     # A privileged identity would skip rootless capability acquisition.
     exec_properties = namespace_test_exec_properties(user = "nobody"),
     tags = ["manual"],
+)
+
+# Preserve Make's three do-tests commands. Rootless cases must start without
+# privileges so they exercise capability acquisition in a new user namespace.
+_DO_VARIANTS = [
+    ("rootless", ["--rootless"], "nobody"),
+    ("rootless_network_none", ["--rootless", "--network=none"], "nobody"),
+    ("root", [], "root"),
+]
+
+[
+    native_test(
+        name = "do_" + name + "_test",
+        size = "large",
+        src = ":release",
+        # Keep each executable beside its declared release sidecars.
+        out = "release/do_" + name + ".exe",
+        args = args + [
+            "--alsologtostderr",
+            "--debug",
+            "--sidecar-usage-policy=STRICT",
+            "do",
+            "true",
+        ],
+        exec_properties = namespace_test_exec_properties(
+            user = user,
+            # The privileged case sets up networking with ip and iptables.
+            image = RBE_NETWORK_TOOLS_IMAGE,
+        ),
+        tags = ["manual"],
+    )
+    for name, args, user in _DO_VARIANTS
+]
+
+test_suite(
+    name = "do_tests",
+    tags = ["manual"],
+    tests = [":do_" + name + "_test" for name, args, user in _DO_VARIANTS],
 )
 
 nogo_config(

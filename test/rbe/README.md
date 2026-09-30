@@ -71,6 +71,13 @@ selects the target architecture. Build lanes instead use AMD64 execution
 workers for either target architecture. Selecting an
 architecture does not establish worker support or qualify the other lanes.
 
+The AMD64 `do` lane runs Make's three `do true` smoke checks against the
+declared release: rootless with default networking, rootless with no network,
+and privileged with default networking. The rootless cases start as an
+unprivileged user; all three require the declared sidecars and retain normal
+sandbox isolation. The privileged case's worker image supplies iproute2 and
+iptables for its network setup. No Docker daemon or installed runtime is used.
+
 The continuous all-target build retains the public pipeline's selection:
 
 ```sh
