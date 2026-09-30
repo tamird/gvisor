@@ -4,53 +4,61 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="theme-color" content="#101916">
-  <meta name="description" content="An interactive map of Tamir's gVisor pull requests, working branches, and external blockers, with source-linked dependencies and live GitHub status.">
-  <title>gVisor · Work map</title>
+  <meta name="theme-color" content="#111917">
+  <meta name="description" content="Which gVisor PR blocks the most work? Explore recorded dependency chains and a compact, sortable inventory.">
+  <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=compact-1">
+  <script src="app.js?v=compact-1" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#workspace">Skip to the map</a>
+  <a class="skip-link" href="#workspace">Skip to work</a>
   <header class="masthead">
-    <a class="brand" href="./" aria-label="gVisor work map home"><img src="icon.svg" alt="" width="32" height="32"><span>gVisor <span class="brand-slash">/</span> <strong>work map</strong></span></a>
-    <a class="repo-link" href="https://github.com/tamird/gvisor/tree/gh-pages" target="_blank" rel="noopener noreferrer">View source <span aria-hidden="true">↗</span></a>
+    <a class="brand" href="./"><img src="icon.svg" alt="" width="24" height="24"><strong>gVisor</strong><span>/ dependencies</span></a>
+    <span id="inventory" class="inventory">Loading registry…</span>
+    <a class="source-link" href="https://github.com/tamird/gvisor/tree/gh-pages" target="_blank" rel="noopener noreferrer">Source ↗</a>
   </header>
-  <main>
-    <section class="intro" aria-labelledby="page-title">
-      <div><p class="eyebrow"><span class="signal"></span> TAMIR’S OPEN SOURCE WORK</p><h1 id="page-title">See how it<br><em>fits together.</em></h1><p class="lede">Pull requests, working branches, and the blockers between them.<br class="wide-only"> Follow a connection. Find the next step.</p></div>
-      <div class="summary" id="summary" aria-label="Inventory counts"></div>
-    </section>
-    <section class="workspace" id="workspace" aria-label="Interactive dependency map">
-      <div class="toolbar">
-        <label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Find a title, PR, or branch…" autocomplete="off" aria-label="Search work"><kbd>/</kbd></label>
-        <label class="group-select"><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>
-        <div class="type-filters" aria-label="Item types">
-          <button data-type="pr" aria-pressed="true"><i class="shape pr"></i>PRs</button>
-          <button data-type="branch" aria-pressed="true"><i class="shape branch"></i>Branches</button>
-          <button data-type="issue" aria-pressed="true"><i class="shape issue"></i>External</button>
-        </div>
-        <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true">DAG</button><button id="graph-view" aria-pressed="false">Map</button><button id="list-view" aria-pressed="false">List</button></div>
-      </div>
-      <section id="ranking" class="ranking" aria-label="Dependency impact ranking"></section><p id="dag-note" class="dag-note">PREREQUISITES → DEPENDENTS <span>Active dependency chains only. Dashed integration membership is available in Map view.</span></p><p id="dag-warning" class="dag-warning" role="alert" hidden></p><div class="map-bar"><div><span id="visible-count">Loading the registry…</span><span class="dot-separator">·</span><label class="connected-option"><input id="connected-only" type="checkbox" disabled>Connected only</label><span class="dot-separator">·</span><label class="connected-option"><input id="show-resolved" type="checkbox" disabled>Show resolved PRs</label></div><button id="clear-focus" hidden>Clear focus <span aria-hidden="true">×</span></button></div>
-      <div class="workspace-body">
-        <section class="map-pane" aria-label="Dependency graph">
-          <div class="graph-stage" id="graph-stage">
-            <svg id="graph" tabindex="0" role="group" aria-label="Work items and dependencies. Drag to pan. Use the zoom buttons, or Control plus mouse wheel. Arrow keys pan the map."><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="graph-content"></g></svg>
-            <div class="map-controls" aria-label="Map controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><span></span><button id="fit" title="Fit all visible items">Fit</button><button id="reset-view" title="Return to readable size">100%</button></div>
-            <div class="map-hint">Drag to explore <span>·</span> select an item to trace its connections</div>
+  <main id="workspace">
+    <div class="toolbar">
+      <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button></div>
+      <label class="search"><span class="sr-only">Search work</span><input id="search" type="search" placeholder="Search title, PR #, or branch" autocomplete="off"><kbd>/</kbd></label>
+      <label><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>
+      <label id="resolved-control" class="resolved-control" hidden><input id="show-resolved" type="checkbox"> Show resolved</label>
+      <button id="toolbar-reset" class="subtle">Reset</button>
+    </div>
+    <div class="workspace-body">
+      <aside id="ranking" class="ranking" aria-label="Global dependency ranking"></aside>
+      <section class="work-pane" aria-label="Work inventory">
+        <div class="pane-bar"><span id="visible-count">Loading…</span><span id="filter-note"></span></div>
+        <div id="isolated-notice" class="notice" role="status" hidden></div>
+        <section id="dag-pane" aria-label="Dependency DAG">
+          <label id="chain-control" class="chain-control"><span>Chain</span><select id="chain-filter" aria-label="Dependency chain"></select></label>
+          <p id="dag-warning" class="notice warning" role="alert" hidden></p>
+          <div id="graph-stage" class="graph-stage">
+            <svg id="graph" tabindex="0" role="group" aria-label="Prerequisite to dependent graph. Drag to pan; use zoom controls or arrow keys."><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="graph-content"></g></svg>
+            <div class="map-controls" aria-label="Graph controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Fit</button><button id="reset-view">100%</button></div>
+            <span class="map-hint">Select for details · ↗ opens source · drag to pan</span>
           </div>
-          <div id="list" class="list-stage" hidden></div>
-          <div class="empty" id="empty" hidden><span aria-hidden="true">⌕</span><h2>No matching work</h2><p>Try another search or reset the filters.</p><button id="reset-filters">Reset filters</button></div>
         </section>
-        <aside class="details" id="details" aria-label="Selected item details" aria-live="polite"></aside>
-      </div>
-      <div class="legend"><span class="legend-label">READING THE MAP</span><span><i class="line-arrow"></i> Prerequisite → dependent</span><span><i class="line-arrow blocked"></i> External blocker</span><span><i class="line-arrow included"></i> Included in branch</span><span class="legend-note">A shared workstream is not a dependency.</span></div>
-    </section>
-    <section class="freshness" aria-label="Data freshness"><div><span class="status-dot" id="freshness-dot"></span><span id="freshness-text" role="status">Loading saved snapshot</span><button id="refresh">Refresh GitHub status <span aria-hidden="true">↻</span></button></div><p id="registry-age"></p><p class="freshness-detail" id="freshness-detail">Relationships are curated from source and review evidence. GitHub status refreshes independently.</p></section>
-    <footer><p>Built for the work between commits.</p><nav aria-label="Footer"><a href="https://github.com/google/gvisor" target="_blank" rel="noopener noreferrer">google/gvisor ↗</a><a href="registry.json">Dependency registry ↗</a><a href="https://github.com/tamird/gvisor/tree/gh-pages#keeping-the-map-current" target="_blank" rel="noopener noreferrer">How this stays current ↗</a></nav></footer>
+        <section id="table-pane" class="table-pane" aria-label="All work table" hidden>
+          <table id="work-table"><thead><tr>
+            <th scope="col" aria-sort="none"><button data-sort="number">Item</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="title">Title</button></th>
+            <th scope="col" class="numeric" aria-sort="descending"><button data-sort="impact" title="Unique downstream open PRs">Blocks</button></th>
+            <th scope="col" class="numeric" aria-sort="none"><button data-sort="direct">Direct</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="status">Status</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="group">Workstream</button></th>
+          </tr></thead><tbody></tbody></table>
+        </section>
+        <div id="empty" class="empty" hidden><h2 id="empty-title">No matching work</h2><p id="empty-text">Try another search or reset the filters.</p><div><button id="empty-table" hidden>View in Table</button><button id="reset-filters">Reset filters</button></div></div>
+      </section>
+      <aside id="details" class="details" aria-label="Selected item details" aria-live="polite" hidden></aside>
+    </div>
   </main>
-  <noscript><div class="noscript">The interactive map needs JavaScript. The <a href="registry.json">full dependency registry</a> remains available as a plain JSON file.</div></noscript>
+  <footer class="freshness">
+    <div><span class="status-dot" id="freshness-dot"></span><span id="freshness-text" role="status">Saved snapshot</span><button id="refresh">Refresh status ↻</button><a href="registry.json">Registry ↗</a></div>
+    <details><summary id="registry-age">About this data</summary><p id="freshness-detail">Dependencies are curated; GitHub status refreshes independently. No recorded dependency does not mean ready to merge.</p></details>
+  </footer>
+  <noscript><p>The dashboard needs JavaScript. Read the <a href="registry.json">dependency registry</a> directly.</p></noscript>
 </body>
 </html>

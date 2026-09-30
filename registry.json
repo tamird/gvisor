@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T20:33:47.544910+00:00",
+    "updatedAt": "2026-09-30T20:47:13.274413+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
-    "edgeDirection": "Prerequisite → dependent; dashed integration edges mean included work, not a required PR stack.",
+    "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
     "dependencyNotes": "Dependencies are curated from PR descriptions and the validated workstream. A node without an edge has no recorded dependency; it is not automatically ready to merge. Landed prerequisites15050,15047,15041,14352,14827 were checked and omitted."
   },
   "groups": [
@@ -1022,7 +1022,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The newer MQ permission tests expose two further gVisor failures; current combined-head coverage is not established by that baseline."
+      "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The iptables large-payload fixture now passes native Linux and both systrap owners. The revised MQ unlink permissions are under validation; current complete combined-head coverage is not established by the earlier baseline."
     },
     {
       "id": "branch:rbe-remote-concurrency",
@@ -1102,11 +1102,22 @@
       "type": "branch",
       "ref": "mq-permission-capabilities",
       "repo": "tamird/gvisor",
-      "title": "Test MQ permissions without DAC bypass",
+      "title": "Match Linux message-queue unlink permissions",
       "group": "tests",
       "status": "branch",
       "url": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities",
-      "summary": "Linux passes all 16 cases; both systrap owners fail 3 permission cases during mq_unlink cleanup. A gVisor unlink permission defect is under investigation."
+      "summary": "The earlier DAC test correction passed 16 Linux cases but exposed three mq_unlink cleanup failures in both systrap owners. The published revision adds Linux’s sticky directory mode and ownership checks, with a foreign-owner regression; complete-owner validation is pending."
+    },
+    {
+      "id": "branch:iptables-replace-counters",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "iptables-replace-counters",
+      "title": "Fix iptables replacement counter counts",
+      "url": "https://github.com/tamird/gvisor/tree/iptables-replace-counters",
+      "group": "tests",
+      "status": "branch",
+      "summary": "LargeReplacePayload passes on native Linux and both ordinary systrap owners after using the replaced table’s entry count. Both systrap owners pass all 17 cases. Native retains four separate socket-option/extension failures and two existing skips."
     }
   ],
   "edges": [
@@ -1396,6 +1407,16 @@
       "type": "includes",
       "reason": "The qualification branch includes this test setup correction.",
       "evidence": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities"
+    },
+    {
+      "from": "branch:iptables-replace-counters",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the validated replacement-counter fixture correction; this is integration membership, not a blocking dependency.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/3de647529",
+        "https://app.buildbuddy.io/invocation/06edeb15-b4f2-4e83-a4e4-a044d978bc36"
+      ]
     }
   ]
 }

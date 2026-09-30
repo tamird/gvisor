@@ -22,7 +22,7 @@ facts and unresolved causes in every relationship.
   HTTPS source URL, workstream `group`, and status. PR and GitHub issue records
   also carry `repo` and `number`; branch and PR records carry `ref`.
 - `edges` point **from prerequisite to dependent**. `depends_on` is an explicit
-  dependency; `blocked_by` records an external blocker. Dashed `includes` edges
+  dependency; `blocked_by` records an external blocker. `includes` relationships
   only identify work included in an integration branch, not a required PR stack.
   Include a plain-language `reason` and a public `evidence` URL (or URL array).
 - Grouping is for navigation. Sharing a group or Git ancestry does not create an
@@ -43,7 +43,7 @@ curated relationships. Closed, unmerged proposals leave the working branch in
 the registry. Newly discovered work without a matching branch is shown in
 **New · not yet grouped** until someone curates it.
 
-Merged and closed PRs hide by default; **Show resolved PRs** reveals retained
+Merged and closed PRs hide by default; Table’s **Show resolved** reveals retained
 resolved entries. Prerequisite details still show their resolved status. Draft
 status is preserved. Review decisions, where present, are explicitly snapshot
 values rather than a live review assessment.
@@ -63,39 +63,47 @@ status is cached in this browser only and can be removed by clearing site data.
 
 ### Interface
 
-The default **DAG** view lays out active prerequisites from left to right.
-Its **Most blocking PRs** ranking counts unique downstream open PRs (including
-drafts), over the complete active model, independently of display filters.
-The count includes direct and indirect descendants; the direct count is shown
-separately. A diamond counts the same descendant once. Only `depends_on` and
-`blocked_by` edges contribute; `includes` edges never contribute. Merged and
-closed PRs, and explicitly resolved blockers, cut blocking paths. A closed
-provider issue with unverified deployment remains unresolved capacity.
+The dashboard has two views. **Dependency DAG** contains only nodes connected
+by active `depends_on` or `blocked_by` relationships. It opens on the leading
+blocker's chain at a readable scale. The chain selector provides every connected
+component and **All connected work**. Isolated items never become graph rows.
+On smaller screens, drag to explore at readable size or use Fit for an overview.
 
-External capacity blockers are ranked separately, including a zero open-PR
-count when they affect only branches. Branch-only work does not inflate a PR's
-score. These counts measure recorded dependency reach, not severity, effort,
-or merge readiness. Selecting a ranking focuses its connected dependency chain.
-Cycles produce an explicit warning instead of a fabricated topological order.
-The grouped **Map** retains integration membership and isolated work, and
-**List** offers the complete text view.
+The compact **Most blocking PRs** rail counts unique downstream open PRs,
+including drafts, over the complete active model. Filters and chain selection
+do not alter these counts. A diamond counts a descendant only once. The direct
+count is separate; `includes` membership never contributes. Merged and closed
+PRs, and explicitly resolved blockers, cut paths. A closed provider issue whose
+deployment is unverified remains a blocker. External capacity is listed
+separately; branch-only work does not inflate PR counts. Reach is not severity,
+effort, or merge readiness.
 
-Search titles, numbers, refs, or summaries. Filter by workstream and item type,
-show connected work only, or use the list view. Select an item to see source
-links and incoming/outgoing relationships; **Focus this connected work** follows
-the connected component. All visible cards can be reached with the keyboard.
+**Table** contains all tracked work, including isolated PRs and branches. It
+starts sorted by blocking reach; click the Item, Title, Blocks, Direct, Status,
+or Workstream heading to change sort order. Click the item identifier to open
+its source, or its title to inspect details. Details consume space only while
+an item is selected and preserve all curated relationships, including integration
+membership, reasons, and evidence links.
 
-Drag the map to pan; use the arrow keys with the map focused, the zoom controls,
+Search titles, numbers, refs, or summaries; filter by workstream. In DAG, matching
+chains retain their dependency context. Isolated matches are explicitly identified
+with a path to Table. The visible ↗ on every node is a native source anchor,
+supporting keyboard activation, new tabs, and normal browser link actions.
+The separate node control selects details. Relationship titles navigate the
+selection, with an adjacent source link.
+
+Drag the graph to pan; use arrow keys with the graph focused, zoom controls,
 or Control/Command + wheel. `/` focuses search and Escape closes details.
-Selection is stored in the URL fragment for sharing. The list and details views
-provide text alternatives to the graph's shapes and colors.
+Selection is stored in the URL fragment. A recorded cycle is reported instead
+of inventing a topological order. HTML references versioned JS and CSS URLs so
+a redesigned document does not reuse stale assets from an earlier layout.
 
 ## Maintenance checks
 
 No build is required. Before publishing, inspect changed relationships against
 the linked sources, ensure IDs are unique and edge endpoints exist, and check
-JavaScript syntax. Preview the site over HTTP, then exercise search, filters,
-selection, focus, list view, navigation, and unavailable-GitHub fallback. Confirm
+JavaScript syntax. Use the hosted browser check to exercise search, filters,
+selection, focus, Table sorting and switching, native links, and unavailable-GitHub fallback. Confirm
 the served registry and source files match the published commit.
 
 GitHub Pages is configured for `gh-pages` at `/`. Keep deployments on this

@@ -4,9 +4,10 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-v1";
 const CACHE_AGE = 15 * 60 * 1000;
-const types = new Set(["pr", "branch", "issue"]);
+const CARD = { width: 216, height: 58, column: 264, row: 72 };
 let registry, model, selected = null, focus = null, view = "dag";
-let camera = { x: 18, y: 18, scale: 1 }, bounds = { width: 900, height: 600 };
+let sortKey = "impact", sortDirection = -1;
+let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600 };
 let refreshing = false, lastAttempt = 0, drag = null, moved = false;
 
 function element(tag, className, text) {
@@ -34,6 +35,7 @@ function link(text, url, className) {
 }
 function button(text, action, className) {
   const node = element("button", className, text);
+  node.type = "button";
   node.addEventListener("click", action);
   return node;
 }
@@ -41,329 +43,273 @@ function date(value) {
   return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short" });
 }
 function label(node) {
-  if (node.type === "pr") return `PR #${node.number}`;
-  if (node.type === "branch") return "WORKING BRANCH";
-  return node.number ? `EXTERNAL #${node.number}` : "EXTERNAL CAPACITY";
+  if (node.type === "pr") return `#${node.number}`;
+  if (node.type === "branch") return "BRANCH";
+  return node.number ? `ISSUE #${node.number}` : "CAPACITY";
 }
 function status(node) {
   if (node.type === "issue" && node.githubState) {
     if (node.status === "deployment-pending") return `Issue ${node.githubState} · deployment pending`;
     return `Issue ${node.githubState} · capacity unverified`;
   }
-  return ({ branch: "Not yet a PR", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
+  return ({ branch: "Working branch", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
 }
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
+function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
 function activeDependencyEdges() {
   const active = new Set(model.nodes.filter((node) => !resolved(node) && node.status !== "resolved").map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
 }
-function displayEdges() { return view === "dag" ? activeDependencyEdges() : model.edges; }
 function impact(id) {
   const edges = activeDependencyEdges(), nodes = nodeMap(), seen = new Set([id]), queue = [id];
-  const direct = new Set(edges.filter((edge) => edge.from === id && edge.to !== id && nodes.get(edge.to)?.type === "pr").map((edge) => edge.to));
-  while (queue.length) {
-    const current = queue.shift();
+  const direct = new Set(edges.filter((edge) => edge.from === id && nodes.get(edge.to)?.type === "pr").map((edge) => edge.to));
+  for (const current of queue) {
     for (const edge of edges) if (edge.from === current && !seen.has(edge.to)) { seen.add(edge.to); queue.push(edge.to); }
   }
   seen.delete(id);
   return { direct: direct.size, prs: [...seen].filter((other) => nodes.get(other)?.type === "pr").length,
     branches: [...seen].filter((other) => nodes.get(other)?.type === "branch").length };
 }
-function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
-function neighbors(id, recursive = false) {
-  const result = new Set([id]), queue = [id];
-  while (queue.length) {
-    const next = queue.shift();
-    for (const edge of displayEdges()) {
-      const other = edge.from === next ? edge.to : edge.to === next ? edge.from : null;
-      if (other && !result.has(other)) { result.add(other); if (recursive) queue.push(other); }
+function rankedPRs() {
+  return model.nodes.filter((node) => node.type === "pr" && !resolved(node))
+    .map((node) => ({ node, reach: impact(node.id) }))
+    .sort((a, b) => b.reach.prs - a.reach.prs || b.reach.direct - a.reach.direct || a.node.number - b.node.number);
+}
+function components() {
+  const edges = activeDependencyEdges(), remaining = new Set(edges.flatMap((edge) => [edge.from, edge.to])), result = [];
+  const nodes = nodeMap();
+  while (remaining.size) {
+    const first = remaining.values().next().value, members = [first]; remaining.delete(first);
+    for (const id of members) for (const edge of edges) {
+      const other = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
+      if (remaining.has(other)) { remaining.delete(other); members.push(other); }
     }
+    const leaders = members.map((id) => nodes.get(id)).sort((a, b) => impact(b.id).prs - impact(a.id).prs || a.title.localeCompare(b.title));
+    const root = leaders[0];
+    const sink = members.find((id) => !edges.some((edge) => edge.from === id));
+    result.push({ ids: new Set(members), id: root.id, score: impact(root.id).prs,
+      title: impact(root.id).prs ? `${label(root)} · ${root.title}` : (nodes.get(sink) || root).title });
   }
-  return result;
+  return result.sort((a, b) => b.score - a.score || b.ids.size - a.ids.size);
 }
-function visibleNodes() {
-  const search = $("search").value.toLowerCase().trim();
-  const group = $("group-filter").value;
-  const connected = new Set(displayEdges().flatMap((edge) => [edge.from, edge.to]));
-  const focused = focus ? neighbors(focus, true) : null;
-  return model.nodes.filter((node) => types.has(node.type)
-    && (!resolved(node) || (view !== "dag" && $("show-resolved").checked))
-    && (!group || node.group === group)
-    && (!(view === "dag" || $("connected-only").checked) || connected.has(node.id))
-    && (!focused || focused.has(node.id))
-    && (!search || `${node.title} ${node.number || ""} ${node.ref || ""} ${node.summary || ""}`.toLowerCase().includes(search)));
+function matches(node) {
+  const search = $("search").value.trim().toLowerCase(), group = $("group-filter").value;
+  return (!group || node.group === group) && (!search || `${node.title} ${node.number || ""} ${node.ref || ""} ${node.summary || ""}`.toLowerCase().includes(search));
 }
-function applyCamera() {
-  $("graph-content").setAttribute("transform", `translate(${camera.x},${camera.y}) scale(${camera.scale})`);
+function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
+function graphNodes() {
+  const chains = components(), filtering = $("search").value.trim() || $("group-filter").value;
+  const visible = chains.filter((chain) => filtering ? [...chain.ids].some((id) => matches(nodeMap().get(id))) : !focus || chain.ids.has(focus));
+  const ids = new Set(visible.flatMap((chain) => [...chain.ids]));
+  return model.nodes.filter((node) => ids.has(node.id));
 }
-function resetCamera(fit = false) {
+function applyCamera() { $("graph-content").setAttribute("transform", `translate(${camera.x},${camera.y}) scale(${camera.scale})`); }
+function resetCamera(fit = true, overview = false) {
+  if (view !== "dag") return;
   const box = $("graph-stage").getBoundingClientRect();
-  const scale = fit ? Math.min((box.width - 36) / bounds.width, (box.height - 70) / bounds.height, 1)
-    : Math.min((box.width - 36) / Math.min(bounds.width, 870), 1);
-  camera = { x: 18, y: 18, scale: Math.max(.06, scale) };
+  const minimum = !overview && box.width < 600 ? .85 : .12;
+  const scale = fit ? Math.max(minimum, Math.min((box.width - 48) / bounds.width, (box.height - 76) / bounds.height, 1.15)) : 1;
+  camera = { x: Math.max(24, (box.width - bounds.width * scale) / 2), y: Math.max(24, (box.height - 44 - bounds.height * scale) / 2), scale };
   applyCamera();
 }
 function zoom(factor, x, y) {
   const box = $("graph-stage").getBoundingClientRect();
   x ??= box.width / 2; y ??= box.height / 2;
-  const scale = Math.max(.06, Math.min(2.2, camera.scale * factor));
-  const ratio = scale / camera.scale;
+  const scale = Math.max(.12, Math.min(2.5, camera.scale * factor)), ratio = scale / camera.scale;
   camera = { x: x - (x - camera.x) * ratio, y: y - (y - camera.y) * ratio, scale };
   applyCamera();
 }
-function wrap(text, length = 29, maxLines = 3) {
-  const words = text.split(/\s+/), lines = [];
-  let line = "";
+function wrap(text, length = 29, maxLines = 2) {
+  const words = text.split(/\s+/), lines = []; let line = "";
   for (const word of words) {
     if (line && `${line} ${word}`.length > length) { lines.push(line); line = word; }
     else line += `${line ? " " : ""}${word}`;
   }
   if (line) lines.push(line);
-  if (lines.length > maxLines) {
-    lines.length = maxLines;
-    lines[maxLines - 1] = lines[maxLines - 1].slice(0, length - 1) + "…";
-  }
+  if (lines.length > maxLines) { lines.length = maxLines; lines[maxLines - 1] = lines[maxLines - 1].slice(0, length - 1) + "…"; }
   return lines;
 }
-function mapLayout(nodes, content) {
-  const degree = (id) => model.edges.filter((edge) => edge.from === id || edge.to === id).length;
-  const groups = model.groups.map((group) => ({ ...group, nodes: nodes.filter((node) => node.group === group.id)
-    .sort((a, b) => degree(b.id) - degree(a.id) || a.title.localeCompare(b.title)) })).filter((group) => group.nodes.length);
-  const positions = new Map(), cardHeight = 112, laneWidth = 274, gap = 22;
-  const columns = Math.min(3, groups.length);
-  let rowY = 0;
-  for (let index = 0; index < groups.length; index += columns) {
-    const row = groups.slice(index, index + columns);
-    const rowHeight = Math.max(...row.map((group) => group.nodes.length)) * (cardHeight + 12) + 60;
-    row.forEach((group, column) => {
-      const x = column * (laneWidth + gap), height = group.nodes.length * (cardHeight + 12) + 60;
-      content.append(svg("rect", { class: "group-panel", x, y: rowY, width: laneWidth, height, rx: 12 }));
-      content.append(svg("text", { class: "group-heading", x: x + 14, y: rowY + 27 }, group.label.toUpperCase()));
-      content.append(svg("text", { class: "group-count", x: x + laneWidth - 16, y: rowY + 27, "text-anchor": "end" }, group.nodes.length));
-      group.nodes.forEach((node, i) => positions.set(node.id, { x: x + 14, y: rowY + 44 + i * (cardHeight + 12) }));
-    });
-    rowY += rowHeight + 26;
-  }
-  return { positions, width: Math.max(columns * (laneWidth + gap) - gap, 1), height: Math.max(rowY - 26, 1) };
-}
 function dagLayout(nodes, content) {
-  const ids = new Set(nodes.map((node) => node.id));
+  const ids = new Set(nodes.map((node) => node.id)), byId = nodeMap();
   const edges = activeDependencyEdges().filter((edge) => ids.has(edge.from) && ids.has(edge.to));
   const indegree = new Map(nodes.map((node) => [node.id, 0])), depth = new Map(nodes.map((node) => [node.id, 0]));
   for (const edge of edges) indegree.set(edge.to, indegree.get(edge.to) + 1);
   const queue = nodes.filter((node) => !indegree.get(node.id)).map((node) => node.id);
-  let visited = 0;
-  while (queue.length) {
-    const id = queue.shift(); visited++;
-    for (const edge of edges) if (edge.from === id) {
-      depth.set(edge.to, Math.max(depth.get(edge.to), depth.get(id) + 1));
-      indegree.set(edge.to, indegree.get(edge.to) - 1);
-      if (!indegree.get(edge.to)) queue.push(edge.to);
-    }
+  for (const id of queue) for (const edge of edges) if (edge.from === id) {
+    depth.set(edge.to, Math.max(depth.get(edge.to), depth.get(id) + 1));
+    indegree.set(edge.to, indegree.get(edge.to) - 1);
+    if (!indegree.get(edge.to)) queue.push(edge.to);
   }
-  if (visited !== nodes.length) throw new Error("A dependency cycle is recorded. Use Map or List to inspect it; a DAG cannot represent this data.");
-  const remaining = new Set(ids), components = [];
-  while (remaining.size) {
-    const first = remaining.values().next().value, members = new Set([first]), pending = [first]; remaining.delete(first);
-    while (pending.length) {
-      const id = pending.shift();
-      for (const edge of edges) {
-        const other = edge.from === id ? edge.to : edge.to === id ? edge.from : null;
-        if (other && remaining.has(other)) { remaining.delete(other); members.add(other); pending.push(other); }
-      }
-    }
-    components.push([...members]);
-  }
-  const byId = nodeMap(), score = (component) => Math.max(...component.filter((id) => byId.get(id).type === "pr").map((id) => impact(id).prs), 0);
-  components.sort((a, b) => score(b) - score(a) || b.length - a.length);
-  const positions = new Map(); let y = 44, width = 1;
-  for (const [index, members] of components.entries()) {
+  if (queue.length !== nodes.length) throw new Error("A recorded dependency cycle cannot be drawn as a DAG. Inspect its relationships in Table.");
+  const chains = components().filter((chain) => ids.has(chain.id)), positions = new Map();
+  let y = 0, width = 1;
+  for (const chain of chains) {
     const columns = new Map();
-    for (const id of members) { const level = depth.get(id); if (!columns.has(level)) columns.set(level, []); columns.get(level).push(id); }
-    const height = Math.max(...[...columns.values()].map((column) => column.length)) * 138;
-    const componentWidth = (Math.max(...columns.keys()) + 1) * 314 - 54;
-    width = Math.max(width, componentWidth);
-    const prs = members.filter((id) => byId.get(id).type === "pr").length;
-    content.append(svg("text", { class: "group-heading", x: 0, y: y - 15 }, `${prs ? "PR DEPENDENCY CHAIN" : "BRANCH & CAPACITY CHAIN"} ${index + 1} · ${prs} OPEN PR${prs === 1 ? "" : "S"}`));
+    for (const id of chain.ids) { const level = depth.get(id); if (!columns.has(level)) columns.set(level, []); columns.get(level).push(id); }
+    const height = Math.max(...[...columns.values()].map((column) => column.length)) * CARD.row;
+    width = Math.max(width, Math.max(...columns.keys()) * CARD.column + CARD.width);
+    if (chains.length > 1) { content.append(svg("text", { class: "chain-heading", x: 0, y: y + 12 }, chain.title)); y += 28; }
     for (const [level, column] of columns) {
       column.sort((a, b) => impact(b).prs - impact(a).prs || byId.get(a).title.localeCompare(byId.get(b).title));
-      const offset = (height - column.length * 138) / 2;
-      column.forEach((id, row) => positions.set(id, { x: level * 314, y: y + offset + row * 138 }));
+      const offset = (height - column.length * CARD.row) / 2;
+      column.forEach((id, row) => positions.set(id, { x: level * CARD.column, y: y + offset + row * CARD.row }));
     }
-    y += height + 65;
+    y += height + 30;
   }
-  return { positions, width, height: Math.max(y - 30, 1) };
+  return { positions, width, height: Math.max(y - 44, CARD.height) };
 }
 function drawGraph(nodes) {
-  const content = $("graph-content"); content.replaceChildren();
-  $("dag-warning").hidden = true;
+  const content = $("graph-content"); content.replaceChildren(); $("dag-warning").hidden = true;
   let layout;
-  try { layout = view === "dag" ? dagLayout(nodes, content) : mapLayout(nodes, content); }
+  try { layout = dagLayout(nodes, content); }
   catch (error) { $("dag-warning").textContent = error.message; $("dag-warning").hidden = false; return; }
-  const { positions } = layout, cardWidth = 246, cardHeight = 112;
   bounds = layout;
-  const related = selected ? neighbors(selected) : null;
+  const { positions } = layout;
   const edges = svg("g", { "aria-hidden": "true" });
-  for (const edge of displayEdges()) {
-    const from = positions.get(edge.from), to = positions.get(edge.to);
-    if (!from || !to) continue;
-    let d;
-    if (from.x === to.x) {
-      const x = from.x + cardWidth, y1 = from.y + cardHeight / 2, y2 = to.y + cardHeight / 2;
-      d = `M ${x},${y1} C ${x + 26},${y1} ${x + 26},${y2} ${x},${y2}`;
-    } else {
-      const forward = to.x > from.x, x1 = from.x + (forward ? cardWidth : 0), x2 = to.x + (forward ? 0 : cardWidth);
-      const y1 = from.y + cardHeight / 2, y2 = to.y + cardHeight / 2, bend = Math.max(Math.abs(x2 - x1) / 2, 42);
-      d = `M ${x1},${y1} C ${x1 + (forward ? bend : -bend)},${y1} ${x2 - (forward ? bend : -bend)},${y2} ${x2},${y2}`;
-    }
-    edges.append(svg("path", { d, class: `edge ${edge.type}${selected ? (edge.from === selected || edge.to === selected ? " active" : " dimmed") : ""}` }));
+  for (const edge of activeDependencyEdges()) {
+    const from = positions.get(edge.from), to = positions.get(edge.to); if (!from || !to) continue;
+    const x1 = from.x + CARD.width, x2 = to.x, y1 = from.y + CARD.height / 2, y2 = to.y + CARD.height / 2;
+    const bend = Math.max((x2 - x1) / 2, 20);
+    edges.append(svg("path", { d: `M ${x1},${y1} C ${x1 + bend},${y1} ${x2 - bend},${y2} ${x2},${y2}`,
+      class: `edge ${edge.type}${edge.from === selected || edge.to === selected ? " active" : ""}`,
+      "data-from": edge.from, "data-to": edge.to }));
   }
   content.append(edges);
+  const filtering = $("search").value.trim() || $("group-filter").value;
   for (const node of nodes) {
     const pos = positions.get(node.id);
-    const group = svg("g", { class: `node ${node.type}${selected === node.id ? " selected" : ""}${related && !related.has(node.id) ? " dimmed" : ""}`,
-      transform: `translate(${pos.x},${pos.y})`, tabindex: "0", role: "button", "aria-label": `${label(node)}: ${node.title}. ${status(node)}. Select for details.`, "aria-pressed": selected === node.id, "data-node": node.id });
-    if (node.type === "branch") group.append(svg("path", { class: "node-shape", d: `M 8,0 H ${cardWidth - 18} L ${cardWidth},18 V ${cardHeight - 8} Q ${cardWidth},${cardHeight} ${cardWidth - 8},${cardHeight} H 8 Q 0,${cardHeight} 0,${cardHeight - 8} V 8 Q 0,0 8,0 Z` }));
-    else if (node.type === "issue") group.append(svg("path", { class: "node-shape", d: `M 12,0 H ${cardWidth - 12} L ${cardWidth},12 V ${cardHeight - 12} L ${cardWidth - 12},${cardHeight} H 12 L 0,${cardHeight - 12} V 12 Z` }));
-    else group.append(svg("rect", { class: "node-shape", width: cardWidth, height: cardHeight, rx: 10 }));
-    group.append(svg("text", { class: "node-label", x: 14, y: 22 }, label(node)));
-    wrap(node.title).forEach((line, index) => group.append(svg("text", { class: "node-title", x: 14, y: 44 + index * 16 }, line)));
-    group.append(svg("circle", { class: `node-dot ${node.status}`, cx: 17, cy: 96, r: 2.5 }));
-    const downstream = impact(node.id);
-    const subtitle = view === "dag" ? `${downstream.prs} downstream PR${downstream.prs === 1 ? "" : "s"} · ${downstream.direct} direct` : status(node).slice(0, 37);
-    group.append(svg("text", { class: "node-status", x: 25, y: 99 }, subtitle));
-    group.append(svg("title", {}, `${node.title}\n${status(node)}`));
-    group.addEventListener("click", () => { if (!moved) select(node.id); });
-    group.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });
-    content.append(group);
+    const group = svg("g", { class: `node ${node.type}${selected === node.id ? " selected" : ""}${filtering && !matches(node) ? " context-node" : ""}`,
+      transform: `translate(${pos.x},${pos.y})`, role: "group" });
+    const card = svg("g", { tabindex: "0", role: "button", "aria-label": `${label(node)}: ${node.title}. Select details.`, "aria-pressed": selected === node.id, "data-node": node.id });
+    card.append(svg("rect", { class: "node-shape", width: CARD.width, height: CARD.height, rx: 5 }));
+    card.append(svg("text", { class: "node-label", x: 10, y: 15 }, label(node)));
+    const reach = impact(node.id).prs;
+    if (reach) card.append(svg("text", { class: "node-reach", x: CARD.width - 33, y: 15, "text-anchor": "end" }, `${reach} downstream`));
+    wrap(node.title).forEach((line, index) => card.append(svg("text", { class: "node-title", x: 10, y: 32 + index * 14 }, line)));
+    card.append(svg("title", {}, `${node.title}\n${status(node)}`));
+    card.addEventListener("click", () => { if (!moved) select(node.id); });
+    card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });
+    group.append(card);
+    const open = svg("a", { href: safeURL(node.url) || "#", target: "_blank", rel: "noopener noreferrer", tabindex: "0", class: "node-link", "aria-label": `Open ${label(node)}: ${node.title}` });
+    open.append(svg("rect", { class: "node-link-hit", x: CARD.width - 29, y: 1, width: 28, height: 26, rx: 4 }),
+      svg("text", { class: "node-outlink", x: CARD.width - 21, y: 18, "aria-hidden": "true" }, "↗"));
+    open.addEventListener("click", (event) => { event.stopPropagation(); if (moved && event.detail !== 0) event.preventDefault(); });
+    open.addEventListener("keydown", (event) => { if (event.key === "Enter") event.stopPropagation(); });
+    group.append(open); content.append(group);
   }
   applyCamera();
 }
-function drawList(nodes) {
-  $("list").replaceChildren();
-  for (const group of model.groups) {
-    const members = nodes.filter((node) => node.group === group.id);
-    if (!members.length) continue;
-    const section = element("section", "list-group");
-    section.append(element("h2", "", `${group.label} · ${members.length}`));
-    for (const node of members) {
-      const card = element("div", `list-card${node.id === selected ? " selected" : ""}`), info = element("div", "list-info");
-      card.append(element("i", `shape ${node.type}`));
-      const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
-      info.append(choose, element("p", "", `${label(node)}${node.ref ? " · " + node.ref : ""}`));
-      const open = link("↗", node.url, "list-open"); open.setAttribute("aria-label", `Open ${node.title}`);
-      card.append(info, element("span", `status-pill ${node.status}`, status(node)), open);
-      section.append(card);
-    }
-    $("list").append(section);
+function drawTable(nodes) {
+  const table = $("work-table"), head = table.tHead.rows[0], body = table.tBodies[0]; body.replaceChildren();
+  for (const th of head.cells) {
+    const key = th.querySelector("button")?.dataset.sort;
+    if (key) th.setAttribute("aria-sort", key === sortKey ? (sortDirection === -1 ? "descending" : "ascending") : "none");
+  }
+  const groups = new Map(model.groups.map((group) => [group.id, group.label]));
+  const value = (node) => ({ impact: impact(node.id).prs, direct: impact(node.id).direct, title: node.title,
+    status: status(node), group: groups.get(node.group) || "", number: node.number || 0 })[sortKey];
+  nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
+  for (const node of nodes) {
+    const row = element("tr", selected === node.id ? "selected" : ""); row.dataset.nodeId = node.id;
+    const reach = impact(node.id), title = element("td", "work-title"), identity = element("td", `identity ${node.type}`);
+    identity.append(link(label(node), node.url));
+    const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
+    title.append(choose);
+    row.append(identity, title, element("td", "numeric reach-cell", String(reach.prs)), element("td", "numeric", String(reach.direct)),
+      element("td", "status-cell", status(node)), element("td", "group-cell", groups.get(node.group) || ""));
+    body.append(row);
   }
 }
 function drawDetails() {
-  const details = $("details"), nodes = nodeMap(), node = nodes.get(selected);
-  details.replaceChildren();
-  if (!node) {
-    const empty = element("div", "detail-empty"), art = element("div", "detail-art");
-    art.setAttribute("aria-hidden", "true"); art.append(element("span"), element("span"), element("span"));
-    empty.append(art, element("h2", "", "Every connection has a source."),
-      element("p", "", "Select a card to see what it needs, what it unlocks, and the evidence behind each relationship."),
-      element("p", "tip", "No recorded dependency does not mean ready to merge. Reviews, tests, and contributor approval still apply."));
-    details.append(empty); return;
-  }
+  const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
+  if (!node) return;
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
-  close.setAttribute("aria-label", "Close details"); top.append(element("span", "", label(node)), close);
+  close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
-  if (!resolved(node)) {
-    const downstream = impact(node.id), impactBox = element("div", "detail-impact");
-    impactBox.append(element("strong", "", downstream.prs), element("span", "", `unique downstream open PR${downstream.prs === 1 ? "" : "s"} · ${downstream.direct} direct`));
-    details.append(impactBox);
-  }
+  const reach = impact(node.id);
+  details.append(element("p", "detail-impact", `${reach.prs} downstream open PRs · ${reach.direct} direct`));
   if (node.summary) details.append(element("p", "detail-description", node.summary));
-  if (node.promotedFrom) details.append(element("p", "detail-meta", `Now proposed upstream from ${node.promotedFrom}. Curated branch relationships are preserved.`));
-  details.append(link(`Open ${node.type === "pr" ? "pull request" : node.type === "branch" ? "branch" : "source"} ↗`, node.url, "primary-link"));
-  if (node.ref) details.append(element("p", "detail-meta", `${node.repo} · ${node.ref}`));
-  if (node.updatedAt) details.append(element("p", "detail-meta", `GitHub updated ${date(node.updatedAt)}`));
-  if (node.reviewDecision) details.append(element("p", "detail-meta", `Snapshot review: ${node.reviewDecision.toLowerCase().replaceAll("_", " ")}`));
-  if (node.type === "issue") details.append(element("p", "detail-meta", "An issue closing does not establish that hosted capacity is deployed or qualified."));
-  const relationships = [
-    ["REQUIRES", model.edges.filter((edge) => edge.to === node.id && edge.type !== "includes"), "from"],
-    ["NEEDED BY", model.edges.filter((edge) => edge.from === node.id && edge.type !== "includes"), "to"],
-    ["INCLUDES WORK FROM", model.edges.filter((edge) => edge.to === node.id && edge.type === "includes"), "from"],
-    ["INCLUDED IN", model.edges.filter((edge) => edge.from === node.id && edge.type === "includes"), "to"],
+  if (node.ref) details.append(element("p", "detail-meta", node.ref));
+  if (node.type === "issue") details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
+  const relations = [
+    ["Requires", model.edges.filter((edge) => edge.to === node.id && edge.type !== "includes"), "from"],
+    ["Needed by", model.edges.filter((edge) => edge.from === node.id && edge.type !== "includes"), "to"],
+    ["Includes", model.edges.filter((edge) => edge.to === node.id && edge.type === "includes"), "from"],
+    ["Included in", model.edges.filter((edge) => edge.from === node.id && edge.type === "includes"), "to"],
   ];
-  let count = 0;
-  for (const [heading, edges, other] of relationships) {
+  for (const [heading, edges, other] of relations) {
     if (!edges.length) continue;
-    count += edges.length;
     const section = element("section", "detail-section"); section.append(element("h3", "", heading));
     for (const edge of edges) {
       const target = nodes.get(edge[other]); if (!target) continue;
       const relation = element("div", "relation");
-      relation.append(button(`${target.type === "pr" ? "#" + target.number + " · " : ""}${target.title}`, () => select(target.id)), element("p", "", edge.reason));
-      if (resolved(target)) relation.append(element("p", "", `Prerequisite status: ${target.status}`));
+      relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link("↗", target.url, "relation-source"), element("p", "", edge.reason));
+      if (resolved(target)) relation.append(element("p", "", `Resolved: ${target.status}`));
       for (const [index, url] of (Array.isArray(edge.evidence) ? edge.evidence : [edge.evidence]).filter(Boolean).entries()) relation.append(link(`Evidence${index ? " " + (index + 1) : ""} ↗`, url, "evidence-link"));
       section.append(relation);
     }
     details.append(section);
   }
-  if (count && displayEdges().some((edge) => edge.from === node.id || edge.to === node.id)) details.append(button("Focus this connected work ↗", () => focusWork(node.id), "focus-button"));
-  else details.append(element("p", "detail-description", count ? "This item has no active dependency chain in this view. Integration membership and resolved work remain available in Map view." : "No dependency is recorded for this item. This is not a merge-readiness assessment."));
+  if (activeDependencyEdges().some((edge) => edge.from === node.id || edge.to === node.id)) details.append(button("Show dependency chain", () => focusWork(node.id), "focus-button"));
+  else details.append(element("p", "detail-description", "No active dependencies recorded. Integration membership is shown above; it is not a blocking relationship."));
 }
 function select(id) {
-  const focusedNode = document.activeElement?.getAttribute("data-node");
-  selected = id;
+  const previous = document.activeElement?.getAttribute("data-node"); selected = id;
   history.replaceState(null, "", id ? `#${encodeURIComponent(id)}` : location.pathname + location.search);
   render();
-  if (focusedNode) document.querySelector(`${view !== "list" ? "#graph" : "#list"} [data-node="${CSS.escape(focusedNode)}"]`)?.focus();
+  if (previous) document.querySelector(`${view === "dag" ? "#graph" : "#work-table"} [data-node="${CSS.escape(previous)}"]`)?.focus();
 }
 function focusWork(id) {
   focus = id; selected = id; $("search").value = ""; $("group-filter").value = "";
-  for (const type of ["pr", "branch", "issue"]) types.add(type);
-  document.querySelectorAll("[data-type]").forEach((node) => node.setAttribute("aria-pressed", "true"));
-  history.replaceState(null, "", `#${encodeURIComponent(id)}`);
-  render(true, true);
+  history.replaceState(null, "", `#${encodeURIComponent(id)}`); setView("dag");
 }
 function drawRanking() {
-  const panel = $("ranking"); panel.replaceChildren(); panel.hidden = view !== "dag";
-  if (view !== "dag") return;
-  const heading = element("div", "ranking-heading");
-  heading.append(element("h2", "", "Most blocking PRs"), element("p", "", "Unique downstream open PRs, across all active dependencies. Drafts count; integration membership does not."));
-  panel.append(heading);
-  const ranked = model.nodes.filter((node) => node.type === "pr" && !resolved(node)).map((node) => ({ node, impact: impact(node.id) }))
-    .sort((a, b) => b.impact.prs - a.impact.prs || b.impact.direct - a.impact.direct || a.node.number - b.node.number);
-  const leaders = ranked.filter((item) => item.impact.prs > 0).slice(0, 5), cards = element("div", "ranking-cards");
-  for (const [index, item] of leaders.entries()) {
-    const card = button("", () => focusWork(item.node.id), "ranking-card");
-    card.append(element("span", "rank-index", String(index + 1).padStart(2, "0")), element("strong", "rank-value", item.impact.prs),
-      element("span", "rank-label", "downstream PRs"), element("span", "rank-title", `#${item.node.number} · ${item.node.title}`),
-      element("span", "rank-direct", `${item.impact.direct} direct · ${item.impact.prs - item.impact.direct} indirect · focus ↗`));
-    cards.append(card);
+  const panel = $("ranking"); panel.replaceChildren();
+  panel.append(element("h2", "", "Most blocking PRs"), element("p", "ranking-explainer", "Unique downstream open PRs"));
+  const ranked = rankedPRs();
+  for (const {node, reach} of ranked.filter((item) => item.reach.prs > 0).slice(0, 5)) {
+    const row = element("div", "rank-row"), choose = button("", () => focusWork(node.id), "rank-choice");
+    choose.dataset.rank = node.id;
+    choose.append(element("span", "rank-number", label(node)), element("span", "rank-title", node.title), element("span", "rank-direct", `${reach.direct} direct`));
+    row.append(choose, element("strong", "rank-value", reach.prs)); panel.append(row);
   }
-  panel.append(cards);
-  const zero = ranked.filter((item) => item.impact.prs === 0).length;
-  panel.append(element("p", "ranking-note", `${zero} open PRs have no recorded downstream open PRs. This measures recorded dependency reach, not severity, effort, or merge readiness.`));
-  const external = model.nodes.filter((node) => node.type === "issue" && activeDependencyEdges().some((edge) => edge.from === node.id))
-    .map((node) => ({ node, impact: impact(node.id) })).sort((a, b) => b.impact.prs - a.impact.prs || b.impact.branches - a.impact.branches);
+  panel.append(element("p", "ranking-note", "Counts are global. Drafts count; resolved prerequisites cut paths. Integration membership is excluded."));
+  const zero = ranked.filter((item) => !item.reach.prs).length;
+  panel.append(button(`${zero} PRs block no recorded PRs → Table`, () => { resetFilters(false); setView("table"); }, "table-link"));
+  const external = model.nodes.filter((node) => node.type === "issue" && activeDependencyEdges().some((edge) => edge.from === node.id));
   if (external.length) {
-    const section = element("details", "external-ranking"), summary = element("summary", "", `${external.length} external capacity blockers · ranked separately`);
-    section.append(summary);
-    for (const item of external) section.append(button(`${item.node.title} · ${item.impact.prs} downstream PRs · ${item.impact.branches} branches`, () => focusWork(item.node.id), "external-rank"));
-    panel.append(section);
+    panel.append(element("h3", "", "External capacity"));
+    for (const node of external) panel.append(button(node.title, () => focusWork(node.id), "external-rank"));
+    panel.append(element("p", "ranking-note", "Issue status does not establish deployment."));
   }
 }
-function render(reposition = false, fit = false) {
-  const nodes = visibleNodes();
-  $("visible-count").textContent = `${nodes.length} of ${model.nodes.length} items${focus ? " · focused work" : ""}`;
-  $("clear-focus").hidden = !focus;
+function drawChainSelector() {
+  const select = $("chain-filter"); select.replaceChildren();
+  const all = element("option", "", "All connected work"); all.value = ""; select.append(all);
+  for (const chain of components()) { const option = element("option", "", `${chain.title} (${chain.ids.size})`); option.value = chain.id; select.append(option); }
+  select.value = components().find((chain) => chain.ids.has(focus))?.id || "";
+  select.disabled = Boolean($("search").value.trim() || $("group-filter").value);
+}
+function render(reposition = false) {
+  const dag = view === "dag";
+  $("dag-pane").hidden = !dag; $("table-pane").hidden = dag; $("ranking").hidden = !dag;
+  $("dag-view").setAttribute("aria-pressed", dag); $("table-view").setAttribute("aria-pressed", !dag);
+  $("chain-control").hidden = !dag; $("resolved-control").hidden = dag;
+  const nodes = dag ? graphNodes() : tableNodes();
+  const connected = new Set(activeDependencyEdges().flatMap((edge) => [edge.from, edge.to]));
+  const matched = tableNodes(), isolatedMatches = matched.filter((node) => !connected.has(node.id));
+  $("visible-count").textContent = dag ? `${nodes.length} / ${connected.size} connected items · prerequisite → dependent` : `${nodes.length} items · click a title for relationships`;
+  $("filter-note").textContent = dag && ($("search").value.trim() || $("group-filter").value) ? "Matching chains with dependency context" : "";
+  const notice = $("isolated-notice"); notice.replaceChildren(); notice.hidden = !dag || !($("search").value.trim() || $("group-filter").value) || !isolatedMatches.length;
+  if (!notice.hidden) notice.append(document.createTextNode(`${isolatedMatches.length} matching item${isolatedMatches.length === 1 ? " has" : "s have"} no active dependencies. `), button("View in Table", () => setView("table")));
   $("empty").hidden = nodes.length !== 0;
-  drawGraph(nodes); drawList(nodes); drawDetails(); drawRanking();
-  if (reposition) resetCamera(fit);
-  $("summary").replaceChildren();
-  for (const [type, title] of [["pr", "Open pull requests"], ["branch", "Working branches"], ["issue", "External items"]]) {
-    const stat = element("div", "stat"), description = element("span", "stat-label");
-    description.append(element("i", `shape ${type}`), document.createTextNode(title));
-    stat.append(element("span", "stat-number", model.nodes.filter((node) => node.type === type && !resolved(node)).length), description);
-    $("summary").append(stat);
-  }
+  $("empty-title").textContent = dag && isolatedMatches.length ? "No dependency chain for this search" : "No matching work";
+  $("empty-text").textContent = dag && isolatedMatches.length ? "The matching work is available in Table. No dependency is recorded for it." : "Try another search or reset the filters.";
+  $("empty-table").hidden = !dag || !isolatedMatches.length;
+  if (dag) { drawGraph(nodes); drawRanking(); drawChainSelector(); } else drawTable(nodes);
+  drawDetails();
+  $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items`;
+  if (reposition) resetCamera();
 }
 function setFreshness(text, warning = false, live = false) {
   $("freshness-text").textContent = text;
@@ -388,7 +334,9 @@ function applyLive(snapshot) {
     groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
   if (aliases.has(selected)) selected = aliases.get(selected);
   if (aliases.has(focus)) focus = aliases.get(focus);
-  render();
+  const chains = components();
+  if (focus && !chains.some((chain) => chain.ids.has(focus))) focus = chains[0]?.id || null;
+  render(true);
   setFreshness(`${snapshot.partial ? "Partial GitHub refresh" : "GitHub status checked"} · ${date(snapshot.checkedAt)}`, snapshot.partial, !snapshot.partial);
   $("freshness-detail").textContent = snapshot.partial
     ? "Some status lookups were unavailable or reached the request limit. Unverified entries retain their saved state; relationships and deployment qualifications remain curated."
@@ -451,31 +399,24 @@ async function refresh(force = false) {
     setFreshness(`GitHub refresh unavailable · ${error.message}. Showing ${cached?.registryDate === registry.meta.updatedAt ? "cached status" : "saved snapshot"}.`, true);
   } finally { refreshing = false; $("refresh").disabled = false; }
 }
-function resetFilters() {
-  $("search").value = ""; $("group-filter").value = ""; $("connected-only").checked = false; focus = null;
-  for (const type of ["pr", "branch", "issue"]) types.add(type);
-  document.querySelectorAll("[data-type]").forEach((node) => node.setAttribute("aria-pressed", "true"));
-  render(true);
+function setView(next) { view = next; render(true); }
+function resetFilters(redraw = true) {
+  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null;
+  if (redraw) render(true);
 }
 function initialize() {
   $("search").addEventListener("input", () => render(true));
-  for (const id of ["group-filter", "connected-only", "show-resolved"]) $(id).addEventListener("change", () => render(true));
-  document.querySelectorAll("[data-type]").forEach((node) => node.addEventListener("click", () => {
-    const type = node.dataset.type; types.has(type) ? types.delete(type) : types.add(type);
-    node.setAttribute("aria-pressed", types.has(type)); render(true);
+  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => render(true));
+  $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; history.replaceState(null, "", location.pathname + location.search); render(true); });
+  for (const next of ["dag", "table"]) $(`${next}-view`).addEventListener("click", () => setView(next));
+  for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
+  $("empty-table").addEventListener("click", () => setView("table"));
+  document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => {
+    const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
-  for (const next of ["dag", "map", "list"]) $(next === "map" ? "graph-view" : `${next}-view`).addEventListener("click", () => {
-    view = next; focus = null; $("graph-stage").hidden = next === "list"; $("list").hidden = next !== "list";
-    $("graph-view").setAttribute("aria-pressed", next === "map"); $("list-view").setAttribute("aria-pressed", next === "list"); $("dag-view").setAttribute("aria-pressed", next === "dag");
-    $("show-resolved").disabled = next === "dag"; $("connected-only").disabled = next === "dag";
-    $("dag-note").hidden = next !== "dag"; render(true);
-  });
-  $("clear-focus").addEventListener("click", () => { focus = null; render(true); });
-  $("reset-filters").addEventListener("click", resetFilters);
   $("refresh").addEventListener("click", () => refresh(true));
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
-  $("fit").addEventListener("click", () => resetCamera(true));
-  $("reset-view").addEventListener("click", () => { camera = { x: 18, y: 18, scale: 1 }; applyCamera(); });
+  $("fit").addEventListener("click", () => resetCamera(true, true)); $("reset-view").addEventListener("click", () => resetCamera(false));
   const graph = $("graph");
   graph.addEventListener("pointerdown", (event) => { if (event.button !== 0) return; moved = false; drag = { x: event.clientX, y: event.clientY, originX: camera.x, originY: camera.y }; });
   graph.addEventListener("pointermove", (event) => {
@@ -500,6 +441,7 @@ function initialize() {
     if (event.key === "Escape") { $("search").blur(); select(null); }
   });
   window.addEventListener("hashchange", () => { selected = decodeURIComponent(location.hash.slice(1)); render(); });
+  new ResizeObserver(() => resetCamera()).observe($("graph-stage"));
 }
 async function start() {
   try {
@@ -510,9 +452,10 @@ async function start() {
     if (ids.size !== registry.nodes.length || registry.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
     model = { ...registry, groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
     for (const group of model.groups) { const option = element("option", "", group.label); option.value = group.id; $("group-filter").append(option); }
-    $("registry-age").textContent = `Relationships and saved inventory reviewed ${date(registry.meta.updatedAt)}. ${registry.meta.scope}`;
+    $("registry-age").textContent = `Registry reviewed ${date(registry.meta.updatedAt)}`;
     selected = decodeURIComponent(location.hash.slice(1)) || null;
+    focus = components().find((chain) => chain.ids.has(selected))?.id || components()[0]?.id || null;
     initialize(); render(true); refresh();
-  } catch (error) { $("visible-count").textContent = "Map unavailable"; setFreshness(error.message, true); }
+  } catch (error) { $("visible-count").textContent = "Registry unavailable"; setFreshness(error.message, true); }
 }
 start();
