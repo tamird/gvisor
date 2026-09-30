@@ -94,7 +94,7 @@ function components() {
 }
 function matches(node) {
   const search = $("search").value.trim().toLowerCase(), group = $("group-filter").value;
-  return (!group || node.group === group) && (!search || `${node.title} ${node.number || ""} ${node.ref || ""} ${node.summary || ""}`.toLowerCase().includes(search));
+  return (!group || node.group === group) && (!search || `${label(node)} ${node.title} ${node.number || ""} ${node.ref || ""} ${node.summary || ""}`.toLowerCase().includes(search));
 }
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
 function graphNodes() {
