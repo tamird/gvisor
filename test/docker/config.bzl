@@ -107,6 +107,7 @@ RUNTIME_SUITES = {
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
     "uds_proxy": ["basic/alpine"],
+    "fsstress": ["basic/fsstress"],
     "iptables": ["iptables"],
     "nftables": ["nftables"],
     "packetdrill": ["packetdrill"],

@@ -257,6 +257,22 @@ oci.pull(
     platforms = ["linux/arm64"],
 )
 
+# images/basic/fsstress, built by tools/images.mk as ec6bc5c65bd568a4.
+oci.pull(
+    name = "docker_image_basic_fsstress_amd64",
+    digest = "sha256:95127b92c573fc958412fb11a30e671f5a3354f94022bc3a10db88ed8ef8c4be",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/fsstress_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/basic/fsstress, built by tools/images.mk as ec6bc5c65bd568a4.
+oci.pull(
+    name = "docker_image_basic_fsstress_arm64",
+    digest = "sha256:cf2a23af9fdceed7614fe35f9d71e58dc2f9ef9cf2288b74304b1294acb7f522",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/basic/fsstress_aarch64",
+    platforms = ["linux/arm64"],
+)
+
 # images/basic/httpd, built by tools/images.mk as 1d03d6745a9f3364.
 oci.pull(
     name = "docker_image_basic_httpd_amd64",
@@ -1033,6 +1049,10 @@ use_repo(
     "docker_image_basic_filecap_amd64_linux_amd64",
     "docker_image_basic_filecap_arm64",
     "docker_image_basic_filecap_arm64_linux_arm64",
+    "docker_image_basic_fsstress_amd64",
+    "docker_image_basic_fsstress_amd64_linux_amd64",
+    "docker_image_basic_fsstress_arm64",
+    "docker_image_basic_fsstress_arm64_linux_arm64",
     "docker_image_basic_httpd_amd64",
     "docker_image_basic_httpd_amd64_linux_amd64",
     "docker_image_basic_httpd_arm64",
