@@ -1104,6 +1104,9 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    # Exhaust ports before the sentry's host descriptors or file table.
+    args = ["--host-nofile=131072"],
+    memory = "1GB",
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
