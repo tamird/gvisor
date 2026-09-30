@@ -5,6 +5,7 @@ const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-v1";
 const CACHE_AGE = 15 * 60 * 1000;
 const CARD = { width: 216, height: 58, column: 264, row: 72 };
+const READABLE_SCALE = .9;
 let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
 let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600 };
@@ -107,7 +108,7 @@ function applyCamera() { $("graph-content").setAttribute("transform", `translate
 function resetCamera(fit = true, overview = false) {
   if (view !== "dag") return;
   const box = $("graph-stage").getBoundingClientRect();
-  const minimum = !overview && box.width < 600 ? .85 : .12;
+  const minimum = overview ? .12 : READABLE_SCALE;
   const scale = fit ? Math.max(minimum, Math.min((box.width - 48) / bounds.width, (box.height - 76) / bounds.height, 1.15)) : 1;
   camera = { x: Math.max(24, (box.width - bounds.width * scale) / 2), y: Math.max(24, (box.height - 44 - bounds.height * scale) / 2), scale };
   applyCamera();
@@ -142,21 +143,43 @@ function dagLayout(nodes, content) {
   }
   if (queue.length !== nodes.length) throw new Error("A recorded dependency cycle cannot be drawn as a DAG. Inspect its relationships in Table.");
   const chains = components().filter((chain) => ids.has(chain.id)), positions = new Map();
-  let y = 0, width = 1;
-  for (const chain of chains) {
+  const padding = chains.length > 1 ? 12 : 0, heading = chains.length > 1 ? 28 : 0;
+  const panels = chains.map((chain) => {
     const columns = new Map();
     for (const id of chain.ids) { const level = depth.get(id); if (!columns.has(level)) columns.set(level, []); columns.get(level).push(id); }
-    const height = Math.max(...[...columns.values()].map((column) => column.length)) * CARD.row;
-    width = Math.max(width, Math.max(...columns.keys()) * CARD.column + CARD.width);
-    if (chains.length > 1) { content.append(svg("text", { class: "chain-heading", x: 0, y: y + 12 }, chain.title)); y += 28; }
-    for (const [level, column] of columns) {
-      column.sort((a, b) => impact(b).prs - impact(a).prs || byId.get(a).title.localeCompare(byId.get(b).title));
-      const offset = (height - column.length * CARD.row) / 2;
-      column.forEach((id, row) => positions.set(id, { x: level * CARD.column, y: y + offset + row * CARD.row }));
+    return { chain, columns,
+      width: Math.max(...columns.keys()) * CARD.column + CARD.width + 2 * padding,
+      height: Math.max(...[...columns.values()].map((column) => column.length)) * CARD.row - (CARD.row - CARD.height) + heading + 2 * padding };
+  });
+  // Pack whole chains into the available width at a readable scale. Filling
+  // gaps beside earlier chains avoids a single tall strip of tiny nodes.
+  const available = Math.max(1, ($("graph-stage").clientWidth - 48) / READABLE_SCALE);
+  const packingWidth = Math.max(available, ...panels.map((panel) => panel.width));
+  const placed = [], gap = 24;
+  for (const panel of panels) {
+    const xs = [0, ...placed.map((other) => other.x + other.width + gap)].sort((a, b) => a - b);
+    const ys = [0, ...placed.map((other) => other.y + other.height + gap)].sort((a, b) => a - b);
+    const spot = ys.flatMap((y) => xs.map((x) => ({ x, y }))).find(({ x, y }) =>
+      x + panel.width <= packingWidth && placed.every((other) =>
+        x + panel.width + gap <= other.x || other.x + other.width + gap <= x ||
+        y + panel.height + gap <= other.y || other.y + other.height + gap <= y));
+    Object.assign(panel, spot); placed.push(panel);
+    if (chains.length > 1) {
+      const backdrop = svg("g", { "data-chain": panel.chain.id });
+      backdrop.append(svg("rect", { class: "chain-panel", x: panel.x, y: panel.y, width: panel.width, height: panel.height, rx: 6 }),
+        svg("text", { class: "chain-heading", x: panel.x + padding, y: panel.y + padding + 12 }, wrap(panel.chain.title, Math.floor((panel.width - 2 * padding) / 7), 1)[0]));
+      content.append(backdrop);
     }
-    y += height + 30;
+    const height = panel.height - heading - 2 * padding;
+    for (const [level, column] of panel.columns) {
+      column.sort((a, b) => impact(b).prs - impact(a).prs || byId.get(a).title.localeCompare(byId.get(b).title));
+      const offset = (height - (column.length * CARD.row - (CARD.row - CARD.height))) / 2;
+      column.forEach((id, row) => positions.set(id, { x: panel.x + padding + level * CARD.column,
+        y: panel.y + padding + heading + offset + row * CARD.row }));
+    }
   }
-  return { positions, width, height: Math.max(y - 44, CARD.height) };
+  return { positions, width: Math.max(1, ...placed.map((panel) => panel.x + panel.width)),
+    height: Math.max(CARD.height, ...placed.map((panel) => panel.y + panel.height)) };
 }
 function drawGraph(nodes) {
   const content = $("graph-content"); content.replaceChildren(); $("dag-warning").hidden = true;
@@ -441,7 +464,7 @@ function initialize() {
     if (event.key === "Escape") { $("search").blur(); select(null); }
   });
   window.addEventListener("hashchange", () => { selected = decodeURIComponent(location.hash.slice(1)); render(); });
-  new ResizeObserver(() => resetCamera()).observe($("graph-stage"));
+  new ResizeObserver(() => { if (view === "dag" && model) { drawGraph(graphNodes()); resetCamera(); } }).observe($("graph-stage"));
 }
 async function start() {
   try {

@@ -66,8 +66,10 @@ status is cached in this browser only and can be removed by clearing site data.
 The dashboard has two views. **Dependency DAG** contains only nodes connected
 by active `depends_on` or `blocked_by` relationships. It opens on the leading
 blocker's chain at a readable scale. The chain selector provides every connected
-component and **All connected work**. Isolated items never become graph rows.
-On smaller screens, drag to explore at readable size or use Fit for an overview.
+component and **All connected work**. Independent chains pack into columns
+across the available width, with labels kept at readable size. Drag to explore
+when they exceed the viewport; Fit deliberately shows the complete overview.
+Isolated items never become graph rows.
 
 The compact **Most blocking PRs** rail counts unique downstream open PRs,
 including drafts, over the complete active model. Filters and chain selection
