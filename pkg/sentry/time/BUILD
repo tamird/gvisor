@@ -44,6 +44,7 @@ go_library(
         "//pkg/gohacks",
         "//pkg/log",
         "//pkg/metric",
+        "//pkg/sentry/hostcpu",
         "//pkg/sync",
         "@org_golang_x_sys//unix:go_default_library",
     ],

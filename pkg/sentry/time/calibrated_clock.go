@@ -17,11 +17,13 @@
 package time
 
 import (
+	"runtime/debug"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/metric"
+	"gvisor.dev/gvisor/pkg/sentry/hostcpu"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -51,6 +53,12 @@ type CalibratedClock struct {
 	//
 	// +checklocks:mu
 	params Parameters
+
+	// sampleCPUs brackets the latest calibration operation for this diagnostic.
+	// Equal values do not exclude migration away and back during the sample.
+	//
+	// +checklocks:mu
+	sampleCPUs [2]uint32
 
 	// errorNS is the estimated clock error in nanoseconds.
 	//
@@ -172,10 +180,12 @@ func (c *CalibratedClock) Update(parked bool) (Parameters, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	cpuBefore := hostcpu.GetCPU()
 	if err := c.ref.Sample(); err != nil {
 		c.resetLocked("Unable to update calibrated clock: %v.", err)
 		return Parameters{}, false
 	}
+	c.sampleCPUs = [2]uint32{cpuBefore, hostcpu.GetCPU()}
 
 	oldest, newest, ok := c.ref.Range()
 	if !ok {
@@ -226,6 +236,17 @@ func (c *CalibratedClock) GetTime() (int64, error) {
 
 	now := c.ref.Cycles()
 	v, ok := c.params.ComputeTime(now)
+	if now < c.params.BaseCycles {
+		// Keep successful reads unchanged. These CPU observations bracket only
+		// a second read, after the original warning; they cannot identify the
+		// CPU of the first read. GetCPU itself uses RDTSCP on AMD64.
+		cpuBefore := hostcpu.GetCPU()
+		again := c.ref.Cycles()
+		cpuAfter := hostcpu.GetCPU()
+		oldest, newest, rangeOK := c.ref.Range()
+		reference, referenceErr := c.ref.Syscall()
+		c.Warningf("clock diagnostic: original_cycles=%d params=%+v calibration_cpu_bracket=%v oldest=%+v newest=%+v range_ok=%t recheck_cycles=%d recheck_cpu_bracket=[%d %d] reference_ns=%d reference_error=%v stack:\n%s", now, c.params, c.sampleCPUs, oldest, newest, rangeOK, again, cpuBefore, cpuAfter, reference, referenceErr, debug.Stack())
+	}
 	if !ok {
 		// The calibrated computation overflowed. Fall back to the reference
 		// clock.
