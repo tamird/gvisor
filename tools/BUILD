@@ -1,3 +1,4 @@
+load("@rules_python//python:py_test.bzl", "py_test")
 load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
 
 package(
@@ -69,3 +70,14 @@ exports_files([
     "make_release.sh",
     "make_test_key.sh",
 ])
+
+py_test(
+    name = "lint_test",
+    srcs = ["lint_test.py"],
+    args = ["$(rootpath :lint.sh)"],
+    data = [
+        "lint.sh",
+        "//:.clang-format",
+        "//:go.mod",
+    ],
+)
