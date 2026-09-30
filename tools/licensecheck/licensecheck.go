@@ -73,52 +73,10 @@ type Entry struct {
 	License    Licenses `yaml:"license"`
 }
 
-// License is an SPDX license identifier (https://spdx.org/licenses/), one of
-// knownLicenses.
+// License is a license identifier from the configured text scanner, or an
+// explicit metadata token such as NOASSERTION. Scanner identifiers include
+// SPDX identifiers and names for texts whose SPDX variant is ambiguous.
 type License string
-
-const (
-	apache2     License = "Apache-2.0"
-	apache2LLVM License = "Apache-2.0 WITH LLVM-exception"
-	bsd2        License = "BSD-2-Clause"
-	bsd3        License = "BSD-3-Clause"
-	bsd4        License = "BSD-4-Clause"
-	cc0         License = "CC0-1.0"
-	gpl2        License = "GPL-2.0-only"
-	gpl3        License = "GPL-3.0-only"
-	gpl3OrLater License = "GPL-3.0-or-later"
-	isc         License = "ISC"
-	lgpl21      License = "LGPL-2.1-only"
-	lgpl3       License = "LGPL-3.0-only"
-	mit         License = "MIT"
-	mpl2        License = "MPL-2.0"
-	unlicense   License = "Unlicense"
-	zlib        License = "Zlib"
-	// noAssertion is the SPDX token for dependencies to which no software
-	// license applies, e.g. a certificate bundle.
-	noAssertion License = "NOASSERTION"
-)
-
-// knownLicenses is the set of known license identifiers.
-var knownLicenses = map[License]struct{}{
-	apache2:     {},
-	apache2LLVM: {},
-	bsd2:        {},
-	bsd3:        {},
-	bsd4:        {},
-	cc0:         {},
-	gpl2:        {},
-	gpl3:        {},
-	gpl3OrLater: {},
-	isc:         {},
-	lgpl21:      {},
-	lgpl3:       {},
-	mit:         {},
-	mpl2:        {},
-	unlicense:   {},
-	zlib:        {},
-	noAssertion: {},
-}
 
 // Licenses is the sorted set of licenses that apply to a dependency. It
 // marshals as a plain string when there is a single license and as a list
@@ -321,6 +279,10 @@ func Verify(p Paths) error {
 // verifyProblems returns one problem per missing, malformed, out-of-date, or
 // stale entry.
 func verifyProblems(deps []dep, entries []Entry) []string {
+	registry, err := configuredLicenses()
+	if err != nil {
+		return []string{fmt.Sprintf("cannot configure license identifiers: %v", err)}
+	}
 	byName := make(map[string]Entry)
 	var problems []string
 	for _, e := range entries {
@@ -348,7 +310,7 @@ func verifyProblems(deps []dep, entries []Entry) []string {
 				problems = append(problems, fmt.Sprintf("%s was audited with sha256 %q, but is now pinned to %q", d.name, e.SHA256, d.sha256))
 			}
 			for i, license := range e.License {
-				if _, ok := knownLicenses[license]; !ok {
+				if _, ok := registry.ids[license]; !ok {
 					problems = append(problems, fmt.Sprintf("%s has unknown license %q", d.name, license))
 				}
 				if i > 0 && e.License[i-1] >= license {
@@ -852,71 +814,6 @@ func resolveGitHubCommit(owner, repo, ref string) (string, error) {
 		return "", fmt.Errorf("unexpected GitHub API response %q", commit)
 	}
 	return commit, nil
-}
-
-// classify maps license text to the set of licenses it contains.
-// Detection looks for phrases unique to each license and reports all that
-// match. The GNU patterns match the dated titles of the full license texts,
-// so that passing references (e.g. in MPL-2.0's "Secondary License" clause)
-// do not trigger them.
-func classify(text string) (Licenses, error) {
-	t := strings.ToLower(strings.Join(strings.Fields(text), " "))
-	var ids Licenses
-	if strings.Contains(t, "apache license") && strings.Contains(t, "version 2.0") {
-		if strings.Contains(t, "llvm exceptions") {
-			ids = append(ids, apache2LLVM)
-		} else {
-			ids = append(ids, apache2)
-		}
-	}
-	if strings.Contains(t, "permission is hereby granted, free of charge") {
-		ids = append(ids, mit)
-	}
-	if strings.Contains(t, "redistribution and use in source and binary forms") {
-		switch {
-		case strings.Contains(t, "all advertising materials"):
-			ids = append(ids, bsd4)
-		case strings.Contains(t, "neither the name"), strings.Contains(t, "the name of the author may not be used"):
-			ids = append(ids, bsd3)
-		default:
-			ids = append(ids, bsd2)
-		}
-	}
-	if strings.Contains(t, "cc0 1.0 universal") {
-		ids = append(ids, cc0)
-	}
-	if strings.Contains(t, "mozilla public license version 2.0") ||
-		strings.Contains(t, "mozilla public license, version 2.0") {
-		ids = append(ids, mpl2)
-	}
-	if strings.Contains(t, "gnu lesser general public license version 2.1, february 1999") {
-		ids = append(ids, lgpl21)
-	}
-	if strings.Contains(t, "gnu lesser general public license version 3, 29 june 2007") {
-		ids = append(ids, lgpl3)
-	}
-	if strings.Contains(t, "gnu general public license version 2, june 1991") {
-		ids = append(ids, gpl2)
-	}
-	if strings.Contains(t, "gnu general public license version 3, 29 june 2007") {
-		ids = append(ids, gpl3)
-	}
-	if strings.Contains(t, "permission to use, copy, modify") && strings.Contains(t, "distribute this software for any purpose") {
-		ids = append(ids, isc)
-	}
-	if strings.Contains(t, "this is free and unencumbered software") {
-		ids = append(ids, unlicense)
-	}
-	if strings.Contains(t, "the origin of this software must not be misrepresented") &&
-		strings.Contains(t, "altered source versions must be plainly marked as such") &&
-		strings.Contains(t, "this notice may not be removed or altered from any source distribution") {
-		ids = append(ids, zlib)
-	}
-	if len(ids) == 0 {
-		return nil, errors.New("cannot classify license text")
-	}
-	slices.Sort(ids)
-	return ids, nil
 }
 
 // Policy is a dependency licensing policy (governance/licensing.yaml).

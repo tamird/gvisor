@@ -118,11 +118,14 @@ func TestWheelLicenses(t *testing.T) {
 	const (
 		metadata = "example-1.0.dist-info/METADATA"
 		license  = "example-1.0.dist-info/licenses/LICENSE"
-		mitText  = "Permission is hereby granted, free of charge, to any person obtaining a copy of this software"
 	)
+	apacheText, _, ok := strings.Cut(llvmText, "---- LLVM Exceptions to the Apache 2.0 License ----")
+	if !ok {
+		t.Fatal("LLVM fixture has no exception boundary")
+	}
 	base := map[string]string{
 		metadata: "Metadata-Version: 2.4\nName: example\nVersion: 1.0\nLicense-File: LICENSE\n\n",
-		license:  mitText,
+		license:  bsdText,
 	}
 	for _, test := range []struct {
 		name    string
@@ -130,32 +133,32 @@ func TestWheelLicenses(t *testing.T) {
 		want    Licenses
 		wantErr string
 	}{
-		{name: "modern", want: Licenses{mit}},
+		{name: "modern", want: Licenses{"BSD-3-Clause"}},
 		{
 			name: "legacy",
 			change: func(files map[string]string) {
 				delete(files, license)
-				files["example-1.0.dist-info/LICENSE"] = mitText
+				files["example-1.0.dist-info/LICENSE"] = bsdText
 			},
-			want: Licenses{mit},
+			want: Licenses{"BSD-3-Clause"},
 		},
 		{
 			name: "split license",
 			change: func(files map[string]string) {
 				files[metadata] = strings.Replace(files[metadata], "License-File: LICENSE", "License-File: LICENSE\nLicense-File: LICENSE.APACHE\nLicense-File: LICENSE.BSD", 1)
 				files[license] = "See LICENSE.APACHE and LICENSE.BSD."
-				files[license+".APACHE"] = "Apache License\nVersion 2.0"
-				files[license+".BSD"] = "Redistribution and use in source and binary forms, with or without modification, are permitted"
+				files[license+".APACHE"] = apacheText
+				files[license+".BSD"] = bsdText
 			},
-			want: Licenses{apache2, bsd2},
+			want: Licenses{"Apache-2.0", "BSD-3-Clause"},
 		},
 		{
-			name: "vendored copyleft",
+			name: "vendored license",
 			change: func(files map[string]string) {
 				files["example/_vendor/other-2.0.dist-info/METADATA"] = "Name: other\nVersion: 2.0\nLicense-File: LICENSE\n\n"
-				files["example/_vendor/other-2.0.dist-info/LICENSE"] = "GNU LESSER GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007"
+				files["example/_vendor/other-2.0.dist-info/LICENSE"] = opensslText
 			},
-			want: Licenses{lgpl3, mit},
+			want: Licenses{"BSD-3-Clause", "OpenSSL"},
 		},
 		{
 			name:    "missing license",
@@ -164,7 +167,7 @@ func TestWheelLicenses(t *testing.T) {
 		},
 		{
 			name:    "ambiguous layout",
-			change:  func(files map[string]string) { files["example-1.0.dist-info/LICENSE"] = mitText },
+			change:  func(files map[string]string) { files["example-1.0.dist-info/LICENSE"] = bsdText },
 			wantErr: "missing or ambiguous License-File",
 		},
 		{
