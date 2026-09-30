@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "bzl_library", "go_binary")
-load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS")
+load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS")
 load(":defs.bzl", "docker_image_archives")
 
 package(
@@ -53,3 +53,13 @@ test_suite(
     tags = ["manual"],
     tests = [target + "_owned" for target in DOCKER_TESTS],
 )
+
+[
+    test_suite(
+        name = variant.name + "_tests",
+        tags = ["manual"],
+        tests = [target + "_" + variant.name + "_owned" for target in INTEGRATION_TESTS],
+    )
+    for variant in INTEGRATION_VARIANTS
+    if variant.name
+]

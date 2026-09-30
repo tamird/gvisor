@@ -182,9 +182,11 @@ install_runtime = $(call configure,$(1),$(2) --TESTONLY-test-name-env=RUNSC_TEST
 install_runtime_noreload = $(call configure_noreload,$(1),$(2) --TESTONLY-test-name-env=RUNSC_TEST_NAME)
 # Install one mode shared with a declared Docker test. Arguments: suite, mode,
 # installed runtime name.
-install_runtime_variant = \
+install_runtime_variant_noreload = \
   $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --variant=$(2) --runsc="$(RUNTIME_BIN)" --name="$(3)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") && \
-  sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)" && \
+  sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
+install_runtime_variant = \
+  $(call install_runtime_variant_noreload,$(1),$(2),$(3)) && \
   $(reload_docker) && $(call wait_for_runtime,$(3))
 # Don't use cached results, otherwise multiple runs using different runtimes
 # may be skipped, if all other inputs are the same.
@@ -514,19 +516,19 @@ plugin-network-tests: RUNSC_TARGET=--config plugin-tldk //runsc:runsc-plugin-sta
 plugin-network-tests: EXTRA_SIDECAR_TARGETS=--config plugin-tldk //runsc/cmd/sentry:gvisor_sentry_plugin_stack
 
 overlay-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME)-overlay,--overlay2=all:dir=/tmp)
-	@$(call install_runtime,$(RUNTIME)-overlay-docker,--net-raw --allow-packet-socket-write --overlay2=all:dir=/tmp)
+	@$(call install_runtime_variant_noreload,integration,overlay,$(RUNTIME)-overlay)
+	@$(call install_runtime_variant,integration-docker,overlay,$(RUNTIME)-overlay-docker)
 	@$(call test_runtime_cached,$(RUNTIME)-overlay,--test_env=TEST_OVERLAY=true $(INTEGRATION_TARGETS))
 .PHONY: overlay-tests
 
 swgso-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME)-swgso,--software-gso=true --gso=false)
-	@$(call install_runtime,$(RUNTIME)-swgso-docker,--net-raw --allow-packet-socket-write --software-gso=true --gso=false)
+	@$(call install_runtime_variant_noreload,integration,swgso,$(RUNTIME)-swgso)
+	@$(call install_runtime_variant,integration-docker,swgso,$(RUNTIME)-swgso-docker)
 	@$(call test_runtime_cached,$(RUNTIME)-swgso,$(INTEGRATION_TARGETS))
 .PHONY: swgso-tests
 
 hostnet-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-hostnet,--network=host --net-raw)
+	@$(call install_runtime_variant,integration,hostnet,$(RUNTIME)-hostnet)
 	@$(call test_runtime_cached,$(RUNTIME)-hostnet,--test_env=TEST_CHECKPOINT=false --test_env=TEST_HOSTNET=true --test_env=TEST_NET_RAW=true $(INTEGRATION_TARGETS))
 .PHONY: hostnet-tests
 
