@@ -72,9 +72,11 @@ def _clang_tidy_impl(target, ctx):
                 executable = ctx.attr._runner[DefaultInfo].files_to_run,
                 inputs = depset(
                     [database, ctx.file._config],
-                    transitive = [action.inputs, headers, ctx.attr._distribution[DefaultInfo].files],
+                    # The LLVM compilation declares its matching resource
+                    # directory along with the source and other tool inputs.
+                    transitive = [action.inputs, headers],
                 ),
-                tools = [ctx.executable._clang_tidy],
+                tools = [ctx.attr._clang_tidy[DefaultInfo].files_to_run],
                 outputs = [report],
                 arguments = [
                     ctx.executable._clang_tidy.path,
@@ -101,13 +103,9 @@ clang_tidy = aspect(
             cfg = "exec",
         ),
         "_clang_tidy": attr.label(
-            default = Label("//tools/clang_tidy:clang_tidy"),
+            default = Label("@llvm//tools:clang-tidy"),
             allow_single_file = True,
             executable = True,
-            cfg = "exec",
-        ),
-        "_distribution": attr.label(
-            default = Label("//tools/clang_tidy:distribution"),
             cfg = "exec",
         ),
         "_config": attr.label(
