@@ -32,14 +32,10 @@ type licenseRegistry struct {
 
 var configuredLicenses = sync.OnceValues(func() (licenseRegistry, error) {
 	patterns := textlicense.BuiltinLicenses()
-	var apache string
-	for _, license := range patterns {
-		if license.ID == "Apache-2.0" && license.LRE != "" {
-			apache = license.LRE
-			break
-		}
-	}
-	if apache == "" {
+	apache := slices.IndexFunc(patterns, func(license textlicense.License) bool {
+		return license.ID == "Apache-2.0" && license.LRE != ""
+	})
+	if apache < 0 {
 		return licenseRegistry{}, errors.New("license scanner has no Apache-2.0 text pattern")
 	}
 	// Match the complete exception after Apache's pattern. The scanner chooses
@@ -47,7 +43,7 @@ var configuredLicenses = sync.OnceValues(func() (licenseRegistry, error) {
 	// are present. v0.3.1 has no builtin LLVM exception pattern.
 	patterns = append(patterns, textlicense.License{
 		ID:  "Apache-2.0 WITH LLVM-exception",
-		LRE: apache + "\n" + llvmException,
+		LRE: patterns[apache].LRE + "\n" + llvmException,
 	})
 	// NOASSERTION is explicit metadata for inputs without a software license,
 	// such as certificate bundles. It is never inferred from license text.
