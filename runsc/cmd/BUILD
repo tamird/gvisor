@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -123,6 +123,7 @@ go_test(
         "//:release",  # keep
         "//runsc",  # keep
     ],
+    exec_properties = namespace_test_exec_properties(memory = "1GB"),
     library = ":cmd",
     deps = [
         "//pkg/abi/linux",
