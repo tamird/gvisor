@@ -1396,7 +1396,7 @@ http_archive(
     sha256 = "8af6b5e603dfb172c72d1725577e5d50267f666d3a4bcb67b1d6d9b4097489c3",
     strip_prefix = "syzkaller-" + _SYZKALLER_REVISION,
     type = "tar.gz",
-    urls = ["https://codeload.github.com/google/syzkaller/tar.gz/" + _SYZKALLER_REVISION],
+    urls = ["https://github.com/google/syzkaller/archive/" + _SYZKALLER_REVISION + ".tar.gz"],
 )
 
 module_proxy(
