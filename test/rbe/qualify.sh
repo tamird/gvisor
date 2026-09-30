@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images docker overlay swgso hostnet root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images docker overlay swgso hostnet root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|docker|overlay|swgso|hostnet|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|docker|overlay|swgso|hostnet|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -249,6 +249,9 @@ run_lane() {
       ;;
     bwrap)
       targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test)
+      ;;
+    fsstress)
+      targets=(//test/fsstress:fsstress_test_owned)
       ;;
     packetimpact)
       targets=(//test/packetimpact/tests:all_tests)

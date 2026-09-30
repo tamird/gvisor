@@ -94,6 +94,7 @@ RUNTIME_SUITES = {
 # Image names are the existing Docker test inputs, grouped by their consuming
 # suite. MODULE.bazel pins the matching tools/images.mk artifacts by digest.
 COHORT_IMAGES = {
+    "fsstress": ["basic/fsstress"],
     "iptables": ["iptables"],
     "nftables": ["nftables"],
     "packetdrill": ["packetdrill"],
