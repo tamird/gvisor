@@ -20,6 +20,7 @@
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <poll.h>
 #include <sys/select.h>
@@ -1084,6 +1085,34 @@ void SetupTimeWaitClose(const TestAddress* listener,
                         const TestAddress* connector, bool reuse,
                         bool accept_close, sockaddr_storage* listen_addr,
                         sockaddr_storage* conn_bound_addr) {
+  // Fork-only diagnostic: observe the worker's TCP policy without changing it.
+  auto dump_tcp = [](const char* phase, int active, int passive) {
+    std::fprintf(stderr, "TCP diagnostic: %s\n", phase);
+    for (const char* path :
+         {"/proc/sys/net/ipv4/tcp_max_tw_buckets",
+          "/proc/sys/net/ipv4/tcp_max_orphans", "/proc/sys/net/ipv4/tcp_mem",
+          "/proc/sys/net/ipv4/tcp_orphan_retries",
+          "/proc/sys/net/ipv4/tcp_fin_timeout",
+          "/proc/sys/net/ipv4/tcp_tw_reuse", "/proc/net/sockstat",
+          "/proc/net/netstat", "/proc/net/tcp", "/proc/net/tcp6"}) {
+      auto contents = GetContents(path);
+      if (contents.ok()) {
+        std::fprintf(stderr, "%s:\n%s", path, contents.ValueOrDie().c_str());
+      } else {
+        std::fprintf(stderr, "%s: %s\n", path,
+                     contents.error().ToString().c_str());
+      }
+    }
+    for (int fd : {active, passive}) {
+      if (fd < 0) continue;
+      tcp_info info = {};
+      socklen_t len = sizeof(info);
+      int ret = getsockopt(fd, IPPROTO_TCP, TCP_INFO, &info, &len);
+      std::fprintf(stderr, "fd=%d TCP_INFO ret=%d errno=%d state=%u\n", fd, ret,
+                   ret == -1 ? errno : 0, info.tcpi_state);
+    }
+  };
+  dump_tcp("before connection", -1, -1);
   // Create the listening socket.
   FileDescriptor listen_fd = ASSERT_NO_ERRNO_AND_VALUE(
       Socket(listener->family(), SOCK_STREAM, IPPROTO_TCP));
@@ -1161,6 +1190,8 @@ void SetupTimeWaitClose(const TestAddress* listener,
               SyscallSucceedsWithValue(sizeof(c)));
   ASSERT_THAT(recv(active_closefd.get(), &c, 1, 0),
               SyscallSucceedsWithValue(sizeof(c)));
+  dump_tcp("active FIN acknowledged", active_closefd.get(),
+           passive_closefd.get());
   ASSERT_THAT(shutdown(passive_closefd.get(), SHUT_WR), SyscallSucceeds());
   {
     constexpr int kTimeout = 10000;
@@ -1175,6 +1206,8 @@ void SetupTimeWaitClose(const TestAddress* listener,
   // This sleep is needed to reduce flake to ensure that the passive-close
   // ensures the state transitions to CLOSE from LAST_ACK.
   absl::SleepFor(absl::Seconds(1));
+  dump_tcp("after both FINs and original sleep", active_closefd.get(),
+           passive_closefd.get());
 }
 
 constexpr char kRangeFile[] = "/proc/sys/net/ipv4/ip_local_port_range";
