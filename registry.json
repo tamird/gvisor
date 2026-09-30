@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T20:47:13.274413+00:00",
+    "updatedAt": "2026-09-30T21:25:38.947499+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -846,7 +846,7 @@
       "url": "https://github.com/tamird/gvisor/tree/plugin-toolchain-build",
       "group": "bazel",
       "status": "branch",
-      "summary": "Independent GNU-compatible precursor to the plugin toolchain migration."
+      "summary": "The prerequisite PR #15047 has merged, so the earlier publication hold is stale. This remains a working branch with no open PR. Standalone build and license revalidation are being prepared before final review and PR publication."
     },
     {
       "id": "branch:hermetic-linux-headers",
@@ -1022,7 +1022,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The iptables large-payload fixture now passes native Linux and both systrap owners. The revised MQ unlink permissions are under validation; current complete combined-head coverage is not established by the earlier baseline."
+      "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The iptables large-payload fixture passes native Linux and both systrap owners. MQ unlink permissions now pass all 17 cases in all three owners. These targeted results do not establish a complete combined-head run."
     },
     {
       "id": "branch:rbe-remote-concurrency",
@@ -1106,7 +1106,7 @@
       "group": "tests",
       "status": "branch",
       "url": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities",
-      "summary": "The earlier DAC test correction passed 16 Linux cases but exposed three mq_unlink cleanup failures in both systrap owners. The published revision adds Linux’s sticky directory mode and ownership checks, with a foreign-owner regression; complete-owner validation is pending."
+      "summary": "The unlink-permissions correction passes all 17 cases on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. The unchanged production Nogo check also passed. The revised sticky directory mode and ownership checks match Linux and include a foreign-owner regression."
     },
     {
       "id": "branch:iptables-replace-counters",
@@ -1118,6 +1118,17 @@
       "group": "tests",
       "status": "branch",
       "summary": "LargeReplacePayload passes on native Linux and both ordinary systrap owners after using the replaced table’s entry count. Both systrap owners pass all 17 cases. Native retains four separate socket-option/extension failures and two existing skips."
+    },
+    {
+      "id": "branch:netfilter-nonraw-sockopts",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "netfilter-nonraw-sockopts",
+      "title": "Allow netfilter options on non-raw sockets",
+      "url": "https://github.com/tamird/gvisor/tree/netfilter-nonraw-sockopts",
+      "group": "runtime",
+      "status": "branch",
+      "summary": "Both IPv4 systrap owners pass all 36 cases; native and both systrap IPv6 owners pass all 21 cases. Netstack Nogo passes ARM64 and AMD64. Native IPv4 retains three unrelated failures: OriginalDstErrors and missing mark revision 1 / CT revision 0 extensions, plus two existing skips."
     }
   ],
   "edges": [
@@ -1405,8 +1416,11 @@
       "from": "branch:mq-permission-capabilities",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "The qualification branch includes this test setup correction.",
-      "evidence": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities"
+      "reason": "The qualification branch includes the validated MQ test setup and unlink-permissions correction.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/e67787e41",
+        "https://app.buildbuddy.io/invocation/18cc1d25-81f3-489f-ac34-8496c7939027"
+      ]
     },
     {
       "from": "branch:iptables-replace-counters",
