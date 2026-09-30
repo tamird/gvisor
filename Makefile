@@ -58,7 +58,7 @@ help: ## Shows all targets and help from the Makefile (this message).
 		}'
 
 build: ## Builds the given $(TARGETS) with the given $(OPTIONS). E.g. make build TARGETS=runsc
-	@$(call build,$(OPTIONS) -- $(TARGETS))
+	@$(call build,$(TARGETS),$(OPTIONS))
 .PHONY: build
 
 test: ## Tests the given $(TARGETS) with the given $(OPTIONS). E.g. make test TARGETS=pkg/buffer:buffer_test
@@ -66,11 +66,11 @@ test: ## Tests the given $(TARGETS) with the given $(OPTIONS). E.g. make test TA
 .PHONY: test
 
 copy: ## Copies the given $(TARGETS), built with the given $(OPTIONS), to the given $(DESTINATION). E.g. make copy TARGETS=runsc DESTINATION=/tmp
-	@$(call copy,$(OPTIONS) -- $(TARGETS),$(DESTINATION))
+	@$(call copy,$(TARGETS),$(DESTINATION),$(OPTIONS))
 .PHONY: copy
 
 run: ## Runs the given $(TARGETS), built with $(OPTIONS), using $(ARGS). E.g. make run TARGETS=runsc ARGS=-version
-	@$(call run,$(TARGETS),$(ARGS))
+	@$(call run,$(TARGETS),$(ARGS),$(OPTIONS))
 .PHONY: run
 
 query: ## Runs a bazel query. E.g. make query TARGETS=//test/...
@@ -82,7 +82,7 @@ mod: ## Runs a bazel mod command. E.g. make mod TARGETS="deps --output json"
 .PHONY: mod
 
 sudo: ## Runs the given $(TARGETS) as per run, but using "sudo -E". E.g. make sudo TARGETS=test/root:root_test ARGS=-test.v
-	@$(call sudo,$(TARGETS),$(ARGS))
+	@$(call sudo,$(TARGETS),$(ARGS),$(OPTIONS))
 .PHONY: sudo
 
 # Load image helpers.
@@ -110,6 +110,7 @@ endif
 ##     RUNTIME_LOG_DIR - The logs directory (default: $RUNTIME_DIR/logs).
 ##     RUNTIME_LOGS    - The log pattern (default: $RUNTIME_LOG_DIR/runsc.log.%TEST%.%TIMESTAMP%.%COMMAND%).
 ##     RUNTIME_ARGS    - Arguments passed to the runtime when installed.
+##     RUNTIME_BUILD_OPTIONS - Bazel options for selected runtime and sidecar targets.
 ##     STAGED_BINARIES - A tarball of staged binaries. If this is set, then binaries
 ##                       will be installed from this staged bundle instead of built.
 ##     DOCKER_RELOAD_COMMAND - The command to run to reload Docker. (default: sudo systemctl reload docker).
@@ -123,6 +124,7 @@ RUNTIME_DIR           ?= $(shell dirname $(shell mktemp -u))/$(RUNTIME)
 RUNSC_TARGET          ?= //runsc
 RUNTIME_BIN           ?= $(RUNTIME_DIR)/runsc
 EXTRA_SIDECAR_TARGETS ?= # Extra binaries to install under gvisor-bin/.
+RUNTIME_BUILD_OPTIONS ?=
 RUNTIME_LOG_DIR       ?= $(RUNTIME_DIR)/logs
 RUNTIME_LOGS          ?= $(RUNTIME_LOG_DIR)/runsc.log.%TEST%.%TIMESTAMP%.%COMMAND%
 RUNTIME_ARGS          ?=
@@ -140,8 +142,8 @@ $(RUNTIME_BIN): # See below.
 	@mkdir -p -m 0755 "$(RUNTIME_DIR)" && chmod a+rx "$(RUNTIME_DIR)"
 ifeq (,$(STAGED_BINARIES))
 	@$(call copy,//:release,$(RUNTIME_DIR))
-	@$(if $(filter-out //runsc,$(RUNSC_TARGET)),$(call copy,$(RUNSC_TARGET),$(RUNTIME_BIN)))
-	@$(if $(EXTRA_SIDECAR_TARGETS),$(call copy,$(EXTRA_SIDECAR_TARGETS),$(RUNTIME_DIR)/gvisor-bin))
+	@$(if $(filter-out //runsc,$(RUNSC_TARGET)),$(call copy,$(RUNSC_TARGET),$(RUNTIME_BIN),$(RUNTIME_BUILD_OPTIONS)))
+	@$(if $(EXTRA_SIDECAR_TARGETS),$(call copy,$(EXTRA_SIDECAR_TARGETS),$(RUNTIME_DIR)/gvisor-bin,$(RUNTIME_BUILD_OPTIONS)))
 else
 	@gcloud storage cat "${STAGED_BINARIES}" | \
 	  tar -C "$(RUNTIME_DIR)" -zxvf - && \
@@ -183,7 +185,7 @@ install_runtime_noreload = $(call configure_noreload,$(1),$(2) --TESTONLY-test-n
 # Install one mode shared with a declared Docker test. Arguments: suite, mode,
 # installed runtime name.
 install_runtime_variant_noreload = \
-  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --variant=$(2) --runsc="$(RUNTIME_BIN)" --name="$(3)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") && \
+  $(call sudo,//test/docker:configure_runtime,--suite=$(1) --variant=$(2) --runsc="$(RUNTIME_BIN)" --name="$(3)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") && \
   sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
 install_runtime_variant = \
   $(call install_runtime_variant_noreload,$(1),$(2),$(3)) && \
@@ -239,22 +241,23 @@ TOTAL_PARTITIONS ?= 1
 PARTITIONS       := --test_env=PARTITION=$(PARTITION) --test_env=TOTAL_PARTITIONS=$(TOTAL_PARTITIONS)
 
 runsc: ## Builds the runsc binary.
-	@$(call build,-c opt //runsc)
+	@$(call build,//runsc,-c opt)
 .PHONY: runsc
 
 runsc-plugin-stack:
-	@$(call build,-c opt $(PLUGIN_STACK_FLAGS) //runsc:runsc-plugin-stack)
+	@$(call build,//runsc:runsc-plugin-stack,-c opt $(PLUGIN_STACK_FLAGS))
 .PHONY: runsc-plugin-stack
 
 debian: ## Builds the debian packages.
-	@$(call build,-c opt //debian:debian)
+	@$(call build,//debian:debian,-c opt)
 .PHONY: debian
 
 smoke-tests: $(RUNTIME_BIN) ## Runs a simple smoke test after building runsc.
 	@$(RUNTIME_BIN) --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 .PHONY: smoke-tests
 
-smoke-race-tests: RUNSC_TARGET = $(RACE_FLAGS) //runsc:runsc-race
+smoke-race-tests: RUNSC_TARGET = //runsc:runsc-race
+smoke-race-tests: RUNTIME_BUILD_OPTIONS = $(RACE_FLAGS)
 smoke-race-tests: $(RUNTIME_BIN) ## Runs a smoke test after build building runsc in race configuration.
 	@$(RUNTIME_BIN) --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 .PHONY: smoke-race-tests
@@ -446,16 +449,16 @@ DOCKER_TEST_SETUP ?= installed
 # Arguments: suite, runtime name, test target, additional test arguments.
 installed_docker_variants = \
 	set -e; \
-	VARIANTS="$$( $(call run,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --list-variants) )"; \
+	VARIANTS="$$( $(call run,//test/docker:configure_runtime,--suite=$(1) --list-variants) )"; \
 	for VARIANT in $$VARIANTS; do \
 	  export VARIANT; \
-	  $(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--suite=$(1) --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(2)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
+	  $(call sudo,//test/docker:configure_runtime,--suite=$(1) --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(2)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
 	  sudo rm -rf "$(RUNTIME_LOG_DIR)"; \
 	  mkdir -p "$(RUNTIME_LOG_DIR)"; \
 	  chmod 0777 "$(RUNTIME_LOG_DIR)"; \
 	  $(reload_docker) || exit $$?; \
 	  $(call wait_for_runtime,$(2)) || exit $$?; \
-	  $(call sudo,--remote_download_outputs=toplevel $(3),--runtime=$(2) --config_path="$(DOCKER_DAEMON_CONFIG_PATH)" -test.v $(4) $(ARGS)) || exit $$?; \
+	  $(call sudo,$(3),--runtime=$(2) --config_path="$(DOCKER_DAEMON_CONFIG_PATH)" -test.v $(4) $(ARGS)) || exit $$?; \
 	done
 
 ifeq ($(DOCKER_TEST_SETUP),owned)
@@ -497,7 +500,7 @@ docker-tests:
 	@$(call test,--config=docker $(PARTITIONS) //test/docker:owned_tests)
 else ifeq ($(DOCKER_TEST_SETUP),installed)
 docker-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call sudo,--remote_download_outputs=toplevel //test/docker:configure_runtime,--runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)")
+	@$(call sudo,//test/docker:configure_runtime,--runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)")
 	@sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
 	@$(reload_docker)
 	@$(call wait_for_runtime,$(RUNTIME))
@@ -512,8 +515,9 @@ plugin-network-tests: integration-test-images $(RUNTIME_BIN)
 	@$(call install_runtime_variant,plugin-network,plugin_network,$(RUNTIME)-dpdk)
 	@$(call test_runtime_cached,$(RUNTIME)-dpdk, --test_arg=-test.run=ConnectToSelf $(INTEGRATION_TARGETS))
 
-plugin-network-tests: RUNSC_TARGET=--config plugin-tldk //runsc:runsc-plugin-stack
-plugin-network-tests: EXTRA_SIDECAR_TARGETS=--config plugin-tldk //runsc/cmd/sentry:gvisor_sentry_plugin_stack
+plugin-network-tests: RUNSC_TARGET=//runsc:runsc-plugin-stack
+plugin-network-tests: EXTRA_SIDECAR_TARGETS=//runsc/cmd/sentry:gvisor_sentry_plugin_stack
+plugin-network-tests: RUNTIME_BUILD_OPTIONS=$(PLUGIN_STACK_FLAGS)
 
 overlay-tests: integration-test-images $(RUNTIME_BIN)
 	@$(call install_runtime_variant_noreload,integration,overlay,$(RUNTIME)-overlay)
@@ -974,7 +978,7 @@ artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions
 	@mkdir -p "$(PYTHON_RELEASE_DEST)"
 	@set -e; \
 	python_release_version=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")); \
-	$(call build_paths,--//sandboxexec/sandbox/python:release_version="$$python_release_version" //sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/")
+	$(call build_paths,//sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/",--//sandboxexec/sandbox/python:release_version="$$python_release_version")
 .PHONY: artifacts-python
 
 release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
@@ -985,8 +989,8 @@ release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
 release-tarball: DESTINATION ?= .
 release-tarball: ## Builds optimized release tarballs (gvisor.tar.bz2, gvisor.tar.zstd) and copies them to $(DESTINATION). E.g. make release-tarball DESTINATION=bin/
 	@mkdir -p "$(DESTINATION)"
-	@$(call copy,-c opt //debian:gvisor-release-tar-bz2,$(DESTINATION))
-	@$(call copy,-c opt //debian:gvisor-release-tar-zstd,$(DESTINATION))
+	@$(call copy,//debian:gvisor-release-tar-bz2,$(DESTINATION),-c opt)
+	@$(call copy,//debian:gvisor-release-tar-zstd,$(DESTINATION),-c opt)
 .PHONY: release-tarball
 
 staged-binaries-check: ## Verifies STAGED_BINARIES contains all files from the //debian:gvisor-release-tar-bz2 fileset.
