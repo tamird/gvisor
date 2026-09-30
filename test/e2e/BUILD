@@ -1,3 +1,4 @@
+load("//test/docker:config.bzl", "INTEGRATION_VARIANTS")
 load("//test/docker:defs.bzl", "docker_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 
@@ -20,6 +21,7 @@ docker_test(
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
+    runtime_variants = INTEGRATION_VARIANTS,
     tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
