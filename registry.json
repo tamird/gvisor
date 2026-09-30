@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T21:44:16.711712+00:00",
+    "updatedAt": "2026-09-30T21:52:05.773506+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -842,11 +842,11 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "plugin-toolchain-build",
-      "title": "Declare plugin build inputs",
+      "title": "Build plugins with the selected C toolchain",
       "url": "https://github.com/tamird/gvisor/tree/plugin-toolchain-build",
       "group": "bazel",
       "status": "branch",
-      "summary": "The prerequisite PR #15047 has merged, so the earlier publication hold is stale. This remains a working branch with no open PR. Standalone build and license revalidation are being prepared before final review and PR publication."
+      "summary": "Standalone revalidation passes: both static AMD64 binaries build and report their versions, the archive-backed Cgo backtrace regression passes uncached, and the canonical license audit passes all 184 dependencies with an unchanged generated catalog. This is GNU compatibility on a hosted coordinator, not a new hermetic remote-action result. The merged #15047 prerequisite no longer blocks publication. Ready for final contributor review; no PR is open."
     },
     {
       "id": "branch:hermetic-linux-headers",
@@ -1162,6 +1162,17 @@
       "group": "tests",
       "status": "branch",
       "summary": "The fixture lowers loopback before checking rename events and preserves cleanup. With the independent membership-copy correction, complete owners have no failures: native 62 passing cases and 11 existing skips; both ordinary systrap variants 67 passing cases and 6 existing skips each. No dependency between the two fixes is recorded."
+    },
+    {
+      "id": "branch:mount-fd-reconfigure-expectations",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "mount-fd-reconfigure-expectations",
+      "title": "Check Linux filesystem reconfiguration effects",
+      "url": "https://github.com/tamird/gvisor/tree/mount-fd-reconfigure-expectations",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Check the inode limit and read-only flag that Linux applies during tmpfs reconfiguration, while preserving gVisor’s tracked expectations. The standalone correction is published and included in the qualification branch; targeted validation is being prepared."
     }
   ],
   "edges": [
@@ -1471,6 +1482,36 @@
       "type": "depends_on",
       "reason": "The DAC capability correction builds on the message-queue unlink-permissions correction.",
       "evidence": "https://github.com/tamird/gvisor/commit/c09cf4487"
+    },
+    {
+      "from": "branch:netlink-membership-copy",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the validated membership-copy correction; this is integration membership, not a blocking dependency.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a78e87139",
+        "https://github.com/tamird/gvisor/commit/7fa3b2874"
+      ]
+    },
+    {
+      "from": "branch:netlink-loopback-rename",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the validated loopback-rename fixture correction; this is integration membership, not a dependency between the two netlink fixes.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/baac6d6e0",
+        "https://github.com/tamird/gvisor/commit/7fa3b2874"
+      ]
+    },
+    {
+      "from": "branch:mount-fd-reconfigure-expectations",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the published fixture correction for targeted validation; this does not claim a passing result.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/451728834",
+        "https://github.com/tamird/gvisor/commit/7fa3b2874"
+      ]
     }
   ]
 }
