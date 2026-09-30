@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images docker overlay swgso hostnet plugin-network root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images docker overlay swgso hostnet plugin-network do root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|docker|overlay|swgso|hostnet|plugin-network|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|docker|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -225,6 +225,13 @@ run_lane() {
       fi
       options=(--config=plugin-tldk)
       targets=(//test/docker:plugin_network_tests)
+      ;;
+    do)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public do smoke checks are declared for AMD64.\n' >&2
+        return 2
+      fi
+      targets=(//:do_tests)
       ;;
     root)
       options=(--config=docker)
