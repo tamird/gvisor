@@ -262,6 +262,7 @@ void ExpectFinished(const FileDescriptor& fd) {
 
 // Verifies that we can read expected bytes from fd into buf.
 void ExpectReadable(const FileDescriptor& fd, int expected, char* buf) {
+  SCOPED_TRACE(expected);
   size_t n = ASSERT_NO_ERRNO_AND_VALUE(
       PollAndReadFd(fd.get(), buf, expected, kTimeout));
   EXPECT_EQ(expected, n);
