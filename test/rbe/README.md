@@ -224,6 +224,26 @@ runtime overrides do not apply in that explicit mode. Direct owned runs should
 set `PARTITION` and `TOTAL_PARTITIONS` through `--test_env` when partitioning;
 `--config=docker` preserves the lane's TCP save/restore setting.
 
+The `overlay`, `swgso` and `hostnet` lanes run the same complete image and
+integration suites as their public Make counterparts, with declared runtime
+settings and the existing private daemon:
+
+```sh
+test/rbe/qualify.sh overlay swgso hostnet
+```
+
+Overlay uses `--overlay2=all:dir=/tmp`; the default Docker suite's separate
+`all:self` tests remain unchanged. Software GSO uses `--software-gso=true
+--gso=false`. Host networking uses `--network=host --net-raw` and the existing
+test flags that disable checkpoint tests and identify host/raw networking.
+These lanes preserve the public test settings, including omission of the
+Docker lane's separate TCP save/restore setting. Their owning suites are
+`//test/docker:overlay_tests`, `swgso_tests` and `hostnet_tests`; the original
+`owned_tests` selection still runs only the default configurations. The public
+pipeline selects AMD64 for these variants; ARM64 execution remains unqualified.
+The installed Make lanes select their runtime flags from the same table while
+retaining their custom binaries, runtime names, test environment and partitions.
+
 The complete AMD64 port-forward lane uses the same owned daemon and declared
 Redis/nginx archives. Its two existing tests run in separate sandbox-network
 and host-network actions:
