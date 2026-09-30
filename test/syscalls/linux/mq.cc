@@ -219,7 +219,7 @@ TEST(MqTest, UnlinkOtherUserQueue) {
     ASSERT_THAT(
         syscall(SYS_setresuid, -1, absl::GetFlag(FLAGS_scratch_uid), -1),
         SyscallSucceeds());
-    EXPECT_THAT(MqUnlink(queue.name()), PosixErrorIs(EPERM));
+    EXPECT_THAT(MqUnlink(queue.name()), PosixErrorIs(EACCES));
   });
 }
 
