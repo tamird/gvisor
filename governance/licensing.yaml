@@ -100,6 +100,16 @@ exceptions:
       University of Illinois/NCSA grant, which permits redistribution with
       copyright notices, conditions and disclaimers retained and prohibits
       using contributors' names for endorsement without permission.
+  - dependency: module_proxy/exported_go_modules/github.com/veraison/go-cose
+    license: MPL-2.0
+    exception_rationale: >-
+      Go-cose is in the offline Go build's dependency graph through
+      containerd, hcsshim and cosesign1go. The checked Linux AMD64 cgo
+      package list for gVisor's exported Go source contains no go-cose
+      packages. Allow MPL-2.0 for this module. Recheck its use when
+      changing dependencies or build configurations: this exception also
+      permits later versions of go-cose under MPL-2.0 and does not prevent
+      builds from importing the code.
   - dependency: nvidia_driver_535_129_03
     license: &nvidia_driver_licenses
       - GPL-2.0
