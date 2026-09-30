@@ -25,6 +25,14 @@ benchmark_test(
     srcs = [
         "iperf_test.go",
     ],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_iperf",
+            "filter": "BenchmarkIperfOneConnection",
+        },
+    ],
     library = ":network",
     use_for_pgo = True,
     visibility = ["//:sandbox"],
@@ -42,6 +50,14 @@ benchmark_test(
     srcs = [
         "node_test.go",
     ],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_node",
+            "filter": ".",
+        },
+    ],
     library = ":network",
     use_for_pgo = False,
     visibility = ["//:sandbox"],
@@ -57,6 +73,14 @@ benchmark_test(
     name = "ruby_test",
     srcs = [
         "ruby_test.go",
+    ],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_ruby",
+            "filter": ".",
+        },
     ],
     library = ":network",
     use_for_pgo = False,
@@ -74,6 +98,14 @@ benchmark_test(
     srcs = [
         "nginx_test.go",
     ],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_nginx",
+            "filter": "Continuous",
+        },
+    ],
     library = ":network",
     use_for_pgo = True,
     visibility = ["//:sandbox"],
@@ -88,6 +120,14 @@ benchmark_test(
     name = "httpd_test",
     srcs = [
         "httpd_test.go",
+    ],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_httpd",
+            "filter": "Continuous",
+        },
     ],
     library = ":network",
     use_for_pgo = False,

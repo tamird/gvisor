@@ -16,8 +16,8 @@ or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
 This profile does not replace the full public CI matrix. It omits the KVM
-variants of posture, startup and syscall tests, as well as slimvm. The
-save/restore and save/resume syscall lanes are included, but their complete
+variants of posture, startup, continuous benchmarks and syscall tests, as well
+as slimvm. The save/restore and save/resume syscall lanes are included, but their complete
 matrices remain unqualified. Existing failures in selected tests remain
 failures. The host systemd cgroup manager is also unqualified; container image
 tests that boot systemd do not exercise that host service. All variants remain
@@ -239,6 +239,49 @@ qualification. Failures remain errors, as in the presubmit pipeline. The
 separate master-only performance benchmark jobs retain their soft-fail policy.
 The installed `startup_test` entrypoint and `make benchmark-platforms` retain
 their custom runtime selection and full benchmark arguments.
+
+The separate continuous benchmark lane uses the master pipeline's maintained
+workloads:
+
+```sh
+test/rbe/qualify.sh benchmarks
+```
+
+`//test/benchmarks:continuous_tests` declares the 20 Docker workload selections
+on systrap, KVM and native runc, plus the direct OCI lifecycle benchmark on
+systrap and KVM. The hosted lane selects AMD64 systrap and runc: 41 actions in
+all. Its `-requires-kvm` filter leaves 21 KVM actions unqualified. The full
+suite remains available to workers with KVM support. The existing startup
+smoke targets and their image cohort are separate.
+
+Each benchmark declaration retains the continuous pipeline's filter and
+benchtime: one iteration for build/media/Ruby-development workloads, 1000
+iterations for each FIO selection, 30 iterations for lifecycle, and the
+existing 30-second default elsewhere. TensorFlow retains its own fixed-run
+harness behavior. The benchmark bodies still own cache dropping, FUSE setup,
+checkpoint support checks and their existing skips. A skipped workload is not
+qualified by a passing test wrapper.
+
+Docker actions share the existing owned fixture, load only their declared
+images and request four CPUs, 8GB memory and 40GB disk. These are allowances
+for the full workloads, not measured minimums. Continuous targets allow up to
+one hour per action; the hosted coordinator's shorter shared deadline can
+still leave a cohort incomplete. Lifecycle uses the existing direct runtime
+source and namespace worker with an 8GB memory allowance, without a Docker
+daemon. The installed benchmark entrypoints remain available.
+
+Runsc variants enable `--profile` as Make does, and explicitly disable the
+ordinary test fixture's debug logging. No profiler starts by default; optional
+existing profile arguments remain available on individual targets. The images
+are the canonical `tools/images.mk` source-hash releases pinned by digest.
+ABSL, syscallbench and TensorFlow have only AMD64 image contexts and their
+owned actions reject ARM64. Other image pins include ARM64 where published;
+that does not qualify ARM64 execution capacity or the continuous ARM64 matrix.
+
+The Buildkite benchmark jobs retain their soft-fail policy. This diagnostic
+lane keeps all benchmark failures visible and returns a failing status while
+`--keep_going` collects independent results. It does not upload benchmark data,
+change the production benchmark pipeline, or establish a performance baseline.
 
 The containerd lane runs the full existing CRI tests against containerd 1.7.31,
 2.0.8, 2.1.7 and 2.2.3:

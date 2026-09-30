@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "platforms")
+load("//tools/bazeldefs:platforms.bzl", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -90,8 +91,7 @@ go_test(
         "//pkg/sentry/kernel",
         "//pkg/sentry/kernel/auth",
         "//pkg/sentry/limits",
-        "//pkg/sentry/platform",
-        "//pkg/sentry/seccheck",
+            "//pkg/sentry/seccheck",
         "//pkg/sentry/seccheck/points:points_go_proto",
         "//pkg/sentry/seccheck/sinks/remote/test",
         "//pkg/sentry/state/checkpointfiles",
@@ -127,33 +127,64 @@ go_test(
     ],
 )
 
+_LIFECYCLE_BENCHMARK_DATA = [
+    "//:release",
+    "//test/cmd/test_app",
+]
+
+_LIFECYCLE_BENCHMARK_DEPS = [
+    "//pkg/log",
+    "//pkg/test/testutil",
+    "//runsc/config",
+    "//runsc/flag",
+    "//runsc/specutils",
+    "@org_golang_x_sys//unix:go_default_library",
+]
+
+_LIFECYCLE_BENCHMARK_ARGS = [
+    "-test.bench=.",
+    "-test.run=^$$",
+    "-test.benchtime=30x",  # A fixed iteration count.
+    "-test.v",
+]
+
 go_test(
     name = "lifecycle_benchmark_test",
     size = "large",
     srcs = ["lifecycle_bench_test.go"],
-    args = [
-        "-test.bench=.",
-        "-test.run=^$$",
-        "-test.benchtime=30x",  # A fixed iteration count.
-        "-test.v",
-        "--test_platforms=kvm,systrap",
-    ],
-    data = [
-        "//:release",
-        "//test/cmd/test_app",
-    ],
+    args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=kvm,systrap"],
+    data = _LIFECYCLE_BENCHMARK_DATA,
     library = ":container",
     tags = [
         "manual",
         "notap",
         "requires-kvm",
     ],
-    deps = [
-        "//pkg/log",
-        "//pkg/test/testutil",
-        "//runsc/config",
-        "//runsc/flag",
-        "//runsc/specutils",
-        "@org_golang_x_sys//unix:go_default_library",
-    ],
+    deps = _LIFECYCLE_BENCHMARK_DEPS,
 )
+
+# Use the same direct runtime owner, separately selectable for hosted systrap
+# and KVM-capable workers. No Docker daemon or runc variant is involved.
+[
+    go_test(
+        name = "lifecycle_benchmark_" + platform + "_test",
+        size = "large",
+        timeout = "eternal",
+        srcs = ["lifecycle_bench_test.go"],
+        args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=" + platform],
+        data = _LIFECYCLE_BENCHMARK_DATA,
+        exec_properties = namespace_test_exec_properties(memory = "8GB"),
+        library = ":container",
+        nogo = False,
+        tags = [
+            "continuous-benchmark",
+            "manual",
+        ] + (["requires-kvm"] if platform == "kvm" else []),
+        visibility = ["//test/benchmarks:__pkg__"],
+        deps = _LIFECYCLE_BENCHMARK_DEPS,
+    )
+    for platform in [
+        "kvm",
+        "systrap",
+    ]
+]

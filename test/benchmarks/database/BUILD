@@ -15,6 +15,14 @@ go_library(
 benchmark_test(
     name = "redis_test",
     srcs = ["redis_test.go"],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_redis",
+            "filter": "BenchmarkRedis/operation",
+        },
+    ],
     library = ":database",
     use_for_pgo = True,
     visibility = ["//:sandbox"],

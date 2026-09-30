@@ -15,6 +15,14 @@ go_library(
 benchmark_test(
     name = "ffmpeg_test",
     srcs = ["ffmpeg_test.go"],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "1ns",
+            "cohort": "benchmark_ffmpeg",
+            "filter": ".",
+        },
+    ],
     library = ":media",
     visibility = ["//:sandbox"],
     deps = [

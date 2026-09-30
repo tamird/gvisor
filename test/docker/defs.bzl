@@ -5,7 +5,7 @@ load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
-load(":config.bzl", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
+load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
 
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")
@@ -44,7 +44,7 @@ def docker_image_archives(name, extra_images = []):
     images.update({image: True for image in extra_images})
     for image in sorted(images):
         image_name = _image_name(image)
-        architectures = ["amd64"] if image in AMD64_RUNTIME_IMAGES else ["amd64", "arm64"]
+        architectures = ["amd64"] if image in AMD64_IMAGES else ["amd64", "arm64"]
         for arch in architectures:
             docker_image_archive(
                 name = name + "_" + image_name + "_" + arch,
@@ -109,11 +109,42 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
     if cohort == None:
         return
 
-    images = sorted(COHORT_IMAGES[cohort])
-    amd64 = images + (AMD64_RUNTIME_IMAGES if cohort == "runtime" else [])
+    owned_docker_test(
+        name = name,
+        cohort = cohort,
+        data = data,
+        args = args + owned_args,
+        runtime_variants = runtime_variants,
+        ipv6 = ipv6,
+        **kwargs
+    )
+
+def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variants = None, ipv6 = False, memory = None, free_disk = None, **kwargs):
+    """Runs existing Go sources with a declared Docker daemon and images.
+
+    Unlike docker_test, this only declares owned actions; its caller owns the
+    installed entrypoint and static analysis of the same sources.
+
+    Args:
+      name: Prefix for owned target names.
+      cohort: Default COHORT_IMAGES key; individual variants may override it.
+      data: Other existing runtime inputs.
+      args: Arguments shared by all variants.
+      runtime_variants: Optional runtime arguments, cohort, test_args, data and tags.
+      ipv6: Whether the owned daemon provides IPv6 on its default bridge.
+      memory: Optional test VM memory budget; defaults to the fixture's 4GB.
+      free_disk: Optional test VM disk budget; defaults to the existing cohort budget.
+      **kwargs: Remaining go_test arguments.
+    """
     tests = []
     variants = runtime_variants if runtime_variants != None else [struct(name = "", args = [])]
     for variant in variants:
+        variant_cohort = getattr(variant, "cohort", cohort)
+        if variant_cohort not in COHORT_IMAGES:
+            fail("unknown Docker image cohort: %s" % variant_cohort)
+        images = sorted(COHORT_IMAGES[variant_cohort])
+        amd64 = images + (AMD64_RUNTIME_IMAGES if variant_cohort == "runtime" else [])
+        arm64 = [image for image in images if image not in AMD64_IMAGES]
         prefix = name + ("_" + variant.name if variant.name else "")
         config = prefix + "_docker_config"
         docker_daemon_config(
@@ -123,22 +154,28 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
             ipv6 = ipv6,
             images = select_arch(
                 amd64 = ["//test/docker:images_" + _image_name(image) + "_amd64_tar" for image in amd64],
-                arm64 = ["//test/docker:images_" + _image_name(image) + "_arm64_tar" for image in images],
+                arm64 = ["//test/docker:images_" + _image_name(image) + "_arm64_tar" for image in arm64],
             ),
             tags = ["manual"],
         )
         test = prefix + "_owned"
         owned_kwargs = dict(kwargs)
         owned_kwargs["tags"] = kwargs.get("tags", []) + getattr(variant, "tags", [])
+        if arm64 != images:
+            owned_kwargs["target_compatible_with"] = kwargs.get("target_compatible_with", []) + select_arch(
+                amd64 = [],
+                arm64 = ["@platforms//:incompatible"],
+            )
         go_test(
             name = test,
             nogo = False,
-            args = ["--docker_test_config=$(rootpath :" + config + ")"] + args + owned_args + getattr(variant, "test_args", []),
+            args = ["--docker_test_config=$(rootpath :" + config + ")"] + args + getattr(variant, "test_args", []),
             data = data + [":" + config] + getattr(variant, "data", []),
             rundir = ".",
             # Image layers and container writes use the explicitly sized root disk.
             exec_properties = docker_test_exec_properties(
-                free_disk = "30GB" if cohort == "image" else "20GB",
+                free_disk = free_disk if free_disk != None else ("30GB" if variant_cohort == "image" else "20GB"),
+                memory = memory,
             ),
             **owned_kwargs
         )
