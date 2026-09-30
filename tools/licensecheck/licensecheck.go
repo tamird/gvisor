@@ -840,7 +840,8 @@ func classify(text string) (Licenses, error) {
 	if strings.Contains(t, "cc0 1.0 universal") {
 		ids = append(ids, cc0)
 	}
-	if strings.Contains(t, "mozilla public license version 2.0") {
+	if strings.Contains(t, "mozilla public license version 2.0") ||
+		strings.Contains(t, "mozilla public license, version 2.0") {
 		ids = append(ids, mpl2)
 	}
 	if strings.Contains(t, "gnu lesser general public license version 2.1, february 1999") {

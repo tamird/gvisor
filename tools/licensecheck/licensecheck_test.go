@@ -105,6 +105,18 @@ func TestClassify(t *testing.T) {
 			want: Licenses{mpl2},
 		},
 		{
+			// https://github.com/mozilla/tls-observatory/blob/eef962332/LICENSE
+			name: "mpl comma title",
+			text: `Mozilla Public License, version 2.0
+
+1.12. "Secondary License"
+
+      means either the GNU General Public License, Version 2.0, the GNU Lesser
+      General Public License, Version 2.1, the GNU Affero General Public
+      License, Version 3.0, or any later versions of those licenses.`,
+			want: Licenses{mpl2},
+		},
+		{
 			name:    "unknown",
 			text:    "All rights reserved. Do not redistribute.",
 			wantErr: true,
