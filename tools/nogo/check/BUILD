@@ -11,7 +11,7 @@ go_library(
         "analyzers.go",
         "build.go",
         "check.go",
-        "checkescape_benchmark.go",
+        "checkescape_profile.go",
         "findings.go",
     ],
     visibility = ["//tools/nogo:__subpackages__"],
