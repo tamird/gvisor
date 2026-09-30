@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T22:27:07.933547+00:00",
+    "updatedAt": "2026-09-30T22:32:01.860597+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -901,8 +901,8 @@
       "title": "Declare clang-tidy in Bazel",
       "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy",
       "group": "release",
-      "status": "refresh needed",
-      "summary": "Old direct-include failures are superseded: #15119 merged and full clang gate 4e78 passed. Refresh this one-commit proposal against current master, reconcile generated catalog/policy with current source, and present the complete tool migration for contributor review. No known unresolved source failure remains. Full lint 369 reports/360 owners passed on integrated source; five fresh Actions, remaining reports reused. Standalone source f4f includes scoped tool-license exceptions."
+      "status": "validation pending",
+      "summary": "Refreshed on current master at 94dcc03a1 with unchanged tool-migration source. The previous direct-include failures are superseded by merged #15119 and the passing full clang gate. Root is validating the current canonical catalog and GNU smoke before final contributor review. Prior integrated full lint produced 369 successful reports across 360 owners; five Actions were fresh and the remainder reused."
     },
     {
       "id": "branch:syscall-overlay-xml",
@@ -916,15 +916,16 @@
       "summary": "Contributor-approved reporting correction held for passed-descriptor support."
     },
     {
-      "id": "branch:checkpoint-resume-poll",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15154",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "checkpoint-resume-poll",
-      "title": "Wait for resumed container logs",
-      "url": "https://github.com/tamird/gvisor/tree/checkpoint-resume-poll",
+      "title": "Wait for checkpointed containers to resume logging",
+      "url": "https://github.com/google/gvisor/pull/15154",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Present the existing single-commit polling fix and focused regression result; no dependency or additional unchanged run is justified. Contributor review is pending. Focused original checkpoint regression e422 passed; integrated, source reviewed."
+      "status": "open",
+      "summary": "The reviewed polling fix is published; its focused regression passed. Contributor-approved and published. Focused original checkpoint regression e422 passed; integrated, source reviewed.",
+      "number": 15154
     },
     {
       "id": "branch:syscall-processes-memory",
@@ -968,7 +969,7 @@
       "url": "https://github.com/tamird/gvisor/tree/network-test-fixtures",
       "group": "tests",
       "status": "review pending",
-      "summary": "Present the independent setup-error/thread-namespace correction with its retained root/nobody evidence. Preserve separate route and cleanup corrections; no need to make them artificial dependencies of fail-fast setup. Contributor review is pending. Integrated root/nobody tests passed; branch itself is one-file standalone fix."
+      "summary": "The independent setup-error and thread-namespace correction is ready for contributor review. Its owning Go sandbox suite passes under root. Separate Python root/nobody results are not credited to this Go fixture change; route and cleanup corrections retain their separate scope."
     },
     {
       "id": "branch:docker-test-flags",
@@ -1077,15 +1078,16 @@
       "summary": "Present the independent sticky-root/unlink ownership fix with17-case three-owner proof and existing Nogo. Contributor review is pending. Native/directfs/shared17PASS each, zero skips; source peers closed."
     },
     {
-      "id": "branch:iptables-replace-counters",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15155",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "iptables-replace-counters",
       "title": "Fix iptables replacement counter counts",
-      "url": "https://github.com/tamird/gvisor/tree/iptables-replace-counters",
+      "url": "https://github.com/google/gvisor/pull/15155",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Present the independent counter-count fixture correction. Keep unrelated native socket/extension failures visible; they do not block this case-specific correction. Contributor review is pending. LargeReplacePayload passes native and both systrap owners; full systrap17PASS each."
+      "status": "open",
+      "summary": "The reviewed counter-count fixture correction is published. Keep unrelated native socket/extension failures visible; they do not block this case-specific correction. Contributor-approved and published. LargeReplacePayload passes native and both systrap owners; full systrap17PASS each.",
+      "number": 15155
     },
     {
       "id": "branch:netfilter-nonraw-sockopts",
@@ -1121,26 +1123,28 @@
       "summary": "Present independent complete-word copy fix with before/after short-length regression and full-owner result. No dependency on loopback fixture fix. Contributor review is pending. With the independent rename fixture fix, complete owners pass: native 62 cases with 11 existing skips; both gVisor variants 67 cases with 6 existing skips each. Netlink Nogo passes ARM64 and AMD64."
     },
     {
-      "id": "branch:netlink-loopback-rename",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15156",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "netlink-loopback-rename",
       "title": "Lower loopback before testing rename events",
-      "url": "https://github.com/tamird/gvisor/tree/netlink-loopback-rename",
+      "url": "https://github.com/google/gvisor/pull/15156",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Present independent lower-before-rename fixture correction with full-owner result. No dependency on membership-copy fix. Contributor review is pending. With the independent membership-copy fix, all three complete owners pass with the existing skips and no failures."
+      "status": "open",
+      "summary": "The reviewed lower-before-rename fixture correction is published. No dependency on membership-copy fix. Contributor-approved and published. With the independent membership-copy fix, all three complete owners pass with the existing skips and no failures.",
+      "number": 15156
     },
     {
-      "id": "branch:mount-fd-reconfigure-expectations",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15157",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "mount-fd-reconfigure-expectations",
       "title": "Check Linux filesystem reconfiguration effects",
-      "url": "https://github.com/tamird/gvisor/tree/mount-fd-reconfigure-expectations",
+      "url": "https://github.com/google/gvisor/pull/15157",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Present the independent expectation correction and precise single-case native/directfs/shared proof. Do not claim whole-owner or Linux6.15 detached-mount coverage. Contributor review is pending. Three actual uncached passes, no skips; prior exactcase has two expectation failures."
+      "status": "open",
+      "summary": "The reviewed expectation correction is published with precise single-case native/directfs/shared proof. Do not claim whole-owner or Linux6.15 detached-mount coverage. Contributor-approved and published. Three actual uncached passes, no skips; prior exactcase has two expectation failures.",
+      "number": 15157
     },
     {
       "id": "branch:llvm-0-8-24",
@@ -1367,7 +1371,7 @@
       "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
     },
     {
-      "from": "branch:checkpoint-resume-poll",
+      "from": "pr:15154",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
@@ -1461,7 +1465,7 @@
       ]
     },
     {
-      "from": "branch:iptables-replace-counters",
+      "from": "pr:15155",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the validated replacement-counter fixture correction; this is integration membership, not a blocking dependency.",
@@ -1488,7 +1492,7 @@
       ]
     },
     {
-      "from": "branch:netlink-loopback-rename",
+      "from": "pr:15156",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the validated loopback-rename fixture correction; this is integration membership, not a dependency between the two netlink fixes.",
@@ -1498,7 +1502,7 @@
       ]
     },
     {
-      "from": "branch:mount-fd-reconfigure-expectations",
+      "from": "pr:15157",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the validated reconfiguration fixture correction; this is integration membership, not a blocking dependency.",
