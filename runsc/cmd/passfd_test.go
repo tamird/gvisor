@@ -45,8 +45,12 @@ func TestPassFDCLI(t *testing.T) {
 			}
 			run := func(files []*os.File, args ...string) {
 				t.Helper()
-				if out, err := command(files, args...).CombinedOutput(); err != nil {
-					t.Fatalf("runsc %v: %v\n%s", args, err, out)
+				cmd := command(files, args...)
+				// Detached containers retain stdio, so avoid output pipes
+				// whose EOF would wait for the container to exit.
+				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+				if err := cmd.Run(); err != nil {
+					t.Fatalf("runsc %v: %v", args, err)
 				}
 			}
 			defer func() {
