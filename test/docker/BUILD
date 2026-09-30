@@ -57,6 +57,30 @@ image_source_command(
     tags = ["manual"],
 )
 
+image_source_command(
+    name = "gpu_image_sources_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    image_class = "gpu",
+    tags = ["manual"],
+)
+
+image_source_command(
+    name = "gpu_image_sources_arm64",
+    testonly = True,
+    architecture = "aarch64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    image_class = "gpu",
+    tags = ["manual"],
+)
+
 docker_daemon_config(
     name = "image_source_config",
     testonly = True,
@@ -93,6 +117,50 @@ docker_command_test(
     size = "large",
     timeout = "eternal",
     command = ":cpu_image_sources_arm64",
+    docker_config = ":image_source_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    shard_count = 2,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+docker_command_test(
+    name = "gpu_image_sources_amd64_test",
+    size = "large",
+    timeout = "eternal",
+    command = ":gpu_image_sources_amd64",
+    docker_config = ":image_source_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    shard_count = 4,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+docker_command_test(
+    name = "gpu_image_sources_arm64_test",
+    size = "large",
+    timeout = "eternal",
+    command = ":gpu_image_sources_arm64",
     docker_config = ":image_source_config",
     exec_compatible_with = [
         "@platforms//os:linux",
