@@ -17,12 +17,12 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows syscalls syscalls-save syscalls-resume)
+lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows lint lint-cc governance license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
-Usage: test/rbe/qualify.sh amd64
-       test/rbe/qualify.sh [--arch=amd64|arm64] LANE [LANE ...]
+Usage: test/rbe/qualify.sh --header-base=REV amd64
+       test/rbe/qualify.sh [--arch=amd64|arm64] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -30,6 +30,7 @@ target architecture is AMD64. Tests use matching execution workers; release
 artifacts cross-build on AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
+The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -51,19 +52,28 @@ if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
   gaps
   exit 0
 fi
-if [[ $# == 1 && $1 == amd64 ]]; then
-  set -- "${lanes[@]}"
-fi
 arch=amd64
-if [[ $1 == --arch=* ]]; then
-  arch=${1#--arch=}
+header_base=
+while (( $# > 0 )) && [[ $1 == --* ]]; do
+  case "$1" in
+    --arch=*) arch=${1#--arch=} ;;
+    --header-base=*) header_base=${1#--header-base=} ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
   shift
-fi
+done
 case "$arch" in
   amd64) architecture_config=x86_64 ;;
   arm64) architecture_config=aarch64 ;;
   *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
 esac
+if [[ $# == 1 && $1 == amd64 ]]; then
+  if [[ $arch != amd64 ]]; then
+    printf 'The amd64 profile requires --arch=amd64.\n' >&2
+    exit 2
+  fi
+  set -- "${lanes[@]}"
+fi
 if (( $# == 0 )); then
   usage >&2
   exit 2
@@ -71,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|syscalls|syscalls-save|syscalls-resume) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|lint|lint-cc|governance|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -82,14 +92,81 @@ if [[ $(uname -s) != Linux ]]; then
 fi
 cd "$(dirname "${BASH_SOURCE[0]}")/../.." || exit 1
 
+# Resolve the caller's comparison base before any lane can modify generated
+# files. A shallow checkout can give an incomplete merge base and selection.
+for lane in "$@"; do
+  if [[ $lane == license-headers ]]; then
+    if [[ -z $header_base || $(git rev-parse --is-shallow-repository) != false ]]; then
+      printf 'License headers require --header-base=REV and complete local Git history.\n' >&2
+      exit 2
+    fi
+    header_base=$(git rev-parse --verify --end-of-options "$header_base^{commit}") || exit 2
+    git merge-base "$header_base" HEAD >/dev/null || exit 2
+    printf 'License header base: %s\n' "$header_base"
+    break
+  fi
+done
+
 printf 'Selected remote lanes for Linux %s: %s\n' "$arch" "$*"
 gaps
+
+# Make uses Bash, and lint.sh calls Bazel directly. Scope the same remote
+# configuration to both paths without changing user rc files or credentials.
+run_source_lane() (
+  local lane=$1 qualification_rc go_root
+  qualification_rc=$(mktemp) || exit 1
+  trap 'rm -f "$qualification_rc"' EXIT
+  export qualification_rc
+  printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
+    'build --keep_going' > "$qualification_rc" || exit 1
+  bazel() {
+    command bazel --bazelrc="$qualification_rc" "$@"
+  }
+  export -f bazel
+  case "$lane" in
+    lint)
+      # Bootstrap the existing installer's Go resolver from the declared SDK;
+      # lint.sh still owns the formatter version and canonical Go caches.
+      go_root=$(bazel run @io_bazel_rules_go//go -- env GOROOT) || exit "$?"
+      if [[ $go_root != /* || $go_root == *$'\n'* || ! -x $go_root/bin/go ]]; then
+        printf 'Declared Go SDK did not provide an executable absolute GOROOT: %s\n' "$go_root" >&2
+        exit 1
+      fi
+      PATH="$go_root/bin:$PATH" make lint DOCKER_BUILD=false
+      ;;
+    lint-cc)
+      make lint-cc DOCKER_BUILD=false
+      ;;
+    governance)
+      # Make runs the generator in the checkout for directory validation.
+      # Materialize its remotely built executable for the build_paths adapter.
+      bazel build --remote_download_outputs=toplevel //governance/tools/maintainers:maintainers_gen || exit "$?"
+      make governance-check DOCKER_BUILD=false
+      ;;
+  esac
+)
 
 run_lane() {
   local lane=$1
   local command=test execution_config=rbe
   local -a options=() targets=()
   case "$lane" in
+    lint|lint-cc|governance)
+      if [[ $arch != amd64 ]]; then
+        printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
+        return 2
+      fi
+      run_source_lane "$lane"
+      return "$?"
+      ;;
+    license-headers)
+      tools/check_license_headers.sh "$header_base"
+      return "$?"
+      ;;
+    python-distributions)
+      command=build
+      targets=(//sandboxexec/sandbox/python:dist)
+      ;;
     nogo)
       options=(--config=nogo)
       targets=(//...)
