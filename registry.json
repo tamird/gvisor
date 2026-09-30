@@ -1,0 +1,1401 @@
+{
+  "meta": {
+    "title": "gVisor contribution map",
+    "updatedAt": "2026-09-30T20:24:07.965973+00:00",
+    "repo": "google/gvisor",
+    "owner": "tamird",
+    "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
+    "edgeDirection": "Prerequisite → dependent; dashed integration edges mean included work, not a required PR stack.",
+    "dependencyNotes": "Dependencies are curated from PR descriptions and the validated workstream. A node without an edge has no recorded dependency; it is not automatically ready to merge. Landed prerequisites15050,15047,15041,14352,14827 were checked and omitted."
+  },
+  "groups": [
+    {
+      "id": "analysis",
+      "label": "Analysis & locking"
+    },
+    {
+      "id": "bazel",
+      "label": "Bazel & toolchains"
+    },
+    {
+      "id": "runtime",
+      "label": "Runtime & kernel"
+    },
+    {
+      "id": "tests",
+      "label": "Tests & reliability"
+    },
+    {
+      "id": "release",
+      "label": "Release & source tools"
+    },
+    {
+      "id": "rbe",
+      "label": "Remote CI"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "pr:15149",
+      "type": "pr",
+      "number": 15149,
+      "repo": "google/gvisor",
+      "ref": "container-create-cgroup-cleanup",
+      "title": "Clean up cgroups after failed container creation",
+      "url": "https://github.com/google/gvisor/pull/15149",
+      "group": "runtime",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T14:50:42Z"
+    },
+    {
+      "id": "pr:15148",
+      "type": "pr",
+      "number": 15148,
+      "repo": "google/gvisor",
+      "ref": "make-docker-socket-optional",
+      "title": "Inspect the Docker socket only when present",
+      "url": "https://github.com/google/gvisor/pull/15148",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T14:21:37Z"
+    },
+    {
+      "id": "pr:15147",
+      "type": "pr",
+      "number": 15147,
+      "repo": "google/gvisor",
+      "ref": "make-materialize-outputs",
+      "title": "Materialize outputs consumed by Make",
+      "url": "https://github.com/google/gvisor/pull/15147",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T13:45:29Z"
+    },
+    {
+      "id": "pr:15146",
+      "type": "pr",
+      "number": 15146,
+      "repo": "google/gvisor",
+      "ref": "license-text-classifier-final",
+      "title": "Recognize complete dependency license texts",
+      "url": "https://github.com/google/gvisor/pull/15146",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T13:45:28Z"
+    },
+    {
+      "id": "pr:15145",
+      "type": "pr",
+      "number": 15145,
+      "repo": "google/gvisor",
+      "ref": "license-github-refs",
+      "title": "Resolve license source refs with Git",
+      "url": "https://github.com/google/gvisor/pull/15145",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T13:45:29Z"
+    },
+    {
+      "id": "pr:15142",
+      "type": "pr",
+      "number": 15142,
+      "repo": "google/gvisor",
+      "ref": "syzkaller-release-input",
+      "title": "Pass the selected runtime to Syzkaller",
+      "url": "https://github.com/google/gvisor/pull/15142",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T10:28:02Z"
+    },
+    {
+      "id": "pr:15141",
+      "type": "pr",
+      "number": 15141,
+      "repo": "google/gvisor",
+      "ref": "runsc-create-pass-fd",
+      "title": "Support passed descriptors in create and restore",
+      "url": "https://github.com/google/gvisor/pull/15141",
+      "group": "runtime",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T10:22:37Z"
+    },
+    {
+      "id": "pr:15140",
+      "type": "pr",
+      "number": 15140,
+      "repo": "google/gvisor",
+      "ref": "benchmark-fio-error-output",
+      "title": "Preserve fio output when a benchmark fails",
+      "url": "https://github.com/google/gvisor/pull/15140",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T10:20:01Z"
+    },
+    {
+      "id": "pr:15139",
+      "type": "pr",
+      "number": 15139,
+      "repo": "google/gvisor",
+      "ref": "benchmark-hackbench-loop-option",
+      "title": "Use hackbench's short loop option",
+      "url": "https://github.com/google/gvisor/pull/15139",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T10:19:58Z"
+    },
+    {
+      "id": "pr:15138",
+      "type": "pr",
+      "number": 15138,
+      "repo": "google/gvisor",
+      "ref": "benchmark-readiness-timeout",
+      "title": "Bound checkpoint readiness with its context",
+      "url": "https://github.com/google/gvisor/pull/15138",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T10:19:55Z"
+    },
+    {
+      "id": "pr:15137",
+      "type": "pr",
+      "number": 15137,
+      "repo": "google/gvisor",
+      "ref": "benchmark-checkpoint-network",
+      "title": "Use private networks in checkpoint benchmarks",
+      "url": "https://github.com/google/gvisor/pull/15137",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T10:19:53Z"
+    },
+    {
+      "id": "pr:15133",
+      "type": "pr",
+      "number": 15133,
+      "repo": "google/gvisor",
+      "ref": "syscall-atime-backing",
+      "title": "Enable atime for host-backed timestamp tests",
+      "url": "https://github.com/google/gvisor/pull/15133",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15132",
+      "type": "pr",
+      "number": 15132,
+      "repo": "google/gvisor",
+      "ref": "hostinet-ping-size",
+      "title": "Check ping size before reading hostnet buffers",
+      "url": "https://github.com/google/gvisor/pull/15132",
+      "group": "runtime",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:31Z"
+    },
+    {
+      "id": "pr:15131",
+      "type": "pr",
+      "number": 15131,
+      "repo": "google/gvisor",
+      "ref": "runner-host-fd-limit",
+      "title": "Declare the ping runner's descriptor budget",
+      "url": "https://github.com/google/gvisor/pull/15131",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15129",
+      "type": "pr",
+      "number": 15129,
+      "repo": "google/gvisor",
+      "ref": "ping-bind-hostinet",
+      "title": "Use native ping bind errors with host networking",
+      "url": "https://github.com/google/gvisor/pull/15129",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15125",
+      "type": "pr",
+      "number": 15125,
+      "repo": "google/gvisor",
+      "ref": "openat2-race-checkpoints",
+      "title": "Checkpoint openat2 races after workers finish",
+      "url": "https://github.com/google/gvisor/pull/15125",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:29Z"
+    },
+    {
+      "id": "pr:15124",
+      "type": "pr",
+      "number": 15124,
+      "repo": "google/gvisor",
+      "ref": "netlink-test-address-cleanup",
+      "title": "Keep IPv6 subnet setup valid through its assertion",
+      "url": "https://github.com/google/gvisor/pull/15124",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15120",
+      "type": "pr",
+      "number": 15120,
+      "repo": "google/gvisor",
+      "ref": "python-hermetic-bootstrap",
+      "title": "Start Python tools with the declared interpreter",
+      "url": "https://github.com/google/gvisor/pull/15120",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15118",
+      "type": "pr",
+      "number": 15118,
+      "repo": "google/gvisor",
+      "ref": "gtest-discovery-output",
+      "title": "Keep test discovery out of XML results",
+      "url": "https://github.com/google/gvisor/pull/15118",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15115",
+      "type": "pr",
+      "number": 15115,
+      "repo": "google/gvisor",
+      "ref": "bazel-skylib-remote-copy",
+      "title": "Allow declared file copies to execute remotely",
+      "url": "https://github.com/google/gvisor/pull/15115",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-29T23:46:30Z"
+    },
+    {
+      "id": "pr:15114",
+      "type": "pr",
+      "number": 15114,
+      "repo": "google/gvisor",
+      "ref": "pip-license-audit",
+      "title": "Audit wheels exposed by imported pip hubs",
+      "url": "https://github.com/google/gvisor/pull/15114",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T04:48:30Z"
+    },
+    {
+      "id": "pr:15111",
+      "type": "pr",
+      "number": 15111,
+      "repo": "google/gvisor",
+      "ref": "lint-failure-propagation",
+      "title": "Propagate failures from source lint tools",
+      "url": "https://github.com/google/gvisor/pull/15111",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T03:50:01Z"
+    },
+    {
+      "id": "pr:15109",
+      "type": "pr",
+      "number": 15109,
+      "repo": "google/gvisor",
+      "ref": "clang-tidy-exit-status",
+      "title": "Propagate clang-tidy process failures",
+      "url": "https://github.com/google/gvisor/pull/15109",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T03:50:01Z"
+    },
+    {
+      "id": "pr:15107",
+      "type": "pr",
+      "number": 15107,
+      "repo": "google/gvisor",
+      "ref": "bazel-actionlint",
+      "title": "Run actionlint as a declared Bazel test",
+      "url": "https://github.com/google/gvisor/pull/15107",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T03:50:01Z"
+    },
+    {
+      "id": "pr:15106",
+      "type": "pr",
+      "number": 15106,
+      "repo": "google/gvisor",
+      "ref": "go-export-archive",
+      "title": "Build the Go branch source archive with Bazel",
+      "url": "https://github.com/google/gvisor/pull/15106",
+      "group": "release",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T03:50:01Z"
+    },
+    {
+      "id": "pr:15084",
+      "type": "pr",
+      "number": 15084,
+      "repo": "google/gvisor",
+      "ref": "docker-exec-completion",
+      "title": "Wait for Docker exec completion",
+      "url": "https://github.com/google/gvisor/pull/15084",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-29T10:16:51Z"
+    },
+    {
+      "id": "pr:15071",
+      "type": "pr",
+      "number": 15071,
+      "repo": "google/gvisor",
+      "ref": "ioprio-explicit-test-state",
+      "title": "Set explicit priorities in ioprio tests",
+      "url": "https://github.com/google/gvisor/pull/15071",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-29T10:16:50Z"
+    },
+    {
+      "id": "pr:15070",
+      "type": "pr",
+      "number": 15070,
+      "repo": "google/gvisor",
+      "ref": "rlimit-unprivileged-hard-limit",
+      "title": "Respect inherited limits in the rlimit test",
+      "url": "https://github.com/google/gvisor/pull/15070",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-29T10:16:51Z"
+    },
+    {
+      "id": "pr:15064",
+      "type": "pr",
+      "number": 15064,
+      "repo": "google/gvisor",
+      "ref": "packet-mmap-copy-threshold",
+      "title": "Honor PACKET_COPY_THRESH for mmap packets",
+      "url": "https://github.com/google/gvisor/pull/15064",
+      "group": "runtime",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-29T10:16:51Z"
+    },
+    {
+      "id": "pr:15062",
+      "type": "pr",
+      "number": 15062,
+      "repo": "google/gvisor",
+      "ref": "root-cgroup-configured-parent",
+      "title": "Use the configured parent in cgroup v2 tests",
+      "url": "https://github.com/google/gvisor/pull/15062",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-29T10:16:51Z"
+    },
+    {
+      "id": "pr:15061",
+      "type": "pr",
+      "number": 15061,
+      "repo": "google/gvisor",
+      "ref": "process-vm-test-buffers",
+      "title": "Allocate process_vm test buffers per case",
+      "url": "https://github.com/google/gvisor/pull/15061",
+      "group": "tests",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-29T10:16:50Z"
+    },
+    {
+      "id": "pr:15048",
+      "type": "pr",
+      "number": 15048,
+      "repo": "google/gvisor",
+      "ref": "nogo-reset-exec-mode",
+      "title": "Reset Go build modes for the Nogo tool",
+      "url": "https://github.com/google/gvisor/pull/15048",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-29T17:49:23Z"
+    },
+    {
+      "id": "pr:15044",
+      "type": "pr",
+      "number": 15044,
+      "repo": "google/gvisor",
+      "ref": "builder-unused-runtime-tools",
+      "title": "Remove unused builder Java and QEMU packages",
+      "url": "https://github.com/google/gvisor/pull/15044",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-26T18:20:44Z"
+    },
+    {
+      "id": "pr:15042",
+      "type": "pr",
+      "number": 15042,
+      "repo": "google/gvisor",
+      "ref": "sysmsg-toolchain-nm",
+      "title": "Use the selected nm for sysmsg offsets",
+      "url": "https://github.com/google/gvisor/pull/15042",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-26T14:13:06Z"
+    },
+    {
+      "id": "pr:15037",
+      "type": "pr",
+      "number": 15037,
+      "repo": "google/gvisor",
+      "ref": "rules-go-0-62",
+      "title": "Upgrade rules_go and adapt Go build rules",
+      "url": "https://github.com/google/gvisor/pull/15037",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-30T02:54:07Z"
+    },
+    {
+      "id": "pr:15036",
+      "type": "pr",
+      "number": 15036,
+      "repo": "google/gvisor",
+      "ref": "goimports-launcher-shebang",
+      "title": "Add a shebang to the goimports launcher",
+      "url": "https://github.com/google/gvisor/pull/15036",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-26T02:01:20Z"
+    },
+    {
+      "id": "pr:15035",
+      "type": "pr",
+      "number": 15035,
+      "repo": "google/gvisor",
+      "ref": "nogo-stdlib-version",
+      "title": "Parse nogo language versions with modfile",
+      "url": "https://github.com/google/gvisor/pull/15035",
+      "group": "analysis",
+      "status": "draft",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-27T19:23:16Z"
+    },
+    {
+      "id": "pr:15034",
+      "type": "pr",
+      "number": 15034,
+      "repo": "google/gvisor",
+      "ref": "nogo-sdk-headers",
+      "title": "Include SDK headers in Go action inputs",
+      "url": "https://github.com/google/gvisor/pull/15034",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-26T02:06:32Z"
+    },
+    {
+      "id": "pr:15033",
+      "type": "pr",
+      "number": 15033,
+      "repo": "google/gvisor",
+      "ref": "checkescape-generics",
+      "title": "Unify generic and concrete checkescape analysis",
+      "url": "https://github.com/google/gvisor/pull/15033",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-30T18:26:26Z"
+    },
+    {
+      "id": "pr:15030",
+      "type": "pr",
+      "number": 15030,
+      "repo": "google/gvisor",
+      "ref": "checklocks-closure-state",
+      "title": "Propagate lock state through synchronous closures",
+      "url": "https://github.com/google/gvisor/pull/15030",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-26T00:48:03Z"
+    },
+    {
+      "id": "pr:14989",
+      "type": "pr",
+      "number": 14989,
+      "repo": "google/gvisor",
+      "ref": "bazel-target-platforms",
+      "title": "Select test platforms by operating system and CPU",
+      "url": "https://github.com/google/gvisor/pull/14989",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-25T01:27:54Z"
+    },
+    {
+      "id": "pr:14988",
+      "type": "pr",
+      "number": 14988,
+      "repo": "google/gvisor",
+      "ref": "bazel-test-tmp-mount",
+      "title": "Use an explicit /tmp mount for Bazel tests",
+      "url": "https://github.com/google/gvisor/pull/14988",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-25T01:27:51Z"
+    },
+    {
+      "id": "pr:14986",
+      "type": "pr",
+      "number": 14986,
+      "repo": "google/gvisor",
+      "ref": "bazel-9-grpc",
+      "title": "Use registry gRPC with Bazel 9 fixes",
+      "url": "https://github.com/google/gvisor/pull/14986",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-25T01:22:14Z"
+    },
+    {
+      "id": "pr:14985",
+      "type": "pr",
+      "number": 14985,
+      "repo": "google/gvisor",
+      "ref": "bazel-9-coral-crosstool",
+      "title": "Load Bazel 9 symbols in Coral crosstool",
+      "url": "https://github.com/google/gvisor/pull/14985",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-25T01:22:15Z"
+    },
+    {
+      "id": "pr:14984",
+      "type": "pr",
+      "number": 14984,
+      "repo": "google/gvisor",
+      "ref": "bazel-9-cpp-test-deps",
+      "title": "Update C++ dependencies for Bazel 9",
+      "url": "https://github.com/google/gvisor/pull/14984",
+      "group": "bazel",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-26T01:56:49Z"
+    },
+    {
+      "id": "pr:14882",
+      "type": "pr",
+      "number": 14882,
+      "repo": "google/gvisor",
+      "ref": "checklocks-private-globals",
+      "title": "Preserve private global lock contracts",
+      "url": "https://github.com/google/gvisor/pull/14882",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-25T12:25:06Z"
+    },
+    {
+      "id": "pr:14879",
+      "type": "pr",
+      "number": 14879,
+      "repo": "google/gvisor",
+      "ref": "metric-field-lookup-nosplit",
+      "title": "Keep metric field lookup nosplit",
+      "url": "https://github.com/google/gvisor/pull/14879",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-25T18:34:24Z"
+    },
+    {
+      "id": "pr:14504",
+      "type": "pr",
+      "number": 14504,
+      "repo": "google/gvisor",
+      "ref": "checklocks-publication-guards",
+      "title": "checklocks: guard AIO and logger state",
+      "url": "https://github.com/google/gvisor/pull/14504",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-13T23:14:32Z"
+    },
+    {
+      "id": "pr:14503",
+      "type": "pr",
+      "number": 14503,
+      "repo": "google/gvisor",
+      "ref": "checklocks-lock-state",
+      "title": "checklocks: correct lock-state diagnostics",
+      "url": "https://github.com/google/gvisor/pull/14503",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-24T13:54:47Z"
+    },
+    {
+      "id": "pr:14502",
+      "type": "pr",
+      "number": 14502,
+      "repo": "google/gvisor",
+      "ref": "checklocks-nogo-inputs",
+      "title": "nogo: preserve configured analysis inputs",
+      "url": "https://github.com/google/gvisor/pull/14502",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-27T21:52:58Z"
+    },
+    {
+      "id": "pr:14361",
+      "type": "pr",
+      "number": 14361,
+      "repo": "google/gvisor",
+      "ref": "checklocks-lisafs-lifetimes",
+      "title": "Fix LisaFS socket and node lifetimes",
+      "url": "https://github.com/google/gvisor/pull/14361",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-03T21:32:42Z"
+    },
+    {
+      "id": "pr:14360",
+      "type": "pr",
+      "number": 14360,
+      "repo": "google/gvisor",
+      "ref": "checklocks-restore-fixes",
+      "title": "Fix checkpoint and restore synchronization",
+      "url": "https://github.com/google/gvisor/pull/14360",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-24T13:54:47Z"
+    },
+    {
+      "id": "pr:14351",
+      "type": "pr",
+      "number": 14351,
+      "repo": "google/gvisor",
+      "ref": "checklocks-memory-annotations",
+      "title": "checklocks: annotate memory and timer locking",
+      "url": "https://github.com/google/gvisor/pull/14351",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-09-18T01:07:35Z"
+    },
+    {
+      "id": "pr:14348",
+      "type": "pr",
+      "number": 14348,
+      "repo": "google/gvisor",
+      "ref": "checklocks-pgalloc-async-state",
+      "title": "checklocks: enforce memory and restore ownership",
+      "url": "https://github.com/google/gvisor/pull/14348",
+      "group": "analysis",
+      "status": "draft",
+      "reviewDecision": "",
+      "updatedAt": "2026-08-30T18:34:05Z"
+    },
+    {
+      "id": "pr:14345",
+      "type": "pr",
+      "number": 14345,
+      "repo": "google/gvisor",
+      "ref": "checklocks-seccheck-state",
+      "title": "checklocks: guard task and IPC state",
+      "url": "https://github.com/google/gvisor/pull/14345",
+      "group": "analysis",
+      "status": "draft",
+      "reviewDecision": "",
+      "updatedAt": "2026-08-30T18:34:03Z"
+    },
+    {
+      "id": "pr:14343",
+      "type": "pr",
+      "number": 14343,
+      "repo": "google/gvisor",
+      "ref": "checklocks-vfs-state",
+      "title": "checklocks: enforce filesystem ownership",
+      "url": "https://github.com/google/gvisor/pull/14343",
+      "group": "analysis",
+      "status": "draft",
+      "reviewDecision": "",
+      "updatedAt": "2026-08-30T18:34:00Z"
+    },
+    {
+      "id": "pr:14338",
+      "type": "pr",
+      "number": 14338,
+      "repo": "google/gvisor",
+      "ref": "checklocks-tcp-state",
+      "title": "checklocks: enforce networking state ownership",
+      "url": "https://github.com/google/gvisor/pull/14338",
+      "group": "analysis",
+      "status": "draft",
+      "reviewDecision": "",
+      "updatedAt": "2026-08-30T18:33:58Z"
+    },
+    {
+      "id": "pr:14237",
+      "type": "pr",
+      "number": 14237,
+      "repo": "google/gvisor",
+      "ref": "checklocks-nested-captures",
+      "title": "checklocks: enforce lock and atomic contracts",
+      "url": "https://github.com/google/gvisor/pull/14237",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-09-27T21:24:28Z"
+    },
+    {
+      "id": "pr:12483",
+      "type": "pr",
+      "number": 12483,
+      "repo": "google/gvisor",
+      "ref": "atomicptr-atomicptr",
+      "title": "atomicptr: use atomic.Pointer",
+      "url": "https://github.com/google/gvisor/pull/12483",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-08-30T18:33:52Z"
+    },
+    {
+      "id": "pr:12470",
+      "type": "pr",
+      "number": 12470,
+      "repo": "google/gvisor",
+      "ref": "refs-generics",
+      "title": "refs: replace go_generics with Go generics",
+      "url": "https://github.com/google/gvisor/pull/12470",
+      "group": "analysis",
+      "status": "open",
+      "reviewDecision": "",
+      "updatedAt": "2026-08-30T18:33:49Z"
+    },
+    {
+      "id": "branch:hermetic-toolchains",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "hermetic-toolchains",
+      "title": "Hermetic C/C++ and plugin toolchains",
+      "url": "https://github.com/tamird/gvisor/tree/hermetic-toolchains",
+      "group": "bazel",
+      "status": "branch",
+      "summary": "Combined compiler migration; fork validation has passed selected builds. Separate prerequisite PRs are shown."
+    },
+    {
+      "id": "branch:hermetic-bpf",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "hermetic-bpf",
+      "title": "Hermetic BPF toolchain",
+      "url": "https://github.com/tamird/gvisor/tree/hermetic-bpf",
+      "group": "bazel",
+      "status": "branch",
+      "summary": "BPF migration on the combined toolchain change."
+    },
+    {
+      "id": "branch:plugin-toolchain-build",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "plugin-toolchain-build",
+      "title": "Declare plugin build inputs",
+      "url": "https://github.com/tamird/gvisor/tree/plugin-toolchain-build",
+      "group": "bazel",
+      "status": "branch",
+      "summary": "Independent GNU-compatible precursor to the plugin toolchain migration."
+    },
+    {
+      "id": "branch:hermetic-linux-headers",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "hermetic-linux-headers",
+      "title": "Select newer Linux headers",
+      "url": "https://github.com/tamird/gvisor/tree/hermetic-linux-headers",
+      "group": "bazel",
+      "status": "branch",
+      "summary": "Header selection for the hermetic toolchain; includes a temporary upstream API patch."
+    },
+    {
+      "id": "branch:builder-without-cross-compilers",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "builder-without-cross-compilers",
+      "title": "Remove builder cross-compilers",
+      "url": "https://github.com/tamird/gvisor/tree/builder-without-cross-compilers",
+      "group": "bazel",
+      "status": "branch",
+      "summary": "Builder package cleanup after the hermetic toolchain migration."
+    },
+    {
+      "id": "branch:platform-only-architecture",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "platform-only-architecture",
+      "title": "Remove legacy CPU selections",
+      "url": "https://github.com/tamird/gvisor/tree/platform-only-architecture",
+      "group": "bazel",
+      "status": "branch",
+      "summary": "Architecture selection through Bazel platforms after toolchain migration."
+    },
+    {
+      "id": "branch:bazel-python-release",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "bazel-python-release",
+      "title": "Build Python distributions with Bazel",
+      "url": "https://github.com/tamird/gvisor/tree/bazel-python-release",
+      "group": "release",
+      "status": "branch",
+      "summary": "Contributor-reviewed release work held for its wheel-audit, Skylib and bootstrap prerequisites."
+    },
+    {
+      "id": "branch:bazel-clang-tidy",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "bazel-clang-tidy",
+      "title": "Declare clang-tidy in Bazel",
+      "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy",
+      "group": "release",
+      "status": "branch",
+      "summary": "Toolchain-driven lint owner prepared for remote CI."
+    },
+    {
+      "id": "branch:syscall-overlay-xml",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syscall-overlay-xml",
+      "title": "Keep syscall XML outside overlays",
+      "url": "https://github.com/tamird/gvisor/tree/syscall-overlay-xml",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Contributor-approved reporting correction held for passed-descriptor support."
+    },
+    {
+      "id": "branch:checkpoint-resume-poll",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "checkpoint-resume-poll",
+      "title": "Wait for resumed container logs",
+      "url": "https://github.com/tamird/gvisor/tree/checkpoint-resume-poll",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Independent correction; exact existing checkpoint regression passed remotely. Contributor review before upstream submission remains pending."
+    },
+    {
+      "id": "branch:syscall-processes-memory",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syscall-processes-memory",
+      "title": "Declare process-test worker memory",
+      "url": "https://github.com/tamird/gvisor/tree/syscall-processes-memory",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Measured guest thread-cap failure fixed by the target-owned worker budget."
+    },
+    {
+      "id": "branch:syscall-socket-stress-resources",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syscall-socket-stress-resources",
+      "title": "Declare socket-stress resources",
+      "url": "https://github.com/tamird/gvisor/tree/syscall-socket-stress-resources",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Descriptor and worker-memory declaration; complete host-network owner validation running."
+    },
+    {
+      "id": "branch:cgroup-unit-fixtures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "cgroup-unit-fixtures",
+      "title": "Make cgroup unit fixtures self-contained",
+      "url": "https://github.com/tamird/gvisor/tree/cgroup-unit-fixtures",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Removes host dependencies from the existing cgroup unit tests."
+    },
+    {
+      "id": "branch:network-test-fixtures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "network-test-fixtures",
+      "title": "Declare network test setup",
+      "url": "https://github.com/tamird/gvisor/tree/network-test-fixtures",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Preserves namespace setup errors and supplies the required worker environment."
+    },
+    {
+      "id": "branch:docker-test-flags",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "docker-test-flags",
+      "title": "Parse Docker test flags before use",
+      "url": "https://github.com/tamird/gvisor/tree/docker-test-flags",
+      "group": "tests",
+      "status": "branch",
+      "summary": "Independent TestMain initialization correction prepared during remote qualification."
+    },
+    {
+      "id": "branch:rbe-docker-qualification",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-docker-qualification",
+      "title": "Own Docker test services and inputs",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-docker-qualification",
+      "group": "rbe",
+      "status": "branch",
+      "summary": "Declared runtime/images and a private daemon fixture; later fixes are consolidated into the qualification branch."
+    },
+    {
+      "id": "branch:rbe-remote-stress",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-remote-stress",
+      "title": "Remote stress testing",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-remote-stress",
+      "group": "rbe",
+      "status": "branch",
+      "summary": "Repeated Go and syscall test cohorts on remote workers."
+    },
+    {
+      "id": "branch:buildkite-rbe",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "buildkite-rbe",
+      "title": "Builder-free Buildkite pilot",
+      "url": "https://github.com/tamird/gvisor/tree/buildkite-rbe",
+      "group": "rbe",
+      "status": "branch",
+      "summary": "Opt-in build/Nogo pilot; does not replace the full public matrix."
+    },
+    {
+      "id": "branch:rbe-qualification-next",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-qualification-next",
+      "title": "Builder-free public CI qualification",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
+      "group": "rbe",
+      "status": "branch",
+      "summary": "Current integration branch. Full systrap passes652/655 owners; remaining runtime failures and worker capabilities stay visible."
+    },
+    {
+      "id": "branch:rbe-remote-concurrency",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-remote-concurrency",
+      "title": "Set remote action concurrency",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-remote-concurrency",
+      "group": "rbe",
+      "status": "branch",
+      "summary": "Use the qualified32-action default instead of coordinator CPU count."
+    },
+    {
+      "id": "external:kernel",
+      "type": "issue",
+      "title": "Newer hosted Linux kernel",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13523",
+      "group": "rbe",
+      "status": "open",
+      "summary": "Supported worker selection is unresolved. Existing kernel defects still affect host-network and filesystem tests.",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13523
+    },
+    {
+      "id": "external:kvm",
+      "type": "issue",
+      "title": "Hosted KVM capacity",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13575",
+      "group": "rbe",
+      "status": "open",
+      "summary": "Current worker has no /dev/kvm; supported hosted route requested.",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13575
+    },
+    {
+      "id": "external:tun",
+      "type": "issue",
+      "title": "Rootless TUN permissions",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13540",
+      "group": "rbe",
+      "status": "deployment-pending",
+      "summary": "Provider issue closed, deployment expected October1; actual rootless networking is not yet revalidated.",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13540
+    },
+    {
+      "id": "external:logs",
+      "type": "issue",
+      "title": "Worker output-buffer ownership",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13542",
+      "group": "rbe",
+      "status": "deployment-pending",
+      "summary": "Provider fix closed, deployment expected October1. Connection to historical corrupted language logs is unverified.",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13542
+    },
+    {
+      "id": "external:arm64",
+      "type": "issue",
+      "title": "ARM64 Firecracker capacity",
+      "url": "https://app.buildbuddy.io/invocation/6e1f969b-8054-4379-8bb2-8a12c48d7942",
+      "group": "rbe",
+      "status": "unavailable",
+      "summary": "Scheduler reports no ARM64 Firecracker executors. Ordinary ARM64 OCI execution works."
+    },
+    {
+      "id": "external:vhost",
+      "type": "issue",
+      "title": "Hosted vhost-net device",
+      "url": "https://app.buildbuddy.io/invocation/48832ad6-fa3c-45d3-9e5a-e72055a6366a",
+      "group": "rbe",
+      "status": "unavailable",
+      "summary": "Actual root AMD64 worker returns ENOENT for /dev/vhost-net. Plugin build passes, plugin runtime remains blocked."
+    },
+    {
+      "id": "branch:mq-permission-capabilities",
+      "type": "branch",
+      "ref": "mq-permission-capabilities",
+      "repo": "tamird/gvisor",
+      "title": "Test MQ permissions without DAC bypass",
+      "group": "tests",
+      "status": "branch",
+      "url": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities",
+      "summary": "Independent six-line test setup correction; native and systrap regression is running."
+    }
+  ],
+  "edges": [
+    {
+      "from": "pr:14502",
+      "to": "pr:14237",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14237"
+    },
+    {
+      "from": "pr:14502",
+      "to": "pr:15035",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/15035"
+    },
+    {
+      "from": "pr:14237",
+      "to": "pr:14504",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14504"
+    },
+    {
+      "from": "pr:14237",
+      "to": "pr:14348",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14348"
+    },
+    {
+      "from": "pr:14360",
+      "to": "pr:14348",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14348"
+    },
+    {
+      "from": "pr:14237",
+      "to": "pr:14345",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14345"
+    },
+    {
+      "from": "pr:14237",
+      "to": "pr:14343",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14343"
+    },
+    {
+      "from": "pr:14237",
+      "to": "pr:14338",
+      "type": "depends_on",
+      "reason": "Explicit landing prerequisite in the PR description.",
+      "evidence": "https://github.com/google/gvisor/pull/14338"
+    },
+    {
+      "from": "pr:15037",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "pr:15034",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "pr:14984",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "pr:15042",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "pr:15036",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "pr:15048",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "branch:plugin-toolchain-build",
+      "to": "branch:hermetic-toolchains",
+      "type": "depends_on",
+      "reason": "The plugin migration incorporates the declared plugin build inputs.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
+    },
+    {
+      "from": "branch:hermetic-toolchains",
+      "to": "branch:hermetic-bpf",
+      "type": "depends_on",
+      "reason": "Prepared on the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-bpf"
+    },
+    {
+      "from": "branch:hermetic-toolchains",
+      "to": "branch:builder-without-cross-compilers",
+      "type": "depends_on",
+      "reason": "Prepared on the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/builder-without-cross-compilers"
+    },
+    {
+      "from": "branch:hermetic-toolchains",
+      "to": "branch:platform-only-architecture",
+      "type": "depends_on",
+      "reason": "Prepared on the combined hermetic toolchain migration.",
+      "evidence": "https://github.com/tamird/gvisor/tree/platform-only-architecture"
+    },
+    {
+      "from": "pr:15114",
+      "to": "branch:bazel-python-release",
+      "type": "depends_on",
+      "reason": "Reviewed Python release change is held for this prerequisite.",
+      "evidence": "https://github.com/tamird/gvisor/tree/bazel-python-release"
+    },
+    {
+      "from": "pr:15115",
+      "to": "branch:bazel-python-release",
+      "type": "depends_on",
+      "reason": "Reviewed Python release change is held for this prerequisite.",
+      "evidence": "https://github.com/tamird/gvisor/tree/bazel-python-release"
+    },
+    {
+      "from": "pr:15120",
+      "to": "branch:bazel-python-release",
+      "type": "depends_on",
+      "reason": "Reviewed Python release change is held for this prerequisite.",
+      "evidence": "https://github.com/tamird/gvisor/tree/bazel-python-release"
+    },
+    {
+      "from": "pr:15141",
+      "to": "branch:syscall-overlay-xml",
+      "type": "depends_on",
+      "reason": "Keep XML descriptors open across create and restore.",
+      "evidence": "https://github.com/tamird/gvisor/tree/syscall-overlay-xml"
+    },
+    {
+      "from": "branch:hermetic-bpf",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:hermetic-linux-headers",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:rbe-docker-qualification",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:bazel-clang-tidy",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:bazel-python-release",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:syscall-overlay-xml",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:checkpoint-resume-poll",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:syscall-processes-memory",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:rbe-remote-concurrency",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:cgroup-unit-fixtures",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:network-test-fixtures",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:docker-test-flags",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
+      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
+    },
+    {
+      "from": "branch:syscall-socket-stress-resources",
+      "to": "branch:rbe-qualification-next",
+      "type": "depends_on",
+      "reason": "Needed to qualify the currently failing host-network stress owner.",
+      "evidence": "https://github.com/tamird/gvisor/tree/syscall-socket-stress-resources"
+    },
+    {
+      "from": "external:kernel",
+      "to": "branch:rbe-qualification-next",
+      "type": "blocked_by",
+      "reason": "Required worker capability for part of the public runtime matrix.",
+      "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13523"
+    },
+    {
+      "from": "external:kvm",
+      "to": "branch:rbe-qualification-next",
+      "type": "blocked_by",
+      "reason": "Required worker capability for part of the public runtime matrix.",
+      "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13575"
+    },
+    {
+      "from": "external:tun",
+      "to": "branch:rbe-qualification-next",
+      "type": "blocked_by",
+      "reason": "Required worker capability for part of the public runtime matrix.",
+      "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13540"
+    },
+    {
+      "from": "external:arm64",
+      "to": "branch:rbe-qualification-next",
+      "type": "blocked_by",
+      "reason": "Required worker capability for part of the public runtime matrix.",
+      "evidence": "https://app.buildbuddy.io/invocation/6e1f969b-8054-4379-8bb2-8a12c48d7942"
+    },
+    {
+      "from": "external:vhost",
+      "to": "branch:rbe-qualification-next",
+      "type": "blocked_by",
+      "reason": "Required worker capability for part of the public runtime matrix.",
+      "evidence": "https://app.buildbuddy.io/invocation/48832ad6-fa3c-45d3-9e5a-e72055a6366a"
+    },
+    {
+      "from": "branch:mq-permission-capabilities",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes this test setup correction.",
+      "evidence": "https://github.com/tamird/gvisor/tree/mq-permission-capabilities"
+    }
+  ]
+}
