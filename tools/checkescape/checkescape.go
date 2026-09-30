@@ -508,7 +508,7 @@ const (
 )
 
 func (calls callSet) forKind(kind callKind) callSet {
-	filtered := make(callSet)
+	var filtered callSet
 	for target := range calls {
 		if target.nonEscaping() {
 			continue
@@ -584,6 +584,9 @@ func (calls callSet) forKind(kind callKind) callSet {
 			matches = matches || strings.HasPrefix(target.name, "runtime.checkptr")
 		}
 		if matches {
+			if filtered == nil {
+				filtered = make(callSet)
+			}
 			filtered[target] = struct{}{}
 		}
 	}
@@ -1605,9 +1608,13 @@ func run(pass *analysis.Pass, binary io.Reader, benchmark bool) (any, error) {
 		// https://github.com/golang/go/blob/go1.26.3/src/cmd/compile/internal/slice/slice.go#L426-L450
 		if !isGeneric(fn) {
 			promotions, _ := bodyEvidence(fn, slicePromotion)
-			es = append(es, emitCalls(promotions, []EscapeReason{builtin}, nil))
+			if escapes := emitCalls(promotions, []EscapeReason{builtin}, nil); !escapes.IsEmpty() {
+				es = append(es, escapes)
+			}
 		}
-		es = append(es, emitCalls(compiledCalls(fn, stackGrowth), []EscapeReason{stackSplit}, nil))
+		if escapes := emitCalls(compiledCalls(fn, stackGrowth), []EscapeReason{stackSplit}, nil); !escapes.IsEmpty() {
+			es = append(es, escapes)
+		}
 
 		// Save the result and return.
 		//
