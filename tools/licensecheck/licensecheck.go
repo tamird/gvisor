@@ -831,7 +831,7 @@ func resolveGitHubCommit(owner, repo, ref string) (string, error) {
 		// Bound inherited pipes if a transport subprocess outlives Git.
 		cmd.WaitDelay = 5 * time.Second
 		out, err := cmd.Output()
-		var exitErr *exec.ExitError
+		exitErr, isExitError := errors.AsType[*exec.ExitError](err)
 		switch {
 		case ctx.Err() != nil:
 			return "", fmt.Errorf("git ls-remote: %w", ctx.Err())
@@ -839,11 +839,11 @@ func resolveGitHubCommit(owner, repo, ref string) (string, error) {
 			if commit, err := parseGitRefs(string(out), refs); err != nil || commit != "" {
 				return commit, err
 			}
-		case errors.As(err, &exitErr) && exitErr.ExitCode() == 2:
+		case isExitError && exitErr.ExitCode() == 2:
 			// A successful connection with no matching ref still permits API
 			// resolution, as does a tag/branch name with conflicting IDs.
 		default:
-			if exitErr != nil {
+			if isExitError {
 				return "", fmt.Errorf("git ls-remote: %w: %s", err, strings.TrimSpace(string(exitErr.Stderr)))
 			}
 			return "", fmt.Errorf("git ls-remote: %w", err)
