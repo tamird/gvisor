@@ -18,10 +18,11 @@
 // mod` in the dockerized build environment): the root module's direct
 // bazel_deps, the http_archive/http_file repos declared in MODULE.bazel, and
 // the Go repos imported from the go_deps extension, unioned with go.mod's
-// requirements, and the wheels exposed by imported pip hubs. Fetch downloads
-// each dependency's license text from the Go module proxy, pinned wheels, or
-// GitHub, classifies it, and records it in a YAML file. Verify checks that the
-// YAML file has an entry for every dependency, without fetching any licenses.
+// requirements, independently resolved module proxies, and the wheels exposed
+// by imported pip hubs. Fetch downloads each dependency's license text from the
+// Go module proxy, pinned wheels, or GitHub, classifies it, and records it in a
+// YAML file. Verify checks that the YAML file has an entry for every dependency,
+// without fetching any licenses.
 //
 // Entries whose license cannot be fetched automatically (e.g.
 // @google_root_pem) are maintained by hand: Fetch preserves an existing entry
@@ -183,17 +184,21 @@ const (
 
 // dep is a single external dependency.
 type dep struct {
-	name    string
-	kind    depKind
-	version string // kindGoModule.
-	url     string // kindArchive or kindWheel.
-	sha256  string // kindArchive or kindWheel: Bazel's pinned artifact hash.
+	name       string
+	kind       depKind
+	version    string // kindGoModule.
+	modulePath string // kindGoModule: module path, independent of the audit name.
+	url        string // kindArchive or kindWheel.
+	sha256     string // kindArchive or kindWheel: Bazel's pinned artifact hash.
 }
 
-// source identifies the audited version of a dependency: the Go module
-// version, or the source archive URL.
+// source identifies the audited artifact: the Go module version (and actual
+// module path for a scoped dependency), or the source archive URL.
 func (d dep) source() string {
 	if d.kind == kindGoModule {
+		if d.modulePath != d.name {
+			return d.modulePath + "@" + d.version
+		}
 		return d.version
 	}
 	return d.url
@@ -386,8 +391,8 @@ func enumerate(p Paths) ([]dep, error) {
 	for _, u := range graph.ExtensionUsages {
 		switch {
 		case strings.HasPrefix(u.Key, "@@//:MODULE.bazel%") &&
-			(strings.HasSuffix(u.Key, " http_archive") || strings.HasSuffix(u.Key, " http_file")):
-			// http_archive/http_file declared directly in MODULE.bazel.
+			(strings.HasSuffix(u.Key, " http_archive") || strings.HasSuffix(u.Key, " http_file") || strings.HasSuffix(u.Key, " module_proxy")):
+			// Repository rules declared directly in MODULE.bazel.
 		case strings.HasSuffix(u.Key, "%go_deps"):
 			// Go repos imported from the gazelle go_deps extension.
 		case strings.HasSuffix(u.Key, "%pip"):
@@ -438,6 +443,12 @@ func enumerate(p Paths) ([]dep, error) {
 			return nil, fmt.Errorf("bazel mod show_repo did not report %s", r.ref)
 		}
 		switch repo.rule {
+		case "module_proxy":
+			modules, err := enumerateModuleProxy(r.name, r.ref)
+			if err != nil {
+				return nil, err
+			}
+			deps = append(deps, modules...)
 		case "go_repository":
 			path, version := repo.first("importpath"), repo.first("version")
 			if path == "" || version == "" {
@@ -464,7 +475,7 @@ func enumerate(p Paths) ([]dep, error) {
 		}
 	}
 	for path, version := range goVersions {
-		deps = append(deps, dep{name: path, kind: kindGoModule, version: version})
+		deps = append(deps, dep{name: path, kind: kindGoModule, version: version, modulePath: path})
 	}
 	slices.SortFunc(deps, func(a, b dep) int { return strings.Compare(a.name, b.name) })
 	for i := 1; i < len(deps); i++ {
@@ -477,12 +488,18 @@ func enumerate(p Paths) ([]dep, error) {
 
 // makeMod runs `make mod TARGETS="..."`, which wraps `bazel mod`.
 func makeMod(args ...string) (string, error) {
-	cmd := exec.Command("make", "-s", "mod", "OPTIONS=", "TARGETS="+strings.Join(args, " "))
+	return makeBazel("mod", "", args...)
+}
+
+// makeBazel uses the existing Make adapter for repository and output paths in
+// both the installed builder and direct Bazel configurations.
+func makeBazel(goal, options string, args ...string) (string, error) {
+	cmd := exec.Command("make", "-s", goal, "OPTIONS="+options, "TARGETS="+strings.Join(args, " "))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("cannot run make mod %s: %w\n%s", strings.Join(args, " "), err, stderr.String())
+		return "", fmt.Errorf("cannot run make %s %s: %w\n%s", goal, strings.Join(args, " "), err, stderr.String())
 	}
 	return stdout.String(), nil
 }
@@ -657,7 +674,7 @@ type fetched struct {
 // dependency.
 func fetchLicense(d dep) (*fetched, error) {
 	if d.kind == kindGoModule {
-		return fetchGoModule(d.name, d.version)
+		return fetchGoModule(d.modulePath, d.version)
 	}
 	if d.kind == kindWheel {
 		body, err := httpGet(d.url, nil)
