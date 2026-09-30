@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows syscalls syscalls-save syscalls-resume)
+lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -71,7 +71,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|syscalls|syscalls-save|syscalls-resume) ;;
+    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -136,6 +136,16 @@ run_lane() {
     startup)
       options=(--test_tag_filters=-requires-kvm)
       targets=(//test/benchmarks/base:startup_test_owned)
+      ;;
+    benchmarks)
+      if [[ $arch != amd64 ]]; then
+        printf 'Continuous CI benchmarks are declared for AMD64; ARM64 workers remain unqualified.\n' >&2
+        return 2
+      fi
+      # CI reports these jobs as soft failures. Keep their status visible here;
+      # --keep_going still collects the other complete benchmark workloads.
+      options=(--test_tag_filters=-requires-kvm)
+      targets=(//test/benchmarks:continuous_tests)
       ;;
     containerd)
       targets=(//test/root:crictl_test_owned)

@@ -79,6 +79,68 @@ COHORT_IMAGES = {
     "packetdrill": ["packetdrill"],
     "containerd": ["containerd/harness"],
     "startup": ["benchmarks/alpine"],
+    "benchmark_absl": [
+        "benchmarks/absl",
+    ],
+    "benchmark_ffmpeg": [
+        "benchmarks/ffmpeg",
+    ],
+    "benchmark_fio": [
+        "benchmarks/fio",
+    ],
+    "benchmark_grpc": [
+        "benchmarks/build-grpc",
+    ],
+    "benchmark_hackbench": [
+        "benchmarks/hackbench",
+    ],
+    "benchmark_httpd": [
+        "benchmarks/hey",
+        "benchmarks/httpd",
+        "benchmarks/util",
+    ],
+    "benchmark_iperf": [
+        "benchmarks/iperf",
+    ],
+    "benchmark_nginx": [
+        "benchmarks/hey",
+        "benchmarks/nginx",
+        "benchmarks/util",
+    ],
+    "benchmark_node": [
+        "benchmarks/hey",
+        "benchmarks/node",
+        "benchmarks/redis",
+        "benchmarks/util",
+    ],
+    "benchmark_redis": [
+        "benchmarks/redis",
+    ],
+    "benchmark_ruby": [
+        "benchmarks/hey",
+        "benchmarks/redis",
+        "benchmarks/ruby",
+        "benchmarks/util",
+    ],
+    "benchmark_rubydev": [
+        "benchmarks/rubydev",
+    ],
+    "benchmark_servers": [
+        "benchmarks/alpine",
+        "benchmarks/nginx",
+        "benchmarks/node",
+        "benchmarks/redis",
+        "benchmarks/util",
+    ],
+    "benchmark_sysbench": [
+        "benchmarks/sysbench",
+    ],
+    "benchmark_syscallbench": [
+        "benchmarks/syscallbench",
+    ],
+    "benchmark_tensorflow": [
+        "benchmarks/tensorflow",
+    ],
     "posture": ["basic/alpine"],
     "portforward": [
         "basic/nginx",
@@ -136,6 +198,13 @@ CONTAINERD_IMAGES = [
 
 # This existing systemd case only runs on AMD64.
 AMD64_RUNTIME_IMAGES = ["arch-systemd"]
+
+# These benchmark contexts have no canonical ARM64 Dockerfile or image.
+AMD64_IMAGES = AMD64_RUNTIME_IMAGES + [
+    "benchmarks/absl",
+    "benchmarks/syscallbench",
+    "benchmarks/tensorflow",
+]
 
 # The maintained Make Docker lane, shared by installed and owned test suites.
 DOCKER_TESTS = [
