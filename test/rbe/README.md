@@ -65,9 +65,20 @@ test/rbe/qualify.sh --arch=arm64 unit
 
 Test lanes use the same selection and filters as AMD64. Their `rbe-arm64`
 configuration selects ARM64 build tools and execution workers; `aarch64`
-selects the target architecture. The `release-artifacts` build lane instead
-uses AMD64 execution workers for either target architecture. Selecting an
+selects the target architecture. Build lanes instead use AMD64 execution
+workers for either target architecture. Selecting an
 architecture does not establish worker support or qualify the other lanes.
+
+The continuous all-target build retains the public pipeline's selection:
+
+```sh
+test/rbe/qualify.sh build-all
+```
+
+It builds `//...` with `--build_tag_filters=-network_plugins`, preserving the
+default compilation and stripping settings. Bazel's wildcard selection omits
+manual and incompatible targets; this lane builds test executables but does
+not run them. The separate runtime lanes remain necessary.
 
 The complete existing Nogo lane uses its normal tag-based selection:
 
