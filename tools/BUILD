@@ -72,6 +72,14 @@ bzl_library(
 
 exports_files(["llvm-linux-header-default.patch"])
 
+exports_files(
+    [
+        "bazel.mk",
+        "images.mk",
+    ],
+    visibility = ["//test/syzkaller:__pkg__"],
+)
+
 exports_files([
     "make_apt.sh",
     "make_release.sh",
