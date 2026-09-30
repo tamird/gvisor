@@ -14,6 +14,23 @@ RUNTIME_VARIANTS = {
     "-cgroupv2": ["--in-sandbox-cgroup=v2"],
 }
 
+# Preserve the public overlay, software-GSO and host-network integration lanes.
+# The unnamed variant keeps each suite's existing default owned test.
+INTEGRATION_VARIANTS = [
+    struct(name = "", args = []),
+    struct(
+        name = "overlay",
+        args = ["--overlay2=all:dir=/tmp"],
+        test_args = ["--test-overlay=true"],
+    ),
+    struct(name = "swgso", args = ["--software-gso=true", "--gso=false"]),
+    struct(
+        name = "hostnet",
+        args = ["--network=host", "--net-raw"],
+        test_args = ["--test-checkpoint=false", "--test-hostnet=true", "--test-net-raw=true"],
+    ),
+]
+
 # Port forwarding is qualified with both runtime network implementations. The
 # installed-runtime adapter and owned Bazel actions use these same modes.
 PORTFORWARD_VARIANTS = [
@@ -62,6 +79,12 @@ RUNTIME_SUITES = {
     suite: [struct(name = variant.name, args = variant.args) for variant in variants]
     for suite, variants in {
         "docker": [struct(name = name, args = args) for name, args in RUNTIME_VARIANTS.items()],
+        "integration": [variant for variant in INTEGRATION_VARIANTS if variant.name],
+        "integration-docker": [
+            struct(name = variant.name, args = variant.args + RUNTIME_VARIANTS["-docker"])
+            for variant in INTEGRATION_VARIANTS
+            if variant.name
+        ],
         "portforward": PORTFORWARD_VARIANTS,
         "posture": POSTURE_VARIANTS,
         "netfilter": NETFILTER_VARIANTS.values(),
@@ -203,10 +226,14 @@ AMD64_IMAGES = AMD64_RUNTIME_IMAGES + [
     "benchmarks/tensorflow",
 ]
 
-# The maintained Make Docker lane, shared by installed and owned test suites.
-DOCKER_TESTS = [
+# The public integration variants select these same two suites.
+INTEGRATION_TESTS = [
     "//test/image:image_test",
     "//test/e2e:integration_test",
+]
+
+# The maintained Make Docker lane, shared by installed and owned test suites.
+DOCKER_TESTS = INTEGRATION_TESTS + [
     "//test/e2e:integration_runtime_test",
     "//test/e2e:runtime_in_docker_test",
 ]

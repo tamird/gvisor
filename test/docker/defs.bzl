@@ -87,6 +87,7 @@ def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo
       owned_args: Additional arguments for owned test entrypoints only.
       nogo: Whether this target owns static analysis of the test sources.
       runtime_variants: Optional named runtime arguments, test_args, data and tags for owned actions.
+        An empty name preserves the default owned test instead of an aggregate suite.
       ipv6: Whether the owned daemon provides IPv6 on its default bridge.
       **kwargs: Remaining go_test arguments.
     """
@@ -131,6 +132,7 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
       data: Other existing runtime inputs.
       args: Arguments shared by all variants.
       runtime_variants: Optional runtime arguments, cohort, test_args, data and tags.
+        An empty name preserves the default owned test instead of an aggregate suite.
       ipv6: Whether the owned daemon provides IPv6 on its default bridge.
       memory: Optional test VM memory budget; defaults to the fixture's 4GB.
       free_disk: Optional test VM disk budget; defaults to the existing cohort budget.
@@ -180,7 +182,7 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
             **owned_kwargs
         )
         tests.append(test)
-    if runtime_variants != None:
+    if runtime_variants != None and name + "_owned" not in tests:
         native.test_suite(
             name = name + "_owned",
             tests = tests,
