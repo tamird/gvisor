@@ -1,6 +1,7 @@
 """Declared inputs and execution requirements for the maintained Docker suites."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@rules_foreign_cc//toolchains/native_tools:tool_access.bzl", "access_tool")
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "go_test")
@@ -54,27 +55,42 @@ def docker_image_archives(name, extra_images = []):
 
 def _daemon_config_impl(ctx):
     runtime = ctx.executable.runtime
+    if runtime == None and ctx.attr.runtime_args:
+        fail("runtime arguments require a declared runsc binary")
     output = ctx.actions.declare_file(ctx.label.name + ".json")
     ctx.actions.write(output, json.encode({
-        "runsc": runtime.short_path,
+        "runsc": runtime.short_path if runtime != None else "",
+        "native": runtime == None,
         "images": [archive.short_path for archive in ctx.files.images],
         "runtime_args": ctx.attr.runtime_args,
         "ipv6": ctx.attr.ipv6,
     }))
-    runfiles = ctx.runfiles(files = [runtime] + ctx.files.images)
-    runfiles = runfiles.merge(ctx.attr.runtime[DefaultInfo].default_runfiles)
+    runfiles = ctx.runfiles(files = ctx.files.images)
+    if runtime != None:
+        runfiles = runfiles.merge(ctx.runfiles(files = [runtime]))
+        runfiles = runfiles.merge(ctx.attr.runtime[DefaultInfo].default_runfiles)
     return [DefaultInfo(files = depset([output]), runfiles = runfiles)]
 
-docker_daemon_config = rule(
+_docker_daemon_config = rule(
     implementation = _daemon_config_impl,
     doc = "Declares the release, image archives and runtime arguments for an owned Docker daemon.",
     attrs = {
-        "runtime": attr.label(default = "//:release", executable = True, cfg = "target"),
+        "runtime": attr.label(executable = True, cfg = "target"),
         "images": attr.label_list(allow_files = True),
         "runtime_args": attr.string_list(),
         "ipv6": attr.bool(doc = "Enable the default Docker bridge's IPv6 subnet."),
     },
 )
+
+def docker_daemon_config(name, runtime = Label("//:release"), **kwargs):
+    """Declares an owned daemon; runtime=None selects native runc only.
+
+    Args:
+      name: Configuration target name.
+      runtime: Declared runsc binary, or None for a native image-build daemon.
+      **kwargs: Image archives, runtime arguments and other rule attributes.
+    """
+    _docker_daemon_config(name = name, runtime = runtime, **kwargs)
 
 def docker_test(name, cohort = None, data = [], args = [], owned_args = [], nogo = True, runtime_variants = None, ipv6 = False, **kwargs):
     """Runs an existing Go suite against installed or declared Docker inputs.
@@ -223,4 +239,50 @@ docker_command_test = rule(
         "docker_config": attr.label(mandatory = True, allow_single_file = True),
         "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "target"),
     },
+)
+
+def _image_source_command_impl(ctx):
+    make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)
+    if make.target == None or make.env != {"MAKE": make.path}:
+        fail("image-source checks require the declared GNU Make toolchain")
+    crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
+    tool_root = ctx.label.name + "_tools"
+    tools = {tool_root + "/" + file.path: file for file in make.target.files.to_list()}
+    tools[tool_root + "/crane"] = crane
+    command = ctx.actions.declare_file(ctx.label.name)
+    ctx.actions.expand_template(
+        template = ctx.file._template,
+        output = command,
+        substitutions = {
+            "@@ARCH@@": shell.quote(ctx.attr.architecture),
+            "@@CONTEXTS@@": ctx.file._contexts.short_path,
+            "@@MAKE@@": make.path,
+            "@@MAKEFILE@@": ctx.file._makefile.short_path,
+            "@@TOOLS@@": tool_root,
+        },
+        is_executable = True,
+    )
+    runfiles = ctx.runfiles(
+        files = [ctx.file._contexts, ctx.file._makefile],
+        root_symlinks = tools,
+    )
+    make_runfiles = make.target[DefaultInfo].default_runfiles
+    if make_runfiles:
+        runfiles = runfiles.merge(make_runfiles)
+    return DefaultInfo(executable = command, runfiles = runfiles)
+
+image_source_command = rule(
+    implementation = _image_source_command_impl,
+    doc = "Runs the canonical CPU image-source check with declared Make and crane.",
+    executable = True,
+    attrs = {
+        "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
+        "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
+        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
+        "_template": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
+    },
+    toolchains = [
+        "@rules_foreign_cc//toolchains:make_toolchain",
+        "@rules_oci//oci:crane_toolchain_type",
+    ],
 )

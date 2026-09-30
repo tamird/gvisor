@@ -1,6 +1,7 @@
 load("//tools:defs.bzl", "bzl_library", "go_binary")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS")
-load(":defs.bzl", "docker_image_archives")
+load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -29,7 +30,83 @@ bzl_library(
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
+        "@rules_foreign_cc//toolchains/native_tools:tool_access",
         "@rules_oci//oci:defs",
+    ],
+)
+
+image_source_command(
+    name = "cpu_image_sources_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    tags = ["manual"],
+)
+
+image_source_command(
+    name = "cpu_image_sources_arm64",
+    testonly = True,
+    architecture = "aarch64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    tags = ["manual"],
+)
+
+docker_daemon_config(
+    name = "image_source_config",
+    testonly = True,
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "cpu_image_sources_amd64_test",
+    size = "large",
+    timeout = "eternal",
+    command = ":cpu_image_sources_amd64",
+    docker_config = ":image_source_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    shard_count = 4,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# The existing pinned Docker image also declares Linux/ARM64. This preserves
+# the public lane's two partitions; it does not claim worker qualification.
+docker_command_test(
+    name = "cpu_image_sources_arm64_test",
+    size = "large",
+    timeout = "eternal",
+    command = ":cpu_image_sources_arm64",
+    docker_config = ":image_source_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    shard_count = 2,
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
     ],
 )
 
