@@ -33,6 +33,12 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; no builder container is started. Normal Bazel caching remains
 enabled.
 
+The RBE configurations default to 32 concurrent actions, the setting used in
+qualification. Bazel's `auto` default follows the coordinator's CPU count
+([Bazel 8.5.0](https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L488-L490)),
+which limits remote concurrency on a small coordinator. To choose another
+limit, pass `--jobs` after `--config=rbe` or `--config=rbe-arm64`.
+
 The `workflows` lane runs the declared actionlint check and the existing GitHub
 and Buildkite schema tests. Actionlint uses the same workflow inputs as the
 GitHub schema check; `tools/lint.sh actions` invokes that same Bazel owner.

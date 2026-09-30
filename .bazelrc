@@ -58,6 +58,8 @@ test:docker --test_env=TEST_SAVE_RESTORE_NETSTACK=true
 # Both compilation and test actions execute remotely; the execution platform
 # owns the runtime image so per-test properties retain its image and architecture.
 build:rbe-common --config=buildbuddy_remote_executor
+# Bazel's default follows coordinator CPUs, limiting otherwise remote work.
+build:rbe-common --jobs=32
 build:rbe-common --define=rbe=true
 build:rbe-common --spawn_strategy=remote
 build:rbe-common --noremote_local_fallback
