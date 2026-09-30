@@ -19,15 +19,13 @@ set -euo pipefail
 make="${TEST_SRCDIR:?}/@@TOOLS@@/@@MAKE@@"
 crane="${TEST_SRCDIR}/@@TOOLS@@/crane"
 makefile="${PWD}/@@MAKEFILE@@"
+contexts="${PWD}/@@CONTEXTS@@"
 work=$(mktemp -d "${TEST_TMPDIR:?}/image-sources.XXXXXX")
 trap 'rm -rf "${work}"' EXIT
 
-# Contexts currently contain only regular files (Git modes 0644 and 0755).
-# Dereference Bazel's runfiles links so find -type f sees the same inputs;
-# restore the owner-write bit removed by read-only input materialization.
-# This does not preserve a future tracked source symlink as cp -a would.
-cp -RLp images "${work}/images"
-chmod -R u+w "${work}/images"
+# The declared archive carries source modes that Bazel runfiles do not retain.
+tar --extract --file "${contexts}" --directory "${work}" \
+  --same-permissions --no-same-owner
 
 # Bazel shards are zero-based; the canonical Make partitions are one-based.
 if [[ -n ${TEST_SHARD_STATUS_FILE:-} ]]; then

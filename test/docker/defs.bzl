@@ -253,6 +253,7 @@ def _image_source_command_impl(ctx):
         output = command,
         substitutions = {
             "@@ARCH@@": shell.quote(ctx.attr.architecture),
+            "@@CONTEXTS@@": ctx.file._contexts.short_path,
             "@@MAKE@@": make.path,
             "@@MAKEFILE@@": ctx.file._makefile.short_path,
             "@@TOOLS@@": tool_root,
@@ -260,7 +261,7 @@ def _image_source_command_impl(ctx):
         is_executable = True,
     )
     runfiles = ctx.runfiles(
-        files = ctx.files._sources + [ctx.file._makefile],
+        files = [ctx.file._contexts, ctx.file._makefile],
         root_symlinks = tools,
     )
     make_runfiles = make.target[DefaultInfo].default_runfiles
@@ -275,7 +276,7 @@ image_source_command = rule(
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
-        "_sources": attr.label(default = "//images:sources"),
+        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
         "_template": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
     },
     toolchains = [

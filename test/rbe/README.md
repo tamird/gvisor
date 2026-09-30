@@ -191,9 +191,11 @@ image build. Base-image and package downloads retain their network behavior.
 
 The action uses declared Make and crane tools with a private native-runc Docker
 daemon. It needs no gVisor release or preloaded images. Complete contexts are
-copied from runfiles as physical regular files with their executable modes so
-Make's `find -type f` hash sees the source bytes. The current tracked contexts
-contain no symlinks; adding one requires revisiting this copy boundary. The
+materialized from the declared `//images:source_contexts` archive so Make's
+`find -type f` hash sees physical source files. The archive declares regular
+file modes and the tracked executable overrides; this avoids Bazel marking
+every remote input executable. The current contexts contain no symlinks; new
+symlinks or executable files must be reflected in that archive declaration. The
 legacy default Dockerfile remains an image-test subject, not a prerequisite
 builder for the coordinator.
 
