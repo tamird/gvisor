@@ -18,14 +18,17 @@
 #include <sched.h>
 #include <sys/poll.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 #include <cerrno>
 #include <cstddef>
+#include <cstdint>
 #include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#include "absl/flags/flag.h"
 #include "absl/strings/str_format.h"
 #include "test/util/capability_util.h"
 #include "test/util/cleanup.h"
@@ -36,8 +39,11 @@
 #include "test/util/posix_error.h"
 #include "test/util/temp_path.h"
 #include "test/util/test_util.h"
+#include "test/util/thread_util.h"
 
 #define NAME_MAX 255
+
+ABSL_FLAG(int32_t, scratch_uid, 65534, "scratch UID");
 
 namespace gvisor {
 namespace testing {
@@ -200,6 +206,21 @@ TEST(MqTest, NoQueueExists) {
   // Choose a name to pass that's unlikely to exist if the test is run locally.
   EXPECT_THAT(MqOpen("/gvisor-mq-test-nonexistent-queue", O_RDWR),
               PosixErrorIs(ENOENT));
+}
+
+TEST(MqTest, UnlinkOtherUserQueue) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_SETUID)));
+  PosixQueue queue = ASSERT_NO_ERRNO_AND_VALUE(
+      MqOpen(O_RDWR | O_CREAT | O_EXCL, 0600, nullptr));
+
+  // Change only this thread's credentials so the owner can clean up afterward.
+  ScopedThread([&] {
+    AutoCapability fowner(CAP_FOWNER, false);
+    ASSERT_THAT(
+        syscall(SYS_setresuid, -1, absl::GetFlag(FLAGS_scratch_uid), -1),
+        SyscallSucceeds());
+    EXPECT_THAT(MqUnlink(queue.name()), PosixErrorIs(EPERM));
+  });
 }
 
 // Test trying to re-open a queue with invalid permissions.
