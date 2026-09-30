@@ -82,19 +82,19 @@ native_test(
 # Preserve Make's three do-tests commands. Rootless cases must start without
 # privileges so they exercise capability acquisition in a new user namespace.
 _DO_VARIANTS = [
-    struct(name = "rootless", args = ["--rootless"], user = "nobody"),
-    struct(name = "rootless_network_none", args = ["--rootless", "--network=none"], user = "nobody"),
-    struct(name = "root", args = [], user = "root"),
+    ("rootless", ["--rootless"], "nobody"),
+    ("rootless_network_none", ["--rootless", "--network=none"], "nobody"),
+    ("root", [], "root"),
 ]
 
 [
     native_test(
-        name = "do_" + variant.name + "_test",
+        name = "do_" + name + "_test",
         size = "large",
         src = ":release",
         # Keep each executable beside its declared release sidecars.
-        out = "release/do_" + variant.name + ".exe",
-        args = variant.args + [
+        out = "release/do_" + name + ".exe",
+        args = args + [
             "--alsologtostderr",
             "--debug",
             "--sidecar-usage-policy=STRICT",
@@ -102,19 +102,19 @@ _DO_VARIANTS = [
             "true",
         ],
         exec_properties = namespace_test_exec_properties(
-            user = variant.user,
+            user = user,
             # The privileged case sets up networking with ip and iptables.
             image = RBE_NETWORK_TOOLS_IMAGE,
         ),
         tags = ["manual"],
     )
-    for variant in _DO_VARIANTS
+    for name, args, user in _DO_VARIANTS
 ]
 
 test_suite(
     name = "do_tests",
     tags = ["manual"],
-    tests = [":do_" + variant.name + "_test" for variant in _DO_VARIANTS],
+    tests = [":do_" + name + "_test" for name, args, user in _DO_VARIANTS],
 )
 
 nogo_config(
