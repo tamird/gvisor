@@ -551,3 +551,22 @@ The public jobs exercise save/restore on AMD64 and save/resume on ARM64. ARM64
 namespace execution still requires Firecracker capacity; the lane must fail
 when those workers are unavailable. Declaring a lane does not establish that
 its tests pass or complete the full save/restore matrix.
+
+The Syzkaller lane runs the upstream smoke script against the declared gVisor
+release:
+
+```sh
+test/rbe/qualify.sh syzkaller
+```
+
+`//test/syzkaller:smoke_test` uses a pinned Syzkaller source archive and its own
+Go module graph. Its build action runs upstream Make with declared Go, LLVM,
+GNU sysroot and Make inputs; the smoke action uses those build outputs and the
+source-built release. The pinned source replaces the existing Make target's
+moving clone, so newer upstream changes require a pin update.
+
+The existing smoke script owns its workload and cleanup. It requires a root
+AMD64 Firecracker worker and the pinned Syzkaller utility image; compilation
+uses the declared tools. This lane exercises compatibility with that workload,
+not a sustained fuzzing campaign or a staged release archive. The public
+Syzkaller jobs and this target are AMD64 only.
