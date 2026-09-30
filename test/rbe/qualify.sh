@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images docker overlay swgso hostnet root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images docker overlay swgso hostnet plugin-network root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -39,7 +39,7 @@ gaps() {
   cat <<'GAPS'
 Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
 host systemd cgroup manager and alternate host kernels; the full save/restore
-and coverage matrices; GPU and network-plugin runtime lanes; staged-binary consistency.
+and coverage matrices; GPU runtime lanes; staged-binary consistency.
 GAPS
 }
 
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|docker|overlay|swgso|hostnet|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|docker|overlay|swgso|hostnet|plugin-network|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -217,6 +217,14 @@ run_lane() {
       ;;
     overlay|swgso|hostnet)
       targets=("//test/docker:${lane}_tests")
+      ;;
+    plugin-network)
+      if [[ $arch != amd64 ]]; then
+        printf 'The public plugin network test is declared for AMD64.\n' >&2
+        return 2
+      fi
+      options=(--config=plugin-tldk)
+      targets=(//test/docker:plugin_network_tests)
       ;;
     root)
       options=(--config=docker)
