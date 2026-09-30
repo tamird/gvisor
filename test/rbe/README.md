@@ -212,19 +212,23 @@ the canonical release script generates its master repository. The test neither
 publishes artifacts nor exercises tagged or nightly publication. The separate
 staged-binary check requires the real staged archive and remains unqualified.
 
-The CPU image-source lane retains the public manifest-or-build check:
+The CPU and GPU/ML image-source lanes retain the public manifest-or-build checks:
 
 ```sh
-test/rbe/qualify.sh cpu-images
+test/rbe/qualify.sh cpu-images gpu-images
 ```
 
-It selects the existing `tools/images.mk test-cpu-images` owner through
-`//test/docker:cpu_image_sources_amd64_test`, or the corresponding `arm64_test`
-with `--arch=arm64`. Each architecture runs natively, using the public four
-AMD64 or two ARM64 partitions as Bazel test shards. Make retains image
+They select the existing `tools/images.mk test-cpu-images` and `test-gpu-images`
+owners through `//test/docker:cpu_image_sources_amd64_test` and
+`//test/docker:gpu_image_sources_amd64_test`, or the corresponding `arm64_test`
+targets with `--arch=arm64`. Each architecture runs natively, using the public
+four AMD64 or two ARM64 partitions as Bazel test shards. Make retains image
 discovery, complete-context hashing and the manifest check: a missing manifest
 builds the image from its Dockerfile; a manifest hit does not prove a fresh
 image build. Base-image and package downloads retain their network behavior.
+The GPU/ML cohort includes Make's TPU images and preserves its `NON_TEST_IMAGES`
+exclusions. These checks build images when needed; they do not run their GPU/TPU
+workloads or require accelerator devices. ARM64 execution remains unqualified.
 
 The action uses declared Make and crane tools with a private native-runc Docker
 daemon. It needs no gVisor release or preloaded images. Complete contexts are
