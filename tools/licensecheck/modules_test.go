@@ -45,9 +45,9 @@ func TestModuleProxyScopes(t *testing.T) {
 		t.Fatalf("proxy dependencies = %+v, want %+v", got, want)
 	}
 	entries := []Entry{
-		{Dependency: want[0].name, Version: "example.com/shared@v1.0.0", Retrieved: "2026-09-30", License: Licenses{mit}},
-		{Dependency: want[1].name, Version: "example.com/fork@v1.2.0", Retrieved: "2026-09-30", License: Licenses{mit}},
-		{Dependency: want[2].name, Version: "example.com/shared@v1.1.0", Retrieved: "2026-09-30", License: Licenses{mit}},
+		{Dependency: want[0].name, Version: "example.com/shared@v1.0.0", Retrieved: "2026-09-30", License: Licenses{"MIT"}},
+		{Dependency: want[1].name, Version: "example.com/fork@v1.2.0", Retrieved: "2026-09-30", License: Licenses{"MIT"}},
+		{Dependency: want[2].name, Version: "example.com/shared@v1.1.0", Retrieved: "2026-09-30", License: Licenses{"MIT"}},
 	}
 	if problems := verifyProblems(got, entries); len(problems) != 0 {
 		t.Fatalf("complete scoped inventory: %v", problems)
