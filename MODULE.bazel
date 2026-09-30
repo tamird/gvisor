@@ -482,6 +482,254 @@ oci.pull(
     platforms = ["linux/arm64"],
 )
 
+# images/benchmarks/absl, built by tools/images.mk as c7bc75e1696281da.
+oci.pull(
+    name = "docker_image_benchmarks_absl_amd64",
+    digest = "sha256:399f4288a0ff1d6067145bc0749fe362ea4d51d06f33cbb45cdc959b866ae5a9",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/absl_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/build-grpc, built by tools/images.mk as 777ca26096936384.
+oci.pull(
+    name = "docker_image_benchmarks_build_grpc_amd64",
+    digest = "sha256:f1d6de0746e2387e745a65bdb489a9e23e3e6ff7d7f7c2dc14ce66f6637394e0",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/build-grpc_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/build-grpc, built by tools/images.mk as 777ca26096936384.
+oci.pull(
+    name = "docker_image_benchmarks_build_grpc_arm64",
+    digest = "sha256:9a486f9c5664d3a7e98caeaac4cc456725b00ff72c5a0f6de9351f6f2e7f66a6",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/build-grpc_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/ffmpeg, built by tools/images.mk as f72901c222f1c9b1.
+oci.pull(
+    name = "docker_image_benchmarks_ffmpeg_amd64",
+    digest = "sha256:10377adf5547d2a6b93567971353cee02a37660c10b28f78cd66da13337e1660",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/ffmpeg_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/ffmpeg, built by tools/images.mk as f72901c222f1c9b1.
+oci.pull(
+    name = "docker_image_benchmarks_ffmpeg_arm64",
+    digest = "sha256:2c7a7df3b5d8cecea43d3b8809f7b45e88bc6f7913e62b8107cfac15b9191ae6",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/ffmpeg_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/fio, built by tools/images.mk as 956534ae1dd7a793.
+oci.pull(
+    name = "docker_image_benchmarks_fio_amd64",
+    digest = "sha256:e14d005fc4c247305dbde4136dfe797f0a91a1446af5b4ff1925505f635370a5",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/fio_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/fio, built by tools/images.mk as 956534ae1dd7a793.
+oci.pull(
+    name = "docker_image_benchmarks_fio_arm64",
+    digest = "sha256:7bea094c6a086d8968451c714f77737a8fab14a41585c16807e4a49720c9847c",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/fio_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/hackbench, built by tools/images.mk as 7af85c47f31b1125.
+oci.pull(
+    name = "docker_image_benchmarks_hackbench_amd64",
+    digest = "sha256:d500bcac20a8e3b05315137a27957184032ac7609fb2c6decb1bbb44b0215d51",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/hackbench_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/hackbench, built by tools/images.mk as 7af85c47f31b1125.
+oci.pull(
+    name = "docker_image_benchmarks_hackbench_arm64",
+    digest = "sha256:09ce6e67d71aab0fe95e01e0981c9bb96fb322bb8b5d275a4c532252f154f610",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/hackbench_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/hey, built by tools/images.mk as 470945fa65d9f946.
+oci.pull(
+    name = "docker_image_benchmarks_hey_amd64",
+    digest = "sha256:4ee056774685f11df9503e9e67db54d5fcb1a9c9d9ffa9afa3b1ce93bb9e02b0",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/hey_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/hey, built by tools/images.mk as 470945fa65d9f946.
+oci.pull(
+    name = "docker_image_benchmarks_hey_arm64",
+    digest = "sha256:d32f00afa51baf4ab2010fd9e240cefd7b4f86b2b1028e70d892c298e972dc92",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/hey_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/httpd, built by tools/images.mk as 47e4ee00c2ae9c90.
+oci.pull(
+    name = "docker_image_benchmarks_httpd_amd64",
+    digest = "sha256:d1d6abf28e00160e88a9993e2c19c7a60465e348031c5627442be0eda5364567",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/httpd_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/httpd, built by tools/images.mk as 47e4ee00c2ae9c90.
+oci.pull(
+    name = "docker_image_benchmarks_httpd_arm64",
+    digest = "sha256:cc9a775ae02bf52e9d8e703e53cd984d57862d90fad00b67064bae30b4ad40d0",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/httpd_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/iperf, built by tools/images.mk as 77769a624d9e1cf3.
+oci.pull(
+    name = "docker_image_benchmarks_iperf_amd64",
+    digest = "sha256:09f17d4c701a4d09b78be8754105c216174f7c90f44a5a215a7f48aea998d66c",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/iperf_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/iperf, built by tools/images.mk as 77769a624d9e1cf3.
+oci.pull(
+    name = "docker_image_benchmarks_iperf_arm64",
+    digest = "sha256:fecd5391ae06f14aa56834769a18786c63630d151e8ebd985c294d11c9c532bc",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/iperf_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/nginx, built by tools/images.mk as 9bcb7654c4976396.
+oci.pull(
+    name = "docker_image_benchmarks_nginx_amd64",
+    digest = "sha256:31c649d512cced4f7dd414fd05cfa9bb7416ee37575caeba46cc1e9b56aef163",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/nginx, built by tools/images.mk as 9bcb7654c4976396.
+oci.pull(
+    name = "docker_image_benchmarks_nginx_arm64",
+    digest = "sha256:352e268498e6cbaee4de70e0b12cc396abe4a43b2ed5f81f6ee697dda1422dd6",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/nginx_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/node, built by tools/images.mk as 244f95abb4bf49da.
+oci.pull(
+    name = "docker_image_benchmarks_node_amd64",
+    digest = "sha256:b2cb415cd6e6c0fe9dd98351b0629a8e2b8caaeb2188eb6c586f07a6d8faf287",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/node_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/node, built by tools/images.mk as 244f95abb4bf49da.
+oci.pull(
+    name = "docker_image_benchmarks_node_arm64",
+    digest = "sha256:b270ccba2b29de34f22d63153b7c9d3c0ee69ab6cd7e1dbcdefb772e9bc617ef",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/node_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/redis, built by tools/images.mk as 947d5813e3bc214d.
+oci.pull(
+    name = "docker_image_benchmarks_redis_amd64",
+    digest = "sha256:e04e2924d0be814a9b6c5b7b136542e271983fbbe43cf5cf989f365e606b13dc",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/redis_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/redis, built by tools/images.mk as 947d5813e3bc214d.
+oci.pull(
+    name = "docker_image_benchmarks_redis_arm64",
+    digest = "sha256:5d4497cd48a2df46ebbdf6aeb5592b0afa6db279d994b40516404e19376fcdb8",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/redis_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/ruby, built by tools/images.mk as f9087a28b622ffca.
+oci.pull(
+    name = "docker_image_benchmarks_ruby_amd64",
+    digest = "sha256:45d578c499c01c7a1eae881d58966d00ff5b76b788f9d033f8f03d58d300f52c",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/ruby_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/ruby, built by tools/images.mk as f9087a28b622ffca.
+oci.pull(
+    name = "docker_image_benchmarks_ruby_arm64",
+    digest = "sha256:80fd93a02bb9cf345d22add7cc5aa7c5d6944f27ff0160142f17e0f74103904b",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/ruby_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/rubydev, built by tools/images.mk as 755dcb89419fd14b.
+oci.pull(
+    name = "docker_image_benchmarks_rubydev_amd64",
+    digest = "sha256:908f36fb814f54d2a710d10f7f1c80eb8642b1f64468b8291223951c0cc15909",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/rubydev_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/rubydev, built by tools/images.mk as 755dcb89419fd14b.
+oci.pull(
+    name = "docker_image_benchmarks_rubydev_arm64",
+    digest = "sha256:3f3c684ce963326208affb1cdddd7586ca341ff5b14715a7c347a7e2688c481b",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/rubydev_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/sysbench, built by tools/images.mk as 97b4424dafffa494.
+oci.pull(
+    name = "docker_image_benchmarks_sysbench_amd64",
+    digest = "sha256:fa019c44b753b55f63a1e744994ede632a1561cea5c43d5cbb8e771a8801feb3",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/sysbench_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/sysbench, built by tools/images.mk as 97b4424dafffa494.
+oci.pull(
+    name = "docker_image_benchmarks_sysbench_arm64",
+    digest = "sha256:6fbc60c4f2808b41803243b5421bb7bc75cae95e727450361606a0e2a7d0f8cb",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/sysbench_aarch64",
+    platforms = ["linux/arm64"],
+)
+
+# images/benchmarks/syscallbench, built by tools/images.mk as 5111e738209aac71.
+oci.pull(
+    name = "docker_image_benchmarks_syscallbench_amd64",
+    digest = "sha256:336206bbd101e78cae78cf669ad4fffff61cb4f71721184d0c2fbe44e8e119dd",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/syscallbench_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/tensorflow, built by tools/images.mk as a2a7e0d0bc8c1440.
+oci.pull(
+    name = "docker_image_benchmarks_tensorflow_amd64",
+    digest = "sha256:4c5930888448c370833d2d224b35f405ea435f36c1911f2813a73cc513af3f75",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/tensorflow_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/util, built by tools/images.mk as c81e41d2023e5605.
+oci.pull(
+    name = "docker_image_benchmarks_util_amd64",
+    digest = "sha256:1c1e09a0ed76fec9cb2489227c8e9ad4f7c45d824126b12a1610c45ead46cbe5",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/util_x86_64",
+    platforms = ["linux/amd64"],
+)
+
+# images/benchmarks/util, built by tools/images.mk as c81e41d2023e5605.
+oci.pull(
+    name = "docker_image_benchmarks_util_arm64",
+    digest = "sha256:7ed548c731af498cd25023da35ec8c34be613050a83438ac7aa4b243e5118d2b",
+    image = "us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images/benchmarks/util_aarch64",
+    platforms = ["linux/arm64"],
+)
+
 # images/image-test/ruby, built by tools/images.mk as 94a1ba1eb5504e9a.
 oci.pull(
     name = "docker_image_image_test_ruby_amd64",
@@ -830,10 +1078,72 @@ use_repo(
     "docker_image_basic_ubuntu_amd64_linux_amd64",
     "docker_image_basic_ubuntu_arm64",
     "docker_image_basic_ubuntu_arm64_linux_arm64",
+    "docker_image_benchmarks_absl_amd64",
+    "docker_image_benchmarks_absl_amd64_linux_amd64",
     "docker_image_benchmarks_alpine_amd64",
     "docker_image_benchmarks_alpine_amd64_linux_amd64",
     "docker_image_benchmarks_alpine_arm64",
     "docker_image_benchmarks_alpine_arm64_linux_arm64",
+    "docker_image_benchmarks_build_grpc_amd64",
+    "docker_image_benchmarks_build_grpc_amd64_linux_amd64",
+    "docker_image_benchmarks_build_grpc_arm64",
+    "docker_image_benchmarks_build_grpc_arm64_linux_arm64",
+    "docker_image_benchmarks_ffmpeg_amd64",
+    "docker_image_benchmarks_ffmpeg_amd64_linux_amd64",
+    "docker_image_benchmarks_ffmpeg_arm64",
+    "docker_image_benchmarks_ffmpeg_arm64_linux_arm64",
+    "docker_image_benchmarks_fio_amd64",
+    "docker_image_benchmarks_fio_amd64_linux_amd64",
+    "docker_image_benchmarks_fio_arm64",
+    "docker_image_benchmarks_fio_arm64_linux_arm64",
+    "docker_image_benchmarks_hackbench_amd64",
+    "docker_image_benchmarks_hackbench_amd64_linux_amd64",
+    "docker_image_benchmarks_hackbench_arm64",
+    "docker_image_benchmarks_hackbench_arm64_linux_arm64",
+    "docker_image_benchmarks_hey_amd64",
+    "docker_image_benchmarks_hey_amd64_linux_amd64",
+    "docker_image_benchmarks_hey_arm64",
+    "docker_image_benchmarks_hey_arm64_linux_arm64",
+    "docker_image_benchmarks_httpd_amd64",
+    "docker_image_benchmarks_httpd_amd64_linux_amd64",
+    "docker_image_benchmarks_httpd_arm64",
+    "docker_image_benchmarks_httpd_arm64_linux_arm64",
+    "docker_image_benchmarks_iperf_amd64",
+    "docker_image_benchmarks_iperf_amd64_linux_amd64",
+    "docker_image_benchmarks_iperf_arm64",
+    "docker_image_benchmarks_iperf_arm64_linux_arm64",
+    "docker_image_benchmarks_nginx_amd64",
+    "docker_image_benchmarks_nginx_amd64_linux_amd64",
+    "docker_image_benchmarks_nginx_arm64",
+    "docker_image_benchmarks_nginx_arm64_linux_arm64",
+    "docker_image_benchmarks_node_amd64",
+    "docker_image_benchmarks_node_amd64_linux_amd64",
+    "docker_image_benchmarks_node_arm64",
+    "docker_image_benchmarks_node_arm64_linux_arm64",
+    "docker_image_benchmarks_redis_amd64",
+    "docker_image_benchmarks_redis_amd64_linux_amd64",
+    "docker_image_benchmarks_redis_arm64",
+    "docker_image_benchmarks_redis_arm64_linux_arm64",
+    "docker_image_benchmarks_ruby_amd64",
+    "docker_image_benchmarks_ruby_amd64_linux_amd64",
+    "docker_image_benchmarks_ruby_arm64",
+    "docker_image_benchmarks_ruby_arm64_linux_arm64",
+    "docker_image_benchmarks_rubydev_amd64",
+    "docker_image_benchmarks_rubydev_amd64_linux_amd64",
+    "docker_image_benchmarks_rubydev_arm64",
+    "docker_image_benchmarks_rubydev_arm64_linux_arm64",
+    "docker_image_benchmarks_sysbench_amd64",
+    "docker_image_benchmarks_sysbench_amd64_linux_amd64",
+    "docker_image_benchmarks_sysbench_arm64",
+    "docker_image_benchmarks_sysbench_arm64_linux_arm64",
+    "docker_image_benchmarks_syscallbench_amd64",
+    "docker_image_benchmarks_syscallbench_amd64_linux_amd64",
+    "docker_image_benchmarks_tensorflow_amd64",
+    "docker_image_benchmarks_tensorflow_amd64_linux_amd64",
+    "docker_image_benchmarks_util_amd64",
+    "docker_image_benchmarks_util_amd64_linux_amd64",
+    "docker_image_benchmarks_util_arm64",
+    "docker_image_benchmarks_util_arm64_linux_arm64",
     "docker_image_containerd_harness_amd64",
     "docker_image_containerd_harness_amd64_linux_amd64",
     "docker_image_containerd_harness_arm64",
