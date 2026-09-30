@@ -40,6 +40,7 @@ var dockerTestConfig = flag.String("docker_test_config", "", "declared runtime a
 // relative to the test's runfiles root.
 type daemonInputs struct {
 	Runsc       string   `json:"runsc"`
+	Native      bool     `json:"native"`
 	Images      []string `json:"images"`
 	RuntimeArgs []string `json:"runtime_args"`
 	IPv6        bool     `json:"ipv6"`
@@ -62,8 +63,12 @@ func RunTests(run func() int) (status int) {
 			log.Printf("decode Docker test configuration: %v", err)
 			return 1
 		}
-		if inputs.Runsc == "" || len(inputs.Images) == 0 {
-			log.Print("Docker test configuration must declare a runtime and image archives")
+		if inputs.Native && (inputs.Runsc != "" || len(inputs.RuntimeArgs) != 0) {
+			log.Print("Native Docker configuration cannot declare runsc or its arguments")
+			return 1
+		}
+		if !inputs.Native && inputs.Runsc == "" {
+			log.Print("Docker test configuration must declare a runtime or select native mode")
 			return 1
 		}
 		d := &testDaemon{}
@@ -105,17 +110,30 @@ type testDaemon struct {
 }
 
 func (d *testDaemon) start(inputs daemonInputs) error {
-	runsc, err := filepath.Abs(inputs.Runsc)
-	if err != nil {
-		return err
-	}
-	sidecars := filepath.Join(filepath.Dir(runsc), "gvisor-bin")
-	st, err := os.Stat(sidecars)
-	if err != nil {
-		return fmt.Errorf("inspect declared sidecars at %q: %w", sidecars, err)
-	}
-	if !st.IsDir() {
-		return fmt.Errorf("declared sidecar path %q is not a directory", sidecars)
+	runtimeName := *runtime
+	var runsc, sidecars string
+	var err error
+	if inputs.Native {
+		if runtimeName != "" && runtimeName != "runc" {
+			return fmt.Errorf("native Docker configuration requires runc, got %q", runtimeName)
+		}
+		runtimeName = "runc"
+	} else {
+		if runtimeName == "" {
+			runtimeName = "runsc"
+		}
+		runsc, err = filepath.Abs(inputs.Runsc)
+		if err != nil {
+			return err
+		}
+		sidecars = filepath.Join(filepath.Dir(runsc), "gvisor-bin")
+		st, err := os.Stat(sidecars)
+		if err != nil {
+			return fmt.Errorf("inspect declared sidecars at %q: %w", sidecars, err)
+		}
+		if !st.IsDir() {
+			return fmt.Errorf("declared sidecar path %q is not a directory", sidecars)
+		}
 	}
 	// Both dockerd and containerd put Unix sockets below this directory. Bazel's
 	// TMPDIR can exceed sockaddr_un's path limit, so keep the owned root short.
@@ -139,23 +157,6 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		return err
 	}
 
-	runtimeName := *runtime
-	if runtimeName == "" {
-		runtimeName = "runsc"
-	}
-	variants, err := RuntimeVariants("docker")
-	if err != nil {
-		return err
-	}
-	// Registration describes the declared runsc binary; --runtime selects what
-	// containers use. Docker reserves "runc" for its built-in native runtime.
-	runtimes := runtimeDefinitions(runsc, "runsc", append([]string{
-		// Keep the reusable gofer namespace under fixture ownership.
-		"--shared-root=" + d.root,
-		"--sidecar-usage-policy=STRICT",
-		"--debug",
-		"--debug-log=" + filepath.Join(logDir, "runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log"),
-	}, inputs.RuntimeArgs...), variants)
 	host := "unix://" + filepath.Join(d.root, "docker.sock")
 	configPath := filepath.Join(d.root, "daemon.json")
 	daemonConfig := map[string]any{
@@ -168,7 +169,21 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		"exec-opts":       []string{"native.cgroupdriver=cgroupfs"},
 		"default-runtime": runtimeName,
 		"experimental":    true,
-		"runtimes":        runtimes,
+	}
+	if !inputs.Native {
+		variants, err := RuntimeVariants("docker")
+		if err != nil {
+			return err
+		}
+		// Registration describes the declared runsc binary; --runtime selects
+		// what containers use. Native mode needs no release or registration.
+		daemonConfig["runtimes"] = runtimeDefinitions(runsc, "runsc", append([]string{
+			// Keep the reusable gofer namespace under fixture ownership.
+			"--shared-root=" + d.root,
+			"--sidecar-usage-policy=STRICT",
+			"--debug",
+			"--debug-log=" + filepath.Join(logDir, "runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log"),
+		}, inputs.RuntimeArgs...), variants)
 	}
 	if inputs.IPv6 {
 		// Match the bridge configuration required by the iptables/nftables
@@ -191,14 +206,17 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		return err
 	}
 	d.env = make(map[string]*string)
-	for key, value := range map[string]string{
-		"GVISOR_SIDECAR_BINARIES_DIR": sidecars,
-		"DOCKER_HOST":                 host,
-		"DOCKER_TLS_VERIFY":           "",
-		"DOCKER_CERT_PATH":            "",
-		"DOCKER_CONTEXT":              "",
-		"DOCKER_API_VERSION":          "",
-	} {
+	environment := map[string]string{
+		"DOCKER_HOST":        host,
+		"DOCKER_TLS_VERIFY":  "",
+		"DOCKER_CERT_PATH":   "",
+		"DOCKER_CONTEXT":     "",
+		"DOCKER_API_VERSION": "",
+	}
+	if !inputs.Native {
+		environment["GVISOR_SIDECAR_BINARIES_DIR"] = sidecars
+	}
+	for key, value := range environment {
 		if old, ok := os.LookupEnv(key); ok {
 			d.env[key] = &old
 		} else {
@@ -275,7 +293,10 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 	if info.DockerRootDir != d.dataRoot || info.DefaultRuntime != runtimeName {
 		return fmt.Errorf("wrong daemon: data root=%q, default runtime=%q", info.DockerRootDir, info.DefaultRuntime)
 	}
-	log.Printf("Private Docker %s, runtime=%s, storage=%s, cgroup=%s/%s, root=%s; runsc=%s, strict sidecars=%s", info.ServerVersion, info.DefaultRuntime, info.Driver, info.CgroupDriver, info.CgroupVersion, info.DockerRootDir, runsc, sidecars)
+	log.Printf("Private Docker %s, runtime=%s, storage=%s, cgroup=%s/%s, root=%s", info.ServerVersion, info.DefaultRuntime, info.Driver, info.CgroupDriver, info.CgroupVersion, info.DockerRootDir)
+	if !inputs.Native {
+		log.Printf("Declared runsc=%s, strict sidecars=%s", runsc, sidecars)
+	}
 	var fs syscall.Statfs_t
 	if err := syscall.Statfs(d.dataRoot, &fs); err != nil {
 		return fmt.Errorf("inspect private image filesystem: %w", err)
@@ -329,6 +350,10 @@ func (d *testDaemon) close(failed bool) error {
 		}
 	}
 	if d.cgroup != nil {
+		daemon := d.cgroup.MakePath("")
+		if err := removeDockerChildCgroups(filepath.Dir(daemon), daemon); err != nil {
+			errs = append(errs, fmt.Errorf("remove Docker child cgroups: %w", err))
+		}
 		if err := d.cgroup.Uninstall(); err != nil {
 			errs = append(errs, fmt.Errorf("remove Docker cgroup: %w", err))
 		}
@@ -369,6 +394,36 @@ func (d *testDaemon) close(failed bool) error {
 		}
 		if err != nil {
 			errs = append(errs, fmt.Errorf("restore environment %q: %w", key, err))
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// removeDockerChildCgroups removes empty descendants left by Docker's builders.
+// The daemon leaf stays with Uninstall so its existing removal retry applies.
+// rmdir rejects populated cgroups; no tasks or control files are removed.
+func removeDockerChildCgroups(path, daemon string) error {
+	entries, err := os.ReadDir(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	var errs []error
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		child := filepath.Join(path, entry.Name())
+		if err := removeDockerChildCgroups(child, daemon); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if child != daemon {
+			if err := syscall.Rmdir(child); err != nil && !os.IsNotExist(err) {
+				errs = append(errs, fmt.Errorf("remove %q: %w", child, err))
+			}
 		}
 	}
 	return errors.Join(errs...)

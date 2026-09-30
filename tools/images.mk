@@ -39,6 +39,11 @@ endif
 
 DOCKER_BUILD_ARGS ?=
 
+# This file also runs directly for the declared image-source check.
+SHELL = /bin/bash
+header ?= echo --- $(1) >&2
+CRANE ?= docker run --rm gcr.io/go-containerregistry/crane
+
 # Note that the image prefixes used here must match the image mangling in
 # runsc/testutil.MangleImage. Names are mangled in this way to ensure that all
 # tests are using locally-defined images (that are consistent and idempotent).
@@ -169,7 +174,7 @@ tag-%: ## Tag a local image.
 	@$(call local_tag,$*) && $(call latest_tag,$*)
 
 image_manifest = \
-	docker run --rm gcr.io/go-containerregistry/crane manifest $(call remote_image,$(1)):$(call tag,$(1))
+	$(CRANE) manifest $(call remote_image,$(1)):$(call tag,$(1))
 
 # pull forces the image to be pulled.
 pull = \
