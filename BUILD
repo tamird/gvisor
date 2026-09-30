@@ -299,3 +299,8 @@ exports_files(
     [".clang-format"],
     visibility = ["//tools:__pkg__"],
 )
+
+exports_files(
+    ["Makefile"],
+    visibility = ["//test/syzkaller:__pkg__"],
+)

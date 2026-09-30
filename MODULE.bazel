@@ -186,6 +186,15 @@ use_repo(release_apt, "release_tools")
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
+# Existing Syzkaller smoke-test tools; this fixture does not replace their build.
+oci.pull(
+    name = "syzkaller_syzbot_amd64",
+    digest = "sha256:e15c2ce66ed56f62a80d6f3642b888f89c1e0bba5b9868e8ce420656e9926e42",
+    image = "gcr.io/syzkaller/syzbot",
+    platforms = ["linux/amd64"],
+)
+use_repo(oci, "syzkaller_syzbot_amd64")
+
 # images/arch-systemd, built by tools/images.mk as ad890a55561e4450.
 oci.pull(
     name = "docker_image_arch_systemd_amd64",
