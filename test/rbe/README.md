@@ -157,6 +157,19 @@ image for CA trust. Docker suites use a separate provider image that declares
 both Linux architectures and supplies their daemon tools. ARM64 Firecracker
 execution remains unqualified.
 
+The `fsstress` lane runs the complete three-case filesystem stress suite
+against the declared release and a private Docker daemon:
+
+```sh
+test/rbe/qualify.sh fsstress
+```
+
+It uses `//test/fsstress:fsstress_test_owned` with the source-tagged
+`basic/fsstress` image pinned for each architecture. The existing gofer,
+bind-mounted gofer and tmpfs cases retain their operation counts, process
+counts and randomized seeds. `make fsstress-test` retains its installed-runtime
+entrypoint. ARM64 execution remains unqualified.
+
 The source-built release smoke test starts a sandbox and runs `true`:
 
 ```sh
