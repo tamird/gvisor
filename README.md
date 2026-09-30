@@ -8,7 +8,7 @@ working branches, and external capacity issues.
 This orphan `gh-pages` branch contains only the static site. It does not change
 upstream source, the fork's default branch, or its build workflows. GitHub Pages
 publishes the root of this branch with `.nojekyll`; there is no package install,
-bundler, scheduled job, database, or authentication in the site.
+bundler, scheduled job, database, or authentication in the browser.
 
 ## Keeping the map current
 
@@ -32,34 +32,62 @@ facts and unresolved causes in every relationship.
 - Remove obsolete branches manually. Do not infer retirement from a missing
   branch lookup or silently replace a dependency with a similarly named item.
 
-### Public status refresh
+### GitHub attribute snapshot
 
-On load, the browser checks a 15-minute local cache. When stale, it requests
-Tamir's open upstream PRs from the public GitHub search API, including new PRs.
-Known PRs missing from that list are individually checked before being marked
-merged or closed. New PR head refs are retrieved to match curated fork branches;
-matching open, draft, or merged PRs replace their branch nodes and inherit their
-curated relationships. Closed, unmerged proposals leave the working branch in
-the registry. Newly discovered work without a matching branch is shown in
-**New · not yet grouped** until someone curates it.
+Run this from the Pages checkout with the existing authenticated GitHub CLI:
 
-Merged and closed PRs hide by default; **Show resolved** reveals retained
-resolved entries. Prerequisite details still show their resolved status. Draft
-status is preserved. Review decisions, where present, are explicitly snapshot
-values rather than a live review assessment.
+```sh
+python3 update-status.py
+```
 
-The same refresh checks linked GitHub issues. Other external evidence, such as
-worker invocation results, remains the curated snapshot. Relationships are
-never generated from titles, shared groups, or branch ancestry.
+Run it after registry edits, then review and commit the resulting
+`github-status.json` with those changes. The browser requires matching registry
+dates and falls back honestly during a partial deployment. This is
+a public-data update, not a build. The script needs Python 3.10+ and `gh`; it
+never reads or writes credentials. Its GraphQL queries fetch the author's open
+PRs, previously discovered/tracked closed PRs, and linked capacity issues.
+Previously discovered PR identities stay in the snapshot after closure, so a
+promoted branch does not reappear. One measured update fetched
+74 original PRs and eight verified import PRs in eight requests. There is a
+20-request ceiling and a 200-open-PR bound. Failed queries leave the previous
+snapshot unchanged.
 
-A refresh permits at most 30 anonymous requests, each with a 10-second timeout,
-and at most 200 open PRs. It rejects incomplete search inventories instead of
-marking missing PRs closed. Individual lookup failures preserve saved states and
-show a partial-refresh warning. A failed top-level request leaves the last
-snapshot usable. Manual refresh has a one-minute cooldown. There is no polling,
-credential, API key, analytics, third-party JavaScript, or remote font. Rate
-limits therefore degrade freshness rather than access to the map. Public API
-status is cached in this browser only and can be removed by clearing site data.
+The updater is the sole GitHub status/attribute owner. Each PR records its exact
+head SHA, observation time, GitHub review decision, labels, merge state, unresolved
+review threads, and visible check/status rollup. Nested lists are bounded to 100
+entries; incomplete thread counts, label lists, check details and import lookups
+are explicitly marked. A null review decision is **not reported**, not approval.
+A `ready to pull` label is displayed as a label, not a merge-readiness decision.
+
+Copybara import links require a same-repository PR by `copybara-service` whose
+body contains the exact `FUTURE_COPYBARA_INTEGRATE_REVIEW` footer for the original
+PR URL and source owner/branch. The footer SHA is retained. An older source SHA
+is labeled **older source**; its checks do not validate the current original
+head. Multiple verified imports are all shown. No matching complete timeline
+means **No linked PR found**, not “not imported”: an internal Copybara CL/status
+can exist without a public import PR. Titles, labels and comments never invent
+an import relationship or graph edge.
+
+Original PR checks and import PR checks are separate. The API's check/status
+rollup is **not a test-case result**. Details distinguish success, skipped,
+neutral, pending and failure results and retain available HTTPS check links.
+The site does not claim to have read logs or passed tests from a green rollup.
+No rollup means unavailable. Both original and import rollups must match their
+own returned head SHA before publication.
+
+The browser loads this single published snapshot; **Reload snapshot** downloads
+it again without querying GitHub or changing its observation time. The footer
+always shows the snapshot time and warns when it is over two hours old. A local
+cache can preserve that same snapshot during an outage. If neither published
+nor cached attributes are available, the curated registry remains usable and
+attributes say they are unavailable. Refreshing the page never makes old data
+fresh. There are no API keys, analytics, third-party scripts or remote fonts in
+the browser.
+
+New PRs replace matching curated branches and inherit their relationships.
+Merged/closed PRs hide by default; **Show resolved** reveals them. Other external
+evidence and deployed-worker qualification remain curated. No source or import
+check status changes a dependency edge or establishes deployed capacity.
 
 ### Interface
 
@@ -86,10 +114,13 @@ effort, or merge readiness.
 
 **Table** contains all tracked work, including isolated PRs and branches. It
 starts sorted by blocking reach; click the Item, Title, Blocks, Direct, Status,
-or Workstream heading to change sort order. Click the item identifier to open
+Review, PR checks, or Workstream heading to change sort order. Click the item identifier to open
 its source, or its title to inspect details. Details consume space only while
 an item is selected and preserve all curated relationships, including integration
-membership, reasons, and evidence links.
+membership, reasons, and evidence links. The compact Review, PR checks and
+Import columns expose the PR snapshot; details include labels, merge conflicts,
+review threads, exact revisions and each import’s own checks. DAG cards keep
+their height: small R/C indicators and hover text summarize review/check state.
 
 Search titles, numbers, refs, or summaries; filter by workstream. In DAG, matching
 chains retain their dependency context, and independent matches appear as nodes. The visible ↗ on every node is a native source anchor,
@@ -108,8 +139,8 @@ a redesigned document does not reuse stale assets from an earlier layout.
 No build is required. Before publishing, inspect changed relationships against
 the linked sources, ensure IDs are unique and edge endpoints exist, and check
 JavaScript syntax. Use the hosted browser check to exercise search, filters,
-selection, focus, Table sorting and switching, native links, and unavailable-GitHub fallback. Confirm
-the served registry and source files match the published commit.
+selection, focus, Table sorting and switching, native links, snapshot fallback, PR attributes and verified import links. Confirm
+the served registry, GitHub snapshot and source files match the published commit.
 
 GitHub Pages is configured for `gh-pages` at `/`. Keep deployments on this
 branch. Enabling Pages does not require changing the repository's default

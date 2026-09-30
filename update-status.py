@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Publish public GitHub metadata using the existing authenticated gh session."""
+
+import json
+import re
+import subprocess
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent
+REGISTRY = json.loads((ROOT / "registry.json").read_text())
+REPO = REGISTRY["meta"]["repo"]
+OWNER = REGISTRY["meta"]["owner"]
+CHECKED_AT = datetime.now(timezone.utc).isoformat()
+REQUEST_LIMIT = 20
+requests = 0
+
+CHECKS = """
+commits(last:1) { nodes { commit { oid statusCheckRollup {
+  state contexts(first:100) { totalCount pageInfo { hasNextPage }
+    nodes { __typename
+      ... on CheckRun { name status conclusion detailsUrl checkSuite { app { name } } }
+      ... on StatusContext { context state targetUrl }
+    }
+  }
+} } } }
+"""
+FIELDS = """
+number title url state isDraft headRefName headRefOid updatedAt createdAt
+headRepository { owner { login } } repository { nameWithOwner }
+author { login } reviewDecision mergeable mergeStateStatus
+labels(first:100) { nodes { name } pageInfo { hasNextPage } }
+reviewThreads(first:100) { totalCount nodes { isResolved } pageInfo { hasNextPage } }
+""" + CHECKS
+TIMELINE = """
+timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
+  pageInfo { hasPreviousPage }
+  nodes { ... on CrossReferencedEvent { source {
+    ... on PullRequest { number url body author { login } repository { nameWithOwner } }
+  } } }
+}
+"""
+
+
+def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
+    global requests
+    requests += 1
+    if requests > REQUEST_LIMIT:
+        raise RuntimeError("Snapshot request limit reached; previous file is unchanged")
+    result = subprocess.run(
+        ["gh", "api", "graphql", "--input", "-"],
+        input=json.dumps({"query": query, "variables": variables or {}}),
+        text=True, capture_output=True, check=True, timeout=60,
+    )
+    response = json.loads(result.stdout)
+    if response.get("errors"):
+        raise RuntimeError(f"GitHub query failed: {response['errors']}")
+    return response["data"]
+
+
+def public_url(value: str | None) -> str | None:
+    # Internal Copybara CL links are not public check-log links.
+    return value if value and value.startswith("https://") else None
+
+
+def normalize(pr: dict) -> dict:
+    commits = pr["commits"]["nodes"]
+    if len(commits) != 1 or commits[0]["commit"]["oid"] != pr["headRefOid"]:
+        raise RuntimeError(f"PR #{pr['number']} head changed during retrieval")
+    rollup = commits[0]["commit"]["statusCheckRollup"]
+    checks = None
+    if rollup is not None:
+        connection = rollup["contexts"]
+        contexts = []
+        for item in connection["nodes"]:
+            if item["__typename"] == "CheckRun":
+                state = item["conclusion"] if item["status"] == "COMPLETED" else item["status"]
+                contexts.append({"name": item["name"], "state": state or "UNKNOWN",
+                                 "url": public_url(item["detailsUrl"]),
+                                 "app": (item["checkSuite"].get("app") or {}).get("name")})
+            else:
+                contexts.append({"name": item["context"], "state": item["state"],
+                                 "url": public_url(item["targetUrl"]), "app": None})
+        checks = {"state": rollup["state"], "total": connection["totalCount"],
+                  "complete": not connection["pageInfo"]["hasNextPage"], "contexts": contexts}
+    threads = pr["reviewThreads"]
+    return {
+        "number": pr["number"], "title": pr["title"], "url": pr["url"],
+        "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
+        "ref": pr["headRefName"], "head": pr["headRefOid"],
+        "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
+        "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"], "checkedAt": CHECKED_AT,
+        "reviewDecision": pr["reviewDecision"], "mergeable": pr["mergeable"],
+        "mergeState": pr["mergeStateStatus"],
+        "labels": [label["name"] for label in pr["labels"]["nodes"]],
+        "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
+        "threads": {"unresolved": sum(not thread["isResolved"] for thread in threads["nodes"]),
+                    "total": threads["totalCount"], "complete": not threads["pageInfo"]["hasNextPage"]},
+        "checks": checks,
+    }
+
+
+def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:
+    result = {}
+    owner, name = REPO.split("/")
+    for start in range(0, len(numbers), 15):
+        fields = " ".join(f"p{number}:pullRequest(number:{number}){{{FIELDS}{TIMELINE if timeline else 'body'}}}"
+                          for number in numbers[start:start + 15])
+        response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')
+        for pr in response["repository"].values():
+            if pr is None:
+                raise RuntimeError("A tracked public PR was unavailable; previous snapshot is unchanged")
+            result[pr["number"]] = pr
+    return result
+
+
+def import_source(candidate: dict, original: dict) -> str | None:
+    if candidate.get("repository", {}).get("nameWithOwner") != REPO or (candidate.get("author") or {}).get("login") != "copybara-service":
+        return None
+    head_owner = (original["headRepository"] or {}).get("owner", {}).get("login")
+    footer = re.compile(r"FUTURE_COPYBARA_INTEGRATE_REVIEW=" + re.escape(original["url"])
+                        + " from " + re.escape(f"{head_owner}:{original['headRefName']}")
+                        + r" ([0-9a-f]{40})")
+    heads = {match[1] for line in candidate["body"].splitlines() if (match := footer.fullmatch(line.strip()))}
+    if len(heads) > 1:
+        raise RuntimeError(f"Import #{candidate['number']} contains ambiguous source revisions")
+    return next(iter(heads), None)
+
+
+def main() -> None:
+    # Search only the public author's open PRs; retained closed PRs are fetched
+    # individually in small GraphQL batches. No per-PR REST request loop.
+    numbers = {node["number"] for node in REGISTRY["nodes"]
+               if node["type"] == "pr" and node["repo"] == REPO}
+    output = ROOT / "github-status.json"
+    if output.exists():
+        previous = json.loads(output.read_text())
+        if previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER:
+            numbers.update(pr["number"] for pr in previous["prs"] if isinstance(pr.get("number"), int))
+    cursor = None
+    open_numbers = set()
+    total = None
+    for _ in range(2):
+        query = """query($q:String!,$after:String) {
+          search(query:$q,type:ISSUE,first:100,after:$after) {
+            issueCount pageInfo { hasNextPage endCursor }
+            nodes { ... on PullRequest { number } }
+          }
+        }"""
+        found = graphql(query, {"q": f"repo:{REPO} is:pr is:open author:{OWNER}", "after": cursor})["search"]
+        if found["issueCount"] > 200:
+            raise RuntimeError("Open PR inventory exceeds the documented 200-PR bound")
+        if total is not None and total != found["issueCount"]:
+            raise RuntimeError("Open PR inventory changed during retrieval")
+        total = found["issueCount"]
+        for item in found["nodes"]:
+            if item["number"] in open_numbers:
+                raise RuntimeError("Duplicate open PR in paginated search")
+            open_numbers.add(item["number"])
+        if not found["pageInfo"]["hasNextPage"]:
+            break
+        cursor = found["pageInfo"]["endCursor"]
+    else:
+        raise RuntimeError("Open PR inventory is incomplete")
+    if len(open_numbers) != total:
+        raise RuntimeError("Open PR inventory is incomplete")
+    numbers.update(open_numbers)
+    originals = fetch_numbers(sorted(numbers), timeline=True)
+    relations = {}
+    for number, pr in originals.items():
+        # A bot-authored import must explicitly name this original PR and its
+        # exact head owner/ref. A differing SHA is a verified but stale import.
+        matches = {}
+        for event in pr["timelineItems"]["nodes"]:
+            candidate = event.get("source", {})
+            if head := import_source(candidate, pr):
+                matches[candidate["number"]] = head
+        relations[number] = matches
+    imported = fetch_numbers(sorted({number for matches in relations.values() for number in matches}), timeline=False)
+    prs = []
+    for number, pr in originals.items():
+        for other, head in relations[number].items():
+            if import_source(imported[other], pr) != head:
+                raise RuntimeError(f"Import #{other} source footer changed during retrieval")
+        item = normalize(pr)
+        item["importsComplete"] = not pr["timelineItems"]["pageInfo"]["hasPreviousPage"]
+        item["imports"] = [{**normalize(imported[other]), "sourceHead": head,
+                            "matchesSourceHead": head == pr["headRefOid"],
+                            "relationshipEvidence": imported[other]["url"]}
+                           for other, head in relations[number].items()]
+        prs.append(item)
+    issue_fields = []
+    issue_ids = {}
+    for index, node in enumerate(REGISTRY["nodes"]):
+        if node["type"] != "issue" or not node.get("repo") or not node.get("number"):
+            continue
+        owner, name = node["repo"].split("/")
+        alias = f"i{index}"
+        issue_fields.append(f'{alias}:repository(owner:"{owner}",name:"{name}"){{issue(number:{node["number"]}){{state updatedAt}}}}')
+        issue_ids[alias] = node["id"]
+    issues = {}
+    if issue_fields:
+        response = graphql("query{" + " ".join(issue_fields) + "}")
+        for alias, value in response.items():
+            if value and value["issue"]:
+                issue = value["issue"]
+                issues[issue_ids[alias]] = {"githubState": issue["state"].lower(), "updatedAt": issue["updatedAt"]}
+    snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": CHECKED_AT,
+                "registryDate": REGISTRY["meta"]["updatedAt"], "prs": prs, "issues": issues,
+                "limits": {"requests": requests, "nestedPageSize": 100, "maxOpenPRs": 200}}
+    temporary = ROOT / ".github-status.json.tmp"
+    temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
+    temporary.replace(output)
+    print(f"Updated {len(prs)} PRs and {len(imported)} verified import PRs in {requests} GitHub requests.")
+
+
+if __name__ == "__main__":
+    main()

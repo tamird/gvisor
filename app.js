@@ -2,8 +2,8 @@
 
 const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
-const CACHE_KEY = "gvisor-work-map-v1";
-const CACHE_AGE = 15 * 60 * 1000;
+const CACHE_KEY = "gvisor-work-map-attributes-v1";
+const STALE_AGE = 2 * 60 * 60 * 1000;
 const CARD = { width: 216, height: 58, column: 264, row: 72 };
 const READABLE_SCALE = .9;
 let registry, model, selected = null, focus = null, view = "dag";
@@ -54,6 +54,91 @@ function status(node) {
     return `Issue ${node.githubState} · capacity unverified`;
   }
   return ({ branch: "Working branch", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
+}
+function reviewInfo(pr) {
+  return ({ APPROVED: { text: "Approved", tone: "good", glyph: "✓" },
+    CHANGES_REQUESTED: { text: "Changes requested", tone: "bad", glyph: "!" },
+    REVIEW_REQUIRED: { text: "Review needed", tone: "pending", glyph: "○" } })[pr?.reviewDecision]
+    || { text: "Not reported", tone: "unknown", glyph: "?" };
+}
+function checkInfo(pr) {
+  const checks = pr?.checks;
+  if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
+  const groups = { succeeded: 0, skipped: 0, neutral: 0, failed: 0, pending: 0, unknown: 0 };
+  for (const check of checks.contexts) {
+    const key = check.state === "SUCCESS" ? "succeeded" : check.state === "SKIPPED" ? "skipped" : check.state === "NEUTRAL" ? "neutral"
+      : ["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"].includes(check.state) ? "failed"
+        : ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state) ? "pending" : "unknown";
+    groups[key]++;
+  }
+  const result = ({ SUCCESS: { text: "Success", tone: "good", glyph: "✓" }, FAILURE: { text: "Failure", tone: "bad", glyph: "!" },
+    ERROR: { text: "Error", tone: "bad", glyph: "!" }, PENDING: { text: "Pending", tone: "pending", glyph: "○" } })[checks.state]
+    || { text: "Unknown", tone: "unknown", glyph: "?" };
+  return { ...result, detail: `${checks.total} check/status contexts: ${Object.entries(groups).filter(([, count]) => count).map(([key, count]) => `${count} ${key}`).join(", ")}${checks.complete ? "" : "; context list incomplete"}. GitHub checks/statuses, not a test-case result.` };
+}
+function badge(info, title) {
+  const node = element("span", `attribute-badge ${info.tone}`, info.text);
+  if (title) node.title = title;
+  return node;
+}
+function attributeTitle(node) {
+  const pr = node.github;
+  if (!pr) return "PR attributes have not been fetched.";
+  return `Review: ${reviewInfo(pr).text}\nPR checks: ${checkInfo(pr).text} · ${checkInfo(pr).detail}\nLabels: ${pr.labels.join(", ") || "none"}\n${pr.imports.length} verified import PR(s)${pr.importsComplete ? "" : "; lookup incomplete"}\nSnapshot ${date(pr.checkedAt)} · source ${pr.head.slice(0, 9)}`;
+}
+function importCell(node) {
+  const cell = element("td", "import-cell"), pr = node.github;
+  if (!pr) { cell.textContent = node.type === "pr" ? "Not fetched" : "—"; return cell; }
+  const labels = pr.labels.filter((name) => /import|ready to pull/i.test(name));
+  for (const name of labels) cell.append(badge({ text: name, tone: "label" }, "Actual GitHub label; not an approval or a test result."));
+  if (pr.imports.length === 1) {
+    const imported = pr.imports[0], info = checkInfo(imported);
+    cell.append(link(`#${imported.number}`, imported.url, "import-link"), badge(info, `Import PR checks on ${imported.head.slice(0, 9)}: ${info.detail}`));
+    if (!imported.matchesSourceHead) cell.append(badge({ text: "older source", tone: "pending" }, `Import refers to ${imported.sourceHead.slice(0, 9)}, not current ${pr.head.slice(0, 9)}.`));
+  } else if (pr.imports.length) cell.append(button(`${pr.imports.length} verified imports`, () => select(node.id), "imports-choice"));
+  else cell.append(element("span", "attribute-unknown", pr.importsComplete ? "No linked PR found" : "Link lookup incomplete"));
+  cell.title = `Snapshot ${date(pr.checkedAt)}. Links require Copybara's explicit source-PR/revision footer. Internal CL status alone is not an import PR.`;
+  return cell;
+}
+function appendChecks(container, pr, heading) {
+  const section = element("details", "check-details"), info = checkInfo(pr), summary = element("summary");
+  summary.append(document.createTextNode(`${heading} · `), badge(info)); section.append(summary);
+  section.append(element("p", "detail-meta", info.detail));
+  for (const check of pr.checks?.contexts || []) {
+    const row = element("div", "check-row");
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", check.state.toLowerCase().replaceAll("_", " ")));
+    if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
+    section.append(row);
+  }
+  container.append(section);
+}
+function appendAttributes(container, node) {
+  if (node.type !== "pr") return;
+  const section = element("section", "detail-section pr-attributes"), pr = node.github;
+  section.append(element("h3", "", "PR attributes"));
+  if (!pr) { section.append(element("p", "detail-description", "No published GitHub attributes for this PR yet. Reloading uses the latest published snapshot.")); container.append(section); return; }
+  section.append(badge(reviewInfo(pr), "GitHub reviewDecision; labels and comments do not grant approval."));
+  const threads = pr.threads;
+  section.append(element("p", "detail-meta", threads.complete ? `${threads.unresolved} unresolved review threads` : `Thread count incomplete: ${threads.unresolved} unresolved among ${Math.min(100, threads.total)} of ${threads.total} threads.`));
+  section.append(element("p", "detail-meta", `${pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "Merge conflicts not yet determined"} · GitHub merge state: ${pr.mergeState.toLowerCase().replaceAll("_", " ")}`));
+  const labels = element("div", "label-list");
+  for (const name of pr.labels) labels.append(badge({ text: name, tone: "label" }));
+  if (!pr.labels.length) labels.append(element("span", "attribute-unknown", "No labels reported"));
+  if (!pr.labelsComplete) labels.append(element("span", "attribute-unknown", "Label list incomplete"));
+  section.append(labels, element("p", "detail-meta", `Snapshot ${date(pr.checkedAt)} · activity ${date(pr.updatedAt)}`), link(`Source head ${pr.head.slice(0, 9)} ↗`, `https://github.com/${node.repo}/commit/${pr.head}`, "detail-meta"));
+  appendChecks(section, pr, "Original PR checks");
+  section.append(element("h4", "", "Verified import PRs"));
+  for (const imported of pr.imports) {
+    const block = element("div", "import-detail");
+    block.append(link(`#${imported.number} · ${imported.status} ↗`, imported.url), element("p", "detail-meta", imported.matchesSourceHead
+      ? `Copybara footer matches source ${imported.sourceHead.slice(0, 9)}.`
+      : `Older source: ${imported.sourceHead.slice(0, 9)}; current PR is ${pr.head.slice(0, 9)}. These checks do not validate the current source.`));
+    block.append(element("p", "detail-meta", `Import head ${imported.head.slice(0, 9)} · snapshot ${date(imported.checkedAt)}`));
+    appendChecks(block, imported, "Import PR checks"); section.append(block);
+  }
+  if (!pr.imports.length) section.append(element("p", "detail-description", pr.importsComplete ? "No linked import PR found. An internal Copybara CL or import status is not a verified public import PR." : "Import relationship lookup is incomplete; no link is assumed."));
+  if (!pr.importsComplete && pr.imports.length) section.append(element("p", "detail-meta", "Only the latest 100 cross-references were checked; older imports may exist."));
+  container.append(section);
 }
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
@@ -218,7 +303,12 @@ function drawGraph(nodes) {
     const reach = impact(node.id).prs;
     if (reach) card.append(svg("text", { class: "node-reach", x: CARD.width - 33, y: 15, "text-anchor": "end" }, `${reach} downstream`));
     wrap(node.title).forEach((line, index) => card.append(svg("text", { class: "node-title", x: 10, y: 32 + index * 14 }, line)));
-    card.append(svg("title", {}, `${node.title}\n${status(node)}`));
+    if (node.type === "pr") {
+      for (const [x, prefix, info] of [[64, "R", reviewInfo(node.github)], [87, "C", checkInfo(node.github)]]) {
+        card.append(svg("text", { class: `node-attribute ${info.tone}`, x, y: 15, "aria-hidden": "true" }, `${prefix}${info.glyph}`));
+      }
+    }
+    card.append(svg("title", {}, `${node.title}\n${status(node)}${node.type === "pr" ? "\n" + attributeTitle(node) : ""}`));
     card.addEventListener("click", () => { if (!moved) select(node.id); });
     card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });
     group.append(card);
@@ -239,7 +329,8 @@ function drawTable(nodes) {
   }
   const groups = new Map(model.groups.map((group) => [group.id, group.label]));
   const value = (node) => ({ impact: impact(node.id).prs, direct: impact(node.id).direct, title: node.title,
-    status: status(node), group: groups.get(node.group) || "", number: node.number || 0 })[sortKey];
+    status: status(node), review: node.type === "pr" ? reviewInfo(node.github).text : "", checks: node.type === "pr" ? checkInfo(node.github).text : "",
+    group: groups.get(node.group) || "", number: node.number || 0 })[sortKey];
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   for (const node of nodes) {
     const row = element("tr", selected === node.id ? "selected" : ""); row.dataset.nodeId = node.id;
@@ -247,8 +338,14 @@ function drawTable(nodes) {
     identity.append(link(label(node), node.url));
     const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
     title.append(choose);
+    const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell", status(node));
+    if (node.type === "pr") {
+      review.append(badge(reviewInfo(node.github), attributeTitle(node)));
+      checks.append(badge(checkInfo(node.github), node.github ? `Original PR head ${node.github.head.slice(0, 9)}. ${checkInfo(node.github).detail}` : "No published check data."));
+      if (node.github?.mergeable === "CONFLICTING") state.append(badge({ text: "conflicts", tone: "bad" }));
+    } else { review.textContent = "—"; checks.textContent = "—"; }
     row.append(identity, title, element("td", "numeric reach-cell", String(reach.prs)), element("td", "numeric", String(reach.direct)),
-      element("td", "status-cell", status(node)), element("td", "group-cell", groups.get(node.group) || ""));
+      state, review, checks, importCell(node), element("td", "group-cell", groups.get(node.group) || ""));
     body.append(row);
   }
 }
@@ -263,6 +360,7 @@ function drawDetails() {
   if (node.summary) details.append(element("p", "detail-description", node.summary));
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
   if (node.type === "issue") details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
+  appendAttributes(details, node);
   const relations = [
     ["Requires", model.edges.filter((edge) => edge.to === node.id && edge.type !== "includes"), "from"],
     ["Needed by", model.edges.filter((edge) => edge.from === node.id && edge.type !== "includes"), "to"],
@@ -349,17 +447,18 @@ function setFreshness(text, warning = false, live = false) {
 }
 function applyLive(snapshot) {
   const nodes = registry.nodes.map((node) => ({ ...node })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
-  for (const pr of [...snapshot.prs, ...snapshot.resolved]) {
+  for (const pr of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const id = `pr:${pr.number}`, existing = ids.get(id);
     const branch = pr.ref ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === `${registry.meta.owner}/gvisor`) : null;
     const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
-      status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new" };
+      status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
+      github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
     }
     if (existing) Object.assign(existing, node); else { nodes.push(node); ids.set(id, node); }
   }
-  for (const node of nodes) if (snapshot.issues[node.id]) Object.assign(node, snapshot.issues[node.id]);
+  for (const node of nodes) if (snapshot.issues?.[node.id]) Object.assign(node, snapshot.issues[node.id]);
   const edges = registry.edges.map((edge) => ({ ...edge, from: aliases.get(edge.from) || edge.from, to: aliases.get(edge.to) || edge.to }))
     .filter((edge, index, all) => edge.from !== edge.to && all.findIndex((other) => other.from === edge.from && other.to === edge.to && other.type === edge.type) === index);
   model = { ...registry, nodes: nodes.filter((node) => !aliases.has(node.id)), edges,
@@ -368,68 +467,44 @@ function applyLive(snapshot) {
   if (aliases.has(focus)) focus = aliases.get(focus);
   if (focus && !model.nodes.some((node) => node.id === focus && !resolved(node))) focus = null;
   render(true);
-  setFreshness(`${snapshot.partial ? "Partial GitHub refresh" : "GitHub status checked"} · ${date(snapshot.checkedAt)}`, snapshot.partial, !snapshot.partial);
-  $("freshness-detail").textContent = snapshot.partial
-    ? "Some status lookups were unavailable or reached the request limit. Unverified entries retain their saved state; relationships and deployment qualifications remain curated."
-    : "Open PRs refresh from public GitHub. New PRs replace matching branches; merged and closed PRs hide by default. Relationships and deployment qualifications remain curated.";
+  const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
+  setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
+  $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot; the maintainer updates it with python3 update-status.py.";
+}
+function validateSnapshot(snapshot) {
+  if (snapshot?.schema !== 1 || snapshot.repo !== registry.meta.repo || snapshot.owner !== registry.meta.owner || snapshot.registryDate !== registry.meta.updatedAt ||
+      !Number.isFinite(Date.parse(snapshot.checkedAt)) || !Array.isArray(snapshot.prs) || !snapshot.issues) throw new Error("Invalid GitHub snapshot");
+  const numbers = new Set();
+  for (const pr of snapshot.prs) {
+    if (!Number.isInteger(pr.number) || numbers.has(pr.number) || !Array.isArray(pr.imports)) throw new Error("Invalid PR inventory");
+    numbers.add(pr.number);
+    for (const item of [pr, ...pr.imports]) {
+      if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
+          !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
+    }
+  }
 }
 async function refresh(force = false) {
-  if (refreshing || (force && Date.now() - lastAttempt < 60000)) return;
+  if (refreshing || (force && Date.now() - lastAttempt < 10000)) return;
   let cached;
-  try { cached = JSON.parse(localStorage.getItem(CACHE_KEY)); } catch { /* Storage is optional. */ }
-  if (cached?.registryDate !== registry.meta.updatedAt) cached = null;
-  if (cached && Array.isArray(cached.prs) && Array.isArray(cached.resolved) && cached.issues) {
-    applyLive(cached);
-    if (!force && Date.now() - cached.checkedAt < CACHE_AGE) return;
-  }
-  refreshing = true; lastAttempt = Date.now(); $("refresh").disabled = true;
-  setFreshness("Checking public GitHub status…");
-  let budget = 30;
-  const get = async (path) => {
-    if (--budget < 0) throw new Error("Request limit reached");
-    const response = await fetch(`https://api.github.com${path}`, { credentials: "omit", headers: { Accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(10000) });
-    if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
-    return response.json();
-  };
   try {
-    const query = encodeURIComponent(`repo:${registry.meta.repo} is:pr is:open author:${registry.meta.owner}`);
-    const first = await get(`/search/issues?q=${query}&per_page=100`);
-    if (first.incomplete_results || first.total_count > 200 || !Array.isArray(first.items)) throw new Error("GitHub did not return a complete open-PR inventory");
-    let items = first.items;
-    if (first.total_count > 100) items = items.concat((await get(`/search/issues?q=${query}&per_page=100&page=2`)).items);
-    if (items.length !== first.total_count || new Set(items.map((item) => item.number)).size !== first.total_count) throw new Error("Open-PR inventory changed during refresh");
-    const prior = new Map([...registry.nodes.filter((node) => node.type === "pr"), ...(cached?.prs || []), ...(cached?.resolved || [])].map((node) => [node.number, node]));
-    const snapshot = { registryDate: registry.meta.updatedAt, checkedAt: Date.now(), prs: [], resolved: [], issues: { ...(cached?.issues || {}) }, partial: false };
-    const open = new Set(items.map((item) => item.number));
-    // Keep previous identities and states until an individual lookup succeeds.
-    snapshot.resolved = [...prior.values()].filter((node) => !open.has(node.number)).map((node) => ({ ...node }));
-    for (const item of items) {
-      let ref = prior.get(item.number)?.ref;
-      if (!ref && budget > 6) {
-        try { const detail = await get(`/repos/${registry.meta.repo}/pulls/${item.number}`); if (detail.head?.repo?.owner?.login === registry.meta.owner) ref = detail.head.ref; }
-        catch { snapshot.partial = true; }
-      } else if (!ref) snapshot.partial = true;
-      snapshot.prs.push({ number: item.number, title: item.title, url: item.html_url, status: item.draft ? "draft" : "open", updatedAt: item.updated_at, ref });
-    }
-    for (const node of prior.values()) {
-      if (open.has(node.number)) continue;
-      if (budget <= 6) { snapshot.partial = true; continue; }
-      try {
-        const detail = await get(`/repos/${registry.meta.repo}/pulls/${node.number}`);
-        const result = { number: node.number, title: detail.title, url: detail.html_url, status: detail.merged_at ? "merged" : detail.state === "open" && detail.draft ? "draft" : detail.state, updatedAt: detail.updated_at, ref: detail.head?.ref };
-        snapshot.resolved[snapshot.resolved.findIndex((item) => item.number === node.number)] = result;
-      } catch { snapshot.partial = true; }
-    }
-    for (const node of registry.nodes.filter((node) => node.type === "issue" && node.repo && node.number)) {
-      try { const issue = await get(`/repos/${node.repo}/issues/${node.number}`); snapshot.issues[node.id] = { githubState: issue.state, updatedAt: issue.updated_at }; }
-      catch { snapshot.partial = true; }
-    }
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* The saved registry works without storage. */ }
+    cached = JSON.parse(localStorage.getItem(CACHE_KEY));
+    if (cached?.registryDate !== registry.meta.updatedAt) cached = null;
+    if (cached) { validateSnapshot(cached); applyLive(cached); }
+  } catch { cached = null; }
+  refreshing = true; lastAttempt = Date.now(); $("refresh").disabled = true;
+  setFreshness("Loading published GitHub snapshot…");
+  try {
+    const response = await fetch("github-status.json", { cache: "no-cache", credentials: "omit", signal: AbortSignal.timeout(10000) });
+    if (!response.ok) throw new Error(`Snapshot returned ${response.status}`);
+    const snapshot = await response.json(); validateSnapshot(snapshot);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* Storage is optional. */ }
     applyLive(snapshot);
   } catch (error) {
-    setFreshness(`GitHub refresh unavailable · ${error.message}. Showing ${cached?.registryDate === registry.meta.updatedAt ? "cached status" : "saved snapshot"}.`, true);
+    setFreshness(`Snapshot unavailable · ${error.message}. Showing ${cached ? "cached GitHub data" : "curated registry; PR attributes unavailable"}.`, true);
   } finally { refreshing = false; $("refresh").disabled = false; }
 }
+
 function setView(next) { view = next; render(true); }
 function resetFilters(redraw = true) {
   $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null;

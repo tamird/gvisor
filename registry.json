@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T22:48:06.801771+00:00",
+    "updatedAt": "2026-09-30T23:46:14.095832+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -901,8 +901,8 @@
       "title": "Declare clang-tidy in Bazel",
       "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy",
       "group": "release",
-      "status": "validation pending",
-      "summary": "Refreshed on current master at 94dcc03a1 with unchanged tool-migration source. The previous direct-include failures are superseded by merged #15119 and the passing full clang gate. Root is validating the current canonical catalog and GNU smoke before final contributor review. Prior integrated full lint produced 369 successful reports across 360 owners; five Actions were fresh and the remainder reused."
+      "status": "revision in progress",
+      "summary": "Contributor requested reuse of the existing hermetic LLVM supplier instead of extra tool wheels. The source revision is in progress; prior standalone GNU compiler-flag failures are not a passing result. The revised dependency and validation are pending."
     },
     {
       "id": "branch:syscall-overlay-xml",
@@ -962,15 +962,16 @@
       "number": 15163
     },
     {
-      "id": "branch:network-test-fixtures",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15168",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "network-test-fixtures",
-      "title": "Declare network test setup",
-      "url": "https://github.com/tamird/gvisor/tree/network-test-fixtures",
+      "title": "Fail network tests at namespace setup errors",
+      "url": "https://github.com/google/gvisor/pull/15168",
       "group": "tests",
-      "status": "validation pending",
-      "summary": "Contributor-approved subject to immediate cleanup-owned unlock. The signed correction is published and the complete qualified sandbox_test owner is validating. Prior owning Go namespace-suite evidence is root-only; separate Python nobody results are not credited to this fixture."
+      "status": "open",
+      "summary": "Contributor-reviewed and published after the cleanup-owned unlock correction. The complete qualified Go sandbox unit owner passes under root. Separate Python nobody results are not credited to this fixture.",
+      "number": 15168
     },
     {
       "id": "pr:15164",
@@ -1207,6 +1208,18 @@
       "status": "open",
       "number": 15165,
       "summary": "Contributor-reviewed and published. Preserves one delayed retry per connection. Complete native, directfs and shared stress owners each pass 33 cases with zero skips across eight shards; all 24 remote attempts are uncached."
+    },
+    {
+      "id": "pr:15169",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15169,
+      "ref": "original-dst-missing-connection",
+      "title": "Return ENOENT for missing original destinations",
+      "url": "https://github.com/google/gvisor/pull/15169",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Contributor-reviewed and published. The exact OriginalDstErrors case passes native Linux and both gVisor configurations; the complete stack unit owner and both Nogo owners pass. Missing native mark/CT extensions remain separate failures."
     }
   ],
   "edges": [
@@ -1428,7 +1441,7 @@
       "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
     },
     {
-      "from": "branch:network-test-fixtures",
+      "from": "pr:15168",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",

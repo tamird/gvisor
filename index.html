@@ -8,8 +8,8 @@
   <meta name="description" content="Which gVisor PR blocks the most work? Explore recorded dependency chains and a compact, sortable inventory.">
   <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=compact-5">
-  <script src="app.js?v=compact-5" defer></script>
+  <link rel="stylesheet" href="style.css?v=attributes-1">
+  <script src="app.js?v=attributes-1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -36,7 +36,7 @@
           <div id="graph-stage" class="graph-stage">
             <svg id="graph" tabindex="0" role="group" aria-label="Prerequisite to dependent graph. Drag to pan; use zoom controls or arrow keys."><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="graph-content"></g></svg>
             <div class="map-controls" aria-label="Graph controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Fit</button><button id="reset-view">100%</button></div>
-            <span class="map-hint">Select for details · ↗ opens source · drag to pan</span>
+            <span class="map-hint">R review · C checks · select for details · ↗ source · drag to pan</span>
           </div>
         </section>
         <section id="table-pane" class="table-pane" aria-label="All work table" hidden>
@@ -46,6 +46,9 @@
             <th scope="col" class="numeric" aria-sort="descending"><button data-sort="impact" title="Unique downstream open PRs">Blocks</button></th>
             <th scope="col" class="numeric" aria-sort="none"><button data-sort="direct">Direct</button></th>
             <th scope="col" aria-sort="none"><button data-sort="status">Status</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="review">Review</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="checks">PR checks</button></th>
+            <th scope="col">Import · own checks</th>
             <th scope="col" aria-sort="none"><button data-sort="group">Workstream</button></th>
           </tr></thead><tbody></tbody></table>
         </section>
@@ -55,8 +58,8 @@
     </div>
   </main>
   <footer class="freshness">
-    <div><span class="status-dot" id="freshness-dot"></span><span id="freshness-text" role="status">Saved snapshot</span><button id="refresh">Refresh status ↻</button><a href="registry.json">Registry ↗</a></div>
-    <details><summary id="registry-age">About this data</summary><p id="freshness-detail">Dependencies are curated; GitHub status refreshes independently. No recorded dependency does not mean ready to merge.</p></details>
+    <div><span class="status-dot" id="freshness-dot"></span><span id="freshness-text" role="status">Saved snapshot</span><button id="refresh" title="Reload the published GitHub snapshot">Reload snapshot ↻</button><a href="github-status.json">GitHub data ↗</a><a href="registry.json">Registry ↗</a></div>
+    <details><summary id="registry-age">About this data</summary><p id="freshness-detail">Dependencies are curated; PR attributes come from a dated GitHub snapshot. No recorded dependency does not mean ready to merge.</p></details>
   </footer>
   <noscript><p>The dashboard needs JavaScript. Read the <a href="registry.json">dependency registry</a> directly.</p></noscript>
 </body>
