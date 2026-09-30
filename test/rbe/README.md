@@ -82,6 +82,16 @@ default compilation and stripping settings. Bazel's wildcard selection omits
 manual and incompatible targets; this lane builds test executables but does
 not run them. The separate runtime lanes remain necessary.
 
+The separate AMD64 plugin build retains `make runsc-plugin-stack`'s optimized
+TLDK configuration, which the all-target build excludes:
+
+```sh
+test/rbe/qualify.sh plugin-build
+```
+
+This builds `//runsc:runsc-plugin-stack` with `-c opt --config=plugin-tldk`.
+Plugin network execution remains a separate, unqualified runtime lane.
+
 The full graph was qualified with Bazel 8.5.0 on a 16 GiB hosted coordinator
 using an 8 GiB JVM heap (`--host_jvm_args=-Xmx8g`). Apply this as a coordinator
 Bazel startup option, before the subcommand. It sizes Bazel's server heap;
