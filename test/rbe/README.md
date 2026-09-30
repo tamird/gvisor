@@ -195,7 +195,38 @@ the canonical release script generates its master repository. The test neither
 publishes artifacts nor exercises tagged or nightly publication. The separate
 staged-binary check requires the real staged archive and remains unqualified.
 
-The maintained Docker lane has an explicit action-owned setup:
+The CPU image-source lane retains the public manifest-or-build check:
+
+```sh
+test/rbe/qualify.sh cpu-images
+```
+
+It selects the existing `tools/images.mk test-cpu-images` owner through
+`//test/docker:cpu_image_sources_amd64_test`, or the corresponding `arm64_test`
+with `--arch=arm64`. Each architecture runs natively, using the public four
+AMD64 or two ARM64 partitions as Bazel test shards. Make retains image
+discovery, complete-context hashing and the manifest check: a missing manifest
+builds the image from its Dockerfile; a manifest hit does not prove a fresh
+image build. Base-image and package downloads retain their network behavior.
+
+The action uses declared Make and crane tools with a private native-runc Docker
+daemon. It needs no gVisor release or preloaded images. Complete contexts are
+materialized from the declared `//images:source_contexts` archive so Make's
+`find -type f` hash sees physical source files. The archive declares regular
+file modes and the tracked executable overrides; this avoids Bazel marking
+every remote input executable. The current contexts contain no symlinks; new
+symlinks or executable files must be reflected in that archive declaration. The
+legacy default Dockerfile remains an image-test subject, not a prerequisite
+builder for the coordinator.
+
+Each shard requests the existing Docker worker image, four CPUs, 8GB memory
+and 40GB disk. These are capacity allowances, not measured minimums. The
+declared one-hour test timeout does not override a shorter coordinator work
+budget; cancellation leaves incomplete qualification. The image declares both
+architectures, but ARM64 Firecracker capacity is still required and its
+execution remains unqualified.
+
+The maintained Docker runtime lane has an explicit action-owned setup:
 
 ```sh
 bazel test --config=rbe --config=x86_64 --config=docker \

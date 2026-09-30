@@ -3,6 +3,12 @@ package(
     licenses = ["notice"],
 )
 
+filegroup(
+    name = "sources",
+    srcs = glob(["**"]),
+    visibility = ["//images:__pkg__"],
+)
+
 exports_files(
     [
         "build.sh",
