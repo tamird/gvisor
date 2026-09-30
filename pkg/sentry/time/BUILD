@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "namespace_test_exec_properties")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -60,6 +61,26 @@ go_test(
     library = ":time",
     deps = [
         "//pkg/abi/linux",
+        "//pkg/sync",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
+)
+
+# Fork-only raw TSC diagnostic; this is not part of ordinary test selection.
+go_test(
+    name = "rdtsc_diagnostic_test",
+    size = "medium",
+    srcs = ["rdtsc_diagnostic_linux_amd64_test.go"],
+    args = ["-test.v"],
+    exec_properties = namespace_test_exec_properties(),
+    library = ":time",
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+    deps = [
+        "//pkg/sentry/hostcpu",
         "//pkg/sync",
         "@org_golang_x_sys//unix:go_default_library",
     ],
