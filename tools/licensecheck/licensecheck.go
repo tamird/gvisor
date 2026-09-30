@@ -831,22 +831,20 @@ func resolveGitHubCommit(owner, repo, ref string) (string, error) {
 		// Bound inherited pipes if a transport subprocess outlives Git.
 		cmd.WaitDelay = 5 * time.Second
 		out, err := cmd.Output()
-		exitErr, isExitError := errors.AsType[*exec.ExitError](err)
-		switch {
-		case ctx.Err() != nil:
-			return "", fmt.Errorf("git ls-remote: %w", ctx.Err())
-		case err == nil:
+		if err != nil {
+			exitErr, ok := errors.AsType[*exec.ExitError](err)
+			if !ok {
+				return "", fmt.Errorf("git ls-remote: %w", err)
+			}
+			if exitErr.ExitCode() != 2 {
+				return "", fmt.Errorf("git ls-remote: %w: %s", err, strings.TrimSpace(string(exitErr.Stderr)))
+			}
+			// A successful connection with no matching ref still permits API
+			// resolution, as does a tag/branch name with conflicting IDs.
+		} else {
 			if commit, err := parseGitRefs(string(out), refs); err != nil || commit != "" {
 				return commit, err
 			}
-		case isExitError && exitErr.ExitCode() == 2:
-			// A successful connection with no matching ref still permits API
-			// resolution, as does a tag/branch name with conflicting IDs.
-		default:
-			if isExitError {
-				return "", fmt.Errorf("git ls-remote: %w: %s", err, strings.TrimSpace(string(exitErr.Stderr)))
-			}
-			return "", fmt.Errorf("git ls-remote: %w", err)
 		}
 	}
 	header := map[string]string{"Accept": "application/vnd.github.sha"}
