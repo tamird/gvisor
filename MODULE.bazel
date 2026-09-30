@@ -1401,8 +1401,22 @@ http_archive(
 
 module_proxy(
     name = "syzkaller_modules",
+    cgo_enabled = "0",
     go_mod = "@syzkaller//:go.mod",
     go_sum = "@syzkaller//:go.sum",
+    goarch = "amd64",
+    goos = "linux",
+    # These are Make's generator and binary roots, without its separate lint
+    # tools. sys/empty.go permits package loading before descriptions exist;
+    # the pinned generated registration adds no external module requirements.
+    # https://github.com/google/syzkaller/blob/7808aef4a/Makefile#L57-L166
+    # https://github.com/google/syzkaller/blob/7808aef4a/sys/syz-sysgen/sysgen.go#L359-L377
+    packages = [
+        "./sys/syz-sysgen",
+        "./syz-manager",
+        "./tools/syz-execprog",
+        "./tools/syz-make",
+    ],
 )
 
 module_proxy(
