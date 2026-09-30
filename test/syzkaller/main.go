@@ -189,6 +189,10 @@ func run() error {
 		"GOCACHE="+filepath.Join(work, "cache"),
 		"GOMODCACHE="+filepath.Join(work, "modules"),
 		"GOPATH="+filepath.Join(work, "gopath"),
+		// Apply Make's default even to its initial syz-make invocation, which
+		// precedes that assignment. Match the declared package dependency set.
+		// https://github.com/google/syzkaller/blob/7808aef4a/Makefile#L57-L80
+		"CGO_ENABLED=0",
 		// Match the action's four-CPU allowance, including code generators.
 		// https://pkg.go.dev/runtime#hdr-Environment_Variables
 		"GOMAXPROCS=4",
