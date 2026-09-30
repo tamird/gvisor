@@ -22,11 +22,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -358,6 +360,152 @@ func deleteSandbox(args []string, id string) error {
 		return fmt.Errorf("delete error: %v", err)
 	}
 	return nil
+}
+
+// observePtraceResources is temporary fork-only evidence for the unchanged
+// thousand-thread test. It reads the worker's procfs, outside the sandbox.
+func observePtraceResources(outputDir string) func() {
+	f, err := os.Create(filepath.Join(outputDir, "ptrace-resources.jsonl"))
+	if err != nil {
+		log.Warningf("ptrace resource diagnostic: %v", err)
+		return func() {}
+	}
+	read := func(path string) string {
+		f, err := os.Open(path)
+		if err != nil {
+			return "ERROR: " + err.Error()
+		}
+		defer f.Close()
+		data, err := io.ReadAll(io.LimitReader(f, 32769))
+		if err != nil || len(data) > 32768 {
+			return fmt.Sprintf("ERROR: read %s: %v, bytes=%d", path, err, len(data))
+		}
+		return string(data)
+	}
+	snapshot := func(procs uint16) map[string]string {
+		values := map[string]string{
+			"time":          time.Now().UTC().Format(time.RFC3339Nano),
+			"sysinfo.procs": strconv.Itoa(int(procs)),
+		}
+		for _, path := range []string{"/proc/sys/kernel/threads-max", "/proc/sys/kernel/pid_max", "/proc/meminfo", "/proc/self/limits", "/proc/self/cgroup", "/proc/self/mountinfo"} {
+			values[path] = read(path)
+		}
+		cgroups := make(map[string]struct{})
+		entries, err := os.ReadDir("/proc")
+		if err != nil {
+			values["process_error"] = err.Error()
+		}
+		processes := 0
+		for _, entry := range entries {
+			if _, err := strconv.Atoi(entry.Name()); err != nil {
+				continue
+			}
+			processes++
+			if processes > 256 {
+				values["process_error"] = "more than 256 process directories"
+				break
+			}
+			base := filepath.Join("/proc", entry.Name())
+			status := read(base + "/status")
+			var selected []string
+			for _, line := range strings.Split(status, "\n") {
+				for _, prefix := range []string{"Name:", "Uid:", "Threads:", "NSpid:", "CapEff:", "ERROR:"} {
+					if strings.HasPrefix(line, prefix) {
+						selected = append(selected, line)
+					}
+				}
+			}
+			values[base+"/status"] = strings.Join(selected, "\n")
+			for _, line := range strings.Split(read(base+"/limits"), "\n") {
+				if strings.HasPrefix(line, "Max processes") || strings.HasPrefix(line, "ERROR:") {
+					values[base+"/limits"] = line
+				}
+			}
+			cg := read(base + "/cgroup")
+			values[base+"/cgroup"] = cg
+			for _, line := range strings.Split(cg, "\n") {
+				if path, ok := strings.CutPrefix(line, "0::"); ok {
+					cgroups[path] = struct{}{}
+				}
+			}
+		}
+		// Resolve the actual cgroup2 mount root before reading each process's
+		// cgroup and its visible ancestors. No claim is made about hidden ones.
+		for _, line := range strings.Split(values["/proc/self/mountinfo"], "\n") {
+			fields := strings.Fields(line)
+			if len(fields) < 10 || !strings.Contains(line, " - cgroup2 ") {
+				continue
+			}
+			root, mount := fields[3], fields[4]
+			if strings.ContainsAny(root+mount, "\\") {
+				values["cgroup_error"] = "escaped mount path is not supported by this diagnostic"
+				continue
+			}
+			for cg := range cgroups {
+				relative, err := filepath.Rel(root, cg)
+				if err != nil || relative == ".." || strings.HasPrefix(relative, "../") {
+					continue
+				}
+				path := filepath.Join(mount, relative)
+				for depth := 0; depth < 16; depth++ {
+					for _, name := range []string{"pids.current", "pids.max", "pids.events", "memory.current", "memory.max", "memory.events"} {
+						file := filepath.Join(path, name)
+						if _, ok := values[file]; !ok {
+							values[file] = read(file)
+						}
+					}
+					if path == mount {
+						break
+					}
+					if depth == 15 {
+						values["cgroup_error"] = "visible ancestors truncated at 16 levels: " + path
+					}
+					path = filepath.Dir(path)
+				}
+			}
+		}
+		return values
+	}
+	var info unix.Sysinfo_t
+	if err := unix.Sysinfo(&info); err != nil {
+		log.Warningf("ptrace resource sysinfo: %v", err)
+	}
+	initial := snapshot(info.Procs)
+	stop, done := make(chan struct{}), make(chan struct{})
+	go func() {
+		defer close(done)
+		defer f.Close()
+		ticker := time.NewTicker(100 * time.Millisecond)
+		defer ticker.Stop()
+		peak := initial
+		maximum, samples := info.Procs, 0
+		for {
+			select {
+			case <-ticker.C:
+				samples++
+				if err := unix.Sysinfo(&info); err == nil && info.Procs > maximum {
+					maximum = info.Procs
+					peak = snapshot(info.Procs)
+				}
+			case <-stop:
+				if err := unix.Sysinfo(&info); err != nil {
+					log.Warningf("ptrace resource final sysinfo: %v", err)
+				}
+				enc := json.NewEncoder(f)
+				for _, record := range []struct {
+					Stage   string
+					Samples int
+					Values  map[string]string
+				}{{"initial", 0, initial}, {"peak", samples, peak}, {"final", samples, snapshot(info.Procs)}} {
+					if err := enc.Encode(record); err != nil {
+						log.Warningf("ptrace resource write: %v", err)
+					}
+				}
+				return
+			}
+		}
+	}()
+	return func() { close(stop); <-done }
 }
 
 // runRunsc runs spec in runsc in a standard test configuration.
@@ -739,7 +887,13 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 			return fmt.Errorf("save resume error: %v", err)
 		}
 	} else {
-		err = cmd.Run()
+		if *platform == "ptrace" && filepath.Base(spec.Process.Args[0]) == "processes_test" {
+			stop := observePtraceResources(testLogDir)
+			err = cmd.Run()
+			stop()
+		} else {
+			err = cmd.Run()
+		}
 		if *waitForPid != 0 {
 			if err != nil {
 				return fmt.Errorf("could not start container: %v", err)
