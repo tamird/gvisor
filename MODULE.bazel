@@ -10,6 +10,7 @@ bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
 bazel_dep(name = "rules_oci", version = "2.3.0")
 bazel_dep(name = "rules_distroless", version = "0.9.4")
+bazel_dep(name = "tar.bzl", version = "0.10.4")
 bazel_dep(name = "gawk", version = "5.3.2.bcr.7")
 bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
@@ -138,7 +139,7 @@ pip.parse(
 )
 use_repo(pip, "python_distribution_deps")
 
-### Release repository test tools
+### Test tools from Ubuntu packages
 # Keep all package resolution at an immutable snapshot. No package installation
 # or network access is required while the release scripts run.
 release_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
@@ -181,7 +182,20 @@ release_apt.install(
         "jammy-security",
     ],
 )
-use_repo(release_apt, "release_tools")
+
+# The executor uses GNU glob extensions and runs without a dynamic loader.
+# libstdc++-11-dev brings the matching static C/C++ libraries and startup files.
+# https://github.com/google/syzkaller/blob/7808aef4a/executor/files.h#L17-L48
+release_apt.install(
+    dependency_set = "syzkaller_sysroot",
+    packages = ["libstdc++-11-dev"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+use_repo(release_apt, "release_tools", "syzkaller_sysroot")
 
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
@@ -1368,6 +1382,28 @@ go_sdk.from_file(
 use_repo(go_sdk, "go_host_compatible_sdk_label")
 
 module_proxy = use_repo_rule("//tools/go_export:repositories.bzl", "module_proxy")
+
+_SYZKALLER_REVISION = "7808aef4ab8b5fe0355e2a480e6d7a2bea28350e"
+
+_SYZKALLER_DATE = "20260929-183604"
+
+http_archive(
+    name = "syzkaller",
+    build_file = "//test/syzkaller:upstream.BUILD",
+    patch_cmds = ["printf '{\"revision\":\"%s\",\"date\":\"%s\"}\\n' > gvisor-source.json" % (_SYZKALLER_REVISION, _SYZKALLER_DATE)],
+    patch_strip = 1,
+    patches = ["//test/syzkaller:smoke_report.patch"],
+    sha256 = "8af6b5e603dfb172c72d1725577e5d50267f666d3a4bcb67b1d6d9b4097489c3",
+    strip_prefix = "syzkaller-" + _SYZKALLER_REVISION,
+    type = "tar.gz",
+    urls = ["https://codeload.github.com/google/syzkaller/tar.gz/" + _SYZKALLER_REVISION],
+)
+
+module_proxy(
+    name = "syzkaller_modules",
+    go_mod = "@syzkaller//:go.mod",
+    go_sum = "@syzkaller//:go.sum",
+)
 
 module_proxy(
     name = "exported_go_modules",
