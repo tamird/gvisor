@@ -15,12 +15,13 @@ Use `test/rbe/qualify.sh --list` to see the lanes and unqualified environments,
 or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
-This profile does not replace the full public CI matrix. In particular, it
-excludes KVM posture, startup and syscall variants, slimvm and syscall save/restore;
-existing failures in selected tests remain failures. The host systemd cgroup
-manager is also unqualified; container image tests that boot systemd do not
-exercise that host service. All variants remain available through their owning
-Bazel targets.
+This profile does not replace the full public CI matrix. It omits the KVM
+variants of posture, startup and syscall tests, as well as slimvm. The
+save/restore and save/resume syscall lanes are included, but their complete
+matrices remain unqualified. Existing failures in selected tests remain
+failures. The host systemd cgroup manager is also unqualified; container image
+tests that boot systemd do not exercise that host service. All variants remain
+available through their owning Bazel targets.
 
 The dispatcher uses the existing Nogo and unit configurations, the declared
 runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
@@ -73,9 +74,10 @@ The public unit matrix runs on AMD64 with cgroup v1 and v2, and on ARM64. The
 commands above do not qualify the complete architecture/cgroup matrix. This
 lane has no separate race variant in the public pipeline.
 
-ARM64 unit qualification retains the full canonical selection. Three owners
+ARM64 unit qualification retains the full canonical selection. These owners
 require Firecracker workers and remain unqualified without ARM64 capacity:
 
+- `//runsc/cmd:cmd_test`
 - `//runsc/sandbox:sandbox_test`
 - `//sandboxexec/sandbox:sandbox_test`
 - `//sandboxexec/sandbox/python:sandbox_py_test`
