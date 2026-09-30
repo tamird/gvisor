@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows lint lint-cc governance license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all nogo unit smoke smoke-race release-artifacts release-repository docker root portforward posture startup benchmarks containerd bwrap packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman website go-export workflows lint lint-cc governance license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -26,8 +26,8 @@ Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
-target architecture is AMD64. Tests use matching execution workers; release
-artifacts cross-build on AMD64 workers. This is partial public CI coverage;
+target architecture is AMD64. Tests use matching execution workers; builds
+use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
 The license-headers lane requires an explicit base and complete Git history.
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|lint|lint-cc|governance|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|docker|root|portforward|posture|startup|benchmarks|containerd|bwrap|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|website|go-export|workflows|lint|lint-cc|governance|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -151,6 +151,11 @@ run_lane() {
   local command=test execution_config=rbe
   local -a options=() targets=()
   case "$lane" in
+    build-all)
+      command=build
+      options=(--build_tag_filters=-network_plugins)
+      targets=(//...)
+      ;;
     lint|lint-cc|governance)
       if [[ $arch != amd64 ]]; then
         printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
