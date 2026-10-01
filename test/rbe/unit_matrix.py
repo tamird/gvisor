@@ -210,19 +210,25 @@ def select_syscalls(
     if requirements.keys() != expected:
         raise ValueError(f"Missing syscall TestRunners: {sorted(expected - requirements.keys())}")
     unavailable: dict[str, str] = {}
+    policy_excluded: dict[str, str] = {}
     for label, target in original.items():
         variant = label if architecture == "amd64" else label + "_arm64"
-        if "runsc_kvm" in target.tags:
+        # The standalone RBE syscall lane also leaves Nogo to its own lane.
+        # Keep this policy distinct from unavailable runtime capabilities.
+        if "nogo" in target.tags:
+            policy_excluded[variant] = "Nogo runs in the dedicated nogo lane."
+        elif "runsc_kvm" in target.tags:
             unavailable[variant] = "KVM execution is unavailable."
         elif architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
-    selected = sorted(expected - unavailable.keys())
+    selected = sorted(expected - unavailable.keys() - policy_excluded.keys())
     Path(output_path).write_text("".join(label + "\n" for label in selected))
     print(json.dumps({
         "profile_architecture": architecture,
         "canonical_syscall_owners": sorted(original),
         "selected_syscall_owners": selected,
         "unavailable_syscall_owners": unavailable,
+        "policy_excluded_syscall_owners": policy_excluded,
     }, indent=2))
 
 
