@@ -43,7 +43,8 @@ build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tld
 # by default for all tests.
 build --build_tag_filters=-nogo
 
-# Select the ordinary ARM64 syscall tests used by public CI.
+# Select the ordinary syscall tests used by public CI.
+test:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
 test:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
 
 # Keep the complete Nogo lane's selection shared with make nogo-tests.

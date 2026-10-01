@@ -330,6 +330,8 @@ run_lane() {
           if [[ $arch == arm64 ]]; then
             options+=(--config=syscalls-arm64)
           else
+            # RBE also excludes KVM; test_tag_filters replaces rather than
+            # extends the public syscalls-amd64 config's selection.
             options+=('--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
           fi
           ;;
