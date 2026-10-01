@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T08:26:58.770689+00:00",
+    "updatedAt": "2026-10-01T09:18:44.379052+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -161,9 +161,9 @@
       "title": "Bound checkpoint readiness with its context",
       "url": "https://github.com/google/gvisor/pull/15138",
       "group": "tests",
-      "status": "open",
-      "reviewDecision": "",
-      "updatedAt": "2026-09-30T10:19:55Z"
+      "status": "merged",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-01T08:26:21Z"
     },
     {
       "id": "pr:15137",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head a6d7bf336 provides builder-free AMD64 qualification with declared inputs and disposable cgroup-v1 workers. Docker-v1 passes all five maintained owners at 9af419910: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run at 508e02c55 remains failed (329 passes, one boot failure); the corrected boot owner at bcf337cfa passes all 105 cases without skips and Nogo on ARM64 and AMD64. The full lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes all 706 entries at 4dca99373; the final head only removes unused PHP 8.3.7 OCI inputs, with analysis-only dependency resolution passing for all four maintained PHP owners and no actions executed. Focused PHP 8.3.35 validation passes on native, DirectFS and goferfs by replacing the missing-UConverter failure with the required missing-intl skip. The earlier full PHP partitions remain failed and were not rerun; intl implementation coverage is not established. This is not complete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture still awaits publication approval and has not run."
+      "summary": "Published head 5b75026d2 runs the implemented AMD64 lanes without the builder image. Full public container and container-v1 selections are declared, but KVM execution remains unqualified. Docker-v1 passes five maintained owners: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run remains failed (329 passes, one boot failure); corrected boot passes all 105 cases without skips and Nogo on both architectures. The full unit lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes 706 entries at 4dca99373; subsequent unused PHP OCI removal has analysis-only coverage for all four maintained owners. Focused PHP 8.3.35 validation on native, DirectFS and goferfs replaces the missing-UConverter failure with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty same-container repetitions of the original Node batch did not reproduce SIGABRT; its cause remains unresolved. This is incomplete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture has not run."
     },
     {
       "id": "branch:rbe-actions-pilot",
