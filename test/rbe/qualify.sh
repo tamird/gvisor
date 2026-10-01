@@ -31,7 +31,8 @@ target architecture is AMD64. Tests use matching execution workers; builds
 use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
-The all architecture selection combines unit and release-repository in one invocation.
+The all architecture selection combines unit, release-repository and syscalls
+in one invocation.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -83,8 +84,8 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
-  if [[ $arch == all && $lane != unit && $lane != release-repository ]]; then
-    printf 'The all architecture selection supports unit and release-repository.\n' >&2
+  if [[ $arch == all && $lane != unit && $lane != release-repository && $lane != syscalls ]]; then
+    printf 'The all architecture selection supports unit, release-repository and syscalls.\n' >&2
     exit 2
   fi
   case "$lane" in
@@ -153,15 +154,53 @@ run_source_lane() (
   esac
 )
 
-# Preserve the canonical unit selection and add declared ARM variants and the
-# existing release test to one graph. Release artifacts already select both CPUs.
+# Let Bazel select each public syscall profile before checking worker capacity.
+# Aquery inherits build options, so the canonical loading filters live there;
+# test inherits the same options. Its ordered universe comes from Make's roots.
+select_syscall_matrix() {
+  local selection_dir=$1 syscall_arch target_config syscall_universe
+  syscall_universe=$(python3 test/rbe/unit_matrix.py universe test/syscalls.targets)
+  for syscall_arch in amd64 arm64; do
+    target_config=x86_64
+    if [[ $syscall_arch == arm64 ]]; then
+      target_config=aarch64
+    fi
+    bazel aquery --config=rbe-matrix "--config=$target_config" \
+      "--config=syscalls-$syscall_arch" --build_tests_only \
+      "--universe_scope=$syscall_universe" \
+      "--build_event_json_file=$selection_dir/syscalls-$syscall_arch-profile.json" 'set()'
+    python3 test/rbe/unit_matrix.py profile-actions \
+      "$selection_dir/syscalls-$syscall_arch-profile.json" "$syscall_arch" \
+      > "$selection_dir/syscalls-$syscall_arch.query"
+    bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+      --output=jsonproto --include_artifacts=false \
+      "--build_event_json_file=$selection_dir/syscalls-$syscall_arch-routing.json" \
+      "--query_file=$selection_dir/syscalls-$syscall_arch.query" \
+      > "$selection_dir/syscalls-$syscall_arch-actions.json"
+    python3 test/rbe/unit_matrix.py select-syscalls \
+      "$selection_dir/syscalls-$syscall_arch-profile.json" "$syscall_arch" \
+      "$selection_dir/syscalls-$syscall_arch-routing.json" \
+      "$selection_dir/syscalls-$syscall_arch-actions.json" \
+      "$selection_dir/syscalls-$syscall_arch-targets"
+  done
+}
+
+# Preserve the canonical unit roots, including filtered tests' build-only work.
+# Append other profiles' selected owners, checking compatibility with the final
+# filters. Release artifacts already select both CPUs in their owning graph.
 run_platform_matrix() (
   set -e
-  local selection_dir lane
+  local selection_dir lane include_unit=false include_syscalls=false explicit_universe
   local -a options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   : > "$selection_dir/targets"
+  : > "$selection_dir/explicit-targets"
+  for lane in "$@"; do
+    if [[ $lane == unit ]]; then
+      include_unit=true
+    fi
+  done
   for lane in "$@"; do
     case "$lane" in
       unit)
@@ -176,10 +215,37 @@ run_platform_matrix() (
         options+=(--config=unit --strip=never)
         ;;
       release-repository)
-        printf '%s\n' '//test/release:repository_test' >> "$selection_dir/targets"
+        printf '%s\n' '//test/release:repository_test' >> "$selection_dir/explicit-targets"
+        ;;
+      syscalls)
+        include_syscalls=true
+        select_syscall_matrix "$selection_dir"
+        if [[ $include_unit == true ]]; then
+          cat "$selection_dir/syscalls-amd64-targets" >> "$selection_dir/explicit-targets"
+        else
+          # Keep the existing standalone syscall roots and RBE exclusions,
+          # including their build-only targets. The ARM additions were selected
+          # by the separate public ARM profile above.
+          cat test/syscalls.targets >> "$selection_dir/targets"
+          options+=(--config=syscalls-amd64 '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm' --strip=never)
+        fi
+        cat "$selection_dir/syscalls-arm64-targets" >> "$selection_dir/explicit-targets"
         ;;
     esac
   done
+  if [[ -s $selection_dir/explicit-targets ]]; then
+    if [[ $include_syscalls == true ]]; then
+      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/explicit-targets")
+      # Verify the final filters with Bazel itself. Never silently lose another
+      # lane's explicit tests when combining it with the unit configuration.
+      bazel aquery --config=rbe-matrix --config=x86_64 "${options[@]}" \
+        --build_tests_only "--universe_scope=$explicit_universe" \
+        "--build_event_json_file=$selection_dir/combined-profile.json" 'set()'
+      python3 test/rbe/unit_matrix.py verify \
+        "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json"
+    fi
+    cat "$selection_dir/explicit-targets" >> "$selection_dir/targets"
+  fi
   bazel test --config=rbe-matrix --config=x86_64 --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" \
     --target_pattern_file="$selection_dir/targets"

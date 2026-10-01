@@ -38,5 +38,8 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
-    deps = ["//tools:defs_bzl"],
+    deps = [
+        "//tools:defs_bzl",
+        "//tools/bazeldefs:test_architectures_bzl",
+    ],
 )
