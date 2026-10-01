@@ -7,7 +7,7 @@ load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "g
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
 load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "static_go_amd64_test", "static_go_arm64_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants")
 
 gazelle = _gazelle
 
@@ -162,7 +162,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = [], **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], **kwargs):
     """Build a go test.
 
     Args:
@@ -188,6 +188,7 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         "//conditions:default": [],
     })
     test_rule = _static_go_test if static else _go_test
+    kwargs["tags"] = test_architecture_tags(architectures, kwargs.get("tags", []))
     test_rule(
         name = name,
         **kwargs

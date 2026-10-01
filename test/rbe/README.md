@@ -768,5 +768,20 @@ compilation and linking retain the caller's execution constraints and consistent
 toolchain selection. No global host-platform override is needed. Target-owned
 `test.*`
 properties continue to select specialized workers; declaring an ARM64 variant
-does not supply the unavailable ARM64 Firecracker capacity. Broader lane selection
-has not yet migrated to these variants.
+does not supply the unavailable ARM64 Firecracker capacity.
+
+The unit lane uses the same declarations without a copied test list:
+
+```sh
+test/rbe/qualify.sh --arch=all unit
+```
+
+The selector preserves `test/unit.targets`, including its exclusions and non-test
+build targets, and adds ARM64 variants of its non-manual Go/C++ owners. Both
+architectures run in one Bazel test invocation with the ordinary unit tag
+filters. A query of configured test actions reports and omits ARM64 Firecracker
+requirements while that worker capacity is unavailable; the declarations retain
+their ARM64 support. Other unit owner types (shell, Python, YAML, generator,
+dependency and build checks) retain their original AMD64 execution. This initial
+adoption does not claim a complete ARM64 unit matrix. Single-architecture lanes
+remain available through `--arch=amd64` and `--arch=arm64`.

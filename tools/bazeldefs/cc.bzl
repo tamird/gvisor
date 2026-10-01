@@ -7,7 +7,7 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants", "with_test_architecture")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 
 def _compile_cc_test(compile_exec_compatible_with, **kwargs):
     kwargs["exec_compatible_with"] = compile_exec_compatible_with
@@ -16,8 +16,9 @@ def _compile_cc_test(compile_exec_compatible_with, **kwargs):
 cc_amd64_test, _cc_amd64_transition = with_test_architecture(_compile_cc_test, "amd64", implicit_targets = ["{name}.dwp", "{name}.stripped"]).build()
 cc_arm64_test, _cc_arm64_transition = with_test_architecture(_compile_cc_test, "arm64", implicit_targets = ["{name}.dwp", "{name}.stripped"]).build()
 
-def cc_test(name, architectures = [], **kwargs):
+def cc_test(name, architectures = ["amd64", "arm64"], **kwargs):
     """Declares a C++ test and optional native architecture variants."""
+    kwargs["tags"] = test_architecture_tags(architectures, kwargs.get("tags", []))
     _cc_test(name = name, **kwargs)
     test_architecture_variants(
         name,
