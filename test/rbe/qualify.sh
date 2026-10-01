@@ -87,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
+      unit|release-repository|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -200,32 +200,33 @@ language_test_options() {
 # Let Bazel select each public syscall profile before checking worker capacity.
 # Aquery inherits build options, so the canonical loading filters live there;
 # test inherits the same options. Its ordered universe comes from Make's roots.
-select_syscall_matrix() {
-  local selection_dir=$1 syscall_arch target_config syscall_universe
+select_syscall_profile() {
+  local selection_dir=$1 lane=$2 syscall_arch=$3 target_config=x86_64 syscall_universe prefix
+  local -a profile_options=()
+  prefix=$selection_dir/$lane-$syscall_arch
   syscall_universe=$(python3 test/rbe/unit_matrix.py universe test/syscalls.targets)
-  for syscall_arch in amd64 arm64; do
-    target_config=x86_64
-    if [[ $syscall_arch == arm64 ]]; then
-      target_config=aarch64
-    fi
-    bazel aquery --config=rbe-matrix "--config=$target_config" \
-      "--config=syscalls-$syscall_arch" --build_tests_only \
-      "--universe_scope=$syscall_universe" \
-      "--build_event_json_file=$selection_dir/syscalls-$syscall_arch-profile.json" 'set()'
-    python3 test/rbe/unit_matrix.py profile-actions \
-      "$selection_dir/syscalls-$syscall_arch-profile.json" "$syscall_arch" \
-      > "$selection_dir/syscalls-$syscall_arch.query"
-    bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
-      --output=jsonproto --include_artifacts=false \
-      "--build_event_json_file=$selection_dir/syscalls-$syscall_arch-routing.json" \
-      "--query_file=$selection_dir/syscalls-$syscall_arch.query" \
-      > "$selection_dir/syscalls-$syscall_arch-actions.json"
-    python3 test/rbe/unit_matrix.py select-syscalls \
-      "$selection_dir/syscalls-$syscall_arch-profile.json" "$syscall_arch" \
-      "$selection_dir/syscalls-$syscall_arch-routing.json" \
-      "$selection_dir/syscalls-$syscall_arch-actions.json" \
-      "$selection_dir/syscalls-$syscall_arch-targets"
-  done
+  if [[ $syscall_arch == arm64 ]]; then
+    target_config=aarch64
+  fi
+  case "$lane" in
+    syscalls) profile_options=("--config=syscalls-$syscall_arch") ;;
+    syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
+    syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
+    *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
+  esac
+  bazel aquery --config=rbe-matrix "--config=$target_config" \
+    "${profile_options[@]}" --build_tests_only \
+    "--universe_scope=$syscall_universe" \
+    "--build_event_json_file=$prefix-profile.json" 'set()'
+  python3 test/rbe/unit_matrix.py profile-actions \
+    "$prefix-profile.json" "$syscall_arch" > "$prefix.query"
+  bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+    --output=jsonproto --include_artifacts=false \
+    "--build_event_json_file=$prefix-routing.json" \
+    "--query_file=$prefix.query" > "$prefix-actions.json"
+  python3 test/rbe/unit_matrix.py select-syscalls \
+    "$prefix-profile.json" "$syscall_arch" "$prefix-routing.json" \
+    "$prefix-actions.json" "$prefix-targets"
 }
 
 # Preserve the canonical unit roots, including filtered tests' build-only work.
@@ -233,7 +234,7 @@ select_syscall_matrix() {
 # filters. Release artifacts already select both CPUs in their owning graph.
 run_platform_matrix() (
   set -e
-  local selection_dir lane include_unit=false include_syscalls=false explicit_universe
+  local selection_dir lane include_unit=false include_syscalls=false include_checkpoints=false explicit_universe
   local -a options=() targets=() verification_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
@@ -242,9 +243,10 @@ run_platform_matrix() (
   : > "$selection_dir/shared-targets"
   : > "$selection_dir/filtered-targets"
   for lane in "$@"; do
-    if [[ $lane == unit ]]; then
-      include_unit=true
-    fi
+    case "$lane" in
+      unit) include_unit=true ;;
+      syscalls-save|syscalls-resume) include_checkpoints=true ;;
+    esac
   done
   for lane in "$@"; do
     case "$lane" in
@@ -264,8 +266,11 @@ run_platform_matrix() (
         ;;
       syscalls)
         include_syscalls=true
-        select_syscall_matrix "$selection_dir"
-        if [[ $include_unit == true ]]; then
+        select_syscall_profile "$selection_dir" "$lane" amd64
+        select_syscall_profile "$selection_dir" "$lane" arm64
+        if [[ $include_unit == true || $include_checkpoints == true ]]; then
+          # Global -allsave would discard the explicitly requested checkpoint
+          # profiles. Use their separately selected owners in a combined run.
           cat "$selection_dir/syscalls-amd64-targets" >> "$selection_dir/explicit-targets"
         else
           # Keep the existing standalone syscall roots and RBE exclusions,
@@ -275,6 +280,17 @@ run_platform_matrix() (
           options+=(--config=syscalls-amd64 '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm' --strip=never)
         fi
         cat "$selection_dir/syscalls-arm64-targets" >> "$selection_dir/explicit-targets"
+        ;;
+      syscalls-save|syscalls-resume)
+        include_syscalls=true
+        # Match the public continuous jobs' architectures.
+        local checkpoint_arch=amd64
+        if [[ $lane == syscalls-resume ]]; then
+          checkpoint_arch=arm64
+        fi
+        select_syscall_profile "$selection_dir" "$lane" "$checkpoint_arch"
+        cat "$selection_dir/$lane-$checkpoint_arch-targets" >> "$selection_dir/explicit-targets"
+        options+=(--strip=never)
         ;;
       smoke|smoke-race)
         printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
@@ -335,6 +351,10 @@ run_platform_matrix() (
         "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json" "${verification_options[@]}"
     fi
     cat "$selection_dir/combined-targets" >> "$selection_dir/targets"
+  fi
+  if [[ ! -s $selection_dir/targets ]]; then
+    printf 'No requested tests have available remote workers; see the profile exclusions above.\n' >&2
+    return 2
   fi
   bazel test --config=rbe-matrix --config=x86_64 --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" \

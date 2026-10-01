@@ -808,6 +808,20 @@ namespace execution still requires Firecracker capacity; the lane must fail
 when those workers are unavailable. Declaring a lane does not establish that
 its tests pass or complete the full save/restore matrix.
 
+With `--arch=all`, both checkpoint lanes use those public architectures and can
+join ordinary syscalls and other lanes in one invocation. Each profile is
+selected separately by Bazel before applying the existing worker-capacity
+checks. Unavailable ARM64 owners are reported; a selection with no available
+tests fails before execution.
+
+```sh
+test/rbe/qualify.sh --arch=all syscalls syscalls-save syscalls-resume smoke
+```
+
+Checkpoint combinations use explicit runtime owners so the ordinary syscall
+profile's `-allsave` filter cannot discard requested checkpoint tests. Their
+filtered tests' build-only work remains in the standalone invocations.
+
 The Syzkaller lane runs the upstream smoke script against the declared gVisor
 release:
 
