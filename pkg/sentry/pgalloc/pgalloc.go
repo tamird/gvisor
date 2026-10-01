@@ -295,6 +295,10 @@ type memAcctInfo struct {
 	// gaps in MemoryFile.memAcct.)
 	knownCommitted bool
 
+	// retainCommitment prevents checkpointing from discarding backing storage
+	// for live allocations, even when their contents are zero.
+	retainCommitment bool
+
 	// If true, represented pages are waste or releasing pages.
 	wasteOrReleasing bool
 
@@ -572,6 +576,12 @@ type AllocOpts struct {
 	// Mode controls the commitment status of returned pages.
 	Mode AllocationMode
 
+	// RetainCommitment keeps the allocation committed until its last reference
+	// is released, including across save and restore. This is for callers that
+	// cannot handle backing-storage faults after allocation. Mode must be
+	// AllocateAndCommit, and Decommit must not be called on these pages.
+	RetainCommitment bool
+
 	// If Huge is true, the allocation should be hugepage-backed if possible.
 	Huge bool
 
@@ -654,6 +664,9 @@ type allocState struct {
 func (f *MemoryFile) Allocate(length uint64, opts AllocOpts) (memmap.FileRange, error) {
 	if length == 0 || !hostarch.IsPageAligned(length) || (opts.Huge && !hostarch.IsHugePageAligned(length)) {
 		panic(fmt.Sprintf("invalid allocation length: %#x", length))
+	}
+	if opts.RetainCommitment && opts.Mode != AllocateAndCommit {
+		panic("RetainCommitment requires AllocateAndCommit")
 	}
 
 	alloc := allocState{
@@ -858,6 +871,7 @@ func (f *MemoryFile) findAllocatableAndMarkUsed(alloc *allocState) (fr memmap.Fi
 				}
 				ma.kind = alloc.opts.Kind
 				ma.memCgID = alloc.opts.MemCgID
+				ma.retainCommitment = alloc.opts.RetainCommitment
 				ma.wasteOrReleasing = false
 				return true
 			})
@@ -904,10 +918,11 @@ retryFree:
 	// them committed prematurely makes them more likely to be saved even if
 	// zeroed, unless SaveOpts.ExcludeCommittedZeroPages is enabled.
 	f.memAcct.InsertRange(fr, memAcctInfo{
-		kind:           alloc.opts.Kind,
-		memCgID:        alloc.opts.MemCgID,
-		knownCommitted: false,
-		commitSeq:      f.commitSeq,
+		kind:             alloc.opts.Kind,
+		memCgID:          alloc.opts.MemCgID,
+		knownCommitted:   false,
+		retainCommitment: alloc.opts.RetainCommitment,
+		commitSeq:        f.commitSeq,
 	})
 	return
 }
@@ -1105,10 +1120,23 @@ func tryPopulate(b safemem.Block) bool {
 //   - fr.Start and fr.End must be page-aligned.
 //   - fr.Length() > 0.
 //   - At least one reference must be held on all pages in fr.
+//   - No pages in fr were allocated with AllocOpts.RetainCommitment.
 func (f *MemoryFile) Decommit(fr memmap.FileRange) {
 	if !fr.WellFormed() || fr.Length() == 0 || fr.Start%hostarch.PageSize != 0 || fr.End%hostarch.PageSize != 0 {
 		panic(fmt.Sprintf("invalid range: %v", fr))
 	}
+	// Check the entire range before changing any backing storage. The caller's
+	// reference keeps this allocation policy stable after we release f.mu.
+	func() {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		f.memAcct.VisitFullRange(fr, func(maseg memAcctIterator) bool {
+			if maseg.ValuePtr().retainCommitment {
+				panic(fmt.Sprintf("Decommit(%v) overlaps retained commitment at %v", fr, maseg.Range()))
+			}
+			return true
+		})
+	}()
 
 	f.decommitOrManuallyZero(fr)
 
@@ -1299,6 +1327,7 @@ func (f *MemoryFile) DecRef(fr memmap.FileRange) {
 						usage.MemoryAccounting.Move(maseg.Range().Length(), usage.System, ma.kind, ma.memCgID)
 					}
 					ma.kind = usage.System
+					ma.retainCommitment = false
 					ma.wasteOrReleasing = true
 					return true
 				})
