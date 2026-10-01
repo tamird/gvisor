@@ -35,9 +35,9 @@ filter because KVM workers remain unavailable and Nogo has a dedicated lane.
 Bazel replaces repeated
 `--test_tag_filters` values, so that restriction cannot be appended to the public
 configuration. The ARM64 lane uses the public configuration directly.
-Most lanes use separate Bazel invocations to preserve their different selections
-and instrumentation. The mixed-platform unit, release and syscall lanes and the
-two smoke lanes share one invocation. Connection settings and credentials come
+Lanes with invocation-wide settings use separate Bazel invocations. The unit,
+release, syscall, smoke, do, Docker, root, port forwarding, bwrap and workflow
+checks can share one invocation. Connection settings and credentials come
 from Bazel's configuration; no builder container is started. Normal Bazel caching
 remains enabled.
 
@@ -92,6 +92,22 @@ same invocation, or run just those two lanes with `--arch=all`. Both smoke
 checks execute on AMD64. The race target owns its instrumentation settings,
 so selecting it does not instrument the other tests. Both use the declared
 release sidecars and the existing rootless namespace setup.
+
+The `do`, `docker`, `root`, `portforward`, `bwrap` and `workflows` lanes can also
+join this invocation, or run together without unit or syscall tests:
+
+```sh
+test/rbe/qualify.sh --arch=all smoke do workflows bwrap
+```
+
+These additions retain their existing AMD64 targets and do not add ARM64
+coverage. The standalone and combined paths use the same owning suites,
+including explicit manual tests. When unit or syscall filters are present,
+Bazel expands the added suites both with and without those filters; a changed
+selection fails before execution. Their original suite roots remain in the
+final target list. Per-test runtime inputs, privileges and sharding stay with
+the owning rules. Cgroup-v1 and other lanes with invocation-wide settings
+remain separate.
 
 Select ARM64 targets with `--arch=arm64`, for example:
 

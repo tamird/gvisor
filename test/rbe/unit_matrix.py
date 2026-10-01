@@ -35,10 +35,12 @@ def target_set(labels: list[str]) -> str:
     return "set(" + " ".join(query_word(label) for label in labels) + ")"
 
 
-def owner_labels(path: str) -> list[str]:
+def owner_labels(path: str, *, allow_empty: bool = False) -> list[str]:
     labels = Path(path).read_text().splitlines()
-    if not labels or any(not label.startswith("//") for label in labels):
-        raise ValueError(f"Expected nonempty canonical owner labels: {labels}")
+    if not labels and not allow_empty:
+        raise ValueError(f"Expected nonempty canonical owner labels: {path}")
+    if any(not label.startswith("//") for label in labels):
+        raise ValueError(f"Expected canonical owner labels: {labels}")
     return sorted(set(labels))
 
 
@@ -282,6 +284,7 @@ def main() -> None:
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
+    verify.add_argument("--profile", help="Successful unfiltered analysis of additional suite roots")
     args = parser.parse_args()
     if args.command == "query":
         print(owner_query(args.patterns))
@@ -296,7 +299,9 @@ def main() -> None:
     elif args.command == "select-syscalls":
         select_syscalls(args.profile, args.architecture, args.events, args.actions, args.output)
     else:
-        expected = set(owner_labels(args.targets))
+        expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
+        if args.profile is not None:
+            expected.update(configured_tests(args.profile))
         actual = configured_tests(args.events)
         if actual.keys() != expected:
             raise ValueError(f"Combined profile changes explicit owners: {sorted(actual.keys() ^ expected)}")
