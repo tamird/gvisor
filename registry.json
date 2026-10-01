@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T16:52:57.874875+00:00",
+    "updatedAt": "2026-10-01T17:31:39.851959+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 2ff2716c4 runs the implemented AMD64 lanes without the builder image, with 400-action remote concurrency. One five-owner invocation passes native AMD64/ARM64 Go units, both complete TUN modes with strict leak checks, and both-CPU release checks. This proves the small composition, not the full syscall matrix. Earlier syscall analysis remains failed; retained graph data reconciles the established Nogo-policy omission separately. The prior unit/release invocation passes 640 owners in 660 uncached actions; its parent remains failed on a preliminary HTTP 500, followed by passing same-source configuration analysis. Qualification includes packet cleanup, mapped TUN storage, oversized writes, checkpoint cases and removal of 50 duplicate variants. Docker-v1 has 159 XML passes and two existing skips. Original unit-v1 remains failed at 329/330; corrected boot passes 105 cases and both Nogo architectures. Four ARM64 Firecracker unit owners are omitted, and 18 non-Go/C++ owners remain AMD64 only. KVM container execution is unqualified. Focused PHP checks pass with the required skip; earlier full partitions remain failed. Twenty Node repetitions did not reproduce SIGABRT. ARM64 Firecracker, KVM, vhost-net and GPU capacity remain blocked; host-systemd has not run."
+      "summary": "Published head cc9c5b572 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency. Shared selection preserves 15 owners under neutral, unit and syscall filters. One maintained invocation passes all eight smoke/do/workflows/bwrap owners; Docker, root and port-forwarding coverage here is analysis-only. Separate mixed-platform proof passes AMD64/ARM64 units, both strict TUN modes and both-CPU release checks. The earlier 640-owner unit/release run passes its tests; its parent remains failed on preliminary HTTP 500, with separate same-source analysis passing. The earlier syscall-analysis parent also remains failed, with its established Nogo-policy omission reconciled. Normal/race smoke passes with target-owned instrumentation. Zero-action timeout proof retains 1800 seconds for language/kind and the control's incoming 61. Original unit-v1 remains failed at 329/330; corrected boot passes 105 cases and both Nogo architectures. Full PHP partitions remain failed despite focused checks. Twenty Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted; 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1526,7 +1526,7 @@
       "url": "https://github.com/google/gvisor/pull/15188",
       "group": "tests",
       "status": "open",
-      "summary": "Published source d538e2092 removes the ignored internal netstack checkpoint option and 50 duplicate syscall targets. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. No syscall runtime workload was repeated for this no-op cleanup. Contributor-approved PR #15188 publishes the change, now included in qualification c2d28e639.",
+      "summary": "Published source e3765b279 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The source is included in qualification cc9c5b572. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188
     },
     {
@@ -2209,10 +2209,14 @@
       "from": "branch:rbe-platform-matrix",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "Qualification includes the exact reviewed source and its bounded validation; this is integration membership, not an upstream prerequisite or full-matrix claim.",
+      "reason": "Qualification includes the mixed-platform graph and now combines target-configured selections. Separate proof links cover shared selection/runtime, race instrumentation and timeout isolation; they do not establish full matrix execution.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/56710a2d9",
-        "https://app.buildbuddy.io/invocation/54c063d3-5c9d-46f0-ae49-ad85da431209"
+        "https://app.buildbuddy.io/invocation/54c063d3-5c9d-46f0-ae49-ad85da431209",
+        "https://github.com/tamird/gvisor/commit/cc9c5b572",
+        "https://app.buildbuddy.io/invocation/5fc1f4eb-9a40-4488-800c-c188526881f7",
+        "https://app.buildbuddy.io/invocation/1908842f-544e-4a47-a4ad-7a59af7f8cab",
+        "https://app.buildbuddy.io/invocation/0f5bcb26-f15d-4ab5-a634-51f5736839af"
       ]
     },
     {
@@ -2263,10 +2267,13 @@
       "from": "pr:15188",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "Qualification includes the exact duplicate-variant deletion verified by before/after graphs and both-architecture runner Nogo.",
+      "reason": "Qualification includes the duplicate-variant deletion verified by before/after graphs and both-architecture runner Nogo, plus the reviewer-requested removal of the unread Make environment setting.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c2d28e639",
-        "https://app.buildbuddy.io/invocation/28945bcb-a25f-42fd-a717-8b140f224728"
+        "https://app.buildbuddy.io/invocation/28945bcb-a25f-42fd-a717-8b140f224728",
+        "https://github.com/tamird/gvisor/commit/e3765b279",
+        "https://github.com/tamird/gvisor/commit/838033277",
+        "https://github.com/google/gvisor/pull/15188#issuecomment-5936443819"
       ]
     },
     {
