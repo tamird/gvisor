@@ -49,9 +49,7 @@ go_cov(
     race = "off",
     visibility = ["//debian:__pkg__"],
     deps = [
-        "//runsc/cli",
-        "//runsc/cmd/sentry/sentrycmd",
-        "//runsc/cmd/util",
+        "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
     ],
 )
@@ -69,9 +67,7 @@ go_cov(
     static = True,
     visibility = ["//debian:__pkg__"],
     deps = [
-        "//runsc/cli",
-        "//runsc/cmd/sentry/sentrycmd",
-        "//runsc/cmd/util",
+        "//runsc/cli/sentrycli",
         "//runsc/gvisorbinaries",
     ],
 )
