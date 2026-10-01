@@ -27,6 +27,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/udp.h>
 #include <poll.h>
 #include <sched.h>
 #include <sys/ioctl.h>
@@ -791,6 +792,46 @@ TEST_F(TuntapTest, WriteHangBug155928773) {
 
 // Test that raw packet sockets do not need/include link headers when
 // sending/receiving packets to/from pure L3 (e.g. TUN) interfaces.
+TEST_F(TuntapTest, TruncatedReadConsumesPacket) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
+  const auto tun = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
+      kTunName, kTapIPAddr, false /* tap */, true /* no_pi */));
+  const auto sender =
+      ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP));
+  const sockaddr_in dest = {.sin_family = AF_INET,
+                            .sin_port = htons(42),
+                            .sin_addr = {.s_addr = kTapPeerIPAddr}};
+  struct {
+    iphdr ip;
+    udphdr udp;
+    char payload[6];
+  } packet = {};
+
+  auto check_packet = [&](const std::string& message, size_t prefix) {
+    ASSERT_THAT(sendto(sender.get(), message.data(), message.size(), 0,
+                       AsSockAddr(&dest), sizeof(dest)),
+                SyscallSucceedsWithValue(message.size()));
+    const size_t headers = sizeof(packet.ip) + sizeof(packet.udp);
+    ssize_t n;
+    do {
+      n = RetryEINTR(read)(tun.fd.get(), &packet, headers + prefix);
+      ASSERT_THAT(n, SyscallSucceeds());
+      // The kernel may also send unsolicited IPv6 traffic on a new interface.
+    } while (n > 0 && packet.ip.version == 6);
+    ASSERT_EQ(n, headers + prefix);
+    ASSERT_EQ(static_cast<int>(packet.ip.version), 4);
+    ASSERT_EQ(packet.ip.protocol, IPPROTO_UDP);
+    ASSERT_EQ(ntohs(packet.ip.tot_len), headers + message.size());
+    ASSERT_EQ(packet.udp.dest, dest.sin_port);
+    EXPECT_EQ(memcmp(packet.payload, message.data(), prefix), 0);
+  };
+
+  // Leave the last byte of the first datagram unread. The next read must
+  // start at the second datagram's IP header.
+  ASSERT_NO_FATAL_FAILURE(check_packet("first", 4));
+  ASSERT_NO_FATAL_FAILURE(check_packet("second", 6));
+}
+
 TEST_F(TuntapTest, RawPacketSocket) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_RAW)));
