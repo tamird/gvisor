@@ -1,7 +1,7 @@
 """Defines a rule for runtime test targets."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("//test/docker:defs.bzl", "docker_daemon_config", "docker_image_archive")
+load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archive")
 load("//tools:defs.bzl", "go_test", "local_test_tags")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
@@ -107,18 +107,22 @@ def runtime_test(name, partitions, memory = None, **kwargs):
     )
 
     archive = name + "_image_amd64"
-    docker_image_archive(
-        name = archive,
-        image = "runtimes/" + name,
-        architecture = "amd64",
-    )
+
+    # Validation branch only: use the source-built PHP image in the same daemon.
+    php_source = name == "php8.3.35"
+    if not php_source:
+        docker_image_archive(
+            name = archive,
+            image = "runtimes/" + name,
+            architecture = "amd64",
+        )
     for mode, directfs in _RUNTIME_MODES.items():
         prefix = name + "_" + mode
         config = prefix + "_docker_config"
         docker_daemon_config(
             name = config,
             testonly = True,
-            images = [":" + archive + "_tar"],
+            images = [] if php_source else [":" + archive + "_tar"],
             runtime_args = [
                 "--platform=systrap",
                 "--watchdog-action=panic",
@@ -132,22 +136,53 @@ def runtime_test(name, partitions, memory = None, **kwargs):
         # as concrete tests and reuse its existing partition/shard selection.
         for partition in range(1, partitions + 1):
             test = prefix + "_" + str(partition) + "_owned"
-            _runtime_test(
-                name = test,
-                image = name,
-                docker_config = ":" + config,
-                args = [
-                    "--partition=" + str(partition),
-                    "--total_partitions=" + str(partitions),
-                ],
-                exec_properties = docker_test_exec_properties(
-                    free_disk = "20GB",
-                    memory = memory,
-                ),
-                target_compatible_with = ["@platforms//cpu:x86_64"],
-                tags = ["manual"],
-                **kwargs
-            )
+            if php_source:
+                docker_command_test(
+                    name = test,
+                    size = "large",
+                    timeout = "eternal",
+                    command = "//test/docker:cpu_image_sources_amd64",
+                    command_args = [
+                        "$(rootpath //test/runtimes/runner:runner)",
+                        "$(rootpath //test/runtimes/proctor:proctor)",
+                        "$(rootpath %s)" % kwargs["exclude_file"],
+                        str(partition),
+                        str(partitions),
+                    ],
+                    data = [
+                        "//test/runtimes/runner:runner",
+                        "//test/runtimes/proctor:proctor",
+                        kwargs["exclude_file"],
+                    ],
+                    docker_config = ":" + config,
+                    exec_properties = docker_test_exec_properties(
+                        free_disk = "40GB",
+                        memory = "8GB",
+                    ),
+                    shard_count = kwargs["shard_count"],
+                    target_compatible_with = [
+                        "@platforms//os:linux",
+                        "@platforms//cpu:x86_64",
+                    ],
+                    tags = ["manual"],
+                )
+            else:
+                _runtime_test(
+                    name = test,
+                    image = name,
+                    docker_config = ":" + config,
+                    args = [
+                        "--partition=" + str(partition),
+                        "--total_partitions=" + str(partitions),
+                    ],
+                    exec_properties = docker_test_exec_properties(
+                        free_disk = "20GB",
+                        memory = memory,
+                    ),
+                    target_compatible_with = ["@platforms//cpu:x86_64"],
+                    tags = ["manual"],
+                    **kwargs
+                )
             tests.append(test)
         native.test_suite(
             name = prefix + "_owned",
