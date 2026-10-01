@@ -61,6 +61,17 @@ entries; incomplete thread counts, label lists, check details and import lookups
 are explicitly marked. A null review decision is **not reported**, not approval.
 A `ready to pull` label is displayed as a label, not a merge-readiness decision.
 
+The snapshot also retains public top-level comments, review bodies and inline
+replies by their GitHub IDs, with authors, timestamps, reviewed commits and
+thread resolution state. The updater prints new or changed feedback from other
+authors by comparing these records, including feedback inside approvals. An
+older snapshot without feedback records triggers a backfill; its observation
+time never implies that earlier feedback was read or addressed. Unchanged
+records do not repeat, and incomplete feedback connections are explicitly
+reported. Review/comment lists retain the latest 100 entries per connection;
+the existing 100-thread bound still applies. These records do not imply that a
+reviewer's concern has been resolved.
+
 Copybara import links require a same-repository PR by `copybara-service` whose
 body contains the exact `FUTURE_COPYBARA_INTEGRATE_REVIEW` footer for the original
 PR URL and source owner/branch. The footer SHA is retained. An older source SHA

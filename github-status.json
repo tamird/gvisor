@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-10-01T20:37:41.659672+00:00",
-  "registryDate": "2026-10-01T20:39:33.096365+00:00",
+  "checkedAt": "2026-10-01T20:45:18.381418+00:00",
+  "registryDate": "2026-10-01T20:48:03.566060+00:00",
   "prs": [
     {
       "number": 12470,
@@ -15,7 +15,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:33:49Z",
       "createdAt": "2026-01-09T14:43:53Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -27,6 +27,183 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eSSyH",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3729337479",
+            "body": "@avagin @ayushr2 let me know if you'd prefer this in separate PRs.",
+            "createdAt": "2026-01-09T15:15:31Z",
+            "updatedAt": "2026-01-09T15:15:31Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eS0C1",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3729473717",
+            "body": "@nixprime could you take a loot at this pr too?",
+            "createdAt": "2026-01-09T15:50:50Z",
+            "updatedAt": "2026-01-09T15:50:50Z",
+            "author": {
+              "login": "avagin",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eTb6W",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3729637014",
+            "body": "@avagin could you import this so that tests run? I haven't run all the tests yet (still need #12461).",
+            "createdAt": "2026-01-09T16:18:14Z",
+            "updatedAt": "2026-01-09T16:18:14Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eVGWH",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3730072967",
+            "body": "@tamird Have we benchmarked the new ilist or refs implementation compared to their old go_generics one? IIRC, with Go generics, we add interface method calls and these types are on the hot paths for various subsystems.",
+            "createdAt": "2026-01-09T18:24:16Z",
+            "updatedAt": "2026-01-09T18:24:16Z",
+            "author": {
+              "login": "ayushr2",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eVL-1",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3730096053",
+            "body": "Thanks very much for the analysis! That makes sense, at least for ilist. How about the second commit that touches refs?",
+            "createdAt": "2026-01-09T18:29:59Z",
+            "updatedAt": "2026-01-09T18:29:59Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eVfyD",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3730177155",
+            "body": "I think the refs case is fine, with some changes:\r\n\r\n- The `LoggingPolicy` type argument has the same same-shape problem, resulting in an indirect call to `LoggingPolicy.enabled()` in every `IncRef/TryIncRef/DecRef`:\r\n\r\n```\r\nTEXT gvisor.dev/gvisor/pkg/refs.(*Refs[go.shape.4a0f57fe00797ca298fdef4b77d40015cc906bef1de26f24611ac34cec347463,go.shape.struct {}]).IncRef(SB) pkg/refs/refs_template.go\r\n  refs_template.go:97   0x9da240                55                      PUSHQ BP\r\n  refs_template.go:97   0x9da241                4889e5                  MOVQ SP, BP\r\n  refs_template.go:97   0x9da244                4883ec60                SUBQ $0x60, SP\r\n  refs_template.go:99   0x9da248                4889442470              MOVQ AX, 0x70(SP)\r\n  refs_template.go:99   0x9da24d                48895c2478              MOVQ BX, 0x78(SP)\r\n  refs_template.go:98   0x9da252                90                      NOPL\r\n  aligned_64bit.go:88   0x9da253                b901000000              MOVL $0x1, CX\r\n  aligned_64bit.go:88   0x9da258                f0480fc108              LOCK XADDQ CX, 0(AX)\r\n  aligned_64bit.go:88   0x9da25d                48894c2428              MOVQ CX, 0x28(SP)\r\n  refs_template.go:99   0x9da262                488b5310                MOVQ 0x10(BX), DX\r\n  refs_template.go:85   0x9da266                488b02                  MOVQ 0(DX), AX\r\n  refs_template.go:85   0x9da269                ffd0                    CALL AX\r\n  aligned_64bit.go:88   0x9da26b                488b4c2428              MOVQ 0x28(SP), CX\r\n  aligned_64bit.go:88   0x9da270                48ffc1                  INCQ CX\r\n  refs_template.go:85   0x9da273                84c0                    TESTL AL, AL\r\n  refs_template.go:99   0x9da275                7420                    JE 0x9da297\r\n  aligned_64bit.go:88   0x9da277                48894c2428              MOVQ CX, 0x28(SP)\r\n  refs_template.go:100  0x9da27c                488b542478              MOVQ 0x78(SP), DX\r\n  refs_template.go:100  0x9da281                488b82a0000000          MOVQ 0xa0(DX), AX\r\n  refs_template.go:100  0x9da288                488b5c2470              MOVQ 0x70(SP), BX\r\n  refs_template.go:100  0x9da28d                e8ae47beff              CALL gvisor.dev/gvisor/pkg/refs.LogIncRef(SB)\r\n...\r\n```\r\n\r\n  I think you can avoid this by making the logging policies distinct shapes instead, as in https://github.com/google/gvisor/blob/master/pkg/bpf/input_bytes.go.\r\n\r\n- An ergonomic complaint: having to explicitly specify `refs.LoggingDisabled` everywhere is a bit obnoxious, since the intended use of the feature is that it's disabled by default, and selectively enabled to debug refcounting problems for specific types. Is it possible to define e.g. `type RefsBase[T any, L LoggingPolicy] struct{...}; type Refs[T any] = RefsBase[T, LoggingDisabled]; type LoggedRefs[T any] = RefsBase[T, LoggingEnabled]`?",
+            "createdAt": "2026-01-09T18:51:47Z",
+            "updatedAt": "2026-01-09T18:51:47Z",
+            "author": {
+              "login": "nixprime",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7eh9eb",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3733444507",
+            "body": "Done. Required some more go_stateify surgery, please have a look!",
+            "createdAt": "2026-01-10T20:00:53Z",
+            "updatedAt": "2026-01-10T20:00:53Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7ejCy9",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3733728445",
+            "body": "Is there any benefits of using Go generics? ",
+            "createdAt": "2026-01-11T00:14:10Z",
+            "updatedAt": "2026-01-11T00:14:10Z",
+            "author": {
+              "login": "avagin",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7emE4b",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3734523419",
+            "body": "> Is there any benefits of using Go generics?\r\n\r\nThere's a big ergonomics benefit. Using bazel in editors is not very well supported, so anyone working on gvisor without the benefit of internal tooling can't easily jump to definition on types generated by `go_generics`.",
+            "createdAt": "2026-01-11T12:54:10Z",
+            "updatedAt": "2026-01-11T12:54:10Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7e6pe2",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3739916214",
+            "body": "Could I please get a CI run on this?",
+            "createdAt": "2026-01-12T18:30:13Z",
+            "updatedAt": "2026-01-12T18:30:13Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7e9tP9",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3740718077",
+            "body": "The loggingPolicy thing in refs didn't work, there's still a runtime test and branching:\r\n\r\n```\r\nTEXT gvisor.dev/gvisor/pkg/refs.(*RefsBase[go.shape.struct { gvisor.dev/gvisor/pkg/buffer.chunkRefs; gvisor.dev/gvisor/pkg/buffer.data []uint8 },go.shape.uint8]).IncRef(SB) pkg/refs/refs_template.go\r\n  ...\r\n  aligned_64bit.go:88   0x7aa94e                f0480fc108              LOCK XADDQ CX, 0(AX)\r\n  refs_template.go:113  0x7aa953                488b5308                MOVQ 0x8(BX), DX\r\n  refs_template.go:92   0x7aa957                488b5260                MOVQ 0x60(DX), DX\r\n  refs_template.go:92   0x7aa95b                0f1f440000              NOPL 0(AX)(AX*1)\r\n  refs_template.go:92   0x7aa960                4885d2                  TESTQ DX, DX\r\n  refs_template.go:92   0x7aa963                0f844e010000            JE 0x7aaab7\r\n  refs_template.go:92   0x7aa969                4889442470              MOVQ AX, 0x70(SP)\r\n  refs_template.go:92   0x7aa96e                48895c2478              MOVQ BX, 0x78(SP)\r\n  refs_template.go:92   0x7aa973                448b4210                MOVL 0x10(DX), R8\r\n  aligned_64bit.go:88   0x7aa977                48ffc1                  INCQ CX\r\n  aligned_64bit.go:88   0x7aa97a                660f1f440000            NOPW 0(AX)(AX*1)\r\n  refs_template.go:92   0x7aa980                4181f8a6ef4c1f          CMPL R8, $0x1f4cefa6\r\n  refs_template.go:92   0x7aa987                7539                    JNE 0x7aa9c2\r\n  refs_template.go:95   0x7aa989                488d35b0e1a100          LEAQ 0xa1e1b0(IP), SI\r\n  refs_template.go:95   0x7aa990                4839f2                  CMPQ DX, SI\r\n  refs_template.go:95   0x7aa993                0f851e010000            JNE 0x7aaab7\r\n  aligned_64bit.go:88   0x7aa999                48894c2428              MOVQ CX, 0x28(SP)\r\n  refs_template.go:114  0x7aa99e                488b93d8000000          MOVQ 0xd8(BX), DX\r\n  refs_template.go:114  0x7aa9a5                4889c3                  MOVQ AX, BX\r\n  refs_template.go:114  0x7aa9a8                4889d0                  MOVQ DX, AX\r\n  refs_template.go:114  0x7aa9ab                e8f03de1ff              CALL gvisor.dev/gvisor/pkg/refs.LogIncRef(SB)\r\n```\r\n\r\nIt looks like it doesn't work in `bpf/input_bytes.go` anymore either... From experimentation, it looks like it works if `bpf.load*()` is inlined into a call site where `endian` is specified explicitly, but when it's inlined into e.g. `bpf.Exec[endian Endianness]()` the type-switch occurs at runtime. I'm asking the Go team if there's anything we can do about this.",
+            "createdAt": "2026-01-12T22:02:13Z",
+            "updatedAt": "2026-01-12T22:02:13Z",
+            "author": {
+              "login": "nixprime",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7e998J",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-3740786441",
+            "body": "Apparently this is https://github.com/golang/go/issues/59591.\r\n\r\nI tried inlining `LogRefs()` into `IncRef()` etc. (`var l L; if _, ok := any(l).(loggingEnabled); ok { ... }`), but this didn't help the generated code.",
+            "createdAt": "2026-01-12T22:20:58Z",
+            "updatedAt": "2026-01-12T22:20:58Z",
+            "author": {
+              "login": "nixprime",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABFJ-aIg",
+            "url": "https://github.com/google/gvisor/pull/12470#issuecomment-4640971298",
+            "body": "A friendly reminder that this PR had no activity for 120 days.",
+            "createdAt": "2026-06-07T01:03:52Z",
+            "updatedAt": "2026-06-07T01:03:52Z",
+            "author": {
+              "login": "github-actions",
+              "__typename": "Bot"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs7ZQ90m",
+            "url": "https://github.com/google/gvisor/pull/12470#pullrequestreview-3645103398",
+            "body": "Unlike go_generics, native Go generics only instantiate distinct code for different argument \"shapes\"; see https://github.com/golang/proposal/blob/master/design/generics-implementation-gcshape.md. AFAIU, all pointers have the same shape, so all instances of `ilist.Entry[*T]` and `ilist.List[*T]` use the same generated code, necessitating dynamic dispatch for `ilist.Linker` method calls after this change.\r\n\r\nFor example, before this change:\r\n\r\n```\r\nTEXT gvisor.dev/gvisor/pkg/sentry/kernel.(*pendingSignals).enqueue(SB) pkg/sentry/kernel/pending_signals.go\r\n...\r\n  pending_signals_list.go:112   0xa9ec71                90                      NOPL\r\n  pending_signals_list.go:231   0xa9ec72                48c70000000000          MOVQ $0x0, 0(AX)\r\n  pending_signals_list.go:113   0xa9ec79                488b4c2410              MOVQ 0x10(SP), CX\r\n  pending_signals_list.go:113   0xa9ec7e                488b542430              MOVQ 0x30(SP), DX\r\n  pending_signals_list.go:113   0xa9ec83                488b5cca08              MOVQ 0x8(DX)(CX*8), BX\r\n  pending_signals_list.go:238   0xa9ec88                833d312a7d0100          CMPL runtime.writeBarrier(SB), $0x0\r\n  pending_signals_list.go:238   0xa9ec8f                7408                    JE 0xa9ec99\r\n  pending_signals_list.go:238   0xa9ec91                e80aa59eff              CALL runtime.gcWriteBarrier1(SB)\r\n  pending_signals_list.go:238   0xa9ec96                49891b                  MOVQ BX, 0(R11)\r\n  pending_signals_list.go:238   0xa9ec99                48895808                MOVQ BX, 0x8(AX)\r\n  pending_signals_list.go:114   0xa9ec9d                488b5cca08              MOVQ 0x8(DX)(CX*8), BX\r\n  pending_signals_list.go:114   0xa9eca2                4885db                  TESTQ BX, BX\r\n  pending_signals_list.go:114   0xa9eca5                741d                    JE 0xa9ecc4\r\n  pending_signals_list.go:231   0xa9eca7                833d122a7d0100          CMPL runtime.writeBarrier(SB), $0x0\r\n  pending_signals_list.go:231   0xa9ecae                740f                    JE 0xa9ecbf\r\n  pending_signals_list.go:231   0xa9ecb0                488b33                  MOVQ 0(BX), SI\r\n  pending_signals_list.go:231   0xa9ecb3                e808a59eff              CALL runtime.gcWriteBarrier2(SB)\r\n  pending_signals_list.go:231   0xa9ecb8                498903                  MOVQ AX, 0(R11)\r\n  pending_signals_list.go:231   0xa9ecbb                49897308                MOVQ SI, 0x8(R11)\r\n  pending_signals_list.go:231   0xa9ecbf                488903                  MOVQ AX, 0(BX)\r\n  pending_signals_list.go:115   0xa9ecc2                eb1d                    JMP 0xa9ece1\r\n  pending_signals_list.go:117   0xa9ecc4                833df5297d0100          CMPL runtime.writeBarrier(SB), $0x0\r\n  pending_signals_list.go:117   0xa9eccb                7410                    JE 0xa9ecdd\r\n  pending_signals_list.go:117   0xa9eccd                488b1cca                MOVQ 0(DX)(CX*8), BX\r\n  pending_signals_list.go:117   0xa9ecd1                e8eaa49eff              CALL runtime.gcWriteBarrier2(SB)\r\n  pending_signals_list.go:117   0xa9ecd6                498903                  MOVQ AX, 0(R11)\r\n  pending_signals_list.go:117   0xa9ecd9                49895b08                MOVQ BX, 0x8(R11)\r\n  pending_signals_list.go:117   0xa9ecdd                488904ca                MOVQ AX, 0(DX)(CX*8)\r\n  pending_signals_list.go:120   0xa9ece1                833dd8297d0100          CMPL runtime.writeBarrier(SB), $0x0\r\n  pending_signals_list.go:120   0xa9ece8                7411                    JE 0xa9ecfb\r\n  pending_signals_list.go:120   0xa9ecea                488b5cca08              MOVQ 0x8(DX)(CX*8), BX\r\n  pending_signals_list.go:120   0xa9ecef                e8cca49eff              CALL runtime.gcWriteBarrier2(SB)\r\n  pending_signals_list.go:120   0xa9ecf4                498903                  MOVQ AX, 0(R11)\r\n  pending_signals_list.go:120   0xa9ecf7                49895b08                MOVQ BX, 0x8(R11)\r\n  pending_signals_list.go:120   0xa9ecfb                488944ca08              MOVQ AX, 0x8(DX)(CX*8)\r\n```\r\n\r\nAfter this change:\r\n\r\n```\r\nTEXT gvisor.dev/gvisor/pkg/sentry/kernel.(*pendingSignals).enqueue(SB) pkg/sentry/kernel/pending_signals.go\r\n...\r\n  pending_signals.go:101        0xa9c186                488d1d937fbd00          LEAQ gvisor.dev/gvisor/pkg/ilist..dict.List[*gvisor.dev/gvisor/pkg/sentry/kernel.pendingSignal](SB), BX\r\n  pending_signals.go:101        0xa9c18d                e82e1d0500              CALL gvisor.dev/gvisor/pkg/ilist.(*List[go.shape.*gvisor.dev/gvisor/pkg/sentry/kernel.pendingSignal]).PushBack(SB)\r\n...\r\n\r\nTEXT gvisor.dev/gvisor/pkg/ilist.(*List[go.shape.*gvisor.dev/gvisor/pkg/sentry/kernel.pendingSignal]).PushBack(SB) pkg/ilist/list.go\r\n  list.go:124           0xaedec0                55                      PUSHQ BP\r\n  list.go:124           0xaedec1                4889e5                  MOVQ SP, BP\r\n  list.go:124           0xaedec4                4883ec18                SUBQ $0x18, SP\r\n  list.go:128           0xaedec8                4889442428              MOVQ AX, 0x28(SP)\r\n  list.go:128           0xaedecd                48895c2430              MOVQ BX, 0x30(SP)\r\n  list.go:128           0xaeded2                48894c2438              MOVQ CX, 0x38(SP)\r\n  list.go:126           0xaeded7                488d5308                LEAQ 0x8(BX), DX\r\n  list.go:126           0xaededb                4889542410              MOVQ DX, 0x10(SP)\r\n  list.go:126           0xaedee0                488b7308                MOVQ 0x8(BX), SI\r\n  list.go:126           0xaedee4                4889c8                  MOVQ CX, AX\r\n  list.go:126           0xaedee7                31db                    XORL BX, BX\r\n  list.go:126           0xaedee9                ffd6                    CALL SI\r\n  list.go:127           0xaedeeb                488b542430              MOVQ 0x30(SP), DX\r\n  list.go:127           0xaedef0                488d4a10                LEAQ 0x10(DX), CX\r\n  list.go:127           0xaedef4                488b7210                MOVQ 0x10(DX), SI\r\n  list.go:127           0xaedef8                488b7c2428              MOVQ 0x28(SP), DI\r\n  list.go:127           0xaedefd                488b5f08                MOVQ 0x8(DI), BX\r\n  list.go:127           0xaedf01                488b442438              MOVQ 0x38(SP), AX\r\n  list.go:127           0xaedf06                4889ca                  MOVQ CX, DX\r\n  list.go:127           0xaedf09                ffd6                    CALL SI\r\n  list.go:128           0xaedf0b                488b4c2428              MOVQ 0x28(SP), CX\r\n  list.go:128           0xaedf10                488b4108                MOVQ 0x8(CX), AX\r\n  list.go:128           0xaedf14                4885c0                  TESTQ AX, AX\r\n  list.go:128           0xaedf17                7529                    JNE 0xaedf42\r\n  list.go:131           0xaedf19                833da037780100          CMPL runtime.writeBarrier(SB), $0x0\r\n  list.go:131           0xaedf20                7507                    JNE 0xaedf29\r\n  list.go:131           0xaedf22                488b542438              MOVQ 0x38(SP), DX\r\n  list.go:131           0xaedf27                eb14                    JMP 0xaedf3d\r\n  list.go:131           0xaedf29                488b01                  MOVQ 0(CX), AX\r\n  list.go:131           0xaedf2c                e88fb299ff              CALL runtime.gcWriteBarrier2(SB)\r\n  list.go:131           0xaedf31                488b542438              MOVQ 0x38(SP), DX\r\n  list.go:131           0xaedf36                498913                  MOVQ DX, 0(R11)\r\n  list.go:131           0xaedf39                49894308                MOVQ AX, 0x8(R11)\r\n  list.go:131           0xaedf3d                488911                  MOVQ DX, 0(CX)\r\n  list.go:131           0xaedf40                eb1f                    JMP 0xaedf61\r\n  list.go:129           0xaedf42                488b4c2430              MOVQ 0x30(SP), CX\r\n  list.go:129           0xaedf47                488b4908                MOVQ 0x8(CX), CX\r\n  list.go:129           0xaedf4b                488b5c2438              MOVQ 0x38(SP), BX\r\n  list.go:129           0xaedf50                488b542410              MOVQ 0x10(SP), DX\r\n  list.go:129           0xaedf55                ffd1                    CALL CX\r\n  list.go:134           0xaedf57                488b4c2428              MOVQ 0x28(SP), CX\r\n  list.go:134           0xaedf5c                488b542438              MOVQ 0x38(SP), DX\r\n  list.go:134           0xaedf61                833d5837780100          CMPL runtime.writeBarrier(SB), $0x0\r\n  list.go:134           0xaedf68                7410                    JE 0xaedf7a\r\n  list.go:134           0xaedf6a                488b4108                MOVQ 0x8(CX), AX\r\n  list.go:134           0xaedf6e                e84db299ff              CALL runtime.gcWriteBarrier2(SB)\r\n  list.go:134           0xaedf73                498913                  MOVQ DX, 0(R11)\r\n  list.go:134           0xaedf76                49894308                MOVQ AX, 0x8(R11)\r\n  list.go:134           0xaedf7a                48895108                MOVQ DX, 0x8(CX)\r\n  list.go:135           0xaedf7e                4883c418                ADDQ $0x18, SP\r\n  list.go:135           0xaedf82                5d                      POPQ BP\r\n  list.go:135           0xaedf83                c3                      RET\r\n```\r\n\r\nConsequently, I don't think we should merge this change.",
+            "state": "COMMENTED",
+            "submittedAt": "2026-01-09T18:27:56Z",
+            "updatedAt": "2026-01-09T18:27:56Z",
+            "author": {
+              "login": "nixprime",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "9b6d47c07faa164369b1bb4551b6c2216778b140"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -90,7 +267,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:33:52Z",
       "createdAt": "2026-01-12T20:58:15Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -100,6 +277,107 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7fJM_F",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-3743731653",
+            "body": "@ayushr2 could you have a look at this one?",
+            "createdAt": "2026-01-13T11:07:26Z",
+            "updatedAt": "2026-01-13T11:07:26Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7fPld8",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-3745404796",
+            "body": "IIUC, we are using `go_generics` package to generate code which is using Go's native generics support. Two levels of generated code. So why not directly replace the `go_generics` atomic pointer with `atomic.Pointer`? Maybe I am missing something. Is there a benefit to doing it this way?",
+            "createdAt": "2026-01-13T16:57:18Z",
+            "updatedAt": "2026-01-13T16:57:18Z",
+            "author": {
+              "login": "ayushr2",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7fP2OO",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-3745473422",
+            "body": "> \r\n\r\nI couldn't agree more, but stateify doesn't yet support generics. That requires the first N-1 commits in https://github.com/google/gvisor/pull/12470, so I was planning to send that after that PR (and this one) merge.",
+            "createdAt": "2026-01-13T17:11:32Z",
+            "updatedAt": "2026-01-13T17:11:32Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7fP3Gy",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-3745477042",
+            "body": "Having said that, I could move those commits to this PR, since there is some question about whether https://github.com/google/gvisor/pull/12470 can be merged at all.",
+            "createdAt": "2026-01-13T17:12:25Z",
+            "updatedAt": "2026-01-13T17:12:25Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7fltgI",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
+            "body": "IIUC https://github.com/google/gvisor/pull/12470/commits/80913f9c71a1e72d7999f736377d8bf245f873a1 requires wrapping the atomic pointer fields with a struct and putting special `stateify` tags on them. I think that is also not a very clean interface.\r\n\r\nWe should probably add native support to stateify for `atomic.Pointer`; such that it should be able to detect `atomic.Pointer` usage and generate code using .Load() and .Store(). I don't know if the AST parser we use is capable to do this. If not, we can add support for new `stateify` tags like:\r\n```\r\n\tptr atomic.Pointer[int] `state: pointer\".(int)\"`\r\n```\r\n\r\nIf you intend to cleanup `atomicptr` from go_generics, then we could also just use:\r\n```\r\n// +stateify savable\r\ntype S struct {\r\n\tptr atomic.Pointer[int] `state:\".(int)\"`\r\n}\r\n\r\nfunc (s *S) savePtr() int {\r\n\treturn s.ptr.Load()\r\n}\r\n\r\nfunc (s *S) loadPtr(_ goContext.Context, ptr int) {\r\n\ts.ptr.Store(ptr)\r\n}\r\n```",
+            "createdAt": "2026-01-14T19:20:56Z",
+            "updatedAt": "2026-01-14T23:25:59Z",
+            "author": {
+              "login": "ayushr2",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs7fqfyk",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-3752459428",
+            "body": "> IIUC [80913f9](https://github.com/google/gvisor/commit/80913f9c71a1e72d7999f736377d8bf245f873a1) requires wrapping the atomic pointer fields with a struct and putting special `stateify` tags on them. I think that is also not a very clean interface.\r\n> \r\n> We should probably add native support to stateify for `atomic.Pointer`; such that it should be able to detect `atomic.Pointer` usage and generate code using .Load() and .Store(). I don't know if the AST parser we use is capable to do this.\r\n\r\nIt's not that the AST parser isn't capable, it's that that state package fundamentally wants to register a `reflect.Type` under a unique name: https://github.com/google/gvisor/blob/70f9a824dc761638488b988ebd33930569a83c65/pkg/state/types.go#L339\r\n\r\nSince there's no `reflect.Type` associated with an uninstantiated generic, we'd need to do string matching on the type's name and its methods to discover that it is an `atomic.Pointer`.\r\n\r\n> If not, we can add support for new `stateify` tags like:\r\n> \r\n> ```\r\n> \tptr atomic.Pointer[int] `state: pointer\".(int)\"`\r\n> ```\r\n\r\nWe perhaps could, but is that any better? This would make a poor addition to `go_stateify` because it doesn't generalize beyond `atomic.Pointer`.\r\n\r\n> \r\n> If you intend to cleanup `atomicptr` from go_generics, then we could also just use:\r\n> \r\n> ```\r\n> // +stateify savable\r\n> type S struct {\r\n> \t// descriptorTable holds descriptors.\r\n> \tptr atomic.Pointer[int] `state:\".(int)\"`\r\n> }\r\n> \r\n> func (s *S) savePtr() int {\r\n> \treturn s.ptr.Load()\r\n> }\r\n> \r\n> func (s *S) loadPtr(_ goContext.Context, ptr int) {\r\n> \ts.ptr.Store(ptr)\r\n> }\r\n> ```\r\n\r\nWe could, but that feels quite manual, and ergonomically worse than what exists today.\r\n\r\nBefore the codegen deficiencies were pointed out in https://github.com/google/gvisor/pull/12470#pullrequestreview-3645103398 my goal was to remove type parameter support from go_generics, leaving only constants.\r\n\r\nNow answering your first point:\r\n\r\n> IIUC [80913f9](https://github.com/google/gvisor/commit/80913f9c71a1e72d7999f736377d8bf245f873a1) requires wrapping the atomic pointer fields with a struct and putting special `stateify` tags on them. I think that is also not a very clean interface.\r\n\r\nWell, I don't disagree, but haven't come up with a cleaner way of supporting generics with stateify. I'm all ears for suggestions!",
+            "createdAt": "2026-01-15T01:35:35Z",
+            "updatedAt": "2026-01-15T01:35:35Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABCz06Xg",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-4483529310",
+            "body": "A friendly reminder that this PR had no activity for 120 days.",
+            "createdAt": "2026-05-19T00:56:49Z",
+            "updatedAt": "2026-05-19T00:56:49Z",
+            "author": {
+              "login": "github-actions",
+              "__typename": "Bot"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABEmJycw",
+            "url": "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011",
+            "body": "> A friendly reminder that this PR had no activity for 120 days.\r\n\r\nYes, I am waiting for guidance from @ayushr2.",
+            "createdAt": "2026-06-02T14:28:01Z",
+            "updatedAt": "2026-06-02T14:28:01Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -127,7 +405,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:49:13Z",
       "createdAt": "2026-08-21T17:35:33Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -139,6 +417,55 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQEX8rA",
+            "url": "https://github.com/google/gvisor/pull/14237#issuecomment-5373295788",
+            "body": "The scope has grown beyond the original nested-capture fix. r? @EtiennePerot for the cumulative lock/atomic analysis and configured-Go-target changes.\n\nThe cumulative diff is 48 files (+1743/−240), centered on `tools/checklocks/; tools/nogo/; tools/bazeldefs/`.\n\ncc @konstantin-s-bogom.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-21T17:45:20Z",
+            "updatedAt": "2026-08-24T04:20:48Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPdI-Ag",
+            "url": "https://github.com/google/gvisor/pull/14237#pullrequestreview-5332155906",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-27T21:24:27Z",
+            "updatedAt": "2026-09-27T21:24:27Z",
+            "author": {
+              "login": "xinzhong",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "d0da6d537289bba2b3dfabc920ad8cbbd0f772d2"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQPOFlg",
+            "url": "https://github.com/google/gvisor/pull/14237#pullrequestreview-5384668566",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T19:49:02Z",
+            "updatedAt": "2026-10-01T19:49:03Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "2bf6f9791fa1640087175db414f78f434f81d0f7"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -238,7 +565,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:33:58Z",
       "createdAt": "2026-08-22T11:55:42Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -248,6 +575,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQK-ZZw",
+            "url": "https://github.com/google/gvisor/pull/14338#issuecomment-5380217191",
+            "body": "r? @nybidari Could you review TCP endpoint/helper ownership, keepalive locking, and lifecycle exceptions?\n\nFocused local Bazel checks passed. Upstream checks have not reported yet.\n\ncc @konstantin-s-bogom\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-08-22T11:55:51Z",
+            "updatedAt": "2026-08-22T11:55:51Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU90Ig",
+            "url": "https://github.com/google/gvisor/pull/14338#issuecomment-5390693410",
+            "body": "The replacement review scopes are #14354, #14366, #14367, #14368, #14369, #14370, #14371, tracked in #14349. This broad PR is only partially replaced: Unix transport contracts and the TPU work in the FD-table batch still need actual prerequisite landing, rebasing and revalidation before separate PRs are opened.\n\nKeeping this PR open to retain that remaining scope; please use the linked replacements for the work ready to review now. Its existing cumulative diff is not an additional replacement review unit.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:22:14Z",
+            "updatedAt": "2026-08-24T04:22:14Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -305,7 +661,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:34:00Z",
       "createdAt": "2026-08-22T11:57:04Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -315,6 +671,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQK_Y8w",
+            "url": "https://github.com/google/gvisor/pull/14343#issuecomment-5380233459",
+            "body": "r? @EtiennePerot Could you review VFS registries, mount helpers, atomic metadata and lifecycle exceptions?\n\nFocused local Bazel checks passed. Upstream checks have not reported yet.\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-08-22T11:57:13Z",
+            "updatedAt": "2026-08-22T11:57:13Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU-2ow",
+            "url": "https://github.com/google/gvisor/pull/14343#issuecomment-5390710435",
+            "body": "The replacement review scopes are #14353, #14361, #14362, #14363, tracked in #14349. This broad PR is only partially replaced: the dependent TMPFS/VFS contracts and FD-table batch still need actual prerequisite landing, rebasing and revalidation before separate PRs are opened.\n\nKeeping this PR open to retain that remaining scope; please use the linked replacements for the work ready to review now. Its existing cumulative diff is not an additional replacement review unit.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:24:44Z",
+            "updatedAt": "2026-08-24T04:24:44Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -372,7 +757,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:34:03Z",
       "createdAt": "2026-08-22T11:57:39Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -382,6 +767,83 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQK_2_A",
+            "url": "https://github.com/google/gvisor/pull/14345#issuecomment-5380241148",
+            "body": "r? @EtiennePerot Could you review registration/session/cache ownership and the atomic cache-pointer contract?\n\nFocused local Bazel checks passed. Upstream checks are pending. This comparison currently includes the prerequisites linked in the description.\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-08-22T11:57:49Z",
+            "updatedAt": "2026-08-22T11:57:49Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQMpFnA",
+            "url": "https://github.com/google/gvisor/pull/14345#issuecomment-5381965212",
+            "body": "@tamird This is quite the spam. Merging PRs today is a huge lift because it requires 2 approvals from Googlers and requires constant submit attempts from Googlers because our presubmits are really long and flaky. (I am no longer a Googler and have pending PRs for multiple weeks now)\r\n\r\nAre these PRs reviewed by you? They do more than just change checklocks.\r\n\r\nSo many commits will also pollute our git commit history with checklocks commits. Please squash all your work into 2-3 PRs, probably divided by subsystem. For example, all checklock changes for netstack can go into 1 commit.",
+            "createdAt": "2026-08-22T18:35:17Z",
+            "updatedAt": "2026-08-22T18:35:17Z",
+            "author": {
+              "login": "ayushr2",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQMpuyQ",
+            "url": "https://github.com/google/gvisor/pull/14345#issuecomment-5381975753",
+            "body": "> @tamird This is quite the spam. Merging PRs today is a huge lift because it requires 2 approvals from Googlers and requires constant submit attempts from Googlers because our presubmits are really long and flaky. (I am no longer a Googler and have pending PRs for multiple weeks now)\r\n> \r\n> Are these PRs reviewed by you? They do more than just change checklocks.\r\n> \r\n> So many commits will also pollute our git commit history with checklocks commits. Please squash all your work into 2-3 PRs, probably divided by subsystem. For example, all checklock changes for netstack can go into 1 commit.\r\n\r\nSure, can do. Yes, they are all reviewed by me; I'll greatly reduce the number.",
+            "createdAt": "2026-08-22T18:37:52Z",
+            "updatedAt": "2026-08-22T18:37:52Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQOiHFw",
+            "url": "https://github.com/google/gvisor/pull/14345#issuecomment-5383948055",
+            "body": "Following up on [Ayush's consolidation request](https://github.com/google/gvisor/pull/14345#issuecomment-5381965212):\n\n> Please squash all your work into 2-3 PRs, probably divided by subsystem.\n\nThe consolidated revisions are now pushed: 77 PRs have become nine subsystem PRs, and the 68 superseded PRs are closed. #14240 remains separate because it was already ready to pull.\n\n| Scope | PR |\n|---|---|\n| Checker and analysis tooling | #14237 |\n| Clocks and timers | #14339 |\n| Shared libraries | #14289 |\n| Runtime control | #14342 |\n| Metrics and logging | #14313 |\n| Memory and checkpointing | #14348 |\n| Filesystems and FDs | #14343 |\n| Tasks, security and IPC | #14345 |\n| Networking | #14338 |\n\nEach production PR adds one subsystem commit above the shared tooling prerequisite, #14237. Tooling keeps two independently applicable commits: analyzer fixes and configured-target analysis/generator support. It needs to land first; the eight production branches are siblings, not a chain.\n\nThe descriptions now distinguish synchronization and error-path fixes from annotations and document the remaining lifecycle and callback limitations.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-23T03:12:31Z",
+            "updatedAt": "2026-08-23T03:12:31Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQUk4Tw",
+            "url": "https://github.com/google/gvisor/pull/14345#issuecomment-5390284879",
+            "body": "I'm further reworking these PRs but there's going to be a lot more than a few; broadly there will be:\r\n- easy adding annotations to code that is already correct\r\n- making checklocks more correct and more expressive\r\n- fixing bugs (there are a lot of findings, and not all of them strictly checklocks related)",
+            "createdAt": "2026-08-24T03:14:26Z",
+            "updatedAt": "2026-08-24T03:14:26Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU-4Wg",
+            "url": "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
+            "body": "The replacement review scopes are #14352, #14364, #14365, tracked in #14349. This broad PR is only partially replaced: the dependent kernel-runtime/TaskSet and futex batches still need actual prerequisite landing, rebasing and revalidation before separate PRs are opened.\n\nKeeping this PR open to retain that remaining scope; please use the linked replacements for the work ready to review now. Its existing cumulative diff is not an additional replacement review unit.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:24:48Z",
+            "updatedAt": "2026-08-24T04:24:48Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -439,7 +901,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:34:05Z",
       "createdAt": "2026-08-22T11:58:27Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -449,6 +911,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQLAcsQ",
+            "url": "https://github.com/google/gvisor/pull/14348#issuecomment-5380250801",
+            "body": "r? @nybidari Could you review asynchronous page-I/O bookkeeping and generic atomic-pointer contracts?\n\nFocused local Bazel checks passed. Upstream checks have not reported yet. This comparison currently includes the prerequisites linked in the description.\n\ncc @EtiennePerot\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-08-22T11:58:34Z",
+            "updatedAt": "2026-08-22T11:58:34Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU-73A",
+            "url": "https://github.com/google/gvisor/pull/14348#issuecomment-5390711772",
+            "body": "The replacement review scopes are #14351, #14360, #14237, tracked in #14349. This broad PR is only partially replaced: the dependent allocator atomic-pointer contracts still need actual prerequisite landing, rebasing and revalidation before separate PRs are opened.\n\nKeeping this PR open to retain that remaining scope; please use the linked replacements for the work ready to review now. Its existing cumulative diff is not an additional replacement review unit.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:24:56Z",
+            "updatedAt": "2026-08-24T04:24:56Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -506,7 +997,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-18T01:07:35Z",
       "createdAt": "2026-08-24T04:14:33Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -516,6 +1007,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU8Brg",
+            "url": "https://github.com/google/gvisor/pull/14351#issuecomment-5390664110",
+            "body": "Validation qualification for 95d420fd1c6: the targeted Bazel checks passed, but the raw analyzer output is not clean. Relative to stock, these contracts expose 100 additional implicit-closure-exit findings from the existing checker limitation; 16 atomic-copy findings disappear, with no other non-hint changes. Implicit-return locations and recovery pruning remain deferred in #14237, and these raw findings have not been hidden with new filters.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:18:03Z",
+            "updatedAt": "2026-08-24T04:18:03Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU8ZwA",
+            "url": "https://github.com/google/gvisor/pull/14351#issuecomment-5390670272",
+            "body": "r? @milantracy for the MM mapping/metadata contracts and their timer, accounting and loader callers.\n\nThe cumulative diff is 26 files (+805/−192), centered on `pkg/sentry/{mm,ktime,usage}/; runsc/boot/`.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:18:54Z",
+            "updatedAt": "2026-08-24T04:18:54Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -573,7 +1093,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-24T13:54:47Z",
       "createdAt": "2026-08-24T04:16:03Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -583,6 +1103,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU8Hag",
+            "url": "https://github.com/google/gvisor/pull/14360#issuecomment-5390665578",
+            "body": "Coverage qualification for 0e9086b818b: the selected normal checks and kernel/pgalloc race tests passed. A define-only 64K build remains blocked by the stock build-tag forwarding problem addressed in #14237; a temporary composition passed, but that is neither an exact-head standalone result nor native 64K-page hardware coverage. Broad checkpoint and boot-baseline coverage is not claimed.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:18:15Z",
+            "updatedAt": "2026-08-24T04:18:15Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU8x4w",
+            "url": "https://github.com/google/gvisor/pull/14360#issuecomment-5390676451",
+            "body": "r? @fvoznika for checkpoint callback ordering and async restore ownership, including allocator save/restore boundaries.\n\nThe cumulative diff is 14 files (+838/−157), centered on `pkg/sentry/{kernel,pgalloc}/; runsc/boot/`.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:19:47Z",
+            "updatedAt": "2026-08-24T04:19:47Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -640,7 +1189,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T04:45:52Z",
       "createdAt": "2026-08-24T04:16:07Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -650,6 +1199,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU8MYA",
+            "url": "https://github.com/google/gvisor/pull/14361#issuecomment-5390666848",
+            "body": "Coverage qualification for 0e5abe9a751: the selected normal checks passed and the Unix-domain-socket cases executed. HardLink coverage was skipped because CAP_DAC_READ_SEARCH is unavailable locally; no cumulative race-suite pass is claimed.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:18:25Z",
+            "updatedAt": "2026-08-24T04:18:25Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABQU8z7Q",
+            "url": "https://github.com/google/gvisor/pull/14361#issuecomment-5390676973",
+            "body": "r? @milantracy for LisaFS socket/control-FD ownership and stale-node removal after replacement.\n\nThe cumulative diff is 10 files (+197/−46), centered on `pkg/lisafs/; runsc/fsgofer/`.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-24T04:19:52Z",
+            "updatedAt": "2026-08-24T04:19:52Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -707,7 +1285,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:21:22Z",
       "createdAt": "2026-08-30T19:57:30Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -719,6 +1297,167 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABRpXDjQ",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5479187341",
+            "body": "r? @konstantin-s-bogom Nogo support extracted from #14237; prerequisite for #14237 and #14504.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-31T13:38:38Z",
+            "updatedAt": "2026-08-31T13:38:38Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABUS13BA",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5656901380",
+            "body": "@kerumeto could you please import this? I've resolved the conflict.",
+            "createdAt": "2026-09-13T23:13:21Z",
+            "updatedAt": "2026-09-13T23:13:21Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABVQ2TKA",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5721920296",
+            "body": "@kerumeto @trantoji is there any further action required here?",
+            "createdAt": "2026-09-17T22:11:52Z",
+            "updatedAt": "2026-09-17T22:11:52Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABV9csBg",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5768686598",
+            "body": "My apologies, it seems I had to reapprove the changes. I'll keep a close eye on this until it goes through.",
+            "createdAt": "2026-09-21T23:00:10Z",
+            "updatedAt": "2026-09-21T23:00:10Z",
+            "author": {
+              "login": "kerumeto",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABWGYfwA",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5778055104",
+            "body": "The public failures in export #14871 have two causes. Preserving the explicit race settings introduced by ba94580e185 exposes that Nogo's architecture transitions select platforms that forbid cgo. A revised version of this change uses cgo-capable analysis platforms and excludes non-allocating compiler race hooks from allocation detection.\n\nThat analysis also exposed missing nosplit guarantees in metric sampling helpers. #14876 contains the prerequisite runtime fixes; ~~it should land before the revised version of this PR so each remains a single-commit change.~~ The combined revision passes both architectures' race Nogo checks and links both race binaries. ~~The revised Nogo commit is still local, pending that prerequisite.~~\n\nSeparately, the export added `//security/safearchive:zip` to `tools/nogo/check/BUILD`, but that package does not exist in the public repository and the test imports standard-library `archive/zip`. This dependency is absent from the source PR. The export mapping needs to omit it before re-exporting. See the [exported BUILD file](https://github.com/google/gvisor/blob/fa7fbdf2e4049929a63df3d96058047451c2a7fa/tools/nogo/check/BUILD) and the [failed public build](https://buildkite.com/gvisor/pipeline/builds/48428).\n\nUpdate: #14876 has merged. This PR now contains one commit, c67d236a4cf356829acef7ee3ccf2591cbb9c0f6, rebased onto master. The production race Nogo checks and the checklocks/checkescape fixtures pass after the rebase. The latest public export still contains the missing safearchive dependency and the older Nogo revision; it needs a refreshed export with that mapping corrected. See [build 48488](https://buildkite.com/gvisor/pipeline/builds/48488).\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-09-22T14:10:56Z",
+            "updatedAt": "2026-09-23T01:51:09Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABWHDoqw",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5778761899",
+            "body": "human here! seems this exposed some existing defects - https://github.com/google/gvisor/pull/14876 is the prerequisite and this is now \"stacked\" on it (it contains both commits). Up to you if you'd prefer to merge them together or separately.",
+            "createdAt": "2026-09-22T14:56:25Z",
+            "updatedAt": "2026-09-22T14:56:25Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABWppH-g",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5815027706",
+            "body": "@kerumeto this is ready for a fresh import!",
+            "createdAt": "2026-09-24T13:26:59Z",
+            "updatedAt": "2026-09-24T13:26:59Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABXUrztw",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5860160439",
+            "body": "@xinzhong could you help with the internal failures?",
+            "createdAt": "2026-09-27T21:52:58Z",
+            "updatedAt": "2026-09-27T21:52:58Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYQYRaA",
+            "url": "https://github.com/google/gvisor/pull/14502#issuecomment-5922754920",
+            "body": "Merged in 5a095390e38b8bf1cb389969d98e3bcb4be0c90b",
+            "createdAt": "2026-10-01T01:17:10Z",
+            "updatedAt": "2026-10-01T01:17:10Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABLixW_w",
+            "url": "https://github.com/google/gvisor/pull/14502#pullrequestreview-5069625087",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-08-31T18:04:34Z",
+            "updatedAt": "2026-08-31T18:04:34Z",
+            "author": {
+              "login": "kerumeto",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "ad6ea5dc3e3218fcd74181ee59bdf9f5a8b628cc"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABOkXRGQ",
+            "url": "https://github.com/google/gvisor/pull/14502#pullrequestreview-5272621337",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-21T22:58:59Z",
+            "updatedAt": "2026-09-21T22:59:00Z",
+            "author": {
+              "login": "kerumeto",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "e14afdf075a7a3c6e34a87808dd27815cc6c3ab0"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPUcd3g",
+            "url": "https://github.com/google/gvisor/pull/14502#pullrequestreview-5323038174",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-25T21:46:29Z",
+            "updatedAt": "2026-09-25T21:46:29Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "c67d236a4cf356829acef7ee3ccf2591cbb9c0f6"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -787,7 +1526,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-30T23:48:42Z",
           "createdAt": "2026-09-22T01:10:22Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -799,6 +1538,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "FAILURE",
@@ -937,7 +1680,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T05:06:44Z",
       "createdAt": "2026-08-30T19:57:56Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -947,6 +1690,23 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABRpXL9w",
+            "url": "https://github.com/google/gvisor/pull/14503#issuecomment-5479189495",
+            "body": "r? @EtiennePerot Independent diagnostics fixes extracted from #14237; no dependency on #14502.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-31T13:38:49Z",
+            "updatedAt": "2026-08-31T13:38:49Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -1004,7 +1764,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-13T23:14:32Z",
       "createdAt": "2026-08-30T19:58:07Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1014,6 +1774,23 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABRpXNRA",
+            "url": "https://github.com/google/gvisor/pull/14504#issuecomment-5479189828",
+            "body": "r? @konstantin-s-bogom AIO/logger annotations extracted from #14237; depend on #14237, transitively #14502.\n\nAssisted-by: Codex",
+            "createdAt": "2026-08-31T13:38:51Z",
+            "updatedAt": "2026-08-31T13:38:51Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -1071,7 +1848,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-25T18:34:24Z",
       "createdAt": "2026-09-22T14:54:48Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1083,6 +1860,271 @@
         "unresolved": 0,
         "total": 4,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABWHF9HQ",
+            "url": "https://github.com/google/gvisor/pull/14879#issuecomment-5778799901",
+            "body": "@EtiennePerot could you please TAL as the author of the commits mentioned in the description? I discovered this while investigating failures in https://github.com/google/gvisor/pull/14502.",
+            "createdAt": "2026-09-22T14:58:48Z",
+            "updatedAt": "2026-09-22T14:58:48Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABWOOheg",
+            "url": "https://github.com/google/gvisor/pull/14879#issuecomment-5786280314",
+            "body": "@konstantin-s-bogom mind having a look here?",
+            "createdAt": "2026-09-22T23:42:41Z",
+            "updatedAt": "2026-09-22T23:42:41Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABWpnn1Q",
+            "url": "https://github.com/google/gvisor/pull/14879#issuecomment-5815003093",
+            "body": "@EtiennePerot could you please take a look? once this lands I will put up another PR to fix the gap in checkescape that admitted this use of maps under nosplit.",
+            "createdAt": "2026-09-24T13:25:29Z",
+            "updatedAt": "2026-09-24T13:25:29Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABW99AYg",
+            "url": "https://github.com/google/gvisor/pull/14879#issuecomment-5836324962",
+            "body": "> For posterity, in the commit message: we are going from 12 ns/op -> 6 ns/op?\r\n\r\nno, things are getting *slower*. the implementation is going from using maps to using open-coded binary search, but that is what's needed here to preserve `nosplit`.",
+            "createdAt": "2026-09-25T17:05:43Z",
+            "updatedAt": "2026-09-25T17:05:43Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABW_I0-Q",
+            "url": "https://github.com/google/gvisor/pull/14879#issuecomment-5837567225",
+            "body": "Great, ty! Once this lands I'll send the checkescape fixes that catch the map use in nosplit.",
+            "createdAt": "2026-09-25T18:34:24Z",
+            "updatedAt": "2026-09-25T18:34:24Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPR8xig",
+            "url": "https://github.com/google/gvisor/pull/14879#pullrequestreview-5320421770",
+            "body": "For posterity, in the commit message: we are going from 12 ns/op -> 6 ns/op?\n",
+            "state": "COMMENTED",
+            "submittedAt": "2026-09-25T17:04:23Z",
+            "updatedAt": "2026-09-25T17:04:23Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1b280a0b8b872103783f895f18d9f6bdc4225532"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPR9ERQ",
+            "url": "https://github.com/google/gvisor/pull/14879#pullrequestreview-5320426565",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-09-25T17:10:45Z",
+            "updatedAt": "2026-09-25T17:10:45Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1b280a0b8b872103783f895f18d9f6bdc4225532"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPSPTlw",
+            "url": "https://github.com/google/gvisor/pull/14879#pullrequestreview-5320725399",
+            "body": "The commit message now explicitly states that the original paired ARM64 measurement showed lookup slowing from about 6.7 ns/op with a map to 12.5 ns/op with binary search, to preserve nosplit behavior.\n\nField lookup tests pass normally and with the race detector; Nogo and formatting also pass. The full ARM64 metric suite still hits the duration-bucketer failure covered by #14359, which I reproduced on current master as well. All builds and tests ran in Docker.\n\nAssisted-by: Codex",
+            "state": "COMMENTED",
+            "submittedAt": "2026-09-25T17:38:38Z",
+            "updatedAt": "2026-09-25T17:38:38Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "13e28b4f18e9749f3f794c93c96f3a8a52867188"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPSxjuw",
+            "url": "https://github.com/google/gvisor/pull/14879#pullrequestreview-5321286587",
+            "body": "Thanks for finding this out. I still think we can do better here, especially for large-cardinality metrics (e.g. syscall counters). Will work on that on my own, but approving anyway here though this might race.",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-25T18:32:05Z",
+            "updatedAt": "2026-09-25T18:32:05Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "13e28b4f18e9749f3f794c93c96f3a8a52867188"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFmPj",
+            "isResolved": true,
+            "isOutdated": false,
+            "path": "pkg/metric/metric.go",
+            "line": 287,
+            "id": "PRRC_kwDOB9IlXs70yT9p",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4106829673",
+            "body": "Any idea why 48?",
+            "createdAt": "2026-09-25T17:04:54Z",
+            "updatedAt": "2026-09-25T17:10:45Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFmPj",
+            "isResolved": true,
+            "isOutdated": false,
+            "path": "pkg/metric/metric.go",
+            "line": 287,
+            "id": "PRRC_kwDOB9IlXs70zQzH",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4107078855",
+            "body": "48 comes from [79b38029d](https://github.com/google/gvisor/commit/79b38029d), whose commit message reports that linear search was faster than both map and binary search through 48 values. Added that direct citation to the comment in 13e28b4f1. This preserves the existing cutoff; I haven't remeasured the crossover with the current toolchain.\n\nAssisted-by: Codex",
+            "createdAt": "2026-09-25T17:38:26Z",
+            "updatedAt": "2026-09-25T17:38:38Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFpGo",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "pkg/metric/metric.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs70yYX1",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4106847733",
+            "body": "`fieldValueAddress(fieldValue)` is invariant across iterations. We can hoist it before the loop to avoid recomputing it in each binary search step:\n\n```go\ntargetAddr := fieldValueAddress(fieldValue)\nlow, high := 0, len(field.valuesSorted)\nfor low < high {\n\tmid := low + (high-low)/2\n\tif fieldValueAddress(field.valuesSorted[mid].value) < targetAddr {\n\t\tlow = mid + 1\n\t} else {\n\t\thigh = mid\n\t}\n}\n```",
+            "createdAt": "2026-09-25T17:07:19Z",
+            "updatedAt": "2026-09-25T17:10:45Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFpGo",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "pkg/metric/metric.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs70zQz_",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4107078911",
+            "body": "Hoisted `targetAddr` before the binary-search loop in 13e28b4f1.\n\nAssisted-by: Codex",
+            "createdAt": "2026-09-25T17:38:27Z",
+            "updatedAt": "2026-09-25T17:38:38Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFpTe",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "pkg/metric/metric.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs70yYsC",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4106849026",
+            "body": "`slices.SortedFunc(maps.Values(valueIndices), ...)` collects an iterator into a slice by starting with a nil slice and growing it via repeated `append`s, triggering multiple slice reallocations.\n\nSince `allowedValues` has a known length, we can pre-allocate `valuesSorted` and sort in-place with `slices.SortFunc`:\n\n```go\nvaluesSorted := make([]fieldValueIndex, len(allowedValues))\nfor i, v := range allowedValues {\n\tvaluesSorted[i] = fieldValueIndex{value: v, index: i}\n}\nslices.SortFunc(valuesSorted, func(a, b fieldValueIndex) int {\n\treturn cmp.Compare(fieldValueAddress(a.value), fieldValueAddress(b.value))\n})\n```\n\nThis avoids iterator closures and slice reallocations, and would also allow `valueIndices` above to remain a lightweight `map[string]struct{}`.",
+            "createdAt": "2026-09-25T17:07:29Z",
+            "updatedAt": "2026-09-25T17:10:45Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFpTe",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "pkg/metric/metric.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs70zQ0p",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4107078953",
+            "body": "Changed in 13e28b4f1: allocate `valuesSorted` at its final length, fill it with the original declaration indices, and sort in place with `slices.SortFunc`. The uniqueness check now uses `map[string]struct{}`.\n\nAssisted-by: Codex",
+            "createdAt": "2026-09-25T17:38:27Z",
+            "updatedAt": "2026-09-25T17:38:38Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFpYU",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "pkg/metric/metric.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs70yY0E",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4106849540",
+            "body": "Minor nit on this comment: `valueIndices` is local to `NewField` and does not escape `NewField`. What ensures `v` escapes to the heap is that `allowedValues` (and `valuesSorted`) are stored into the returned `Field` struct, which callers assign to package-level vars or long-lived metric objects. For small fields ($\\le 48$), `valuesSorted` is not constructed and `valueIndices` is dropped, but `v` is still retained in `Field.values`.",
+            "createdAt": "2026-09-25T17:07:33Z",
+            "updatedAt": "2026-09-25T17:10:45Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6mFpYU",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "pkg/metric/metric.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs70zQ1Z",
+            "url": "https://github.com/google/gvisor/pull/14879#discussion_r4107079001",
+            "body": "Changed construction to retain the pointers in the preallocated sorted slice and updated the comment in 13e28b4f1. One subtlety: a map can remain local while pointer values stored in it escape; Go 1.26.3's [map0 test](https://github.com/golang/go/blob/go1.26.3/test/escape_map.go#L13-L22) demonstrates this. Indexed slice stores likewise make the pointees escape ([slice6](https://github.com/golang/go/blob/go1.26.3/test/escape_slice.go#L62-L68)), preserving stable heap addresses here. Small fields only use pointer equality.\n\nAssisted-by: Codex",
+            "createdAt": "2026-09-25T17:38:28Z",
+            "updatedAt": "2026-09-25T17:38:38Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -1151,7 +2193,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-25T23:28:20Z",
           "createdAt": "2026-09-25T18:51:28Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -1163,6 +2205,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "SUCCESS",
@@ -1271,7 +2317,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-25T12:25:06Z",
       "createdAt": "2026-09-22T15:41:48Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1281,6 +2327,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -1338,7 +2388,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T01:56:49Z",
       "createdAt": "2026-09-25T01:16:55Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1350,6 +2400,43 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPU9PHw",
+            "url": "https://github.com/google/gvisor/pull/14984#pullrequestreview-5323575071",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-25T23:35:36Z",
+            "updatedAt": "2026-09-25T23:35:36Z",
+            "author": {
+              "login": "kerumeto",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "f1ac1940debd1afd8eaed00a7b87c647918a8eec"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPU_fzw",
+            "url": "https://github.com/google/gvisor/pull/14984#pullrequestreview-5323612111",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-25T23:45:00Z",
+            "updatedAt": "2026-09-25T23:45:00Z",
+            "author": {
+              "login": "kerumeto",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "f1ac1940debd1afd8eaed00a7b87c647918a8eec"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -1430,7 +2517,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-26T02:10:44Z",
           "createdAt": "2026-09-25T23:47:45Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -1442,6 +2529,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "SUCCESS",
@@ -1550,7 +2641,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:22:11Z",
       "createdAt": "2026-09-25T01:16:58Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -1560,6 +2651,23 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYQbQNA",
+            "url": "https://github.com/google/gvisor/pull/14985#issuecomment-5922803764",
+            "body": "Closing in favor of the [hermetic LLVM toolchain migration](https://github.com/tamird/gvisor/commit/63e2554be). It removes Coral’s toolchain registration, extension, and templates, so these compatibility patches are no longer needed on that path. The replacement is published but has not landed upstream.\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-10-01T01:21:52Z",
+            "updatedAt": "2026-10-01T01:21:52Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -1629,7 +2737,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:16:48Z",
       "createdAt": "2026-09-25T01:17:00Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1639,6 +2747,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -1696,7 +2808,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T21:42:04Z",
       "createdAt": "2026-09-25T01:22:37Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1706,6 +2818,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -1775,7 +2891,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:19:05Z",
       "createdAt": "2026-09-25T01:22:40Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1785,6 +2901,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -1842,7 +2962,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T00:48:03Z",
       "createdAt": "2026-09-26T00:42:48Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1852,6 +2972,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -1921,7 +3045,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:51:03Z",
       "createdAt": "2026-09-26T02:01:16Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1933,6 +3057,126 @@
         "unresolved": 0,
         "total": 1,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABP0UzNg",
+            "url": "https://github.com/google/gvisor/pull/15033#pullrequestreview-5356466998",
+            "body": "Minor nit, but otherwise approved. Thanks for the patch!",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-29T18:02:39Z",
+            "updatedAt": "2026-09-29T18:02:39Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "47f9bf020cf9faaaa296a1f413817c2a2db06741"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABP0_tAw",
+            "url": "https://github.com/google/gvisor/pull/15033#pullrequestreview-5357169923",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-09-29T19:08:45Z",
+            "updatedAt": "2026-09-29T19:08:45Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "2e35b5a3228e9689fcfe5fde2370406c6e575973"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABP0__1A",
+            "url": "https://github.com/google/gvisor/pull/15033#pullrequestreview-5357174740",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-09-29T19:09:14Z",
+            "updatedAt": "2026-09-29T19:09:14Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "47f9bf020cf9faaaa296a1f413817c2a2db06741"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQBjOLg",
+            "url": "https://github.com/google/gvisor/pull/15033#pullrequestreview-5370334766",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-30T18:26:16Z",
+            "updatedAt": "2026-09-30T18:26:16Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "44627fd8dfaed191380e87f69152426eb6d00045"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nOweA",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "tools/checkescape/checkescape.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs72kOQr",
+            "url": "https://github.com/google/gvisor/pull/15033#discussion_r4136690731",
+            "body": "AI nit:\n\n#### 1. Trailing Whitespace on //go:nosplit Directive\n\n  In checkescape.go:\n\n    if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {\n        for _, comment := range decl.Doc.List {\n            if comment.Text == \"//go:nosplit\" {\n                return nil\n            }\n        }\n    }\n\n  • Observation: comment.Text includes the full comment text including any trailing whitespace or carriage returns (e.g. //go:nosplit  or \\r\\n). In cmd/compile, the compiler trims\n  trailing whitespace when checking compiler directives.\n  • Suggestion: Consider strings.TrimSpace(comment.Text) == \"//go:nosplit\" to guard against accidental trailing whitespace.\n",
+            "createdAt": "2026-09-29T18:01:30Z",
+            "updatedAt": "2026-09-29T18:02:39Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nOweA",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "tools/checkescape/checkescape.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs72miN-",
+            "url": "https://github.com/google/gvisor/pull/15033#discussion_r4137296766",
+            "body": "Updated to match the compiler's [ASCII-space split](https://github.com/golang/go/blob/2dc996f71/src/cmd/compile/internal/noder/noder.go#L334-L339) and [single terminal CR removal](https://github.com/golang/go/blob/2dc996f71/src/cmd/compile/internal/syntax/parser.go#L169-L181). A trailing tab or NBSP remains part of the directive name, so `TrimSpace` would accept directives the compiler does not recognize. The analyzer reads the original comment bytes because `go/parser` removes interior CRs. Concrete and generic fixtures cover these distinctions; their Nogo checks pass for AMD64 and ARM64.\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-09-29T19:08:45Z",
+            "updatedAt": "2026-09-29T19:08:45Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nOweA",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "tools/checkescape/checkescape.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs72mjM6",
+            "url": "https://github.com/google/gvisor/pull/15033#discussion_r4137300794",
+            "body": "Went full strict and matched the compiler behavior exactly 🙃 ",
+            "createdAt": "2026-09-29T19:09:14Z",
+            "updatedAt": "2026-09-29T19:09:14Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -1990,7 +3234,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T02:06:32Z",
       "createdAt": "2026-09-26T02:01:17Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2000,6 +3244,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -2069,7 +3317,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:51:21Z",
       "createdAt": "2026-09-26T02:01:18Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2079,6 +3327,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABXTa5iQ",
+            "url": "https://github.com/google/gvisor/pull/15035#issuecomment-5858834825",
+            "body": "@tamird can you squash PR to 1 commit",
+            "createdAt": "2026-09-27T19:04:41Z",
+            "updatedAt": "2026-09-27T19:04:41Z",
+            "author": {
+              "login": "milantracy",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABXTm6vg",
+            "url": "https://github.com/google/gvisor/pull/15035#issuecomment-5859031742",
+            "body": "The first part of this PR is https://github.com/google/gvisor/pull/14502, which failed internal checks. I can squash this into that one, but I didn't want to mix changes. What would you like me to do?",
+            "createdAt": "2026-09-27T19:23:15Z",
+            "updatedAt": "2026-09-27T19:23:15Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -2136,7 +3413,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T02:01:20Z",
       "createdAt": "2026-09-26T02:01:20Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2146,6 +3423,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "FAILURE",
@@ -2215,10 +3496,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:16:48Z",
       "createdAt": "2026-09-26T02:01:22Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -2227,6 +3508,59 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFUZgQ",
+            "url": "https://github.com/google/gvisor/pull/15037#pullrequestreview-5374286209",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T02:34:13Z",
+            "updatedAt": "2026-10-01T02:34:13Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "ad5a9c94fb079006703408028b4222987d6de9ab"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFcU2g",
+            "url": "https://github.com/google/gvisor/pull/15037#pullrequestreview-5374416090",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T02:55:51Z",
+            "updatedAt": "2026-10-01T02:55:51Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "89991321039b4ae64d2578379e60c5fb9aac0337"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQPhFrA",
+            "url": "https://github.com/google/gvisor/pull/15037#pullrequestreview-5384979884",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T20:16:36Z",
+            "updatedAt": "2026-10-01T20:16:36Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "64d84bfb1547c1dd83ba018577d56a981c2304b1"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -2319,7 +3653,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:33:39Z",
           "createdAt": "2026-10-01T03:08:56Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2331,6 +3665,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "PENDING",
@@ -2439,7 +3777,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T14:13:06Z",
       "createdAt": "2026-09-26T14:07:49Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2449,6 +3787,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -2518,7 +3860,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:34:55Z",
       "createdAt": "2026-09-26T18:15:29Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2530,6 +3872,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFUkYA",
+            "url": "https://github.com/google/gvisor/pull/15044#pullrequestreview-5374288992",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T02:34:47Z",
+            "updatedAt": "2026-10-01T02:34:47Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "2a1eb34d9210b6d9bd1383857fb39180257ab96d"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -2605,7 +3968,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:46:35Z",
       "createdAt": "2026-09-26T19:08:51Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -2615,6 +3978,39 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYfC6EQ",
+            "url": "https://github.com/google/gvisor/pull/15048#issuecomment-5938133521",
+            "body": "Landed in master via commit 71a606a61 (cl/991461175) w/ original author credit to you. Closing! ",
+            "createdAt": "2026-10-01T18:41:08Z",
+            "updatedAt": "2026-10-01T18:41:08Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABP0NZyg",
+            "url": "https://github.com/google/gvisor/pull/15048#pullrequestreview-5356345802",
+            "body": "LGTM! Thanks for fixing the toolchain mode leak on :nogo\n\nI may need to do some things internally to get this fixed so this will import. ",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-29T17:49:22Z",
+            "updatedAt": "2026-09-29T17:49:22Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "dca9ff69427c7507a15843648a24e858d6252654"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -2671,7 +4067,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:46:27Z",
           "createdAt": "2026-09-29T18:15:45Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2683,6 +4079,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "FAILURE",
@@ -2821,7 +4221,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:50Z",
       "createdAt": "2026-09-28T16:46:14Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2831,6 +4231,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -2888,7 +4292,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:36:20Z",
       "createdAt": "2026-09-28T16:46:17Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2900,6 +4304,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFU_Vw",
+            "url": "https://github.com/google/gvisor/pull/15062#pullrequestreview-5374295895",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T02:36:11Z",
+            "updatedAt": "2026-10-01T02:36:11Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "62a1c78ba033a04f692377b5d67c8e59b18104cd"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -2963,7 +4388,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:51Z",
       "createdAt": "2026-09-28T16:46:23Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2973,6 +4398,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -3030,7 +4459,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:22:46Z",
       "createdAt": "2026-09-28T17:47:35Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3042,6 +4471,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQNrxjw",
+            "url": "https://github.com/google/gvisor/pull/15070#pullrequestreview-5383057807",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T17:30:53Z",
+            "updatedAt": "2026-10-01T17:30:53Z",
+            "author": {
+              "login": "konstantin-s-bogom",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "17ac3a39539d10376f245e712bd6aad4a940fad3"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -3110,7 +4560,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T19:06:34Z",
           "createdAt": "2026-10-01T17:51:08Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -3122,6 +4572,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "PENDING",
@@ -3260,7 +4714,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:50Z",
       "createdAt": "2026-09-28T17:47:39Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3270,6 +4724,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -3327,7 +4785,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:51Z",
       "createdAt": "2026-09-28T22:31:32Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3339,6 +4797,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABPqtFkg",
+            "url": "https://github.com/google/gvisor/pull/15084#pullrequestreview-5346379154",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-29T00:46:46Z",
+            "updatedAt": "2026-09-29T10:16:50Z",
+            "author": {
+              "login": "milantracy",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "d229d43572ebcd2e5dc3182e1db402e8fb4e8a38"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -3407,7 +4886,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-29T10:31:13Z",
           "createdAt": "2026-09-29T10:31:11Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -3419,6 +4898,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "FAILURE",
@@ -3539,7 +5022,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:05:07Z",
       "createdAt": "2026-09-29T19:09:15Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3549,6 +5032,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQOwXXw",
+            "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5384181599",
+            "body": "LGTM! Very clean improvement—decoupling the Go export layout assembly from git branch manipulation is a great win for testability.\n\nA couple of minor non-blocking thoughts:\n- In the binary entrypoint filegroups (`runsc`, `shim`, etc.), consider `glob([\"*.go\"], exclude = [\"*_test.go\"])` just to future-proof against any unit tests added to those top-level packages getting accidentally bundled into the export archive.\n- In `BUILD`, `$(execpath go.mod)` is passed both to `--go-mod` and in the positional args list. Harmless since it just populates `files[\"go.mod\"]`, but `assemble` could also just implicitly write `files[\"go.mod\"] = data` from the already-read `--go-mod` file.",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T19:05:07Z",
+            "updatedAt": "2026-10-01T19:05:07Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "a1620973b43a2d60ae8d8b542e45a46a341c95b7"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -3606,7 +5110,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:55:43Z",
       "createdAt": "2026-09-29T19:09:25Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3618,6 +5122,93 @@
         "unresolved": 0,
         "total": 1,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQDUvOQ",
+            "url": "https://github.com/google/gvisor/pull/15107#pullrequestreview-5372194617",
+            "body": "",
+            "state": "CHANGES_REQUESTED",
+            "submittedAt": "2026-09-30T21:28:38Z",
+            "updatedAt": "2026-09-30T21:28:38Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "0077417d6b676e285cdad0a233f064fed271ecd6"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQDdiJA",
+            "url": "https://github.com/google/gvisor/pull/15107#pullrequestreview-5372338724",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-09-30T21:45:07Z",
+            "updatedAt": "2026-09-30T21:45:07Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "6db816c6c39d73c12ac28f045c4410652bcd1ea2"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQD-Maw",
+            "url": "https://github.com/google/gvisor/pull/15107#pullrequestreview-5372873835",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-30T22:55:33Z",
+            "updatedAt": "2026-09-30T22:55:33Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "6db816c6c39d73c12ac28f045c4410652bcd1ea2"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nt6tT",
+            "isResolved": true,
+            "isOutdated": false,
+            "path": "tools/lint.sh",
+            "line": 371,
+            "id": "PRRC_kwDOB9IlXs73VKfF",
+            "url": "https://github.com/google/gvisor/pull/15107#discussion_r4149520325",
+            "body": "check_actions() {\n  if ! command -v bazel > /dev/null 2>&1; then\n    echo \"lint: bazel is not on PATH; the actions check runs //:github_actions_test\" >&2\n    return 1\n  fi\n  bazel test --enable_runfiles --test_output=errors //:github_actions_test\n}",
+            "createdAt": "2026-09-30T21:28:08Z",
+            "updatedAt": "2026-09-30T21:28:38Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nt6tT",
+            "isResolved": true,
+            "isOutdated": false,
+            "path": "tools/lint.sh",
+            "line": 371,
+            "id": "PRRC_kwDOB9IlXs73VoeC",
+            "url": "https://github.com/google/gvisor/pull/15107#discussion_r4149643138",
+            "body": "Added the Bazel prerequisite check. With Bazel absent from PATH, `tools/lint.sh actions` now reports the target and returns a failure through the normal lint summary. The Bazel invocation is unchanged.\n\nThe [hosted check](https://app.buildbuddy.io/invocation/c274e46a-5a87-49f1-ba4a-62bb48dc194c) verified both the missing-tool error and the successful uncached actions test.\n\nAssisted-by: OpenAI Codex\n",
+            "createdAt": "2026-09-30T21:45:07Z",
+            "updatedAt": "2026-09-30T21:45:07Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -3687,7 +5278,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:11:23Z",
       "createdAt": "2026-09-29T19:23:01Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -3697,6 +5288,35 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABX35JDA",
+            "url": "https://github.com/google/gvisor/pull/15109#issuecomment-5897079052",
+            "body": "Could you weigh in on whether the added test is worth keeping? It exercises the public CLI with a controlled clang-tidy executable to cover nonzero exits and stderr diagnostics, but adds considerably more setup than the production fix.\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-09-29T19:23:10Z",
+            "updatedAt": "2026-09-29T19:23:10Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYQTZ9Q",
+            "url": "https://github.com/google/gvisor/pull/15109#issuecomment-5922675189",
+            "body": "Closing in favor of the [toolchain-based clang-tidy migration](https://github.com/tamird/gvisor/commit/40dc10a02). It removes this Python driver and runs clang-tidy through Bazel, preserving failure status and diagnostics. The replacement has passed remote validation but has not landed upstream.\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-10-01T01:09:42Z",
+            "updatedAt": "2026-10-01T01:09:42Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -3754,7 +5374,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T03:50:01Z",
       "createdAt": "2026-09-29T20:25:57Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3764,6 +5384,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -3821,7 +5445,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-29T20:59:48Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3831,6 +5455,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -3888,7 +5516,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T23:46:30Z",
       "createdAt": "2026-09-29T21:00:04Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3900,6 +5528,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABP2Tlew",
+            "url": "https://github.com/google/gvisor/pull/15115#pullrequestreview-5358544251",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-29T21:13:32Z",
+            "updatedAt": "2026-09-29T23:46:30Z",
+            "author": {
+              "login": "parth-opensrc",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "b89c01c4c4cada4c7cb0c34dc3c2479d583d7a22"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -3968,7 +5617,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-29T23:49:24Z",
           "createdAt": "2026-09-29T21:28:51Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -3980,6 +5629,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "FAILURE",
@@ -4118,7 +5771,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T00:29:56Z",
       "createdAt": "2026-09-29T22:13:52Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4130,6 +5783,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQDXrbA",
+            "url": "https://github.com/google/gvisor/pull/15118#pullrequestreview-5372242796",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-30T21:33:59Z",
+            "updatedAt": "2026-09-30T21:33:59Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1981947ab11f465f7b60b7ccbb5dd5c83981706b"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -4198,7 +5872,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T00:23:18Z",
           "createdAt": "2026-09-30T21:47:09Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4210,6 +5884,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "FAILURE",
@@ -4348,7 +6026,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-29T22:13:58Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4358,6 +6036,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -4415,7 +6097,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:32:57Z",
       "createdAt": "2026-09-29T23:49:52Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4427,6 +6109,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQOKzDQ",
+            "url": "https://github.com/google/gvisor/pull/15124#pullrequestreview-5383566093",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T18:16:23Z",
+            "updatedAt": "2026-10-01T18:16:23Z",
+            "author": {
+              "login": "rexren-gif",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -4525,7 +6228,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:32:52Z",
           "createdAt": "2026-10-01T18:51:05Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4538,21 +6241,25 @@
             "total": 0,
             "complete": true
           },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
           "checks": {
             "state": "PENDING",
             "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36922353736/job/110571237001",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/36922350431/job/110571223092",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36922353736/job/110571237001",
                 "app": "GitHub Actions"
               },
               {
@@ -4604,21 +6311,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/30845",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49171",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/30845",
                 "app": null
               },
               {
@@ -4626,6 +6327,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -4645,7 +6352,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:29Z",
       "createdAt": "2026-09-29T23:49:55Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4655,6 +6362,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -4712,7 +6423,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:10:14Z",
       "createdAt": "2026-09-30T00:53:26Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4724,6 +6435,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFLfcQ",
+            "url": "https://github.com/google/gvisor/pull/15129#pullrequestreview-5374140273",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T02:10:02Z",
+            "updatedAt": "2026-10-01T02:10:02Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "8014062d9c6ab3b1eeeb01e93e05d6569082d837"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -4787,7 +6519,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-30T00:53:30Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4797,6 +6529,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -4854,7 +6590,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:31Z",
       "createdAt": "2026-09-30T00:53:32Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4864,6 +6600,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -4921,7 +6661,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-30T00:53:35Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4931,6 +6671,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -4988,7 +6732,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:32:30Z",
       "createdAt": "2026-09-30T10:14:36Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5000,6 +6744,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQO2kSQ",
+            "url": "https://github.com/google/gvisor/pull/15137#pullrequestreview-5384283209",
+            "body": "LGTM",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T19:13:53Z",
+            "updatedAt": "2026-10-01T19:13:53Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "792cc8f9c687ce490028aeaffe3215506a3ce981"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -5110,7 +6875,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:19:44Z",
           "createdAt": "2026-10-01T19:31:38Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5122,6 +6887,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "PENDING",
@@ -5254,7 +7023,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T10:11:09Z",
       "createdAt": "2026-09-30T10:14:39Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5266,6 +7035,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQDxmUg",
+            "url": "https://github.com/google/gvisor/pull/15138#pullrequestreview-5372667474",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-30T22:24:25Z",
+            "updatedAt": "2026-09-30T22:24:25Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "840fdc5ae1399ea2e0ff5f35db52d28dc66809fb"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -5346,7 +7136,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T08:26:22Z",
           "createdAt": "2026-09-30T22:37:25Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5358,6 +7148,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "FAILURE",
@@ -5496,7 +7290,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:51:58Z",
       "createdAt": "2026-09-30T10:14:42Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5508,6 +7302,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQOm0TA",
+            "url": "https://github.com/google/gvisor/pull/15139#pullrequestreview-5384025164",
+            "body": "LGTM! Thanks!",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T18:51:43Z",
+            "updatedAt": "2026-10-01T18:51:43Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "1ada6ae0d8a92377b17a3692d729330ec8ad0d98"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -5588,7 +7403,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:32:58Z",
           "createdAt": "2026-10-01T19:07:27Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5600,6 +7415,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "PENDING",
@@ -5708,7 +7527,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T07:08:07Z",
       "createdAt": "2026-09-30T10:14:45Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5720,6 +7539,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFJQIg",
+            "url": "https://github.com/google/gvisor/pull/15140#pullrequestreview-5374103586",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T02:03:50Z",
+            "updatedAt": "2026-10-01T02:03:50Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "4c3863927320e9f8fc85b47942d52a5eaefcb80e"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -5800,7 +7640,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:58:26Z",
           "createdAt": "2026-10-01T02:18:26Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5812,6 +7652,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "SUCCESS",
@@ -5944,7 +7788,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:46:11Z",
       "createdAt": "2026-09-30T10:17:14Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5954,6 +7798,77 @@
         "unresolved": 0,
         "total": 1,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFIwFg",
+            "url": "https://github.com/google/gvisor/pull/15141#pullrequestreview-5374095382",
+            "body": "",
+            "state": "CHANGES_REQUESTED",
+            "submittedAt": "2026-10-01T02:03:35Z",
+            "updatedAt": "2026-10-01T02:03:35Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "eae60e8523c300e68dd0235a9339fa63323ebc7c"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFY0Pg",
+            "url": "https://github.com/google/gvisor/pull/15141#pullrequestreview-5374358590",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-01T02:46:11Z",
+            "updatedAt": "2026-10-01T02:46:11Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "f221361d14ff8f65ca476c2c909114e461b00799"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nxtnL",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "runsc/cmd/create.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs73bOGC",
+            "url": "https://github.com/google/gvisor/pull/15141#discussion_r4151107970",
+            "body": "Set size to `len(c.passFDs)`",
+            "createdAt": "2026-10-01T02:02:13Z",
+            "updatedAt": "2026-10-01T02:03:35Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nxtnL",
+            "isResolved": true,
+            "isOutdated": true,
+            "path": "runsc/cmd/create.go",
+            "line": null,
+            "id": "PRRC_kwDOB9IlXs73cEX9",
+            "url": "https://github.com/google/gvisor/pull/15141#discussion_r4151330301",
+            "body": "Preallocated both descriptor maps with `len(c.passFDs)`.\n\nAssisted-by: Codex",
+            "createdAt": "2026-10-01T02:46:11Z",
+            "updatedAt": "2026-10-01T02:46:11Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -6011,7 +7926,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:52:46Z",
       "createdAt": "2026-09-30T10:22:42Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -6021,6 +7936,39 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYgDqNg",
+            "url": "https://github.com/google/gvisor/pull/15142#issuecomment-5939194422",
+            "body": "Fixed more comprehensively in 78424a487aa850a479e1922f1d2954e7fca0f84d",
+            "createdAt": "2026-10-01T19:42:46Z",
+            "updatedAt": "2026-10-01T19:42:46Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQDUMbg",
+            "url": "https://github.com/google/gvisor/pull/15142#pullrequestreview-5372185710",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-09-30T21:27:02Z",
+            "updatedAt": "2026-09-30T21:27:02Z",
+            "author": {
+              "login": "milantracy",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "2534cc989cd5392fdd7e28b31ebc47e99fae2af8"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -6090,7 +8038,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T13:45:29Z",
       "createdAt": "2026-09-30T13:40:07Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6100,6 +8048,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6169,7 +8121,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T13:45:28Z",
       "createdAt": "2026-09-30T13:40:10Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6179,6 +8131,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6248,7 +8204,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:09:46Z",
       "createdAt": "2026-09-30T13:40:13Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6260,6 +8216,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQOzasg",
+            "url": "https://github.com/google/gvisor/pull/15147#pullrequestreview-5384231602",
+            "body": "LGTM",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T19:09:26Z",
+            "updatedAt": "2026-10-01T19:09:26Z",
+            "author": {
+              "login": "zkoopmans",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "72ab5296eea71c8e701861db18eacb0ff9ec3267"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -6370,7 +8347,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:31:07Z",
           "createdAt": "2026-10-01T19:29:32Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6383,21 +8360,25 @@
             "total": 0,
             "complete": true
           },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
           "checks": {
             "state": "PENDING",
             "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36922150147/job/110570555162",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/36922147379/job/110570548439",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36922150147/job/110570555162",
                 "app": "GitHub Actions"
               },
               {
@@ -6449,21 +8430,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/30844",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49170",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/30844",
                 "app": null
               },
               {
@@ -6471,6 +8446,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -6490,7 +8471,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T14:21:37Z",
       "createdAt": "2026-09-30T14:16:15Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6500,6 +8481,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6569,7 +8554,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:55:42Z",
       "createdAt": "2026-09-30T14:45:26Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6581,6 +8566,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFGHMg",
+            "url": "https://github.com/google/gvisor/pull/15149#pullrequestreview-5374052146",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T01:55:29Z",
+            "updatedAt": "2026-10-01T01:55:29Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "fbdc950ab825fd17e61f07d321411c24517b8343"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -6656,7 +8662,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:29:39Z",
       "createdAt": "2026-09-30T22:24:21Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6666,6 +8672,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6735,7 +8745,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:18Z",
       "createdAt": "2026-09-30T22:30:02Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6745,6 +8755,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6814,7 +8828,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:19Z",
       "createdAt": "2026-09-30T22:30:05Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6824,6 +8838,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6893,7 +8911,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:24Z",
       "createdAt": "2026-09-30T22:30:07Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6903,6 +8921,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -6972,7 +8994,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:27Z",
       "createdAt": "2026-09-30T22:30:10Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6982,6 +9004,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -7051,7 +9077,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T17:50:25Z",
       "createdAt": "2026-09-30T22:38:16Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7063,6 +9089,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQN3_JQ",
+            "url": "https://github.com/google/gvisor/pull/15159#pullrequestreview-5383257893",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T17:50:09Z",
+            "updatedAt": "2026-10-01T17:50:09Z",
+            "author": {
+              "login": "xinzhong",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "5e68f4ec51904694e614cef50af36bddb155c25e"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -7169,14 +9216,14 @@
           "url": "https://github.com/google/gvisor/pull/15195",
           "status": "open",
           "ref": "test/cl991778973",
-          "head": "301de4930ac70fb19575847b46ea3c70199bbd09",
+          "head": "e8b02cfe5c26a9e5ca51277c8fc2a415e8e8d3a2",
           "headOwner": "google",
-          "updatedAt": "2026-10-01T19:42:08Z",
+          "updatedAt": "2026-10-01T20:45:36Z",
           "createdAt": "2026-10-01T18:09:06Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -7186,81 +9233,67 @@
             "total": 0,
             "complete": true
           },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
           "checks": {
-            "state": "FAILURE",
-            "total": 14,
+            "state": "PENDING",
+            "total": 10,
             "complete": true,
             "contexts": [
               {
                 "name": "check-changes",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36916226444/job/110550746430",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36923906166/job/110576378399",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36916229744/job/110550754232",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36923910939/job/110576393001",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36916229340/job/110550752356",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36923911158/job/110576392894",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36923911076/job/110576393255",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/36923910953/job/110576392342",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36916229486/job/110550752545",
+                "url": "https://github.com/google/gvisor/actions/runs/36923910984/job/110576392911",
                 "app": "GitHub Actions"
-              },
-              {
-                "name": "fileheader",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36916229415/job/110550754101",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "lint",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/36916229760/job/110550753359",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "zizmor-config",
-                "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/36916226444/job/110551170171",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "zizmor-scan",
-                "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/36916226444/job/110551171075",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "zizmor-upload",
-                "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/36916226444/job/110551173106",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "zizmor-output",
-                "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/36916226444/job/110551171768",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "buildkite/pipeline",
-                "state": "FAILURE",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49161",
-                "app": null
               },
               {
                 "name": "buildkite/internal",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/30837",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/30851",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49179",
+                "app": null
+              },
+              {
+                "name": "go tests",
+                "state": "PENDING",
+                "url": null,
                 "app": null
               },
               {
@@ -7268,12 +9301,6 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
-              },
-              {
-                "name": "go tests",
-                "state": "SUCCESS",
-                "url": null,
-                "app": null
               }
             ]
           },
@@ -7293,7 +9320,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:43:35Z",
       "createdAt": "2026-09-30T22:38:18Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7303,6 +9330,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -7372,7 +9403,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:43:37Z",
       "createdAt": "2026-09-30T22:38:21Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7382,6 +9413,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -7451,7 +9486,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:14:00Z",
       "createdAt": "2026-09-30T22:38:24Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7461,6 +9496,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -7548,7 +9587,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:52:12Z",
       "createdAt": "2026-09-30T22:42:30Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7560,6 +9599,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFE7rA",
+            "url": "https://github.com/google/gvisor/pull/15163#pullrequestreview-5374032812",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T01:52:03Z",
+            "updatedAt": "2026-10-01T01:52:03Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "9d613685825952e28a5efa9b37560a5caa28f941"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -7635,7 +9695,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T17:34:09Z",
       "createdAt": "2026-09-30T22:42:32Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7647,6 +9707,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQNt4Jg",
+            "url": "https://github.com/google/gvisor/pull/15164#pullrequestreview-5383092262",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T17:34:03Z",
+            "updatedAt": "2026-10-01T17:34:03Z",
+            "author": {
+              "login": "konstantin-s-bogom",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "79cadb7e9af1af19a11861f14123b8bac8390049"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -7727,7 +9808,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T19:54:38Z",
           "createdAt": "2026-10-01T17:52:04Z",
-          "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+          "checkedAt": "2026-10-01T20:45:18.381418+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7739,6 +9820,10 @@
             "unresolved": 0,
             "total": 0,
             "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
           },
           "checks": {
             "state": "SUCCESS",
@@ -7847,7 +9932,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:47:54Z",
       "createdAt": "2026-09-30T22:42:35Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7857,6 +9942,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -7926,7 +10015,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:08:27Z",
       "createdAt": "2026-09-30T23:39:09Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7936,6 +10025,77 @@
         "unresolved": 0,
         "total": 1,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFDpXQ",
+            "url": "https://github.com/google/gvisor/pull/15168#pullrequestreview-5374011741",
+            "body": "",
+            "state": "CHANGES_REQUESTED",
+            "submittedAt": "2026-10-01T01:49:17Z",
+            "updatedAt": "2026-10-01T01:49:17Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "9f1992f0f44f09ddcfd3d2e4b19db202b8c3a2b6"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFggNg",
+            "url": "https://github.com/google/gvisor/pull/15168#pullrequestreview-5374484534",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-01T03:07:21Z",
+            "updatedAt": "2026-10-01T03:07:21Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "92ef87c5e68429aa0985afdb6f54cb43c309a600"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nxiFP",
+            "isResolved": true,
+            "isOutdated": false,
+            "path": "runsc/sandbox/network_test.go",
+            "line": 174,
+            "id": "PRRC_kwDOB9IlXs73a7xg",
+            "url": "https://github.com/google/gvisor/pull/15168#discussion_r4151032928",
+            "body": "This should check if it's running on the first go thread, otherwise it'll stay locked forever. IIRC workaround is to detect that (`tid == pid`) and spawn a different goroutine if that happens.\n\nThis probably means the test code needs to run in a closure, or maybe some `TestMain` magic could do it?",
+            "createdAt": "2026-10-01T01:48:06Z",
+            "updatedAt": "2026-10-01T01:49:17Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6nxiFP",
+            "isResolved": true,
+            "isOutdated": false,
+            "path": "runsc/sandbox/network_test.go",
+            "line": 174,
+            "id": "PRRC_kwDOB9IlXs73ceOV",
+            "url": "https://github.com/google/gvisor/pull/15168#discussion_r4151436181",
+            "body": "Reserved the initial OS thread during init, which keeps the generated test main on that thread as documented by runtime.LockOSThread [1]. The namespace tests then run on threads Go can terminate if restoration fails. The full sandbox tests and Nogo checks pass.\n\n[1]: https://pkg.go.dev/runtime#LockOSThread\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-10-01T03:07:21Z",
+            "updatedAt": "2026-10-01T03:07:21Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -7993,7 +10153,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T06:44:31Z",
       "createdAt": "2026-09-30T23:41:33Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8005,6 +10165,27 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQGxPVQ",
+            "url": "https://github.com/google/gvisor/pull/15169#pullrequestreview-5375807317",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-01T06:44:17Z",
+            "updatedAt": "2026-10-01T06:44:17Z",
+            "author": {
+              "login": "milantracy",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "8f2dadb9e3af4edf5d1282326b5b8bcf9aff3eda"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "FAILURE",
@@ -8080,7 +10261,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T00:12:19Z",
       "createdAt": "2026-10-01T00:07:02Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8090,6 +10271,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8159,7 +10344,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:13:01Z",
       "createdAt": "2026-10-01T02:15:11Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8169,6 +10354,39 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYRhsCA",
+            "url": "https://github.com/google/gvisor/pull/15173#issuecomment-5923957768",
+            "body": "> Why though? And why this approach for arm64 but not amd64?\n\nYou're right: this prepares the selections for the direct-Bazel remote-execution runner [1], and the description omitted that consumer. The filters lived in Buildkite's Make commands; the runner needs to reuse them without Make's local runtime setup.\n\nThere is no reason to give AMD64 a different configuration interface. The revised change names both selections and switches all four public jobs to them. The public AMD64 config still includes KVM; the remote runner's current KVM exclusion is a separate worker-capacity restriction, not a change to public CI coverage.\n\n[1]: https://github.com/tamird/gvisor/blob/c5a376025/test/rbe/qualify.sh#L326-L338\n\nAssisted-by: Codex\n",
+            "createdAt": "2026-10-01T03:11:05Z",
+            "updatedAt": "2026-10-01T03:11:05Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQFWCbQ",
+            "url": "https://github.com/google/gvisor/pull/15173#pullrequestreview-5374313069",
+            "body": "Why though?\n\nAnd why this approach for arm64 but not amd64?",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-01T02:39:20Z",
+            "updatedAt": "2026-10-01T02:39:20Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "afd1aa04aa49d9d2ac3ada0360bd42cf0031614b"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -8226,7 +10444,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:11:50Z",
       "createdAt": "2026-10-01T10:12:07Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8236,6 +10454,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8323,7 +10545,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T10:18:13Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8333,6 +10555,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8420,7 +10646,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T13:18:55Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8430,6 +10656,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8517,7 +10747,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T13:36:08Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8527,6 +10757,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8614,7 +10848,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T13:36:19Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8624,6 +10858,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8711,7 +10949,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T15:53:05Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8721,6 +10959,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",
@@ -8808,7 +11050,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:40:12Z",
       "createdAt": "2026-10-01T15:53:08Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8818,6 +11060,39 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": [
+          {
+            "kind": "comment",
+            "id": "IC_kwDOB9IlXs8AAAABYdbxqw",
+            "url": "https://github.com/google/gvisor/pull/15188#issuecomment-5936443819",
+            "body": "> can you also remove TEST_SAVE_RESTORE_NETSTACK in Makefile\n\nDone in e3765b279. The PR now removes the unused Make setting too, in the same commit.\n\nAssisted-by: OpenAI Codex\n",
+            "createdAt": "2026-10-01T17:05:02Z",
+            "updatedAt": "2026-10-01T17:05:02Z",
+            "author": {
+              "login": "tamird",
+              "__typename": "User"
+            }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQM54MQ",
+            "url": "https://github.com/google/gvisor/pull/15188#pullrequestreview-5382240305",
+            "body": "LGTM, can you also remove TEST_SAVE_RESTORE_NETSTACK in Makefile: https://github.com/google/gvisor/blob/fcb40d1a9af67597211df31ca27f49ead9045617/Makefile#L481 ",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-01T16:19:47Z",
+            "updatedAt": "2026-10-01T16:20:11Z",
+            "author": {
+              "login": "nybidari",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "d538e2092a1ad4aa97cd0ee83630e1ed3b686ce0"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -8905,7 +11180,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T15:55:39Z",
-      "checkedAt": "2026-10-01T20:37:41.659672+00:00",
+      "checkedAt": "2026-10-01T20:45:18.381418+00:00",
       "reviewDecision": null,
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8915,6 +11190,10 @@
         "unresolved": 0,
         "total": 0,
         "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
       },
       "checks": {
         "state": "SUCCESS",

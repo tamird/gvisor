@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T20:39:33.096365+00:00",
+    "updatedAt": "2026-10-01T20:48:03.566060+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1104,7 +1104,7 @@
       "group": "tests",
       "status": "open",
       "url": "https://github.com/google/gvisor/pull/15159",
-      "summary": "Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks. Public import #15195 at 301de4930ac70fb19575847b46ea3c70199bbd09 failed build 49161 in Podman cleanup. Both DirectFS modes printed Hello, world; the final rm -rf then failed with Directory not empty. The remaining directory's cause and any relationship to the MQ change are not established. This public failure does not explain the separate unavailable internal Copybara feedback.",
+      "summary": "Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks. Public import #15195 at 301de4930ac70fb19575847b46ea3c70199bbd09 failed build 49161 in Podman cleanup. Both DirectFS modes printed Hello, world; the final rm -rf then failed with Directory not empty. The remaining directory's cause and any relationship to the MQ change are not established. This public failure does not explain the separate unavailable internal Copybara feedback. Copybara refreshed the import to e8b02cfe5c26a9e5ca51277c8fc2a415e8e8d3a2 at 20:45:24 UTC; public build 49179 is pending at this observation.",
       "number": 15159
     },
     {

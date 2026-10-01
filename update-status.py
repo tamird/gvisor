@@ -32,7 +32,18 @@ number title url state isDraft headRefName headRefOid updatedAt createdAt
 headRepository { owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
-reviewThreads(first:100) { totalCount nodes { isResolved } pageInfo { hasNextPage } }
+comments(last:100) { pageInfo { hasPreviousPage } nodes {
+  id url body createdAt updatedAt author { login __typename }
+} }
+reviews(last:100) { pageInfo { hasPreviousPage } nodes {
+  id url body state submittedAt updatedAt author { login __typename } commit { oid }
+} }
+reviewThreads(first:100) { totalCount pageInfo { hasNextPage } nodes {
+  id isResolved isOutdated path line
+  comments(last:100) { pageInfo { hasPreviousPage } nodes {
+    id url body createdAt updatedAt author { login __typename }
+  } }
+} }
 """ + CHECKS
 TIMELINE = """
 timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
@@ -65,6 +76,31 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
 def public_url(value: str | None) -> str | None:
     # Internal Copybara CL links are not public check-log links.
     return value if value and value.startswith("https://") else None
+
+
+def feedback(pr: dict) -> dict:
+    items = []
+    complete = not pr["reviewThreads"]["pageInfo"]["hasNextPage"]
+    for kind, key in (("comment", "comments"), ("review", "reviews")):
+        connection = pr[key]
+        complete &= not connection["pageInfo"]["hasPreviousPage"]
+        items.extend({"kind": kind, **item} for item in connection["nodes"])
+    for thread in pr["reviewThreads"]["nodes"]:
+        complete &= not thread["comments"]["pageInfo"]["hasPreviousPage"]
+        items.extend({"kind": "inline", "threadId": thread["id"],
+                      "isResolved": thread["isResolved"], "isOutdated": thread["isOutdated"],
+                      "path": thread["path"], "line": thread["line"], **item}
+                     for item in thread["comments"]["nodes"])
+    return {"complete": complete, "items": items}
+
+
+def changed_feedback(current: dict, previous: dict) -> list[dict]:
+    # checkedAt records an attribute observation, not acknowledgment of feedback.
+    # Missing prior feedback therefore requires a backfill, regardless of age,
+    # approval state, or whether an inline thread is resolved or outdated.
+    prior = {item["id"]: item for item in previous.get("feedback", {}).get("items", [])}
+    return [item for item in current["feedback"]["items"]
+            if (item.get("author") or {}).get("login") != OWNER and prior.get(item["id"]) != item]
 
 
 def normalize(pr: dict) -> dict:
@@ -100,6 +136,7 @@ def normalize(pr: dict) -> dict:
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
         "threads": {"unresolved": sum(not thread["isResolved"] for thread in threads["nodes"]),
                     "total": threads["totalCount"], "complete": not threads["pageInfo"]["hasNextPage"]},
+        "feedback": feedback(pr),
         "checks": checks,
     }
 
@@ -137,6 +174,7 @@ def main() -> None:
     numbers = {node["number"] for node in REGISTRY["nodes"]
                if node["type"] == "pr" and node["repo"] == REPO}
     output = ROOT / "github-status.json"
+    previous = {}
     if output.exists():
         previous = json.loads(output.read_text())
         if previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER:
@@ -216,6 +254,14 @@ def main() -> None:
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
     temporary.replace(output)
     print(f"Updated {len(prs)} PRs and {len(imported)} verified import PRs in {requests} GitHub requests.")
+    prior_prs = {pr["number"]: pr for source in previous.get("prs", [])
+                 for pr in (source, *source.get("imports", []))}
+    for source in prs:
+        for pr in (source, *source["imports"]):
+            changes = changed_feedback(pr, prior_prs.get(pr["number"], {}))
+            if changes or not pr["feedback"]["complete"]:
+                print(json.dumps({"number": pr["number"], "url": pr["url"], "head": pr["head"],
+                                  "feedbackComplete": pr["feedback"]["complete"], "feedback": changes}))
 
 
 if __name__ == "__main__":
