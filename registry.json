@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T20:48:03.566060+00:00",
+    "updatedAt": "2026-10-01T20:58:11.623226+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -256,7 +256,8 @@
       "group": "tests",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-30T04:48:30Z"
+      "updatedAt": "2026-09-30T04:48:30Z",
+      "summary": "Source a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b has exact-source import #15196 at db5e793d6b9e708ccc2d0b03c63abebd43304f54. Public build 49171 failed in Podman cleanup at 20:53:35 UTC: the first directfs=false workload printed Hello, world, then rm -rf reported Directory not empty and exited 1. The complete public log does not establish the directory's cause or any relationship to this IPv6 assertion change; the second DirectFS mode was not reached in that attempt."
     },
     {
       "id": "pr:15120",
@@ -361,7 +362,8 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-30T03:50:01Z"
+      "updatedAt": "2026-09-30T03:50:01Z",
+      "summary": "The public PR remains at a1620973b43a2d60ae8d8b542e45a46a341c95b7. Zach's two suggestions in the approval review are awaiting the contributor's review of candidate go-export-archive-review at 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24. Its exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The live PR has not been amended and no public response has been posted."
     },
     {
       "id": "pr:15084",
@@ -992,8 +994,8 @@
       "title": "Parse Docker test flags before checking the client",
       "url": "https://github.com/google/gvisor/pull/15164",
       "group": "tests",
-      "status": "open",
-      "summary": "Contributor-reviewed and published. Corrects flag initialization in 18 TestMain functions. Both affected client entrypoints reproduce before and pass after using the existing declared Docker client interface.",
+      "status": "merged",
+      "summary": "Copybara merged import #15192 at 20:47:56 UTC and this source PR at 20:47:59 UTC into ea3ae5ba09fe6508bf6dddfd75bcbfde157d99e7. Its flag-initialization patch is preserved across all 18 changed files. Historical integration in primary qualification remains recorded. The obsolete local and origin docker-test-flags refs were removed after exact-head and worktree checks; recovery source commit is 79cadb7e9af1af19a11861f14123b8bac8390049. Fresh checks on the merged head are distinct from the previous import pass.",
       "number": 15164
     },
     {
@@ -1005,7 +1007,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head eb6a71ba1 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo recovery passed its independently reconciled bounded selection/runtime proof; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified."
+      "summary": "Published head ff47eae257 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo recovery passed its independently reconciled bounded selection/runtime proof; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified. Artifact composition passed its independently reconciled bounded mixed-runtime and metadata proof. The original parent retains its preliminary metadata assertion failure; the metadata-only continuation passed without repeating runtime. A broader 45-minute qualification run e150e6c1-644e-4c42-9ee4-08dcfe895ed2 is live at this head, with no result credit yet."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1628,7 +1630,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-test-selection",
       "group": "rbe",
       "status": "fork validation candidate",
-      "summary": "Published candidate 0db5008e34e96b57be34499eae18e3795059fb7b contains the reviewed per-target cgroup profiles from 714caba55, shared file-based selection transport, and corrected dependency-patch file headers. It descends from historical qualification head c327900462e558a1a610e8a44e168ba0098dd2eb; it is not based directly on master and does not include the later checkpoint or Nogo composition. The first graph parent failed fetching the patched dependency before executing actions. The graph continuation also failed and is being diagnosed; runtime qualification remains pending."
+      "summary": "Published candidate 0db5008e34e96b57be34499eae18e3795059fb7b contains the reviewed per-target cgroup profiles from 714caba55, shared file-based selection transport, and corrected dependency-patch file headers. It descends from historical qualification head c327900462e558a1a610e8a44e168ba0098dd2eb; it is not based directly on master and does not include the later checkpoint or Nogo composition. The first graph parent failed fetching the patched dependency before executing actions. The graph continuation also failed and is being diagnosed; runtime qualification remains pending. Reviewed composition rbe-cgroup-integration is public at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b, directly atop current primary ff47eae257; component runtime qualification remains pending."
     },
     {
       "id": "branch:rbe-artifact-selection",
@@ -1638,8 +1640,8 @@
       "title": "Compose release and distribution artifacts",
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
-      "status": "fork validation candidate",
-      "summary": "Published candidate ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from qualification head eb6a71ba1 and adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Source review is complete; hosted qualification remains pending. This candidate is not yet the primary qualification branch."
+      "status": "integrated; bounded qualification passed",
+      "summary": "Published head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is now primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader live qualification run."
     }
   ],
   "edges": [
