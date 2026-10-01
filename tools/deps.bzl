@@ -1,6 +1,7 @@
 """Rules for dependency checking."""
 
 load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 
 # DepsInfo provides a list of dependencies found when building a target.
 DepsInfo = provider(
@@ -180,10 +181,18 @@ _deps_test = rule(
 def _compile_deps_test(**kwargs):
     _deps_test(**kwargs)
 
+_deps_amd64_test, _deps_amd64_transition = with_test_architecture(_compile_deps_test, "amd64").build()
+_deps_arm64_test, _deps_arm64_transition = with_test_architecture(_compile_deps_test, "arm64").build()
 _deps_test_cgroup_v1_test, _deps_test_cgroup_v1_transition = with_cgroup_v1(_compile_deps_test)
 
-def deps_test(name, **kwargs):
-    """Declares the original check and its manual cgroup-v1 variant."""
-    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+def deps_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original check and manual architecture/cgroup variants."""
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _deps_test(name = name, **kwargs)
     cgroup_v1_variant(name, _deps_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": _deps_amd64_test, "arm64": _deps_arm64_test},
+        kwargs,
+    )

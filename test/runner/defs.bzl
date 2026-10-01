@@ -172,7 +172,7 @@ def _syscall_test(
         name,
         ["amd64", "arm64"],
         {"amd64": runner_amd64_test, "arm64": runner_arm64_test},
-        attributes,
+        dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
     )
 
 def all_platforms():

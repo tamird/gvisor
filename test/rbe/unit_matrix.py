@@ -290,7 +290,6 @@ def select_variants(patterns_path: str, owners_path: str, actions_path: str, out
         "additional_arm64_variants": selected,
         "unavailable_arm64_firecracker": unavailable,
         "canonical_selection": profile_path or patterns_path,
-        "limitation": "Non-Go/C++ unit owners retain their original AMD64 execution.",
     }, indent=2))
 
 

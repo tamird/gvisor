@@ -28,7 +28,7 @@ def cc_test(name, architectures = ["amd64", "arm64"], **kwargs):
         name,
         architectures,
         {"amd64": cc_amd64_test, "arm64": cc_arm64_test},
-        kwargs,
+        dict(kwargs, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
     )
 
 def cc_library(**kwargs):

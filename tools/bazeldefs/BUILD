@@ -99,7 +99,10 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
-    deps = [":cgroup_test_bzl"],
+    deps = [
+        ":cgroup_test_bzl",
+        ":test_architectures_bzl",
+    ],
 )
 
 bzl_library(
@@ -135,7 +138,8 @@ bzl_library(
 bzl_library(
     name = "test_architectures_bzl",
     srcs = ["test_architectures.bzl"],
-    visibility = ["//test/runner:__pkg__"],
+    visibility = ["//:sandbox"],
+    deps = ["@with_cfg.bzl//:with_cfg"],
 )
 
 config_setting(

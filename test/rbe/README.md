@@ -909,8 +909,8 @@ Syzkaller jobs and this target are AMD64 only.
 
 ### Mixed target architectures
 
-`architectures = ["amd64", "arm64"]` on the maintained `go_test` and `cc_test`
-macros adds explicit `<name>_amd64` and `<name>_arm64` test variants. Each variant
+`architectures = ["amd64", "arm64"]` on maintained test declarations adds explicit
+`<name>_amd64` and `<name>_arm64` test variants. Each variant
 uses the original declaration's arguments, environment, data, sharding, and
 execution properties. The original target and its Nogo analysis remain available;
 Nogo already analyzes both architectures. Variants are manual to avoid changing
@@ -937,13 +937,12 @@ test/rbe/qualify.sh --arch=all unit
 ```
 
 The selector preserves `test/unit.targets`, including its exclusions and non-test
-build targets, and adds ARM64 variants of its non-manual Go/C++ owners. Both
+build targets, and adds ARM64 variants of its non-manual test owners. Both
 architectures run in one Bazel test invocation with the ordinary unit tag
 filters. A query of configured test actions reports and omits ARM64 Firecracker
 requirements while that worker capacity is unavailable; the declarations retain
-their ARM64 support. Other unit owner types (shell, Python, YAML, generator,
-dependency and build checks) retain their original AMD64 execution. This initial
-adoption does not claim a complete ARM64 unit matrix. Single-architecture lanes
+their ARM64 support. Shell, Python, YAML, generator, dependency and build checks
+use the same architecture selection as Go/C++ tests. Single-architecture lanes
 remain available through `--arch=amd64` and `--arch=arm64`.
 
 The existing syscall runner also declares architecture variants centrally;

@@ -50,6 +50,10 @@ static_go_cov, _static_go_cov_transition = _go_binary_variant(static = True, cov
 # the original test attributes, providers, and Go configuration transition.
 go_test, _go_test_transition = with_cfg(_go_test).set("platforms", _MUSL_PLATFORMS).build()
 
+# with_cfg gives native execution constraints to its test frontend. Restore
+# the caller's constraints on the original test so its default and named link
+# groups use consistent toolchains. The named group does not inherit them:
+# https://github.com/bazel-contrib/rules_go/blob/9792f1c07/go/private/rules/test.bzl#L475-L479
 def _compile_go_test(compile_exec_compatible_with, test_rule = _go_test, **kwargs):
     kwargs["exec_compatible_with"] = compile_exec_compatible_with
     test_rule(**kwargs)

@@ -10,42 +10,75 @@ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@rules_python//python:py_test.bzl", _py_test = "py_test")
 load("@rules_shell//shell:sh_test.bzl", _sh_test = "sh_test")
 load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 
 bzl_library = _bzl_library
 bool_flag = _bool_flag
 BuildSettingInfo = _BuildSettingInfo
 
+build_amd64_test, _build_amd64_transition = with_test_architecture(_build_test, "amd64").build()
+build_arm64_test, _build_arm64_transition = with_test_architecture(_build_test, "arm64").build()
 build_test_cgroup_v1_test, _build_test_cgroup_v1_transition = with_cgroup_v1(_build_test)
 
-def build_test(name, **kwargs):
-    """Declares the ordinary test and its manual cgroup-v1 variant."""
-    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+def build_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants."""
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _build_test(name = name, **kwargs)
     cgroup_v1_variant(name, build_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": build_amd64_test, "arm64": build_arm64_test},
+        kwargs,
+    )
 
+native_amd64_test, _native_amd64_transition = with_test_architecture(_native_test, "amd64").build()
+native_arm64_test, _native_arm64_transition = with_test_architecture(_native_test, "arm64").build()
 native_test_cgroup_v1_test, _native_test_cgroup_v1_transition = with_cgroup_v1(_native_test)
 
-def native_test(name, **kwargs):
-    """Declares the ordinary test and its manual cgroup-v1 variant."""
-    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+def native_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants."""
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _native_test(name = name, **kwargs)
     cgroup_v1_variant(name, native_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": native_amd64_test, "arm64": native_arm64_test},
+        kwargs,
+    )
 
+py_amd64_test, _py_amd64_transition = with_test_architecture(_py_test, "amd64").build()
+py_arm64_test, _py_arm64_transition = with_test_architecture(_py_test, "arm64").build()
 py_test_cgroup_v1_test, _py_test_cgroup_v1_transition = with_cgroup_v1(_py_test)
 
-def py_test(name, **kwargs):
-    """Declares the ordinary test and its manual cgroup-v1 variant."""
-    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+def py_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants."""
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _py_test(name = name, **kwargs)
     cgroup_v1_variant(name, py_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": py_amd64_test, "arm64": py_arm64_test},
+        kwargs,
+    )
 
+sh_amd64_test, _sh_amd64_transition = with_test_architecture(_sh_test, "amd64").build()
+sh_arm64_test, _sh_arm64_transition = with_test_architecture(_sh_test, "arm64").build()
 sh_test_cgroup_v1_test, _sh_test_cgroup_v1_transition = with_cgroup_v1(_sh_test)
 
-def sh_test(name, **kwargs):
-    """Declares the ordinary test and its manual cgroup-v1 variant."""
-    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+def sh_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original test and manual architecture/cgroup variants."""
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _sh_test(name = name, **kwargs)
     cgroup_v1_variant(name, sh_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": sh_amd64_test, "arm64": sh_arm64_test},
+        kwargs,
+    )
 
 # Public language and Kubernetes qualification gives each test 1800 seconds.
 # Use an output-only transition: with_cfg also reads test_timeout, whose native

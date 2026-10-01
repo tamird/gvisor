@@ -216,7 +216,7 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         name,
         architectures,
         {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
-        kwargs,
+        dict(kwargs, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
     )
 
 def go_rule(rule, implementation, **kwargs):

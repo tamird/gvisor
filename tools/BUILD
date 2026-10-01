@@ -59,7 +59,10 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
-    deps = ["//tools/bazeldefs:cgroup_test_bzl"],
+    deps = [
+        "//tools/bazeldefs:cgroup_test_bzl",
+        "//tools/bazeldefs:test_architectures_bzl",
+    ],
 )
 
 bzl_library(
