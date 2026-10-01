@@ -165,5 +165,6 @@ def precompiled_seccomp_rules(
             "//conditions:default": actual,
         })
     native.alias(name = name, actual = actual, tags = tags + ["requires-mem:16g"])
+
     # Keep both labels accepted by existing callers, without a copy action.
     native.alias(name = out, actual = ":" + name, tags = tags + ["manual"])
