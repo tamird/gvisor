@@ -31,10 +31,9 @@ target architecture is AMD64. Tests use matching execution workers; builds
 use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
-The all architecture selection combines unit, release-repository, syscalls,
-smoke, smoke-race, do, docker, root, portforward, bwrap, workflows,
-language-directfs and language-goferfs in one invocation. Only unit and syscalls
-add ARM64 variants.
+The all architecture selection combines unit, release-repository and syscalls
+with the target-configured test lanes described in test/rbe/README.md.
+Only unit and syscalls add ARM64 variants.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -88,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs) ;;
+      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -161,6 +160,7 @@ run_source_lane() (
 # Set the caller's targets array from the same owning suites for standalone and
 # combined invocations.
 shared_test_targets() {
+  local target_arch=$2
   case "$1" in
     do) targets=(//:do_tests) ;;
     docker) targets=(//test/docker:owned_tests) ;;
@@ -168,6 +168,16 @@ shared_test_targets() {
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
+    overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
+    containerd) targets=(//test/root:crictl_test_owned) ;;
+    fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
+    packetimpact) targets=(//test/packetimpact/tests:all_tests) ;;
+    iptables|nftables|packetdrill) targets=("//test/$1:owned_tests") ;;
+    kubernetes) targets=(//test/kubernetes/tests:kind_test) ;;
+    podman) targets=(//test/podman:podman_test) ;;
+    syzkaller) targets=(//test/syzkaller:smoke_test) ;;
+    go-export) targets=(//tools/go_export:all_test) ;;
+    cpu-images|gpu-images) targets=("//test/docker:${1%-images}_image_sources_${target_arch}_test") ;;
     language-directfs|language-goferfs) targets=("//test/runtimes:${1#language-}_tests") ;;
     *) printf 'Unknown shared test lane: %s\n' "$1" >&2; return 2 ;;
   esac
@@ -266,8 +276,8 @@ run_platform_matrix() (
         printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
-      do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs)
-        shared_test_targets "$lane"
+      do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images)
+        shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
         fi
@@ -388,14 +398,8 @@ run_lane() (
       fi
       targets=(//test/release:repository_test)
       ;;
-    cpu-images|gpu-images)
-      targets=("//test/docker:${lane%-images}_image_sources_${arch}_test")
-      ;;
     docker-v1)
-      shared_test_targets docker
-      ;;
-    overlay|swgso|hostnet)
-      targets=("//test/docker:${lane}_tests")
+      shared_test_targets docker "$arch"
       ;;
     plugin-network)
       if [[ $arch != amd64 ]]; then
@@ -405,12 +409,12 @@ run_lane() (
       options=(--config=plugin-tldk)
       targets=(//test/docker:plugin_network_tests)
       ;;
-    do|docker|root|portforward|bwrap|workflows)
+    do|docker|root|portforward|bwrap|workflows|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images)
       if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2
       fi
-      shared_test_targets "$lane"
+      shared_test_targets "$lane" "$arch"
       ;;
     posture)
       options=(--test_tag_filters=-requires-kvm)
@@ -430,49 +434,34 @@ run_lane() (
       options=(--test_tag_filters=-requires-kvm)
       targets=(//test/benchmarks:continuous_tests)
       ;;
-    containerd)
-      targets=(//test/root:crictl_test_owned)
-      ;;
-    fsstress)
-      targets=(//test/fsstress:fsstress_test_owned)
-      ;;
-    packetimpact)
-      targets=(//test/packetimpact/tests:all_tests)
-      ;;
-    iptables|nftables|packetdrill)
-      targets=("//test/$lane:owned_tests")
-      ;;
     language-directfs|language-goferfs)
       if [[ $arch != amd64 ]]; then
         printf 'Language runtime images are declared only for AMD64.\n' >&2
         return 1
       fi
       language_test_options
-      shared_test_targets "$lane"
+      shared_test_targets "$lane" "$arch"
       ;;
     kubernetes)
       if [[ $arch != amd64 ]]; then
         printf 'The kind tool and node image are declared only for AMD64.\n' >&2
         return 1
       fi
-      targets=(//test/kubernetes/tests:kind_test)
-      ;;
-    podman)
-      targets=(//test/podman:podman_test)
+      shared_test_targets "$lane" "$arch"
       ;;
     syzkaller)
       if [[ $arch != amd64 ]]; then
         printf 'The Syzkaller smoke test is declared only for AMD64.\n' >&2
         return 2
       fi
-      targets=(//test/syzkaller:smoke_test)
+      shared_test_targets "$lane" "$arch"
       ;;
     go-export)
       if [[ $arch != amd64 ]]; then
         printf 'The exported-module matrix runs on AMD64 workers.\n' >&2
         return 2
       fi
-      targets=(//tools/go_export:all_test)
+      shared_test_targets "$lane" "$arch"
       ;;
     website)
       if [[ $arch != amd64 ]]; then

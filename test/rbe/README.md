@@ -109,6 +109,20 @@ final target list. Per-test runtime inputs, privileges and sharding stay with
 the owning rules. Cgroup-v1 and other lanes with invocation-wide settings
 remain separate.
 
+The same path also accepts `overlay`, `swgso`, `hostnet`, `containerd`,
+`fsstress`, `packetimpact`, `iptables`, `nftables`, `packetdrill`, `kubernetes`,
+`podman`, `syzkaller`, `go-export`, `cpu-images` and `gpu-images`. These lanes
+retain their existing suites and target-owned runtime settings. Combined
+selection uses AMD64; standalone ARM64 selection remains available where the
+existing lane supports it, with ARM64 Firecracker capacity still unqualified.
+The image checks retain four AMD64 shards or two standalone ARM64 shards.
+They check image availability/builds, not GPU runtime execution. Adding a
+lane to the combined graph does not resolve its existing workload failures.
+
+```sh
+test/rbe/qualify.sh --arch=all smoke packetdrill workflows
+```
+
 Select ARM64 targets with `--arch=arm64`, for example:
 
 ```sh
