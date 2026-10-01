@@ -34,10 +34,10 @@ filter because KVM workers remain unavailable. Bazel replaces repeated
 `--test_tag_filters` values, so that restriction cannot be appended to the public
 configuration. The ARM64 lane uses the public configuration directly.
 Most lanes use separate Bazel invocations to preserve their different selections
-and instrumentation. The mixed-platform unit and release lanes below share one
-invocation. Connection settings and credentials come from Bazel's
-configuration; no builder container is started. Normal Bazel caching remains
-enabled.
+and instrumentation. The mixed-platform unit and release lanes and the two smoke
+lanes below share one invocation. Connection settings and credentials come from
+Bazel's configuration; no builder container is started. Normal Bazel caching
+remains enabled.
 
 The RBE configurations default to 400 concurrent actions. Bazel's `auto` default
 follows the coordinator's CPU count
@@ -84,6 +84,12 @@ packages for both CPUs, then checks signing and APT metadata on AMD64. Its
 owning test preserves the release build's default stripping policy even though
 unit tests use `--strip=never`. Either lane can also be selected alone with
 `--arch=all`; their order does not change the selection.
+
+Add `smoke smoke-race` to run the existing normal and race smoke checks in that
+same invocation, or run just those two lanes with `--arch=all`. Both smoke
+checks execute on AMD64. The race target owns its instrumentation settings,
+so selecting it does not instrument the other tests. Both use the declared
+release sidecars and the existing rootless namespace setup.
 
 Select ARM64 targets with `--arch=arm64`, for example:
 

@@ -31,7 +31,8 @@ target architecture is AMD64. Tests use matching execution workers; builds
 use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
-The all architecture selection combines unit and release-repository in one invocation.
+The all architecture selection combines unit, release-repository, smoke and
+smoke-race in one invocation. Both smoke lanes use AMD64 workers.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -83,8 +84,8 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
-  if [[ $arch == all && $lane != unit && $lane != release-repository ]]; then
-    printf 'The all architecture selection supports unit and release-repository.\n' >&2
+  if [[ $arch == all && $lane != unit && $lane != release-repository && $lane != smoke && $lane != smoke-race ]]; then
+    printf 'The all architecture selection supports unit, release-repository, smoke and smoke-race.\n' >&2
     exit 2
   fi
   case "$lane" in
@@ -178,6 +179,10 @@ run_platform_matrix() (
       release-repository)
         printf '%s\n' '//test/release:repository_test' >> "$selection_dir/targets"
         ;;
+      smoke|smoke-race)
+        printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/targets"
+        options+=(--strip=never)
+        ;;
     esac
   done
   bazel test --config=rbe-matrix --config=x86_64 --keep_going \
@@ -255,8 +260,7 @@ run_lane() (
       targets=(//:release_smoke_test)
       ;;
     smoke-race)
-      options=(--config=race)
-      targets=(//:release_smoke_test)
+      targets=(//:release_smoke_race_test)
       ;;
     release-artifacts)
       command=build
