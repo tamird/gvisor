@@ -19,6 +19,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -252,6 +253,9 @@ func TestStartSignal(t *testing.T) {
 // Test that network=host with raw sockets enabled requires CAP_NET_RAW on the
 // host.
 func TestHostnetWithRawSockets(t *testing.T) {
+	// Capabilities are per-thread; keep the drop, check, and restoration together.
+	runtime.LockOSThread()
+
 	// Drop CAP_NET_RAW from effective capabilities, if we have it.
 	pid := os.Getpid()
 	caps, err := capability.NewPid2(0)
@@ -261,18 +265,22 @@ func TestHostnetWithRawSockets(t *testing.T) {
 	if err := caps.Load(); err != nil {
 		t.Fatalf("error loading capabilities: %v", err)
 	}
-	if caps.Get(capability.EFFECTIVE, capability.CAP_NET_RAW) {
-		caps.Unset(capability.EFFECTIVE, capability.CAP_NET_RAW)
-		if err := caps.Apply(capability.EFFECTIVE); err != nil {
-			t.Fatalf("error applying capabilities")
-		}
-		// Be nice and add it back when we are done.
-		defer func() {
+	hadNetRaw := caps.Get(capability.EFFECTIVE, capability.CAP_NET_RAW)
+	defer func() {
+		if hadNetRaw {
 			caps.Set(capability.EFFECTIVE, capability.CAP_NET_RAW)
-			if err := caps.Apply(capability.EFFECTIVE); err != nil {
-				t.Fatalf("error restoring capabilities")
+			if err := caps.Apply(capability.CAPS); err != nil {
+				// Do not return a thread with altered capabilities to the runtime.
+				t.Fatalf("error restoring capabilities: %v", err)
 			}
-		}()
+		}
+		runtime.UnlockOSThread()
+	}()
+	if hadNetRaw {
+		caps.Unset(capability.EFFECTIVE, capability.CAP_NET_RAW)
+		if err := caps.Apply(capability.CAPS); err != nil {
+			t.Fatalf("error applying capabilities: %v", err)
+		}
 	}
 
 	// Configure host network with raw sockets.
