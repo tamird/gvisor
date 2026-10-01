@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T21:07:52.872243+00:00",
+    "updatedAt": "2026-10-01T21:17:36.859478+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -149,10 +149,10 @@
       "title": "Use hackbench's short loop option",
       "url": "https://github.com/google/gvisor/pull/15139",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": "",
       "updatedAt": "2026-09-30T10:19:58Z",
-      "summary": "Exact-source import #15198 at 53f6b086d1b2d9ba15729ede7adc460b6f0bd5b1 passed public pipeline 49172 at 21:02:05 UTC. The import and source PR remain open; passing CI is not a landing."
+      "summary": "Copybara merged import #15198 at 21:09:45 UTC and this source PR at 21:09:47 UTC into 586e0a9d3d3b446643990cf24313032e50a94475. The landed change in test/benchmarks/tools/hackbench.go exactly preserves source 1ada6ae0d8a92377b17a3692d729330ec8ad0d98. The previous import passed public pipeline 49172; fresh merged-head pipeline 49187 remains pending at this observation."
     },
     {
       "id": "pr:15138",
@@ -258,7 +258,7 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-30T04:48:30Z",
-      "summary": "Source a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b has exact-source import #15196 at db5e793d6b9e708ccc2d0b03c63abebd43304f54. Public build 49171 failed in Podman cleanup at 20:53:35 UTC: the first directfs=false workload printed Hello, world, then rm -rf reported Directory not empty and exited 1. The complete public log does not establish the directory's cause or any relationship to this IPv6 assertion change; the second DirectFS mode was not reached in that attempt. Copybara separately reported unavailable Google internal checks failed at 20:57:06 UTC for runs created at 20:19:26; the public cleanup log does not establish that internal failure's cause."
+      "summary": "Source a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b previously had exact-source import #15196 at db5e793d6b9e708ccc2d0b03c63abebd43304f54. Public build 49171 failed in Podman cleanup at 20:53:35 UTC: the first directfs=false workload printed Hello, world, then rm -rf reported Directory not empty and exited 1. The complete public log does not establish the directory's cause or any relationship to this IPv6 assertion change; the second DirectFS mode was not reached in that attempt. Copybara separately reported unavailable Google internal checks failed at 20:57:06 UTC for runs created at 20:19:26; the public cleanup log does not establish that internal failure's cause. Copybara refreshed the exact-source import at 21:13:21 UTC to 6a9364b3107f12da94398ab40ff355698ce3cadf; new public build 49188 is pending."
     },
     {
       "id": "pr:15120",
@@ -364,7 +364,7 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-30T03:50:01Z",
-      "summary": "After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; new-head public checks are queued. Publication and reply were independently verified at 21:07 UTC."
+      "summary": "After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; new-head check-changes, scan, label, fileheader and lint passed while generate remains in progress. Publication and reply were independently verified at 21:07 UTC."
     },
     {
       "id": "pr:15084",
@@ -1008,7 +1008,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head ff47eae257 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo recovery passed its independently reconciled bounded selection/runtime proof; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified. Artifact composition passed its independently reconciled bounded mixed-runtime and metadata proof. The original parent retains its preliminary metadata assertion failure; the metadata-only continuation passed without repeating runtime. A broader 45-minute qualification run e150e6c1-644e-4c42-9ee4-08dcfe895ed2 is live at this head, with no result credit yet."
+      "summary": "Published head ff47eae257 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo recovery passed its independently reconciled bounded selection/runtime proof; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified. Artifact composition passed its independently reconciled bounded mixed-runtime and metadata proof. The original parent retains its preliminary metadata assertion failure; the metadata-only continuation passed without repeating runtime. Broader qualification parent e150e6c1-644e-4c42-9ee4-08dcfe895ed2 failed in 1,277.870 seconds at this exact head. Its saved evidence is being collected; failure counts, causes and runtime coverage have not yet been reconciled."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1631,7 +1631,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-test-selection",
       "group": "rbe",
       "status": "graph proof reconciled; runtime pending",
-      "summary": "Published component 0db5008e34e96b57be34499eae18e3795059fb7b descends from historical qualification c327900462e558a1a610e8a44e168ba0098dd2eb. Independent saved-byte reconciliation closes its graph proof, preserving the non-layout assertions across 981 owners, 1,025 TestRunner actions, 21 legacy comparisons and 43 metadata owners. The original dependency-fetch and script-import parents remain failed; compact parent c4b20db6 also remains failed because its comparator treated generated executable/bootstrap spellings as behavior changes. No runtime result follows from these graph checks. Reviewed composition rbe-cgroup-integration at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b is directly atop primary ff47eae257. Runtime parent daf277fd-0641-43a8-98ec-25b3fce05558 and combined-selector metadata parent 16ababb2-e0a6-4e88-b8ca-3fec5efdfd57 are running; runtime, mount and cleanup proof remain pending."
+      "summary": "Published component 0db5008e34e96b57be34499eae18e3795059fb7b descends from historical qualification c327900462e558a1a610e8a44e168ba0098dd2eb. Independent saved-byte reconciliation closes its graph proof, preserving the non-layout assertions across 981 owners, 1,025 TestRunner actions, 21 legacy comparisons and 43 metadata owners. The original dependency-fetch and script-import parents remain failed; compact parent c4b20db6 also remains failed because its comparator treated generated executable/bootstrap spellings as behavior changes. No runtime result follows from these graph checks. Reviewed composition rbe-cgroup-integration at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b is directly atop primary ff47eae257. Runtime parent daf277fd-0641-43a8-98ec-25b3fce05558 remains running. Combined-selector metadata parent 16ababb2-e0a6-4e88-b8ca-3fec5efdfd57 failed in its comparator after all 11 analyses and the exact 1,811-test union passed: it required 829 Nogo labels to remain classified as non-test roots. Saved reconciliation is pending, as is runtime, mount and cleanup proof."
     },
     {
       "id": "branch:rbe-artifact-selection",
@@ -1642,7 +1642,19 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
       "status": "integrated; bounded qualification passed",
-      "summary": "Published head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is now primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader live qualification run."
+      "summary": "Published head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is now primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose parent is now failed and awaiting evidence reconciliation."
+    },
+    {
+      "id": "pr:15202",
+      "type": "pr",
+      "number": 15202,
+      "repo": "google/gvisor",
+      "ref": "podman-smoke-cleanup",
+      "title": "Remove the Podman smoke container before cleanup",
+      "url": "https://github.com/google/gvisor/pull/15202",
+      "group": "tests",
+      "status": "open",
+      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. Public checks are pending and no exact-source import is visible yet. This publication does not establish that it fixes either earlier import cleanup failure."
     }
   ],
   "edges": [
