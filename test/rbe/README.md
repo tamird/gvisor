@@ -36,10 +36,10 @@ Bazel replaces repeated
 `--test_tag_filters` values, so that restriction cannot be appended to the public
 configuration. The ARM64 lane uses the public configuration directly.
 Lanes with invocation-wide settings use separate Bazel invocations. The unit,
-release, syscall, smoke, do, Docker, root, port forwarding, bwrap and workflow
-checks can share one invocation. Connection settings and credentials come
-from Bazel's configuration; no builder container is started. Normal Bazel caching
-remains enabled.
+release, syscall, smoke, do, Docker, root, port forwarding, bwrap, workflow and
+language checks can share one invocation. Connection settings and credentials
+come from Bazel's configuration; no builder container is started. Normal Bazel
+caching remains enabled.
 
 The RBE configurations default to 400 concurrent actions. Bazel's `auto` default
 follows the coordinator's CPU count
@@ -586,17 +586,19 @@ without an explicit architecture selector. This profile starts with AMD64;
 ARM64 Firecracker capacity and the other network conformance lanes remain
 unqualified.
 
-The language runtime lanes retain the five public AMD64 suites: PHP 8.3.7,
+The language runtime lanes retain the five public AMD64 suites: PHP 8.3.35,
 Java 21, Go 1.22, Node 22.2.0 and Python 3.12.3. DirectFS matches presubmit;
 goferfs matches the continuous matrix:
 
 ```sh
 test/rbe/qualify.sh language-directfs
 test/rbe/qualify.sh language-goferfs
+test/rbe/qualify.sh --arch=all unit language-directfs language-goferfs
 ```
 
 Each action starts the shared private Docker daemon and loads its language's
-declared archive, pinned to the existing `tools/images.mk` source-hash image.
+declared archive. PHP uses the shared source-image producer; the other archives
+are pinned to their existing `tools/images.mk` source-hash images.
 The original image entrypoint is retained, including Node's `dumb-init`.
 The declared release and proctor run the existing tests with systrap and
 `--watchdog-action=panic`. Installed `make %-runtime-tests` entrypoints still
@@ -604,7 +606,7 @@ accept their current runtime, image, partition and test controls.
 
 The owned suites schedule the public CI partitions inside Bazel. Each partition
 keeps the existing four or eight Bazel shards, batch size, exclusions and runner
-timeout; the dispatcher retains Make's 1800-second action timeout. Java's forty
+timeout; each test owner sets its 1800-second action timeout. Java's forty
 partitions cannot be collapsed into one test target because Bazel limits each
 target to fifty shards. Each complete mode schedules 456 actions across 64
 partition targets. No external `PARTITION` or `TOTAL_PARTITIONS` setting is
@@ -613,7 +615,13 @@ needed for these owned suites. Selecting a concrete partition target, such as
 
 `RUNTIME_TESTS_FILTER`, `RUNTIME_TESTS_PER_TEST_TIMEOUT`,
 `RUNTIME_TESTS_RUNS_PER_TEST`, `RUNTIME_TESTS_FLAKY_IS_ERROR` and
-`RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT` retain their Make defaults and meanings.
+`RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT` use the defaults in the runtime runner.
+The dispatcher forwards only variables set in its environment, including empty
+values. Unset controls leave any user rc `--test_env` settings in effect; a set
+empty value selects the runner's default. Explicit controls apply to the whole
+combined invocation, but only the language runner consumes these names.
+Make retains its explicit value transport through the builder, and direct Bazel
+commands retain their existing `--test_env` precedence.
 The language and Kubernetes test owners retain their 1800-second deadline
 even when an invocation overrides `--test_timeout`; other tests retain the
 invocation's timeout settings.

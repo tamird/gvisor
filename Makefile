@@ -335,13 +335,7 @@ packetimpact-tests:
 	@$(call test,--jobs=HOST_CPUS*3 --local_test_jobs=HOST_CPUS*3 //test/packetimpact/tests:all_tests)
 .PHONY: packetimpact-tests
 
-# Extra configuration options for runtime tests.
-RUNTIME_TESTS_FILTER ?=
-RUNTIME_TESTS_PER_TEST_TIMEOUT ?= 20m
-RUNTIME_TESTS_RUNS_PER_TEST ?= 1
-RUNTIME_TESTS_FLAKY_IS_ERROR ?= true
-RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT ?= true
-
+# Empty controls use the defaults in test/runtimes/runner.
 %-runtime-tests: load-runtimes_% $(RUNTIME_BIN)
 	@$(call install_runtime,$(RUNTIME),--watchdog-action=panic --platform=systrap)
 	@IMAGE_TAG=$(call tag,runtimes_$*) && \
