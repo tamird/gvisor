@@ -198,14 +198,24 @@ language_test_options() {
   done
 }
 
+# A file keeps large ordered target lists below Linux's argument-size limit.
+# Aquery ignores target_pattern_file; apply this config after the caller's options.
+analyze_profile() {
+  local patterns=$1 events=$2
+  shift 2
+  local rc=$events.bazelrc
+  python3 test/rbe/unit_matrix.py universe-rc "$patterns" > "$rc"
+  bazel "--bazelrc=$rc" aquery "$@" --config=rbe-selection \
+    "--build_event_json_file=$events" 'set()'
+}
+
 # Let Bazel select each public syscall profile before checking worker capacity.
 # Aquery inherits build options, so the canonical loading filters live there;
 # test inherits the same options. Its ordered universe comes from Make's roots.
 select_syscall_profile() {
-  local selection_dir=$1 lane=$2 syscall_arch=$3 target_config=x86_64 syscall_universe prefix
+  local selection_dir=$1 lane=$2 syscall_arch=$3 target_config=x86_64 prefix
   local -a profile_options=()
   prefix=$selection_dir/$lane-$syscall_arch
-  syscall_universe=$(python3 test/rbe/unit_matrix.py universe test/syscalls.targets)
   if [[ $syscall_arch == arm64 ]]; then
     target_config=aarch64
   fi
@@ -215,10 +225,9 @@ select_syscall_profile() {
     syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
     *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
   esac
-  bazel aquery --config=rbe-matrix "--config=$target_config" \
-    "${profile_options[@]}" --build_tests_only \
-    "--universe_scope=$syscall_universe" \
-    "--build_event_json_file=$prefix-profile.json" 'set()'
+  analyze_profile test/syscalls.targets "$prefix-profile.json" \
+    --config=rbe-matrix "--config=$target_config" \
+    "${profile_options[@]}" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
     "$prefix-profile.json" "$syscall_arch" > "$prefix.query"
   bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
@@ -235,7 +244,7 @@ select_syscall_profile() {
 # filters. Release artifacts already select both CPUs in their owning graph.
 run_platform_matrix() (
   set -e
-  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false explicit_universe
+  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false
   local -a options=() targets=() verification_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
@@ -277,10 +286,8 @@ run_platform_matrix() (
         if [[ $include_nogo == true ]]; then
           # Preserve the original unit selection before allowing Nogo through
           # its wildcard roots. Verify the complete union before execution.
-          explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/unit-targets")
-          bazel aquery --config=rbe-matrix --config=x86_64 --config=unit \
-            --strip=never --build_tests_only "--universe_scope=$explicit_universe" \
-            "--build_event_json_file=$selection_dir/unit-profile.json" 'set()'
+          analyze_profile "$selection_dir/unit-targets" "$selection_dir/unit-profile.json" \
+            --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
           verification_options+=(--profile "$selection_dir/unit-profile.json")
         fi
         ;;
@@ -352,13 +359,11 @@ run_platform_matrix() (
     fi
   fi
   if [[ -s $selection_dir/filtered-targets ]]; then
-    explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/filtered-targets")
     # Select only these profiles under their KVM policy. Applying it to the final
     # invocation would also change unrelated lanes' filters.
-    bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
-      --build_tests_only --test_tag_filters=-requires-kvm \
-      "--universe_scope=$explicit_universe" \
-      "--build_event_json_file=$selection_dir/filtered-profile.json" 'set()'
+    analyze_profile "$selection_dir/filtered-targets" "$selection_dir/filtered-profile.json" \
+      --config=rbe-matrix --config=x86_64 --strip=never \
+      --build_tests_only --test_tag_filters=-requires-kvm
     python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/filtered-targets" \
       > "$selection_dir/filtered-kvm.query"
     bazel query --output=label --query_file="$selection_dir/filtered-kvm.query" \
@@ -371,12 +376,10 @@ run_platform_matrix() (
   if [[ -s $selection_dir/combined-targets ]]; then
     if [[ $include_nogo == true || $include_syscalls == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
       if [[ -s $selection_dir/shared-targets ]]; then
-        explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/shared-targets")
         # Let Bazel expand explicit suites, including their manual members,
         # before comparing their selection under the combined lane's filters.
-        bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
-          --build_tests_only "--universe_scope=$explicit_universe" \
-          "--build_event_json_file=$selection_dir/shared-profile.json" 'set()'
+        analyze_profile "$selection_dir/shared-targets" "$selection_dir/shared-profile.json" \
+          --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only
         verification_options+=(--profile "$selection_dir/shared-profile.json")
       fi
       : > "$selection_dir/verification-targets"
@@ -384,12 +387,10 @@ run_platform_matrix() (
         cat "$selection_dir/targets" >> "$selection_dir/verification-targets"
       fi
       cat "$selection_dir/combined-targets" >> "$selection_dir/verification-targets"
-      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/verification-targets")
       # Verify the final filters with Bazel itself. Never silently lose another
       # lane's explicit tests when combining it with the unit configuration.
-      bazel aquery --config=rbe-matrix --config=x86_64 "${options[@]}" \
-        --build_tests_only "--universe_scope=$explicit_universe" \
-        "--build_event_json_file=$selection_dir/combined-profile.json" 'set()'
+      analyze_profile "$selection_dir/verification-targets" "$selection_dir/combined-profile.json" \
+        --config=rbe-matrix --config=x86_64 "${options[@]}" --build_tests_only
       python3 test/rbe/unit_matrix.py verify \
         "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json" "${verification_options[@]}"
     fi

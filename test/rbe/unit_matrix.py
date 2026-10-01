@@ -286,7 +286,7 @@ def main() -> None:
     select = commands.add_parser("select")
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
-    patterns = commands.add_parser("universe")
+    patterns = commands.add_parser("universe-rc")
     patterns.add_argument("patterns")
     kvm = commands.add_parser("kvm-query")
     kvm.add_argument("roots")
@@ -313,8 +313,11 @@ def main() -> None:
         print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
         select_variants(args.patterns, args.owners, args.actions, args.output)
-    elif args.command == "universe":
-        print(universe(args.patterns))
+    elif args.command == "universe-rc":
+        # Bazel's rc tokenizer consumes backslash escapes inside double quotes.
+        # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/cpp/util/strings.cc#L181-L220
+        value = universe(args.patterns).replace("\\", "\\\\").replace('"', '\\"')
+        print('aquery:rbe-selection "--universe_scope=' + value + '"')
     elif args.command == "kvm-query":
         tag = query_word(r"(^|\[|, )requires-kvm(,|\]|$)")
         print("attr(tags, " + tag + ", tests(" + target_set(owner_labels(args.roots)) + "))")
