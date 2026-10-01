@@ -277,7 +277,7 @@ def syscall_test_variants(
       add_host_tty: setup host TTY at /dev/tty.
       add_hostinet: add a hostinet test.
       add_directfs: add a directfs test.
-      one_sandbox: runs each unit test in a new sandbox instance.
+      one_sandbox: runs all test cases in one sandbox instance.
       iouring: enable IO_URING support.
       allow_native: generate a native test variant.
       debug: enable debug output.
@@ -481,7 +481,7 @@ def syscall_test(
       add_host_tty: setup host TTY at /dev/tty.
       add_hostinet: add a hostinet test.
       add_directfs: add a directfs test.
-      one_sandbox: runs each unit test in a new sandbox instance.
+      one_sandbox: runs all test cases in one sandbox instance.
       iouring: enable IO_URING support.
       allow_native: generate a native test variant.
       debug: enable debug output.
