@@ -32,7 +32,8 @@ use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
 The all architecture selection combines unit, release-repository, syscalls,
-smoke and smoke-race in one invocation. Both smoke lanes use AMD64 workers.
+smoke, smoke-race, do, docker, root, portforward, bwrap and workflows in one
+invocation. Only unit and syscalls add ARM64 variants.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -84,9 +85,11 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
-  if [[ $arch == all && $lane != unit && $lane != release-repository && $lane != syscalls && $lane != smoke && $lane != smoke-race ]]; then
-    printf 'The all architecture selection supports unit, release-repository, syscalls, smoke and smoke-race.\n' >&2
-    exit 2
+  if [[ $arch == all ]]; then
+    case "$lane" in
+      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows) ;;
+      *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
+    esac
   fi
   case "$lane" in
     build-all|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
@@ -154,6 +157,20 @@ run_source_lane() (
   esac
 )
 
+# Set the caller's targets array from the same owning suites for standalone and
+# combined invocations. These lanes need no invocation-wide test settings.
+shared_test_targets() {
+  case "$1" in
+    do) targets=(//:do_tests) ;;
+    docker) targets=(//test/docker:owned_tests) ;;
+    root) targets=(//test/root:root_test_owned) ;;
+    portforward) targets=(//test/root:portforward_test_owned) ;;
+    bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
+    workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
+    *) printf 'Unknown shared test lane: %s\n' "$1" >&2; return 2 ;;
+  esac
+}
+
 # Let Bazel select each public syscall profile before checking worker capacity.
 # Aquery inherits build options, so the canonical loading filters live there;
 # test inherits the same options. Its ordered universe comes from Make's roots.
@@ -191,11 +208,12 @@ select_syscall_matrix() {
 run_platform_matrix() (
   set -e
   local selection_dir lane include_unit=false include_syscalls=false explicit_universe
-  local -a options=()
+  local -a options=() targets=() verification_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   : > "$selection_dir/targets"
   : > "$selection_dir/explicit-targets"
+  : > "$selection_dir/shared-targets"
   for lane in "$@"; do
     if [[ $lane == unit ]]; then
       include_unit=true
@@ -235,20 +253,36 @@ run_platform_matrix() (
         printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
+      do|docker|root|portforward|bwrap|workflows)
+        shared_test_targets "$lane"
+        printf '%s\n' "${targets[@]}" >> "$selection_dir/shared-targets"
+        printf 'Combined lane %s retains AMD64 execution; no ARM64 coverage is added.\n' "$lane"
+        options+=(--strip=never)
+        ;;
     esac
   done
-  if [[ -s $selection_dir/explicit-targets ]]; then
-    if [[ $include_syscalls == true ]]; then
-      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/explicit-targets")
+  cat "$selection_dir/explicit-targets" "$selection_dir/shared-targets" > "$selection_dir/combined-targets"
+  if [[ -s $selection_dir/combined-targets ]]; then
+    if [[ $include_syscalls == true || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
+      if [[ -s $selection_dir/shared-targets ]]; then
+        explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/shared-targets")
+        # Let Bazel expand explicit suites, including their manual members,
+        # before comparing their selection under the combined lane's filters.
+        bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
+          --build_tests_only "--universe_scope=$explicit_universe" \
+          "--build_event_json_file=$selection_dir/shared-profile.json" 'set()'
+        verification_options=(--profile "$selection_dir/shared-profile.json")
+      fi
+      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/combined-targets")
       # Verify the final filters with Bazel itself. Never silently lose another
       # lane's explicit tests when combining it with the unit configuration.
       bazel aquery --config=rbe-matrix --config=x86_64 "${options[@]}" \
         --build_tests_only "--universe_scope=$explicit_universe" \
         "--build_event_json_file=$selection_dir/combined-profile.json" 'set()'
       python3 test/rbe/unit_matrix.py verify \
-        "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json"
+        "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json" "${verification_options[@]}"
     fi
-    cat "$selection_dir/explicit-targets" >> "$selection_dir/targets"
+    cat "$selection_dir/combined-targets" >> "$selection_dir/targets"
   fi
   bazel test --config=rbe-matrix --config=x86_64 --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" \
@@ -341,8 +375,8 @@ run_lane() (
     cpu-images|gpu-images)
       targets=("//test/docker:${lane%-images}_image_sources_${arch}_test")
       ;;
-    docker|docker-v1)
-      targets=(//test/docker:owned_tests)
+    docker-v1)
+      shared_test_targets docker
       ;;
     overlay|swgso|hostnet)
       targets=("//test/docker:${lane}_tests")
@@ -355,18 +389,12 @@ run_lane() (
       options=(--config=plugin-tldk)
       targets=(//test/docker:plugin_network_tests)
       ;;
-    do)
-      if [[ $arch != amd64 ]]; then
+    do|docker|root|portforward|bwrap|workflows)
+      if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2
       fi
-      targets=(//:do_tests)
-      ;;
-    root)
-      targets=(//test/root:root_test_owned)
-      ;;
-    portforward)
-      targets=(//test/root:portforward_test_owned)
+      shared_test_targets "$lane"
       ;;
     posture)
       options=(--test_tag_filters=-requires-kvm)
@@ -388,9 +416,6 @@ run_lane() (
       ;;
     containerd)
       targets=(//test/root:crictl_test_owned)
-      ;;
-    bwrap)
-      targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test)
       ;;
     fsstress)
       targets=(//test/fsstress:fsstress_test_owned)
@@ -437,9 +462,6 @@ run_lane() (
         return 2
       fi
       targets=(//tools/go_export:all_test)
-      ;;
-    workflows)
-      targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test)
       ;;
     website)
       if [[ $arch != amd64 ]]; then
