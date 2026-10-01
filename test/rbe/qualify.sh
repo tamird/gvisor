@@ -14,6 +14,7 @@
 # limitations under the License.
 
 set -uo pipefail
+set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
@@ -22,7 +23,7 @@ lanes=(build-all plugin-build nogo unit unit-v1 container container-v1 smoke smo
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
-       test/rbe/qualify.sh [--arch=amd64|arm64] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -30,6 +31,7 @@ target architecture is AMD64. Tests use matching execution workers; builds
 use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
+The all architecture selection currently supports the unit lane only.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -65,6 +67,7 @@ done
 case "$arch" in
   amd64) architecture_config=x86_64 ;;
   arm64) architecture_config=aarch64 ;;
+  all) architecture_config=x86_64 ;;
   *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
 esac
 if [[ $# == 1 && $1 == amd64 ]]; then
@@ -80,6 +83,10 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
+  if [[ $arch == all && $lane != unit ]]; then
+    printf 'The all architecture selection currently supports only unit.\n' >&2
+    exit 2
+  fi
   case "$lane" in
     build-all|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
@@ -114,11 +121,11 @@ gaps
 # configuration to both paths without changing user rc files or credentials.
 run_source_lane() (
   local lane=$1 qualification_rc go_root
-  qualification_rc=$(mktemp) || exit 1
+  qualification_rc=$(mktemp)
   trap 'rm -f "$qualification_rc"' EXIT
   export qualification_rc
   printf '%s\n' 'build --config=rbe' 'build --config=x86_64' \
-    'build --keep_going' > "$qualification_rc" || exit 1
+    'build --keep_going' > "$qualification_rc"
   bazel() {
     command bazel --bazelrc="$qualification_rc" "$@"
   }
@@ -127,7 +134,7 @@ run_source_lane() (
     lint)
       # Bootstrap the existing installer's Go resolver from the declared SDK;
       # lint.sh still owns the formatter version and canonical Go caches.
-      go_root=$(bazel run @io_bazel_rules_go//go -- env GOROOT) || exit "$?"
+      go_root=$(bazel run @io_bazel_rules_go//go -- env GOROOT)
       if [[ $go_root != /* || $go_root == *$'\n'* || ! -x $go_root/bin/go ]]; then
         printf 'Declared Go SDK did not provide an executable absolute GOROOT: %s\n' "$go_root" >&2
         exit 1
@@ -146,7 +153,28 @@ run_source_lane() (
   esac
 )
 
-run_lane() {
+# Preserve the canonical AMD64 selection and add declared ARM variants in the
+# same test invocation. Query configured worker properties so a temporary
+# provider gap does not become an intrinsic test architecture restriction.
+run_unit_matrix() (
+  local selection_dir
+  selection_dir=$(mktemp -d)
+  trap 'rm -rf "$selection_dir"' EXIT
+  python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
+  bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+  python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+  bazel aquery --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
+    --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+  python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+    "$selection_dir/actions.json" "$selection_dir/targets"
+  bazel test --config=rbe-matrix --config=x86_64 --keep_going "$@" \
+    --target_pattern_file="$selection_dir/targets"
+)
+
+run_lane() (
+  # Called as a plain command below so errexit also applies inside helpers.
+  # The parent records failures and continues with other requested lanes.
+  set -e
   local lane=$1
   local command=test execution_config=rbe
   local -a options=() targets=()
@@ -371,15 +399,19 @@ run_lane() {
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi
   fi
-  bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
-    --keep_going "${options[@]}" "${targets[@]}"
-}
+  if [[ $arch == all ]]; then
+    run_unit_matrix "${options[@]}"
+  else
+    bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
+      --keep_going "${options[@]}" "${targets[@]}"
+  fi
+)
 
 status=0
 for lane in "$@"; do
   printf '\nRunning lane: %s\n' "$lane"
-  lane_status=0
-  run_lane "$lane" || lane_status=$?
+  run_lane "$lane"
+  lane_status=$?
   printf 'Lane %s exited %d\n' "$lane" "$lane_status"
   if (( lane_status != 0 )); then
     status=1
