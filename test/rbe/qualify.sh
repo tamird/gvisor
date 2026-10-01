@@ -326,7 +326,13 @@ run_lane() {
     syscalls|syscalls-save|syscalls-resume)
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror)
       case "$lane" in
-        syscalls) options+=('--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm') ;;
+        syscalls)
+          if [[ $arch == arm64 ]]; then
+            options+=(--config=syscalls-arm64)
+          else
+            options+=('--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm')
+          fi
+          ;;
         syscalls-save) options+=(--test_tag_filters=save_restore) ;;
         syscalls-resume) options+=(--test_tag_filters=save_resume) ;;
       esac
