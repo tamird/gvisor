@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T16:10:14.247606+00:00",
+    "updatedAt": "2026-10-01T16:52:57.874875+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head c2d28e639 runs the implemented AMD64 lanes without the builder image, with 400-action remote concurrency. Its combined unit/release invocation passes all 640 owners in 660 remote uncached actions, including 309 ARM64 unit additions. That parent remains failed because a preliminary dependency download returned HTTP 500; a separate same-source analysis passes the release configuration and both-CPU artifact checks without executing tests. Qualification includes validated packet cleanup, mapped TUN storage, oversized writes, checkpoint cases and removal of 50 duplicate variants. Docker-v1 has 159 XML passes and two existing skips. Original unit-v1 remains failed at 329 of 330 owners; corrected boot passes 105 cases and both Nogo architectures, without a fresh whole-lane pass. Four ARM64 Firecracker unit owners are omitted; 18 non-Go/C++ unit owners remain AMD64 only. Full container selectors are declared, but KVM runtime is unqualified. Focused PHP checks pass with the required missing-intl skip; earlier full partitions remain failed. Twenty Node batch repetitions did not reproduce SIGABRT. ARM64 Firecracker, KVM, vhost-net and GPU capacity remain blocked; the host-systemd fixture has not run."
+      "summary": "Published head 2ff2716c4 runs the implemented AMD64 lanes without the builder image, with 400-action remote concurrency. One five-owner invocation passes native AMD64/ARM64 Go units, both complete TUN modes with strict leak checks, and both-CPU release checks. This proves the small composition, not the full syscall matrix. Earlier syscall analysis remains failed; retained graph data reconciles the established Nogo-policy omission separately. The prior unit/release invocation passes 640 owners in 660 uncached actions; its parent remains failed on a preliminary HTTP 500, followed by passing same-source configuration analysis. Qualification includes packet cleanup, mapped TUN storage, oversized writes, checkpoint cases and removal of 50 duplicate variants. Docker-v1 has 159 XML passes and two existing skips. Original unit-v1 remains failed at 329/330; corrected boot passes 105 cases and both Nogo architectures. Four ARM64 Firecracker unit owners are omitted, and 18 non-Go/C++ owners remain AMD64 only. KVM container execution is unqualified. Focused PHP checks pass with the required skip; earlier full partitions remain failed. Twenty Node repetitions did not reproduce SIGABRT. ARM64 Firecracker, KVM, vhost-net and GPU capacity remain blocked; host-systemd has not run."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1538,18 +1538,18 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-unit-release-qualification",
       "group": "rbe",
       "status": "validated",
-      "summary": "Published head c2d28e639 is also the current primary qualification head. Its one mixed unit/release invocation passes all 640 selected owners in 660 remote uncached single attempts. The parent remains failed solely because its preliminary yq dependency download returned HTTP 500. Separate same-source analysis a8bb5fff5 passes with zero build actions or tests: the release owner pins strip=sometimes despite incoming never, and Debian, bzip2 and zstd artifacts select both CPUs. Actual release logs verify the six package/archive inputs and existing package checks. The unit run retains four explicit ARM64 Firecracker omissions and 18 non-Go/C++ owners on AMD64 only; no full syscall matrix is claimed."
+      "summary": "Published head c2d28e639 is retained in current qualification 2ff2716c4. Its one mixed unit/release invocation passes all 640 selected owners in 660 remote uncached single attempts. The parent remains failed solely because its preliminary yq dependency download returned HTTP 500. Separate same-source analysis a8bb5fff5 passes with zero build actions or tests: the release owner pins strip=sometimes despite incoming never, and Debian, bzip2 and zstd artifacts select both CPUs. Actual release logs verify the six package/archive inputs and existing package checks. The unit run retains four explicit ARM64 Firecracker omissions and 18 non-Go/C++ owners on AMD64 only; no full syscall matrix is claimed."
     },
     {
       "id": "branch:tuntap-leak-check",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tuntap-leak-check",
-      "title": "Restore TUN syscall leak checking",
+      "title": "Enable leak checks in TUN syscall tests",
       "url": "https://github.com/tamird/gvisor/tree/tuntap-leak-check",
       "group": "tests",
-      "status": "lineage review pending",
-      "summary": "Published source f6576a1c5 removes the full TUN suite leak-check exemption. On the pre-lifecycle qualification source, both complete shared and DirectFS owners pass 21 cases with one existing down-device skip each and strict leak checking. Contributor review is held while the historical fixing commit is identified; no upstream PR or dependency on the newer packet-cleanup fix is claimed. The combination with new mapped-packet source awaits its focused proof."
+      "status": "awaiting contributor review",
+      "summary": "Published source 36106ebdd removes the stale TUN suite leak-check exemption after 0bf11c160 fixed the endpoint reference leak on failed NIC creation. Both full shared and DirectFS owners pass 21 cases plus one existing down-device skip with strict leak checking on the earlier source and now on the mapped-packet qualification composition 2ff2716c4. The latest branch amendment changes only its message. Contributor review is pending; no upstream PR is authorized."
     }
   ],
   "edges": [
@@ -2277,6 +2277,18 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c2d28e639",
         "https://app.buildbuddy.io/invocation/a8bb5fff-5678-4cee-bcac-d163564975c3"
+      ]
+    },
+    {
+      "from": "branch:tuntap-leak-check",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes the strict TUN leak-check restoration. The five-owner mixed invocation passes both full TUN modes on mapped-packet source, native Go units on both CPUs and release checks for both package architectures. Earlier syscall analysis remains failed; its exact Nogo-policy exclusion is reconciled from retained graph evidence, not credited as full matrix execution.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/2ff2716c4",
+        "https://github.com/tamird/gvisor/commit/36106ebdd",
+        "https://app.buildbuddy.io/invocation/9487ec67-c8b2-48a0-bb99-396ed64be9a0",
+        "https://app.buildbuddy.io/invocation/3a1fe011-518a-427f-a76f-c4610896d3a0"
       ]
     }
   ]
