@@ -446,9 +446,11 @@ function setFreshness(text, warning = false, live = false) {
   $("freshness-text").textContent = text;
   $("freshness-dot").className = `status-dot${warning ? " warning" : live ? " live" : ""}`;
 }
-function applyLive(snapshot) {
+function applyLive(snapshot, nextRegistry = registry) {
   const scrollPositions = ["table-pane", "details", "ranking"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openChecks = new Set([...$("details").querySelectorAll(".check-details[open]")].map((section) => section.dataset.pr));
+  registry = nextRegistry;
+  updateRegistryControls();
   const nodes = registry.nodes.map((node) => ({ ...node })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
   for (const pr of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const id = `pr:${pr.number}`, existing = ids.get(id);
@@ -480,9 +482,26 @@ function applyLive(snapshot) {
   setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
   $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot; the maintainer updates it with python3 update-status.py.";
 }
-function validateSnapshot(snapshot) {
-  if (snapshot?.schema !== 1 || snapshot.repo !== registry.meta.repo || snapshot.owner !== registry.meta.owner || snapshot.registryDate !== registry.meta.updatedAt ||
+function validateRegistry(candidate) {
+  if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
+      !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
+  const ids = new Set(candidate.nodes.map((node) => node.id));
+  if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
+}
+function updateRegistryControls() {
+  const group = $("group-filter").value;
+  $("group-filter").replaceChildren(element("option", "", "All workstreams"));
+  $("group-filter").firstChild.value = "";
+  for (const item of [...registry.groups, { id: "new", label: "New · not yet grouped" }]) {
+    const option = element("option", "", item.label); option.value = item.id; $("group-filter").append(option);
+  }
+  $("group-filter").value = [...$("group-filter").options].some((option) => option.value === group) ? group : "";
+  $("registry-age").textContent = `Registry reviewed ${date(registry.meta.updatedAt)}`;
+}
+function validateSnapshot(snapshot, nextRegistry = registry) {
+  if (snapshot?.schema !== 1 || snapshot.repo !== nextRegistry.meta.repo || snapshot.owner !== nextRegistry.meta.owner ||
       !Number.isFinite(Date.parse(snapshot.checkedAt)) || !Array.isArray(snapshot.prs) || !snapshot.issues) throw new Error("Invalid GitHub snapshot");
+  if (snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
   const numbers = new Set();
   for (const pr of snapshot.prs) {
     if (!Number.isInteger(pr.number) || numbers.has(pr.number) || !Array.isArray(pr.imports)) throw new Error("Invalid PR inventory");
@@ -504,13 +523,22 @@ async function refresh(force = false) {
   refreshing = true; lastAttempt = Date.now(); $("refresh").disabled = true;
   setFreshness("Loading published GitHub snapshot…");
   try {
-    const response = await fetch("github-status.json", { cache: "no-cache", credentials: "omit", signal: AbortSignal.timeout(10000) });
-    if (!response.ok) throw new Error(`Snapshot returned ${response.status}`);
-    const snapshot = await response.json(); validateSnapshot(snapshot);
+    // An open tab can outlive a deployment. Reload both data files and validate
+    // their shared revision before replacing the current registry or snapshot.
+    const options = { cache: "no-cache", credentials: "omit", signal: AbortSignal.timeout(10000) };
+    const [registryResponse, snapshotResponse] = await Promise.all([
+      fetch("registry.json", options), fetch("github-status.json", options),
+    ]);
+    if (!registryResponse.ok) throw new Error(`Registry returned ${registryResponse.status}`);
+    if (!snapshotResponse.ok) throw new Error(`Snapshot returned ${snapshotResponse.status}`);
+    const [nextRegistry, snapshot] = await Promise.all([registryResponse.json(), snapshotResponse.json()]);
+    validateRegistry(nextRegistry);
+    if (nextRegistry.meta.repo !== registry.meta.repo || nextRegistry.meta.owner !== registry.meta.owner) throw new Error("Registry repository changed");
+    validateSnapshot(snapshot, nextRegistry);
+    applyLive(snapshot, nextRegistry);
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* Storage is optional. */ }
-    applyLive(snapshot);
   } catch (error) {
-    setFreshness(`Snapshot unavailable · ${error.message}. Showing ${cached ? "cached GitHub data" : "curated registry; PR attributes unavailable"}.`, true);
+    setFreshness(`Snapshot unavailable · ${error.message}. Keeping the last displayed data.`, true);
   } finally { refreshing = false; $("refresh").disabled = false; }
 }
 
@@ -561,12 +589,9 @@ async function start() {
   try {
     const response = await fetch("registry.json", { cache: "no-cache" });
     if (!response.ok) throw new Error(`Registry returned ${response.status}`);
-    registry = await response.json();
-    const ids = new Set(registry.nodes.map((node) => node.id));
-    if (ids.size !== registry.nodes.length || registry.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
+    registry = await response.json(); validateRegistry(registry);
     model = { ...registry, groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
-    for (const group of model.groups) { const option = element("option", "", group.label); option.value = group.id; $("group-filter").append(option); }
-    $("registry-age").textContent = `Registry reviewed ${date(registry.meta.updatedAt)}`;
+    updateRegistryControls();
     selected = decodeURIComponent(location.hash.slice(1)) || null;
     focus = selected && model.nodes.some((node) => node.id === selected) ? selected : null;
     initialize(); render(true); refresh();

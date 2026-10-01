@@ -1,12 +1,12 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T00:57:58.632623+00:00",
+    "updatedAt": "2026-10-01T01:35:01.917349+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
     "edgeDirection": "Prerequisite \u2192 dependent. Integration membership is listed in details and excluded from dependency reach.",
-    "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Historical Docker, stress and Buildkite pilots are omitted; their branches/evidence are preserved. Landed prerequisites are not active blockers."
+    "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Retained unpublished source remains visible; obsolete validation branches are omitted. Landed prerequisites are not active blockers."
   },
   "groups": [
     {
@@ -330,9 +330,10 @@
       "title": "Propagate clang-tidy process failures",
       "url": "https://github.com/google/gvisor/pull/15109",
       "group": "release",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "",
-      "updatedAt": "2026-09-30T03:50:01Z"
+      "updatedAt": "2026-09-30T03:50:01Z",
+      "summary": "Closed in favor of the LLVM-backed clang-tidy migration at 40dc10a02, which removes the old Python driver. The replacement is published and remotely validated but has not landed upstream; the closing comment links the exact replacement."
     },
     {
       "id": "pr:15107",
@@ -603,9 +604,10 @@
       "title": "Load Bazel 9 symbols in Coral crosstool",
       "url": "https://github.com/google/gvisor/pull/14985",
       "group": "bazel",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "",
-      "updatedAt": "2026-09-25T01:22:15Z"
+      "updatedAt": "2026-09-25T01:22:15Z",
+      "summary": "Closed in favor of the hermetic LLVM toolchain migration at 63e2554be, which removes the Coral toolchain owner. The replacement is published but has not landed upstream; the closing comment links the exact replacement."
     },
     {
       "id": "pr:14984",
@@ -681,9 +683,10 @@
       "title": "nogo: preserve configured analysis inputs",
       "url": "https://github.com/google/gvisor/pull/14502",
       "group": "analysis",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-27T21:52:58Z"
+      "updatedAt": "2026-09-27T21:52:58Z",
+      "summary": "Landed upstream as 5a095390e; the source PR is closed. Its configured Nogo input support is no longer an active prerequisite blocker."
     },
     {
       "id": "pr:14361",
@@ -787,7 +790,8 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-27T21:24:28Z"
+      "updatedAt": "2026-09-27T21:24:28Z",
+      "summary": "Prerequisite #14502 has landed. The dependent source update is in progress and has not yet been published; landing the prerequisite does not complete that update."
     },
     {
       "id": "pr:12483",
@@ -994,7 +998,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The iptables large-payload fixture passes native Linux and both systrap owners. MQ unlink permissions now pass all 17 cases in all three owners. These targeted results do not establish a complete combined-head run."
+      "summary": "Current published head c5a376025 includes the ARM64 syscall selection correction. Saved loading evidence gives identical public/config/driver selections: 910 owners (255 ptrace, 655 systrap); the AMD64 pipeline schema test passes. The parent remains failed because warning rejection stopped its reducer, and parity was checked from retained events. This establishes no ARM64 runtime capacity or complete combined-head qualification. Earlier targeted runtime results remain valid for their recorded source."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1235,6 +1239,50 @@
       "group": "runtime",
       "status": "open",
       "summary": "Contributor-reviewed and published. The exact OriginalDstErrors case passes native Linux and both gVisor configurations; the complete stack unit owner and both Nogo owners pass. Missing native mark/CT extensions remain separate failures."
+    },
+    {
+      "id": "branch:syscall-arm64-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syscall-arm64-selection",
+      "title": "Share the public ARM64 syscall selection",
+      "url": "https://github.com/tamird/gvisor/tree/syscall-arm64-selection",
+      "group": "rbe",
+      "status": "review pending",
+      "summary": "Standalone source afd1aa04a shares the ARM64 filter between public CI commands. On integrated c5a376025, retained loading evidence proves the same 910 selected owners for the literal filter, config and qualification driver, and the AMD64 pipeline schema test passes. The parent remains failed for its warning/capture guard; no ARM64 compilation, runtime or capacity claim. Contributor review remains pending."
+    },
+    {
+      "id": "branch:rbe-remote-stress",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-remote-stress",
+      "title": "Run repeated remote test selections",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-remote-stress",
+      "group": "rbe",
+      "status": "preparation needed",
+      "summary": "Retained unpublished source fa02d20f4 provides arbitrary Bazel labels, repetition counts and test arguments through tools/remote_stress.sh. The current fixed-lane qualification driver does not replace this interface. Extract and review the retained source before proposing delivery; ancestry alone does not make it depend on the qualification branch."
+    },
+    {
+      "id": "branch:syzkaller-hermetic-smoke",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syzkaller-hermetic-smoke",
+      "title": "Declare a Syzkaller build and smoke owner",
+      "url": "https://github.com/tamird/gvisor/tree/syzkaller-hermetic-smoke",
+      "group": "rbe",
+      "status": "extraction needed",
+      "summary": "Retained source 5b6434ea6 declares Syzkaller, module inputs and the Bazel smoke owner. It consumes the hermetic LLVM compiler supplier. Its module-proxy and release-apt snapshot suppliers also need extraction; no unrelated release PR is credited with providing them. Integration membership does not make this source obsolete or publication-ready."
+    },
+    {
+      "id": "branch:syzkaller-build-dependencies",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syzkaller-build-dependencies",
+      "title": "Select Syzkaller module and build inputs",
+      "url": "https://github.com/tamird/gvisor/tree/syzkaller-build-dependencies",
+      "group": "rbe",
+      "status": "extraction needed",
+      "summary": "Retained source e5fbc67d9 extends the Syzkaller repositories and runner introduced by syzkaller-hermetic-smoke, including module-proxy package selection. This input-selection work is not supplied by the separate release-archive PR. Extract the source and its suppliers for contributor review; preserve its independent scope."
     }
   ],
   "edges": [
@@ -1242,15 +1290,21 @@
       "from": "pr:14502",
       "to": "pr:14237",
       "type": "depends_on",
-      "reason": "Explicit landing prerequisite in the PR description.",
-      "evidence": "https://github.com/google/gvisor/pull/14237"
+      "reason": "The declared prerequisite landed upstream as 5a095390e. This historical source dependency is retained, but the closed prerequisite no longer blocks active dependency paths.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/14237",
+        "https://github.com/google/gvisor/commit/5a095390e"
+      ]
     },
     {
       "from": "pr:14502",
       "to": "pr:15035",
       "type": "depends_on",
-      "reason": "Explicit landing prerequisite in the PR description.",
-      "evidence": "https://github.com/google/gvisor/pull/15035"
+      "reason": "The declared prerequisite landed upstream as 5a095390e. This historical source dependency is retained, but the closed prerequisite no longer blocks active dependency paths.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15035",
+        "https://github.com/google/gvisor/commit/5a095390e"
+      ]
     },
     {
       "from": "pr:14237",
@@ -1648,6 +1702,36 @@
       "type": "depends_on",
       "reason": "The Actions frontend directly invokes the existing qualification driver and smoke target from its d6a21b8b7 parent. Credential provisioning is a separate setup step, not a code dependency.",
       "evidence": "https://github.com/tamird/gvisor/blob/af19903e9/.github/workflows/build.yml#L84"
+    },
+    {
+      "from": "branch:syscall-arm64-selection",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the shared public ARM64 selection and its dispatcher integration. The saved proof covers loading/filter parity and the AMD64 pipeline schema, not ARM runtime.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/c5a376025",
+        "https://app.buildbuddy.io/invocation/aa9d8c01-1ac9-45ff-9cca-0713d68c96e8"
+      ]
+    },
+    {
+      "from": "branch:hermetic-toolchains",
+      "to": "branch:syzkaller-hermetic-smoke",
+      "type": "depends_on",
+      "reason": "The declared Syzkaller rule directly consumes the LLVM clang, clang++, linker and builtin resource directory supplied by the compiler migration. Separate module-proxy and package-snapshot inputs still need extraction.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/blob/5b6434ea6/test/syzkaller/defs.bzl#L86",
+        "https://github.com/tamird/gvisor/blob/5b6434ea6/test/syzkaller/defs.bzl#L89"
+      ]
+    },
+    {
+      "from": "branch:syzkaller-hermetic-smoke",
+      "to": "branch:syzkaller-build-dependencies",
+      "type": "depends_on",
+      "reason": "The build-input change extends the Syzkaller repository, module inputs and runner introduced by the smoke owner; this is an actual source dependency.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/blob/e5fbc67d9/MODULE.bazel#L1403",
+        "https://github.com/tamird/gvisor/blob/e5fbc67d9/MODULE.bazel#L1414"
+      ]
     }
   ]
 }

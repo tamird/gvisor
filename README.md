@@ -76,7 +76,10 @@ No rollup means unavailable. Both original and import rollups must match their
 own returned head SHA before publication.
 
 The browser loads this single published snapshot; **Reload snapshot** downloads
-it again without querying GitHub or changing its observation time. The footer
+both the registry and GitHub snapshot without querying GitHub or changing the
+observation time. A tab open across a deployment adopts the matching pair
+together. Mismatched published revisions leave the last good view and cache
+intact, with an explicit warning; a later reload can recover. The footer
 always shows the snapshot time and warns when it is over two hours old. A local
 cache can preserve that same snapshot during an outage. If neither published
 nor cached attributes are available, the curated registry remains usable and
