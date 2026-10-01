@@ -288,6 +288,11 @@ def main() -> None:
         select.add_argument(name)
     patterns = commands.add_parser("universe")
     patterns.add_argument("patterns")
+    kvm = commands.add_parser("kvm-query")
+    kvm.add_argument("roots")
+    filtered = commands.add_parser("select-filtered")
+    for name in ("events", "kvm_owners", "output"):
+        filtered.add_argument(name)
     profile = commands.add_parser("profile-actions")
     profile.add_argument("events")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
@@ -309,6 +314,20 @@ def main() -> None:
         select_variants(args.patterns, args.owners, args.actions, args.output)
     elif args.command == "universe":
         print(universe(args.patterns))
+    elif args.command == "kvm-query":
+        tag = query_word(r"(^|\[|, )requires-kvm(,|\]|$)")
+        print("attr(tags, " + tag + ", tests(" + target_set(owner_labels(args.roots)) + "))")
+    elif args.command == "select-filtered":
+        selected = configured_tests(args.events)
+        kvm_owners = owner_labels(args.kvm_owners, allow_empty=True)
+        if overlap := selected.keys() & set(kvm_owners):
+            raise ValueError(f"KVM profile filter retained excluded owners: {sorted(overlap)}")
+        Path(args.output).write_text("".join(label + "\n" for label in sorted(selected)))
+        print(json.dumps({
+            "selected_filtered_owners": sorted(selected),
+            "excluded_kvm_owners": kvm_owners,
+            "limitation": "KVM identities come from loading only; their configurations and execution remain unqualified.",
+        }, indent=2))
     elif args.command == "profile-actions":
         print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture)) + ")")
     elif args.command == "select-syscalls":

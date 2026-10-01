@@ -123,6 +123,24 @@ lane to the combined graph does not resolve its existing workload failures.
 test/rbe/qualify.sh --arch=all smoke packetdrill workflows
 ```
 
+The `posture`, `startup` and `benchmarks` lanes can join the same invocation on
+AMD64. Bazel selects their runtime owners under the existing `-requires-kvm`
+filter before combining them with other lanes. The final analysis checks that
+unit, syscall and build-scope caller filters retain every selected owner; it
+does not read test-command-only rc entries. The KVM filter is never applied to
+unrelated lanes. A loading-only query reports the excluded KVM test identities
+from the same owning suites, without claiming their configurations or execution.
+
+```sh
+test/rbe/qualify.sh --arch=all posture startup workflows
+```
+
+These combined additions preserve runtime selection, not the filtered KVM tests'
+build-only work. Standalone invocations retain their original suite roots and
+filters, including that build coverage. Benchmark arguments, durations and
+resources remain target-owned; combining the lane does not shorten workloads or
+resolve existing failures.
+
 Select ARM64 targets with `--arch=arm64`, for example:
 
 ```sh

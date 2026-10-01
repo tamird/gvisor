@@ -87,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images) ;;
+      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -165,6 +165,9 @@ shared_test_targets() {
     do) targets=(//:do_tests) ;;
     docker) targets=(//test/docker:owned_tests) ;;
     root) targets=(//test/root:root_test_owned) ;;
+    posture) targets=(//test/root:sandbox_posture_test_owned) ;;
+    startup) targets=(//test/benchmarks/base:startup_test_owned) ;;
+    benchmarks) targets=(//test/benchmarks:continuous_tests) ;;
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
@@ -237,6 +240,7 @@ run_platform_matrix() (
   : > "$selection_dir/targets"
   : > "$selection_dir/explicit-targets"
   : > "$selection_dir/shared-targets"
+  : > "$selection_dir/filtered-targets"
   for lane in "$@"; do
     if [[ $lane == unit ]]; then
       include_unit=true
@@ -276,6 +280,12 @@ run_platform_matrix() (
         printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
+      posture|startup|benchmarks)
+        shared_test_targets "$lane" amd64
+        printf '%s\n' "${targets[@]}" >> "$selection_dir/filtered-targets"
+        printf 'Combined lane %s retains AMD64 execution; no ARM64 coverage is added.\n' "$lane"
+        options+=(--strip=never)
+        ;;
       do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
@@ -287,9 +297,25 @@ run_platform_matrix() (
         ;;
     esac
   done
+  if [[ -s $selection_dir/filtered-targets ]]; then
+    explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/filtered-targets")
+    # Select only these profiles under their KVM policy. Applying it to the final
+    # invocation would also change unrelated lanes' filters.
+    bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
+      --build_tests_only --test_tag_filters=-requires-kvm \
+      "--universe_scope=$explicit_universe" \
+      "--build_event_json_file=$selection_dir/filtered-profile.json" 'set()'
+    python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/filtered-targets" \
+      > "$selection_dir/filtered-kvm.query"
+    bazel query --output=label --query_file="$selection_dir/filtered-kvm.query" \
+      > "$selection_dir/filtered-kvm-targets"
+    python3 test/rbe/unit_matrix.py select-filtered "$selection_dir/filtered-profile.json" \
+      "$selection_dir/filtered-kvm-targets" "$selection_dir/filtered-selected-targets"
+    cat "$selection_dir/filtered-selected-targets" >> "$selection_dir/explicit-targets"
+  fi
   cat "$selection_dir/explicit-targets" "$selection_dir/shared-targets" > "$selection_dir/combined-targets"
   if [[ -s $selection_dir/combined-targets ]]; then
-    if [[ $include_syscalls == true || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
+    if [[ $include_syscalls == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
       if [[ -s $selection_dir/shared-targets ]]; then
         explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/shared-targets")
         # Let Bazel expand explicit suites, including their manual members,
@@ -418,11 +444,11 @@ run_lane() (
       ;;
     posture)
       options=(--test_tag_filters=-requires-kvm)
-      targets=(//test/root:sandbox_posture_test_owned)
+      shared_test_targets "$lane" "$arch"
       ;;
     startup)
       options=(--test_tag_filters=-requires-kvm)
-      targets=(//test/benchmarks/base:startup_test_owned)
+      shared_test_targets "$lane" "$arch"
       ;;
     benchmarks)
       if [[ $arch != amd64 ]]; then
@@ -432,7 +458,7 @@ run_lane() (
       # CI reports these jobs as soft failures. Keep their status visible here;
       # --keep_going still collects the other complete benchmark workloads.
       options=(--test_tag_filters=-requires-kvm)
-      targets=(//test/benchmarks:continuous_tests)
+      shared_test_targets "$lane" "$arch"
       ;;
     language-directfs|language-goferfs)
       if [[ $arch != amd64 ]]; then
