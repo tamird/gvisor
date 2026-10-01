@@ -129,6 +129,7 @@ bzl_library(
     name = "cgroup_test_bzl",
     srcs = ["cgroup_test.bzl"],
     visibility = ["//:sandbox"],
+    deps = ["@with_cfg.bzl//:with_cfg"],
 )
 
 bzl_library(

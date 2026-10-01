@@ -4,6 +4,7 @@
 # upstream main a33b1b2d2fd38f5884643d37d1c54c5d280d583c. Neither exposes a
 # public frontend override; the released wrapper transitions only its inputs.
 # Remove this patch when with_cfg exposes an equivalent public frontend API.
+diff --git a/with_cfg.bzl b/with_cfg.bzl
 --- a/with_cfg.bzl
 +++ b/with_cfg.bzl
 @@ -1,4 +1,5 @@
@@ -13,6 +14,7 @@
  with_cfg = _with_cfg
  original_settings = _original_settings
 +frontend_test = _frontend_test
+diff --git a/with_cfg/defs.bzl b/with_cfg/defs.bzl
 --- a/with_cfg/defs.bzl
 +++ b/with_cfg/defs.bzl
 @@ -1,3 +1,4 @@
@@ -25,6 +27,7 @@
  with_cfg = _with_cfg
  original_settings = _original_settings
 +frontend_test = _frontend_test
+diff --git a/with_cfg/private/frontend.bzl b/with_cfg/private/frontend.bzl
 --- a/with_cfg/private/frontend.bzl
 +++ b/with_cfg/private/frontend.bzl
 @@ -1,7 +1,7 @@
@@ -46,6 +49,7 @@
  def _frontend_default(*, name, exports, **kwargs):
      native.alias(
          name = name,
+diff --git a/with_cfg/private/providers.bzl b/with_cfg/private/providers.bzl
 --- a/with_cfg/private/providers.bzl
 +++ b/with_cfg/private/providers.bzl
 @@ -12,6 +12,7 @@
@@ -56,6 +60,7 @@
  ])
  
  ArgsInfo = provider(fields = [
+diff --git a/with_cfg/private/with_cfg.bzl b/with_cfg/private/with_cfg.bzl
 --- a/with_cfg/private/with_cfg.bzl
 +++ b/with_cfg/private/with_cfg.bzl
 @@ -15,7 +15,8 @@
@@ -97,6 +102,7 @@
          implicit_targets = implicit_targets,
          providers = _all_providers(extra_providers),
          native = _is_native(kind),
+diff --git a/with_cfg/private/builder.bzl b/with_cfg/private/builder.bzl
 --- a/with_cfg/private/builder.bzl
 +++ b/with_cfg/private/builder.bzl
 @@ -89,7 +89,7 @@
