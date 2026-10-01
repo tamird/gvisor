@@ -442,12 +442,27 @@ The containerd lane runs the full existing CRI tests against containerd 1.7.31,
 test/rbe/qualify.sh containerd
 ```
 
-Each version owns an outer Docker daemon that loads only the existing
-`containerd/harness` image. The harness receives the source-built release and
+Each version owns an outer Docker daemon that loads only the
+`containerd/harness` image. On AMD64, all four versions depend on one declared
+archive from `//test/docker:containerd_harness_source_amd64`. That build action
+uses the existing native Docker daemon and canonical Make image load/build
+rules, then saves the source-hash and canonical `latest` tags. The ordinary
+test fixture loads the archive into its separate daemon; no registry push or
+per-test image compilation is required. ARM64 retains its existing image pin.
+
+The source archive is not hermetic: Dockerfile base tags and package mirrors
+are mutable network inputs. The producer disables disk and remote result
+caching, while normal compilation caches remain enabled. Bazel's incremental
+state may still reuse an unchanged producer; an actual construction claim
+requires its execution record, not just successful consumers. Qualification
+records the concrete archive and image identity. A canonical `load-*` may pull
+an already published matching source-hash tag instead of compiling it.
+
+The harness receives the source-built release and
 imports the six declared workload archives directly through CRI's existing
 image import path. It also imports the selected containerd version's default
-pause image before creating pods. All archives are pinned for AMD64 and ARM64;
-the selected version and archive contents are test action inputs.
+pause image before creating pods. These workload and pause archives keep their
+AMD64 and ARM64 pins; the selected version and archive contents are test inputs.
 
 The full suite is `//test/root:crictl_test_owned`. The installed `crictl_test`
 target and `make containerd-tests` retain custom runtime selection, Docker

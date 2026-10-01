@@ -11,14 +11,23 @@ load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")
 
-def docker_image_archive(name, image, architecture):
-    """Declares a Docker archive of an existing image pinned in MODULE.
+def docker_image_archive(name, image, architecture, source = None):
+    """Declares a Docker archive from a source producer or a MODULE pin.
 
     Args:
-      name: Archive target name; the tarball is exposed as name + "_tar".
+      name: Target prefix; the tarball is exposed as name + "_tar".
       image: Image name relative to gvisor.dev/images.
       architecture: Architecture of the declared image.
+      source: Optional declared Docker-save archive replacing the registry input.
     """
+    if source != None:
+        native.filegroup(
+            name = name + "_tar",
+            testonly = True,
+            srcs = [source],
+            tags = ["manual"],
+        )
+        return
     repository = "docker_image_" + _image_name(image) + "_" + architecture
     oci_load(
         name = name,
@@ -33,12 +42,13 @@ def docker_image_archive(name, image, architecture):
         tags = ["manual"],
     )
 
-def docker_image_archives(name, extra_images = []):
-    """Declares Docker-format archives of the suite images pinned in MODULE.
+def docker_image_archives(name, extra_images = [], source_archives = {}):
+    """Declares Docker-format archives for the suite's image inputs.
 
     Args:
       name: Prefix for the archive targets.
       extra_images: Archives consumed directly without loading them into Docker.
+      source_archives: Image names mapped to architecture-to-archive label maps.
     """
     images = {image: True for cohort in COHORT_IMAGES.values() for image in cohort}
     images.update({image: True for image in AMD64_RUNTIME_IMAGES})
@@ -51,6 +61,7 @@ def docker_image_archives(name, extra_images = []):
                 name = name + "_" + image_name + "_" + arch,
                 image = image,
                 architecture = arch,
+                source = source_archives.get(image, {}).get(arch),
             )
 
 def _daemon_config_impl(ctx):
@@ -251,21 +262,27 @@ def _image_source_command_impl(ctx):
     tools = {tool_root + "/" + file.path: file for file in make.target.files.to_list()}
     tools[tool_root + "/crane"] = crane
     command = ctx.actions.declare_file(ctx.label.name)
-    ctx.actions.expand_template(
-        template = ctx.file._template,
-        output = command,
-        substitutions = {
-            "@@ARCH@@": shell.quote(ctx.attr.architecture),
-            "@@CONTEXTS@@": ctx.file._contexts.short_path,
-            "@@IMAGE_CLASS@@": shell.quote(ctx.attr.image_class),
-            "@@MAKE@@": make.path,
-            "@@MAKEFILE@@": ctx.file._makefile.short_path,
-            "@@TOOLS@@": tool_root,
-        },
+    ctx.actions.write(
+        command,
+        "\n".join([
+            "#!/bin/bash",
+            "set -euo pipefail",
+            'exec /bin/bash %s test %s "${TEST_SRCDIR:?}/%s/%s" "${TEST_SRCDIR}/%s/crane" %s %s %s' % (
+                shell.quote(ctx.file._script.short_path),
+                shell.quote(ctx.attr.architecture),
+                tool_root,
+                make.path,
+                tool_root,
+                shell.quote(ctx.file._makefile.short_path),
+                shell.quote(ctx.file._contexts.short_path),
+                shell.quote(ctx.attr.image_class),
+            ),
+            "",
+        ]),
         is_executable = True,
     )
     runfiles = ctx.runfiles(
-        files = [ctx.file._contexts, ctx.file._makefile],
+        files = [ctx.file._contexts, ctx.file._makefile, ctx.file._script],
         root_symlinks = tools,
     )
     make_runfiles = make.target[DefaultInfo].default_runfiles
@@ -282,8 +299,67 @@ image_source_command = rule(
         "image_class": attr.string(default = "cpu", values = ["cpu", "gpu"], doc = "Selects Make's CPU or GPU/ML test-image cohort."),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
-        "_template": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
+        "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
     },
+    toolchains = [
+        "@rules_foreign_cc//toolchains:make_toolchain",
+        "@rules_oci//oci:crane_toolchain_type",
+    ],
+)
+
+def _source_image_archive_impl(ctx):
+    make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)
+    if make.target == None or make.env != {"MAKE": make.path}:
+        fail("source image archives require the declared GNU Make toolchain")
+    crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
+    archive = ctx.actions.declare_file(ctx.label.name + ".tar")
+    inputs = depset(
+        [ctx.file._contexts, ctx.file._makefile, ctx.file._script, ctx.file._config, crane],
+        transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
+    )
+    ctx.actions.run(
+        executable = ctx.attr._wrapper[DefaultInfo].files_to_run,
+        arguments = [
+            "--runtime=runc",
+            "--docker_test_config=" + ctx.file._config.path,
+            "--",
+            "/bin/bash",
+            ctx.file._script.path,
+            "archive",
+            ctx.attr.architecture,
+            make.path,
+            crane.path,
+            ctx.file._makefile.path,
+            ctx.file._contexts.path,
+            ctx.attr.image,
+            archive.path,
+        ],
+        inputs = inputs,
+        outputs = [archive],
+        # The pinned execution image supplies the daemon and Docker CLI.
+        env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
+        mnemonic = "DockerSourceImage",
+        progress_message = "Constructing source image %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
+        exec_group = "image",
+        # Dockerfile base tags and package mirrors are mutable network inputs.
+        # Share this action among consumers, but do not reuse remote/disk results.
+        execution_requirements = {"no-cache": "1"},
+    )
+    return [DefaultInfo(files = depset([archive]))]
+
+source_image_archive = rule(
+    implementation = _source_image_archive_impl,
+    doc = "Constructs one Docker-save archive with the existing native daemon and Make image rules.",
+    attrs = {
+        "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
+        "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
+        "_config": attr.label(default = "//test/docker:image_source_config", allow_single_file = True),
+        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
+        "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
+        "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
+        "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "exec"),
+    },
+    exec_groups = {"image": exec_group()},
     toolchains = [
         "@rules_foreign_cc//toolchains:make_toolchain",
         "@rules_oci//oci:crane_toolchain_type",

@@ -24,23 +24,24 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
-def docker_test_exec_properties(free_disk, memory = None):
-    """Returns a remote VM with Docker tools for a test-owned daemon.
+def docker_test_exec_properties(free_disk, memory = None, exec_group = "test"):
+    """Returns a remote VM with Docker tools for an owned daemon.
 
     Args:
       free_disk: Root filesystem space for expanded images and container copies.
-      memory: Test VM memory budget; defaults to 4GB.
+      memory: VM memory budget; defaults to 4GB.
+      exec_group: Execution group owning the daemon; defaults to test execution.
     """
     return select({
         Label("//tools/bazeldefs:rbe"): {
-            "test.EstimatedCPU": "4",
-            "test.EstimatedMemory": memory if memory != None else "4GB",
-            "test.EstimatedFreeDiskBytes": free_disk,
-            "test.container-image": _RBE_DOCKER_IMAGE,
-            "test.dockerUser": "root",
-            "test.network": "external",
-            "test.network-enable-ipv6": "true",
-            "test.workload-isolation-type": "firecracker",
+            exec_group + ".EstimatedCPU": "4",
+            exec_group + ".EstimatedMemory": memory if memory != None else "4GB",
+            exec_group + ".EstimatedFreeDiskBytes": free_disk,
+            exec_group + ".container-image": _RBE_DOCKER_IMAGE,
+            exec_group + ".dockerUser": "root",
+            exec_group + ".network": "external",
+            exec_group + ".network-enable-ipv6": "true",
+            exec_group + ".workload-isolation-type": "firecracker",
         },
         "//conditions:default": {},
     })
