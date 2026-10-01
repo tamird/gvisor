@@ -17,6 +17,9 @@
 package pgalloc
 
 import (
+	"bytes"
+	"context"
+	"fmt"
 	"os"
 	"testing"
 	"unsafe"
@@ -32,6 +35,190 @@ const (
 	page     = hostarch.PageSize
 	hugepage = hostarch.HugePageSize
 )
+
+func newSaveRestoreMemoryFile(t *testing.T) *MemoryFile {
+	t.Helper()
+	fd, err := unix.MemfdCreate("pgalloc_save_test", unix.MFD_CLOEXEC)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := os.NewFile(uintptr(fd), "pgalloc_save_test")
+	f, err := NewMemoryFile(file, MemoryFileOpts{
+		DisableIMAWorkAround:    true,
+		DisableMemoryAccounting: true,
+		AdviseNoHugepage:        true,
+	})
+	if err != nil {
+		file.Close()
+		t.Fatal(err)
+	}
+	t.Cleanup(f.Destroy)
+	return f
+}
+
+func TestRetainCommitmentSaveRestore(t *testing.T) {
+	zeroPage := make([]byte, page)
+	for _, excludeZero := range []bool{false, true} {
+		t.Run(fmt.Sprintf("exclude_zero=%t", excludeZero), func(t *testing.T) {
+			f := newSaveRestoreMemoryFile(t)
+			// Put ordinary zero pages on both sides of retained zero pages. Save
+			// must elide only the former, even while updating adjacent metadata.
+			var ranges []memmap.FileRange
+			for _, retain := range []bool{false, true, false} {
+				fr, err := f.Allocate(page, AllocOpts{Mode: AllocateAndCommit, RetainCommitment: retain})
+				if err != nil {
+					t.Fatal(err)
+				}
+				allocated := f
+				t.Cleanup(func() { allocated.DecRef(fr) })
+				ranges = append(ranges, fr)
+			}
+			// The second round starts with restored, known-committed pages; it
+			// checks that the policy survives metadata serialization and also
+			// overrides ExcludeCommittedZeroPages on a later checkpoint.
+			for round := 0; round < 2; round++ {
+				var saved bytes.Buffer
+				if err := f.SaveTo(context.Background(), &saved, &SaveOpts{ExcludeCommittedZeroPages: excludeZero}); err != nil {
+					t.Fatal(err)
+				}
+				if got := f.knownCommittedBytes; got != page {
+					t.Fatalf("round %d: saved committed bytes = %d, want %d", round, got, page)
+				}
+				var st unix.Stat_t
+				if err := unix.Fstat(f.FD(), &st); err != nil {
+					t.Fatal(err)
+				}
+				if got := uint64(st.Blocks) * 512; got < page {
+					t.Fatalf("round %d: live backing after save = %d, want at least %d", round, got, page)
+				}
+				restored := newSaveRestoreMemoryFile(t)
+				if err := restored.LoadFrom(context.Background(), &saved, &LoadOpts{}); err != nil {
+					t.Fatal(err)
+				}
+				for _, fr := range ranges {
+					t.Cleanup(func() { restored.DecRef(fr) })
+				}
+				// Check backing before reading the mapping, which could itself
+				// instantiate missing zero pages and conceal a bad restore.
+				if err := unix.Fstat(restored.FD(), &st); err != nil {
+					t.Fatal(err)
+				}
+				if got := uint64(st.Blocks) * 512; got != page {
+					t.Fatalf("round %d: restored backing = %d, want %d", round, got, page)
+				}
+				blocks, err := restored.MapInternal(ranges[1], hostarch.ReadWrite)
+				if err != nil {
+					t.Fatal(err)
+				}
+				for bs := blocks; !bs.IsEmpty(); bs = bs.Tail() {
+					if !bytes.Equal(bs.Head().ToSlice(), zeroPage[:bs.Head().Len()]) {
+						t.Fatalf("round %d: retained page did not restore zero bytes", round)
+					}
+				}
+				f = restored
+			}
+		})
+	}
+}
+
+func TestRetainCommitmentDecommit(t *testing.T) {
+	f := newSaveRestoreMemoryFile(t)
+	ordinary, err := f.Allocate(page, AllocOpts{Mode: AllocateAndCommit})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.DecRef(ordinary)
+	retained, err := f.Allocate(page, AllocOpts{Mode: AllocateAndCommit, RetainCommitment: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.DecRef(retained)
+	if ordinary.End != retained.Start {
+		t.Fatal("expected adjacent allocations")
+	}
+	blocks, err := f.MapInternal(ordinary, hostarch.ReadWrite)
+	if err != nil {
+		t.Fatal(err)
+	}
+	blocks.Head().ToSlice()[0] = 1
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("Decommit accepted a range containing retained commitment")
+			}
+		}()
+		f.Decommit(memmap.FileRange{ordinary.Start, retained.End})
+	}()
+	if got := blocks.Head().ToSlice()[0]; got != 1 {
+		t.Fatalf("rejected Decommit changed the ordinary prefix to %d", got)
+	}
+	f.Decommit(ordinary)
+	if got := blocks.Head().ToSlice()[0]; got != 0 {
+		t.Fatalf("ordinary Decommit left byte %d, want zero", got)
+	}
+}
+
+func TestRetainCommitmentReferences(t *testing.T) {
+	// Exercise the range metadata without a releaser racing to consume waste,
+	// as in TestFindAllocatable. No backing pages are accessed here.
+	f := &MemoryFile{opts: MemoryFileOpts{DisableMemoryAccounting: true}}
+	f.initFields()
+	chunks := []chunkInfo{{}}
+	f.chunks.Store(&chunks)
+	fr := memmap.FileRange{0, 2 * page}
+	f.unfreeSmall.RemoveRange(fr)
+	alloc := allocState{
+		length:     fr.Length(),
+		opts:       AllocOpts{Mode: AllocateAndCommit, RetainCommitment: true},
+		willCommit: true,
+	}
+	if got, err := f.findAllocatableAndMarkUsed(&alloc); err != nil || got != fr {
+		t.Fatalf("allocation = (%v, %v), want (%v, nil)", got, err, fr)
+	}
+	first := memmap.FileRange{0, page}
+	f.IncRef(first, 0)
+	f.DecRef(fr)
+	f.mu.Lock()
+	for _, want := range []struct {
+		offset uint64
+		retain bool
+	}{{0, true}, {page, false}} {
+		if got := f.memAcct.FindSegment(want.offset).Value().retainCommitment; got != want.retain {
+			t.Errorf("retainCommitment at %d = %t, want %t after partial release", want.offset, got, want.retain)
+		}
+	}
+	f.mu.Unlock()
+	f.DecRef(first)
+	// Recycle the same range into an ordinary allocation. A stale retained
+	// policy would defeat zero-page elision for the new owner.
+	alloc.opts.RetainCommitment = false
+	alloc.recycled = false
+	if got, err := f.findAllocatableAndMarkUsed(&alloc); err != nil || got != fr || !alloc.recycled {
+		t.Fatalf("recycled allocation = (%v, %v), recycled=%t; want (%v, nil), true", got, err, alloc.recycled, fr)
+	}
+	f.mu.Lock()
+	f.memAcct.VisitFullRange(fr, func(seg memAcctIterator) bool {
+		if seg.Value().retainCommitment {
+			t.Errorf("recycled ordinary range %v retained the prior allocation's policy", seg.Range())
+		}
+		return true
+	})
+	f.mu.Unlock()
+	f.DecRef(fr)
+	alloc.opts.RetainCommitment = true
+	if got, err := f.findAllocatableAndMarkUsed(&alloc); err != nil || got != fr {
+		t.Fatalf("retained reuse = (%v, %v), want (%v, nil)", got, err, fr)
+	}
+	f.mu.Lock()
+	f.memAcct.VisitFullRange(fr, func(seg memAcctIterator) bool {
+		if !seg.Value().retainCommitment {
+			t.Errorf("recycled retained range %v lost its new allocation policy", seg.Range())
+		}
+		return true
+	})
+	f.mu.Unlock()
+	f.DecRef(fr)
+}
 
 func TestAllocateAndCommit(t *testing.T) {
 	for _, test := range []struct {
