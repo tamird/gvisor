@@ -1072,6 +1072,9 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 	defer fdnotifier.Resume()
 
 	// Load the kernel state.
+	var mappedStorage pgalloc.MappedStorageRestore
+	ctx = context.WithValue(ctx, pgalloc.CtxMappedStorageRestore, &mappedStorage)
+	defer mappedStorage.Clear()
 	kernelStart := time.Now()
 	stats, err := state.Load(ctx, r, k)
 	if err != nil {
@@ -1096,6 +1099,12 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 			return fmt.Errorf("main MF start failed: %w", err)
 		}
 		timeline.Reached("Main MemoryFile loading started")
+	}
+
+	// Buffer byte access is infallible. Complete fallible mapping and async
+	// page loading before restoring network endpoints or other consumers.
+	if err := mappedStorage.Restore(); err != nil {
+		return err
 	}
 
 	k.Timekeeper().SetClocks(clocks, k.vdsoParams)
