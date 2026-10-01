@@ -14,6 +14,9 @@ RBE_NETWORK_TOOLS_IMAGE = "docker://docker.io/istio/base@sha256:cab6852ff5ae3934
 def network_test_exec_properties():
     """Returns remote test properties for external HTTPS access."""
     return select({
+        # The cgroup-v1 wrapper needs root and mount tools before the test starts.
+        # The Docker image also supplies CA trust for the HTTPS requests.
+        Label("//tools/bazeldefs:rbe_cgroup_v1"): docker_exec_properties(free_disk = "20GB"),
         Label("//tools/bazeldefs:rbe"): {
             "test.container-image": RBE_NETWORK_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
@@ -25,6 +28,13 @@ def network_test_exec_properties():
     })
 
 def docker_test_exec_properties(free_disk, memory = None, exec_group = "test"):
+    """Selects Docker VM properties when remote execution is enabled."""
+    return select({
+        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group),
+        "//conditions:default": {},
+    })
+
+def docker_exec_properties(free_disk, memory = None, exec_group = "test"):
     """Returns a remote VM with Docker tools for an owned daemon.
 
     Args:
@@ -33,21 +43,18 @@ def docker_test_exec_properties(free_disk, memory = None, exec_group = "test"):
       exec_group: Group owning the daemon; empty uses the rule's default group.
     """
     prefix = exec_group + "." if exec_group else ""
-    return select({
-        Label("//tools/bazeldefs:rbe"): {
-            prefix + "EstimatedCPU": "4",
-            prefix + "EstimatedMemory": memory if memory != None else "4GB",
-            prefix + "EstimatedFreeDiskBytes": free_disk,
-            prefix + "container-image": _RBE_DOCKER_IMAGE,
-            prefix + "dockerUser": "root",
-            prefix + "network": "external",
-            prefix + "network-enable-ipv6": "true",
-            prefix + "workload-isolation-type": "firecracker",
-            # Owned daemons change guest-wide kernel state. Discard their VM.
-            prefix + "recycle-runner": "false",
-        },
-        "//conditions:default": {},
-    })
+    return {
+        prefix + "EstimatedCPU": "4",
+        prefix + "EstimatedMemory": memory if memory != None else "4GB",
+        prefix + "EstimatedFreeDiskBytes": free_disk,
+        prefix + "container-image": _RBE_DOCKER_IMAGE,
+        prefix + "dockerUser": "root",
+        prefix + "network": "external",
+        prefix + "network-enable-ipv6": "true",
+        prefix + "workload-isolation-type": "firecracker",
+        # Owned daemons change guest-wide kernel state. Discard their VM.
+        prefix + "recycle-runner": "false",
+    }
 
 def namespace_test_exec_properties(user = "root", image = None, memory = None):
     """Defaults for remote tests that create nested Linux namespaces.

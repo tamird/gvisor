@@ -1,6 +1,7 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
 load("//tools:defs.bzl", "bzl_library")
+load(":platforms.bzl", "docker_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -27,6 +28,14 @@ platform(
     ),
 )
 
+# Only TestRunner actions need the privileged cgroup setup; compilation inherits
+# the ordinary OCI worker properties.
+platform(
+    name = "rbe_linux_amd64_cgroup_v1",
+    exec_properties = docker_exec_properties(free_disk = "20GB"),
+    parents = [":rbe_linux_amd64"],
+)
+
 # C++ test execution can select the host platform. Retain the Go cgo constraints
 # there while supplying the same remote routing as compilation actions.
 platform(
@@ -41,6 +50,14 @@ platform(
 config_setting(
     name = "rbe",
     define_values = {"rbe": "true"},
+)
+
+config_setting(
+    name = "rbe_cgroup_v1",
+    define_values = {
+        "cgroup_v1": "true",
+        "rbe": "true",
+    },
 )
 
 # BPF uses the downloaded compiler and its matching resource directory.
