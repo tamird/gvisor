@@ -102,6 +102,7 @@ function importCell(node) {
 }
 function appendChecks(container, pr, heading) {
   const section = element("details", "check-details"), info = checkInfo(pr), summary = element("summary");
+  section.dataset.pr = pr.number;
   summary.append(document.createTextNode(`${heading} · `), badge(info)); section.append(summary);
   section.append(element("p", "detail-meta", info.detail));
   for (const check of pr.checks?.contexts || []) {
@@ -436,8 +437,8 @@ function render(reposition = false) {
   $("visible-count").textContent = dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
   $("filter-note").textContent = dag && ($("search").value.trim() || $("group-filter").value) ? "Matches with dependency context" : "";
   $("empty").hidden = nodes.length !== 0;
-  if (dag) { drawGraph(nodes); drawRanking(); drawChainSelector(); } else drawTable(nodes);
   drawDetails();
+  if (dag) { drawGraph(nodes); drawRanking(); drawChainSelector(); } else drawTable(nodes);
   $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items`;
   if (reposition) resetCamera();
 }
@@ -446,6 +447,8 @@ function setFreshness(text, warning = false, live = false) {
   $("freshness-dot").className = `status-dot${warning ? " warning" : live ? " live" : ""}`;
 }
 function applyLive(snapshot) {
+  const scrollPositions = ["table-pane", "details", "ranking"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
+  const openChecks = new Set([...$("details").querySelectorAll(".check-details[open]")].map((section) => section.dataset.pr));
   const nodes = registry.nodes.map((node) => ({ ...node })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
   for (const pr of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const id = `pr:${pr.number}`, existing = ids.get(id);
@@ -465,8 +468,14 @@ function applyLive(snapshot) {
     groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
   if (aliases.has(selected)) selected = aliases.get(selected);
   if (aliases.has(focus)) focus = aliases.get(focus);
+  if (selected && !model.nodes.some((node) => node.id === selected)) selected = null;
   if (focus && !model.nodes.some((node) => node.id === focus && !resolved(node))) focus = null;
-  render(true);
+  history.replaceState(null, "", selected ? `#${encodeURIComponent(selected)}` : location.pathname + location.search);
+  // Status updates redraw the data, not the user's viewport. Initial render,
+  // filters and explicit graph controls own fitting/recentering.
+  render();
+  for (const section of $("details").querySelectorAll(".check-details")) section.open = openChecks.has(section.dataset.pr);
+  for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
   const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
   setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
   $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot; the maintainer updates it with python3 update-status.py.";
@@ -490,7 +499,7 @@ async function refresh(force = false) {
   try {
     cached = JSON.parse(localStorage.getItem(CACHE_KEY));
     if (cached?.registryDate !== registry.meta.updatedAt) cached = null;
-    if (cached) { validateSnapshot(cached); applyLive(cached); }
+    if (cached) { validateSnapshot(cached); if (!force) applyLive(cached); }
   } catch { cached = null; }
   refreshing = true; lastAttempt = Date.now(); $("refresh").disabled = true;
   setFreshness("Loading published GitHub snapshot…");
@@ -546,7 +555,7 @@ function initialize() {
     if (event.key === "Escape") { $("search").blur(); select(null); }
   });
   window.addEventListener("hashchange", () => { selected = decodeURIComponent(location.hash.slice(1)); render(); });
-  new ResizeObserver(() => { if (view === "dag" && model) { drawGraph(graphNodes()); resetCamera(); } }).observe($("graph-stage"));
+  new ResizeObserver(() => { if (view === "dag" && model) drawGraph(graphNodes()); }).observe($("graph-stage"));
 }
 async function start() {
   try {

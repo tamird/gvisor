@@ -84,6 +84,11 @@ attributes say they are unavailable. Refreshing the page never makes old data
 fresh. There are no API keys, analytics, third-party scripts or remote fonts in
 the browser.
 
+Reloading preserves graph pan/zoom, table and details scroll, expanded check
+lists, selection, focus, filters and sorting. A removed item clears its selection;
+promoted branches retain it under the PR identity. Initial display, filter/focus
+changes and explicit Fit/Reset controls still position the graph.
+
 New PRs replace matching curated branches and inherit their relationships.
 Merged/closed PRs hide by default; **Show resolved** reveals them. Other external
 evidence and deployed-worker qualification remain curated. No source or import

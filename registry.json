@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-09-30T23:46:14.095832+00:00",
+    "updatedAt": "2026-10-01T00:09:40.866996+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -894,15 +894,15 @@
       "summary": "Contributor-reviewed release work held for its wheel-audit, Skylib and bootstrap prerequisites."
     },
     {
-      "id": "branch:bazel-clang-tidy",
+      "id": "branch:bazel-clang-tidy-llvm",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "bazel-clang-tidy",
-      "title": "Declare clang-tidy in Bazel",
-      "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy",
+      "ref": "bazel-clang-tidy-llvm",
+      "title": "Run clang-tidy through Bazel compile actions",
+      "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy-llvm",
       "group": "release",
-      "status": "revision in progress",
-      "summary": "Contributor requested reuse of the existing hermetic LLVM supplier instead of extra tool wheels. The source revision is in progress; prior standalone GNU compiler-flag failures are not a passing result. The revised dependency and validation are pending."
+      "status": "validation pending",
+      "summary": "Uses clang-tidy from the existing hermetic LLVM compiler supplier. This replaces the wheel-based proposal; the old branch is retained as historical work. Focused validation of the replacement is pending, and prior GNU/wheel results do not validate this source."
     },
     {
       "id": "branch:syscall-overlay-xml",
@@ -1392,13 +1392,6 @@
       "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
     },
     {
-      "from": "branch:bazel-clang-tidy",
-      "to": "branch:rbe-qualification-next",
-      "type": "includes",
-      "reason": "Integrated work supporting the public qualification branch; this is an integration relationship, not a claim of an upstream PR stack.",
-      "evidence": "https://github.com/tamird/gvisor/tree/rbe-qualification-next"
-    },
-    {
       "from": "branch:bazel-python-release",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
@@ -1616,6 +1609,13 @@
       "type": "includes",
       "reason": "The qualification branch includes this validated correction; integration membership does not imply a blocking dependency.",
       "evidence": "https://github.com/tamird/gvisor/commit/65006316a"
+    },
+    {
+      "from": "branch:hermetic-toolchains",
+      "to": "branch:bazel-clang-tidy-llvm",
+      "type": "depends_on",
+      "reason": "The clang-tidy aspect uses @llvm//tools:clang-tidy from the existing hermetic LLVM compiler supplier; it does not require an LLVM module version bump.",
+      "evidence": "https://github.com/tamird/gvisor/blob/be3c86964/tools/clang_tidy/clang_tidy.bzl#L106"
     }
   ]
 }
