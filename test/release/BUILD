@@ -1,8 +1,9 @@
 load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
-load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//tools:arch.bzl", "arch_genrule")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load(":defs.bzl", "repository_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -98,7 +99,7 @@ docker_daemon_config(
     tags = ["manual"],
 )
 
-docker_command_test(
+repository_test(
     name = "repository_test",
     size = "large",
     command = "repository_test.sh",
