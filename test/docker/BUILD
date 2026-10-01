@@ -230,3 +230,21 @@ test_suite(
     for variant in INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT]
     if variant.name
 ]
+
+# Build PHP once and share its declared archive among the runtime owners.
+source_image_archive(
+    name = "php_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    image = "runtimes/php8.3.35",
+    tags = ["manual"],
+)

@@ -31,11 +31,12 @@ _RUNTIMES = {
         partitions = 10,
         shard_count = most_shards,
     ),
-    "php8.3.7": dict(
-        exclude_file = "exclude/php8.3.7.csv",
+    "php8.3.35": dict(
+        exclude_file = "exclude/php8.3.35.csv",
         lang = "php",
         partitions = 2,
         shard_count = more_shards,
+        source_archive = "//test/docker:php_source_amd64",
     ),
     "python3.12.3": dict(
         exclude_file = "exclude/python.csv",
