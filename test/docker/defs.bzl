@@ -340,7 +340,6 @@ def _source_image_archive_impl(ctx):
         env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
         mnemonic = "DockerSourceImage",
         progress_message = "Constructing source image %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
-        exec_group = "image",
         # Dockerfile base tags and package mirrors are mutable network inputs.
         # Share this action among consumers, but do not reuse remote/disk results.
         execution_requirements = {"no-cache": "1"},
@@ -359,7 +358,6 @@ source_image_archive = rule(
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
         "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "exec"),
     },
-    exec_groups = {"image": exec_group()},
     toolchains = [
         "@rules_foreign_cc//toolchains:make_toolchain",
         "@rules_oci//oci:crane_toolchain_type",
