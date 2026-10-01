@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T10:19:13.146080+00:00",
+    "updatedAt": "2026-10-01T13:33:45.654370+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 9802c50bc runs the implemented AMD64 lanes without the builder image. TUN/TAP MTU bounds and committed allocation pass focused validation. Full public container and container-v1 selections are declared, but KVM execution remains unqualified. Docker-v1 passes five maintained owners: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run remains failed (329 passes, one boot failure); corrected boot passes all 105 cases without skips and Nogo on both architectures. The full unit lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes 706 entries at 4dca99373; subsequent unused PHP OCI removal has analysis-only coverage for all four maintained owners. Focused PHP 8.3.35 validation on native, DirectFS and goferfs replaces the missing-UConverter failure with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty same-container repetitions of the original Node batch did not reproduce SIGABRT; its cause remains unresolved. This is incomplete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture has not run."
+      "summary": "Published head 81cea3750 runs the implemented AMD64 lanes without the builder image, with 400-action remote concurrency. TUN/TAP MTU bounds, committed allocation and IPv6 payload bounds pass focused validation. Full public container and container-v1 selections are declared, but KVM execution remains unqualified. Docker-v1 passes five maintained owners: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run remains failed (329 passes, one boot failure); corrected boot passes all 105 cases without skips and Nogo on both architectures. The full unit lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes 706 entries at 4dca99373; subsequent unused PHP OCI removal has analysis-only coverage for all four maintained owners. Focused PHP 8.3.35 validation on native, DirectFS and goferfs replaces the missing-UConverter failure with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty same-container repetitions of the original Node batch did not reproduce SIGABRT; its cause remains unresolved. This is incomplete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture has not run."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1024,8 +1024,8 @@
       "title": "Set remote action concurrency",
       "url": "https://github.com/tamird/gvisor/tree/rbe-remote-concurrency",
       "group": "rbe",
-      "status": "extraction needed",
-      "summary": "Current branch contains188 qualification commits. Extract provider configuration/default32-job change with its owning RBE config; no runtime revalidation needed for the already-proven flag placement. Obtain contributor review for source/config publication. Explicit32-job plugin proof and subsequent full-lane runs pass; source/record reviewed."
+      "status": "resolved",
+      "summary": "Superseded by rbe-concurrency-400 at 77a7b4c69. The 35496ce44 proposal only adds the earlier 32-action setting; the replacement owns the current concurrency policy. Its refs remain preserved for later dependency-aware cleanup."
     },
     {
       "id": "external:kernel",
@@ -1379,6 +1379,106 @@
       "status": "open",
       "summary": "Published source 6f26e5cf0 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This is an allocator prerequisite: TUN oversized-write allocation and external packet storage remain unresolved.",
       "number": 15181
+    },
+    {
+      "id": "pr:15183",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15183,
+      "ref": "ipv6-payload-bounds",
+      "title": "Bound IPv6 parsing by the declared payload",
+      "url": "https://github.com/google/gvisor/pull/15183",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Contributor-approved PR #15183 publishes 7e7b34772. IPv6 parsing caps the packet before walking extension headers and handles unsupported jumbo payloads with the required ICMP error. Focused regressions distinguish the original behavior, and the corrected complete owners and three Nogo owners pass. Qualification head 24485f327 includes the validated fix. Oversized TUN-write allocation remains separate."
+    },
+    {
+      "id": "branch:buffer-grow-cow",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "buffer-grow-cow",
+      "title": "Preserve shared data when growing a view",
+      "url": "https://github.com/tamird/gvisor/tree/buffer-grow-cow",
+      "group": "runtime",
+      "status": "review pending",
+      "summary": "Published source d6eefc9f1 fixes zeroing beyond a trimmed view without first separating shared storage. The original heap regression fails; the corrected full buffer owner passes 326 XML entries and both owning Nogo targets pass AMD64 and ARM64. Contributor review is pending; qualification has not integrated this branch."
+    },
+    {
+      "id": "branch:buffer-benchmark-payloads",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "buffer-benchmark-payloads",
+      "title": "Benchmark populated buffer payloads",
+      "url": "https://github.com/tamird/gvisor/tree/buffer-benchmark-payloads",
+      "group": "tests",
+      "status": "review pending",
+      "summary": "Published source 3c44e9daa corrects existing empty-payload benchmarks and bounds each iteration. Identical benchmark source was used before and after the external-storage change. The results do not establish a speedup or identical worker placement. Contributor review is pending; this is independent of the buffer API changes."
+    },
+    {
+      "id": "branch:buffer-external-storage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "buffer-external-storage",
+      "title": "Support external buffer storage",
+      "url": "https://github.com/tamird/gvisor/tree/buffer-external-storage",
+      "group": "runtime",
+      "status": "review pending",
+      "summary": "Published source d065826bc adds bounded external storage ownership to buffer chunks, sharing and copy-on-write, with checkpoint segments that avoid flattening mapped storage. The complete buffer owner and both Nogo architectures pass. A concrete MemoryFile owner and its restore barrier are still being developed; this generic change alone does not validate TUN or checkpoint/resume of mapped packet storage. Contributor review is pending."
+    },
+    {
+      "id": "branch:pgalloc-retained-commitment",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "pgalloc-retained-commitment",
+      "title": "Retain commitment for live memory ranges",
+      "url": "https://github.com/tamird/gvisor/tree/pgalloc-retained-commitment",
+      "group": "runtime",
+      "status": "review pending",
+      "summary": "Published source fcac43da2 adds opt-in lifetime commitment to allocation accounting and checkpoint metadata, preserving retained zero pages through save/restore and resetting policy on final release or reuse. The complete allocator owner passes 61 XML entries; both owning Nogo targets pass AMD64 and ARM64. Synchronous save/restore and metadata ownership are validated. The concrete mapped-owner asynchronous restore barrier remains future work; contributor review is pending."
+    },
+    {
+      "id": "branch:tun-buffer-io",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tun-buffer-io",
+      "title": "Keep segmented buffers across TUN I/O",
+      "url": "https://github.com/tamird/gvisor/tree/tun-buffer-io",
+      "group": "runtime",
+      "status": "review pending",
+      "summary": "Published source 900d262b1 passes buffer ownership through the TUN device and file-description boundary, copying only fixed headers. The maintained syscall owner passes 21 cases with one existing skip in each of shared and DirectFS modes; both owning Nogo targets pass AMD64 and ARM64. The current write-size guard and heap allocation remain unchanged. Contributor review and qualification integration are pending."
+    },
+    {
+      "id": "branch:rbe-concurrency-400",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-concurrency-400",
+      "title": "Set remote concurrency to 400 actions",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-concurrency-400",
+      "group": "rbe",
+      "status": "review pending",
+      "summary": "Published source 77a7b4c69 sets remote concurrency to 400 and disables remote-action-building throttling. Qualification head 81cea3750 includes the exact configuration; hosted coordinator CPU and memory bounds remain independent. TUN buffer validation uses this configuration. Contributor review remains pending; this does not establish additional worker capabilities."
+    },
+    {
+      "id": "branch:rbe-platform-matrix",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-platform-matrix",
+      "title": "Declare native architecture test variants",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-platform-matrix",
+      "group": "rbe",
+      "status": "validation failed",
+      "summary": "Published source 1200f5fe6 adds AMD64 and ARM64 variants to maintained Go and C++ test declarations. The first combined proof failed: ARM Go and C++ link actions selected ARM executables but carried AMD64 worker properties. AMD64 Go and both Nogo architectures passed; the C++ invocation selected zero cases and earns no runtime coverage. A completed analysis-only query confirms ARM TestRunner selection but AMD64 link-action ownership; correction and runtime proof remain pending. Broader unit-lane adoption and ARM64 Firecracker capacity remain separate."
+    },
+    {
+      "id": "branch:pgalloc-buffer-storage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "pgalloc-buffer-storage",
+      "title": "Own mapped packet storage across restore",
+      "url": "https://github.com/tamird/gvisor/tree/pgalloc-buffer-storage",
+      "group": "runtime",
+      "status": "validation running",
+      "summary": "Published source 2d5d095d0 supplies bounded, committed MemoryFile storage owners and a fallible restore barrier before buffer consumers. Source review is complete; the full allocator and owning Nogo validation is running on composition 0e1bc8980. Runtime and checkpoint coverage remain pending. TUN allocation and its size guard are unchanged; contributor review has not been requested."
     }
   ],
   "edges": [
@@ -1908,6 +2008,81 @@
         "https://github.com/tamird/gvisor/commit/9802c50bc",
         "https://app.buildbuddy.io/invocation/73416569-9cd4-460f-a67d-5ad2a1c709f2"
       ]
+    },
+    {
+      "from": "pr:15183",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes the exact validated IPv6 payload-bound fix; this is integration membership, not a prerequisite for unrelated PRs.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/7e7b34772",
+        "https://github.com/tamird/gvisor/commit/24485f327"
+      ]
+    },
+    {
+      "from": "branch:buffer-grow-cow",
+      "to": "branch:buffer-external-storage",
+      "type": "depends_on",
+      "reason": "The external-storage implementation depends on the corrected view growth path to preserve shared chunk contents during copy-on-write.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/d6eefc9f1",
+        "https://github.com/tamird/gvisor/commit/d065826bc"
+      ]
+    },
+    {
+      "from": "pr:15181",
+      "to": "branch:pgalloc-retained-commitment",
+      "type": "depends_on",
+      "reason": "Retained ranges require the corrected AllocateAndCommit contract before their backing can be exposed to infallible consumers.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/6f26e5cf0",
+        "https://github.com/tamird/gvisor/commit/fcac43da2"
+      ]
+    },
+    {
+      "from": "branch:rbe-public-qualification",
+      "to": "branch:rbe-concurrency-400",
+      "type": "depends_on",
+      "reason": "The concurrency settings extend the existing shared remote configuration.",
+      "evidence": "https://github.com/tamird/gvisor/commit/77a7b4c69"
+    },
+    {
+      "from": "branch:rbe-public-qualification",
+      "to": "branch:rbe-platform-matrix",
+      "type": "depends_on",
+      "reason": "The matrix config uses the existing remote configuration and architecture-specific execution-platform declarations.",
+      "evidence": "https://github.com/tamird/gvisor/commit/1200f5fe6"
+    },
+    {
+      "from": "branch:hermetic-toolchains",
+      "to": "branch:rbe-platform-matrix",
+      "type": "depends_on",
+      "reason": "The test variants reuse the toolchain migration's Go rule wrappers, with_cfg supplier and static LLVM platform selection.",
+      "evidence": "https://github.com/tamird/gvisor/blob/1200f5fe6/tools/bazeldefs/go_variants.bzl"
+    },
+    {
+      "from": "branch:rbe-concurrency-400",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes the exact 400-action remote configuration; coordinator resource limits remain separate. The older 32-action proposal is superseded.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/77a7b4c69",
+        "https://github.com/tamird/gvisor/commit/81cea3750"
+      ]
+    },
+    {
+      "from": "branch:buffer-external-storage",
+      "to": "branch:pgalloc-buffer-storage",
+      "type": "depends_on",
+      "reason": "The concrete owner implements the generic external-storage lifetime and checkpoint interface.",
+      "evidence": "https://github.com/tamird/gvisor/commit/2d5d095d0"
+    },
+    {
+      "from": "branch:pgalloc-retained-commitment",
+      "to": "branch:pgalloc-buffer-storage",
+      "type": "depends_on",
+      "reason": "Infallible buffer access requires allocated pages to retain commitment through checkpoints.",
+      "evidence": "https://github.com/tamird/gvisor/commit/2d5d095d0"
     }
   ]
 }
