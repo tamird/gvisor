@@ -22,6 +22,8 @@ test_suite(
     tests = [
         "//runsc/container:lifecycle_benchmark_kvm_test",
         "//runsc/container:lifecycle_benchmark_systrap_test",
+        "//shim/tests:lifecycle_benchmark_kvm_test",
+        "//shim/tests:lifecycle_benchmark_systrap_test",
         "//test/benchmarks/base:hackbench_test_continuous_owned",
         "//test/benchmarks/base:startup_test_continuous_owned",
         "//test/benchmarks/base:sysbench_test_continuous_owned",

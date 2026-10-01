@@ -43,8 +43,7 @@ import (
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	dockerutil.EnsureSupportedDockerVersion()
-	os.Exit(m.Run())
+	os.Exit(dockerutil.RunTests(m.Run))
 }
 
 const (

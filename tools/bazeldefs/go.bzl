@@ -119,6 +119,10 @@ def go_importpath(target):
     """Returns the importpath for the target."""
     return target[GoLibrary].importpath
 
+def go_has_archive(target):
+    """Returns whether the target exposes a compiled Go archive."""
+    return GoArchive in target
+
 def go_binary_archive(target):
     """Returns compiled Go archive metadata for a binary target."""
     return target[GoArchive].data

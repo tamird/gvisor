@@ -274,8 +274,8 @@ bazel test --config=rbe --config=x86_64 --config=docker \
   //test/docker:owned_tests
 ```
 
-The suite selects the same four test source sets as `make docker-tests`, with
-all seven runtime configurations from `test/docker/config.bzl`. Each test
+The suite selects the same five test source sets as `make docker-tests`, with
+all eight runtime configurations from `test/docker/config.bzl`. Each test
 binary starts one private Docker daemon before its tests, loads only that
 suite's declared image archives, and stops the daemon after all parallel tests
 finish. The source-built release retains strict sidecar lookup. The former
@@ -393,11 +393,11 @@ test/rbe/qualify.sh benchmarks
 ```
 
 `//test/benchmarks:continuous_tests` declares the 20 Docker workload selections
-on systrap, KVM and native runc, plus the direct OCI lifecycle benchmark on
-systrap and KVM. The hosted lane selects AMD64 systrap and runc: 41 actions in
-all. Its `-requires-kvm` filter leaves 21 KVM actions unqualified. The full
-suite remains available to workers with KVM support. The existing startup
-smoke targets and their image cohort are separate.
+on systrap, KVM and native runc, plus the direct OCI and shim lifecycle
+benchmarks on systrap and KVM. The hosted lane selects AMD64 systrap and runc:
+42 actions in all. Its `-requires-kvm` filter leaves 22 KVM actions
+unqualified. The full suite remains available to workers with KVM support.
+The existing startup smoke targets and their image cohort are separate.
 
 Each benchmark declaration retains the continuous pipeline's filter and
 benchtime: one iteration for build/media/Ruby-development workloads, 1000
@@ -411,9 +411,11 @@ Docker actions share the existing owned fixture, load only their declared
 images and request four CPUs, 8GB memory and 40GB disk. These are allowances
 for the full workloads, not measured minimums. Continuous targets allow up to
 one hour per action; the hosted coordinator's shorter shared deadline can
-still leave a cohort incomplete. Lifecycle uses the existing direct runtime
-source and namespace worker with an 8GB memory allowance, without a Docker
-daemon. The installed benchmark entrypoints remain available.
+still leave a cohort incomplete. Both lifecycle suites use their existing
+benchmark bodies and the namespace worker with an 8GB memory allowance. The
+shim suite declares the full release, including containerd-shim-runsc-v1, and
+uses its own TTRPC fixture; neither suite needs a Docker or containerd daemon.
+The installed benchmark entrypoints remain available.
 
 Runsc variants enable `--profile` as Make does, and explicitly disable the
 ordinary test fixture's debug logging. No profiler starts by default; optional
