@@ -15,10 +15,11 @@
 # limitations under the License.
 
 # lint.sh runs gVisor's source-level lint checks without a builder container.
-# The actions check is a Bazel test. Deep Go analysis is owned by gVisor nogo.
+# The actions and optional clang-tidy checks use Bazel. Deep Go analysis is
+# owned by gVisor nogo.
 #
 # Usage:
-#   tools/lint.sh                     # run every check
+#   tools/lint.sh                     # run the default checks
 #   tools/lint.sh gofmt clang-format  # run only the named checks
 #   tools/lint.sh --fix               # rewrite files in place where a check can
 #
@@ -40,7 +41,7 @@ if ! mkdir -p "${CACHE_DIR}" 2>/dev/null; then
 fi
 readonly CACHE_DIR
 
-# Every check, in run order, named as tools/lint.sh accepts it.
+# Default checks, in run order, named as tools/lint.sh accepts them.
 declare -ra ALL_CHECKS=(gofmt clang-format cpplint buildifier actions spelling)
 # Only the formatters can rewrite a file; the rest have no safe autofix.
 declare -ra FIXABLE_CHECKS=(gofmt clang-format buildifier)
