@@ -87,6 +87,15 @@ owning test preserves the release build's default stripping policy even though
 unit tests use `--strip=never`. Either lane can also be selected alone with
 `--arch=all`; their order does not change the selection.
 
+Add `nogo` to select the complete existing Nogo lane in the same invocation.
+Each Nogo target already analyzes AMD64 and ARM64. Bazel selects its owners
+under the public `nogo` configuration before combining them with the other
+lanes. Unit and ordinary syscall selection then remove only their Nogo
+exclusion. The complete combined test set must match the selected profiles
+before execution; unit and syscall wildcard roots retain their build-only work.
+The final invocation does not inherit Nogo's positive tag filter or
+`--build_tests_only`.
+
 Add `smoke smoke-race` to run the existing normal and race smoke checks in that
 same invocation, or run just those two lanes with `--arch=all`. Both smoke
 checks execute on AMD64. The race target owns its instrumentation settings,

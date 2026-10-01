@@ -293,9 +293,10 @@ def main() -> None:
     filtered = commands.add_parser("select-filtered")
     for name in ("events", "kvm_owners", "output"):
         filtered.add_argument(name)
-    profile = commands.add_parser("profile-actions")
-    profile.add_argument("events")
-    profile.add_argument("architecture", choices=("amd64", "arm64"))
+    for command in ("profile-actions", "profile-targets"):
+        profile = commands.add_parser(command)
+        profile.add_argument("events")
+        profile.add_argument("architecture", choices=("amd64", "arm64"))
     syscalls = commands.add_parser("select-syscalls")
     syscalls.add_argument("profile")
     syscalls.add_argument("architecture", choices=("amd64", "arm64"))
@@ -304,7 +305,7 @@ def main() -> None:
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
-    verify.add_argument("--profile", help="Successful unfiltered analysis of additional suite roots")
+    verify.add_argument("--profile", action="append", help="Successful analysis of additional suite roots")
     args = parser.parse_args()
     if args.command == "query":
         print(owner_query(args.patterns))
@@ -330,12 +331,14 @@ def main() -> None:
         }, indent=2))
     elif args.command == "profile-actions":
         print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture)) + ")")
+    elif args.command == "profile-targets":
+        print("\n".join(profile_targets(args.events, args.architecture)))
     elif args.command == "select-syscalls":
         select_syscalls(args.profile, args.architecture, args.events, args.actions, args.output)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
-        if args.profile is not None:
-            expected.update(configured_tests(args.profile))
+        for profile in args.profile or []:
+            expected.update(configured_tests(profile))
         actual = configured_tests(args.events)
         if actual.keys() != expected:
             raise ValueError(f"Combined profile changes explicit owners: {sorted(actual.keys() ^ expected)}")
