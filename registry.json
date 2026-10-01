@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T10:17:10.681891+00:00",
+    "updatedAt": "2026-10-01T10:19:13.146080+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1365,19 +1365,20 @@
       "url": "https://github.com/google/gvisor/pull/15180",
       "group": "runtime",
       "status": "open",
-      "summary": "Published source aaaa87663 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor-approved PR #15180 is open on the validated source. Oversized-write allocation remains unresolved, and these interface bounds are not a Linux write-size limit.",
+      "summary": "Published source aaaa87663 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor-approved PR #15180 is open on the validated source. Oversized-write allocation remains unresolved, and these interface bounds are not a Linux write-size limit. The initial upstream lint job hit an HTTP500 fetching buildifier.",
       "number": 15180
     },
     {
-      "id": "branch:pgalloc-commit-errors",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15181",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "pgalloc-commit-errors",
       "title": "Honor committed memory allocation requests",
-      "url": "https://github.com/tamird/gvisor/tree/pgalloc-commit-errors",
+      "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
-      "status": "review pending",
-      "summary": "Published source 6f26e5cf0 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor review is pending and no PR is open. This is an allocator prerequisite: TUN oversized-write allocation and external packet storage remain unresolved."
+      "status": "open",
+      "summary": "Published source 6f26e5cf0 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This is an allocator prerequisite: TUN oversized-write allocation and external packet storage remain unresolved.",
+      "number": 15181
     }
   ],
   "edges": [
@@ -1898,7 +1899,7 @@
       ]
     },
     {
-      "from": "branch:pgalloc-commit-errors",
+      "from": "pr:15181",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the independently reviewable committed-allocation fix, with a failing baseline and passing complete allocator owner and both Nogo architectures. TUN writes and external packet storage are unchanged.",
