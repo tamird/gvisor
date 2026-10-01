@@ -87,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images) ;;
+      unit|release-repository|syscalls|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -164,6 +164,7 @@ shared_test_targets() {
   case "$1" in
     do) targets=(//:do_tests) ;;
     docker) targets=(//test/docker:owned_tests) ;;
+    plugin-network) targets=(//test/docker:plugin_network_tests) ;;
     root) targets=(//test/root:root_test_owned) ;;
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
@@ -230,7 +231,7 @@ select_syscall_matrix() {
 # filters. Release artifacts already select both CPUs in their owning graph.
 run_platform_matrix() (
   set -e
-  local selection_dir lane include_unit=false include_syscalls=false explicit_universe
+  local selection_dir lane command=build include_unit=false include_syscalls=false explicit_universe
   local -a options=() targets=() verification_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
@@ -238,6 +239,9 @@ run_platform_matrix() (
   : > "$selection_dir/explicit-targets"
   : > "$selection_dir/shared-targets"
   for lane in "$@"; do
+    if [[ $lane != plugin-build ]]; then
+      command='test'
+    fi
     if [[ $lane == unit ]]; then
       include_unit=true
     fi
@@ -276,7 +280,12 @@ run_platform_matrix() (
         printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
-      do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images)
+      plugin-build)
+        # This is a build-only root, not an executable test for the loading
+        # verifier. Its own transition preserves opt/strip=sometimes.
+        printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
+        ;;
+      plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
@@ -310,7 +319,7 @@ run_platform_matrix() (
     fi
     cat "$selection_dir/combined-targets" >> "$selection_dir/targets"
   fi
-  bazel test --config=rbe-matrix --config=x86_64 --keep_going \
+  bazel "$command" --config=rbe-matrix --config=x86_64 --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" \
     --target_pattern_file="$selection_dir/targets"
 )
@@ -341,8 +350,7 @@ run_lane() (
         return 2
       fi
       command=build
-      options=(-c opt --config=plugin-tldk)
-      targets=(//runsc:runsc-plugin-stack)
+      targets=(//runsc:runsc-plugin-stack-build)
       ;;
     lint|lint-cc|governance|license-check)
       if [[ $arch != amd64 ]]; then
@@ -406,8 +414,7 @@ run_lane() (
         printf 'The public plugin network test is declared for AMD64.\n' >&2
         return 2
       fi
-      options=(--config=plugin-tldk)
-      targets=(//test/docker:plugin_network_tests)
+      shared_test_targets "$lane" "$arch"
       ;;
     do|docker|root|portforward|bwrap|workflows|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images)
       if [[ $lane == "do" && $arch != amd64 ]]; then

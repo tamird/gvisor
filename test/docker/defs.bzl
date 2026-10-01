@@ -191,6 +191,8 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
         test = prefix + "_owned"
         owned_kwargs = dict(kwargs)
         owned_kwargs["tags"] = kwargs.get("tags", []) + getattr(variant, "tags", [])
+        if hasattr(variant, "test_rule"):
+            owned_kwargs["test_rule"] = variant.test_rule
         if arm64 != images:
             owned_kwargs["target_compatible_with"] = kwargs.get("target_compatible_with", []) + select_arch(
                 amd64 = [],

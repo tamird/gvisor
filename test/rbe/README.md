@@ -161,7 +161,9 @@ TLDK configuration, which the all-target build excludes:
 test/rbe/qualify.sh plugin-build
 ```
 
-This builds `//runsc:runsc-plugin-stack` with `-c opt --config=plugin-tldk`.
+The `//runsc:runsc-plugin-stack-build` target selects the existing plugin
+binary with `compilation_mode=opt` and `strip=sometimes`. Its configuration
+does not affect ordinary targets in the same invocation.
 The separate AMD64 runtime lane preserves `make plugin-network-tests`:
 
 ```sh
@@ -173,6 +175,18 @@ retains the `ConnectToSelf` filter on the image and integration suites. Only
 the integration suite currently contains a matching test. As in Make, this
 lane leaves the runtime platform at its default; its public agent's KVM
 capability requirement does not set `--platform=kvm`.
+
+Both plugin lanes also accept `--arch=all` alongside other lanes. They retain
+AMD64 targets; this adds no ARM64 plugin or vhost-net worker capability. The
+network tests own the TLDK/cgo configuration and retain their normal compilation
+mode and `strip=never`, including the runtime and all release sidecars. The
+build-only plugin root is built by the same final Bazel invocation.
+
+`--config=plugin-tldk` remains available for direct Bazel and Make callers. It
+sets the same default-off `//external/tools/plugin-stack:tldk` flag used by the
+configured owners, replacing the old `plugin_tldk`/`network_plugins` defines.
+The raw plugin binaries and backtrace test remain available under that config,
+with their existing default selection unchanged.
 
 The full graph was qualified with Bazel 8.5.0 on a 16 GiB hosted coordinator
 using an 8 GiB JVM heap (`--host_jvm_args=-Xmx8g`). Apply this as a coordinator

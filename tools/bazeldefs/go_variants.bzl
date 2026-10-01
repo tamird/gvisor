@@ -49,9 +49,9 @@ static_go_cov, _static_go_cov_transition = _go_binary_variant(static = True, cov
 # the original test attributes, providers, and Go configuration transition.
 go_test, _go_test_transition = with_cfg(_go_test).set("platforms", _MUSL_PLATFORMS).build()
 
-def _compile_go_test(compile_exec_compatible_with, **kwargs):
+def _compile_go_test(compile_exec_compatible_with, test_rule = _go_test, **kwargs):
     kwargs["exec_compatible_with"] = compile_exec_compatible_with
-    _go_test(**kwargs)
+    test_rule(**kwargs)
 
 def _architecture_go_test(architecture, static = False):
     # Reuse with_cfg's test frontend: it forwards runfiles, environment,

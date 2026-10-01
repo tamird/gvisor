@@ -1,4 +1,5 @@
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//external/tools/plugin-stack:defs.bzl", "plugin_build")
 load("//tools:defs.bzl", "go_binary", "go_cov")
 
 package(
@@ -27,6 +28,17 @@ go_binary(
         "//runsc/cli/maincli",
         "//runsc/version",
     ],
+)
+
+plugin_build(
+    name = "runsc-plugin-stack-build",
+    srcs = [":runsc-plugin-stack"],
+    tags = [
+        "manual",
+        "network_plugins",
+    ],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+    visibility = ["//visibility:public"],
 )
 
 go_binary(

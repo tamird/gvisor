@@ -15,11 +15,6 @@ filegroup(
     ]),
 )
 
-config_setting(
-    name = "plugin_tldk_condition",
-    values = {"define": "plugin_tldk=true"},
-)
-
 copy_file(
     name = "queue_header",
     src = "@plugin_bsd_queue//file",
@@ -63,7 +58,7 @@ make(
     out_static_libs = ["libpluginstack.a"],
     resource_size = "small",
     target_compatible_with = select({
-        ":plugin_tldk_condition": [
+        "@//external/tools/plugin-stack:plugin_tldk": [
             "@llvm//constraints/libc:musl",
             "@platforms//cpu:x86_64",
             "@platforms//os:linux",

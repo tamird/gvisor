@@ -5,11 +5,6 @@ package(
     licenses = ["notice"],
 )
 
-config_setting(
-    name = "network_plugins",
-    values = {"define": "network_plugins=true"},
-)
-
 go_library(
     name = "cgo",
     srcs = [
@@ -20,11 +15,11 @@ go_library(
         "util_unsafe.go",
     ],
     bazel_cdeps = select({
-        ":network_plugins": ["@libpluginstack//:libpluginstack"],
+        "//external/tools/plugin-stack:plugin_tldk": ["@libpluginstack//:libpluginstack"],
         "//conditions:default": [],
     }),
     bazel_cgo = select({
-        ":network_plugins": True,
+        "//external/tools/plugin-stack:plugin_tldk": True,
         "//conditions:default": False,
     }),
     visibility = ["//visibility:public"],
