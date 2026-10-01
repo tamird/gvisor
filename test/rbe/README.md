@@ -298,9 +298,32 @@ that supplies Docker, external networking and IPv6. They use the host
 OverlayFS driver and request root disk space for expanded image layers and
 container writes; the action workspace holds the declared archives. These
 resource estimates need runtime qualification. Test logs identify the actual
-Docker version, storage and cgroup mode. ARM64 Firecracker capacity and
-cgroup v1 remain separate gaps; providing ARM64 image pins does not qualify
-either environment.
+Docker version, storage and cgroup mode. ARM64 Firecracker capacity remains
+unqualified; providing ARM64 image pins does not supply that capacity.
+
+The `docker-v1` lane selects the same complete AMD64 Docker suite under an
+actual cgroup-v1 hierarchy:
+
+```sh
+test/rbe/qualify.sh docker-v1
+```
+
+It adds `--run_under=//test/rbe:cgroup_v1` before each existing test entrypoint,
+so the wrapper binds unused controllers before the test starts its private
+Docker daemon. It preserves the command vector, test selection, runtime table,
+sharding and `--config=docker` setting. It does not infer the hierarchy from
+`CGROUPV2` or replace a runtime check with that environment variable.
+
+The wrapper requires RBE and the lane forbids local test execution. Existing
+owned Docker actions select root Firecracker VMs with runner recycling disabled;
+compilation keeps its ordinary execution platform. A private mount namespace
+and child PID namespace contain the command. Cleanup removes only empty owned
+groups, uses ordinary unmounts and checks the original mount view. Kernel
+controller references may persist until the disposable VM is destroyed; their
+residual state is recorded, without claiming global controller restoration.
+The focused `//test/rbe:cgroup_v1_fixture_test` retains the existing
+`TestCgroupV1` assertions separately from the generic wrapper. Other public
+cgroup-v1 lanes remain unqualified.
 
 Default `make docker-tests` and the original four test labels retain installed
 Docker, staged bundles, custom `RUNTIME_BIN`/`RUNSC_TARGET`, `RUNTIME_ARGS`,

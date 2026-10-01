@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker overlay swgso hostnet plugin-network do root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker docker-v1 overlay swgso hostnet plugin-network do root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -37,9 +37,9 @@ USAGE
 
 gaps() {
   cat <<'GAPS'
-Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; cgroup v1, the
-host systemd cgroup manager and alternate host kernels; the full save/restore
-and coverage matrices; GPU/TPU runtime lanes; staged-binary consistency.
+Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; other cgroup
+v1 lanes; the host systemd cgroup manager and alternate host kernels; the full
+save/restore and coverage matrices; GPU/TPU runtime lanes; staged-binary consistency.
 GAPS
 }
 
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -211,9 +211,16 @@ run_lane() {
     cpu-images|gpu-images)
       targets=("//test/docker:${lane%-images}_image_sources_${arch}_test")
       ;;
-    docker)
+    docker|docker-v1)
       options=(--config=docker)
       targets=(//test/docker:owned_tests)
+      if [[ $lane == docker-v1 ]]; then
+        if [[ $arch != amd64 ]]; then
+          printf 'The public Docker cgroup-v1 lane is declared for AMD64.\n' >&2
+          return 2
+        fi
+        options+=(--run_under=//test/rbe:cgroup_v1 --modify_execution_info=TestRunner=+no-local)
+      fi
       ;;
     overlay|swgso|hostnet)
       targets=("//test/docker:${lane}_tests")
