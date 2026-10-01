@@ -37,7 +37,7 @@ build --@io_bazel_rules_go//go/config:pure
 test --@io_bazel_rules_go//go/config:pure
 
 # Set bazel_rule as non-pure when cgo is used.
-build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tldk=true --define=network_plugins=true
+build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --//external/tools/plugin-stack:tldk
 
 # By default, exclude nogo targets from building. They will still be included
 # by default for all tests.

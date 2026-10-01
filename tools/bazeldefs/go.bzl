@@ -162,7 +162,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, **kwargs):
     """Build a go test.
 
     Args:
@@ -171,6 +171,8 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         pure: should it be built without cgo.
         library: the library to embed.
         architectures: Additional explicitly selected native architecture variants.
+        test_rule: Optional configured raw Go test rule, including any required
+            static platform transition. Used by the base and architecture variants.
         **kwargs: rest of the arguments to pass to _go_test.
     """
     if pure:
@@ -187,12 +189,16 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         "//tools:lockdep": ["lockdep"],
         "//conditions:default": [],
     })
-    test_rule = _static_go_test if static else _go_test
+    base_rule = test_rule if test_rule != None else (_static_go_test if static else _go_test)
     kwargs["tags"] = test_architecture_tags(architectures, kwargs.get("tags", []))
-    test_rule(
+    base_rule(
         name = name,
         **kwargs
     )
+    if test_rule != None:
+        # The architecture frontend must configure the same raw rule as the
+        # original declaration, without copying this macro's Go/Nogo setup.
+        kwargs["test_rule"] = test_rule
     test_architecture_variants(
         name,
         architectures,

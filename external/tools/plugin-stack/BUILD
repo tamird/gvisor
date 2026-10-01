@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_test")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "go_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -10,9 +10,22 @@ exports_files(glob([
     "*.patch",
 ]))
 
+bool_flag(
+    name = "tldk",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
 config_setting(
     name = "plugin_tldk",
-    values = {"define": "plugin_tldk=true"},
+    flag_values = {":tldk": "true"},
+    visibility = ["//visibility:public"],
+)
+
+bzl_library(
+    name = "defs_bzl",
+    srcs = ["defs.bzl"],
+    visibility = ["//:sandbox"],
 )
 
 go_test(
