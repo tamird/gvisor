@@ -1,7 +1,7 @@
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
-load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command")
+load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -12,6 +12,34 @@ package(
 docker_image_archives(
     name = "images",
     extra_images = CONTAINERD_IMAGES,
+    source_archives = {
+        "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
+    },
+)
+
+# All containerd versions share this output instead of rebuilding the harness
+# in each test daemon. Other images and the ARM64 archive retain their pins.
+source_image_archive(
+    name = "containerd_harness_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_group_compatible_with = {
+        "image": [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    },
+    exec_properties = docker_test_exec_properties(
+        exec_group = "image",
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    image = "containerd/harness",
+    tags = ["manual"],
 )
 
 bzl_library(
