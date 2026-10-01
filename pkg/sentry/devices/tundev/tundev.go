@@ -164,12 +164,10 @@ func (fd *tunFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.Wri
 	if src.NumBytes() == 0 {
 		return 0, unix.EINVAL
 	}
-	mtu, err := fd.device.MTU()
-	if err != nil {
+	// Preserve the device-state check before allocating packet storage. The
+	// configured MTU does not limit the size of a write to the device.
+	if _, err := fd.device.MTU(); err != nil {
 		return 0, err
-	}
-	if int64(mtu) < src.NumBytes() {
-		return 0, unix.EMSGSIZE
 	}
 	mf := pgalloc.MemoryFileFromContext(ctx)
 	storage, err := mf.AllocateMapped(uint64(src.NumBytes()), buffer.MaxChunkSize, usage.System, pgalloc.MemoryCgroupIDFromContext(ctx))
