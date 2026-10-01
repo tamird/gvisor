@@ -310,7 +310,7 @@ execution remains unqualified.
 The maintained Docker runtime lane has an explicit action-owned setup:
 
 ```sh
-bazel test --config=rbe --config=x86_64 --config=docker \
+bazel test --config=rbe --config=x86_64 \
   //test/docker:owned_tests
 ```
 
@@ -345,8 +345,8 @@ test/rbe/qualify.sh docker-v1
 
 It adds `--run_under=//test/rbe:cgroup_v1` before each existing test entrypoint,
 so the wrapper binds unused controllers before the test starts its private
-Docker daemon. It preserves the command vector, test selection, runtime table,
-sharding and `--config=docker` setting. It does not infer the hierarchy from
+Docker daemon. It preserves the command vector, test selection, runtime table
+and sharding. It does not infer the hierarchy from
 `CGROUPV2` or replace a runtime check with that environment variable.
 
 The wrapper requires RBE and the lane forbids local test execution. Existing
@@ -372,8 +372,7 @@ copy/sudo/reload behavior and partition variables. The installation adapter
 uses the same runtime table as the owned daemon. `make docker-tests
 DOCKER_TEST_SETUP=owned` selects the declared-input suite instead; installed
 runtime overrides do not apply in that explicit mode. Direct owned runs should
-set `PARTITION` and `TOTAL_PARTITIONS` through `--test_env` when partitioning;
-`--config=docker` preserves the lane's TCP save/restore setting.
+set `PARTITION` and `TOTAL_PARTITIONS` through `--test_env` when partitioning.
 
 The `overlay`, `swgso` and `hostnet` lanes run the same complete image and
 integration suites as their public Make counterparts, with declared runtime
@@ -387,8 +386,7 @@ Overlay uses `--overlay2=all:dir=/tmp`; the default Docker suite's separate
 `all:self` tests remain unchanged. Software GSO uses `--software-gso=true
 --gso=false`. Host networking uses `--network=host --net-raw` and the existing
 test flags that disable checkpoint tests and identify host/raw networking.
-These lanes preserve the public test settings, including omission of the
-Docker lane's separate TCP save/restore setting. Their owning suites are
+These lanes preserve the public test settings. Their owning suites are
 `//test/docker:overlay_tests`, `swgso_tests` and `hostnet_tests`; the original
 `owned_tests` selection still runs only the default configurations. The public
 pipeline selects AMD64 for these variants; ARM64 execution remains unqualified.
@@ -400,7 +398,7 @@ Redis/nginx archives. Its two existing tests run in separate sandbox-network
 and host-network actions:
 
 ```sh
-bazel test --config=rbe --config=x86_64 --config=docker //test/root:portforward_test_owned
+bazel test --config=rbe --config=x86_64 //test/root:portforward_test_owned
 ```
 
 `make portforward-tests DOCKER_TEST_SETUP=owned` selects that suite. Default
@@ -424,7 +422,7 @@ not been qualified for nested KVM, so the full posture gate remains unsupported
 there. The five non-KVM configurations can be qualified explicitly:
 
 ```sh
-bazel test --config=rbe --config=x86_64 --config=docker \
+bazel test --config=rbe --config=x86_64 \
   --test_tag_filters=-requires-kvm //test/root:sandbox_posture_test_owned
 ```
 
