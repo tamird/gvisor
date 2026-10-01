@@ -85,13 +85,14 @@ _runtime_test = rule(
     test = True,
 )
 
-def runtime_test(name, partitions, memory = None, **kwargs):
+def runtime_test(name, partitions, memory = None, source_archive = None, **kwargs):
     """Declares installed and owned entrypoints for a language runtime.
 
     Args:
       name: Existing runtime image and installed target name.
       partitions: Number of public CI partitions, each retaining its Bazel shards.
       memory: Optional memory budget for each owned test VM.
+      source_archive: Optional source-built archive replacing the image registry pin.
       **kwargs: Existing language, batch, exclusion and shard settings.
     """
     if partitions < 1:
@@ -111,6 +112,7 @@ def runtime_test(name, partitions, memory = None, **kwargs):
         name = archive,
         image = "runtimes/" + name,
         architecture = "amd64",
+        source = source_archive,
     )
     for mode, directfs in _RUNTIME_MODES.items():
         prefix = name + "_" + mode
