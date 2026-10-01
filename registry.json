@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T20:31:05.604425+00:00",
+    "updatedAt": "2026-10-01T20:39:33.096365+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1005,7 +1005,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head eb6a71ba1 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo recovery finished, with saved-result reconciliation still pending; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified."
+      "summary": "Published head eb6a71ba1 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo recovery passed its independently reconciled bounded selection/runtime proof; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1058,7 +1058,7 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13540",
       "group": "rbe",
       "status": "deployment-pending",
-      "summary": "Provider issue closed, deployment expected October1; actual rootless networking is not yet revalidated.",
+      "summary": "Provider issue closed. On September 29, bduffany said the fix should go live Thursday afternoon (October 1), without a timezone or hour. No deployment-complete notice has followed; actual rootless networking remains unverified.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13540
     },
@@ -1104,7 +1104,7 @@
       "group": "tests",
       "status": "open",
       "url": "https://github.com/google/gvisor/pull/15159",
-      "summary": "Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks.",
+      "summary": "Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks. Public import #15195 at 301de4930ac70fb19575847b46ea3c70199bbd09 failed build 49161 in Podman cleanup. Both DirectFS modes printed Hello, world; the final rm -rf then failed with Directory not empty. The remaining directory's cause and any relationship to the MQ change are not established. This public failure does not explain the separate unavailable internal Copybara feedback.",
       "number": 15159
     },
     {
@@ -1616,8 +1616,8 @@
       "title": "Combine Nogo with runtime qualification",
       "url": "https://github.com/tamird/gvisor/tree/rbe-nogo-test-selection",
       "group": "rbe",
-      "status": "integrated; proof pending",
-      "summary": "Published source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. Integrated as 08102c576 in qualification head eb6a71ba1. The first proof completed 26 zero-action analyses, then failed at a 136456-byte subprocess argument limit. Recovery 9d381d0b-8f49-4b78-a568-e5782f5de969 uses file-based selection transport and finished with 13 child invocations; saved-result reconciliation remains pending and no full Nogo or runtime-matrix pass is claimed."
+      "status": "integrated; bounded proof passed",
+      "summary": "Published source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. Integrated as 08102c576 in qualification head eb6a71ba1. The first proof completed 26 zero-action analyses, then failed at a 136456-byte subprocess argument limit. Recovery 9d381d0b-8f49-4b78-a568-e5782f5de969 uses file-based selection transport and passed its independently reconciled bounded selection/runtime proof across 13 child invocations. No full Nogo or runtime-matrix pass is claimed."
     },
     {
       "id": "branch:rbe-cgroup-test-selection",
@@ -1628,7 +1628,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-test-selection",
       "group": "rbe",
       "status": "fork validation candidate",
-      "summary": "Published candidate 0db5008e34e96b57be34499eae18e3795059fb7b contains the reviewed per-target cgroup profiles from 714caba55, shared file-based selection transport, and corrected dependency-patch file headers. It descends from historical qualification head c327900462e558a1a610e8a44e168ba0098dd2eb; it is not based directly on master and does not include the later checkpoint or Nogo composition. The first graph parent failed fetching the patched dependency before executing actions. Graph continuation and runtime qualification remain pending."
+      "summary": "Published candidate 0db5008e34e96b57be34499eae18e3795059fb7b contains the reviewed per-target cgroup profiles from 714caba55, shared file-based selection transport, and corrected dependency-patch file headers. It descends from historical qualification head c327900462e558a1a610e8a44e168ba0098dd2eb; it is not based directly on master and does not include the later checkpoint or Nogo composition. The first graph parent failed fetching the patched dependency before executing actions. The graph continuation also failed and is being diagnosed; runtime qualification remains pending."
     },
     {
       "id": "branch:rbe-artifact-selection",
@@ -1639,7 +1639,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
       "status": "fork validation candidate",
-      "summary": "Published candidate ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from qualification head eb6a71ba1 and adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Source review is complete; hosted method review and qualification remain pending. This candidate is not yet the primary qualification branch."
+      "summary": "Published candidate ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from qualification head eb6a71ba1 and adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Source review is complete; hosted qualification remains pending. This candidate is not yet the primary qualification branch."
     }
   ],
   "edges": [
