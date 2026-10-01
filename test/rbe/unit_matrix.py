@@ -138,8 +138,8 @@ class ConfiguredTarget:
     configuration: str
 
 
-def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
-    """Read this successful analysis invocation's runnable top-level tests."""
+def configured_targets(events_path: str, *, tests: bool) -> dict[str, ConfiguredTarget]:
+    """Read this successful analysis invocation's top-level targets."""
     targets: dict[str, ConfiguredTarget] = {}
     skipped: set[tuple[str, str]] = set()
     succeeded = False
@@ -173,7 +173,7 @@ def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
             or not isinstance(children, list)
         ):
             raise ValueError(f"Invalid configured target: {event}")
-        if "testSize" not in configured:
+        if ("testSize" in configured) != tests or configured.get("targetKind") == "test_suite rule":
             continue
         configurations = []
         for child in children:
@@ -193,8 +193,21 @@ def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
             del targets[label]
             print(f"Bazel skipped {label} in configuration {checksum}", file=sys.stderr)
     if not succeeded or not targets:
-        raise ValueError(f"Expected successful, nonempty test analysis: {events_path}")
+        raise ValueError(f"Expected successful, nonempty target analysis: {events_path}")
     return targets
+
+
+def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
+    """Read this successful analysis invocation's runnable top-level tests."""
+    return configured_targets(events_path, tests=True)
+
+
+def cgroup_targets(events_path: str) -> list[str]:
+    targets = configured_tests(events_path)
+    missing = sorted(label for label, target in targets.items() if "rbe-has-cgroup-v1-variant" not in target.tags)
+    if missing:
+        raise ValueError(f"Canonical owners without cgroup-v1 variants: {missing}")
+    return sorted(label + "_cgroup_v1" for label in targets)
 
 
 def profile_targets(events_path: str, architecture: str) -> list[str]:
@@ -256,7 +269,7 @@ def universe(patterns_path: str) -> str:
     return ",".join(pattern for pattern in patterns if pattern)
 
 
-def select_variants(patterns_path: str, owners_path: str, actions_path: str, output_path: str) -> None:
+def select_variants(patterns_path: str, owners_path: str, actions_path: str, output_path: str, profile_path: str | None) -> None:
     owners = owner_labels(owners_path)
     expected = {owner + "_arm64" for owner in owners}
     requirements = test_requirements(actions_path)
@@ -264,14 +277,19 @@ def select_variants(patterns_path: str, owners_path: str, actions_path: str, out
         raise ValueError(f"Missing configured test owners: {sorted(expected - requirements.keys())}")
     unavailable = sorted(label for label, properties in requirements.items() if properties["workload-isolation-type"] == "firecracker")
     selected = sorted(expected - set(unavailable))
-    # Keep all original patterns, exclusions and non-test build targets. Only
-    # the additional variants bypass wildcard manual filtering; ordinary unit
-    # tag filters remain in force for both architectures.
-    Path(output_path).write_text(Path(patterns_path).read_text().rstrip() + "\n" + "\n".join(selected) + "\n")
+    if profile_path is None:
+        # Ordinary mixed units retain their original patterns and build-only
+        # work. Other lanes that require neutral filters use canonical leaves.
+        output = Path(patterns_path).read_text().rstrip() + "\n" + "\n".join(selected) + "\n"
+    else:
+        original = configured_tests(profile_path)
+        selected = sorted(set(selected) & {label + "_arm64" for label in original})
+        output = "".join(label + "\n" for label in sorted(original) + selected)
+    Path(output_path).write_text(output)
     print(json.dumps({
         "additional_arm64_variants": selected,
         "unavailable_arm64_firecracker": unavailable,
-        "unchanged_selection": patterns_path,
+        "canonical_selection": profile_path or patterns_path,
         "limitation": "Non-Go/C++ unit owners retain their original AMD64 execution.",
     }, indent=2))
 
@@ -286,6 +304,13 @@ def main() -> None:
     select = commands.add_parser("select")
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
+    select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
+    cgroup = commands.add_parser("cgroup-targets")
+    cgroup.add_argument("events")
+    container = commands.add_parser("container-targets")
+    container.add_argument("events")
+    roots = commands.add_parser("build-roots")
+    roots.add_argument("events")
     patterns = commands.add_parser("universe")
     patterns.add_argument("patterns")
     kvm = commands.add_parser("kvm-query")
@@ -311,7 +336,17 @@ def main() -> None:
     elif args.command == "actions":
         print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output)
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile)
+    elif args.command == "cgroup-targets":
+        print("\n".join(cgroup_targets(args.events)))
+    elif args.command == "container-targets":
+        targets = configured_tests(args.events)
+        print("\n".join(sorted(
+            label + "_cgroup_v2" if "rbe-has-cgroup-v2-variant" in target.tags else label
+            for label, target in targets.items()
+        )))
+    elif args.command == "build-roots":
+        print("\n".join(sorted(configured_targets(args.events, tests=False))))
     elif args.command == "universe":
         print(universe(args.patterns))
     elif args.command == "kvm-query":

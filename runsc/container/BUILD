@@ -70,6 +70,7 @@ go_test(
             "--test_platforms=%s" % default_platform,
         ],
     }),
+    cgroup_v2 = True,
     data = [
         "//:release",
         "//test/cmd/test_app",

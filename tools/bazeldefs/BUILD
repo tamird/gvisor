@@ -99,6 +99,7 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = ["//visibility:private"],
+    deps = [":cgroup_test_bzl"],
 )
 
 bzl_library(
@@ -106,6 +107,7 @@ bzl_library(
     srcs = ["go.bzl"],
     visibility = ["//visibility:private"],
     deps = [
+        ":cgroup_test_bzl",
         ":defs_bzl",
         ":go_variants_bzl",
         ":test_architectures_bzl",
@@ -117,9 +119,16 @@ bzl_library(
     srcs = ["go_variants.bzl"],
     visibility = ["//visibility:private"],
     deps = [
+        ":cgroup_test_bzl",
         ":defs_bzl",
         ":test_architectures_bzl",
     ],
+)
+
+bzl_library(
+    name = "cgroup_test_bzl",
+    srcs = ["cgroup_test.bzl"],
+    visibility = ["//:sandbox"],
 )
 
 bzl_library(

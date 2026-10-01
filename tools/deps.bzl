@@ -1,5 +1,7 @@
 """Rules for dependency checking."""
 
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+
 # DepsInfo provides a list of dependencies found when building a target.
 DepsInfo = provider(
     "lists dependencies encountered while building",
@@ -152,7 +154,7 @@ def _deps_test_impl(ctx):
 # This recursively checks "deps", following "actual_binary" and "exports"
 # wrappers. Other dependency attributes are not checked. For example, protobuf
 # targets pull in protobuf code, but aren't analyzed by deps_test.
-deps_test = rule(
+_deps_test = rule(
     implementation = _deps_test_impl,
     attrs = {
         "targets": attr.label_list(
@@ -174,3 +176,14 @@ deps_test = rule(
     },
     test = True,
 )
+
+def _compile_deps_test(**kwargs):
+    _deps_test(**kwargs)
+
+_deps_test_cgroup_v1_test, _deps_test_cgroup_v1_transition = with_cgroup_v1(_compile_deps_test)
+
+def deps_test(name, **kwargs):
+    """Declares the original check and its manual cgroup-v1 variant."""
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+    _deps_test(name = name, **kwargs)
+    cgroup_v1_variant(name, _deps_test_cgroup_v1_test, kwargs)

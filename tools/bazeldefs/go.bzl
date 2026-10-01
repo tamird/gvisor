@@ -5,8 +5,9 @@ load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
-load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "static_go_amd64_test", "static_go_arm64_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
+load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "go_cgroup_v1_test", "static_go_amd64_test", "static_go_arm64_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants")
 
 gazelle = _gazelle
@@ -162,7 +163,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = ["amd64", "arm64"], test_rule = None, cgroup_v2 = False, **kwargs):
     """Build a go test.
 
     Args:
@@ -173,6 +174,8 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         architectures: Additional explicitly selected native architecture variants.
         test_rule: Optional configured raw Go test rule, including any required
             static platform transition. Used by the base and architecture variants.
+        cgroup_v2: Declare an explicit cgroup-v2 environment variant for combined
+            container qualification, preserving the ordinary target's environment.
         **kwargs: rest of the arguments to pass to _go_test.
     """
     if pure:
@@ -190,11 +193,21 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         "//conditions:default": [],
     })
     base_rule = test_rule if test_rule != None else (_static_go_test if static else _go_test)
-    kwargs["tags"] = test_architecture_tags(architectures, kwargs.get("tags", []))
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    if cgroup_v2:
+        kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
     base_rule(
         name = name,
         **kwargs
     )
+    if cgroup_v2:
+        # Rule-owned env overrides invocation test_env. The ordinary declaration
+        # must still accept Make's CGROUPV2=false for local cgroup-v1 callers.
+        v2_attributes = dict(kwargs)
+        v2_attributes["tags"] = kwargs["tags"] + ["manual"]
+        v2_attributes["env"] = dict(kwargs.get("env", {}), CGROUPV2 = "true")
+        base_rule(name = name + "_cgroup_v2", **v2_attributes)
+    cgroup_v1_variant(name, go_cgroup_v1_test, dict(kwargs, test_rule = base_rule))
     if test_rule != None:
         # The architecture frontend must configure the same raw rule as the
         # original declaration, without copying this macro's Go/Nogo setup.
