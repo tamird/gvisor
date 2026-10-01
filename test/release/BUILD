@@ -3,7 +3,7 @@ load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//tools:arch.bzl", "arch_genrule")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
-load(":defs.bzl", "repository_test")
+load(":defs.bzl", "release_artifacts", "repository_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -78,17 +78,21 @@ arch_genrule(
     template = "artifacts/%s/gvisor.tar.zstd",
 )
 
-_ARTIFACTS = [
-    ":debian_packages",
-    ":bzip2_archives",
-    ":zstd_archives",
-]
+release_artifacts(
+    name = "artifacts",
+    srcs = [
+        ":bzip2_archives",
+        ":debian_packages",
+        ":zstd_archives",
+    ],
+    tags = ["manual"],
+)
 
 genrule(
     name = "artifacts_manifest",
-    srcs = _ARTIFACTS,
+    srcs = [":artifacts"],
     outs = ["artifacts.txt"],
-    cmd = "printf '%s\\n' " + " ".join(["$(rootpaths " + target + ")" for target in _ARTIFACTS]) + " > $@",
+    cmd = "printf '%s\\n' $(rootpaths :artifacts) > $@",
     tags = ["manual"],
 )
 
@@ -110,8 +114,9 @@ repository_test(
         "$(rootpath //tools:make_apt.sh)",
         "$(rootpath :repository_test_inner.sh)",
     ],
-    data = _ARTIFACTS + [
+    data = [
         "repository_test_inner.sh",
+        ":artifacts",
         ":artifacts_manifest",
         "//tools:make_apt.sh",
         "//tools:make_release.sh",

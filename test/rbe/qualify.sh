@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker docker-v1 overlay swgso hostnet plugin-network do root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -87,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      nogo|unit|release-repository|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
+      nogo|unit|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -253,9 +253,10 @@ run_platform_matrix() (
   : > "$selection_dir/shared-targets"
   : > "$selection_dir/filtered-targets"
   for lane in "$@"; do
-    if [[ $lane != plugin-build ]]; then
-      command=test
-    fi
+    case "$lane" in
+      plugin-build|release-artifacts|python-distributions|website) ;;
+      *) command='test' ;;
+    esac
     case "$lane" in
       unit) include_unit=true ;;
       syscalls-save|syscalls-resume) include_checkpoints=true ;;
@@ -293,6 +294,15 @@ run_platform_matrix() (
         ;;
       release-repository)
         printf '%s\n' '//test/release:repository_test' >> "$selection_dir/explicit-targets"
+        ;;
+      release-artifacts)
+        printf '%s\n' '//test/release:artifacts' >> "$selection_dir/targets"
+        ;;
+      python-distributions)
+        printf '%s\n' '//sandboxexec/sandbox/python:dist' >> "$selection_dir/targets"
+        ;;
+      website)
+        printf '%s\n' '//website:artifact' >> "$selection_dir/targets"
         ;;
       syscalls)
         include_syscalls=true
@@ -355,7 +365,7 @@ run_platform_matrix() (
     if [[ $include_unit == true ]]; then
       options+=(--test_tag_filters=-requires-kvm)
     elif [[ $include_syscalls == true && $include_checkpoints == false ]]; then
-      options+=(--test_tag_filters=-allsave,-runsc_kvm,-runsc_slimvm)
+      options+=('--test_tag_filters=-allsave,-runsc_kvm,-runsc_slimvm')
     fi
   fi
   if [[ -s $selection_dir/filtered-targets ]]; then

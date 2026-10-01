@@ -3,7 +3,7 @@ load("//images:defs.bzl", "docker_image")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load("//tools/yamltest:defs.bzl", "yaml_test")
-load("//website:defs.bzl", "doc", "docs", "website_files")
+load("//website:defs.bzl", "doc", "docs", "website_artifact", "website_files")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -43,6 +43,12 @@ oci_image(
     target_compatible_with = ["@platforms//os:linux"],
     tars = [":files"],
     workdir = "/",
+)
+
+website_artifact(
+    name = "artifact",
+    srcs = [":image"],
+    tags = ["manual"],
 )
 
 website_files(
@@ -210,6 +216,7 @@ bzl_library(
     deps = [
         "//tools:defs_bzl",
         "@bazel_skylib//lib:shell",
+        "@with_cfg.bzl//:with_cfg",
     ],
 )
 

@@ -1,7 +1,11 @@
 """Wrappers for website documentation."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:defs.bzl", "short_path")
+
+# Keep the public website build's default stripping policy beside runtime tests.
+website_artifact, _website_transition = with_cfg(native.filegroup).set("strip", "sometimes").build()
 
 # The existing images/jekyll tool environment, published from source-hash tag
 # 0366317e456d913b. Build and check scripts remain declared source inputs.

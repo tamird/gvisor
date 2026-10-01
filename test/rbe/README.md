@@ -150,6 +150,21 @@ filters, including that build coverage. Benchmark arguments, durations and
 resources remain target-owned; combining the lane does not shorten workloads or
 resolve existing failures.
 
+The `release-artifacts`, `python-distributions` and `website` build lanes can
+join the same invocation. Release packaging builds both AMD64 and ARM64 through
+the same artifact group used by the repository test; website qualification stays
+on AMD64. Release and website targets preserve the public stripping policy when
+selected beside runtime tests. A selection containing only build lanes invokes
+`bazel build`; adding a runtime lane uses one `bazel test` invocation for both
+builds and tests.
+
+```sh
+test/rbe/qualify.sh --arch=all release-artifacts python-distributions website smoke
+```
+
+The `build-all` wildcard lane remains separate: adding `//...` to a test
+invocation would run unrelated tests as well as building their executables.
+
 Select ARM64 targets with `--arch=arm64`, for example:
 
 ```sh
