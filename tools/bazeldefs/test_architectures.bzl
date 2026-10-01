@@ -17,10 +17,10 @@ _ARCHITECTURES = {
     ),
 }
 
-def with_test_architecture(test_rule, architecture, static = False):
+def with_test_architecture(test_rule, architecture, static = False, extra_providers = [], implicit_targets = None):
     """Returns a with_cfg builder that preserves the test's other configuration."""
     target = _ARCHITECTURES[architecture]
-    return with_cfg(test_rule).set("cpu", target.cpu).set(
+    return with_cfg(test_rule, extra_providers = extra_providers, implicit_targets = implicit_targets).set("cpu", target.cpu).set(
         "platforms",
         [target.static_platform if static else target.platform],
     )
@@ -40,6 +40,13 @@ def test_architecture_variants(name, architectures, test_rules, kwargs):
         if architecture not in _ARCHITECTURES:
             fail("unsupported test architecture: %s" % architecture)
         attributes = dict(kwargs)
+
+        # with_cfg gives these native constraints to its test frontend. The
+        # compile adapter restores the caller's constraints on the original
+        # test, so its default and named link groups use consistent toolchains.
+        # The named group does not inherit target execution constraints:
+        # https://github.com/bazel-contrib/rules_go/blob/9792f1c07/go/private/rules/test.bzl#L475-L479
+        attributes["compile_exec_compatible_with"] = kwargs.get("exec_compatible_with", [])
 
         # Bazel 8.5's use_target_platform_for_tests ignores target exec_properties.
         # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/RuleContext.java#L428-L451
