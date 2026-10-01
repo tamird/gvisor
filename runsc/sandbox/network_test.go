@@ -30,6 +30,13 @@ import (
 	"gvisor.dev/gvisor/runsc/config"
 )
 
+func init() {
+	// Reserve the initial thread for main so namespace tests use threads that
+	// can exit if namespace restoration fails. Locking during init pins main
+	// to this thread: https://pkg.go.dev/runtime#LockOSThread.
+	runtime.LockOSThread()
+}
+
 func fdbasedLinkEqual(a, b boot.FDBasedLink) bool {
 	if a.Name != b.Name {
 		return false
