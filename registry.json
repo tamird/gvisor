@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T15:09:24.719529+00:00",
+    "updatedAt": "2026-10-01T15:27:44.006054+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 475b1c41d runs the implemented AMD64 lanes without the builder image, with 400-action remote concurrency. Mixed-platform Go/C++ proof passes on both CPUs; broader unit adoption remains failed at 638 of 639 owners because ARM64 seccomp generation embedded AMD64 filters. Its published correction is validating separately. Qualification includes verified packet-cleanup ordering and committed mapped storage with synchronous/asynchronous restore; oversized TUN writes remain unresolved. Docker-v1 has 159 XML passes and two existing bridge-network skips. Original unit-v1 remains failed at 329 of 330 owners; corrected boot passes 105 cases and both Nogo architectures, without a fresh whole-lane pass. Full container selectors are declared; KVM runtime remains unqualified. All four AMD64 containerd versions pass 68 leaf cases with four optional skips. Focused PHP 8.3.35 checks pass with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty Node batch repetitions did not reproduce SIGABRT; its cause remains unresolved. Coverage is incomplete: KVM, ARM64 Firecracker, vhost-net and GPU capacity remain blocked, and the host-systemd fixture has not run."
+      "summary": "Published head 475b1c41d runs the implemented AMD64 lanes without the builder image, with 400-action remote concurrency. Separately validated mixed units pass all 639 selected owners: 330 original and 309 ARM64 additions. Their corrected seccomp generation, oversized TUN writes and checkpoint cases, and duplicate-checkpoint cleanup await primary integration. A combined unit/release graph is published for validation. Qualification already includes verified packet-cleanup ordering and committed mapped storage with synchronous/asynchronous restore. Docker-v1 has 159 XML passes and two existing bridge-network skips. Original unit-v1 remains failed at 329 of 330 owners; corrected boot passes 105 cases and both Nogo architectures, without a fresh whole-lane pass. Full container selectors are declared; KVM runtime remains unqualified. All four AMD64 containerd versions pass 68 leaf cases with four optional skips. Focused PHP checks pass with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty Node batch repetitions did not reproduce SIGABRT. Coverage remains incomplete: ARM64 Firecracker, KVM, vhost-net and GPU capacity are blocked, and the host-systemd fixture has not run."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1490,8 +1490,8 @@
       "title": "Select unit architectures from the test graph",
       "url": "https://github.com/tamird/gvisor/tree/rbe-unit-platform-matrix",
       "group": "rbe",
-      "status": "validation pending",
-      "summary": "Published head d90dfe0c1 composes canonical unit selection with graph-declared ARM64 variants and the seccomp generator correction. The full run at ffff73510 retained all 330 original owners and executed 309 ARM64 owners: 638 passed and the ARM64 seccomp example failed. Four ARM64 Firecracker owners are explicitly omitted for provider capacity; the existing KVM filter excludes one further ARM owner. Eighteen non-Go/C++ owners remain AMD64 only. The corrected same-selection run is pending; the earlier failure is preserved, and no complete matrix pass is claimed."
+      "status": "validated",
+      "summary": "Published head d90dfe0c1 passes all 639 selected owners in one mixed-platform unit invocation: all 330 original owners and 309 ARM64 additions, with 659 remote uncached shard actions. Canonical roots, exclusions and non-test build targets are preserved. Four ARM64 Firecracker owners remain omitted for provider capacity; the existing KVM filter excludes one further ARM owner. Eighteen non-Go/C++ owners remain AMD64 only. The earlier ffff73510 run remains failed at 638 of 639 because of the seccomp generator mismatch. Qualification integration is pending."
     },
     {
       "id": "branch:seccomp-generator-architecture",
@@ -1501,8 +1501,8 @@
       "title": "Precompile seccomp for the target architecture",
       "url": "https://github.com/tamird/gvisor/tree/seccomp-generator-architecture",
       "group": "bazel",
-      "status": "validation pending",
-      "summary": "Published source e5dd29534 selects a Linux generator action matching the target CPU, preserving both generated-source labels and the architecture-independent fastbuild stub. The mixed unit run demonstrated AMD64 audit and syscall constants embedded in an ARM64 target. Full precompilation now requires a native target-CPU executor; cross-compilation without one fails resolution instead of silently embedding wrong filters. Source review is complete; corrected mixed-unit runtime and focused routing validation are pending. No upstream PR yet."
+      "status": "review pending",
+      "summary": "Published source e5dd29534 selects a Linux generator action matching the target CPU, preserving generated-source labels and the architecture-independent fastbuild stub. The earlier ARM64 example failed with AMD64 audit and syscall constants. Corrected composition d90dfe0c1 passes the complete mixed unit selection, including both actual seccomp owners. Focused configured-action checks prove native AMD64/ARM64 full generation and an ARM64-target stub on AMD64. Full generation requires a native target-CPU executor; without one, resolution fails instead of embedding wrong filters. Non-verbose Go XML has no individual case counts. Contributor review and upstream submission remain pending."
     },
     {
       "id": "branch:netstack-packet-cleanup",
@@ -1514,6 +1514,28 @@
       "group": "runtime",
       "status": "review pending",
       "summary": "Published source d2ab68ace waits for NIC link-resolution callbacks and completes sentry network teardown before backing memory is destroyed. Before tests fail for ordinary and overflow callback lifetimes and sentry Destroy ordering; the corrected composition 475b1c41d passes four Go owners; all four Nogo owners pass both AMD64 and ARM64. Qualification includes the tested source. Contributor review remains pending; this result does not establish oversized TUN-write support."
+    },
+    {
+      "id": "branch:syscall-save-restore-variants",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "syscall-save-restore-variants",
+      "title": "Remove duplicate network checkpoint variants",
+      "url": "https://github.com/tamird/gvisor/tree/syscall-save-restore-variants",
+      "group": "tests",
+      "status": "review pending",
+      "summary": "Published source d538e2092 removes the ignored internal netstack checkpoint option and 50 duplicate syscall targets. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. No syscall runtime workload was repeated for this no-op cleanup. Contributor review and qualification integration remain pending."
+    },
+    {
+      "id": "branch:rbe-unit-release-qualification",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-unit-release-qualification",
+      "title": "Combine unit and release qualification",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-unit-release-qualification",
+      "group": "rbe",
+      "status": "validation pending",
+      "summary": "Published head c2d28e639 combines the reviewed mixed-unit selector with the existing release repository test in one Bazel test invocation. The existing release graph already builds Debian, bzip2 and zstd packages for both CPUs; its owning test preserves the normal stripping policy while unit tests remain unstripped. The source also composes separately validated unit, packet-cleanup, mapped TUN and duplicate-checkpoint changes. The combined invocation is not yet validated, and the primary qualification ref remains 475b1c41d."
     }
   ],
   "edges": [
@@ -2205,6 +2227,13 @@
         "https://github.com/tamird/gvisor/commit/475b1c41d",
         "https://app.buildbuddy.io/invocation/8d58f925-8b10-42ee-a708-387e2d497831"
       ]
+    },
+    {
+      "from": "branch:rbe-unit-platform-matrix",
+      "to": "branch:rbe-unit-release-qualification",
+      "type": "depends_on",
+      "reason": "The combined dispatcher reuses the canonical unit-matrix selector and graph-declared architecture variants.",
+      "evidence": "https://github.com/tamird/gvisor/commit/c2d28e639"
     }
   ]
 }
