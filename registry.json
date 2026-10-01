@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T03:53:42.620055+00:00",
+    "updatedAt": "2026-10-01T04:21:29.496184+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1000,7 +1000,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head ae3d5c420 includes the upstream refresh, final namespace cleanup and CodeQL dependency setup. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
+      "summary": "Published head 3b4759d75 includes the upstream refresh, final namespace cleanup, CodeQL dependency setup, CNI plugin source update and the complete public syscall selection change from #15173. The declared prebuilt containerd image pin is unchanged. The syscall integration changes no qualification dispatcher commands; AMD64 retains its separate filter because KVM workers remain unavailable. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1297,6 +1297,17 @@
       "group": "analysis",
       "status": "review pending",
       "summary": "Published source 8a965e8cc downloads Go dependencies in a separate step that stops on download failure and suppresses automatic Make discovery, preserving the full-checkout extraction pattern. The exact Go steps pass in the four-language CodeQL run at 26d37ff9d: 1,818 checkout Go files are processed, but 216 packages report extraction errors, including missing generated imports and methods. Scan success is not complete type coverage or zero findings. Integrated in ae3d5c420; contributor review remains pending and no PR is open."
+    },
+    {
+      "id": "branch:containerd-cni-plugins",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "containerd-cni-plugins",
+      "title": "Update containerd harness CNI plugins",
+      "url": "https://github.com/tamird/gvisor/tree/containerd-cni-plugins",
+      "group": "tests",
+      "status": "review pending",
+      "summary": "Published source 14f731c92 updates the harness to CNI plugins 1.9.1. At validation source 78ab8a103, the canonical harness image builds and the actual loopback plugin passes ADD/DEL with protocol 0.3.1 and ADD/CHECK/DEL with protocol 1.0.0. The image archive remains in remote storage, unpublished, and the declared prebuilt image pin is unchanged. This does not reproduce or establish the historical EINTR cause, qualify full CRI or ARM runtime, or resolve the separate xt_comment gap. The source update is integrated in 3b4759d75. Contributor review remains pending; no PR is open."
     }
   ],
   "edges": [
@@ -1711,10 +1722,10 @@
       "from": "pr:15173",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "The qualification branch contains the earlier ARM64 revision afd1aa04a and its dispatcher integration. The later symmetric AMD64/ARM64 revision 957e27f04 is not yet integrated here. Membership records this retained source; it is not an upstream prerequisite or an ARM runtime claim.",
+      "reason": "The qualification branch contains the complete symmetric AMD64/ARM64 configuration and all four public pipeline consumers from 957e27f04. Existing RBE selections remain unchanged; membership is not an upstream prerequisite or an ARM runtime claim.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/c5a376025",
-        "https://app.buildbuddy.io/invocation/aa9d8c01-1ac9-45ff-9cca-0713d68c96e8"
+        "https://github.com/tamird/gvisor/commit/798026a43",
+        "https://github.com/google/gvisor/pull/15173"
       ]
     },
     {
@@ -1745,6 +1756,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/ae3d5c420",
         "https://github.com/tamird/gvisor/actions/runs/36811535837"
+      ]
+    },
+    {
+      "from": "branch:containerd-cni-plugins",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the validated CNI plugin source update. This records source integration only: the declared prebuilt image pin is unchanged, and the focused loopback result does not qualify full CRI or ARM runtime.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/3b4759d75",
+        "https://app.buildbuddy.io/invocation/909c3133-4ce0-4fe6-a757-37e169fad691"
       ]
     }
   ]
