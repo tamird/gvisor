@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T03:13:18.584606+00:00",
+    "updatedAt": "2026-10-01T03:53:42.620055+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -567,7 +567,8 @@
       "group": "bazel",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-25T01:27:54Z"
+      "updatedAt": "2026-09-25T01:27:54Z",
+      "summary": "Rebased source d5056fd5a is published and mergeable. Focused normal and race tests pass, together with an ARM64 race cross-build. The cross-build is not ARM64 runtime coverage."
     },
     {
       "id": "pr:14988",
@@ -593,7 +594,8 @@
       "group": "bazel",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-25T01:22:14Z"
+      "updatedAt": "2026-09-25T01:22:14Z",
+      "summary": "Rebased source fa6b2c474 is published and mergeable. Focused hosted GNU/Bazel 8.3.1 posix_server compilation passes; canonical Fetch/Verify covers 180 dependencies with the catalog and lockfile unchanged. This does not qualify Bazel 9, ARM runtime or the full matrix."
     },
     {
       "id": "pr:14985",
@@ -998,7 +1000,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 425affd58 includes the upstream refresh and final namespace cleanup. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
+      "summary": "Published head ae3d5c420 includes the upstream refresh, final namespace cleanup and CodeQL dependency setup. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1284,6 +1286,17 @@
       "group": "rbe",
       "status": "extraction needed",
       "summary": "Retained source e5fbc67d9 extends the Syzkaller repositories and runner introduced by syzkaller-hermetic-smoke, including module-proxy package selection. This input-selection work is not supplied by the separate release-archive PR. Extract the source and its suppliers for contributor review; preserve its independent scope."
+    },
+    {
+      "id": "branch:codeql-go-dependencies",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "codeql-go-dependencies",
+      "title": "Avoid Make during CodeQL Go extraction",
+      "url": "https://github.com/tamird/gvisor/tree/codeql-go-dependencies",
+      "group": "analysis",
+      "status": "review pending",
+      "summary": "Published source 8a965e8cc downloads Go dependencies in a separate step that stops on download failure and suppresses automatic Make discovery, preserving the full-checkout extraction pattern. The exact Go steps pass in the four-language CodeQL run at 26d37ff9d: 1,818 checkout Go files are processed, but 216 packages report extraction errors, including missing generated imports and methods. Scan success is not complete type coverage or zero findings. Integrated in ae3d5c420; contributor review remains pending and no PR is open."
     }
   ],
   "edges": [
@@ -1722,6 +1735,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/blob/e5fbc67d9/MODULE.bazel#L1403",
         "https://github.com/tamird/gvisor/blob/e5fbc67d9/MODULE.bazel#L1414"
+      ]
+    },
+    {
+      "from": "branch:codeql-go-dependencies",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the same Go dependency and extraction steps that passed the one-off CodeQL run. This is integration membership, not an upstream prerequisite or complete generated-source coverage.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/ae3d5c420",
+        "https://github.com/tamird/gvisor/actions/runs/36811535837"
       ]
     }
   ]
