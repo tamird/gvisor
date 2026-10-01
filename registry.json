@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T05:39:16.742157+00:00",
+    "updatedAt": "2026-10-01T05:59:31.686775+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1002,7 +1002,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 52f47d076 adds the validated shared source-image archive producer and the qualified LisaFS lifetime fixes from #14361, alongside the upstream refresh, final namespace cleanup, CodeQL dependency setup, CNI plugin source update and complete public syscall selection change from #15173. The MODULE prebuilt containerd image pin is unchanged; AMD64 harness consumers now use the shared source archive, while ARM64 retains the pin. The syscall integration changes no qualification dispatcher commands; AMD64 retains its separate filter because KVM workers remain unavailable. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
+      "summary": "Published head d99108b15 integrates PHP 8.3.35 and its upstream GH-17469 extension metadata fix, on the validated shared source-image producer and qualified LisaFS lifetime fixes from #14361. At source 52f47d076, the complete maintained AMD64 containerd lane passes all four versions (1.7.31, 2.0.8, 2.1.7 and 2.2.3): 68 passing leaf cases, zero failures, and four skips of the optional grouping-performance measurement that public jobs do not enable. The focused PHP correction passes on native, DirectFS and goferfs with one shared source image: the original missing-UConverter failure becomes the explicit missing-intl skip. The earlier full PHP run remains failed; full partitions were not rerun and intl implementation coverage is not claimed. The MODULE prebuilt containerd image pin is unchanged; AMD64 harness consumers use the shared source archive, while ARM64 retains the pin. The integrated public syscall selection change from #15173 leaves qualification dispatcher commands unchanged; AMD64 retains its separate filter because KVM workers remain unavailable. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. That combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1309,7 +1309,7 @@
       "url": "https://github.com/tamird/gvisor/tree/containerd-cni-plugins",
       "group": "tests",
       "status": "review pending",
-      "summary": "Published source 14f731c92 updates the harness to CNI plugins 1.9.1. At validation source 78ab8a103, the canonical harness image builds and the actual loopback plugin passes ADD/DEL with protocol 0.3.1 and ADD/CHECK/DEL with protocol 1.0.0. The image archive remains in remote storage, unpublished, and the declared prebuilt image pin is unchanged. This does not reproduce or establish the historical EINTR cause, qualify full CRI or ARM runtime, or resolve the separate xt_comment gap. The source update is integrated in 3b4759d75. Contributor review remains pending; no PR is open."
+      "summary": "Published source 14f731c92 updates the harness to CNI plugins 1.9.1. At validation source 78ab8a103, the canonical harness image builds and the actual loopback plugin passes ADD/DEL with protocol 0.3.1 and ADD/CHECK/DEL with protocol 1.0.0. The source update was integrated in 3b4759d75. The later complete maintained AMD64 containerd lane at 52f47d076 uses a shared source-built image and passes all four versions with 68 passing leaf cases and no failures. This does not establish the historical EINTR cause, ARM runtime compatibility or availability across all workers. The declared prebuilt image pin is unchanged, and no registry image was published. Contributor review remains pending; no PR is open."
     },
     {
       "id": "branch:php-8-3-35",
@@ -1319,8 +1319,8 @@
       "title": "Update PHP runtime tests to 8.3.35",
       "url": "https://github.com/tamird/gvisor/tree/php-8-3-35",
       "group": "tests",
-      "status": "validating",
-      "summary": "Published source 369c86ae8 updates PHP 8.3.7 to 8.3.35 and backports upstream GH-17469 metadata declaring its intl requirement. The complete prior four-owner run remains two passes and two failures: each mode selected all 19,404 eligible tests, with only missing UConverter reported as a PHP failure. Focused native, DirectFS and goferfs before/after validation of GH-17469 is running at source fbfd04586 using one shared source image; no corrected result is claimed yet. Extension configuration and exclusions remain unchanged. No PR is open, and the prebuilt image pin and qualification integration remain unchanged."
+      "status": "review pending",
+      "summary": "Published source 369c86ae8 updates PHP 8.3.7 to 8.3.35 and backports upstream GH-17469 metadata declaring its intl requirement; it is integrated in d99108b15. Focused validation at fbfd04586 passes on native, DirectFS and goferfs using one shared source image: the original fixture fails for missing UConverter, then the patched fixture explicitly skips because intl is absent. The complete prior four-owner run 29f728a2 remains two passes and two failures: each mode selected all 19,404 eligible tests, with only missing UConverter reported as a PHP failure. Those full partitions were not rerun, and this does not establish intl implementation coverage. Extension configuration and exclusions remain unchanged; no registry image was published. Contributor review remains pending; no PR is open."
     },
     {
       "id": "branch:rbe-source-image-archives",
@@ -1331,7 +1331,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-source-image-archives",
       "group": "rbe",
       "status": "validated",
-      "summary": "Published source 52f47d076 is integrated unchanged in the qualification branch and corrects the initial Bazel analysis error. One uncached native image action built a declared Docker-save archive, and the existing containerd 2.0.8 and 2.2.3 TestCrictlSanity-filtered owners both loaded that same archive and its source/latest tags before passing with runsc. Their XML is empty, so grouping subcases are not separately enumerated. The original analysis-failure parent remains failed. Other image pins and ARM64 remain unchanged; this is not full CRI qualification or a hermetic image-content claim."
+      "summary": "Published source 52f47d076 is integrated unchanged in the qualification branch. One shared native image action builds the declared archive consumed by all four maintained AMD64 containerd versions. The complete lane passes 68 leaf cases with zero failures; public jobs do not enable the optional grouping-performance measurement, which skips once per version. Each owner loads the source/latest tags and runs the existing harness with runsc. The earlier two filtered sanity owners also passed, while the original analysis-failure parent remains failed. Other image pins and ARM64 remain unchanged. Mutable network inputs prevent a hermetic image-content or cross-run reproducibility claim; no image was published to a registry."
     }
   ],
   "edges": [
@@ -1810,10 +1810,20 @@
       "from": "branch:rbe-source-image-archives",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "The qualification branch is the exact source head that passed shared archive construction and two filtered containerd consumer owners. This is source membership, not full CRI qualification.",
+      "reason": "The qualification branch includes the exact producer source validated by shared archive construction and the complete four-version AMD64 containerd lane.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/52f47d076",
-        "https://app.buildbuddy.io/invocation/d5661a26-9e3c-4ef6-ac16-7563525e64f9"
+        "https://app.buildbuddy.io/invocation/1d7b0fad-020e-4749-aa1b-934662c53eb6"
+      ]
+    },
+    {
+      "from": "branch:php-8-3-35",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch integrates the released PHP fixture and upstream intl metadata correction. Focused before/after validation passes; the prior full run remains failed and was not repeated.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/d99108b15",
+        "https://app.buildbuddy.io/invocation/2bdacc7b-50cf-4e98-971b-3b8fd47a6292"
       ]
     }
   ]
