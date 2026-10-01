@@ -28,24 +28,6 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
-  - dependency: clang_tidy_linux_amd64
-    license:
-      - Apache-2.0
-      - Apache-2.0 WITH LLVM-exception
-    exception_rationale: >-
-      clang-tidy and its resource headers are used only for C++ lint
-      actions and are not part of released gVisor artifacts. The LLVM
-      exception relaxes Apache-2.0's requirements; the wheel packaging
-      itself is Apache-2.0.
-  - dependency: clang_tidy_linux_arm64
-    license:
-      - Apache-2.0
-      - Apache-2.0 WITH LLVM-exception
-    exception_rationale: >-
-      clang-tidy and its resource headers are used only for C++ lint
-      actions and are not part of released gVisor artifacts. The LLVM
-      exception relaxes Apache-2.0's requirements; the wheel packaging
-      itself is Apache-2.0.
   - dependency: gawk
     license: GPL-3.0-or-later
     exception_rationale: >-
