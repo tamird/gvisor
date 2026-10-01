@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
+load("//tools/bazeldefs:platforms.bzl", "namespace_test_exec_properties")
+
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
@@ -28,4 +31,13 @@ test_suite(
         "//test/syscalls:clock_getres_test_runsc_systrap_directfs",
         "//test/util:posix_error_test",
     ],
+)
+
+# Inspect the guest before any Docker fixture enables cgroup controllers.
+sh_test(
+    name = "cgroup_environment_test",
+    size = "small",
+    srcs = ["cgroup_environment.sh"],
+    exec_properties = namespace_test_exec_properties(),
+    tags = ["manual"],
 )
