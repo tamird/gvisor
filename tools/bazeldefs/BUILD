@@ -119,7 +119,7 @@ bzl_library(
 bzl_library(
     name = "test_architectures_bzl",
     srcs = ["test_architectures.bzl"],
-    visibility = ["//visibility:private"],
+    visibility = ["//test/runner:__pkg__"],
 )
 
 config_setting(

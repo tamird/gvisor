@@ -29,12 +29,13 @@ available through their owning Bazel targets.
 The dispatcher uses the existing Nogo and unit configurations, the declared
 runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
 Public CI's ordinary syscall selections live in the `syscalls-amd64` and
-`syscalls-arm64` test configurations. The AMD64 RBE lane retains its stricter
+`syscalls-arm64` configurations. Their loading options are shared by analysis
+and test commands. The AMD64 RBE lane retains its stricter
 filter because KVM workers remain unavailable. Bazel replaces repeated
 `--test_tag_filters` values, so that restriction cannot be appended to the public
 configuration. The ARM64 lane uses the public configuration directly.
 Most lanes use separate Bazel invocations to preserve their different selections
-and instrumentation. The mixed-platform unit and release lanes below share one
+and instrumentation. The mixed-platform unit, release and syscall lanes share one
 invocation. Connection settings and credentials come from Bazel's
 configuration; no builder container is started. Normal Bazel caching remains
 enabled.
@@ -800,3 +801,28 @@ their ARM64 support. Other unit owner types (shell, Python, YAML, generator,
 dependency and build checks) retain their original AMD64 execution. This initial
 adoption does not claim a complete ARM64 unit matrix. Single-architecture lanes
 remain available through `--arch=amd64` and `--arch=arm64`.
+
+The existing syscall runner also declares architecture variants centrally;
+individual syscall declarations and their shard/hash buckets remain unchanged:
+
+```sh
+test/rbe/qualify.sh --arch=all unit release-repository syscalls
+```
+
+Bazel analyzes the ordered `test/syscalls.targets` roots with each public
+architecture configuration and `--build_tests_only`. The selector reads that
+invocation's configured top-level test events, then checks the actual variants'
+TestRunner configurations and worker properties. It reports KVM and ARM64
+Firecracker omissions explicitly. Public ARM64 syscall selection contains only
+ptrace/systrap owners; it excludes native tests. Native syscall wrappers also
+retain their existing privileged namespace fixtures, rather than being treated
+as ordinary OCI tests.
+
+The combined command keeps the original unit patterns and configuration,
+including build-only tests and non-test targets. Selected syscall owners must
+also survive those final filters; a conflicting selection fails before tests
+start. A syscall-only command retains its original wildcard roots and RBE
+filters. The runner owns the public `-Werror` compiler option, so syscall tests
+retain that check without imposing it on unit or release compilation. Direct
+runner invocations now receive the same compiler check; an existing trailing
+`-Werror` is preserved without duplication.
