@@ -84,11 +84,12 @@ func (f *MemoryFile) exportMetadataProto() *pgallocpb.MemoryFileMetadataProto {
 	for s := f.memAcct.FirstSegment(); s.Ok(); s = s.NextSegment() {
 		val := s.Value()
 		pb.MemAcct = append(pb.MemAcct, &pgallocpb.MemAcctRangeProto{
-			Start:          s.Start(),
-			End:            s.End(),
-			Kind:           uint32(val.kind),
-			MemCgId:        val.memCgID,
-			KnownCommitted: val.knownCommitted,
+			Start:            s.Start(),
+			End:              s.End(),
+			Kind:             uint32(val.kind),
+			MemCgId:          val.memCgID,
+			KnownCommitted:   val.knownCommitted,
+			RetainCommitment: val.retainCommitment,
 		})
 	}
 	for s := f.unfreeSmall.FirstSegment(); s.Ok(); s = s.NextSegment() {
@@ -141,9 +142,10 @@ func (f *MemoryFile) importMetadataProto(pb *pgallocpb.MemoryFileMetadataProto) 
 	f.memAcct.RemoveAll()
 	for _, s := range pb.MemAcct {
 		f.memAcct.InsertRange(memmap.FileRange{Start: s.Start, End: s.End}, memAcctInfo{
-			kind:           usage.MemoryKind(s.Kind),
-			memCgID:        s.MemCgId,
-			knownCommitted: s.KnownCommitted,
+			kind:             usage.MemoryKind(s.Kind),
+			memCgID:          s.MemCgId,
+			knownCommitted:   s.KnownCommitted,
+			retainCommitment: s.RetainCommitment,
 		})
 	}
 	f.unfreeSmall.RemoveAll()
@@ -176,6 +178,8 @@ type SaveOpts struct {
 	// saved implicitly rather than explicitly to reduce checkpoint size. If
 	// ExcludeCommittedZeroPages is false, SaveTo() will scan only
 	// possibly-committed pages to find zero pages.
+	// Pages allocated with AllocOpts.RetainCommitment are always saved
+	// explicitly, regardless of this option.
 	//
 	// Enabling ExcludeCommittedZeroPages will usually increase the time taken
 	// by SaveTo() (due to the larger number of pages that must be scanned),
@@ -224,10 +228,10 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		}
 	}
 
-	// We only want to explicitly include pages containing non-zero bytes in
-	// the checkpoint, to reduce the size of the checkpoint and improve restore
-	// performance. Scan pages for non-zero bytes and ensure that they are
-	// marked known-committed.
+	// Except for allocations that retain commitment, we only want to include
+	// pages containing non-zero bytes explicitly in the checkpoint, to reduce
+	// checkpoint size and improve restore performance. Scan pages for non-zero
+	// bytes and ensure that they are marked known-committed.
 	//
 	// If async page saving is enabled, emit writes to the pages file during
 	// scanning, which is feasible since the pages metadata file and pages file
@@ -404,9 +408,13 @@ func (f *MemoryFile) SaveTo(ctx context.Context, w io.Writer, opts *SaveOpts) er
 		allocatedBytes += fr.Length()
 		ma.commitSeq = 0
 		wasCommitted := ma.knownCommitted
-		if !opts.ExcludeCommittedZeroPages && wasCommitted {
-			alreadyCommittedBytes += fr.Length()
-			maseg = updateAddRange(maseg, fr, true /* wasCommitted */, true /* nowCommitted */)
+		if ma.retainCommitment || (!opts.ExcludeCommittedZeroPages && wasCommitted) {
+			if wasCommitted {
+				alreadyCommittedBytes += fr.Length()
+			} else {
+				newCommittedBytes += fr.Length()
+			}
+			maseg = updateAddRange(maseg, fr, wasCommitted, true /* nowCommitted */)
 			maseg = updateFlush(maseg)
 			if maseg.End() == unscannedStart {
 				maseg = maseg.NextSegment()
