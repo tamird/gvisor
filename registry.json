@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T20:02:58.965199+00:00",
+    "updatedAt": "2026-10-01T20:19:38.206608+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -109,9 +109,10 @@
       "title": "Pass the selected runtime to Syzkaller",
       "url": "https://github.com/google/gvisor/pull/15142",
       "group": "tests",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "",
-      "updatedAt": "2026-09-30T10:28:02Z"
+      "updatedAt": "2026-10-01T19:52:46Z",
+      "summary": "Closed as replaced by upstream 78424a487aa850a479e1922f1d2954e7fca0f84d, which fixes Syzkaller's input contract using release or staged tarballs. This replaces the main fix but does not preserve this PR's custom RUNTIME_BIN and adjacent-sidecar selection."
     },
     {
       "id": "pr:15141",
@@ -1003,7 +1004,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head ecf379336 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings and checkpoint composition. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified."
+      "summary": "Published head eb6a71ba1 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings, checkpoint and Nogo composition, and file-based selection transport. Nogo selection/runtime recovery is running; the first parent remains failed after a subprocess argument limit following 26 zero-action analyses. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1614,8 +1615,19 @@
       "title": "Combine Nogo with runtime qualification",
       "url": "https://github.com/tamird/gvisor/tree/rbe-nogo-test-selection",
       "group": "rbe",
-      "status": "source reviewed; proof pending",
-      "summary": "Published source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. The bounded selection and two-owner runtime proof is pending. Not integrated in qualification; no full Nogo or runtime-matrix pass is claimed."
+      "status": "integrated; proof pending",
+      "summary": "Published source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. Integrated as 08102c576 in qualification head eb6a71ba1. The first proof completed 26 zero-action analyses, then failed at a 136456-byte subprocess argument limit. Recovery 9d381d0b-8f49-4b78-a568-e5782f5de969 uses file-based selection transport and is running; no full Nogo or runtime-matrix pass is claimed."
+    },
+    {
+      "id": "branch:rbe-cgroup-test-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-cgroup-test-selection",
+      "title": "Configure cgroup profiles per test target",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-test-selection",
+      "group": "rbe",
+      "status": "fork validation candidate",
+      "summary": "Published candidate 6c26384e787abd5a1a3b1aa591bb1e2bc204e356 contains the reviewed per-target cgroup profiles from 714caba55 and shared file-based selection transport. It descends from historical qualification head c327900462e558a1a610e8a44e168ba0098dd2eb; it is not based directly on master and does not include the later checkpoint or Nogo composition. Graph and runtime qualification remain pending."
     }
   ],
   "edges": [
