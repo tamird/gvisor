@@ -55,9 +55,6 @@ test:unit --target_pattern_file=test/unit.targets
 build:unit --test_tag_filters=-nogo,-requires-kvm
 build:unit --build_tag_filters=-network_plugins
 
-# Preserve the Docker lane's existing TCP checkpoint/restore coverage.
-test:docker --test_env=TEST_SAVE_RESTORE_NETSTACK=true
-
 # BuildBuddy's hosted coordinator supplies this configuration and authentication.
 # Both compilation and test actions execute remotely; the execution platform
 # owns the runtime image so per-test properties retain its image and architecture.

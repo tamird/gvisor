@@ -342,7 +342,6 @@ run_lane() (
       targets=("//test/docker:${lane%-images}_image_sources_${arch}_test")
       ;;
     docker|docker-v1)
-      options=(--config=docker)
       targets=(//test/docker:owned_tests)
       ;;
     overlay|swgso|hostnet)
@@ -364,15 +363,13 @@ run_lane() (
       targets=(//:do_tests)
       ;;
     root)
-      options=(--config=docker)
       targets=(//test/root:root_test_owned)
       ;;
     portforward)
-      options=(--config=docker)
       targets=(//test/root:portforward_test_owned)
       ;;
     posture)
-      options=(--config=docker --test_tag_filters=-requires-kvm)
+      options=(--test_tag_filters=-requires-kvm)
       targets=(//test/root:sandbox_posture_test_owned)
       ;;
     startup)

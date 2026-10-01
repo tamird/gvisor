@@ -463,7 +463,7 @@ installed_docker_variants = \
 
 ifeq ($(DOCKER_TEST_SETUP),owned)
 portforward-tests:
-	@$(call test,--config=docker //test/root:portforward_test_owned)
+	@$(call test,//test/root:portforward_test_owned)
 else ifeq ($(DOCKER_TEST_SETUP),installed)
 portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
 	@$(call installed_docker_variants,portforward,$(RUNTIME),test/root:portforward_test,)
@@ -475,7 +475,7 @@ endif
 
 ifeq ($(DOCKER_TEST_SETUP),owned)
 sandbox-posture-tests:
-	@$(call test,--config=docker //test/root:sandbox_posture_test_owned)
+	@$(call test,//test/root:sandbox_posture_test_owned)
 else ifeq ($(DOCKER_TEST_SETUP),installed)
 sandbox-posture-tests: load-basic_alpine $(RUNTIME_BIN)
 	@$(call installed_docker_variants,posture,$(RUNTIME)-posture,test/root:sandbox_posture_test,-test.run=TestSandboxPosture)
@@ -497,14 +497,14 @@ INTEGRATION_TARGETS := //test/image:image_test //test/e2e:integration_test
 # Owned mode uses declared Bazel inputs and a private daemon in each test action.
 ifeq ($(DOCKER_TEST_SETUP),owned)
 docker-tests:
-	@$(call test,--config=docker $(PARTITIONS) //test/docker:owned_tests)
+	@$(call test,$(PARTITIONS) //test/docker:owned_tests)
 else ifeq ($(DOCKER_TEST_SETUP),installed)
 docker-tests: integration-test-images $(RUNTIME_BIN)
 	@$(call sudo,//test/docker:configure_runtime,--runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)")
 	@sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
 	@$(reload_docker)
 	@$(call wait_for_runtime,$(RUNTIME))
-	@$(call test_runtime_cached,$(RUNTIME),--config=docker //test/docker:installed_tests)
+	@$(call test_runtime_cached,$(RUNTIME),//test/docker:installed_tests)
 else
 docker-tests:
 	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
