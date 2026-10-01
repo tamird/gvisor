@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
@@ -34,6 +35,22 @@ test_suite(
     ],
 )
 
+# Applied with --run_under before the selected test initializes its daemon.
+sh_binary(
+    name = "cgroup_v1",
+    testonly = True,
+    srcs = ["cgroup_v1.sh"],
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ] + select({
+        "//tools/bazeldefs:rbe": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+    visibility = ["//visibility:public"],
+)
+
 docker_daemon_config(
     name = "cgroup_v1_docker_config",
     testonly = True,
@@ -47,10 +64,12 @@ sh_test(
     size = "large",
     srcs = ["cgroup_v1_fixture.sh"],
     args = [
+        "$(rootpath :cgroup_v1)",
         "$(rootpath //test/root:root_test)",
         "$(rootpath :cgroup_v1_docker_config)",
     ],
     data = [
+        ":cgroup_v1",
         ":cgroup_v1_docker_config",
         "//test/root:root_test",
     ],
