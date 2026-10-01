@@ -3,6 +3,7 @@
 load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "go_binary", _go_test = "go_test")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools/bazeldefs:defs.bzl", "select_arch")
+load("//tools/bazeldefs:test_architectures.bzl", "with_test_architecture")
 
 # LLVM's GNU sysroot contains dynamic linking stubs, not static libc archives.
 # Change the platform for static targets and their dependencies so that cgo
@@ -47,3 +48,10 @@ static_go_cov, _static_go_cov_transition = _go_binary_variant(static = True, cov
 # it as go_test preserves the rule kind used by the Nogo aspect, together with
 # the original test attributes, providers, and Go configuration transition.
 go_test, _go_test_transition = with_cfg(_go_test).set("platforms", _MUSL_PLATFORMS).build()
+
+# These are extended test rules, so test attributes and Go providers remain on
+# the configured owner. Nogo recognizes their exported rule kinds as tests.
+go_amd64_test, _go_amd64_transition = with_test_architecture(_go_test, "amd64").build()
+go_arm64_test, _go_arm64_transition = with_test_architecture(_go_test, "arm64").build()
+static_go_amd64_test, _static_go_amd64_transition = with_test_architecture(_go_test, "amd64", static = True).build()
+static_go_arm64_test, _static_go_arm64_transition = with_test_architecture(_go_test, "arm64", static = True).build()

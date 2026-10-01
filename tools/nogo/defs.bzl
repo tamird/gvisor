@@ -1,7 +1,7 @@
 """Nogo rules."""
 
 load("//tools:arch.bzl", "arch_transition")
-load("//tools/bazeldefs:go.bzl", "go_binary_archive", "go_context", "go_embed_libraries", "go_has_archive", "go_importpath", "go_rule", "nogo_extra_proto_deps")
+load("//tools/bazeldefs:go.bzl", "go_binary_archive", "go_context", "go_embed_libraries", "go_has_archive", "go_importpath", "go_is_test", "go_rule", "nogo_extra_proto_deps")
 
 NogoConfigInfo = provider(
     "information about a nogo configuration",
@@ -264,7 +264,8 @@ def _nogo_aspect_impl(target, ctx):
     # we should not introduce new go_tool_library dependencies unless strictly
     # necessary.
     is_binary = ctx.rule.kind in ("go_binary", "go_non_executable_binary")
-    if is_binary or ctx.rule.kind in ("go_library", "go_tool_library", "go_test"):
+    is_test = go_is_test(ctx.rule.kind)
+    if is_binary or is_test or ctx.rule.kind in ("go_library", "go_tool_library"):
         srcs = ctx.rule.files.srcs
         deps = ctx.rule.attr.deps
     elif ctx.rule.kind in ("go_proto_library", "go_wrap_cc"):
@@ -305,7 +306,7 @@ def _nogo_aspect_impl(target, ctx):
         objfiles = (archive.file, archive.export_file)
         binaries = list(objfiles)
     else:
-        importpath = "test" if ctx.rule.kind == "go_test" else go_importpath(target)
+        importpath = "test" if is_test else go_importpath(target)
         binaries = target.files.to_list()
         compilation_outputs = binaries
         if hasattr(target.output_groups, "compilation_outputs"):
