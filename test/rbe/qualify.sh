@@ -17,7 +17,7 @@ set -uo pipefail
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker docker-v1 overlay swgso hostnet plugin-network do root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit unit-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker docker-v1 overlay swgso hostnet plugin-network do root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -81,7 +81,7 @@ fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
   case "$lane" in
-    build-all|plugin-build|nogo|unit|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|plugin-build|nogo|unit|unit-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -150,6 +150,13 @@ run_lane() {
   local lane=$1
   local command=test execution_config=rbe
   local -a options=() targets=()
+  if [[ $lane == unit-v1 || $lane == docker-v1 ]]; then
+    if [[ $arch != amd64 ]]; then
+      printf 'The public cgroup-v1 lanes are declared for AMD64.\n' >&2
+      return 2
+    fi
+    execution_config=rbe-cgroup-v1
+  fi
   case "$lane" in
     build-all)
       command=build
@@ -185,7 +192,7 @@ run_lane() {
       options=(--config=nogo)
       targets=(//...)
       ;;
-    unit)
+    unit|unit-v1)
       # test/unit.targets also retains non-test build targets and the existing
       # exclusions. Keep its selection separate from Nogo's positive tag filter.
       options=(--config=unit)
@@ -214,13 +221,6 @@ run_lane() {
     docker|docker-v1)
       options=(--config=docker)
       targets=(//test/docker:owned_tests)
-      if [[ $lane == docker-v1 ]]; then
-        if [[ $arch != amd64 ]]; then
-          printf 'The public Docker cgroup-v1 lane is declared for AMD64.\n' >&2
-          return 2
-        fi
-        options+=(--run_under=//test/rbe:cgroup_v1 --modify_execution_info=TestRunner=+no-local)
-      fi
       ;;
     overlay|swgso|hostnet)
       targets=("//test/docker:${lane}_tests")
