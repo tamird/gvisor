@@ -201,7 +201,6 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 		case nil:
 			return endpoint, nil
 		case *tcpip.ErrDuplicateNICID:
-			endpoint.DecRef(ctx)
 			if !flags.Exclusive {
 				// Race detected: A NIC has been created in between.
 				continue
