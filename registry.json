@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T01:58:12.662145+00:00",
+    "updatedAt": "2026-10-01T02:30:15.383725+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1241,15 +1241,16 @@
       "summary": "Contributor-reviewed and published. The exact OriginalDstErrors case passes native Linux and both gVisor configurations; the complete stack unit owner and both Nogo owners pass. Missing native mark/CT extensions remain separate failures."
     },
     {
-      "id": "branch:syscall-arm64-selection",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15173",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "syscall-arm64-selection",
-      "title": "Share the public ARM64 syscall selection",
-      "url": "https://github.com/tamird/gvisor/tree/syscall-arm64-selection",
+      "title": "Share the ARM64 syscall test selection",
+      "url": "https://github.com/google/gvisor/pull/15173",
       "group": "rbe",
-      "status": "review pending",
-      "summary": "Standalone source afd1aa04a shares the ARM64 filter between public CI commands. On integrated c5a376025, retained loading evidence proves the same 910 selected owners for the literal filter, config and qualification driver, and the AMD64 pipeline schema test passes. The parent remains failed for its warning/capture guard; no ARM64 compilation, runtime or capacity claim. Contributor review remains pending."
+      "status": "open",
+      "summary": "Standalone source afd1aa04a shares the ARM64 filter between public CI commands. On integrated c5a376025, retained loading evidence proves the same 910 selected owners for the literal filter, config and qualification driver, and the AMD64 pipeline schema test passes. The parent remains failed for its warning/capture guard; no ARM64 compilation, runtime or capacity claim. Approved source is now published as #15173.",
+      "number": 15173
     },
     {
       "id": "branch:rbe-remote-stress",
@@ -1694,7 +1695,7 @@
       "evidence": "https://github.com/tamird/gvisor/blob/af19903e9/.github/workflows/build.yml#L84"
     },
     {
-      "from": "branch:syscall-arm64-selection",
+      "from": "pr:15173",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the shared public ARM64 selection and its dispatcher integration. The saved proof covers loading/filter parity and the AMD64 pipeline schema, not ARM runtime.",
