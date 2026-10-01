@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T18:18:26.156941+00:00",
+    "updatedAt": "2026-10-01T19:44:34.302571+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 245c0980c runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. Language selection preserves all 128 partitions; focused Node cases pass in both filesystem modes alongside workflow owners. Shared smoke/do/workflows/bwrap passes eight owners. Separate mixed proof passes AMD64/ARM64 units, both strict TUN modes and both-CPU release checks. Candidate 8b6fb4862 validates 15 further lane selectors: 124 runnable owners match under neutral, unit and syscall filters, and four selected runtime owners pass. Podman ARM is explicitly skipped. The upstream refresh at 8b3576dcf remains pending a targeted cgroup test correction. Historical failed parents remain failed: the 640-owner unit/release tests passed despite a preliminary HTTP500; original unit-v1 passed 329/330, with the corrected boot owner later passing 105 cases. Full PHP partitions remain failed. Twenty Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted, and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; provider deployment is unverified."
+      "summary": "Published head b9dbdeccb runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the upstream refresh and targeted cgroup correction: AMD64, ARM64 and v1 each pass all 157 cgroup cases. Fifteen target-owned lanes preserve 124 runnable owners under neutral, unit and syscall filters; four selected runtime owners pass. Filtered posture/startup/benchmark selection preserves 50 owners and reports 24 KVM omissions. One posture/startup/workflow invocation passes 11 owners; posture evidence is owner-level only, and continuous benchmarks were not executed. Its 211 original hosted artifacts were recovered after local scratch loss and independently verified. Earlier mixed unit/release execution passed 640 owners, but that parent remains failed because of a preliminary HTTP500; separate same-source analysis closed the configuration check. Original unit-v1 passed 329/330, with the corrected boot owner later passing 105 cases. Full PHP partitions remain failed. Twenty Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted, and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; provider deployment is unverified."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1559,8 +1559,52 @@
       "title": "Combine target-owned qualification lanes",
       "url": "https://github.com/tamird/gvisor/tree/rbe-owned-test-selection",
       "group": "rbe",
-      "status": "validated; awaiting integration",
-      "summary": "Published source 8b6fb4862 shares the existing selectors for 15 more lanes, preserving standalone architecture guards and image shards. Six zero-action analyses verify 124 runnable owners and 130 TestRunner actions with identical worker properties, commands and multiplicities under neutral, unit and syscall filters; incompatible Podman ARM is explicitly reported. One direct invocation passes smoke, workflow validation and packetdrill sanity on native Linux and gVisor, all remote and uncached. This does not execute the full 15-lane workload or ARM tests. Earlier parents 40868ce6 and bdc82378 remain failed analysis attempts: the fixes made packetimpact suite membership explicit and honored Bazel SKIPPED completions. No upstream PR is proposed."
+      "status": "validated; integrated",
+      "summary": "Published source 8b6fb4862 shares the existing selectors for 15 more lanes, preserving standalone architecture guards and image shards. Six zero-action analyses verify 124 runnable owners and 130 TestRunner actions with identical worker properties, commands and multiplicities under neutral, unit and syscall filters; incompatible Podman ARM is explicitly reported. One direct invocation passes smoke, workflow validation and packetdrill sanity on native Linux and gVisor, all remote and uncached. This does not execute the full 15-lane workload or ARM tests. Earlier parents 40868ce6 and bdc82378 remain failed analysis attempts: the fixes made packetimpact suite membership explicit and honored Bazel SKIPPED completions. No upstream PR is proposed. Integrated through refreshed qualification head e0d8060c7; this does not extend the bounded runtime result."
+    },
+    {
+      "id": "branch:rbe-filtered-test-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-filtered-test-selection",
+      "title": "Combine the KVM-filtered test lanes",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-filtered-test-selection",
+      "group": "rbe",
+      "status": "validated; integrated",
+      "summary": "Published source b9dbdeccb keeps posture, startup and continuous-benchmark KVM filtering local to canonical selection. Fifty configured owners and their commands, worker properties and multiplicities match under neutral, unit and syscall filters; 24 KVM labels are reported as loading-only omissions. A conflicting inherited build-scope filter is rejected before execution. One actual qualifier invocation passes 11 posture/startup/workflow owners remotely and uncached. Startup logs show one benchmark iteration per mode; nonverbose posture logs support owner-level PASS only. Continuous benchmarks remain analysis-only. All 211 original hosted artifacts were recovered and independently verified after local scratch loss; no workload was repeated. Integrated as the current qualification head. No upstream PR is proposed."
+    },
+    {
+      "id": "branch:rbe-cgroup-profile-setting",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-cgroup-profile-setting",
+      "title": "Represent the cgroup mode as a build setting",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-profile-setting",
+      "group": "rbe",
+      "status": "source reviewed; configuration proof pending",
+      "summary": "Published source a9d9d4b77 replaces the cgroup-v1 define with a default-off boolean setting while preserving existing RBE specialization and visibility. This is a prerequisite for graph-owned cgroup profiles; it does not yet add per-target mode support. The first zero-action canonical analysis succeeded, but its cached action dump was empty. A targeted configuration-proof continuation is pending. Not integrated in the qualification branch; no runtime or upstream PR claim."
+    },
+    {
+      "id": "branch:rbe-plugin-test-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-plugin-test-selection",
+      "title": "Own plugin settings in the target graph",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-plugin-test-selection",
+      "group": "rbe",
+      "status": "source reviewed; validation pending",
+      "summary": "Published source b8901e603 replaces the three plugin define consumers with a boolean setting and keeps plugin build optimization separate from ordinary runtime targets. The existing plugin network targets retain their declared Docker inputs, sidecars and worker requirements. Initial validation stopped before runtime on an upstream dependency HTTP500, followed by a Bazel failure. The same-source continuation is running; no plugin-network or vhost-net runtime pass is claimed. Not integrated in the qualification branch; no upstream PR is proposed."
+    },
+    {
+      "id": "branch:rbe-checkpoint-test-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-checkpoint-test-selection",
+      "title": "Combine checkpoint syscall profiles",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-checkpoint-test-selection",
+      "group": "rbe",
+      "status": "source reviewed; proof pending",
+      "summary": "Published source 8ce3e97d0 selects the public AMD64 save/restore and ARM64 save/resume profiles before composition. Explicit runtime owners prevent ordinary syscall exclusions from dropping requested checkpoint tests; standalone build-only behavior remains available. Existing runner-owned warning settings and capability checks are retained, with an explicit error when no requested tests have available workers. The bounded selection and runtime proof is being prepared. Not integrated in the qualification branch; no full checkpoint-matrix or upstream PR claim."
     }
   ],
   "edges": [
@@ -2307,6 +2351,26 @@
         "https://github.com/tamird/gvisor/commit/36106ebdd",
         "https://app.buildbuddy.io/invocation/9487ec67-c8b2-48a0-bb99-396ed64be9a0",
         "https://app.buildbuddy.io/invocation/3a1fe011-518a-427f-a76f-c4610896d3a0"
+      ]
+    },
+    {
+      "from": "branch:rbe-owned-test-selection",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes the validated target-only selector extension and its packetimpact/SKIPPED corrections. The full 15-lane workload remains analysis-only beyond the four named runtime owners.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/e0d8060c7a0c0aa89ce66a5e5c51669c894be26a",
+        "https://github.com/tamird/gvisor/commit/b9dbdeccb7178d82ddb2395997cad4758f72b60d"
+      ]
+    },
+    {
+      "from": "branch:rbe-filtered-test-selection",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes the validated filtered selector. Canonical analysis and the bounded posture/startup/workflow runtime are distinct; continuous benchmarks and KVM were not executed.",
+      "evidence": [
+        "https://app.buildbuddy.io/invocation/f854fd56-9eef-4d48-80cb-5fd5ab7d8033",
+        "https://github.com/tamird/gvisor/commit/b9dbdeccb7178d82ddb2395997cad4758f72b60d"
       ]
     }
   ]
