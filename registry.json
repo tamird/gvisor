@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T10:01:57.516675+00:00",
+    "updatedAt": "2026-10-01T10:17:10.681891+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 3027ad857 runs the implemented AMD64 lanes without the builder image. TUN/TAP MTU bounds pass focused native/gVisor validation. Full public container and container-v1 selections are declared, but KVM execution remains unqualified. Docker-v1 passes five maintained owners: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run remains failed (329 passes, one boot failure); corrected boot passes all 105 cases without skips and Nogo on both architectures. The full unit lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes 706 entries at 4dca99373; subsequent unused PHP OCI removal has analysis-only coverage for all four maintained owners. Focused PHP 8.3.35 validation on native, DirectFS and goferfs replaces the missing-UConverter failure with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty same-container repetitions of the original Node batch did not reproduce SIGABRT; its cause remains unresolved. This is incomplete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture has not run."
+      "summary": "Published head 9802c50bc runs the implemented AMD64 lanes without the builder image. TUN/TAP MTU bounds and committed allocation pass focused validation. Full public container and container-v1 selections are declared, but KVM execution remains unqualified. Docker-v1 passes five maintained owners: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run remains failed (329 passes, one boot failure); corrected boot passes all 105 cases without skips and Nogo on both architectures. The full unit lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes 706 entries at 4dca99373; subsequent unused PHP OCI removal has analysis-only coverage for all four maintained owners. Focused PHP 8.3.35 validation on native, DirectFS and goferfs replaces the missing-UConverter failure with the required missing-intl skip; earlier full partitions remain failed and intl coverage is unproved. Twenty same-container repetitions of the original Node batch did not reproduce SIGABRT; its cause remains unresolved. This is incomplete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture has not run."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1357,15 +1357,27 @@
       "summary": "Published source a686e547a fixes TestHostnetWithRawSockets: Apply(EFFECTIVE) did not call capset, so the privileged fixture never dropped CAP_NET_RAW. Apply(CAPS) preserves the other loaded capability sets, and one OS thread owns the drop, check and restoration. Source review has passed. Focused validation 479432ff at composed source bcf337cfa passes all 105 boot XML cases without skips and boot Nogo on ARM64 and AMD64. The original full unit-v1 parent remains failed; contributor review is pending and no PR is open. Integrated in qualification head a6d7bf336."
     },
     {
-      "id": "branch:tuntap-mtu-limits",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15180",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tuntap-mtu-limits",
       "title": "Bound TUN and TAP interface MTUs",
-      "url": "https://github.com/tamird/gvisor/tree/tuntap-mtu-limits",
+      "url": "https://github.com/google/gvisor/pull/15180",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Published source aaaa87663 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor-approved PR #15180 is open on the validated source. Oversized-write allocation remains unresolved, and these interface bounds are not a Linux write-size limit.",
+      "number": 15180
+    },
+    {
+      "id": "branch:pgalloc-commit-errors",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "pgalloc-commit-errors",
+      "title": "Honor committed memory allocation requests",
+      "url": "https://github.com/tamird/gvisor/tree/pgalloc-commit-errors",
       "group": "runtime",
       "status": "review pending",
-      "summary": "Published source aaaa87663 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor review has been requested and is pending; no PR is open. Oversized-write allocation remains unresolved, and these interface bounds are not a Linux write-size limit."
+      "summary": "Published source 6f26e5cf0 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor review is pending and no PR is open. This is an allocator prerequisite: TUN oversized-write allocation and external packet storage remain unresolved."
     }
   ],
   "edges": [
@@ -1874,7 +1886,7 @@
       ]
     },
     {
-      "from": "branch:tuntap-mtu-limits",
+      "from": "pr:15180",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the independently reviewable MTU bounds fix. Native and gVisor before/after cases validate configured interface limits; the oversized-write allocation defect remains separate and unresolved.",
@@ -1883,6 +1895,17 @@
         "https://github.com/tamird/gvisor/commit/3027ad857",
         "https://app.buildbuddy.io/invocation/7ef12134-6693-46d5-bde3-0d308a989a5b",
         "https://app.buildbuddy.io/invocation/d059317c-cbcf-4725-a2b5-ee8dcbcd0362"
+      ]
+    },
+    {
+      "from": "branch:pgalloc-commit-errors",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the independently reviewable committed-allocation fix, with a failing baseline and passing complete allocator owner and both Nogo architectures. TUN writes and external packet storage are unchanged.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/6f26e5cf0",
+        "https://github.com/tamird/gvisor/commit/9802c50bc",
+        "https://app.buildbuddy.io/invocation/73416569-9cd4-460f-a67d-5ad2a1c709f2"
       ]
     }
   ]
