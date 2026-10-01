@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T17:31:39.851959+00:00",
+    "updatedAt": "2026-10-01T18:18:26.156941+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head cc9c5b572 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency. Shared selection preserves 15 owners under neutral, unit and syscall filters. One maintained invocation passes all eight smoke/do/workflows/bwrap owners; Docker, root and port-forwarding coverage here is analysis-only. Separate mixed-platform proof passes AMD64/ARM64 units, both strict TUN modes and both-CPU release checks. The earlier 640-owner unit/release run passes its tests; its parent remains failed on preliminary HTTP 500, with separate same-source analysis passing. The earlier syscall-analysis parent also remains failed, with its established Nogo-policy omission reconciled. Normal/race smoke passes with target-owned instrumentation. Zero-action timeout proof retains 1800 seconds for language/kind and the control's incoming 61. Original unit-v1 remains failed at 329/330; corrected boot passes 105 cases and both Nogo architectures. Full PHP partitions remain failed despite focused checks. Twenty Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted; 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified."
+      "summary": "Published head 245c0980c runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. Language selection preserves all 128 partitions; focused Node cases pass in both filesystem modes alongside workflow owners. Shared smoke/do/workflows/bwrap passes eight owners. Separate mixed proof passes AMD64/ARM64 units, both strict TUN modes and both-CPU release checks. Candidate 8b6fb4862 validates 15 further lane selectors: 124 runnable owners match under neutral, unit and syscall filters, and four selected runtime owners pass. Podman ARM is explicitly skipped. The upstream refresh at 8b3576dcf remains pending a targeted cgroup test correction. Historical failed parents remain failed: the 640-owner unit/release tests passed despite a preliminary HTTP500; original unit-v1 passed 329/330, with the corrected boot owner later passing 105 cases. Full PHP partitions remain failed. Twenty Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted, and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; provider deployment is unverified."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1215,11 +1215,11 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "devpts-mount-options",
-      "title": "Apply devpts mount options to slave PTYs",
+      "title": "Keep devpts mount options off root and ptmx",
       "url": "https://github.com/google/gvisor/pull/15162",
       "status": "open",
       "number": 15162,
-      "summary": "Contributor-reviewed and published. SetMode passes native and fails then passes both gVisor variants. Each complete gVisor PTY owner passes 113 cases with one existing skip; devpts unit and Nogo pass. Native PTY timing remains a separate failure."
+      "summary": "Published residual b07ccec16 keeps replica uid/gid options from changing the devpts root or ptmx ownership, while preserving the landed replica-option fix. The root uses mapped namespace-root identity; ptmx uses mounting credentials. The before check fails four root/ptmx ownership assertions. On corrected integration 8b3576dcf, SetMode passes native Linux, shared, DirectFS and save/restore without skips; its save log records 37 restores. Both owning Nogo targets pass AMD64 and ARM64. This is focused residual validation, not a fresh complete PTY suite or namespace-runtime result. The first attempt remains a setup failure with no runtime credit."
     },
     {
       "group": "tests",
@@ -1365,7 +1365,7 @@
       "url": "https://github.com/google/gvisor/pull/15180",
       "group": "runtime",
       "status": "open",
-      "summary": "Published source aaaa87663 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor-approved PR #15180 is open on the validated source. Oversized-write allocation remains unresolved, and these interface bounds are not a Linux write-size limit. The initial upstream lint job hit an HTTP500 fetching buildifier.",
+      "summary": "Published source 145188349 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor-approved PR #15180 is open on the validated source. These interface bounds are not a Linux write-size limit; the later oversized-write implementation has separate validation. The initial upstream lint job hit an HTTP500 fetching buildifier. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
       "number": 15180
     },
     {
@@ -1377,7 +1377,7 @@
       "url": "https://github.com/google/gvisor/pull/15181",
       "group": "runtime",
       "status": "open",
-      "summary": "Published source 6f26e5cf0 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This is an allocator prerequisite: TUN oversized-write allocation and external packet storage remain unresolved.",
+      "summary": "Published source e981e7162 preserves AllocateAndCommit through huge-page and recycled allocation paths, returns ENOMEM for destination backing faults, and keeps disk-backed storage reservation. A regression demonstrates the original uncommitted allocation; the corrected full pgalloc owner passes 56 XML cases without failures or skips, and Nogo passes AMD64 and ARM64. Qualification head 9802c50bc includes the exact source change. Contributor-approved PR #15181 is open on the validated source. This allocator prerequisite is separate from the later validated external storage and oversized TUN-write changes. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
       "number": 15181
     },
     {
@@ -1390,7 +1390,7 @@
       "url": "https://github.com/google/gvisor/pull/15183",
       "group": "runtime",
       "status": "open",
-      "summary": "Contributor-approved PR #15183 publishes 7e7b34772. IPv6 parsing caps the packet before walking extension headers and handles unsupported jumbo payloads with the required ICMP error. Focused regressions distinguish the original behavior, and the corrected complete owners and three Nogo owners pass. Qualification head 24485f327 includes the validated fix. Oversized TUN-write allocation remains separate."
+      "summary": "Contributor-approved PR #15183 publishes a1e02e4c2. IPv6 parsing caps the packet before walking extension headers and handles unsupported jumbo payloads with the required ICMP error. Focused regressions distinguish the original behavior, and the corrected complete owners and three Nogo owners pass. Qualification head 24485f327 includes the validated fix. Oversized TUN-write allocation remains separate. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged."
     },
     {
       "id": "pr:15184",
@@ -1401,7 +1401,7 @@
       "url": "https://github.com/google/gvisor/pull/15184",
       "group": "runtime",
       "status": "open",
-      "summary": "Contributor-approved PR #15184 publishes d6eefc9f1, correcting zeroing beyond a trimmed view without first separating shared storage. The original heap regression fails; the corrected full buffer owner passes 326 XML entries and both owning Nogo targets pass AMD64 and ARM64. Qualification includes the validated change.",
+      "summary": "Contributor-approved PR #15184 publishes 8b92e722d, correcting zeroing beyond a trimmed view without first separating shared storage. The original heap regression fails; the corrected full buffer owner passes 326 XML entries and both owning Nogo targets pass AMD64 and ARM64. Qualification includes the validated change. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
       "number": 15184
     },
     {
@@ -1413,7 +1413,7 @@
       "url": "https://github.com/google/gvisor/pull/15185",
       "group": "tests",
       "status": "open",
-      "summary": "Contributor-approved PR #15185 publishes 3c44e9daa, correcting existing empty-payload benchmarks and bounding each iteration. Identical populated benchmark source was used before and after external storage. The results do not establish a speedup or identical worker placement. This is independent of the buffer API changes and is included in qualification.",
+      "summary": "Contributor-approved PR #15185 publishes d996900c1, correcting existing empty-payload benchmarks and bounding each iteration. Identical populated benchmark source was used before and after external storage. The results do not establish a speedup or identical worker placement. This is independent of the buffer API changes and is included in qualification. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
       "number": 15185
     },
     {
@@ -1502,7 +1502,7 @@
       "url": "https://github.com/google/gvisor/pull/15187",
       "group": "bazel",
       "status": "open",
-      "summary": "Published source 0496ad5dc, a formatting-only amendment of validated e5dd29534, selects a Linux generator action matching the target CPU, preserving generated-source labels and the architecture-independent fastbuild stub. The earlier ARM64 example failed with AMD64 audit and syscall constants. Corrected composition d90dfe0c1 passes the complete mixed unit selection, including both actual seccomp owners. Focused configured-action checks prove native AMD64/ARM64 full generation and an ARM64-target stub on AMD64. Full generation requires a native target-CPU executor; without one, resolution fails instead of embedding wrong filters. Non-verbose Go XML has no individual case counts. Contributor-approved PR #15187 publishes the validated change.",
+      "summary": "Published source a37b20ac5 selects a Linux generator action matching the target CPU, preserving generated-source labels and the architecture-independent fastbuild stub. The earlier ARM64 example failed with AMD64 audit and syscall constants. Corrected composition d90dfe0c1 passes the complete mixed unit selection, including both actual seccomp owners. Focused configured-action checks prove native AMD64/ARM64 full generation and an ARM64-target stub on AMD64. Full generation requires a native target-CPU executor; without one, resolution fails instead of embedding wrong filters. Non-verbose Go XML has no individual case counts. Contributor-approved PR #15187 publishes the validated change. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
       "number": 15187
     },
     {
@@ -1514,7 +1514,7 @@
       "url": "https://github.com/google/gvisor/pull/15189",
       "group": "runtime",
       "status": "open",
-      "summary": "Published source d2ab68ace waits for NIC link-resolution callbacks and completes sentry network teardown before backing memory is destroyed. Before tests fail for ordinary and overflow callback lifetimes and sentry Destroy ordering; the corrected composition 475b1c41d passes four Go owners; all four Nogo owners pass both AMD64 and ARM64. Qualification includes the tested source. Contributor-approved PR #15189 publishes the validated change; oversized TUN-write behavior has separate evidence.",
+      "summary": "Published source 4db0d2d6f waits for NIC link-resolution callbacks and completes sentry network teardown before backing memory is destroyed. Before tests fail for ordinary and overflow callback lifetimes and sentry Destroy ordering; the corrected composition 475b1c41d passes four Go owners; all four Nogo owners pass both AMD64 and ARM64. Qualification includes the tested source. Contributor-approved PR #15189 publishes the validated change; oversized TUN-write behavior has separate evidence. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
       "number": 15189
     },
     {
@@ -1526,7 +1526,7 @@
       "url": "https://github.com/google/gvisor/pull/15188",
       "group": "tests",
       "status": "open",
-      "summary": "Published source e3765b279 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The source is included in qualification cc9c5b572. No syscall runtime workload was repeated for these no-op removals.",
+      "summary": "Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188
     },
     {
@@ -1550,6 +1550,17 @@
       "group": "tests",
       "status": "awaiting contributor review",
       "summary": "Published source 36106ebdd removes the stale TUN suite leak-check exemption after 0bf11c160 fixed the endpoint reference leak on failed NIC creation. Both full shared and DirectFS owners pass 21 cases plus one existing down-device skip with strict leak checking on the earlier source and now on the mapped-packet qualification composition 2ff2716c4. The latest branch amendment changes only its message. Contributor review is pending; no upstream PR is authorized."
+    },
+    {
+      "id": "branch:rbe-owned-test-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-owned-test-selection",
+      "title": "Combine target-owned qualification lanes",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-owned-test-selection",
+      "group": "rbe",
+      "status": "validated; awaiting integration",
+      "summary": "Published source 8b6fb4862 shares the existing selectors for 15 more lanes, preserving standalone architecture guards and image shards. Six zero-action analyses verify 124 runnable owners and 130 TestRunner actions with identical worker properties, commands and multiplicities under neutral, unit and syscall filters; incompatible Podman ARM is explicitly reported. One direct invocation passes smoke, workflow validation and packetdrill sanity on native Linux and gVisor, all remote and uncached. This does not execute the full 15-lane workload or ARM tests. Earlier parents 40868ce6 and bdc82378 remain failed analysis attempts: the fixes made packetimpact suite membership explicit and honored Bazel SKIPPED completions. No upstream PR is proposed."
     }
   ],
   "edges": [
