@@ -340,7 +340,7 @@ run_lane() (
         printf 'Language runtime images are declared only for AMD64.\n' >&2
         return 1
       fi
-      options=(--test_timeout=1800
+      options=(
         "--test_env=RUNTIME_TESTS_FILTER=${RUNTIME_TESTS_FILTER:-}"
         "--test_env=RUNTIME_TESTS_PER_TEST_TIMEOUT=${RUNTIME_TESTS_PER_TEST_TIMEOUT:-20m}"
         "--test_env=RUNTIME_TESTS_RUNS_PER_TEST=${RUNTIME_TESTS_RUNS_PER_TEST:-1}"
@@ -353,7 +353,6 @@ run_lane() (
         printf 'The kind tool and node image are declared only for AMD64.\n' >&2
         return 1
       fi
-      options=(--test_timeout=1800)
       targets=(//test/kubernetes/tests:kind_test)
       ;;
     podman)

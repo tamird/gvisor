@@ -13,6 +13,24 @@ bzl_library = _bzl_library
 bool_flag = _bool_flag
 BuildSettingInfo = _BuildSettingInfo
 native_test = _native_test
+
+# Public language and Kubernetes qualification gives each test 1800 seconds.
+# Use an output-only transition: with_cfg also reads test_timeout, whose native
+# Map<TestTimeout, Duration> value is not readable by Starlark in Bazel 8.5.
+# https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/config/StarlarkDefinedConfigTransition.java#L416-L471
+runtime_test_timeout = transition(
+    implementation = lambda _settings, _attr: {"//command_line_option:test_timeout": "1800"},
+    inputs = [],
+    outputs = ["//command_line_option:test_timeout"],
+)
+
+runtime_native_test = rule(
+    doc = "A native test with the public runtime qualification timeout.",
+    implementation = lambda ctx: ctx.super(),
+    parent = _native_test,
+    cfg = runtime_test_timeout,
+)
+
 more_shards = 4
 most_shards = 8
 version = "//tools/bazeldefs:version"

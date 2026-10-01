@@ -592,6 +592,9 @@ needed for these owned suites. Selecting a concrete partition target, such as
 `RUNTIME_TESTS_FILTER`, `RUNTIME_TESTS_PER_TEST_TIMEOUT`,
 `RUNTIME_TESTS_RUNS_PER_TEST`, `RUNTIME_TESTS_FLAKY_IS_ERROR` and
 `RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT` retain their Make defaults and meanings.
+The language and Kubernetes test owners retain their 1800-second deadline
+even when an invocation overrides `--test_timeout`; other tests retain the
+invocation's timeout settings.
 An explicit test filter replaces the exclusion list as before. Filtered or
 partition-only results do not qualify a complete language lane. These published
 images and public jobs are AMD64-only; selecting an ARM64 language lane fails
