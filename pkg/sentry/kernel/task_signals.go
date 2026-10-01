@@ -244,6 +244,13 @@ func (t *Task) deliverSignal(info *linux.SignalInfo, act linux.SigAction) taskRu
 		t.Debugf("Signal %d, PID: %d, TID: %d, fault addr: %#x: terminating thread group", info.Signo, ucs.Pid, ucs.Tid, ucs.FaultAddr)
 		eventchannel.Emit(ucs)
 
+		if sig == linux.SIGABRT {
+			// Fork-only Node inspector diagnostic: capture native caller state
+			// before fatal-signal teardown without changing signal disposition.
+			t.Debugf("SIGABRT diagnostic: code=%d, sender PID=%d, sender UID=%d", info.Code, info.PID(), info.UID())
+			t.DebugDumpState()
+		}
+
 		t.PrepareGroupExit(linux.WaitStatusTerminationSignal(sig))
 		return (*runExit)(nil)
 
