@@ -28,6 +28,11 @@ available through their owning Bazel targets.
 
 The dispatcher uses the existing Nogo and unit configurations, the declared
 runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
+Public CI's ordinary syscall selections live in the `syscalls-amd64` and
+`syscalls-arm64` test configurations. The AMD64 RBE lane retains its stricter
+filter because KVM workers remain unavailable. Bazel replaces repeated
+`--test_tag_filters` values, so that restriction cannot be appended to the public
+configuration. The ARM64 lane uses the public configuration directly.
 The lanes use separate Bazel invocations to preserve their different selections
 and instrumentation. Connection settings and credentials come from Bazel's
 configuration; no builder container is started. Normal Bazel caching remains
