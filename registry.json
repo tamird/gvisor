@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T04:47:56.079706+00:00",
+    "updatedAt": "2026-10-01T05:21:38.128935+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -674,7 +674,8 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-24T13:54:47Z"
+      "updatedAt": "2026-09-24T13:54:47Z",
+      "summary": "Published rebase 06ad0ffc9 preserves alias-aware lock-state diagnostics and current ignored-field behavior. The maintained checklocks fixture Nogo owner passes ARM64 and AMD64 analysis on the hosted GNU coordinator. The former separate strict owner and anchors are unnecessary under the landed all-fixture policy. This standalone PR is not included in the qualification branch; no runtime or production-wide result is claimed."
     },
     {
       "id": "pr:14502",
@@ -702,7 +703,7 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-03T21:32:42Z",
-      "summary": "Faithful single-commit rebase 199ebf489 on 78424a487 preserves the three LisaFS socket and node lifetime fixes, existing regression tests and restored leak checks, together with current upstream lock contracts and block-device protection. Source review passes; focused hosted unit, Nogo and host-socket validation is pending."
+      "summary": "Published rebase 199ebf489 preserves the three LisaFS socket and node lifetime fixes, existing regression tests and restored leak checks with current upstream lock contracts and block-device protection. At qualified source ec6357419, all ten focused owning tests pass, including 36 host-socket XML entries across four syscall owners with leak checking, LisaFS node/connection tests, fsgofer UDS tests and three Nogo owners on ARM64 and AMD64. The existing HardLink capability skip remains. Integrated in the qualification branch; this is not a full-matrix result."
     },
     {
       "id": "pr:14360",
@@ -1001,7 +1002,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head 3b4759d75 includes the upstream refresh, final namespace cleanup, CodeQL dependency setup, CNI plugin source update and the complete public syscall selection change from #15173. The declared prebuilt containerd image pin is unchanged. The syscall integration changes no qualification dispatcher commands; AMD64 retains its separate filter because KVM workers remain unavailable. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
+      "summary": "Published head ec6357419 also integrates the qualified LisaFS lifetime fixes from #14361, alongside the upstream refresh, final namespace cleanup, CodeQL dependency setup, CNI plugin source update and complete public syscall selection change from #15173. The declared prebuilt containerd image pin is unchanged. The syscall integration changes no qualification dispatcher commands; AMD64 retains its separate filter because KVM workers remain unavailable. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1318,8 +1319,19 @@
       "title": "Update PHP runtime tests to 8.3.35",
       "url": "https://github.com/tamird/gvisor/tree/php-8-3-35",
       "group": "tests",
-      "status": "validating",
-      "summary": "Published source 190427de0 updates the released PHP fixture from 8.3.7 to 8.3.35. Source review passes. Hosted validation at 564b0f607 is running all four complete, unsharded directfs/goferfs partition owners against the source-built image. Results are pending; no runtime pass is claimed. No PR is open, and the declared prebuilt image pin and qualification integration remain unchanged."
+      "status": "validation failed",
+      "summary": "Published source 190427de0 updates PHP 8.3.7 to 8.3.35. The four complete unsharded DirectFS/goferfs partition owners finished: two pass and two fail, each failure reporting only GH-17469 missing UConverter because the fixture lacks required intl metadata. Both modes selected all 19,404 eligible tests. An upstream test-metadata backport is being prepared; the failed parent remains failed. No PR is open, and the declared prebuilt image pin and qualification integration remain unchanged."
+    },
+    {
+      "id": "branch:rbe-source-image-archives",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-source-image-archives",
+      "title": "Share source images across containerd tests",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-source-image-archives",
+      "group": "rbe",
+      "status": "validation failed",
+      "summary": "Published source a95347e3c declares one Docker-save archive through the existing native daemon and canonical Make image rules so AMD64 containerd owners can share an input without registry publication or per-test rebuilds. The first focused producer/sanity gate stopped during Bazel analysis on an unsupported execution-group attribute; no image or runtime test ran. A narrow correction is in progress. Other image pins and ARM64 remain unchanged, and mutable base tags and package mirrors mean image contents are not hermetic."
     }
   ],
   "edges": [
@@ -1779,6 +1791,20 @@
         "https://github.com/tamird/gvisor/commit/3b4759d75",
         "https://app.buildbuddy.io/invocation/909c3133-4ce0-4fe6-a757-37e169fad691"
       ]
+    },
+    {
+      "from": "pr:14361",
+      "to": "branch:rbe-qualification-next",
+      "reason": "The qualification head integrates the exact LisaFS lifetime fixes and their focused owning validation.",
+      "evidence": "https://github.com/tamird/gvisor/commit/ec6357419",
+      "type": "includes"
+    },
+    {
+      "from": "branch:rbe-qualification-next",
+      "to": "branch:rbe-source-image-archives",
+      "reason": "The producer uses the declared Docker runner, native daemon configuration and execution-property interface provided by the qualification branch.",
+      "evidence": "https://github.com/tamird/gvisor/blob/a95347e3c/test/docker/defs.bzl",
+      "type": "depends_on"
     }
   ]
 }
