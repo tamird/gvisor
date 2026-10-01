@@ -1279,7 +1279,6 @@ syscall_test(
 )
 
 syscall_test(
-    netstack_sr = True,
     one_sandbox = False,
     test = "//test/syscalls/linux:tuntap_packet_lifetime_test",
 )

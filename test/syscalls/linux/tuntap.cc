@@ -598,7 +598,7 @@ TEST_F(TuntapTest, PingKernel) {
   }
 }
 
-TEST_F(TuntapTest, LargeWritesFailWithEMSGSIZE) {
+TEST_F(TuntapTest, WritesLargerThanMTU) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
 
   const auto& [fd, link] = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
@@ -606,8 +606,6 @@ TEST_F(TuntapTest, LargeWritesFailWithEMSGSIZE) {
 
   ping_pkt ping_req =
       CreatePingPacket(kMacB, kTapPeerIPAddr, kMacA, kTapIPAddr);
-  std::string arp_rep =
-      CreateArpPacket(kMacB, kTapPeerIPAddr, kMacA, kTapIPAddr);
 
   constexpr int kBufSize = 4096;
   std::vector<char> buf(kBufSize);
@@ -622,8 +620,10 @@ TEST_F(TuntapTest, LargeWritesFailWithEMSGSIZE) {
       },
   };
 
-  // A packet is large than MTU which is 1500 by default..
-  EXPECT_THAT(writev(fd.get(), iov, 2), SyscallFailsWithErrno(EMSGSIZE));
+  // Linux accepts the complete write, including padding beyond the default
+  // 1500-byte interface MTU and the IP packet's declared length.
+  EXPECT_THAT(writev(fd.get(), iov, 2),
+              SyscallSucceedsWithValue(sizeof(ping_req) + buf.size()));
 }
 
 TEST_F(TuntapTest, SendUdpTriggersArpResolution) {

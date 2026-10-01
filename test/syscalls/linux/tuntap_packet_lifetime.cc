@@ -120,11 +120,13 @@ TEST_F(TuntapPacketLifetimeTest, ExitWithUnreadSocket) {
 }
 
 TEST_F(TuntapPacketLifetimeTest, FaultingTailDoesNotInject) {
+  std::array<unsigned char, 4096> padding = {};
   iovec iov[] = {
       {.iov_base = payload_.data(), .iov_len = payload_.size()},
+      {.iov_base = padding.data(), .iov_len = padding.size()},
       {.iov_base = nullptr, .iov_len = 1},
   };
-  ASSERT_THAT(writev(tun_.get(), iov, 2), SyscallFailsWithErrno(EFAULT));
+  ASSERT_THAT(writev(tun_.get(), iov, 3), SyscallFailsWithErrno(EFAULT));
   pollfd pfd = {.fd = packet_.get(), .events = POLLIN};
   ASSERT_THAT(poll(&pfd, 1, 0), SyscallSucceedsWithValue(0));
   tun_.reset();
