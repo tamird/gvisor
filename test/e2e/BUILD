@@ -37,11 +37,11 @@ docker_test(
 
 docker_test(
     name = "uds_proxy_test",
-    cohort = "uds_proxy",
     size = "large",
     srcs = [
         "uds_proxy_test.go",
     ],
+    cohort = "uds_proxy",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
