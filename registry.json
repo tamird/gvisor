@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T02:30:15.383725+00:00",
+    "updatedAt": "2026-10-01T03:13:18.584606+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -974,7 +974,7 @@
       "url": "https://github.com/google/gvisor/pull/15168",
       "group": "tests",
       "status": "open",
-      "summary": "Contributor-reviewed and published after the cleanup-owned unlock correction. The complete qualified Go sandbox unit owner passes under root. Separate Python nobody results are not credited to this fixture.",
+      "summary": "User-approved revision 92ef87c5e reserves the initial OS thread and centralizes namespace cleanup; failed namespace restoration leaves the worker thread locked for Go to terminate. The complete qualified Go sandbox fixture file has 35 passing XML entries, with its Nogo owner passing ARM64 and AMD64. The review reply is posted and the thread resolved; a fresh reviewer response is pending. Separate Python nobody results are not credited to this fixture.",
       "number": 15168
     },
     {
@@ -998,7 +998,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Current published head c5a376025 includes the ARM64 syscall selection correction. Saved loading evidence gives identical public/config/driver selections: 910 owners (255 ptrace, 655 systrap); the AMD64 pipeline schema test passes. The parent remains failed because warning rejection stopped its reducer, and parity was checked from retained events. This establishes no ARM64 runtime capacity or complete combined-head qualification. Earlier targeted runtime results remain valid for their recorded source."
+      "summary": "Published head 425affd58 includes the upstream refresh and final namespace cleanup. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. The combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. These focused results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1245,11 +1245,11 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "syscall-arm64-selection",
-      "title": "Share the ARM64 syscall test selection",
+      "title": "Share public syscall test selections",
       "url": "https://github.com/google/gvisor/pull/15173",
       "group": "rbe",
       "status": "open",
-      "summary": "Standalone source afd1aa04a shares the ARM64 filter between public CI commands. On integrated c5a376025, retained loading evidence proves the same 910 selected owners for the literal filter, config and qualification driver, and the AMD64 pipeline schema test passes. The parent remains failed for its warning/capture guard; no ARM64 compilation, runtime or capacity claim. Approved source is now published as #15173.",
+      "summary": "Published revision 957e27f04 shares both public architecture filters and explains the direct-Bazel runner consumer, addressing the reviewer's motivation and symmetry questions. On that exact standalone source, loading-only comparisons preserve 1,415 AMD64 and 907 ARM64 selected targets, and the complete pipeline schema command passes. The first parent remains failed for its version-check capture error; the corrected selection-only continuation passes. No syscall compilation, runtime or worker-capacity claim.",
       "number": 15173
     },
     {
@@ -1698,7 +1698,7 @@
       "from": "pr:15173",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
-      "reason": "The qualification branch includes the shared public ARM64 selection and its dispatcher integration. The saved proof covers loading/filter parity and the AMD64 pipeline schema, not ARM runtime.",
+      "reason": "The qualification branch contains the earlier ARM64 revision afd1aa04a and its dispatcher integration. The later symmetric AMD64/ARM64 revision 957e27f04 is not yet integrated here. Membership records this retained source; it is not an upstream prerequisite or an ARM runtime claim.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/c5a376025",
         "https://app.buildbuddy.io/invocation/aa9d8c01-1ac9-45ff-9cca-0713d68c96e8"
