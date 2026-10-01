@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T20:58:11.623226+00:00",
+    "updatedAt": "2026-10-01T21:07:52.872243+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -151,7 +151,8 @@
       "group": "tests",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-30T10:19:58Z"
+      "updatedAt": "2026-09-30T10:19:58Z",
+      "summary": "Exact-source import #15198 at 53f6b086d1b2d9ba15729ede7adc460b6f0bd5b1 passed public pipeline 49172 at 21:02:05 UTC. The import and source PR remain open; passing CI is not a landing."
     },
     {
       "id": "pr:15138",
@@ -257,7 +258,7 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-30T04:48:30Z",
-      "summary": "Source a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b has exact-source import #15196 at db5e793d6b9e708ccc2d0b03c63abebd43304f54. Public build 49171 failed in Podman cleanup at 20:53:35 UTC: the first directfs=false workload printed Hello, world, then rm -rf reported Directory not empty and exited 1. The complete public log does not establish the directory's cause or any relationship to this IPv6 assertion change; the second DirectFS mode was not reached in that attempt."
+      "summary": "Source a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b has exact-source import #15196 at db5e793d6b9e708ccc2d0b03c63abebd43304f54. Public build 49171 failed in Podman cleanup at 20:53:35 UTC: the first directfs=false workload printed Hello, world, then rm -rf reported Directory not empty and exited 1. The complete public log does not establish the directory's cause or any relationship to this IPv6 assertion change; the second DirectFS mode was not reached in that attempt. Copybara separately reported unavailable Google internal checks failed at 20:57:06 UTC for runs created at 20:19:26; the public cleanup log does not establish that internal failure's cause."
     },
     {
       "id": "pr:15120",
@@ -363,7 +364,7 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-30T03:50:01Z",
-      "summary": "The public PR remains at a1620973b43a2d60ae8d8b542e45a46a341c95b7. Zach's two suggestions in the approval review are awaiting the contributor's review of candidate go-export-archive-review at 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24. Its exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The live PR has not been amended and no public response has been posted."
+      "summary": "After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; new-head public checks are queued. Publication and reply were independently verified at 21:07 UTC."
     },
     {
       "id": "pr:15084",
@@ -1629,8 +1630,8 @@
       "title": "Configure cgroup profiles per test target",
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-test-selection",
       "group": "rbe",
-      "status": "fork validation candidate",
-      "summary": "Published candidate 0db5008e34e96b57be34499eae18e3795059fb7b contains the reviewed per-target cgroup profiles from 714caba55, shared file-based selection transport, and corrected dependency-patch file headers. It descends from historical qualification head c327900462e558a1a610e8a44e168ba0098dd2eb; it is not based directly on master and does not include the later checkpoint or Nogo composition. The first graph parent failed fetching the patched dependency before executing actions. The graph continuation also failed and is being diagnosed; runtime qualification remains pending. Reviewed composition rbe-cgroup-integration is public at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b, directly atop current primary ff47eae257; component runtime qualification remains pending."
+      "status": "graph proof reconciled; runtime pending",
+      "summary": "Published component 0db5008e34e96b57be34499eae18e3795059fb7b descends from historical qualification c327900462e558a1a610e8a44e168ba0098dd2eb. Independent saved-byte reconciliation closes its graph proof, preserving the non-layout assertions across 981 owners, 1,025 TestRunner actions, 21 legacy comparisons and 43 metadata owners. The original dependency-fetch and script-import parents remain failed; compact parent c4b20db6 also remains failed because its comparator treated generated executable/bootstrap spellings as behavior changes. No runtime result follows from these graph checks. Reviewed composition rbe-cgroup-integration at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b is directly atop primary ff47eae257. Runtime parent daf277fd-0641-43a8-98ec-25b3fce05558 and combined-selector metadata parent 16ababb2-e0a6-4e88-b8ca-3fec5efdfd57 are running; runtime, mount and cleanup proof remain pending."
     },
     {
       "id": "branch:rbe-artifact-selection",
