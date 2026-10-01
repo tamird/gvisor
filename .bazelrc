@@ -47,8 +47,8 @@ build --build_tag_filters=-nogo
 build:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
 build:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
 
-# Keep the complete Nogo lane's selection shared with make nogo-tests.
-test:nogo --test_tag_filters=nogo --build_tests_only
+# Keep Nogo selection shared by analysis, tests and make nogo-tests.
+build:nogo --test_tag_filters=nogo --build_tests_only
 
 # Keep the existing unit lane's roots, exclusions and filters shared with Make.
 test:unit --target_pattern_file=test/unit.targets

@@ -87,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      unit|release-repository|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
+      nogo|unit|release-repository|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -235,7 +235,7 @@ select_syscall_profile() {
 # filters. Release artifacts already select both CPUs in their owning graph.
 run_platform_matrix() (
   set -e
-  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false explicit_universe
+  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false explicit_universe
   local -a options=() targets=() verification_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
@@ -250,10 +250,20 @@ run_platform_matrix() (
     case "$lane" in
       unit) include_unit=true ;;
       syscalls-save|syscalls-resume) include_checkpoints=true ;;
+      nogo) include_nogo=true ;;
     esac
   done
   for lane in "$@"; do
     case "$lane" in
+      nogo)
+        # Each existing Nogo owner already analyzes both architectures. Select
+        # its leaves without applying the positive tag filter to other lanes.
+        bazel aquery --config=rbe-matrix --config=x86_64 --config=nogo \
+          --universe_scope=//... \
+          "--build_event_json_file=$selection_dir/nogo-profile.json" 'set()'
+        python3 test/rbe/unit_matrix.py profile-targets "$selection_dir/nogo-profile.json" amd64 \
+          >> "$selection_dir/explicit-targets"
+        ;;
       unit)
         python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
         bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
@@ -264,6 +274,15 @@ run_platform_matrix() (
           "$selection_dir/actions.json" "$selection_dir/unit-targets"
         cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
         options+=(--config=unit --strip=never)
+        if [[ $include_nogo == true ]]; then
+          # Preserve the original unit selection before allowing Nogo through
+          # its wildcard roots. Verify the complete union before execution.
+          explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/unit-targets")
+          bazel aquery --config=rbe-matrix --config=x86_64 --config=unit \
+            --strip=never --build_tests_only "--universe_scope=$explicit_universe" \
+            "--build_event_json_file=$selection_dir/unit-profile.json" 'set()'
+          verification_options+=(--profile "$selection_dir/unit-profile.json")
+        fi
         ;;
       release-repository)
         printf '%s\n' '//test/release:repository_test' >> "$selection_dir/explicit-targets"
@@ -282,6 +301,9 @@ run_platform_matrix() (
           # by the separate public ARM profile above.
           cat test/syscalls.targets >> "$selection_dir/targets"
           options+=(--config=syscalls-amd64 '--test_tag_filters=-nogo,-allsave,-runsc_kvm,-runsc_slimvm' --strip=never)
+          if [[ $include_nogo == true ]]; then
+            cat "$selection_dir/syscalls-amd64-targets" >> "$selection_dir/explicit-targets"
+          fi
         fi
         cat "$selection_dir/syscalls-arm64-targets" >> "$selection_dir/explicit-targets"
         ;;
@@ -322,6 +344,13 @@ run_platform_matrix() (
         ;;
     esac
   done
+  if [[ $include_nogo == true ]]; then
+    if [[ $include_unit == true ]]; then
+      options+=(--test_tag_filters=-requires-kvm)
+    elif [[ $include_syscalls == true && $include_checkpoints == false ]]; then
+      options+=(--test_tag_filters=-allsave,-runsc_kvm,-runsc_slimvm)
+    fi
+  fi
   if [[ -s $selection_dir/filtered-targets ]]; then
     explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/filtered-targets")
     # Select only these profiles under their KVM policy. Applying it to the final
@@ -340,7 +369,7 @@ run_platform_matrix() (
   fi
   cat "$selection_dir/explicit-targets" "$selection_dir/shared-targets" > "$selection_dir/combined-targets"
   if [[ -s $selection_dir/combined-targets ]]; then
-    if [[ $include_syscalls == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
+    if [[ $include_nogo == true || $include_syscalls == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
       if [[ -s $selection_dir/shared-targets ]]; then
         explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/shared-targets")
         # Let Bazel expand explicit suites, including their manual members,
@@ -348,9 +377,14 @@ run_platform_matrix() (
         bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
           --build_tests_only "--universe_scope=$explicit_universe" \
           "--build_event_json_file=$selection_dir/shared-profile.json" 'set()'
-        verification_options=(--profile "$selection_dir/shared-profile.json")
+        verification_options+=(--profile "$selection_dir/shared-profile.json")
       fi
-      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/combined-targets")
+      : > "$selection_dir/verification-targets"
+      if [[ $include_nogo == true ]]; then
+        cat "$selection_dir/targets" >> "$selection_dir/verification-targets"
+      fi
+      cat "$selection_dir/combined-targets" >> "$selection_dir/verification-targets"
+      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/verification-targets")
       # Verify the final filters with Bazel itself. Never silently lose another
       # lane's explicit tests when combining it with the unit configuration.
       bazel aquery --config=rbe-matrix --config=x86_64 "${options[@]}" \
