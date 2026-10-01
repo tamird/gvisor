@@ -31,7 +31,8 @@ runtime suites, and the syscall roots shared with Make in `test/syscalls.targets
 Public CI's ordinary syscall selections live in the `syscalls-amd64` and
 `syscalls-arm64` configurations. Their loading options are shared by analysis
 and test commands. The AMD64 RBE lane retains its stricter
-filter because KVM workers remain unavailable. Bazel replaces repeated
+filter because KVM workers remain unavailable and Nogo has a dedicated lane.
+Bazel replaces repeated
 `--test_tag_filters` values, so that restriction cannot be appended to the public
 configuration. The ARM64 lane uses the public configuration directly.
 Most lanes use separate Bazel invocations to preserve their different selections
@@ -813,7 +814,9 @@ Bazel analyzes the ordered `test/syscalls.targets` roots with each public
 architecture configuration and `--build_tests_only`. The selector reads that
 invocation's configured top-level test events, then checks the actual variants'
 TestRunner configurations and worker properties. It reports KVM and ARM64
-Firecracker omissions explicitly. Public ARM64 syscall selection contains only
+Firecracker omissions explicitly. It separately reports Nogo owners selected
+by public CI but excluded by the established RBE runtime policy; the dedicated
+`nogo` lane retains them. Public ARM64 syscall selection contains only
 ptrace/systrap owners; it excludes native tests. Native syscall wrappers also
 retain their existing privileged namespace fixtures, rather than being treated
 as ordinary OCI tests.
