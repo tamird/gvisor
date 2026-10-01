@@ -1,6 +1,6 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
-load("//tools:defs.bzl", "bzl_library")
+load("//tools:defs.bzl", "bool_flag", "bzl_library")
 load(":platforms.bzl", "docker_exec_properties")
 
 package(
@@ -52,12 +52,18 @@ config_setting(
     define_values = {"rbe": "true"},
 )
 
+# Individual tests must be able to select the cgroup-v1 fixture. Bazel forbids
+# Starlark transitions from changing --define, so use a build setting instead.
+# https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/starlark/FunctionTransitionUtil.java#L305-L313
+bool_flag(
+    name = "cgroup_v1",
+    build_setting_default = False,
+)
+
 config_setting(
     name = "rbe_cgroup_v1",
-    define_values = {
-        "cgroup_v1": "true",
-        "rbe": "true",
-    },
+    define_values = {"rbe": "true"},
+    flag_values = {":cgroup_v1": "true"},
 )
 
 # BPF uses the downloaded compiler and its matching resource directory.
