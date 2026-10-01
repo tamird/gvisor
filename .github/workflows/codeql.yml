@@ -9,12 +9,11 @@
 name: "CodeQL"
 
 "on":
-  schedule:
-    # Daily at 1:00.
-    - cron: '0 1 * * *'
+  workflow_dispatch:
 
 jobs:
   analyze:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/rbe-codeql-qualification'
     name: Analyze
     # Runner size impacts CodeQL analysis time. To learn more, please see:
     #   - https://gh.io/recommended-hardware-resources-for-running-codeql
@@ -22,7 +21,7 @@ jobs:
     #   - https://gh.io/using-larger-runners
     # Consider using larger runners for possible analysis time improvements.
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
-    timeout-minutes: ${{ (matrix.language == 'swift' && 120) || 360 }}
+    timeout-minutes: ${{ (matrix.language == 'go' && 45) || 10 }}
     permissions:
       actions: read
       contents: read
@@ -46,6 +45,10 @@ jobs:
       with:
         go-version-file: 'go.mod'
 
+    - name: Download Go dependencies
+      if: ${{ matrix.language == 'go' }}
+      run: go mod download
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
@@ -63,6 +66,11 @@ jobs:
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
       uses: github/codeql-action/autobuild@v4
+      env:
+        # Dependencies are downloaded above. Avoid Make's Docker builder;
+        # keep CodeQL's normal full-checkout Go extraction.
+        # https://github.com/github/codeql/blob/6e9f9e383/go/extractor/cli/go-autobuilder/go-autobuilder.go#L588-L594
+        CODEQL_EXTRACTOR_GO_BUILD_COMMAND: ':'
 
     #   If the Autobuild fails above, remove it and uncomment the following three lines.
     #   modify them (or add more) to build your code if your project, please refer to the EXAMPLE below for guidance.

@@ -11,6 +11,8 @@ concurrency:
 
 jobs:
   build:
+    # The CodeQL qualification branch performs source analysis only.
+    if: github.repository != 'tamird/gvisor' || github.ref != 'refs/heads/rbe-codeql-qualification'
     runs-on: ubuntu-latest
     permissions:
       contents: read
