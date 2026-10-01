@@ -19,6 +19,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -1211,6 +1212,27 @@ func TestCreateController(t *testing.T) {
 		t.Fatalf("os.Mkdir(%q) failed: %v", readOnlyCtrlr, err)
 	}
 	defer os.Chmod(readOnlyCtrlr, 0755)
+
+	// CAP_DAC_OVERRIDE bypasses the directory permissions even for MkdirAll.
+	// Capabilities are per-thread; restore them before returning this thread.
+	runtime.LockOSThread()
+	header := unix.CapUserHeader{Version: unix.LINUX_CAPABILITY_VERSION_3}
+	var caps [2]unix.CapUserData
+	if err := unix.Capget(&header, &caps[0]); err != nil {
+		t.Fatalf("capget: %v", err)
+	}
+	originalCaps := caps
+	defer func() {
+		if err := unix.Capset(&header, &originalCaps[0]); err != nil {
+			// A failed restoration must not return altered credentials to Go.
+			t.Fatalf("restoring capabilities: %v", err)
+		}
+		runtime.UnlockOSThread()
+	}()
+	caps[0].Effective &^= 1 << unix.CAP_DAC_OVERRIDE
+	if err := unix.Capset(&header, &caps[0]); err != nil {
+		t.Fatalf("dropping CAP_DAC_OVERRIDE: %v", err)
+	}
 
 	skip, err = createController(c, "readonly")
 	if !skip {
