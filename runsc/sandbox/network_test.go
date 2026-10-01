@@ -30,6 +30,13 @@ import (
 	"gvisor.dev/gvisor/runsc/config"
 )
 
+func init() {
+	// Reserve the initial thread for main so namespace tests use threads that
+	// can exit if namespace restoration fails. Locking during init pins main
+	// to this thread: https://pkg.go.dev/runtime#LockOSThread.
+	runtime.LockOSThread()
+}
+
 func fdbasedLinkEqual(a, b boot.FDBasedLink) bool {
 	if a.Name != b.Name {
 		return false
@@ -151,27 +158,30 @@ func setupTestNamespace(t *testing.T) {
 
 	// Network namespaces are per-thread. Pin before saving or changing one.
 	runtime.LockOSThread()
+	restoreFailed := false
+	t.Cleanup(func() {
+		if !restoreFailed {
+			runtime.UnlockOSThread()
+		}
+	})
 	origNs, err := unix.Open("/proc/thread-self/ns/net", unix.O_RDONLY, 0)
 	if err != nil {
-		runtime.UnlockOSThread()
 		t.Fatalf("Failed to get current netns: %v", err)
 	}
 
+	t.Cleanup(func() { unix.Close(origNs) })
+
 	if err := unix.Unshare(unix.CLONE_NEWNET); err != nil {
-		unix.Close(origNs)
-		runtime.UnlockOSThread()
 		t.Fatalf("Failed to unshare netns: %v", err)
 	}
 
 	t.Cleanup(func() {
-		defer unix.Close(origNs)
 		if err := unix.Setns(origNs, unix.CLONE_NEWNET); err != nil {
-			t.Errorf("Failed to restore original netns: %v", err)
 			// Let the test goroutine exit with the thread locked rather than
 			// returning a thread in the wrong namespace to the runtime.
-			return
+			restoreFailed = true
+			t.Errorf("Failed to restore original netns: %v", err)
 		}
-		runtime.UnlockOSThread()
 	})
 }
 
