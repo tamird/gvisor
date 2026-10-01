@@ -199,16 +199,6 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         kwargs,
     )
 
-def go_is_test(rule_kind):
-    """Identifies the test rules exported by this Go wrapper for Nogo."""
-    return rule_kind in (
-        "go_test",
-        "go_amd64_test",
-        "go_arm64_test",
-        "static_go_amd64_test",
-        "static_go_arm64_test",
-    )
-
 def go_rule(rule, implementation, **kwargs):
     """Wraps a rule definition with Go attributes.
 

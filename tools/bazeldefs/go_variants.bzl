@@ -49,9 +49,22 @@ static_go_cov, _static_go_cov_transition = _go_binary_variant(static = True, cov
 # the original test attributes, providers, and Go configuration transition.
 go_test, _go_test_transition = with_cfg(_go_test).set("platforms", _MUSL_PLATFORMS).build()
 
-# These are extended test rules, so test attributes and Go providers remain on
-# the configured owner. Nogo recognizes their exported rule kinds as tests.
-go_amd64_test, _go_amd64_transition = with_test_architecture(_go_test, "amd64").build()
-go_arm64_test, _go_arm64_transition = with_test_architecture(_go_test, "arm64").build()
-static_go_amd64_test, _static_go_amd64_transition = with_test_architecture(_go_test, "amd64", static = True).build()
-static_go_arm64_test, _static_go_arm64_transition = with_test_architecture(_go_test, "arm64", static = True).build()
+def _compile_go_test(compile_exec_compatible_with, **kwargs):
+    kwargs["exec_compatible_with"] = compile_exec_compatible_with
+    _go_test(**kwargs)
+
+def _architecture_go_test(architecture, static = False):
+    # Reuse with_cfg's test frontend: it forwards runfiles, environment,
+    # coverage and test attributes while only runtime execution is constrained.
+    # Nogo follows the forwarded GoArchive through exports to the original test.
+    return with_test_architecture(
+        _compile_go_test,
+        architecture,
+        static = static,
+        extra_providers = [GoLibrary, GoArchive],
+    ).build()
+
+go_amd64_test, _go_amd64_transition = _architecture_go_test("amd64")
+go_arm64_test, _go_arm64_transition = _architecture_go_test("arm64")
+static_go_amd64_test, _static_go_amd64_transition = _architecture_go_test("amd64", static = True)
+static_go_arm64_test, _static_go_arm64_transition = _architecture_go_test("arm64", static = True)

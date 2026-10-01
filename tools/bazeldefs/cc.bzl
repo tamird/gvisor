@@ -9,8 +9,12 @@ load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolcha
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants", "with_test_architecture")
 
-cc_amd64_test, _cc_amd64_transition = with_test_architecture(_cc_test, "amd64").build()
-cc_arm64_test, _cc_arm64_transition = with_test_architecture(_cc_test, "arm64").build()
+def _compile_cc_test(compile_exec_compatible_with, **kwargs):
+    kwargs["exec_compatible_with"] = compile_exec_compatible_with
+    _cc_test(**kwargs)
+
+cc_amd64_test, _cc_amd64_transition = with_test_architecture(_compile_cc_test, "amd64", implicit_targets = ["{name}.dwp", "{name}.stripped"]).build()
+cc_arm64_test, _cc_arm64_transition = with_test_architecture(_compile_cc_test, "arm64", implicit_targets = ["{name}.dwp", "{name}.stripped"]).build()
 
 def cc_test(name, architectures = [], **kwargs):
     """Declares a C++ test and optional native architecture variants."""

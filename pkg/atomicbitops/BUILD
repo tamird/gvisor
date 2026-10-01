@@ -47,5 +47,6 @@ go_test(
         "arm64",
     ],
     library = ":atomicbitops",
+    visibility = ["//test/rbe:__pkg__"],
     deps = ["//pkg/sync"],
 )

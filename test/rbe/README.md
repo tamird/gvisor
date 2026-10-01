@@ -38,8 +38,8 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; no builder container is started. Normal Bazel caching remains
 enabled.
 
-The RBE configurations default to 32 concurrent actions, the setting used in
-qualification. Bazel's `auto` default follows the coordinator's CPU count
+The RBE configurations default to 400 concurrent actions. Bazel's `auto` default
+follows the coordinator's CPU count
 ([Bazel 8.5.0](https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L488-L490)),
 which limits remote concurrency on a small coordinator. To choose another
 limit, pass `--jobs` after `--config=rbe` or `--config=rbe-arm64`.
@@ -763,8 +763,10 @@ bazel test --config=rbe-matrix //test/rbe:platform_matrix
 ```
 
 This builds and runs two ordinary Go/C++ owners for both architectures in one
-Bazel invocation. Architecture constraints select matching native execution
-workers without changing the global host platform. Target-owned `test.*`
+Bazel invocation. The existing test frontend selects a matching native worker;
+compilation and linking retain the caller's execution constraints and consistent
+toolchain selection. No global host-platform override is needed. Target-owned
+`test.*`
 properties continue to select specialized workers; declaring an ARM64 variant
 does not supply the unavailable ARM64 Firecracker capacity. Broader lane selection
 has not yet migrated to these variants.
