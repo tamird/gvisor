@@ -158,6 +158,15 @@ lane has no separate race variant in the public pipeline.
 Use `test/rbe/qualify.sh unit-v1` for the AMD64 cgroup-v1 selection. Its
 disposable-VM setup is shared with the Docker-v1 lane described below.
 
+The `container` and `container-v1` lanes retain the public AMD64
+`make container-tests` selection: `//runsc/container/...` with only Nogo tests
+filtered out. Unlike the unit lanes, they include the KVM cases. `container`
+sets `CGROUPV2=true`; `container-v1` uses the same disposable cgroup-v1 setup
+as `unit-v1`. The container test requests a root Firecracker worker for its
+nested namespaces, but that does not provide the required KVM device. Both
+full container lanes remain unqualified without hosted KVM capacity; missing
+capabilities remain failures.
+
 ARM64 unit qualification retains the full canonical selection. These owners
 require Firecracker workers and remain unqualified without ARM64 capacity:
 
@@ -328,12 +337,11 @@ The focused `//test/rbe:cgroup_v1_fixture_test` retains the existing
 `TestCgroupV1` assertions separately from the generic wrapper.
 
 The `unit-v1` lane uses the same wrapper and preserves `--config=unit`'s roots,
-filters and exclusions. Both v1 lanes select `--config=rbe-cgroup-v1`, which
+filters and exclusions. All three v1 lanes select `--config=rbe-cgroup-v1`, which
 gives test actions the privileged setup environment while compilation inherits
 the ordinary OCI platform. Tests retain their own memory settings. The live
 NVIDIA checksum test also uses this environment, including its CA trust and
 external networking, so setup can mount controllers before HTTPS requests.
-The full container-v1 lane still needs hosted KVM capacity.
 
 Default `make docker-tests` and the original four test labels retain installed
 Docker, staged bundles, custom `RUNTIME_BIN`/`RUNSC_TARGET`, `RUNTIME_ARGS`,
