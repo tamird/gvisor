@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -138,8 +139,9 @@ class ConfiguredTarget:
 
 
 def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
-    """Read only this successful analysis invocation's top-level test identities."""
+    """Read this successful analysis invocation's runnable top-level tests."""
     targets: dict[str, ConfiguredTarget] = {}
+    skipped: set[tuple[str, str]] = set()
     succeeded = False
     for line_number, line in enumerate(Path(events_path).read_text().splitlines(), start=1):
         event = json.loads(line)
@@ -148,6 +150,15 @@ def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
         if "buildFinished" in event_id:
             finished = event.get("finished")
             succeeded = isinstance(finished, dict) and finished.get("overallSuccess") is True
+        if isinstance(aborted := event.get("aborted"), dict) and aborted.get("reason") == "SKIPPED":
+            if not (
+                isinstance(completed := event_id.get("targetCompleted"), dict)
+                and isinstance(label := completed.get("label"), str)
+                and isinstance(configuration := completed.get("configuration"), dict)
+                and isinstance(checksum := configuration.get("id"), str)
+            ):
+                raise ValueError(f"Invalid skipped target identity: {event}")
+            skipped.add((label, checksum))
         if "targetConfigured" not in event_id:
             continue
         identity = event_id["targetConfigured"]
@@ -177,6 +188,10 @@ def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
         if len(configurations) != 1 or label in targets:
             raise ValueError(f"Ambiguous top-level test identity: {event}")
         targets[label] = ConfiguredTarget(tags, configurations[0])
+    for label, checksum in sorted(skipped):
+        if (target := targets.get(label)) is not None and target.configuration == checksum:
+            del targets[label]
+            print(f"Bazel skipped {label} in configuration {checksum}", file=sys.stderr)
     if not succeeded or not targets:
         raise ValueError(f"Expected successful, nonempty test analysis: {events_path}")
     return targets
