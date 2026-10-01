@@ -5,15 +5,18 @@ name: CI
     branches:
       - "*"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
+    # The pilot runs entirely on Remote Bazel, without this builder job.
+    if: github.repository != 'tamird/gvisor' || github.ref != 'refs/heads/rbe-actions-pilot'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
     - name: bazel
       run: |
@@ -33,3 +36,49 @@ jobs:
       with:
           name: runsc
           path: bin/runsc
+
+  remote-smoke:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/rbe-actions-pilot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+    - name: Check the Remote Bazel credential
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
+
+    - name: Checkout the triggering commit
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+
+    - name: Download the pinned BuildBuddy CLI
+      shell: bash
+      run: |
+        curl --fail --silent --show-error --location --max-time 120 \
+          https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 \
+          --output "$RUNNER_TEMP/bb"
+        printf '%s  %s\n' \
+          f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb \
+          "$RUNNER_TEMP/bb" | sha256sum --check --strict
+        chmod +x "$RUNNER_TEMP/bb"
+
+    - name: Qualify smoke on Remote Bazel
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GIT_REPO_DEFAULT_BRANCH: master
+      run: |
+        # Expand the script variables only on the remote coordinator.
+        # shellcheck disable=SC2016
+        exec "$RUNNER_TEMP/bb" remote \
+          --run_from_commit="$GITHUB_SHA" \
+          --os=linux --arch=amd64 \
+          --runner_exec_properties=EstimatedCPU=4 \
+          --runner_exec_properties=EstimatedMemory=8GB \
+          --runner_exec_properties=EstimatedFreeDiskBytes=40GB \
+          --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
+          --timeout=15m --disable_retry \
+          --script='test "$(git rev-parse HEAD)" = "$QUALIFICATION_COMMIT" && exec test/rbe/qualify.sh smoke'

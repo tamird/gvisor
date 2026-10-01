@@ -33,6 +33,36 @@ and instrumentation. Connection settings and credentials come from Bazel's
 configuration; no builder container is started. Normal Bazel caching remains
 enabled.
 
+The `rbe-actions-pilot` branch in `tamird/gvisor` adds a narrow GitHub Actions
+frontend to the existing CI workflow. A push to that branch runs only the
+`smoke` lane through the pinned BuildBuddy CLI. The Actions worker checks out
+and submits the immutable triggering commit; Bazel and the test run on hosted
+Linux workers. Pull requests cannot trigger this credentialed job. The
+workflow token has read-only contents permission, and checkout does not persist
+it.
+
+The first job step requires the `BUILDBUDDY_API_KEY` repository secret. Without
+it, the job fails before checkout, tool download or remote submission. This
+permits publishing and reviewing the pilot before provisioning its credential.
+After credential setup is authorized and complete, rerun the failed job at the
+same commit; its first step verifies secret availability before starting any
+remote work. No default-branch workflow or repository setting changes are
+required.
+
+The CLI streams the remote logs and returns the remote exit status. Its
+interrupt handling requests remote cancellation; the independent 15-minute
+remote timeout also bounds work if the Actions process is killed or loses
+connectivity. The Actions job has a 20-minute timeout. Normal Bazel caches
+remain enabled. Branch pushes and GitHub's native job rerun are the pilot's
+entrypoints.
+
+This pilot checks submission and completion through CI. It does not establish
+full public coverage or turn existing qualification failures into passes. It
+skips the legacy builder job and its `runsc` artifact upload on the pilot
+branch; build and test outputs remain in BuildBuddy. Other branches retain the
+existing build/artifact job. A broader rollout must retain the remaining
+lanes' failures and gaps and preserve the required release artifact contract.
+
 The RBE configurations default to 32 concurrent actions, the setting used in
 qualification. Bazel's `auto` default follows the coordinator's CPU count
 ([Bazel 8.5.0](https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/buildtool/BuildRequestOptions.java#L488-L490)),
