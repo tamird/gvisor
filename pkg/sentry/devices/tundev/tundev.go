@@ -26,11 +26,14 @@ import (
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/errors/linuxerr"
 	"gvisor.dev/gvisor/pkg/hostarch"
+	"gvisor.dev/gvisor/pkg/safemem"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
 	"gvisor.dev/gvisor/pkg/sentry/inet"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
+	"gvisor.dev/gvisor/pkg/sentry/pgalloc"
 	"gvisor.dev/gvisor/pkg/sentry/socket/netstack"
+	"gvisor.dev/gvisor/pkg/sentry/usage"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/tcpip/link/tun"
 	"gvisor.dev/gvisor/pkg/usermem"
@@ -168,13 +171,28 @@ func (fd *tunFD) Write(ctx context.Context, src usermem.IOSequence, opts vfs.Wri
 	if int64(mtu) < src.NumBytes() {
 		return 0, unix.EMSGSIZE
 	}
-	view := buffer.NewView(int(src.NumBytes()))
-	if _, err := io.CopyN(view, src.Reader(ctx), src.NumBytes()); err != nil {
-		view.Release()
+	mf := pgalloc.MemoryFileFromContext(ctx)
+	storage, err := mf.AllocateMapped(uint64(src.NumBytes()), buffer.MaxChunkSize, usage.System, pgalloc.MemoryCgroupIDFromContext(ctx))
+	if err != nil {
+		// Match tun_alloc_skb's allocation failure, rather than exposing the
+		// MemoryFile backing store's errors to the writer.
+		return 0, linuxerr.ENOBUFS
+	}
+	var data buffer.Buffer
+	defer data.Release()
+	blocks := make([]safemem.Block, 0, len(storage))
+	for _, s := range storage {
+		// Every view is full, so Append only links it into data. The buffer
+		// now owns the page references, including on a later copy failure.
+		data.Append(buffer.NewViewWithExternalStorage(s))
+		blocks = append(blocks, safemem.BlockFromSafeSlice(s.Bytes()))
+	}
+	writer := safemem.BlockSeqWriter{Blocks: safemem.BlockSeqFromSlice(blocks)}
+	if _, err := src.CopyInTo(ctx, &writer); err != nil {
 		return 0, err
 	}
-	data := buffer.MakeWithView(view)
-	defer data.Release()
+	// Copy the entire user range before injecting any packet. Device.Write
+	// retains shared chunk references when delivery outlives this call.
 	return fd.device.Write(&data)
 }
 
