@@ -13,7 +13,8 @@ REGISTRY = json.loads((ROOT / "registry.json").read_text())
 REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 CHECKED_AT = datetime.now(timezone.utc).isoformat()
-REQUEST_LIMIT = 20
+REQUEST_LIMIT = 32
+PR_BATCH_SIZE = 5
 requests = 0
 
 CHECKS = """
@@ -51,8 +52,10 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
     result = subprocess.run(
         ["gh", "api", "graphql", "--input", "-"],
         input=json.dumps({"query": query, "variables": variables or {}}),
-        text=True, capture_output=True, check=True, timeout=60,
+        text=True, capture_output=True, check=False, timeout=60,
     )
+    if result.returncode:
+        raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
     response = json.loads(result.stdout)
     if response.get("errors"):
         raise RuntimeError(f"GitHub query failed: {response['errors']}")
@@ -104,9 +107,9 @@ def normalize(pr: dict) -> dict:
 def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:
     result = {}
     owner, name = REPO.split("/")
-    for start in range(0, len(numbers), 15):
+    for start in range(0, len(numbers), PR_BATCH_SIZE):
         fields = " ".join(f"p{number}:pullRequest(number:{number}){{{FIELDS}{TIMELINE if timeline else 'body'}}}"
-                          for number in numbers[start:start + 15])
+                          for number in numbers[start:start + PR_BATCH_SIZE])
         response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')
         for pr in response["repository"].values():
             if pr is None:

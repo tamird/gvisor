@@ -48,9 +48,11 @@ never reads or writes credentials. Its GraphQL queries fetch the author's open
 PRs, previously discovered/tracked closed PRs, and linked capacity issues.
 Previously discovered PR identities stay in the snapshot after closure, so a
 promoted branch does not reappear. One measured update fetched
-74 original PRs and eight verified import PRs in eight requests. There is a
-20-request ceiling and a 200-open-PR bound. Failed queries leave the previous
-snapshot unchanged.
+81 original PRs and ten verified import PRs in 21 requests. PR detail
+queries use batches of five to limit the combined check, review and timeline
+payload. There is a 32-request ceiling and a 200-open-PR bound.
+Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
+unchanged.
 
 The updater is the sole GitHub status/attribute owner. Each PR records its exact
 head SHA, observation time, GitHub review decision, labels, merge state, unresolved
