@@ -71,9 +71,10 @@ Select ARM64 targets with `--arch=arm64`, for example:
 test/rbe/qualify.sh --arch=arm64 unit
 ```
 
-Test lanes use the same selection and filters as AMD64. Their `rbe-arm64`
-configuration selects ARM64 build tools and execution workers; `aarch64`
-selects the target architecture. Build lanes instead use AMD64 execution
+The ordinary `syscalls` lane shares the public ARM64 ptrace/systrap selection
+through `--config=syscalls-arm64`, excluding native and save/restore tests.
+Test lanes use `rbe-arm64` to select ARM64 build tools and execution workers;
+`aarch64` selects the target architecture. Build lanes use AMD64 execution
 workers for either target architecture. Selecting an
 architecture does not establish worker support or qualify the other lanes.
 

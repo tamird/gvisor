@@ -383,7 +383,7 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":muscle: System call tests (ARM64)"
-    command: make BAZEL_OPTIONS=--test_tag_filters=-allsave,runsc_ptrace,runsc_systrap syscall-tests
+    command: make OPTIONS=--config=syscalls-arm64 syscall-tests
     parallelism: 10
     agents:
       arch: "arm64"
@@ -402,7 +402,7 @@ steps:
   - <<: *common
     <<: *source_test_continuous
     label: ":linux: System call tests on release-candidate Linux (ARM64)"
-    command: make BAZEL_OPTIONS=--test_tag_filters=-allsave,runsc_ptrace,runsc_systrap syscall-tests
+    command: make OPTIONS=--config=syscalls-arm64 syscall-tests
     parallelism: 10
     agents:
       arch: "arm64"
