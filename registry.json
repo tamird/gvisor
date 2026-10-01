@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T04:21:29.496184+00:00",
+    "updatedAt": "2026-10-01T04:47:56.079706+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
-    "edgeDirection": "Prerequisite \u2192 dependent. Integration membership is listed in details and excluded from dependency reach.",
+    "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
     "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Retained unpublished source remains visible; obsolete validation branches are omitted. Landed prerequisites are not active blockers."
   },
   "groups": [
@@ -701,7 +701,8 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-09-03T21:32:42Z"
+      "updatedAt": "2026-09-03T21:32:42Z",
+      "summary": "Faithful single-commit rebase 199ebf489 on 78424a487 preserves the three LisaFS socket and node lifetime fixes, existing regression tests and restored leak checks, together with current upstream lock contracts and block-device protection. Source review passes; focused hosted unit, Nogo and host-socket validation is pending."
     },
     {
       "id": "pr:14360",
@@ -1308,6 +1309,17 @@
       "group": "tests",
       "status": "review pending",
       "summary": "Published source 14f731c92 updates the harness to CNI plugins 1.9.1. At validation source 78ab8a103, the canonical harness image builds and the actual loopback plugin passes ADD/DEL with protocol 0.3.1 and ADD/CHECK/DEL with protocol 1.0.0. The image archive remains in remote storage, unpublished, and the declared prebuilt image pin is unchanged. This does not reproduce or establish the historical EINTR cause, qualify full CRI or ARM runtime, or resolve the separate xt_comment gap. The source update is integrated in 3b4759d75. Contributor review remains pending; no PR is open."
+    },
+    {
+      "id": "branch:php-8-3-35",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "php-8-3-35",
+      "title": "Update PHP runtime tests to 8.3.35",
+      "url": "https://github.com/tamird/gvisor/tree/php-8-3-35",
+      "group": "tests",
+      "status": "validating",
+      "summary": "Published source 190427de0 updates the released PHP fixture from 8.3.7 to 8.3.35. Source review passes. Hosted validation at 564b0f607 is running all four complete, unsharded directfs/goferfs partition owners against the source-built image. Results are pending; no runtime pass is claimed. No PR is open, and the declared prebuilt image pin and qualification integration remain unchanged."
     }
   ],
   "edges": [
