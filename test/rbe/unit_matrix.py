@@ -311,7 +311,7 @@ def main() -> None:
     container.add_argument("events")
     roots = commands.add_parser("build-roots")
     roots.add_argument("events")
-    patterns = commands.add_parser("universe")
+    patterns = commands.add_parser("universe-rc")
     patterns.add_argument("patterns")
     kvm = commands.add_parser("kvm-query")
     kvm.add_argument("roots")
@@ -347,8 +347,11 @@ def main() -> None:
         )))
     elif args.command == "build-roots":
         print("\n".join(sorted(configured_targets(args.events, tests=False))))
-    elif args.command == "universe":
-        print(universe(args.patterns))
+    elif args.command == "universe-rc":
+        # Bazel's rc tokenizer consumes backslash escapes inside double quotes.
+        # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/cpp/util/strings.cc#L181-L220
+        value = universe(args.patterns).replace("\\", "\\\\").replace('"', '\\"')
+        print('aquery:rbe-selection "--universe_scope=' + value + '"')
     elif args.command == "kvm-query":
         tag = query_word(r"(^|\[|, )requires-kvm(,|\]|$)")
         print("attr(tags, " + tag + ", tests(" + target_set(owner_labels(args.roots)) + "))")

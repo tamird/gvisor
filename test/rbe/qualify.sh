@@ -198,21 +198,30 @@ language_test_options() {
   done
 }
 
+# A file keeps large ordered target lists below Linux's argument-size limit.
+# Aquery ignores target_pattern_file; apply this config after the caller's options.
+analyze_profile() {
+  local patterns=$1 events=$2
+  shift 2
+  local rc=$events.bazelrc
+  python3 test/rbe/unit_matrix.py universe-rc "$patterns" > "$rc"
+  bazel "--bazelrc=$rc" aquery "$@" --config=rbe-selection \
+    "--build_event_json_file=$events" 'set()'
+}
+
 # Let Bazel select each public syscall profile before checking worker capacity.
 # Aquery inherits build options, so the canonical loading filters live there;
 # test inherits the same options. Its ordered universe comes from Make's roots.
 select_syscall_matrix() {
-  local selection_dir=$1 syscall_arch target_config syscall_universe
-  syscall_universe=$(python3 test/rbe/unit_matrix.py universe test/syscalls.targets)
+  local selection_dir=$1 syscall_arch target_config
   for syscall_arch in amd64 arm64; do
     target_config=x86_64
     if [[ $syscall_arch == arm64 ]]; then
       target_config=aarch64
     fi
-    bazel aquery --config=rbe-matrix "--config=$target_config" \
-      "--config=syscalls-$syscall_arch" --build_tests_only \
-      "--universe_scope=$syscall_universe" \
-      "--build_event_json_file=$selection_dir/syscalls-$syscall_arch-profile.json" 'set()'
+    analyze_profile test/syscalls.targets "$selection_dir/syscalls-$syscall_arch-profile.json" \
+      --config=rbe-matrix "--config=$target_config" \
+      "--config=syscalls-$syscall_arch" --build_tests_only
     python3 test/rbe/unit_matrix.py profile-actions \
       "$selection_dir/syscalls-$syscall_arch-profile.json" "$syscall_arch" \
       > "$selection_dir/syscalls-$syscall_arch.query"
@@ -233,24 +242,21 @@ select_syscall_matrix() {
 # a mixed cgroup invocation. A separate analysis retains non-test build roots;
 # filtered tests' build-only work remains in standalone unit/build-all lanes.
 select_unit_profile() {
-  local selection_dir=$1 unit_universe
+  local selection_dir=$1
   if [[ -f $selection_dir/unit-profile.json ]]; then
     return
   fi
-  unit_universe=$(python3 test/rbe/unit_matrix.py universe test/unit.targets)
-  bazel aquery --config=rbe-matrix --config=x86_64 --config=unit --strip=never \
-    --build_tests_only "--universe_scope=$unit_universe" \
-    "--build_event_json_file=$selection_dir/unit-profile.json" 'set()'
-  bazel aquery --config=rbe-matrix --config=x86_64 --config=unit --strip=never \
-    --nobuild_tests_only "--universe_scope=$unit_universe" \
-    "--build_event_json_file=$selection_dir/unit-build-profile.json" 'set()'
+  analyze_profile test/unit.targets "$selection_dir/unit-profile.json" \
+    --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
+  analyze_profile test/unit.targets "$selection_dir/unit-build-profile.json" \
+    --config=rbe-matrix --config=x86_64 --config=unit --strip=never --nobuild_tests_only
   python3 test/rbe/unit_matrix.py build-roots "$selection_dir/unit-build-profile.json" \
     > "$selection_dir/unit-build-targets"
   cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
 }
 
 select_cgroup_profile() {
-  local selection_dir=$1 lane=$2 profile_universe
+  local selection_dir=$1 lane=$2
   local -a profile_options=() targets=()
   if [[ $lane == unit-v1 ]]; then
     select_unit_profile "$selection_dir"
@@ -266,10 +272,8 @@ select_cgroup_profile() {
     docker-v1) shared_test_targets docker amd64 ;;
   esac
   printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-roots"
-  profile_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/$lane-roots")
-  bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
-    "${profile_options[@]}" --build_tests_only "--universe_scope=$profile_universe" \
-    "--build_event_json_file=$selection_dir/$lane-profile.json" 'set()'
+  analyze_profile "$selection_dir/$lane-roots" "$selection_dir/$lane-profile.json" \
+    --config=rbe-matrix --config=x86_64 --strip=never "${profile_options[@]}" --build_tests_only
   if [[ $lane == container ]]; then
     python3 test/rbe/unit_matrix.py container-targets "$selection_dir/$lane-profile.json" \
       >> "$selection_dir/explicit-targets"
@@ -284,7 +288,7 @@ select_cgroup_profile() {
 # not suppress another requested lane's owners. Release owns both CPU builds.
 run_platform_matrix() (
   set -e
-  local selection_dir lane command=build include_unit=false include_syscalls=false explicit_unit=false explicit_universe
+  local selection_dir lane command=build include_unit=false include_syscalls=false explicit_unit=false
   local -a options=() targets=() verification_options=() unit_selection_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
@@ -373,13 +377,11 @@ run_platform_matrix() (
     esac
   done
   if [[ -s $selection_dir/filtered-targets ]]; then
-    explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/filtered-targets")
     # Select only these profiles under their KVM policy. Applying it to the final
     # invocation would also change unrelated lanes' filters.
-    bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
-      --build_tests_only --test_tag_filters=-requires-kvm \
-      "--universe_scope=$explicit_universe" \
-      "--build_event_json_file=$selection_dir/filtered-profile.json" 'set()'
+    analyze_profile "$selection_dir/filtered-targets" "$selection_dir/filtered-profile.json" \
+      --config=rbe-matrix --config=x86_64 --strip=never \
+      --build_tests_only --test_tag_filters=-requires-kvm
     python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/filtered-targets" \
       > "$selection_dir/filtered-kvm.query"
     bazel query --output=label --query_file="$selection_dir/filtered-kvm.query" \
@@ -392,20 +394,16 @@ run_platform_matrix() (
   if [[ -s $selection_dir/combined-targets ]]; then
     if [[ $include_syscalls == true || $explicit_unit == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
       if [[ -s $selection_dir/shared-targets ]]; then
-        explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/shared-targets")
         # Let Bazel expand explicit suites, including their manual members,
         # before comparing their selection under the combined lane's filters.
-        bazel aquery --config=rbe-matrix --config=x86_64 --strip=never \
-          --build_tests_only "--universe_scope=$explicit_universe" \
-          "--build_event_json_file=$selection_dir/shared-profile.json" 'set()'
+        analyze_profile "$selection_dir/shared-targets" "$selection_dir/shared-profile.json" \
+          --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only
         verification_options=(--profile "$selection_dir/shared-profile.json")
       fi
-      explicit_universe=$(python3 test/rbe/unit_matrix.py universe "$selection_dir/combined-targets")
       # Verify the final filters with Bazel itself. Never silently lose another
       # lane's explicit tests when combining it with the unit configuration.
-      bazel aquery --config=rbe-matrix --config=x86_64 "${options[@]}" \
-        --build_tests_only "--universe_scope=$explicit_universe" \
-        "--build_event_json_file=$selection_dir/combined-profile.json" 'set()'
+      analyze_profile "$selection_dir/combined-targets" "$selection_dir/combined-profile.json" \
+        --config=rbe-matrix --config=x86_64 "${options[@]}" --build_tests_only
       python3 test/rbe/unit_matrix.py verify \
         "$selection_dir/explicit-targets" "$selection_dir/combined-profile.json" "${verification_options[@]}"
     fi
