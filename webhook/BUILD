@@ -8,7 +8,10 @@ package(
 
 filegroup(
     name = "go_export_sources",
-    srcs = glob(["*.go"]),
+    srcs = glob(
+        ["*.go"],
+        exclude = ["*_test.go"],
+    ),
     visibility = ["//:__pkg__"],
 )
 

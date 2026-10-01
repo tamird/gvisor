@@ -68,7 +68,7 @@ func TestAssemble(t *testing.T) {
 				t.Fatal(err)
 			}
 			var output bytes.Buffer
-			err := assemble(gopath, goMod, []string{goMod, command}, &output)
+			err := assemble(gopath, goMod, []string{command}, &output)
 			if tc.wantError != "" {
 				if err == nil || !strings.Contains(err.Error(), tc.wantError) {
 					t.Fatalf("assemble error = %v, want %q", err, tc.wantError)
@@ -109,7 +109,7 @@ func TestAssemble(t *testing.T) {
 				t.Errorf("archive entries are not sorted: %v", names)
 			}
 			var repeated bytes.Buffer
-			if err := assemble(gopath, goMod, []string{goMod, command}, &repeated); err != nil {
+			if err := assemble(gopath, goMod, []string{command}, &repeated); err != nil {
 				t.Fatal(err)
 			}
 			if !bytes.Equal(output.Bytes(), repeated.Bytes()) {
