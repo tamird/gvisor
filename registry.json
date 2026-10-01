@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T01:35:01.917349+00:00",
+    "updatedAt": "2026-10-01T01:58:12.662145+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -791,7 +791,7 @@
       "status": "open",
       "reviewDecision": "APPROVED",
       "updatedAt": "2026-09-27T21:24:28Z",
-      "summary": "Prerequisite #14502 has landed. The dependent source update is in progress and has not yet been published; landing the prerequisite does not complete that update."
+      "summary": "Updated and published at 2bf6f9791 on current upstream after #14502 landed. The complete checklocks test_nogo owner passes ARM64 and AMD64 in the hosted GNU validation. This is not builder-free qualification. The reported approval predates this source update; it is not a new review of the updated head."
     },
     {
       "id": "pr:12483",
@@ -1286,16 +1286,6 @@
     }
   ],
   "edges": [
-    {
-      "from": "pr:14502",
-      "to": "pr:14237",
-      "type": "depends_on",
-      "reason": "The declared prerequisite landed upstream as 5a095390e. This historical source dependency is retained, but the closed prerequisite no longer blocks active dependency paths.",
-      "evidence": [
-        "https://github.com/google/gvisor/pull/14237",
-        "https://github.com/google/gvisor/commit/5a095390e"
-      ]
-    },
     {
       "from": "pr:14502",
       "to": "pr:15035",
