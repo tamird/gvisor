@@ -1,5 +1,7 @@
+load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
 load("//test/runtimes:defs.bzl", "runtime_tests")
 load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -31,11 +33,12 @@ _RUNTIMES = {
         partitions = 10,
         shard_count = most_shards,
     ),
-    "php8.3.7": dict(
-        exclude_file = "exclude/php8.3.7.csv",
+    "php8.3.35": dict(
+        exclude_file = "exclude/php8.3.35.csv",
         lang = "php",
         partitions = 2,
         shard_count = more_shards,
+        source_archive = "//test/docker:php_source_amd64",
     ),
     "python3.12.3": dict(
         exclude_file = "exclude/python.csv",
@@ -61,3 +64,59 @@ bzl_library(
         "@bazel_skylib//lib:shell",
     ],
 )
+
+# Validation only: consume the same declared archive without rebuilding PHP.
+_PHP_METADATA_MODES = [
+    ("native", None, []),
+    (
+        "directfs",
+        "//:release",
+        [
+            "--platform=systrap",
+            "--directfs=true",
+        ],
+    ),
+    (
+        "goferfs",
+        "//:release",
+        [
+            "--platform=systrap",
+            "--directfs=false",
+        ],
+    ),
+]
+
+[
+    docker_daemon_config(
+        name = "php_metadata_" + mode_name + "_config",
+        testonly = True,
+        images = ["//test/docker:php_source_amd64"],
+        runtime = mode_runtime,
+        runtime_args = mode_args,
+        tags = ["manual"],
+    )
+    for mode_name, mode_runtime, mode_args in _PHP_METADATA_MODES
+]
+
+[
+    docker_command_test(
+        name = "php_metadata_" + mode_name + "_test",
+        size = "large",
+        timeout = "long",
+        command = ":php_metadata.sh",
+        command_args = [
+            "$(rootpath //test/runtimes/proctor:proctor)",
+            "runc" if mode_runtime == None else "runsc",
+            mode_name,
+        ],
+        data = ["//test/runtimes/proctor"],
+        docker_config = ":php_metadata_" + mode_name + "_config",
+        exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+        tags = ["manual"],
+        target_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    )
+    for mode_name, mode_runtime, mode_args in _PHP_METADATA_MODES
+]
