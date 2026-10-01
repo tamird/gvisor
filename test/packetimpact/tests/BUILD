@@ -474,5 +474,8 @@ test_suite(
         "notap",
         "packetimpact",
     ],
-    tests = existing_rules(),
+    tests = [t.name + suffix for t in ALL_TESTS for suffix in [
+        "_native_test",
+        "_netstack_test",
+    ]],
 )
