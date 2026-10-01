@@ -2,7 +2,7 @@
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("//test/docker:defs.bzl", "docker_daemon_config", "docker_image_archive")
-load("//tools:defs.bzl", "go_test", "local_test_tags")
+load("//tools:defs.bzl", "go_test", "local_test_tags", "runtime_test_timeout")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 _RUNTIME_MODES = {
@@ -50,6 +50,7 @@ def _runtime_test_impl(ctx):
 
 _runtime_test = rule(
     implementation = _runtime_test_impl,
+    cfg = runtime_test_timeout,
     attrs = {
         "image": attr.string(
             mandatory = False,
