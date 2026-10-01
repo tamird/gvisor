@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T23:44:11.234759+00:00",
+    "updatedAt": "2026-10-01T23:54:47.726980+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1656,7 +1656,7 @@
       "url": "https://github.com/google/gvisor/pull/15202",
       "group": "tests",
       "status": "open",
-      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. Current-head GitHub checks pass or are skipped, and no exact-source import is visible yet. This publication does not establish that it fixes either earlier import cleanup failure."
+      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. EtiennePerot approved the current head at 23:48:48 UTC. GitHub checks pass or are skipped and import/copybara reports success, but no associated public exact-source import PR is visible yet; the source remains open. This publication does not establish that it fixes either earlier import cleanup failure."
     }
   ],
   "edges": [
