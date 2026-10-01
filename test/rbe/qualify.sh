@@ -32,8 +32,9 @@ use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
 The all architecture selection combines unit, release-repository, syscalls,
-smoke, smoke-race, do, docker, root, portforward, bwrap and workflows in one
-invocation. Only unit and syscalls add ARM64 variants.
+smoke, smoke-race, do, docker, root, portforward, bwrap, workflows,
+language-directfs and language-goferfs in one invocation. Only unit and syscalls
+add ARM64 variants.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -87,7 +88,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows) ;;
+      unit|release-repository|syscalls|smoke|smoke-race|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -158,7 +159,7 @@ run_source_lane() (
 )
 
 # Set the caller's targets array from the same owning suites for standalone and
-# combined invocations. These lanes need no invocation-wide test settings.
+# combined invocations.
 shared_test_targets() {
   case "$1" in
     do) targets=(//:do_tests) ;;
@@ -167,8 +168,20 @@ shared_test_targets() {
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
+    language-directfs|language-goferfs) targets=("//test/runtimes:${1#language-}_tests") ;;
     *) printf 'Unknown shared test lane: %s\n' "$1" >&2; return 2 ;;
   esac
+}
+
+# The runtime runner owns defaults. Forward only explicit caller settings,
+# including empty values, through Bazel's client environment.
+language_test_options() {
+  local name
+  for name in RUNTIME_TESTS_FILTER RUNTIME_TESTS_PER_TEST_TIMEOUT RUNTIME_TESTS_RUNS_PER_TEST RUNTIME_TESTS_FLAKY_IS_ERROR RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT; do
+    if [[ ${!name+x} ]]; then
+      options+=("--test_env=$name")
+    fi
+  done
 }
 
 # Let Bazel select each public syscall profile before checking worker capacity.
@@ -253,8 +266,11 @@ run_platform_matrix() (
         printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
-      do|docker|root|portforward|bwrap|workflows)
+      do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs)
         shared_test_targets "$lane"
+        if [[ $lane == language-* ]]; then
+          language_test_options
+        fi
         printf '%s\n' "${targets[@]}" >> "$selection_dir/shared-targets"
         printf 'Combined lane %s retains AMD64 execution; no ARM64 coverage is added.\n' "$lane"
         options+=(--strip=never)
@@ -431,13 +447,8 @@ run_lane() (
         printf 'Language runtime images are declared only for AMD64.\n' >&2
         return 1
       fi
-      options=(
-        "--test_env=RUNTIME_TESTS_FILTER=${RUNTIME_TESTS_FILTER:-}"
-        "--test_env=RUNTIME_TESTS_PER_TEST_TIMEOUT=${RUNTIME_TESTS_PER_TEST_TIMEOUT:-20m}"
-        "--test_env=RUNTIME_TESTS_RUNS_PER_TEST=${RUNTIME_TESTS_RUNS_PER_TEST:-1}"
-        "--test_env=RUNTIME_TESTS_FLAKY_IS_ERROR=${RUNTIME_TESTS_FLAKY_IS_ERROR:-true}"
-        "--test_env=RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT=${RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT:-true}")
-      targets=("//test/runtimes:${lane#language-}_tests")
+      language_test_options
+      shared_test_targets "$lane"
       ;;
     kubernetes)
       if [[ $arch != amd64 ]]; then
