@@ -33,8 +33,9 @@ Public CI's ordinary syscall selections live in the `syscalls-amd64` and
 filter because KVM workers remain unavailable. Bazel replaces repeated
 `--test_tag_filters` values, so that restriction cannot be appended to the public
 configuration. The ARM64 lane uses the public configuration directly.
-The lanes use separate Bazel invocations to preserve their different selections
-and instrumentation. Connection settings and credentials come from Bazel's
+Most lanes use separate Bazel invocations to preserve their different selections
+and instrumentation. The mixed-platform unit and release lanes below share one
+invocation. Connection settings and credentials come from Bazel's
 configuration; no builder container is started. Normal Bazel caching remains
 enabled.
 
@@ -69,6 +70,20 @@ selection and exclusions. The `python-distributions` lane builds
 `//sandboxexec/sandbox/python:dist` with the canonical metadata's version;
 registry version discovery, installation and publication are separate work.
 CodeQL remains owned by its scheduled GitHub workflow and is not covered here.
+
+Run the mixed-platform units and release repository checks together:
+
+```sh
+test/rbe/qualify.sh --arch=all unit release-repository
+```
+
+This uses one `bazel test` invocation. The unit selector preserves the AMD64
+selection and adds the declared ARM64 variants, reporting unavailable ARM64
+Firecracker workers. The existing release graph builds Debian, bzip2 and zstd
+packages for both CPUs, then checks signing and APT metadata on AMD64. Its
+owning test preserves the release build's default stripping policy even though
+unit tests use `--strip=never`. Either lane can also be selected alone with
+`--arch=all`; their order does not change the selection.
 
 Select ARM64 targets with `--arch=arm64`, for example:
 

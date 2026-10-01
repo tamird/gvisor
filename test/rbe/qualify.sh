@@ -31,7 +31,7 @@ target architecture is AMD64. Tests use matching execution workers; builds
 use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
-The all architecture selection currently supports the unit lane only.
+The all architecture selection combines unit and release-repository in one invocation.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -83,8 +83,8 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
-  if [[ $arch == all && $lane != unit ]]; then
-    printf 'The all architecture selection currently supports only unit.\n' >&2
+  if [[ $arch == all && $lane != unit && $lane != release-repository ]]; then
+    printf 'The all architecture selection supports unit and release-repository.\n' >&2
     exit 2
   fi
   case "$lane" in
@@ -153,21 +153,35 @@ run_source_lane() (
   esac
 )
 
-# Preserve the canonical AMD64 selection and add declared ARM variants in the
-# same test invocation. Query configured worker properties so a temporary
-# provider gap does not become an intrinsic test architecture restriction.
-run_unit_matrix() (
-  local selection_dir
+# Preserve the canonical unit selection and add declared ARM variants and the
+# existing release test to one graph. Release artifacts already select both CPUs.
+run_platform_matrix() (
+  set -e
+  local selection_dir lane
+  local -a options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
-  python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
-  bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
-  python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
-  bazel aquery --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
-    --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
-  python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
-    "$selection_dir/actions.json" "$selection_dir/targets"
-  bazel test --config=rbe-matrix --config=x86_64 --keep_going "$@" \
+  : > "$selection_dir/targets"
+  for lane in "$@"; do
+    case "$lane" in
+      unit)
+        python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
+        bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+        python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+        bazel aquery --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
+          --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+        python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+          "$selection_dir/actions.json" "$selection_dir/unit-targets"
+        cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
+        options+=(--config=unit --strip=never)
+        ;;
+      release-repository)
+        printf '%s\n' '//test/release:repository_test' >> "$selection_dir/targets"
+        ;;
+    esac
+  done
+  bazel test --config=rbe-matrix --config=x86_64 --keep_going \
+    --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" \
     --target_pattern_file="$selection_dir/targets"
 )
 
@@ -399,13 +413,14 @@ run_lane() (
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi
   fi
-  if [[ $arch == all ]]; then
-    run_unit_matrix "${options[@]}"
-  else
-    bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
-      --keep_going "${options[@]}" "${targets[@]}"
-  fi
+  bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
+    --keep_going "${options[@]}" "${targets[@]}"
 )
+
+if [[ $arch == all ]]; then
+  run_platform_matrix "$@"
+  exit "$?"
+fi
 
 status=0
 for lane in "$@"; do
