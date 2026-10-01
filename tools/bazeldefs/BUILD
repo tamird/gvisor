@@ -102,6 +102,7 @@ bzl_library(
     deps = [
         ":defs_bzl",
         ":go_variants_bzl",
+        ":test_architectures_bzl",
     ],
 )
 
@@ -109,7 +110,16 @@ bzl_library(
     name = "go_variants_bzl",
     srcs = ["go_variants.bzl"],
     visibility = ["//visibility:private"],
-    deps = [":defs_bzl"],
+    deps = [
+        ":defs_bzl",
+        ":test_architectures_bzl",
+    ],
+)
+
+bzl_library(
+    name = "test_architectures_bzl",
+    srcs = ["test_architectures.bzl"],
+    visibility = ["//visibility:private"],
 )
 
 config_setting(
