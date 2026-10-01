@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T19:44:34.302571+00:00",
+    "updatedAt": "2026-10-01T20:02:58.965199+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1003,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head b9dbdeccb runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the upstream refresh and targeted cgroup correction: AMD64, ARM64 and v1 each pass all 157 cgroup cases. Fifteen target-owned lanes preserve 124 runnable owners under neutral, unit and syscall filters; four selected runtime owners pass. Filtered posture/startup/benchmark selection preserves 50 owners and reports 24 KVM omissions. One posture/startup/workflow invocation passes 11 owners; posture evidence is owner-level only, and continuous benchmarks were not executed. Its 211 original hosted artifacts were recovered after local scratch loss and independently verified. Earlier mixed unit/release execution passed 640 owners, but that parent remains failed because of a preliminary HTTP500; separate same-source analysis closed the configuration check. Original unit-v1 passed 329/330, with the corrected boot owner later passing 105 cases. Full PHP partitions remain failed. Twenty Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted, and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; provider deployment is unverified."
+      "summary": "Published head ecf379336 runs the implemented AMD64 lanes without the builder image, with 400-action concurrency and graph-owned settings. It includes the cgroup boolean prerequisite, plugin settings and checkpoint composition. Cgroup configuration equivalence is verified from saved zero-action analyses; its comparator parent remains failed. Plugin build, backtrace and ordinary smoke pass, while plugin-network runtime remains unqualified. Checkpoint selection preserves 532 AMD64 save owners and reports 578 unavailable ARM resume owners. A direct ordinary/save/smoke invocation passes, including two real restores; the full checkpoint matrix was not run. Earlier filtered posture/startup/workflow execution passed 11 owners, with posture evidence limited to owner status and continuous benchmarks analysis-only. The 640-owner mixed unit/release execution passed, but its parent retains a preliminary HTTP500 failure; separate same-source analysis closed that check. Original unit-v1 passed 329/330; corrected boot later passed 105 cases. Full PHP partitions remain failed, and 20 Node repetitions did not reproduce SIGABRT. Four ARM Firecracker unit owners remain omitted and 18 other unit owners remain AMD64. KVM, ARM Firecracker, vhost-net, GPU and host-systemd runtime coverage remains unavailable or unqualified; deployment is unverified."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1581,8 +1581,8 @@
       "title": "Represent the cgroup mode as a build setting",
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-profile-setting",
       "group": "rbe",
-      "status": "source reviewed; configuration proof pending",
-      "summary": "Published source a9d9d4b77 replaces the cgroup-v1 define with a default-off boolean setting while preserving existing RBE specialization and visibility. This is a prerequisite for graph-owned cgroup profiles; it does not yet add per-target mode support. The first zero-action canonical analysis succeeded, but its cached action dump was empty. A targeted configuration-proof continuation is pending. Not integrated in the qualification branch; no runtime or upstream PR claim."
+      "status": "integrated; configuration equivalence verified",
+      "summary": "Published source a9d9d4b77 replaces the cgroup-v1 define with a default-off boolean setting and is included in qualification. Eight zero-action analyses bind both canonical owners to their action configurations and preserve arguments and worker properties. Parent ef299288 remains failed because its comparator expected test_env in aquery output; saved options and pinned Bazel semantics independently establish the configured CGROUPV2=false setting. The earlier empty cached dump is retained separately. This precursor does not yet provide per-target cgroup profiles or runtime-environment proof."
     },
     {
       "id": "branch:rbe-plugin-test-selection",
@@ -1592,8 +1592,8 @@
       "title": "Own plugin settings in the target graph",
       "url": "https://github.com/tamird/gvisor/tree/rbe-plugin-test-selection",
       "group": "rbe",
-      "status": "source reviewed; validation pending",
-      "summary": "Published source b8901e603 replaces the three plugin define consumers with a boolean setting and keeps plugin build optimization separate from ordinary runtime targets. The existing plugin network targets retain their declared Docker inputs, sidecars and worker requirements. Initial validation stopped before runtime on an upstream dependency HTTP500, followed by a Bazel failure. The same-source continuation is running; no plugin-network or vhost-net runtime pass is claimed. Not integrated in the qualification branch; no upstream PR is proposed."
+      "status": "integrated; bounded validation passed",
+      "summary": "Published source b8901e603 owns plugin settings in the graph and is included in qualification. The plugin build retains opt/strip=sometimes while network tests retain fastbuild/strip=never; ordinary smoke remains plugin-free. Parent 4e1e11b5 passes the plugin build with smoke and the existing TestDumpStack regression. Canonical neutral, unit and syscall loading preserve the network owners, whose runtime remains unqualified. Initial HTTP500 and subsequent action-query method failures remain recorded; neither receives runtime credit. No plugin-network, vhost-net, KVM or ARM runtime pass is claimed."
     },
     {
       "id": "branch:rbe-checkpoint-test-selection",
@@ -1603,8 +1603,19 @@
       "title": "Combine checkpoint syscall profiles",
       "url": "https://github.com/tamird/gvisor/tree/rbe-checkpoint-test-selection",
       "group": "rbe",
+      "status": "integrated; bounded validation passed",
+      "summary": "Published source 8ce3e97d0 composes canonical public checkpoint profiles and is included in qualification. Parent 49857cb9 passes 24 zero-action analyses: 532 AMD64 save/restore owners remain selected, while all 578 ARM64 save/resume owners are explicitly unavailable on current Firecracker capacity. Ordinary and checkpoint combinations retain 1,701 runtime owners, or 2,340 with unit; unit build roots remain intact. One direct three-owner invocation passes ordinary ClockGetres.Timespec, its save variant with two actual restores, and rootless smoke. All three actions were remote, uncached single attempts. Broad syscall/checkpoint runtime remains unqualified."
+    },
+    {
+      "id": "branch:rbe-nogo-test-selection",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-nogo-test-selection",
+      "title": "Combine Nogo with runtime qualification",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-nogo-test-selection",
+      "group": "rbe",
       "status": "source reviewed; proof pending",
-      "summary": "Published source 8ce3e97d0 selects the public AMD64 save/restore and ARM64 save/resume profiles before composition. Explicit runtime owners prevent ordinary syscall exclusions from dropping requested checkpoint tests; standalone build-only behavior remains available. Existing runner-owned warning settings and capability checks are retained, with an explicit error when no requested tests have available workers. The bounded selection and runtime proof is being prepared. Not integrated in the qualification branch; no full checkpoint-matrix or upstream PR claim."
+      "summary": "Published source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. The bounded selection and two-owner runtime proof is pending. Not integrated in qualification; no full Nogo or runtime-matrix pass is claimed."
     }
   ],
   "edges": [
@@ -2371,6 +2382,36 @@
       "evidence": [
         "https://app.buildbuddy.io/invocation/f854fd56-9eef-4d48-80cb-5fd5ab7d8033",
         "https://github.com/tamird/gvisor/commit/b9dbdeccb7178d82ddb2395997cad4758f72b60d"
+      ]
+    },
+    {
+      "from": "branch:rbe-cgroup-profile-setting",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes the cgroup boolean prerequisite after saved configuration-equivalence verification. The failed comparator parent is retained; no runtime environment or per-target profile claim.",
+      "evidence": [
+        "https://app.buildbuddy.io/invocation/ef299288-1291-4b68-9d5f-e116d83219b1",
+        "https://github.com/tamird/gvisor/commit/a9d9d4b778ec700fdceb2fe82a2754ec4cb17bed"
+      ]
+    },
+    {
+      "from": "branch:rbe-plugin-test-selection",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes graph-owned plugin settings, the bounded plugin build/backtrace/smoke proof and configuration checks. Network runtime remains unqualified.",
+      "evidence": [
+        "https://app.buildbuddy.io/invocation/4e1e11b5-6499-4391-9b14-8481d2085103",
+        "https://github.com/tamird/gvisor/commit/b8901e603131d50f481f2d9b3c557438beec155a"
+      ]
+    },
+    {
+      "from": "branch:rbe-checkpoint-test-selection",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "Qualification includes canonical checkpoint composition and its three-owner runtime proof. The full syscall/save matrix and unavailable ARM Firecracker execution are not claimed.",
+      "evidence": [
+        "https://app.buildbuddy.io/invocation/49857cb9-a0d0-40d0-b3e0-0fdf4fc593f8",
+        "https://github.com/tamird/gvisor/commit/8ce3e97d0ee83d18acbe6dbf1c0c93b9d2502c0d"
       ]
     }
   ]
