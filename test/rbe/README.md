@@ -746,3 +746,25 @@ AMD64 Firecracker worker and the pinned Syzkaller utility image; compilation
 uses the declared tools. This lane exercises compatibility with that workload,
 not a sustained fuzzing campaign or a staged release archive. The public
 Syzkaller jobs and this target are AMD64 only.
+
+### Mixed target architectures
+
+`architectures = ["amd64", "arm64"]` on the maintained `go_test` and `cc_test`
+macros adds explicit `<name>_amd64` and `<name>_arm64` test variants. Each variant
+uses the original declaration's arguments, environment, data, sharding, and
+execution properties. The original target and its Nogo analysis remain available;
+Nogo already analyzes both architectures. Variants are manual to avoid changing
+existing broad target selections.
+
+On a Linux remote coordinator, the initial mixed-language selection is:
+
+```sh
+bazel test --config=rbe-matrix //test/rbe:platform_matrix
+```
+
+This builds and runs two ordinary Go/C++ owners for both architectures in one
+Bazel invocation. Architecture constraints select matching native execution
+workers without changing the global host platform. Target-owned `test.*`
+properties continue to select specialized workers; declaring an ARM64 variant
+does not supply the unavailable ARM64 Firecracker capacity. Broader lane selection
+has not yet migrated to these variants.

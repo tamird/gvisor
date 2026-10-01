@@ -6,7 +6,8 @@ load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
-load("//tools/bazeldefs:go_variants.bzl", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
+load("//tools/bazeldefs:go_variants.bzl", "go_amd64_test", "go_arm64_test", "static_go_amd64_test", "static_go_arm64_test", _go_cov = "go_cov", _static_go_binary = "go_binary", _static_go_cov = "static_go_cov", _static_go_test = "go_test")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants")
 
 gazelle = _gazelle
 
@@ -161,7 +162,7 @@ def go_library(name, bazel_cgo = False, bazel_cdeps = [], bazel_clinkopts = [], 
         **kwargs
     )
 
-def go_test(name, static = False, pure = False, library = None, **kwargs):
+def go_test(name, static = False, pure = False, library = None, architectures = [], **kwargs):
     """Build a go test.
 
     Args:
@@ -169,6 +170,7 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
         static: build a static binary.
         pure: should it be built without cgo.
         library: the library to embed.
+        architectures: Additional explicitly selected native architecture variants.
         **kwargs: rest of the arguments to pass to _go_test.
     """
     if pure:
@@ -189,6 +191,22 @@ def go_test(name, static = False, pure = False, library = None, **kwargs):
     test_rule(
         name = name,
         **kwargs
+    )
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
+        kwargs,
+    )
+
+def go_is_test(rule_kind):
+    """Identifies the test rules exported by this Go wrapper for Nogo."""
+    return rule_kind in (
+        "go_test",
+        "go_amd64_test",
+        "go_arm64_test",
+        "static_go_amd64_test",
+        "static_go_arm64_test",
     )
 
 def go_rule(rule, implementation, **kwargs):

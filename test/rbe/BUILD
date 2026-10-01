@@ -86,3 +86,15 @@ sh_test(
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
+
+# One invocation retains four distinct configured native test owners.
+test_suite(
+    name = "platform_matrix",
+    tags = ["manual"],
+    tests = [
+        "//pkg/atomicbitops:atomicbitops_test_amd64",
+        "//pkg/atomicbitops:atomicbitops_test_arm64",
+        "//test/util:posix_error_test_amd64",
+        "//test/util:posix_error_test_arm64",
+    ],
+)

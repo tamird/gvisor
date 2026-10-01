@@ -7,6 +7,20 @@ load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc:defs.bzl", _cc_binary = "cc_binary", _cc_library = "cc_library", _cc_test = "cc_test")
 load("@rules_cc//cc:find_cc_toolchain.bzl", "find_cc_toolchain", "use_cc_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_variants", "with_test_architecture")
+
+cc_amd64_test, _cc_amd64_transition = with_test_architecture(_cc_test, "amd64").build()
+cc_arm64_test, _cc_arm64_transition = with_test_architecture(_cc_test, "arm64").build()
+
+def cc_test(name, architectures = [], **kwargs):
+    """Declares a C++ test and optional native architecture variants."""
+    _cc_test(name = name, **kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": cc_amd64_test, "arm64": cc_arm64_test},
+        kwargs,
+    )
 
 def cc_library(**kwargs):
     """Wraps _cc_library and deduplicates deps.
@@ -26,7 +40,6 @@ def cc_library(**kwargs):
 
 cc_binary = _cc_binary
 cc_proto_library = _cc_proto_library
-cc_test = _cc_test
 cc_linker = "@llvm//tools:ld.lld"
 cc_objcopy = "@llvm//tools:llvm-objcopy"
 cc_nm = "@llvm//tools:llvm-nm"
