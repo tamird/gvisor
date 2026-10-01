@@ -58,30 +58,40 @@ def _clang_tidy_impl(target, ctx):
             if source == None or not source.is_source or source.owner.workspace_name:
                 continue
             output_dir = "{}.clang_tidy/{}".format(ctx.label.name, index)
-            database = ctx.actions.declare_file(output_dir + "/compile_commands.json")
             report = ctx.actions.declare_file(output_dir + "/report.txt")
 
             # Bazel exposes the actual, expanded compiler arguments, including
             # toolchain flags; do not reconstruct them from rule attributes.
             # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/rules/cpp/CppCompileAction.java#L889-L893
-            ctx.actions.write(database, json.encode([{
-                "file": source.path,
-                "arguments": action.argv,
-            }]))
-            ctx.actions.run(
-                executable = ctx.attr._runner[DefaultInfo].files_to_run,
+            # Keep a report even when there are no diagnostics: clang-tidy
+            # only writes --export-fixes output when there are findings.
+            ctx.actions.run_shell(
+                command = """
+report="$1"
+shift
+"$@" >"$report" 2>&1 || {
+    status=$?
+    cat "$report" >&2
+    exit "$status"
+}
+""",
                 inputs = depset(
-                    [database, ctx.file._config],
-                    transitive = [action.inputs, headers, ctx.attr._distribution[DefaultInfo].files],
+                    [ctx.file._config],
+                    # The LLVM compilation declares its matching resource
+                    # directory along with the source and other tool inputs.
+                    transitive = [action.inputs, headers],
                 ),
-                tools = [ctx.executable._clang_tidy],
+                tools = [ctx.attr._clang_tidy[DefaultInfo].files_to_run],
                 outputs = [report],
                 arguments = [
-                    ctx.executable._clang_tidy.path,
-                    database.path,
-                    ctx.file._config.path,
                     report.path,
-                ],
+                    ctx.executable._clang_tidy.path,
+                    "--config-file=" + ctx.file._config.path,
+                    "--quiet",
+                    "--warnings-as-errors=*",
+                    source.path,
+                    "--",
+                ] + action.argv[1:],
                 env = action.env,
                 mnemonic = "ClangTidy",
                 progress_message = "Checking {} with clang-tidy".format(source.short_path),
@@ -95,19 +105,10 @@ clang_tidy = aspect(
     attr_aspects = ["*"],
     required_aspect_providers = [CcInfo],
     attrs = {
-        "_runner": attr.label(
-            default = Label("//tools/clang_tidy:run"),
-            executable = True,
-            cfg = "exec",
-        ),
         "_clang_tidy": attr.label(
-            default = Label("//tools/clang_tidy:clang_tidy"),
+            default = Label("@llvm//tools:clang-tidy"),
             allow_single_file = True,
             executable = True,
-            cfg = "exec",
-        ),
-        "_distribution": attr.label(
-            default = Label("//tools/clang_tidy:distribution"),
             cfg = "exec",
         ),
         "_config": attr.label(

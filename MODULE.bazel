@@ -81,22 +81,6 @@ single_version_override(
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 http_archive(
-    name = "clang_tidy_linux_amd64",
-    build_file = "//tools/clang_tidy:tool.BUILD",
-    sha256 = "1a3de07ba82d4403d8b692ae63a5520d4db5c606014c92c24bbcef9259057bf1",
-    type = "zip",
-    urls = ["https://files.pythonhosted.org/packages/82/19/0f2668f8f5e2452b096a2b898f2b6bcecbceb6dd0c7f75d1755ce1f18d8b/clang_tidy-22.1.8-py2.py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"],
-)
-
-http_archive(
-    name = "clang_tidy_linux_arm64",
-    build_file = "//tools/clang_tidy:tool.BUILD",
-    sha256 = "1eaddaa7415e8c5e39aeefbfd15174f1ab2a671c86f7ebb200eb523cf9465559",
-    type = "zip",
-    urls = ["https://files.pythonhosted.org/packages/ac/b7/61ed8c319f2d9ddb9762a550a6fee434bdef7bdc46d5a4b50929f1c90ec0/clang_tidy-22.1.8-py2.py3-none-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl"],
-)
-
-http_archive(
     name = "llvm-raw",
     build_file_content = "# empty",
     sha256 = "c98bbef08a2b4c2613cd50e9aa9ae7b69b1fe6c16b2c40373bc0ab6116fdf78a",
