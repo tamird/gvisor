@@ -43,6 +43,8 @@ def docker_test_exec_properties(free_disk, memory = None, exec_group = "test"):
             prefix + "network": "external",
             prefix + "network-enable-ipv6": "true",
             prefix + "workload-isolation-type": "firecracker",
+            # Owned daemons change guest-wide kernel state. Discard their VM.
+            prefix + "recycle-runner": "false",
         },
         "//conditions:default": {},
     })
