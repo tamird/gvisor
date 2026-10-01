@@ -1,11 +1,11 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T00:09:40.866996+00:00",
+    "updatedAt": "2026-10-01T00:32:31.388797+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
-    "edgeDirection": "Prerequisite → dependent. Integration membership is listed in details and excluded from dependency reach.",
+    "edgeDirection": "Prerequisite \u2192 dependent. Integration membership is listed in details and excluded from dependency reach.",
     "dependencyNotes": "Dependencies are curated from source interfaces, PR descriptions and validated workstreams. Review/preparation waits appear as status, not dependency edges. Historical Docker, stress and Buildkite pilots are omitted; their branches/evidence are preserved. Landed prerequisites are not active blockers."
   },
   "groups": [
@@ -901,8 +901,8 @@
       "title": "Run clang-tidy through Bazel compile actions",
       "url": "https://github.com/tamird/gvisor/tree/bazel-clang-tidy-llvm",
       "group": "release",
-      "status": "validation pending",
-      "summary": "Uses clang-tidy from the existing hermetic LLVM compiler supplier. This replaces the wheel-based proposal; the old branch is retained as historical work. Focused validation of the replacement is pending, and prior GNU/wheel results do not validate this source."
+      "status": "review pending",
+      "summary": "Uses clang-tidy from the existing hermetic LLVM compiler supplier. On the qualification branch, focused AMD64 and ARM64 checks pass, and full AMD64 lint produces 368 reports. Canonical Fetch/Verify passes for 706 catalog entries. Current source 40dc10a02 and the generated catalog are integrated in d6a21b8b7. Contributor review remains pending; the old wheel-based branch is historical."
     },
     {
       "id": "branch:syscall-overlay-xml",
@@ -1615,7 +1615,17 @@
       "to": "branch:bazel-clang-tidy-llvm",
       "type": "depends_on",
       "reason": "The clang-tidy aspect uses @llvm//tools:clang-tidy from the existing hermetic LLVM compiler supplier; it does not require an LLVM module version bump.",
-      "evidence": "https://github.com/tamird/gvisor/blob/be3c86964/tools/clang_tidy/clang_tidy.bzl#L106"
+      "evidence": "https://github.com/tamird/gvisor/blob/40dc10a02/tools/clang_tidy/clang_tidy.bzl"
+    },
+    {
+      "from": "branch:bazel-clang-tidy-llvm",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the validated LLVM-backed clang-tidy replacement and canonical catalog; this is integration membership, not an upstream PR dependency.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/d6a21b8b7",
+        "https://app.buildbuddy.io/invocation/bc33e16d-8a67-4f63-8d2e-dc3cc42f78f0"
+      ]
     }
   ]
 }
