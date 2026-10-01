@@ -1,5 +1,5 @@
 load("//test/docker:defs.bzl", "docker_daemon_config", "docker_image_archive")
-load("//tools:defs.bzl", "go_library", "go_test", "native_test")
+load("//tools:defs.bzl", "go_library", "go_test", "runtime_native_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
@@ -65,7 +65,7 @@ go_test(
 )
 
 # Keep runtime-only architecture constraints outside Nogo's portable Go graph.
-native_test(
+runtime_native_test(
     name = "kind_test",
     size = "large",
     src = ":kind_test_binary",
