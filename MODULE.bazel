@@ -33,6 +33,13 @@ bazel_dep(name = "protoc-gen-validate", version = "1.3.0")
 bazel_dep(name = "xds", version = "0.0.0-20251210-ee656c7")
 bazel_dep(name = "cel-spec", version = "0.25.1")
 
+# Reuse the upstream test frontend for per-target test-action transitions.
+single_version_override(
+    module_name = "with_cfg.bzl",
+    patch_strip = 1,
+    patches = ["//tools:with_cfg-test-frontend.patch"],
+)
+
 single_version_override(
     module_name = "rules_go",
     patch_strip = 1,

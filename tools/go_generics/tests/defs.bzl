@@ -1,5 +1,6 @@
 """Generics tests."""
 
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
 load("//tools/go_generics:defs.bzl", "go_template", "go_template_instance")
 
 def _go_generics_test_impl(ctx):
@@ -31,6 +32,11 @@ _go_generics_test = rule(
     test = True,
 )
 
+def _compile_go_generics_test(**kwargs):
+    _go_generics_test(**kwargs)
+
+_go_generics_cgroup_v1_test, _go_generics_cgroup_v1_transition = with_cgroup_v1(_compile_go_generics_test)
+
 def go_generics_test(name, inputs, output, types = None, consts = None, **kwargs):
     """Instantiates a generics test.
 
@@ -60,8 +66,10 @@ def go_generics_test(name, inputs, output, types = None, consts = None, **kwargs
         consts = consts,
         **kwargs
     )
-    _go_generics_test(
-        name = name + "_test",
-        template_output = name + "_output.go",
-        expected_output = output,
-    )
+    test_kwargs = {
+        "template_output": name + "_output.go",
+        "expected_output": output,
+        "tags": cgroup_v1_tags([]),
+    }
+    _go_generics_test(name = name + "_test", **test_kwargs)
+    cgroup_v1_variant(name + "_test", _go_generics_cgroup_v1_test, test_kwargs)

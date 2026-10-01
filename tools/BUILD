@@ -1,5 +1,4 @@
-load("@rules_python//python:py_test.bzl", "py_test")
-load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
+load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values", "py_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -60,6 +59,7 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = ["//tools/bazeldefs:cgroup_test_bzl"],
 )
 
 bzl_library(
@@ -70,7 +70,10 @@ bzl_library(
     ],
 )
 
-exports_files(["llvm-linux-header-default.patch"])
+exports_files([
+    "llvm-linux-header-default.patch",
+    "with_cfg-test-frontend.patch",
+])
 
 exports_files(
     ["images.mk"],
@@ -92,4 +95,5 @@ py_test(
         "//:.clang-format",
         "//:go.mod",
     ],
+    main = "lint_test.py",
 )

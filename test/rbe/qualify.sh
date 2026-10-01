@@ -87,7 +87,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      nogo|unit|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
+      nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -239,13 +239,58 @@ select_syscall_profile() {
     "$prefix-actions.json" "$prefix-targets"
 }
 
-# Preserve the canonical unit roots, including filtered tests' build-only work.
-# Append other profiles' selected owners, checking compatibility with the final
-# filters. Release artifacts already select both CPUs in their owning graph.
+# Expand the public unit selection before removing its lane-wide filters from
+# a mixed cgroup invocation. A separate analysis retains non-test build roots;
+# filtered tests' build-only work remains in standalone unit/build-all lanes.
+select_unit_profile() {
+  local selection_dir=$1
+  if [[ -f $selection_dir/unit-profile.json ]]; then
+    return
+  fi
+  analyze_profile test/unit.targets "$selection_dir/unit-profile.json" \
+    --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
+  analyze_profile test/unit.targets "$selection_dir/unit-build-profile.json" \
+    --config=rbe-matrix --config=x86_64 --config=unit --strip=never --nobuild_tests_only
+  python3 test/rbe/unit_matrix.py build-roots "$selection_dir/unit-build-profile.json" \
+    > "$selection_dir/unit-build-targets"
+  cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
+}
+
+select_cgroup_profile() {
+  local selection_dir=$1 lane=$2
+  local -a profile_options=() targets=()
+  if [[ $lane == unit-v1 ]]; then
+    select_unit_profile "$selection_dir"
+    python3 test/rbe/unit_matrix.py cgroup-targets "$selection_dir/unit-profile.json" \
+      >> "$selection_dir/explicit-targets"
+    return
+  fi
+  case "$lane" in
+    container|container-v1)
+      targets=(//runsc/container/...)
+      profile_options=(--test_tag_filters=-nogo)
+      ;;
+    docker-v1) shared_test_targets docker amd64 ;;
+  esac
+  printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-roots"
+  analyze_profile "$selection_dir/$lane-roots" "$selection_dir/$lane-profile.json" \
+    --config=rbe-matrix --config=x86_64 --strip=never "${profile_options[@]}" --build_tests_only
+  if [[ $lane == container ]]; then
+    python3 test/rbe/unit_matrix.py container-targets "$selection_dir/$lane-profile.json" \
+      >> "$selection_dir/explicit-targets"
+  else
+    python3 test/rbe/unit_matrix.py cgroup-targets "$selection_dir/$lane-profile.json" \
+      >> "$selection_dir/explicit-targets"
+  fi
+}
+
+# Ordinary unit/syscall combinations retain their canonical build-only roots.
+# Mixing cgroup profiles uses explicit canonical tests so lane-wide filters do
+# not suppress another requested lane's owners. Release owns both CPU builds.
 run_platform_matrix() (
   set -e
-  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false
-  local -a options=() targets=() verification_options=()
+  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false explicit_unit=false
+  local -a options=() targets=() verification_options=() unit_selection_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   : > "$selection_dir/targets"
@@ -259,6 +304,7 @@ run_platform_matrix() (
     esac
     case "$lane" in
       unit) include_unit=true ;;
+      unit-v1|container|container-v1|docker-v1) explicit_unit=true ;;
       syscalls-save|syscalls-resume) include_checkpoints=true ;;
       nogo) include_nogo=true ;;
     esac
@@ -280,17 +326,30 @@ run_platform_matrix() (
         python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
         bazel aquery --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
           --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+        if [[ $explicit_unit == true ]]; then
+          select_unit_profile "$selection_dir"
+          unit_selection_options=(--profile "$selection_dir/unit-profile.json")
+        fi
         python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
-          "$selection_dir/actions.json" "$selection_dir/unit-targets"
-        cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
-        options+=(--config=unit --strip=never)
-        if [[ $include_nogo == true ]]; then
+          "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}"
+        if [[ $explicit_unit == true ]]; then
+          cat "$selection_dir/unit-targets" >> "$selection_dir/explicit-targets"
+        else
+          cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
+          options+=(--config=unit)
+        fi
+        options+=(--strip=never)
+        if [[ $include_nogo == true && $explicit_unit == false ]]; then
           # Preserve the original unit selection before allowing Nogo through
           # its wildcard roots. Verify the complete union before execution.
           analyze_profile "$selection_dir/unit-targets" "$selection_dir/unit-profile.json" \
             --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
           verification_options+=(--profile "$selection_dir/unit-profile.json")
         fi
+        ;;
+      unit-v1|container|container-v1|docker-v1)
+        select_cgroup_profile "$selection_dir" "$lane"
+        options+=(--strip=never)
         ;;
       release-repository)
         printf '%s\n' '//test/release:repository_test' >> "$selection_dir/explicit-targets"
@@ -308,7 +367,7 @@ run_platform_matrix() (
         include_syscalls=true
         select_syscall_profile "$selection_dir" "$lane" amd64
         select_syscall_profile "$selection_dir" "$lane" arm64
-        if [[ $include_unit == true || $include_checkpoints == true ]]; then
+        if [[ $include_unit == true || $explicit_unit == true || $include_checkpoints == true ]]; then
           # Global -allsave would discard the explicitly requested checkpoint
           # profiles. Use their separately selected owners in a combined run.
           cat "$selection_dir/syscalls-amd64-targets" >> "$selection_dir/explicit-targets"
@@ -361,7 +420,9 @@ run_platform_matrix() (
         ;;
     esac
   done
-  if [[ $include_nogo == true ]]; then
+  # Explicit cgroup selections already applied each lane's filters. Do not
+  # reapply the unit KVM exclusion to the requested container owners.
+  if [[ $include_nogo == true && $explicit_unit == false ]]; then
     if [[ $include_unit == true ]]; then
       options+=(--test_tag_filters=-requires-kvm)
     elif [[ $include_syscalls == true && $include_checkpoints == false ]]; then
@@ -384,7 +445,7 @@ run_platform_matrix() (
   fi
   cat "$selection_dir/explicit-targets" "$selection_dir/shared-targets" > "$selection_dir/combined-targets"
   if [[ -s $selection_dir/combined-targets ]]; then
-    if [[ $include_nogo == true || $include_syscalls == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
+    if [[ $include_nogo == true || $include_syscalls == true || $explicit_unit == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
       if [[ -s $selection_dir/shared-targets ]]; then
         # Let Bazel expand explicit suites, including their manual members,
         # before comparing their selection under the combined lane's filters.

@@ -2,6 +2,7 @@
 
 load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "go_binary", _go_test = "go_test")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("//tools/bazeldefs:cgroup_test.bzl", "with_cgroup_v1")
 load("//tools/bazeldefs:defs.bzl", "select_arch")
 load("//tools/bazeldefs:test_architectures.bzl", "with_test_architecture")
 
@@ -68,3 +69,12 @@ go_amd64_test, _go_amd64_transition = _architecture_go_test("amd64")
 go_arm64_test, _go_arm64_transition = _architecture_go_test("arm64")
 static_go_amd64_test, _static_go_amd64_transition = _architecture_go_test("amd64", static = True)
 static_go_arm64_test, _static_go_arm64_transition = _architecture_go_test("arm64", static = True)
+
+# The caller supplies the same configured raw rule used by its ordinary test.
+def _cgroup_go_test(test_rule, **kwargs):
+    test_rule(**kwargs)
+
+go_cgroup_v1_test, _go_cgroup_v1_transition = with_cgroup_v1(
+    _cgroup_go_test,
+    extra_providers = [GoLibrary, GoArchive],
+)

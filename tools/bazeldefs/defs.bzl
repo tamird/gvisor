@@ -7,12 +7,45 @@ load("@bazel_skylib//rules:native_binary.bzl", _native_test = "native_test")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
 load("@com_google_protobuf//bazel:proto_library.bzl", _proto_library = "proto_library")
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+load("@rules_python//python:py_test.bzl", _py_test = "py_test")
+load("@rules_shell//shell:sh_test.bzl", _sh_test = "sh_test")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
 
-build_test = _build_test
 bzl_library = _bzl_library
 bool_flag = _bool_flag
 BuildSettingInfo = _BuildSettingInfo
-native_test = _native_test
+
+build_test_cgroup_v1_test, _build_test_cgroup_v1_transition = with_cgroup_v1(_build_test)
+
+def build_test(name, **kwargs):
+    """Declares the ordinary test and its manual cgroup-v1 variant."""
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+    _build_test(name = name, **kwargs)
+    cgroup_v1_variant(name, build_test_cgroup_v1_test, kwargs)
+
+native_test_cgroup_v1_test, _native_test_cgroup_v1_transition = with_cgroup_v1(_native_test)
+
+def native_test(name, **kwargs):
+    """Declares the ordinary test and its manual cgroup-v1 variant."""
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+    _native_test(name = name, **kwargs)
+    cgroup_v1_variant(name, native_test_cgroup_v1_test, kwargs)
+
+py_test_cgroup_v1_test, _py_test_cgroup_v1_transition = with_cgroup_v1(_py_test)
+
+def py_test(name, **kwargs):
+    """Declares the ordinary test and its manual cgroup-v1 variant."""
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+    _py_test(name = name, **kwargs)
+    cgroup_v1_variant(name, py_test_cgroup_v1_test, kwargs)
+
+sh_test_cgroup_v1_test, _sh_test_cgroup_v1_transition = with_cgroup_v1(_sh_test)
+
+def sh_test(name, **kwargs):
+    """Declares the ordinary test and its manual cgroup-v1 variant."""
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+    _sh_test(name = name, **kwargs)
+    cgroup_v1_variant(name, sh_test_cgroup_v1_test, kwargs)
 
 # Public language and Kubernetes qualification gives each test 1800 seconds.
 # Use an output-only transition: with_cfg also reads test_timeout, whose native

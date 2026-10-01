@@ -115,8 +115,36 @@ including explicit manual tests. When unit or syscall filters are present,
 Bazel expands the added suites both with and without those filters; a changed
 selection fails before execution. Their original suite roots remain in the
 final target list. Per-test runtime inputs, privileges and sharding stay with
-the owning rules. Cgroup-v1 and other lanes with invocation-wide settings
-remain separate.
+the owning rules.
+
+The `unit-v1`, `container`, `container-v1` and `docker-v1` lanes also join
+`--arch=all` invocations. Their cgroup profiles execute on AMD64. The v1
+variants own the existing mount wrapper, `CGROUPV2=false`, root privileges,
+disposable worker and no-local execution policy. They reuse the original test
+inputs, arguments, environment, coverage, runfiles and shard/timeout metadata;
+unit selection includes its non-Go/C++ owners. The explicit container-v2
+variant owns `CGROUPV2=true`, while the ordinary target still accepts local
+Make overrides. Container selections retain the full public KVM-containing
+owners; declaring them does not qualify unavailable KVM capacity.
+
+```sh
+test/rbe/qualify.sh --arch=all unit unit-v1 docker docker-v1
+```
+
+When one of these lanes is present, Bazel first selects the ordinary unit tests
+under the public unit filters, then combines explicit ordinary and v1 leaves.
+This prevents the unit KVM filter from suppressing requested container tests.
+A separate canonical analysis retains unit non-test build roots. Filtered
+tests' build-only work is not retained by this combined mode: standalone
+`unit`/`unit-v1` preserve the complete original selection, and `build-all`
+remains the all-target compilation lane. Final canonical analysis rejects a
+caller filter that drops any explicitly selected test.
+
+The test frontend is the existing with_cfg implementation, extended with an
+incoming cgroup transition. The pinned dependency patch exposes that frontend
+for reuse because its released API transitions only the inner target. This
+keeps argument expansion, provider forwarding and executable layout in the
+same owner rather than maintaining another wrapper.
 
 The same path also accepts `overlay`, `swgso`, `hostnet`, `containerd`,
 `fsstress`, `packetimpact`, `iptables`, `nftables`, `packetdrill`, `kubernetes`,

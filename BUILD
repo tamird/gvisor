@@ -1,4 +1,3 @@
-load("@bazel_skylib//rules:native_binary.bzl", native_binary_test = "native_test")
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
 load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
@@ -214,7 +213,7 @@ write_file(
 
 # A real runfiles tree is needed for project/configuration discovery. On
 # Windows, enable Bazel symlink support and pass --enable_runfiles.
-native_binary_test(
+native_test(
     name = "github_actions_test",
     src = "//tools/actionlint",
     args = [

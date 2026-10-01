@@ -1,5 +1,7 @@
 """Tools for testing yaml files against schemas."""
 
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+
 def _yaml_test_impl(ctx):
     """Implementation for yaml_test."""
     runner = ctx.actions.declare_file(ctx.label.name)
@@ -19,7 +21,7 @@ def _yaml_test_impl(ctx):
         executable = runner,
     )]
 
-yaml_test = rule(
+_yaml_test = rule(
     implementation = _yaml_test_impl,
     doc = "Tests a yaml file against a schema.",
     attrs = {
@@ -51,3 +53,14 @@ yaml_test = rule(
     },
     test = True,
 )
+
+def _compile_yaml_test(**kwargs):
+    _yaml_test(**kwargs)
+
+_yaml_test_cgroup_v1_test, _yaml_test_cgroup_v1_transition = with_cgroup_v1(_compile_yaml_test)
+
+def yaml_test(name, **kwargs):
+    """Declares the original check and its manual cgroup-v1 variant."""
+    kwargs["tags"] = cgroup_v1_tags(kwargs.get("tags", []))
+    _yaml_test(name = name, **kwargs)
+    cgroup_v1_variant(name, _yaml_test_cgroup_v1_test, kwargs)

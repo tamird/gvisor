@@ -1,7 +1,6 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_flag")
 load("@rules_python//python:py_library.bzl", "py_library")
-load("@rules_python//python:py_test.bzl", "py_test")
-load("//tools:defs.bzl", "namespace_test_exec_properties")
+load("//tools:defs.bzl", "namespace_test_exec_properties", "py_test")
 load("//tools/python_distribution:defs.bzl", "python_distribution")
 
 package(
