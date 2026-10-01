@@ -74,19 +74,21 @@ build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
 
 build:rbe --config=rbe-common
-build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64
+# Architecture-specific generators may need the other native CPU even when
+# the requested build or test lane selects only one target architecture.
+build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
 
 # Bind unused cgroup-v1 controllers in disposable AMD64 test VMs.
 build:rbe-cgroup-v1 --config=rbe-common
 build:rbe-cgroup-v1 --define=cgroup_v1=true
-build:rbe-cgroup-v1 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64_cgroup_v1
+build:rbe-cgroup-v1 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64_cgroup_v1,//tools/bazeldefs:rbe_linux_arm64
 test:rbe-cgroup-v1 --run_under=//test/rbe:cgroup_v1
 test:rbe-cgroup-v1 --modify_execution_info=TestRunner=+no-local
 test:rbe-cgroup-v1 --test_env=CGROUPV2=false
 
 # Select ARM64 tools as well as ARM64 execution workers.
 build:rbe-arm64 --config=rbe-common
-build:rbe-arm64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64
+build:rbe-arm64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64,//tools/bazeldefs:rbe_linux_amd64
 build:rbe-arm64 --host_platform=//tools/bazeldefs:rbe_linux_arm64
 
 # Set flags for x86_64.
