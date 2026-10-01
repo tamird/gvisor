@@ -243,6 +243,58 @@ func blockUntilWaitable(pid int) error {
 	return err
 }
 
+func TestSetOOMScoreAdjExited(t *testing.T) {
+	cmd := exec.Command("/bin/cat")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { stdin.Close() })
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	})
+
+	pid := cmd.Process.Pid
+	filename := fmt.Sprintf("/proc/%d/oom_score_adj", pid)
+	var live unix.Stat_t
+	if err := unix.Stat(filename, &live); err != nil {
+		t.Fatal(err)
+	}
+	if err := setOOMScoreAdj(pid, 1000); err != nil {
+		t.Fatalf("setOOMScoreAdj(%d, 1000) while alive: %v", pid, err)
+	}
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.TrimSpace(string(data)); got != "1000" {
+		t.Fatalf("live oom_score_adj = %q, want 1000", got)
+	}
+
+	// Keep the child waitable but unreaped so its proc files still exist.
+	if err := stdin.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := blockUntilWaitable(pid); err != nil {
+		t.Fatal(err)
+	}
+	var exited unix.Stat_t
+	if err := unix.Stat(filename, &exited); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("child PID %d: proc ownership changed from %d:%d to %d:%d; caller UID %d", pid, live.Uid, live.Gid, exited.Uid, exited.Gid, os.Geteuid())
+	if live.Uid == exited.Uid {
+		t.Fatal("diagnostic requires a nonroot host UID so exited proc ownership changes")
+	}
+	if err := setOOMScoreAdj(pid, 1000); err != nil {
+		t.Fatalf("setOOMScoreAdj(%d, 1000) after exit = %v, want nil", pid, err)
+	}
+}
+
 // execPS executes `ps` inside the container and return the processes.
 func execPS(conf *config.Config, c *Container) ([]*control.Process, error) {
 	out, err := executeCombinedOutput(conf, c, nil, "/bin/ps", "-e")
