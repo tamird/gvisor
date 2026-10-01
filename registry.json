@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T00:46:08.709553+00:00",
+    "updatedAt": "2026-10-01T00:57:58.632623+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -997,6 +997,17 @@
       "summary": "Historical ordinary-systrap baseline plus the socket correction passed 653 of 655 owners. The iptables large-payload fixture passes native Linux and both systrap owners. MQ unlink permissions now pass all 17 cases in all three owners. These targeted results do not establish a complete combined-head run."
     },
     {
+      "id": "branch:rbe-actions-pilot",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-actions-pilot",
+      "title": "Submit smoke qualification from GitHub Actions",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-actions-pilot",
+      "group": "rbe",
+      "status": "credential setup pending",
+      "summary": "Workflow checks pass at af19903e9, reusing the unchanged actionlint and Buildkite schema results. The GitHub job stops at its missing-credential guard before checkout or remote submission. GitHub-to-BuildBuddy smoke awaits authorized credential provisioning; full CI coverage is not established."
+    },
+    {
       "id": "branch:rbe-remote-concurrency",
       "type": "branch",
       "repo": "tamird/gvisor",
@@ -1630,6 +1641,13 @@
         "https://github.com/tamird/gvisor/commit/d6a21b8b7",
         "https://app.buildbuddy.io/invocation/bc33e16d-8a67-4f63-8d2e-dc3cc42f78f0"
       ]
+    },
+    {
+      "from": "branch:rbe-qualification-next",
+      "to": "branch:rbe-actions-pilot",
+      "type": "depends_on",
+      "reason": "The Actions frontend directly invokes the existing qualification driver and smoke target from its d6a21b8b7 parent. Credential provisioning is a separate setup step, not a code dependency.",
+      "evidence": "https://github.com/tamird/gvisor/blob/af19903e9/.github/workflows/build.yml#L84"
     }
   ]
 }
