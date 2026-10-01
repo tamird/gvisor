@@ -31,8 +31,8 @@ target architecture is AMD64. Tests use matching execution workers; builds
 use AMD64 workers. This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
-The all architecture selection combines unit, release-repository and syscalls
-in one invocation.
+The all architecture selection combines unit, release-repository, syscalls,
+smoke and smoke-race in one invocation. Both smoke lanes use AMD64 workers.
 The license-headers lane requires an explicit base and complete Git history.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
@@ -84,8 +84,8 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
-  if [[ $arch == all && $lane != unit && $lane != release-repository && $lane != syscalls ]]; then
-    printf 'The all architecture selection supports unit, release-repository and syscalls.\n' >&2
+  if [[ $arch == all && $lane != unit && $lane != release-repository && $lane != syscalls && $lane != smoke && $lane != smoke-race ]]; then
+    printf 'The all architecture selection supports unit, release-repository, syscalls, smoke and smoke-race.\n' >&2
     exit 2
   fi
   case "$lane" in
@@ -231,6 +231,10 @@ run_platform_matrix() (
         fi
         cat "$selection_dir/syscalls-arm64-targets" >> "$selection_dir/explicit-targets"
         ;;
+      smoke|smoke-race)
+        printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
+        options+=(--strip=never)
+        ;;
     esac
   done
   if [[ -s $selection_dir/explicit-targets ]]; then
@@ -321,8 +325,7 @@ run_lane() (
       targets=(//:release_smoke_test)
       ;;
     smoke-race)
-      options=(--config=race)
-      targets=(//:release_smoke_test)
+      targets=(//:release_smoke_race_test)
       ;;
     release-artifacts)
       command=build

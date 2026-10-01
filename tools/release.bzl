@@ -1,6 +1,17 @@
 """Rules assembling the gVisor release binaries in their installed layout."""
 
+load("@bazel_skylib//rules:native_binary.bzl", "native_test")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:defs.bzl", "cov_available", "pkg_tar")
+
+# Match --config=race on the smoke test and its release dependencies without
+# instrumenting other targets in the same invocation. Extending the raw rule
+# keeps the executable beside its sidecars and resolves its environment select
+# in the instrumented configuration.
+race_smoke_test, _race_smoke_transition = with_cfg(native_test).set(
+    Label("@io_bazel_rules_go//go/config:race"),
+    True,
+).set(Label("@io_bazel_rules_go//go/config:pure"), False).build()
 
 # FLAVORS are the instrumentation flavors of gVisor binaries.
 FLAVORS = [
