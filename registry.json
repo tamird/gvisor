@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-01T05:59:31.686775+00:00",
+    "updatedAt": "2026-10-01T08:26:58.770689+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -450,7 +450,8 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-29T17:49:23Z"
+      "updatedAt": "2026-09-29T17:49:23Z",
+      "summary": "The complete current change at 4d09fd68d landed upstream as 71a606a61 through import #15104: the full four-file patch and resulting source files match. Its code prerequisite for hermetic-toolchains is satisfied. The original PR remains open; the import footer still names older source dca9ff694, so its recorded source-head mismatch is preserved."
     },
     {
       "id": "pr:15044",
@@ -1002,7 +1003,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-qualification-next",
       "group": "rbe",
       "status": "branch",
-      "summary": "Published head d99108b15 integrates PHP 8.3.35 and its upstream GH-17469 extension metadata fix, on the validated shared source-image producer and qualified LisaFS lifetime fixes from #14361. At source 52f47d076, the complete maintained AMD64 containerd lane passes all four versions (1.7.31, 2.0.8, 2.1.7 and 2.2.3): 68 passing leaf cases, zero failures, and four skips of the optional grouping-performance measurement that public jobs do not enable. The focused PHP correction passes on native, DirectFS and goferfs with one shared source image: the original missing-UConverter failure becomes the explicit missing-intl skip. The earlier full PHP run remains failed; full partitions were not rerun and intl implementation coverage is not claimed. The MODULE prebuilt containerd image pin is unchanged; AMD64 harness consumers use the shared source archive, while ARM64 retains the pin. The integrated public syscall selection change from #15173 leaves qualification dispatcher commands unchanged; AMD64 retains its separate filter because KVM workers remain unavailable. At source 757fdf90b, full systrap shim and OCI lifecycle owners complete 22 and 16 benchmark rows respectively at 30 iterations, four changed Nogo owners pass both architectures, sanity passes, and canonical license Verify covers 706 entries. That combined parent remains failed for the UDS build option error; a corrected UDS-only run passes. The same analyzed source and Go steps pass all four CodeQL jobs at fork 26d37ff9d without Make or Docker; generated Go imports and methods still limit type coverage. These results do not qualify the complete refreshed matrix, ARM runtime, KVM or other unavailable worker features."
+      "summary": "Published head a6d7bf336 provides builder-free AMD64 qualification with declared inputs and disposable cgroup-v1 workers. Docker-v1 passes all five maintained owners at 9af419910: 159 XML passes and two existing bridge-network skips. The original 330-owner unit-v1 run at 508e02c55 remains failed (329 passes, one boot failure); the corrected boot owner at bcf337cfa passes all 105 cases without skips and Nogo on ARM64 and AMD64. The full lane was not repeated. All four maintained AMD64 containerd versions pass 68 leaf cases, with four optional grouping-performance skips. Canonical license validation passes all 706 entries at 4dca99373; the final head only removes unused PHP 8.3.7 OCI inputs, with analysis-only dependency resolution passing for all four maintained PHP owners and no actions executed. Focused PHP 8.3.35 validation passes on native, DirectFS and goferfs by replacing the missing-UConverter failure with the required missing-intl skip. The earlier full PHP partitions remain failed and were not rerun; intl implementation coverage is not established. This is not complete public-matrix qualification: KVM, ARM64 Firecracker, vhost-net and GPU routes remain blocked, and the host-systemd fixture still awaits publication approval and has not run."
     },
     {
       "id": "branch:rbe-actions-pilot",
@@ -1276,7 +1277,7 @@
       "url": "https://github.com/tamird/gvisor/tree/syzkaller-hermetic-smoke",
       "group": "rbe",
       "status": "extraction needed",
-      "summary": "Retained source 5b6434ea6 declares Syzkaller, module inputs and the Bazel smoke owner. It consumes the hermetic LLVM compiler supplier. Its module-proxy and release-apt snapshot suppliers also need extraction; no unrelated release PR is credited with providing them. Integration membership does not make this source obsolete or publication-ready."
+      "summary": "Published source 62b52c3fd declares Syzkaller, module inputs and the Bazel smoke owner, with its direct tar.bzl version aligned to the existing LLVM dependency at 0.10.4. It consumes the hermetic LLVM compiler supplier. Its module-proxy and release-apt snapshot suppliers also need extraction; no unrelated release PR is credited with providing them. Integration membership does not make this source obsolete or publication-ready."
     },
     {
       "id": "branch:syzkaller-build-dependencies",
@@ -1320,7 +1321,7 @@
       "url": "https://github.com/tamird/gvisor/tree/php-8-3-35",
       "group": "tests",
       "status": "review pending",
-      "summary": "Published source 369c86ae8 updates PHP 8.3.7 to 8.3.35 and backports upstream GH-17469 metadata declaring its intl requirement; it is integrated in d99108b15. Focused validation at fbfd04586 passes on native, DirectFS and goferfs using one shared source image: the original fixture fails for missing UConverter, then the patched fixture explicitly skips because intl is absent. The complete prior four-owner run 29f728a2 remains two passes and two failures: each mode selected all 19,404 eligible tests, with only missing UConverter reported as a PHP failure. Those full partitions were not rerun, and this does not establish intl implementation coverage. Extension configuration and exclusions remain unchanged; no registry image was published. Contributor review remains pending; no PR is open."
+      "summary": "Published source 369c86ae8 updates PHP 8.3.7 to 8.3.35 and backports upstream GH-17469 metadata declaring its intl requirement; it is integrated in d99108b15. Focused validation at fbfd04586 passes on native, DirectFS and goferfs using one shared source image: the original fixture fails for missing UConverter, then the patched fixture explicitly skips because intl is absent. The complete prior four-owner run 29f728a2 remains two passes and two failures: each mode selected all 19,404 eligible tests, with only missing UConverter reported as a PHP failure. Those full partitions were not rerun, and this does not establish intl implementation coverage. Extension configuration and exclusions remain unchanged; no registry image was published. Contributor review remains pending; no PR is open. Qualification head a6d7bf336 also removes the unused PHP 8.3.7 OCI input. Analysis-only parent 84449f85 resolves all four maintained owners to the shared source archive without the obsolete repository; no build actions or runtime tests were executed."
     },
     {
       "id": "branch:rbe-source-image-archives",
@@ -1332,6 +1333,28 @@
       "group": "rbe",
       "status": "validated",
       "summary": "Published source 52f47d076 is integrated unchanged in the qualification branch. One shared native image action builds the declared archive consumed by all four maintained AMD64 containerd versions. The complete lane passes 68 leaf cases with zero failures; public jobs do not enable the optional grouping-performance measurement, which skips once per version. Each owner loads the source/latest tags and runs the existing harness with runsc. The earlier two filtered sanity owners also passed, while the original analysis-failure parent remains failed. Other image pins and ARM64 remain unchanged. Mutable network inputs prevent a hermetic image-content or cross-run reproducibility claim; no image was published to a registry."
+    },
+    {
+      "id": "branch:cgroup-v1-memory-update",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "cgroup-v1-memory-update",
+      "title": "Use a valid cgroup v1 memory update",
+      "url": "https://github.com/tamird/gvisor/tree/cgroup-v1-memory-update",
+      "group": "tests",
+      "status": "review pending",
+      "summary": "Published source 1ed70341c corrects the existing TestCgroupV1 memory shrink to 512 MiB, above its unchanged 500 MiB reservation, while preserving the attribute and process-membership checks. The focused cgroup-v1 proof at 28a6cf8b6 passes with the actual update on an isolated AMD64 Firecracker worker. Contributor review remains pending; no PR is open. Integrated in qualification head a6d7bf336."
+    },
+    {
+      "id": "branch:boot-test-capability-drop",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "boot-test-capability-drop",
+      "title": "Apply capability changes in the hostnet test",
+      "url": "https://github.com/tamird/gvisor/tree/boot-test-capability-drop",
+      "group": "tests",
+      "status": "review pending",
+      "summary": "Published source a686e547a fixes TestHostnetWithRawSockets: Apply(EFFECTIVE) did not call capset, so the privileged fixture never dropped CAP_NET_RAW. Apply(CAPS) preserves the other loaded capability sets, and one OS thread owns the drop, check and restoration. Source review has passed. Focused validation 479432ff at composed source bcf337cfa passes all 105 boot XML cases without skips and boot Nogo on ARM64 and AMD64. The original full unit-v1 parent remains failed; contributor review is pending and no PR is open. Integrated in qualification head a6d7bf336."
     }
   ],
   "edges": [
@@ -1417,13 +1440,6 @@
     },
     {
       "from": "pr:15036",
-      "to": "branch:hermetic-toolchains",
-      "type": "depends_on",
-      "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
-      "evidence": "https://github.com/tamird/gvisor/tree/hermetic-toolchains"
-    },
-    {
-      "from": "pr:15048",
       "to": "branch:hermetic-toolchains",
       "type": "depends_on",
       "reason": "Open prerequisite used by the combined hermetic toolchain migration.",
@@ -1573,7 +1589,7 @@
       "from": "external:kvm",
       "to": "branch:rbe-qualification-next",
       "type": "blocked_by",
-      "reason": "Required worker capability for part of the public runtime matrix.",
+      "reason": "The complete public container-v1 lane still requires hosted KVM capacity; the passing focused cgroup-v1 root case does not supply it.",
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13575"
     },
     {
@@ -1824,6 +1840,26 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/d99108b15",
         "https://app.buildbuddy.io/invocation/2bdacc7b-50cf-4e98-971b-3b8fd47a6292"
+      ]
+    },
+    {
+      "from": "branch:cgroup-v1-memory-update",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the exact standalone memory-limit update in the unchanged TestCgroupV1 consumer; the focused v1 proof passes. Existing v2 fixture adaptations are separate.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/28a6cf8b6",
+        "https://github.com/tamird/gvisor/commit/4dca99373"
+      ]
+    },
+    {
+      "from": "branch:boot-test-capability-drop",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The qualification branch includes the exact standalone boot test source. Focused boot and both-architecture Nogo validation pass; the prior full unit parent remains failed and was not rerun wholesale.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/bcf337cfa",
+        "https://app.buildbuddy.io/invocation/479432ff-61e2-436b-ba96-6aac4e16410a"
       ]
     }
   ]
