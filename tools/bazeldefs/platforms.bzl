@@ -30,18 +30,19 @@ def docker_test_exec_properties(free_disk, memory = None, exec_group = "test"):
     Args:
       free_disk: Root filesystem space for expanded images and container copies.
       memory: VM memory budget; defaults to 4GB.
-      exec_group: Execution group owning the daemon; defaults to test execution.
+      exec_group: Group owning the daemon; empty uses the rule's default group.
     """
+    prefix = exec_group + "." if exec_group else ""
     return select({
         Label("//tools/bazeldefs:rbe"): {
-            exec_group + ".EstimatedCPU": "4",
-            exec_group + ".EstimatedMemory": memory if memory != None else "4GB",
-            exec_group + ".EstimatedFreeDiskBytes": free_disk,
-            exec_group + ".container-image": _RBE_DOCKER_IMAGE,
-            exec_group + ".dockerUser": "root",
-            exec_group + ".network": "external",
-            exec_group + ".network-enable-ipv6": "true",
-            exec_group + ".workload-isolation-type": "firecracker",
+            prefix + "EstimatedCPU": "4",
+            prefix + "EstimatedMemory": memory if memory != None else "4GB",
+            prefix + "EstimatedFreeDiskBytes": free_disk,
+            prefix + "container-image": _RBE_DOCKER_IMAGE,
+            prefix + "dockerUser": "root",
+            prefix + "network": "external",
+            prefix + "network-enable-ipv6": "true",
+            prefix + "workload-isolation-type": "firecracker",
         },
         "//conditions:default": {},
     })

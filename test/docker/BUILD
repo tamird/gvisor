@@ -27,14 +27,8 @@ source_image_archive(
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
     ],
-    exec_group_compatible_with = {
-        "image": [
-            "@platforms//os:linux",
-            "@platforms//cpu:x86_64",
-        ],
-    },
     exec_properties = docker_test_exec_properties(
-        exec_group = "image",
+        exec_group = "",
         free_disk = "40GB",
         memory = "8GB",
     ),
