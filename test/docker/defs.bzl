@@ -6,6 +6,7 @@ load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
 
 def _image_name(image):
@@ -242,7 +243,7 @@ def _docker_command_test_impl(ctx):
             runfiles = runfiles.merge(dependency_runfiles)
     return [DefaultInfo(executable = runner, runfiles = runfiles)]
 
-docker_command_test = rule(
+_docker_command_test = rule(
     implementation = _docker_command_test_impl,
     doc = "Runs a declared command with the shared private Docker test daemon.",
     test = True,
@@ -254,6 +255,26 @@ docker_command_test = rule(
         "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "target"),
     },
 )
+
+docker_command_amd64_test, _docker_command_amd64_transition = with_test_architecture(_docker_command_test, "amd64").build()
+docker_command_arm64_test, _docker_command_arm64_transition = with_test_architecture(_docker_command_test, "arm64").build()
+
+def docker_command_test(name, architectures = [], **kwargs):
+    """Declares the original command test and requested architecture variants.
+
+    Args:
+      name: Existing command test target name.
+      architectures: Architectures supported by its declared command and inputs.
+      **kwargs: Remaining command test attributes.
+    """
+    kwargs["tags"] = test_architecture_tags(architectures, kwargs.get("tags", []))
+    _docker_command_test(name = name, **kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": docker_command_amd64_test, "arm64": docker_command_arm64_test},
+        kwargs,
+    )
 
 def _image_source_command_impl(ctx):
     make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)

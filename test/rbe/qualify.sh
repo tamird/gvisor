@@ -33,7 +33,8 @@ selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
 The all architecture selection combines unit, release-repository and syscalls
 with the target-configured test lanes described in test/rbe/README.md.
-Only unit and syscalls add ARM64 variants.
+ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
+image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 USAGE
@@ -212,34 +213,44 @@ analyze_profile() {
     "--build_event_json_file=$events" 'set()'
 }
 
-# Let Bazel select each public syscall profile before checking worker capacity.
+# Let Bazel select each public profile before checking worker capacity.
 # Aquery inherits build options, so the canonical loading filters live there;
-# test inherits the same options. Its ordered universe comes from Make's roots.
-select_syscall_profile() {
-  local selection_dir=$1 lane=$2 syscall_arch=$3 target_config=x86_64 prefix
-  local -a profile_options=()
-  prefix=$selection_dir/$lane-$syscall_arch
-  if [[ $syscall_arch == arm64 ]]; then
+# test inherits the same options. Its ordered universe uses the owning roots.
+select_test_profile() {
+  local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
+  shift 4
+  local -a selection_options=()
+  prefix=$selection_dir/$lane-$target_arch
+  if [[ $target_arch == arm64 ]]; then
     target_config=aarch64
   fi
+  if [[ $lane == syscalls* ]]; then
+    selection_options=(--syscall-policy)
+  fi
+  analyze_profile "$roots" "$prefix-profile.json" \
+    --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
+  python3 test/rbe/unit_matrix.py profile-actions \
+    "$prefix-profile.json" "$target_arch" > "$prefix.query"
+  bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+    --output=jsonproto --include_artifacts=false \
+    "--build_event_json_file=$prefix-routing.json" \
+    "--query_file=$prefix.query" > "$prefix-actions.json"
+  python3 test/rbe/unit_matrix.py select-profile \
+    "$prefix-profile.json" "$target_arch" "$prefix-routing.json" \
+    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}"
+}
+
+select_syscall_profile() {
+  local selection_dir=$1 lane=$2 syscall_arch=$3
+  local -a profile_options=()
   case "$lane" in
     syscalls) profile_options=("--config=syscalls-$syscall_arch") ;;
     syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
     syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
     *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
   esac
-  analyze_profile test/syscalls.targets "$prefix-profile.json" \
-    --config=rbe-matrix "--config=$target_config" \
-    "${profile_options[@]}" --build_tests_only
-  python3 test/rbe/unit_matrix.py profile-actions \
-    "$prefix-profile.json" "$syscall_arch" > "$prefix.query"
-  bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
-    --output=jsonproto --include_artifacts=false \
-    "--build_event_json_file=$prefix-routing.json" \
-    "--query_file=$prefix.query" > "$prefix-actions.json"
-  python3 test/rbe/unit_matrix.py select-syscalls \
-    "$prefix-profile.json" "$syscall_arch" "$prefix-routing.json" \
-    "$prefix-actions.json" "$prefix-targets"
+  select_test_profile "$selection_dir" "$lane" "$syscall_arch" \
+    test/syscalls.targets "${profile_options[@]}"
 }
 
 # Expand the public unit selection before removing its lane-wide filters from
@@ -292,7 +303,7 @@ select_cgroup_profile() {
 # not suppress another requested lane's owners. Release owns both CPU builds.
 run_platform_matrix() (
   set -e
-  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false explicit_unit=false
+  local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false include_public_profiles=false explicit_unit=false
   local -a options=() targets=() verification_options=() unit_selection_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
@@ -397,8 +408,26 @@ run_platform_matrix() (
         cat "$selection_dir/$lane-$checkpoint_arch-targets" >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
-      smoke|smoke-race)
-        printf '//:release_%s_test\n' "${lane//-/_}" >> "$selection_dir/explicit-targets"
+      smoke|docker|bwrap|cpu-images|gpu-images)
+        include_public_profiles=true
+        # These public lanes run on both CPUs. Expand each owning suite under
+        # that architecture before mapping its declared test variants.
+        local profile_arch
+        for profile_arch in amd64 arm64; do
+          if [[ $lane == smoke ]]; then
+            targets=(//:release_smoke_test)
+          else
+            shared_test_targets "$lane" "$profile_arch"
+          fi
+          printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-$profile_arch-roots"
+          select_test_profile "$selection_dir" "$lane" "$profile_arch" \
+            "$selection_dir/$lane-$profile_arch-roots" --strip=never
+          cat "$selection_dir/$lane-$profile_arch-targets" >> "$selection_dir/explicit-targets"
+        done
+        options+=(--strip=never)
+        ;;
+      smoke-race)
+        printf '%s\n' '//:release_smoke_race_test' >> "$selection_dir/explicit-targets"
         options+=(--strip=never)
         ;;
       posture|startup|benchmarks)
@@ -412,7 +441,7 @@ run_platform_matrix() (
         # verifier. Its own transition preserves opt/strip=sometimes.
         printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
         ;;
-      plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|cos-metadata)
+      plugin-network|do|root|portforward|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
@@ -448,7 +477,7 @@ run_platform_matrix() (
   fi
   cat "$selection_dir/explicit-targets" "$selection_dir/shared-targets" > "$selection_dir/combined-targets"
   if [[ -s $selection_dir/combined-targets ]]; then
-    if [[ $include_nogo == true || $include_syscalls == true || $explicit_unit == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
+    if [[ $include_nogo == true || $include_syscalls == true || $include_public_profiles == true || $explicit_unit == true || -s $selection_dir/filtered-targets || ( $include_unit == true && -s $selection_dir/shared-targets ) ]]; then
       if [[ -s $selection_dir/shared-targets ]]; then
         # Let Bazel expand explicit suites, including their manual members,
         # before comparing their selection under the combined lane's filters.

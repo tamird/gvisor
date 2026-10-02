@@ -54,6 +54,7 @@ bzl_library(
         "//tools:arch_bzl",
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
+        "//tools/bazeldefs:test_architectures_bzl",
         "@bazel_skylib//lib:shell",
         "@rules_foreign_cc//toolchains/native_tools:tool_access",
         "@rules_oci//oci:defs",
@@ -117,6 +118,7 @@ docker_command_test(
     name = "cpu_image_sources_amd64_test",
     size = "large",
     timeout = "eternal",
+    architectures = ["amd64"],
     command = ":cpu_image_sources_amd64",
     docker_config = ":image_source_config",
     exec_compatible_with = [
@@ -141,6 +143,7 @@ docker_command_test(
     name = "cpu_image_sources_arm64_test",
     size = "large",
     timeout = "eternal",
+    architectures = ["arm64"],
     command = ":cpu_image_sources_arm64",
     docker_config = ":image_source_config",
     exec_compatible_with = [
@@ -163,6 +166,7 @@ docker_command_test(
     name = "gpu_image_sources_amd64_test",
     size = "large",
     timeout = "eternal",
+    architectures = ["amd64"],
     command = ":gpu_image_sources_amd64",
     docker_config = ":image_source_config",
     exec_compatible_with = [
@@ -185,6 +189,7 @@ docker_command_test(
     name = "gpu_image_sources_arm64_test",
     size = "large",
     timeout = "eternal",
+    architectures = ["arm64"],
     command = ":gpu_image_sources_arm64",
     docker_config = ":image_source_config",
     exec_compatible_with = [

@@ -109,10 +109,11 @@ The final invocation does not inherit Nogo's positive tag filter or
 `--build_tests_only`.
 
 Add `smoke smoke-race` to run the existing normal and race smoke checks in that
-same invocation, or run just those two lanes with `--arch=all`. Both smoke
-checks execute on AMD64. The race target owns its instrumentation settings,
-so selecting it does not instrument the other tests. Both use the declared
-release sidecars and the existing rootless namespace setup.
+same invocation, or run just those two lanes with `--arch=all`. Normal smoke
+declares both public architectures; the race check executes on AMD64. The race
+target owns its instrumentation settings, so selecting it does not instrument
+the other tests. Both use the declared release sidecars and the existing
+rootless namespace setup.
 
 The `do`, `docker`, `root`, `portforward`, `bwrap` and `workflows` lanes can also
 join this invocation, or run together without unit or syscall tests:
@@ -121,13 +122,18 @@ join this invocation, or run together without unit or syscall tests:
 test/rbe/qualify.sh --arch=all smoke do workflows bwrap
 ```
 
-These additions retain their existing AMD64 targets and do not add ARM64
-coverage. The standalone and combined paths use the same owning suites,
-including explicit manual tests. When unit or syscall filters are present,
-Bazel expands the added suites both with and without those filters; a changed
-selection fails before execution. Their original suite roots remain in the
-final target list. Per-test runtime inputs, privileges and sharding stay with
-the owning rules.
+The combined selection follows the public CI architectures: normal smoke,
+Docker and bwrap include ARM64; `do`, root, port forwarding and workflow
+checks retain AMD64. Bazel expands each architecture's owning suites, including
+explicit manual tests, before the selector checks their declared variants and
+configured worker requirements. Unavailable ARM64 Firecracker tests are
+reported and omitted from execution. Declaring and analyzing these variants
+does not establish ARM64 runtime coverage.
+
+The selected tests must survive the final invocation's filters; a changed
+selection fails before execution. Single-architecture lanes and combined lanes
+use the same owning suites. Per-test runtime inputs, privileges and sharding
+stay with the owning rules.
 
 The `unit-v1`, `container`, `container-v1` and `docker-v1` lanes also join
 `--arch=all` invocations. Their cgroup profiles execute on AMD64. The v1
@@ -438,7 +444,9 @@ test/rbe/qualify.sh cpu-images gpu-images
 They select the existing `tools/images.mk test-cpu-images` and `test-gpu-images`
 owners through `//test/docker:cpu_image_sources_amd64_test` and
 `//test/docker:gpu_image_sources_amd64_test`, or the corresponding `arm64_test`
-targets with `--arch=arm64`. Each architecture runs natively, using the public
+targets with `--arch=arm64`. With `--arch=all`, both public profiles are analyzed
+and their target-configured variants use the same worker-capacity selection as
+smoke, Docker and bwrap. Each architecture runs natively, using the public
 four AMD64 or two ARM64 partitions as Bazel test shards. Make retains image
 discovery, complete-context hashing and the manifest check: a missing manifest
 builds the image from its Dockerfile; a manifest hit does not prove a fresh

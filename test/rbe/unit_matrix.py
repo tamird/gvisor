@@ -216,38 +216,40 @@ def profile_targets(events_path: str, architecture: str) -> list[str]:
         return sorted(targets)
     missing = sorted(label for label, target in targets.items() if "rbe-has-arm64-variant" not in target.tags)
     if missing:
-        raise ValueError(f"Syscall owners without ARM64 variants: {missing}")
+        raise ValueError(f"Profile owners without ARM64 variants: {missing}")
     return sorted(label + "_arm64" for label in targets)
 
 
-def select_syscalls(
+def select_profile(
     profile_path: str,
     architecture: str,
     events_path: str,
     actions_path: str,
     output_path: str,
+    *,
+    syscall_policy: bool,
 ) -> None:
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
-        raise ValueError(f"Configured syscall owners differ from profile: {sorted(configured.keys() ^ expected)}")
+        raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
     requirements = test_requirements(
         actions_path,
         architecture,
         {label: target.configuration for label, target in configured.items()},
     )
     if requirements.keys() != expected:
-        raise ValueError(f"Missing syscall TestRunners: {sorted(expected - requirements.keys())}")
+        raise ValueError(f"Missing profile TestRunners: {sorted(expected - requirements.keys())}")
     unavailable: dict[str, str] = {}
     policy_excluded: dict[str, str] = {}
     for label, target in original.items():
         variant = label if architecture == "amd64" else label + "_arm64"
         # The standalone RBE syscall lane also leaves Nogo to its own lane.
         # Keep this policy distinct from unavailable runtime capabilities.
-        if "nogo" in target.tags:
+        if syscall_policy and "nogo" in target.tags:
             policy_excluded[variant] = "Nogo runs in the dedicated nogo lane."
-        elif "runsc_kvm" in target.tags:
+        elif syscall_policy and "runsc_kvm" in target.tags:
             unavailable[variant] = "KVM execution is unavailable."
         elif architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
@@ -255,10 +257,11 @@ def select_syscalls(
     Path(output_path).write_text("".join(label + "\n" for label in selected))
     print(json.dumps({
         "profile_architecture": architecture,
-        "canonical_syscall_owners": sorted(original),
-        "selected_syscall_owners": selected,
-        "unavailable_syscall_owners": unavailable,
-        "policy_excluded_syscall_owners": policy_excluded,
+        "canonical_profile": profile_path,
+        "canonical_owners": sorted(original),
+        "selected_owners": selected,
+        "unavailable_owners": unavailable,
+        "policy_excluded_owners": policy_excluded,
     }, indent=2))
 
 
@@ -321,11 +324,12 @@ def main() -> None:
         profile = commands.add_parser(command)
         profile.add_argument("events")
         profile.add_argument("architecture", choices=("amd64", "arm64"))
-    syscalls = commands.add_parser("select-syscalls")
-    syscalls.add_argument("profile")
-    syscalls.add_argument("architecture", choices=("amd64", "arm64"))
+    profile = commands.add_parser("select-profile")
+    profile.add_argument("profile")
+    profile.add_argument("architecture", choices=("amd64", "arm64"))
     for name in ("events", "actions", "output"):
-        syscalls.add_argument(name)
+        profile.add_argument(name)
+    profile.add_argument("--syscall-policy", action="store_true", help="Apply the existing syscall runtime exclusions")
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
@@ -370,8 +374,8 @@ def main() -> None:
         print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture)) + ")")
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture)))
-    elif args.command == "select-syscalls":
-        select_syscalls(args.profile, args.architecture, args.events, args.actions, args.output)
+    elif args.command == "select-profile":
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:
