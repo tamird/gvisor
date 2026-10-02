@@ -16,7 +16,7 @@
 
 #include <stddef.h>
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <unistd.h>
 
 #include <atomic>
@@ -34,7 +34,7 @@ bool SaveEnabled() {
   auto enabled = save_enabled.load();
   if (!enabled.has_value()) {
     const char* env = getenv("GVISOR_SAVE_TEST");
-    enabled = env && strcmp(env, "TRUE") == 0;
+    enabled = env && strcasecmp(env, "true") == 0;
     save_enabled.store(enabled);
   }
   return enabled.value();
