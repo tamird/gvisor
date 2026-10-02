@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -35,6 +35,7 @@ The all architecture selection combines unit, release-repository and syscalls
 with the target-configured test lanes described in test/rbe/README.md.
 Only unit and syscalls add ARM64 variants.
 The license-headers lane requires an explicit base and complete Git history.
+The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -88,12 +89,12 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|posture|startup|benchmarks) ;;
+      nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
   case "$lane" in
-    build-all|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -183,6 +184,7 @@ shared_test_targets() {
     syzkaller) targets=(//test/syzkaller:smoke_test) ;;
     go-export) targets=(//tools/go_export:all_test) ;;
     cpu-images|gpu-images) targets=("//test/docker:${1%-images}_image_sources_${target_arch}_test") ;;
+    cos-metadata) targets=(//test/gpu:cos_gpu_compatibility_test) ;;
     language-directfs|language-goferfs) targets=("//test/runtimes:${1#language-}_tests") ;;
     *) printf 'Unknown shared test lane: %s\n' "$1" >&2; return 2 ;;
   esac
@@ -410,7 +412,7 @@ run_platform_matrix() (
         # verifier. Its own transition preserves opt/strip=sometimes.
         printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
         ;;
-      plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images)
+      plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|cos-metadata)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
@@ -569,7 +571,7 @@ run_lane() (
       fi
       shared_test_targets "$lane" "$arch"
       ;;
-    do|docker|root|portforward|bwrap|workflows|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images)
+    do|docker|root|portforward|bwrap|workflows|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
       if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2
@@ -664,19 +666,32 @@ run_lane() (
     --keep_going "${options[@]}" "${targets[@]}"
 )
 
-if [[ $arch == all ]]; then
-  run_platform_matrix "$@"
-  exit "$?"
-fi
+run_selection() {
+  if [[ $arch == all ]]; then
+    run_platform_matrix "$@"
+    return "$?"
+  fi
 
-status=0
+  local status=0 lane lane_status
+  for lane in "$@"; do
+    printf '\nRunning lane: %s\n' "$lane"
+    run_lane "$lane"
+    lane_status=$?
+    printf 'Lane %s exited %d\n' "$lane" "$lane_status"
+    if (( lane_status != 0 )); then
+      status=1
+    fi
+  done
+  return "$status"
+}
+
 for lane in "$@"; do
-  printf '\nRunning lane: %s\n' "$lane"
-  run_lane "$lane"
-  lane_status=$?
-  printf 'Lane %s exited %d\n' "$lane" "$lane_status"
-  if (( lane_status != 0 )); then
-    status=1
+  if [[ $lane == cos-metadata ]]; then
+    # Prepare the declared input before any selected lane runs, including the
+    # analyses that establish a combined test selection.
+    source tools/gpu/cos_metadata_input.sh
+    with_cos_metadata_input "${COS_IMAGES_JSON:-}" run_selection "$@"
+    exit "$?"
   fi
 done
-exit "$status"
+run_selection "$@"

@@ -16,7 +16,8 @@ test/rbe/qualify.sh --header-base="$BASE_COMMIT" amd64
 
 Set `BASE_COMMIT` to the explicit comparison commit for license headers and
 provide complete local Git history. The dispatcher does not choose or fetch a
-comparison base. Use `test/rbe/qualify.sh --list` to see the lanes and
+comparison base. The full profile also requires `COS_IMAGES_JSON`, as described
+below. Use `test/rbe/qualify.sh --list` to see the lanes and
 environment limits, or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
@@ -167,6 +168,37 @@ lane to the combined graph does not resolve its existing workload failures.
 ```sh
 test/rbe/qualify.sh --arch=all smoke packetdrill workflows
 ```
+
+The `cos-metadata` lane checks COS image driver metadata against nvproxy's
+supported drivers. It needs HTTPS access to the public COS driver metadata,
+but no GPU, COS worker, installed runtime or GCP credentials on the test worker.
+Supply the complete output of the public CI query from a coordinator with
+authorized GCP access:
+
+```sh
+gcloud compute images list --project cos-cloud \
+  --filter="family:cos*" --format json > /path/to/cos-images.json
+COS_IMAGES_JSON=/path/to/cos-images.json \
+  test/rbe/qualify.sh --arch=all cos-metadata smoke
+```
+
+Preserve that query's full catalog and record its capture time when reporting
+results. The dispatcher does not authenticate, query GCP or replace a missing
+catalog. An absent or unreadable file fails before any selected lane runs.
+It copies the catalog into the temporary repository input
+`test/gpu/cos_metadata_input/images.json`, which the existing test declares as
+runfile data. The helper refuses a pre-existing input directory and removes
+only the directory it created after the selected lanes finish. Do not commit
+this generated input. Building without a catalog remains supported; explicitly
+running the metadata test without one fails with an input error.
+
+Combined selection runs this owner on AMD64. The test retains the catalog's
+existing image/version checks and live driver metadata queries, including the
+existing treatment of not-yet-published metadata. Its `external` tag disables
+cached test results because the driver metadata can change independently of
+the catalog. The catalog is a declared input, not a frozen snapshot of those
+live responses. The public `tools/gpu/cos_drivers_test.sh` caller obtains the
+same catalog and uses the same declared-input helper and Bazel test.
 
 The `posture`, `startup` and `benchmarks` lanes can join the same invocation on
 AMD64. Bazel selects their runtime owners under the existing `-requires-kvm`

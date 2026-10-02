@@ -30,6 +30,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/prototext"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	cospb "gvisor.dev/gvisor/test/gpu/gpu_driver_versions_go_proto"
 )
 
@@ -44,7 +45,15 @@ var (
 )
 
 func TestGPUDriversCompatibility(t *testing.T) {
-	content, err := os.ReadFile(*imageJSON)
+	imagePath := *imageJSON
+	if imagePath == "" {
+		var err error
+		imagePath, err = testutil.FindFile("test/gpu/cos_metadata_input/images.json")
+		if err != nil {
+			t.Fatalf("COS image catalog is missing; use tools/gpu/cos_drivers_test.sh or supply COS_IMAGES_JSON to the cos-metadata qualification lane: %v", err)
+		}
+	}
+	content, err := os.ReadFile(imagePath)
 	if err != nil {
 		t.Fatalf("Failed to read image JSON file: %v", err)
 	}
