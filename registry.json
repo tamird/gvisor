@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T00:46:38.224457+00:00",
+    "updatedAt": "2026-10-02T00:57:13.618794+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1666,8 +1666,8 @@
       "title": "Extend mixed-architecture unit selection",
       "url": "https://github.com/tamird/gvisor/tree/rbe-unit-all-architectures",
       "group": "rbe",
-      "status": "fork validation; compatibility correction pending",
-      "summary": "Current public candidate 0aca154318a32a16e57da7efc87d3b6f08b7459b follows the reviewed architecture expansion at 9c145262fe863218a2d6ce77efdc8e165678ef5a. The original mixed-unit parent 315b5149-9f50-4787-bc33-7782d3a80f7d is independently closed FAILED: 655 of 656 actual owners and 675 of 676 uncached remote results pass. Both canonical profiles contain 330 owners; four unavailable ARM Firecracker owners remain explicit. The sole failure invokes an AMD64 analyzer on ARM64 in sanity_test_arm64. A focused corrected native pair passed, but a plain cross-target compatibility gap remains. The standalone nogo-sanity-execution-platform candidate b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee is held, not independently ready for an upstream PR. The ongoing correction preserves the generic fixture and adds explicit native variants. Primary qualification remains 5b649d4766."
+      "status": "fork validation; integration pending",
+      "summary": "Current public candidate 0aca154318a32a16e57da7efc87d3b6f08b7459b follows the reviewed architecture expansion at 9c145262fe863218a2d6ce77efdc8e165678ef5a. The original mixed-unit parent 315b5149-9f50-4787-bc33-7782d3a80f7d is independently closed FAILED: 655 of 656 actual owners and 675 of 676 uncached remote results pass. Both canonical profiles contain 330 owners; four unavailable ARM Firecracker owners remain explicit. The sole failure invokes an AMD64 analyzer on ARM64 in sanity_test_arm64. A focused corrected native pair passed, but a plain cross-target compatibility gap remains. The standalone nogo-sanity-execution-platform candidate b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee is held, not independently ready for an upstream PR. Published native-variants candidate 63e94f33c99cedceeb46bdca07563ae0d2fdc52d preserves the ordinary fixture execution behavior and uses fixed-CPU helpers only for explicit native variants. Source and method reviews passed; all three actual runtime owners passed parent 19aa7e54-554c-4e5e-8876-012402e7f573, with saved-evidence closure still pending. Primary qualification remains 5b649d4766."
     },
     {
       "id": "branch:syscall-session-keyring-description",
@@ -1690,6 +1690,17 @@
       "group": "runtime",
       "status": "validated; contributor review pending",
       "summary": "Current published standalone ab141693238f1189f078353e4da8d3851a716091 is based on master bbb7e9e15. Full source and record reviews passed. The initial gate failed compilation because its new test omitted the errors import; no tests ran then. The corrected gate passed all nine owners, including the nobody-worker case without a skip, and saved-evidence peer review closed. Contributor review is pending before an upstream PR. Earlier reproduction showed a live write succeeded while an unreaped exited process returned EACCES as nobody; this does not establish the process state or cause in public Buildkite 49170. The change does not broadly suppress EACCES."
+    },
+    {
+      "id": "branch:rbe-unit-runtime-integration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-unit-runtime-integration",
+      "title": "Integrate unit runtime corrections",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-unit-runtime-integration",
+      "group": "rbe",
+      "status": "fork validation candidate",
+      "summary": "Published candidate 00c068dddf00cb6cde75d1c1800d10424a5c3d8e combines native Nogo variants from 63e94f33c with the exact reviewed keyring and OOM corrections. Full mixed-unit parent 1f05c074-0376-4d0a-a0b3-13c15051f270 is running with 400 remote actions and a 25-minute work limit; no result credit is claimed. The previous 655-of-656 mixed-unit failure remains recorded at its original 9c145262f source. Primary remains 5b649d4766 until the integration gate closes."
     }
   ],
   "edges": [
@@ -2487,6 +2498,20 @@
         "https://app.buildbuddy.io/invocation/49857cb9-a0d0-40d0-b3e0-0fdf4fc593f8",
         "https://github.com/tamird/gvisor/commit/8ce3e97d0ee83d18acbe6dbf1c0c93b9d2502c0d"
       ]
+    },
+    {
+      "from": "branch:syscall-session-keyring-description",
+      "to": "branch:rbe-unit-runtime-integration",
+      "type": "includes",
+      "reason": "The candidate composes the exact reviewed keyring correction; this records integration membership, not an upstream PR prerequisite.",
+      "evidence": "https://github.com/tamird/gvisor/commit/00c068dddf00cb6cde75d1c1800d10424a5c3d8e"
+    },
+    {
+      "from": "branch:oom-score-exited-process",
+      "to": "branch:rbe-unit-runtime-integration",
+      "type": "includes",
+      "reason": "The candidate composes the exact reviewed OOM correction; this records integration membership, not an upstream PR prerequisite.",
+      "evidence": "https://github.com/tamird/gvisor/commit/00c068dddf00cb6cde75d1c1800d10424a5c3d8e"
     }
   ]
 }
