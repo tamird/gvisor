@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Fork-only setup for the existing host-systemd cgroup regression cases.
+# Fork-only setup for the full existing root suite under host systemd.
 set -euo pipefail
 test "$#" -eq 4
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
@@ -108,9 +108,9 @@ docker_ready=true
 set +e
 docker exec --env DOCKER_HOST=unix:///var/run/docker.sock \
   --env GVISOR_SIDECAR_BINARIES_DIR=/fixture/runtime/gvisor-bin \
+  --env TEST_TIMEOUT="${TEST_TIMEOUT:?}" \
   "${container}" /fixture/root_test --runtime=runsc \
-  --config_path=/etc/docker/daemon.json -test.v -test.timeout=3m \
-  '-test.run=^(TestMemCgroup|TestCgroupV2|TestCgroupParent|TestSystemdCgroupJoinTwice)$' \
+  --config_path=/etc/docker/daemon.json -test.v \
   2>&1 | tee "${out}/root-test.log"
 statuses=("${PIPESTATUS[@]}")
 set -e
