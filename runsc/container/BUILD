@@ -75,7 +75,7 @@ go_test(
         "//:release",
         "//test/cmd/test_app",
     ],
-    exec_properties = namespace_test_exec_properties(),
+    exec_properties = namespace_test_exec_properties(user = "nobody"),
     library = ":container",
     shard_count = most_shards,
     tags = ["requires-kvm"],
