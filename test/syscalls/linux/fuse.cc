@@ -15,7 +15,6 @@
 #include <fcntl.h>
 #include <linux/capability.h>
 #include <linux/fuse.h>
-#include <linux/stat.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
