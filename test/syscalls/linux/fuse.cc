@@ -230,6 +230,9 @@ TEST(FuseTest, Fallocate) {
   const FileDescriptor stop_fd =
       ASSERT_NO_ERRNO_AND_VALUE(NewEventFD(0, EFD_CLOEXEC));
 
+  constexpr uint64_t kIno = 42;
+  constexpr uint64_t kBlocks = 8;
+
   // Only the server owns the device after initialization. Closing it when the
   // server exits also aborts any client request waiting for a reply.
   const int server_fd = fd.release();
@@ -253,14 +256,16 @@ TEST(FuseTest, Fallocate) {
       if (in->opcode == FUSE_LOOKUP) {
         fuse_entry_out out = {
             .nodeid = 2, .generation = 1, .entry_valid = 1, .attr_valid = 1};
-        out.attr = {.ino = 2, .mode = S_IFREG | 0644, .nlink = 1};
+        out.attr = {
+            .ino = kIno, .blocks = kBlocks, .mode = S_IFREG | 0644, .nlink = 1};
         FuseRespond(fd.get(), in->unique, &out, sizeof(out));
       } else if (in->opcode == FUSE_OPEN) {
         fuse_open_out out = {.fh = 1};
         FuseRespond(fd.get(), in->unique, &out, sizeof(out));
       } else if (in->opcode == FUSE_GETATTR) {
         fuse_attr_out out = {.attr_valid = 1};
-        out.attr = {.ino = in->nodeid,
+        out.attr = {.ino = in->nodeid == 1 ? 1 : kIno,
+                    .blocks = in->nodeid == 1 ? 0 : kBlocks,
                     .mode = in->nodeid == 1 ? S_IFDIR | 0755U : S_IFREG | 0644U,
                     .nlink = 1};
         FuseRespond(fd.get(), in->unique, &out, sizeof(out));
@@ -295,13 +300,18 @@ TEST(FuseTest, Fallocate) {
 
   // Without writeback caching, a normal fstat refreshes attributes from the
   // server. Inspect the kernel's size update without requesting that refresh.
+  constexpr unsigned int kStatMask =
+      STATX_SIZE | STATX_TYPE | STATX_INO | STATX_BLOCKS;
   struct statx st = {};
   EXPECT_THAT(
       RetryEINTR(syscall)(__NR_statx, file_fd.get(), "",
-                          AT_EMPTY_PATH | AT_STATX_DONT_SYNC, STATX_SIZE, &st),
+                          AT_EMPTY_PATH | AT_STATX_DONT_SYNC, kStatMask, &st),
       SyscallSucceeds());
-  EXPECT_EQ(st.stx_mask & STATX_SIZE, STATX_SIZE);
+  EXPECT_EQ(st.stx_mask & kStatMask, kStatMask);
+  EXPECT_EQ(st.stx_mode & S_IFMT, S_IFREG);
   EXPECT_EQ(st.stx_size, 6);
+  EXPECT_EQ(st.stx_ino, kIno);
+  EXPECT_EQ(st.stx_blocks, kBlocks);
 
   file_fd.reset();
   fuse_server.Join();
