@@ -13,7 +13,7 @@ must be followed for new tests.
 
 ## Running the tests
 
-Each test file generates three different test targets that run in different
+Each test file generates test targets that run in different
 environments:
 
 *   a `native` target that runs directly on the host machine
@@ -61,6 +61,21 @@ while to run.)
 # Run all tests on every platform:
 $ bazel test //test/syscalls/...
 ```
+
+## Linux versions tested in CI
+
+The [public CI pipeline](../../.buildkite/pipeline.yaml) routinely exercises
+system call tests on these Linux kernels:
+
+| CI environment | Kernel | Architectures |
+| --- | --- | --- |
+| Ordinary syscall tests | Linux 6.8 (`6.8.0-1069-gcp`) | AMD64 and ARM64 |
+| Release-candidate Linux tests | Linux 7.3-rc3 (`7.3.0-070300rc3-generic`) | AMD64 and ARM64 |
+
+This inventory reflects the workers observed on October 2, 2026. AMD64 jobs
+run both native Linux and gVisor targets. ARM64 jobs select the gVisor ptrace
+and systrap targets. The release-candidate version changes as those worker
+pools are updated.
 
 ## Writing new tests
 
