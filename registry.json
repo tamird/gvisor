@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T06:54:35.300163+00:00",
+    "updatedAt": "2026-10-02T07:19:12.673924+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1826,8 +1826,8 @@
       "title": "Upgrade LLVM sources for driver parsing",
       "url": "https://github.com/tamird/gvisor/tree/llvm-source-release-current",
       "group": "bazel",
-      "status": "catalog verified; bootstrap prerequisite pending",
-      "summary": "Public, clean and tracked at dcd8ef29951708fc054db8b5630222f979fd861a, one commit on upstream d3d566ad19. Updates the driver parser source archive to LLVM 23.1.2 and replaces the obsolete custom zlib extension with the BCR zlib-ng 2.3.3 module. The actual b9 compiler gate reaches Hexagon RDFCopy.cpp and fails on the old stateful std::less specialization under libc++ 23; the release contains the upstream RegisterRefLess correction. Source/record peers, exact official archive digest and BCR provider compatibility pass. Standalone canonical catalog Fetch failed because the current-master classifier cannot recognize Zlib. Existing PR #15146 supplies the generalized license-text classifier and is an established prerequisite. On the exact classifier composition 7cc3262660733cd6e5a51108ec10aeddd5bda012, parent b1a7f191-189a-4a8a-a370-6d0740447a2c closed OK in 92.261 seconds: canonical Fetch and Verify passed all 181 dependencies, retaining only the existing google_root_pem warning. Outcome 311b063780b6 is independently closed; the exact generated catalog 7b085834b13c changes only llvm-raw and zlib-ng and passed source/record review. This is catalog validation only. The subsequent compiler-composition parser build reaches LLVM 23 bundle_resources but fails because existing #15120 script bootstrap was omitted; composing that prerequisite and validating the parser remain pending; no upstream PR or contributor approval is claimed. Old llvm-source-release a240185e7 and its descendants are preserved."
+      "status": "catalog verified; parser validation running",
+      "summary": "Public, clean and tracked at dcd8ef29951708fc054db8b5630222f979fd861a, one commit on upstream d3d566ad19. Updates the driver parser source archive to LLVM 23.1.2 and replaces the obsolete custom zlib extension with the BCR zlib-ng 2.3.3 module. The actual b9 compiler gate reaches Hexagon RDFCopy.cpp and fails on the old stateful std::less specialization under libc++ 23; the release contains the upstream RegisterRefLess correction. Source/record peers, exact official archive digest and BCR provider compatibility pass. Standalone canonical catalog Fetch failed because the current-master classifier cannot recognize Zlib. Existing PR #15146 supplies the generalized license-text classifier and is an established prerequisite. On the exact classifier composition 7cc3262660733cd6e5a51108ec10aeddd5bda012, parent b1a7f191-189a-4a8a-a370-6d0740447a2c closed OK in 92.261 seconds: canonical Fetch and Verify passed all 181 dependencies, retaining only the existing google_root_pem warning. Outcome 311b063780b6 is independently closed; the exact generated catalog 7b085834b13c changes only llvm-raw and zlib-ng and passed source/record review. This is catalog validation only. The subsequent compiler-composition parser build at 51901f9a1 reaches LLVM 23 bundle_resources but fails because existing #15120 script bootstrap was omitted. Corrected compiler 7f82a4f5b includes that unchanged prerequisite; focused parent 9683afe5-ec68-4d76-b29f-ba485ca34efb is running, with no parser pass yet. Standalone catalog import remains separate and pending; no upstream PR or contributor approval is claimed. Old llvm-source-release a240185e7 and its descendants are preserved."
     },
     {
       "id": "branch:hermetic-compiler-go126",
@@ -1837,8 +1837,8 @@
       "title": "Validate LLVM compilers with the current Go SDK",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-compiler-go126",
       "group": "bazel",
-      "status": "validation running; parser and plugin builds failed",
-      "summary": "Public, clean and tracked at 51901f9a1084f731d54ac4409f199ed5be656fc6. This separately reviewed composition starts from final independent BPF 904b7e113 and retains the required Benchmark release/ranges, four open SDK/goimports/nm/plugin PRs, Benchmark and Abseil annotations, and older noexcept subset. It adds the exact reviewed LLVM source-release precursor for the observed Hexagon parser failure. Retains current-master Go 1.26.3 and x/net 0.54, with a byte-identical coverage script; independent Go 1.27/x/net upgrade branches are not prerequisites. All compiler implementation added/removed lines are unchanged from reviewed 1cb. Includes the exact existing #15146 generalized license-text classifier for Zlib recognition. Its 12-path replay preserves the plugin policy and catalog records without new classifier code or policy broadening. Parent 48bcb09d-92cd-4b21-9b7f-c3bbf809614f is still running at this exact source. Both normal Go roots and both static race roots completed successfully for each target CPU; final saved-result closure is pending. The parser build fails at LLVM bundle_resources because existing #15120 script bootstrap was omitted. The GNU plugin build passes the former loader checks but fails to find pthread/dl/c libraries and reports the selected toolchain objdump path missing. Owners are diagnosing these distinct link and tool-path boundaries; plugin tests are still running and no final outcome or runtime pass is claimed. A local qualification integration is held and unpublished. No upstream approval or qualification-integration claim is made. Old b9/1cb results retain their actual Go 1.27 source and failed parser evidence."
+      "status": "corrected source published; focused validation running",
+      "summary": "Public, clean and tracked at 7f82a4f5ba3e845089c87300ae06a71ff48b9fb0. This separately reviewed composition starts from final independent BPF 904b7e113 and retains the required Benchmark release/ranges, SDK headers, goimports, selected nm, the plugin source/musl/backtrace foundation from #15153, Benchmark and Abseil annotations, and older noexcept subset. It includes released LLVM sources and the exact existing #15146 generalized license-text classifier. Go 1.26.3 and x/net 0.54 are unchanged; independent SDK/x/net upgrade branches are not prerequisites. The original parent 48bcb09d-92cd-4b21-9b7f-c3bbf809614f at source 51901f9a1084f731d54ac4409f199ed5be656fc6 remains FAILED. Independently closed outcome 6004b9b94284 verifies eight normal/race outputs across both target CPUs, four static race ELF/link joins, two actual uncached deps/Nogo test passes, and the canonical 189-entry catalog audit with five retained warnings. The parser failed at the missing Python bootstrap; supported musl plugin builds failed at absent legacy linker/objdump paths. The direct GNU-libc archive was an additional unsupported experiment and remains FAILED separately. The correction replays #15120 unchanged and reuses primary qualification's declared LLVM ld/objdump and Linux AMD64 musl boundary, retaining explicit DPDK_TARGET forwarding and the standalone define selector. It removes the generic tool supplier; no new supplier adapter, GNU support expansion or primary source edit is included. Source/record peers pass. Focused parent 9683afe5-ec68-4d76-b29f-ba485ca34efb is running at exact 7f82a4f5b, covering the parser, existing backtrace test and two public plugin binaries with the original 40-minute work/45-minute parent limits. No fresh runtime pass, full CI pass or upstream approval is claimed. Canonical standalone catalog import remains separate and pending. Old failed source results retain their exact evidence."
     }
   ],
   "edges": [
@@ -2944,8 +2944,11 @@
       "from": "pr:15153",
       "to": "branch:hermetic-compiler-go126",
       "type": "depends_on",
-      "reason": "Includes the still-open plugin-toolchain prerequisite.",
-      "evidence": "https://github.com/tamird/gvisor/commit/9a11639e2ec413e48e8a7be959a9f0478bd43e91"
+      "reason": "Retains the pinned plugin sources, rules_foreign_cc build, musl portability patches, libbacktrace and cgo backtrace test, declared archive inputs, and scoped license records. The compiler correction replaces only the generic supplier/GCC/raw-linker selection with explicit LLVM tools and the existing musl boundary; explicit DPDK_TARGET forwarding is preserved.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/9a11639e2ec413e48e8a7be959a9f0478bd43e91",
+        "https://github.com/tamird/gvisor/commit/7f82a4f5ba3e845089c87300ae06a71ff48b9fb0"
+      ]
     },
     {
       "from": "branch:benchmark-thread-safety",
@@ -2994,6 +2997,16 @@
         "https://github.com/google/gvisor/pull/15120",
         "https://github.com/tamird/gvisor/commit/4ce2f68bcec88d564511847aa9397e4b353db9e0",
         "https://app.buildbuddy.io/invocation/48bcb09d-92cd-4b21-9b7f-c3bbf809614f"
+      ]
+    },
+    {
+      "from": "pr:15120",
+      "to": "branch:hermetic-compiler-go126",
+      "type": "depends_on",
+      "reason": "The exact existing script-bootstrap replay supplies the declared Python interpreter required by LLVM bundle_resources on the minimal worker. The original parser failure is preserved; focused validation is running.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15120",
+        "https://github.com/tamird/gvisor/commit/a492df34778844c2a28c22c84445a240bc646822"
       ]
     }
   ]
