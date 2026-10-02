@@ -1453,14 +1453,21 @@ TEST(RawSocketTest, SetIPv6ChecksumError_ReadShort) {
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET6, SOCK_RAW, IPPROTO_UDP));
 
   int intV = 2;
-  ASSERT_THAT(
-      setsockopt(fd.get(), SOL_IPV6, IPV6_CHECKSUM, &intV, sizeof(intV) - 1),
-      SyscallFailsWithErrno(EINVAL));
-
   // Use a valid length to reach the bad-pointer check.
   ASSERT_THAT(
       setsockopt(fd.get(), SOL_IPV6, IPV6_CHECKSUM, nullptr, sizeof(intV)),
       SyscallFailsWithErrno(EFAULT));
+
+  // Linux 5.16 added the length check. Conservatively skip older native
+  // kernels, which may or may not have the fix backported. gVisor checks the
+  // length. https://github.com/torvalds/linux/commit/fb7bc9204
+  if (!IsRunningOnGvisor()) {
+    auto version = ASSERT_NO_ERRNO_AND_VALUE(GetKernelVersion());
+    SKIP_IF(version.major < 5 || (version.major == 5 && version.minor < 16));
+  }
+  ASSERT_THAT(
+      setsockopt(fd.get(), SOL_IPV6, IPV6_CHECKSUM, &intV, sizeof(intV) - 1),
+      SyscallFailsWithErrno(EINVAL));
 }
 
 TEST(RawSocketTest, IPv6Checksum_ValidateAndCalculate) {
