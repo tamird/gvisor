@@ -51,6 +51,32 @@ build:x86_64 --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64_cgo
 build:aarch64 --cpu=aarch64
 build:aarch64 --platforms=@io_bazel_rules_go//go/toolchain:linux_arm64_cgo
 
+# BuildBuddy's hosted coordinator supplies this configuration and authentication.
+# Both compilation and test actions execute remotely; the execution platform
+# owns the runtime image so per-test properties retain its image and architecture.
+build:rbe-common --config=buildbuddy_remote_executor
+# Keep remote workers fed independently of the coordinator's CPU count.
+build:rbe-common --jobs=400
+# Uploads otherwise hold the action-preparation semaphore and delay new work.
+# https://github.com/bazelbuild/bazel/issues/28734
+build:rbe-common --noexperimental_throttle_remote_action_building
+build:rbe-common --define=rbe=true
+build:rbe-common --spawn_strategy=remote
+build:rbe-common --noremote_local_fallback
+build:rbe-common --remote_cache_compression
+test:rbe-common --strategy=TestRunner=remote
+
+build:rbe --config=rbe-common
+# Architecture-specific generators may need the other native CPU even when
+# the requested build or test lane selects only one target architecture.
+build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+build:rbe --host_platform=//tools/bazeldefs:rbe_linux_amd64
+
+# Prefer native ARM64 tools and workers, including host-configured test actions.
+build:rbe-arm64 --config=rbe-common
+build:rbe-arm64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64,//tools/bazeldefs:rbe_linux_amd64
+build:rbe-arm64 --host_platform=//tools/bazeldefs:rbe_linux_arm64
+
 # Use prebuilt protoc to speed up builds.
 common --@com_google_protobuf//bazel/toolchains:prefer_prebuilt_protoc
 common --incompatible_enable_proto_toolchain_resolution=true

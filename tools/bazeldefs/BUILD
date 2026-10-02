@@ -8,6 +8,38 @@ package(
     licenses = ["notice"],
 )
 
+# Shared by ordinary and namespace-dependent remote test actions.
+_RBE_EXEC_PROPERTIES = {
+    "OSFamily": "linux",
+    "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    "workload-isolation-type": "oci",
+}
+
+# These also serve as host platforms. Preserve the Go cgo constraints while
+# adding worker routing for compilation and host-configured test actions.
+platform(
+    name = "rbe_linux_amd64",
+    exec_properties = dict(
+        _RBE_EXEC_PROPERTIES,
+        Arch = "amd64",
+    ),
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
+)
+
+platform(
+    name = "rbe_linux_arm64",
+    exec_properties = dict(
+        _RBE_EXEC_PROPERTIES,
+        Arch = "arm64",
+    ),
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_arm64_cgo"],
+)
+
+config_setting(
+    name = "rbe",
+    define_values = {"rbe": "true"},
+)
+
 # BPF uses the downloaded compiler and its matching resource directory.
 alias(
     name = "bpf_clang",
