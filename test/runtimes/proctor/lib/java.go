@@ -70,6 +70,9 @@ func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
 			"-timeoutFactor:5",    // Extend the default timeout (2 min) of all tests by this factor.
 			"-verbose:all",        // Verbose output.
 			"-tl:200",             // Do not run tests which specify a timeout longer than 200s.
+			// Fork-only diagnostic; runner setup compiles and verifies this handler.
+			"-timeoutHandler:TimeoutDiagnostic",
+			"-timeoutHandlerPath:/proctor",
 		},
 		tests...,
 	)

@@ -100,9 +100,30 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 	opts := dockerutil.RunOpts{
 		Image: fmt.Sprintf("runtimes/%s", image),
 	}
-	d.CopyFiles(&opts, "/proctor", "test/runtimes/proctor/proctor")
+	files := []string{"test/runtimes/proctor/proctor"}
+	if lang == "java" {
+		files = append(files, "test/runtimes/runner/lib/TimeoutDiagnostic.java")
+	}
+	d.CopyFiles(&opts, "/proctor", files...)
 	if err := d.Spawn(ctx, opts, "/proctor/proctor", "--pause"); err != nil {
 		return nil, fmt.Errorf("docker run failed: %v", err)
+	}
+	if lang == "java" {
+		// Fork-only diagnostic: use the declared image's JDK and jtreg API,
+		// and verify the capture path before running the unchanged test.
+		setupCtx, cancel := context.WithTimeout(ctx, time.Minute)
+		defer cancel()
+		for _, argv := range [][]string{
+			{"sha256sum", "/root/jtreg/build/images/jtreg/lib/jtreg.jar", "/root/jdk/test/jdk/java/net/HttpURLConnection/SetAuthenticator/HTTPTest.java", "/root/jdk/test/jdk/java/net/HttpURLConnection/SetAuthenticator/HTTPTestServer.java"},
+			{"javac", "-cp", "/root/jtreg/build/images/jtreg/lib/*", "-d", "/proctor", "/proctor/TimeoutDiagnostic.java"},
+			{"java", "-cp", "/proctor:/root/jtreg/build/images/jtreg/lib/*", "TimeoutDiagnostic"},
+		} {
+			output, err := d.Exec(setupCtx, dockerutil.ExecOpts{Privileged: true, User: "0"}, argv...)
+			fmt.Print(output)
+			if err != nil {
+				return nil, fmt.Errorf("Java timeout diagnostic setup %q failed: %w", argv[0], err)
+			}
+		}
 	}
 
 	done := make(chan struct{})
@@ -195,6 +216,14 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 
 				select {
 				case <-done:
+					if lang == "java" {
+						if !strings.Contains(output, "TIMEOUT_DIAGNOSTIC_LOADED") || strings.Contains(output, "Reverting to the default timeout handler.") {
+							t.Fatalf("jtreg did not load the diagnostic timeout handler:\n%s", output)
+						}
+						if err == nil {
+							fmt.Print(output)
+						}
+					}
 					if err == nil {
 						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
 						return

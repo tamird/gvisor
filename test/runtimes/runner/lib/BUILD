@@ -13,6 +13,7 @@ go_library(
         "go_test_dependency_not_go118.go",
         "lib.go",
     ],
+    data = ["TimeoutDiagnostic.java"],
     visibility = ["//test/runtimes/runner:__pkg__"],
     deps = [
         "//pkg/log",
