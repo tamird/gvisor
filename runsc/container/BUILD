@@ -1,5 +1,6 @@
 load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
 load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
+load(":test_tools.bzl", "erofs_tools")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -58,6 +59,12 @@ _CONTAINER_EXEC_PROPERTIES = namespace_test_exec_properties(
     memory = "4GB",
 )
 
+erofs_tools(
+    name = "erofs_tools",
+    testonly = True,
+    src = "@container_test_tools//:flat",
+)
+
 go_test(
     name = "container_test",
     size = "large",
@@ -83,6 +90,7 @@ go_test(
     }),
     cgroup_v2 = True,
     data = [
+        ":erofs_tools",
         "//:release",
         "//test/cmd/test_app",
     ],

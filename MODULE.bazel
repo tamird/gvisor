@@ -135,7 +135,10 @@ use_repo(pip, "python_distribution_deps")
 # or network access is required while the release scripts run.
 release_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
 release_apt.sources_list(
-    architectures = ["amd64"],
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
     components = [
         "main",
         "universe",
@@ -148,24 +151,27 @@ release_apt.sources_list(
     types = ["deb"],
     uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
 )
+
+# Keep the existing AMD64 package sets independent of the container tools'
+# target architecture.
 release_apt.install(
     dependency_set = "release_tools",
     packages = [
-        "apt-utils",
-        "bash",
-        "bzip2",
-        "coreutils",
-        "diffutils",
-        "dpkg",
-        "dpkg-sig",
-        "file",
-        "gnupg",
-        "grep",
-        "gzip",
-        "mawk",
-        "tar",
-        "xz-utils",
-        "zstd",
+        "apt-utils:amd64",
+        "bash:amd64",
+        "bzip2:amd64",
+        "coreutils:amd64",
+        "diffutils:amd64",
+        "dpkg:amd64",
+        "dpkg-sig:amd64",
+        "file:amd64",
+        "gnupg:amd64",
+        "grep:amd64",
+        "gzip:amd64",
+        "mawk:amd64",
+        "tar:amd64",
+        "xz-utils:amd64",
+        "zstd:amd64",
     ],
     suites = [
         "jammy",
@@ -179,14 +185,26 @@ release_apt.install(
 # https://github.com/google/syzkaller/blob/7808aef4a/executor/files.h#L17-L48
 release_apt.install(
     dependency_set = "syzkaller_sysroot",
-    packages = ["libstdc++-11-dev"],
+    packages = ["libstdc++-11-dev:amd64"],
     suites = [
         "jammy",
         "jammy-updates",
         "jammy-security",
     ],
 )
-use_repo(release_apt, "release_tools", "syzkaller_sysroot")
+release_apt.install(
+    dependency_set = "container_test_tools",
+    packages = [
+        "busybox-static",
+        "erofs-utils",
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+use_repo(release_apt, "container_test_tools", "release_tools", "syzkaller_sysroot")
 
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
