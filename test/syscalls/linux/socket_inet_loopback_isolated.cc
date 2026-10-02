@@ -15,11 +15,13 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -28,6 +30,7 @@
 #include "test/syscalls/linux/socket_inet_loopback_test_params.h"
 #include "test/util/capability_util.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
 #include "test/util/socket_util.h"
@@ -152,6 +155,13 @@ TEST_P(SocketInetLoopbackIsolatedTest, TCPFinWait2Test) {
   TestAddress const& listener = param.listener;
   TestAddress const& connector = param.connector;
 
+  ASSERT_FALSE(IsRunningOnGvisor());
+  ASSERT_EQ(connector.family(), AF_INET);
+  struct utsname host;
+  ASSERT_THAT(uname(&host), SyscallSucceeds());
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC kernel=" << host.release
+            << " version=" << host.version << std::endl;
+
   // Disable cooperative saves after this point. As a save between the first
   // bind/connect and the second one can cause the linger timeout timer to
   // be restarted causing the final bind/connect to fail.
@@ -203,6 +213,20 @@ TEST_P(SocketInetLoopbackIsolatedTest, TCPFinWait2Test) {
 
   // close the connecting FD to trigger FIN_WAIT2  on the connected fd.
   conn_fd.reset();
+
+  // Wait for the peer to receive the FIN before testing the closed endpoint's
+  // bind reservation. Record the native kernel's state rather than inferring it
+  // from the close or the peer's EOF.
+  char byte;
+  ASSERT_THAT(RetryEINTR(recv)(accepted.get(), &byte, sizeof(byte), 0),
+              SyscallSucceedsWithValue(0));
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC client_port="
+            << ntohs(ASSERT_NO_ERRNO_AND_VALUE(
+                   AddrPort(connector.family(), conn_bound_addr)))
+            << " listener_port=" << ntohs(port) << std::endl;
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC tcp_begin\n"
+            << ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/net/tcp"))
+            << "FIN_WAIT2_DIAGNOSTIC tcp_end" << std::endl;
 
   // Now bind and connect a new socket.
   const FileDescriptor conn_fd2 = ASSERT_NO_ERRNO_AND_VALUE(
