@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T01:26:43.596671+00:00",
+    "updatedAt": "2026-10-02T01:39:13.775619+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1669,10 +1669,10 @@
       "repo": "tamird/gvisor",
       "ref": "rbe-unit-all-architectures",
       "title": "Extend mixed-architecture unit selection",
-      "url": "https://github.com/tamird/gvisor/tree/rbe-unit-all-architectures",
+      "url": "https://github.com/tamird/gvisor/commit/0aca154318a32a16e57da7efc87d3b6f08b7459b",
       "group": "rbe",
-      "status": "integrated and validated",
-      "summary": "Current public candidate 0aca154318a32a16e57da7efc87d3b6f08b7459b follows the reviewed architecture expansion at 9c145262fe863218a2d6ce77efdc8e165678ef5a. The original mixed-unit parent 315b5149-9f50-4787-bc33-7782d3a80f7d is independently closed FAILED: 655 of 656 actual owners and 675 of 676 uncached remote results pass. Both canonical profiles contain 330 owners; four unavailable ARM Firecracker owners remain explicit. The sole failure invokes an AMD64 analyzer on ARM64 in sanity_test_arm64. A focused corrected native pair passed, but root found a plain cross-target compatibility gap in that first correction. The standalone nogo-sanity-execution-platform candidate b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee is held, not independently ready for an upstream PR. Published native-variants candidate 63e94f33c99cedceeb46bdca07563ae0d2fdc52d preserves the ordinary fixture execution behavior and uses fixed-CPU helpers only for explicit native variants. Source and method reviews passed. Parent 19aa7e54-554c-4e5e-8876-012402e7f573 is independently closed PASS for all three actual runtime owners, with worker and analyzer ELF proofs (outcome 02c7da98e8aa). The final native variants are included in primary 00c068dddf after the independently closed full mixed-unit pass; the earlier failed candidate remains historical evidence."
+      "status": "superseded; refs deleted",
+      "summary": "Superseded candidate 0aca154318a32a16e57da7efc87d3b6f08b7459b followed the reviewed architecture expansion at 9c145262fe863218a2d6ce77efdc8e165678ef5a. The original mixed-unit parent 315b5149-9f50-4787-bc33-7782d3a80f7d is independently closed FAILED: 655 of 656 actual owners and 675 of 676 uncached remote results pass. Both canonical profiles contain 330 owners; four unavailable ARM Firecracker owners remain explicit. The sole failure invokes an AMD64 analyzer on ARM64 in sanity_test_arm64. A focused corrected native pair passed, but root found a plain cross-target compatibility gap in that first correction. The standalone nogo-sanity-execution-platform candidate b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee had the same ordinary cross-target incompatibility and was never submitted upstream. Published native-variants candidate 63e94f33c99cedceeb46bdca07563ae0d2fdc52d preserves the ordinary fixture execution behavior and uses fixed-CPU helpers only for explicit native variants. Source and method reviews passed. Parent 19aa7e54-554c-4e5e-8876-012402e7f573 is independently closed PASS for all three actual runtime owners, with worker and analyzer ELF proofs (outcome 02c7da98e8aa). The final native variants are included in primary 00c068dddf after the independently closed full mixed-unit pass; the earlier failed candidate remains historical evidence. Both obsolete local, remote-tracking and live remote refs were deleted after exact-head, active-checkout, consumer and PR checks. Recovery commits remain 0aca154318a32a16e57da7efc87d3b6f08b7459b and b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee. Current primary, integration and final native-variant refs were preserved."
     },
     {
       "id": "branch:syscall-session-keyring-description",
