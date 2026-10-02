@@ -15,11 +15,16 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <iostream>
+#include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -28,6 +33,7 @@
 #include "test/syscalls/linux/socket_inet_loopback_test_params.h"
 #include "test/util/capability_util.h"
 #include "test/util/file_descriptor.h"
+#include "test/util/fs_util.h"
 #include "test/util/posix_error.h"
 #include "test/util/save_util.h"
 #include "test/util/socket_util.h"
@@ -152,6 +158,13 @@ TEST_P(SocketInetLoopbackIsolatedTest, TCPFinWait2Test) {
   TestAddress const& listener = param.listener;
   TestAddress const& connector = param.connector;
 
+  ASSERT_FALSE(IsRunningOnGvisor());
+  ASSERT_EQ(connector.family(), AF_INET);
+  struct utsname host;
+  ASSERT_THAT(uname(&host), SyscallSucceeds());
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC kernel=" << host.release
+            << " version=" << host.version << std::endl;
+
   // Disable cooperative saves after this point. As a save between the first
   // bind/connect and the second one can cause the linger timeout timer to
   // be restarted causing the final bind/connect to fail.
@@ -204,12 +217,74 @@ TEST_P(SocketInetLoopbackIsolatedTest, TCPFinWait2Test) {
   // close the connecting FD to trigger FIN_WAIT2  on the connected fd.
   conn_fd.reset();
 
+  // Wait for the peer to receive the FIN before testing the closed endpoint's
+  // bind reservation. Record the native kernel's state rather than inferring it
+  // from the close or the peer's EOF.
+  char byte;
+  ASSERT_THAT(RetryEINTR(recv)(accepted.get(), &byte, sizeof(byte), 0),
+              SyscallSucceedsWithValue(0));
+  const auto& client = reinterpret_cast<const sockaddr_in&>(conn_bound_addr);
+  const auto& server = reinterpret_cast<const sockaddr_in&>(conn_addr);
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC client_port=" << ntohs(client.sin_port)
+            << " listener_port=" << ntohs(port) << std::endl;
+
+  // EOF does not mean that the client has received the peer's FIN
+  // acknowledgment. Wait for this exact tuple to reach FIN_WAIT2 before
+  // checking its reservation.
+  char fin_wait2[64];
+  snprintf(
+      fin_wait2, sizeof(fin_wait2), " %08X:%04X %08X:%04X 05 ",
+      client.sin_addr.s_addr, static_cast<unsigned>(ntohs(client.sin_port)),
+      server.sin_addr.s_addr, static_cast<unsigned>(ntohs(server.sin_port)));
+  const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(1);
+  std::string tcp;
+  while (true) {
+    tcp = ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/net/tcp"));
+    if (tcp.find(fin_wait2) != std::string::npos) {
+      break;
+    }
+    ASSERT_TRUE(std::chrono::steady_clock::now() < deadline) << tcp;
+    absl::SleepFor(absl::Milliseconds(1));
+  }
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC before_probe_begin\n"
+            << tcp << "FIN_WAIT2_DIAGNOSTIC before_probe_end" << std::endl;
+
+  // Linux 6.1 looks up wildcard binds in bhash and specific-address binds in
+  // bhash2. Before 936a192f9, compact FIN_WAIT2 sockets were only in bhash:
+  // https://github.com/torvalds/linux/commit/936a192f9
+  // Close the control socket before the original bind even if it unexpectedly
+  // succeeds, so the probe cannot itself reserve the port under test.
+  {
+    const FileDescriptor wildcard_fd =
+        ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+    sockaddr_in wildcard = client;
+    wildcard.sin_addr.s_addr = htonl(INADDR_ANY);
+    const int result =
+        bind(wildcard_fd.get(), AsSockAddr(&wildcard), sizeof(wildcard));
+    const int error = result < 0 ? errno : 0;
+    std::cerr << "FIN_WAIT2_DIAGNOSTIC wildcard_bind_result=" << result
+              << " errno=" << error << std::endl;
+  }
+  tcp = ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/net/tcp"));
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC before_bind_begin\n"
+            << tcp << "FIN_WAIT2_DIAGNOSTIC before_bind_end" << std::endl;
+
   // Now bind and connect a new socket.
   const FileDescriptor conn_fd2 = ASSERT_NO_ERRNO_AND_VALUE(
       Socket(connector.family(), SOCK_STREAM, IPPROTO_TCP));
 
-  ASSERT_THAT(bind(conn_fd2.get(), AsSockAddr(&conn_bound_addr), conn_addrlen),
-              SyscallFailsWithErrno(EADDRINUSE));
+  const int bind_result =
+      bind(conn_fd2.get(), AsSockAddr(&conn_bound_addr), conn_addrlen);
+  const int bind_errno = bind_result < 0 ? errno : 0;
+  // Snapshot before an assertion can close the peer and remove the old tuple.
+  tcp = ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/net/tcp"));
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC specific_bind_result=" << bind_result
+            << " errno=" << bind_errno << "\n"
+            << "FIN_WAIT2_DIAGNOSTIC after_bind_begin\n"
+            << tcp << "FIN_WAIT2_DIAGNOSTIC after_bind_end" << std::endl;
+  errno = bind_errno;
+  ASSERT_THAT(bind_result, SyscallFailsWithErrno(EADDRINUSE));
 
   // Sleep for the linger timeout to allow the FIN_WAIT2 timer to expire.
   absl::SleepFor(absl::Seconds(kTCPLingerTimeout));
