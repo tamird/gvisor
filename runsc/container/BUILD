@@ -1,5 +1,5 @@
 load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
-load("//tools/bazeldefs:platforms.bzl", "namespace_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -51,6 +51,13 @@ go_library(
 # public platforms selectable without rebuilding or narrowing the test binary.
 _CONTAINER_PLATFORMS = [p for (p, tags) in platforms.items() if "manual" not in tags and p != "ptrace"]
 
+# The tests execute ip from the container root and create memory-backed files
+# in up to 25 concurrent containers, each writing 100 MiB.
+_CONTAINER_EXEC_PROPERTIES = namespace_test_exec_properties(
+    image = RBE_NETWORK_TOOLS_IMAGE,
+    memory = "4GB",
+)
+
 go_test(
     name = "container_test",
     size = "large",
@@ -79,7 +86,7 @@ go_test(
         "//:release",
         "//test/cmd/test_app",
     ],
-    exec_properties = namespace_test_exec_properties(),
+    exec_properties = _CONTAINER_EXEC_PROPERTIES,
     library = ":container",
     shard_count = most_shards,
     tags = ["requires-kvm"] + ["rbe-has-container-%s-variant" % p for p in _CONTAINER_PLATFORMS],
@@ -133,7 +140,7 @@ go_test(
         cgroup_v2 = True,
         # Preserve rules_go's runfiles initialization in the shared executable.
         env = {"GO_TEST_RUN_FROM_BAZEL": "1"},
-        exec_properties = namespace_test_exec_properties(),
+        exec_properties = _CONTAINER_EXEC_PROPERTIES,
         shard_count = most_shards,
         tags = ["manual"] + (["requires-kvm"] if platform == "kvm" else []),
     )
