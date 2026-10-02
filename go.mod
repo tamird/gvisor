@@ -2,6 +2,8 @@ module gvisor.dev/gvisor
 
 go 1.26.3
 
+toolchain go1.27.1
+
 require (
 	cloud.google.com/go/auth v0.20.0
 	cloud.google.com/go/auth/oauth2adapt v0.2.8
