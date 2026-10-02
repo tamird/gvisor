@@ -54,6 +54,10 @@ type cgroupSystemd struct {
 	// ScopePrefix is the prefix for the scope name.
 	ScopePrefix string
 
+	// initialResources is retained from Install until a successful Join.
+	// It is not serialized; Update receives the current resources explicitly.
+	initialResources *specs.LinuxResources
+
 	properties []systemdDbus.Property
 	dbusConn   *systemdDbus.Conn
 }
@@ -112,7 +116,11 @@ func (c *cgroupSystemd) Install(res *specs.LinuxResources) error {
 	// For compatibility with runc.
 	c.addProp("DefaultDependencies", false)
 
-	return c.updateControllersProps(res)
+	if err := c.updateControllersProps(res); err != nil {
+		return err
+	}
+	c.initialResources = res
+	return nil
 }
 
 // Update updates the cgroup resources of an existing systemd unit.
@@ -132,7 +140,7 @@ func (c *cgroupSystemd) Update(res *specs.LinuxResources) error {
 	if err := c.dbusConn.SetUnitPropertiesContext(ctx, c.unitName(), true /* runtime */, c.properties...); err != nil {
 		return fmt.Errorf("error setting systemd unit properties: %v", err)
 	}
-	return nil
+	return (&io2{}).set(res, c.MakePath(""))
 }
 
 func (c *cgroupSystemd) unitName() string {
@@ -189,6 +197,7 @@ func (c *cgroupSystemd) Join() (func(), error) {
 		if err := c.dbusConn.AttachProcessesToUnit(timedCtx, unitName, "" /* subcgroup */, []uint32{uint32(os.Getpid())}); err != nil {
 			return nil, fmt.Errorf("error joining systemd unit `%s`: %w", unitName, err)
 		}
+		c.initialResources = nil
 		return clean.Release(), nil
 	} else {
 		return nil, fmt.Errorf("systemd error: %v", err)
@@ -196,6 +205,10 @@ func (c *cgroupSystemd) Join() (func(), error) {
 	if _, err = c.createCgroupPaths(); err != nil {
 		return nil, err
 	}
+	if err := (&io2{}).set(c.initialResources, c.MakePath("")); err != nil {
+		return nil, err
+	}
+	c.initialResources = nil
 	return clean.Release(), nil
 }
 
@@ -289,14 +302,6 @@ func systemdVersion(conn *systemdDbus.Conn) (int, error) {
 		return -1, fmt.Errorf("%w: can't parse version %q", err, vStr)
 	}
 	return version, nil
-}
-
-func addIOProps(props []systemdDbus.Property, name string, devs []specs.LinuxThrottleDevice) []systemdDbus.Property {
-	for _, dev := range devs {
-		val := fmt.Sprintf("%d:%d %d", dev.Major, dev.Minor, dev.Rate)
-		props = append(props, newProp(name, val))
-	}
-	return props
 }
 
 func (c *cgroupSystemd) addProp(name string, value any) {
