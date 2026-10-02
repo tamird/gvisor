@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"math"
