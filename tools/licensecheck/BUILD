@@ -8,6 +8,7 @@ package(
 go_library(
     name = "licensecheck",
     srcs = [
+        "apt.go",
         "classify.go",
         "licensecheck.go",
         "modules.go",
@@ -29,6 +30,7 @@ go_test(
     name = "licensecheck_test",
     size = "small",
     srcs = [
+        "apt_test.go",
         "licensecheck_test.go",
         "modules_test.go",
         "wheels_test.go",
@@ -38,6 +40,10 @@ go_test(
         "//governance:licensing.yaml",
     ],
     embedsrcs = [
+        "testdata/apt-busybox-static-copyright.txt",
+        "testdata/apt-erofs-utils-copyright.txt",
+        "testdata/apt-libpcre2-8-0-copyright.txt",
+        "testdata/apt-lock.json",
         "testdata/bsd.txt",
         "testdata/llvm.txt",
         "testdata/openssl.txt",

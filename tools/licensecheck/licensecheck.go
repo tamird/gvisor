@@ -18,15 +18,16 @@
 // mod` in the dockerized build environment): the root module's direct
 // bazel_deps, the http_archive/http_file repos declared in MODULE.bazel, and
 // the Go repos imported from the go_deps extension, unioned with go.mod's
-// requirements, independently resolved module proxies, and the wheels exposed
-// by imported pip hubs. Fetch downloads each dependency's license text from the
-// Go module proxy, pinned wheels, or GitHub, classifies it, and records it in a
-// YAML file. Verify checks that the YAML file has an entry for every dependency,
-// without fetching any licenses.
+// requirements, independently resolved module proxies, and the packages exposed
+// by imported pip and apt hubs. Fetch reads each dependency's license text from
+// the Go module proxy, pinned package archives, or GitHub, classifies it, and
+// records it in a YAML file. Verify checks that the YAML file has an entry for
+// every dependency, without fetching any licenses.
 //
-// Entries whose license cannot be fetched automatically (e.g.
-// @google_root_pem) are maintained by hand: Fetch preserves an existing entry
-// whenever fetching fails.
+// Entries that cannot be fetched or classified automatically can be maintained
+// by hand. Fetch preserves an existing entry for the same source and declared
+// archive hash, reporting the fetch error. Retention does not establish that
+// current notices were available or classified successfully.
 package licensecheck
 
 import (
@@ -142,6 +143,7 @@ const (
 	kindGoModule depKind = iota
 	kindArchive
 	kindWheel
+	kindApt
 )
 
 // dep is a single external dependency.
@@ -150,8 +152,11 @@ type dep struct {
 	kind       depKind
 	version    string // kindGoModule.
 	modulePath string // kindGoModule: module path, independent of the audit name.
-	url        string // kindArchive or kindWheel.
-	sha256     string // kindArchive or kindWheel: Bazel's pinned artifact hash.
+	url        string // kindArchive, kindWheel or kindApt.
+	sha256     string // Bazel's pinned artifact hash.
+	aptRepo    string // kindApt: imported repository reference.
+	aptArch    string // kindApt: selected target architecture, including for Architecture: all.
+	aptPackage string // kindApt: binary package name owning usr/share/doc/<name>/copyright.
 }
 
 // source identifies the audited artifact: the Go module version (and actual
@@ -171,8 +176,9 @@ const (
 # go.mod.
 # Regenerate with: make run TARGETS=//tools/licensecheck/main:licensecheck ARGS=--mode=fetch
 # Check completeness with ARGS=--mode=verify.
-# Entries whose license cannot be fetched automatically are maintained by hand and preserved
-# by --mode=fetch, so you can hand-edit the file for these.
+# Reviewed entries are retained on fetch failures only when the source and any
+# declared archive hash match. The reported error remains a retrieval or
+# classification limitation, not a successful automatic audit.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -193,21 +199,22 @@ func Fetch(p Paths) error {
 		oldByName[e.Dependency] = e
 	}
 
-	type result struct {
-		fetched *fetched
-		err     error
-	}
-	results := make([]result, len(deps))
+	aptResults := fetchAptLicenses(deps)
+	results := make([]fetchResult, len(deps))
 	sem := make(chan struct{}, fetchWorkers)
 	var wg sync.WaitGroup
 	for i, d := range deps {
+		if d.kind == kindApt {
+			results[i] = aptResults[d.name]
+			continue
+		}
 		wg.Add(1)
 		go func(i int, d dep) {
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			f, err := fetchLicense(d)
-			results[i] = result{f, err}
+			results[i] = fetchResult{f, err}
 		}(i, d)
 	}
 	wg.Wait()
@@ -218,7 +225,7 @@ func Fetch(p Paths) error {
 	for i, d := range deps {
 		r := results[i]
 		if r.err != nil {
-			if e, ok := oldByName[d.name]; ok && len(e.License) > 0 {
+			if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
 				fmt.Fprintf(os.Stderr, "%-60s %s (kept existing entry: %v)\n", d.name, e.License, r.err)
 				entries = append(entries, e)
 				continue
@@ -248,9 +255,17 @@ func Fetch(p Paths) error {
 		return err
 	}
 	if len(failed) > 0 {
-		return fmt.Errorf("cannot fetch licenses for %s; add entries to %s by hand", strings.Join(failed, ", "), p.YAML)
+		return fmt.Errorf("cannot fetch licenses for %s; fix the reported source or notice errors", strings.Join(failed, ", "))
 	}
 	return nil
+}
+
+// canRetain applies Verify's declared-identity checks to reviewed metadata.
+// Go module hashes are computed by fetch, rather than declared by enumeration;
+// sources without an archive pin therefore retain their version/URL check.
+func (d dep) canRetain(e Entry) bool {
+	return len(e.License) > 0 && e.Version == d.source() &&
+		(d.sha256 == "" || e.SHA256 == d.sha256)
 }
 
 // Verify checks that the YAML file has a well-formed, up-to-date entry for
@@ -363,6 +378,8 @@ func enumerate(p Paths) ([]dep, error) {
 			// Go repos imported from the gazelle go_deps extension.
 		case strings.HasSuffix(u.Key, "%pip"):
 			// Imported pip hubs own the wheel selection, including variants.
+		case strings.HasSuffix(u.Key, "%apt"):
+			// Imported apt hubs own the selected package closures.
 		default:
 			// Toolchain extensions (crosstool, llvm_zlib, python, go_sdk,
 			// ...) are not audited.
@@ -409,6 +426,12 @@ func enumerate(p Paths) ([]dep, error) {
 			return nil, fmt.Errorf("bazel mod show_repo did not report %s", r.ref)
 		}
 		switch repo.rule {
+		case "translate_dependency_set":
+			packages, err := aptDependencies(r.name, r.ref, repo)
+			if err != nil {
+				return nil, err
+			}
+			deps = append(deps, packages...)
 		case "module_proxy":
 			modules, err := enumerateModuleProxy(r.name, r.ref)
 			if err != nil {
@@ -634,6 +657,11 @@ type fetched struct {
 	commit  string
 	sha256  string
 	license Licenses
+}
+
+type fetchResult struct {
+	fetched *fetched
+	err     error
 }
 
 // fetchLicense returns the upstream commit, artifact hash, and licenses of a
