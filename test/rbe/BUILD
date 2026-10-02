@@ -22,6 +22,26 @@ package(
     licenses = ["notice"],
 )
 
+# Fork-only observation of the actual guest used by existing regression owners.
+platform(
+    name = "worker_refresh_kvm",
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
+    parents = ["//tools/bazeldefs:rbe_linux_amd64"],
+)
+
+sh_binary(
+    name = "worker_identity",
+    testonly = True,
+    srcs = ["worker_identity.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)
+
 # Infrastructure smoke coverage, not the complete unit or syscall test lanes.
 test_suite(
     name = "smoke",
