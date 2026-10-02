@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T18:36:08.831230+00:00",
+    "updatedAt": "2026-10-02T18:46:26.653960+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1186,7 +1186,7 @@
       "url": "https://github.com/google/gvisor/pull/15157",
       "group": "tests",
       "status": "open",
-      "summary": "The reviewed expectation correction is published with precise single-case native/directfs/shared proof. Do not claim whole-owner or Linux6.15 detached-mount coverage. Contributor-approved and published. Three actual uncached passes, no skips; prior exactcase has two expectation failures.",
+      "summary": "The reviewed expectation correction is published with precise single-case native/directfs/shared proof. Do not claim whole-owner or Linux6.15 detached-mount coverage. Contributor-approved and published. Three actual uncached passes, no skips; prior exactcase has two expectation failures. zkoopmans approved exact current source 4517288346ac3b7d6f7f81529769bba1322a771d at 18:37:28 UTC on October 2. The 18:44:16 UTC observation shows ready-to-pull and successful import/copybara status, while the source PR remains open with no verified public import PR or merge.",
       "number": 15157
     },
     {
@@ -1232,7 +1232,7 @@
       "url": "https://github.com/google/gvisor/pull/15162",
       "status": "open",
       "number": 15162,
-      "summary": "Published residual b07ccec16 keeps replica uid/gid options from changing the devpts root or ptmx ownership, while preserving the landed replica-option fix. The root uses mapped namespace-root identity; ptmx uses mounting credentials. The before check fails four root/ptmx ownership assertions. On corrected integration 8b3576dcf, SetMode passes native Linux, shared, DirectFS and save/restore without skips; its save log records 37 restores. Both owning Nogo targets pass AMD64 and ARM64. This is focused residual validation, not a fresh complete PTY suite or namespace-runtime result. The first attempt remains a setup failure with no runtime credit. At the 18:34:05 UTC observation on October 2, zkoopmans has left a positive COMMENTED review at 18:33:43 UTC on exact current head b07ccec16daffe566b470cecd2bf36fb4385bcfa, and ready-to-pull is present. The GitHub review decision remains unreported; this is not a formal approval or landing. The source PR remains open with successful visible checks and no verified public import PR."
+      "summary": "Published residual b07ccec16 keeps replica uid/gid options from changing the devpts root or ptmx ownership, while preserving the landed replica-option fix. The root uses mapped namespace-root identity; ptmx uses mounting credentials. The before check fails four root/ptmx ownership assertions. On corrected integration 8b3576dcf, SetMode passes native Linux, shared, DirectFS and save/restore without skips; its save log records 37 restores. Both owning Nogo targets pass AMD64 and ARM64. This is focused residual validation, not a fresh complete PTY suite or namespace-runtime result. The first attempt remains a setup failure with no runtime credit. zkoopmans left a positive COMMENTED review at 18:33:43 UTC on October 2, then formally APPROVED exact current head b07ccec16daffe566b470cecd2bf36fb4385bcfa at 18:36:05 UTC. The 18:44:16 UTC observation shows ready-to-pull and successful import/copybara status. The source PR remains open; no public import PR or landing is yet verified."
     },
     {
       "group": "tests",
@@ -1244,7 +1244,7 @@
       "url": "https://github.com/google/gvisor/pull/15165",
       "status": "open",
       "number": 15165,
-      "summary": "Contributor-reviewed and published. Preserves one delayed retry per connection. Complete native, directfs and shared stress owners each pass 33 cases with zero skips across eight shards; all 24 remote attempts are uncached."
+      "summary": "Contributor-reviewed and published. Preserves one delayed retry per connection. Complete native, directfs and shared stress owners each pass 33 cases with zero skips across eight shards; all 24 remote attempts are uncached. zkoopmans approved exact current source 8bd2a60b504329d08410280954268b954369078e at 18:35:27 UTC on October 2, with thanks for improving flaky network tests and no requested change. The 18:44:16 UTC observation shows ready-to-pull and successful import/copybara status; the source PR remains open with no verified public import PR or landing."
     },
     {
       "id": "pr:15169",
@@ -1414,7 +1414,7 @@
       "url": "https://github.com/google/gvisor/pull/15184",
       "group": "runtime",
       "status": "open",
-      "summary": "Contributor-approved PR #15184 publishes 8b92e722d, correcting zeroing beyond a trimmed view without first separating shared storage. The original heap regression fails; the corrected full buffer owner passes 326 XML entries and both owning Nogo targets pass AMD64 and ARM64. Qualification includes the validated change. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged. zkoopmans formally approved exact current head 8b92e722d8e0d9caf4c68b4221e23ab828349dc3 at 18:25:31 UTC on October 2. The 18:34:05 UTC observation shows ready-to-pull and successful import/copybara status, but the source PR remains open and no public import PR or merge is verified. This source approval does not establish an import landing.",
+      "summary": "Contributor-approved PR #15184 publishes 8b92e722d, correcting zeroing beyond a trimmed view without first separating shared storage. The original heap regression fails; the corrected full buffer owner passes 326 XML entries and both owning Nogo targets pass AMD64 and ARM64. Qualification includes the validated change. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged. zkoopmans formally approved exact current head 8b92e722d8e0d9caf4c68b4221e23ab828349dc3 at 18:25:31 UTC on October 2. The source PR remains open with ready-to-pull and successful Copybara statuses. Copybara-service created public import #15223 at 18:43:03 UTC on October 2; its exact-source footer matches current source 8b92e722d8e0d9caf4c68b4221e23ab828349dc3. At the 18:44:16 UTC observation, import head 8883e2d53e0dd0200cfabf77ec626aefe700644d remains open and its public Buildkite pipeline 49262 is pending. Internal build 30930 is also pending but its logs are unavailable. Neither source approval nor import creation establishes a landing.",
       "number": 15184
     },
     {
