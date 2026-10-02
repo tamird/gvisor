@@ -72,7 +72,7 @@ func (javaRunner) TestCmds(tests []string) []*exec.Cmd {
 			"-tl:200",             // Do not run tests which specify a timeout longer than 200s.
 			// Fork-only diagnostic; runner setup compiles and verifies this handler.
 			"-timeoutHandler:TimeoutDiagnostic",
-			"-timeoutHandlerPath:/proctor",
+			"-timeoutHandlerDir:/proctor",
 		},
 		tests...,
 	)
