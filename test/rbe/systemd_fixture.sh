@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Fork-only setup for the full existing root suite under host systemd.
+# Run the full root suite with a native systemd cgroup manager.
 set -euo pipefail
 test "$#" -eq 4
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
@@ -105,11 +105,14 @@ SETUP
 docker_ready=true
 
 # Keep /proc, cgroup paths, Docker's PIDs and systemd's D-Bus PIDs in one view.
+# The OOM tests inspect their parent. Keep a waiting shell inside this PID
+# namespace; the direct docker exec process has an out-of-namespace parent.
 set +e
 docker exec --env DOCKER_HOST=unix:///var/run/docker.sock \
   --env GVISOR_SIDECAR_BINARIES_DIR=/fixture/runtime/gvisor-bin \
   --env TEST_TIMEOUT="${TEST_TIMEOUT:?}" \
-  "${container}" /fixture/root_test --runtime=runsc \
+  "${container}" bash -c '"$@"; exit "$?"' systemd-root \
+  /fixture/root_test --runtime=runsc \
   --config_path=/etc/docker/daemon.json -test.v \
   2>&1 | tee "${out}/root-test.log"
 statuses=("${PIPESTATUS[@]}")

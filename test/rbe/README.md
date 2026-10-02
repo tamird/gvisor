@@ -29,9 +29,12 @@ variants of posture, startup, continuous benchmarks and syscall tests, as well
 as slimvm. Public CI uses AMD64 save/restore and ARM64 save/resume;
 `--arch=all` follows that mapping. Standalone checkpoint lanes use the requested
 `--arch`, defaulting to AMD64. ARM64 checkpoints require Firecracker capacity.
-The profile does not provide a host systemd cgroup manager; container image
-tests that boot systemd do not exercise that host service. All variants remain
-available through their owning Bazel targets.
+The root lane retains its cgroupfs owner and, on AMD64, also runs the complete
+root suite under native systemd in a private PID, cgroup and mount namespace.
+The test, Docker and runsc share that view and a writable delegated cgroup
+subtree.
+This fixture does not qualify the separate container mock-systemd or KVM
+variants. All variants remain available through their owning Bazel targets.
 
 This document describes lane selection and environment requirements. Execution
 results apply to the recorded source, selected tests and actual workers.

@@ -107,7 +107,7 @@ docker_daemon_config(
     tags = ["manual"],
 )
 
-# Fork-only proof: the real host-manager tests run inside native systemd.
+# The root suite and runtime share the native systemd manager namespace.
 docker_command_test(
     name = "systemd_fixture_test",
     size = "large",

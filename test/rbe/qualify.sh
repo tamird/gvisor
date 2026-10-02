@@ -46,7 +46,7 @@ USAGE
 gaps() {
   cat <<'GAPS'
 Environment limits: this profile does not supply KVM, slimvm, ARM64
-Firecracker, host systemd, alternate kernels, or GPU/TPU runtime environments.
+Firecracker, alternate kernels, or GPU/TPU runtime environments.
 Staged-binary consistency requires an independently supplied release bundle.
 Selecting a lane does not establish a passing result or full public CI coverage.
 GAPS
@@ -170,7 +170,12 @@ shared_test_targets() {
     do) targets=(//:do_tests) ;;
     docker) targets=(//test/docker:owned_tests) ;;
     plugin-network) targets=(//test/docker:plugin_network_tests) ;;
-    root) targets=(//test/root:root_test_owned) ;;
+    root)
+      targets=(//test/root:root_test_owned)
+      if [[ $target_arch == amd64 ]]; then
+        targets+=(//test/rbe:systemd_fixture_test)
+      fi
+      ;;
     posture) targets=(//test/root:sandbox_posture_test_owned) ;;
     startup) targets=(//test/benchmarks/base:startup_test_owned) ;;
     benchmarks) targets=(//test/benchmarks:continuous_tests) ;;
