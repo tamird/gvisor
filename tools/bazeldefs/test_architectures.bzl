@@ -49,9 +49,16 @@ def test_architecture_variants(name, architectures, test_rules, kwargs):
         # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/RuleContext.java#L428-L451
         # Matching execution constraints retain test.* worker requirements while
         # selecting native workers independently for each configured test.
-        attributes["exec_compatible_with"] = attributes.get("exec_compatible_with", []) + [
+        constraints = attributes.get("exec_compatible_with", []) + [
             Label("@platforms//os:linux"),
             _ARCHITECTURES[architecture].constraint,
         ]
+
+        # Strings and Labels can name the same constraint. Resolve caller
+        # strings in their BUILD package before removing duplicate values.
+        attributes["exec_compatible_with"] = {
+            native.package_relative_label(constraint): None
+            for constraint in constraints
+        }.keys()
         attributes["tags"] = attributes.get("tags", []) + ["manual"]
         test_rules[architecture](name = name + "_" + architecture, **attributes)
