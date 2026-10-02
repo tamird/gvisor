@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T00:57:13.618794+00:00",
+    "updatedAt": "2026-10-02T01:06:47.637698+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -497,7 +497,7 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-30T02:54:07Z",
-      "summary": "Reviewed source 64d84bfb1547c1dd83ba018577d56a981c2304b1 has exact-source import #15175 at 59d7ae2e5081d28be5e99713c7bff99d149e49f7. Public pipeline 49197 passed at 23:10:38 UTC; source Copybara feedback is successful. The source and import remain open, so this is not a landing."
+      "summary": "Reviewed source 64d84bfb1547c1dd83ba018577d56a981c2304b1 has exact-source import #15175. Copybara refreshed the import to de17da8859c4e62b1e19cf93f96329af9cd1876d at 00:57:54 UTC on October 2; current public pipeline 49222 is pending. The earlier pipeline 49197 pass belongs to the previous import head. Source and import remain open."
     },
     {
       "id": "pr:15036",
@@ -656,7 +656,8 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-25T18:34:24Z"
+      "updatedAt": "2026-09-25T18:34:24Z",
+      "summary": "Source remains open at 13e28b4f18e9749f3f794c93c96f3a8a52867188. Copybara closed exact-source import #15001 unmerged at 01:00:50 UTC on October 2 and deleted its import branch. No explanation or replacement import was observed in the 01:04 sweep; this is not a source landing."
     },
     {
       "id": "pr:14504",
@@ -1063,7 +1064,7 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13540",
       "group": "rbe",
       "status": "deployment unverified",
-      "summary": "Provider issue closed. On September 29, bduffany said the fix should go live Thursday afternoon (October 1), without a timezone or hour. No deployment-complete notice has followed. The actual AMD64 Podman owner in qualification parent e150e6c1-644e-4c42-9ee4-08dcfe895ed2 at ff47eae257 failed its explicit TUN-0600 guard; that run does not establish deployed rootless-network support.",
+      "summary": "Provider issue closed. On September 29 at 17:56:27 UTC, bduffany said the fix should go live Thursday afternoon (October 1), without a timezone or hour. No deployment-complete notice has followed. The actual AMD64 Podman owner in qualification parent e150e6c1-644e-4c42-9ee4-08dcfe895ed2 at ff47eae257 failed its explicit TUN-0600 guard at 21:00:04–21:00:09 UTC on October 1. That check was during US Pacific afternoon; deployment remains unverified after the expected continental-US afternoon window.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13540
     },
@@ -1073,8 +1074,8 @@
       "title": "Worker output-buffer ownership",
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13542",
       "group": "rbe",
-      "status": "deployment-pending",
-      "summary": "Provider fix closed, deployment expected October1. Connection to historical corrupted language logs is unverified.",
+      "status": "deployment unverified",
+      "summary": "Provider issue closed. On September 29 at 15:50:21 UTC (edited 15:50:33), bduffany said releases occur Tuesdays and Thursdays, are cut the previous afternoon, and this fix should go live with Thursday afternoon’s release (October 1). No timezone, hour or deployment-complete notice was supplied. Connection to historical corrupted language logs remains unverified.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13542
     },
