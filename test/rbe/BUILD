@@ -124,3 +124,27 @@ sh_test(
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
+
+# Fork-only inspection of dynamic-probe access; no PTY case or probes run.
+sh_test(
+    name = "pty_probe_setup",
+    size = "medium",
+    srcs = ["pty_probe_setup.sh"],
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.recycle-runner": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ] + select({
+        "//tools/bazeldefs:rbe": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
