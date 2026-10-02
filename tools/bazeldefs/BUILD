@@ -16,16 +16,15 @@ _RBE_EXEC_PROPERTIES = {
     "workload-isolation-type": "oci",
 }
 
+# These also serve as host platforms. Preserve the Go cgo constraints while
+# adding worker routing for compilation and host-configured test actions.
 platform(
     name = "rbe_linux_amd64",
-    constraint_values = [
-        "@platforms//cpu:x86_64",
-        "@platforms//os:linux",
-    ],
     exec_properties = dict(
         _RBE_EXEC_PROPERTIES,
         Arch = "amd64",
     ),
+    parents = ["@io_bazel_rules_go//go/toolchain:linux_amd64_cgo"],
 )
 
 # Only TestRunner actions need the privileged cgroup setup; compilation inherits
@@ -36,8 +35,6 @@ platform(
     parents = [":rbe_linux_amd64"],
 )
 
-# C++ test execution can select the host platform. Retain the Go cgo constraints
-# there while supplying the same remote routing as compilation actions.
 platform(
     name = "rbe_linux_arm64",
     exec_properties = dict(

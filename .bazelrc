@@ -74,6 +74,7 @@ build:rbe --config=rbe-common
 # Architecture-specific generators may need the other native CPU even when
 # the requested build or test lane selects only one target architecture.
 build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+build:rbe --host_platform=//tools/bazeldefs:rbe_linux_amd64
 
 # Bind unused cgroup-v1 controllers in disposable AMD64 test VMs.
 build:rbe-cgroup-v1 --config=rbe-common

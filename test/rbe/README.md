@@ -5,6 +5,9 @@ on a BuildBuddy hosted Linux AMD64 coordinator against a published commit; its
 `buildbuddy_remote_executor` configuration supplies the connection and
 authentication. No custom gVisor builder image is required.
 
+For authentication and individual remote build/test commands, see the
+[remote execution guide](../../tools/bazeldefs/README.md).
+
 See [stress testing](stress.md) to repeat selected Go, C++ or syscall tests
 with the same remote configuration.
 
