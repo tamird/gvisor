@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -27,12 +27,14 @@ Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
-target architecture is AMD64. Tests use matching execution workers; builds
-use AMD64 workers. This is partial public CI coverage;
+target architecture is AMD64. Tests use matching execution workers. Builds
+prefer AMD64 workers while retaining declared native generator requirements.
+This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
 The all architecture selection combines unit, release-repository and syscalls
 with the target-configured test lanes described in test/rbe/README.md.
+Presubmit builds run separately for each requested CPU in the same job.
 ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
@@ -90,12 +92,12 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
   case "$lane" in
-    build-all|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -523,6 +525,31 @@ run_lane() (
     execution_config=rbe-cgroup-v1
   fi
   case "$lane" in
+    presubmit-build)
+      local build_config build_root phase_status status=0
+      local -a build_configs=("$architecture_config")
+      if [[ $arch == all ]]; then
+        build_configs=(x86_64 aarch64)
+      fi
+      for build_config in "${build_configs[@]}"; do
+        for build_root in //pkg/... //runsc/...; do
+          # Match the two public presubmit commands: pkg inherits -nogo;
+          # runsc replaces that filter with -network_plugins.
+          options=()
+          if [[ $build_root == //runsc/... ]]; then
+            options=(--build_tag_filters=-network_plugins)
+          fi
+          phase_status=0
+          bazel build --config=rbe "--config=$build_config" --keep_going \
+            "${options[@]}" -- "$build_root" || phase_status=$?
+          printf 'Presubmit build %s (%s) exited %d\n' "$build_root" "$build_config" "$phase_status"
+          if (( phase_status != 0 )); then
+            status=1
+          fi
+        done
+      done
+      return "$status"
+      ;;
     build-all)
       command=build
       options=(--build_tag_filters=-network_plugins)
@@ -696,13 +723,15 @@ run_lane() (
 )
 
 run_selection() {
-  if [[ $arch == all ]]; then
-    run_platform_matrix "$@"
-    return "$?"
-  fi
-
   local status=0 lane lane_status
+  local -a matrix_lanes=()
   for lane in "$@"; do
+    # Wildcard presubmit builds keep their public loading filters and cannot
+    # join a test invocation, which would also execute their test targets.
+    if [[ $arch == all && $lane != presubmit-build ]]; then
+      matrix_lanes+=("$lane")
+      continue
+    fi
     printf '\nRunning lane: %s\n' "$lane"
     run_lane "$lane"
     lane_status=$?
@@ -711,6 +740,13 @@ run_selection() {
       status=1
     fi
   done
+  if (( ${#matrix_lanes[@]} )); then
+    run_platform_matrix "${matrix_lanes[@]}"
+    lane_status=$?
+    if (( lane_status != 0 )); then
+      status=1
+    fi
+  fi
   return "$status"
 }
 
