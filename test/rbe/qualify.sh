@@ -47,7 +47,6 @@ gaps() {
   cat <<'GAPS'
 Environment limits: this profile does not supply KVM, slimvm, ARM64
 Firecracker, alternate kernels, or GPU/TPU runtime environments.
-Staged-binary consistency requires an independently supplied release bundle.
 Selecting a lane does not establish a passing result or full public CI coverage.
 GAPS
 }
@@ -278,7 +277,7 @@ select_unit_profile() {
 }
 
 select_cgroup_profile() {
-  local selection_dir=$1 lane=$2
+  local selection_dir=$1 lane=$2 profile
   local -a profile_options=() targets=()
   if [[ $lane == unit-v1 ]]; then
     select_unit_profile "$selection_dir"
@@ -296,11 +295,28 @@ select_cgroup_profile() {
   printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-roots"
   analyze_profile "$selection_dir/$lane-roots" "$selection_dir/$lane-profile.json" \
     --config=rbe-matrix --config=x86_64 --strip=never "${profile_options[@]}" --build_tests_only
+  profile=$selection_dir/$lane-profile.json
+  if [[ $lane == container || $lane == container-v1 ]]; then
+    # Replace the aggregate runtime owner before applying worker policy. Keep
+    # every other public owner, including future additions to the package.
+    python3 test/rbe/unit_matrix.py container-platform-targets "$profile" \
+      > "$selection_dir/$lane-platform-roots"
+    profile=$selection_dir/$lane-platform-profile.json
+    analyze_profile "$selection_dir/$lane-platform-roots" "$profile" \
+      --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only \
+      --test_tag_filters=-nogo,-requires-kvm
+    python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/$lane-platform-roots" \
+      > "$selection_dir/$lane-kvm.query"
+    bazel query --output=label --query_file="$selection_dir/$lane-kvm.query" \
+      > "$selection_dir/$lane-kvm-targets"
+    python3 test/rbe/unit_matrix.py select-filtered "$profile" \
+      "$selection_dir/$lane-kvm-targets" "$selection_dir/$lane-platform-targets"
+  fi
   if [[ $lane == container ]]; then
-    python3 test/rbe/unit_matrix.py container-targets "$selection_dir/$lane-profile.json" \
+    python3 test/rbe/unit_matrix.py container-targets "$profile" \
       >> "$selection_dir/explicit-targets"
   else
-    python3 test/rbe/unit_matrix.py cgroup-targets "$selection_dir/$lane-profile.json" \
+    python3 test/rbe/unit_matrix.py cgroup-targets "$profile" \
       >> "$selection_dir/explicit-targets"
   fi
 }
@@ -459,8 +475,7 @@ run_platform_matrix() (
         ;;
     esac
   done
-  # Explicit cgroup selections already applied each lane's filters. Do not
-  # reapply the unit KVM exclusion to the requested container owners.
+  # Explicit cgroup selections already applied each lane's filters.
   if [[ $include_nogo == true && $explicit_unit == false ]]; then
     if [[ $include_unit == true ]]; then
       options+=(--test_tag_filters=-requires-kvm)
@@ -598,12 +613,8 @@ run_lane() (
         printf 'The public container lanes are declared for AMD64.\n' >&2
         return 2
       fi
-      # Unlike unit, the public container selection includes KVM tests.
-      options=(--test_tag_filters=-nogo)
-      if [[ $lane == container ]]; then
-        options+=(--test_env=CGROUPV2=true)
-      fi
-      targets=(//runsc/container/...)
+      run_platform_matrix "$lane"
+      return
       ;;
     smoke)
       targets=(//:release_smoke_test)

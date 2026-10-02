@@ -210,6 +210,23 @@ def cgroup_targets(events_path: str) -> list[str]:
     return sorted(label + "_cgroup_v1" for label in targets)
 
 
+def container_platform_targets(events_path: str) -> list[str]:
+    """Expand only owners that advertise separately declared runtime variants."""
+    prefix, suffix = "rbe-has-container-", "-variant"
+    selected = []
+    for label, target in configured_tests(events_path).items():
+        platforms = [
+            tag[len(prefix):-len(suffix)]
+            for tag in target.tags
+            if tag.startswith(prefix) and tag.endswith(suffix)
+        ]
+        if platforms:
+            selected.extend(label + "_" + platform for platform in platforms)
+        else:
+            selected.append(label)
+    return sorted(selected)
+
+
 def profile_targets(events_path: str, architecture: str) -> list[str]:
     targets = configured_tests(events_path)
     if architecture == "amd64":
@@ -311,6 +328,8 @@ def main() -> None:
     cgroup.add_argument("events")
     container = commands.add_parser("container-targets")
     container.add_argument("events")
+    container_platforms = commands.add_parser("container-platform-targets")
+    container_platforms.add_argument("events")
     roots = commands.add_parser("build-roots")
     roots.add_argument("events")
     patterns = commands.add_parser("universe-rc")
@@ -343,6 +362,8 @@ def main() -> None:
         select_variants(args.patterns, args.owners, args.actions, args.output, args.profile)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events)))
+    elif args.command == "container-platform-targets":
+        print("\n".join(container_platform_targets(args.events)))
     elif args.command == "container-targets":
         targets = configured_tests(args.events)
         print("\n".join(sorted(

@@ -33,8 +33,10 @@ The root lane retains its cgroupfs owner and, on AMD64, also runs the complete
 root suite under native systemd in a private PID, cgroup and mount namespace.
 The test, Docker and runsc share that view and a writable delegated cgroup
 subtree.
-This fixture does not qualify the separate container mock-systemd or KVM
-variants. All variants remain available through their owning Bazel targets.
+Container tests use their own runtime variants; their systemd case checks
+serialized mock state and does not require a host systemd manager. KVM coverage
+remains unavailable. All variants remain available through their owning Bazel
+targets.
 
 This document describes lane selection and environment requirements. Execution
 results apply to the recorded source, selected tests and actual workers.
@@ -145,8 +147,13 @@ disposable worker and no-local execution policy. They reuse the original test
 inputs, arguments, environment, coverage, runfiles and shard/timeout metadata;
 unit selection includes its non-Go/C++ owners. The explicit container-v2
 variant owns `CGROUPV2=true`, while the ordinary target still accepts local
-Make overrides. Container selections retain the full public KVM-containing
-owners; declaring them does not qualify unavailable KVM capacity.
+Make overrides. Container selection expands the aggregate test into its declared
+systrap and KVM frontends, then reports and excludes unavailable KVM execution.
+Both frontends share the original compiled test and runfiles, preserve its eight
+shards and timeout, and run all test cases with the selected platform. The suite
+already excludes ptrace. Cases that do not parameterize their configuration run
+on the default systrap platform in either frontend. The original aggregate test
+and Make's full KVM-containing selection remain unchanged.
 
 ```sh
 test/rbe/qualify.sh --arch=all unit unit-v1 docker docker-v1
@@ -154,7 +161,7 @@ test/rbe/qualify.sh --arch=all unit unit-v1 docker docker-v1
 
 When one of these lanes is present, Bazel first selects the ordinary unit tests
 under the public unit filters, then combines explicit ordinary and v1 leaves.
-This prevents the unit KVM filter from suppressing requested container tests.
+This prevents unit filters from suppressing selected container tests.
 A separate canonical analysis retains unit non-test build roots. Filtered
 tests' build-only work is not retained by this combined mode: standalone
 `unit`/`unit-v1` preserve the complete original selection, and `build-all`
@@ -454,8 +461,10 @@ APT snapshot. The existing private Docker fixture owns the daemon, and native
 runc executes the scripts with networking disabled. Only the declared scripts
 and packages are mounted: no Git metadata or publishing script is present, so
 the canonical release script generates its master repository. The test neither
-publishes artifacts nor exercises tagged or nightly publication. The separate
-staged-binary check requires the real staged archive and remains unqualified.
+publishes artifacts nor exercises tagged or nightly publication. Qualification
+covers outputs built from source on RBE; externally produced staged release
+bundles are outside its scope. Make's separate staged-binary support remains
+available.
 
 The CPU and GPU/ML image-source lanes retain the public manifest-or-build checks:
 

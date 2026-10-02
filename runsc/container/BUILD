@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "platforms")
+load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
 load("//tools/bazeldefs:platforms.bzl", "namespace_test_exec_properties")
 
 package(
@@ -47,6 +47,10 @@ go_library(
     ],
 )
 
+# configs() in container_test.go already excludes ptrace. Keep the remaining
+# public platforms selectable without rebuilding or narrowing the test binary.
+_CONTAINER_PLATFORMS = [p for (p, tags) in platforms.items() if "manual" not in tags and p != "ptrace"]
+
 go_test(
     name = "container_test",
     size = "large",
@@ -78,7 +82,7 @@ go_test(
     exec_properties = namespace_test_exec_properties(),
     library = ":container",
     shard_count = most_shards,
-    tags = ["requires-kvm"],
+    tags = ["requires-kvm"] + ["rbe-has-container-%s-variant" % p for p in _CONTAINER_PLATFORMS],
     deps = [
         "//pkg/abi/linux",
         "//pkg/cleanup",
@@ -119,6 +123,22 @@ go_test(
         "@org_golang_x_sys//unix:go_default_library",
     ],
 )
+
+[
+    native_test(
+        name = "container_test_" + platform,
+        size = "large",
+        src = ":container_test",
+        args = ["--test_platforms=" + platform],
+        cgroup_v2 = True,
+        # Preserve rules_go's runfiles initialization in the shared executable.
+        env = {"GO_TEST_RUN_FROM_BAZEL": "1"},
+        exec_properties = namespace_test_exec_properties(),
+        shard_count = most_shards,
+        tags = ["manual"] + (["requires-kvm"] if platform == "kvm" else []),
+    )
+    for platform in _CONTAINER_PLATFORMS
+]
 
 go_test(
     name = "serialization_test",

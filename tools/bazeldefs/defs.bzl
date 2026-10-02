@@ -9,7 +9,7 @@ load("@com_google_protobuf//bazel:proto_library.bzl", _proto_library = "proto_li
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@rules_python//python:py_test.bzl", _py_test = "py_test")
 load("@rules_shell//shell:sh_test.bzl", _sh_test = "sh_test")
-load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "cgroup_v2_variant", "with_cgroup_v1")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 
 bzl_library = _bzl_library
@@ -36,10 +36,14 @@ native_amd64_test, _native_amd64_transition = with_test_architecture(_native_tes
 native_arm64_test, _native_arm64_transition = with_test_architecture(_native_test, "arm64").build()
 native_test_cgroup_v1_test, _native_test_cgroup_v1_transition = with_cgroup_v1(_native_test)
 
-def native_test(name, architectures = ["amd64", "arm64"], **kwargs):
+def native_test(name, architectures = ["amd64", "arm64"], cgroup_v2 = False, **kwargs):
     """Declares the original test and manual architecture/cgroup variants."""
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    if cgroup_v2:
+        kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
     _native_test(name = name, **kwargs)
+    if cgroup_v2:
+        cgroup_v2_variant(name, _native_test, kwargs)
     cgroup_v1_variant(name, native_test_cgroup_v1_test, kwargs)
     test_architecture_variants(
         name,
