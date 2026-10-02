@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T01:06:47.637698+00:00",
+    "updatedAt": "2026-10-02T01:19:04.873659+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -376,9 +376,10 @@
       "title": "Wait for Docker exec completion",
       "url": "https://github.com/google/gvisor/pull/15084",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-29T10:16:51Z"
+      "updatedAt": "2026-10-02T01:13:49Z",
+      "summary": "Copybara merged exact-source import #15096 at 01:13:47 UTC on October 2 and this source at 01:13:49. Landing 5ae557e9c8c0bc4fbd2356fd8217334c4b03dccc preserves all four changed files and exact added/removed lines from source d229d43572ebcd2e5dc3182e1db402e8fb4e8a38. Post-merge public pipeline 49228 is pending. The source hash remains the branch recovery point. The obsolete local, origin-tracking and live remote docker-exec-completion refs were deleted after exact landing-patch and worktree checks; the recovery commit is preserved above."
     },
     {
       "id": "pr:15071",
@@ -549,7 +550,8 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-30T18:26:26Z"
+      "updatedAt": "2026-09-30T18:26:26Z",
+      "summary": "EtiennePerot approved current head 43e2272333016adf07c2b814b5eb9e75eab5de22 at 00:55:11 UTC on October 2, without a review body or requested change. Copybara then reported Google internal checks failed at 01:05:14 and 01:11:06. The latest status refers to internal run creation 01:09:34.205507116; internal logs are unavailable, so no failure cause is established."
     },
     {
       "id": "pr:15030",
@@ -1063,8 +1065,8 @@
       "title": "Rootless TUN permissions",
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13540",
       "group": "rbe",
-      "status": "deployment unverified",
-      "summary": "Provider issue closed. On September 29 at 17:56:27 UTC, bduffany said the fix should go live Thursday afternoon (October 1), without a timezone or hour. No deployment-complete notice has followed. The actual AMD64 Podman owner in qualification parent e150e6c1-644e-4c42-9ee4-08dcfe895ed2 at ff47eae257 failed its explicit TUN-0600 guard at 21:00:04–21:00:09 UTC on October 1. That check was during US Pacific afternoon; deployment remains unverified after the expected continental-US afternoon window.",
+      "status": "observed AMD64 worker qualified",
+      "summary": "Provider issue closed with Thursday afternoon (October 1) deployment expected, without a timezone or hour. The earlier AMD64 Podman owner failed its TUN-0600 guard at 21:00:04–21:00:09 UTC on October 1. After that expected window, unchanged parent 31d0c0d3-879f-4e4a-ae3c-81c485275b9f at 00c068dddf independently closed PASS: the actual nonroot UID1338/GID1337 AMD64 Firecracker worker had root-owned /dev/net/tun mode0666, and both DirectFS modes passed in nine seconds using the pinned image. This resolves the TUN capability hold for that observed worker and qualifies the current AMD64 public Podman smoke. ARM was explicitly skipped; this is not fleet-wide deployment confirmation, buffer-fix verification or a diagnosis of the historical OOM start failure.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13540
     },
@@ -1657,7 +1659,7 @@
       "url": "https://github.com/google/gvisor/pull/15202",
       "group": "tests",
       "status": "open",
-      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. EtiennePerot approved the current head at 23:48:48 UTC. GitHub checks pass or are skipped. Copybara opened exact-source import #15209 at 00:07:07 UTC October 2 and refreshed it at 00:21:10 to current head 58fd726b9cecc6db3ed108e7ed39c7567b2ff45f; current public pipeline 49214 is pending. The source and import remain open. This publication does not establish that it fixes either earlier import cleanup failure."
+      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. EtiennePerot approved the current head at 23:48:48 UTC. GitHub checks pass or are skipped. Copybara opened exact-source import #15209 at 00:07:07 UTC October 2 and refreshed it at 00:21:10 to current head 58fd726b9cecc6db3ed108e7ed39c7567b2ff45f; current public pipeline 49214 passed at 01:13:25 UTC. The source and import remain open. This publication does not establish that it fixes either earlier import cleanup failure."
     },
     {
       "id": "branch:rbe-unit-all-architectures",
@@ -1668,7 +1670,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-unit-all-architectures",
       "group": "rbe",
       "status": "fork validation; integration pending",
-      "summary": "Current public candidate 0aca154318a32a16e57da7efc87d3b6f08b7459b follows the reviewed architecture expansion at 9c145262fe863218a2d6ce77efdc8e165678ef5a. The original mixed-unit parent 315b5149-9f50-4787-bc33-7782d3a80f7d is independently closed FAILED: 655 of 656 actual owners and 675 of 676 uncached remote results pass. Both canonical profiles contain 330 owners; four unavailable ARM Firecracker owners remain explicit. The sole failure invokes an AMD64 analyzer on ARM64 in sanity_test_arm64. A focused corrected native pair passed, but a plain cross-target compatibility gap remains. The standalone nogo-sanity-execution-platform candidate b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee is held, not independently ready for an upstream PR. Published native-variants candidate 63e94f33c99cedceeb46bdca07563ae0d2fdc52d preserves the ordinary fixture execution behavior and uses fixed-CPU helpers only for explicit native variants. Source and method reviews passed; all three actual runtime owners passed parent 19aa7e54-554c-4e5e-8876-012402e7f573, with saved-evidence closure still pending. Primary qualification remains 5b649d4766."
+      "summary": "Current public candidate 0aca154318a32a16e57da7efc87d3b6f08b7459b follows the reviewed architecture expansion at 9c145262fe863218a2d6ce77efdc8e165678ef5a. The original mixed-unit parent 315b5149-9f50-4787-bc33-7782d3a80f7d is independently closed FAILED: 655 of 656 actual owners and 675 of 676 uncached remote results pass. Both canonical profiles contain 330 owners; four unavailable ARM Firecracker owners remain explicit. The sole failure invokes an AMD64 analyzer on ARM64 in sanity_test_arm64. A focused corrected native pair passed, but root found a plain cross-target compatibility gap in that first correction. The standalone nogo-sanity-execution-platform candidate b3c1d5999d2cbde1faf2fc0a3ebf24dacc11a2ee is held, not independently ready for an upstream PR. Published native-variants candidate 63e94f33c99cedceeb46bdca07563ae0d2fdc52d preserves the ordinary fixture execution behavior and uses fixed-CPU helpers only for explicit native variants. Source and method reviews passed. Parent 19aa7e54-554c-4e5e-8876-012402e7f573 is independently closed PASS for all three actual runtime owners, with worker and analyzer ELF proofs (outcome 02c7da98e8aa). Primary qualification remains 5b649d4766."
     },
     {
       "id": "branch:syscall-session-keyring-description",
@@ -1700,8 +1702,8 @@
       "title": "Integrate unit runtime corrections",
       "url": "https://github.com/tamird/gvisor/tree/rbe-unit-runtime-integration",
       "group": "rbe",
-      "status": "fork validation candidate",
-      "summary": "Published candidate 00c068dddf00cb6cde75d1c1800d10424a5c3d8e combines native Nogo variants from 63e94f33c with the exact reviewed keyring and OOM corrections. Full mixed-unit parent 1f05c074-0376-4d0a-a0b3-13c15051f270 is running with 400 remote actions and a 25-minute work limit; no result credit is claimed. The previous 655-of-656 mixed-unit failure remains recorded at its original 9c145262f source. Primary remains 5b649d4766 until the integration gate closes."
+      "status": "runtime passed; evidence closure pending",
+      "summary": "Published candidate 00c068dddf00cb6cde75d1c1800d10424a5c3d8e combines native Nogo variants from 63e94f33c with the exact reviewed keyring and OOM corrections. Full mixed-unit parent 1f05c074-0376-4d0a-a0b3-13c15051f270 passed all 656 owners and 676 single-attempt shard results in 947 seconds; final source/platform evidence review is still in progress. The previous 655-of-656 mixed-unit failure remains recorded at its original 9c145262f source. A separate unchanged AMD64 Podman smoke passed both DirectFS modes on the observed nonroot Firecracker worker, with saved evidence independently closed; ARM remained explicitly skipped. Primary remains 5b649d4766 until the unit integration gate closes."
     }
   ],
   "edges": [
@@ -1938,13 +1940,6 @@
       "type": "blocked_by",
       "reason": "The complete public container-v1 lane still requires hosted KVM capacity; the passing focused cgroup-v1 root case does not supply it.",
       "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13575"
-    },
-    {
-      "from": "external:tun",
-      "to": "branch:rbe-qualification-next",
-      "type": "blocked_by",
-      "reason": "Required worker capability for part of the public runtime matrix.",
-      "evidence": "https://github.com/buildbuddy-io/buildbuddy/issues/13540"
     },
     {
       "from": "external:arm64",
