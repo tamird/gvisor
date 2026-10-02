@@ -1241,6 +1241,7 @@ syscall_test(
     save = False,
     shard_count = more_shards,
     test = "//test/syscalls/linux:tcp_socket_test",
+    visibility = ["//test/rbe:__pkg__"],
 )
 
 syscall_test(
