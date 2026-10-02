@@ -314,7 +314,8 @@ func TestPIDFDSelftests(t *testing.T) {
 		Image:      "basic/pidfd-tests",
 		Privileged: true,
 	}
-	out, err := d.Run(ctx, runOpts)
+	// Measure the unchanged loop without kselftest's outer 45-second timeout.
+	out, err := d.Run(ctx, runOpts, "/bin/bash", "-c", "time ./pidfd/pidfd_poll_test")
 	if err != nil {
 		t.Fatalf("docker run failed; output: %v, err: %v", out, err)
 	} else {
