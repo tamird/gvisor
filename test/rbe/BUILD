@@ -148,3 +148,27 @@ sh_test(
         "//conditions:default": ["@platforms//:incompatible"],
     }),
 )
+
+# Fork-only provider check; registered events remain disabled.
+sh_test(
+    name = "pty_probe_registration",
+    size = "medium",
+    srcs = ["pty_probe_registration.sh"],
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.recycle-runner": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ] + select({
+        "//tools/bazeldefs:rbe": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
