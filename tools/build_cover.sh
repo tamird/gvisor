@@ -66,6 +66,8 @@ mkdir -p "$gvisor_gopath/src/gvisor.dev/gvisor/$(dirname "$main_go")"
 cp "$main_go" "$gvisor_gopath/src/gvisor.dev/gvisor/$main_go"
 cd "$gvisor_gopath/src/gvisor.dev/gvisor/"
 export GOROOT="$goroot_dir"
+# Keep the patched SDK instead of selecting the module's suggested toolchain.
+export GOTOOLCHAIN=local
 go_opts=""
 go_tags="kcov,opensource"
 if [[ "$race" = true ]]; then
