@@ -41,9 +41,10 @@ USAGE
 
 gaps() {
   cat <<'GAPS'
-Unqualified by this profile: KVM and slimvm; the full ARM64 matrix; other cgroup
-v1 lanes; the host systemd cgroup manager and alternate host kernels; the full
-save/restore and coverage matrices; GPU/TPU runtime lanes; staged-binary consistency.
+Environment limits: this profile does not supply KVM, slimvm, ARM64
+Firecracker, host systemd, alternate kernels, or GPU/TPU runtime environments.
+Staged-binary consistency requires an independently supplied release bundle.
+Selecting a lane does not establish a passing result or full public CI coverage.
 GAPS
 }
 

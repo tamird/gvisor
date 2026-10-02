@@ -17,17 +17,22 @@ test/rbe/qualify.sh --header-base="$BASE_COMMIT" amd64
 Set `BASE_COMMIT` to the explicit comparison commit for license headers and
 provide complete local Git history. The dispatcher does not choose or fetch a
 comparison base. Use `test/rbe/qualify.sh --list` to see the lanes and
-unqualified environments,
-or pass lane names to run a smaller selection, for example
+environment limits, or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
 This profile does not replace the full public CI matrix. It omits the KVM
 variants of posture, startup, continuous benchmarks and syscall tests, as well
-as slimvm. The save/restore and save/resume syscall lanes are included, but their complete
-matrices remain unqualified. Existing failures in selected tests remain
-failures. The host systemd cgroup manager is also unqualified; container image
+as slimvm. Public CI uses AMD64 save/restore and ARM64 save/resume;
+`--arch=all` follows that mapping. Standalone checkpoint lanes use the requested
+`--arch`, defaulting to AMD64. ARM64 checkpoints require Firecracker capacity.
+The profile does not provide a host systemd cgroup manager; container image
 tests that boot systemd do not exercise that host service. All variants remain
 available through their owning Bazel targets.
+
+This document describes lane selection and environment requirements. Execution
+results apply to the recorded source, selected tests and actual workers.
+Declaring a lane does not establish that its tests pass, and failures remain
+part of the qualification result.
 
 The dispatcher uses the existing Nogo and unit configurations, the declared
 runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
@@ -648,8 +653,9 @@ target and `make containerd-tests` retain custom runtime selection, Docker
 image export and the existing version flags. Harness output, test status and
 both container and daemon cleanup failures reach the outer test result.
 These tests require the worker's namespace, cgroup and CNI kernel support;
-missing capabilities remain failures. ARM64 Firecracker capacity and the
-separate shim-grouping performance lane remain unqualified.
+missing capabilities remain failures. ARM64 execution requires Firecracker
+capacity. Optional shim-grouping measurements are separate from the public
+containerd test jobs.
 
 The bwrap lane runs the existing integration suite directly:
 
@@ -683,9 +689,9 @@ Remote wrappers request root Firecracker workers with IPv6 and the existing
 pinned networking image, which supplies `iptables-nft` and `ip6tables-nft` for
 the runner's TCP filtering. Worker namespace and nftables support remain runtime
 requirements. The public step specifies Ubuntu, cgroup v2 and a modern kernel,
-without an explicit architecture selector. This profile starts with AMD64;
-ARM64 Firecracker capacity and the other network conformance lanes remain
-unqualified.
+without an explicit architecture selector. Combined selection uses AMD64;
+standalone ARM64 execution requires Firecracker capacity. The other network
+conformance suites have separate lanes described below.
 
 The language runtime lanes retain the five public AMD64 suites: PHP 8.3.35,
 Java 21, Go 1.22, Node 22.2.0 and Python 3.12.3. DirectFS matches presubmit;
@@ -777,11 +783,10 @@ test results and execution records. A cached result or a coordinator-local test
 is not evidence of remote test execution. Keep logs in the hosted invocation;
 do not upload raw build-event files containing authentication options.
 
-This slice does not cover the complete unit/syscall matrix, KVM, GPU, the full
-ARM64 matrix, the complete Docker/containerd lanes, or kernel/cgroup variants.
-Firecracker alone does not provide those capabilities. Missing capacity or failed
-tests must remain visible failures rather than local fallback or additional
-exclusions.
+This smoke suite does not select the complete unit, syscall, Docker or
+containerd suites. Use their owning lanes for those selections. Worker
+requirements and existing test failures still apply to each lane; Firecracker
+alone does not supply KVM, accelerators or alternate kernel environments.
 
 The Kubernetes smoke lane owns one kind cluster inside the shared Docker
 fixture:
@@ -804,13 +809,14 @@ The original `hello_test` remains usable with an external cluster through
 its existing local setup. Migrating that adapter requires a supported way to
 run the owned daemon as root while preserving caller-owned builds, declared
 runfiles and process cleanup; the current Make builder does not supply it.
-The first kind lane is AMD64 only; ARM64 kind execution and worker capacity
-remain unqualified. The real nested cluster, networking and resource
-requirements still need hosted validation.
+The kind lane selects AMD64 only. The worker must support the real nested
+cluster, networking and resource requirements; declaring the lane does not
+supply those capabilities.
 
 The portable Go binary retains both-architecture Nogo analysis. The native
 test wrapper owns the AMD64 runtime inputs and does not forward Go coverage
-metadata, so Kubernetes Go coverage remains unqualified.
+metadata. Go coverage instrumentation is separate from the public Kubernetes
+smoke job, which does not request it.
 
 The networking lanes reuse the existing iptables, nftables and packetdrill
 suites with declared image archives and a private Docker daemon:
