@@ -58,10 +58,16 @@ The current kernel environments are:
 | --- | --- | --- |
 | Hosted Firecracker | AMD64 | Observed Linux 6.1.0 in the October 2, 2026 qualification runs; partial qualification with remaining failures. |
 | Hosted Firecracker | ARM64 | No execution capacity verified; no guest kernel qualified. |
-| Public CI ordinary syscall pools | AMD64 / ARM64 | The `default` / `arm64` pools do not declare exact kernel versions in the public pipeline. |
-| Public CI release-candidate syscall pools | AMD64 / ARM64 | The moving `rckernel` / `rckernel-arm64` pools require separate coverage; no equivalent RBE kernel selection is established. |
+| Public CI ordinary syscall pools | AMD64 / ARM64 | Linux 6.8.0-1069-gcp, observed October 2, 2026. |
+| Public CI release-candidate syscall pools | AMD64 / ARM64 | Linux 7.3.0-070300rc3-generic, observed October 2, 2026; no equivalent RBE kernel selection is established. |
 
 The [public pipeline](../../.buildkite/pipeline.yaml) defines these CI pools.
+Public master builds [49276](https://buildkite.com/gvisor/pipeline/builds/49276)
+and [49266](https://buildkite.com/gvisor/pipeline/builds/49266) report the listed
+kernel releases in both architectures' job logs. AMD64 runs native reference
+and gVisor tests; ARM64 selects the ptrace and systrap gVisor tests. The
+release-candidate version changes as its worker pools are updated.
+
 A pinned action image selects userspace, not the worker's kernel. Kernel
 configuration and exposed devices also affect test behavior. Qualification
 reports must identify the actual worker kernel release/build and available
