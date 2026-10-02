@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/bits"
+	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sync"
 )
 
@@ -101,6 +102,9 @@ func (c *chunk) bytes() []byte {
 	}
 	return c.data
 }
+
+// +stateify transparent
+type chunkRefs struct{ refs.Refs[chunk] }
 
 func newChunk(size int) *chunk {
 	var c *chunk
