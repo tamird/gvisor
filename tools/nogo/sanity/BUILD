@@ -19,22 +19,42 @@ nogo_config(
     srcs = ["sanity.yaml"],
 )
 
-nogo_test(
+# sanity_test executes the generated script as data, so its embedded analyzer
+# must match the test's architecture. Execution constraints cannot use select().
+[
+    nogo_test(
+        name = "sanity_nogo_" + arch,
+        srcs = ["sanity.go"],
+        config = ":sanity_config",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            cpu,
+        ],
+        tags = [
+            "manual",
+            "noguitar",
+            "notap",
+        ],
+        visibility = ["//visibility:private"],
+        deps = [":sanity"],
+    )
+    for arch, cpu in [
+        ("amd64", "@platforms//cpu:x86_64"),
+        ("arm64", "@platforms//cpu:aarch64"),
+    ]
+]
+
+alias(
     name = "sanity_nogo",
-    srcs = ["sanity.go"],
-    config = ":sanity_config",
-    # sanity_test runs this script as data; its embedded analyzer must run on
-    # the same architecture as the enclosing test.
-    exec_compatible_with = ["@platforms//os:linux"] + select_arch(
-        amd64 = ["@platforms//cpu:x86_64"],
-        arm64 = ["@platforms//cpu:aarch64"],
+    actual = select_arch(
+        amd64 = ":sanity_nogo_amd64",
+        arm64 = ":sanity_nogo_arm64",
     ),
     tags = [
         "manual",
         "noguitar",
         "notap",
     ],
-    deps = [":sanity"],
 )
 
 sh_test(
