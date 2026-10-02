@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-10-02T18:44:16.958878+00:00",
-  "registryDate": "2026-10-02T18:46:26.653960+00:00",
+  "checkedAt": "2026-10-02T18:54:19.062647+00:00",
+  "registryDate": "2026-10-02T19:00:12.504155+00:00",
   "prs": [
     {
       "number": 12470,
@@ -15,10 +15,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T10:26:15Z",
       "createdAt": "2026-01-09T14:43:53Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "stale-pr"
       ],
@@ -291,10 +291,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:33:52Z",
       "createdAt": "2026-01-12T20:58:15Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -429,10 +429,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:49:13Z",
       "createdAt": "2026-08-21T17:35:33Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -588,10 +588,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T23:59:07Z",
           "createdAt": "2026-10-01T23:59:06Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -724,10 +724,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:33:58Z",
       "createdAt": "2026-08-22T11:55:42Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "CONFLICTING",
-      "mergeState": "DIRTY",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -820,10 +820,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:34:00Z",
       "createdAt": "2026-08-22T11:57:04Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "CONFLICTING",
-      "mergeState": "DIRTY",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -916,10 +916,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:34:03Z",
       "createdAt": "2026-08-22T11:57:39Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "CONFLICTING",
-      "mergeState": "DIRTY",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1060,10 +1060,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-08-30T18:34:05Z",
       "createdAt": "2026-08-22T11:58:27Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "CONFLICTING",
-      "mergeState": "DIRTY",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1156,10 +1156,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-18T01:07:35Z",
       "createdAt": "2026-08-24T04:14:33Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1252,10 +1252,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-24T13:54:47Z",
       "createdAt": "2026-08-24T04:16:03Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1348,10 +1348,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T04:45:52Z",
       "createdAt": "2026-08-24T04:16:07Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1444,7 +1444,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:21:22Z",
       "createdAt": "2026-08-30T19:57:30Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -1685,7 +1685,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-30T23:48:42Z",
           "createdAt": "2026-09-22T01:10:22Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -1839,10 +1839,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T05:06:44Z",
       "createdAt": "2026-08-30T19:57:56Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1923,10 +1923,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-13T23:14:32Z",
       "createdAt": "2026-08-30T19:58:07Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "CONFLICTING",
-      "mergeState": "DIRTY",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -2007,10 +2007,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-25T18:34:24Z",
       "createdAt": "2026-09-22T14:54:48Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -2352,7 +2352,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:00:52Z",
           "createdAt": "2026-09-25T18:51:28Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2476,10 +2476,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-25T12:25:06Z",
       "createdAt": "2026-09-22T15:41:48Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -2547,10 +2547,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T01:56:49Z",
       "createdAt": "2026-09-25T01:16:55Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -2676,7 +2676,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T02:33:00Z",
           "createdAt": "2026-09-25T23:47:45Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2798,10 +2798,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T00:42:06Z",
           "createdAt": "2026-10-02T00:25:48Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -2922,7 +2922,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:22:11Z",
       "createdAt": "2026-09-25T01:16:58Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -3018,10 +3018,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:16:48Z",
       "createdAt": "2026-09-25T01:17:00Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3089,10 +3089,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T21:42:04Z",
       "createdAt": "2026-09-25T01:22:37Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3172,10 +3172,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T02:54:55Z",
       "createdAt": "2026-09-25T01:22:40Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3273,10 +3273,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T00:48:03Z",
       "createdAt": "2026-09-26T00:42:48Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3356,10 +3356,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T00:55:21Z",
       "createdAt": "2026-09-26T02:01:16Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -3573,10 +3573,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T03:01:29Z",
       "createdAt": "2026-09-26T02:01:17Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3674,10 +3674,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:51:21Z",
       "createdAt": "2026-09-26T02:01:18Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3770,10 +3770,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T02:01:20Z",
       "createdAt": "2026-09-26T02:01:20Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -3853,7 +3853,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T02:30:11Z",
       "createdAt": "2026-09-26T02:01:22Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4016,7 +4016,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T02:22:32Z",
           "createdAt": "2026-10-01T03:08:56Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4170,10 +4170,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-26T14:13:06Z",
       "createdAt": "2026-09-26T14:07:49Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -4253,10 +4253,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:34:55Z",
       "createdAt": "2026-09-26T18:15:29Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -4361,7 +4361,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:46:35Z",
       "createdAt": "2026-09-26T19:08:51Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -4460,7 +4460,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:46:27Z",
           "createdAt": "2026-09-29T18:15:45Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4614,10 +4614,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:50Z",
       "createdAt": "2026-09-28T16:46:14Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -4685,10 +4685,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:36:20Z",
       "createdAt": "2026-09-28T16:46:17Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -4781,10 +4781,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:51Z",
       "createdAt": "2026-09-28T16:46:23Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -4852,7 +4852,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:22:46Z",
       "createdAt": "2026-09-28T17:47:35Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -4953,7 +4953,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T19:06:34Z",
           "createdAt": "2026-10-01T17:51:08Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5107,10 +5107,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T10:16:50Z",
       "createdAt": "2026-09-28T17:47:39Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -5178,7 +5178,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T01:18:16Z",
       "createdAt": "2026-09-28T22:31:32Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5279,7 +5279,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:13:49Z",
           "createdAt": "2026-09-29T10:31:11Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5425,9 +5425,9 @@
       "ref": "go-export-archive",
       "head": "83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-01T21:10:26Z",
+      "updatedAt": "2026-10-02T18:53:47Z",
       "createdAt": "2026-09-29T19:09:15Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -5557,10 +5557,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:55:43Z",
       "createdAt": "2026-09-29T19:09:25Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -5725,7 +5725,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:11:23Z",
       "createdAt": "2026-09-29T19:23:01Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -5821,10 +5821,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T03:50:01Z",
       "createdAt": "2026-09-29T20:25:57Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -5892,10 +5892,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-29T20:59:48Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -5963,10 +5963,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-29T23:46:30Z",
       "createdAt": "2026-09-29T21:00:04Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -6064,7 +6064,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-29T23:49:24Z",
           "createdAt": "2026-09-29T21:28:51Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6218,7 +6218,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T00:29:56Z",
       "createdAt": "2026-09-29T22:13:52Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6319,7 +6319,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T00:23:18Z",
           "createdAt": "2026-09-30T21:47:09Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6473,10 +6473,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-29T22:13:58Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -6544,10 +6544,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:32:57Z",
       "createdAt": "2026-09-29T23:49:52Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -6675,10 +6675,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T21:13:24Z",
           "createdAt": "2026-10-01T18:51:05Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -6799,10 +6799,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:29Z",
       "createdAt": "2026-09-29T23:49:55Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -6870,10 +6870,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:10:14Z",
       "createdAt": "2026-09-30T00:53:26Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -6966,10 +6966,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-30T00:53:30Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -7037,10 +7037,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:31Z",
       "createdAt": "2026-09-30T00:53:32Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -7108,10 +7108,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T04:48:30Z",
       "createdAt": "2026-09-30T00:53:35Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -7179,7 +7179,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:32:30Z",
       "createdAt": "2026-09-30T10:14:36Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7322,7 +7322,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:19:44Z",
           "createdAt": "2026-10-01T19:31:38Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7470,7 +7470,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T10:11:09Z",
       "createdAt": "2026-09-30T10:14:39Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7583,7 +7583,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T08:26:22Z",
           "createdAt": "2026-09-30T22:37:25Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7737,7 +7737,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T21:19:41Z",
       "createdAt": "2026-09-30T10:14:42Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7850,7 +7850,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T21:09:47Z",
           "createdAt": "2026-10-01T19:07:27Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8004,7 +8004,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T07:08:07Z",
       "createdAt": "2026-09-30T10:14:45Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8117,7 +8117,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:58:26Z",
           "createdAt": "2026-10-01T02:18:26Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8265,10 +8265,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T02:46:11Z",
       "createdAt": "2026-09-30T10:17:14Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -8403,7 +8403,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:52:46Z",
       "createdAt": "2026-09-30T10:22:42Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -8515,10 +8515,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T13:45:29Z",
       "createdAt": "2026-09-30T13:40:07Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -8598,10 +8598,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T13:45:28Z",
       "createdAt": "2026-09-30T13:40:10Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -8681,10 +8681,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:09:46Z",
       "createdAt": "2026-09-30T13:40:13Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -8824,10 +8824,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T21:41:28Z",
           "createdAt": "2026-10-01T19:29:32Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -8948,10 +8948,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T14:21:37Z",
       "createdAt": "2026-09-30T14:16:15Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9031,10 +9031,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:55:42Z",
       "createdAt": "2026-09-30T14:45:26Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -9139,10 +9139,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:29:39Z",
       "createdAt": "2026-09-30T22:24:21Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9222,10 +9222,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:18Z",
       "createdAt": "2026-09-30T22:30:02Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9305,10 +9305,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:19Z",
       "createdAt": "2026-09-30T22:30:05Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9388,10 +9388,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:35:24Z",
       "createdAt": "2026-09-30T22:30:07Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9471,10 +9471,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T18:37:39Z",
       "createdAt": "2026-09-30T22:30:10Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -9507,7 +9507,7 @@
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 9,
+        "total": 10,
         "complete": true,
         "contexts": [
           {
@@ -9559,6 +9559,12 @@
             "app": "Google CLA"
           },
           {
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "import/copybara",
             "state": "SUCCESS",
             "url": null,
@@ -9567,7 +9573,112 @@
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15226,
+          "title": "Check Linux filesystem reconfiguration effects",
+          "url": "https://github.com/google/gvisor/pull/15226",
+          "status": "open",
+          "ref": "test/cl992447762",
+          "head": "acd5518e24375632b197d2fe78681ceaa0b1238b",
+          "headOwner": "google",
+          "updatedAt": "2026-10-02T18:54:23Z",
+          "createdAt": "2026-10-02T18:54:21Z",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
+          "reviewDecision": null,
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 11,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "assign",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050581146/job/110982691747",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050581139/job/110982691844",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "check-changes",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050581110/job/110982690619",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050580970/job/110982689827",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050580431/job/110982687101",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050580656/job/110982687447",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050580632/job/110982687810",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "QUEUED",
+                "url": "https://github.com/google/gvisor/actions/runs/37050580532/job/110982688025",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/30937",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49267",
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              }
+            ]
+          },
+          "sourceHead": "4517288346ac3b7d6f7f81529769bba1322a771d",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15226"
+        }
+      ]
     },
     {
       "number": 15159,
@@ -9579,10 +9690,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T17:50:25Z",
       "createdAt": "2026-09-30T22:38:16Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -9722,10 +9833,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:45:36Z",
           "createdAt": "2026-10-01T18:09:06Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -9846,10 +9957,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:43:35Z",
       "createdAt": "2026-09-30T22:38:18Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9929,10 +10040,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-09-30T22:43:37Z",
       "createdAt": "2026-09-30T22:38:21Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -10012,10 +10123,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T18:36:05Z",
       "createdAt": "2026-09-30T22:38:24Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -10064,7 +10175,7 @@
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 12,
+        "total": 13,
         "complete": true,
         "contexts": [
           {
@@ -10134,6 +10245,12 @@
             "app": "Google CLA"
           },
           {
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "import/copybara",
             "state": "SUCCESS",
             "url": null,
@@ -10142,7 +10259,118 @@
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15225,
+          "title": "Keep devpts mount options off root and ptmx",
+          "url": "https://github.com/google/gvisor/pull/15225",
+          "status": "open",
+          "ref": "test/cl992446873",
+          "head": "6ac613b99020bd599439a7182d26dd57b4170671",
+          "headOwner": "google",
+          "updatedAt": "2026-10-02T18:52:24Z",
+          "createdAt": "2026-10-02T18:52:22Z",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
+          "reviewDecision": null,
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 12,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "assign",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367712/job/110981975929",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "check-changes",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367757/job/110981976699",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367691/job/110981974848",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367657/job/110981974473",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367747/job/110981975921",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367703/job/110981975303",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367820/job/110981977047",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050367678/job/110981974897",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/30935",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49264",
+                "app": null
+              },
+              {
+                "name": "go tests",
+                "state": "PENDING",
+                "url": null,
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              }
+            ]
+          },
+          "sourceHead": "b07ccec16daffe566b470cecd2bf36fb4385bcfa",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15225"
+        }
+      ]
     },
     {
       "number": 15163,
@@ -10154,10 +10382,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:52:12Z",
       "createdAt": "2026-09-30T22:42:30Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -10262,7 +10490,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:56:57Z",
       "createdAt": "2026-09-30T22:42:32Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -10375,7 +10603,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:48:05Z",
           "createdAt": "2026-10-01T17:52:04Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -10523,10 +10751,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T18:35:40Z",
       "createdAt": "2026-09-30T22:42:35Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -10559,7 +10787,7 @@
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 9,
+        "total": 10,
         "complete": true,
         "contexts": [
           {
@@ -10611,6 +10839,12 @@
             "app": "Google CLA"
           },
           {
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "import/copybara",
             "state": "SUCCESS",
             "url": null,
@@ -10619,7 +10853,118 @@
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15224,
+          "title": "Retry each exhausted stress-test connection",
+          "url": "https://github.com/google/gvisor/pull/15224",
+          "status": "open",
+          "ref": "test/cl992446780",
+          "head": "c48b76848ee32c6bc18b168dae361236f81afb58",
+          "headOwner": "google",
+          "updatedAt": "2026-10-02T18:50:55Z",
+          "createdAt": "2026-10-02T18:50:53Z",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
+          "reviewDecision": null,
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 12,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "check-changes",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050206299/job/110981431257",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050205975/job/110981428238",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050205686/job/110981427088",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050205867/job/110981428993",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050205847/job/110981427987",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "assign",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050206420/job/110981430515",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050206440/job/110981431378",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37050205668/job/110981426623",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/30932",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49263",
+                "app": null
+              },
+              {
+                "name": "go tests",
+                "state": "PENDING",
+                "url": null,
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              }
+            ]
+          },
+          "sourceHead": "8bd2a60b504329d08410280954268b954369078e",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15224"
+        }
+      ]
     },
     {
       "number": 15168,
@@ -10631,10 +10976,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:08:27Z",
       "createdAt": "2026-09-30T23:39:09Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -10769,10 +11114,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T06:44:31Z",
       "createdAt": "2026-09-30T23:41:33Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -10877,10 +11222,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T00:12:19Z",
       "createdAt": "2026-10-01T00:07:02Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -10960,10 +11305,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T03:13:01Z",
       "createdAt": "2026-10-01T02:15:11Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11060,10 +11405,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:11:50Z",
       "createdAt": "2026-10-01T10:12:07Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11161,10 +11506,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T10:18:13Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11262,10 +11607,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T13:18:55Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11363,10 +11708,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T18:25:40Z",
       "createdAt": "2026-10-01T13:36:08Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
       ],
@@ -11494,10 +11839,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T18:43:05Z",
           "createdAt": "2026-10-02T18:43:03Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
-          "mergeable": "MERGEABLE",
-          "mergeState": "BLOCKED",
+          "mergeable": "UNKNOWN",
+          "mergeState": "UNKNOWN",
           "labels": [
             "exported"
           ],
@@ -11630,10 +11975,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T13:36:19Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11731,10 +12076,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T15:53:05Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11832,10 +12177,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:40:12Z",
       "createdAt": "2026-10-01T15:53:08Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -11962,10 +12307,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:13:38Z",
       "createdAt": "2026-10-01T15:55:39Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -12063,7 +12408,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T01:26:22Z",
       "createdAt": "2026-10-01T21:14:49Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12206,7 +12551,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:20:08Z",
           "createdAt": "2026-10-02T00:07:07Z",
-          "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+          "checkedAt": "2026-10-02T18:54:19.062647+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -12360,10 +12705,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T12:59:06Z",
       "createdAt": "2026-10-02T10:29:20Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -12461,10 +12806,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T13:01:08Z",
       "createdAt": "2026-10-02T12:55:53Z",
-      "checkedAt": "2026-10-02T18:44:16.958878+00:00",
+      "checkedAt": "2026-10-02T18:54:19.062647+00:00",
       "reviewDecision": null,
-      "mergeable": "MERGEABLE",
-      "mergeState": "BLOCKED",
+      "mergeable": "UNKNOWN",
+      "mergeState": "UNKNOWN",
       "labels": [],
       "labelsComplete": true,
       "threads": {
