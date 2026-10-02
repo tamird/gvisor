@@ -1070,9 +1070,9 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 		env = append(env, fuseVar+"=FALSE")
 	}
 	if *save || *saveResume {
-		env = append(env, saveVar+"=TRUE")
+		env = append(env, saveVar+"=true")
 	} else {
-		env = append(env, saveVar+"=FALSE")
+		env = append(env, saveVar+"=false")
 	}
 	env = removeShardAndXMLEnvVars(env, tc)
 
