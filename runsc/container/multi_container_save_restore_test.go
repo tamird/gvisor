@@ -741,7 +741,7 @@ func TestCheckpointRestoreAnnotation(t *testing.T) {
 	}
 
 	// Check that the new env var is present in /proc/gvisor/spec_environ.
-	if out, err := executeCombinedOutput(conf, conts[1], nil, "/usr/bin/strings", "/proc/gvisor/spec_environ"); err != nil {
+	if out, err := executeCombinedOutput(conf, conts[1], nil, "/bin/cat", "/proc/gvisor/spec_environ"); err != nil {
 		t.Fatalf("out=%q, err=%v", string(out), err)
 	} else if !strings.Contains(string(out), newEnvVar) {
 		t.Fatalf("env var %q not found in /proc/gvisor/spec_environ: %q", newEnvVar, string(out))
