@@ -1039,10 +1039,10 @@
   sha256: 64d421959bba30cb3bcdd1e57a01b8ef2f12b93db3d1ab4a34fe5f4d2ca78aa4
   license: MIT
 - dependency: llvm-raw
-  version: https://github.com/llvm/llvm-project/archive/cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f.tar.gz
-  retrieved: "2026-09-30"
-  commit: cb2f0d0a5f14c183e7182aba0f0e54a518de9e3f
-  sha256: e8ece380fdb57dc6f8e42df9db872a1ade5056c5379075e3e2f99c89200aea69
+  version: https://github.com/llvm/llvm-project/releases/download/llvmorg-23.1.2/llvm-project-23.1.2.src.tar.xz
+  retrieved: "2026-10-02"
+  commit: 85ac560262434c9ccfc0c183ec22d4138ed647fb
+  sha256: c98bbef08a2b4c2613cd50e9aa9ae7b69b1fe6c16b2c40373bc0ab6116fdf78a
   license:
     - Apache-2.0 WITH LLVM-exception
     - NCSA
@@ -1149,12 +1149,24 @@
     - Apache-2.0
     - BSD-3-Clause
     - MIT
+- dependency: with_cfg.bzl
+  version: https://github.com/fmeum/with_cfg.bzl/releases/download/v1.0.0/with_cfg.bzl-v1.0.0.tar.gz
+  retrieved: "2026-10-02"
+  commit: a33b1b2d2fd38f5884643d37d1c54c5d280d583c
+  sha256: 79815b22f8de722a25bb90ccdc209c145c44983f6d7cd7deb6d87b2b35d821fa
+  license: Apache-2.0
 - dependency: xds
   version: https://github.com/cncf/xds/archive/ee656c7534f5d7dc23d44dd611689568f72017a6.tar.gz
   retrieved: "2026-08-27"
   commit: ee656c7534f5d7dc23d44dd611689568f72017a6
   sha256: 49535f3c3370004309da50194c09bbfc528d4702424dd46e7d56a278a3dfc15d
   license: Apache-2.0
+- dependency: zlib-ng
+  version: https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.3.3.tar.gz
+  retrieved: "2026-10-02"
+  commit: 12731092979c6d07f42da27da673a9f6c7b13586
+  sha256: f9c65aa9c852eb8255b636fd9f07ce1c406f061ec19a2e7d508b318ca0c907d1
+  license: Zlib
 - dependency: zstd
   version: https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
   retrieved: "2026-10-02"
