@@ -98,3 +98,29 @@ test_suite(
         "//test/util:posix_error_test_arm64",
     ],
 )
+
+# Fork-only observation of the existing native PTY input assertion.
+sh_test(
+    name = "pty_input_trace",
+    size = "medium",
+    srcs = ["pty_input_trace.sh"],
+    args = ["$(rootpath //test/syscalls:pty_test_native)"],
+    data = ["//test/syscalls:pty_test_native"],
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.recycle-runner": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ] + select({
+        "//tools/bazeldefs:rbe": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)

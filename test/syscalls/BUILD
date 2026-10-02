@@ -664,6 +664,7 @@ syscall_test(
     size = "medium",
     shard_count = more_shards,
     test = "//test/syscalls/linux:pty_test",
+    visibility = ["//test/rbe:__pkg__"],
 )
 
 syscall_test(
