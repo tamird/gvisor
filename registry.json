@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T00:16:01.917659+00:00",
+    "updatedAt": "2026-10-02T00:25:44.842150+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1656,7 +1656,7 @@
       "url": "https://github.com/google/gvisor/pull/15202",
       "group": "tests",
       "status": "open",
-      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. EtiennePerot approved the current head at 23:48:48 UTC. GitHub checks pass or are skipped. Copybara opened exact-source import #15209 at 00:07:07 UTC October 2, head 801b860e7d2f55c83c966dbf52e789a31d0b0cb8; public pipeline 49210 is pending. The source and import remain open. This publication does not establish that it fixes either earlier import cleanup failure."
+      "summary": "Published source 8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6 requests synchronous container removal with --rm before the EXIT trap removes the temporary runtime wrapper and logs. EtiennePerot approved the current head at 23:48:48 UTC. GitHub checks pass or are skipped. Copybara opened exact-source import #15209 at 00:07:07 UTC October 2 and refreshed it at 00:21:10 to current head 58fd726b9cecc6db3ed108e7ed39c7567b2ff45f; current public pipeline 49214 is pending. The source and import remain open. This publication does not establish that it fixes either earlier import cleanup failure."
     },
     {
       "id": "branch:rbe-unit-all-architectures",
