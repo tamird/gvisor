@@ -19,9 +19,12 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -220,13 +223,32 @@ TEST_P(SocketInetLoopbackIsolatedTest, TCPFinWait2Test) {
   char byte;
   ASSERT_THAT(RetryEINTR(recv)(accepted.get(), &byte, sizeof(byte), 0),
               SyscallSucceedsWithValue(0));
-  std::cerr << "FIN_WAIT2_DIAGNOSTIC client_port="
-            << ntohs(ASSERT_NO_ERRNO_AND_VALUE(
-                   AddrPort(connector.family(), conn_bound_addr)))
+  const auto& client = reinterpret_cast<const sockaddr_in&>(conn_bound_addr);
+  const auto& server = reinterpret_cast<const sockaddr_in&>(conn_addr);
+  std::cerr << "FIN_WAIT2_DIAGNOSTIC client_port=" << ntohs(client.sin_port)
             << " listener_port=" << ntohs(port) << std::endl;
+
+  // EOF does not mean that the client has received the peer's FIN
+  // acknowledgment. Wait for this exact tuple to reach FIN_WAIT2 before
+  // checking its reservation.
+  char fin_wait2[64];
+  snprintf(
+      fin_wait2, sizeof(fin_wait2), " %08X:%04X %08X:%04X 05 ",
+      client.sin_addr.s_addr, static_cast<unsigned>(ntohs(client.sin_port)),
+      server.sin_addr.s_addr, static_cast<unsigned>(ntohs(server.sin_port)));
+  const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(1);
+  std::string tcp;
+  while (true) {
+    tcp = ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/net/tcp"));
+    if (tcp.find(fin_wait2) != std::string::npos) {
+      break;
+    }
+    ASSERT_TRUE(std::chrono::steady_clock::now() < deadline) << tcp;
+    absl::SleepFor(absl::Milliseconds(1));
+  }
   std::cerr << "FIN_WAIT2_DIAGNOSTIC tcp_begin\n"
-            << ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/net/tcp"))
-            << "FIN_WAIT2_DIAGNOSTIC tcp_end" << std::endl;
+            << tcp << "FIN_WAIT2_DIAGNOSTIC tcp_end" << std::endl;
 
   // Now bind and connect a new socket.
   const FileDescriptor conn_fd2 = ASSERT_NO_ERRNO_AND_VALUE(
