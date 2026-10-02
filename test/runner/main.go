@@ -1031,10 +1031,10 @@ func runTestCaseRunsc(testBin string, tc *gtest.TestCase, args []string, t *test
 	} else {
 		env = append(env, fuseVar+"=FALSE")
 	}
+	// The C++ save utility enables checkpoint behavior when this variable exists.
+	env = filterEnv(env, []string{saveVar})
 	if *save || *saveResume {
 		env = append(env, saveVar+"=TRUE")
-	} else {
-		env = append(env, saveVar+"=FALSE")
 	}
 	env = removeShardAndXMLEnvVars(env, tc)
 
