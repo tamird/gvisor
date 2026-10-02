@@ -1,3 +1,6 @@
+# Backport abseil/abseil-cpp@0784689a6 for Clang 23 lifetime attributes.
+# Keep Abseil 20250814.1; remove when its graph can use a containing release.
+
 diff --git a/absl/base/attributes.h b/absl/base/attributes.h
 --- a/absl/base/attributes.h
 +++ b/absl/base/attributes.h
