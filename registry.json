@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T07:48:33.113816+00:00",
+    "updatedAt": "2026-10-02T08:08:13.123757+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1046,7 +1046,7 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13523",
       "group": "rbe",
       "status": "open",
-      "summary": "Supported worker selection is unresolved. Existing kernel defects still affect host-network and filesystem tests.",
+      "summary": "Supported worker-kernel selection remains unresolved; issue #13523 is open with no new provider resolution. Source-only review of the retained failed core run finds ten non-FIB netfilter validation failures consistent with older Linux behavior and dual-stack native/hostnet reservation failures matching Linux fix d9ba9934285514f1f95d96326a82398a22dc77f2. The failed execution's kernel build/configuration/backports remain unknown, so these are source/failure-pattern matches, not verified deployed-patch attribution. Nine FIB cases retain an unresolved module/configuration boundary. All original outcomes remain FAILED; no new job, expectation weakening or source fix was introduced. Session-keyring expectations have a separately validated fix; PTY and timestamp failures remain unresolved.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13523
     },
@@ -1731,26 +1731,26 @@
       "summary": "Public and tracked at 1047109d167d6a82b725f3bf5c5d3301acb15dbc, one commit directly on upstream d3d566ad19. Selects released Go 1.27.1 and explicitly selects the patched SDK for coverage; go.mod and tools/build_cover.sh are byte-identical to historical compiler precursor 577443168. Source/record peers and static Bash/diff checks pass. Subsequent source and prior exported-module build evidence do not establish this upgrade as a compiler prerequisite: Go 1.26 final static links retain the required flags. The independent branch is preserved. The focused existing GNU/static-auto race test passed on primary d3f with Go 1.26; ELF postprocessing remains pending, and the upgrade remains outside the final compiler plan. The b9/1cb hosted gate remains evidence for its actual Go 1.27 composition; fresh result closure is pending. No upstream PR or contributor approval is claimed."
     },
     {
-      "id": "branch:benchmark-thread-safety",
+      "id": "branch:benchmark-thread-safety-current",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "benchmark-thread-safety",
+      "ref": "benchmark-thread-safety-current",
       "title": "Fix Benchmark annotations for libc++",
-      "url": "https://github.com/tamird/gvisor/tree/benchmark-thread-safety",
+      "url": "https://github.com/tamird/gvisor/tree/benchmark-thread-safety-current",
       "group": "bazel",
-      "status": "compiler validation passed; upstream preparation",
-      "summary": "Current public head 3972acde20d65d6e7440ae90560ed962335518c3. Independent public master-based backport of google/benchmark 82a895089 for the selected Clang/libc++ annotations. Its patch is byte-identical to compiler precursor be5a3e07f (original b63ff054a). Current upstream lacks this backport declaration; no source PR exists. The unchanged backport participates in the independently closed compiler normal/race build evidence and final focused consumer gate. Its independent branch is being prepared for contributor review; no upstream PR or separate fresh standalone execution is claimed."
+      "status": "contributor review pending",
+      "summary": "Public, clean and tracked at 19ead085f40e4d945da8ced8e10c5b84ae6673e2, one independently reviewed commit directly on current upstream d3d566ad1979a92cb76918a18cba6e51fe252393. Backports google/benchmark 82a895089 for the libc++ mutex annotations exposed by the selected Clang thread-safety checks. It has no compiler prerequisite. Latest released Benchmark 1.9.5 predates this fix; its mutex header is byte-identical to the selected 1.8.4 header. The successor keeps the exact compiler-validated patch body and moves its purpose comment into the owning commit. Retained LLVM 23 normal builds on both target CPUs passed with Benchmark 1.9.5; no fresh standalone GNU build or whole-Benchmark-1.8.4 Clang pass is claimed. Contributor review has been requested; no upstream PR or approval exists yet. Predecessor benchmark-thread-safety@3972acde20d65d6e7440ae90560ed962335518c3 and original b63ff054a remain preserved; actual compiler copies be5a3e07f and 430252e1cb retain their evidence."
     },
     {
-      "id": "branch:abseil-lifetime-attributes",
+      "id": "branch:abseil-lifetime-attributes-current",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "abseil-lifetime-attributes",
+      "ref": "abseil-lifetime-attributes-current",
       "title": "Update Abseil lifetime annotations",
-      "url": "https://github.com/tamird/gvisor/tree/abseil-lifetime-attributes",
+      "url": "https://github.com/tamird/gvisor/tree/abseil-lifetime-attributes-current",
       "group": "bazel",
-      "status": "compiler validation passed; upstream preparation",
-      "summary": "Current public head ca41e2a347b144df6a023a2ea411e10f7ea461b8. Independent public master-based backport of abseil/abseil-cpp 0784689a6 for Clang 23 lifetime annotations. Its patch is byte-identical to compiler precursor c1111b2c3 (original 2f8828d7e). Current upstream lacks this backport declaration; no source PR exists. The unchanged backport participates in the independently closed compiler normal/race build evidence and final focused consumer gate. Its independent branch is being prepared for contributor review; no upstream PR or separate fresh standalone execution is claimed."
+      "status": "contributor review pending",
+      "summary": "Public, clean and tracked at b79732a81ad9e451a5d65bc873014704ba7c425e, one independently reviewed commit directly on current upstream d3d566ad1979a92cb76918a18cba6e51fe252393. Backports abseil/abseil-cpp 0784689a6 for Clang 23 lifetime annotations without changing the selected dependency graph; it has no compiler prerequisite. The selected 20250814.1 and patch release 20250814.2 lack the correction. A newer 20260817 release includes it but changes compatibility and dependency floors, so that wider upgrade is separate work. The successor keeps the exact compiler-validated patch body and moves its purpose comment into the owning commit. Retained LLVM 23 normal builds on both target CPUs passed with Abseil 20250814.1; no fresh standalone GNU build is claimed. Contributor review has been requested; no upstream PR or approval exists yet. Predecessor abseil-lifetime-attributes@ca41e2a347b144df6a023a2ea411e10f7ea461b8 and original 2f8828d7e remain preserved; actual compiler copies c1111b2c3 and b89bfe2bb retain their evidence."
     },
     {
       "id": "branch:errno-safe-delete-noexcept",
@@ -2705,18 +2705,24 @@
       ]
     },
     {
-      "from": "branch:benchmark-thread-safety",
+      "from": "branch:benchmark-thread-safety-current",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "Includes the required Benchmark annotation backport.",
-      "evidence": "https://github.com/tamird/gvisor/commit/430252e1cb42d90d778dd1075cc24801b526fe6e"
+      "reason": "Includes the required Benchmark annotation backport. The refreshed independent current-master branch preserves that exact backport body; it does not depend on the compiler.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/430252e1cb42d90d778dd1075cc24801b526fe6e",
+        "https://github.com/tamird/gvisor/commit/19ead085f40e4d945da8ced8e10c5b84ae6673e2"
+      ]
     },
     {
-      "from": "branch:abseil-lifetime-attributes",
+      "from": "branch:abseil-lifetime-attributes-current",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
-      "reason": "Includes the Abseil lifetime annotation backport.",
-      "evidence": "https://github.com/tamird/gvisor/commit/b89bfe2bb9e260a181032618dc87478cffe56450"
+      "reason": "Includes the Abseil lifetime annotation backport. The refreshed independent current-master branch preserves that exact backport body; it does not depend on the compiler.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/b89bfe2bb9e260a181032618dc87478cffe56450",
+        "https://github.com/tamird/gvisor/commit/b79732a81ad9e451a5d65bc873014704ba7c425e"
+      ]
     },
     {
       "from": "branch:errno-safe-delete-noexcept",
