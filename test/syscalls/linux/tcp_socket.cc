@@ -28,14 +28,17 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/utsname.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <iostream>
 #include <iterator>
 #include <limits>
 #include <memory>
@@ -906,6 +909,13 @@ TEST_P(TcpSocketTest, Tiocinq) {
 }
 
 TEST_P(TcpSocketTest, TcpSCMPriority) {
+  ASSERT_FALSE(IsRunningOnGvisor());
+  ASSERT_EQ(GetParam(), AF_INET);
+  struct utsname host;
+  ASSERT_THAT(uname(&host), SyscallSucceeds());
+  std::cerr << "TCP_TIMESTAMP_DIAGNOSTIC kernel=" << host.release
+            << " version=" << host.version << std::endl;
+
   // Enable socket options first so that when the data is sent, the appropriate
   // data is populated in the control buffer.
   int val = 1;
@@ -933,6 +943,53 @@ TEST_P(TcpSocketTest, TcpSCMPriority) {
   ASSERT_THAT(RetryEINTR(recvmsg)(accepted_.get(), &msg, 0),
               SyscallSucceedsWithValue(sizeof(buf)));
 
+  // Observe the first message without adding work between enabling timestamps
+  // and receiving it. Keep its control buffer for the original assertions
+  // below.
+  const auto first_received = std::chrono::steady_clock::now();
+  auto dump_control = [](const char* phase, msghdr& message, size_t received) {
+    std::cerr << "TCP_TIMESTAMP_DIAGNOSTIC phase=" << phase
+              << " payload_bytes=" << received
+              << " control_bytes=" << message.msg_controllen
+              << " flags=" << message.msg_flags << std::endl;
+    for (cmsghdr* cmsg = CMSG_FIRSTHDR(&message); cmsg != nullptr;
+         cmsg = CMSG_NXTHDR(&message, cmsg)) {
+      std::cerr << "TCP_TIMESTAMP_DIAGNOSTIC phase=" << phase
+                << " level=" << cmsg->cmsg_level << " type=" << cmsg->cmsg_type
+                << " length=" << cmsg->cmsg_len << std::endl;
+    }
+  };
+  dump_control("first", msg, sizeof(buf));
+  int timestamp = 0;
+  socklen_t timestamp_len = sizeof(timestamp);
+  ASSERT_THAT(getsockopt(accepted_.get(), SOL_SOCKET, SO_TIMESTAMP, &timestamp,
+                         &timestamp_len),
+              SyscallSucceeds());
+  std::cerr << "TCP_TIMESTAMP_DIAGNOSTIC option=" << timestamp
+            << " option_bytes=" << timestamp_len << std::endl;
+
+  // This diagnostic interval allows deferred activation to run; it is not a
+  // synchronization guarantee. Observe a later packet with the option
+  // unchanged.
+  absl::SleepFor(absl::Milliseconds(100));
+  const auto second_sent = std::chrono::steady_clock::now();
+  ASSERT_THAT(RetryEINTR(write)(connected_.get(), buf, sizeof(buf)),
+              SyscallSucceedsWithValue(sizeof(buf)));
+  std::vector<char> second_control(control.size());
+  msghdr second = msg;
+  second.msg_control = second_control.data();
+  second.msg_controllen = second_control.size();
+  second.msg_flags = 0;
+  ASSERT_THAT(RetryEINTR(recvmsg)(accepted_.get(), &second, 0),
+              SyscallSucceedsWithValue(sizeof(buf)));
+  std::cerr << "TCP_TIMESTAMP_DIAGNOSTIC second_send_after_ms="
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                   second_sent - first_received)
+                   .count()
+            << std::endl;
+  dump_control("second", second, sizeof(buf));
+
+  // Assert against the original first message even if the later one differed.
   struct cmsghdr* cmsg = CMSG_FIRSTHDR(&msg);
   ASSERT_NE(cmsg, nullptr);
   // TODO(b/78348848): SO_TIMESTAMP isn't implemented for TCP sockets.
