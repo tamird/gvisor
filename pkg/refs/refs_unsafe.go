@@ -18,14 +18,13 @@ package refs
 import (
 	"context"
 	"fmt"
+	"unsafe"
 
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 )
 
-// These type definitions must have different GC shapes to ensure that
-// the Go compiler generates distinct code paths for them.
-//
-// This is borrowed from `pkg/bpf/input_bytes.go`.
+// These types have distinct sizes and GC shapes so LogRefs can select the
+// policy from the instantiated type's size, without runtime type tests.
 type (
 	// loggingDisabled indicates that reference-related events should not be logged.
 	// This should be the default, as logging can be extremely noisy and expensive.
@@ -88,15 +87,10 @@ func (r *RefsBase[T, L]) LeakMessage() string {
 
 // LogRefs implements refs.CheckedObject.LogRefs.
 func (r *RefsBase[T, L]) LogRefs() bool {
+	// Go lowers Sizeof after substituting the shape type.
+	// https://github.com/golang/go/blob/2dc996f71/src/cmd/compile/internal/noder/reader.go#L2446-L2447
 	var l L
-	switch any(l).(type) {
-	case loggingDisabled:
-		return false
-	case loggingEnabled:
-		return true
-	default:
-		panic("unreachable")
-	}
+	return unsafe.Sizeof(l) == unsafe.Sizeof(loggingEnabled(0))
 }
 
 // ReadRefs returns the current number of references. The returned count is
