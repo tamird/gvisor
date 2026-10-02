@@ -1,4 +1,6 @@
-load("//tools:defs.bzl", "go_library", "select_arch", "sh_test")
+load("//tools:defs.bzl", "go_library", "sh_test")
+load("//tools/bazeldefs:defs.bzl", "sh_amd64_test", "sh_arm64_test")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants")
 load("//tools/nogo:defs.bzl", "nogo_config", "nogo_test")
 
 package(
@@ -19,8 +21,20 @@ nogo_config(
     srcs = ["sanity.yaml"],
 )
 
-# sanity_test executes the generated script as data, so its embedded analyzer
-# must match the test's architecture. Execution constraints cannot use select().
+nogo_test(
+    name = "sanity_nogo",
+    srcs = ["sanity.go"],
+    config = ":sanity_config",
+    tags = [
+        "manual",
+        "noguitar",
+        "notap",
+    ],
+    deps = [":sanity"],
+)
+
+# Only the explicit native variants require the embedded analyzer to match the
+# target CPU. The ordinary test may use a different execution platform.
 [
     nogo_test(
         name = "sanity_nogo_" + arch,
@@ -44,22 +58,34 @@ nogo_config(
     ]
 ]
 
-alias(
-    name = "sanity_nogo",
-    actual = select_arch(
-        amd64 = ":sanity_nogo_amd64",
-        arm64 = ":sanity_nogo_arm64",
-    ),
-    tags = [
-        "manual",
-        "noguitar",
-        "notap",
-    ],
-)
-
 sh_test(
     name = "sanity_test",
     srcs = ["sanity_test.sh"],
+    architectures = [],
     args = ["$(location :sanity_nogo)"],
     data = [":sanity_nogo"],
+    tags = test_architecture_tags(
+        [
+            "amd64",
+            "arm64",
+        ],
+        [],
+    ),
 )
+
+[
+    test_architecture_variants(
+        "sanity_test",
+        [arch],
+        {arch: test_rule},
+        {
+            "srcs": ["sanity_test.sh"],
+            "args": ["$(location :sanity_nogo_%s)" % arch],
+            "data": [":sanity_nogo_%s" % arch],
+        },
+    )
+    for arch, test_rule in [
+        ("amd64", sh_amd64_test),
+        ("arm64", sh_arm64_test),
+    ]
+]
