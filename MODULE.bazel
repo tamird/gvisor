@@ -8,7 +8,9 @@ bazel_dep(name = "gazelle", version = "0.51.3", repo_name = "bazel_gazelle")
 bazel_dep(name = "rules_license", version = "1.0.0")
 bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "rules_pkg", version = "1.0.1")
-bazel_dep(name = "rules_cc", version = "0.2.17")
+bazel_dep(name = "rules_cc", version = "0.2.25")
+bazel_dep(name = "llvm", version = "0.8.24")
+bazel_dep(name = "with_cfg.bzl", version = "1.0.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "libbacktrace", version = "1.0.0-20250926-7939218.bcr.2")
@@ -19,8 +21,8 @@ bazel_dep(name = "abseil-cpp", version = "20250814.1", repo_name = "com_google_a
 bazel_dep(name = "googletest", version = "1.17.0", repo_name = "com_google_googletest")
 bazel_dep(name = "google_benchmark", version = "1.8.4", repo_name = "com_google_benchmark")
 bazel_dep(name = "nlohmann_json", version = "3.11.3")
-bazel_dep(name = "rules_python", version = "1.7.0")
-bazel_dep(name = "zstd", version = "1.5.5", repo_name = "llvm_zstd")
+bazel_dep(name = "rules_python", version = "1.8.0")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
 bazel_dep(name = "protoc-gen-validate", version = "1.3.0")
 bazel_dep(name = "xds", version = "0.0.0-20251210-ee656c7")
 bazel_dep(name = "cel-spec", version = "0.25.1")
@@ -89,13 +91,6 @@ http_archive(
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = "3.11")
 python.toolchain(python_version = "3.11")
-
-### Crosstool
-coral_crosstool_extension = use_extension("//tools/bazeldefs:extensions/coral_crosstool.bzl", "coral_crosstool_extension")
-use_repo(coral_crosstool_extension, "coral_crosstool")
-
-crosstool = use_extension("//tools/bazeldefs:extensions/crosstool.bzl", "crosstool_extension")
-use_repo(crosstool, "crosstool")
 
 ### zlib-ng
 # TODO: try using "zlib-ng" from BCR
@@ -177,9 +172,7 @@ http_file(
 )
 
 ### Toolchains
-register_toolchains("//:cc_toolchain_k8")
-
-register_toolchains("//:cc_toolchain_aarch64")
+register_toolchains("@llvm//toolchain:all")
 
 ### Go
 go_sdk = use_extension("@io_bazel_rules_go//go:extensions.bzl", "go_sdk")

@@ -1,3 +1,6 @@
+# Backport google/benchmark@82a895089 for Clang with annotated libc++ mutexes.
+# Keep Benchmark 1.8.4; remove when the selected release includes this fix.
+
 diff --git a/src/mutex.h b/src/mutex.h
 index bec78d9e5f..b6b4b71ab0 100644
 --- a/src/mutex.h
