@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T05:32:44.637920+00:00",
+    "updatedAt": "2026-10-02T05:52:37.731540+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1728,18 +1728,18 @@
       "url": "https://github.com/tamird/gvisor/tree/hermetic-compiler-current",
       "group": "bazel",
       "status": "failed; corrected successor validating",
-      "summary": "Public source 1087b901f92a02c0f50ee834d841a8ae69dfae1d is based on upstream d3d566ad19 plus explicit source precursors. Landed rules_go #15037 and the still-open SDK headers #15034, goimports launcher #15036, selected nm #15042 and plugin inputs #15153 are included; Benchmark, Abseil and noexcept compatibility changes are distinct parents. The Go 1.27.1 prerequisite and explicit patched-SDK coverage selection replace the broken Go 1.26 linker probes. Hosted gate 8f466163-1541-4a59-9725-a8e4de057c3a independently closed FAILED after 417.191 seconds (outcome 580480fa44e7): the Go 1.27.1 SDK and canonical 186-entry license verification pass, retaining four existing catalog warnings. Six of eight normal AMD64 roots build; runsc and send_recv_benchmark fail at gRPC/x/net compatibility, undeclared BPF headers, Benchmark 1.8.4 counter macros and the unused ncalls variable. No runtime test, ARM, race, parser or ELF/link gate ran. Existing #14984 supplies the released Benchmark 1.9.5 macro fix; existing send-recv-benchmark-ranges supplies the ncalls correction. Those corrections and the x/net/BPF prerequisites are now composed in separate candidate hermetic-compiler-corrected at b9effe5415. This original 1087 head and its failed evidence remain unchanged. The thread-safety backport remains needed with Benchmark 1.9.5. The direct-module license catalog excludes toolchain runtime payloads; its success is not a complete linked-runtime audit. No old descendants or integration relationships have moved, and this successor remains unqualified."
+      "summary": "Public source 1087b901f92a02c0f50ee834d841a8ae69dfae1d is based on upstream d3d566ad19 plus explicit source precursors. Landed rules_go #15037 and the still-open SDK headers #15034, goimports launcher #15036, selected nm #15042 and plugin inputs #15153 are included; Benchmark, Abseil and noexcept compatibility changes are distinct parents. This historical composition uses Go 1.27.1 and explicit patched-SDK coverage selection. Subsequent source and prior build evidence do not establish Go 1.27 as a compiler prerequisite: Go 1.26 final static links retain the required flags. Hosted gate 8f466163-1541-4a59-9725-a8e4de057c3a independently closed FAILED after 417.191 seconds (outcome 580480fa44e7): the Go 1.27.1 SDK and canonical 186-entry license verification pass, retaining four existing catalog warnings. Six of eight normal AMD64 roots build; runsc and send_recv_benchmark fail at gRPC/x/net compatibility, undeclared BPF headers, Benchmark 1.8.4 counter macros and the unused ncalls variable. No runtime test, ARM, race, parser or ELF/link gate ran. Existing #14984 supplies the released Benchmark 1.9.5 macro fix; existing send-recv-benchmark-ranges supplies the ncalls correction. Those corrections and BPF source are composed in separate candidate hermetic-compiler-corrected, whose b9effe5415 validation also includes independent Go 1.27/x/net updates. The SDK decision remains pending a focused check of an existing GNU/static-auto race test that forces external linking; neither a Go upgrade requirement nor its irrelevance is established. This original 1087 head and its failed evidence remain unchanged. The thread-safety backport remains needed with Benchmark 1.9.5. The direct-module license catalog excludes toolchain runtime payloads; its success is not a complete linked-runtime audit. No old descendants or integration relationships have moved, and this successor remains unqualified."
     },
     {
       "id": "branch:go-toolchain-linker-flags",
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "go-toolchain-linker-flags",
-      "title": "Use Go linker probes compatible with LLVM",
+      "title": "Use Go 1.27.1 and select the coverage SDK",
       "url": "https://github.com/tamird/gvisor/tree/go-toolchain-linker-flags",
       "group": "bazel",
       "status": "validation pending",
-      "summary": "Public and tracked at 1047109d167d6a82b725f3bf5c5d3301acb15dbc, one commit directly on upstream d3d566ad19. Uses released Go 1.27.1 to preserve the linker flags required by the declared LLVM toolchain, and explicitly selects the patched SDK for coverage. The go.mod and tools/build_cover.sh changes are byte-identical to compiler precursor 577443168. Both source/record peers and static Bash/diff checks pass; fresh hosted runtime validation remains pending. No upstream PR or contributor approval is claimed."
+      "summary": "Public and tracked at 1047109d167d6a82b725f3bf5c5d3301acb15dbc, one commit directly on upstream d3d566ad19. Selects released Go 1.27.1 and explicitly selects the patched SDK for coverage; go.mod and tools/build_cover.sh are byte-identical to historical compiler precursor 577443168. Source/record peers and static Bash/diff checks pass. Subsequent source and prior exported-module build evidence do not establish this upgrade as a compiler prerequisite: Go 1.26 final static links retain the required flags. The independent branch is preserved. The SDK decision remains pending a focused check of an existing GNU/static-auto race test that forces external linking. The b9/1cb hosted gate remains evidence for its actual Go 1.27 composition; fresh result closure is pending. No upstream PR or contributor approval is claimed."
     },
     {
       "id": "branch:benchmark-thread-safety",
@@ -1794,7 +1794,7 @@
       "url": "https://github.com/tamird/gvisor/tree/xnet-go127-compatibility",
       "group": "bazel",
       "status": "source reviewed; validation pending",
-      "summary": "Public, clean and tracked at c4f9d2b5198995f17d93a7a05ec03d8547d39c2a on upstream d3d566ad19 after three source/record peers. Released x/net 0.56 restores the HTTP/2 APIs missing under Go 1.27 and includes the later server/client wrapper configuration fixes. The required crypto, sys, term, text and sync floors are retained consistently in the existing Go/Bazel manifests; standalone Go 1.26.3 and gRPC 1.80.0 are unchanged. Source checks and official checksum verification pass. Canonical catalog and hosted validation are pending in corrected compiler composition b9effe5415; there is no runtime or contributor-approval claim."
+      "summary": "Public, clean and tracked at c4f9d2b5198995f17d93a7a05ec03d8547d39c2a on upstream d3d566ad19 after three source/record peers. Released x/net 0.56 restores the HTTP/2 APIs missing under Go 1.27 and includes the later server/client wrapper configuration fixes. The required crypto, sys, term, text and sync floors are retained consistently in the existing Go/Bazel manifests; standalone Go 1.26.3 and gRPC 1.80.0 are unchanged. Source checks and official checksum verification pass. Canonical catalog and hosted validation remain pending for the actual Go 1.27 composition b9effe5415. This independent branch is preserved, but no hard compiler prerequisite is established. The SDK decision remains pending the focused forced-external-link check on current Go 1.26. There is no runtime or contributor-approval claim."
     },
     {
       "id": "branch:hermetic-bpf-current",
@@ -1804,8 +1804,8 @@
       "title": "Build BPF with declared LLVM tools and headers",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-bpf-current",
       "group": "bazel",
-      "status": "corrected source; validation pending",
-      "summary": "Independent public current head 60cfca6bb9b5e86de6fb3be2b3e2f6e81d6a3e4d contains reviewed BPF source 3d991571b9dd57e6403b268ef7c54164856fed85 plus the reviewed Bazel 8.5 correction. All seven BPF owners use declared execution-platform LLVM tools/resource headers, target Linux UAPI and libbpf helper headers with BPF v1 explicit; Coral remains registered for C/C++. This prerequisite does not depend on the compiler successor. First standalone parent 76659934-8b8f-42b4-be7d-a6239021f67b failed after 148.721 seconds during canonical license module-graph expansion: Bazel 8.3.1 lacks module_ctx.facts used by the supplier. Outcome b36fd810e3df independently closes that failure before any BPF, Coral or test execution; no such result is credited. The corrected source and eventual single-commit preparation remain validation pending. The existing libbpf BSD-2-Clause audit entry is retained; fresh canonical catalog and action/ISA proof remain pending."
+      "status": "validated; contributor review pending",
+      "summary": "Public, clean and tracked at 904b7e1131b26dd82e6b144329fce0ac28a2b2b3, a single commit on upstream d3d566ad19. All seven BPF owners use declared execution-platform LLVM tools/resource headers, target Linux UAPI and libbpf helper headers with BPF v1 explicit; Coral remains registered for C/C++. This prerequisite is independent of the compiler successor. Corrected-source parent 5d982681-ae8f-4049-a462-7c016df5a731 at 60cfca6bb9 built all seven objects for each target CPU and passed the canonical 181-entry license audit. Its parent FAILED solely on a total-action-count assertion; saved graph and artifact reconciliation independently closes the intended BPF and default-Coral analysis contracts (outcome 35d4a2a53862). Fourteen real ELF64 little-endian EM_BPF objects and exact tool/header inputs were verified. Normal caching was enabled; no native ARM worker, BPF runtime or C++ execution is claimed. Final source differs from tested 60cf only by its byte-identical generated catalog; the audited libbpf BSD-2-Clause seed is unchanged. All source/catalog/record peers pass. Contributor review has been requested; no upstream PR is authorized yet. First parent 76659934-8b8f-42b4-be7d-a6239021f67b at 3d991571b9 remains FAILED before any BPF build because Bazel 8.3.1 lacked module_ctx.facts; the final source uses required Bazel 8.5. Existing compiler compositions retain their actual historical BPF parent and are not reparented for this squash."
     },
     {
       "id": "branch:hermetic-compiler-corrected",
@@ -1816,7 +1816,7 @@
       "url": "https://github.com/tamird/gvisor/tree/hermetic-compiler-corrected",
       "group": "bazel",
       "status": "validation running",
-      "summary": "Public, clean and tracked b9effe541574ce1ac8f0d15624733e046efc9116 passed all source/composition peers. It is based on independent BPF source 3d991571b9 and eleven explicit source precursors: #14984, send-recv-benchmark-ranges 20382, x/net c4f9, the four still-open SDK/goimports/nm/plugin PRs, Benchmark and Abseil annotations, the older noexcept subset, and the Go 1.27.1/coverage SDK prerequisite. Compiler source retains the reviewed public rules_go API, static-musl behavior and analyzer/dependency forwarding; shared LLVM supplier declarations are owned by the BPF prerequisite. Bazel 8.5 is already selected here. Parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 is running with normal caching and 400-action concurrency; no result is yet credited. Fresh canonical licenses and actual AMD64/ARM64, race, parser, plugin and runtime gates remain pending. Failed 1087 compiler and original 3d BPF outcomes are preserved, as are old combined branches and their descendants. Primary qualification remains d3f5ea5774; this candidate is not integrated or approved for an upstream PR."
+      "summary": "Public, clean and tracked at 1cb132b03918e0963308fb7f24fde59a76ca8574, tree-identical to the running source b9effe541574ce1ac8f0d15624733e046efc9116; no new run was submitted for the record-only amendment. All source/composition peers passed. Its actual history includes BPF source 3d991571b9, #14984, send-recv-benchmark-ranges 20382, the four still-open SDK/goimports/nm/plugin PRs, Benchmark and Abseil annotations, the older noexcept subset, and independent Go 1.27.1/x/net 0.56 updates. Compiler source retains the public rules_go API, static-musl behavior and analyzer/dependency forwarding; the BPF prerequisite owns shared LLVM supplier declarations and Bazel 8.5 is selected. Parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 is running with normal caching and 400-action concurrency; no result is yet credited. Its results will remain specific to the actual Go 1.27 source. Go 1.27 and x/net 0.56 are not established hard compiler prerequisites. A focused check of an existing GNU/static-auto race test that forces external linking will settle the SDK decision before final simplification. Fresh catalog and actual AMD64/ARM64, race, parser, plugin and runtime gates remain pending here. Failed 1087 compiler and first 3d BPF outcomes are preserved, as are old combined branches and descendants. Primary remains d3f5ea5774; this candidate is not integrated or approved for an upstream PR."
     }
   ],
   "edges": [
@@ -2696,8 +2696,8 @@
     {
       "from": "branch:go-toolchain-linker-flags",
       "to": "branch:hermetic-compiler-current",
-      "type": "depends_on",
-      "reason": "The compiler successor requires the Go linker-probe and coverage-SDK changes; its precursor 577443168 has byte-identical go.mod and tools/build_cover.sh to the independent master-based branch.",
+      "type": "includes",
+      "reason": "Historical composition membership only: this exact compiler candidate includes the independent Go 1.27 or related x/net update. A hard compiler prerequisite is unproven; the SDK decision awaits a focused check of an existing race test that forces external linking.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/1047109d167d6a82b725f3bf5c5d3301acb15dbc",
         "https://github.com/tamird/gvisor/commit/1087b901f92a02c0f50ee834d841a8ae69dfae1d"
@@ -2787,8 +2787,8 @@
     {
       "from": "branch:xnet-go127-compatibility",
       "to": "branch:hermetic-compiler-corrected",
-      "type": "depends_on",
-      "reason": "The corrected composition includes the released x/net and required module-floor correction for the Go 1.27 HTTP/2 boundary.",
+      "type": "includes",
+      "reason": "Historical composition membership only: this exact compiler candidate includes the independent Go 1.27 or related x/net update. A hard compiler prerequisite is unproven; the SDK decision awaits a focused check of an existing race test that forces external linking.",
       "evidence": "https://github.com/tamird/gvisor/commit/f68a4102ef1fbddee475e00bc0327826d3e526fb"
     },
     {
@@ -2843,8 +2843,8 @@
     {
       "from": "branch:go-toolchain-linker-flags",
       "to": "branch:hermetic-compiler-corrected",
-      "type": "depends_on",
-      "reason": "The corrected compiler includes the byte-identical Go 1.27.1 linker-probe and explicit patched coverage-SDK prerequisite.",
+      "type": "includes",
+      "reason": "Historical composition membership only: this exact compiler candidate includes the independent Go 1.27 or related x/net update. A hard compiler prerequisite is unproven; the SDK decision awaits a focused check of an existing race test that forces external linking.",
       "evidence": "https://github.com/tamird/gvisor/commit/9e198dd1bc7d517c8a318e2386bda5b78a4552b2"
     },
     {
