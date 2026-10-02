@@ -98,3 +98,29 @@ test_suite(
         "//test/util:posix_error_test_arm64",
     ],
 )
+
+# Fork-only observation of the existing native timestamp assertion.
+sh_test(
+    name = "tcp_timestamp_trace",
+    size = "medium",
+    srcs = ["tcp_timestamp_trace.sh"],
+    args = ["$(rootpath //test/syscalls:tcp_socket_test_native)"],
+    data = ["//test/syscalls:tcp_socket_test_native"],
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.recycle-runner": "false",
+        "test.workload-isolation-type": "firecracker",
+    },
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ] + select({
+        "//tools/bazeldefs:rbe": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
