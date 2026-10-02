@@ -288,8 +288,8 @@ go_deps.module(
 )
 go_deps.module(
     path = "golang.org/x/crypto",
-    sum = "h1:IBPXwPfKxY7cWQZ38ZCIRPI50YLeevDLlLnyC5wRGTI=",
-    version = "v0.51.0",
+    sum = "h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=",
+    version = "v0.53.0",
 )
 go_deps.module(
     path = "golang.org/x/mod",
@@ -298,13 +298,13 @@ go_deps.module(
 )
 go_deps.module(
     path = "golang.org/x/sync",
-    sum = "h1:l60nONMj9l5drqw6jlhIELNv9I0A4OFgRsG9k2oT9Ug=",
-    version = "v0.17.0",
+    sum = "h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=",
+    version = "v0.21.0",
 )
 go_deps.module(
     path = "golang.org/x/sys",
-    sum = "h1:ildZl3J4uzeKP07r2F++Op7E9B29JRUy+a27EibtBTQ=",
-    version = "v0.44.0",
+    sum = "h1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=",
+    version = "v0.46.0",
 )
 go_deps.module(
     path = "golang.org/x/tools",
@@ -313,13 +313,13 @@ go_deps.module(
 )
 go_deps.module(
     path = "golang.org/x/term",
-    sum = "h1:S4RLU2sB31O/NCl+zFN9Aru9A/Cq2aqKpTZJ6B+DwT4=",
-    version = "v0.43.0",
+    sum = "h1:0rLvDRCtNj0gZkyIXhCyOb2OAzEhLVqc4B+hrsBhrmc=",
+    version = "v0.44.0",
 )
 go_deps.module(
     path = "golang.org/x/net",
-    sum = "h1:2zJIZAxAHV/OHCDTCOHAYehQzLfSXuf/5SoL/Dv6w/w=",
-    version = "v0.54.0",
+    sum = "h1:Rw8j/hFzGvJUZwNBXnAtf5sVDVt+65SK2C7IxCxZt5o=",
+    version = "v0.56.0",
 )
 go_deps.module(
     path = "github.com/google/go-cmp",
