@@ -41,6 +41,35 @@ results apply to the recorded source, selected tests and actual workers.
 Declaring a lane does not establish that its tests pass, and failures remain
 part of the qualification result.
 
+## Linux kernel coverage
+
+Linux serves as both the host for gVisor and the native reference for syscall
+tests. The documented [Linux 5.6+ host requirement](../../README.md#requirements)
+is not a claim that every syscall test passes on every kernel from 5.6 onward.
+Tests for behavior that changed in Linux must account for older native kernels
+without weakening the expected gVisor behavior. Version checks can conservatively
+skip native tests, but cannot prove that an older kernel lacks a backported fix.
+
+The current kernel environments are:
+
+| Environment | Architecture | Kernel coverage |
+| --- | --- | --- |
+| Hosted Firecracker | AMD64 | Observed Linux 6.1.0 in the October 2, 2026 qualification runs; partial qualification with remaining failures. |
+| Hosted Firecracker | ARM64 | No execution capacity verified; no guest kernel qualified. |
+| Public CI ordinary syscall pools | AMD64 / ARM64 | The `default` / `arm64` pools do not declare exact kernel versions in the public pipeline. |
+| Public CI release-candidate syscall pools | AMD64 / ARM64 | The moving `rckernel` / `rckernel-arm64` pools require separate coverage; no equivalent RBE kernel selection is established. |
+
+The [public pipeline](../../.buildkite/pipeline.yaml) defines these CI pools.
+A pinned action image selects userspace, not the worker's kernel. Kernel
+configuration and exposed devices also affect test behavior. Qualification
+reports must identify the actual worker kernel release/build and available
+configuration evidence, with uncached results for that environment. Passing on
+one observed kernel does not qualify another kernel or a release-candidate lane.
+Supported immutable kernel selection and its effect on cache identity remain
+[provider requirements](https://github.com/buildbuddy-io/buildbuddy/issues/13523).
+
+## Selecting qualification lanes
+
 The dispatcher uses the existing Nogo and unit configurations, the declared
 runtime suites, and the syscall roots shared with Make in `test/syscalls.targets`.
 Public CI's ordinary syscall selections live in the `syscalls-amd64` and
