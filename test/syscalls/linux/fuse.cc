@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <linux/capability.h>
 #include <linux/fuse.h>
+#include <linux/stat.h>
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <sys/mount.h>
@@ -232,6 +233,7 @@ TEST(FuseTest, Fallocate) {
       if (res <= 0) break;
       auto* in = reinterpret_cast<fuse_in_header*>(req_buf);
       if (in->opcode == FUSE_FORGET) continue;
+      SCOPED_TRACE(absl::StrFormat("FUSE opcode %u", in->opcode));
 
       if (in->opcode == FUSE_LOOKUP) {
         fuse_entry_out out = {
@@ -249,11 +251,13 @@ TEST(FuseTest, Fallocate) {
         FuseRespond(fd.get(), in->unique, &out, sizeof(out));
       } else if (in->opcode == FUSE_FALLOCATE) {
         FuseRespond(fd.get(), in->unique);
+      } else if (in->opcode == FUSE_FLUSH) {
+        FuseRespond(fd.get(), in->unique);
       } else if (in->opcode == FUSE_RELEASE) {
         FuseRespond(fd.get(), in->unique);
         break;
       } else {
-        FuseRespond(fd.get(), in->unique);
+        FuseRespond(fd.get(), in->unique, nullptr, 0, -ENOSYS);
       }
     }
   });
@@ -262,16 +266,21 @@ TEST(FuseTest, Fallocate) {
   FileDescriptor file_fd =
       ASSERT_NO_ERRNO_AND_VALUE(Open(file_path, O_RDWR, 0));
 
-  struct stat st_before;
+  struct stat st_before = {};
   EXPECT_THAT(fstat(file_fd.get(), &st_before), SyscallSucceeds());
+  EXPECT_EQ(st_before.st_size, 0);
 
   EXPECT_THAT(fallocate(file_fd.get(), 0, 5, 1), SyscallSucceeds());
 
-  struct stat st;
-  EXPECT_THAT(fstat(file_fd.get(), &st), SyscallSucceeds());
-  EXPECT_EQ(st.st_size, 6);
-  EXPECT_GT(st.st_mtime, 0);
-  EXPECT_GT(st.st_ctime, 0);
+  // Without writeback caching, a normal fstat refreshes attributes from the
+  // server. Inspect the kernel's size update without requesting that refresh.
+  struct statx st = {};
+  EXPECT_THAT(
+      RetryEINTR(syscall)(__NR_statx, file_fd.get(), "",
+                          AT_EMPTY_PATH | AT_STATX_DONT_SYNC, STATX_SIZE, &st),
+      SyscallSucceeds());
+  EXPECT_EQ(st.stx_mask & STATX_SIZE, STATX_SIZE);
+  EXPECT_EQ(st.stx_size, 6);
 
   file_fd.reset();
   fuse_server.Join();
