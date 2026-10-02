@@ -1,4 +1,4 @@
-"""Cgroup-v1 variants of the original test declarations."""
+"""Cgroup variants of the original test declarations."""
 
 load("@with_cfg.bzl//:with_cfg.bzl", "frontend_test", "with_cfg")
 
@@ -63,3 +63,12 @@ def cgroup_v1_variant(name, test_rule, kwargs):
         "//conditions:default": [Label("@platforms//:incompatible")],
     })
     test_rule(name = name + "_cgroup_v1", **attributes)
+
+def cgroup_v2_variant(name, test_rule, kwargs):
+    """Declares the same test with a rule-owned cgroup-v2 environment."""
+
+    # Preserve the ordinary target's environment for Make's CGROUPV2 override.
+    attributes = dict(kwargs)
+    attributes["tags"] = attributes.get("tags", []) + ["manual"]
+    attributes["env"] = dict(attributes.get("env", {}), CGROUPV2 = "true")
+    test_rule(name = name + "_cgroup_v2", **attributes)
