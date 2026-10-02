@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T04:47:20.249381+00:00",
+    "updatedAt": "2026-10-02T05:02:48.757739+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1706,7 +1706,7 @@
       "url": "https://github.com/tamird/gvisor/tree/send-recv-benchmark-ranges",
       "group": "tests",
       "status": "validated; contributor review pending",
-      "summary": "Independent published source 20382c02f2efab5d94f713526b6853e03a5db553 addresses the shared unused-counter/deprecated Benchmark compile failure found in five send_recv wrappers by the full build-all gate. It has no code prerequisites. Exact one-file validation composition 015f378f2580fb46ef3f88c6bda35083e709e949 is based on primary 00c068dddf. Outcome 0c53255d6b77 and independent root peer 91196aaf9db1 are closed PASS: all five original failing target/configuration pairs build and all 43 benchmark listing names are correct. This supplies no measured benchmark, runtime or KVM credit and is not a full build-all rerun. Contributor review has been requested before an upstream PR. Primary qualification is now published at the exact validated one-file composition 015f378f2580fb46ef3f88c6bda35083e709e949; standalone contributor review remains pending."
+      "summary": "Independent published source 20382c02f2efab5d94f713526b6853e03a5db553 addresses the shared unused-counter/deprecated Benchmark compile failure found in five send_recv wrappers by the full build-all gate. It has no code prerequisites. Exact one-file validation composition 015f378f2580fb46ef3f88c6bda35083e709e949 is based on primary 00c068dddf. Outcome 0c53255d6b77 and independent root peer 91196aaf9db1 are closed PASS: all five original failing target/configuration pairs build and all 43 benchmark listing names are correct. This supplies no measured benchmark, runtime or KVM credit and is not a full build-all rerun. Contributor review has been requested before an upstream PR. The current primary retains the validated one-file composition 015f378f2580fb46ef3f88c6bda35083e709e949; standalone contributor review remains pending."
     },
     {
       "id": "branch:send-recv-benchmark-readiness",
@@ -1727,8 +1727,8 @@
       "title": "Declare the C and C++ compiler toolchains",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-compiler-current",
       "group": "bazel",
-      "status": "validation pending",
-      "summary": "Public, clean and tracked at 1087b901f92a02c0f50ee834d841a8ae69dfae1d on current upstream d3d566ad19 plus explicit source precursors. The rules_go prerequisite #15037 has landed. Still-open source prerequisites are SDK headers #15034, the goimports launcher #15036, selected nm #15042 and plugin inputs #15153; Benchmark, Abseil and noexcept compatibility fixes are distinct parent commits. Source review corrected Go 1.26 linker probes through released Go 1.27.1 precursor 577443168 and explicit patched-SDK selection for coverage. The Bazel 9 C++ supplier upgrade #14984 is not a code prerequisite. Fresh canonical license records and hosted validation remain pending, including the actual driver parser boundary. The direct-module catalog excludes toolchain runtime payloads; regeneration alone is not a complete linked-runtime audit. Existing fork validation does not qualify this successor, and no old descendants or integration relationships have moved."
+      "status": "validation failed; fixes in preparation",
+      "summary": "Public source 1087b901f92a02c0f50ee834d841a8ae69dfae1d is based on upstream d3d566ad19 plus explicit source precursors. Landed rules_go #15037 and the still-open SDK headers #15034, goimports launcher #15036, selected nm #15042 and plugin inputs #15153 are included; Benchmark, Abseil and noexcept compatibility changes are distinct parents. The Go 1.27.1 prerequisite and explicit patched-SDK coverage selection replace the broken Go 1.26 linker probes. Hosted gate 8f466163-1541-4a59-9725-a8e4de057c3a independently closed FAILED after 417.191 seconds (outcome 580480fa44e7): the Go 1.27.1 SDK and canonical 186-entry license verification pass, retaining four existing catalog warnings. Six of eight normal AMD64 roots build; runsc and send_recv_benchmark fail at gRPC/x/net compatibility, undeclared BPF headers, Benchmark 1.8.4 counter macros and the unused ncalls variable. No runtime test, ARM, race, parser or ELF/link gate ran. Existing #14984 supplies the released Benchmark 1.9.5 macro fix; existing send-recv-benchmark-ranges supplies the ncalls correction. Those corrections are pending composition, alongside the separately owned x/net and BPF boundary work. The thread-safety backport remains needed with Benchmark 1.9.5. The direct-module license catalog excludes toolchain runtime payloads; its success is not a complete linked-runtime audit. No old descendants or integration relationships have moved, and this successor remains unqualified."
     },
     {
       "id": "branch:go-toolchain-linker-flags",
@@ -1771,8 +1771,19 @@
       "title": "Preserve C++ allocation failure semantics",
       "url": "https://github.com/tamird/gvisor/tree/errno-safe-delete-noexcept",
       "group": "bazel",
-      "status": "validated; upstream preparation",
-      "summary": "Current public head a04bf42405f376e922f9956b1e3d48b653565b33. Independent public one-commit branch on upstream 6485c3fbd. It includes noexcept delete operators and the later throwing-new/new_handler correction with owning tests. Earlier before/after validation failed before and passed all three cases after, with actual remote actions reviewed; no source PR exists. The compiler successor contains only the older noexcept prerequisite as 71fb69959 (original 1f92a05f9), not the full current allocation-behavior change."
+      "status": "validated; contributor review pending",
+      "summary": "Current public, clean and tracked head d257959b1a9257f1caed5a8a0c3d6a8c956abdf8 is one commit on upstream d3d566ad19. Independent review verifies the complete patch, all three file blobs and message are byte-identical to prior a04bf42405f376e922f9956b1e3d48b653565b33, retained by the local recovery ref errno-safe-delete-noexcept-before-refresh. The correction includes noexcept delete operators and throwing-new/new_handler behavior with owning tests. Earlier before/after validation failed before and passed all three cases after, with actual remote actions reviewed; the mechanical refresh did not rerun runtime. Contributor review has been requested before any upstream PR. The compiler successor currently contains only the older noexcept prerequisite as 71fb69959 (original 1f92a05f9), not the full allocation-behavior change."
+    },
+    {
+      "id": "branch:cos-metadata-http-errors",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "cos-metadata-http-errors",
+      "title": "Report COS metadata download errors",
+      "url": "https://github.com/tamird/gvisor/tree/cos-metadata-http-errors",
+      "group": "tests",
+      "status": "reviewed; contributor review pending",
+      "summary": "Independent public one-commit source 3fed8d848e5c9916d6dbb5b021733b7e5c77ddf9 on upstream d3d566ad19 checks transport errors before accessing the HTTP response, rejects unexpected statuses before parsing, and preserves 404 as an empty driver list. Both source/record peers passed. Source-identical composition d3f5ea57741a861d29a3a4779e9e5ffd7452bffe passed both-CPU Nogo within the bounded COS input gate; its actual COS test failed for the deliberately missing catalog, so there is no live HTTP or compatibility validation claim. Contributor review has been requested before any upstream PR."
     }
   ],
   "edges": [
@@ -2685,8 +2696,38 @@
       "type": "depends_on",
       "reason": "The compiler successor requires the noexcept delete declarations contained in this branch; it does not yet include the branch’s later throwing-new correction and tests.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/a04bf42405f376e922f9956b1e3d48b653565b33",
+        "https://github.com/tamird/gvisor/commit/d257959b1a9257f1caed5a8a0c3d6a8c956abdf8",
         "https://github.com/tamird/gvisor/commit/71fb69959aafce097ff3cb6cc1339d06a12f5b25"
+      ]
+    },
+    {
+      "from": "pr:14984",
+      "to": "branch:hermetic-compiler-current",
+      "type": "blocked_by",
+      "reason": "The failed compiler gate exposed Benchmark 1.8.4 counter macros under Clang 23. This existing PR supplies released Benchmark 1.9.5 with the upstream correction; composition is pending, and its unrelated Bazel 9 changes are not the reason for this relationship.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/14984",
+        "https://app.buildbuddy.io/invocation/8f466163-1541-4a59-9725-a8e4de057c3a"
+      ]
+    },
+    {
+      "from": "branch:send-recv-benchmark-ranges",
+      "to": "branch:hermetic-compiler-current",
+      "type": "blocked_by",
+      "reason": "The failed compiler gate exposed the existing unused ncalls variable. This independently validated branch removes it and replaces the deprecated Benchmark argument helper; composition into the compiler successor is pending.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/20382c02f2efab5d94f713526b6853e03a5db553",
+        "https://app.buildbuddy.io/invocation/8f466163-1541-4a59-9725-a8e4de057c3a"
+      ]
+    },
+    {
+      "from": "branch:cos-metadata-http-errors",
+      "to": "branch:rbe-qualification-next",
+      "type": "includes",
+      "reason": "The primary includes the exact standalone HTTP error-ordering correction. This is integrated source provenance; the missing-catalog validation does not exercise live driver downloads.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/3fed8d848e5c9916d6dbb5b021733b7e5c77ddf9",
+        "https://github.com/tamird/gvisor/commit/d3f5ea57741a861d29a3a4779e9e5ffd7452bffe"
       ]
     }
   ]
