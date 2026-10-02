@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-02T05:02:48.757739+00:00",
+    "updatedAt": "2026-10-02T05:32:44.637920+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -845,7 +845,7 @@
       "url": "https://github.com/tamird/gvisor/tree/hermetic-toolchains",
       "group": "bazel",
       "status": "preserved pending successor validation",
-      "summary": "Existing combined compiler/plugin source 63e2554be remains preserved with its integration evidence and current descendants. A distinct compiler-only successor is published as hermetic-compiler-current at 1087b901f92a02c0f50ee834d841a8ae69dfae1d, with validation pending. Its source review and pending gates do not qualify this older branch or move its dependent branches; old refs remain until the successor qualifies and composition moves."
+      "summary": "Existing combined compiler/plugin source 63e2554be remains preserved with its integration evidence and current descendants. First compiler-only successor hermetic-compiler-current at 1087b901f9 failed its normal AMD64 gate. A separate corrected composition, hermetic-compiler-corrected at b9effe541574ce1ac8f0d15624733e046efc9116, is now undergoing validation. Source reviews and partial gate results do not qualify the older branches or move their descendants; old refs remain until the successor qualifies and composition moves."
     },
     {
       "id": "branch:hermetic-bpf",
@@ -855,8 +855,8 @@
       "title": "Hermetic BPF toolchain",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-bpf",
       "group": "bazel",
-      "status": "branch",
-      "summary": "BPF migration on the combined toolchain change."
+      "status": "preserved pending successor validation",
+      "summary": "Original combined-toolchain BPF migration c49df4829 and its existing integration evidence remain preserved. Independent master-based successor hermetic-bpf-current separates the declared BPF tools and headers from the C/C++ compiler migration. Its first standalone gate failed before BPF compilation because Bazel 8.3.1 lacked module-extension facts; the published Bazel 8.5 correction is awaiting validation. No old descendants or refs have moved."
     },
     {
       "id": "pr:15153",
@@ -1727,8 +1727,8 @@
       "title": "Declare the C and C++ compiler toolchains",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-compiler-current",
       "group": "bazel",
-      "status": "validation failed; fixes in preparation",
-      "summary": "Public source 1087b901f92a02c0f50ee834d841a8ae69dfae1d is based on upstream d3d566ad19 plus explicit source precursors. Landed rules_go #15037 and the still-open SDK headers #15034, goimports launcher #15036, selected nm #15042 and plugin inputs #15153 are included; Benchmark, Abseil and noexcept compatibility changes are distinct parents. The Go 1.27.1 prerequisite and explicit patched-SDK coverage selection replace the broken Go 1.26 linker probes. Hosted gate 8f466163-1541-4a59-9725-a8e4de057c3a independently closed FAILED after 417.191 seconds (outcome 580480fa44e7): the Go 1.27.1 SDK and canonical 186-entry license verification pass, retaining four existing catalog warnings. Six of eight normal AMD64 roots build; runsc and send_recv_benchmark fail at gRPC/x/net compatibility, undeclared BPF headers, Benchmark 1.8.4 counter macros and the unused ncalls variable. No runtime test, ARM, race, parser or ELF/link gate ran. Existing #14984 supplies the released Benchmark 1.9.5 macro fix; existing send-recv-benchmark-ranges supplies the ncalls correction. Those corrections are pending composition, alongside the separately owned x/net and BPF boundary work. The thread-safety backport remains needed with Benchmark 1.9.5. The direct-module license catalog excludes toolchain runtime payloads; its success is not a complete linked-runtime audit. No old descendants or integration relationships have moved, and this successor remains unqualified."
+      "status": "failed; corrected successor validating",
+      "summary": "Public source 1087b901f92a02c0f50ee834d841a8ae69dfae1d is based on upstream d3d566ad19 plus explicit source precursors. Landed rules_go #15037 and the still-open SDK headers #15034, goimports launcher #15036, selected nm #15042 and plugin inputs #15153 are included; Benchmark, Abseil and noexcept compatibility changes are distinct parents. The Go 1.27.1 prerequisite and explicit patched-SDK coverage selection replace the broken Go 1.26 linker probes. Hosted gate 8f466163-1541-4a59-9725-a8e4de057c3a independently closed FAILED after 417.191 seconds (outcome 580480fa44e7): the Go 1.27.1 SDK and canonical 186-entry license verification pass, retaining four existing catalog warnings. Six of eight normal AMD64 roots build; runsc and send_recv_benchmark fail at gRPC/x/net compatibility, undeclared BPF headers, Benchmark 1.8.4 counter macros and the unused ncalls variable. No runtime test, ARM, race, parser or ELF/link gate ran. Existing #14984 supplies the released Benchmark 1.9.5 macro fix; existing send-recv-benchmark-ranges supplies the ncalls correction. Those corrections and the x/net/BPF prerequisites are now composed in separate candidate hermetic-compiler-corrected at b9effe5415. This original 1087 head and its failed evidence remain unchanged. The thread-safety backport remains needed with Benchmark 1.9.5. The direct-module license catalog excludes toolchain runtime payloads; its success is not a complete linked-runtime audit. No old descendants or integration relationships have moved, and this successor remains unqualified."
     },
     {
       "id": "branch:go-toolchain-linker-flags",
@@ -1784,6 +1784,39 @@
       "group": "tests",
       "status": "reviewed; contributor review pending",
       "summary": "Independent public one-commit source 3fed8d848e5c9916d6dbb5b021733b7e5c77ddf9 on upstream d3d566ad19 checks transport errors before accessing the HTTP response, rejects unexpected statuses before parsing, and preserves 404 as an empty driver list. Both source/record peers passed. Source-identical composition d3f5ea57741a861d29a3a4779e9e5ffd7452bffe passed both-CPU Nogo within the bounded COS input gate; its actual COS test failed for the deliberately missing catalog, so there is no live HTTP or compatibility validation claim. Contributor review has been requested before any upstream PR."
+    },
+    {
+      "id": "branch:xnet-go127-compatibility",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "xnet-go127-compatibility",
+      "title": "Update x/net for Go 1.27 compatibility",
+      "url": "https://github.com/tamird/gvisor/tree/xnet-go127-compatibility",
+      "group": "bazel",
+      "status": "source reviewed; validation pending",
+      "summary": "Public, clean and tracked at c4f9d2b5198995f17d93a7a05ec03d8547d39c2a on upstream d3d566ad19 after three source/record peers. Released x/net 0.56 restores the HTTP/2 APIs missing under Go 1.27 and includes the later server/client wrapper configuration fixes. The required crypto, sys, term, text and sync floors are retained consistently in the existing Go/Bazel manifests; standalone Go 1.26.3 and gRPC 1.80.0 are unchanged. Source checks and official checksum verification pass. Canonical catalog and hosted validation are pending in corrected compiler composition b9effe5415; there is no runtime or contributor-approval claim."
+    },
+    {
+      "id": "branch:hermetic-bpf-current",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "hermetic-bpf-current",
+      "title": "Build BPF with declared LLVM tools and headers",
+      "url": "https://github.com/tamird/gvisor/tree/hermetic-bpf-current",
+      "group": "bazel",
+      "status": "corrected source; validation pending",
+      "summary": "Independent public current head 60cfca6bb9b5e86de6fb3be2b3e2f6e81d6a3e4d contains reviewed BPF source 3d991571b9dd57e6403b268ef7c54164856fed85 plus the reviewed Bazel 8.5 correction. All seven BPF owners use declared execution-platform LLVM tools/resource headers, target Linux UAPI and libbpf helper headers with BPF v1 explicit; Coral remains registered for C/C++. This prerequisite does not depend on the compiler successor. First standalone parent 76659934-8b8f-42b4-be7d-a6239021f67b failed after 148.721 seconds during canonical license module-graph expansion: Bazel 8.3.1 lacks module_ctx.facts used by the supplier. Outcome b36fd810e3df independently closes that failure before any BPF, Coral or test execution; no such result is credited. The corrected source and eventual single-commit preparation remain validation pending. The existing libbpf BSD-2-Clause audit entry is retained; fresh canonical catalog and action/ISA proof remain pending."
+    },
+    {
+      "id": "branch:hermetic-compiler-corrected",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "hermetic-compiler-corrected",
+      "title": "Validate the corrected LLVM compiler composition",
+      "url": "https://github.com/tamird/gvisor/tree/hermetic-compiler-corrected",
+      "group": "bazel",
+      "status": "validation running",
+      "summary": "Public, clean and tracked b9effe541574ce1ac8f0d15624733e046efc9116 passed all source/composition peers. It is based on independent BPF source 3d991571b9 and eleven explicit source precursors: #14984, send-recv-benchmark-ranges 20382, x/net c4f9, the four still-open SDK/goimports/nm/plugin PRs, Benchmark and Abseil annotations, the older noexcept subset, and the Go 1.27.1/coverage SDK prerequisite. Compiler source retains the reviewed public rules_go API, static-musl behavior and analyzer/dependency forwarding; shared LLVM supplier declarations are owned by the BPF prerequisite. Bazel 8.5 is already selected here. Parent 3d44639e-10ca-4350-a97a-5bc3ce1f5fc0 is running with normal caching and 400-action concurrency; no result is yet credited. Fresh canonical licenses and actual AMD64/ARM64, race, parser, plugin and runtime gates remain pending. Failed 1087 compiler and original 3d BPF outcomes are preserved, as are old combined branches and their descendants. Primary qualification remains d3f5ea5774; this candidate is not integrated or approved for an upstream PR."
     }
   ],
   "edges": [
@@ -2729,6 +2762,97 @@
         "https://github.com/tamird/gvisor/commit/3fed8d848e5c9916d6dbb5b021733b7e5c77ddf9",
         "https://github.com/tamird/gvisor/commit/d3f5ea57741a861d29a3a4779e9e5ffd7452bffe"
       ]
+    },
+    {
+      "from": "branch:hermetic-bpf-current",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected compiler builds on the independent declared-BPF source and shared LLVM supplier. Its own Bazel 8.5 selection matches the later standalone BPF correction; it is not based on the old combined-toolchain BPF branch.",
+      "evidence": "https://github.com/tamird/gvisor/commit/3d991571b9dd57e6403b268ef7c54164856fed85"
+    },
+    {
+      "from": "pr:14984",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "This copied prerequisite supplies Benchmark 1.9.5, including the macro compatibility fix exposed by the failed 1087 gate.",
+      "evidence": "https://github.com/tamird/gvisor/commit/8f5e516bccc1a56e86a7a990da7d612c1f5199e8"
+    },
+    {
+      "from": "branch:send-recv-benchmark-ranges",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected composition includes the exact existing unused-counter and Benchmark argument-registration correction.",
+      "evidence": "https://github.com/tamird/gvisor/commit/59a98a692fa8c48f173d1d8379add5e96908ea88"
+    },
+    {
+      "from": "branch:xnet-go127-compatibility",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected composition includes the released x/net and required module-floor correction for the Go 1.27 HTTP/2 boundary.",
+      "evidence": "https://github.com/tamird/gvisor/commit/f68a4102ef1fbddee475e00bc0327826d3e526fb"
+    },
+    {
+      "from": "pr:15034",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected compiler includes this still-open SDK header-input prerequisite as an explicit parent.",
+      "evidence": "https://github.com/tamird/gvisor/commit/138676e224ea594288bfb05b39c0678700770489"
+    },
+    {
+      "from": "pr:15036",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected compiler includes this still-open goimports launcher prerequisite as an explicit parent.",
+      "evidence": "https://github.com/tamird/gvisor/commit/35a6dfa8bb87546619c31c3b94016701d1875797"
+    },
+    {
+      "from": "pr:15042",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected compiler includes this still-open selected-nm prerequisite as an explicit parent.",
+      "evidence": "https://github.com/tamird/gvisor/commit/0ddda6f914fb3221f6bda70a6501daec73e8d938"
+    },
+    {
+      "from": "pr:15153",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected compiler includes this still-open plugin-toolchain prerequisite as an explicit parent.",
+      "evidence": "https://github.com/tamird/gvisor/commit/3febc460a03b85417eccdb3a7f171cf11372ab39"
+    },
+    {
+      "from": "branch:benchmark-thread-safety",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The reviewed annotation backport remains required with released Benchmark 1.9.5 and is an explicit parent.",
+      "evidence": "https://github.com/tamird/gvisor/commit/aa831ca09960d87bafde7896bed4b89a196ce187"
+    },
+    {
+      "from": "branch:abseil-lifetime-attributes",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The reviewed Abseil lifetime annotation backport is an explicit parent.",
+      "evidence": "https://github.com/tamird/gvisor/commit/d3483de37a8b653104ce5c2043cda551fc12ef5d"
+    },
+    {
+      "from": "branch:errno-safe-delete-noexcept",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "This parent includes only the older noexcept delete declarations from the allocator branch, not its later throwing-new correction and owning tests.",
+      "evidence": "https://github.com/tamird/gvisor/commit/4507dbd491862a1e5f9485767a0de342e937bd9e"
+    },
+    {
+      "from": "branch:go-toolchain-linker-flags",
+      "to": "branch:hermetic-compiler-corrected",
+      "type": "depends_on",
+      "reason": "The corrected compiler includes the byte-identical Go 1.27.1 linker-probe and explicit patched coverage-SDK prerequisite.",
+      "evidence": "https://github.com/tamird/gvisor/commit/9e198dd1bc7d517c8a318e2386bda5b78a4552b2"
+    },
+    {
+      "from": "pr:15037",
+      "to": "branch:hermetic-bpf-current",
+      "type": "depends_on",
+      "reason": "The independent BPF supplier uses the rules_go baseline already provided by this landed prerequisite in current master.",
+      "evidence": "https://github.com/google/gvisor/commit/35c8ae289e4f75897a120f8472650ee0d34c30e7"
     }
   ]
 }
