@@ -185,7 +185,11 @@ release_apt.install(
 # https://github.com/google/syzkaller/blob/7808aef4a/executor/files.h#L17-L48
 release_apt.install(
     dependency_set = "syzkaller_sysroot",
-    packages = ["libstdc++-11-dev:amd64"],
+    packages = [
+        # Retain the common-license texts referenced by package copyrights.
+        "base-files:amd64",
+        "libstdc++-11-dev:amd64",
+    ],
     suites = [
         "jammy",
         "jammy-updates",
