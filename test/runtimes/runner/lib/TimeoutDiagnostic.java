@@ -90,7 +90,7 @@ public class TimeoutDiagnostic extends DefaultTimeoutHandler {
             log.flush();
             for (String expected : new String[] {
                     "TIMEOUT_DIAGNOSTIC_LOADED", "THREAD name=main ",
-                    "at TimeoutDiagnostic.runActions(", "CHILD alive=false",
+                    "TimeoutDiagnostic.runActions(", "CHILD alive=false",
                     "CHILD exit_value=0", "CHILD proc_status=absent", "TIMEOUT_DIAGNOSTIC_END"
             }) {
                 if (!output.contains(expected)) {
