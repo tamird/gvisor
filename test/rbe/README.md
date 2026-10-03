@@ -136,8 +136,10 @@ files outside the Bazel build graph. Stage new paths before analysis; missing
 indexed files and sources resolving outside the checkout are errors. The input
 is for analysis, not a source archive preserving Git modes or symlink metadata.
 Go uses the declared SDK, C toolchain and a separate offline analysis module
-profile. Gazelle supplies its resolved module archive identities; the Go SDK
-combines them with the root module and resolves their transitive requirements.
+profile. Gazelle supplies resolved archive pins for Go requirements declared
+by the root `MODULE.bazel` and `go.mod`, including indirect requirements. The Go
+SDK resolves their transitive requirements; Gazelle's own tooling dependencies
+are not added as analysis roots.
 The resulting manifests, proxy and license inventory are declared inputs. This
 uses upstream module archives, without Bazel dependency source patches, and
 leaves the source-export module profile unchanged. As in the public workflow,

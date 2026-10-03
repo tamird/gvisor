@@ -14,7 +14,7 @@ def _run_go(ctx, root, environment, args, working_directory = "module"):
     return result.stdout
 
 def _add_resolved_modules(ctx, root, environment, original):
-    """Seed the Go-resolved analysis profile from Gazelle module archives."""
+    """Seed root Go declarations using their resolved Gazelle archive pins."""
     metadata = json.decode(ctx.read(ctx.attr.resolved_modules))
     original_module = json.decode(_run_go(ctx, root, environment, ["mod", "edit", "-json"]))
     original_requirements = {module["Path"]: None for module in (original_module.get("Require") or [])}
@@ -22,11 +22,14 @@ def _add_resolved_modules(ctx, root, environment, original):
     for line in original["go.sum"].splitlines():
         path, version, checksum = line.split(" ")
         checksums[(path, version)] = checksum
+    root_requirements = {path: None for path in metadata["root_requirements"]}
     edits = []
     for name, module in sorted(metadata["archives"].items()):
         if module.get("local_path") or module.get("urls"):
             fail("Go analysis cannot represent local or archive override " + name)
         path = module["importpath"]
+        if path not in root_requirements:
+            continue
         version = module.get("version")
         checksum = module.get("sum")
         if not version or not checksum:
@@ -188,7 +191,7 @@ def _module_proxy_impl(ctx):
     # Go documents cache/download as a file:// module proxy. Only its protocol
     # files are inputs to the consuming build; its actions never fetch modules.
     # The exported profile uses checked-in manifests; analysis additionally
-    # incorporates Gazelle's declared archive requirements.
+    # incorporates resolved archive pins for the root's Go declarations.
     # https://go.dev/ref/mod#module-cache
     ctx.file("modules/cache/download/ROOT", "")
     ctx.file("BUILD.bazel", """

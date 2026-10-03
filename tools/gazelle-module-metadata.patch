@@ -3,13 +3,14 @@
 # Remove this patch when Gazelle publishes equivalent resolver-owned metadata.
 --- a/internal/bzlmod/go_deps.bzl
 +++ b/internal/bzlmod/go_deps.bzl
-@@ -270,7 +270,17 @@
+@@ -270,7 +270,18 @@
          ))
  
      ctx.file("WORKSPACE", "\n".join(repos))
 -    ctx.file("BUILD.bazel", "exports_files(['WORKSPACE', 'config.json', 'go_env.bzl', 'go_tools.bzl'])")
 +    ctx.file("BUILD.bazel", "exports_files(['WORKSPACE', 'config.json', 'go_env.bzl', 'go_tools.bzl', 'modules.json'])")
 +    ctx.file("modules.json", json.encode_indent({
++        "root_requirements": ctx.attr.root_requirements,
 +        "archives": {
 +            name: json.decode(metadata)
 +            for name, metadata in ctx.attr.modules.items()
@@ -22,16 +23,21 @@
      ctx.file("go_env.bzl", content = "GO_ENV = " + repr(go_env))
      ctx.file("go_tools.bzl", content = "GO_TOOLS = {{k: Label(v) for k, v in {}.items()}}".format(
          repr(ctx.attr.tool_targets),
-@@ -285,6 +295,8 @@
+@@ -285,6 +296,9 @@
  _go_repository_config = repository_rule(
      implementation = _go_repository_config_impl,
      attrs = {
++        "root_requirements": attr.string_list(mandatory = True),
 +        "modules": attr.string_dict(mandatory = True),
 +        "bazel_modules": attr.string_dict(mandatory = True),
          "importpaths": attr.string_dict(mandatory = True),
          "module_names": attr.string_dict(mandatory = True),
          "tool_targets": attr.string_dict(mandatory = True),
-@@ -391,6 +403,8 @@
+@@ -364,2 +378,3 @@
+     root_versions = {}
++    root_requirements = {}
+     root_module_direct_deps = {}
+@@ -391,6 +406,8 @@
          for mod_config in module.tags.config:
              if not module.is_root:
                  continue
@@ -40,7 +46,12 @@
              check_direct_deps = mod_config.check_direct_dependencies
              if check_direct_deps == "off":
                  outdated_direct_dep_printer = _noop
-@@ -591,6 +605,11 @@
+@@ -541,2 +558,4 @@
+         for module_tag in module.tags.module + additional_module_tags:
++            if module.is_root:
++                root_requirements[module_tag.path] = None
+             raw_version = _canonicalize_raw_version(module_tag.version)
+@@ -591,6 +610,11 @@
      _fail_on_unmatched_overrides(gazelle_overrides.keys(), module_resolutions, "gazelle_overrides")
      _fail_on_unmatched_overrides(module_overrides.keys(), module_resolutions, "module_overrides")
  
@@ -52,7 +63,7 @@
      # All `replace` directives are applied after version resolution.
      # We can simply do this by checking the replace paths' existence
      # in the module resolutions and swapping out the entry.
-@@ -720,6 +739,7 @@
+@@ -720,6 +744,7 @@
          )
  
      repos_processed = {}
@@ -60,7 +71,7 @@
      for path, module in module_resolutions.items():
          if hasattr(module, "module_name") or (getattr(module_ctx, "is_isolated", False) and path in _SHARED_REPOS):
              # Do not create a go_repository for a Go module provided by a bazel_go_module or one shared with the non-isolated
-@@ -778,6 +798,14 @@
+@@ -778,6 +803,14 @@
  
              go_repository_args.update(repo_args)
  
@@ -75,10 +86,11 @@
          go_repository(**go_repository_args)
  
      # Build lookup table for tool_targets
-@@ -818,6 +846,16 @@
+@@ -818,6 +851,17 @@
      # are relevant.
      _go_repository_config(
          name = "bazel_gazelle_go_repository_config",
++        root_requirements = sorted(root_requirements),
 +        modules = module_metadata,
 +        bazel_modules = {
 +            path: json.encode({
@@ -92,7 +104,7 @@
          importpaths = {
              module.repo_name: path
              for path, module in module_resolutions.items()
-@@ -888,6 +926,9 @@
+@@ -888,6 +932,9 @@
      Only the root module's config tag is used.
      """,
      attrs = {
