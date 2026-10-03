@@ -2,10 +2,10 @@
 
 load("@go_host_compatible_sdk_label//:defs.bzl", "HOST_COMPATIBLE_SDK")
 
-def _run_go(ctx, root, environment, args):
+def _run_go(ctx, root, environment, args, working_directory = "module"):
     result = ctx.execute(
         [str(root.get_child("bin/go"))] + args,
-        working_directory = str(ctx.path("module")),
+        working_directory = str(ctx.path(working_directory)),
         timeout = 600,
         environment = environment,
     )
@@ -56,15 +56,17 @@ def _add_resolved_modules(ctx, root, environment, original):
 def _module_proxy_impl(ctx):
     root = ctx.path(ctx.attr._sdk_root).dirname
     selectors = [ctx.attr.goos, ctx.attr.goarch, ctx.attr.cgo_enabled]
-    if ctx.attr.packages:
+    if bool(ctx.attr.resolved_modules) != bool(ctx.attr.source_manifest):
+        fail("Analysis requires both resolved_modules and source_manifest")
+    if ctx.attr.packages or ctx.attr.source_manifest:
         if not all(selectors):
-            fail("Package selection requires explicit goos, goarch and cgo_enabled")
+            fail("Source selection requires explicit goos, goarch and cgo_enabled")
         for package in ctx.attr.packages:
             # Go's wildcard traversal does not follow the staged symlink dirs.
             if not package.startswith("./") or ".." in package.split("/") or "..." in package:
                 fail("Package roots must be exact paths within go_mod's source tree: " + package)
     elif any(selectors):
-        fail("Go target selectors require packages")
+        fail("Go target selectors require packages or source_manifest")
 
     original = {name: ctx.read(label) for name, label in {
         "go.mod": ctx.attr.go_mod,
@@ -96,6 +98,35 @@ def _module_proxy_impl(ctx):
         if ctx.attr.packages:
             fail("Resolved module metadata requires full graph selection")
         bazel_modules = _add_resolved_modules(ctx, root, environment, original)
+
+        # Match the analysis action's indexed paths and current file contents.
+        # Real parent directories let ./... traverse only those sources.
+        # Watch each file so content edits invalidate resolution even when
+        # the manifest's indexed path list remains unchanged.
+        manifest = ctx.path(ctx.attr.source_manifest)
+        for number, name in enumerate(json.decode(ctx.read(manifest))):
+            source = manifest.dirname.get_child("files", str(number))
+            ctx.watch(source)
+            ctx.symlink(source, "source/" + name)
+
+        # Module selection alone can prune older go.mod files that loading
+        # actual packages needs. Use the extractor's native metadata command
+        # before downloading the final selected graph. Package errors remain
+        # in the output, including unavailable generated repository sources.
+        # https://github.com/github/codeql/blob/6e9f9e383/go/extractor/toolchain/toolchain.go
+        package_environment = dict(environment, **{
+            "GOOS": ctx.attr.goos,
+            "GOARCH": ctx.attr.goarch,
+            "CGO_ENABLED": ctx.attr.cgo_enabled,
+            "GOFLAGS": "-modfile=%s -mod=mod -buildvcs=false" % ctx.path("module/go.mod"),
+        })
+        ctx.file("package-inventory.json", _run_go(
+            ctx,
+            root,
+            package_environment,
+            ["list", "-e", "-f", "", "-deps", "-json", "./..."],
+            working_directory = "source",
+        ))
 
     modules = ["all"]
     if ctx.attr.packages:
@@ -159,7 +190,7 @@ def _module_proxy_impl(ctx):
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
 package(default_visibility = ["//visibility:public"])
-exports_files(["module/go.mod", "module/go.sum", "modules/cache/download/ROOT"])
+exports_files(["module/go.mod", "module/go.sum", "modules/cache/download/ROOT"] + %s)
 copy_file(
     name = "license_inventory",
     src = "module-inventory.json",
@@ -174,7 +205,7 @@ filegroup(
         "modules/cache/download/**/list",
     ]),
 )
-""")
+""" % json.encode(["package-inventory.json"] if ctx.attr.resolved_modules else []))
 
 module_proxy = repository_rule(
     implementation = _module_proxy_impl,
@@ -182,6 +213,7 @@ module_proxy = repository_rule(
         "go_mod": attr.label(mandatory = True, allow_single_file = True),
         "go_sum": attr.label(mandatory = True, allow_single_file = True),
         "resolved_modules": attr.label(allow_single_file = True, doc = "Optional Gazelle module archive metadata for a distinct analysis profile; does not apply Bazel dependency source patches."),
+        "source_manifest": attr.label(allow_single_file = True, doc = "Indexed analysis paths with numbered files alongside the manifest; required with resolved_modules."),
         "packages": attr.string_list(doc = "Optional exact package roots in go_mod's source tree; empty resolves the full module graph."),
         "goos": attr.string(doc = "GOOS for package selection."),
         "goarch": attr.string(doc = "GOARCH for package selection."),

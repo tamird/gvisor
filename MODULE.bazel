@@ -1478,9 +1478,13 @@ go_deps.from_file(go_mod = "//:go.mod")
 
 module_proxy(
     name = "codeql_go_modules",
+    cgo_enabled = "1",
     go_mod = "//:go.mod",
     go_sum = "//:go.sum",
+    goarch = "amd64",
+    goos = "linux",
     resolved_modules = "@bazel_gazelle_go_repository_config//:modules.json",
+    source_manifest = "@codeql_sources//:manifest.json",
 )
 
 use_repo(
