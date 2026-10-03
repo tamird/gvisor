@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-03T11:26:23.026057+00:00",
+    "updatedAt": "2026-10-03T11:44:42.946645+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1155,11 +1155,12 @@
       "repo": "google/gvisor",
       "title": "Match Linux message-queue unlink permissions",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "url": "https://github.com/google/gvisor/pull/15159",
-      "summary": "The authorized October 2/3 rebase is published at 768231db3c0851e808b0a35aa5d212dc27082437 on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15159#issuecomment-5963372289. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks. Public import #15195 at 301de4930ac70fb19575847b46ea3c70199bbd09 failed build 49161 in Podman cleanup. Both DirectFS modes printed Hello, world; the final rm -rf then failed with Directory not empty. The remaining directory's cause and any relationship to the MQ change are not established. This public failure does not explain the separate unavailable internal Copybara feedback. Copybara refreshed the import to e8b02cfe5c26a9e5ca51277c8fc2a415e8e8d3a2 at 20:45:24 UTC; public build 49179 passed at 21:26:41 UTC and source Copybara feedback is now successful.",
+      "summary": "Source PR #15159 and import #15195 are both merged, clearing the code prerequisite for the independent mq-dac-permissions topic. The source head is 768231db3c0851e808b0a35aa5d212dc27082437; final observed import head 142ce817f839feb6ed8de96902e10dcbd67b6eaf has verified source linkage. The DAC child has been refreshed and is now awaiting contributor review; this landing does not itself approve that separate change.\n\nEarlier source-specific evidence:\n\nThe authorized October 2/3 rebase is published at 768231db3c0851e808b0a35aa5d212dc27082437 on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15159#issuecomment-5963372289. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Contributor-reviewed and published. Native, directfs and shared owners each pass all 17 MQ cases with zero skips; existing Nogo passes. Corrects sticky-root unlink ownership checks. Public import #15195 at 301de4930ac70fb19575847b46ea3c70199bbd09 failed build 49161 in Podman cleanup. Both DirectFS modes printed Hello, world; the final rm -rf then failed with Directory not empty. The remaining directory's cause and any relationship to the MQ change are not established. This public failure does not explain the separate unavailable internal Copybara feedback. Copybara refreshed the import to e8b02cfe5c26a9e5ca51277c8fc2a415e8e8d3a2 at 20:45:24 UTC; public build 49179 passed at 21:26:41 UTC and source Copybara feedback is now successful.",
       "number": 15159,
-      "reviewDecision": "APPROVED"
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-03T11:44:42.946645+00:00"
     },
     {
       "id": "pr:15155",
@@ -1196,8 +1197,9 @@
       "title": "Honor DAC capabilities in mq_open",
       "url": "https://github.com/tamird/gvisor/tree/mq-dac-permissions",
       "group": "runtime",
-      "status": "branch",
-      "summary": "The DAC capability correction passes all 19 cases on native Linux, systrap DirectFS, and systrap shared-gofer, with no failures or skips. MQ and mqfs Nogo also pass. The before run passed natively and failed the two intended capability cases in each gVisor configuration. Ready for contributor review; no PR is open."
+      "status": "code prerequisite landed; contributor review pending",
+      "summary": "Refreshed standalone https://github.com/tamird/gvisor/commit/3fd8e2cafc6f1e1c614165e9e7c0c13b98b13d61 is one commit on current master 142ce817f839feb6ed8de96902e10dcbd67b6eaf, after #15159/#15195 landed. Local, tracking and live heads match. Independent review confirms the same three-file patch and commit message, with relevant dependency trees unchanged; all three topic files also match the implementation already in MAIN fc1d164822. The existing before/after proof remains applicable: all 19 cases pass on native Linux, systrap DirectFS and shared-gofer, plus MQ/mqfs Nogo; the before run reproduced the two intended DAC failures in each gVisor configuration. No fresh test run or broader qualification is claimed. The code-prerequisite hold is cleared. Contributor approval to open the standalone PR was requested once and remains pending; no PR is open.",
+      "updatedAt": "2026-10-03T11:44:42.946645+00:00"
     },
     {
       "id": "pr:15161",
@@ -2378,8 +2380,12 @@
       "from": "pr:15159",
       "to": "branch:mq-dac-permissions",
       "type": "depends_on",
-      "reason": "The DAC capability correction builds on the message-queue unlink-permissions correction.",
-      "evidence": "https://github.com/tamird/gvisor/commit/c09cf4487"
+      "reason": "The unlink-permissions prerequisite has landed in #15159/#15195. The independent DAC child is refreshed onto that current master; this retained lineage edge is satisfied and no longer blocks code delivery.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15159",
+        "https://github.com/google/gvisor/pull/15195",
+        "https://github.com/tamird/gvisor/commit/3fd8e2cafc6f1e1c614165e9e7c0c13b98b13d61"
+      ]
     },
     {
       "from": "pr:15161",
