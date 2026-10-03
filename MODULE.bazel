@@ -82,6 +82,13 @@ single_version_override(
     patches = ["//tools:abseil-lifetime-attributes.patch"],
 )
 
+# Gazelle owns the version and checksum selection consumed by Go analysis.
+single_version_override(
+    module_name = "gazelle",
+    patch_strip = 1,
+    patches = ["//tools:gazelle-module-metadata.patch"],
+)
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -1466,9 +1473,19 @@ module_proxy(
 )
 
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
+go_deps.config(export_module_metadata = True)
 go_deps.from_file(go_mod = "//:go.mod")
+
+module_proxy(
+    name = "codeql_go_modules",
+    go_mod = "//:go.mod",
+    go_sum = "//:go.sum",
+    resolved_modules = "@bazel_gazelle_go_repository_config//:modules.json",
+)
+
 use_repo(
     go_deps,
+    "bazel_gazelle_go_repository_config",
     "co_honnef_go_tools",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",

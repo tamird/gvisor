@@ -13,6 +13,45 @@ def _run_go(ctx, root, environment, args):
         fail("go %s failed:\n%s" % (" ".join(args), result.stderr))
     return result.stdout
 
+def _add_resolved_modules(ctx, root, environment, original):
+    """Seed the Go-resolved analysis profile from Gazelle module archives."""
+    metadata = json.decode(ctx.read(ctx.attr.resolved_modules))
+    checksums = {}
+    for line in original["go.sum"].splitlines():
+        path, version, checksum = line.split()
+        checksums[(path, version)] = checksum
+    edits = []
+    for name, module in sorted(metadata["archives"].items()):
+        if module.get("local_path") or module.get("urls"):
+            fail("Go analysis cannot represent local or archive override " + name)
+        path = module["importpath"]
+        version = module.get("version")
+        checksum = module.get("sum")
+        if not version or not checksum:
+            fail("Go analysis requires a version and checksum for " + name)
+        edits.append("-require=%s@%s" % (path, module["requirement_version"]))
+        actual = module.get("replace") or path
+        if module.get("replace"):
+            edits.append("-replace=%s=%s@%s" % (path, actual, version))
+        key = (actual, version)
+        if key in checksums and checksums[key] != checksum:
+            fail("Conflicting checksums for %s@%s" % key)
+        checksums[key] = checksum
+    _run_go(ctx, root, environment, ["mod", "edit"] + edits)
+    expected = {
+        "go.mod": ctx.read("module/go.mod"),
+        "go.sum": "".join([
+            "%s %s %s\n" % (path, version, checksum)
+            for (path, version), checksum in sorted(checksums.items())
+        ]),
+    }
+    ctx.file("module/go.sum", expected["go.sum"])
+    return expected, {
+        path: module
+        for path, module in metadata["bazel_modules"].items()
+        if not module["is_root"]
+    }
+
 def _module_proxy_impl(ctx):
     root = ctx.path(ctx.attr._sdk_root).dirname
     selectors = [ctx.attr.goos, ctx.attr.goarch, ctx.attr.cgo_enabled]
@@ -51,6 +90,13 @@ def _module_proxy_impl(ctx):
         "GOWORK": "off",
     }
 
+    expected = original
+    bazel_modules = {}
+    if ctx.attr.resolved_modules:
+        if ctx.attr.packages:
+            fail("Resolved module metadata requires full graph selection")
+        expected, bazel_modules = _add_resolved_modules(ctx, root, environment, original)
+
     modules = ["all"]
     if ctx.attr.packages:
         # Keep writable manifests private while tracking every source change,
@@ -86,22 +132,34 @@ def _module_proxy_impl(ctx):
         # explicitly required by go.mod when it declares Go 1.17 or newer.
         # https://pkg.go.dev/cmd/go#hdr-Download_modules_to_local_cache
         _run_go(ctx, root, environment, ["mod", "download", "all"])
+    if bazel_modules:
+        selected = _run_go(ctx, root, environment, ["list", "-m", "-f", "{{.Path}}", "all"])
+        for path in selected.splitlines():
+            if path in bazel_modules:
+                fail("Go analysis needs %s, which is supplied by Bazel module %s rather than a declared module archive" % (path, bazel_modules[path]["module_name"]))
     inventory = _run_go(ctx, root, environment, ["list", "-m", "-json=Path,Version,Main,Replace,Error"] + modules)
-    for name, content in original.items():
+    for name, content in expected.items():
+        if name == "go.sum" and ctx.attr.resolved_modules:
+            # This profile is derived from declared Bazel module pins. Go may
+            # add authenticated checksums for their transitive requirements;
+            # the input module hashes above still bind every declared archive.
+            # Keep the resulting sums and selected inventory as declared data.
+            continue
         if ctx.read("module/" + name) != content:
             fail("Go module resolution changed %s; update the checked-in module metadata first" % name)
     ctx.file("module-inventory.json", inventory)
 
     # Go documents cache/download as a file:// module proxy. Only its protocol
-    # files are inputs to the consuming build; no Gazelle cache or
-    # upgraded Bzlmod graph participates in that build.
+    # files are inputs to the consuming build; its actions never fetch modules.
+    # The exported profile uses checked-in manifests; analysis additionally
+    # incorporates Gazelle's declared archive requirements.
     # https://go.dev/ref/mod#module-cache
     ctx.file("modules/cache/download/ROOT", "")
     ctx.file("BUILD.bazel", """
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
 package(default_visibility = ["//visibility:public"])
-exports_files(["modules/cache/download/ROOT"])
+exports_files(["module/go.mod", "module/go.sum", "modules/cache/download/ROOT"])
 copy_file(
     name = "license_inventory",
     src = "module-inventory.json",
@@ -123,6 +181,7 @@ module_proxy = repository_rule(
     attrs = {
         "go_mod": attr.label(mandatory = True, allow_single_file = True),
         "go_sum": attr.label(mandatory = True, allow_single_file = True),
+        "resolved_modules": attr.label(allow_single_file = True, doc = "Optional Gazelle module archive metadata for a distinct analysis profile; does not apply Bazel dependency source patches."),
         "packages": attr.string_list(doc = "Optional exact package roots in go_mod's source tree; empty resolves the full module graph."),
         "goos": attr.string(doc = "GOOS for package selection."),
         "goarch": attr.string(doc = "GOARCH for package selection."),

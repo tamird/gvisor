@@ -32,7 +32,7 @@ def main() -> None:
     for name in ("codeql", "manifest", "output", "sarif"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--language", choices=("go", "javascript", "python", "ruby"), required=True)
-    for name in ("go", "goroot", "proxy", "cc", "cxx"):
+    for name in ("go", "goroot", "proxy", "go-mod", "go-sum", "cc", "cxx"):
         parser.add_argument("--" + name, type=Path)
     for name in ("cflag", "cxxflag", "ldflag"):
         parser.add_argument("--" + name, action="append", default=[])
@@ -64,6 +64,14 @@ def main() -> None:
         path = [str(binaries)] + [str(Path(entry).absolute()) for entry in os.environ.get("PATH", "/usr/bin:/bin").split(os.pathsep)]
         env = dict(os.environ)
         if args.language == "go":
+            # Use the declared full-checkout dependency profile without
+            # changing the checked-in module that belongs to Go source export.
+            # https://go.dev/ref/mod#build-commands (the -modfile option)
+            go_mod = work / "analysis.mod"
+            shutil.copyfile(args.go_mod, go_mod)
+            shutil.copyfile(args.go_sum, go_mod.with_suffix(".sum"))
+            shutil.copyfile(go_mod, output / "input-analysis.mod")
+            shutil.copyfile(go_mod.with_suffix(".sum"), output / "input-analysis.sum")
             env = go_environment(
                 goroot=args.goroot,
                 proxy=args.proxy,
@@ -76,7 +84,7 @@ def main() -> None:
             )
             env.update(
                 CODEQL_EXTRACTOR_GO_BUILD_COMMAND=":",
-                GOFLAGS="-mod=readonly -buildvcs=false",
+                GOFLAGS=f"-modfile={go_mod} -mod=readonly -buildvcs=false",
             )
             (binaries / "go").symlink_to(args.go.absolute())
         env.update(PATH=os.pathsep.join(path), PYTHONDONTWRITEBYTECODE="1")
@@ -100,12 +108,19 @@ def main() -> None:
         database = output / "database"
         config = output / "config.yml"
         config.write_text("{}\n")
-        run("create", [
-            str(codeql), "database", "create", str(database), cache,
-            "--language=" + args.language, "--source-root=" + str(source),
-            "--codescanning-config=" + str(config),
-            "--threads=4", "--ram=12288",
-        ])
+        try:
+            run("create", [
+                str(codeql), "database", "create", str(database), cache,
+                "--language=" + args.language, "--source-root=" + str(source),
+                "--codescanning-config=" + str(config),
+                "--threads=4", "--ram=12288",
+            ])
+        finally:
+            if args.language == "go":
+                # The Go autobuilder runs tidy even with BUILD_COMMAND=":".
+                # Retain its effective profile as well as the declared input.
+                shutil.copyfile(go_mod, output / "analysis.mod")
+                shutil.copyfile(go_mod.with_suffix(".sum"), output / "analysis.sum")
         # With no query customization, the Action and CLI use the bundled
         # language pack's default code-scanning suite. Keep source coverage and
         # extraction diagnostics alongside findings; success is not proof that

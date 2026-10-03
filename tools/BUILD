@@ -74,6 +74,7 @@ bzl_library(
 )
 
 exports_files([
+    "gazelle-module-metadata.patch",
     "llvm-linux-header-default.patch",
     "with_cfg-test-frontend.patch",
 ])

@@ -135,10 +135,15 @@ CodeQL reads every indexed source path using its current file contents, includin
 files outside the Bazel build graph. Stage new paths before analysis; missing
 indexed files and sources resolving outside the checkout are errors. The input
 is for analysis, not a source archive preserving Git modes or symlink metadata.
-Go uses the declared SDK, C toolchain and offline module proxy. As in the public
-workflow, `CODEQL_EXTRACTOR_GO_BUILD_COMMAND=:` skips dependency build heuristics
-without restricting module discovery. Generated Go inputs are not overlaid;
-successful extraction still needs its diagnostics and coverage assessed.
+Go uses the declared SDK, C toolchain and a separate offline analysis module
+profile. Gazelle supplies its resolved module archive identities; the Go SDK
+combines them with the root module and resolves their transitive requirements.
+The resulting manifests, proxy and license inventory are declared inputs. This
+uses upstream module archives, without Bazel dependency source patches, and
+leaves the source-export module profile unchanged. As in the public workflow,
+`CODEQL_EXTRACTOR_GO_BUILD_COMMAND=:` skips dependency build heuristics without
+restricting module discovery. Generated Go inputs are not overlaid; successful
+extraction still needs its diagnostics and coverage assessed.
 
 Run the mixed-platform units and release repository checks together:
 

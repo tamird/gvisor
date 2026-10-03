@@ -475,6 +475,9 @@ func enumerate(p Paths) ([]dep, error) {
 		case "local_repository", "new_local_repository":
 			// Local paths are part of the gVisor checkout, not external
 			// dependencies.
+		case "_go_repository_config":
+			// Resolver metadata contains no additional package payload. Its
+			// Go repositories and module proxies are enumerated separately.
 		case "hub_repository", "whl_library":
 			// Already expanded by enumerateWheels.
 		default:
