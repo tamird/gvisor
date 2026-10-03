@@ -40,18 +40,14 @@ def _add_resolved_modules(ctx, root, environment, original):
             fail("Conflicting checksums for %s@%s" % key)
         checksums[key] = checksum
     _run_go(ctx, root, environment, ["mod", "edit"] + edits)
-    expected = {
-        "go.mod": ctx.read("module/go.mod"),
-        "go.sum": "".join([
-            "%s %s %s\n" % (path, version, checksum)
-            for (path, version), checksum in sorted(checksums.items())
-        ]),
-    }
-    ctx.file("module/go.sum", expected["go.sum"])
+    ctx.file("module/go.sum", "".join([
+        "%s %s %s\n" % (path, version, checksum)
+        for (path, version), checksum in sorted(checksums.items())
+    ]))
 
     # The root Go module already represents some Bazel-provided dependencies
     # as module archives. Other selected providers need an explicit Go input.
-    return expected, {
+    return {
         path: module
         for path, module in metadata["bazel_modules"].items()
         if not module["is_root"] and path not in original_requirements
@@ -95,12 +91,11 @@ def _module_proxy_impl(ctx):
         "GOWORK": "off",
     }
 
-    expected = original
     bazel_modules = {}
     if ctx.attr.resolved_modules:
         if ctx.attr.packages:
             fail("Resolved module metadata requires full graph selection")
-        expected, bazel_modules = _add_resolved_modules(ctx, root, environment, original)
+        bazel_modules = _add_resolved_modules(ctx, root, environment, original)
 
     modules = ["all"]
     if ctx.attr.packages:
@@ -143,15 +138,15 @@ def _module_proxy_impl(ctx):
             if path in bazel_modules:
                 fail("Go analysis needs %s, which is supplied by Bazel module %s rather than a declared module archive" % (path, bazel_modules[path]["module_name"]))
     inventory = _run_go(ctx, root, environment, ["list", "-m", "-json=Path,Version,Main,Replace,Error"] + modules)
-    for name, content in expected.items():
-        if name == "go.sum" and ctx.attr.resolved_modules:
-            # This profile is derived from declared Bazel module pins. Go may
-            # add authenticated checksums for their transitive requirements;
-            # the input module hashes above still bind every declared archive.
-            # Keep the resulting sums and selected inventory as declared data.
-            continue
-        if ctx.read("module/" + name) != content:
-            fail("Go module resolution changed %s; update the checked-in module metadata first" % name)
+
+    # Go owns the derived analysis manifests: download all may raise seeded
+    # minimum requirements and add authenticated transitive checksums. Publish
+    # those native outputs and the selected inventory, while source profiles
+    # continue to require their checked-in manifests to remain unchanged.
+    if not ctx.attr.resolved_modules:
+        for name, content in original.items():
+            if ctx.read("module/" + name) != content:
+                fail("Go module resolution changed %s; update the checked-in module metadata first" % name)
     ctx.file("module-inventory.json", inventory)
 
     # Go documents cache/download as a file:// module proxy. Only its protocol
