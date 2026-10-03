@@ -24,9 +24,10 @@
 // records it in a YAML file. Verify checks that the YAML file has an entry for
 // every dependency, without fetching any licenses.
 //
-// Non-apt entries whose license cannot be fetched automatically (e.g.
-// @google_root_pem) are maintained by hand: Fetch preserves an existing entry
-// whenever fetching fails. Apt notices must be present in the declared payload.
+// Entries that cannot be fetched or classified automatically can be maintained
+// by hand. Fetch preserves an existing entry for the same source and declared
+// archive hash, reporting the fetch error. Retention does not establish that
+// current notices were available or classified successfully.
 package licensecheck
 
 import (
@@ -175,8 +176,9 @@ const (
 # go.mod.
 # Regenerate with: make run TARGETS=//tools/licensecheck/main:licensecheck ARGS=--mode=fetch
 # Check completeness with ARGS=--mode=verify.
-# Non-apt entries whose license cannot be fetched automatically are maintained by hand
-# and preserved by --mode=fetch. Apt notices must be present in the declared payload.
+# Reviewed entries are retained on fetch failures only when the source and any
+# declared archive hash match. The reported error remains a retrieval or
+# classification limitation, not a successful automatic audit.
 `
 	dateFormat   = "2006-01-02"
 	fetchWorkers = 8
@@ -223,7 +225,7 @@ func Fetch(p Paths) error {
 	for i, d := range deps {
 		r := results[i]
 		if r.err != nil {
-			if e, ok := oldByName[d.name]; ok && len(e.License) > 0 && d.kind != kindApt {
+			if e, ok := oldByName[d.name]; ok && d.canRetain(e) {
 				fmt.Fprintf(os.Stderr, "%-60s %s (kept existing entry: %v)\n", d.name, e.License, r.err)
 				entries = append(entries, e)
 				continue
@@ -256,6 +258,14 @@ func Fetch(p Paths) error {
 		return fmt.Errorf("cannot fetch licenses for %s; fix the reported source or notice errors", strings.Join(failed, ", "))
 	}
 	return nil
+}
+
+// canRetain applies Verify's declared-identity checks to reviewed metadata.
+// Go module hashes are computed by fetch, rather than declared by enumeration;
+// sources without an archive pin therefore retain their version/URL check.
+func (d dep) canRetain(e Entry) bool {
+	return len(e.License) > 0 && e.Version == d.source() &&
+		(d.sha256 == "" || e.SHA256 == d.sha256)
 }
 
 // Verify checks that the YAML file has a well-formed, up-to-date entry for
