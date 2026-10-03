@@ -1075,6 +1075,8 @@ func createProcessArgs(id string, spec *specs.Spec, conf *config.Config, creds *
 // Note that this will block until all open control server connections have
 // been closed. For that reason, this should NOT be called in a defer, because
 // a panic in a control server rpc would then hang forever.
+//
+// +checklocksexclude:l.k.fsSaveMu
 func (l *Loader) Destroy() {
 	if l.stopSignalForwarding != nil {
 		l.stopSignalForwarding()
