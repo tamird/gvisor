@@ -126,9 +126,10 @@ registry version discovery, installation and publication are separate work.
 The `codeql` lane runs the workflow's Go, JavaScript, Python and Ruby analyses as
 four declared Linux AMD64 Bazel actions. It pins the complete CodeQL 2.27.1
 bundle, including compatible query packs and notices, and uses the same default
-code-scanning suites and language categories. Each output retains SARIF with
-per-file coverage, extraction diagnostics, and the database. Uploading results
-to GitHub is separate.
+code-scanning suites and language categories. The default outputs are four SARIF
+files with per-file coverage and extraction diagnostics. Build
+`//tools/codeql:diagnostics` to also retrieve the databases and logs.
+Uploading results to GitHub is separate.
 
 CodeQL reads every indexed source path using its current file contents, including
 files outside the Bazel build graph. Stage new paths before analysis; missing

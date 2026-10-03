@@ -12,6 +12,13 @@ py_binary(
     deps = ["//tools/go_export:compiler"],
 )
 
+_LANGUAGES = [
+    "go",
+    "javascript",
+    "python",
+    "ruby",
+]
+
 [
     codeql_analysis(
         name = language,
@@ -26,22 +33,20 @@ py_binary(
         language = language,
         tags = ["manual"],
     )
-    for language in [
-        "go",
-        "javascript",
-        "python",
-        "ruby",
-    ]
+    for language in _LANGUAGES
 ]
 
 filegroup(
     name = "all",
-    srcs = [
-        ":go",
-        ":javascript",
-        ":python",
-        ":ruby",
-    ],
+    srcs = [":" + language for language in _LANGUAGES],
+    tags = ["manual"],
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "diagnostics",
+    srcs = [":" + language for language in _LANGUAGES],
+    output_group = "codeql_diagnostics",
     tags = ["manual"],
     visibility = ["//visibility:public"],
 )

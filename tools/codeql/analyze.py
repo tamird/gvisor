@@ -29,7 +29,7 @@ from tools.go_export.compile import go_environment
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    for name in ("codeql", "manifest", "output"):
+    for name in ("codeql", "manifest", "output", "sarif"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--language", choices=("go", "javascript", "python", "ruby"), required=True)
     for name in ("go", "goroot", "proxy", "cc", "cxx"):
@@ -40,6 +40,8 @@ def main() -> None:
     codeql = args.codeql.absolute()
     output = args.output.absolute()
     output.mkdir(parents=True, exist_ok=True)
+    sarif = args.sarif.absolute()
+    sarif.parent.mkdir(parents=True, exist_ok=True)
     manifest = args.manifest.absolute()
     names = json.loads(manifest.read_text())
 
@@ -104,7 +106,7 @@ def main() -> None:
         # every generated Go package was available to the extractor.
         run("analyze", [
             str(codeql), "database", "analyze", str(database), cache,
-            "--format=sarif-latest", "--output=" + str(output / "results.sarif"),
+            "--format=sarif-latest", "--output=" + str(sarif),
             "--threads=4", "--ram=12288", "--print-diagnostics-summary",
             "--print-metrics-summary", "--sarif-add-baseline-file-info",
             "--sarif-group-rules-by-pack", "--sarif-include-query-help=always",

@@ -22,11 +22,13 @@ load("//tools/bazeldefs:go.bzl", "go_rule")
 
 def _analysis_impl(ctx):
     output = ctx.actions.declare_directory(ctx.label.name)
+    sarif = ctx.actions.declare_file(ctx.label.name + ".sarif")
     args = ctx.actions.args()
     args.add("--codeql", ctx.file._codeql)
     args.add("--manifest", ctx.file._manifest)
     args.add("--language", ctx.attr.language)
     args.add("--output", output.path)
+    args.add("--sarif", sarif.path)
     inputs = [ctx.attr._bundle[DefaultInfo].files, ctx.attr._sources[DefaultInfo].files]
     direct = [ctx.file._manifest]
     env = {}
@@ -53,12 +55,15 @@ def _analysis_impl(ctx):
         executable = ctx.attr._runner[DefaultInfo].files_to_run,
         arguments = [args],
         inputs = depset(direct, transitive = inputs),
-        outputs = [output],
+        outputs = [output, sarif],
         env = env,
         mnemonic = "CodeQL",
         progress_message = "Analyzing %s sources with CodeQL" % ctx.attr.language,
     )
-    return [DefaultInfo(files = depset([output]))]
+    return [
+        DefaultInfo(files = depset([sarif])),
+        OutputGroupInfo(codeql_diagnostics = depset([output])),
+    ]
 
 _ATTRS = {
     "language": attr.string(mandatory = True, values = ["go", "javascript", "python", "ruby"]),

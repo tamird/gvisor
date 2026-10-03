@@ -38,7 +38,7 @@ def _analysis_sources_impl(ctx):
         ctx.watch(shared_index)
 
     names = []
-    for entry in _git(ctx, root, ["ls-files", "--stage", "-z"]).split("\x00"):
+    for entry in _git(ctx, root, ["ls-files", "--stage", "-z"]).split("\000"):
         if not entry:
             continue
         metadata, _, name = entry.partition("\t")
