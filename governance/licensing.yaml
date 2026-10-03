@@ -34,6 +34,17 @@ exceptions:
       The source-built executable is used by rules_distroless to process
       tar metadata when constructing the release test's tool image. It is
       neither linked into nor included in the gVisor release artifacts.
+  - dependency: github.com/opencontainers/go-digest
+    license: &module_documentation_licenses
+      - Apache-2.0
+      - CC-BY-SA-4.0
+    exception_rationale: &go_digest_documentation_rationale >-
+      The module's code is Apache-2.0. Its LICENSE.docs contains CC-BY-SA-4.0
+      for the README and CONTRIBUTING documentation already in the archive.
+      Allow this complete bundled-notice set for the existing module inputs;
+      the documentation license does not reclassify the Go code. The README's
+      Attribution wording differs from the full ShareAlike text in LICENSE.docs,
+      so retain the latter identifier without resolving that wording conflict.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
@@ -82,6 +93,65 @@ exceptions:
       University of Illinois/NCSA grant, which permits redistribution with
       copyright notices, conditions and disclaimers retained and prohibits
       using contributors' names for endorsement without permission.
+  - dependency: module_proxy/codeql_go_modules/github.com/apache/arrow/go/v15
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSL-1.0
+      - HPND
+      - MIT
+      - NCSA
+      - OpenSSL
+      - Zlib
+    exception_rationale: >-
+      The CodeQL analysis uses the same Arrow archive and complete root-notice
+      set already allowed for the Syzkaller proxy. Apply the same exception
+      to CodeQL's copy. Retain its Boost, historical c-ares and LLVM NCSA
+      notices. Some notices concern C++ sources or binary
+      Python distributions; the set does not establish which grants apply to
+      the compiled Go packages.
+  - dependency: module_proxy/codeql_go_modules/github.com/docker/go-metrics
+    license: *module_documentation_licenses
+    exception_rationale: &go_metrics_documentation_rationale >-
+      The module's code is Apache-2.0. Its LICENSE.docs contains CC-BY-SA-4.0
+      for the README and docs directory already in the archive. Allow this
+      complete bundled-notice set for the existing module inputs; the
+      documentation license does not reclassify the Go code. The README's
+      Attribution wording differs from the full ShareAlike text in LICENSE.docs,
+      so retain the latter identifier without resolving that wording conflict.
+  - dependency: module_proxy/codeql_go_modules/github.com/opencontainers/go-digest
+    license: *module_documentation_licenses
+    exception_rationale: *go_digest_documentation_rationale
+  - dependency: module_proxy/codeql_go_modules/github.com/rcrowley/go-metrics
+    license: BSD-2-Clause-Views
+    exception_rationale: >-
+      The CodeQL analysis uses the same module archive and BSD notice already
+      allowed for the exported Go proxy. Apply the same exception to CodeQL's
+      copy. Preserve the final views-and-conclusions paragraph alongside the
+      two redistribution conditions.
+  - dependency: module_proxy/codeql_go_modules/github.com/veraison/go-cose
+    license: MPL-2.0
+    exception_rationale: >-
+      The CodeQL profile supplies the same go-cose archive under MPL-2.0
+      already allowed in the exported Go proxy. Apply the same exception to
+      CodeQL's copy. The checked Linux AMD64 cgo package inventory loads no
+      go-cose packages; recheck use when dependency or build configurations
+      change, since this exception does not prevent importing the code.
+  - dependency: module_proxy/codeql_go_modules/github.com/zeebo/assert
+    license: CC0-1.0
+    exception_rationale: >-
+      The native Go dependency closure supplies this assertion module to the
+      offline CodeQL analysis. The checked Linux AMD64 cgo package inventory
+      loads no packages from it. Allow its CC0 dedication and fallback license
+      for this declared input, without treating it as a patent or trademark
+      grant.
+  - dependency: module_proxy/exported_go_modules/github.com/docker/go-metrics
+    license: *module_documentation_licenses
+    exception_rationale: *go_metrics_documentation_rationale
+  - dependency: module_proxy/exported_go_modules/github.com/opencontainers/go-digest
+    license: *module_documentation_licenses
+    exception_rationale: *go_digest_documentation_rationale
   - dependency: module_proxy/exported_go_modules/github.com/rcrowley/go-metrics
     license: BSD-2-Clause-Views
     exception_rationale: >-
