@@ -58,7 +58,7 @@ jobs:
           --runner_exec_properties=EstimatedCPU=4 \
           --runner_exec_properties=EstimatedMemory=16GB \
           --runner_exec_properties=EstimatedFreeDiskBytes=60GB \
-          --timeout=30m --disable_retry \
+          --timeout=30m \
           build --config=rbe-matrix //tools/codeql:${{ matrix.language }}
 
     - name: Upload CodeQL results
