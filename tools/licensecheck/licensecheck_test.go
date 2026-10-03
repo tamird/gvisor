@@ -152,6 +152,14 @@ func TestVerifyProblems(t *testing.T) {
 		}
 	}
 	entries[0].License = Licenses{"MIT"}
+	for _, id := range []License{"LicenseRef-CodeQL", "LicenseRef-", "LicenseRef-Code_QL"} {
+		entries[1].License = Licenses{id}
+		problems := verifyProblems(deps, entries)
+		if (len(problems) == 0) != (id == "LicenseRef-CodeQL") {
+			t.Errorf("verifyProblems with explicit %s = %v", id, problems)
+		}
+	}
+	entries[1].License = Licenses{"Apache-2.0"}
 
 	// A version bump without re-fetching must be flagged, for both kinds.
 	deps[0].version = "v1.3.0"
@@ -178,6 +186,44 @@ func TestVerifyProblems(t *testing.T) {
 		!strings.Contains(problems[0], "missing entry for renamed-archive") ||
 		!strings.Contains(problems[1], "stale entry for some-archive") {
 		t.Errorf("verifyProblems after rename = %v, want missing+stale", problems)
+	}
+}
+
+func TestPinnedManualEntries(t *testing.T) {
+	entry := Entry{
+		Dependency: "bundle", Version: "https://example.com/v1.tar.gz",
+		Retrieved: "2026-10-02", SHA256: "cafe",
+		License: Licenses{"LicenseRef-CodeQL", "MIT"},
+	}
+	for _, test := range []struct {
+		name, url, hash string
+		wantErr         bool
+	}{
+		{"unchanged", entry.Version, entry.SHA256, false},
+		{"new version", "https://example.com/v2.tar.gz", entry.SHA256, true},
+		{"changed contents", entry.Version, "beef", true},
+		{"removed pin", entry.Version, "", true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			deps := []dep{{name: entry.Dependency, kind: kindArchive, url: test.url, sha256: test.hash}, {name: "new-dependency"}}
+			got, err := pinnedManualEntries(deps, map[string]Entry{entry.Dependency: entry})
+			if (err != nil) != test.wantErr {
+				t.Fatalf("pinnedManualEntries = %v, want error=%t", err, test.wantErr)
+			}
+			if !test.wantErr && (len(got) != 1 || !slices.Equal(got[entry.Dependency].License, entry.License) || got[entry.Dependency].Retrieved != entry.Retrieved) {
+				t.Errorf("pinnedManualEntries = %v, want the original license set and audit date", got)
+			}
+		})
+	}
+	// Accepting an identifier does not permit its terms. Even mixed sets still
+	// require the existing dependency-specific policy decision.
+	policy := &Policy{AllowedLicenses: []License{"MIT"}}
+	if problems := CheckPolicy([]Entry{entry}, policy); len(problems) != 1 {
+		t.Fatalf("CheckPolicy = %v, want a disallowed-license problem", problems)
+	}
+	policy.Exceptions = []Exception{{Dependency: entry.Dependency, License: entry.License, ExceptionRationale: "reviewed terms"}}
+	if problems := CheckPolicy([]Entry{entry}, policy); len(problems) != 0 {
+		t.Errorf("CheckPolicy with scoped exception = %v", problems)
 	}
 }
 
