@@ -15,6 +15,8 @@
 package licensecheck
 
 import (
+	"archive/zip"
+	"bytes"
 	_ "embed"
 	"io/fs"
 	"os"
@@ -100,6 +102,107 @@ func TestParseGitRefs(t *testing.T) {
 			got, err := parseGitRefs(test.output, test.refs)
 			if (err != nil) != test.wantErr || got != test.want {
 				t.Errorf("parseGitRefs = (%q, %v), want (%q, error=%t)", got, err, test.want, test.wantErr)
+			}
+		})
+	}
+}
+
+// Verbatim notices from the modules that exposed incomplete discovery:
+// https://github.com/JohnCGriffin/overflow/blob/46fa312c3/README.md
+// https://github.com/aymanbagabas/go-udiff/tree/4608934d2
+var (
+	//go:embed testdata/overflow-readme.txt
+	overflowReadme string
+	//go:embed testdata/udiff-bsd.txt
+	udiffBSD string
+	//go:embed testdata/udiff-mit.txt
+	udiffMIT string
+)
+
+func TestModuleLicenses(t *testing.T) {
+	const prefix = "example.com/module@v1.0.0/"
+	for _, test := range []struct {
+		name    string
+		files   map[string]string
+		want    Licenses
+		wantErr string
+	}{
+		{
+			name: "split notices",
+			files: map[string]string{
+				prefix + "LICENSE-BSD": udiffBSD,
+				prefix + "LICENSE-MIT": udiffMIT,
+			},
+			want: Licenses{"BSD-3-Clause", "MIT"},
+		},
+		{
+			name: "unrecognized notice alongside known notice",
+			files: map[string]string{
+				prefix + "LICENSE":     "All rights reserved. Do not redistribute.",
+				prefix + "LICENSE-MIT": udiffMIT,
+			},
+			wantErr: "LICENSE: cannot classify license text",
+		},
+		{
+			name:  "readme grant",
+			files: map[string]string{prefix + "README.md": overflowReadme},
+			want:  Licenses{"MIT"},
+		},
+		{
+			name: "primary notices take precedence",
+			files: map[string]string{
+				prefix + "License_BSD": udiffBSD,
+				prefix + "README.md":   overflowReadme,
+			},
+			want: Licenses{"BSD-3-Clause"},
+		},
+		{
+			name: "unrecognized primary notice",
+			files: map[string]string{
+				prefix + "COPYING":   "All rights reserved. Do not redistribute.",
+				prefix + "README.md": overflowReadme,
+			},
+			wantErr: "cannot classify license text",
+		},
+		{
+			name:    "readme reference is not a grant",
+			files:   map[string]string{prefix + "README": "See https://opensource.org/licenses/MIT for background."},
+			wantErr: "cannot classify license text",
+		},
+		{
+			name: "root membership",
+			files: map[string]string{
+				prefix + "source.go":               udiffMIT,
+				prefix + "nested/LICENSE":          udiffMIT,
+				"example.com/other@v1.0.0/LICENSE": udiffMIT,
+			},
+			wantErr: "no license notice at module root",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var body bytes.Buffer
+			z := zip.NewWriter(&body)
+			for name, text := range test.files {
+				w, err := z.Create(name)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if _, err := w.Write([]byte(text)); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if err := z.Close(); err != nil {
+				t.Fatal(err)
+			}
+			got, err := moduleLicenses(body.Bytes(), prefix)
+			if test.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantErr) {
+					t.Fatalf("moduleLicenses = %v, %v, want error %q", got, err, test.wantErr)
+				}
+				return
+			}
+			if err != nil || !slices.Equal(got, test.want) {
+				t.Fatalf("moduleLicenses = %v, %v, want %v", got, err, test.want)
 			}
 		})
 	}

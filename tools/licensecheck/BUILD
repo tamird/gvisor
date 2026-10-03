@@ -37,10 +37,6 @@ go_test(
         "dependencies.yaml",
         "//governance:licensing.yaml",
     ],
-    embedsrcs = [
-        "testdata/bsd.txt",
-        "testdata/llvm.txt",
-        "testdata/openssl.txt",
-    ],
+    embedsrcs = glob(["testdata/*.txt"]),
     library = ":licensecheck",
 )
