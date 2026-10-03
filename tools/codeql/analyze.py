@@ -84,7 +84,9 @@ def main() -> None:
             )
             env.update(
                 CODEQL_EXTRACTOR_GO_BUILD_COMMAND=":",
-                GOFLAGS=f"-modfile={go_mod} -mod=readonly -buildvcs=false",
+                # Package loading may update this private derived profile.
+                # The declared file proxy still bounds available dependencies.
+                GOFLAGS=f"-modfile={go_mod} -mod=mod -buildvcs=false",
             )
             (binaries / "go").symlink_to(args.go.absolute())
         env.update(PATH=os.pathsep.join(path), PYTHONDONTWRITEBYTECODE="1")
