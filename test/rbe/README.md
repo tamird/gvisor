@@ -123,7 +123,21 @@ The `license-headers` lane passes `--header-base` to the existing
 selection and exclusions. The `python-distributions` lane builds
 `//sandboxexec/sandbox/python:dist` with the canonical metadata's version;
 registry version discovery, installation and publication are separate work.
-CodeQL remains owned by its scheduled GitHub workflow and is not covered here.
+The `codeql` lane runs the workflow's Go, JavaScript, Python and Ruby analyses as
+four declared Linux AMD64 Bazel actions. It pins the complete CodeQL 2.27.1
+bundle, including compatible query packs and notices, and uses the same default
+code-scanning suites and language categories. Each output retains SARIF with
+per-file coverage, extraction diagnostics, and the database. Uploading results
+to GitHub is separate.
+
+CodeQL reads every indexed source path using its current file contents, including
+files outside the Bazel build graph. Stage new paths before analysis; missing
+indexed files and sources resolving outside the checkout are errors. The input
+is for analysis, not a source archive preserving Git modes or symlink metadata.
+Go uses the declared SDK, C toolchain and offline module proxy. As in the public
+workflow, `CODEQL_EXTRACTOR_GO_BUILD_COMMAND=:` skips dependency build heuristics
+without restricting module discovery. Generated Go inputs are not overlaid;
+successful extraction still needs its diagnostics and coverage assessed.
 
 Run the mixed-platform units and release repository checks together:
 

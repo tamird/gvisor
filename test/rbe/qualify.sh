@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -91,12 +91,12 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -336,7 +336,7 @@ run_platform_matrix() (
   : > "$selection_dir/filtered-targets"
   for lane in "$@"; do
     case "$lane" in
-      plugin-build|release-artifacts|python-distributions|website) ;;
+      plugin-build|release-artifacts|python-distributions|website|codeql) ;;
       *) command='test' ;;
     esac
     case "$lane" in
@@ -458,6 +458,9 @@ run_platform_matrix() (
         printf '%s\n' "${targets[@]}" >> "$selection_dir/filtered-targets"
         printf 'Combined lane %s retains AMD64 execution; no ARM64 coverage is added.\n' "$lane"
         options+=(--strip=never)
+        ;;
+      codeql)
+        printf '%s\n' '//tools/codeql:all' >> "$selection_dir/targets"
         ;;
       plugin-build)
         # This is a build-only root, not an executable test for the loading
@@ -582,6 +585,10 @@ run_lane() (
       fi
       command=build
       targets=(//runsc:runsc-plugin-stack-build)
+      ;;
+    codeql)
+      command=build
+      targets=(//tools/codeql:all)
       ;;
     lint|lint-cc|governance|license-check)
       if [[ $arch != amd64 ]]; then

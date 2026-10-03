@@ -1,4 +1,4 @@
-load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:defs.bzl", "py_binary", "py_library")
 load("@with_cfg.bzl//:with_cfg.bzl", "original_settings")
 load("//tools:defs.bzl", "build_test", "go_binary", "go_test")
 load(":defs.bzl", "cgo_module_build", "module_build")
@@ -28,6 +28,12 @@ go_test(
 py_binary(
     name = "compile",
     srcs = ["compile.py"],
+)
+
+py_library(
+    name = "compiler",
+    srcs = ["compile.py"],
+    visibility = ["//tools/codeql:__pkg__"],
 )
 
 # The public CI netstack portability selection. The Linux build also compiles

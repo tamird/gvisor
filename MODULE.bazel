@@ -1234,6 +1234,25 @@ use_repo(kernel_headers, "kernel_headers")
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
+# Keep the official CLI, compatible precompiled queries, and all bundled notices
+# together. The CLI has its own CodeQL Terms; the Action repository's MIT license
+# does not license this release asset.
+http_archive(
+    name = "codeql_bundle",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+exports_files(["codeql"])
+filegroup(name = "files", srcs = glob(["**"], exclude = ["BUILD.bazel"]))
+""",
+    sha256 = "1d380f79896ededc654c7b21fafb3360136f1aeb678ad4df4df9af3910c6b815",
+    strip_prefix = "codeql",
+    urls = ["https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.1/codeql-bundle-linux64.tar.gz"],
+)
+
+analysis_sources = use_repo_rule("//tools/codeql:repositories.bzl", "analysis_sources")
+
+analysis_sources(name = "codeql_sources")
+
 http_archive(
     name = "libpluginstack",
     build_file = "//external/tools/plugin-stack:plugin-stack.BUILD",
