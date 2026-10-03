@@ -81,10 +81,11 @@ def _module_proxy_impl(ctx):
         if not modules:
             fail("Package selection contains no Go modules")
     else:
-        # download without arguments only covers go.mod's requirements on
-        # current Go versions. list all reports the selected graph, including
-        # replacements, rather than just the download subset.
-        _run_go(ctx, root, environment, ["mod", "download"])
+        # Populate the complete selected graph, including transitive modules
+        # that package loading may need. Bare download only fetches modules
+        # explicitly required by go.mod when it declares Go 1.17 or newer.
+        # https://pkg.go.dev/cmd/go#hdr-Download_modules_to_local_cache
+        _run_go(ctx, root, environment, ["mod", "download", "all"])
     inventory = _run_go(ctx, root, environment, ["list", "-m", "-json=Path,Version,Main,Replace,Error"] + modules)
     for name, content in original.items():
         if ctx.read("module/" + name) != content:
