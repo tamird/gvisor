@@ -145,6 +145,8 @@ latest_tag = \
   docker tag $(call local_image,$(1)):$(call tag,$(1)) $(call local_image,$(1)):latest >&2
 tag_exists = \
   docker image inspect $(call local_image,$(1)):$(call tag,$(1)) &>/dev/null
+cached_image = $(if $(wildcard $(call path,$(1))/Dockerfile $(call path,$(1))/Dockerfile.$(ARCH)),$(shell \
+  docker image inspect $(call remote_image,$(1)):$(call tag,$(1)) >/dev/null 2>&1 && echo cached))
 tag-%: ## Tag a local image.
 	@$(call header,TAG $*)
 	@$(call local_tag,$*) && $(call latest_tag,$*)
@@ -183,11 +185,13 @@ rebuild-%: register-cross ## Force rebuild an image locally.
 # latest tags. On a cache miss, SKIP_IMAGE_LOAD only checks the local hash tag.
 # If the image is not available for the current architecture, it is not loaded.
 # Defer cache inspection and image hashing until an image is requested.
-# All loads share cross-emulation setup, including cache hits.
-load-%: register-cross ## Pull or build an image locally.
-	@if [ -f "$(call path,$*)/$(call dockerfile,$*)" ]; then \
-	  if docker image inspect $(call remote_image,$*):$(call tag,$*) &>/dev/null; then \
-	    $(call header,TAG $*) && $(call local_tag,$*) && $(call latest_tag,$*); \
+# Secondary expansion selects a prerequisite only when this image is requested:
+# cached images only need tagging; cache misses share cross-emulation setup.
+.SECONDEXPANSION:
+load-%: $$(if $$(call cached_image,$$*),tag-$$*,register-cross) ## Pull or build an image locally.
+	@if [ "$<" = register-cross ]; then \
+	  if [ ! -f "$(call path,$*)/$(call dockerfile,$*)" ]; then \
+	    echo "Image $* is not available on $$(uname -m), ignoring it." >&2; \
 	  elif [ "$(SKIP_IMAGE_LOAD)" == true ]; then \
 	    if ! $(call tag_exists,$*); then \
 	      echo "Image $* does not exist locally and SKIP_IMAGE_LOAD is set so cannot pull it. Failing." >&2; \
@@ -196,8 +200,6 @@ load-%: register-cross ## Pull or build an image locally.
 	  else \
 	    ($(call pull,$*)) || ($(call rebuild,$*)); \
 	  fi; \
-	else \
-	  echo "Image $* is not available on $$(uname -m), ignoring it." >&2; \
 	fi
 
 test-%: register-cross ## Build an image locally if the remote doesn't exist.
