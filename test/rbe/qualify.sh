@@ -125,8 +125,8 @@ done
 printf 'Selected remote lanes for Linux %s: %s\n' "$arch" "$*"
 gaps
 
-# Make uses Bash, and lint.sh calls Bazel directly. Scope the same remote
-# configuration to both paths without changing user rc files or credentials.
+# Scope remote configuration to direct Bazel calls and Make's Bash recipes
+# without changing user rc files or credentials.
 run_source_lane() (
   local lane=$1 qualification_rc go_root
   qualification_rc=$(mktemp)

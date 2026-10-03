@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# lint.sh runs gVisor's source-level lint checks without a builder container.
-# The actions and optional clang-tidy checks use Bazel. Deep Go analysis is
-# owned by gVisor nogo.
+# lint.sh runs gVisor's source-level lint checks on the host. The actions check
+# uses Make's Bazel wrapper; optional clang-tidy uses Bazel directly. Deep Go
+# analysis is owned by gVisor nogo.
 #
 # Usage:
 #   tools/lint.sh                     # run the default checks
@@ -337,7 +337,11 @@ check_buildifier() {
 }
 
 check_actions() {
-  bazel test --enable_runfiles --test_output=errors //:github_actions_test
+  if ! command -v make > /dev/null 2>&1; then
+    echo "lint: make is not on PATH; the actions check runs //:github_actions_test" >&2
+    return 1
+  fi
+  make test OPTIONS=--enable_runfiles TARGETS=//:github_actions_test
 }
 
 check_spelling() {
