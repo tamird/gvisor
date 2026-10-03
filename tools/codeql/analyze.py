@@ -80,6 +80,12 @@ def main() -> None:
             )
             (binaries / "go").symlink_to(args.go.absolute())
         env.update(PATH=os.pathsep.join(path), PYTHONDONTWRITEBYTECODE="1")
+        if args.language == "python":
+            # The Bazel launcher enables PYTHONSAFEPATH, but CodeQL's index.py
+            # imports the sibling python_tracer module. Restore normal script
+            # imports for the extractor subprocess.
+            # https://docs.python.org/3.11/using/cmdline.html#envvar-PYTHONSAFEPATH
+            env.pop("PYTHONSAFEPATH", None)
 
         def run(name: str, command: list[str]) -> None:
             with (output / (name + ".log")).open("w") as log:
