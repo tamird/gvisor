@@ -2,6 +2,7 @@ load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
 load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
+load(":image_cache_diagnostic.bzl", "image_cache_command")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -15,6 +16,41 @@ docker_image_archives(
     source_archives = {
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
     },
+)
+
+# Fork-only validation of the canonical Make image-cache helper.
+image_cache_command(
+    name = "image_cache_command",
+    testonly = True,
+    tags = ["manual"],
+)
+
+docker_daemon_config(
+    name = "image_cache_config",
+    testonly = True,
+    images = [":images_basic_alpine_amd64_tar"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "image_cache_diagnostic_test",
+    size = "medium",
+    command = ":image_cache_command",
+    docker_config = ":image_cache_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "20GB",
+        memory = "4GB",
+    ),
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
 )
 
 # All containerd versions share this output instead of rebuilding the harness
