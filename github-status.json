@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-10-03T08:26:43.670765+00:00",
-  "registryDate": "2026-10-03T08:30:03.192831+00:00",
+  "checkedAt": "2026-10-03T08:47:35.294128+00:00",
+  "registryDate": "2026-10-03T08:49:41.510173+00:00",
   "prs": [
     {
       "number": 12470,
@@ -15,7 +15,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:56:32Z",
       "createdAt": "2026-01-09T14:43:53Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -317,7 +317,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:21:01Z",
       "createdAt": "2026-01-12T20:58:15Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -527,7 +527,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T22:20:26Z",
       "createdAt": "2026-08-21T17:35:33Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -686,7 +686,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T22:20:26Z",
           "createdAt": "2026-10-01T23:59:06Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -834,7 +834,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:20Z",
       "createdAt": "2026-08-22T11:55:42Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -972,7 +972,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:21Z",
       "createdAt": "2026-08-22T11:57:04Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -1110,7 +1110,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:23Z",
       "createdAt": "2026-08-22T11:57:39Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -1296,7 +1296,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:24Z",
       "createdAt": "2026-08-22T11:58:27Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -1434,7 +1434,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:46:19Z",
       "createdAt": "2026-08-24T04:14:33Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -1601,7 +1601,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:18Z",
           "createdAt": "2026-10-03T07:05:57Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -1624,15 +1624,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109473214/job/111164424840",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109471739/job/111164421453",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109473214/job/111164424840",
                 "app": "GitHub Actions"
               },
               {
@@ -1696,16 +1696,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -1725,7 +1725,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:39:52Z",
       "createdAt": "2026-08-24T04:16:03Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -1896,7 +1896,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:33:25Z",
       "createdAt": "2026-08-24T04:16:07Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -2034,7 +2034,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:21:22Z",
       "createdAt": "2026-08-30T19:57:30Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -2275,7 +2275,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-30T23:48:42Z",
           "createdAt": "2026-09-22T01:10:22Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2429,7 +2429,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:14:23Z",
       "createdAt": "2026-08-30T19:57:56Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -2555,7 +2555,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T23:22:23Z",
       "createdAt": "2026-08-30T19:58:07Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -2698,7 +2698,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:31Z",
           "createdAt": "2026-10-02T23:40:10Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -2721,15 +2721,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109428253/job/111164303121",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109427250/job/111164300929",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109428253/job/111164303121",
                 "app": "GitHub Actions"
               },
               {
@@ -2793,16 +2793,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -2822,7 +2822,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:18:03Z",
       "createdAt": "2026-09-22T14:54:48Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -3225,7 +3225,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:00:52Z",
           "createdAt": "2026-09-25T18:51:28Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -3347,7 +3347,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T00:33:33Z",
           "createdAt": "2026-10-03T00:19:06Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "CONFLICTING",
           "mergeState": "DIRTY",
@@ -3471,7 +3471,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:24:32Z",
       "createdAt": "2026-09-22T15:41:48Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -3518,7 +3518,7 @@
         ]
       },
       "checks": {
-        "state": "SUCCESS",
+        "state": "FAILURE",
         "total": 13,
         "complete": true,
         "contexts": [
@@ -3583,16 +3583,16 @@
             "app": "GitHub Actions"
           },
           {
+            "name": "feedback/copybara",
+            "state": "FAILURE",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "cla/google",
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
-          },
-          {
-            "name": "feedback/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
           },
           {
             "name": "import/copybara",
@@ -3614,7 +3614,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:19:53Z",
           "createdAt": "2026-10-03T06:37:13Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -3632,20 +3632,20 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109336746/job/111164046859",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109334293/job/111164040711",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109336746/job/111164046859",
                 "app": "GitHub Actions"
               },
               {
@@ -3698,20 +3698,14 @@
               },
               {
                 "name": "buildkite/internal",
-                "state": "PENDING",
+                "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/31057",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
-                "state": "PENDING",
+                "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49376",
-                "app": null
-              },
-              {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
                 "app": null
               },
               {
@@ -3719,6 +3713,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -3738,7 +3738,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:12:58Z",
       "createdAt": "2026-09-25T01:16:55Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -3913,7 +3913,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T02:33:00Z",
           "createdAt": "2026-09-25T23:47:45Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4035,7 +4035,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T07:24:34Z",
           "createdAt": "2026-10-02T00:25:48Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4189,7 +4189,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:22:11Z",
       "createdAt": "2026-09-25T01:16:58Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -4285,7 +4285,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:33:56Z",
       "createdAt": "2026-09-25T01:17:00Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -4434,7 +4434,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:31:50Z",
       "createdAt": "2026-09-25T01:22:37Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -4577,7 +4577,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:14Z",
           "createdAt": "2026-10-03T07:44:54Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -4600,15 +4600,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109414566/job/111164262684",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109412406/job/111164256959",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109414566/job/111164262684",
                 "app": "GitHub Actions"
               },
               {
@@ -4660,21 +4660,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31072",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49385",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31072",
                 "app": null
               },
               {
@@ -4682,6 +4676,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -4701,7 +4701,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:31:03Z",
       "createdAt": "2026-09-25T01:22:40Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -4844,7 +4844,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:17Z",
           "createdAt": "2026-10-03T08:21:15Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -4867,12 +4867,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109417185/job/111164269922",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109417373/job/111164271104",
@@ -4888,6 +4882,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109417417/job/111164271179",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109417185/job/111164269922",
                 "app": "GitHub Actions"
               },
               {
@@ -4939,21 +4939,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31074",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49386",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31074",
                 "app": null
               },
               {
@@ -4961,6 +4955,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -4980,7 +4980,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:22:22Z",
       "createdAt": "2026-09-26T00:42:48Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -5137,7 +5137,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T06:47:35Z",
           "createdAt": "2026-10-03T06:47:33Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -5273,7 +5273,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:22:56Z",
       "createdAt": "2026-09-26T02:01:16Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -5543,7 +5543,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T02:39:46Z",
           "createdAt": "2026-10-02T18:59:24Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5697,7 +5697,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:29:46Z",
       "createdAt": "2026-09-26T02:01:17Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -5840,7 +5840,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:21Z",
           "createdAt": "2026-10-03T08:22:19Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -5863,12 +5863,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109477093/job/111164435479",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109477507/job/111164437568",
@@ -5884,6 +5878,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109477084/job/111164436260",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109477093/job/111164435479",
                 "app": "GitHub Actions"
               },
               {
@@ -5947,16 +5947,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -5976,7 +5976,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:25:08Z",
       "createdAt": "2026-09-26T02:01:18Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -6114,7 +6114,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:29:02Z",
       "createdAt": "2026-09-26T02:01:20Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -6257,7 +6257,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:20:06Z",
           "createdAt": "2026-10-03T07:43:57Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -6280,15 +6280,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109344715/job/111164068642",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109342724/job/111164064383",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109344715/job/111164068642",
                 "app": "GitHub Actions"
               },
               {
@@ -6340,21 +6340,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31058",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49377",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31058",
                 "app": null
               },
               {
@@ -6362,6 +6356,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -6381,7 +6381,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T02:30:11Z",
       "createdAt": "2026-09-26T02:01:22Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6544,7 +6544,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T02:22:32Z",
           "createdAt": "2026-10-01T03:08:56Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6698,7 +6698,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:28:34Z",
       "createdAt": "2026-09-26T14:07:49Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -6841,7 +6841,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:20:46Z",
           "createdAt": "2026-10-03T08:20:45Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -6864,12 +6864,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109387833/job/111164188209",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109388021/job/111164189058",
@@ -6885,6 +6879,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109387996/job/111164189148",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109387833/job/111164188209",
                 "app": "GitHub Actions"
               },
               {
@@ -6936,21 +6936,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31068",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49382",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31068",
                 "app": null
               },
               {
@@ -6958,6 +6952,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -6977,7 +6977,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:27:42Z",
       "createdAt": "2026-09-26T18:15:29Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -7136,7 +7136,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:20:44Z",
           "createdAt": "2026-10-03T08:20:41Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -7159,12 +7159,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109385156/job/111164180820",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109385246/job/111164181497",
@@ -7180,6 +7174,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109385155/job/111164181289",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109385156/job/111164180820",
                 "app": "GitHub Actions"
               },
               {
@@ -7231,21 +7231,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31066",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49380",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31066",
                 "app": null
               },
               {
@@ -7253,6 +7247,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -7272,7 +7272,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:46:35Z",
       "createdAt": "2026-09-26T19:08:51Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -7371,7 +7371,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:46:27Z",
           "createdAt": "2026-09-29T18:15:45Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7525,7 +7525,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:10:15Z",
       "createdAt": "2026-09-28T16:46:14Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -7655,7 +7655,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:11:31Z",
       "createdAt": "2026-09-28T16:46:17Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -7814,7 +7814,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:25:14Z",
           "createdAt": "2026-10-03T08:21:36Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -7837,15 +7837,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109638529/job/111164928327",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109637155/job/111164883909",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109638529/job/111164928327",
                 "app": "GitHub Actions"
               },
               {
@@ -7909,16 +7909,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -7938,7 +7938,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:26Z",
       "createdAt": "2026-09-28T16:46:23Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -8052,7 +8052,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:22:46Z",
       "createdAt": "2026-09-28T17:47:35Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8153,7 +8153,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T19:06:34Z",
           "createdAt": "2026-10-01T17:51:08Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8307,7 +8307,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:06:09Z",
       "createdAt": "2026-09-28T17:47:39Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -8450,7 +8450,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:25:09Z",
           "createdAt": "2026-10-03T08:25:08Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -8473,12 +8473,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109633989/job/111164875114",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109634008/job/111164875495",
@@ -8494,6 +8488,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109633983/job/111164875326",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109633989/job/111164875114",
                 "app": "GitHub Actions"
               },
               {
@@ -8557,16 +8557,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -8586,7 +8586,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T01:18:16Z",
       "createdAt": "2026-09-28T22:31:32Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8687,7 +8687,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:13:49Z",
           "createdAt": "2026-09-29T10:31:11Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8835,7 +8835,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:05:01Z",
       "createdAt": "2026-09-29T19:09:15Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -8977,7 +8977,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:05:02Z",
       "createdAt": "2026-09-29T19:09:25Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -9186,7 +9186,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T07:56:22Z",
           "createdAt": "2026-10-03T01:38:35Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -9310,7 +9310,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:11:23Z",
       "createdAt": "2026-09-29T19:23:01Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -9406,7 +9406,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:20:29Z",
       "createdAt": "2026-09-29T20:25:57Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -9581,7 +9581,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:24:40Z",
       "createdAt": "2026-09-29T20:59:48Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -9711,7 +9711,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:47:02Z",
       "createdAt": "2026-09-29T21:00:04Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -9840,7 +9840,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-29T23:49:24Z",
           "createdAt": "2026-09-29T21:28:51Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -9994,7 +9994,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T00:29:56Z",
       "createdAt": "2026-09-29T22:13:52Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -10095,7 +10095,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T00:23:18Z",
           "createdAt": "2026-09-30T21:47:09Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -10249,7 +10249,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:23:58Z",
       "createdAt": "2026-09-29T22:13:58Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -10392,7 +10392,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:41Z",
           "createdAt": "2026-10-03T07:41:31Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -10415,15 +10415,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109494496/job/111164486580",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109492786/job/111164481729",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109494496/job/111164486580",
                 "app": "GitHub Actions"
               },
               {
@@ -10487,16 +10487,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -10516,7 +10516,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:07:32Z",
       "createdAt": "2026-09-29T23:49:52Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -10659,7 +10659,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:23:13Z",
           "createdAt": "2026-10-01T18:51:05Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -10813,7 +10813,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:08:19Z",
       "createdAt": "2026-09-29T23:49:55Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -10956,7 +10956,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:01Z",
           "createdAt": "2026-10-03T08:21:59Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -10979,12 +10979,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109456207/job/111164380725",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109456398/job/111164381808",
@@ -11000,6 +10994,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109456362/job/111164381666",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109456207/job/111164380725",
                 "app": "GitHub Actions"
               },
               {
@@ -11063,16 +11063,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -11092,7 +11092,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:07:00Z",
       "createdAt": "2026-09-30T00:53:26Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -11251,7 +11251,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:23:52Z",
           "createdAt": "2026-10-03T08:23:51Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -11274,12 +11274,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109560425/job/111164672095",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109561137/job/111164674414",
@@ -11295,6 +11289,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109561172/job/111164674653",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109560425/job/111164672095",
                 "app": "GitHub Actions"
               },
               {
@@ -11358,16 +11358,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -11387,7 +11387,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:03:20Z",
       "createdAt": "2026-09-30T00:53:30Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -11530,7 +11530,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:23:02Z",
           "createdAt": "2026-10-03T08:23:00Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -11553,12 +11553,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109513381/job/111164539616",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109513691/job/111164541104",
@@ -11574,6 +11568,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109513644/job/111164541079",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109513381/job/111164539616",
                 "app": "GitHub Actions"
               },
               {
@@ -11637,16 +11637,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -11666,7 +11666,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:04:48Z",
       "createdAt": "2026-09-30T00:53:32Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -11805,11 +11805,11 @@
           "url": "https://github.com/google/gvisor/pull/15264",
           "status": "open",
           "ref": "test/cl992759668",
-          "head": "e4dc79453553fa02a647e77644d0a6fb63e923ab",
+          "head": "f87fb3acfc77e8b76c0abede15937a578c14a92d",
           "headOwner": "google",
-          "updatedAt": "2026-10-03T08:19:40Z",
+          "updatedAt": "2026-10-03T08:31:13Z",
           "createdAt": "2026-10-03T08:19:39Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -11828,97 +11828,79 @@
           },
           "checks": {
             "state": "PENDING",
-            "total": 16,
+            "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324856/job/111164014827",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324814/job/111164014925",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324826/job/111164014929",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324827/job/111164015003",
+                "url": "https://github.com/google/gvisor/actions/runs/37109978412/job/111165816678",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109980764/job/111165867715",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324843/job/111164014245",
+                "url": "https://github.com/google/gvisor/actions/runs/37109980780/job/111165823175",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324896/job/111164014472",
+                "url": "https://github.com/google/gvisor/actions/runs/37109980774/job/111165823150",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324831/job/111164014514",
+                "url": "https://github.com/google/gvisor/actions/runs/37109980760/job/111165823212",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324819/job/111164014286",
+                "url": "https://github.com/google/gvisor/actions/runs/37109980855/job/111165823423",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324827/job/111164174642",
+                "url": "https://github.com/google/gvisor/actions/runs/37109978412/job/111165969362",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324827/job/111164175049",
+                "url": "https://github.com/google/gvisor/actions/runs/37109978412/job/111165969273",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324827/job/111164175500",
+                "url": "https://github.com/google/gvisor/actions/runs/37109978412/job/111165969845",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109324827/job/111164175438",
+                "url": "https://github.com/google/gvisor/actions/runs/37109978412/job/111165969803",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/internal",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31056",
+                "url": "https://buildkite.com/gvisor/internal/builds/31110",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49375",
-                "app": null
-              },
-              {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49408",
                 "app": null
               },
               {
@@ -11926,6 +11908,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -11945,7 +11933,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:29Z",
       "createdAt": "2026-09-30T00:53:35Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -12059,7 +12047,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:32:30Z",
       "createdAt": "2026-09-30T10:14:36Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12202,7 +12190,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:19:44Z",
           "createdAt": "2026-10-01T19:31:38Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -12350,7 +12338,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T10:11:09Z",
       "createdAt": "2026-09-30T10:14:39Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12463,7 +12451,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T08:26:22Z",
           "createdAt": "2026-09-30T22:37:25Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -12617,7 +12605,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T21:19:41Z",
       "createdAt": "2026-09-30T10:14:42Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12730,7 +12718,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T21:09:47Z",
           "createdAt": "2026-10-01T19:07:27Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -12884,7 +12872,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T07:08:07Z",
       "createdAt": "2026-09-30T10:14:45Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12997,7 +12985,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:58:26Z",
           "createdAt": "2026-10-01T02:18:26Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -13145,7 +13133,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:00:20Z",
       "createdAt": "2026-09-30T10:17:14Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -13370,7 +13358,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:50Z",
           "createdAt": "2026-10-03T08:22:49Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -13393,12 +13381,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109502945/job/111164510739",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109502519/job/111164509774",
@@ -13414,6 +13396,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109502530/job/111164510095",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109502945/job/111164510739",
                 "app": "GitHub Actions"
               },
               {
@@ -13477,16 +13465,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -13506,7 +13494,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:52:46Z",
       "createdAt": "2026-09-30T10:22:42Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -13618,7 +13606,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:23:09Z",
       "createdAt": "2026-09-30T13:40:07Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -13748,7 +13736,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:17:45Z",
       "createdAt": "2026-09-30T13:40:10Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -13878,7 +13866,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:12:28Z",
       "createdAt": "2026-09-30T13:40:13Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -14037,7 +14025,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T02:18:03Z",
           "createdAt": "2026-10-01T19:29:32Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -14191,7 +14179,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:09:59Z",
       "createdAt": "2026-09-30T14:16:15Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -14334,7 +14322,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:23:02Z",
           "createdAt": "2026-10-03T07:22:11Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -14357,15 +14345,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109513925/job/111164541394",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109512218/job/111164537340",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109513925/job/111164541394",
                 "app": "GitHub Actions"
               },
               {
@@ -14429,16 +14417,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -14458,7 +14446,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T08:03:56Z",
       "createdAt": "2026-09-30T14:45:26Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -14617,7 +14605,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:07Z",
           "createdAt": "2026-10-03T08:21:05Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -14640,12 +14628,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109407785/job/111164244677",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109407767/job/111164243773",
@@ -14661,6 +14643,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109407689/job/111164243566",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109407785/job/111164244677",
                 "app": "GitHub Actions"
               },
               {
@@ -14724,16 +14712,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -14753,7 +14741,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:05:16Z",
       "createdAt": "2026-09-30T22:24:21Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -14867,7 +14855,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:59:15Z",
       "createdAt": "2026-09-30T22:30:02Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -15010,7 +14998,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:20:46Z",
           "createdAt": "2026-10-03T08:20:44Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -15033,12 +15021,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109387020/job/111164185937",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109387081/job/111164186513",
@@ -15054,6 +15036,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109387066/job/111164186590",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109387020/job/111164185937",
                 "app": "GitHub Actions"
               },
               {
@@ -15105,21 +15093,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31067",
-                "app": null
-              },
-              {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49381",
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31067",
                 "app": null
               },
               {
@@ -15127,6 +15109,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -15146,7 +15134,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:55:32Z",
       "createdAt": "2026-09-30T22:30:05Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -15289,7 +15277,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:53Z",
           "createdAt": "2026-10-03T08:22:52Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -15312,12 +15300,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109506149/job/111164520160",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109506124/job/111164520618",
@@ -15333,6 +15315,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109506116/job/111164520603",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109506149/job/111164520160",
                 "app": "GitHub Actions"
               },
               {
@@ -15396,16 +15384,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -15425,7 +15413,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:56:26Z",
       "createdAt": "2026-09-30T22:30:07Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -15568,7 +15556,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:23:00Z",
           "createdAt": "2026-10-03T08:22:58Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -15591,12 +15579,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109512127/job/111164536513",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109511841/job/111164536277",
@@ -15612,6 +15594,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109511880/job/111164536366",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109512127/job/111164536513",
                 "app": "GitHub Actions"
               },
               {
@@ -15675,16 +15663,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -15704,7 +15692,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T22:54:11Z",
       "createdAt": "2026-09-30T22:30:10Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -15817,7 +15805,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T22:54:10Z",
           "createdAt": "2026-10-02T18:54:21Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -15971,7 +15959,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T01:26:56Z",
       "createdAt": "2026-09-30T22:38:16Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -16124,7 +16112,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:01Z",
           "createdAt": "2026-10-01T18:09:06Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -16147,15 +16135,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109398558/job/111164217982",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109396827/job/111164214172",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109398558/job/111164217982",
                 "app": "GitHub Actions"
               },
               {
@@ -16219,16 +16207,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -16246,7 +16234,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:45:43Z",
           "createdAt": "2026-10-03T01:45:41Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -16382,7 +16370,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:31Z",
       "createdAt": "2026-09-30T22:38:18Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -16496,7 +16484,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:58:05Z",
       "createdAt": "2026-09-30T22:38:21Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -16635,11 +16623,11 @@
           "url": "https://github.com/google/gvisor/pull/15265",
           "status": "open",
           "ref": "test/cl992760074",
-          "head": "61c273594db8a83796e1bcbf88292016bf051fa6",
+          "head": "6a7168f1c6b8588c14c9830834bbf66f47c931a8",
           "headOwner": "google",
-          "updatedAt": "2026-10-03T08:20:18Z",
+          "updatedAt": "2026-10-03T08:32:31Z",
           "createdAt": "2026-10-03T08:20:16Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -16658,97 +16646,79 @@
           },
           "checks": {
             "state": "PENDING",
-            "total": 16,
+            "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362034/job/111164116441",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362185/job/111164117361",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362137/job/111164116832",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362119/job/111164116666",
+                "url": "https://github.com/google/gvisor/actions/runs/37110050961/job/111166025010",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37110052378/job/111166075033",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362024/job/111164115876",
+                "url": "https://github.com/google/gvisor/actions/runs/37110052350/job/111166028754",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362055/job/111164115858",
+                "url": "https://github.com/google/gvisor/actions/runs/37110052440/job/111166029638",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362110/job/111164116041",
+                "url": "https://github.com/google/gvisor/actions/runs/37110052373/job/111166029009",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109361999/job/111164115936",
+                "url": "https://github.com/google/gvisor/actions/runs/37110052419/job/111166029124",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362119/job/111164266104",
+                "url": "https://github.com/google/gvisor/actions/runs/37110050961/job/111166139214",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362119/job/111164266443",
+                "url": "https://github.com/google/gvisor/actions/runs/37110050961/job/111166139663",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362119/job/111164266966",
+                "url": "https://github.com/google/gvisor/actions/runs/37110050961/job/111166139978",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109362119/job/111164267107",
+                "url": "https://github.com/google/gvisor/actions/runs/37110050961/job/111166140223",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/internal",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31060",
+                "url": "https://buildkite.com/gvisor/internal/builds/31111",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49378",
-                "app": null
-              },
-              {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49409",
                 "app": null
               },
               {
@@ -16756,6 +16726,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -16775,7 +16751,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T20:21:04Z",
       "createdAt": "2026-09-30T22:38:24Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -16922,7 +16898,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T20:14:01Z",
           "createdAt": "2026-10-02T18:52:22Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -17076,7 +17052,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:53:05Z",
       "createdAt": "2026-09-30T22:42:30Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -17235,7 +17211,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:20:42Z",
           "createdAt": "2026-10-03T08:20:40Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -17253,16 +17229,10 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 16,
             "complete": true,
             "contexts": [
-              {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109383581/job/111164176008",
-                "app": "GitHub Actions"
-              },
               {
                 "name": "assign",
                 "state": "SUCCESS",
@@ -17279,6 +17249,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109383568/job/111164176711",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109383581/job/111164176008",
                 "app": "GitHub Actions"
               },
               {
@@ -17331,20 +17307,14 @@
               },
               {
                 "name": "buildkite/internal",
-                "state": "PENDING",
+                "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/31063",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
-                "state": "PENDING",
+                "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/pipeline/builds/49379",
-                "app": null
-              },
-              {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
                 "app": null
               },
               {
@@ -17352,6 +17322,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -17371,7 +17347,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:56:57Z",
       "createdAt": "2026-09-30T22:42:32Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -17484,7 +17460,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:48:05Z",
           "createdAt": "2026-10-01T17:52:04Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -17632,7 +17608,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:54:46Z",
       "createdAt": "2026-09-30T22:42:35Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -17769,7 +17745,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:18:31Z",
           "createdAt": "2026-10-02T18:50:53Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -17917,7 +17893,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:52:37Z",
       "createdAt": "2026-09-30T23:39:09Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -18138,11 +18114,11 @@
           "url": "https://github.com/google/gvisor/pull/15277",
           "status": "open",
           "ref": "test/cl992760166",
-          "head": "e11934310d81930a211151b65015cd0f85283975",
+          "head": "0e3028e7b5ba84fe58b409f54db260db431cf92a",
           "headOwner": "google",
-          "updatedAt": "2026-10-03T08:22:31Z",
+          "updatedAt": "2026-10-03T08:36:33Z",
           "createdAt": "2026-10-03T08:22:29Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -18161,91 +18137,79 @@
           },
           "checks": {
             "state": "PENDING",
-            "total": 16,
+            "total": 14,
             "complete": true,
             "contexts": [
               {
                 "name": "generate",
                 "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109486158/job/111164461577",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485969/job/111164461654",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485930/job/111164461662",
+                "url": "https://github.com/google/gvisor/actions/runs/37110280877/job/111166669830",
                 "app": "GitHub Actions"
               },
               {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485985/job/111164461718",
+                "url": "https://github.com/google/gvisor/actions/runs/37110278982/job/111166664558",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109486143/job/111164461588",
+                "url": "https://github.com/google/gvisor/actions/runs/37110280854/job/111166669363",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109486065/job/111164461247",
+                "url": "https://github.com/google/gvisor/actions/runs/37110280883/job/111166669653",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109486087/job/111164461327",
+                "url": "https://github.com/google/gvisor/actions/runs/37110280922/job/111166670208",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109486078/job/111164461465",
+                "url": "https://github.com/google/gvisor/actions/runs/37110281039/job/111166670424",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485985/job/111164630821",
+                "url": "https://github.com/google/gvisor/actions/runs/37110278982/job/111166806830",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485985/job/111164630752",
+                "url": "https://github.com/google/gvisor/actions/runs/37110278982/job/111166807146",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485985/job/111164631000",
+                "url": "https://github.com/google/gvisor/actions/runs/37110278982/job/111166807367",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37109485985/job/111164630983",
+                "url": "https://github.com/google/gvisor/actions/runs/37110278982/job/111166807332",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/internal",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31088",
+                "url": "https://buildkite.com/gvisor/internal/builds/31112",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49394",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49410",
                 "app": null
               },
               {
@@ -18278,7 +18242,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:54:04Z",
       "createdAt": "2026-09-30T23:41:33Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -18437,7 +18401,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:48Z",
           "createdAt": "2026-10-03T08:22:47Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -18460,12 +18424,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109501415/job/111164506487",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109501675/job/111164507726",
@@ -18481,6 +18439,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109501715/job/111164507813",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109501415/job/111164506487",
                 "app": "GitHub Actions"
               },
               {
@@ -18544,16 +18508,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -18573,7 +18537,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:08:22Z",
       "createdAt": "2026-10-01T00:07:02Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -18703,7 +18667,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:15:14Z",
       "createdAt": "2026-10-01T02:15:11Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -18890,7 +18854,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:22:37Z",
           "createdAt": "2026-10-03T08:22:36Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -18913,12 +18877,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109492394/job/111164480148",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109492511/job/111164481457",
@@ -18934,6 +18892,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109492443/job/111164480715",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109492394/job/111164480148",
                 "app": "GitHub Actions"
               },
               {
@@ -18997,16 +18961,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -19026,7 +18990,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:33Z",
       "createdAt": "2026-10-01T10:12:07Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -19140,7 +19104,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:34Z",
       "createdAt": "2026-10-01T10:18:13Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -19254,7 +19218,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:34Z",
       "createdAt": "2026-10-01T13:18:55Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -19368,7 +19332,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T21:30:01Z",
       "createdAt": "2026-10-01T13:36:08Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -19499,7 +19463,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T21:30:02Z",
           "createdAt": "2026-10-02T18:43:03Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -19653,7 +19617,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:51:25Z",
       "createdAt": "2026-10-01T13:36:19Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -19790,7 +19754,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:26:18Z",
           "createdAt": "2026-10-02T19:16:01Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -19932,7 +19896,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:06:43Z",
       "createdAt": "2026-10-01T15:53:05Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -20091,7 +20055,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:43Z",
           "createdAt": "2026-10-03T08:21:41Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -20114,12 +20078,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109439877/job/111164336280",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109440207/job/111164338171",
@@ -20135,6 +20093,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109440146/job/111164338128",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109439877/job/111164336280",
                 "app": "GitHub Actions"
               },
               {
@@ -20198,16 +20162,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -20227,7 +20191,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:06:09Z",
       "createdAt": "2026-10-01T15:53:08Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -20398,7 +20362,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:23:46Z",
           "createdAt": "2026-10-03T07:22:09Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -20421,15 +20385,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109554240/job/111164654656",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109553050/job/111164651567",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109554240/job/111164654656",
                 "app": "GitHub Actions"
               },
               {
@@ -20493,16 +20457,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -20522,7 +20486,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:03:14Z",
       "createdAt": "2026-10-01T15:55:39Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -20636,7 +20600,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T01:26:22Z",
       "createdAt": "2026-10-01T21:14:49Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -20779,7 +20743,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:20:08Z",
           "createdAt": "2026-10-02T00:07:07Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -20933,7 +20897,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:37:08Z",
       "createdAt": "2026-10-02T10:29:20Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -21092,7 +21056,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:23:07Z",
           "createdAt": "2026-10-03T08:14:35Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -21115,15 +21079,15 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109517909/job/111164596898",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109516272/job/111164547791",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109517909/job/111164596898",
                 "app": "GitHub Actions"
               },
               {
@@ -21187,16 +21151,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -21216,7 +21180,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:49:31Z",
       "createdAt": "2026-10-02T12:55:53Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -21379,7 +21343,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:35:06Z",
       "createdAt": "2026-10-02T20:43:10Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -21590,7 +21554,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:55Z",
           "createdAt": "2026-10-03T08:21:53Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -21613,12 +21577,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109450431/job/111164365277",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109450446/job/111164367128",
@@ -21634,6 +21592,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109450455/job/111164366089",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109450431/job/111164365277",
                 "app": "GitHub Actions"
               },
               {
@@ -21697,16 +21661,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -21726,7 +21690,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:34:28Z",
       "createdAt": "2026-10-02T20:45:07Z",
-      "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+      "checkedAt": "2026-10-03T08:47:35.294128+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -21885,7 +21849,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:19:26Z",
           "createdAt": "2026-10-03T08:19:24Z",
-          "checkedAt": "2026-10-03T08:26:43.670765+00:00",
+          "checkedAt": "2026-10-03T08:47:35.294128+00:00",
           "reviewDecision": null,
           "mergeable": "MERGEABLE",
           "mergeState": "BLOCKED",
@@ -21908,12 +21872,6 @@
             "complete": true,
             "contexts": [
               {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37109313168/job/111163981457",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "assign",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109313566/job/111163983297",
@@ -21929,6 +21887,12 @@
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37109313422/job/111163983005",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37109313168/job/111163981457",
                 "app": "GitHub Actions"
               },
               {
@@ -21992,16 +21956,16 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
-                "app": null
-              },
-              {
                 "name": "cla/google",
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
