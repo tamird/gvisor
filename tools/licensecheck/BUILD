@@ -8,6 +8,7 @@ package(
 go_library(
     name = "licensecheck",
     srcs = [
+        "apt.go",
         "classify.go",
         "licensecheck.go",
         "modules.go",
@@ -29,6 +30,7 @@ go_test(
     name = "licensecheck_test",
     size = "small",
     srcs = [
+        "apt_test.go",
         "licensecheck_test.go",
         "modules_test.go",
         "wheels_test.go",
@@ -37,6 +39,6 @@ go_test(
         "dependencies.yaml",
         "//governance:licensing.yaml",
     ],
-    embedsrcs = glob(["testdata/*.txt"]),
+    embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),
     library = ":licensecheck",
 )
