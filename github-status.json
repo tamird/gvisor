@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-03T09:59:14.950340+00:00",
-  "registryDate": "2026-10-03T09:12:15.266346+00:00",
+  "registryDate": "2026-10-03T10:04:19.539715+00:00",
   "prs": [
     {
       "number": 12470,
@@ -547,7 +547,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQEX8rA",
             "url": "https://github.com/google/gvisor/pull/14237#issuecomment-5373295788",
-            "body": "The scope has grown beyond the original nested-capture fix. r? @EtiennePerot for the cumulative lock/atomic analysis and configured-Go-target changes.\n\nThe cumulative diff is 48 files (+1743/−240), centered on `tools/checklocks/; tools/nogo/; tools/bazeldefs/`.\n\ncc @konstantin-s-bogom.\n\nAssisted-by: Codex",
+            "body": "The scope has grown beyond the original nested-capture fix. r? @EtiennePerot for the cumulative lock/atomic analysis and configured-Go-target changes.\n\nThe cumulative diff is 48 files (+1743/\u2212240), centered on `tools/checklocks/; tools/nogo/; tools/bazeldefs/`.\n\ncc @konstantin-s-bogom.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-21T17:45:20Z",
             "updatedAt": "2026-08-24T04:20:48Z",
             "author": {
@@ -1466,7 +1466,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQU8ZwA",
             "url": "https://github.com/google/gvisor/pull/14351#issuecomment-5390670272",
-            "body": "r? @milantracy for the MM mapping/metadata contracts and their timer, accounting and loader callers.\n\nThe cumulative diff is 26 files (+805/−192), centered on `pkg/sentry/{mm,ktime,usage}/; runsc/boot/`.\n\nAssisted-by: Codex",
+            "body": "r? @milantracy for the MM mapping/metadata contracts and their timer, accounting and loader callers.\n\nThe cumulative diff is 26 files (+805/\u2212192), centered on `pkg/sentry/{mm,ktime,usage}/; runsc/boot/`.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-24T04:18:54Z",
             "updatedAt": "2026-08-24T04:18:54Z",
             "author": {
@@ -1755,7 +1755,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQU8x4w",
             "url": "https://github.com/google/gvisor/pull/14360#issuecomment-5390676451",
-            "body": "r? @fvoznika for checkpoint callback ordering and async restore ownership, including allocator save/restore boundaries.\n\nThe cumulative diff is 14 files (+838/−157), centered on `pkg/sentry/{kernel,pgalloc}/; runsc/boot/`.\n\nAssisted-by: Codex",
+            "body": "r? @fvoznika for checkpoint callback ordering and async restore ownership, including allocator save/restore boundaries.\n\nThe cumulative diff is 14 files (+838/\u2212157), centered on `pkg/sentry/{kernel,pgalloc}/; runsc/boot/`.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-24T04:19:47Z",
             "updatedAt": "2026-08-24T04:19:47Z",
             "author": {
@@ -1926,7 +1926,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABQU8z7Q",
             "url": "https://github.com/google/gvisor/pull/14361#issuecomment-5390676973",
-            "body": "r? @milantracy for LisaFS socket/control-FD ownership and stale-node removal after replacement.\n\nThe cumulative diff is 10 files (+197/−46), centered on `pkg/lisafs/; runsc/fsgofer/`.\n\nAssisted-by: Codex",
+            "body": "r? @milantracy for LisaFS socket/control-FD ownership and stale-node removal after replacement.\n\nThe cumulative diff is 10 files (+197/\u221246), centered on `pkg/lisafs/; runsc/fsgofer/`.\n\nAssisted-by: Codex",
             "createdAt": "2026-08-24T04:19:52Z",
             "updatedAt": "2026-08-24T04:19:52Z",
             "author": {
@@ -4207,7 +4207,7 @@
             "kind": "comment",
             "id": "IC_kwDOB9IlXs8AAAABYQbQNA",
             "url": "https://github.com/google/gvisor/pull/14985#issuecomment-5922803764",
-            "body": "Closing in favor of the [hermetic LLVM toolchain migration](https://github.com/tamird/gvisor/commit/63e2554be). It removes Coral’s toolchain registration, extension, and templates, so these compatibility patches are no longer needed on that path. The replacement is published but has not landed upstream.\n\nAssisted-by: Codex\n",
+            "body": "Closing in favor of the [hermetic LLVM toolchain migration](https://github.com/tamird/gvisor/commit/63e2554be). It removes Coral\u2019s toolchain registration, extension, and templates, so these compatibility patches are no longer needed on that path. The replacement is published but has not landed upstream.\n\nAssisted-by: Codex\n",
             "createdAt": "2026-10-01T01:21:52Z",
             "updatedAt": "2026-10-01T01:21:52Z",
             "author": {
@@ -5402,7 +5402,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs72kOQr",
             "url": "https://github.com/google/gvisor/pull/15033#discussion_r4136690731",
-            "body": "AI nit:\n\n#### 1. Trailing Whitespace on //go:nosplit Directive\n\n  In checkescape.go:\n\n    if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {\n        for _, comment := range decl.Doc.List {\n            if comment.Text == \"//go:nosplit\" {\n                return nil\n            }\n        }\n    }\n\n  • Observation: comment.Text includes the full comment text including any trailing whitespace or carriage returns (e.g. //go:nosplit  or \\r\\n). In cmd/compile, the compiler trims\n  trailing whitespace when checking compiler directives.\n  • Suggestion: Consider strings.TrimSpace(comment.Text) == \"//go:nosplit\" to guard against accidental trailing whitespace.\n",
+            "body": "AI nit:\n\n#### 1. Trailing Whitespace on //go:nosplit Directive\n\n  In checkescape.go:\n\n    if decl, ok := fn.Syntax().(*ast.FuncDecl); ok && decl.Doc != nil {\n        for _, comment := range decl.Doc.List {\n            if comment.Text == \"//go:nosplit\" {\n                return nil\n            }\n        }\n    }\n\n  \u2022 Observation: comment.Text includes the full comment text including any trailing whitespace or carriage returns (e.g. //go:nosplit  or \\r\\n). In cmd/compile, the compiler trims\n  trailing whitespace when checking compiler directives.\n  \u2022 Suggestion: Consider strings.TrimSpace(comment.Text) == \"//go:nosplit\" to guard against accidental trailing whitespace.\n",
             "createdAt": "2026-09-29T18:01:30Z",
             "updatedAt": "2026-09-29T18:02:39Z",
             "author": {
@@ -5436,7 +5436,7 @@
             "line": null,
             "id": "PRRC_kwDOB9IlXs72mjM6",
             "url": "https://github.com/google/gvisor/pull/15033#discussion_r4137300794",
-            "body": "Went full strict and matched the compiler behavior exactly 🙃 ",
+            "body": "Went full strict and matched the compiler behavior exactly \ud83d\ude43 ",
             "createdAt": "2026-09-29T19:09:14Z",
             "updatedAt": "2026-09-29T19:09:14Z",
             "author": {
@@ -8865,7 +8865,7 @@
             "kind": "review",
             "id": "PRR_kwDOB9IlXs8AAAABQOwXXw",
             "url": "https://github.com/google/gvisor/pull/15106#pullrequestreview-5384181599",
-            "body": "LGTM! Very clean improvement—decoupling the Go export layout assembly from git branch manipulation is a great win for testability.\n\nA couple of minor non-blocking thoughts:\n- In the binary entrypoint filegroups (`runsc`, `shim`, etc.), consider `glob([\"*.go\"], exclude = [\"*_test.go\"])` just to future-proof against any unit tests added to those top-level packages getting accidentally bundled into the export archive.\n- In `BUILD`, `$(execpath go.mod)` is passed both to `--go-mod` and in the positional args list. Harmless since it just populates `files[\"go.mod\"]`, but `assemble` could also just implicitly write `files[\"go.mod\"] = data` from the already-read `--go-mod` file.",
+            "body": "LGTM! Very clean improvement\u2014decoupling the Go export layout assembly from git branch manipulation is a great win for testability.\n\nA couple of minor non-blocking thoughts:\n- In the binary entrypoint filegroups (`runsc`, `shim`, etc.), consider `glob([\"*.go\"], exclude = [\"*_test.go\"])` just to future-proof against any unit tests added to those top-level packages getting accidentally bundled into the export archive.\n- In `BUILD`, `$(execpath go.mod)` is passed both to `--go-mod` and in the positional args list. Harmless since it just populates `files[\"go.mod\"]`, but `assemble` could also just implicitly write `files[\"go.mod\"] = data` from the already-read `--go-mod` file.",
             "state": "APPROVED",
             "submittedAt": "2026-10-01T19:05:07Z",
             "updatedAt": "2026-10-01T19:05:07Z",
