@@ -47,7 +47,22 @@ var configuredLicenses = sync.OnceValues(func() (licenseRegistry, error) {
 	})
 	// NOASSERTION is explicit metadata for inputs without a software license,
 	// such as certificate bundles. It is never inferred from license text.
-	ids := map[License]struct{}{"NOASSERTION": {}}
+	ids := map[License]struct{}{
+		"NOASSERTION": {},
+		// This identifier names the complete verbatim notice in
+		// testdata/apt-gzip-copyright.txt, not an inferred SPDX equivalent.
+		// Notice SHA256: 7fc508e2557f534edfcbfebb00cccd0e6884f7b72582c43b50bc9f7b03dc493e.
+		// Package SHA256: 018db5661b38873d1e650be8612ff7e1d882c4576c95079f94e0d6ac2320342b.
+		// https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gzip/gzip_1.10-4ubuntu4.2_amd64.deb
+		"LicenseRef-Gzip-Copyright-7fc508e25": {},
+		// This identifier preserves the complete libxcrypt notice in
+		// testdata/apt-libxcrypt-copyright.txt, including its per-file license
+		// inventory and exceptions. It does not attribute them to binary code.
+		// Notice SHA256: 5a5e7ca0e9f3f9679977e3a3e9ede45ad92885a3297ea78e766979f9866c5a16.
+		// Source descriptor SHA256: 1ffc1194e44330552a28d42a84c6b638b4939f0172d2bc84f58055406546edf9.
+		// https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libx/libxcrypt/libxcrypt_4.4.27-1.dsc
+		"LicenseRef-libxcrypt-4.4.27": {},
+	}
 	for _, license := range patterns {
 		ids[License(license.ID)] = struct{}{}
 	}
