@@ -200,6 +200,8 @@ func TestAptArchiveLinks(t *testing.T) {
 	var data bytes.Buffer
 	writer := tar.NewWriter(&data)
 	for _, h := range []tar.Header{
+		{Name: ".", Typeflag: tar.TypeDir},
+		{Name: "./", Typeflag: tar.TypeDir},
 		{Name: "./usr/share/doc/libgcc-s1", Typeflag: tar.TypeSymlink, Linkname: "./gcc-12-base"},
 		{Name: "./usr/share/doc/gcc-12-base/copyright", Typeflag: tar.TypeReg, Size: int64(len(bsdText))},
 		{Name: "./usr/share/doc/hard/copyright", Typeflag: tar.TypeLink, Linkname: "./usr/share/doc/gcc-12-base/copyright"},

@@ -137,10 +137,10 @@ func readAptArchive(input io.Reader) (map[string]aptFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		name := strings.TrimPrefix(header.Name, "./")
-		if name == "." && header.Typeflag == tar.TypeDir {
+		if header.Typeflag == tar.TypeDir && (header.Name == "." || header.Name == "./") {
 			continue
 		}
+		name := strings.TrimPrefix(header.Name, "./")
 		name = strings.TrimSuffix(name, "/")
 		if !fs.ValidPath(name) || strings.Contains(name, `\`) {
 			return nil, fmt.Errorf("invalid apt archive path %q", header.Name)
