@@ -32,6 +32,7 @@ LINT = pathlib.Path(sys.argv.pop(1)).absolute()
 class LintTest(unittest.TestCase):
 
   def setUp(self) -> None:
+    super().setUp()
     self.temp = tempfile.TemporaryDirectory(dir=os.environ["TEST_TMPDIR"])
     self.addCleanup(self.temp.cleanup)
     self.root = pathlib.Path(self.temp.name)
