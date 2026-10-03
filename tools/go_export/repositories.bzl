@@ -16,9 +16,11 @@ def _run_go(ctx, root, environment, args):
 def _add_resolved_modules(ctx, root, environment, original):
     """Seed the Go-resolved analysis profile from Gazelle module archives."""
     metadata = json.decode(ctx.read(ctx.attr.resolved_modules))
+    original_module = json.decode(_run_go(ctx, root, environment, ["mod", "edit", "-json"]))
+    original_requirements = {module["Path"]: None for module in (original_module.get("Require") or [])}
     checksums = {}
     for line in original["go.sum"].splitlines():
-        path, version, checksum = line.split()
+        path, version, checksum = line.split(" ")
         checksums[(path, version)] = checksum
     edits = []
     for name, module in sorted(metadata["archives"].items()):
@@ -46,10 +48,13 @@ def _add_resolved_modules(ctx, root, environment, original):
         ]),
     }
     ctx.file("module/go.sum", expected["go.sum"])
+
+    # The root Go module already represents some Bazel-provided dependencies
+    # as module archives. Other selected providers need an explicit Go input.
     return expected, {
         path: module
         for path, module in metadata["bazel_modules"].items()
-        if not module["is_root"]
+        if not module["is_root"] and path not in original_requirements
     }
 
 def _module_proxy_impl(ctx):
