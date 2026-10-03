@@ -1,3 +1,4 @@
+load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
@@ -16,6 +17,21 @@ docker_image_archives(
     source_archives = {
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
     },
+)
+
+# Package the existing ARM image on the native diagnostic's target platform.
+oci_load(
+    name = "image_cache_arm64",
+    image = "@docker_image_basic_alpine_arm64_linux_arm64",
+    repo_tags = ["gvisor.dev/images/basic/alpine:latest"],
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "image_cache_arm64_tar",
+    srcs = [":image_cache_arm64"],
+    output_group = "tarball",
+    tags = ["manual"],
 )
 
 # Fork-only validation of the canonical Make image-cache helper.

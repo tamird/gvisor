@@ -50,7 +50,7 @@ image_cache_command = rule(
     implementation = _image_cache_command_impl,
     executable = True,
     attrs = {
-        "_arm_archive": attr.label(default = "//test/docker:images_basic_alpine_arm64_tar", allow_single_file = True),
+        "_arm_archive": attr.label(default = "//test/docker:image_cache_arm64_tar", allow_single_file = True),
         "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:image_cache_diagnostic.sh", allow_single_file = True),
