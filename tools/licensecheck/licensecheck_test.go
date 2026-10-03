@@ -76,6 +76,18 @@ func TestVerifyProblems(t *testing.T) {
 	if problems := verifyProblems(deps, entries); len(problems) != 0 {
 		t.Errorf("verifyProblems on up-to-date entries = %v, want none", problems)
 	}
+	// The same declared identity can retain reviewed metadata after a fetch
+	// failure. A Go entry's computed ZIP hash is not an enumerated archive pin.
+	for i, d := range deps {
+		if !d.canRetain(entries[i]) {
+			t.Errorf("cannot retain current entry for %s", d.name)
+		}
+		empty := entries[i]
+		empty.License = nil
+		if d.canRetain(empty) {
+			t.Errorf("retained entry without licenses for %s", d.name)
+		}
+	}
 	for _, id := range []License{"NOASSERTION", "Apache-2.0 WITH LLVM-exception", "GPL-2.0", "GPL-2.0-only", "GPL-2.0-or-later"} {
 		entries[0].License = Licenses{id}
 		if problems := verifyProblems(deps, entries); len(problems) != 0 {
@@ -87,6 +99,11 @@ func TestVerifyProblems(t *testing.T) {
 	// A version bump without re-fetching must be flagged, for both kinds.
 	deps[0].version = "v1.3.0"
 	deps[1].url = "https://github.com/a/b/archive/refs/tags/v4.tar.gz"
+	for i, d := range deps {
+		if d.canRetain(entries[i]) {
+			t.Errorf("retained stale source for %s", d.name)
+		}
+	}
 	problems := verifyProblems(deps, entries)
 	if len(problems) != 2 ||
 		!strings.Contains(problems[0], `example.com/mod was audited at "v1.2.0", but is now "v1.3.0"`) ||
@@ -97,6 +114,9 @@ func TestVerifyProblems(t *testing.T) {
 	deps[0].version = "v1.2.0"
 	deps[1].url = "https://github.com/a/b/archive/refs/tags/v3.tar.gz"
 	deps[1].sha256 = "d00d"
+	if deps[1].canRetain(entries[1]) {
+		t.Error("retained entry after archive pin changed")
+	}
 	problems = verifyProblems(deps, entries)
 	if len(problems) != 1 || !strings.Contains(problems[0], `some-archive was audited with sha256 "cafe", but is now pinned to "d00d"`) {
 		t.Errorf("verifyProblems after pin change = %v, want one sha256 problem", problems)
