@@ -99,6 +99,11 @@ def _module_proxy_impl(ctx):
             fail("Resolved module metadata requires full graph selection")
         bazel_modules = _add_resolved_modules(ctx, root, environment, original)
 
+        # Resolve seeded minimum versions before package loading can download
+        # their sources. The final download below includes any requirements
+        # added by loading the indexed packages.
+        _run_go(ctx, root, environment, ["mod", "download", "all"])
+
         # Match the analysis action's indexed paths and current file contents.
         # Real parent directories let ./... traverse only those sources.
         # Watch each file so content edits invalidate resolution even when
