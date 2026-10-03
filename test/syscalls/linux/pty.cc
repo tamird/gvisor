@@ -19,6 +19,7 @@
 #include <poll.h>
 #include <sched.h>
 #include <signal.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -1421,10 +1422,73 @@ TEST_F(PtyTest, SwitchNoncanonToCanonNewlineBig) {
 
   // We can read the line.
   char buf[kMaxLineSize] = {};
-  ExpectReadable(replica_, kMaxLineSize - 1, buf);
+  {
+    SCOPED_TRACE("4095-byte prefix");
+    ExpectReadable(replica_, kMaxLineSize - 1, buf);
+  }
+  if (HasFailure()) {
+    return;
+  }
 
   // We can also read the remaining characters.
-  ExpectReadable(replica_, 6, buf);
+  {
+    SCOPED_TRACE("six-byte remainder after successful prefix");
+    ExpectReadable(replica_, 6, buf);
+  }
+  if (HasFailure()) {
+    // Observe only after the original read fails. Changing ICANON exposes
+    // incomplete canonical input; the read may also restart queued delivery.
+    // These bytes are not an atomic snapshot of the state at the timeout.
+    fprintf(stderr, "PTY observation after failed six-byte remainder\n");
+    int buffered = -1;
+    int ret = ioctl(replica_.get(), FIONREAD, &buffered);
+    int saved_errno = ret < 0 ? errno : 0;
+    fprintf(stderr, "PTY canonical FIONREAD ret=%d errno=%d count=%d\n", ret,
+            saved_errno, buffered);
+    struct kernel_termios t = {};
+    ret = ioctl(replica_.get(), TCGETS, &t);
+    saved_errno = ret < 0 ? errno : 0;
+    fprintf(stderr, "PTY TCGETS ret=%d errno=%d\n", ret, saved_errno);
+    if (ret == 0) {
+      fprintf(stderr,
+              "PTY termios iflag=%x oflag=%x cflag=%x lflag=%x line=%u cc=",
+              t.c_iflag, t.c_oflag, t.c_cflag, t.c_lflag,
+              static_cast<unsigned int>(t.c_line));
+      for (unsigned char c : t.c_cc) {
+        fprintf(stderr, "%02x", static_cast<unsigned int>(c));
+      }
+      fprintf(stderr, "\n");
+      t.c_lflag &= ~ICANON;
+      ret = ioctl(replica_.get(), TCSETS, &t);
+      saved_errno = ret < 0 ? errno : 0;
+      fprintf(stderr, "PTY noncanonical TCSETS ret=%d errno=%d\n", ret,
+              saved_errno);
+      if (ret == 0) {
+        buffered = -1;
+        ret = ioctl(replica_.get(), FIONREAD, &buffered);
+        saved_errno = ret < 0 ? errno : 0;
+        fprintf(stderr, "PTY noncanonical FIONREAD ret=%d errno=%d count=%d\n",
+                ret, saved_errno, buffered);
+        const int flags = fcntl(replica_.get(), F_GETFL);
+        saved_errno = flags < 0 ? errno : 0;
+        fprintf(stderr, "PTY F_GETFL flags=%d errno=%d\n", flags, saved_errno);
+        if (flags >= 0 && (flags & O_NONBLOCK)) {
+          char pending[32] = {};
+          const ssize_t n = read(replica_.get(), pending, sizeof(pending));
+          saved_errno = n < 0 ? errno : 0;
+          fprintf(stderr, "PTY noncanonical read count=%zd errno=%d bytes=", n,
+                  saved_errno);
+          for (ssize_t i = 0; i < n; ++i) {
+            fprintf(stderr, "%02x",
+                    static_cast<unsigned int>(
+                        static_cast<unsigned char>(pending[i])));
+          }
+          fprintf(stderr, "\n");
+        }
+      }
+    }
+    return;
+  }
 
   ExpectFinished(replica_);
 }
