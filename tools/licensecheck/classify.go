@@ -17,18 +17,24 @@ package licensecheck
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"sync"
 
 	textlicense "github.com/google/licensecheck"
 )
 
-// The registry owns both text patterns and identifiers accepted in explicit
-// metadata. Verifying metadata does not require compiling the scanner.
+// The registry owns both text patterns and their identifiers. Verifying
+// metadata does not require compiling the scanner.
 type licenseRegistry struct {
 	patterns []textlicense.License
 	ids      map[License]struct{}
 }
+
+// Local references identify manually audited terms outside the scanner's
+// registry. They are metadata, not text matches or policy permissions.
+// https://spdx.github.io/spdx-spec/v2.3/SPDX-license-expressions/#d1-overview
+var licenseRefRE = regexp.MustCompile(`^LicenseRef-[A-Za-z0-9.-]+$`)
 
 var configuredLicenses = sync.OnceValues(func() (licenseRegistry, error) {
 	patterns := textlicense.BuiltinLicenses()
