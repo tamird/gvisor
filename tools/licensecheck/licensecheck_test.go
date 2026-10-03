@@ -136,6 +136,16 @@ func TestModuleLicenses(t *testing.T) {
 			want: Licenses{"BSD-3-Clause", "MIT"},
 		},
 		{
+			name: "source files alongside notices",
+			files: map[string]string{
+				prefix + "LICENSE":         udiffMIT,
+				prefix + "LICENSE.docs":    udiffBSD,
+				prefix + "license.go":      "package licensecheck\n",
+				prefix + "license_test.go": "package licensecheck\n",
+			},
+			want: Licenses{"BSD-3-Clause", "MIT"},
+		},
+		{
 			name: "unrecognized notice alongside known notice",
 			files: map[string]string{
 				prefix + "LICENSE":     "All rights reserved. Do not redistribute.",

@@ -783,6 +783,10 @@ func moduleLicenses(body []byte, prefix string) (Licenses, error) {
 		if !ok || strings.Contains(name, "/") || !f.Mode().IsRegular() {
 			continue
 		}
+		// Go source files such as license.go are not license notices.
+		if strings.HasSuffix(name, ".go") {
+			continue
+		}
 		stem := strings.ToUpper(name)
 		if i := strings.IndexAny(stem, ".-_"); i >= 0 {
 			stem = stem[:i]
