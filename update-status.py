@@ -14,7 +14,7 @@ REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 CHECKED_AT = datetime.now(timezone.utc).isoformat()
 REQUEST_LIMIT = 32
-PR_BATCH_SIZE = 5
+PR_BATCH_SIZE = 8
 requests = 0
 
 CHECKS = """
