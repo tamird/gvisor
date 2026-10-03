@@ -190,7 +190,7 @@ def _module_proxy_impl(ctx):
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
 
 package(default_visibility = ["//visibility:public"])
-exports_files(["module/go.mod", "module/go.sum", "modules/cache/download/ROOT"] + %s)
+exports_files(["modules/cache/download/ROOT"] + %s)
 copy_file(
     name = "license_inventory",
     src = "module-inventory.json",
@@ -205,7 +205,7 @@ filegroup(
         "modules/cache/download/**/list",
     ]),
 )
-""" % json.encode(["package-inventory.json"] if ctx.attr.resolved_modules else []))
+""" % json.encode(["module/go.mod", "module/go.sum", "package-inventory.json"] if ctx.attr.resolved_modules else []))
 
 module_proxy = repository_rule(
     implementation = _module_proxy_impl,
