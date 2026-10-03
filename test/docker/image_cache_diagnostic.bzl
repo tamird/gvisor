@@ -27,17 +27,18 @@ def _image_cache_command_impl(ctx):
     ctx.actions.write(command, "\n".join([
         "#!/bin/bash",
         "set -euo pipefail",
-        'exec /bin/bash %s "${TEST_SRCDIR:?}/%s/%s" %s %s' % (
+        'exec /bin/bash %s "${TEST_SRCDIR:?}/%s/%s" %s %s %s' % (
             shell.quote(ctx.file._script.short_path),
             tool_root,
             make.path,
             shell.quote(ctx.file._makefile.short_path),
             shell.quote(ctx.file._contexts.short_path),
+            shell.quote(ctx.file._arm_archive.short_path),
         ),
         "",
     ]), is_executable = True)
     runfiles = ctx.runfiles(
-        files = [ctx.file._script, ctx.file._makefile, ctx.file._contexts],
+        files = [ctx.file._script, ctx.file._makefile, ctx.file._contexts, ctx.file._arm_archive],
         root_symlinks = tools,
     )
     make_runfiles = make.target[DefaultInfo].default_runfiles
@@ -49,6 +50,7 @@ image_cache_command = rule(
     implementation = _image_cache_command_impl,
     executable = True,
     attrs = {
+        "_arm_archive": attr.label(default = "//test/docker:images_basic_alpine_arm64_tar", allow_single_file = True),
         "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:image_cache_diagnostic.sh", allow_single_file = True),

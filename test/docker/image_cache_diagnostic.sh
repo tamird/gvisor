@@ -15,17 +15,18 @@
 # limitations under the License.
 
 set -euo pipefail
-test "$#" -eq 3
+test "$#" -eq 4
 make=$(realpath "$1")
 makefile=$(realpath "$2")
 contexts=$(realpath "$3")
+arm_archive=$(realpath "$4")
 out="${TEST_UNDECLARED_OUTPUTS_DIR:?}/image-cache"
 mkdir -p "$out"
 work=$(mktemp -d "${TEST_TMPDIR:?}/image-cache.XXXXXX")
 trap 'rm -rf "$work"' EXIT
 tar --extract --file "$contexts" --directory "$work" \
   --same-permissions --no-same-owner
-sha256sum "$make" "$makefile" "$contexts" > "$out/inputs.txt"
+sha256sum "$make" "$makefile" "$contexts" "$arm_archive" > "$out/inputs.txt"
 "$make" --version > "$out/make-version.txt"
 docker version > "$out/docker-version.txt"
 cd "$work"
@@ -84,5 +85,67 @@ echo 'PASS missing-local-skip-failure' | tee -a "$out/results.txt"
 if grep -E "^--- (PULL|REBUILD) " "$out/cache-hit.txt" "$out/tag-failure.txt" \
   "$out/local-only.txt" "$out/missing-local.txt"; then
   echo "Image loading unexpectedly fell through to pull or rebuild" >&2
+  exit 1
+fi
+
+# Native cache hits and local-only misses share one registration graph node.
+# Its native recipe is a no-op; this checks Make deduplication, not QEMU setup.
+docker tag "$source_image" "$remote_image"
+for name in basic_busybox basic_ubuntu; do
+  missing_local=$("$make" "${make_args[@]}" "local-image-$name")
+  missing_hash=${missing_local##*:}
+  missing_remote="$remote_prefix/${name//_//}_$arch:$missing_hash"
+  missing_latest="${missing_local%:*}:latest"
+  printf '%s %s %s\n' "$missing_remote" "$missing_local" "$missing_latest" >> "$out/mixed-images.txt"
+  if docker image inspect "$missing_remote" > "$out/$name-absent-remote.txt" 2>&1; then
+    echo "Mixed-load fixture unexpectedly has a remote tag for $name" >&2
+    exit 1
+  fi
+  docker tag "$source_image" "$missing_local"
+done
+"$make" "${make_args[@]}" --debug=b -j3 SKIP_IMAGE_LOAD=true \
+  load-basic_alpine load-basic_busybox load-basic_ubuntu 2>&1 | tee "$out/mixed-load.txt"
+test "$(grep -Fc "Successfully remade target file 'register-cross'." "$out/mixed-load.txt")" -eq 1
+test "$(docker image inspect --format '{{.Id}}' "$local_image")" = "$image_id"
+test "$(docker image inspect --format '{{.Id}}' "$latest")" = "$image_id"
+while read -r missing_remote missing_local missing_latest; do
+  test "$(docker image inspect --format '{{.Id}}' "$missing_local")" = "$image_id"
+  for absent in "$missing_remote" "$missing_latest"; do
+    if docker image inspect "$absent" >> "$out/mixed-absent-tags.txt" 2>&1; then
+      echo "Mixed local-only load unexpectedly created $absent" >&2
+      exit 1
+    fi
+  done
+done < "$out/mixed-images.txt"
+echo 'PASS mixed-load-shared-registration' | tee -a "$out/results.txt"
+
+# Retag a real ARM64 archive on this AMD64 worker without executing it or
+# visiting register-cross, regardless of the worker's existing binfmt state.
+docker load --input "$arm_archive" > "$out/arm-load.txt"
+arm_id=$(docker image inspect --format '{{.Id}}' "$source_image")
+test "$(docker image inspect --format '{{.Architecture}}' "$source_image")" = arm64
+arm_remote="$remote_prefix/basic/alpine_aarch64:$hash"
+docker tag "$source_image" "$arm_remote"
+printf 'id=%s\nremote=%s\nlocal=%s\nlatest=%s\n' \
+  "$arm_id" "$arm_remote" "$local_image" "$latest" > "$out/arm-images.txt"
+if docker image inspect multiarch/qemu-user-static > "$out/absent-registrar-before.txt" 2>&1; then
+  echo 'Unexpected registrar image in the private daemon' >&2
+  exit 1
+fi
+"$make" --no-print-directory -s -f "$makefile" --debug=b ARCH=aarch64 \
+  "REMOTE_IMAGE_PREFIX=$remote_prefix" "LOCAL_IMAGE_PREFIX=$local_prefix" \
+  SKIP_IMAGE_LOAD=true load-basic_alpine 2>&1 | tee "$out/arm-cache-hit.txt"
+if grep -F register-cross "$out/arm-cache-hit.txt"; then
+  echo 'Cached cross-architecture load visited register-cross' >&2
+  exit 1
+fi
+test "$(docker image inspect --format '{{.Id}}' "$local_image")" = "$arm_id"
+test "$(docker image inspect --format '{{.Id}}' "$latest")" = "$arm_id"
+if docker image inspect multiarch/qemu-user-static > "$out/absent-registrar-after.txt" 2>&1; then
+  exit 1
+fi
+echo 'PASS cross-cache-hit-without-registration' | tee -a "$out/results.txt"
+if grep -E '^--- (PULL|REBUILD) ' "$out/mixed-load.txt" "$out/arm-cache-hit.txt"; then
+  echo 'Cache/SKIP load unexpectedly attempted a pull or build' >&2
   exit 1
 fi
