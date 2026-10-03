@@ -82,6 +82,13 @@ single_version_override(
     patches = ["//tools:abseil-lifetime-attributes.patch"],
 )
 
+# Gazelle owns the version and checksum selection consumed by Go analysis.
+single_version_override(
+    module_name = "gazelle",
+    patch_strip = 1,
+    patches = ["//tools:gazelle-module-metadata.patch"],
+)
+
 ### LLVM
 # TODO: try using "llvm-raw" from BCR
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
@@ -1234,6 +1241,25 @@ use_repo(kernel_headers, "kernel_headers")
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
+# Keep the official CLI, compatible precompiled queries, and all bundled notices
+# together. The CLI has its own CodeQL Terms; the Action repository's MIT license
+# does not license this release asset.
+http_archive(
+    name = "codeql_bundle",
+    build_file_content = """
+package(default_visibility = ["//visibility:public"])
+exports_files(["codeql"])
+filegroup(name = "files", srcs = glob(["**"], exclude = ["BUILD.bazel"]))
+""",
+    sha256 = "1d380f79896ededc654c7b21fafb3360136f1aeb678ad4df4df9af3910c6b815",
+    strip_prefix = "codeql",
+    urls = ["https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.1/codeql-bundle-linux64.tar.gz"],
+)
+
+analysis_sources = use_repo_rule("//tools/codeql:repositories.bzl", "analysis_sources")
+
+analysis_sources(name = "codeql_sources")
+
 http_archive(
     name = "libpluginstack",
     build_file = "//external/tools/plugin-stack:plugin-stack.BUILD",
@@ -1447,9 +1473,23 @@ module_proxy(
 )
 
 go_deps = use_extension("@bazel_gazelle//:extensions.bzl", "go_deps")
+go_deps.config(export_module_metadata = True)
 go_deps.from_file(go_mod = "//:go.mod")
+
+module_proxy(
+    name = "codeql_go_modules",
+    cgo_enabled = "1",
+    go_mod = "//:go.mod",
+    go_sum = "//:go.sum",
+    goarch = "amd64",
+    goos = "linux",
+    resolved_modules = "@bazel_gazelle_go_repository_config//:modules.json",
+    source_manifest = "@codeql_sources//:manifest.json",
+)
+
 use_repo(
     go_deps,
+    "bazel_gazelle_go_repository_config",
     "co_honnef_go_tools",
     "com_github_burntsushi_toml",
     "com_github_cenkalti_backoff",

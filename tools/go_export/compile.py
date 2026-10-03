@@ -79,6 +79,58 @@ def absolute_flags(flags: list[str]) -> list[str]:
     return result
 
 
+def go_environment(
+    *,
+    goroot: Path,
+    proxy: Path,
+    work: Path,
+    cc: Path | None,
+    cxx: Path | None,
+    cflags: list[str],
+    cxxflags: list[str],
+    ldflags: list[str],
+) -> dict[str, str]:
+    """Use declared tools/modules and action-private Go state.
+
+    Disable user configuration, toolchain downloads, VCS and checksum-server
+    access: the module_proxy repository already resolves and verifies inputs.
+    https://go.dev/ref/mod#environment-variables
+    """
+    env = dict(
+        os.environ,
+        GOENV="off",
+        GOFLAGS="",
+        GOTOOLCHAIN="local",
+        GOWORK="off",
+        GOTELEMETRY="off",
+        GOROOT=str(goroot.absolute()),
+        GOMAXPROCS="4",
+        GOPROXY=proxy.absolute().as_uri(),
+        GOSUMDB="off",
+        GOPRIVATE="",
+        GONOPROXY="",
+        GONOSUMDB="",
+        GOVCS="*:off",
+        CGO_ENABLED="1" if cc else "0",
+        GOCACHE=str(work / "build"),
+        GOMODCACHE=str(work / "modules"),
+        GOPATH=str(work / "gopath"),
+        GOTMPDIR=str(work / "tmp"),
+    )
+    Path(env["GOTMPDIR"]).mkdir()
+    if cc:
+        if cxx is None:
+            raise ValueError("A C++ compiler is required with the C compiler")
+        env.update(
+            CC=str(cc.absolute()),
+            CXX=str(cxx.absolute()),
+            CGO_CFLAGS=shlex.join(absolute_flags(cflags)),
+            CGO_CXXFLAGS=shlex.join(absolute_flags(cxxflags)),
+            CGO_LDFLAGS=shlex.join(absolute_flags(ldflags)),
+        )
+    return env
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("archive", "go", "goroot", "proxy", "output"):
@@ -93,47 +145,24 @@ def main() -> None:
     args = parser.parse_args()
     output = args.output.absolute()
     go = args.go.absolute()
-    env = dict(
-        os.environ,
-        GOENV="off",
-        GOFLAGS="",
-        GOTOOLCHAIN="local",
-        GOWORK="off",
-        GOTELEMETRY="off",
-        GOROOT=str(args.goroot.absolute()),
-        GOOS=args.goos,
-        GOARCH=args.goarch,
-        GOMAXPROCS="4",
-        GOPROXY=args.proxy.absolute().as_uri(),
-        GOSUMDB="off",
-        GOPRIVATE="",
-        GONOPROXY="",
-        GONOSUMDB="",
-        GOVCS="*:off",
-        CGO_ENABLED="1" if args.cc else "0",
-    )
-    if args.cc:
-        env.update(
-            CC=str(args.cc.absolute()),
-            CXX=str(args.cxx.absolute()),
-            CGO_CFLAGS=shlex.join(absolute_flags(args.cflag)),
-            CGO_CXXFLAGS=shlex.join(absolute_flags(args.cxxflag)),
-            CGO_LDFLAGS=shlex.join(absolute_flags(args.ldflag)),
-        )
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
+        env = go_environment(
+            goroot=args.goroot,
+            proxy=args.proxy,
+            work=work,
+            cc=args.cc,
+            cxx=args.cxx,
+            cflags=args.cflag,
+            cxxflags=args.cxxflag,
+            ldflags=args.ldflag,
+        )
+        env.update(GOOS=args.goos, GOARCH=args.goarch)
         source = work / "source"
         source.mkdir()
         with zipfile.ZipFile(args.archive) as archive:
             archive.extractall(source)
         originals = {name: (source / name).read_bytes() for name in ("go.mod", "go.sum")}
-        env.update(
-            GOCACHE=str(work / "build"),
-            GOMODCACHE=str(work / "modules"),
-            GOPATH=str(work / "gopath"),
-            GOTMPDIR=str(work / "tmp"),
-        )
-        Path(env["GOTMPDIR"]).mkdir()
         subprocess.run(
             [str(go), "build", "-mod=readonly", "-buildvcs=false", "-p=4", *args.packages],
             cwd=source,

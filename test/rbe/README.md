@@ -123,7 +123,29 @@ The `license-headers` lane passes `--header-base` to the existing
 selection and exclusions. The `python-distributions` lane builds
 `//sandboxexec/sandbox/python:dist` with the canonical metadata's version;
 registry version discovery, installation and publication are separate work.
-CodeQL remains owned by its scheduled GitHub workflow and is not covered here.
+The `codeql` lane runs the workflow's Go, JavaScript, Python and Ruby analyses as
+four declared Linux AMD64 Bazel actions. It pins the complete CodeQL 2.27.1
+bundle, including compatible query packs and notices, and uses the same default
+code-scanning suites and language categories. The default outputs are four SARIF
+files with per-file coverage and extraction diagnostics. Build
+`//tools/codeql:diagnostics` to also retrieve the databases and logs.
+Uploading results to GitHub is separate.
+
+CodeQL reads every indexed source path using its current file contents, including
+files outside the Bazel build graph. Stage new paths before analysis; missing
+indexed files and sources resolving outside the checkout are errors. The input
+is for analysis, not a source archive preserving Git modes or symlink metadata.
+Go uses the declared SDK, C toolchain and a separate offline analysis module
+profile. Gazelle supplies resolved archive pins for Go requirements declared
+by the root `MODULE.bazel` and `go.mod`, including indirect requirements. The Go
+SDK resolves their transitive requirements; Gazelle's own tooling dependencies
+are not added as analysis roots.
+The resulting manifests, proxy and license inventory are declared inputs. This
+uses upstream module archives, without Bazel dependency source patches, and
+leaves the source-export module profile unchanged. As in the public workflow,
+`CODEQL_EXTRACTOR_GO_BUILD_COMMAND=:` skips dependency build heuristics without
+restricting module discovery. Generated Go inputs are not overlaid; successful
+extraction still needs its diagnostics and coverage assessed.
 
 Run the mixed-platform units and release repository checks together:
 
