@@ -1,4 +1,6 @@
-load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "platforms")
+load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
+load(":test_tools.bzl", "erofs_tools")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -46,6 +48,23 @@ go_library(
     ],
 )
 
+# configs() in container_test.go already excludes ptrace. Keep the remaining
+# public platforms selectable without rebuilding or narrowing the test binary.
+_CONTAINER_PLATFORMS = [p for (p, tags) in platforms.items() if "manual" not in tags and p != "ptrace"]
+
+# The tests execute ip from the container root and create memory-backed files
+# in up to 25 concurrent containers, each writing 100 MiB.
+_CONTAINER_EXEC_PROPERTIES = namespace_test_exec_properties(
+    image = RBE_NETWORK_TOOLS_IMAGE,
+    memory = "4GB",
+)
+
+erofs_tools(
+    name = "erofs_tools",
+    testonly = True,
+    src = "@container_test_tools//:flat",
+)
+
 go_test(
     name = "container_test",
     size = "large",
@@ -69,13 +88,16 @@ go_test(
             "--test_platforms=%s" % default_platform,
         ],
     }),
+    cgroup_v2 = True,
     data = [
+        ":erofs_tools",
         "//:release",
         "//test/cmd/test_app",
     ],
+    exec_properties = _CONTAINER_EXEC_PROPERTIES,
     library = ":container",
     shard_count = most_shards,
-    tags = ["requires-kvm"],
+    tags = ["requires-kvm"] + ["rbe-has-container-%s-variant" % p for p in _CONTAINER_PLATFORMS],
     deps = [
         "//pkg/abi/linux",
         "//pkg/cleanup",
@@ -117,6 +139,22 @@ go_test(
     ],
 )
 
+[
+    native_test(
+        name = "container_test_" + platform,
+        size = "large",
+        src = ":container_test",
+        args = ["--test_platforms=" + platform],
+        cgroup_v2 = True,
+        # Preserve rules_go's runfiles initialization in the shared executable.
+        env = {"GO_TEST_RUN_FROM_BAZEL": "1"},
+        exec_properties = _CONTAINER_EXEC_PROPERTIES,
+        shard_count = most_shards,
+        tags = ["manual"] + (["requires-kvm"] if platform == "kvm" else []),
+    )
+    for platform in _CONTAINER_PLATFORMS
+]
+
 go_test(
     name = "serialization_test",
     srcs = ["serialization_test.go"],
@@ -127,33 +165,64 @@ go_test(
     ],
 )
 
+_LIFECYCLE_BENCHMARK_DATA = [
+    "//:release",
+    "//test/cmd/test_app",
+]
+
+_LIFECYCLE_BENCHMARK_DEPS = [
+    "//pkg/log",
+    "//pkg/test/testutil",
+    "//runsc/config",
+    "//runsc/flag",
+    "//runsc/specutils",
+    "@org_golang_x_sys//unix:go_default_library",
+]
+
+_LIFECYCLE_BENCHMARK_ARGS = [
+    "-test.bench=.",
+    "-test.run=^$$",
+    "-test.benchtime=30x",  # A fixed iteration count.
+    "-test.v",
+]
+
 go_test(
     name = "lifecycle_benchmark_test",
     size = "large",
     srcs = ["lifecycle_bench_test.go"],
-    args = [
-        "-test.bench=.",
-        "-test.run=^$$",
-        "-test.benchtime=30x",  # A fixed iteration count.
-        "-test.v",
-        "--test_platforms=kvm,systrap",
-    ],
-    data = [
-        "//:release",
-        "//test/cmd/test_app",
-    ],
+    args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=kvm,systrap"],
+    data = _LIFECYCLE_BENCHMARK_DATA,
     library = ":container",
     tags = [
         "manual",
         "notap",
         "requires-kvm",
     ],
-    deps = [
-        "//pkg/log",
-        "//pkg/test/testutil",
-        "//runsc/config",
-        "//runsc/flag",
-        "//runsc/specutils",
-        "@org_golang_x_sys//unix:go_default_library",
-    ],
+    deps = _LIFECYCLE_BENCHMARK_DEPS,
 )
+
+# Use the same direct runtime owner, separately selectable for hosted systrap
+# and KVM-capable workers. No Docker daemon or runc variant is involved.
+[
+    go_test(
+        name = "lifecycle_benchmark_" + platform + "_test",
+        size = "large",
+        timeout = "eternal",
+        srcs = ["lifecycle_bench_test.go"],
+        args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=" + platform],
+        data = _LIFECYCLE_BENCHMARK_DATA,
+        exec_properties = namespace_test_exec_properties(memory = "8GB"),
+        library = ":container",
+        nogo = False,
+        tags = [
+            "continuous-benchmark",
+            "manual",
+        ] + (["requires-kvm"] if platform == "kvm" else []),
+        visibility = ["//test/benchmarks:__pkg__"],
+        deps = _LIFECYCLE_BENCHMARK_DEPS,
+    )
+    for platform in [
+        "kvm",
+        "systrap",
+    ]
+]

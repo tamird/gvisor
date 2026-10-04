@@ -751,8 +751,14 @@ func routesForIface(iface net.Interface, disableIPv6 bool) ([]boot.Route, *boot.
 	for _, r := range rs {
 		mtu := uint32(r.MTU)
 
-		// Is it a default route?
-		if r.Dst == nil {
+		// Netlink may represent a default route with no destination or an
+		// explicit zero-length IPv4 or IPv6 prefix.
+		isDefault := r.Dst == nil
+		if r.Dst != nil {
+			ones, bits := r.Dst.Mask.Size()
+			isDefault = ones == 0 && bits != 0
+		}
+		if isDefault {
 			if r.Gw == nil {
 				return nil, nil, nil, fmt.Errorf("default route with no gateway %q: %+v", iface.Name, r)
 			}

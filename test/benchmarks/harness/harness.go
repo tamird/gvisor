@@ -28,8 +28,9 @@ var (
 	debug = flag.Bool("debug", false, "turns on debug messages for individual benchmarks")
 )
 
-// Init performs any harness initialization before runs.
-func Init() error {
+// Run initializes the benchmark harness and runs benchmarks against the selected
+// Docker daemon. Owned daemon cleanup finishes before Run returns to TestMain.
+func Run(run func() int) int {
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s -- --test.bench=<regex>\n", os.Args[0])
 		flag.PrintDefaults()
@@ -37,10 +38,9 @@ func Init() error {
 	flag.Parse()
 	if *help {
 		flag.Usage()
-		os.Exit(0)
+		return 0
 	}
-	dockerutil.EnsureSupportedDockerVersion()
-	return nil
+	return dockerutil.RunTests(run)
 }
 
 // SetFixedBenchmarks causes all benchmarks to run once.

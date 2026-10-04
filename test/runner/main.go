@@ -64,7 +64,7 @@ var (
 	fusefs             = flag.Bool("fusefs", false, "mounts a fusefs for /tmp")
 	fileAccess         = flag.String("file-access", "exclusive", "mounts root in exclusive or shared mode")
 	overlay            = flag.Bool("overlay", false, "wrap filesystem mounts with writable tmpfs overlay")
-	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Implicitly enabled if network=host, or if using network namespaces")
+	container          = flag.Bool("container", false, "run tests in their own namespaces (user ns, network ns, etc), pretending to be root. Native tests already run with isolated networking when permitted; this flag also remaps the current user to root")
 	setupContainerPath = flag.String("setup-container", "", "path to setup_container binary (for use with --container)")
 	trace              = flag.Bool("trace", false, "enables all trace points")
 	directfs           = flag.Bool("directfs", false, "enables directfs (for all gofer mounts)")
@@ -78,7 +78,6 @@ var (
 	waitForPid       = flag.Duration("delay-for-debugger", 0, "Print out the sandbox PID and wait for the specified duration to start the test. This is useful for attaching a debugger to the runsc-sandbox process.")
 	save             = flag.Bool("save", false, "enables save restore")
 	saveResume       = flag.Bool("save-resume", false, "enables save resume")
-	netstackSR       = flag.Bool("netstack-sr", false, "enables netstack s/r")
 	nftables         = flag.Bool("nftables", false, "enables nftables")
 	kvmUseCPUNums    = flag.Bool("kvm-use-cpu-nums", false, "use cpu numbers in kvm platform")
 	inSandboxCgroup  = flag.String("in-sandbox-cgroup", "v1", "cgroup setup to use inside the sandbox (v1 or v2)")
@@ -154,6 +153,11 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 		t.Fatalf("could not create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
+
+	// Tests that change users still need access to their scratch directory.
+	if err := os.Chmod(tmpDir, 0777); err != nil {
+		t.Fatalf("could not chmod temp dir: %v", err)
+	}
 
 	// Replace TEST_TMPDIR in the current environment with something
 	// unique.
@@ -237,7 +241,8 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 	cmd.Stderr = os.Stderr
 	cmd.SysProcAttr = &unix.SysProcAttr{}
 
-	if specutils.HasCapabilities(capability.CAP_SYS_ADMIN) {
+	hasSysAdmin := specutils.HasCapabilities(capability.CAP_SYS_ADMIN)
+	if hasSysAdmin {
 		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUTS
 	}
 
@@ -249,18 +254,25 @@ func runTestCaseNative(testBin string, tc *gtest.TestCase, args []string, t *tes
 		// setup_container takes in its target argv as positional arguments.
 		cmd.Path = getSetupContainerPath()
 		cmd.Args = append([]string{cmd.Path}, cmd.Args...)
-		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER | unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
-		// Set current user/group as root inside the namespace.
-		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getuid(), Size: 1},
-		}
-		cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
-			{ContainerID: 0, HostID: os.Getgid(), Size: 1},
-		}
-		cmd.SysProcAttr.GidMappingsEnableSetgroups = false
-		cmd.SysProcAttr.Credential = &syscall.Credential{
-			Uid: 0,
-			Gid: 0,
+		cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET | unix.CLONE_NEWIPC | unix.CLONE_NEWUTS | unix.CLONE_NEWNS
+		// Preserve privileged native tests' existing UID/GID mappings: mapping
+		// only the current user prevents tests from switching to another ID.
+		// Non-root callers still need a user namespace, since their effective
+		// capabilities may be lost when executing setup_container.
+		if *container || os.Geteuid() != 0 || !hasSysAdmin {
+			cmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWUSER
+			// Set current user/group as root inside the namespace.
+			cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getuid(), Size: 1},
+			}
+			cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{
+				{ContainerID: 0, HostID: os.Getgid(), Size: 1},
+			}
+			cmd.SysProcAttr.GidMappingsEnableSetgroups = false
+			cmd.SysProcAttr.Credential = &syscall.Credential{
+				Uid: 0,
+				Gid: 0,
+			}
 		}
 	}
 
@@ -354,7 +366,8 @@ func deleteSandbox(args []string, id string) error {
 //
 // Returns an error if the sandboxed application exits non-zero.
 func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
-	var hostTTYFile *os.File
+	var extraFiles []*os.File
+	var passFDArgs []string
 
 	if *addHostTTY {
 		ptmx, pts, err := pty.Open()
@@ -363,8 +376,36 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		}
 		defer ptmx.Close()
 		defer pts.Close()
-		hostTTYFile = pts
+		extraFiles = append(extraFiles, pts)
+		passFDArgs = append(passFDArgs, fmt.Sprintf("--pass-fd=%d:%d", hostPTYHostFD, hostPTYGuestFD))
 		spec.Process.Env = append(spec.Process.Env, fmt.Sprintf("TEST_HOST_PTY_FD=%d", hostPTYGuestFD))
+	}
+
+	if *overlay {
+		for _, kv := range spec.Process.Env {
+			xmlPath, ok := strings.CutPrefix(kv, "XML_OUTPUT_FILE=")
+			if !ok || xmlPath == "" {
+				continue
+			}
+			// Opening the report on the host keeps its writes out of the
+			// overlay. Keep it open across every checkpoint/restore, and let
+			// GTest reopen it through procfs when writing its final report.
+			xmlFile, err := os.Create(xmlPath)
+			if err != nil {
+				return fmt.Errorf("creating XML report: %w", err)
+			}
+			defer xmlFile.Close()
+			// Use the first guest descriptor after stdio, before tests allocate
+			// their own descriptors (including close_range test ranges).
+			const xmlGuestFD = 3
+			passFDArgs = append(passFDArgs, fmt.Sprintf("--pass-fd=%d:%d", 3+len(extraFiles), xmlGuestFD))
+			extraFiles = append(extraFiles, xmlFile)
+			spec.Process.Env = filterEnv(spec.Process.Env, []string{"XML_OUTPUT_FILE", "GTEST_OUTPUT", "GUNIT_OUTPUT"})
+			spec.Process.Env = append(spec.Process.Env,
+				fmt.Sprintf("XML_OUTPUT_FILE=/proc/self/fd/%d", xmlGuestFD),
+				fmt.Sprintf("GTEST_OUTPUT=xml:/proc/self/fd/%d", xmlGuestFD))
+			break
+		}
 	}
 
 	bundleDir, cleanup, err := testutil.SetupBundleDir(spec)
@@ -406,7 +447,9 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		args = append(args, "-net-raw")
 	}
 	if *overlay {
-		args = append(args, "-overlay2=all:dir=/tmp")
+		// Honor the test scratch directory: /tmp may share the gofer's root
+		// mount, whose read-only remount is blocked by writable backing files.
+		args = append(args, "-overlay2=all:dir="+testutil.TmpDir())
 	} else {
 		args = append(args, "-overlay2=none")
 	}
@@ -487,9 +530,6 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 
 		// Create the state file.
 		if *save || *saveResume {
-			if *netstackSR {
-				args = append(args, "--save-restore-netstack=true")
-			}
 			saveArgs = args
 			args, currentSaveDir, err = prepareSave(args, undeclaredOutputsDir, 0)
 			if err != nil {
@@ -526,16 +566,12 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 	var cmdArgs []string
 	if *waitForPid != 0 {
 		createArgs := append(args, "create")
-		if hostTTYFile != nil {
-			createArgs = append(createArgs, fmt.Sprintf("--pass-fd=%d:%d", hostPTYHostFD, hostPTYGuestFD))
-		}
+		createArgs = append(createArgs, passFDArgs...)
 		createArgs = append(createArgs, "-pid-file", filepath.Join(testLogDir, "pid"), "--bundle", bundleDir, id)
 		defer os.Remove(filepath.Join(testLogDir, "pid"))
 		log.Infof("Executing: %v", append([]string{specutils.ExePath}, createArgs...))
 		createCmd := exec.Command(specutils.ExePath, createArgs...)
-		if hostTTYFile != nil {
-			createCmd.ExtraFiles = append(createCmd.ExtraFiles, hostTTYFile)
-		}
+		createCmd.ExtraFiles = extraFiles
 		createCmd.SysProcAttr = sysProcAttr
 		createCmd.Stdout = os.Stdout
 		createCmd.Stderr = os.Stderr
@@ -570,15 +606,13 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 		cmdArgs = append(args, "start", id)
 	} else {
 		cmdArgs = append(args, "run")
-		if hostTTYFile != nil {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("--pass-fd=%d:%d", hostPTYHostFD, hostPTYGuestFD))
-		}
+		cmdArgs = append(cmdArgs, passFDArgs...)
 		cmdArgs = append(cmdArgs, "--bundle", bundleDir, id)
 	}
 	log.Infof("Executing: %v", append([]string{specutils.ExePath}, cmdArgs...))
 	cmd := exec.Command(specutils.ExePath, cmdArgs...)
-	if hostTTYFile != nil && *waitForPid == 0 {
-		cmd.ExtraFiles = append(cmd.ExtraFiles, hostTTYFile)
+	if *waitForPid == 0 {
+		cmd.ExtraFiles = extraFiles
 	}
 	cmd.SysProcAttr = sysProcAttr
 	if *container || *network == "host" || (cmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
@@ -667,9 +701,12 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 				os.RemoveAll(currentRestoreDir)
 				return fmt.Errorf("prepareSave error: %v", err)
 			}
-			restoreArgs = append(restoreArgs, "restore", "--image-path", currentRestoreDir, "--bundle", bundleDir, id)
+			restoreArgs = append(restoreArgs, "restore")
+			restoreArgs = append(restoreArgs, passFDArgs...)
+			restoreArgs = append(restoreArgs, "--image-path", currentRestoreDir, "--bundle", bundleDir, id)
 			log.Infof("Executing: %v", append([]string{specutils.ExePath}, restoreArgs...))
 			restoreCmd := exec.Command(specutils.ExePath, restoreArgs...)
+			restoreCmd.ExtraFiles = extraFiles
 			restoreCmd.SysProcAttr = sysProcAttr
 			if *container || *network == "host" || (restoreCmd.SysProcAttr.Cloneflags&unix.CLONE_NEWNET != 0) {
 				restoreCmd.SysProcAttr.Cloneflags |= unix.CLONE_NEWNET

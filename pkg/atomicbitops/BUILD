@@ -42,6 +42,11 @@ go_test(
         "aligned_test.go",
         "atomicbitops_test.go",
     ],
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
     library = ":atomicbitops",
+    visibility = ["//test/rbe:__pkg__"],
     deps = ["//pkg/sync"],
 )

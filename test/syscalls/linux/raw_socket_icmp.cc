@@ -115,7 +115,7 @@ void RawSocketICMPTest::TearDown() {
 }
 
 TEST_F(RawSocketICMPTest, IPv6ChecksumNotSupported) {
-  int v;
+  int v = 0;
   EXPECT_THAT(setsockopt(s_, SOL_IPV6, IPV6_CHECKSUM, &v, sizeof(v)),
               SyscallFailsWithErrno(ENOPROTOOPT));
   socklen_t len = sizeof(v);
@@ -125,7 +125,7 @@ TEST_F(RawSocketICMPTest, IPv6ChecksumNotSupported) {
 }
 
 TEST_F(RawSocketICMPTest, ICMPv6FilterNotSupported) {
-  icmp6_filter v;
+  icmp6_filter v = {};
   EXPECT_THAT(setsockopt(s_, SOL_ICMPV6, ICMP6_FILTER, &v, sizeof(v)),
               SyscallFailsWithErrno(ENOPROTOOPT));
   socklen_t len = sizeof(v);

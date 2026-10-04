@@ -124,6 +124,7 @@ syscall_test(
 
 syscall_test(
     size = "large",
+    memory = "2GB",
     perf = True,
     test = "//test/perf/linux:send_recv_benchmark",
 )

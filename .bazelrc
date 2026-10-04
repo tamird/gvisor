@@ -15,10 +15,13 @@
 # Ensure a strong hash function.
 startup --host_jvm_args=-Dbazel.DigestFunction=SHA256
 
-# Build with C++17.
-# com_google_protobuf is compiled with a few warnings.
-build --cxxopt=-std=c++17 --cxxopt=-Wno-error=maybe-uninitialized
-build --host_cxxopt=-std=c++17 --host_cxxopt=-Wno-error=maybe-uninitialized
+# Start Python programs with the declared interpreter, without requiring a host
+# Python interpreter to bootstrap it.
+build --@rules_python//python/config_settings:bootstrap_impl=script
+
+# Build C with GNU17 and C++ with C++17.
+build --conlyopt=-std=gnu17 --cxxopt=-std=c++17
+build --host_conlyopt=-std=gnu17 --host_cxxopt=-std=c++17
 
 # Display the current git revision in the info block.
 build --stamp --workspace_status_command tools/workspace_status.sh
@@ -34,26 +37,72 @@ build --@io_bazel_rules_go//go/config:pure
 test --@io_bazel_rules_go//go/config:pure
 
 # Set bazel_rule as non-pure when cgo is used.
-build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tldk=true --define=network_plugins=true
+build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --//external/tools/plugin-stack:tldk
 
 # By default, exclude nogo targets from building. They will still be included
 # by default for all tests.
 build --build_tag_filters=-nogo
 
 # Select the ordinary syscall tests used by public CI.
-test:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
-test:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
+build:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
+build:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
+
+# Keep Nogo selection shared by analysis, tests and make nogo-tests.
+build:nogo --test_tag_filters=nogo --build_tests_only
+
+# Keep the existing unit lane's roots, exclusions and filters shared with Make.
+test:unit --target_pattern_file=test/unit.targets
+build:unit --test_tag_filters=-nogo,-requires-kvm
+build:unit --build_tag_filters=-network_plugins
+
+# BuildBuddy's hosted coordinator supplies this configuration and authentication.
+# Both compilation and test actions execute remotely; the execution platform
+# owns the runtime image so per-test properties retain its image and architecture.
+build:rbe-common --config=buildbuddy_remote_executor
+# Keep remote workers fed independently of the coordinator's CPU count.
+build:rbe-common --jobs=400
+# Uploads otherwise hold the action-preparation semaphore and delay new work.
+# https://github.com/bazelbuild/bazel/issues/28734
+build:rbe-common --noexperimental_throttle_remote_action_building
+build:rbe-common --define=rbe=true
+build:rbe-common --spawn_strategy=remote
+build:rbe-common --noremote_local_fallback
+build:rbe-common --remote_cache_compression
+test:rbe-common --strategy=TestRunner=remote
+
+build:rbe --config=rbe-common
+# Architecture-specific generators may need the other native CPU even when
+# the requested build or test lane selects only one target architecture.
+build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+build:rbe --host_platform=//tools/bazeldefs:rbe_linux_amd64
+
+# Bind unused cgroup-v1 controllers in disposable AMD64 test VMs.
+build:rbe-cgroup-v1 --config=rbe-common
+build:rbe-cgroup-v1 --//tools/bazeldefs:cgroup_v1=true
+build:rbe-cgroup-v1 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64_cgroup_v1,//tools/bazeldefs:rbe_linux_arm64
+test:rbe-cgroup-v1 --run_under=//test/rbe:cgroup_v1
+test:rbe-cgroup-v1 --modify_execution_info=TestRunner=+no-local
+test:rbe-cgroup-v1 --test_env=CGROUPV2=false
+
+# Select ARM64 tools as well as ARM64 execution workers.
+build:rbe-arm64 --config=rbe-common
+build:rbe-arm64 --extra_execution_platforms=//tools/bazeldefs:rbe_linux_arm64,//tools/bazeldefs:rbe_linux_amd64
+build:rbe-arm64 --host_platform=//tools/bazeldefs:rbe_linux_arm64
 
 # Set flags for x86_64.
-build:x86_64 --crosstool_top=@crosstool//:toolchains
 build:x86_64 --cpu=k8
 build:x86_64 --platforms=//tools/bazeldefs:linux_amd64
 
 # Set flags for aarch64.
-build:aarch64 --crosstool_top=@crosstool//:toolchains
 build:aarch64 --cpu=aarch64
 build:aarch64 --platforms=//tools/bazeldefs:linux_arm64
 
 # Use prebuilt protoc to speed up builds.
 common --@com_google_protobuf//bazel/toolchains:prefer_prebuilt_protoc
 common --incompatible_enable_proto_toolchain_resolution=true
+
+# One graph can compile and execute explicit AMD64 and ARM64 test variants.
+# Target-owned execution constraints select the worker without a host-platform
+# override; test.* properties continue to select isolated runtime fixtures.
+build:rbe-matrix --config=rbe-common
+build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64

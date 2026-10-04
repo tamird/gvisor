@@ -57,21 +57,7 @@ _templates:
     env:
       <<: *benchmarks_env
       BUILDKITE_PIPELINE_INSTALL_RUNTIME: false
-  netstack_test: &netstack_test
-    env:
-      PACKAGES: >
-        ./pkg/tcpip
-        ./pkg/tcpip/adapters/gonet
-        ./pkg/tcpip/header
-        ./pkg/tcpip/link/channel
-        ./pkg/tcpip/network/ipv4
-        ./pkg/tcpip/network/ipv6
-        ./pkg/tcpip/stack
-        ./pkg/tcpip/transport/icmp
-        ./pkg/tcpip/transport/tcp
-        ./pkg/tcpip/transport/udp
-        ./pkg/buffer
-        ./pkg/waiter
+
 env:
   # Force a clean checkout every time to avoid reuse of files between runs.
   BUILDKITE_CLEAN_CHECKOUT: true
@@ -141,68 +127,49 @@ steps:
     agents:
       queue: "default"
 
-  # Check that the Go branch builds. This is not technically required, as this build is maintained
-  # as a GitHub action in order to preserve this maintaince across forks. However, providing the
-  # action here may provide easier debuggability and diagnosis on failure.
+  # Build the exported Go module and its cross-platform netstack selections.
   - <<: *common
     <<: *source_test
     label: ":golang: Go branch"
     commands:
-      - tools/go_branch.sh
-      - git checkout go && git clean -xf .
-      - go build ./...
+      - "make test TARGETS=//tools/go_export:linux_amd64_test"
     agents:
       queue: "default"
 
   # Check that commonly used netstack packages build on various platforms.
   - <<: *common
     <<: *source_test
-    <<: *netstack_test
     label: ":mac: Netstack on Mac"
     commands:
-      - tools/go_branch.sh
-      - git checkout go && git clean -xf .
-      - GOOS=darwin GOARCH=arm64 go build $$PACKAGES
+      - "make test TARGETS=//tools/go_export:darwin_arm64_test"
     agents:
       queue: "default"
   - <<: *common
     <<: *source_test
-    <<: *netstack_test
     label: ":windows: Netstack on Windows"
     commands:
-      - tools/go_branch.sh
-      - git checkout go && git clean -xf .
-      - GOOS=windows GOARCH=amd64 go build $$PACKAGES
+      - "make test TARGETS=//tools/go_export:windows_amd64_test"
     agents:
       queue: "default"
   - <<: *common
     <<: *source_test
-    <<: *netstack_test
     label: ":freebsd: Netstack on FreeBSD"
     commands:
-      - tools/go_branch.sh
-      - git checkout go && git clean -xf .
-      - GOOS=freebsd GOARCH=amd64 go build $$PACKAGES
+      - "make test TARGETS=//tools/go_export:freebsd_amd64_test"
     agents:
       queue: "default"
   - <<: *common
     <<: *source_test
-    <<: *netstack_test
     label: ":openbsd: Netstack on OpenBSD"
     commands:
-      - tools/go_branch.sh
-      - git checkout go && git clean -xf .
-      - GOOS=openbsd GOARCH=amd64 go build $$PACKAGES
+      - "make test TARGETS=//tools/go_export:openbsd_amd64_test"
     agents:
       queue: "default"
   - <<: *common
     <<: *source_test
-    <<: *netstack_test
     label: ":older_man: Netstack on 32-bit Linux"
     commands:
-      - tools/go_branch.sh
-      - git checkout go && git clean -xf .
-      - GOOS=linux GOARCH=mips go build $$PACKAGES
+      - "make test TARGETS=//tools/go_export:linux_mips_test"
     agents:
       queue: "default"
 
@@ -655,9 +622,7 @@ steps:
   - <<: *common
     <<: *source_test
     label: ":podman: Podman"
-    commands:
-      - sudo RUNTIME_ARGS=--directfs=false ./test/podman/run.sh
-      - sudo RUNTIME_ARGS=--directfs=true ./test/podman/run.sh
+    command: sudo ./test/podman/run.sh
     agents:
       <<: *ubuntu_agents
       cgroup: "v2"
@@ -721,7 +686,7 @@ steps:
   - <<: *common
     <<: *docker
     label: ":php: PHP runtime tests"
-    command: make php8.3.7-runtime-tests RUNTIME_ARGS=--directfs
+    command: make php8.3.35-runtime-tests RUNTIME_ARGS=--directfs
     parallelism: 2
     agents:
       <<: *platform_specific_agents
@@ -788,7 +753,7 @@ steps:
   - <<: *common
     <<: *docker
     label: ":php: PHP runtime tests (goferfs)"
-    command: make php8.3.7-runtime-tests RUNTIME_ARGS=--directfs=false
+    command: make php8.3.35-runtime-tests RUNTIME_ARGS=--directfs=false
     parallelism: 2
     if: build.branch == "master"
     agents:

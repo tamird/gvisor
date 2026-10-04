@@ -82,104 +82,110 @@ func dockerCLIPath() string {
 }
 
 // PrintDockerConfig prints the whole Docker configuration file to the log.
-func PrintDockerConfig() {
+func PrintDockerConfig(t testing.TB) {
+	t.Helper()
 	configBytes, err := os.ReadFile(*config)
 	if err != nil {
-		log.Fatalf("Cannot read Docker config at %v: %v", *config, err)
+		t.Fatalf("Cannot read Docker config at %v: %v", *config, err)
 	}
-	log.Printf("Docker config (from %v):\n--------\n%v\n--------\n", *config, string(configBytes))
+	t.Logf("Docker config (from %v):\n--------\n%v\n--------\n", *config, string(configBytes))
 }
 
-func getDockerVersion() (int, int) {
-	cmd := exec.Command(dockerCLIPath(), "version", "--format", "{{.Server.Version}}")
+func dockerVersion() (int, int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, dockerCLIPath(), "version", "--format", "{{.Server.Version}}")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("error running %q: %s: %s", cmd, err, stderr.String())
+		return 0, 0, fmt.Errorf("error running %q: %w: %s", cmd, err, stderr.String())
 	}
 	version := strings.TrimSpace(stdout.String())
 	parts := strings.Split(version, ".")
 	if len(parts) < 3 {
-		log.Fatalf("invalid %q output: %s", cmd, version)
+		return 0, 0, fmt.Errorf("invalid %q output: %s", cmd, version)
 	}
-	major, _ := strconv.Atoi(parts[0])
-	minor, _ := strconv.Atoi(parts[1])
-	return major, minor
+	major, err := strconv.Atoi(parts[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid Docker major version %q: %w", version, err)
+	}
+	minor, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return 0, 0, fmt.Errorf("invalid Docker minor version %q: %w", version, err)
+	}
+	return major, minor, nil
 }
 
 // EnsureSupportedDockerVersion checks if correct docker is installed.
 //
 // This logs directly to stderr, as it is typically called from a Main wrapper.
 func EnsureSupportedDockerVersion() {
-	major, minor := getDockerVersion()
-	if major < 17 || (major == 17 && minor < 9) {
-		log.Fatalf("Docker version 17.09.0 or greater is required, found: %02d.%02d", major, minor)
+	if err := checkSupportedDockerVersion(); err != nil {
+		log.Fatal(err)
 	}
 }
 
+func checkSupportedDockerVersion() error {
+	major, minor, err := dockerVersion()
+	if err != nil {
+		return err
+	}
+	if major < 17 || (major == 17 && minor < 9) {
+		return fmt.Errorf("unsupported Docker version %02d.%02d: requires 17.09.0 or later", major, minor)
+	}
+	return nil
+}
+
 // EnsureDockerExperimentalEnabled ensures that Docker has experimental features enabled.
-func EnsureDockerExperimentalEnabled() {
-	cmd := exec.Command(dockerCLIPath(), "version", "--format={{.Server.Experimental}}")
+func EnsureDockerExperimentalEnabled(t testing.TB) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, dockerCLIPath(), "version", "--format={{.Server.Experimental}}")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		log.Fatalf("error running %q: %s: %s", cmd, err, stderr.String())
+		t.Fatalf("error running %q: %s: %s", cmd, err, stderr.String())
 	}
 	if strings.TrimSpace(stdout.String()) != "true" {
-		PrintDockerConfig()
-		log.Fatalf("Docker is running without experimental features enabled.")
+		PrintDockerConfig(t)
+		t.Fatal("Docker is running without experimental features enabled.")
 	}
 }
 
 // IsRestoreSupported returns true if the docker version supports restore.
 // Docker restore broke starting v28 due to
 // https://github.com/moby/moby/issues/50750.
-func IsRestoreSupported() bool {
-	major, _ := getDockerVersion()
+func IsRestoreSupported(t testing.TB) bool {
+	t.Helper()
+	major, _, err := dockerVersion()
+	if err != nil {
+		t.Fatal(err)
+	}
 	return major <= 27
 }
 
 // RuntimePath returns the binary path for the current runtime.
 func RuntimePath() (string, error) {
-	rs, err := runtimeMap()
+	r, err := NamedRuntime(Runtime())
 	if err != nil {
 		return "", err
 	}
-
-	p, ok := rs["path"].(string)
-	if !ok {
-		// The runtime does not declare a path.
-		return "", fmt.Errorf("runtime does not declare a path: %v", rs)
+	if r.Path == "" {
+		return "", fmt.Errorf("runtime %q does not declare a path", Runtime())
 	}
-	return p, nil
+	return r.Path, nil
 }
 
 // RuntimeArgs returns the arguments for the current runtime.
 func RuntimeArgs() ([]string, error) {
-	rs, err := runtimeMap()
+	r, err := NamedRuntime(Runtime())
 	if err != nil {
 		return nil, err
 	}
-	argsAny, ok := rs["runtimeArgs"]
-	if !ok {
-		// The runtime does not have any arguments.
-		return nil, nil
-	}
-	argsAnySlice, ok := argsAny.([]any)
-	if !ok {
-		return nil, fmt.Errorf("runtime arguments should be a list of strings, got: %q (type: %T)", argsAny, argsAny)
-	}
-	args := make([]string, 0, len(argsAnySlice))
-	for i, argAny := range argsAnySlice {
-		arg, ok := argAny.(string)
-		if !ok {
-			return nil, fmt.Errorf("runtime arguments should be a list of strings, got: %q (index %d is %q which has unexpected type %T)", argsAny, i, argAny, argAny)
-		}
-		args = append(args, arg)
-	}
-	return args, nil
+	return r.Args, nil
 }
 
 // IsGVisorRuntime returns whether the default container runtime used by
@@ -262,40 +268,24 @@ func CgroupfsParent() (string, error) {
 	return cfg.Parent, nil
 }
 
-func runtimeMap() (map[string]any, error) {
-	// Read the configuration data; the file must exist.
-	configBytes, err := os.ReadFile(*config)
+// NamedRuntime reads a registered runtime from the selected Docker configuration.
+// The name is independent of the runtime selected for outer test containers.
+func NamedRuntime(name string) (RuntimeDefinition, error) {
+	data, err := os.ReadFile(*config)
 	if err != nil {
-		return nil, err
+		return RuntimeDefinition{}, err
 	}
-
-	// Unmarshal the configuration.
-	c := make(map[string]any)
-	if err := json.Unmarshal(configBytes, &c); err != nil {
-		return nil, err
+	var cfg struct {
+		Runtimes map[string]*RuntimeDefinition `json:"runtimes"`
 	}
-
-	// Decode the expected configuration.
-	r, ok := c["runtimes"]
-	if !ok {
-		return nil, fmt.Errorf("no runtimes declared: %v", c)
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return RuntimeDefinition{}, fmt.Errorf("decode Docker runtimes: %w", err)
 	}
-	rs, ok := r.(map[string]any)
-	if !ok {
-		// The runtimes are not a map.
-		return nil, fmt.Errorf("unexpected format: %v", rs)
+	r, ok := cfg.Runtimes[name]
+	if !ok || r == nil {
+		return RuntimeDefinition{}, fmt.Errorf("runtime %q not declared in %q", name, *config)
 	}
-	r, ok = rs[*runtime]
-	if !ok {
-		// The expected runtime is not declared.
-		return nil, fmt.Errorf("runtime %q not found: %v", *runtime, rs)
-	}
-	rs, ok = r.(map[string]any)
-	if !ok {
-		// The runtime is not a map.
-		return nil, fmt.Errorf("unexpected format: %v", r)
-	}
-	return rs, nil
+	return *r, nil
 }
 
 // Save exports a container image to the given Writer.

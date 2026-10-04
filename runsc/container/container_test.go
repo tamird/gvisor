@@ -18,6 +18,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -71,7 +73,14 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "Error running as root: %v", err)
 		os.Exit(123)
 	}
-	os.Exit(m.Run())
+	status := m.Run()
+	if erofsToolsDir != "" {
+		if err := os.RemoveAll(erofsToolsDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Removing EROFS tools: %v\n", err)
+			status = 1
+		}
+	}
+	os.Exit(status)
 }
 
 func execute(conf *config.Config, cont *Container, name string, arg ...string) (unix.WaitStatus, error) {
@@ -241,6 +250,64 @@ func blockUntilWaitable(pid int) error {
 		return 0, 0, err
 	})
 	return err
+}
+
+func TestSetOOMScoreAdjExited(t *testing.T) {
+	cmd := exec.Command("/bin/cat")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { stdin.Close() })
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		cmd.Process.Kill()
+		cmd.Wait()
+	})
+
+	pid := cmd.Process.Pid
+	if err := setOOMScoreAdj(pid, 1000); err != nil {
+		t.Fatalf("setOOMScoreAdj(%d, 1000) while alive: %v", pid, err)
+	}
+	data, err := os.ReadFile(fmt.Sprintf("/proc/%d/oom_score_adj", pid))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.TrimSpace(string(data)); got != "1000" {
+		t.Fatalf("live oom_score_adj = %q, want 1000", got)
+	}
+
+	// Keep the child waitable but unreaped so its proc files still exist.
+	if err := stdin.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := blockUntilWaitable(pid); err != nil {
+		t.Fatal(err)
+	}
+	if err := setOOMScoreAdj(pid, 1000); err != nil {
+		t.Fatalf("setOOMScoreAdj(%d, 1000) after exit = %v, want nil", pid, err)
+	}
+}
+
+func TestSetOOMScoreAdjPermissionDenied(t *testing.T) {
+	// Probe without writing: a privileged caller may be able to change PID 1's
+	// score, in which case this permission-denied control does not apply.
+	f, err := os.OpenFile("/proc/1/oom_score_adj", os.O_WRONLY, 0)
+	if err == nil {
+		f.Close()
+		t.Skip("PID 1's oom_score_adj is writable")
+	}
+	if !errors.Is(err, unix.EACCES) {
+		t.Fatalf("opening PID 1's oom_score_adj: %v, want EACCES", err)
+	}
+	if running, err := specutils.IsProcessRunning(1); err != nil || !running {
+		t.Fatalf("IsProcessRunning(1) = (%t, %v), want (true, nil)", running, err)
+	}
+	if err := setOOMScoreAdj(1, 1000); !errors.Is(err, unix.EACCES) {
+		t.Fatalf("setOOMScoreAdj(1, 1000) = %v, want EACCES", err)
+	}
 }
 
 // execPS executes `ps` inside the container and return the processes.
@@ -4529,10 +4596,79 @@ func TestExecFDExec(t *testing.T) {
 	}
 }
 
-// skipIfNotAvailable skips the test if the requested executable files are not available.
+// erofsToolsDir is initialized once by erofsToolsRoot and removed after m.Run.
+var erofsToolsDir string
+
+// Keep the package archive intact in runfiles: its absolute filesystem symlinks
+// are not portable Bazel tree outputs. Only the EROFS tests extract it.
+var erofsToolsRoot = sync.OnceValues(func() (string, error) {
+	configPath, err := testutil.FindFile("runsc/container/erofs_tools.json")
+	if err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return "", err
+	}
+	var config struct {
+		Archive string   `json:"archive"`
+		Tar     string   `json:"tar"`
+		Env     []string `json:"env"`
+	}
+	if err := json.Unmarshal(data, &config); err != nil {
+		return "", err
+	}
+	archive, err := testutil.FindFile(config.Archive)
+	if err != nil {
+		return "", err
+	}
+	tar, err := testutil.FindFile(config.Tar)
+	if err != nil {
+		return "", err
+	}
+	root, err := os.MkdirTemp(testutil.TmpDir(), "erofs-tools-")
+	if err != nil {
+		return "", err
+	}
+	erofsToolsDir = root
+	cmd := exec.Command(tar, "-xf", archive, "-C", root, "--no-same-owner")
+	cmd.Env = append(os.Environ(), config.Env...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("extracting EROFS tools: %w, output: %s", err, out)
+	}
+	return root, nil
+})
+
+// erofsTool uses declared inputs under Bazel and PATH for direct execution.
+func erofsTool(name string) (string, error) {
+	if os.Getenv("TEST_SRCDIR") == "" {
+		return exec.LookPath(name)
+	}
+	root, err := erofsToolsRoot()
+	if err != nil {
+		return "", err
+	}
+	var toolPath string
+	switch name {
+	case "mkfs.erofs":
+		toolPath = "usr/bin/mkfs.erofs"
+	case "busybox":
+		toolPath = "bin/busybox"
+	default:
+		return "", fmt.Errorf("unknown EROFS tool %q", name)
+	}
+	return exec.LookPath(filepath.Join(root, toolPath))
+}
+
+// skipIfNotAvailable preserves optional installed tools for direct execution.
+// Missing declared Bazel inputs are failures rather than skipped coverage.
 func skipIfNotAvailable(t *testing.T, files ...string) {
+	t.Helper()
 	for _, f := range files {
-		if _, err := exec.LookPath(f); err != nil {
+		if _, err := erofsTool(f); err != nil {
+			if os.Getenv("TEST_SRCDIR") != "" {
+				t.Fatalf("declared %v is not available: %v", f, err)
+			}
 			t.Skipf("%v is not available: %v", f, err)
 		}
 	}
@@ -4540,13 +4676,34 @@ func skipIfNotAvailable(t *testing.T, files ...string) {
 
 // createImageEROFS creates the EROFS image from the source directory using the requested options.
 func createImageEROFS(image, source string, options ...string) error {
-	mkfs, err := exec.LookPath("mkfs.erofs")
+	mkfs, err := erofsTool("mkfs.erofs")
 	if err != nil {
 		return fmt.Errorf("mkfs.erofs is not available: %v", err)
 	}
-	cmd := fmt.Sprintf("%s %s %s %s", mkfs, strings.Join(options, " "), image, source)
-	if out, err := exec.Command("/bin/sh", "-c", cmd).CombinedOutput(); err != nil {
-		return fmt.Errorf("exec: sh -c %q, err: %v, out: %s", cmd, err, out)
+	args := append(options, image, source)
+	cmd := exec.Command(mkfs, args...)
+	if os.Getenv("TEST_SRCDIR") != "" {
+		root, err := erofsToolsRoot()
+		if err != nil {
+			return err
+		}
+		var triple, loader string
+		switch runtime.GOARCH {
+		case "amd64":
+			triple, loader = "x86_64-linux-gnu", "ld-linux-x86-64.so.2"
+		case "arm64":
+			triple, loader = "aarch64-linux-gnu", "ld-linux-aarch64.so.1"
+		default:
+			return fmt.Errorf("unsupported EROFS tool architecture %q", runtime.GOARCH)
+		}
+		// mkfs uses its declared loader and library closure without changing the
+		// environment of the other container tests or their child processes.
+		libPath := filepath.Join(root, "lib", triple) + ":" + filepath.Join(root, "usr/lib", triple)
+		args = append([]string{"--inhibit-cache", "--library-path", libPath, mkfs}, args...)
+		cmd = exec.Command(filepath.Join(root, "lib", triple, loader), args...)
+	}
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("exec: %v, err: %v, out: %s", cmd.Args, err, out)
 	}
 	return nil
 }
@@ -4627,27 +4784,27 @@ find $dir -type l -o -type f | sort | xargs cat | md5sum`), 0755); err != nil {
 
 	images := []struct {
 		name    string
-		options string
+		options []string
 	}{
 		{
 			// Generate extended inodes. Inline regular files if possible.
 			name:    "image1",
-			options: "-E force-inode-extended",
+			options: []string{"-E", "force-inode-extended"},
 		},
 		{
 			// Generate extended inodes. Do not inline regular files.
 			name:    "image2",
-			options: "-E force-inode-extended -E noinline_data",
+			options: []string{"-E", "force-inode-extended", "-E", "noinline_data"},
 		},
 		{
 			// Generate compact inodes. Inline regular files if possible.
 			name:    "image3",
-			options: "-E force-inode-compact",
+			options: []string{"-E", "force-inode-compact"},
 		},
 		{
 			// Generate compact inodes. Do not inline regular files.
 			name:    "image4",
-			options: "-E force-inode-compact -E noinline_data",
+			options: []string{"-E", "force-inode-compact", "-E", "noinline_data"},
 		},
 	}
 
@@ -4655,12 +4812,12 @@ find $dir -type l -o -type f | sort | xargs cat | md5sum`), 0755); err != nil {
 	// Create the EROFS images.
 	for _, i := range images {
 		imagePath := filepath.Join(testDir, i.name)
-		if err := createImageEROFS(imagePath, sourceDir, i.options); err != nil {
+		if err := createImageEROFS(imagePath, sourceDir, i.options...); err != nil {
 			return nil, nil, fmt.Errorf("error creating EROFS image: %v", err)
 		}
 		resultImages = append(resultImages, erofsImageInfo{
 			name:    i.name,
-			options: i.options,
+			options: strings.Join(i.options, " "),
 			path:    imagePath,
 		})
 	}
@@ -4804,7 +4961,7 @@ func createRootfsEROFS(dir string) (string, string, error) {
 	if err := os.Mkdir(rootfsDir, 0755); err != nil {
 		return "", "", fmt.Errorf("os.Mkdir() failed: %v", err)
 	}
-	busybox, err := exec.LookPath("busybox")
+	busybox, err := erofsTool("busybox")
 	if err != nil {
 		return "", "", fmt.Errorf("busybox is not available: %v", err)
 	}
@@ -4823,7 +4980,7 @@ func createRootfsEROFS(dir string) (string, string, error) {
 
 	// Build the EROFS rootfs image.
 	rootfsImage := filepath.Join(dir, "rootfs.img")
-	if err := createImageEROFS(rootfsImage, rootfsDir, "-E noinline_data"); err != nil {
+	if err := createImageEROFS(rootfsImage, rootfsDir, "-E", "noinline_data"); err != nil {
 		return "", "", fmt.Errorf("error creating EROFS image: %v", err)
 	}
 

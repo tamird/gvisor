@@ -21,6 +21,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -293,28 +294,32 @@ TEST(ReadvTestNoFixture, TruncatedAtMax) {
   // From Linux's include/linux/fs.h.
   size_t const MAX_RW_COUNT = INT_MAX & ~(kPageSize - 1);
 
-  // Create an iovec array with 3 segments pointing to consecutive parts of a
-  // buffer. The first covers all but the last three pages, and should be
-  // written to in its entirety. The second covers the last page before
-  // MAX_RW_COUNT and the first page after; only the first page should be
-  // written to. The third covers the last page of the buffer, and should be
-  // skipped entirely.
-  size_t const kBufferSize = MAX_RW_COUNT + 2 * kPageSize;
-  size_t const kFirstOffset = MAX_RW_COUNT - kPageSize;
-  size_t const kSecondOffset = MAX_RW_COUNT + kPageSize;
-  // The buffer is too big to fit on the stack.
+  // Reuse the same storage for the prefix so the test need not allocate 2 GiB.
+  // A 4 MiB buffer keeps the number of iovecs below IOV_MAX.
+  constexpr size_t kBufferSize = 4 * 1024 * 1024;
   std::vector<char> buf(kBufferSize);
-  struct iovec iov[3];
-  iov[0].iov_base = buf.data();
-  iov[0].iov_len = kFirstOffset;
-  iov[1].iov_base = buf.data() + kFirstOffset;
-  iov[1].iov_len = kSecondOffset - kFirstOffset;
-  iov[2].iov_base = buf.data() + kSecondOffset;
-  iov[2].iov_len = kBufferSize - kSecondOffset;
+  std::vector<struct iovec> iov;
+  for (size_t remaining = MAX_RW_COUNT - kPageSize; remaining > 0;) {
+    const size_t length = std::min(remaining, buf.size());
+    iov.push_back({buf.data(), length});
+    remaining -= length;
+  }
+
+  // The next iovec straddles MAX_RW_COUNT; only its first page may be written.
+  // The final iovec must be skipped entirely.
+  constexpr char kSentinel = 0x5a;
+  std::vector<char> tail(3 * kPageSize, kSentinel);
+  iov.push_back({tail.data(), 2 * kPageSize});
+  iov.push_back({tail.data() + 2 * kPageSize, kPageSize});
+  ASSERT_LE(iov.size(), IOV_MAX);
 
   const FileDescriptor fd =
       ASSERT_NO_ERRNO_AND_VALUE(Open("/dev/zero", O_RDONLY));
-  EXPECT_THAT(readv(fd.get(), iov, 3), SyscallSucceedsWithValue(MAX_RW_COUNT));
+  ASSERT_THAT(readv(fd.get(), iov.data(), static_cast<int>(iov.size())),
+              SyscallSucceedsWithValue(MAX_RW_COUNT));
+  EXPECT_EQ(std::count(tail.begin(), tail.begin() + kPageSize, 0), kPageSize);
+  EXPECT_EQ(std::count(tail.begin() + kPageSize, tail.end(), kSentinel),
+            2 * kPageSize);
 }
 
 }  // namespace

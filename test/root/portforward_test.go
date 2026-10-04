@@ -35,6 +35,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
 	"gvisor.dev/gvisor/runsc/specutils"
@@ -173,33 +174,19 @@ func getUnusedPort() (int, error) {
 }
 
 func waitUntilServerIsUp(ctx context.Context, server *dockerutil.Container, port int) error {
-	// This is a bit crude, but we need to make sure the server is up without exposing a port to the
-	// host. When the server container boots, the nginx process should run first. If we run nginx
-	// again, it will fail to bind to port 80. Run exec calls until we get that failure.
-	serverUpChan := make(chan struct{})
-	var upOut string
-	var upErr error
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 	reg := regexp.MustCompile(fmt.Sprintf(`0\.0\.0\.0:%d[\s]*0\.0\.0\.0:\*[\s]*LISTEN`, port))
-	go func() {
-		for {
-			time.Sleep(time.Millisecond * 500)
-			upOut, upErr = server.Exec(ctx, dockerutil.ExecOpts{}, []string{"netstat", "-l"}...)
-			if reg.MatchString(upOut) {
-				close(serverUpChan)
-				return
-			}
+	return testutil.PollContext(ctx, func() error {
+		out, err := server.Exec(ctx, dockerutil.ExecOpts{}, "netstat", "-l")
+		if err != nil {
+			return fmt.Errorf("query server listeners: %w; output: %s", err, out)
 		}
-	}()
-
-	// If the server isn't up after 30 seconds, there is probably something wrong.
-	select {
-	case <-serverUpChan:
-		break
-	case <-time.After(time.Second * 30):
-		return fmt.Errorf("could not verify server is up: err: %v out: %s", upErr, upOut)
-	}
-
-	return nil
+		if !reg.MatchString(out) {
+			return fmt.Errorf("server is not listening on port %d: %s", port, out)
+		}
+		return nil
+	})
 }
 
 type portForwardProcess struct {
@@ -259,14 +246,14 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 
-	dockerutil.EnsureSupportedDockerVersion()
-
-	// Configure exe for tests.
-	path, err := dockerutil.RuntimePath()
-	if err != nil {
-		panic(err.Error())
-	}
-	specutils.ExePath = path
-
-	os.Exit(m.Run())
+	os.Exit(dockerutil.RunTests(func() int {
+		// Resolve the executable after the selected daemon has been configured.
+		path, err := dockerutil.RuntimePath()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Configure runsc for port-forward tests: %v\n", err)
+			return 1
+		}
+		specutils.ExePath = path
+		return m.Run()
+	}))
 }

@@ -101,27 +101,26 @@ func (c *cgroupV2) createCgroupPaths() (bool, error) {
 	//	* /sys/fs/cgroup/cgroup.subtree_control
 	//	* /sys/fs/cgroup/foo/cgroup.subtree_control
 	val := "+" + strings.Join(c.Controllers, " +")
-	elements := strings.Split(c.Path, "/")
 	current := c.Mountpoint
 	created := false
 
-	for i, e := range elements {
-		current = filepath.Join(current, e)
-		if i > 0 {
-			if err := os.Mkdir(current, 0o755); err != nil {
-				if !os.IsExist(err) {
-					return false, err
-				}
-			} else {
-				created = true
-				c.Own = append(c.Own, current)
-			}
+	for _, e := range strings.Split(c.Path, "/") {
+		if e == "" || e == "." {
+			continue
 		}
-		// enable all known controllers for subtree
-		if i < len(elements)-1 {
-			if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+		// Enable the parent before creating its child, regardless of whether
+		// Path has a leading slash. Never create or own the mount point itself.
+		if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+			return false, err
+		}
+		current = filepath.Join(current, e)
+		if err := os.Mkdir(current, 0o755); err != nil {
+			if !os.IsExist(err) {
 				return false, err
 			}
+		} else {
+			created = true
+			c.Own = append(c.Own, current)
 		}
 	}
 	return created, nil
@@ -505,26 +504,34 @@ func (*cpu2) set(spec *specs.LinuxResources, path string) error {
 		}
 	}
 
-	if spec.CPU.Period != nil || spec.CPU.Quota != nil {
-		v := maxLimitStr
-		if spec.CPU.Quota != nil && *spec.CPU.Quota > 0 {
-			v = strconv.FormatInt(*spec.CPU.Quota, 10)
-		}
-
-		var period uint64
-		if spec.CPU.Period != nil && *spec.CPU.Period != 0 {
-			period = *spec.CPU.Period
-		} else {
-			period = defaultPeriod
-		}
-
-		v += " " + strconv.FormatUint(period, 10)
-		if err := setValue(path, cpuLimitCgroup, v); err != nil {
+	// As with cgroup v1, zero fields leave existing limits unchanged. Both
+	// values share cpu.max in v2, so retain the other field on partial updates.
+	hasQuota := spec.CPU.Quota != nil && *spec.CPU.Quota != 0
+	hasPeriod := spec.CPU.Period != nil && *spec.CPU.Period != 0
+	if !hasQuota && !hasPeriod {
+		return nil
+	}
+	var quota int64
+	var period uint64
+	if !hasQuota || !hasPeriod {
+		oldQuota, oldPeriod, err := readCPUQuotaAndPeriod(path)
+		if err != nil {
 			return err
 		}
+		quota, period = oldQuota, uint64(oldPeriod)
 	}
-
-	return nil
+	if hasQuota {
+		quota = *spec.CPU.Quota
+	}
+	if hasPeriod {
+		period = *spec.CPU.Period
+	}
+	v := maxLimitStr
+	if quota > 0 {
+		v = strconv.FormatInt(quota, 10)
+	}
+	v += " " + strconv.FormatUint(period, 10)
+	return setValue(path, cpuLimitCgroup, v)
 }
 
 type cpuset2 struct {

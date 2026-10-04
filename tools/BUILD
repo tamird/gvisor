@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values")
+load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values", "py_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -39,6 +39,13 @@ bzl_library(
 )
 
 bzl_library(
+    name = "cc_compile_inputs_bzl",
+    srcs = ["cc_compile_inputs.bzl"],
+    visibility = ["//tools/clang_tidy:__pkg__"],
+    deps = ["@rules_cc//cc/common"],
+)
+
+bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     visibility = [
@@ -52,6 +59,10 @@ bzl_library(
     visibility = [
         "//:sandbox",
     ],
+    deps = [
+        "//tools/bazeldefs:cgroup_test_bzl",
+        "//tools/bazeldefs:test_architectures_bzl",
+    ],
 )
 
 bzl_library(
@@ -63,6 +74,30 @@ bzl_library(
 )
 
 exports_files([
-    "build_cover.sh",
-    "go-allow-internal.patch",
+    "gazelle-module-metadata.patch",
+    "llvm-linux-header-default.patch",
+    "with_cfg-test-frontend.patch",
 ])
+
+exports_files(
+    ["images.mk"],
+    visibility = ["//test/docker:__pkg__"],
+)
+
+exports_files([
+    "make_apt.sh",
+    "make_release.sh",
+    "make_test_key.sh",
+])
+
+py_test(
+    name = "lint_test",
+    srcs = ["lint_test.py"],
+    args = ["$(rootpath :lint.sh)"],
+    data = [
+        "lint.sh",
+        "//:.clang-format",
+        "//:go.mod",
+    ],
+    main = "lint_test.py",
+)
