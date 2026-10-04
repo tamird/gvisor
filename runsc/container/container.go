@@ -27,7 +27,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -188,7 +187,7 @@ type Args struct {
 	Attached bool
 
 	// PassFiles are user-supplied files from the host to be exposed to the
-	// sandboxed app.
+	// sandboxed app. They are supported only for the sandbox's root container.
 	PassFiles map[int]*os.File
 
 	// ExecFile is the host file used for program execution.
@@ -221,6 +220,10 @@ func New(conf *config.Config, args Args) (*Container, error) {
 
 	if err := validateID(args.ID); err != nil {
 		return nil, err
+	}
+
+	if len(args.PassFiles) != 0 && !specutils.IsRootContainer(args.Spec) {
+		return nil, fmt.Errorf("passed files are supported only when creating a new sandbox")
 	}
 
 	if err := os.MkdirAll(conf.RootDir, 0711); err != nil {
@@ -1556,7 +1559,11 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *boot.Pod
 	// Don't forward GOMAXPROCS defaults that apply to this process (in
 	// particular, containerd-shim-runsc-v1 passes GOMAXPROCS=2 in
 	// v1.service.newCommand()).
-	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool { return strings.HasPrefix(env, "GOMAXPROCS=") })
+	// Also exclude filesystem coverage collectors that cannot run under the
+	// gofer's seccomp policy.
+	cmd.Env = slices.DeleteFunc(os.Environ(), func(env string) bool {
+		return strings.HasPrefix(env, "GOMAXPROCS=") || specutils.IsGoCoverageEnv(env)
+	})
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		// Detach from session. Otherwise, signals sent to the foreground process
 		// will also be forwarded by this process, resulting in duplicate signals.
@@ -1705,9 +1712,9 @@ func (c *Container) createGoferProcess(conf *config.Config, mountHints *boot.Pod
 	if !rootlessEUID {
 		if userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec); ok {
 			nss = append(nss, userNS)
-			specutils.SetUIDGIDMappings(cmd, c.Spec)
-			// We need to set UID and GID to have capabilities in a new user namespace.
-			cmd.SysProcAttr.Credential = &syscall.Credential{Uid: 0, Gid: 0}
+			if err := sandbox.ConfigureCmdForUserNamespace(cmd, c.Spec, userNS); err != nil {
+				return nil, nil, nil, nil, err
+			}
 		}
 	} else {
 		userNS, ok := specutils.GetNS(specs.UserNamespace, c.Spec)
@@ -2023,6 +2030,15 @@ func setOOMScoreAdj(pid int, scoreAdj int) error {
 		if os.IsNotExist(err) {
 			log.Warningf("Process (%d) not found setting oom_score_adj", pid)
 			return nil
+		}
+		// An exited process without an mm has root-owned proc files. For a
+		// nonroot caller, opening oom_score_adj can fail before reaching the
+		// write that would otherwise report ESRCH.
+		if errors.Is(err, unix.EACCES) {
+			if running, checkErr := specutils.IsProcessRunning(pid); checkErr == nil && !running {
+				log.Warningf("Process (%d) exited while setting oom_score_adj", pid)
+				return nil
+			}
 		}
 		return err
 	}

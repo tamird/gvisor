@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"strconv"
 	"strings"
 	"time"
@@ -216,6 +217,9 @@ type TestCluster struct {
 
 	client KubernetesClient
 
+	// containerImages is set before use by clusters with preloaded images.
+	containerImages map[string]string
+
 	// testNodepoolRuntimeOverride, if set, overrides the runtime used for pods
 	// running on the test nodepool. If unset, the test nodepool's default
 	// runtime is used.
@@ -300,6 +304,47 @@ func NewTestClusterFromKubernetesClient(clusterName string, client KubernetesCli
 		client:                      client,
 		testNodepoolRuntimeOverride: "",
 	}
+}
+
+// SetContainerImages restricts container images in CreatePod and CreateDaemonset
+// to the given aliases and uses preloaded images without registry pulls. Call
+// this before using the cluster. Other API clients and image volumes are not
+// covered by this policy. A nil map preserves the cluster's normal image policy.
+func (t *TestCluster) SetContainerImages(images map[string]string) {
+	t.containerImages = maps.Clone(images)
+}
+
+func (t *TestCluster) resolveContainerImages(spec *v13.PodSpec) error {
+	if t.containerImages == nil {
+		return nil
+	}
+	resolve := func(image *string, policy *v13.PullPolicy) error {
+		resolved, ok := t.containerImages[*image]
+		if !ok || resolved == "" {
+			return fmt.Errorf("container image %q is not declared for cluster %q", *image, t.clusterName)
+		}
+		*image, *policy = resolved, v13.PullNever
+		return nil
+	}
+	for i := range spec.InitContainers {
+		c := &spec.InitContainers[i]
+		if err := resolve(&c.Image, &c.ImagePullPolicy); err != nil {
+			return err
+		}
+	}
+	for i := range spec.Containers {
+		c := &spec.Containers[i]
+		if err := resolve(&c.Image, &c.ImagePullPolicy); err != nil {
+			return err
+		}
+	}
+	for i := range spec.EphemeralContainers {
+		c := &spec.EphemeralContainers[i]
+		if err := resolve(&c.Image, &c.ImagePullPolicy); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // GetName returns this cluster's name.
@@ -536,6 +581,12 @@ func (t *TestCluster) HasMicroVMTestRuntime(ctx context.Context) (bool, error) {
 
 // CreatePod is a helper to create a pod.
 func (t *TestCluster) CreatePod(ctx context.Context, pod *v13.Pod) (*v13.Pod, error) {
+	if t.containerImages != nil {
+		pod = pod.DeepCopy()
+		if err := t.resolveContainerImages(&pod.Spec); err != nil {
+			return nil, err
+		}
+	}
 	if pod.GetObjectMeta().GetNamespace() == "" {
 		pod.SetNamespace(NamespaceDefault)
 	}
@@ -1067,6 +1118,12 @@ func (t *TestCluster) DeletePersistentVolume(ctx context.Context, volume *v13.Pe
 
 // CreateDaemonset creates a daemonset with default options.
 func (t *TestCluster) CreateDaemonset(ctx context.Context, ds *appsv1.DaemonSet) (*appsv1.DaemonSet, error) {
+	if t.containerImages != nil {
+		ds = ds.DeepCopy()
+		if err := t.resolveContainerImages(&ds.Spec.Template.Spec); err != nil {
+			return nil, err
+		}
+	}
 	if ds.GetObjectMeta().GetNamespace() == "" {
 		ds.SetNamespace(NamespaceDefault)
 	}

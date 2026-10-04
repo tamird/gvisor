@@ -163,6 +163,7 @@ go_library(
         "debug.go",
         "evictable_range.go",
         "evictable_range_set.go",
+        "mapped_storage.go",
         "memacct_set.go",
         "memory_file_mutex.go",
         "pgalloc.go",
@@ -184,6 +185,7 @@ go_library(
         "//pkg/hostarch",
         "//pkg/log",
         "//pkg/ringdeque",
+        "//pkg/safecopy",
         "//pkg/safemem",
         "//pkg/sentry/arch",
         "//pkg/sentry/checkpoint",
@@ -207,13 +209,21 @@ go_test(
     name = "pgalloc_test",
     size = "small",
     srcs = [
+        "mapped_storage_test.go",
         "pgalloc_64k_test.go",
         "pgalloc_test.go",
     ],
     library = ":pgalloc",
     deps = [
+        "//pkg/buffer",
+        "//pkg/errors/linuxerr",
         "//pkg/hostarch",
+        "//pkg/safemem",
         "//pkg/sentry/memmap",
+        "//pkg/sentry/state/stateio",
+        "//pkg/sentry/usage",
+        "//pkg/state",
+        "@org_golang_x_sys//unix:go_default_library",
     ],
 )
 

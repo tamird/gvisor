@@ -1,5 +1,8 @@
 """Rules for dependency checking."""
 
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
+
 # DepsInfo provides a list of dependencies found when building a target.
 DepsInfo = provider(
     "lists dependencies encountered while building",
@@ -25,20 +28,28 @@ def _deps_check_impl(target, ctx):
             if DepsInfo in dep:
                 nodes.update(dep[DepsInfo].nodes)
 
-    if hasattr(ctx.rule.attr, "actual_binary"):
-        dep = ctx.rule.attr.actual_binary
-        if dep and DepsInfo in dep:
+    # Follow executable wrappers, including with_cfg's exports chain. Its
+    # transitioning alias exposes a singleton list; its frontend uses a label.
+    for attr_name in ("actual_binary", "exports"):
+        wrapped = getattr(ctx.rule.attr, attr_name, None)
+        if wrapped == None:
+            continue
+        if type(wrapped) != "list":
+            wrapped = [wrapped]
+        for dep in wrapped:
+            if DepsInfo not in dep:
+                continue
             nodes.update(dep[DepsInfo].nodes)
 
             # Map target (the wrapper target) as depending on the wrapped target's deps.
             if dep in dep[DepsInfo].nodes:
-                nodes[target] = dep[DepsInfo].nodes[dep]
+                nodes.setdefault(target, []).extend(dep[DepsInfo].nodes[dep])
 
     return [DepsInfo(nodes = nodes)]
 
 _deps_check = aspect(
     implementation = _deps_check_impl,
-    attr_aspects = ["deps", "actual_binary"],
+    attr_aspects = ["deps", "actual_binary", "exports"],
 )
 
 def _workspace_of(label):
@@ -141,10 +152,10 @@ def _deps_test_impl(ctx):
 # be specified directly, or prefixes can be used to allow entire packages or
 # directory trees.
 #
-# This recursively checks the "deps" attribute of each target, dependencies
-# expressed other ways are not checked. For example, protobuf targets pull in
-# protobuf code, but aren't analyzed by deps_test.
-deps_test = rule(
+# This recursively checks "deps", following "actual_binary" and "exports"
+# wrappers. Other dependency attributes are not checked. For example, protobuf
+# targets pull in protobuf code, but aren't analyzed by deps_test.
+_deps_test = rule(
     implementation = _deps_test_impl,
     attrs = {
         "targets": attr.label_list(
@@ -166,3 +177,22 @@ deps_test = rule(
     },
     test = True,
 )
+
+def _compile_deps_test(**kwargs):
+    _deps_test(**kwargs)
+
+_deps_amd64_test, _deps_amd64_transition = with_test_architecture(_compile_deps_test, "amd64").build()
+_deps_arm64_test, _deps_arm64_transition = with_test_architecture(_compile_deps_test, "arm64").build()
+_deps_test_cgroup_v1_test, _deps_test_cgroup_v1_transition = with_cgroup_v1(_compile_deps_test)
+
+def deps_test(name, architectures = ["amd64", "arm64"], **kwargs):
+    """Declares the original check and manual architecture/cgroup variants."""
+    kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
+    _deps_test(name = name, **kwargs)
+    cgroup_v1_variant(name, _deps_test_cgroup_v1_test, kwargs)
+    test_architecture_variants(
+        name,
+        architectures,
+        {"amd64": _deps_amd64_test, "arm64": _deps_arm64_test},
+        kwargs,
+    )

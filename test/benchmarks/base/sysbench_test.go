@@ -17,6 +17,7 @@ package sysbench_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
@@ -123,4 +124,9 @@ func BenchmarkSysbench(b *testing.B) {
 			tc.test.Report(b, out)
 		})
 	}
+}
+
+// TestMain initializes the benchmark harness and its declared Docker inputs.
+func TestMain(m *testing.M) {
+	os.Exit(harness.Run(m.Run))
 }

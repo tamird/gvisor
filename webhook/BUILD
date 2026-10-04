@@ -6,6 +6,12 @@ package(
     licenses = ["notice"],
 )
 
+filegroup(
+    name = "go_export_sources",
+    srcs = glob(["*.go"]),
+    visibility = ["//:__pkg__"],
+)
+
 docker_image(
     name = "image",
     data = ":files",

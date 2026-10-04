@@ -323,8 +323,9 @@ func TestRuby(t *testing.T) {
 	url := fmt.Sprintf("http://%s:%d", ip.String(), port)
 	resp, err := http.Get(url)
 	if err != nil {
-		t.Errorf("error reaching http server: %v, docker logs: %v", err, dockerLogs(ctx, d))
+		t.Fatalf("error reaching http server: %v, docker logs: %v", err, dockerLogs(ctx, d))
 	}
+	defer resp.Body.Close()
 	if want := http.StatusOK; resp.StatusCode != want {
 		t.Errorf("wrong response code, got: %d, want: %d, docker logs: %v", resp.StatusCode, want, dockerLogs(ctx, d))
 	}
@@ -887,6 +888,5 @@ func testDockerComposeRun(ctx context.Context, t *testing.T, d *dockerutil.Conta
 
 func TestMain(m *testing.M) {
 	flag.Parse()
-	dockerutil.EnsureSupportedDockerVersion()
-	os.Exit(m.Run())
+	os.Exit(dockerutil.RunTests(m.Run))
 }

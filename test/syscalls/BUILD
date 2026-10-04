@@ -82,6 +82,13 @@ syscall_test(
     test = "//test/syscalls/linux:cgroup2_test",
 )
 
+# Transfers must run separately from tests that enter non-root memory cgroups:
+# memory charges survive task migration and cgroup removal and can pin controllers.
+syscall_test(
+    in_sandbox_cgroup = "v2",
+    test = "//test/syscalls/linux:cgroup2_transfer_test",
+)
+
 syscall_test(
     add_fusefs = True,
     add_overlay = True,
@@ -139,8 +146,6 @@ syscall_test(
 syscall_test(
     add_host_connector = True,
     add_hostinet = True,
-    # TODO(b/318948806): lisafs.BoundSocketFD is leaked.
-    leak_check = False,
     one_sandbox = False,
     # Takes too long to run with S/R.
     save = False,
@@ -153,8 +158,6 @@ syscall_test(
 syscall_test(
     add_host_uds = True,
     add_hostinet = True,
-    # TODO(b/318948806): lisafs.BoundSocketFD is leaked.
-    leak_check = False,
     one_sandbox = False,
     # Takes too long to run with S/R.
     save = False,
@@ -421,6 +424,8 @@ syscall_test(
 )
 
 syscall_test(
+    # The test populates 512 MiB; save/restore and the executor need memory too.
+    memory = "2GB",
     test = "//test/syscalls/linux:memory_accounting_test",
 )
 
@@ -502,7 +507,6 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
-    netstack_sr = True,
     test = "//test/syscalls/linux:network_namespace_test",
 )
 
@@ -526,7 +530,6 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
-    netstack_sr = True,
     test = "//test/syscalls/linux:packet_socket_dgram_test",
 )
 
@@ -560,6 +563,10 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    # Host-network sockets also need descriptors in the sentry.
+    args = ["--host-nofile=131072"],
+    # ICMP identifier exhaustion retains up to 65,535 connected sockets.
+    memory = "1GB",
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
     test = "//test/syscalls/linux:ping_socket_test",
@@ -894,20 +901,17 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
-    netstack_sr = True,
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_external_networking_test",
 )
 
 syscall_test(
     # TODO(b/446206378): TestJoinLeaveMulticast fails with add_hostinet.
-    netstack_sr = True,
     test = "//test/syscalls/linux:socket_ipv6_udp_unbound_external_networking_test",
 )
 
 syscall_test(
     size = "large",
     add_hostinet = True,
-    netstack_sr = True,
     shard_count = most_shards,
     test = "//test/syscalls/linux:socket_ip_tcp_generic_loopback_test",
 )
@@ -973,6 +977,9 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
+    args = ["--host-nofile=131072"],
+    # The host file table must hold the full ephemeral-port range.
+    memory = "1GB",
     shard_count = more_shards,
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
@@ -988,7 +995,6 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
-    netstack_sr = True,
     test = "//test/syscalls/linux:socket_ipv6_udp_unbound_loopback_netlink_test",
 )
 
@@ -1009,7 +1015,6 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
-    netstack_sr = True,
     test = "//test/syscalls/linux:socket_ip_unbound_netlink_test",
 )
 
@@ -1029,12 +1034,14 @@ syscall_test(
 )
 
 syscall_test(
+    # The RBE worker supplies the namespaces needed by these tests.
+    execution_requirements = select({
+        "//tools/bazeldefs:rbe": {},
+        "//conditions:default": {"local": ""},
+    }),
     nftables = True,
     save = False,
-    tags = [
-        "local",
-        "notap",
-    ],
+    tags = ["notap"],
     test = "//test/syscalls/linux:socket_netlink_netfilter_test",
 )
 
@@ -1090,6 +1097,9 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    # Exhaust ports before the sentry's host descriptors or file table.
+    args = ["--host-nofile=131072"],
+    memory = "1GB",
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
@@ -1131,7 +1141,6 @@ syscall_test(
 
 syscall_test(
     size = "medium",
-    netstack_sr = True,
     shard_count = most_shards,
     test = "//test/syscalls/linux:socket_unix_stream_test",
 )
@@ -1188,6 +1197,7 @@ syscall_test(
 syscall_test(
     add_fusefs = True,
     add_overlay = True,
+    requires_atime = True,
     test = "//test/syscalls/linux:stat_times_test",
 )
 
@@ -1200,6 +1210,7 @@ syscall_test(
 syscall_test(
     add_fusefs = True,
     add_overlay = True,
+    requires_atime = True,
     test = "//test/syscalls/linux:symlink_test",
 )
 
@@ -1264,8 +1275,11 @@ syscall_test(
 )
 
 syscall_test(
-    # TODO(b/318948806): tun.tunEndpoint is leaked.
-    leak_check = False,
+    one_sandbox = False,
+    test = "//test/syscalls/linux:tuntap_packet_lifetime_test",
+)
+
+syscall_test(
     # TODO(b/110961832): /dev/net/tun does not support S/R.
     save = False,
     test = "//test/syscalls/linux:tuntap_test",
@@ -1284,14 +1298,12 @@ syscall_test(
 syscall_test(
     size = "medium",
     add_hostinet = True,
-    netstack_sr = True,
     shard_count = more_shards,
     test = "//test/syscalls/linux:udp_socket_test",
 )
 
 syscall_test(
     add_hostinet = True,
-    netstack_sr = True,
     test = "//test/syscalls/linux:udp_raw_socket_test",
 )
 
@@ -1360,6 +1372,9 @@ syscall_test(
 )
 
 syscall_test(
+    # Linux sizes its host thread limit from guest RAM. The thousand-thread
+    # case also needs ptrace tracer and tracee threads.
+    memory = "1GB",
     test = "//test/syscalls/linux:processes_test",
 )
 

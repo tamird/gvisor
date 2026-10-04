@@ -2137,7 +2137,10 @@ cc_binary(
     malloc = "//test/util:errno_safe_allocator",
     deps = select_gtest() + [
         ":ip_socket_test_util",
+        "//test/util:cleanup",
         "//test/util:file_descriptor",
+        "//test/util:logging",
+        "//test/util:memory_util",
         "//test/util:posix_error",
         "//test/util:save_util",
         "//test/util:socket_util",
@@ -4871,6 +4874,25 @@ cc_binary(
 )
 
 cc_binary(
+    name = "tuntap_packet_lifetime_test",
+    testonly = 1,
+    srcs = ["tuntap_packet_lifetime.cc"],
+    linkstatic = 1,
+    malloc = "//test/util:errno_safe_allocator",
+    deps = select_gtest() + [
+        ":socket_netlink_route_util",
+        "//test/util:capability_util",
+        "//test/util:file_descriptor",
+        "//test/util:fs_util",
+        "//test/util:posix_error",
+        "//test/util:save_util",
+        "//test/util:socket_util",
+        "//test/util:test_main",
+        "//test/util:test_util",
+    ],
+)
+
+cc_binary(
     name = "tuntap_test",
     testonly = 1,
     srcs = ["tuntap.cc"],
@@ -4888,7 +4910,9 @@ cc_binary(
         "//test/util:socket_util",
         "//test/util:test_main",
         "//test/util:test_util",
+        "//test/util:timer_util",
         "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
     ],
 )
 
@@ -5499,6 +5523,29 @@ cc_binary(
 )
 
 cc_binary(
+    name = "cgroup2_transfer_test",
+    testonly = 1,
+    srcs = ["cgroup2_transfer.cc"],
+    linkstatic = 1,
+    malloc = "//test/util:errno_safe_allocator",
+    deps = select_gtest() + [
+        "//test/util:capability_util",
+        "//test/util:cgroup_util",
+        "//test/util:file_descriptor",
+        "//test/util:fs_util",
+        "//test/util:logging",
+        "//test/util:posix_error",
+        "//test/util:temp_path",
+        "//test/util:test_main",
+        "//test/util:test_util",
+        "//test/util:time_util",
+        "//test/util:timer_util",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/time",
+    ],
+)
+
+cc_binary(
     name = "deleted_test",
     testonly = 1,
     srcs = ["deleted.cc"],
@@ -5542,6 +5589,8 @@ cc_binary(
     # sandbox as standard.
     deps = select_gtest() + [
         "//test/util:capability_util",
+        "//test/util:cleanup",
+        "//test/util:eventfd_util",
         "//test/util:file_descriptor",
         "//test/util:fs_util",
         "//test/util:mount_util",

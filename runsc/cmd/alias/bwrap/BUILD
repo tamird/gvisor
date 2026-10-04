@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -46,9 +46,10 @@ go_test(
     data = [
         "//:release",
     ],
+    # The runtime creates nested namespaces and configures cgroups.
+    exec_properties = namespace_test_exec_properties(),
     library = ":bwrap",
     tags = [
-        "local",
         "manual",
     ],
     deps = [

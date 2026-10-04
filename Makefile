@@ -58,7 +58,7 @@ help: ## Shows all targets and help from the Makefile (this message).
 		}'
 
 build: ## Builds the given $(TARGETS) with the given $(OPTIONS). E.g. make build TARGETS=runsc
-	@$(call build,$(OPTIONS) -- $(TARGETS))
+	@$(call build,$(TARGETS),$(OPTIONS))
 .PHONY: build
 
 test: ## Tests the given $(TARGETS) with the given $(OPTIONS). E.g. make test TARGETS=pkg/buffer:buffer_test
@@ -66,11 +66,11 @@ test: ## Tests the given $(TARGETS) with the given $(OPTIONS). E.g. make test TA
 .PHONY: test
 
 copy: ## Copies the given $(TARGETS), built with the given $(OPTIONS), to the given $(DESTINATION). E.g. make copy TARGETS=runsc DESTINATION=/tmp
-	@$(call copy,$(OPTIONS) -- $(TARGETS),$(DESTINATION))
+	@$(call copy,$(TARGETS),$(DESTINATION),$(OPTIONS))
 .PHONY: copy
 
 run: ## Runs the given $(TARGETS), built with $(OPTIONS), using $(ARGS). E.g. make run TARGETS=runsc ARGS=-version
-	@$(call run,$(TARGETS),$(ARGS))
+	@$(call run,$(TARGETS),$(ARGS),$(OPTIONS))
 .PHONY: run
 
 query: ## Runs a bazel query. E.g. make query TARGETS=//test/...
@@ -82,7 +82,7 @@ mod: ## Runs a bazel mod command. E.g. make mod TARGETS="deps --output json"
 .PHONY: mod
 
 sudo: ## Runs the given $(TARGETS) as per run, but using "sudo -E". E.g. make sudo TARGETS=test/root:root_test ARGS=-test.v
-	@$(call sudo,$(TARGETS),$(ARGS))
+	@$(call sudo,$(TARGETS),$(ARGS),$(OPTIONS))
 .PHONY: sudo
 
 # Load image helpers.
@@ -110,6 +110,7 @@ endif
 ##     RUNTIME_LOG_DIR - The logs directory (default: $RUNTIME_DIR/logs).
 ##     RUNTIME_LOGS    - The log pattern (default: $RUNTIME_LOG_DIR/runsc.log.%TEST%.%TIMESTAMP%.%COMMAND%).
 ##     RUNTIME_ARGS    - Arguments passed to the runtime when installed.
+##     RUNTIME_BUILD_OPTIONS - Bazel options for selected runtime and sidecar targets.
 ##     STAGED_BINARIES - A tarball of staged binaries. If this is set, then binaries
 ##                       will be installed from this staged bundle instead of built.
 ##     DOCKER_RELOAD_COMMAND - The command to run to reload Docker. (default: sudo systemctl reload docker).
@@ -123,6 +124,7 @@ RUNTIME_DIR           ?= $(shell dirname $(shell mktemp -u))/$(RUNTIME)
 RUNSC_TARGET          ?= //runsc
 RUNTIME_BIN           ?= $(RUNTIME_DIR)/runsc
 EXTRA_SIDECAR_TARGETS ?= # Extra binaries to install under gvisor-bin/.
+RUNTIME_BUILD_OPTIONS ?=
 RUNTIME_LOG_DIR       ?= $(RUNTIME_DIR)/logs
 RUNTIME_LOGS          ?= $(RUNTIME_LOG_DIR)/runsc.log.%TEST%.%TIMESTAMP%.%COMMAND%
 RUNTIME_ARGS          ?=
@@ -140,8 +142,8 @@ $(RUNTIME_BIN): # See below.
 	@mkdir -p -m 0755 "$(RUNTIME_DIR)" && chmod a+rx "$(RUNTIME_DIR)"
 ifeq (,$(STAGED_BINARIES))
 	@$(call copy,//:release,$(RUNTIME_DIR))
-	@$(if $(filter-out //runsc,$(RUNSC_TARGET)),$(call copy,$(RUNSC_TARGET),$(RUNTIME_BIN)))
-	@$(if $(EXTRA_SIDECAR_TARGETS),$(call copy,$(EXTRA_SIDECAR_TARGETS),$(RUNTIME_DIR)/gvisor-bin))
+	@$(if $(filter-out //runsc,$(RUNSC_TARGET)),$(call copy,$(RUNSC_TARGET),$(RUNTIME_BIN),$(RUNTIME_BUILD_OPTIONS)))
+	@$(if $(EXTRA_SIDECAR_TARGETS),$(call copy,$(EXTRA_SIDECAR_TARGETS),$(RUNTIME_DIR)/gvisor-bin,$(RUNTIME_BUILD_OPTIONS)))
 else
 	@gcloud storage cat "${STAGED_BINARIES}" | \
 	  tar -C "$(RUNTIME_DIR)" -zxvf - && \
@@ -180,6 +182,14 @@ configure = $(call configure_noreload,$(1),$(2)) && $(reload_docker) && $(call w
 # Helpers for above. Requires $(RUNTIME_BIN) dependency.
 install_runtime = $(call configure,$(1),$(2) --TESTONLY-test-name-env=RUNSC_TEST_NAME)
 install_runtime_noreload = $(call configure_noreload,$(1),$(2) --TESTONLY-test-name-env=RUNSC_TEST_NAME)
+# Install one mode shared with a declared Docker test. Arguments: suite, mode,
+# installed runtime name.
+install_runtime_variant_noreload = \
+  $(call sudo,//test/docker:configure_runtime,--suite=$(1) --variant=$(2) --runsc="$(RUNTIME_BIN)" --name="$(3)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") && \
+  sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
+install_runtime_variant = \
+  $(call install_runtime_variant_noreload,$(1),$(2),$(3)) && \
+  $(reload_docker) && $(call wait_for_runtime,$(3))
 # Don't use cached results, otherwise multiple runs using different runtimes
 # may be skipped, if all other inputs are the same.
 test_runtime = $(call test,--test_env=RUNTIME=$(1) --nocache_test_results $(PARTITIONS) $(2))
@@ -231,39 +241,37 @@ TOTAL_PARTITIONS ?= 1
 PARTITIONS       := --test_env=PARTITION=$(PARTITION) --test_env=TOTAL_PARTITIONS=$(TOTAL_PARTITIONS)
 
 runsc: ## Builds the runsc binary.
-	@$(call build,-c opt //runsc)
+	@$(call build,//runsc,-c opt)
 .PHONY: runsc
 
 runsc-plugin-stack:
-	@$(call build,-c opt $(PLUGIN_STACK_FLAGS) //runsc:runsc-plugin-stack)
+	@$(call build,//runsc:runsc-plugin-stack,-c opt $(PLUGIN_STACK_FLAGS))
 .PHONY: runsc-plugin-stack
 
 debian: ## Builds the debian packages.
-	@$(call build,-c opt //debian:debian)
+	@$(call build,//debian:debian,-c opt)
 .PHONY: debian
 
 smoke-tests: $(RUNTIME_BIN) ## Runs a simple smoke test after building runsc.
 	@$(RUNTIME_BIN) --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 .PHONY: smoke-tests
 
-smoke-race-tests: RUNSC_TARGET = $(RACE_FLAGS) //runsc:runsc-race
+smoke-race-tests: RUNSC_TARGET = //runsc:runsc-race
+smoke-race-tests: RUNTIME_BUILD_OPTIONS = $(RACE_FLAGS)
 smoke-race-tests: $(RUNTIME_BIN) ## Runs a smoke test after build building runsc in race configuration.
 	@$(RUNTIME_BIN) --alsologtostderr --network none --debug --TESTONLY-unsafe-nonroot=true --rootless do true
 .PHONY: smoke-race-tests
 
 nogo-tests:
-	@$(call test,--test_tag_filters=nogo --build_tests_only //...)
+	@$(call test,--config=nogo //...)
 .PHONY: nogo-tests
 
-# For unit tests, we take everything in the root, pkg/... and tools/..., and
-# pull in all directories in runsc except runsc/container.
-#
-# FIXME(gvisor.dev/issue/10045): Need to fix broken tests.
+# Share the unit selection with direct Bazel invocations.
 unit-tests: ## Local package unit tests in pkg/..., tools/.., etc.
-	@$(call test,--test_tag_filters=-nogo$(COMMA)-requires-kvm --build_tag_filters=-network_plugins --test_env=CGROUPV2=$(CGROUPV2) -- //:all pkg/... tools/... runsc/... vdso/... sandboxexec/... test/trace/... -//pkg/metric:metric_test -//pkg/coretag:coretag_test -//tools/tracereplay:tracereplay_test -//test/trace:trace_test)
+	@$(call test,--config=unit --test_env=CGROUPV2=$(CGROUPV2))
 .PHONY: unit-tests
 
-# See unit-tests: this includes runsc/container.
+# Unlike unit-tests, include the container tests that require KVM.
 container-tests: ## Run all tests in runsc/container/...
 	@$(call test,--test_tag_filters=-nogo --test_env=CGROUPV2=$(CGROUPV2) runsc/container/...)
 .PHONY: container-tests
@@ -311,7 +319,7 @@ HOST_KERNEL ?= $(shell uname -r)
 # gtest flags):
 #   make sudo TARGETS=//test/syscalls/linux:chown_test ARGS='--gtest_filter=*Root*'
 syscall-tests: $(RUNTIME_BIN)
-	@$(call test,$(OPTIONS) --test_env=RUNTIME=$(RUNTIME_BIN) --test_env=GVISOR_SIDECAR_BINARIES_DIR=$(RUNTIME_DIR)/gvisor-bin --test_env=HOST_KERNEL=$(HOST_KERNEL) --cxxopt=-Werror $(PARTITIONS) $(if $(TARGETS),-- $(TARGETS),test/syscalls/... test/rtnetlink/...))
+	@$(call test,$(OPTIONS) --test_env=RUNTIME=$(RUNTIME_BIN) --test_env=GVISOR_SIDECAR_BINARIES_DIR=$(RUNTIME_DIR)/gvisor-bin --test_env=HOST_KERNEL=$(HOST_KERNEL) --cxxopt=-Werror $(PARTITIONS) $(if $(TARGETS),-- $(TARGETS),--target_pattern_file=test/syscalls.targets))
 .PHONY: syscall-tests
 
 # `make syscall-test-boot-log` prints the newest runsc boot log written by a
@@ -327,17 +335,11 @@ packetimpact-tests:
 	@$(call test,--jobs=HOST_CPUS*3 --local_test_jobs=HOST_CPUS*3 //test/packetimpact/tests:all_tests)
 .PHONY: packetimpact-tests
 
-# Extra configuration options for runtime tests.
-RUNTIME_TESTS_FILTER ?=
-RUNTIME_TESTS_PER_TEST_TIMEOUT ?= 20m
-RUNTIME_TESTS_RUNS_PER_TEST ?= 1
-RUNTIME_TESTS_FLAKY_IS_ERROR ?= true
-RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT ?= true
-
+# Empty controls use the defaults in test/runtimes/runner.
 %-runtime-tests: load-runtimes_% $(RUNTIME_BIN)
 	@$(call install_runtime,$(RUNTIME),--watchdog-action=panic --platform=systrap)
 	@IMAGE_TAG=$(call tag,runtimes_$*) && \
-	$(call test_runtime_cached,$(RUNTIME),--test_timeout=1800 --test_env=RUNTIME_TESTS_FILTER=$(RUNTIME_TESTS_FILTER) --test_env=RUNTIME_TESTS_PER_TEST_TIMEOUT=$(RUNTIME_TESTS_PER_TEST_TIMEOUT) --test_env=RUNTIME_TESTS_RUNS_PER_TEST=$(RUNTIME_TESTS_RUNS_PER_TEST) --test_env=RUNTIME_TESTS_FLAKY_IS_ERROR=$(RUNTIME_TESTS_FLAKY_IS_ERROR) --test_env=RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT=$(RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT) --test_env=IMAGE_TAG=$${IMAGE_TAG} //test/runtimes:$*)
+	$(call test_runtime_cached,$(RUNTIME),--test_env=RUNTIME_TESTS_FILTER=$(RUNTIME_TESTS_FILTER) --test_env=RUNTIME_TESTS_PER_TEST_TIMEOUT=$(RUNTIME_TESTS_PER_TEST_TIMEOUT) --test_env=RUNTIME_TESTS_RUNS_PER_TEST=$(RUNTIME_TESTS_RUNS_PER_TEST) --test_env=RUNTIME_TESTS_FLAKY_IS_ERROR=$(RUNTIME_TESTS_FLAKY_IS_ERROR) --test_env=RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT=$(RUNTIME_TESTS_FLAKY_SHORT_CIRCUIT) --test_env=IMAGE_TAG=$${IMAGE_TAG} //test/runtimes:$*)
 
 do-tests: $(RUNTIME_BIN)
 	@$(RUNTIME_BIN) --rootless do true
@@ -434,27 +436,47 @@ cuda-12-8-tests: load-basic_alpine load-gpu_cuda-tests-12-8 $(RUNTIME_BIN)
 	@$(call sudo,test/gpu:cuda_12_8_test,--runtime=$(RUNTIME) -test.v $(ARGS))
 .PHONY: cuda-tests
 
-portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME),--network=sandbox)
-	@$(call sudo,test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS))
-	@$(call install_runtime,$(RUNTIME),--network=host)
-	@$(call sudo,test/root:portforward_test,--runtime=$(RUNTIME) -test.v $(ARGS))
-.PHONY: portforward-test
+# Installed mode preserves staged/custom runtimes; owned mode declares inputs.
+DOCKER_TEST_SETUP ?= installed
 
-POSTURE_TEST_ARGS := -test.run=TestSandboxPosture -test.v
+# Install and run each declared configuration with the caller's runtime.
+# Arguments: suite, runtime name, test target, additional test arguments.
+installed_docker_variants = \
+	set -e; \
+	VARIANTS="$$( $(call run,//test/docker:configure_runtime,--suite=$(1) --list-variants) )"; \
+	for VARIANT in $$VARIANTS; do \
+	  export VARIANT; \
+	  $(call sudo,//test/docker:configure_runtime,--suite=$(1) --variant="$$VARIANT" --runsc="$(RUNTIME_BIN)" --name="$(2)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)") || exit $$?; \
+	  sudo rm -rf "$(RUNTIME_LOG_DIR)"; \
+	  mkdir -p "$(RUNTIME_LOG_DIR)"; \
+	  chmod 0777 "$(RUNTIME_LOG_DIR)"; \
+	  $(reload_docker) || exit $$?; \
+	  $(call wait_for_runtime,$(2)) || exit $$?; \
+	  $(call sudo,$(3),--runtime=$(2) --config_path="$(DOCKER_DAEMON_CONFIG_PATH)" -test.v $(4) $(ARGS)) || exit $$?; \
+	done
+
+ifeq ($(DOCKER_TEST_SETUP),owned)
+portforward-tests:
+	@$(call test,//test/root:portforward_test_owned)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
+portforward-tests: load-basic_redis load-basic_nginx $(RUNTIME_BIN)
+	@$(call installed_docker_variants,portforward,$(RUNTIME),test/root:portforward_test,)
+else
+portforward-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
+.PHONY: portforward-tests
+
+ifeq ($(DOCKER_TEST_SETUP),owned)
+sandbox-posture-tests:
+	@$(call test,//test/root:sandbox_posture_test_owned)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 sandbox-posture-tests: load-basic_alpine $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-posture,) # Clear flags.
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-hostnet,--network=host)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-hostnet --network=host $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-hostnet-raw,--network=host --net-raw)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-hostnet-raw --network=host --net-raw $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-nodirectfs,--directfs=false)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-nodirectfs --directfs=false $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-nodirectfs-hostnet,--directfs=false --network=host)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-nodirectfs-hostnet --directfs=false --network=host $(POSTURE_TEST_ARGS) $(ARGS))
-	@$(call install_runtime,$(RUNTIME)-posture-kvm,--platform=kvm)
-	@$(call sudo,test/root:root_test,--runtime=$(RUNTIME)-posture-kvm --platform=kvm $(POSTURE_TEST_ARGS) $(ARGS))
+	@$(call installed_docker_variants,posture,$(RUNTIME)-posture,test/root:sandbox_posture_test,-test.run=TestSandboxPosture)
+else
+sandbox-posture-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
 .PHONY: sandbox-posture-tests
 
 root-tests: load-basic_alpine $(RUNTIME_BIN)
@@ -465,43 +487,46 @@ root-tests: load-basic_alpine $(RUNTIME_BIN)
 # Standard integration targets.
 INTEGRATION_TARGETS := //test/image:image_test //test/e2e:integration_test
 
-# Socket that the external network proxy in //test/e2e:uds_proxy_test listens
-# on. Must match externalUDSSocketPath in test/e2e/uds_proxy_test.go.
-NET_PROXY_SOCKET := /tmp/gvisor-net-uds/proxy.sock
-
+# Installed mode retains staged/custom runtime selection and daemon reload.
+# Owned mode uses declared Bazel inputs and a private daemon in each test action.
+ifeq ($(DOCKER_TEST_SETUP),owned)
+docker-tests:
+	@$(call test,$(PARTITIONS) //test/docker:owned_tests)
+else ifeq ($(DOCKER_TEST_SETUP),installed)
 docker-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME),) # Clear flags.
-	@$(call install_runtime_noreload,$(RUNTIME)-docker,--net-raw --allow-packet-socket-write) # Used by TestDocker*.
-	@$(call install_runtime_noreload,$(RUNTIME)-fdlimit,--fdlimit=2000) # Used by TestRlimitNoFile.
-	@$(call install_runtime_noreload,$(RUNTIME)-dcache,--fdlimit=2000 --dcache=100) # Used by TestDentryCacheLimit.
-	@$(call install_runtime_noreload,$(RUNTIME)-host-uds,--host-uds=all) # Used by TestHostSocketConnect.
-	@$(call install_runtime_noreload,$(RUNTIME)-overlay,--overlay2=all:self) # Used by TestOverlay*.
-	@$(call install_runtime_noreload,$(RUNTIME)-net-uds,--network-proxy-path=$(NET_PROXY_SOCKET)) # Used by TestExternalUDSProxy*.
-	@$(call install_runtime,$(RUNTIME)-cgroupv2,--in-sandbox-cgroup=v2) # Used by TestSystemd* and TestPIDFDSelftests.
-	@$(call test_runtime_cached,$(RUNTIME),--test_env=TEST_SAVE_RESTORE_NETSTACK=true -- $(INTEGRATION_TARGETS) //test/e2e:integration_runtime_test //test/e2e:runtime_in_docker_test //test/e2e:uds_proxy_test)
+	@$(call sudo,//test/docker:configure_runtime,--runsc="$(RUNTIME_BIN)" --name="$(RUNTIME)" --config="$(DOCKER_DAEMON_CONFIG_PATH)" -- $(RUNTIME_ARGS) --debug-log "$(RUNTIME_LOGS)")
+	@sudo rm -rf "$(RUNTIME_LOG_DIR)" && mkdir -p "$(RUNTIME_LOG_DIR)" && chmod 0777 "$(RUNTIME_LOG_DIR)"
+	@$(reload_docker)
+	@$(call wait_for_runtime,$(RUNTIME))
+	@$(call test_runtime_cached,$(RUNTIME),//test/docker:installed_tests)
+else
+docker-tests:
+	@echo "DOCKER_TEST_SETUP must be installed or owned" >&2; exit 1
+endif
 .PHONY: docker-tests
 
 plugin-network-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-dpdk,--network=plugin)
+	@$(call install_runtime_variant,plugin-network,plugin_network,$(RUNTIME)-dpdk)
 	@$(call test_runtime_cached,$(RUNTIME)-dpdk, --test_arg=-test.run=ConnectToSelf $(INTEGRATION_TARGETS))
 
-plugin-network-tests: RUNSC_TARGET=--config plugin-tldk //runsc:runsc-plugin-stack
-plugin-network-tests: EXTRA_SIDECAR_TARGETS=--config plugin-tldk //runsc/cmd/sentry:gvisor_sentry_plugin_stack
+plugin-network-tests: RUNSC_TARGET=//runsc:runsc-plugin-stack
+plugin-network-tests: EXTRA_SIDECAR_TARGETS=//runsc/cmd/sentry:gvisor_sentry_plugin_stack
+plugin-network-tests: RUNTIME_BUILD_OPTIONS=$(PLUGIN_STACK_FLAGS)
 
 overlay-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME)-overlay,--overlay2=all:dir=/tmp)
-	@$(call install_runtime,$(RUNTIME)-overlay-docker,--net-raw --allow-packet-socket-write --overlay2=all:dir=/tmp)
+	@$(call install_runtime_variant_noreload,integration,overlay,$(RUNTIME)-overlay)
+	@$(call install_runtime_variant,integration-docker,overlay,$(RUNTIME)-overlay-docker)
 	@$(call test_runtime_cached,$(RUNTIME)-overlay,--test_env=TEST_OVERLAY=true $(INTEGRATION_TARGETS))
 .PHONY: overlay-tests
 
 swgso-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime_noreload,$(RUNTIME)-swgso,--software-gso=true --gso=false)
-	@$(call install_runtime,$(RUNTIME)-swgso-docker,--net-raw --allow-packet-socket-write --software-gso=true --gso=false)
+	@$(call install_runtime_variant_noreload,integration,swgso,$(RUNTIME)-swgso)
+	@$(call install_runtime_variant,integration-docker,swgso,$(RUNTIME)-swgso-docker)
 	@$(call test_runtime_cached,$(RUNTIME)-swgso,$(INTEGRATION_TARGETS))
 .PHONY: swgso-tests
 
 hostnet-tests: integration-test-images $(RUNTIME_BIN)
-	@$(call install_runtime,$(RUNTIME)-hostnet,--network=host --net-raw)
+	@$(call install_runtime_variant,integration,hostnet,$(RUNTIME)-hostnet)
 	@$(call test_runtime_cached,$(RUNTIME)-hostnet,--test_env=TEST_CHECKPOINT=false --test_env=TEST_HOSTNET=true --test_env=TEST_NET_RAW=true $(INTEGRATION_TARGETS))
 .PHONY: hostnet-tests
 
@@ -527,9 +552,9 @@ iptables-tests: load-iptables $(RUNTIME_BIN)
 	@sudo modprobe ip6table_nat
 	@# FIXME(b/218923513): Need to fix permissions issues.
 	@#$(call test,--test_env=RUNTIME=runc -- //test/iptables:iptables_test)
-	@$(call install_runtime,$(RUNTIME),--net-raw)
+	@$(call install_runtime_variant,netfilter,iptables,$(RUNTIME))
 	@$(call test_runtime,$(RUNTIME),--test_env=TEST_NET_RAW=true -- //test/iptables:iptables_test)
-	@$(call install_runtime,$(RUNTIME)-nftables,--net-raw --reproduce-nftables)
+	@$(call install_runtime_variant,netfilter,reproduce,$(RUNTIME)-nftables)
 	@$(call test_runtime,$(RUNTIME)-nftables,--test_env=TEST_NET_RAW=true --test_output=all -- //test/iptables:nftables_test)
 .PHONY: iptables-tests
 
@@ -537,7 +562,7 @@ iptables-tests: load-iptables $(RUNTIME_BIN)
 iptables-nft-tests: load-iptables $(RUNTIME_BIN)
 	@sudo modprobe nfnetlink
 	@sudo modprobe nf_tables
-	@$(call install_runtime,$(RUNTIME)-nftables,--net-raw --TESTONLY-nftables)
+	@$(call install_runtime_variant,netfilter,nftables,$(RUNTIME)-nftables)
 	@$(call test_runtime,$(RUNTIME)-nftables,--test_env=TEST_NET_RAW=true -- //test/iptables:iptables_nft_test)
 .PHONY: iptables-nft-tests
 
@@ -545,7 +570,7 @@ nftables-tests: load-nftables $(RUNTIME_BIN)
 	@sudo modprobe nfnetlink
 	@sudo modprobe nf_tables
 	@$(call test,--test_env=RUNTIME=runc -- //test/nftables:nftables_test) # run with runc
-	@$(call install_runtime,$(RUNTIME),--net-raw --TESTONLY-nftables)
+	@$(call install_runtime_variant,netfilter,nftables,$(RUNTIME))
 	@$(call test_runtime,$(RUNTIME),--test_env=TEST_NET_RAW=true -- //test/nftables:nftables_test) # run with runsc
 .PHONY: nftables-tests
 
@@ -932,21 +957,9 @@ RELEASE_NIGHTLY   := false
 RELEASE_COMMIT    :=
 RELEASE_NAME      :=
 RELEASE_NOTES     :=
-GPG_TEST_OPTIONS  := $(shell if gpg --pinentry-mode loopback --version >/dev/null 2>&1; then echo --pinentry-mode loopback; fi)
-
 $(RELEASE_KEY):
 	@echo "WARNING: Generating a key for testing ($@); don't use this."
-	@T=$$(mktemp --tmpdir keyring.XXXXXX); \
-	C=$$(mktemp --tmpdir config.XXXXXX); \
-	echo Key-Type: DSA >> $$C && \
-	echo Key-Length: 1024 >> $$C && \
-	echo Name-Real: Test >> $$C && \
-	echo Name-Email: test@example.com >> $$C && \
-	echo Expire-Date: 0 >> $$C && \
-	echo %commit >> $$C && \
-	gpg --batch $(GPG_TEST_OPTIONS) --passphrase '' --no-default-keyring --secret-keyring $$T --no-tty --gen-key $$C && \
-	gpg --batch $(GPG_TEST_OPTIONS) --export-secret-keys --no-default-keyring --secret-keyring $$T > $@; \
-	rc=$$?; rm -f $$T $$C; exit $$rc
+	@tools/make_test_key.sh "$@"
 
 $(RELEASE_ARTIFACTS)/%:
 	@mkdir -p $@
@@ -954,9 +967,12 @@ $(RELEASE_ARTIFACTS)/%:
 	@$(call copy,//debian:gvisor-release-tar-bz2,$@)
 	@$(call copy,//debian:gvisor-release-tar-zstd,$@)
 
-artifacts-python: ensure-bazel-server ## Builds Python SandboxExec wheels into $(RELEASE_ARTIFACTS)/python.
-	@mkdir -p $(RELEASE_ARTIFACTS)/python
-	@$(call wrapper,tools/make_python_release.sh build $(RELEASE_ARTIFACTS)/python "$(RELEASE_NAME)")
+PYTHON_RELEASE_DEST ?= $(RELEASE_ARTIFACTS)/python
+artifacts-python: ensure-bazel-server ## Builds Python SandboxExec distributions into $(PYTHON_RELEASE_DEST).
+	@mkdir -p "$(PYTHON_RELEASE_DEST)"
+	@set -e; \
+	python_release_version=$$($(call wrapper,tools/make_python_release.sh version "$(RELEASE_NAME)")); \
+	$(call build_paths,//sandboxexec/sandbox/python:dist,cp -f "$$0"/*.whl "$$0"/*.tar.gz "$(PYTHON_RELEASE_DEST)/",--//sandboxexec/sandbox/python:release_version="$$python_release_version")
 .PHONY: artifacts-python
 
 release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
@@ -967,8 +983,8 @@ release: $(RELEASE_KEY) $(RELEASE_ARTIFACTS)/$(ARCH)
 release-tarball: DESTINATION ?= .
 release-tarball: ## Builds optimized release tarballs (gvisor.tar.bz2, gvisor.tar.zstd) and copies them to $(DESTINATION). E.g. make release-tarball DESTINATION=bin/
 	@mkdir -p "$(DESTINATION)"
-	@$(call copy,-c opt //debian:gvisor-release-tar-bz2,$(DESTINATION))
-	@$(call copy,-c opt //debian:gvisor-release-tar-zstd,$(DESTINATION))
+	@$(call copy,//debian:gvisor-release-tar-bz2,$(DESTINATION),-c opt)
+	@$(call copy,//debian:gvisor-release-tar-zstd,$(DESTINATION),-c opt)
 .PHONY: release-tarball
 
 staged-binaries-check: ## Verifies STAGED_BINARIES contains all files from the //debian:gvisor-release-tar-bz2 fileset.
@@ -995,7 +1011,7 @@ tag: ## Stages a release tag; the release pipeline publishes it once the artifac
 ##
 ## Lint targets.
 ##
-##   These run the source-level linters that live outside the Bazel build.
+##   These run the source-level linters, including the Bazel-owned actions check.
 ##   Deep Go analysis is owned by gVisor nogo.
 ##
 lint: ## Runs the source linters.
@@ -1006,6 +1022,6 @@ lint-fix: ## Reformats sources in place.
 	@tools/lint.sh --fix
 .PHONY: lint-fix
 
-lint-cc: ensure-bazel-server ## Runs clang-tidy over the C++ sources; needs bazel for compile_commands.json.
+lint-cc: ensure-bazel-server ## Runs clang-tidy with the declared C++ compile inputs.
 	@$(call wrapper,tools/lint.sh clang-tidy)
 .PHONY: lint-cc

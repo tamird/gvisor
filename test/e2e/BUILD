@@ -1,3 +1,5 @@
+load("//test/docker:config.bzl", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
+load("//test/docker:defs.bzl", "docker_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 
 package(
@@ -5,22 +7,22 @@ package(
     licenses = ["notice"],
 )
 
-go_test(
+docker_test(
     name = "integration_test",
     size = "large",
     srcs = [
         "exec_test.go",
         "integration_test.go",
+        "lifecycle_test.go",
+        "main_test.go",
     ],
+    cohort = "integration",
 
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    runtime_variants = INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT],
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/abi/linux",
@@ -33,21 +35,17 @@ go_test(
     ],
 )
 
-go_test(
+docker_test(
     name = "uds_proxy_test",
     size = "large",
     srcs = [
         "uds_proxy_test.go",
     ],
+    cohort = "uds_proxy",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and the $(RUNTIME)-net-uds runtime to be configured
-        # before the test runs.
-        "local",
-        "manual",
-    ],
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/tcpip",
@@ -63,21 +61,19 @@ go_test(
     ],
 )
 
-go_test(
+docker_test(
     name = "integration_runtime_test",
     size = "large",
     srcs = [
         "integration_runtime_test.go",
+        "main_test.go",
         "systemd_test.go",
     ],
+    cohort = "runtime",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/cleanup",
@@ -89,20 +85,18 @@ go_test(
     ],
 )
 
-go_test(
+docker_test(
     name = "runtime_in_docker_test",
     size = "large",
     srcs = [
+        "main_test.go",
         "runtime_in_docker_test.go",
     ],
+    cohort = "nested_runtime",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",
@@ -120,11 +114,9 @@ go_test(
     # runsc is needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
     library = ":integration",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "local",
-        "manual",
-    ],
+    # Requires docker and runsc to be configured before the test runs.
+    local = True,
+    tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",

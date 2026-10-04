@@ -24,6 +24,7 @@ import (
 	"net"
 	"sort"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
@@ -44,6 +45,129 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
 )
 
+type blockedResolutionProtocol struct {
+	stack.NetworkProtocol
+	onFailure func(*stack.PacketBuffer)
+}
+
+func (p *blockedResolutionProtocol) NewEndpoint(nic stack.NetworkInterface, dispatcher stack.TransportDispatcher) stack.NetworkEndpoint {
+	ep := p.NetworkProtocol.NewEndpoint(nic, dispatcher)
+	return &blockedResolutionEndpoint{
+		NetworkEndpoint:     ep,
+		AddressableEndpoint: ep.(stack.AddressableEndpoint),
+		onFailure:           p.onFailure,
+	}
+}
+
+type blockedResolutionEndpoint struct {
+	stack.NetworkEndpoint
+	stack.AddressableEndpoint
+	onFailure func(*stack.PacketBuffer)
+}
+
+func (e *blockedResolutionEndpoint) HandleLinkResolutionFailure(pkt *stack.PacketBuffer) {
+	e.onFailure(pkt)
+	e.NetworkEndpoint.(stack.LinkResolvableNetworkEndpoint).HandleLinkResolutionFailure(pkt)
+}
+
+func TestRemoveNICWaitsForLinkResolution(t *testing.T) {
+	for _, overflow := range []bool{false, true} {
+		t.Run(fmt.Sprintf("overflow=%t", overflow), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				started := make(chan struct{})
+				resume := make(chan struct{})
+				clock := faketime.NewManualClock()
+				firstRemote := tcpip.AddrFrom4([4]byte{192, 0, 2, 2})
+				var s *stack.Stack
+				var retained *stack.PacketBuffer
+				s = stack.New(stack.Options{
+					Clock: clock,
+					NetworkProtocols: []stack.NetworkProtocolFactory{
+						arp.NewProtocol,
+						func(s *stack.Stack) stack.NetworkProtocol {
+							return &blockedResolutionProtocol{
+								NetworkProtocol: ipv4.NewProtocol(s),
+								onFailure: func(pkt *stack.PacketBuffer) {
+									// NIC removal may fail other pending resolutions too.
+									if header.IPv4(pkt.NetworkHeader().Slice()).DestinationAddress() != firstRemote {
+										return
+									}
+									retained = pkt.IncRef()
+									close(started)
+									<-resume
+									// Error callbacks may re-enter the stack. Removal must
+									// release its lock before waiting for this callback.
+									s.CheckNIC(1)
+								},
+							}
+						},
+					},
+				})
+				defer s.Destroy()
+				ep := channel.New(0, 1500, "\x02\x00\x00\x00\x00\x01")
+				ep.LinkEPCapabilities |= stack.CapabilityResolutionRequired
+				if err := s.CreateNIC(1, ep); err != nil {
+					t.Fatalf("CreateNIC: %s", err)
+				}
+				local := tcpip.AddrFrom4([4]byte{192, 0, 2, 1})
+				addr := tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: tcpip.AddressWithPrefix{Address: local, PrefixLen: 24}}
+				if err := s.AddProtocolAddress(1, addr, stack.AddressProperties{}); err != nil {
+					t.Fatalf("AddProtocolAddress: %s", err)
+				}
+				s.SetRouteTable([]tcpip.Route{{Destination: addr.AddressWithPrefix.Subnet(), NIC: 1}})
+				count := 1
+				if overflow {
+					// The queue admits 64 pending resolutions; the 65th dispatches
+					// the oldest batch on its separate overflow goroutine.
+					count = 65
+				}
+				for i := range count {
+					remote := tcpip.AddrFrom4([4]byte{192, 0, 2, byte(i + 2)})
+					r, err := s.FindRoute(1, local, remote, ipv4.ProtocolNumber, false)
+					if err != nil {
+						t.Fatalf("FindRoute: %s", err)
+					}
+					pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
+						ReserveHeaderBytes: int(r.MaxHeaderLength()),
+						Payload:            buffer.MakeWithData([]byte{1}),
+					})
+					err = r.WritePacket(stack.NetworkHeaderParams{Protocol: 253, TTL: 64}, pkt)
+					pkt.DecRef()
+					r.Release()
+					if err != nil {
+						t.Fatalf("WritePacket: %s", err)
+					}
+				}
+				if !overflow {
+					if err := s.RemoveNeighbor(1, ipv4.ProtocolNumber, firstRemote); err != nil {
+						t.Fatalf("RemoveNeighbor: %s", err)
+					}
+					go clock.RunImmediatelyScheduledJobs()
+				}
+				<-started
+				done := make(chan tcpip.Error, 1)
+				go func() { done <- s.RemoveNIC(1) }()
+				synctest.Wait()
+				select {
+				case err := <-done:
+					t.Errorf("RemoveNIC returned %v while a callback retained a packet", err)
+					done <- err
+				default:
+				}
+				close(resume)
+				if err := <-done; err != nil {
+					t.Errorf("RemoveNIC: %s", err)
+				}
+				synctest.Wait()
+				if got := retained.ReadRefs(); got != 1 {
+					t.Errorf("packet references after RemoveNIC = %d, want only the test's reference", got)
+				}
+				retained.DecRef()
+			})
+		})
+	}
+}
+
 func TestClockResolution(t *testing.T) {
 	for _, test := range []struct {
 		name string
@@ -60,6 +184,47 @@ func TestClockResolution(t *testing.T) {
 				t.Errorf("ClockResolution() = %v, want %v", got, test.want)
 			}
 		})
+	}
+}
+
+func TestNICMTULimitsSurviveMove(t *testing.T) {
+	src := stack.New(stack.Options{})
+	defer src.Close()
+	dst := stack.New(stack.Options{})
+	defer dst.Close()
+	ep := channel.New(0, 1500, "")
+	const nicID = 1
+	if err := src.CreateNICWithOptions(nicID, ep, stack.NICOptions{MinMTU: 1000, MaxMTU: 2000}); err != nil {
+		t.Fatalf("CreateNICWithOptions(%d, _, _) = %v", nicID, err)
+	}
+	id, err := src.SetNICStack(nicID, dst)
+	if err != nil {
+		t.Fatalf("SetNICStack(%d, _) = %v", nicID, err)
+	}
+	for _, test := range []struct {
+		mtu     uint32
+		wantMTU uint32
+		wantErr tcpip.Error
+	}{
+		{mtu: 999, wantMTU: 1500, wantErr: &tcpip.ErrInvalidOptionValue{}},
+		{mtu: 1000, wantMTU: 1000},
+		{mtu: 2000, wantMTU: 2000},
+		{mtu: 2001, wantMTU: 2000, wantErr: &tcpip.ErrInvalidOptionValue{}},
+	} {
+		if err := dst.SetNICMTU(id, test.mtu); !cmp.Equal(err, test.wantErr) {
+			t.Errorf("SetNICMTU(%d, %d) = %v, want %v", id, test.mtu, err, test.wantErr)
+		}
+		if got := ep.MTU(); got != test.wantMTU {
+			t.Errorf("MTU after SetNICMTU(%d, %d) = %d, want %d", id, test.mtu, got, test.wantMTU)
+		}
+	}
+
+	// NICs without explicit bounds retain their existing MTU policy.
+	if err := src.CreateNIC(nicID, channel.New(0, 1500, "")); err != nil {
+		t.Fatalf("CreateNIC(%d, _) = %v", nicID, err)
+	}
+	if err := src.SetNICMTU(nicID, math.MaxUint32); err != nil {
+		t.Errorf("SetNICMTU(%d, MaxUint32) = %v", nicID, err)
 	}
 }
 

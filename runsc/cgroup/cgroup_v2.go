@@ -101,27 +101,26 @@ func (c *cgroupV2) createCgroupPaths() (bool, error) {
 	//	* /sys/fs/cgroup/cgroup.subtree_control
 	//	* /sys/fs/cgroup/foo/cgroup.subtree_control
 	val := "+" + strings.Join(c.Controllers, " +")
-	elements := strings.Split(c.Path, "/")
 	current := c.Mountpoint
 	created := false
 
-	for i, e := range elements {
-		current = filepath.Join(current, e)
-		if i > 0 {
-			if err := os.Mkdir(current, 0o755); err != nil {
-				if !os.IsExist(err) {
-					return false, err
-				}
-			} else {
-				created = true
-				c.Own = append(c.Own, current)
-			}
+	for _, e := range strings.Split(c.Path, "/") {
+		if e == "" || e == "." {
+			continue
 		}
-		// enable all known controllers for subtree
-		if i < len(elements)-1 {
-			if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+		// Enable the parent before creating its child, regardless of whether
+		// Path has a leading slash. Never create or own the mount point itself.
+		if err := writeFile(filepath.Join(current, subtreeControl), []byte(val), 0700); err != nil {
+			return false, err
+		}
+		current = filepath.Join(current, e)
+		if err := os.Mkdir(current, 0o755); err != nil {
+			if !os.IsExist(err) {
 				return false, err
 			}
+		} else {
+			created = true
+			c.Own = append(c.Own, current)
 		}
 	}
 	return created, nil
@@ -505,26 +504,34 @@ func (*cpu2) set(spec *specs.LinuxResources, path string) error {
 		}
 	}
 
-	if spec.CPU.Period != nil || spec.CPU.Quota != nil {
-		v := maxLimitStr
-		if spec.CPU.Quota != nil && *spec.CPU.Quota > 0 {
-			v = strconv.FormatInt(*spec.CPU.Quota, 10)
-		}
-
-		var period uint64
-		if spec.CPU.Period != nil && *spec.CPU.Period != 0 {
-			period = *spec.CPU.Period
-		} else {
-			period = defaultPeriod
-		}
-
-		v += " " + strconv.FormatUint(period, 10)
-		if err := setValue(path, cpuLimitCgroup, v); err != nil {
+	// As with cgroup v1, zero fields leave existing limits unchanged. Both
+	// values share cpu.max in v2, so retain the other field on partial updates.
+	hasQuota := spec.CPU.Quota != nil && *spec.CPU.Quota != 0
+	hasPeriod := spec.CPU.Period != nil && *spec.CPU.Period != 0
+	if !hasQuota && !hasPeriod {
+		return nil
+	}
+	var quota int64
+	var period uint64
+	if !hasQuota || !hasPeriod {
+		oldQuota, oldPeriod, err := readCPUQuotaAndPeriod(path)
+		if err != nil {
 			return err
 		}
+		quota, period = oldQuota, uint64(oldPeriod)
 	}
-
-	return nil
+	if hasQuota {
+		quota = *spec.CPU.Quota
+	}
+	if hasPeriod {
+		period = *spec.CPU.Period
+	}
+	v := maxLimitStr
+	if quota > 0 {
+		v = strconv.FormatInt(quota, 10)
+	}
+	v += " " + strconv.FormatUint(period, 10)
+	return setValue(path, cpuLimitCgroup, v)
 }
 
 type cpuset2 struct {
@@ -692,27 +699,12 @@ type io2 struct {
 	mandatory
 }
 
-func (*io2) generateProperties(spec *specs.LinuxResources) ([]dbus.Property, error) {
-	props := []dbus.Property{}
-	if spec == nil || spec.BlockIO == nil {
-		return props, nil
-	}
-	io := spec.BlockIO
-	if io != nil {
-		if io.Weight != nil && *io.Weight != 0 {
-			ioWeight := convertBlkIOToIOWeightValue(*io.Weight)
-			props = append(props, newProp("IOWeight", ioWeight))
-		}
-		for _, dev := range io.WeightDevice {
-			val := fmt.Sprintf("%d:%d %d", dev.Major, dev.Minor, *dev.Weight)
-			props = append(props, newProp("IODeviceWeight", val))
-		}
-		props = addIOProps(props, "IOReadBandwidthMax", io.ThrottleReadBpsDevice)
-		props = addIOProps(props, "IOWriteBandwidthMax", io.ThrottleWriteBpsDevice)
-		props = addIOProps(props, "IOReadIOPSMax", io.ThrottleReadIOPSDevice)
-		props = addIOProps(props, "IOWriteIOPSMax", io.ThrottleWriteIOPSDevice)
-	}
-	return props, nil
+func (*io2) generateProperties(*specs.LinuxResources) ([]dbus.Property, error) {
+	// Systemd's IOWeight-to-BFQ mapping differs from our cgroupfs mapping:
+	// https://github.com/systemd/systemd/blob/b3d8fc43e/src/basic/cgroup-util.h#L100-L112
+	// Apply I/O resources directly after creating or updating the scope, using
+	// the same filesystem translation as other cgroup v2 users.
+	return nil, nil
 }
 
 func (*io2) set(spec *specs.LinuxResources, path string) error {

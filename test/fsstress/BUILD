@@ -1,22 +1,20 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//test/docker:defs.bzl", "docker_test")
+load("//tools:defs.bzl", "go_library")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-go_test(
+docker_test(
     name = "fsstress_test",
     size = "large",
     srcs = [
         "fsstress_test.go",
     ],
+    cohort = "fsstress",
     library = ":fsstress",
-    tags = [
-        # Requires docker and runsc to be configured before the test runs.
-        "manual",
-        "local",
-    ],
+    tags = ["manual"],
     deps = [
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",

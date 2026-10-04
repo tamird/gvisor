@@ -218,14 +218,13 @@ func (c *bwrapConfig) userNamespace() []sandbox.Option {
 		{ContainerID: uint32(targetGID), HostID: uint32(sudoGID), Size: 1},
 	}
 
-	// When runsc is executed by root (hostUID == 0), gVisor's Gofer initialization requires Container 0:0
-	// to be mapped to Host 0:0 so the Gofer process can successfully call setuid(0)/setgid(0).
-	// TODO(gvisor.dev/issue/13747): Have the sandbox bindings add the 0:0 mapping for root sandboxes with a user namespace.
+	// Keep root mapped for privileged sandbox helpers when both sides of the
+	// mapping are free. Mapping the same host ID twice is invalid.
 	if hostUID == 0 {
-		if targetUID != 0 {
+		if targetUID != 0 && sudoUID != 0 {
 			uidMappings = append(uidMappings, specs.LinuxIDMapping{ContainerID: 0, HostID: 0, Size: 1})
 		}
-		if targetGID != 0 {
+		if targetGID != 0 && sudoGID != 0 {
 			gidMappings = append(gidMappings, specs.LinuxIDMapping{ContainerID: 0, HostID: 0, Size: 1})
 		}
 	}

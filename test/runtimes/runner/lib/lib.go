@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
@@ -198,10 +199,18 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
 						return
 					}
+					// Keep the complete batch output even if the test log is truncated.
+					if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" {
+						name := filepath.Join(dir, fmt.Sprintf("batch-%d.log", i))
+						contents := fmt.Sprintf("Batch:\n%s\nOutput:\n%s\n", strings.Join(tcs, "\n"), output)
+						if err := os.WriteFile(name, []byte(contents), 0644); err != nil {
+							t.Errorf("Could not save batch output: %v", err)
+						}
+					}
 					t.Fatalf("FAIL: (%v):\nBatch:\n%s\nOutput:\n%s\n", time.Since(now), strings.Join(tcs, "\n"), output)
 				// Add one minute to let proctor handle timeout.
 				case <-timeoutChan:
-					t.Fatalf("TIMEOUT: (%v):\nBatch:\n%s\nOutput:\n%s\n", time.Since(now), strings.Join(tcs, "\n"), output)
+					t.Fatalf("TIMEOUT: (%v):\nBatch:\n%s\n", time.Since(now), strings.Join(tcs, "\n"))
 				}
 			},
 		})

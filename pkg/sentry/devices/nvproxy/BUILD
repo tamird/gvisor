@@ -1,5 +1,6 @@
 load("//pkg/sync/locking:locking.bzl", "declare_mutex")
 load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "network_test_exec_properties")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(default_applicable_licenses = ["//:license"])
@@ -113,16 +114,40 @@ go_test(
 )
 
 go_test(
-    name = "nvproxy_driver_parity_test",
+    name = "nvproxy_driver_abi_test",
     size = "large",
     srcs = ["nvproxy_driver_parity_test.go"],
-    data = ["//tools/nvidia_driver_differ:driver_ast_parser"],
+    data = ["//tools/nvidia_driver_differ:driver_abi"],
     deps = [
         ":nvproxy",
         "//pkg/abi/nvgpu",
         "//pkg/sentry/devices/nvproxy/nvconf",
         "//pkg/test/testutil",
-        "//tools/gpu/drivers",
         "//tools/nvidia_driver_differ/parser",
+    ],
+)
+
+go_test(
+    name = "nvproxy_driver_checksums_test",
+    size = "large",
+    srcs = ["nvproxy_driver_checksums_test.go"],
+    exec_properties = network_test_exec_properties(),
+    # Verify the current upstream installers on every invocation.
+    tags = [
+        "external",
+        "requires-network",
+    ],
+    deps = [
+        ":nvproxy",
+        "//pkg/sentry/devices/nvproxy/nvconf",
+        "//tools/gpu/drivers",
+    ],
+)
+
+test_suite(
+    name = "nvproxy_driver_parity_test",
+    tests = [
+        ":nvproxy_driver_abi_test",
+        ":nvproxy_driver_checksums_test",
     ],
 )

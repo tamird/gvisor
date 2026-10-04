@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -50,6 +51,7 @@
 #include "gtest/gtest.h"
 #include "absl/strings/ascii.h"
 #include "absl/strings/str_split.h"
+#include "absl/time/time.h"
 #include "test/syscalls/linux/socket_netlink_route_util.h"
 #include "test/syscalls/linux/socket_netlink_util.h"
 #include "test/util/capability_util.h"
@@ -61,6 +63,7 @@
 #include "test/util/posix_error.h"
 #include "test/util/socket_util.h"
 #include "test/util/test_util.h"
+#include "test/util/timer_util.h"
 
 namespace gvisor {
 namespace testing {
@@ -85,16 +88,6 @@ PosixErrorOr<std::set<std::string>> DumpLinkNames() {
     names.emplace(link.name);
   }
   return names;
-}
-
-PosixErrorOr<Link> GetLinkByName(const std::string& name) {
-  ASSIGN_OR_RETURN_ERRNO(auto links, DumpLinks());
-  for (const auto& link : links) {
-    if (link.name == name) {
-      return link;
-    }
-  }
-  return PosixError(ENOENT, "interface not found");
 }
 
 struct ping_ip_pkt {
@@ -202,8 +195,9 @@ std::string CreateArpPacket(const uint8_t srcmac[ETH_ALEN],
 TEST(TuntapStaticTest, NetTunExists) {
   struct stat statbuf;
   ASSERT_THAT(stat(kDevNetTun, &statbuf), SyscallSucceeds());
-  // Check that it's a character device with rw-rw-rw- permissions.
-  EXPECT_EQ(statbuf.st_mode, S_IFCHR | 0666);
+  // Device permissions depend on userspace policy, such as udev rules.
+  EXPECT_TRUE(S_ISCHR(statbuf.st_mode));
+  EXPECT_EQ(statbuf.st_rdev, makedev(10, 200));
 }
 
 class TuntapTest : public ::testing::Test {
@@ -223,6 +217,66 @@ class TuntapTest : public ::testing::Test {
     }
   }
 };
+
+struct MTUParams {
+  bool tap;
+  uint16_t request;
+};
+
+class TuntapMTUTest : public TuntapTest,
+                      public ::testing::WithParamInterface<MTUParams> {};
+
+TEST_P(TuntapMTUTest, ChangeMTULimits) {
+  SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
+
+  const auto param = GetParam();
+  FileDescriptor tun = ASSERT_NO_ERRNO_AND_VALUE(Open(kDevNetTun, O_RDWR));
+  struct ifreq ifr = {};
+  ifr.ifr_flags = param.tap ? IFF_TAP : IFF_TUN;
+  strncpy(ifr.ifr_name, param.tap ? kTapName : kTunName, IFNAMSIZ);
+  ASSERT_THAT(ioctl(tun.get(), TUNSETIFF, &ifr), SyscallSucceeds());
+  auto link = ASSERT_NO_ERRNO_AND_VALUE(GetLinkByName(ifr.ifr_name));
+  const auto fd = ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
+
+  struct {
+    struct nlmsghdr hdr;
+    struct ifinfomsg ifm;
+    struct rtattr attr;
+    uint32_t mtu;
+  } req = {};
+  req.hdr.nlmsg_len = sizeof(req);
+  req.hdr.nlmsg_type = param.request;
+  req.hdr.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+  req.hdr.nlmsg_seq = 1;
+  req.ifm.ifi_family = AF_UNSPEC;
+  req.ifm.ifi_index = link.index;
+  req.attr.rta_type = IFLA_MTU;
+  req.attr.rta_len = RTA_LENGTH(sizeof(req.mtu));
+
+  const uint32_t max_mtu = param.tap ? 65521 : 65535;
+  for (const auto& test : {std::pair<uint32_t, int>{68, 0},
+                           {67, EINVAL},
+                           {max_mtu, 0},
+                           {max_mtu + 1, EINVAL},
+                           {UINT32_MAX, EINVAL}}) {
+    SCOPED_TRACE(test.first);
+    req.mtu = test.first;
+    const auto result =
+        NetlinkRequestAckOrError(fd, req.hdr.nlmsg_seq, &req, sizeof(req));
+    EXPECT_EQ(result.errno_value(), test.second) << result;
+    if (test.second == 0) {
+      link.mtu = test.first;
+    }
+    EXPECT_EQ(ASSERT_NO_ERRNO_AND_VALUE(GetLinkByName(link.name)).mtu,
+              link.mtu);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(Netlink, TuntapMTUTest,
+                         ::testing::Values(MTUParams{false, RTM_NEWLINK},
+                                           MTUParams{false, RTM_SETLINK},
+                                           MTUParams{true, RTM_NEWLINK},
+                                           MTUParams{true, RTM_SETLINK}));
 
 TEST_F(TuntapTest, CreateInterfaceNoCap) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
@@ -298,21 +352,26 @@ TEST_F(TuntapTest, CreateWithExclFlag) {
   memset(&ifr_set, 0, sizeof(ifr_set));
   ifr_set.ifr_flags = (unsigned)IFF_TAP | IFF_TUN_EXCL;
   strncpy(ifr_set.ifr_name, kTapName, IFNAMSIZ);
-  EXPECT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set),
+  ASSERT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set),
               SyscallSucceedsWithValue(0));
 
   struct ifreq ifr_get;
   memset(&ifr_get, 0, sizeof(ifr_get));
-  EXPECT_THAT(ioctl(fd.get(), TUNGETIFF, &ifr_get),
+  ASSERT_THAT(ioctl(fd.get(), TUNGETIFF, &ifr_get),
               SyscallSucceedsWithValue(0));
 
   struct ifreq ifr_expect = ifr_set;
-  // See __tun_chr_ioctl() in net/drivers/tun.c.
+  // IFF_TUN_EXCL controls creation, not the interface's persistent flags.
+  ifr_expect.ifr_flags &= ~IFF_TUN_EXCL;
   ifr_expect.ifr_flags |= IFF_NOFILTER;
 
   EXPECT_THAT(DumpLinkNames(),
               IsPosixErrorOkAndHolds(::testing::Contains(kTapName)));
   EXPECT_THAT(memcmp(&ifr_expect, &ifr_get, sizeof(ifr_get)), ::testing::Eq(0));
+
+  // This descriptor is already attached to an interface.
+  EXPECT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set),
+              SyscallFailsWithErrno(EEXIST));
 
   FileDescriptor fd2 = ASSERT_NO_ERRNO_AND_VALUE(Open(kDevNetTun, O_RDWR));
 
@@ -320,7 +379,7 @@ TEST_F(TuntapTest, CreateWithExclFlag) {
   ifr_set.ifr_flags = (unsigned)IFF_TAP | IFF_TUN_EXCL;
   strncpy(ifr_set.ifr_name, kTapName, IFNAMSIZ);
   EXPECT_THAT(ioctl(fd2.get(), TUNSETIFF, &ifr_set),
-              SyscallFailsWithErrno(EEXIST));
+              SyscallFailsWithErrno(EBUSY));
 }
 
 TEST_F(TuntapTest, CreateInterface) {
@@ -451,7 +510,7 @@ PosixErrorOr<TunTapInterface> OpenAndAttachTunTap(const std::string& dev_name,
   ASSIGN_OR_RETURN_ERRNO(auto nlsk, NetlinkBoundSocket(NETLINK_ROUTE));
   const struct in_addr dev_ipv4_addr = {.s_addr = dev_addr};
   // Interface setup.
-  EXPECT_NO_ERRNO(LinkAddLocalAddr(nlsk, link.index, AF_INET, /*prefixlen=*/24,
+  RETURN_IF_ERRNO(LinkAddLocalAddr(nlsk, link.index, AF_INET, /*prefixlen=*/24,
                                    &dev_ipv4_addr, sizeof(dev_ipv4_addr)));
 
   if (!IsRunningOnGvisor()) {
@@ -539,7 +598,7 @@ TEST_F(TuntapTest, PingKernel) {
   }
 }
 
-TEST_F(TuntapTest, LargeWritesFailWithEMSGSIZE) {
+TEST_F(TuntapTest, WritesLargerThanMTU) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
 
   const auto& [fd, link] = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
@@ -547,8 +606,6 @@ TEST_F(TuntapTest, LargeWritesFailWithEMSGSIZE) {
 
   ping_pkt ping_req =
       CreatePingPacket(kMacB, kTapPeerIPAddr, kMacA, kTapIPAddr);
-  std::string arp_rep =
-      CreateArpPacket(kMacB, kTapPeerIPAddr, kMacA, kTapIPAddr);
 
   constexpr int kBufSize = 4096;
   std::vector<char> buf(kBufSize);
@@ -563,8 +620,10 @@ TEST_F(TuntapTest, LargeWritesFailWithEMSGSIZE) {
       },
   };
 
-  // A packet is large than MTU which is 1500 by default..
-  EXPECT_THAT(writev(fd.get(), iov, 2), SyscallFailsWithErrno(EMSGSIZE));
+  // Linux accepts the complete write, including padding beyond the default
+  // 1500-byte interface MTU and the IP packet's declared length.
+  EXPECT_THAT(writev(fd.get(), iov, 2),
+              SyscallSucceedsWithValue(sizeof(ping_req) + buf.size()));
 }
 
 TEST_F(TuntapTest, SendUdpTriggersArpResolution) {
@@ -611,33 +670,43 @@ TEST_F(TuntapTest, SendUdpTriggersArpResolution) {
 TEST_F(TuntapTest, TUNNoPacketInfo) {
   SKIP_IF(!ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_NET_ADMIN)));
 
-  // Interface creation.
-  FileDescriptor fd = ASSERT_NO_ERRNO_AND_VALUE(Open(kDevNetTun, O_RDWR));
-
-  struct ifreq ifr_set = {};
-  ifr_set.ifr_flags = IFF_TUN | IFF_NO_PI;
-  strncpy(ifr_set.ifr_name, kTunName, IFNAMSIZ);
-  EXPECT_THAT(ioctl(fd.get(), TUNSETIFF, &ifr_set), SyscallSucceeds());
-
-  // Interface setup.
-  auto link = ASSERT_NO_ERRNO_AND_VALUE(GetLinkByName(kTunName));
-  const struct in_addr dev_ipv4_addr = {.s_addr = kTapIPAddr};
-  FileDescriptor nlsk =
-      ASSERT_NO_ERRNO_AND_VALUE(NetlinkBoundSocket(NETLINK_ROUTE));
-  EXPECT_NO_ERRNO(LinkAddLocalAddr(nlsk, link.index, AF_INET, 24,
-                                   &dev_ipv4_addr, sizeof(dev_ipv4_addr)));
+  const auto& [fd, link] = ASSERT_NO_ERRNO_AND_VALUE(OpenAndAttachTunTap(
+      kTunName, kTapIPAddr, false /* tap */, true /* no_pi */));
 
   ping_ip_pkt ping_req = CreatePingIPPacket(kTapPeerIPAddr, kTapIPAddr);
 
   // Send ICMP query
-  EXPECT_THAT(write(fd.get(), &ping_req, sizeof(ping_req)),
+  ASSERT_THAT(write(fd.get(), &ping_req, sizeof(ping_req)),
               SyscallSucceedsWithValue(sizeof(ping_req)));
 
-  // Receive loop to process inbound packets.
+  // Bound the response wait even if unrelated packets keep arriving.
+  MonotonicTimer timer;
+  timer.Start();
   while (1) {
+    const auto timeout_ms =
+        absl::ToInt64Milliseconds(absl::Seconds(10) - timer.Duration());
+    ASSERT_GT(timeout_ms, 0) << "Timed out waiting for ICMP echo reply";
+    struct pollfd pfd = {
+        .fd = fd.get(),
+        .events = POLLIN,
+    };
+    const int ready = poll(&pfd, 1, timeout_ms);
+    if (ready < 0 && errno == EINTR) {
+      continue;
+    }
+    ASSERT_THAT(ready, SyscallSucceedsWithValue(1))
+        << "Waiting for ICMP echo reply";
+    ASSERT_NE(pfd.revents & POLLIN, 0);
+
     ping_ip_pkt ping_resp = {};
-    EXPECT_THAT(read(fd.get(), &ping_resp, sizeof(ping_req)),
-                SyscallSucceedsWithValue(sizeof(ping_req)));
+    const ssize_t n = read(fd.get(), &ping_resp, sizeof(ping_resp));
+    if (n < 0 && errno == EINTR) {
+      continue;
+    }
+    ASSERT_THAT(n, SyscallSucceeds());
+    if (n != static_cast<ssize_t>(sizeof(ping_resp))) {
+      continue;
+    }
 
     // Process ping response packet.
     if (!memcmp(&ping_resp.ip.saddr, &ping_req.ip.daddr, kIPLen) &&

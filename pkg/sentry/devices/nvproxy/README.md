@@ -103,6 +103,11 @@ which compares `nvproxy`'s struct definitions with driver struct definitions:
 bazel test pkg/sentry/devices/nvproxy:nvproxy_driver_parity_test
 ```
 
+This suite includes the ABI comparison and `nvproxy_driver_checksums_test`,
+which downloads the current NVIDIA installers and verifies their checksums.
+The checksum test requires network access and always runs, even when a previous
+result is cached. Use `nvproxy_driver_abi_test` to select only the ABI comparison.
+
 #### Handling Intermediate Versions
 
 It is crucial to introduce ABI changes at the exact version they appear in the

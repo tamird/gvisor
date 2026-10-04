@@ -1,6 +1,8 @@
+load("@bazel_skylib//rules:write_file.bzl", "write_file")
 load("@rules_license//rules:license.bzl", "license")
-load("//tools:defs.bzl", "build_test", "gazelle", "go_path")
-load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "release_files")
+load("//tools:defs.bzl", "build_test", "gazelle", "go_path", "namespace_test_exec_properties", "native_test")
+load("//tools:release.bzl", "RELEASE_RUNSC", "RELEASE_SIDECARS", "SIDECARS", "race_smoke_test", "release_files")
+load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE")
 load("//tools/nogo:defs.bzl", "nogo_config")
 load("//tools/yamltest:defs.bzl", "yaml_test")
 load("//website:defs.bzl", "doc")
@@ -16,6 +18,7 @@ license(
 )
 
 exports_files([
+    ".clang-tidy",
     "LICENSE",
     "README.md",
     "SECURITY.md",
@@ -32,6 +35,91 @@ release_files(
     runsc = RELEASE_RUNSC,
     sidecars = RELEASE_SIDECARS,
     visibility = ["//visibility:public"],
+)
+
+# Match Make's plugin runtime: the normal sidecars plus its plugin sentry.
+release_files(
+    name = "plugin_release",
+    bins = ["//shim:containerd-shim-runsc-v1"],
+    runsc = "//runsc:runsc-plugin-stack",
+    sidecars = SIDECARS | {
+        "//runsc/cmd/sentry:gvisor_sentry_plugin_stack": "gvisor_sentry_plugin_stack",
+    },
+    tags = ["manual", "network_plugins"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+    visibility = ["//visibility:public"],
+)
+
+[
+    smoke_test(
+        name = "release_" + name + "_test",
+        # Race builds start multiple instrumented runtime processes.
+        size = "large",
+        src = ":release",
+        # Remote execution may materialize the native_test executable as a file.
+        # Keep it beside the declared sidecars without relying on symlink identity.
+        out = "release/" + name + "_test.exe",
+        args = [
+            "--alsologtostderr",
+            "--network=none",
+            "--debug",
+            "--TESTONLY-unsafe-nonroot=true",
+            "--rootless",
+            # Exercise the declared release layout, never embedded sidecar copies.
+            "--sidecar-usage-policy=STRICT",
+            "do",
+            "true",
+        ],
+        env = select({
+            "//tools:gotsan": {"GLIBC_TUNABLES": "glibc.pthread.rseq=0"},
+            "//conditions:default": {},
+        }),
+        # A privileged identity would skip rootless capability acquisition.
+        exec_properties = namespace_test_exec_properties(user = "nobody"),
+        tags = ["manual"],
+    )
+    for name, smoke_test in [
+        ("smoke", native_test),
+        ("smoke_race", race_smoke_test),
+    ]
+]
+
+# Preserve Make's three do-tests commands. Rootless cases must start without
+# privileges so they exercise capability acquisition in a new user namespace.
+_DO_VARIANTS = [
+    ("rootless", ["--rootless"], "nobody"),
+    ("rootless_network_none", ["--rootless", "--network=none"], "nobody"),
+    ("root", [], "root"),
+]
+
+[
+    native_test(
+        name = "do_" + name + "_test",
+        size = "large",
+        src = ":release",
+        # Keep each executable beside its declared release sidecars.
+        out = "release/do_" + name + ".exe",
+        args = args + [
+            "--alsologtostderr",
+            "--debug",
+            "--sidecar-usage-policy=STRICT",
+            "do",
+            "true",
+        ],
+        exec_properties = namespace_test_exec_properties(
+            user = user,
+            # The privileged case sets up networking with ip and iptables.
+            image = RBE_NETWORK_TOOLS_IMAGE,
+        ),
+        tags = ["manual"],
+    )
+    for name, args, user in _DO_VARIANTS
+]
+
+test_suite(
+    name = "do_tests",
+    tags = ["manual"],
+    tests = [":do_" + name + "_test" for name, args, user in _DO_VARIANTS],
 )
 
 nogo_config(
@@ -96,10 +184,53 @@ yaml_test(
     schema = "//tools/nogo/config:schema.json",
 )
 
+GITHUB_WORKFLOWS = glob(
+    [
+        ".github/workflows/**/*.yaml",
+        ".github/workflows/**/*.yml",
+    ],
+    allow_empty = True,
+) or fail("No GitHub workflow YAML files were found")
+
+filegroup(
+    name = "github_workflows",
+    srcs = GITHUB_WORKFLOWS,
+)
+
 yaml_test(
     name = "github_workflows_test",
-    srcs = glob([".github/workflows/*.yml"]),
+    srcs = [":github_workflows"],
     schema = "@github_workflow_schema//file",
+)
+
+# actionlint discovers project configuration and local actions by finding .git.
+# It only stats the marker; Git metadata and history are not needed.
+write_file(
+    name = "actionlint_project_marker",
+    out = ".git",
+    content = [],
+)
+
+# A real runfiles tree is needed for project/configuration discovery. On
+# Windows, enable Bazel symlink support and pass --enable_runfiles.
+native_test(
+    name = "github_actions_test",
+    src = "//tools/actionlint",
+    args = [
+        "-no-color",
+        "-oneline",
+        "-shellcheck=",
+        "-pyflakes=",
+    ] + ['"$(rootpath %s)"' % workflow for workflow in GITHUB_WORKFLOWS],
+    # These optional configuration files may be absent.
+    # buildifier: disable=constant-glob
+    data = GITHUB_WORKFLOWS + [":actionlint_project_marker"] + glob(
+        [
+            ".github/actionlint.yaml",
+            ".github/actionlint.yml",
+        ],
+        allow_empty = True,
+    ),
 )
 
 filegroup(
@@ -189,26 +320,26 @@ go_path(
     ],
 )
 
-# CC toolchain targets for cross-compilation.
-# Required to be explicitly specified in bazel >= 5.
-toolchain(
-    name = "cc_toolchain_k8",
-    target_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
+genrule(
+    name = "go_export",
+    srcs = [
+        ":gopath",
+        "AUTHORS",
+        "LICENSE",
+        "go.mod",
+        "go.sum",
+        "//runsc:go_export_sources",
+        "//shim:go_export_sources",
+        "//tools/checklocks/cmd/checklocks:go_export_sources",
+        "//webhook:go_export_sources",
     ],
-    toolchain = "@crosstool//:cc-compiler-k8",
-    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
-)
-
-toolchain(
-    name = "cc_toolchain_aarch64",
-    target_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:aarch64",
-    ],
-    toolchain = "@crosstool//:cc-compiler-aarch64",
-    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+    outs = ["go_export.zip"],
+    cmd = "$(execpath //tools/go_export:assemble) --gopath $(execpath :gopath) --output $@ --go-mod $(execpath go.mod) " +
+          "$(execpath AUTHORS) $(execpath LICENSE) $(execpath go.mod) $(execpath go.sum) " +
+          "$(execpaths //runsc:go_export_sources) $(execpaths //shim:go_export_sources) " +
+          "$(execpaths //tools/checklocks/cmd/checklocks:go_export_sources) $(execpaths //webhook:go_export_sources)",
+    tools = ["//tools/go_export:assemble"],
+    visibility = ["//visibility:public"],
 )
 
 # gazelle is a set of build tools.
@@ -221,3 +352,8 @@ exports_files([
     "go.sum",
     "go.mod",
 ])
+
+exports_files(
+    [".clang-format"],
+    visibility = ["//tools:__pkg__"],
+)

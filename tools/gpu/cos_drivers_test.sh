@@ -14,14 +14,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Script to easily run gpu tests on all supported driver versions. This should
-# be run from the gVisor repo root directory.
+# Check COS image driver metadata. Run from the gVisor repository root.
 set -ueo pipefail
 
+source tools/gpu/cos_metadata_input.sh
+
 json_file=$(mktemp /tmp/cos_gpu_compatibility_test.XXXXXX)
-trap "rm -f ${json_file}" EXIT
+trap 'rm -f "$json_file"' EXIT
 
 gcloud compute images list --project cos-cloud \
   --filter="family:cos*"  --format json > "${json_file}"
 
-make run TARGETS=test/gpu:cos_gpu_compatibility_test ARGS="-test.v --image_json=${json_file}"
+with_cos_metadata_input "$json_file" \
+  make test TARGETS=test/gpu:cos_gpu_compatibility_test \
+    OPTIONS="--test_output=all --test_arg=-test.v"

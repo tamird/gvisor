@@ -30,6 +30,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/prototext"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	cospb "gvisor.dev/gvisor/test/gpu/gpu_driver_versions_go_proto"
 )
 
@@ -44,7 +45,15 @@ var (
 )
 
 func TestGPUDriversCompatibility(t *testing.T) {
-	content, err := os.ReadFile(*imageJSON)
+	imagePath := *imageJSON
+	if imagePath == "" {
+		var err error
+		imagePath, err = testutil.FindFile("test/gpu/cos_metadata_input/images.json")
+		if err != nil {
+			t.Fatalf("COS image catalog is missing; use tools/gpu/cos_drivers_test.sh or supply COS_IMAGES_JSON to the cos-metadata qualification lane: %v", err)
+		}
+	}
+	content, err := os.ReadFile(imagePath)
 	if err != nil {
 		t.Fatalf("Failed to read image JSON file: %v", err)
 	}
@@ -133,16 +142,18 @@ func listedDriverVersions(cosVersion string) ([]byte, error) {
 	// See: https://cloud.google.com/container-optimized-os/docs/release-notes
 	url := fmt.Sprintf("https://storage.googleapis.com/cos-tools/%s/lakitu/gpu_driver_versions.textproto", cosVersion)
 	resp, err := http.Get(url)
-	// When COS versions are newly released, they will often show up in projects but not the release
-	// page. In this case, we return an empty list of driver versions.
-	if resp.StatusCode == 404 {
-		resp.Body.Close()
-		return []byte("gpu_driver_version_info: []"), nil
-	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to get driver versions for release %q: %w", cosVersion, err)
 	}
 	defer resp.Body.Close()
+	// When COS versions are newly released, they will often show up in projects but not the release
+	// page. In this case, we return an empty list of driver versions.
+	if resp.StatusCode == http.StatusNotFound {
+		return []byte("gpu_driver_version_info: []"), nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get driver versions for release %q: HTTP %s", cosVersion, resp.Status)
+	}
 	return ioutil.ReadAll(resp.Body)
 }
 

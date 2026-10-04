@@ -1,8 +1,22 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//test/docker:config.bzl", "PORTFORWARD_VARIANTS", "POSTURE_VARIANTS")
+load("//test/docker:defs.bzl", "docker_test")
+load("//tools:defs.bzl", "bzl_library", "go_library")
+load(":defs.bzl", "containerd_test")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+bzl_library(
+    name = "defs_bzl",
+    srcs = ["defs.bzl"],
+    deps = [
+        "//test/docker:config_bzl",
+        "//test/docker:defs_bzl",
+        "//tools:arch_bzl",
+        "@rules_oci//oci:defs",
+    ],
 )
 
 go_library(
@@ -13,6 +27,7 @@ go_library(
         "root.go",
     ],
     deps = [
+        "//pkg/test/criutil",
         "//pkg/test/dockerutil",
         "//pkg/test/testutil",
         "//runsc/flag",
@@ -20,46 +35,63 @@ go_library(
     ],
 )
 
-go_test(
+_ROOT_TEST_SRCS = [
+    "cgroup_test.go",
+    "chroot_test.go",
+    "main_test.go",
+    "oom_score_adj_test.go",
+    "runsc_test.go",
+    "sandboxposture_test.go",
+]
+
+_ROOT_TEST_DEPS = [
+    "//pkg/cleanup",
+    "//pkg/test/dockerutil",
+    "//pkg/test/sandboxposture",
+    "//pkg/test/testutil",
+    "//runsc/cgroup",
+    "//runsc/config",
+    "//runsc/container",
+    "//runsc/flag",
+    "//runsc/specutils",
+    "@com_github_cenkalti_backoff//:go_default_library",
+    "@com_github_docker_docker//api/types/container:go_default_library",
+    "@com_github_moby_sys_capability//:go_default_library",
+    "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
+    "@org_golang_x_sys//unix:go_default_library",
+]
+
+docker_test(
     name = "root_test",
-    size = "small",
-    srcs = [
-        "cgroup_test.go",
-        "chroot_test.go",
-        "main_test.go",
-        "oom_score_adj_test.go",
-        "runsc_test.go",
-        "sandboxposture_test.go",
-    ],
-    data = [
-        "//:release",
-    ],
+    size = "large",
+    srcs = _ROOT_TEST_SRCS,
+    cohort = "root",
+    data = ["//:release"],
     library = ":root",
     pure = True,
-    tags = [
-        "local",
-        "manual",
-    ],
+    tags = ["manual"],
     visibility = ["//:sandbox"],
-    deps = [
-        "//pkg/cleanup",
-        "//pkg/test/dockerutil",
-        "//pkg/test/sandboxposture",
-        "//pkg/test/testutil",
-        "//runsc/cgroup",
-        "//runsc/config",
-        "//runsc/container",
-        "//runsc/flag",
-        "//runsc/specutils",
-        "@com_github_cenkalti_backoff//:go_default_library",
-        "@com_github_docker_docker//api/types/container:go_default_library",
-        "@com_github_moby_sys_capability//:go_default_library",
-        "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
-        "@org_golang_x_sys//unix:go_default_library",
-    ],
+    deps = _ROOT_TEST_DEPS,
 )
 
-go_test(
+docker_test(
+    name = "sandbox_posture_test",
+    size = "large",
+    srcs = _ROOT_TEST_SRCS,
+    args = ["-test.run=TestSandboxPosture"],
+    cohort = "posture",
+    data = ["//:release"],
+    library = ":root",
+    # root_test owns analysis of these same sources.
+    nogo = False,
+    pure = True,
+    runtime_variants = POSTURE_VARIANTS,
+    tags = ["manual"],
+    visibility = ["//:sandbox"],
+    deps = _ROOT_TEST_DEPS,
+)
+
+containerd_test(
     name = "crictl_test",
     size = "large",
     srcs = [
@@ -73,7 +105,6 @@ go_test(
     library = ":root",
     pure = True,
     tags = [
-        "local",
         "manual",
     ],
     visibility = ["//:sandbox"],
@@ -90,18 +121,20 @@ go_test(
     ],
 )
 
-go_test(
+docker_test(
     name = "portforward_test",
     srcs = ["portforward_test.go"],
+    cohort = "portforward",
     pure = True,
+    runtime_variants = PORTFORWARD_VARIANTS,
     tags = [
-        "local",
         "manual",
     ],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/cleanup",
         "//pkg/test/dockerutil",
+        "//pkg/test/testutil",
         "//runsc/config",
         "//runsc/flag",
         "//runsc/specutils",

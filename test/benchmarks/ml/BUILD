@@ -15,6 +15,14 @@ go_library(
 benchmark_test(
     name = "tensorflow_test",
     srcs = ["tensorflow_test.go"],
+    continuous = [
+        {
+            "name": "",
+            "benchtime": "30s",
+            "cohort": "benchmark_tensorflow",
+            "filter": "BenchmarkTensorflowDashboard",
+        },
+    ],
     library = ":ml",
     use_for_pgo = False,
     visibility = ["//:sandbox"],

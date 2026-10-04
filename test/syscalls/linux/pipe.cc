@@ -19,6 +19,7 @@
 #include <linux/magic.h>
 #include <signal.h>
 #include <sys/ioctl.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/statfs.h>
 #include <sys/syscall.h>
@@ -704,28 +705,34 @@ TEST_P(PipeTest, ZeroSize) {
   ASSERT_THAT(read(rfd_.get(), nullptr, 0), SyscallSucceedsWithValue(0));
 }
 
-// Test that we can open more FDs than the max default value without crashing.
-TEST_P(PipeTest, PipeFdCount) {
-  SKIP_IF(!CreateBlocking());
-
+// Test allocating pipe descriptors beyond the 16-bit descriptor range.
+TEST(PipeTest, PipeFdCount) {
   // We make too many calls to go through full save cycles.
   DisableSave ds;
   constexpr size_t kMaxFd = 66000;
-  std::vector<int> fds;
+  struct rlimit original_limit;
+  ASSERT_THAT(getrlimit(RLIMIT_NOFILE, &original_limit), SyscallSucceeds());
+  struct rlimit limit = original_limit;
+  // Allow a final pair at kMaxFd + 1 and kMaxFd + 2.
+  limit.rlim_cur = kMaxFd + 3;
+  if (limit.rlim_max < limit.rlim_cur) {
+    limit.rlim_max = limit.rlim_cur;
+  }
+  ASSERT_THAT(setrlimit(RLIMIT_NOFILE, &limit), SyscallSucceeds());
+  const Cleanup restore_limit([original_limit] {
+    TEST_PCHECK(setrlimit(RLIMIT_NOFILE, &original_limit) == 0);
+  });
+  std::vector<FileDescriptor> fds;
 
   while (true) {
     int pipefd[2];
     ASSERT_THAT(pipe2(pipefd, 0), SyscallSucceeds());
+    fds.emplace_back(pipefd[0]);
     ASSERT_NE(pipefd[0], pipefd[1]);
-    fds.push_back(pipefd[0]);
-    fds.push_back(pipefd[1]);
+    fds.emplace_back(pipefd[1]);
     if (static_cast<size_t>(pipefd[1]) > kMaxFd) {
       break;
     }
-  }
-
-  for (const auto fd : fds) {
-    close(fd);
   }
 }
 

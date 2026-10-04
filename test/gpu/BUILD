@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "go_test", "proto_library")
+load("//tools/bazeldefs:platforms.bzl", "network_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -204,14 +205,24 @@ proto_library(
 go_test(
     name = "cos_gpu_compatibility_test",
     srcs = ["cos_gpu_compatibility_test.go"],
+    # Prepared by tools/gpu/cos_metadata_input.sh. Compilation does not need a
+    # catalog; executing this explicit manual test fails if none was supplied.
+    data = glob(
+        ["cos_metadata_input/images.json"],
+        allow_empty = True,
+    ),
+    exec_properties = network_test_exec_properties(),
     tags = [
+        "external",  # Driver metadata is fetched live, so results cannot be cached.
         "manual",
         "noguitar",
         "notap",
+        "requires-network",
     ],
     deps = [
         ":gpu_driver_versions_go_proto",
         "//pkg/sentry/devices/nvproxy",
+        "//pkg/test/testutil",
         "@org_golang_google_protobuf//encoding/prototext:go_default_library",
     ],
 )

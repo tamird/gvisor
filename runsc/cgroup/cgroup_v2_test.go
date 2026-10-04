@@ -17,7 +17,6 @@ package cgroup
 import (
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -42,10 +41,10 @@ func TestIO(t *testing.T) {
 		{
 			name: "simple",
 			spec: &specs.LinuxBlockIO{
-				Weight: uint16Ptr(1),
+				Weight: uint16Ptr(750),
 			},
 			path:  "io.weight",
-			wants: strconv.FormatUint(convertBlkIOToIOWeightValue(1), 10),
+			wants: "7475",
 		},
 		{
 			name: "bfq",
@@ -455,6 +454,9 @@ func TestInstallPrecreatedCgroupV2SetsMemorySwap(t *testing.T) {
 		t.Fatalf("error creating temporary directory: %v", err)
 	}
 	defer os.RemoveAll(dir)
+	if err := os.WriteFile(filepath.Join(dir, subtreeControl), nil, 0o666); err != nil {
+		t.Fatalf("os.WriteFile(%q): %v", subtreeControl, err)
+	}
 
 	cg := &cgroupV2{
 		Mountpoint:  dir,
@@ -580,6 +582,68 @@ func TestUpdate(t *testing.T) {
 			},
 			wantCPUQuota:  150,
 			wantCPUPeriod: 50,
+			wantMemory:    1024,
+		},
+		{
+			name:          "update memory preserves zero-valued cpu fields",
+			initialCPUMax: "100 2000",
+			initialMemMax: "1024",
+			updatedResources: &specs.LinuxResources{
+				CPU: &specs.LinuxCPU{
+					Quota:  int64Ptr(0),
+					Period: uint64Ptr(0),
+				},
+				Memory: &specs.LinuxMemory{Limit: int64Ptr(2048)},
+			},
+			wantCPUQuota:  100,
+			wantCPUPeriod: 2000,
+			wantMemory:    2048,
+		},
+		{
+			name:          "update quota preserves period",
+			initialCPUMax: "100 2000",
+			initialMemMax: "1024",
+			updatedResources: &specs.LinuxResources{
+				CPU: &specs.LinuxCPU{Quota: int64Ptr(150)},
+			},
+			wantCPUQuota:  150,
+			wantCPUPeriod: 2000,
+			wantMemory:    1024,
+		},
+		{
+			name:          "update period with zero quota preserves limit",
+			initialCPUMax: "100 2000",
+			initialMemMax: "1024",
+			updatedResources: &specs.LinuxResources{
+				CPU: &specs.LinuxCPU{
+					Quota:  int64Ptr(0),
+					Period: uint64Ptr(4000),
+				},
+			},
+			wantCPUQuota:  100,
+			wantCPUPeriod: 4000,
+			wantMemory:    1024,
+		},
+		{
+			name:          "remove quota preserves period",
+			initialCPUMax: "100 2000",
+			initialMemMax: "1024",
+			updatedResources: &specs.LinuxResources{
+				CPU: &specs.LinuxCPU{Quota: int64Ptr(-1)},
+			},
+			wantCPUQuota:  -1,
+			wantCPUPeriod: 2000,
+			wantMemory:    1024,
+		},
+		{
+			name:          "update period preserves unlimited quota",
+			initialCPUMax: "max 2000",
+			initialMemMax: "1024",
+			updatedResources: &specs.LinuxResources{
+				CPU: &specs.LinuxCPU{Period: uint64Ptr(4000)},
+			},
+			wantCPUQuota:  -1,
+			wantCPUPeriod: 4000,
 			wantMemory:    1024,
 		},
 	} {

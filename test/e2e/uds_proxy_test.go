@@ -42,14 +42,13 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	dockerutil.EnsureSupportedDockerVersion()
 	flag.Parse()
-	os.Exit(m.Run())
+	os.Exit(dockerutil.RunTests(m.Run))
 }
 
 const (
 	// externalUDSRuntimeSuffix names the runtime installed by the
-	// $(RUNTIME)-net-uds target in the Makefile.
+	// shared Docker test runtime configuration.
 	externalUDSRuntimeSuffix = "-net-uds"
 
 	// externalUDSSocketPath must match the --network-proxy-path value baked into

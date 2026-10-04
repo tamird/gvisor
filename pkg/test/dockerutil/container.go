@@ -522,15 +522,28 @@ func (c *Container) ID() string {
 
 // RootDirectory returns an educated guess about the container's root directory.
 func (c *Container) RootDirectory() (string, error) {
+	configBytes, err := os.ReadFile(*config)
+	if err != nil {
+		return "", err
+	}
+	var cfg struct {
+		ExecRoot string `json:"exec-root"`
+	}
+	if err := json.Unmarshal(configBytes, &cfg); err != nil {
+		return "", err
+	}
+	if cfg.ExecRoot == "" {
+		cfg.ExecRoot = "/var/run/docker"
+	}
 	// The root directory of this container's runtime.
-	rootDir := fmt.Sprintf("/var/run/docker/runtime-%s/moby", c.runtime)
-	_, err := os.Stat(rootDir)
+	rootDir := filepath.Join(cfg.ExecRoot, "runtime-"+c.runtime, "moby")
+	_, err = os.Stat(rootDir)
 	if err == nil {
 		return rootDir, nil
 	}
 	// In docker v20+, due to https://github.com/moby/moby/issues/42345 the
 	// rootDir seems to always be the following.
-	const defaultDir = "/var/run/docker/runtime-runc/moby"
+	defaultDir := filepath.Join(cfg.ExecRoot, "runtime-runc/moby")
 	_, derr := os.Stat(defaultDir)
 	if derr == nil {
 		return defaultDir, nil
@@ -756,8 +769,9 @@ func (c *Container) Remove(ctx context.Context) error {
 	return c.client.ContainerRemove(ctx, c.Name, remove)
 }
 
-// CleanUp kills and deletes the container (best effort).
-func (c *Container) CleanUp(ctx context.Context) {
+// CleanUp attempts to kill and delete the container, logging and returning errors.
+// Already stopped or removed containers are not errors.
+func (c *Container) CleanUp(ctx context.Context) error {
 	// Execute all cleanups. We execute cleanups here to close any
 	// open connections to the container before closing. Open connections
 	// can cause Kill and Remove to hang.
@@ -766,19 +780,24 @@ func (c *Container) CleanUp(ctx context.Context) {
 	}
 	c.cleanups = nil
 
+	var cleanupErr error
 	// Kill the container.
-	if err := c.Kill(ctx); err != nil && !strings.Contains(err.Error(), "is not running") {
-		// Just log; can't do anything here.
-		c.logger.Logf("error killing container %q: %v", c.Name, err)
+	if err := c.Kill(ctx); err != nil && !client.IsErrNotFound(err) && !strings.Contains(err.Error(), "is not running") {
+		err = fmt.Errorf("error killing container %q: %w", c.Name, err)
+		c.logger.Logf("%v", err)
+		cleanupErr = err
 	}
 
-	// Remove the image.
-	if err := c.Remove(ctx); err != nil {
-		c.logger.Logf("error removing container %q: %v", c.Name, err)
+	// Remove the container and its anonymous volumes.
+	if err := c.Remove(ctx); err != nil && !client.IsErrNotFound(err) {
+		err = fmt.Errorf("error removing container %q: %w", c.Name, err)
+		c.logger.Logf("%v", err)
+		cleanupErr = errors.Join(cleanupErr, err)
 	}
 
 	// Forget all mounts.
 	c.mounts = nil
+	return cleanupErr
 }
 
 // Update is analogous to 'docker update'.

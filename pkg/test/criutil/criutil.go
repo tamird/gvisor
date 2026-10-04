@@ -20,6 +20,7 @@ package criutil
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -61,7 +62,7 @@ func ResolvePath(executable string) string {
 	}
 
 	// Try to find via the path.
-	guess, _ := exec.LookPath(executable)
+	guess, err := exec.LookPath(executable)
 	if err == nil {
 		return guess
 	}
@@ -252,7 +253,8 @@ func (cc *Crictl) RmPod(podID string) error {
 // ImageDirEnv is the environment variable naming the image tarball directory.
 const ImageDirEnv = "GVISOR_CRI_IMAGE_DIR"
 
-func tarNameForImage(image string) string {
+// ImageArchiveName returns the filename used to stage and import an image.
+func ImageArchiveName(image string) string {
 	return strings.ReplaceAll(image, "/", "_") + ".tar"
 }
 
@@ -260,7 +262,7 @@ func tarNameForImage(image string) string {
 // directory of pre-exported tarballs if ImageDirEnv is set.
 func (cc *Crictl) Import(image string) error {
 	if dir := os.Getenv(ImageDirEnv); dir != "" {
-		tarball := path.Join(dir, tarNameForImage(image))
+		tarball := path.Join(dir, ImageArchiveName(image))
 		out, err := cc.runCmd(ResolvePath("ctr"),
 			fmt.Sprintf("--connect-timeout=%s", 30*time.Second),
 			fmt.Sprintf("--address=%s", cc.endpoint),
@@ -303,18 +305,11 @@ func (cc *Crictl) importFromDocker(image string) error {
 		return err
 	}
 
-	// Save the image on the other end.
-	if err := dockerutil.Save(cc.logger, image, w); err != nil {
-		cmd.Wait()
-		return err
-	}
-
-	// Close our pipe reference & see if it was loaded.
-	if err := w.Close(); err != nil {
-		return w.Close()
-	}
-
-	return cmd.Wait()
+	saveErr := dockerutil.Save(cc.logger, image, w)
+	// The importer may wait for EOF even when saving the image fails.
+	closeErr := w.Close()
+	waitErr := cmd.Wait()
+	return errors.Join(saveErr, closeErr, waitErr)
 }
 
 // StartContainer pulls the given image ands starts the container in the

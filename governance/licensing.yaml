@@ -28,6 +28,12 @@ allowed_licenses:
   - Zlib
   - Google patent license for Golang
 exceptions:
+  - dependency: gawk
+    license: GPL-3.0-or-later
+    exception_rationale: >-
+      The source-built executable is used by rules_distroless to process
+      tar metadata when constructing the release test's tool image. It is
+      neither linked into nor included in the gVisor release artifacts.
   - dependency: google_root_pem
     license: NOASSERTION
     exception_rationale: >-
@@ -44,12 +50,179 @@ exceptions:
       bundled components, including the MPL-2.0 text covering Mozilla's CA
       certificate data (etc/roots.pem). Used by Bazel build and test tooling
       only. Released gVisor binaries use the pure-Go google.golang.org/grpc.
+  - dependency: kythe_release
+    license:
+      - Apache-2.0
+      - NCSA
+    exception_rationale: >-
+      Kythe is Apache-2.0; its LICENSE also includes the legacy LLVM
+      University of Illinois/NCSA grant for incorporated LLVM code. That
+      grant permits redistribution with copyright notices, conditions and
+      disclaimers retained, and prohibits using contributors' names for
+      endorsement without permission.
+  - dependency: libpluginstack
+    license:
+      - Apache-2.0
+      - BSD-3-Clause
+      - CC0-1.0
+    exception_rationale: >-
+      The existing TLDK plugin uses Apache-2.0 libraries, the CC0-1.0
+      implementation in lib/libtle_l4p/halfsiphash.h, and BSD-3-Clause code
+      in its DPDK patch series. This records those existing dependencies
+      when replacing the plugin's implicit source downloads with pinned
+      Bazel inputs. The optional GPL packetdrill integration is not built.
   - dependency: llvm-raw
     license:
       - Apache-2.0 WITH LLVM-exception
-      - MIT
+      - NCSA
     exception_rationale: >-
       LLVM is part of the NVIDIA GPU test toolchain only and is not
       distributed with gVisor. The LLVM exception only relaxes
-      Apache-2.0's requirements, and the MIT match comes from third-party
-      notices embedded in LICENSE.TXT.
+      Apache-2.0's requirements. LICENSE.TXT also includes LLVM's legacy
+      University of Illinois/NCSA grant, which permits redistribution with
+      copyright notices, conditions and disclaimers retained and prohibits
+      using contributors' names for endorsement without permission.
+  - dependency: module_proxy/exported_go_modules/github.com/rcrowley/go-metrics
+    license: BSD-2-Clause-Views
+    exception_rationale: >-
+      The module's LICENSE permits source and binary redistribution with
+      copyright notices, conditions and disclaimers retained. Its final
+      paragraph says the authors' views and conclusions do not represent
+      Richard Crowley's official policies.
+      This exception allows this module under BSD-2-Clause-Views, preserving
+      that paragraph alongside the two redistribution conditions rather than
+      reducing the notice to BSD-2-Clause.
+  - dependency: module_proxy/exported_go_modules/github.com/veraison/go-cose
+    license: MPL-2.0
+    exception_rationale: >-
+      Go-cose is in the offline Go build's dependency graph through
+      containerd, hcsshim and cosesign1go. The checked Linux AMD64 cgo
+      package list for gVisor's exported Go source contains no go-cose
+      packages. Allow MPL-2.0 for this module. Recheck its use when
+      changing dependencies or build configurations: this exception also
+      permits later versions of go-cose under MPL-2.0 and does not prevent
+      builds from importing the code.
+  - dependency: module_proxy/syzkaller_modules/github.com/apache/arrow/go/v15
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - BSD-3-Clause
+      - BSL-1.0
+      - HPND
+      - MIT
+      - NCSA
+      - OpenSSL
+      - Zlib
+    exception_rationale: >-
+      The module's root LICENSE.txt aggregates Apache and third-party notices.
+      The Boost, historical c-ares and LLVM NCSA grants permit use and
+      redistribution subject to their respective notice, disclaimer and
+      name-use conditions. This exception allows the module supplied to the
+      Syzkaller build with this complete observed license set. Some notices
+      explicitly concern C++ sources or binary Python distributions; the set
+      does not establish which grants apply to the compiled Go packages.
+  - dependency: nvidia_driver_535_129_03
+    license: &nvidia_driver_licenses
+      - GPL-2.0
+      - MIT
+    exception_rationale: &nvidia_driver_rationale >-
+      These snapshots supply headers for the existing NVIDIA ABI parity test.
+      COPYING licenses individual files under MIT unless otherwise noted and
+      describes linked Linux kernel modules as MIT/GPLv2. The build only parses
+      headers into ABI JSON; it does not build or distribute an NVIDIA kernel
+      module or link driver code into gVisor. The scanner's GPL-2.0 identifier
+      describes the included license text; it does not assert a later-version
+      grant.
+  - dependency: nvidia_driver_535_183_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_247_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_261_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_274_02
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_288_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_535_309_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_550_90_12
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_124_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_133_20
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_172_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_570_195_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_105_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_126_09
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_126_20
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_159_03
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_159_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_167_08
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_173_02
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_178_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_580_65_06
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_590_48_01
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_610_57_04
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: nvidia_driver_615_71_09
+    license: *nvidia_driver_licenses
+    exception_rationale: *nvidia_driver_rationale
+  - dependency: plugin_dpdk
+    license:
+      - BSD-3-Clause
+      - GPL-2.0-only
+    exception_rationale: >-
+      The existing plugin links DPDK's BSD-3-Clause user-space libraries
+      and drivers. GPL-2.0-only applies to buildtools/pmdinfogen, which
+      generates device metadata during the build and is not linked into
+      the plugin archive or gVisor executables. Kernel modules are disabled.
+  - dependency: pypi/setuptools-84.0.0-py3-none-any.whl
+    license:
+      - Apache-2.0
+      - BSD-2-Clause
+      - LGPL-3.0
+      - MIT
+    exception_rationale: >-
+      Setuptools is the declared build backend for the Python distribution,
+      used only by the Bazel execution tool. Its wheel bundles autocommand
+      under LGPLv3 or later, as stated in all six vendored source files,
+      alongside permissively licensed dependencies. The scanner's LGPL-3.0
+      identifier describes the included license text without narrowing that
+      grant. These tools are not distribution runtime requirements or payload
+      files.
+      The distribution action stages only the declared project sources.
