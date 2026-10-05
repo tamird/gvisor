@@ -20,6 +20,7 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"slices"
 	"sync"
@@ -200,7 +201,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 
 	// Give the container our IP.
-	if err := sendIP(ip); err != nil {
+	if err := sendIP(ctx, ip); err != nil {
 		log.Infof("failed to send IP to container: %v", err)
 		t.FailNow()
 	}
@@ -244,26 +245,24 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 }
 
-func sendIP(ip net.IP) error {
-	contAddr := net.TCPAddr{
-		IP:   ip,
-		Port: IPExchangePort,
-	}
+func sendIP(ctx context.Context, ip net.IP) error {
+	addr, _ := netip.AddrFromSlice(ip)
+	contAddr := netip.AddrPortFrom(addr, IPExchangePort)
 	var conn *net.TCPConn
+	var dialer net.Dialer
 	// The container may not be listening when we first connect, so retry
-	// upon error.
+	// upon error. Each connection attempt shares the test's deadline.
 	cb := func() error {
-		c, err := net.DialTCP("tcp", nil, &contAddr)
+		c, err := dialer.DialTCP(ctx, "tcp", netip.AddrPort{}, contAddr)
 		conn = c
 		return err
 	}
-	if err := testutil.Poll(cb, TestTimeout); err != nil {
-		return fmt.Errorf("timed out waiting to send IP, most recent error: %v", err)
+	if err := testutil.PollContext(ctx, cb); err != nil {
+		return fmt.Errorf("connecting to %v: %w", contAddr, err)
 	}
-	if _, err := conn.Write([]byte{0}); err != nil {
-		return fmt.Errorf("error writing to container: %v", err)
-	}
-	return nil
+	// The container's getIP uses RemoteAddr() to learn where to send test
+	// traffic, so we can close the connection without writing a payload.
+	return conn.Close()
 }
 
 func TestFilterInputDropUDP(t *testing.T) {
