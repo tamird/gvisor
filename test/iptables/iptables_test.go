@@ -155,20 +155,26 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	ctx, cancel := context.WithTimeout(context.Background(), TestTimeout)
+	ctx, cancel := context.WithTimeout(t.Context(), TestTimeout)
 	defer cancel()
 
 	d := dockerutil.MakeContainer(ctx, t)
-	defer func() {
-		if logs, err := d.Logs(context.Background()); err != nil {
-			log.Infof("Failed to retrieve container logs.")
+	// Testing cancels t.Context before cleanup. Give logging and removal
+	// independent deadlines so a log retrieval timeout does not prevent removal.
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), TestTimeout)
+		defer cancel()
+		d.CleanUp(ctx)
+	})
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), TestTimeout)
+		defer cancel()
+		if logs, err := d.Logs(ctx); err != nil {
+			log.Infof("Failed to retrieve container logs: %v", err)
 		} else {
 			log.Infof("=== Container logs: ===\n%s", logs)
 		}
-		// Use a new context, as cleanup should run even when we
-		// timeout.
-		d.CleanUp(context.Background())
-	}()
+	})
 
 	// Create and start the container.
 	opts := dockerutil.RunOpts{
@@ -200,7 +206,10 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		t.FailNow()
 	}
 
-	ip, _ := netip.AddrFromSlice(containerIP)
+	ip, ok := netip.AddrFromSlice(containerIP)
+	if !ok {
+		t.Fatalf("invalid container IP: %v", containerIP)
+	}
 	ip = ip.Unmap()
 
 	// Give the container our IP.
@@ -209,17 +218,18 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		t.FailNow()
 	}
 
-	// Give the actions their full timeout after container setup and the
-	// address exchange, including the wait required by negative tests.
-	actionCtx, cancelAction := context.WithTimeout(context.Background(), TestTimeout)
-	defer cancelAction()
+	// Drop checks need their full observation window; slow container setup
+	// may have consumed most of the setup context's deadline.
+	cancel()
+	ctx, cancel = context.WithTimeout(t.Context(), TestTimeout)
+	defer cancel()
 
 	// Run our side of the test.
 	errCh := make(chan error, 2)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := test.LocalAction(actionCtx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
+		if err := test.LocalAction(ctx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("LocalAction failed: %v", err)
 		} else {
 			errCh <- nil
@@ -236,7 +246,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		// Wait for the final statement. This structure has the side
 		// effect that all container logs will appear within the
 		// individual test context.
-		if _, err := d.WaitForOutput(actionCtx, TerminalStatement, TestTimeout); err != nil && !errors.Is(err, context.Canceled) {
+		if _, err := d.WaitForOutput(ctx, TerminalStatement, TestTimeout); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("ContainerAction failed: %v", err)
 		} else {
 			errCh <- nil

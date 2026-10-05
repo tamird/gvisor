@@ -37,7 +37,6 @@ func ListenUDP(ctx context.Context, port int, ipv6 bool) error {
 
 // ListenUDPFrom listens on a UDP port and returns the sender's UDP address if
 // the first read from that port is successful.
-// IPv4-mapped IPv6 addresses are returned as IPv4 addresses.
 func ListenUDPFrom(ctx context.Context, port int, ipv6 bool) (netip.AddrPort, error) {
 	localAddr := net.UDPAddr{
 		Port: port,
@@ -57,7 +56,6 @@ func ListenUDPFrom(ctx context.Context, port int, ipv6 bool) (netip.AddrPort, er
 	ch := make(chan result, 1)
 	go func() {
 		_, remoteAddr, err := conn.ReadFromUDPAddrPort([]byte{0})
-		remoteAddr = netip.AddrPortFrom(remoteAddr.Addr().Unmap(), remoteAddr.Port())
 		ch <- result{remoteAddr, err}
 	}()
 
@@ -105,7 +103,6 @@ func ListenTCP(ctx context.Context, port int, ipv6 bool) error {
 
 // ListenTCPFrom listens for connections on a TCP port, and returns the remote
 // TCP address if a connection is established.
-// IPv4-mapped IPv6 addresses are returned as IPv4 addresses.
 func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (netip.AddrPort, error) {
 	localAddr := net.TCPAddr{
 		Port: port,
@@ -130,8 +127,7 @@ func ListenTCPFrom(ctx context.Context, port int, ipv6 bool) (netip.AddrPort, er
 		conn, err := lConn.AcceptTCP()
 		var remoteAddr netip.AddrPort
 		if err == nil {
-			addr := conn.RemoteAddr().(*net.TCPAddr).AddrPort()
-			remoteAddr = netip.AddrPortFrom(addr.Addr().Unmap(), addr.Port())
+			remoteAddr = conn.RemoteAddr().(*net.TCPAddr).AddrPort()
 			conn.Close()
 		}
 		ch <- result{remoteAddr, err}

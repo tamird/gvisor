@@ -110,7 +110,10 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		t.FailNow()
 	}
 
-	ip, _ := netip.AddrFromSlice(containerIP)
+	ip, ok := netip.AddrFromSlice(containerIP)
+	if !ok {
+		t.Fatalf("invalid container IP: %v", containerIP)
+	}
 	ip = ip.Unmap()
 
 	// Give the container our IP.

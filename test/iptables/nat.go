@@ -1319,10 +1319,13 @@ func addMasqueradeSecondaryAddress(ipv6 bool) (netip.Addr, error) {
 	if err != nil {
 		return netip.Addr{}, fmt.Errorf("netlink.ParseAddr(%q): %w", secondaryCIDR, err)
 	}
+	ip, ok := netip.AddrFromSlice(addr.IP)
+	if !ok {
+		return netip.Addr{}, fmt.Errorf("invalid secondary IP: %v", addr.IP)
+	}
 	if err := netlink.AddrAdd(link, addr); err != nil {
 		return netip.Addr{}, fmt.Errorf("netlink.AddrAdd(%q): %w", secondaryCIDR, err)
 	}
-	ip, _ := netip.AddrFromSlice(addr.IP)
 	return ip.Unmap(), nil
 }
 

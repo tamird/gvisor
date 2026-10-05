@@ -1391,7 +1391,7 @@ func (*tcpMasq) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error
 			}
 
 			// Assert that the remote IP is the container's IP and not the namespace IP.
-			if remoteAddr.AddrPort().Addr().Unmap() != ip {
+			if remoteAddr.AddrPort().Addr() != ip {
 				errCh <- fmt.Errorf("unexpected remote IP: %s, expected %s", remoteAddr.IP.String(), ip.String())
 				return
 			}
