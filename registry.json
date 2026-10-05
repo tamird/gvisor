@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T17:01:45.726042+00:00",
+    "updatedAt": "2026-10-05T17:24:09.234197+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -493,8 +493,8 @@
       "group": "bazel",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-26T18:20:44Z",
-      "summary": "The authorized October 2/3 rebase is published at 3e7bad01a0e19a247b7bed9427f9defd6b4b809a on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15044#issuecomment-5963408059. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion."
+      "updatedAt": "2026-10-05T17:24:09.234197+00:00",
+      "summary": "The October 5 17:17 UTC snapshot binds unchanged source 3e7bad01a0e19a247b7bed9427f9defd6b4b809a to refreshed open import #15267 at 90f71d1b100477ec586a0cbfba7ced0da4b2b0d9. Public pipeline 49561 is pending: https://buildkite.com/gvisor/pipeline/builds/49561. This is new import activity without a new source amendment or result.\n\nThe authorized October 2/3 rebase is published at 3e7bad01a0e19a247b7bed9427f9defd6b4b809a on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15044#issuecomment-5963408059. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion."
     },
     {
       "id": "pr:15042",
@@ -659,10 +659,10 @@
       "title": "Update C++ dependencies for Bazel 9",
       "url": "https://github.com/google/gvisor/pull/14984",
       "group": "bazel",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-03T07:54:01.123952+00:00",
-      "summary": "Verified linked import #15210 landed at 07:24:33 UTC on October 3 as b90bda8cd1f32607b65b4c59e699c1dbac947e42: https://github.com/google/gvisor/pull/15210. The source PR remains OPEN; import landing and source closure are distinct. This clears its recorded C++ dependency prerequisite for the hermetic compiler. Other compiler prerequisites and contributor-review boundaries remain. Later landing-head checks do not undo the verified merge.\n\nThe authorized October 2/3 rebase is published at ec9b0935a4d9db689dc7a3a2d1fc238c1811520e on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14984#issuecomment-5963405814. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Current source f1ac1940debd1afd8eaed00a7b87c647918a8eec has exact-source import #15210 at 6381b062b0ff60fce4eee7e4757fc512f65023f7. Public pipeline 49218 passed at 01:15:23 UTC on October 2; source and import remain open. Copybara closed the older exact-source import #15022 unmerged at 02:32:58 UTC on October 2 and deleted its ref; its head was ea67d0f616d4145fd8822d41132462f0fc8a0443. Current import #15210 remains the open replacement; the import-only closure is not a source landing."
+      "updatedAt": "2026-10-05T17:24:09.234197+00:00",
+      "summary": "Kerumeto closed the source PR on October 5 at 17:12:33 UTC, explaining that merged import #15210 is identical: https://github.com/google/gvisor/pull/14984#issuecomment-5999363856. The import landed on October 3 at b90bda8cd1f32607b65b4c59e699c1dbac947e42; the closed source head is ec9b0935a4d9db689dc7a3a2d1fc238c1811520e. This confirms source closure after the already recorded prerequisite landing.\n\nEarlier source-specific evidence and review history:\n\nVerified linked import #15210 landed at 07:24:33 UTC on October 3 as b90bda8cd1f32607b65b4c59e699c1dbac947e42: https://github.com/google/gvisor/pull/15210. The source PR remains OPEN; import landing and source closure are distinct. This clears its recorded C++ dependency prerequisite for the hermetic compiler. Other compiler prerequisites and contributor-review boundaries remain. Later landing-head checks do not undo the verified merge.\n\nThe authorized October 2/3 rebase is published at ec9b0935a4d9db689dc7a3a2d1fc238c1811520e on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14984#issuecomment-5963405814. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Current source f1ac1940debd1afd8eaed00a7b87c647918a8eec has exact-source import #15210 at 6381b062b0ff60fce4eee7e4757fc512f65023f7. Public pipeline 49218 passed at 01:15:23 UTC on October 2; source and import remain open. Copybara closed the older exact-source import #15022 unmerged at 02:32:58 UTC on October 2 and deleted its ref; its head was ea67d0f616d4145fd8822d41132462f0fc8a0443. Current import #15210 remains the open replacement; the import-only closure is not a source landing."
     },
     {
       "id": "pr:14882",
@@ -2140,8 +2140,8 @@
       "url": "https://github.com/tamird/gvisor/tree/iptables-handshake-deadline",
       "group": "tests",
       "status": "contributor review pending",
-      "updatedAt": "2026-10-05T17:01:45.726042+00:00",
-      "summary": "Independent master-based candidate b2d9c588c366a4bf185ba6f8e68e7e471c4abc7d bounds the startup handshake and has no code prerequisite. The user-directed final amendment replaces TCPAddr construction with direct AddrPortFrom conversion and explains getIP’s RemoteAddr use for test traffic. The added helper tests remain removed. The immediately preceding d158 source has independent real-case validation: IPv4 passes in 1.91 seconds; IPv6 still fails in 10.24 seconds versus the original 130.79 seconds. Failed-parent outcome c83b2f2c7a9e and peer 1cfbc047c987 are retained. Equivalent-conversion review covers the final amendment; no new runtime run or test is claimed. This bounds waiting and does not itself fix reachability. The separate shared Docker readiness correction passes all sixteen focused network leaves; both corrections are integrated in MAIN 2cc814772. Contributor review was requested once; no upstream PR is authorized or open."
+      "updatedAt": "2026-10-05T17:24:09.234197+00:00",
+      "summary": "Independent master-based candidate b3c3c85d363eaa8c2ab05911097b217437a4ef72 is the unchanged final patch rebased onto master 8bf3dc484b3d86e7a677994aad43a2a271fdbe13. It bounds the startup handshake and has no code prerequisite. The user-directed final amendment replaces TCPAddr construction with direct AddrPortFrom conversion and explains getIP’s RemoteAddr use for test traffic. The added helper tests remain removed. The immediately preceding d158 source has independent real-case validation: IPv4 passes in 1.91 seconds; IPv6 still fails in 10.24 seconds versus the original 130.79 seconds. Failed-parent outcome c83b2f2c7a9e and peer 1cfbc047c987 are retained. Equivalent-conversion review covers the final amendment; no new runtime run or test is claimed. This bounds waiting and does not itself fix reachability. The separate shared Docker readiness correction passes all sixteen focused network leaves; both corrections are integrated in MAIN 2cc814772. Contributor review was requested once; no upstream PR is authorized or open."
     },
     {
       "id": "branch:test-local-execution",
