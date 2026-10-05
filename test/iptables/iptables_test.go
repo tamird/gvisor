@@ -189,7 +189,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 
 	// Get the container IP.
-	ip, err := d.FindIP(ctx, ipv6)
+	containerIP, err := d.FindIP(ctx, ipv6)
 	if err != nil {
 		// If ipv6 is not configured, don't fail.
 		if ipv6 && err == dockerutil.ErrNoIP {
@@ -199,6 +199,9 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		log.Infof("failed to get container IP: %v", err)
 		t.FailNow()
 	}
+
+	ip, _ := netip.AddrFromSlice(containerIP)
+	ip = ip.Unmap()
 
 	// Give the container our IP.
 	if err := sendIP(ctx, ip); err != nil {
@@ -250,9 +253,8 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 }
 
-func sendIP(ctx context.Context, ip net.IP) error {
-	addr, _ := netip.AddrFromSlice(ip)
-	contAddr := netip.AddrPortFrom(addr, IPExchangePort)
+func sendIP(ctx context.Context, ip netip.Addr) error {
+	contAddr := netip.AddrPortFrom(ip, IPExchangePort)
 	var conn *net.TCPConn
 	var dialer net.Dialer
 	// The container may not be listening when we first connect, so retry

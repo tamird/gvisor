@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"strings"
 	"syscall"
 	"time"
@@ -57,7 +58,7 @@ func (*JumpAndDropAll) Name() string {
 }
 
 // ContainerAction are the commands that are ran in the container.
-func (*JumpAndDropAll) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*JumpAndDropAll) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	tableName := "TABLE"
 	cmds := [][]string{
 		// Create a table: JUMP_TABLE.
@@ -94,7 +95,7 @@ func (*JumpAndDropAll) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool
 }
 
 // LocalAction are the commands that are ran on the test runner.
-func (*JumpAndDropAll) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*JumpAndDropAll) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return netutils.SendUDPLoop(ctx, ip, dropPort, ipv6)
 }
 
@@ -116,7 +117,7 @@ func (*tcpDNAT) Name() string {
 // ContainerAction are the commands that are ran in the container.
 // Creates a table with a DNAT rule at serverAddr:serverPort.
 // Verify that the server is reachable at the dnatAddr:dnatPort.
-func (*tcpDNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*tcpDNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	testMsg := "Hello World!"
 	serverAddr := netutils.LocalIP(ipv6)
 	serverPort := "9000"
@@ -200,7 +201,7 @@ func (*tcpDNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error
 }
 
 // LocalAction are the commands that are ran on the test runner.
-func (*tcpDNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*tcpDNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -223,7 +224,7 @@ func (*tcpSNAT) Name() string {
 // Creates a table with a SNAT rule for TCP packets to port 9000.
 // Verify that any client connection to port 9000
 // has the source address: snatAddr.
-func (*tcpSNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*tcpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Expected SNAT address of client connection to server.
 	snatAddr := "127.0.0.99"
 	ipMatch := "ip"
@@ -284,7 +285,7 @@ func (*tcpSNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error
 
 // LocalAction are the commands that are ran on the test runner.
 // Connects to the server inside the container at port 9000.
-func (*tcpSNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*tcpSNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Connect to the server inside the container at port 9000.
 	var conn net.Conn
 	var err error
@@ -324,7 +325,7 @@ func (*udpDNAT) Name() string {
 // ContainerAction are the commands that are ran in the container.
 // Creates a table with a DNAT rule at serverAddr:serverPort.
 // Verify that the server is reachable at the dnatAddr:dnatPort.
-func (*udpDNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*udpDNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	testMsg := "Hello World!"
 	serverAddr := netutils.LocalIP(ipv6)
 	serverPort := "9000"
@@ -403,7 +404,7 @@ func (*udpDNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error
 }
 
 // LocalAction are the commands that are ran on the test runner.
-func (*udpDNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*udpDNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	return nil
 }
 
@@ -426,7 +427,7 @@ func (*udpSNAT) Name() string {
 // Creates a table with a SNAT rule for UDP packets to port 9000.
 // Verify that any client connection to port 9000
 // has the source address: snatAddr.
-func (*udpSNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*udpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Expected SNAT address of client connection to server.
 	snatAddr := "127.0.0.99"
 	ipMatch := "ip"
@@ -488,7 +489,7 @@ func (*udpSNAT) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error
 
 // LocalAction are the commands that are ran on the test runner.
 // Connects to the server inside the container at port 9000.
-func (*udpSNAT) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*udpSNAT) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	dialAddr := net.JoinHostPort(ip.String(), "9000")
 	conn, err := net.Dial(netutils.UDPNetwork(ipv6), dialAddr)
 	if err != nil {
@@ -528,7 +529,7 @@ func (*mapTest) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (t *mapTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *mapTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	addrType := "ipv4_addr"
 	ipMatch := "ip"
 	snatAddr := "127.0.0.99"
@@ -662,7 +663,7 @@ func (t *mapTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) err
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (t *mapTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *mapTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	dialAddr1 := net.JoinHostPort(ip.String(), "8999")
 	dialAddr2 := net.JoinHostPort(ip.String(), "9000")
 
@@ -715,7 +716,7 @@ func (*fibTest) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (t *fibTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *fibTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Find the interface dynamically.
 	targetIface, ok := netutils.GetNonLoopbackInterface()
 	if !ok {
@@ -865,7 +866,7 @@ func (t *fibTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) err
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (t *fibTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *fibTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// 1. Sync with ContainerAction by connecting to port 8995.
 	log.Infof("fibTest (LocalAction): Attempting to sync with container on port 8995")
 	{
@@ -922,7 +923,7 @@ func (*ctTest) Name() string {
 }
 
 // ContainerAction implements TestCase.ContainerAction.
-func (t *ctTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *ctTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// install_rules
 	{
 		cmds := [][]string{
@@ -1068,7 +1069,7 @@ func dialTCPWithReuseAddr(ctx context.Context, localAddr, remoteAddr net.Addr) (
 }
 
 // LocalAction implements TestCase.LocalAction.
-func (t *ctTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *ctTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// 1. Sync with ContainerAction setup.
 	{
 		log.Infof("ctTest (LocalAction): Waiting for sync...")
@@ -1184,7 +1185,7 @@ func (t *tcpMasq) setupClientNamespace(ipv6 bool) (func(), error) {
 
 // acceptSync listens on the specified port with a timeout,
 // and calls the handle function on the connection.
-func acceptSync(network string, ip net.IP, port string, timeout time.Duration, handle func(net.Conn) error) error {
+func acceptSync(network string, ip netip.Addr, port string, timeout time.Duration, handle func(net.Conn) error) error {
 	l, err := net.Listen(network, net.JoinHostPort(ip.String(), port))
 	if err != nil {
 		return err
@@ -1217,7 +1218,7 @@ func acceptSync(network string, ip net.IP, port string, timeout time.Duration, h
 
 // dialSync attempts to connect to the specified IP and port,
 // and calls the handle function on the connection.
-func dialSync(network string, ip net.IP, port string, retries int, handle func(net.Conn) error) error {
+func dialSync(network string, ip netip.Addr, port string, retries int, handle func(net.Conn) error) error {
 	dialAddr := net.JoinHostPort(ip.String(), port)
 	var lastErr error
 	for i := 0; i < retries; i++ {
@@ -1243,7 +1244,7 @@ func (*tcpMasq) Name() string {
 // Setup a client namespace and NAT masq TCP rules.
 // Enable IP forwarding.
 // Generate traffic from namespace to trigger NAT masq.
-func (t *tcpMasq) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (t *tcpMasq) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	targetIface, ok := netutils.GetNonLoopbackInterface()
 	if !ok {
 		return fmt.Errorf("no non-loopback interface found")
@@ -1274,9 +1275,9 @@ func (t *tcpMasq) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) err
 	// This is to avoid port in use issues.
 	var remotePort int
 
-	bindIP := net.ParseIP("0.0.0.0")
+	bindIP := netip.IPv4Unspecified()
 	if ipv6 {
-		bindIP = net.ParseIP("::")
+		bindIP = netip.IPv6Unspecified()
 	}
 
 	if err := acceptSync(netutils.TCPNetwork(ipv6), bindIP, "8995", 15*time.Second, func(conn net.Conn) error {
@@ -1345,7 +1346,7 @@ func (t *tcpMasq) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) err
 // LocalAction implements TestCase.LocalAction.
 // Setup a TCP server to listen on dynamic port (to avoid port reuse issues).
 // Share the port with ContainerAction and verify the masq IP.
-func (*tcpMasq) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*tcpMasq) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Listen on dynamic port to accept connections from container.
 	log.Infof("tcpMasq (LocalAction): Listening on dynamic port")
 	l, err := net.Listen(netutils.TCPNetwork(ipv6), ":0")
@@ -1390,7 +1391,7 @@ func (*tcpMasq) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
 			}
 
 			// Assert that the remote IP is the container's IP and not the namespace IP.
-			if !remoteAddr.IP.Equal(ip) {
+			if remoteAddr.AddrPort().Addr().Unmap() != ip {
 				errCh <- fmt.Errorf("unexpected remote IP: %s, expected %s", remoteAddr.IP.String(), ip.String())
 				return
 			}
@@ -1428,7 +1429,7 @@ func (*deletionTest) Name() string {
 // Sets up drop rules in multiple chains and tables.
 // Verifies that Flush Chain, Flush Table, Flush Ruleset
 // and Delete Set Element clear the rules/set correctly and restore flow.
-func (*deletionTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) error {
+func (*deletionTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	tableName := "FLUSH_TEST_TABLE"
 	chainName1 := "CHAIN1"
 	chainName2 := "CHAIN2"
@@ -1600,15 +1601,12 @@ func (*deletionTest) ContainerAction(ctx context.Context, ip net.IP, ipv6 bool) 
 // LocalAction implements TestCase.LocalAction.
 // Continuously sends TCP packets to all target ports (2402, 2403, 2404)
 // to generate traffic for the container to filter and verify.
-func (*deletionTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) error {
-	ports := []int{2402, 2403, 2404}
+func (*deletionTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
+	ports := []uint16{2402, 2403, 2404}
 	errCh := make(chan error, len(ports))
 	for _, port := range ports {
-		go func(p int) {
-			contAddr := net.TCPAddr{
-				IP:   ip,
-				Port: p,
-			}
+		go func(p uint16) {
+			contAddr := netip.AddrPortFrom(ip, p)
 			for {
 				select {
 				case <-ctx.Done():
@@ -1617,7 +1615,7 @@ func (*deletionTest) LocalAction(ctx context.Context, ip net.IP, ipv6 bool) erro
 				default:
 					// Dial with short timeout to generate frequent SYNs.
 					d := net.Dialer{Timeout: 500 * time.Millisecond}
-					conn, err := d.DialContext(ctx, netutils.TCPNetwork(ipv6), contAddr.String())
+					conn, err := d.DialTCP(ctx, netutils.TCPNetwork(ipv6), netip.AddrPort{}, contAddr)
 					if err == nil {
 						conn.Close()
 					}
