@@ -591,6 +591,11 @@ func (c *Container) FindIP(ctx context.Context, ipv6 bool) (net.IP, error) {
 	if ip == nil {
 		return net.IP{}, ErrNoIP
 	}
+	if ipv6 {
+		if err := waitForOwnedIPv6Gateway(ctx, c.client, resp.NetworkSettings.DefaultNetworkSettings.IPv6Gateway); err != nil {
+			return nil, err
+		}
+	}
 	return ip, nil
 }
 
