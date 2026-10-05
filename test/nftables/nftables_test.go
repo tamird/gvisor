@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"sync"
 	"testing"
 	"time"
@@ -91,7 +92,7 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 
 	// Get the container IP.
-	ip, err := d.FindIP(ctx, ipv6)
+	containerIP, err := d.FindIP(ctx, ipv6)
 	if err != nil {
 		// If ipv6 is not configured, don't fail.
 		if ipv6 && err == dockerutil.ErrNoIP {
@@ -101,6 +102,12 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		log.Infof("failed to get container IP: %v", err)
 		t.FailNow()
 	}
+
+	ip, ok := netip.AddrFromSlice(containerIP)
+	if !ok {
+		t.Fatalf("invalid container IP: %v", containerIP)
+	}
+	ip = ip.Unmap()
 
 	// Give the container our IP.
 	if err := sendIP(ip, test.Timeout()); err != nil {
@@ -157,16 +164,13 @@ func TestNftablesValidation(t *testing.T) {
 	}
 }
 
-func sendIP(ip net.IP, timeout time.Duration) error {
-	contAddr := net.TCPAddr{
-		IP:   ip,
-		Port: IPExchangePort,
-	}
+func sendIP(ip netip.Addr, timeout time.Duration) error {
+	contAddr := net.TCPAddrFromAddrPort(netip.AddrPortFrom(ip, IPExchangePort))
 	var conn *net.TCPConn
 	// The container may not be listening when we first connect, so retry
 	// upon error.
 	cb := func() error {
-		c, err := net.DialTCP("tcp", nil, &contAddr)
+		c, err := net.DialTCP("tcp", nil, contAddr)
 		conn = c
 		return err
 	}
