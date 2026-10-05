@@ -4,6 +4,7 @@
 import json
 import re
 import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -57,20 +58,25 @@ timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
 
 def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
     global requests
-    requests += 1
-    if requests > REQUEST_LIMIT:
-        raise RuntimeError("Snapshot request limit reached; previous file is unchanged")
-    result = subprocess.run(
-        ["gh", "api", "graphql", "--input", "-"],
-        input=json.dumps({"query": query, "variables": variables or {}}),
-        text=True, capture_output=True, check=False, timeout=60,
-    )
-    if result.returncode:
-        raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
-    response = json.loads(result.stdout)
-    if response.get("errors"):
-        raise RuntimeError(f"GitHub query failed: {response['errors']}")
-    return response["data"]
+    for attempt in range(2):
+        requests += 1
+        if requests > REQUEST_LIMIT:
+            raise RuntimeError("Snapshot request limit reached; previous file is unchanged")
+        result = subprocess.run(
+            ["gh", "api", "graphql", "--input", "-"],
+            input=json.dumps({"query": query, "variables": variables or {}}),
+            text=True, capture_output=True, check=False, timeout=60,
+        )
+        if result.returncode:
+            # Retry this read-only query once for a TLS transport failure.
+            if attempt == 0 and requests < REQUEST_LIMIT and "net/http: TLS handshake timeout" in result.stderr:
+                print("GitHub TLS handshake timed out; retrying once within the request cap", file=sys.stderr)
+                continue
+            raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
+        response = json.loads(result.stdout)
+        if response.get("errors"):
+            raise RuntimeError(f"GitHub query failed: {response['errors']}")
+        return response["data"]
 
 
 def public_url(value: str | None) -> str | None:
