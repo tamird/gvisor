@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/nogo:defs.bzl", "nogo_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -59,4 +60,33 @@ test_suite(
         ":atomicbitops_test_arm64",
         ":atomicbitops_test_nogo",
     ],
+)
+
+# Validation-only owners exercise Nogo through each configured test frontend.
+nogo_test(
+    name = "atomicbitops_test_amd64_frontend_nogo",
+    srcs = [
+        "aligned_test.go",
+        "atomicbitops_test.go",
+    ],
+    config = "//:nogo_config",
+    tags = [
+        "manual",
+        "nogo",
+    ],
+    deps = [":atomicbitops_test_amd64"],
+)
+
+nogo_test(
+    name = "atomicbitops_test_arm64_frontend_nogo",
+    srcs = [
+        "aligned_test.go",
+        "atomicbitops_test.go",
+    ],
+    config = "//:nogo_config",
+    tags = [
+        "manual",
+        "nogo",
+    ],
+    deps = [":atomicbitops_test_arm64"],
 )
