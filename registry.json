@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T22:42:04.652577+00:00",
+    "updatedAt": "2026-10-05T23:01:19.753383+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -86,7 +86,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "ad67cc40192d4b659d0f679f3c3b161f8e434b0d",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -112,7 +112,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "c5e943bc48ce63b12fc67b826919b872ebd01a55",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -138,7 +138,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "a9429cd833940fd776a4c44e792e322069b7bc6f",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -248,7 +248,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "dac54db335181f1fa10653fd357d66bac72f549b",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -263,17 +263,17 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-10-04T11:39:16.209315+00:00",
-      "summary": "The enum-to-int compatibility correction is published with the evidence-backed reply. Earlier validation compiled the complete parameterized fixture with the actual GNU toolchain; the rebase adds no fresh runtime claim. Current published head a87038abd8ed4af3274ad06cc1b9e88c85573812. https://github.com/google/gvisor/pull/15132#issuecomment-6004567900 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
+      "summary": "The enum-to-int compatibility correction is published with the evidence-backed reply. Earlier validation compiled the complete parameterized fixture with the actual GNU toolchain; the rebase adds no fresh runtime claim. Current published head abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7 adds only the CI-prescribed two-space formatting correction; no semantic or test change. https://github.com/google/gvisor/pull/15132#issuecomment-6004567900 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "followup": {
-        "disposition": "published; mechanical formatting follow-up",
+        "disposition": "requested revision and formatting fix published",
         "owner": "external_sweeps",
-        "nextAction": "Root owns the exact two-space clang-format continuation correction reported by current-head lint; no behavior change. Workflow-scanner failures are separate baseline findings.",
+        "nextAction": "Track review/import of the exact amended head. Current lint passes; workflow-scanner failures are separate baseline findings, and old import failures remain bound to the prior source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15132#issuecomment-6004567900",
           "https://github.com/google/gvisor/actions/runs/37382866249/job/112008932632"
         ],
-        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
-        "sourceHead": "a87038abd8ed4af3274ad06cc1b9e88c85573812",
+        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
+        "sourceHead": "abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
       }
@@ -357,7 +357,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "8130f5a58fdd688379390fcbdf90a81b66149235",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -424,7 +424,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "6163d92a567f0983df38f57ec2596adc917ae78a",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -504,7 +504,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "8d55f931860145475cae7e872db3784499faf855",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -561,18 +561,18 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-29T10:16:51Z",
-      "summary": "The authorized October 2/3 rebase is published at c5bd19ac9f19f5bf78ac59b8a6ea4112a44c2554 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15064#issuecomment-5963371514. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "summary": "The mechanical conflict refresh is published at c058cddf269f5fe81bb4e261f6356ca764bb50ca on master 4ac0fde02. The reviewed topic behavior and record are preserved, including the upstream TUN restore rollback where it intersects surrounding code. No comments or review requests were posted and no new runtime was run. Current exact-head CI and review state are shown from the snapshot.",
       "followup": {
-        "disposition": "mechanical conflict; rebase allocation pending",
-        "owner": "root",
-        "nextAction": "Resolve the include/context overlap while preserving the landed 64K-page fixture correction and unchanged production patch.",
+        "disposition": "conflict resolved; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact-head review, CI and import after the source-preserving rebase. No remaining rebase task or new code dependency.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15064"
         ],
-        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
-        "sourceHead": "c5bd19ac9f19f5bf78ac59b8a6ea4112a44c2554",
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "c058cddf269f5fe81bb4e261f6356ca764bb50ca",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -708,7 +708,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "ccc387fc0195c118b8e3f75c6116bbddcf49a936",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -814,7 +814,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "b69abbaaa9796a33b9f954cc00e6a70c04bde649",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -841,7 +841,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "e8c82dd30d419cc7bba8047f3535a632cb47e70c",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -900,16 +900,16 @@
       "updatedAt": "2026-10-04T12:35:11.492672+00:00",
       "summary": "The October 4 conflict rebase is published at f5f0270289147db0614fd2eadc1ed15dcb652f81 on master 95ed905fb406e26326b263b2b3cb4ee78985a022. All three metric source files and the commit message are byte-identical to the previously approved change. The sole conflict was an upstream escape-analysis exemption attached to the map lookup that this change removes. GitHub reports MERGEABLE, and all visible checks are successful in the 12:33 UTC snapshot; explicitly skipped checks remain skipped. Open import #15248 remains at 4000441e4893051187fba9489bf733b5d57f1905 for the previous source head, so its prior results do not validate this rebased head. No new public comment or import retry was sent.\n\nEarlier source-specific evidence and publication history:\n\nAt 01:39 UTC on October 3, exact-source import #15248 at 4000441e4893051187fba9489bf733b5d57f1905 has all visible checks successful, including public pipeline 49332, and remains OPEN. Source 4d4f60d21c333171c89460b8bfe565464578e70c retains its separate opaque Copybara failure; successful import checks do not identify or resolve that internal cause.\n\nThe authorized October 2/3 rebase is published at 4d4f60d21c333171c89460b8bfe565464578e70c on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14879#issuecomment-5963430960. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. Etienne approved this head again at 2026-10-03 00:18:03 UTC. Exact-source Copybara import #15248 opened at 00:19:06, matching source 4d4f60d21c333171c89460b8bfe565464578e70c; import head 121274c7e193f7ea00d374ebe6779ba3a05cd2e7 is open with checks pending. This is not a landing; the old closed import remains historical. At current source 4d4f60d21c333171c89460b8bfe565464578e70c, feedback/copybara changed to FAILURE at 2026-10-03 00:40:52 UTC for an internal run created 00:18:06.372926658. An earlier run had reported PASS at 00:16:36. The new public status contains no cause; no internal logs were accessed or retry requested. Current import #15248 is at 4000441e4893051187fba9489bf733b5d57f1905, still open, exact-source and pending. Approval and its prior checks do not establish landing or explain this failure.\n\nEarlier source-specific evidence and review history: Source remains open at 13e28b4f18e9749f3f794c93c96f3a8a52867188. Copybara closed exact-source import #15001 unmerged at 01:00:50 UTC on October 2 and deleted its import branch. No explanation or replacement import was observed in the 01:04 sweep; this is not a source landing.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "current head reapproved; matching import pending",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Track exact-head import/check progress after Etienne reapproved the current rebased source. Existing open import names an earlier head; no source revision or public reply is requested.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14879"
+          "https://github.com/google/gvisor/pull/14879#pullrequestreview-5421564665"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
         "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -926,16 +926,16 @@
       "updatedAt": "2026-10-05T20:11:33.186866+00:00",
       "summary": "The approved source conflict rebase is published at 47ac9acd486edafa1c43cf30b18c78442f8492e8 on master 083093288. Root verified OPEN, MERGEABLE and APPROVED, with new checks initially queued and CLA passing. Independent peer d25ca27de554 confirms the three approved files, commit message and author date are unchanged; the AIO overlap adds the requestReady annotation over the new upstream implementation. Normal signer/SSH refusal was handled with authorized one-operation fallbacks. No new runtime, public comment or review request is claimed. Import #15242 at 308e9e9f9 still describes the prior bbe6fe435 source and does not qualify this rebased head.\n\nEarlier source-specific evidence:\n\nThe October 3 03:10 UTC observation retains source bbe6fe435 OPEN and exact-source import #15242 OPEN at refreshed head 5b814dab7957afed1a84aeab37a73344585277b9. Checks are PENDING on this new head, including fresh public pipeline 49356; generate and Go checks pass. Previous import head 33e81b350 had all checks SUCCESS at 02:40 and remains historical evidence. The earlier opaque source feedback is not explained by either observation, and no passing result is transferred across import heads.\n\nThis source was excluded from the one-time rebase because exact-source Copybara import #15242 was OPEN and created at 2026-10-02 23:40:10 UTC, within the fixed 19:46:58 UTC cutoff. Source bbe6fe4352878295780e1c20d4fd0c2395a19be3 remains unchanged; At the eligibility cutoff, import head 00f4759ebf0fdb0f021351bd22d5fcbd3b814e8c recorded that exact source. The 00:27:00 UTC snapshot now observes import head 6c5ab051a075d8ffff059a489baf65a0a85abd62, still matching the unchanged source, with public pipeline 49319 pending. Source approval and import creation are not landing.\n\nEarlier source-specific evidence: The #14237 prerequisite landed as ef8822c74. The complete AIO and logger changes are published as one commit/four files at bbe6fe4352878295780e1c20d4fd0c2395a19be3, based on upstream ef8822c74, with the corrected upstream SetTarget contract retained. The owner verified clean local, tracking and live source refs; GitHub reports the PR mergeable. EtiennePerot approved this exact head at 23:22:11 UTC on October 2. The pre-import 23:24:52 UTC snapshot reported lint and the other completed applicable checks successful, with generate still running. The description removes the landed prerequisite and existing review requests are preserved. Qualification composition 54ee retains the newly landed analyzer: owning log/mm runtime tests and both-architecture Nogo analyses pass, with outcome 9da0ac23e714 and the root saved-evidence review closed. Those results belong to that composition. The original 4f7 source head failed GitHub Actions lint only because warnedSet inline annotation spacing required gofmt alignment (job 111065627222); the current correction is whitespace-only, with an empty diff -w. The failed-head evidence remains retained. The duplicate review ref was deleted with its exact 4f7 lease; the original source and validation evidence remain recoverable. Approval and passing checks are not an import merge.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "current head reapproved; matching import pending",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Track exact-head import/check progress after Etienne reapproved the current rebased source. Existing open import names an earlier head; no source revision or public reply is requested.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14504"
+          "https://github.com/google/gvisor/pull/14504#pullrequestreview-5421551262"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
         "sourceHead": "47ac9acd486edafa1c43cf30b18c78442f8492e8",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -961,7 +961,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "0943d0f425c80d8a1b9372fcaba1b87711d51a92",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1001,7 +1001,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "1a608a4d3199222ac1a94311e7ceff57cd8885a1",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1094,7 +1094,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "465af2b28ffd8b01a181d21f637876c8680d93d9",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1120,7 +1120,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "152df38c6bac0ef3285e02fc73e844da77f97117",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1146,7 +1146,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1187,7 +1187,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "9f15cc6f33d681c1cd051c2797a3172f0dc89efa",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1250,7 +1250,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "c17616f3bc7e1b0a32a07b456ea495072b66d837",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1330,7 +1330,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "b04fae38936fc090e1dcd624121c4bd0a832cbf1",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1550,7 +1550,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "e34ecd989257a01fc2bc592f7edcfec0185cabdb",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "updatedAt": "2026-10-05T22:12:29.534300+00:00"
     },
@@ -1592,7 +1592,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "6e908d714da848893f8c40798ca9fe632c31e8c1",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1707,7 +1707,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1802,28 +1802,58 @@
       "summary": "Published source 52f47d076 is integrated unchanged in the qualification branch. One shared native image action builds the declared archive consumed by all four maintained AMD64 containerd versions. The complete lane passes 68 leaf cases with zero failures; public jobs do not enable the optional grouping-performance measurement, which skips once per version. Each owner loads the source/latest tags and runs the existing harness with runsc. The earlier two filtered sanity owners also passed, while the original analysis-failure parent remains failed. Other image pins and ARM64 remain unchanged. Mutable network inputs prevent a hermetic image-content or cross-run reproducibility claim; no image was published to a registry."
     },
     {
-      "id": "branch:cgroup-v1-memory-update",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15330",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "cgroup-v1-memory-update",
       "title": "Use a valid cgroup v1 memory update",
-      "url": "https://github.com/tamird/gvisor/tree/cgroup-v1-memory-update",
+      "url": "https://github.com/google/gvisor/pull/15330",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Current published head a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublished source 1ed70341c corrects the existing TestCgroupV1 memory shrink to 512 MiB, above its unchanged 500 MiB reservation, while preserving the attribute and process-membership checks. The focused cgroup-v1 proof at 28a6cf8b6 passes with the actual update on an isolated AMD64 Firecracker worker. Contributor review remains pending; no PR is open. Integrated in qualification head a6d7bf336.",
-      "head": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc"
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused cgroup-v1 validation reached the actual memory update and checked its attributes. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
+      "head": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
+      "number": 15330,
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15330"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
-      "id": "branch:boot-test-capability-drop",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15331",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "boot-test-capability-drop",
       "title": "Apply capability changes in the hostnet test",
-      "url": "https://github.com/tamird/gvisor/tree/boot-test-capability-drop",
+      "url": "https://github.com/google/gvisor/pull/15331",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Current published head bac3c399e3a5a01ee2f334a11fa25aad51d72638 is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublished source a686e547a fixes TestHostnetWithRawSockets: Apply(EFFECTIVE) did not call capset, so the privileged fixture never dropped CAP_NET_RAW. Apply(CAPS) preserves the other loaded capability sets, and one OS thread owns the drop, check and restoration. Source review has passed. Focused validation 479432ff at composed source bcf337cfa passes all 105 boot XML cases without skips and boot Nogo on ARM64 and AMD64. The original full unit-v1 parent remains failed; contributor review is pending and no PR is open. Integrated in qualification head a6d7bf336.",
-      "head": "bac3c399e3a5a01ee2f334a11fa25aad51d72638"
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at bac3c399e3a5a01ee2f334a11fa25aad51d72638, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused hosted validation passed all 105 boot XML cases and both-CPU Nogo. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
+      "head": "bac3c399e3a5a01ee2f334a11fa25aad51d72638",
+      "number": 15331,
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15331"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "bac3c399e3a5a01ee2f334a11fa25aad51d72638",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "pr:15180",
@@ -1834,21 +1864,21 @@
       "url": "https://github.com/google/gvisor/pull/15180",
       "group": "runtime",
       "status": "open",
-      "summary": "The October 5 17:53 UTC snapshot confirms all reported checks pass on this corrected head; GitHub remains MERGEABLE. No new review feedback or import is present.\n\nThe conflict is resolved in published source e5326341e1d88ea579b73fd9be582004eb83813f, rebased onto master 8bf3dc484b3d86e7a677994aad43a2a271fdbe13. Root verified matching local/tracking/live heads and GitHub MERGEABLE; independent peer e9d6af3c3fd7 covers the source-context resolution. No fresh runtime result or new public comment is claimed. Current checks and feedback are in the paired snapshot.\n\nEarlier source-specific history:\n\nThe October 5 16:57 UTC snapshot reports a new conflict at unchanged source 54a3df0a30f8b2eb2a89bcc20aea6a1f7f7dd422. There is no linked Copybara import or substantive review feedback in the complete tracked record. The source needs conflict assessment before any rebase; no rewrite or new public comment has been made.\n\nEarlier evidence: The authorized October 2/3 rebase is published at 54a3df0a30f8b2eb2a89bcc20aea6a1f7f7dd422 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15180#issuecomment-5963372610. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source 145188349 bounds configured TUN MTUs to 68–65535 and TAP MTUs to 68–65521, matching Linux. Invalid rtnetlink updates return EINVAL without changing the MTU; bounds survive NIC moves. The regression passes all four cases natively, fails all four on each of two gVisor modes before the fix, and passes all four per mode afterward. Qualification head 3027ad857 includes the fix and also passes the full stack unit owner and three Nogo owners on AMD64 and ARM64. Contributor-approved PR #15180 is open on the validated source. These interface bounds are not a Linux write-size limit; the later oversized-write implementation has separate validation. The initial upstream lint job hit an HTTP500 fetching buildifier. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
+      "summary": "The mechanical conflict refresh is published at bac65ee5763cac5ef145474553415c3dc17d5e16 on master 4ac0fde02. The reviewed topic behavior and record are preserved, including the upstream TUN restore rollback where it intersects surrounding code. No comments or review requests were posted and no new runtime was run. Current exact-head CI and review state are shown from the snapshot.",
       "number": 15180,
       "reviewDecision": "",
       "updatedAt": "2026-10-05T17:56:52.860466+00:00",
       "followup": {
-        "disposition": "mechanical conflict; rebase allocation pending",
-        "owner": "root",
-        "nextAction": "Rebase MTU bounds while preserving the upstream restore rollback, including removal of Kind tun. This topic does not require the rolled-back restore feature.",
+        "disposition": "conflict resolved; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact-head review, CI and import after the source-preserving rebase. No remaining rebase task or new code dependency.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15180"
         ],
-        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
-        "sourceHead": "e5326341e1d88ea579b73fd9be582004eb83813f",
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "bac65ee5763cac5ef145474553415c3dc17d5e16",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1873,7 +1903,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "4100db31d96ed8830ad5e26b8cd80258be0246d9",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "updatedAt": "2026-10-05T22:12:29.534300+00:00"
     },
@@ -1899,7 +1929,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "e2f202dd4555d7377a51205bd8e5f382ca4209b3",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "updatedAt": "2026-10-05T22:12:29.534300+00:00"
     },
@@ -2020,21 +2050,21 @@
       "url": "https://github.com/google/gvisor/pull/15189",
       "group": "runtime",
       "status": "open",
-      "summary": "The October 5 17:53 UTC snapshot confirms all reported checks pass on this corrected head; GitHub remains MERGEABLE. No new review feedback or import is present.\n\nThe conflict is resolved in published source f6399ac0c5f5cef89f64435d09290f74a80fba48, rebased onto master 8bf3dc484b3d86e7a677994aad43a2a271fdbe13. Root verified matching local/tracking/live heads and GitHub MERGEABLE; independent peer e9d6af3c3fd7 covers the source-context resolution. No fresh runtime result or new public comment is claimed. Current checks and feedback are in the paired snapshot.\n\nEarlier source-specific history:\n\nThe October 5 16:57 UTC snapshot reports a new conflict at unchanged source de2e527015fa23d26bd8f67adbbe555da71d42a6. There is no linked Copybara import or substantive review feedback in the complete tracked record. The source needs conflict assessment before any rebase; no rewrite or new public comment has been made.\n\nEarlier evidence: The authorized October 2/3 rebase is published at de2e527015fa23d26bd8f67adbbe555da71d42a6 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15189#issuecomment-5963388850. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source 4db0d2d6f waits for NIC link-resolution callbacks and completes sentry network teardown before backing memory is destroyed. Before tests fail for ordinary and overflow callback lifetimes and sentry Destroy ordering; the corrected composition 475b1c41d passes four Go owners; all four Nogo owners pass both AMD64 and ARM64. Qualification includes the tested source. Contributor-approved PR #15189 publishes the validated change; oversized TUN-write behavior has separate evidence. The current head is a patch-identical rebase onto b426401b3; historical validation sources remain unchanged.",
+      "summary": "The mechanical conflict refresh is published at 60a7ce4cd836424b3f2d9e97edf28167372f6aff on master 4ac0fde02. The reviewed topic behavior and record are preserved, including the upstream TUN restore rollback where it intersects surrounding code. No comments or review requests were posted and no new runtime was run. Current exact-head CI and review state are shown from the snapshot.",
       "number": 15189,
       "reviewDecision": "",
       "updatedAt": "2026-10-05T17:56:52.860466+00:00",
       "followup": {
-        "disposition": "mechanical conflict; rebase allocation pending",
-        "owner": "root",
-        "nextAction": "Rebase queue teardown/wait logic while preserving removal of the rolled-back context import and afterLoad helper. No restore-feature dependency.",
+        "disposition": "conflict resolved; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact-head review, CI and import after the source-preserving rebase. No remaining rebase task or new code dependency.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15189"
         ],
-        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
-        "sourceHead": "f6399ac0c5f5cef89f64435d09290f74a80fba48",
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "60a7ce4cd836424b3f2d9e97edf28167372f6aff",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2061,7 +2091,7 @@
         "reviewedAt": "2026-10-05T22:27:03.475369+00:00",
         "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2094,8 +2124,8 @@
       "title": "Combine target-owned qualification lanes",
       "url": "https://github.com/tamird/gvisor/tree/rbe-owned-test-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished source 8b6fb4862 shares the existing selectors for 15 more lanes, preserving standalone architecture guards and image shards. Six zero-action analyses verify 124 runnable owners and 130 TestRunner actions with identical worker properties, commands and multiplicities under neutral, unit and syscall filters; incompatible Podman ARM is explicitly reported. One direct invocation passes smoke, workflow validation and packetdrill sanity on native Linux and gVisor, all remote and uncached. This does not execute the full 15-lane workload or ARM tests. Earlier parents 40868ce6 and bdc82378 remain failed analysis attempts: the fixes made packetimpact suite membership explicit and honored Bazel SKIPPED completions. No upstream PR is proposed. Integrated through refreshed qualification head e0d8060c7; this does not extend the bounded runtime result."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source 8b6fb4862 shares the existing selectors for 15 more lanes, preserving standalone architecture guards and image shards. Six zero-action analyses verify 124 runnable owners and 130 TestRunner actions with identical worker properties, commands and multiplicities under neutral, unit and syscall filters; incompatible Podman ARM is explicitly reported. One direct invocation passes smoke, workflow validation and packetdrill sanity on native Linux and gVisor, all remote and uncached. This does not execute the full 15-lane workload or ARM tests. Earlier parents 40868ce6 and bdc82378 remain failed analysis attempts: the fixes made packetimpact suite membership explicit and honored Bazel SKIPPED completions. No upstream PR is proposed. Integrated through refreshed qualification head e0d8060c7; this does not extend the bounded runtime result."
     },
     {
       "id": "branch:rbe-filtered-test-selection",
@@ -2105,8 +2135,8 @@
       "title": "Combine the KVM-filtered test lanes",
       "url": "https://github.com/tamird/gvisor/tree/rbe-filtered-test-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished source b9dbdeccb keeps posture, startup and continuous-benchmark KVM filtering local to canonical selection. Fifty configured owners and their commands, worker properties and multiplicities match under neutral, unit and syscall filters; 24 KVM labels are reported as loading-only omissions. A conflicting inherited build-scope filter is rejected before execution. One actual qualifier invocation passes 11 posture/startup/workflow owners remotely and uncached. Startup logs show one benchmark iteration per mode; nonverbose posture logs support owner-level PASS only. Continuous benchmarks remain analysis-only. All 211 original hosted artifacts were recovered and independently verified after local scratch loss; no workload was repeated. Integrated as the current qualification head. No upstream PR is proposed."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source b9dbdeccb keeps posture, startup and continuous-benchmark KVM filtering local to canonical selection. Fifty configured owners and their commands, worker properties and multiplicities match under neutral, unit and syscall filters; 24 KVM labels are reported as loading-only omissions. A conflicting inherited build-scope filter is rejected before execution. One actual qualifier invocation passes 11 posture/startup/workflow owners remotely and uncached. Startup logs show one benchmark iteration per mode; nonverbose posture logs support owner-level PASS only. Continuous benchmarks remain analysis-only. All 211 original hosted artifacts were recovered and independently verified after local scratch loss; no workload was repeated. Integrated as the current qualification head. No upstream PR is proposed."
     },
     {
       "id": "branch:rbe-cgroup-profile-setting",
@@ -2116,8 +2146,8 @@
       "title": "Represent the cgroup mode as a build setting",
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-profile-setting",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished source a9d9d4b77 replaces the cgroup-v1 define with a default-off boolean setting and is included in qualification. Eight zero-action analyses bind both canonical owners to their action configurations and preserve arguments and worker properties. Parent ef299288 remains failed because its comparator expected test_env in aquery output; saved options and pinned Bazel semantics independently establish the configured CGROUPV2=false setting. The earlier empty cached dump is retained separately. This precursor does not yet provide per-target cgroup profiles or runtime-environment proof."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source a9d9d4b77 replaces the cgroup-v1 define with a default-off boolean setting and is included in qualification. Eight zero-action analyses bind both canonical owners to their action configurations and preserve arguments and worker properties. Parent ef299288 remains failed because its comparator expected test_env in aquery output; saved options and pinned Bazel semantics independently establish the configured CGROUPV2=false setting. The earlier empty cached dump is retained separately. This precursor does not yet provide per-target cgroup profiles or runtime-environment proof."
     },
     {
       "id": "branch:rbe-plugin-test-selection",
@@ -2127,8 +2157,8 @@
       "title": "Own plugin settings in the target graph",
       "url": "https://github.com/tamird/gvisor/tree/rbe-plugin-test-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished source b8901e603 owns plugin settings in the graph and is included in qualification. The plugin build retains opt/strip=sometimes while network tests retain fastbuild/strip=never; ordinary smoke remains plugin-free. Parent 4e1e11b5 passes the plugin build with smoke and the existing TestDumpStack regression. Canonical neutral, unit and syscall loading preserve the network owners, whose runtime remains unqualified. Initial HTTP500 and subsequent action-query method failures remain recorded; neither receives runtime credit. No plugin-network, vhost-net, KVM or ARM runtime pass is claimed."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source b8901e603 owns plugin settings in the graph and is included in qualification. The plugin build retains opt/strip=sometimes while network tests retain fastbuild/strip=never; ordinary smoke remains plugin-free. Parent 4e1e11b5 passes the plugin build with smoke and the existing TestDumpStack regression. Canonical neutral, unit and syscall loading preserve the network owners, whose runtime remains unqualified. Initial HTTP500 and subsequent action-query method failures remain recorded; neither receives runtime credit. No plugin-network, vhost-net, KVM or ARM runtime pass is claimed."
     },
     {
       "id": "branch:rbe-checkpoint-test-selection",
@@ -2138,8 +2168,8 @@
       "title": "Combine checkpoint syscall profiles",
       "url": "https://github.com/tamird/gvisor/tree/rbe-checkpoint-test-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished source 8ce3e97d0 composes canonical public checkpoint profiles and is included in qualification. Parent 49857cb9 passes 24 zero-action analyses: 532 AMD64 save/restore owners remain selected, while all 578 ARM64 save/resume owners are explicitly unavailable on current Firecracker capacity. Ordinary and checkpoint combinations retain 1,701 runtime owners, or 2,340 with unit; unit build roots remain intact. One direct three-owner invocation passes ordinary ClockGetres.Timespec, its save variant with two actual restores, and rootless smoke. All three actions were remote, uncached single attempts. Broad syscall/checkpoint runtime remains unqualified."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source 8ce3e97d0 composes canonical public checkpoint profiles and is included in qualification. Parent 49857cb9 passes 24 zero-action analyses: 532 AMD64 save/restore owners remain selected, while all 578 ARM64 save/resume owners are explicitly unavailable on current Firecracker capacity. Ordinary and checkpoint combinations retain 1,701 runtime owners, or 2,340 with unit; unit build roots remain intact. One direct three-owner invocation passes ordinary ClockGetres.Timespec, its save variant with two actual restores, and rootless smoke. All three actions were remote, uncached single attempts. Broad syscall/checkpoint runtime remains unqualified."
     },
     {
       "id": "branch:rbe-nogo-test-selection",
@@ -2149,8 +2179,8 @@
       "title": "Combine Nogo with runtime qualification",
       "url": "https://github.com/tamird/gvisor/tree/rbe-nogo-test-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. Integrated as 08102c576 in qualification head eb6a71ba1. The first proof completed 26 zero-action analyses, then failed at a 136456-byte subprocess argument limit. Recovery 9d381d0b-8f49-4b78-a568-e5782f5de969 uses file-based selection transport and passed its independently reconciled bounded selection/runtime proof across 13 child invocations. No full Nogo or runtime-matrix pass is claimed."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished source 0a05f9f02 selects the existing complete Nogo profile before composing runtime lanes. Each analyzer already checks both architectures. When requested, only the Nogo exclusion is removed from unit and ordinary syscall filters; exact canonical union verification preserves original wildcard build roots. Positive Nogo filtering and build_tests_only remain confined to analysis. Integrated as 08102c576 in qualification head eb6a71ba1. The first proof completed 26 zero-action analyses, then failed at a 136456-byte subprocess argument limit. Recovery 9d381d0b-8f49-4b78-a568-e5782f5de969 uses file-based selection transport and passed its independently reconciled bounded selection/runtime proof across 13 child invocations. No full Nogo or runtime-matrix pass is claimed."
     },
     {
       "id": "branch:rbe-cgroup-test-selection",
@@ -2160,8 +2190,8 @@
       "title": "Configure cgroup profiles per test target",
       "url": "https://github.com/tamird/gvisor/tree/rbe-cgroup-test-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished component 0db5008e34e96b57be34499eae18e3795059fb7b descends from historical qualification c327900462e558a1a610e8a44e168ba0098dd2eb. Independent saved-byte reconciliation closes its graph proof, preserving the non-layout assertions across 981 owners, 1,025 TestRunner actions, 21 legacy comparisons and 43 metadata owners. The original dependency-fetch and script-import parents remain failed; compact parent c4b20db6 also remains failed because its comparator treated generated executable/bootstrap spellings as behavior changes. No runtime result follows from these graph checks. Reviewed composition rbe-cgroup-integration at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b is directly atop prior primary ff47eae257 and is now published as primary qualification. Runtime parent daf277fd-0641-43a8-98ec-25b3fce05558 passed its 23-owner cohort on integrated 5b649d4766: all owners ran remotely and uncached, with 21 v1 profiles and two ordinary controls. Saved mount and cleanup evidence is verified, one existing Python skip remains, and independent runtime peer review closed PASS before primary promotion. This is not the full unit-v1 lane. Combined-selector parent 16ababb2-e0a6-4e88-b8ca-3fec5efdfd57 remains FAILED_METHOD: its final test-to-aquery substitution omitted build_tests_only, allowing the default -nogo filter to exclude 829 labels. Independently reconciled saved call 10 proves the exact 1,811-test profile union, and call 11 separately proves 2,147 non-test roots with matching common configs and universe. Those separate graph calls do not prove a single combined test command; the bounded runtime result is recorded separately. The earlier Nogo reclassification diagnosis was incorrect. The later full eight-lane cohort ca76d203 independently passed all 330 unit-v1 owners and the complete cgroup-v1 runtime owner; its parent remains FAILED because one PIDFD selftest reached its 45-second limit (352 of 353 owners passed)."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished component 0db5008e34e96b57be34499eae18e3795059fb7b descends from historical qualification c327900462e558a1a610e8a44e168ba0098dd2eb. Independent saved-byte reconciliation closes its graph proof, preserving the non-layout assertions across 981 owners, 1,025 TestRunner actions, 21 legacy comparisons and 43 metadata owners. The original dependency-fetch and script-import parents remain failed; compact parent c4b20db6 also remains failed because its comparator treated generated executable/bootstrap spellings as behavior changes. No runtime result follows from these graph checks. Reviewed composition rbe-cgroup-integration at 5b649d4766a2d0df1e1984063d3a3e7be7a2963b is directly atop prior primary ff47eae257 and is now published as primary qualification. Runtime parent daf277fd-0641-43a8-98ec-25b3fce05558 passed its 23-owner cohort on integrated 5b649d4766: all owners ran remotely and uncached, with 21 v1 profiles and two ordinary controls. Saved mount and cleanup evidence is verified, one existing Python skip remains, and independent runtime peer review closed PASS before primary promotion. This is not the full unit-v1 lane. Combined-selector parent 16ababb2-e0a6-4e88-b8ca-3fec5efdfd57 remains FAILED_METHOD: its final test-to-aquery substitution omitted build_tests_only, allowing the default -nogo filter to exclude 829 labels. Independently reconciled saved call 10 proves the exact 1,811-test profile union, and call 11 separately proves 2,147 non-test roots with matching common configs and universe. Those separate graph calls do not prove a single combined test command; the bounded runtime result is recorded separately. The earlier Nogo reclassification diagnosis was incorrect. The later full eight-lane cohort ca76d203 independently passed all 330 unit-v1 owners and the complete cgroup-v1 runtime owner; its parent remains FAILED because one PIDFD selftest reached its 45-second limit (352 of 353 owners passed)."
     },
     {
       "id": "branch:rbe-artifact-selection",
@@ -2171,8 +2201,8 @@
       "title": "Compose release and distribution artifacts",
       "url": "https://github.com/tamird/gvisor/tree/rbe-artifact-selection",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Upstream scope/extraction decision is required. This production graph component currently uses qualification frontend/owner interfaces absent from upstream master. No standalone cut has been established, and no decision assumes that the large fork qualifier belongs upstream. Root is deciding which mechanisms belong in upstream native Bazel targets and which remain qualification tooling. Zero recorded code blockers does not make this branch independently ready for a PR.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed."
+      "status": "extraction needed",
+      "summary": "Upstream delivery needs smaller Bazel-native extraction units. The reviewed architecture keeps qualify.sh and the Python selector as temporary fork comparison tooling; durable behavior should use configured test owners and native suites. These existing component branches remain evidence/comparison inputs, not independently ready upstream PRs. The individual source cuts still need implementation and review.\n\nPublished head ff47eae25757e50d8e66319b2b2d3cb4189bceb9 descends from eb6a71ba1 and is included in primary qualification. It adds graph-owned release artifacts, Python distributions and website outputs to the mixed invocation. Both-architecture artifacts and two uncached remote tests passed in parent 89df3a5e-1f08-4bb8-aa09-40d46eccaaca, which then failed its metadata assertion because the graph also contains an exec-configured runsc for the website. Metadata-only continuation 97d28482-c93b-4cd7-844f-03a063068545 passed with zero actions; independent reconciliation distinguishes three target configurations from that exec tool. This closes the bounded component proof, not the broader qualification run, whose independently reconciled outcome remains failed."
     },
     {
       "id": "pr:15202",
@@ -2189,16 +2219,31 @@
       "reviewDecision": "APPROVED"
     },
     {
-      "id": "branch:syscall-session-keyring-description",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15336",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "syscall-session-keyring-description",
-      "title": "Correct session keyring description expectations",
-      "url": "https://github.com/tamird/gvisor/tree/syscall-session-keyring-description",
+      "title": "Accept inherited session keyring descriptions",
+      "url": "https://github.com/google/gvisor/pull/15336",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Current published head da9faf745bef96666b1672fbf814af4b8cdc0e52 is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublished standalone aa39a4b48450726e61ea362d7b028e5663e25e6d is based on master bbb7e9e15. Independent saved-evidence review passed after all 31 cases passed on each native, shared and directfs owner. The old native _uid_ses.0 expectation was invalid. Contributor review is pending before opening an upstream PR.",
-      "head": "da9faf745bef96666b1672fbf814af4b8cdc0e52"
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at da9faf745bef96666b1672fbf814af4b8cdc0e52, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier source-bound validation passed all 31 cases on each native, shared and directfs owner. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
+      "head": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
+      "number": 15336,
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15336"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "branch:oom-score-exited-process",
@@ -2212,16 +2257,31 @@
       "summary": "Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nCurrent published standalone ab141693238f1189f078353e4da8d3851a716091 is based on master bbb7e9e15. Full source and record reviews passed. The initial gate failed compilation because its new test omitted the errors import; no tests ran then. The corrected gate passed all nine owners, including the nobody-worker case without a skip, and saved-evidence peer review closed. Contributor review is pending before an upstream PR. Earlier reproduction showed a live write succeeded while an unreaped exited process returned EACCES as nobody; this does not establish the process state or cause in public Buildkite 49170. The change does not broadly suppress EACCES. Public Buildkite 49348 separately repeats the oom_score_adj permission-denied symptom in DirectFS mode after the other mode passes. That log has no process-state evidence, so neither the same exited-process cause nor an actionlint regression is established. The existing contributor-review hold remains; no duplicate correction or diagnostic was created."
     },
     {
-      "id": "branch:send-recv-benchmark-ranges",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15332",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "send-recv-benchmark-ranges",
-      "title": "Repair send/recv benchmark iteration",
-      "url": "https://github.com/tamird/gvisor/tree/send-recv-benchmark-ranges",
+      "title": "Simplify TCP benchmark argument registration",
+      "url": "https://github.com/google/gvisor/pull/15332",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Current published head 0bf9505beb87bdd44666d1cb703efececedf9ef2 is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nIndependent published source 20382c02f2efab5d94f713526b6853e03a5db553 addresses the shared unused-counter/deprecated Benchmark compile failure found in five send_recv wrappers by the full build-all gate. It has no code prerequisites. Exact one-file validation composition 015f378f2580fb46ef3f88c6bda35083e709e949 is based on primary 00c068dddf. Outcome 0c53255d6b77 and independent root peer 91196aaf9db1 are closed PASS: all five original failing target/configuration pairs build and all 43 benchmark listing names are correct. This supplies no measured benchmark, runtime or KVM credit and is not a full build-all rerun. Contributor review has been requested before an upstream PR. The current primary retains the validated one-file composition 015f378f2580fb46ef3f88c6bda35083e709e949; standalone contributor review remains pending.",
-      "head": "0bf9505beb87bdd44666d1cb703efececedf9ef2"
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at 22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier validation rebuilt all five originally failing target/configuration pairs and verified all 43 benchmark listing names. This is compilation/listing evidence, not a measured benchmark or KVM runtime. The new head changes only stale commit prose after the source-preserving rebase.",
+      "head": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
+      "number": 15332,
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15332"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "branch:send-recv-benchmark-readiness",
@@ -2359,7 +2419,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "e16cf7c2826bf341b8b20578c8672a81d36931ff",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2439,16 +2499,31 @@
       "updatedAt": "2026-10-05T15:12:59.250293+00:00"
     },
     {
-      "id": "branch:container-overlay-tempdir",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15333",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "container-overlay-tempdir",
-      "title": "Use the test directory for container overlays",
-      "url": "https://github.com/tamird/gvisor/tree/container-overlay-tempdir",
+      "title": "Use the test directory for overlay storage",
+      "url": "https://github.com/google/gvisor/pull/15333",
       "group": "tests",
-      "status": "review pending",
-      "summary": "Current published head 73d62b335ccacd564193b201c861b482e0c1ab18 is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublic, clean and tracked source 212380f458ef721c0add9e1c31fa88d897e570de is the exact reviewed one-file overlay correction on upstream d1e11f9359. It replaces a hardcoded /tmp overlay backing directory with the existing overlayTestConfig test-owned temporary directory, preserving the all-mount overlay and invisibility assertions. Focused composition a34ee770dc passes the actual existing TestSharedVolumeOverlay case in both cgroup modes, with unchanged worker images/resources and 900-second owner timeouts. Outcome 7a066049d7f4 retains two actual uncached Action/worker joins and cleanup; this is not a full suite or production gofer change. Contributor review is pending; no upstream PR exists.",
-      "head": "73d62b335ccacd564193b201c861b482e0c1ab18"
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.",
+      "head": "73d62b335ccacd564193b201c861b482e0c1ab18",
+      "number": 15333,
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15333"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "73d62b335ccacd564193b201c861b482e0c1ab18",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "branch:syscall-linux-versions",
@@ -2547,16 +2622,31 @@
       "updatedAt": "2026-10-03T09:12:15.266346+00:00"
     },
     {
-      "id": "branch:github-client-versioned-imports",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15334",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "github-client-versioned-imports",
       "title": "Use the versioned GitHub client imports",
-      "url": "https://github.com/tamird/gvisor/tree/github-client-versioned-imports",
+      "url": "https://github.com/google/gvisor/pull/15334",
       "group": "bazel",
-      "status": "review pending",
-      "summary": "Current published head 507fb1697568ee3aac7405722180d082f4018a4d is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublic standalone github-client-versioned-imports at 107173ce007954be05a7105153199f3fa85f9597 changes the two GitHub-tool source imports to go-github/v56, matching their existing Bazel dependency and MODULE declaration. It is based directly on public master aa42986c0959256e89b340b9c3db8a16dbb4ad6b and adds no dependency upgrade. Source and record reviews pass. Validation composition c3d988d903523408f1392be574ef8f6ba2725822 applies the exact patch on c51; parent 814cd828-4a50-45df-bdd3-9120bdfe4b34 passes in 26.218 seconds. The GitHub binary has a successful configured build and a bound 6,828,194-byte output. The complete reviver owner passes on one actual uncached AMD64 OCI worker with its original 60-second timeout: two top-level tests and four named table cases, six XML entries, no skips or filtering. Outcome 8d9a0003dbcd and independent peer 2fa51c80e002 bind all 62 saved files, 19 source blobs and the actual worker/log joins. The binary was not executed and no live GitHub API was called. This is integration validation, not a standalone-master run or CodeQL coverage proof. Contributor review was requested once and remains pending; no upstream PR is open. The exact correction is now included in CodeQL compositions from 6fb4c62463 onward; their separate Go extraction failures do not alter this focused import validation.",
-      "head": "507fb1697568ee3aac7405722180d082f4018a4d"
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at 507fb1697568ee3aac7405722180d082f4018a4d, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier hosted validation built the GitHub binary and passed the full existing reviver tests. It did not execute the GitHub binary or make API calls. The reviewed two-import patch is unchanged after rebase.",
+      "head": "507fb1697568ee3aac7405722180d082f4018a4d",
+      "number": 15334,
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15334"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "507fb1697568ee3aac7405722180d082f4018a4d",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "branch:licensecheck-module-notices",
@@ -2596,17 +2686,31 @@
       }
     },
     {
-      "id": "branch:mount-util-types",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15335",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "mount-util-types",
       "title": "Include syscall utility type and errno providers",
-      "url": "https://github.com/tamird/gvisor/tree/mount-util-types",
+      "url": "https://github.com/google/gvisor/pull/15335",
       "group": "runtime",
-      "status": "review pending",
-      "updatedAt": "2026-10-03T11:02:59.770693+00:00",
-      "summary": "Current published head 4e7f86be29e92b697aac1d205f94bd640ce8e854 is a signed single commit on master 4ac0fde02. The complete patch and commit message are unchanged after the reviewed refresh; contributor approval remains pending. Earlier runtime evidence below is reused by source comparison, with no new exact-head run.\n\nEarlier evidence: Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nFinal standalone candidate https://github.com/tamird/gvisor/commit/3a83fa31d1a2097ec4dfa26dbf73ce5b21b77c88 contains two small provider corrections: mount_util.h directly includes sys/types.h and cstdint for its declared types, and linux_capability_util.cc replaces cerrno with errno.h for Linux error constants including EUSERS. The mount action passes under the declared musl toolchain in the three-libc FUSE composition. Separate parent 1e83eb96-df55-444f-85e1-cc34f5fb3b3e passes in 34.777 seconds: one actual uncached capability ClangTidy action has an empty report and its full owner builds successfully. Independent saved-result peer f2b64d4ca403 closes that proof. The earlier full musl-owner failure remains historical; no broader musl suite, syscall/Nogo or runtime behavior result is claimed. MAIN af82e3fe368a6216efe736cf5558400194271946 contains the exact tested utility files. Contributor approval to open the standalone PR was requested once and remains pending. This topic is independent of PR #15216; combined validation does not create an upstream code dependency.",
-      "head": "4e7f86be29e92b697aac1d205f94bd640ce8e854"
+      "status": "open",
+      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "summary": "Opened ready for review after explicit user approval at 4e7f86be29e92b697aac1d205f94bd640ce8e854, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier actual ClangTidy checks passed for the mount header and the capability errno provider with musl. This is focused utility-source validation, not a broader musl-suite pass.",
+      "head": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
+      "number": 15335,
+      "reviewDecision": null,
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15335"
+        ],
+        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "sourceHead": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "pr:15308",
@@ -2695,7 +2799,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "45a2169c18c3662cb3127f0bd4bb4c2579c65555",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2720,7 +2824,7 @@
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "7540239d5b6ede5248dadf079ffc8086e5f42a55",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2753,12 +2857,13 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "iptables-test-action-deadline",
-      "title": "Start netfilter action deadlines after setup",
+      "title": "Give iptables test phases separate deadlines",
       "url": "https://github.com/tamird/gvisor/tree/iptables-test-action-deadline",
       "group": "tests",
-      "status": "validation pending",
+      "status": "review pending",
       "updatedAt": "2026-10-05T20:20:31.632321+00:00",
-      "summary": "Current public revision 98507d833 expands the proposed change to the complete iptables test context lifecycle, including the bounded/context-aware handshake. Source and message reviews pass; combined existing-case validation is being prepared. It supersedes the narrower 98cd/d44 revisions. No new runtime result or upstream publication approval is claimed.\n\nHistorical focused evidence for the earlier narrower change: 98cd2bc95f8a9c109a172c4539ea8ae277a62021 is based on master 8bf3dc484 and has no open code prerequisite. It gives LocalAction and the container-completion wait a separate bounded ten-second context after container setup and the address exchange, while preserving the existing setup deadline. Focused validation at rbe-netfilter-action-deadline@f9a9e0cf220e7e6d4ac9ccd7846055b8c57c50e8 passes all sixteen selected leaves with no skips in 220.267 seconds: https://app.buildbuddy.io/invocation/736b2770-a857-4566-bc9f-136802b4cc87. Outcome 5dbfbdf56c74 binds two actual Firecracker Action/log/XML joins and 39 source blobs, independently checked by root. The validation composition includes earlier netip and listener-cancellation changes to exercise the qualification graph; these are not code dependencies of this source topic. This focused pass does not rerun the entire earlier 36-leaf batch. No upstream PR is open; the requested revision is in progress."
+      "summary": "Separates setup and traffic deadlines derived from the test context, bounds address exchange, cancels traffic before joining helpers, and gives log collection and Docker cleanup separate timed contexts. Current independent source 98507d833004461047a8b2d65386b90221d3e4cb. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Contributor review is pending. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
+      "head": "98507d833004461047a8b2d65386b90221d3e4cb"
     },
     {
       "id": "pr:15319",
@@ -2773,16 +2878,17 @@
       "summary": "Approved by relkochta on the exact source at 21:36 UTC; matching Copybara import #15324 is open at e8dff5c9b5f8745afc38f3695e868daba337c569 with checks pending. Source checks pass.\n\nOpened as ready-for-review PR #15319 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 05accd6eadb331394c93c0a45898710829deb89f is based on master 658c9c101 and has no open code prerequisite. It removes the unused 108-line dockerutil.Network wrapper and its BUILD source entry; its final callers were removed with the legacy packetimpact runner in f5482c508 in 2021. Existing exec_test passes remotely on validation composition e489084d7: parent https://app.buildbuddy.io/invocation/21a86d00-81fb-4f7d-a817-b5653320978b completes in 87.260 seconds, with outcome 64f40662245e binding 21 source captures, 58 evidence files and one actual action. No new tests or code dependency on the netip migration are introduced. The approved source is now published in this PR. The exact source is included in canonical b4982500d.",
       "number": 15319,
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "approved; opaque internal import failure",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Track public feedback and matching import #15324. The public status reports an internal-check failure from the 21:50 run, without a public cause; no internal link access, retry or source amendment is justified.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15319"
+          "https://github.com/google/gvisor/pull/15319",
+          "https://github.com/google/gvisor/pull/15324"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
         "sourceHead": "05accd6eadb331394c93c0a45898710829deb89f",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2820,7 +2926,8 @@
       "group": "tests",
       "status": "review pending",
       "updatedAt": "2026-10-05T20:12:35.310821+00:00",
-      "summary": "Current source 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e adds the reviewed boundary-check correction. The original 96b857817/110d validation is closed PASS for 34 leaves and 50 XML entries, with saved result peer ea22526617eb. That result remains tied to the earlier executed source; the amendment has source peer 51436341d141, without a new runtime claim. Contributor review is pending. Other netip/context topics are validation companions, not source prerequisites.\n\nStanding disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nIndependent public source 96b85781716c461221de1599f74737eb8abd67b2 is based on master 083093288. It uses comparable netip address values in iptables/nftables action interfaces and shared helpers, converting at Docker, netlink and socket boundaries while preserving IPv6 zones. GetInterfaceAddrs now selects only the requested family; original-destination sockaddr checks retain their full assertions. The prior focused validation of 34 leaves ran on rbe-netfilter-action-netip@110d3e06a, which combines earlier peer-address, cancellation and handshake topics for qualification. Those topics are not source prerequisites of this standalone candidate. No upstream PR is open; source publication approval remains pending."
+      "summary": "Uses comparable netip values in iptables/nftables actions and shared helpers, with checked conversions at Docker, netlink and socket boundaries. Preserves IPv6 zones and corrects interface-address family selection. Current independent source 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Contributor review is pending. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
+      "head": "0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e"
     },
     {
       "id": "upstream:tun-ndp-restore-rollback",
@@ -3313,7 +3420,7 @@
       ]
     },
     {
-      "from": "branch:cgroup-v1-memory-update",
+      "from": "pr:15330",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the exact standalone memory-limit update in the unchanged TestCgroupV1 consumer; the focused v1 proof passes. Existing v2 fixture adaptations are separate.",
@@ -3323,7 +3430,7 @@
       ]
     },
     {
-      "from": "branch:boot-test-capability-drop",
+      "from": "pr:15331",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "The qualification branch includes the exact standalone boot test source. Focused boot and both-architecture Nogo validation pass; the prior full unit parent remains failed and was not rerun wholesale.",
@@ -3683,7 +3790,7 @@
       ]
     },
     {
-      "from": "branch:send-recv-benchmark-ranges",
+      "from": "pr:15332",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
       "reason": "Includes the exact benchmark argument-registration and unused-counter correction.",
@@ -3875,7 +3982,7 @@
       ]
     },
     {
-      "from": "branch:container-overlay-tempdir",
+      "from": "pr:15333",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "Current primary includes the exact reviewed overlay fixture correction. Its bounded two-mode evidence is retained independently of the later full container run and missing EROFS tools.",
@@ -3924,7 +4031,7 @@
       ]
     },
     {
-      "from": "branch:github-client-versioned-imports",
+      "from": "pr:15334",
       "to": "branch:rbe-codeql-actions",
       "type": "depends_on",
       "reason": "Full-checkout module-based analysis must use the same go-github v56 provider already declared by the GitHub tools. The exact independently validated two-import correction is incorporated from composition 6fb4c62463 onward. Contributor approval remains a separate upstream delivery hold.",
@@ -3944,7 +4051,7 @@
       ]
     },
     {
-      "from": "branch:mount-util-types",
+      "from": "pr:15335",
       "to": "branch:rbe-qualification-next",
       "type": "includes",
       "reason": "MAIN contains both exact tested utility files; mount and capability lint checks retain separate source-bound results, with no broader musl-suite claim.",
