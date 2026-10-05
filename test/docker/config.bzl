@@ -53,7 +53,7 @@ PORTFORWARD_VARIANTS = [
 
 # Runtime modes used by the installed and owned netfilter suites.
 NETFILTER_VARIANTS = {
-    "iptables": struct(name = "iptables", args = ["--net-raw"]),
+    "iptables": struct(name = "iptables", args = ["--net-raw", "--log-packets"]),
     "reproduce": struct(name = "reproduce", args = ["--net-raw", "--reproduce-nftables"]),
     "nftables": struct(name = "nftables", args = ["--net-raw", "--TESTONLY-nftables"]),
 }
