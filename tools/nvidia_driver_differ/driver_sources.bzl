@@ -31,4 +31,5 @@ DRIVER_SOURCES = {
     "615.71.09": "@nvidia_driver_615_71_09",
     "620.06.00": None,  # No matching tag in the successful public Git advertisement.
     "620.30.00": None,  # No matching tag in the successful public Git advertisement.
+    "620.51.00": None,  # No matching tag in the successful public Git advertisement.
 }
