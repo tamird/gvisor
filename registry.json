@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T22:34:52.782824+00:00",
+    "updatedAt": "2026-10-05T22:42:04.652577+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -263,19 +263,19 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-10-04T11:39:16.209315+00:00",
-      "summary": "EtiennePerot requested changes on exact live source ee3edab2197ab23f019a71f1e73c760db8cef9a7 at 04:05:39 UTC on October 4, citing the same ping_socket.cc enum-compare error already addressed and validated by candidate 1fdf8b5cb09c383243a682b6992a1dc901db6b60: https://github.com/google/gvisor/pull/15132#pullrequestreview-5404257682. The reviewed amendment remains pending contributor approval; the human review is not publication authorization and no new source change or test run is needed for this repeated diagnostic.\n\nEarlier source-specific evidence and publication history: The public import failure is a GCC -Werror=enum-compare error in ping_socket.cc:97, where IPPROTO_ICMP and IPPROTO_ICMPV6 have distinct unnamed enum types: https://buildkite.com/gvisor/pipeline/builds/49408#01a1010d-72cb-4c0a-81fd-5dd6dd44023b. Candidate https://github.com/tamird/gvisor/commit/1fdf8b5cb09c383243a682b6992a1dc901db6b60 converts both operands to int. Exact-source parent 77183aaf-0669-4ec0-9ee8-fc2dde4ea4e2 passes legacy GNU compilation in 107.919 seconds: an actual uncached Firecracker CppCompile action uses /usr/bin/x86_64-linux-gnu-gcc with -Wall, -Werror and C++17, with source and object digests bound. GNU 11.4/header identity is captured in the same pinned public builder image. This is compatibility proof, not builder-free qualification or a syscall/Nogo run. The earlier unobservable parent remains UNKNOWN, and the separate compiler-startup failure is retained. MAIN 2dcc9df7fb211fe1026eeba84ed1d9da6c4bd7d3 integrates only the validated expression. Contributor approval to amend the live PR was requested once and remains pending; live source ee3edab2197ab23f019a71f1e73c760db8cef9a7 is unchanged.\n\nThe authorized October 2/3 rebase is published at ee3edab2197ab23f019a71f1e73c760db8cef9a7 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15132#issuecomment-5963371955. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "summary": "The enum-to-int compatibility correction is published with the evidence-backed reply. Earlier validation compiled the complete parameterized fixture with the actual GNU toolchain; the rebase adds no fresh runtime claim. Current published head a87038abd8ed4af3274ad06cc1b9e88c85573812. https://github.com/google/gvisor/pull/15132#issuecomment-6004567900 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "followup": {
-        "disposition": "validated amendment awaits publication approval",
-        "owner": "root",
-        "nextAction": "1fdf8b5cb converts both enum operands to int and passes actual GNU compilation. Live ee3ed remains unchanged; matching import #15264 still fails. Existing contributor amendment decision is pending.",
+        "disposition": "published; mechanical formatting follow-up",
+        "owner": "external_sweeps",
+        "nextAction": "Root owns the exact two-space clang-format continuation correction reported by current-head lint; no behavior change. Workflow-scanner failures are separate baseline findings.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15132#pullrequestreview-5404257682",
-          "https://buildkite.com/gvisor/pipeline/builds/49419"
+          "https://github.com/google/gvisor/pull/15132#issuecomment-6004567900",
+          "https://github.com/google/gvisor/actions/runs/37382866249/job/112008932632"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
-        "sourceHead": "ee3edab2197ab23f019a71f1e73c760db8cef9a7",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
+        "sourceHead": "a87038abd8ed4af3274ad06cc1b9e88c85573812",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -383,16 +383,17 @@
       "title": "Allow declared file copies to execute remotely",
       "url": "https://github.com/google/gvisor/pull/15115",
       "group": "bazel",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "APPROVED",
       "updatedAt": "2026-09-29T23:46:30Z",
-      "summary": "The one-time October 2/3 rebase review verified that this patch is already included upstream as ff350d4ddae6327c71b529abd8a2df6ecd376fde. Its existing source head b89c01c4c4cada4c7cb0c34dc3c2479d583d7a22 is preserved. The authorized maintainer comment states that result: https://github.com/google/gvisor/pull/15115#issuecomment-5963409328. The source PR remains open; no empty rebase, closure or merge was performed.",
+      "summary": "Closed as superseded after verifying that its complete two-file patch and substantive author record are already upstream in ff350d4ddae6327c71b529abd8a2df6ecd376fde. Current master retains the exact Skylib 1.9.2 dependency and catalog entry. The explanatory closure is https://github.com/google/gvisor/pull/15115#issuecomment-6004586713. The obsolete local, tracking and public source refs were retired with an exact lease; code and record remain in the upstream replacement. No merge was performed.",
       "followup": {
-        "disposition": "replacement verification for authorized closure",
+        "disposition": "closed; complete replacement verified",
         "owner": "external_sweeps",
-        "nextAction": "Verify the complete source patch and record against ff350d4dd/current master and check remaining dependencies, then prepare the already-authorized obsolete-PR closure for root review.",
+        "nextAction": "Closure and exact-ref cleanup are complete; no source task remains.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15115#issuecomment-5963409328"
+          "https://github.com/google/gvisor/commit/ff350d4ddae6327c71b529abd8a2df6ecd376fde",
+          "https://github.com/google/gvisor/pull/15115#issuecomment-6004586713"
         ],
         "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
         "sourceHead": "b89c01c4c4cada4c7cb0c34dc3c2479d583d7a22",
@@ -438,18 +439,18 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-10-05T20:39:56.720564+00:00",
-      "summary": "Standing follow-up: fcf0e115c adds super().setUp() and passes all four unittest methods. Live 5a10 remains CONFLICTING; contributor approval for amendment/reply/thread resolution is pending. Private internal checker was not run.\n\nThe one-line correction is published for contributor review at lint-failure-propagation-review@fcf0e115cee46dde084266513c8fc81c893f28f5: https://github.com/tamird/gvisor/tree/lint-failure-propagation-review. It starts LintTest.setUp() with super().setUp(), directly addressing Etienne’s finding https://github.com/google/gvisor/pull/15111#discussion_r4172291457. Parent 0acf73d4-7517-44dc-b44c-81c6bb60a707 passes in 22.887 seconds: all four actual unittest methods pass in one uncached AMD64 OCI TestRunner action at the original 300-second timeout, wrapped by one Bazel XML case. Outcome b39b2a33a230 and independent peer 9b64d683686c bind the 40-file archive, eight source captures and actual Action/Command/stdout/BEP/XML evidence. The private g-missing-super-call checker was not available; no claim is made that it ran. Contributor approval for amendment, reply and thread resolution was requested once and remains pending; the live PR head is unchanged.\n\nEtienne requested changes at exact 5a10ff6a7fdc3cce8bc64440b37a4d2466cba830 on October 3 at 08:20:19 UTC. The inline finding identifies a missing super().setUp() call in tools/lint_test.py: https://github.com/google/gvisor/pull/15111#discussion_r4172291457. The live PR remains unamended; the separate correction and its completed validation are described above.",
+      "summary": "The super().setUp() correction is published, the reply is posted and the inline thread is resolved. Earlier hosted validation passed all four existing unittest methods; the private internal checker was not run. Current published head f8cbf72aaf807407e493babd1c5958d8ad8cefc8. https://github.com/google/gvisor/pull/15111#discussion_r4189573012 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "followup": {
-        "disposition": "validated amendment and conflict await publication approval",
-        "owner": "root",
-        "nextAction": "fcf0e115c adds super().setUp() and passes all four unittest methods. Live 5a10 remains CONFLICTING; contributor approval for amendment/reply/thread resolution is pending. Private internal checker was not run.",
+        "disposition": "requested revision published; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track review and exact-head checks/import. The authorized source amendment and response are complete; no duplicate revision, reply or approval question remains.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15111#discussion_r4172291457"
+          "https://github.com/google/gvisor/pull/15111#discussion_r4189573012"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
-        "sourceHead": "5a10ff6a7fdc3cce8bc64440b37a4d2466cba830",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
+        "sourceHead": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -562,16 +563,16 @@
       "updatedAt": "2026-09-29T10:16:51Z",
       "summary": "The authorized October 2/3 rebase is published at c5bd19ac9f19f5bf78ac59b8a6ea4112a44c2554 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15064#issuecomment-5963371514. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "disposition": "mechanical conflict; rebase allocation pending",
+        "owner": "root",
+        "nextAction": "Resolve the include/context overlap while preserving the landed 64K-page fixture correction and unchanged production patch.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15064"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
         "sourceHead": "c5bd19ac9f19f5bf78ac59b8a6ea4112a44c2554",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -600,18 +601,18 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-10-05T20:39:56.720564+00:00",
-      "summary": "Standing follow-up: The evidence-backed reply is complete at process-vm-review-reply-draft.txt (2ace53134e49). Authorization was requested once and remains pending. It distinguishes a 300 MB estimate from an unknown hard limit; no new source change is needed.\n\nEtienne requested changes at exact e0f75c3ea08d7b74e1c757e9034285142c551309 on October 3 at 08:10:15 UTC: “Is this really necessary? How tightly constrained are such workers?” https://github.com/google/gvisor/pull/15061#pullrequestreview-5399663055. The evidence-backed response is prepared and awaiting the existing posting decision; no reply or new commitment is published.\n\nThe authorized October 2/3 rebase is published at e0f75c3ea08d7b74e1c757e9034285142c551309 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15061#issuecomment-5963371394. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "summary": "The prepared evidence-backed response is now posted under user approval: https://github.com/google/gvisor/pull/15061#issuecomment-6004570076. It distinguishes the estimated 300 MB workload from an unknown hard resource limit. No source change or new workload was needed; maintainer response remains pending.",
       "followup": {
-        "disposition": "prepared reply awaits posting approval",
-        "owner": "root",
-        "nextAction": "The evidence-backed reply is complete at process-vm-review-reply-draft.txt (2ace53134e49). Authorization was requested once and remains pending. It distinguishes a 300 MB estimate from an unknown hard limit; no new source change is needed.",
+        "disposition": "response posted; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track the maintainer response; the authorized reply is complete and should not be requested or posted again.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15061#pullrequestreview-5399663055"
+          "https://github.com/google/gvisor/pull/15061#issuecomment-6004570076"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
         "sourceHead": "e0f75c3ea08d7b74e1c757e9034285142c551309",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -762,19 +763,18 @@
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-10-03T08:30:03.192831+00:00",
-      "summary": "Etienne requested changes on live e3ae3d363 at 07:22:14 UTC on October 3: https://github.com/google/gvisor/pull/15030#pullrequestreview-5399519760. The exact correction ac3e8e2584072bfcfc60227c0a728bc6a2d0d409 is independently validated on the reviewed compiler base as 43e948868f5f4adcaf1ab64958aee60237c86445. Parent 9285541e-800a-4a4b-adb3-3f5a88afd53e passes in 389.181 seconds: existing fixture, gofer, overlay and TCP Nogo owners each execute uncached on AMD64 OCI and pass both ARM64 and AMD64 analyses. Outcome 734ffcda6151 and peer 51379aa31fde bind 126 saved files, 41 Git source captures and all four actual Action/Command/stdout/BEP/XML chains. This is focused static-analysis validation with existing compiler prerequisites, not standalone-master or runtime-suite credit. The first failure 856d1871e944 is preserved. Contributor publication approval remains pending; live source/import refs are unchanged. The old import #15255 public Nogo failure has the same TCP duplicate-acquisition and gofer/overlay read-unlock sites: https://buildkite.com/gvisor/pipeline/builds/49361#01a100c9-b53a-42a9-83a4-6ef0a0b84633. No import retry or upstream amendment is claimed.\n\nThe authorized October 2/3 rebase is published at e3ae3d36313bc38f25fadc4cb96621b640a3bdab on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15030#issuecomment-5963509434. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "summary": "The closure-state correction is published and the maintainer reply explains the private-flag handling and removed TCP workaround. Earlier focused validation passed all four owning Nogo checks on the reviewed compiler base; no fresh runtime was run for the unchanged rebase. Current published head 61027644ef3258c2fe16a236861980d5ec7707ae. https://github.com/google/gvisor/pull/15030#issuecomment-6004566380 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "followup": {
-        "disposition": "validated amendment awaits publication approval",
-        "owner": "root",
-        "nextAction": "Candidate ac3e8e258 corrects the requested closure diagnostics and passed four owning Nogo checks on the reviewed compiler base. Live e3ae remains unchanged; import #15255 fails at those same sites. Existing contributor decision is pending, with no active source task.",
+        "disposition": "requested revision published; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track review and exact-head checks/import. The authorized source amendment and response are complete; no duplicate revision, reply or approval question remains.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15030#pullrequestreview-5399519760",
-          "https://buildkite.com/gvisor/pipeline/builds/49361"
+          "https://github.com/google/gvisor/pull/15030#issuecomment-6004566380"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
-        "sourceHead": "e3ae3d36313bc38f25fadc4cb96621b640a3bdab",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
+        "sourceHead": "61027644ef3258c2fe16a236861980d5ec7707ae",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1839,16 +1839,16 @@
       "reviewDecision": "",
       "updatedAt": "2026-10-05T17:56:52.860466+00:00",
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "disposition": "mechanical conflict; rebase allocation pending",
+        "owner": "root",
+        "nextAction": "Rebase MTU bounds while preserving the upstream restore rollback, including removal of Kind tun. This topic does not require the rolled-back restore feature.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15180"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
         "sourceHead": "e5326341e1d88ea579b73fd9be582004eb83813f",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -2025,16 +2025,16 @@
       "reviewDecision": "",
       "updatedAt": "2026-10-05T17:56:52.860466+00:00",
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "disposition": "mechanical conflict; rebase allocation pending",
+        "owner": "root",
+        "nextAction": "Rebase queue teardown/wait logic while preserving removal of the rolled-back context import and afterLoad helper. No restore-feature dependency.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15189"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
         "sourceHead": "f6399ac0c5f5cef89f64435d09290f74a80fba48",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -2371,22 +2371,21 @@
       "url": "https://github.com/google/gvisor/pull/15217",
       "group": "tests",
       "status": "open",
-      "summary": "Standing follow-up: Case-insensitive d11754fac is validated and public; live 993f50bb6 remains unchanged. Existing contributor decision is pending; both original inline request and changes-requested review remain outstanding.\n\nEtienne reiterated the existing case-sensitivity request at 07:49:30 UTC on October 3 on live 993f50bb6: “See other comment on case sensitivity.” https://github.com/google/gvisor/pull/15217#pullrequestreview-5399606360. The independently validated lowercase-compatible d117 revision is already prepared and remains pending contributor publication approval. No duplicate source work, review request or amendment was performed.\n\nThe authorized October 2/3 rebase is published at 993f50bb6d68de439ae7ff072425d2c8cf6aaa26 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15217#issuecomment-5963388935. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The live exact-TRUE patch is preserved. Case-insensitive candidate d11754fac7 remains separate and awaits contributor publication approval; it was not folded into this rebase.\n\nEarlier source-specific evidence and review history: Public standalone f7b46bcf9cbd82568852c5954886d9d370df535d is one commit on upstream 0e0839258722e059551666a7805e156d48d7d801. It implements the requested consumer contract: GVISOR_SAVE_TEST enables save behavior only for exact TRUE, matching neighboring flags. Existing namespace-scope atomic initialization is preserved. Qualification composition c317a907b7bc40bc49d9291ff7aa8c45d0ee6bdd on primary 2312 retains exact utility blobs and restores the runner producer to its pre-118 TRUE/FALSE behavior. Source, record and composition peers pass.\n\nParent 30f79fa4-71f5-4195-aa5e-4f4db98a3dca closed OK in 131.938 seconds. Outcome 8d72e44937ef and independent saved-byte peer 8df224aa62b3 verify all 107 indexed artifacts, 28 source blobs plus commit and four actual uncached single attempts on root AMD64 Firecracker. Native/ordinary CloneDevice pass in 3/18 ms; save CloneDevice is correctly skipped, and Uname Sanity passes after an actual nonempty-checkpoint restore. The restore before the CloneDevice skip belongs to its capability check, not execution of the clone body. Literal child marker values are derived from actual Command flags/environment and captured producer/ResolveEnvs; spec logging intentionally removes the child environment. No direct child-environment observation, ARM/KVM, broad suite or arbitrary spelling compatibility claim is made.\n\nThe contributor-requested revision supersedes the active 11836951af2d6f5bc8f8b049727ea4b3dfa3d99a presence-workaround candidate, whose ref and source-specific evidence are preserved: 110 mount, 57 stat and one actual checkpoint case passed (420c5f331b42), then the corrected Fallocate save control skipped as expected (9fbd58af3f13). The exact validated boolean composition c317a907b7bc40bc49d9291ff7aa8c45d0ee6bdd is retained under current primary 4c97fcc42cf4840e9a2f0c426a569f684cda1306; earlier 2312 and 118 evidence are preserved. The contributor approved the revised boolean source, and PR #15217 is published at exact f7b46bcf9 as one commit/two files on master. Maintainer review and landing remain pending. Its 13:26:04 UTC observation is MERGEABLE/BLOCKED, with all applicable checks successful and no human feedback; no reviewer outreach was sent.\n\nAt 2026-10-02 21:46:45 UTC, xinzhong requests case-insensitive parsing on current f7b46bcf9, reporting writers that set GVISOR_SAVE_TEST to lowercase true: https://github.com/google/gvisor/pull/15217#discussion_r4170100586. The thread is unresolved and not outdated. The earlier exact-TRUE validation does not establish lowercase compatibility. Root and source owner have the feedback; no amendment or reply is recorded yet.\n\nThe independently reviewed case-insensitive candidate is public at d11754fac7c558b7db30690a86842ddbe9b7cdb4 on fresh upstream d1e11f9359. It accepts true ignoring case through strcasecmp, retaining the namespace-scope atomic cache and excluding broader boolean spellings. Live PR head remains f7b46bcf9 pending contributor review and publication authority. Fork-only composition 993b3681acfa4a1b3de46793b2679ca8beba5209 changes only the diagnostic runner save-marker literals to lowercase. Parent 9d827e5f-e61f-4323-a731-a3c64cfbecc4 closes OK in 91.729 seconds: ordinary CloneDevice passes, save CloneDevice explicitly skips, and Uname Sanity passes after an actual nonempty-checkpoint restore. Outcome 89eea6fcc69a and independent peer a8ba90617872 verify 95 indexed files, 28 source blobs plus commit and all three actual uncached root AMD64 Firecracker Action/Command/stdout joins. Original ordinary/save timeouts are 300/900 seconds. Lowercase child values remain source/flag-derived, not directly logged; the diagnostic producer is excluded from the two-file PR candidate.",
+      "summary": "The case-insensitive save-mode correction is published, the reply is posted and the inline thread is resolved. Prior focused validation remains tied to its original source; the current rebase preserves the reviewed change. Current published head 10ee73c8cf90ef1624282e216473b71fbab1cb32. https://github.com/google/gvisor/pull/15217#discussion_r4189574014 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "number": 15217,
       "updatedAt": "2026-10-05T20:39:56.720564+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
       "followup": {
-        "disposition": "validated amendment awaits publication approval",
-        "owner": "root",
-        "nextAction": "Case-insensitive d11754fac is validated and public; live 993f50bb6 remains unchanged. Existing contributor decision is pending; both original inline request and changes-requested review remain outstanding.",
+        "disposition": "requested revision published; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track review and exact-head checks/import. The authorized source amendment and response are complete; no duplicate revision, reply or approval question remains.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15217#discussion_r4170100586",
-          "https://github.com/google/gvisor/pull/15217#pullrequestreview-5399606360"
+          "https://github.com/google/gvisor/pull/15217#discussion_r4189574014"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
-        "sourceHead": "993f50bb6d68de439ae7ff072425d2c8cf6aaa26",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
+        "sourceHead": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2472,20 +2471,20 @@
       "url": "https://github.com/google/gvisor/pull/15170",
       "group": "bazel",
       "status": "open",
-      "summary": "Standing follow-up: Narrow candidate 2b02a860f passed the eight-case Make proof. Live b2c76 remains CONFLICTING and broader than the requested scope. Existing contributor decision is pending; no duplicate source work.\n\nThe narrower review candidate is public at make-multiple-target-paths-review@2b02a860f22ff3076d9f2beeeecf11b92b8b3104: https://github.com/tamird/gvisor/tree/make-multiple-target-paths-review. It changes only the public build/copy query argument handling and preserves existing internal macro callers. Hosted parent 3fe1c346-20ae-45f2-a6f9-586b0e0e3a80 passes in 34.868 seconds: fifteen actual build/cquery calls cover eight cases, including ordered exclusions/re-additions, exact copies, effective options, unchanged legacy invocation, and specific expected build/query failures. Outcome f6d14f530799 and independent peer 9524bb153eba close the saved evidence. The first provider-argument interaction failure remains recorded. These documentation source-output owners establish Make behavior, not compilation or remote TestRunner coverage. Contributor review is pending; the live PR and its requested narrower scope remain unchanged.\n\nThe authorized October 2/3 rebase is published at b2c76e4621d15672e570fdaa958eef2617a4a508 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15170#issuecomment-5963411122. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "summary": "The requested narrow Make change is published with its reply. Earlier hosted proof passed all eight real build/copy/query cases; the current rebase preserves that patch without a fresh workload. Current published head 6b98f2ca05794e793f5fa70d7fb0b937ec79fa56. https://github.com/google/gvisor/pull/15170#issuecomment-6004568678 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "reviewDecision": "CHANGES_REQUESTED",
       "updatedAt": "2026-10-05T20:39:56.720564+00:00",
       "followup": {
-        "disposition": "validated narrower amendment and conflict await publication approval",
-        "owner": "root",
-        "nextAction": "Narrow candidate 2b02a860f passed the eight-case Make proof. Live b2c76 remains CONFLICTING and broader than the requested scope. Existing contributor decision is pending; no duplicate source work.",
+        "disposition": "requested revision published; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track review and exact-head checks/import. The authorized source amendment and response are complete; no duplicate revision, reply or approval question remains.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15170#pullrequestreview-5399481171"
+          "https://github.com/google/gvisor/pull/15170#issuecomment-6004568678"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
-        "sourceHead": "b2c76e4621d15672e570fdaa958eef2617a4a508",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
+        "sourceHead": "6b98f2ca05794e793f5fa70d7fb0b937ec79fa56",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2737,17 +2736,16 @@
       "summary": "Blocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
       "number": 15315,
       "followup": {
-        "disposition": "upstream feature restoration required",
-        "owner": "root (source dependency); external_sweeps (observation)",
-        "nextAction": "Keep the reviewed source unchanged. Await restoration or an upstream replacement of the rolled-back checkpoint support; no routine conflict rebase or rollback reversal.",
+        "disposition": "blocked by upstream feature rollback",
+        "owner": "root",
+        "nextAction": "Preserve the reviewed head until upstream restores or replaces the rolled-back TUN/NDP checkpoint interfaces. No routine rebase or reintroduction of rolled-back code. Public rollback cause is unknown. #15315 also has a separate baseline workflow-scanner failure under investigation.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
-          "https://github.com/google/gvisor/pull/15315"
+          "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
-        "sourceHead": "729318f57643f5504d55fdcd91995ffc807d1774",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
+        "sourceHead": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -2800,17 +2798,16 @@
       "summary": "Blocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
       "number": 15318,
       "followup": {
-        "disposition": "upstream feature restoration required",
-        "owner": "root (source dependency); external_sweeps (observation)",
-        "nextAction": "Keep the reviewed source unchanged. Await restoration or an upstream replacement of the rolled-back checkpoint support; no routine conflict rebase or rollback reversal.",
+        "disposition": "blocked by upstream feature rollback",
+        "owner": "root",
+        "nextAction": "Preserve the reviewed head until upstream restores or replaces the rolled-back TUN/NDP checkpoint interfaces. No routine rebase or reintroduction of rolled-back code. Public rollback cause is unknown. #15315 also has a separate baseline workflow-scanner failure under investigation.",
         "evidence": [
-          "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
-          "https://github.com/google/gvisor/pull/15318"
+          "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T22:37:22.446865+00:00",
         "sourceHead": "86a99a4cb330d57e13ca073adaa04a9b0d3d085b",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
