@@ -915,6 +915,67 @@ TEST_P(TcpSocketTest, TcpSCMPriority) {
       setsockopt(accepted_.get(), SOL_SOCKET, SO_TIMESTAMP, &val, sizeof(val)),
       SyscallSucceedsWithValue(0));
 
+  if (!IsRunningOnGvisor()) {
+    // Linux enables receive timestamping asynchronously. Wait for a TCP
+    // timestamp before checking control-message ordering, keeping this socket
+    // open so timestamping stays enabled. UDP can synthesize a missing
+    // timestamp at recvmsg and therefore cannot establish readiness here.
+    // https://github.com/torvalds/linux/commit/ce6f6cffa
+    char probe = 0;
+    struct iovec probe_iov = {.iov_base = &probe, .iov_len = sizeof(probe)};
+    alignas(struct cmsghdr) char probe_control[CMSG_SPACE(sizeof(struct timeval)) +
+                                              CMSG_SPACE(sizeof(int))];
+    struct timespec start;
+    ASSERT_THAT(clock_gettime(CLOCK_MONOTONIC, &start), SyscallSucceeds());
+    int missing_timestamps = 0;
+    for (;;) {
+      RecordProperty("timestamp_readiness_missing_probes", missing_timestamps);
+      struct timespec now;
+      ASSERT_THAT(clock_gettime(CLOCK_MONOTONIC, &now), SyscallSucceeds());
+      ASSERT_LT(ms_elapsed(start, now), kTimeoutMillis)
+          << "TCP receive timestamping did not become ready";
+      ASSERT_THAT(send(connected_.get(), &probe, sizeof(probe), MSG_DONTWAIT),
+                  SyscallSucceedsWithValue(sizeof(probe)));
+
+      struct pollfd pfd = {.fd = accepted_.get(), .events = POLLIN};
+      for (;;) {
+        ASSERT_THAT(clock_gettime(CLOCK_MONOTONIC, &now), SyscallSucceeds());
+        const auto elapsed = ms_elapsed(start, now);
+        ASSERT_LT(elapsed, kTimeoutMillis)
+            << "TCP receive timestamping did not become ready";
+        const int ret = poll(&pfd, 1, kTimeoutMillis - static_cast<int>(elapsed));
+        if (ret < 0 && errno == EINTR) {
+          continue;
+        }
+        ASSERT_THAT(ret, SyscallSucceedsWithValue(1));
+        break;
+      }
+
+      struct msghdr probe_msg = {};
+      probe_msg.msg_iov = &probe_iov;
+      probe_msg.msg_iovlen = 1;
+      probe_msg.msg_control = probe_control;
+      probe_msg.msg_controllen = sizeof(probe_control);
+      ASSERT_THAT(recvmsg(accepted_.get(), &probe_msg, MSG_DONTWAIT),
+                  SyscallSucceedsWithValue(sizeof(probe)));
+      ASSERT_EQ(probe_msg.msg_flags & MSG_CTRUNC, 0);
+      bool ready = false;
+      for (auto* cmsg = CMSG_FIRSTHDR(&probe_msg); cmsg != nullptr;
+           cmsg = CMSG_NXTHDR(&probe_msg, cmsg)) {
+        if (cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMP) {
+          ASSERT_EQ(cmsg->cmsg_len, CMSG_LEN(sizeof(struct timeval)));
+          struct timeval timestamp;
+          memcpy(&timestamp, CMSG_DATA(cmsg), sizeof(timestamp));
+          ready = timestamp.tv_sec != 0 || timestamp.tv_usec != 0;
+        }
+      }
+      if (ready) {
+        break;
+      }
+      ++missing_timestamps;
+    }
+  }
+
   char buf[1024];
   ASSERT_THAT(RetryEINTR(write)(connected_.get(), buf, sizeof(buf)),
               SyscallSucceedsWithValue(sizeof(buf)));
