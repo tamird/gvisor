@@ -21,15 +21,21 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/docker/docker/client"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/cgroup"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
@@ -320,6 +326,86 @@ func loadImageArchive(archive string) error {
 	}
 	log.Printf("Loaded declared image archive %s:\n%s", archive, output)
 	return nil
+}
+
+// waitForOwnedIPv6Gateway waits for the private bridge's gateway to finish
+// duplicate address detection. Container startup can return while the address
+// is tentative, causing host connections to select an unrelated source address.
+// Check per container: daemon API readiness does not imply bridge readiness.
+func waitForOwnedIPv6Gateway(ctx context.Context, cli *client.Client, gateway string) error {
+	if *dockerTestConfig == "" {
+		return nil
+	}
+	data, err := os.ReadFile(*config)
+	if err != nil {
+		return fmt.Errorf("read private Docker configuration: %w", err)
+	}
+	var cfg struct {
+		Hosts []string `json:"hosts"`
+	}
+	if err := json.Unmarshal(data, &cfg); err != nil {
+		return fmt.Errorf("decode private Docker hosts: %w", err)
+	}
+	if len(cfg.Hosts) != 1 || !strings.HasPrefix(cfg.Hosts[0], "unix:///") {
+		return fmt.Errorf("private Docker configuration has invalid hosts: %q", cfg.Hosts)
+	}
+	if cli.DaemonHost() != cfg.Hosts[0] {
+		// An explicitly selected external daemon is not in our network namespace.
+		return nil
+	}
+	ip := net.ParseIP(gateway)
+	if ip == nil || ip.To4() != nil || ip.IsUnspecified() {
+		return fmt.Errorf("invalid IPv6 gateway %q for private Docker daemon", gateway)
+	}
+	handle, err := netlink.NewHandle(unix.NETLINK_ROUTE)
+	if err != nil {
+		return fmt.Errorf("open route netlink socket: %w", err)
+	}
+	defer handle.Close()
+	return testutil.PollContext(ctx, func() error {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		// Retain netlink's normal socket limit, shortened to the caller's
+		// remaining budget rather than a separate readiness timeout.
+		timeout := netlink.GetSocketTimeout()
+		if deadline, ok := ctx.Deadline(); ok {
+			timeout = min(timeout, time.Until(deadline))
+		}
+		if timeout <= 0 {
+			return context.DeadlineExceeded
+		}
+		if err := handle.SetSocketTimeout(timeout); err != nil {
+			return backoff.Permanent(fmt.Errorf("set route netlink socket timeout: %w", err))
+		}
+		addresses, err := handle.AddrList(nil, netlink.FAMILY_V6)
+		if errors.Is(err, netlink.ErrDumpInterrupted) {
+			// Partial dumps cannot establish that the gateway is ready.
+			return fmt.Errorf("list host IPv6 addresses: %w", err)
+		}
+		if err != nil {
+			return backoff.Permanent(fmt.Errorf("list host IPv6 addresses: %w", err))
+		}
+		var address *netlink.Addr
+		for i := range addresses {
+			if addresses[i].IP.Equal(ip) {
+				if address != nil {
+					return backoff.Permanent(fmt.Errorf("IPv6 gateway %s has multiple local addresses", ip))
+				}
+				address = &addresses[i]
+			}
+		}
+		if address == nil {
+			return fmt.Errorf("IPv6 gateway %s has no local address", ip)
+		}
+		if address.Flags&unix.IFA_F_DADFAILED != 0 {
+			return backoff.Permanent(fmt.Errorf("IPv6 gateway %s on interface %d failed duplicate address detection", ip, address.LinkIndex))
+		}
+		if address.Flags&unix.IFA_F_TENTATIVE != 0 {
+			return fmt.Errorf("IPv6 gateway %s on interface %d is tentative", ip, address.LinkIndex)
+		}
+		return nil
+	})
 }
 
 func (d *testDaemon) close(failed bool) error {
