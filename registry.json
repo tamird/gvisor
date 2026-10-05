@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T15:14:46.613537+00:00",
+    "updatedAt": "2026-10-05T15:31:42.939246+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -633,8 +633,8 @@
       "group": "bazel",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-05T15:12:59.250293+00:00",
-      "summary": "Current GitHub status is CONFLICTING, so the existing topic needs rebase maintenance. Etienne’s “Ugly...” observation was followed by approval of the same exact head, 30aaadcbb; it does not request a revision or an acknowledgment reply.\n\nEarlier publication evidence: The authorized October 2/3 rebase is published at 30aaadcbb0450d39dc5e60d76557bd9d61cc9b40 on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14986#issuecomment-5963406126. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Rebased source fa6b2c474 is published and mergeable. Focused hosted GNU/Bazel 8.3.1 posix_server compilation passes; canonical Fetch/Verify covers 180 dependencies with the catalog and lockfile unchanged. This does not qualify Bazel 9, ARM runtime or the full matrix."
+      "updatedAt": "2026-10-05T15:31:42.939246+00:00",
+      "summary": "The conflict is resolved on published head e8c82dd30d419cc7bba8047f3535a632cb47e70c. The fresh rebase preserves upstream’s explicit Benchmark 1.9.5 selection and the approved gRPC/Envoy design. GitHub reports MERGEABLE and APPROVED; lint, fileheader and other completed checks pass, while generate is still running in the October 5 15:29 UTC snapshot. No linked Copybara import is recorded. Only the obsolete Benchmark 1.9.4 refresh clause was removed from the description; no public comment or new review request was sent. Prior compilation and audit results remain historical exact-source evidence, not a fresh validation run. Etienne’s earlier “Ugly...” observation was followed by approval of the same head and did not request a revision.\n\nEarlier publication evidence: The authorized October 2/3 rebase is published at 30aaadcbb0450d39dc5e60d76557bd9d61cc9b40 on current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. Local/tracking/live heads match and GitHub reports MERGEABLE. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14986#issuecomment-5963406126. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Rebased source fa6b2c474 is published and mergeable. Focused hosted GNU/Bazel 8.3.1 posix_server compilation passes; canonical Fetch/Verify covers 180 dependencies with the catalog and lockfile unchanged. This does not qualify Bazel 9, ARM runtime or the full matrix."
     },
     {
       "id": "pr:14985",
