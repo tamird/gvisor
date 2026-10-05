@@ -2227,6 +2227,9 @@ func (s *Stack) Restore() {
 	for id, nic := range s.preservedNICs {
 		nic.stack = s
 		s.nics[id] = nic
+		nic.NetworkLinkEndpoint.SetOnCloseAction(func() {
+			s.RemoveNIC(id)
+		})
 		nic.packetEPsMu.Lock()
 		clear(nic.packetEPs)
 		nic.packetEPsMu.Unlock()
@@ -2730,6 +2733,7 @@ func (s *Stack) SetNICStack(id tcpip.NICID, peer *Stack) (tcpip.NICID, tcpip.Err
 	linkEp := nic.NetworkLinkEndpoint.(LinkEndpoint)
 	opts := NICOptions{
 		Name:   nic.Name(),
+		Kind:   nic.kind,
 		MinMTU: nic.minMTU,
 		MaxMTU: nic.maxMTU,
 	}
