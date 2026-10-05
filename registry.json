@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T23:01:19.753383+00:00",
+    "updatedAt": "2026-10-05T23:15:14.656992+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -897,16 +897,17 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-04T12:35:11.492672+00:00",
-      "summary": "The October 4 conflict rebase is published at f5f0270289147db0614fd2eadc1ed15dcb652f81 on master 95ed905fb406e26326b263b2b3cb4ee78985a022. All three metric source files and the commit message are byte-identical to the previously approved change. The sole conflict was an upstream escape-analysis exemption attached to the map lookup that this change removes. GitHub reports MERGEABLE, and all visible checks are successful in the 12:33 UTC snapshot; explicitly skipped checks remain skipped. Open import #15248 remains at 4000441e4893051187fba9489bf733b5d57f1905 for the previous source head, so its prior results do not validate this rebased head. No new public comment or import retry was sent.\n\nEarlier source-specific evidence and publication history:\n\nAt 01:39 UTC on October 3, exact-source import #15248 at 4000441e4893051187fba9489bf733b5d57f1905 has all visible checks successful, including public pipeline 49332, and remains OPEN. Source 4d4f60d21c333171c89460b8bfe565464578e70c retains its separate opaque Copybara failure; successful import checks do not identify or resolve that internal cause.\n\nThe authorized October 2/3 rebase is published at 4d4f60d21c333171c89460b8bfe565464578e70c on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14879#issuecomment-5963430960. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. Etienne approved this head again at 2026-10-03 00:18:03 UTC. Exact-source Copybara import #15248 opened at 00:19:06, matching source 4d4f60d21c333171c89460b8bfe565464578e70c; import head 121274c7e193f7ea00d374ebe6779ba3a05cd2e7 is open with checks pending. This is not a landing; the old closed import remains historical. At current source 4d4f60d21c333171c89460b8bfe565464578e70c, feedback/copybara changed to FAILURE at 2026-10-03 00:40:52 UTC for an internal run created 00:18:06.372926658. An earlier run had reported PASS at 00:16:36. The new public status contains no cause; no internal logs were accessed or retry requested. Current import #15248 is at 4000441e4893051187fba9489bf733b5d57f1905, still open, exact-source and pending. Approval and its prior checks do not establish landing or explain this failure.\n\nEarlier source-specific evidence and review history: Source remains open at 13e28b4f18e9749f3f794c93c96f3a8a52867188. Copybara closed exact-source import #15001 unmerged at 01:00:50 UTC on October 2 and deleted its import branch. No explanation or replacement import was observed in the 01:04 sweep; this is not a source landing.",
+      "updatedAt": "2026-10-05T23:07:14.086677+00:00",
+      "summary": "The conflict rebase preserves all three metric source files and the approved commit message. It removes the upstream escape-analysis exemption attached to the map lookup that this change deletes. Etienne reapproved published head f5f0270289147db0614fd2eadc1ed15dcb652f81. Import #15248 now names that exact source head; its current checks remain separate from earlier import results. No new runtime, public comment or import retry was performed.",
       "followup": {
         "disposition": "current head reapproved; matching import pending",
         "owner": "external_sweeps",
-        "nextAction": "Track exact-head import/check progress after Etienne reapproved the current rebased source. Existing open import names an earlier head; no source revision or public reply is requested.",
+        "nextAction": "Track exact-source import #15248 at cb9daa3cb6f3b823e14246b43f91bd3699a79c1c and its current public checks. No source revision, public reply or retry is requested.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14879#pullrequestreview-5421564665"
+          "https://github.com/google/gvisor/pull/14879#pullrequestreview-5421564665",
+          "https://github.com/google/gvisor/pull/15248"
         ],
-        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
+        "reviewedAt": "2026-10-05T23:07:14.086677+00:00",
         "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -923,16 +924,17 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-05T20:11:33.186866+00:00",
-      "summary": "The approved source conflict rebase is published at 47ac9acd486edafa1c43cf30b18c78442f8492e8 on master 083093288. Root verified OPEN, MERGEABLE and APPROVED, with new checks initially queued and CLA passing. Independent peer d25ca27de554 confirms the three approved files, commit message and author date are unchanged; the AIO overlap adds the requestReady annotation over the new upstream implementation. Normal signer/SSH refusal was handled with authorized one-operation fallbacks. No new runtime, public comment or review request is claimed. Import #15242 at 308e9e9f9 still describes the prior bbe6fe435 source and does not qualify this rebased head.\n\nEarlier source-specific evidence:\n\nThe October 3 03:10 UTC observation retains source bbe6fe435 OPEN and exact-source import #15242 OPEN at refreshed head 5b814dab7957afed1a84aeab37a73344585277b9. Checks are PENDING on this new head, including fresh public pipeline 49356; generate and Go checks pass. Previous import head 33e81b350 had all checks SUCCESS at 02:40 and remains historical evidence. The earlier opaque source feedback is not explained by either observation, and no passing result is transferred across import heads.\n\nThis source was excluded from the one-time rebase because exact-source Copybara import #15242 was OPEN and created at 2026-10-02 23:40:10 UTC, within the fixed 19:46:58 UTC cutoff. Source bbe6fe4352878295780e1c20d4fd0c2395a19be3 remains unchanged; At the eligibility cutoff, import head 00f4759ebf0fdb0f021351bd22d5fcbd3b814e8c recorded that exact source. The 00:27:00 UTC snapshot now observes import head 6c5ab051a075d8ffff059a489baf65a0a85abd62, still matching the unchanged source, with public pipeline 49319 pending. Source approval and import creation are not landing.\n\nEarlier source-specific evidence: The #14237 prerequisite landed as ef8822c74. The complete AIO and logger changes are published as one commit/four files at bbe6fe4352878295780e1c20d4fd0c2395a19be3, based on upstream ef8822c74, with the corrected upstream SetTarget contract retained. The owner verified clean local, tracking and live source refs; GitHub reports the PR mergeable. EtiennePerot approved this exact head at 23:22:11 UTC on October 2. The pre-import 23:24:52 UTC snapshot reported lint and the other completed applicable checks successful, with generate still running. The description removes the landed prerequisite and existing review requests are preserved. Qualification composition 54ee retains the newly landed analyzer: owning log/mm runtime tests and both-architecture Nogo analyses pass, with outcome 9da0ac23e714 and the root saved-evidence review closed. Those results belong to that composition. The original 4f7 source head failed GitHub Actions lint only because warnedSet inline annotation spacing required gofmt alignment (job 111065627222); the current correction is whitespace-only, with an empty diff -w. The failed-head evidence remains retained. The duplicate review ref was deleted with its exact 4f7 lease; the original source and validation evidence remain recoverable. Approval and passing checks are not an import merge.",
+      "updatedAt": "2026-10-05T23:07:14.086677+00:00",
+      "summary": "The approved conflict rebase preserves the three source files, commit message and author date; its only AIO overlap adds the requestReady annotation over the new upstream implementation. Independent source peer d25ca27de554 closed. Etienne reapproved published head 47ac9acd486edafa1c43cf30b18c78442f8492e8. Import #15242 now names that exact source head; its current checks remain separate from the earlier import results. No new runtime, public comment or import retry was performed.",
       "followup": {
         "disposition": "current head reapproved; matching import pending",
         "owner": "external_sweeps",
-        "nextAction": "Track exact-head import/check progress after Etienne reapproved the current rebased source. Existing open import names an earlier head; no source revision or public reply is requested.",
+        "nextAction": "Track exact-source import #15242 at 8c072b0ed56dcc0e133570d9b9278ae0118636ee and its current public checks. No source revision, public reply or retry is requested.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14504#pullrequestreview-5421551262"
+          "https://github.com/google/gvisor/pull/14504#pullrequestreview-5421551262",
+          "https://github.com/google/gvisor/pull/15242"
         ],
-        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
+        "reviewedAt": "2026-10-05T23:07:14.086677+00:00",
         "sourceHead": "47ac9acd486edafa1c43cf30b18c78442f8492e8",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2230,18 +2232,19 @@
       "summary": "Opened ready for review after explicit user approval at da9faf745bef96666b1672fbf814af4b8cdc0e52, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier source-bound validation passed all 31 cases on each native, shared and directfs owner. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
       "head": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
       "number": 15336,
-      "reviewDecision": null,
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-05T23:07:14.086677+00:00",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
+        "disposition": "approved upstream; import/landing pending",
         "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "nextAction": "Track current source checks and any matching import after parth-opensrc approved this exact published head. No further source correction or review request is pending.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15336"
+          "https://github.com/google/gvisor/pull/15336",
+          "https://github.com/google/gvisor/pull/15336#pullrequestreview-5421728875"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:07:14.086677+00:00",
         "sourceHead": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -2759,19 +2762,19 @@
       "url": "https://github.com/google/gvisor/pull/15309",
       "group": "bazel",
       "status": "merged",
-      "updatedAt": "2026-10-05T20:11:33.186866+00:00",
-      "summary": "At the October 5 20:04 UTC observation, unchanged source 6098e86dd0bfb5db160490a492cce8d325fa34f0 remains OPEN, APPROVED and MERGEABLE, but feedback/copybara reports an opaque internal-check failure posted at 20:00:09 for runs created at 18:51:20.174357742. Exact-source import #15312 at 4ece225ac0455e8107f8cd46b22d7f189b0613f2 remains OPEN with all checks SUCCESS. The public status identifies no diagnostic cause; its internal link was not accessed, and no retry or source amendment is inferred.\n\nEarlier source-specific evidence:\n\nEtienne approved corrected exact head 6098e86dd0bfb5db160490a492cce8d325fa34f0 at 18:04:31 UTC on October 5: https://github.com/google/gvisor/pull/15309#pullrequestreview-5418679473. All source checks pass. New exact-source import #15312 is open at 624b3212a25f49bd8876a6ac20498db84622159c, with public pipeline 49573 pending. The source remains open; graph-only validation is still not runtime evidence.\n\nEarlier source-specific evidence:\n\nThe corrected published head is 6098e86dd0bfb5db160490a492cce8d325fa34f0. In the October 5 17:53 UTC snapshot it remains OPEN/MERGEABLE, lint now passes and generation is still running. There is no human review feedback or linked import. The earlier exact-22136 lint failure remains recorded below; no runtime execution is inferred from the graph-only validation.\n\nEarlier delivery and validation evidence:\n\nThe user approved delivery, and #15309 is open at exact 22136f9c0199805fac7d55f247bdc519b401bf10. The refreshed topic preserves local test execution through test attributes while permitting compilation and analysis to run remotely. Root verified the published title/body/head and MERGEABLE state; the 17:37 UTC snapshot reports lint FAILED while generation continues. The sole error is Buildifier’s missing function docstring for benchmark_test in test/benchmarks/defs.bzl:5; the other four lint categories pass. Exact public job: https://github.com/google/gvisor/actions/runs/37349186963/job/111895413935. The failure has been handed to the source owner; no retry is claimed. Graph-validation outcome 91326dddfbad passes with zero action execution, so it is not runtime evidence.\n\nThe topic has no code dependency on cgroup-unit-fixtures. Its local attribute preserves the cgroup execution restriction, while #15163 had tried to remove that restriction; the omitted removal remains separately held for reconciliation. The original 0992 branch remains preserved.\n\nEarlier retained-source assessment:\n\nPublic independent commit 0992ee669cb20b297f0881b17c9dde59bca706ad replaces local tags with test local attributes across 14 BUILD/defs files, preserving local test execution while allowing compilation and analysis to use remote execution. Its full effect is not replaced by upstream d3f4faffa: ten owning files remain identical to the old base, and four changed files retain their original local tags. The existing qualification record retains integrated Nogo/profile/locality validation, not a fresh standalone check on current master. The old topic needs refresh for newer owning targets and a current delivery review; no tracked upstream PR exists, and this retained evidence does not establish publication approval. Its cgroup substitution keeps execution local and therefore does not satisfy #15163’s omitted removal of the restriction. These are overlapping policy choices to reconcile, not a proven code dependency; both refs are preserved.",
+      "updatedAt": "2026-10-05T23:15:14.656992+00:00",
+      "summary": "Merged through import #15312 at aa1fef14e7a6b5c1098ec5f254abfb44438da67f. The complete delivered source patch at 6098e86dd0bfb5db160490a492cce8d325fa34f0 is byte-identical to the merge’s first-parent delta, and its original commit survives as the second merge parent. It moves restrictions on 13 owning test files from local tags to the local test attribute, allowing compilation to run remotely while keeping test execution local. Prior graph validation passed with zero action execution; no new runtime claim is made.\n\nThe older test-local-execution@0992 also changed runsc/cgroup/BUILD, and that hunk is absent from this delivered revision. Current master still retains its local tag. Preserve that original branch and the separate #15163 request to remove the restriction until the intended cgroup locality is reconciled. The merged review branch was retired after independent full-patch review and exact-head ownership checks; the original source commit remains in upstream history.",
       "number": 15309,
       "reviewDecision": "APPROVED",
       "followup": {
-        "disposition": "opaque internal failure; refreshed public import pending",
+        "disposition": "merged; delivered review branch retired",
         "owner": "external_sweeps",
-        "nextAction": "Source Copybara failure has no public diagnostic. Matching #15312 refreshed to 0b67ac552 and its public pipeline is pending; no retry or inferred source regression.",
+        "nextAction": "No action remains for the delivered PR. Preserve original 0992 and #15163 while their distinct cgroup locality effects remain unreconciled.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15309",
-          "https://github.com/google/gvisor/pull/15312"
+          "https://github.com/google/gvisor/commit/aa1fef14e7a6b5c1098ec5f254abfb44438da67f"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T23:08:00+00:00",
         "sourceHead": "6098e86dd0bfb5db160490a492cce8d325fa34f0",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
