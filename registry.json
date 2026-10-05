@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T23:15:14.656992+00:00",
+    "updatedAt": "2026-10-05T23:53:16.050924+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -72,18 +72,19 @@
       "title": "Materialize outputs consumed by Make",
       "url": "https://github.com/google/gvisor/pull/15147",
       "group": "release",
-      "status": "open",
+      "status": "closed",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-03T07:12:28Z",
-      "summary": "Etienne approved exact ad67cc401 at 07:12:16 UTC on October 3: https://github.com/google/gvisor/pull/15147#pullrequestreview-5399494259. Approval does not imply landing.\n\nImport #15199 merged on October 3 at 02:18:01 UTC as ea3dcb1307fece751db9b40b8c2e37cd07b2efe7, explicitly importing earlier source 72ab5296eea71c8e701861db18eacb0ff9ec3267. The rebased source PR remains OPEN at ad67cc40192d4b659d0f679f3c3b161f8e434b0d, so its refs are preserved. No curated dependency is newly unblocked by this landing.\n\nThe authorized October 2/3 rebase is published at ad67cc40192d4b659d0f679f3c3b161f8e434b0d on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15147#issuecomment-5963410410. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Source 72ab5296eea71c8e701861db18eacb0ff9ec3267 previously had exact-source import #15199 at db40d079debe4a25abec64ffbd76b1d1f61acce7. Public build 49170 failed its Podman job: directfs=false printed Hello, world and cleaned up, then directfs=true failed opening /proc/214736/oom_score_adj with permission denied at 21:20:57 UTC. runsc start exited 128 and the command exited 126. This attempt has no Directory not empty error; its cause and any relationship to this Make-output change remain unestablished. Separate Copybara feedback reported unavailable internal checks failed at 21:25:49 UTC for runs created at 20:17:57; the public error does not explain those internal results. Copybara refreshed the import at 21:41:24 UTC to 9287f14e99745076c8a79413f0138667c1a3392c. Its public pipeline 49190 passed at 22:08:31 UTC and source Copybara feedback is now successful; the older start failure remains historical evidence.",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "summary": "Closed after the complete Make-output change landed as ea3dcb1307fece751db9b40b8c2e37cd07b2efe7. Independent source and record comparison confirmed full replacement. The obsolete local branch and stale tracking ref have been retired; the remote was already absent. Original ad67cc401 remains recorded for recovery. Earlier public Podman failures do not establish a cause in this Make change.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "closed; upstream replacement and branch cleanup complete",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "No source or delivery action remains for this replaced topic.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15147"
+          "https://github.com/google/gvisor/pull/15147#issuecomment-6005123104",
+          "https://github.com/google/gvisor/commit/ea3dcb1307fece751db9b40b8c2e37cd07b2efe7"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "ad67cc40192d4b659d0f679f3c3b161f8e434b0d",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -109,10 +110,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "c5e943bc48ce63b12fc67b826919b872ebd01a55",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -1067,10 +1068,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/14348#issuecomment-5963584566"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "58b093bd6b6a0dbe4c6b516c379d5013cc973722",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -1226,8 +1227,8 @@
       "title": "Hermetic BPF toolchain",
       "url": "https://github.com/tamird/gvisor/tree/hermetic-bpf",
       "group": "bazel",
-      "status": "preserved pending successor validation",
-      "summary": "Original combined-toolchain BPF migration c49df4829 and its existing integration evidence remain preserved. Independent master-based successor hermetic-bpf-current separates the declared BPF tools and headers from the C/C++ compiler migration. Its first standalone gate failed before BPF compilation because Bazel 8.3.1 lacked module-extension facts; the published Bazel 8.5 correction is awaiting validation. No old descendants or refs have moved."
+      "status": "superseded",
+      "summary": "Preserved historical combined-toolchain implementation at c49df4829. Its independent successor is now PR #15337. This old ref is not another ready upstream candidate and remains retained with its integration history; no retirement is inferred."
     },
     {
       "id": "pr:15153",
@@ -1812,21 +1813,21 @@
       "url": "https://github.com/google/gvisor/pull/15330",
       "group": "tests",
       "status": "open",
-      "summary": "Opened ready for review after explicit user approval at a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused cgroup-v1 validation reached the actual memory update and checked its attributes. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
+      "summary": "Opened ready for review after explicit user approval at a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused cgroup-v1 validation reached the actual memory update and checked its attributes. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:48:26Z.",
       "head": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
       "number": 15330,
-      "reviewDecision": null,
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
+        "disposition": "upstream approved; import and checks monitored",
         "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15330"
+          "https://github.com/google/gvisor/pull/15330#pullrequestreview-5422073584"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -1842,18 +1843,19 @@
       "summary": "Opened ready for review after explicit user approval at bac3c399e3a5a01ee2f334a11fa25aad51d72638, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused hosted validation passed all 105 boot XML cases and both-CPU Nogo. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
       "head": "bac3c399e3a5a01ee2f334a11fa25aad51d72638",
       "number": 15331,
-      "reviewDecision": null,
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "reviewDecision": "CHANGES_REQUESTED",
+      "updatedAt": "2026-10-05T23:17:29.875955+00:00",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
-        "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "disposition": "review correction assigned",
+        "owner": "syscall_validation",
+        "nextAction": "Apply the existing #15168 one-shot thread pattern to the hostnet capability test, then obtain focused validation and contributor review before any source publication or reply. The new review thread remains unresolved.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15331"
+          "https://github.com/google/gvisor/pull/15331#pullrequestreview-5421828849",
+          "https://github.com/google/gvisor/pull/15331#discussion_r4189853823"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:17:29.875955+00:00",
         "sourceHead": "bac3c399e3a5a01ee2f334a11fa25aad51d72638",
-        "reviewDecision": null,
+        "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -2229,20 +2231,19 @@
       "url": "https://github.com/google/gvisor/pull/15336",
       "group": "tests",
       "status": "open",
-      "summary": "Opened ready for review after explicit user approval at da9faf745bef96666b1672fbf814af4b8cdc0e52, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier source-bound validation passed all 31 cases on each native, shared and directfs owner. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.",
+      "summary": "Opened ready for review after explicit user approval at da9faf745bef96666b1672fbf814af4b8cdc0e52, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier source-bound validation passed all 31 cases on each native, shared and directfs owner. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.\n\nCurrent upstream review: parth-opensrc approved this exact source head at 2026-10-05T23:04:20Z.",
       "head": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
       "number": 15336,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-05T23:07:14.086677+00:00",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
       "followup": {
-        "disposition": "approved upstream; import/landing pending",
+        "disposition": "upstream approved; import and checks monitored",
         "owner": "external_sweeps",
-        "nextAction": "Track current source checks and any matching import after parth-opensrc approved this exact published head. No further source correction or review request is pending.",
+        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15336",
           "https://github.com/google/gvisor/pull/15336#pullrequestreview-5421728875"
         ],
-        "reviewedAt": "2026-10-05T23:07:14.086677+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2268,21 +2269,21 @@
       "url": "https://github.com/google/gvisor/pull/15332",
       "group": "tests",
       "status": "open",
-      "summary": "Opened ready for review after explicit user approval at 22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier validation rebuilt all five originally failing target/configuration pairs and verified all 43 benchmark listing names. This is compilation/listing evidence, not a measured benchmark or KVM runtime. The new head changes only stale commit prose after the source-preserving rebase.",
+      "summary": "Opened ready for review after explicit user approval at 22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier validation rebuilt all five originally failing target/configuration pairs and verified all 43 benchmark listing names. This is compilation/listing evidence, not a measured benchmark or KVM runtime. The new head changes only stale commit prose after the source-preserving rebase.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:57Z.",
       "head": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
       "number": 15332,
-      "reviewDecision": null,
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
+        "disposition": "upstream approved; import and checks monitored",
         "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15332"
+          "https://github.com/google/gvisor/pull/15332#pullrequestreview-5421811742"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -2364,15 +2365,31 @@
       "summary": "Deferred outside current RBE delivery. This optional Go upgrade experiment is not a prerequisite: retained Go 1.26 link evidence supports the current compiler plan. Its refs and historical evidence remain preserved; no new upgrade work or validation is scheduled.\n\nPublic, clean and tracked at c4f9d2b5198995f17d93a7a05ec03d8547d39c2a on upstream d3d566ad19 after three source/record peers. Released x/net 0.56 restores the HTTP/2 APIs missing under Go 1.27 and includes the later server/client wrapper configuration fixes. The required crypto, sys, term, text and sync floors are retained consistently in the existing Go/Bazel manifests; standalone Go 1.26.3 and gRPC 1.80.0 are unchanged. Source checks and official checksum verification pass. Canonical catalog and hosted validation remain pending for the actual Go 1.27 composition b9effe5415. This independent branch is preserved, but no hard compiler prerequisite is established. The focused forced-external-link race test passed on primary d3f with Go 1.26; ELF postprocessing remains pending, and the Go/xnet upgrades remain outside the final compiler plan. There is no runtime or contributor-approval claim."
     },
     {
-      "id": "branch:hermetic-bpf-current",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15337",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "hermetic-bpf-current",
       "title": "Build BPF with declared LLVM tools and headers",
-      "url": "https://github.com/tamird/gvisor/tree/hermetic-bpf-current",
+      "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
-      "status": "review pending",
-      "summary": "Standing disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublic, clean and tracked at 904b7e1131b26dd82e6b144329fce0ac28a2b2b3, a single commit on upstream d3d566ad19. All seven BPF owners use declared execution-platform LLVM tools/resource headers, target Linux UAPI and libbpf helper headers with BPF v1 explicit; Coral remains registered for C/C++. This prerequisite is independent of the compiler successor. Corrected-source parent 5d982681-ae8f-4049-a462-7c016df5a731 at 60cfca6bb9 built all seven objects for each target CPU and passed the canonical 181-entry license audit. Its parent FAILED solely on a total-action-count assertion; saved graph and artifact reconciliation independently closes the intended BPF and default-Coral analysis contracts (outcome 35d4a2a53862). Fourteen real ELF64 little-endian EM_BPF objects and exact tool/header inputs were verified. Normal caching was enabled; no native ARM worker, BPF runtime or C++ execution is claimed. Final source differs from tested 60cf only by its byte-identical generated catalog; the audited libbpf BSD-2-Clause seed is unchanged. All source/catalog/record peers pass. Contributor review has been requested; no upstream PR is authorized yet. First parent 76659934-8b8f-42b4-be7d-a6239021f67b at 3d991571b9 remains FAILED before any BPF build because Bazel 8.3.1 lacked module_ctx.facts; the final source uses required Bazel 8.5. Existing compiler compositions retain their actual historical BPF parent and are not reparented for this squash."
+      "status": "open",
+      "summary": "Opened after explicit user approval at b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7. The independent topic supplies declared LLVM tools and headers for all seven BPF owners; Coral remains the C/C++ toolchain. Prior focused evidence verified fourteen real EM_BPF objects across both target CPU configurations and a 181-entry license audit. That parent failed only its total-action-count assertion; saved graph and artifact review closed the intended build contract. The refreshed topic preserves the reviewed implementation. No native ARM worker, BPF runtime or C++ execution is claimed.",
+      "number": 15337,
+      "head": "b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7",
+      "reviewDecision": null,
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "followup": {
+        "disposition": "approved delivery complete; upstream review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact-head checks, review and any matching import; do not repeat the completed opening.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15337"
+        ],
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
+        "sourceHead": "b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      }
     },
     {
       "id": "branch:hermetic-compiler-review",
@@ -2510,21 +2527,21 @@
       "url": "https://github.com/google/gvisor/pull/15333",
       "group": "tests",
       "status": "open",
-      "summary": "Opened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.",
+      "summary": "Opened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:23Z.",
       "head": "73d62b335ccacd564193b201c861b482e0c1ab18",
       "number": 15333,
-      "reviewDecision": null,
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
+        "disposition": "upstream approved; import and checks monitored",
         "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15333"
+          "https://github.com/google/gvisor/pull/15333#pullrequestreview-5421807283"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "73d62b335ccacd564193b201c861b482e0c1ab18",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -2632,20 +2649,21 @@
       "title": "Use the versioned GitHub client imports",
       "url": "https://github.com/google/gvisor/pull/15334",
       "group": "bazel",
-      "status": "open",
-      "summary": "Opened ready for review after explicit user approval at 507fb1697568ee3aac7405722180d082f4018a4d, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier hosted validation built the GitHub binary and passed the full existing reviver tests. It did not execute the GitHub binary or make API calls. The reviewed two-import patch is unchanged after rebase.",
+      "status": "closed",
+      "summary": "Closed after the landed GitHub client v84 update aligned both Go imports with the declared provider. Both complete source files match the proposed correction after the v56-to-v84 version substitution, and the BUILD files and go.mod agree. Root independently verified the intended correction is superseded by b9961ddfa6c68aa97538c1b81a21b49e734feedd. The obsolete local branch and stale tracking ref were retired after live ownership checks; its remote was already absent. This establishes replacement of the import correction, not a new API-compatibility test result.",
       "head": "507fb1697568ee3aac7405722180d082f4018a4d",
       "number": 15334,
       "reviewDecision": null,
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
+        "disposition": "closed; upstream supersession and branch cleanup complete",
         "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "nextAction": "No reopening, amendment or duplicate import correction is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15334"
+          "https://github.com/google/gvisor/pull/15334#issuecomment-6005376258",
+          "https://github.com/google/gvisor/commit/b9961ddfa6c68aa97538c1b81a21b49e734feedd"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "507fb1697568ee3aac7405722180d082f4018a4d",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -2697,21 +2715,21 @@
       "url": "https://github.com/google/gvisor/pull/15335",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-05T22:50:59.798783+00:00",
-      "summary": "Opened ready for review after explicit user approval at 4e7f86be29e92b697aac1d205f94bd640ce8e854, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier actual ClangTidy checks passed for the mount header and the capability errno provider with musl. This is focused utility-source validation, not a broader musl-suite pass.",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "summary": "Opened ready for review after explicit user approval at 4e7f86be29e92b697aac1d205f94bd640ce8e854, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier actual ClangTidy checks passed for the mount header and the capability errno provider with musl. This is focused utility-source validation, not a broader musl-suite pass.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:49:06Z.",
       "head": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
       "number": 15335,
-      "reviewDecision": null,
+      "reviewDecision": "APPROVED",
       "followup": {
-        "disposition": "approved delivery complete; upstream review pending",
+        "disposition": "upstream approved; import and checks monitored",
         "owner": "external_sweeps",
-        "nextAction": "Track the new PR’s exact-head checks, review and import. The authorized opening is complete; no duplicate contributor question or source work is requested.",
+        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15335"
+          "https://github.com/google/gvisor/pull/15335#pullrequestreview-5422078162"
         ],
-        "reviewedAt": "2026-10-05T22:57:53.340972+00:00",
+        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
         "sourceHead": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -2863,9 +2881,9 @@
       "title": "Give iptables test phases separate deadlines",
       "url": "https://github.com/tamird/gvisor/tree/iptables-test-action-deadline",
       "group": "tests",
-      "status": "review pending",
-      "updatedAt": "2026-10-05T20:20:31.632321+00:00",
-      "summary": "Separates setup and traffic deadlines derived from the test context, bounds address exchange, cancels traffic before joining helpers, and gives log collection and Docker cleanup separate timed contexts. Current independent source 98507d833004461047a8b2d65386b90221d3e4cb. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Contributor review is pending. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
+      "status": "reconciliation in progress",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "summary": "Separates setup and traffic deadlines derived from the test context, bounds address exchange, cancels traffic before joining helpers, and gives log collection and Docker cleanup separate timed contexts. Current independent source 98507d833004461047a8b2d65386b90221d3e4cb. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Root is reconciling the user-identified overlap between the context, action-netip and sendIP changes. Upstream publication is held until the revised scopes are reviewed. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
       "head": "98507d833004461047a8b2d65386b90221d3e4cb"
     },
     {
@@ -2927,9 +2945,9 @@
       "title": "Use netip addresses in netfilter test actions",
       "url": "https://github.com/tamird/gvisor/tree/netfilter-action-netip",
       "group": "tests",
-      "status": "review pending",
-      "updatedAt": "2026-10-05T20:12:35.310821+00:00",
-      "summary": "Uses comparable netip values in iptables/nftables actions and shared helpers, with checked conversions at Docker, netlink and socket boundaries. Preserves IPv6 zones and corrects interface-address family selection. Current independent source 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Contributor review is pending. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
+      "status": "reconciliation in progress",
+      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "summary": "Uses comparable netip values in iptables/nftables actions and shared helpers, with checked conversions at Docker, netlink and socket boundaries. Preserves IPv6 zones and corrects interface-address family selection. Current independent source 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Root is reconciling the user-identified overlap between the context, action-netip and sendIP changes. Upstream publication is held until the revised scopes are reviewed. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
       "head": "0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e"
     },
     {
@@ -3770,13 +3788,13 @@
     },
     {
       "from": "pr:15037",
-      "to": "branch:hermetic-bpf-current",
+      "to": "pr:15337",
       "type": "depends_on",
       "reason": "The independent BPF supplier uses the rules_go baseline already provided by this landed prerequisite in current master.",
       "evidence": "https://github.com/google/gvisor/commit/35c8ae289e4f75897a120f8472650ee0d34c30e7"
     },
     {
-      "from": "branch:hermetic-bpf-current",
+      "from": "pr:15337",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
       "reason": "Supplies the declared BPF graph, shared LLVM 0.8.24 module and required Bazel 8.5 baseline. The folded LLVM parser source overlay also references this supplier module.",
@@ -4037,7 +4055,7 @@
       "from": "pr:15334",
       "to": "branch:rbe-codeql-actions",
       "type": "depends_on",
-      "reason": "Full-checkout module-based analysis must use the same go-github v56 provider already declared by the GitHub tools. The exact independently validated two-import correction is incorporated from composition 6fb4c62463 onward. Contributor approval remains a separate upstream delivery hold.",
+      "reason": "Historical fork analysis incorporated the two-import v56 correction to align source with its declared provider. Upstream now supplies the complete intended alignment through the landed v84 upgrade b9961ddfa; this source PR is closed and imposes no outstanding upstream delivery hold.",
       "evidence": [
         "https://github.com/tamird/gvisor/commit/107173ce007954be05a7105153199f3fa85f9597",
         "https://github.com/tamird/gvisor/commit/6fb4c62463cbb9d2943c2e032f95feb3fa9e1daa"
