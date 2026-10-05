@@ -19,6 +19,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"slices"
@@ -200,7 +201,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 
 	// Give the container our IP.
-	if err := sendIP(ip); err != nil {
+	if err := sendIP(ctx, ip); err != nil {
 		log.Infof("failed to send IP to container: %v", err)
 		t.FailNow()
 	}
@@ -244,26 +245,66 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 }
 
-func sendIP(ip net.IP) error {
+func sendIP(ctx context.Context, ip net.IP) error {
 	contAddr := net.TCPAddr{
 		IP:   ip,
 		Port: IPExchangePort,
 	}
-	var conn *net.TCPConn
+	var conn net.Conn
+	var dialer net.Dialer
 	// The container may not be listening when we first connect, so retry
-	// upon error.
+	// upon error. Each connection attempt shares the test's deadline.
 	cb := func() error {
-		c, err := net.DialTCP("tcp", nil, &contAddr)
-		conn = c
+		var err error
+		conn, err = dialer.DialContext(ctx, "tcp", contAddr.String())
 		return err
 	}
-	if err := testutil.Poll(cb, TestTimeout); err != nil {
-		return fmt.Errorf("timed out waiting to send IP, most recent error: %v", err)
+	if err := testutil.PollContext(ctx, cb); err != nil {
+		return fmt.Errorf("connecting to %v: %w", &contAddr, err)
 	}
-	if _, err := conn.Write([]byte{0}); err != nil {
-		return fmt.Errorf("error writing to container: %v", err)
+	// The runner gets our IP from the connection's source address, without
+	// reading any data.
+	return conn.Close()
+}
+
+func TestSendIP(t *testing.T) {
+	ip := net.IPv4(127, 0, 0, 1)
+	listener, err := net.ListenTCP("tcp", &net.TCPAddr{IP: ip, Port: IPExchangePort})
+	if err != nil {
+		t.Fatal(err)
 	}
-	return nil
+	defer listener.Close()
+
+	t.Run("ClosesConnection", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), TestTimeout)
+		defer cancel()
+		deadline, _ := ctx.Deadline()
+		if err := listener.SetDeadline(deadline); err != nil {
+			t.Fatal(err)
+		}
+		if err := sendIP(ctx, ip); err != nil {
+			t.Fatalf("sendIP: %v", err)
+		}
+		conn, err := listener.AcceptTCP()
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer conn.Close()
+		if err := conn.SetReadDeadline(deadline); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := io.Copy(io.Discard, conn); err != nil {
+			t.Fatalf("waiting for handshake connection to close: %v", err)
+		}
+	})
+
+	t.Run("Canceled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		if err := sendIP(ctx, ip); !errors.Is(err, context.Canceled) {
+			t.Fatalf("sendIP with canceled context = %v, want context.Canceled", err)
+		}
+	})
 }
 
 func TestFilterInputDropUDP(t *testing.T) {
