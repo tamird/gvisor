@@ -19,7 +19,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net"
 	"net/netip"
 	"os"
 	"slices"
@@ -28,7 +27,6 @@ import (
 
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/netutils"
 )
 
@@ -212,8 +210,9 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 	ip = ip.Unmap()
 
-	// Give the container our IP.
-	if err := sendIP(ctx, ip); err != nil {
+	// The container learns our IP from the connection's source address;
+	// ConnectTCP closes the connection without sending a payload.
+	if err := netutils.ConnectTCP(ctx, ip, IPExchangePort, ipv6); err != nil {
 		log.Infof("failed to send IP to container: %v", err)
 		t.FailNow()
 	}
@@ -261,25 +260,6 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 			t.Fatal(err)
 		}
 	}
-}
-
-func sendIP(ctx context.Context, ip netip.Addr) error {
-	contAddr := netip.AddrPortFrom(ip, IPExchangePort)
-	var conn *net.TCPConn
-	var dialer net.Dialer
-	// The container may not be listening when we first connect, so retry
-	// upon error. Each connection attempt shares the test's deadline.
-	cb := func() error {
-		c, err := dialer.DialTCP(ctx, "tcp", netip.AddrPort{}, contAddr)
-		conn = c
-		return err
-	}
-	if err := testutil.PollContext(ctx, cb); err != nil {
-		return fmt.Errorf("connecting to %v: %w", contAddr, err)
-	}
-	// The container's getIP uses RemoteAddr() to learn where to send test
-	// traffic, so we can close the connection without writing a payload.
-	return conn.Close()
 }
 
 func TestFilterInputDropUDP(t *testing.T) {
