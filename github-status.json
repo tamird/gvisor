@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-05T14:39:37.321537+00:00",
-  "registryDate": "2026-10-05T14:43:10.177225+00:00",
+  "registryDate": "2026-10-05T14:45:45.734759+00:00",
   "prs": [
     {
       "number": 12470,
@@ -23029,6 +23029,95 @@
             "name": "zizmor-output",
             "state": "SKIPPED",
             "url": "https://github.com/google/gvisor/actions/runs/37322042920/job/111803655732",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "cla/google",
+            "state": "SUCCESS",
+            "url": "https://cla.developers.google.com/about",
+            "app": "Google CLA"
+          }
+        ]
+      },
+      "importsComplete": true,
+      "imports": []
+    },
+    {
+      "number": 15308,
+      "title": "Wait for restore before checkpointing in the test",
+      "url": "https://github.com/google/gvisor/pull/15308",
+      "status": "open",
+      "ref": "checkpoint-reconfigure-wait",
+      "head": "e5c4013efc560d176bfdec23206d68a5190be211",
+      "headOwner": "tamird",
+      "updatedAt": "2026-10-05T14:43:33Z",
+      "createdAt": "2026-10-05T14:43:33Z",
+      "checkedAt": "2026-10-05T14:45:05.704524+00:00",
+      "reviewDecision": null,
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [],
+      "labelsComplete": true,
+      "threads": {
+        "unresolved": 0,
+        "total": 0,
+        "complete": true
+      },
+      "feedback": {
+        "complete": true,
+        "items": []
+      },
+      "checks": {
+        "state": "PENDING",
+        "total": 9,
+        "complete": true,
+        "contexts": [
+          {
+            "name": "assign",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327194074/job/111820839834",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "check-changes",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327193736/job/111820837327",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327192355/job/111820830856",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "scan-pr",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327192327/job/111820830793",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "fileheader",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327192299/job/111820831024",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "lint",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327192451/job/111820833206",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "close",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327193519/job/111820843352",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "label",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37327192441/job/111820831460",
             "app": "GitHub Actions"
           },
           {
