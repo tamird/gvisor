@@ -25,7 +25,10 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/vishvananda/netlink"
+	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
 	"gvisor.dev/gvisor/pkg/test/testutil"
@@ -201,7 +204,13 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	}
 
 	// Give the container our IP.
+	if ipv6 {
+		logIPv6State(t, "before-sendIP", ip)
+	}
 	if err := sendIP(ctx, ip); err != nil {
+		if ipv6 {
+			logIPv6State(t, "failed-sendIP", ip)
+		}
 		log.Infof("failed to send IP to container: %v", err)
 		t.FailNow()
 	}
@@ -242,6 +251,48 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		if err := <-errCh; err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+// logIPv6State is temporary fork-only evidence for the host's source-address
+// selection and neighbor resolution. These sequential observations are not an
+// atomic snapshot; missing or truncated records do not prove address removal.
+func logIPv6State(t *testing.T, phase string, destination net.IP) {
+	t.Helper()
+	started := time.Now()
+	t.Logf("IPv6 diagnostic phase=%s at=%s destination=%s", phase, started.UTC().Format(time.RFC3339Nano), destination)
+	defer func() { t.Logf("IPv6 diagnostic phase=%s elapsed=%s", phase, time.Since(started)) }()
+	handle, err := netlink.NewHandle(unix.NETLINK_ROUTE)
+	if err != nil {
+		t.Logf("IPv6 diagnostic NewHandle: %v", err)
+		return
+	}
+	defer handle.Close()
+	if err := handle.SetSocketTimeout(100 * time.Millisecond); err != nil {
+		t.Logf("IPv6 diagnostic SetSocketTimeout: %v", err)
+		return
+	}
+	const limit = 32
+	links, err := handle.LinkList()
+	t.Logf("IPv6 diagnostic links returned=%d emitted=%d error=%v", len(links), min(len(links), limit), err)
+	for _, link := range links[:min(len(links), limit)] {
+		attrs := link.Attrs()
+		t.Logf("IPv6 diagnostic link index=%d name=%q flags=%s mac=%s", attrs.Index, attrs.Name, attrs.Flags, attrs.HardwareAddr)
+	}
+	addresses, err := handle.AddrList(nil, netlink.FAMILY_V6)
+	t.Logf("IPv6 diagnostic addresses returned=%d emitted=%d error=%v", len(addresses), min(len(addresses), limit), err)
+	for _, address := range addresses[:min(len(addresses), limit)] {
+		t.Logf("IPv6 diagnostic address link=%d ip=%s flags=%#x scope=%d preferred=%d valid=%d", address.LinkIndex, address.IPNet, address.Flags, address.Scope, address.PreferedLft, address.ValidLft)
+	}
+	routes, err := handle.RouteGet(destination)
+	t.Logf("IPv6 diagnostic routes returned=%d emitted=%d error=%v", len(routes), min(len(routes), limit), err)
+	for _, route := range routes[:min(len(routes), limit)] {
+		t.Logf("IPv6 diagnostic route link=%d source=%s destination=%s gateway=%s table=%d scope=%d type=%d", route.LinkIndex, route.Src, route.Dst, route.Gw, route.Table, route.Scope, route.Type)
+	}
+	neighbors, err := handle.NeighList(0, netlink.FAMILY_V6)
+	t.Logf("IPv6 diagnostic neighbors returned=%d emitted=%d error=%v", len(neighbors), min(len(neighbors), limit), err)
+	for _, neighbor := range neighbors[:min(len(neighbors), limit)] {
+		t.Logf("IPv6 diagnostic neighbor link=%d ip=%s mac=%s state=%#x flags=%#x type=%d", neighbor.LinkIndex, neighbor.IP, neighbor.HardwareAddr, neighbor.State, neighbor.Flags, neighbor.Type)
 	}
 }
 
