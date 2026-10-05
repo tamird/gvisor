@@ -206,12 +206,17 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		t.FailNow()
 	}
 
+	// Give the actions their full timeout after container setup and the
+	// address exchange, including the wait required by negative tests.
+	actionCtx, cancelAction := context.WithTimeout(context.Background(), TestTimeout)
+	defer cancelAction()
+
 	// Run our side of the test.
 	errCh := make(chan error, 2)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := test.LocalAction(ctx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
+		if err := test.LocalAction(actionCtx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("LocalAction failed: %v", err)
 		} else {
 			errCh <- nil
@@ -228,7 +233,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		// Wait for the final statement. This structure has the side
 		// effect that all container logs will appear within the
 		// individual test context.
-		if _, err := d.WaitForOutput(ctx, TerminalStatement, TestTimeout); err != nil && !errors.Is(err, context.Canceled) {
+		if _, err := d.WaitForOutput(actionCtx, TerminalStatement, TestTimeout); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("ContainerAction failed: %v", err)
 		} else {
 			errCh <- nil
