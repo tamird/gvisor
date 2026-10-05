@@ -46,6 +46,7 @@ function date(value) {
 function label(node) {
   if (node.type === "pr") return `#${node.number}`;
   if (node.type === "branch") return "BRANCH";
+  if (node.type === "commit") return "UPSTREAM";
   return node.number ? `ISSUE #${node.number}` : "CAPACITY";
 }
 function status(node) {
@@ -300,7 +301,7 @@ function drawGraph(nodes) {
       transform: `translate(${pos.x},${pos.y})`, role: "group" });
     const card = svg("g", { tabindex: "0", role: "button", "aria-label": `${label(node)}: ${node.title}. Select details.`, "aria-pressed": selected === node.id, "data-node": node.id });
     card.append(svg("rect", { class: "node-shape", width: CARD.width, height: CARD.height, rx: 5 }));
-    card.append(svg("text", { class: "node-label", x: 10, y: 15 }, label(node)));
+    card.append(svg("text", { class: "node-label", x: 10, y: 15 }, node.type === "branch" ? wrap(status(node), 21, 1)[0] : label(node)));
     const reach = impact(node.id).prs;
     if (reach) card.append(svg("text", { class: "node-reach", x: CARD.width - 33, y: 15, "text-anchor": "end" }, `${reach} downstream`));
     wrap(node.title).forEach((line, index) => card.append(svg("text", { class: "node-title", x: 10, y: 32 + index * 14 }, line)));
