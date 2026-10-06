@@ -16,7 +16,6 @@ package generic_dgram_socket_send_recv_test
 
 import (
 	"context"
-	"net"
 	"net/netip"
 	"testing"
 	"time"
@@ -75,8 +74,7 @@ func (test *icmpV6Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo ne
 	})
 
 	// Preserve the mapped IPv6 representation for IPv4 destination cases.
-	addr := sendTo.As16()
-	dstAddr := net.IP(addr[:])
+	dstAddr := netip.AddrFrom16(sendTo.As16())
 	return icmpV6TestEnv{
 		socketFD: socketFD,
 		ident:    ident,
