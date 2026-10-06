@@ -332,7 +332,7 @@ PY
     fi
     privilege=()
     if [[ $group == root ]]; then
-      privilege=(--run_under='sudo -n -E')
+      privilege=(--run_under=//test/rbe:local_root)
     fi
     phase_status=0
     bazel test --config=rbe --config=x86_64 --config=rbe-local-tests --keep_going \

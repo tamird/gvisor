@@ -35,6 +35,16 @@ test_suite(
     ],
 )
 
+# Root tests return readable outputs to the unprivileged Actions Bazel server.
+sh_binary(
+    name = "local_root",
+    testonly = True,
+    srcs = ["local_root.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)
+
 # Applied with --run_under before the selected test initializes its daemon.
 sh_binary(
     name = "cgroup_v1",
