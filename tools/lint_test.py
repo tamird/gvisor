@@ -55,8 +55,7 @@ class LintTest(unittest.TestCase):
     self.assertEqual(calls, [
         "test --keep_going //tools/lint:gofmt //tools/lint:spelling",
         "test OPTIONS=--enable_runfiles TARGETS=//:github_actions_test",
-        "build --aspects=//tools/clang_tidy:clang_tidy.bzl%clang_tidy "
-        "--output_groups=clang_tidy //test/... //tools/...",
+        "build --config=lint-cc",
     ])
 
   def test_fix_continues_and_excludes_nonfixable_checks(self) -> None:
