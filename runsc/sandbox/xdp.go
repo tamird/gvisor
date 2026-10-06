@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"strings"
 
@@ -151,24 +152,25 @@ func prepareRedirectInterfaceArgs(bind boot.BindOpt, conf *config.Config, disabl
 			continue
 		}
 
-		var ipAddrs []*net.IPNet
+		var ipAddrs []netip.Prefix
 		for _, ifaddr := range allAddrs {
 			ipNet, ok := ifaddr.(*net.IPNet)
 			if !ok {
 				return boot.CreateLinksAndRoutesArgs{}, net.Interface{}, fmt.Errorf("address is not IPNet: %+v", ifaddr)
 			}
-			if ipNet.IP.To4() == nil {
-				log.Infof("Skipping non-IPv4 address %s", ipNet.IP)
+			addr, err := prefixFromIPNet(ipNet)
+			if err != nil {
+				return boot.CreateLinksAndRoutesArgs{}, net.Interface{}, err
+			}
+			if !addr.Addr().Is4() {
+				log.Infof("Skipping non-IPv4 address %s", addr)
 				continue
 			}
-			ipAddrs = append(ipAddrs, ipNet)
+			ipAddrs = append(ipAddrs, addr)
 		}
 		if len(ipAddrs) != 1 {
 			return boot.CreateLinksAndRoutesArgs{}, net.Interface{}, fmt.Errorf("we only handle a single IPv4 address, but interface %q has %d: %v", iface.Name, len(ipAddrs), ipAddrs)
 		}
-		prefix, _ := ipAddrs[0].Mask.Size()
-		addr := boot.IPWithPrefix{Address: ipAddrs[0].IP, PrefixLen: prefix}
-
 		// Collect data from the ARP table.
 		dump, err := netlink.NeighList(iface.Index, 0)
 		if err != nil {
@@ -180,9 +182,13 @@ func prepareRedirectInterfaceArgs(bind boot.BindOpt, conf *config.Config, disabl
 			// There are only two "good" states NUD_PERMANENT and NUD_REACHABLE,
 			// but NUD_REACHABLE is fully dynamic and will be re-probed anyway.
 			if n.State == netlink.NUD_PERMANENT {
+				addr, ok := netip.AddrFromSlice(n.IP)
+				if !ok {
+					return boot.CreateLinksAndRoutesArgs{}, net.Interface{}, fmt.Errorf("invalid neighbor address: %v", n.IP)
+				}
 				log.Debugf("Copying a static ARP entry: %+v %+v", n.IP, n.HardwareAddr)
 				// No flags are copied because Stack.AddStaticNeighbor does not support flags right now.
-				neighbors = append(neighbors, boot.Neighbor{IP: n.IP, HardwareAddr: n.HardwareAddr})
+				neighbors = append(neighbors, boot.Neighbor{IP: addr.Unmap(), HardwareAddr: n.HardwareAddr})
 			}
 		}
 
@@ -224,7 +230,7 @@ func prepareRedirectInterfaceArgs(bind boot.BindOpt, conf *config.Config, disabl
 			QDisc:             conf.QDisc,
 			Neighbors:         neighbors,
 			LinkAddress:       linkAddress,
-			Addresses:         []boot.IPWithPrefix{addr},
+			Addresses:         ipAddrs,
 			GVisorGRO:         conf.GVisorGRO,
 			Bind:              bind,
 		}

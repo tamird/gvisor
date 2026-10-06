@@ -18,9 +18,11 @@ import (
 	"bytes"
 	"errors"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 	"time"
 
@@ -47,40 +49,23 @@ func fdbasedLinkEqual(a, b boot.FDBasedLink) bool {
 	if a.QDisc != b.QDisc {
 		return false
 	}
-	// LinkAddress is randomly assigned for veth pairs, so compare lengths.
-	if len(a.LinkAddress) != len(b.LinkAddress) {
+	if !bytes.Equal(a.LinkAddress, b.LinkAddress) {
 		return false
 	}
-	if len(a.Addresses) != len(b.Addresses) {
+	if !slices.Equal(a.Addresses, b.Addresses) {
 		return false
 	}
-	for i := range a.Addresses {
-		if !a.Addresses[i].Address.Equal(b.Addresses[i].Address) {
-			return false
-		}
-		if a.Addresses[i].PrefixLen != b.Addresses[i].PrefixLen {
-			return false
-		}
-	}
-	if len(a.Routes) != len(b.Routes) {
+	if !slices.Equal(a.Routes, b.Routes) {
 		return false
-	}
-	for i := range a.Routes {
-		if a.Routes[i].Destination.String() != b.Routes[i].Destination.String() {
-			return false
-		}
-		if !a.Routes[i].Gateway.Equal(b.Routes[i].Gateway) {
-			return false
-		}
 	}
 	if len(a.Neighbors) != len(b.Neighbors) {
 		return false
 	}
 	for i := range a.Neighbors {
-		if !a.Neighbors[i].IP.Equal(b.Neighbors[i].IP) {
+		if a.Neighbors[i].IP != b.Neighbors[i].IP {
 			return false
 		}
-		if a.Neighbors[i].HardwareAddr.String() != b.Neighbors[i].HardwareAddr.String() {
+		if !bytes.Equal(a.Neighbors[i].HardwareAddr, b.Neighbors[i].HardwareAddr) {
 			return false
 		}
 	}
@@ -99,19 +84,6 @@ func fdbasedLinksEqual(a, b []boot.FDBasedLink) bool {
 	return true
 }
 
-func defaultRouteEqual(a, b boot.DefaultRoute) bool {
-	if a.Name != b.Name {
-		return false
-	}
-	if a.Route.Destination.String() != b.Route.Destination.String() {
-		return false
-	}
-	if !a.Route.Gateway.Equal(b.Route.Gateway) {
-		return false
-	}
-	return true
-}
-
 func loopbackLinksEqual(a, b []boot.LoopbackLink) bool {
 	if len(a) != len(b) {
 		return false
@@ -120,27 +92,11 @@ func loopbackLinksEqual(a, b []boot.LoopbackLink) bool {
 		if a[i].Name != b[i].Name {
 			return false
 		}
-		if len(a[i].Addresses) != len(b[i].Addresses) {
+		if !slices.Equal(a[i].Addresses, b[i].Addresses) {
 			return false
 		}
-		for j := range a[i].Addresses {
-			if !a[i].Addresses[j].Address.Equal(b[i].Addresses[j].Address) {
-				return false
-			}
-			if a[i].Addresses[j].PrefixLen != b[i].Addresses[j].PrefixLen {
-				return false
-			}
-		}
-		if len(a[i].Routes) != len(b[i].Routes) {
+		if !slices.Equal(a[i].Routes, b[i].Routes) {
 			return false
-		}
-		for j := range a[i].Routes {
-			if a[i].Routes[j].Destination.String() != b[i].Routes[j].Destination.String() {
-				return false
-			}
-			if !a[i].Routes[j].Gateway.Equal(b[i].Routes[j].Gateway) {
-				return false
-			}
 		}
 	}
 	return true
@@ -291,22 +247,16 @@ func defaultLoopbackLinks() []boot.LoopbackLink {
 	return []boot.LoopbackLink{
 		{
 			Name: "lo",
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("127.0.0.1"), PrefixLen: 8},
-				{Address: net.ParseIP("::1"), PrefixLen: 128},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
+				netip.MustParsePrefix("::1/128"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{127, 0, 0, 0},
-						Mask: net.IPMask{255, 0, 0, 0},
-					},
+					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 				{
-					Destination: net.IPNet{
-						IP:   net.ParseIP("::1"),
-						Mask: net.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-					},
+					Destination: netip.MustParsePrefix("::1/128"),
 				},
 			},
 		},
@@ -336,26 +286,20 @@ func TestCollectLinksAndRoutes_SingleInterface(t *testing.T) {
 			MTU:         1500,
 			LinkAddress: link.Attrs().HardwareAddr,
 			QDisc:       config.QDiscNone,
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.1/24"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{10, 0, 0, 0},
-						Mask: net.IPMask{255, 255, 255, 0},
-					},
+					Destination: netip.MustParsePrefix("10.0.0.0/24"),
 				},
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{192, 168, 1, 0},
-						Mask: net.IPMask{255, 255, 255, 0},
-					},
-					Gateway: net.ParseIP("10.0.0.2"),
+					Destination: netip.MustParsePrefix("192.168.1.0/24"),
+					Gateway:     netip.MustParseAddr("10.0.0.2"),
 				},
 			},
 			Neighbors: []boot.Neighbor{
-				{IP: net.ParseIP("10.0.0.2"), HardwareAddr: mustParseMAC("00:11:22:33:44:55")},
+				{IP: netip.MustParseAddr("10.0.0.2"), HardwareAddr: mustParseMAC("00:11:22:33:44:55")},
 			},
 		},
 	}
@@ -367,14 +311,11 @@ func TestCollectLinksAndRoutes_SingleInterface(t *testing.T) {
 	wantGW := boot.DefaultRoute{
 		Name: "testveth0",
 		Route: boot.Route{
-			Destination: net.IPNet{
-				IP:   net.IPv4zero,
-				Mask: net.IPMask(net.IPv4zero),
-			},
-			Gateway: net.ParseIP("10.0.0.254"),
+			Destination: netip.MustParsePrefix("0.0.0.0/0"),
+			Gateway:     netip.MustParseAddr("10.0.0.254"),
 		},
 	}
-	if !defaultRouteEqual(args.Defaultv4Gateway, wantGW) {
+	if args.Defaultv4Gateway != wantGW {
 		t.Errorf("Defaultv4Gateway mismatch:\ngot  %+v\nwant %+v", args.Defaultv4Gateway, wantGW)
 	}
 
@@ -384,7 +325,10 @@ func TestCollectLinksAndRoutes_SingleInterface(t *testing.T) {
 }
 
 func mustParseMAC(s string) net.HardwareAddr {
-	hw, _ := net.ParseMAC(s)
+	hw, err := net.ParseMAC(s)
+	if err != nil {
+		panic(err)
+	}
 	return hw
 }
 
@@ -405,22 +349,16 @@ func TestCollectLinksAndRoutes_LoopbackOnly(t *testing.T) {
 	wantLoopbackLinks := []boot.LoopbackLink{
 		{
 			Name: "lo",
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("127.0.0.1"), PrefixLen: 8},
-				{Address: net.ParseIP("::1"), PrefixLen: 128},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
+				netip.MustParsePrefix("::1/128"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{127, 0, 0, 0},
-						Mask: net.IPMask{255, 0, 0, 0},
-					},
+					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 				{
-					Destination: net.IPNet{
-						IP:   net.ParseIP("::1"),
-						Mask: net.IPMask{255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255},
-					},
+					Destination: netip.MustParsePrefix("::1/128"),
 				},
 			},
 		},
@@ -475,15 +413,12 @@ func TestCollectLinksAndRoutes_MultipleInterfaces(t *testing.T) {
 			MTU:         1500,
 			LinkAddress: veth0Link.Attrs().HardwareAddr,
 			QDisc:       config.QDiscNone,
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.1/24"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{10, 0, 0, 0},
-						Mask: net.IPMask{255, 255, 255, 0},
-					},
+					Destination: netip.MustParsePrefix("10.0.0.0/24"),
 				},
 			},
 		},
@@ -492,15 +427,12 @@ func TestCollectLinksAndRoutes_MultipleInterfaces(t *testing.T) {
 			MTU:         1500,
 			LinkAddress: veth1Link.Attrs().HardwareAddr,
 			QDisc:       config.QDiscNone,
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("192.168.1.1"), PrefixLen: 24},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("192.168.1.1/24"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{192, 168, 1, 0},
-						Mask: net.IPMask{255, 255, 255, 0},
-					},
+					Destination: netip.MustParsePrefix("192.168.1.0/24"),
 				},
 			},
 		},
@@ -512,14 +444,11 @@ func TestCollectLinksAndRoutes_MultipleInterfaces(t *testing.T) {
 	wantGW := boot.DefaultRoute{
 		Name: "testveth0",
 		Route: boot.Route{
-			Destination: net.IPNet{
-				IP:   net.IPv4zero,
-				Mask: net.IPMask(net.IPv4zero),
-			},
-			Gateway: net.ParseIP("10.0.0.254"),
+			Destination: netip.MustParsePrefix("0.0.0.0/0"),
+			Gateway:     netip.MustParseAddr("10.0.0.254"),
 		},
 	}
-	if !defaultRouteEqual(args.Defaultv4Gateway, wantGW) {
+	if args.Defaultv4Gateway != wantGW {
 		t.Errorf("Defaultv4Gateway mismatch:\ngot  %+v\nwant %+v", args.Defaultv4Gateway, wantGW)
 	}
 
@@ -566,15 +495,12 @@ func TestCollectLinksAndRoutes_IPv6Disabled(t *testing.T) {
 			MTU:         1500,
 			LinkAddress: veth0Link.Attrs().HardwareAddr,
 			QDisc:       config.QDiscNone,
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.1/24"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{10, 0, 0, 0},
-						Mask: net.IPMask{255, 255, 255, 0},
-					},
+					Destination: netip.MustParsePrefix("10.0.0.0/24"),
 				},
 			},
 		},
@@ -591,15 +517,12 @@ func TestCollectLinksAndRoutes_IPv6Disabled(t *testing.T) {
 	wantLoopbackLinks := []boot.LoopbackLink{
 		{
 			Name: "lo",
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("127.0.0.1"), PrefixLen: 8},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{127, 0, 0, 0},
-						Mask: net.IPMask{255, 0, 0, 0},
-					},
+					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 			},
 		},
@@ -705,28 +628,19 @@ func TestCollectLinksAndRoutes_LoopbackExtraRoutes(t *testing.T) {
 	wantLoopbackLinks := []boot.LoopbackLink{
 		{
 			Name: "lo",
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("127.0.0.1"), PrefixLen: 8},
-				{Address: net.IPv6loopback, PrefixLen: 128},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
+				netip.MustParsePrefix("::1/128"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{127, 0, 0, 0},
-						Mask: net.IPMask{255, 0, 0, 0},
-					},
+					Destination: netip.MustParsePrefix("127.0.0.0/8"),
 				},
 				{
-					Destination: net.IPNet{
-						IP:   net.IPv6loopback,
-						Mask: net.CIDRMask(128, 128),
-					},
+					Destination: netip.MustParsePrefix("::1/128"),
 				},
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{10, 88, 0, 0},
-						Mask: net.IPMask{255, 255, 0, 0},
-					},
+					Destination: netip.MustParsePrefix("10.88.0.0/16"),
 				},
 			},
 		},
@@ -742,15 +656,12 @@ func TestCollectLinksAndRoutes_LoopbackExtraRoutes(t *testing.T) {
 			MTU:         1500,
 			LinkAddress: vethLink.Attrs().HardwareAddr,
 			QDisc:       config.QDiscNone,
-			Addresses: []boot.IPWithPrefix{
-				{Address: net.ParseIP("10.0.0.1"), PrefixLen: 24},
+			Addresses: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.1/24"),
 			},
 			Routes: []boot.Route{
 				{
-					Destination: net.IPNet{
-						IP:   net.IP{10, 0, 0, 0},
-						Mask: net.IPMask{255, 255, 255, 0},
-					},
+					Destination: netip.MustParsePrefix("10.0.0.0/24"),
 				},
 			},
 		},
