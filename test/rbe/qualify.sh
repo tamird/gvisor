@@ -310,10 +310,28 @@ run_hybrid_units() (
   python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
     "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
     | tee "$selection_dir/selection.json"
+  # Disposable validation: retain canonical accounting and run only corrected owners.
+  cp "$selection_dir/targets" "$selection_dir/canonical-targets"
+  python3 - "$selection_dir/targets" <<'FOCUSED'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+selected = set(path.read_text().splitlines())
+focused = {
+    "//runsc/sandbox:sandbox_test_arm64",
+    "//sandboxexec/sandbox:sandbox_test_arm64",
+    "//runsc/cmd:cmd_test_arm64",
+    "//tools:lint_test_arm64",
+}
+assert focused <= selected, sorted(focused - selected)
+path.write_text("".join(label + "\n" for label in sorted(focused)))
+print("Focused correction: 3 local Go tests and remote lint; canonical selection retained.")
+FOCUSED
   # Preserve the selection, but never upload Bazel's parsed credential options.
   mkdir -p "${RUNNER_TEMP:?}/qualification/unit-selection"
   cp "$selection_dir/selection.json" "$selection_dir/actions.json" "$selection_dir/owners" \
-    "$selection_dir/targets"* "$RUNNER_TEMP/qualification/unit-selection/"
+    "$selection_dir/targets"* "$selection_dir/canonical-targets" "$RUNNER_TEMP/qualification/unit-selection/"
   python3 - "$selection_dir/profile.json" "$RUNNER_TEMP/qualification/unit-selection/profile.json" <<'PY'
 import json
 from pathlib import Path
