@@ -15,10 +15,10 @@ _ARCHITECTURES = {
     ),
 }
 
-def with_test_architecture(test_rule, architecture, extra_providers = []):
+def with_test_architecture(test_rule, architecture, extra_providers = [], implicit_targets = None):
     """Returns a with_cfg builder that preserves the test's other configuration."""
     target = _ARCHITECTURES[architecture]
-    return with_cfg(test_rule, extra_providers = extra_providers).set("cpu", target.cpu).set(
+    return with_cfg(test_rule, extra_providers = extra_providers, implicit_targets = implicit_targets).set("cpu", target.cpu).set(
         "platforms",
         [target.platform],
     )
