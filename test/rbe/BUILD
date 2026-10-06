@@ -47,9 +47,9 @@ sh_binary(
 
 # Applied with --run_under before the selected test initializes its daemon.
 sh_binary(
-    name = "docker_cgroup",
+    name = "docker_setup",
     testonly = True,
-    srcs = ["docker_cgroup.sh"],
+    srcs = ["docker_setup.sh"],
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],
     visibility = ["//visibility:public"],
