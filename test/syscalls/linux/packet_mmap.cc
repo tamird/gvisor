@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <array>
 #include <cerrno>
 #include <cstdint>
@@ -47,6 +48,11 @@
 namespace gvisor {
 namespace testing {
 namespace {
+
+// Frame size used by most tests below. They put 32 frames in a block, and
+// PACKET_RX_RING requires the block size to be a multiple of the page size, so
+// 32 frames must be a multiple of the largest supported page size (64K).
+constexpr uint32_t kLargeFrameSize = 65536 + 2048;
 
 PosixErrorOr<void*> MakePacketMmapRing(int fd, const sockaddr* bind_addr,
                                        int bind_addr_size, tpacket_req* req,
@@ -131,7 +137,7 @@ TEST(PacketMmapTest, Basic) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_DGRAM, 0));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -178,7 +184,7 @@ TEST(PacketMmapTest, FillBlocks) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_DGRAM, 0));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -290,7 +296,7 @@ TEST(PacketMmapTest, ConcurrentReadWrite) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_DGRAM, 0));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -346,7 +352,7 @@ TEST(PacketMmapTest, RawPacket) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -403,7 +409,7 @@ TEST(PacketMmapTest, SetRingAfterMmapFails) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -438,7 +444,9 @@ TEST(PacketMmapTest, MmapCopy) {
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL)));
 
   uint32_t tp_frame_size = 256;
-  uint32_t tp_block_size = tp_frame_size * 32;
+  // The block size must be a multiple of the page size.
+  uint32_t tp_block_size =
+      std::max(tp_frame_size * 32, static_cast<uint32_t>(kPageSize));
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
   tpacket_req req = {
@@ -556,7 +564,7 @@ TEST(PacketMmapTest, BasicV2) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_DGRAM, 0));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -642,7 +650,7 @@ TEST(PacketMmapTest, PacketReserve) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_DGRAM, 0));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
@@ -699,7 +707,7 @@ TEST(PacketMmapTest, PacketStatistics) {
   FileDescriptor mmap_sock =
       ASSERT_NO_ERRNO_AND_VALUE(Socket(AF_PACKET, SOCK_DGRAM, 0));
 
-  uint32_t tp_frame_size = 65536 + 128;
+  uint32_t tp_frame_size = kLargeFrameSize;
   uint32_t tp_block_size = tp_frame_size * 32;
   uint32_t tp_block_nr = 2;
   uint32_t tp_frame_nr = (tp_block_size * tp_block_nr) / tp_frame_size;
