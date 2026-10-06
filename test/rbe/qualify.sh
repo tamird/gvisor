@@ -248,7 +248,7 @@ analyze_profile() {
 select_test_profile() {
   local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
   shift 4
-  local -a selection_options=() variant_options=() routing_options=()
+  local -a selection_options=() page_size_options=() routing_options=()
   prefix=$selection_dir/$lane-$target_arch
   if [[ $target_arch == arm64 ]]; then
     target_config=aarch64
@@ -257,11 +257,11 @@ select_test_profile() {
     selection_options=(--syscall-policy)
   fi
   if [[ $lane == syscalls-64k ]]; then
-    variant_options=(--page-size=64k)
+    page_size_options=(--page-size=64k)
   fi
   if [[ $test_execution == local ]]; then
-    routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch")
-    variant_options+=(--hybrid)
+    routing_options=(--//tools/bazeldefs:local_test_architecture=arm64)
+    selection_options+=(--hybrid)
     if [[ -n $syscall_bucket ]]; then
       selection_options+=("--syscall-bucket=$syscall_bucket")
     fi
@@ -269,7 +269,7 @@ select_test_profile() {
   analyze_profile "$roots" "$prefix-profile.json" \
     --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
-    "$prefix-profile.json" "$target_arch" "${variant_options[@]}" > "$prefix.query"
+    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" > "$prefix.query"
   bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
     "${routing_options[@]}" \
     --output=jsonproto --include_artifacts=false \
@@ -277,7 +277,7 @@ select_test_profile() {
     "--query_file=$prefix.query" > "$prefix-actions.json"
   python3 test/rbe/unit_matrix.py select-profile \
     "$prefix-profile.json" "$target_arch" "$prefix-routing.json" \
-    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}" "${variant_options[@]}"
+    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}" "${page_size_options[@]}"
 }
 
 select_syscall_profile() {
@@ -332,19 +332,11 @@ run_hybrid_profile() (
       "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
       | tee "$selection_dir/selection.json"
   else
-    if [[ $lane == startup ]]; then
-      local -a targets=()
-      shared_test_targets "$lane" "$arch"
-      printf '%s\n' "${targets[@]}" > "$selection_dir/$lane-roots"
-      select_test_profile "$selection_dir" "$lane" "$arch" "$selection_dir/$lane-roots" --strip=never \
-        | tee "$selection_dir/selection.json"
-    else
-      lane_options=(--cxxopt=-Werror)
-      select_syscall_profile "$selection_dir" "$lane" "$arch" | tee "$selection_dir/selection.json"
-    fi
-    cp "$selection_dir/$lane-$arch-targets" "$selection_dir/targets"
-    cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
-    cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
+    lane_options=(--cxxopt=-Werror)
+    select_syscall_profile "$selection_dir" "$lane" arm64 | tee "$selection_dir/selection.json"
+    cp "$selection_dir/$lane-arm64-targets" "$selection_dir/targets"
+    cp "$selection_dir/$lane-arm64-actions.json" "$selection_dir/actions.json"
+    cp "$selection_dir/$lane-arm64-profile.json" "$selection_dir/profile.json"
   fi
   # Preserve the selection, but never upload Bazel's parsed credential options.
   mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
@@ -366,12 +358,12 @@ for source in Path(sys.argv[1]).glob("*.json"):
                 event = json.loads(line)
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
-  printf '%s %s profile: namespace owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$arch" "$lane"
+  printf 'ARM64 %s profile: namespace owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
-    "--//tools/bazeldefs:local_test_architecture=$arch" \
+    --//tools/bazeldefs:local_test_architecture=arm64 \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" --target_pattern_file="$selection_dir/targets"
 )
@@ -795,12 +787,28 @@ run_lane() (
       shared_test_targets "$lane" "$arch"
       ;;
     startup)
-      if [[ $test_execution == local ]]; then
-        run_hybrid_profile "$lane"
-        return
-      fi
-      options=(--test_tag_filters=-requires-kvm)
       shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        # The owned daemons need separate firewall state. These startup cases
+        # load declared images and need no network outside their containers.
+        options=(
+          --strategy=TestRunner=docker
+          --local_test_jobs=2
+          --experimental_enable_docker_sandbox
+          --experimental_docker_privileged
+          --noexperimental_docker_use_customized_images
+          --noincompatible_legacy_local_fallback
+          --sandbox_default_allow_network=false
+          --test_env=GO_TEST_WRAP_TESTV=1
+        )
+        mkdir -p "${RUNNER_TEMP:?}/qualification/startup-selection"
+        bazel aquery --config=rbe --config=x86_64 --strip=never \
+          --output=jsonproto --include_artifacts=false \
+          "mnemonic(\"^TestRunner$\", tests(set(${targets[*]})))" \
+          > "$RUNNER_TEMP/qualification/startup-selection/actions.json"
+      else
+        options=(--test_tag_filters=-requires-kvm)
+      fi
       ;;
     benchmarks)
       if [[ $arch != amd64 ]]; then
@@ -878,7 +886,7 @@ run_lane() (
     fi
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
-      options+=(--config=rbe-local-tests)
+      options=(--config=rbe-local-tests "${options[@]}")
     elif [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
