@@ -61,6 +61,7 @@ if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
   exit 0
 fi
 arch=amd64
+header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
   case "$1" in
@@ -91,7 +92,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|license-headers) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -116,7 +117,9 @@ for lane in "$@"; do
       exit 2
     fi
     header_base=$(git rev-parse --verify --end-of-options "$header_base^{commit}") || exit 2
-    git merge-base "$header_base" HEAD >/dev/null || exit 2
+    header_head=$(git rev-parse --verify HEAD) || exit 2
+    git merge-base "$header_base" "$header_head" >/dev/null || exit 2
+    header_options=("--repo_env=GVISOR_HEADER_BASE=$header_base" "--repo_env=GVISOR_HEADER_HEAD=$header_head")
     printf 'License header base: %s\n' "$header_base"
     break
   fi
@@ -180,6 +183,7 @@ shared_test_targets() {
     benchmarks) targets=(//test/benchmarks:continuous_tests) ;;
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
+    license-headers) targets=(//tools:license_headers_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
     overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
     containerd) targets=(//test/root:crictl_test_owned) ;;
@@ -215,7 +219,7 @@ analyze_profile() {
   shift 2
   local rc=$events.bazelrc
   python3 test/rbe/unit_matrix.py universe-rc "$patterns" > "$rc"
-  bazel "--bazelrc=$rc" aquery "$@" --config=rbe-selection \
+  bazel "--bazelrc=$rc" aquery "$@" "${header_options[@]}" --config=rbe-selection \
     "--build_event_json_file=$events" 'set()'
 }
 
@@ -473,7 +477,7 @@ run_platform_matrix() (
         # verifier. Its own transition preserves opt/strip=sometimes.
         printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
         ;;
-      plugin-network|do|root|portforward|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata)
+      plugin-network|do|root|portforward|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata|license-headers)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
@@ -535,7 +539,7 @@ run_platform_matrix() (
     return 2
   fi
   bazel "$command" --config=rbe-matrix --config=x86_64 --keep_going \
-    --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" \
+    --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" "${header_options[@]}" \
     --target_pattern_file="$selection_dir/targets"
 )
 
@@ -605,8 +609,7 @@ run_lane() (
       return "$?"
       ;;
     license-headers)
-      tools/check_license_headers.sh "$header_base"
-      return "$?"
+      shared_test_targets "$lane" "$arch"
       ;;
     python-distributions)
       command=build
@@ -748,7 +751,7 @@ run_lane() (
     fi
   fi
   bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
-    --keep_going "${options[@]}" "${targets[@]}"
+    --keep_going "${options[@]}" "${header_options[@]}" "${targets[@]}"
 )
 
 run_selection() {

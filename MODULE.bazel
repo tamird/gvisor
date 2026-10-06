@@ -1264,6 +1264,10 @@ analysis_sources = use_repo_rule("//tools/source_inputs:repositories.bzl", "anal
 
 analysis_sources(name = "analysis_sources")
 
+added_sources = use_repo_rule("//tools/source_inputs:repositories.bzl", "added_sources")
+
+added_sources(name = "license_header_sources")
+
 http_archive(
     name = "libpluginstack",
     build_file = "//external/tools/plugin-stack:plugin-stack.BUILD",

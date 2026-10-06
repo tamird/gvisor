@@ -1,3 +1,4 @@
+load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//tools:defs.bzl", "bzl_library", "gotsan_flag_values", "gotsan_values", "py_test")
 
 package(
@@ -100,4 +101,19 @@ py_test(
         "//:go.mod",
     ],
     main = "lint_test.py",
+)
+
+sh_test(
+    name = "license_headers_test",
+    size = "small",
+    srcs = ["check_license_headers.sh"],
+    args = [
+        "--manifest",
+        "$(rootpath @license_header_sources//:manifest)",
+    ],
+    data = [
+        "@license_header_sources//:files",
+        "@license_header_sources//:manifest",
+    ],
+    tags = ["manual"],
 )
