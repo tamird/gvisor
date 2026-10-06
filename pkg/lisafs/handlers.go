@@ -1640,7 +1640,7 @@ func FListXattrHandler(c *Connection, comm Communicator, payloadLen uint32) (uin
 	defer fd.DecRef(nil)
 
 	var resp FListXattrResp
-	if fd.safelyRead(func() error {
+	if err := fd.safelyRead(func() error {
 		if fd.node.isDeleted() {
 			return unix.EINVAL
 		}

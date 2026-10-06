@@ -1111,33 +1111,30 @@ func (fd *controlFDLisa) GetXattr(name string, size uint32, getValueBuf func(uin
 		size = linux.XATTR_SIZE_MAX
 	}
 	data := getValueBuf(size)
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, fgetxattr(2) fails
-		// with EBADF for O_PATH FDs. Use lgetxattr(2) instead.
-		xattrSize, err := unix.Lgetxattr(fd.Node().FilePath(), name, data)
-		return uint16(xattrSize), err
-	}
 	xattrSize, err := unix.Fgetxattr(fd.hostFD, name, data)
+	if err == unix.EBADF {
+		// tryOpen also uses O_PATH for files that cannot be opened for reading.
+		// The fd-based xattr syscalls reject O_PATH, regardless of file type.
+		xattrSize, err = unix.Lgetxattr(fd.Node().FilePath(), name, data)
+	}
 	return uint16(xattrSize), err
 }
 
 // SetXattr implements lisafs.ControlFDImpl.SetXattr.
 func (fd *controlFDLisa) SetXattr(name string, value string, flags uint32) error {
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, fsetxattr(2) fails
-		// with EBADF for O_PATH FDs. Use lsetxattr(2) instead.
+	err := unix.Fsetxattr(fd.hostFD, name, []byte(value), int(flags))
+	if err == unix.EBADF {
 		return unix.Lsetxattr(fd.Node().FilePath(), name, []byte(value), int(flags))
 	}
-	return unix.Fsetxattr(fd.hostFD, name, []byte(value), int(flags))
+	return err
 }
 
 func (fd *controlFDLisa) listXattr(data []byte) (int, error) {
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, flistxattr(2) fails
-		// with EBADF for O_PATH FDs. Use llistxattr(2) instead.
+	n, err := unix.Flistxattr(fd.hostFD, data)
+	if err == unix.EBADF {
 		return unix.Llistxattr(fd.Node().FilePath(), data)
 	}
-	return unix.Flistxattr(fd.hostFD, data)
+	return n, err
 }
 
 var listXattrBufPool = sync.Pool{
@@ -1177,12 +1174,11 @@ func (fd *controlFDLisa) ListXattr(size uint64) (lisafs.StringArray, error) {
 
 // RemoveXattr implements lisafs.ControlFDImpl.RemoveXattr.
 func (fd *controlFDLisa) RemoveXattr(name string) error {
-	if fd.IsSocket() || fd.IsSymlink() {
-		// Sockets and symlinks use O_PATH host FDs. However, fremovexattr(2) fails
-		// with EBADF for O_PATH FDs. Use lremovexattr(2) instead.
+	err := unix.Fremovexattr(fd.hostFD, name)
+	if err == unix.EBADF {
 		return unix.Lremovexattr(fd.Node().FilePath(), name)
 	}
-	return unix.Fremovexattr(fd.hostFD, name)
+	return err
 }
 
 // openFDLisa implements lisafs.OpenFDImpl.
@@ -1362,7 +1358,7 @@ func tryOpen(open func(int) (int, error)) (hostFD int, err error) {
 	//   1. RDONLY | NONBLOCK: for all files, directories, ro mounts, FIFOs.
 	//      Use non-blocking to prevent getting stuck inside open(2) for
 	//      FIFOs. This option has no effect on regular files.
-	//   2. PATH: for symlinks, sockets.
+	//   2. PATH: for symlinks, sockets, and files without read permission.
 	flags := []int{
 		unix.O_RDONLY | unix.O_NONBLOCK,
 		unix.O_PATH,

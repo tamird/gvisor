@@ -481,6 +481,9 @@ func testUnlink(ctx context.Context, t *testing.T, tester Tester, root lisafs.Cl
 	defer unix.Close(hostFD)
 
 	unlinkFile(ctx, t, root, name, false /* isDir */)
+	if _, err := controlFile.ListXattr(ctx, 0); err != unix.EINVAL {
+		t.Errorf("ListXattr on deleted file: got %v, want EINVAL", err)
+	}
 	if inodes := walk(ctx, t, root, []string{name}); len(inodes) > 0 {
 		t.Errorf("deleted file should not be generating inodes on walk: %+v", inodes)
 	}
