@@ -7,10 +7,10 @@
 # classification limitation, not a successful automatic audit.
 # LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
-  version: https://github.com/abseil/abseil-cpp/releases/download/20250814.1/abseil-cpp-20250814.1.tar.gz
-  retrieved: "2026-08-27"
-  commit: d38452e1ee03523a208362186fd42248ff2609f6
-  sha256: 1692f77d1739bacf3f94337188b78583cf09bab7e420d2dc6c5605a4f86785a1
+  version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
+  retrieved: "2026-10-06"
+  commit: 2065f4ded0558c6f89fee67c8e5228feb4eb960e
+  sha256: f7e05179df39c45434cad433f5783840bb3788ef322976f9138bc6b72b3a107d
   license: Apache-2.0
 - dependency: actionlint_darwin_amd64
   version: https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_darwin_amd64.tar.gz
@@ -2394,6 +2394,12 @@
   commit: 2676b8abaa00063729a033660870bcf66cc5ac26
   sha256: c23d204546fe976a68758763b673f37106af8a0026df9b616aee25e903303e94
   license: BSD-3-Clause
+- dependency: envoy_api
+  version: https://github.com/envoyproxy/data-plane-api/archive/84e84367f2560cdb47b9bb78fd3e615feb80c3e4.tar.gz
+  retrieved: "2026-10-06"
+  commit: 84e84367f2560cdb47b9bb78fd3e615feb80c3e4
+  sha256: fc3e24880c8ff2ac1564e24aa6d691d2224feadc04f39bb8919a16f28f12eb14
+  license: Apache-2.0
 - dependency: gawk
   version: https://mirror.bazel.build/ftp.gnu.org/gnu/gawk/gawk-5.3.2.tar.xz
   retrieved: "2026-09-29"
@@ -3237,10 +3243,10 @@
   sha256: ""
   license: NOASSERTION
 - dependency: googletest
-  version: https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-  retrieved: "2026-08-27"
-  commit: 52eb8108c5bdec04579160ae17225d66034bd723
-  sha256: 65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
+  version: https://github.com/google/googletest/releases/download/v1.18.0/googletest-1.18.0.tar.gz
+  retrieved: "2026-10-06"
+  commit: 063de7e9578f82b369302001269680b4b1553359
+  sha256: 6e3191c1455468b3fc35a417fb565c1c5071aee1b7e7f85e30cf48a98d37d8b5
   license: BSD-3-Clause
 - dependency: gopkg.in/evanphx/json-patch.v4
   version: v4.12.0
@@ -3271,10 +3277,10 @@
     - Apache-2.0
     - MIT
 - dependency: grpc
-  version: https://github.com/grpc/grpc/archive/refs/tags/v1.75.0.tar.gz
-  retrieved: "2026-08-27"
-  commit: 093085cc925e0d5aa6e92bc29e917f9bdc00add2
-  sha256: 31d6c01c3bfa0a3584532665715e487703eb10d76bb30b4875e57d139c13bbf9
+  version: https://github.com/grpc/grpc/archive/refs/tags/v1.84.0.tar.gz
+  retrieved: "2026-10-06"
+  commit: 3252a89f10d8e92997862167ca7d095ecda85973
+  sha256: 17a4d25717f4871eb71cfdf191f7491f66a59c8ebc782ab53d52fcbfc478959f
   license:
     - Apache-2.0
     - BSD-3-Clause
@@ -5399,10 +5405,10 @@
   sha256: d4c36b8bcd0616290a3913215e0f53b931bd6e00670596f2960df1b44af2bd07
   license: BSD-2-Clause
 - dependency: module_proxy/codeql_go_modules/github.com/planetscale/vtprotobuf
-  version: github.com/planetscale/vtprotobuf@v0.6.1-0.20240319094008-0393e58bdf10
+  version: github.com/planetscale/vtprotobuf@v0.6.1-0.20240409071808-615f978279ca
   retrieved: "2026-10-06"
-  commit: 0393e58bdf106fe0347e554d272a8f2c84d12461
-  sha256: 6fdbac53c6ace58d732be8ec29c1aae928639eb12960cc4c52a9f7a25395ca05
+  commit: 615f978279caa2965ae5d57c7d242f88b38e6802
+  sha256: 19e38fb1b826fb2f9c1d212670d6e5c1119797852f801d97f26722eeffc437b7
   license: BSD-3-Clause
 - dependency: module_proxy/codeql_go_modules/github.com/pmezard/go-difflib
   version: github.com/pmezard/go-difflib@v1.0.1-0.20181226105442-5d4384ee4fb2
@@ -9294,10 +9300,10 @@
     - BSD-3-Clause
     - GPL-2.0-only
 - dependency: protobuf
-  version: https://github.com/protocolbuffers/protobuf/releases/download/v33.4/protobuf-33.4.bazel.tar.gz
-  retrieved: "2026-08-27"
-  commit: edaa823d8b36a8656d7b2b9241b7d0bfe50af878
-  sha256: 687e98a471973b5c5fd711750c40b8b82c0ade33f649db65e00b290f29345a2b
+  version: https://github.com/protocolbuffers/protobuf/releases/download/v35.1/protobuf-35.1.bazel.tar.gz
+  retrieved: "2026-10-06"
+  commit: 35cd01f9fe9afbeea38cc7b979a3b6bfcde82c03
+  sha256: 75b7b0b36b630c7b6e3aeb07b2e58993fb9494fbb2b08bba0891aaa231d4e4d1
   license: BSD-3-Clause
 - dependency: protoc-gen-validate
   version: https://github.com/bufbuild/protoc-gen-validate/archive/refs/tags/v1.3.0.tar.gz
@@ -9317,12 +9323,6 @@
   commit: ""
   sha256: a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1
   license: GPL-2.0
-- dependency: pypi/colorama-0.4.6-py2.py3-none-any.whl
-  version: https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl
-  retrieved: "2026-09-29"
-  commit: ""
-  sha256: 4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
-  license: BSD-3-Clause
 - dependency: pypi/packaging-26.3-py3-none-any.whl
   version: https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl
   retrieved: "2026-09-29"
@@ -9402,10 +9402,10 @@
   sha256: 14a225870ab4e91869652cfd69ef2028277fc1dc4910d65d353b62d6e0ae21f4
   license: Apache-2.0
 - dependency: rules_python
-  version: https://github.com/bazel-contrib/rules_python/releases/download/1.9.0/rules_python-1.9.0.tar.gz
-  retrieved: "2026-09-26"
-  commit: bac549496f67b9f0109d914319c09acf653ccdea
-  sha256: 098ba13578e796c00c853a2161f382647f32eb9a77099e1c88bc5299333d0d6e
+  version: https://github.com/bazel-contrib/rules_python/releases/download/2.0.2/rules_python-2.0.2.tar.gz
+  retrieved: "2026-10-06"
+  commit: 6aad8828e82667cda09ff449862a5a8559bee27b
+  sha256: 2119ca04726066c53b8f1ff42dffa090ea7f3e42a75679f1cfda937406cf7753
   license: Apache-2.0
 - dependency: rules_shell
   version: https://github.com/bazel-contrib/rules_shell/releases/download/v0.8.0/rules_shell-v0.8.0.tar.gz
