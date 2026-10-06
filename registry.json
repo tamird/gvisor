@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+    "updatedAt": "2026-10-06T00:12:27.973926+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1813,19 +1813,19 @@
       "url": "https://github.com/google/gvisor/pull/15330",
       "group": "tests",
       "status": "open",
-      "summary": "Opened ready for review after explicit user approval at a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused cgroup-v1 validation reached the actual memory update and checked its attributes. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:48:26Z.",
+      "summary": "Opened ready for review after explicit user approval at a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused cgroup-v1 validation reached the actual memory update and checked its attributes. The complete patch is unchanged after rebase; no fresh exact-head runtime was run.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:48:26Z.\n\nCopybara import now reports an error while migrating the change, with no diagnostic link. Public CI remains successful; an importer or source cause is not established.",
       "head": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
       "number": 15330,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "updatedAt": "2026-10-06T00:02:27.860240+00:00",
       "followup": {
-        "disposition": "upstream approved; import and checks monitored",
+        "disposition": "upstream approved; opaque Copybara import error",
         "owner": "external_sweeps",
-        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
+        "nextAction": "Await an actionable importer diagnostic or matching import. Public CI is successful; the status exposes only an error while migrating the change and no diagnostic link. No source cause or retry is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15330#pullrequestreview-5422073584"
         ],
-        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
+        "reviewedAt": "2026-10-06T00:02:27.860240+00:00",
         "sourceHead": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2083,16 +2083,16 @@
       "summary": "The requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. The October 5 19:24 UTC sweep reports all current-head checks SUCCESS. Etienne’s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 still refers to the prior 9099a8c50 source and is not evidence for the new head.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-05T19:36:41.924314+00:00",
+      "updatedAt": "2026-10-06T00:12:27.973926+00:00",
       "followup": {
-        "disposition": "approved; import pending",
+        "disposition": "upstream approved; opaque internal-check failure",
         "owner": "external_sweeps",
-        "nextAction": "Etienne approved the rebased current head at 22:23. Track the matching import and checks; no source revision or public reply is requested.",
+        "nextAction": "Track the matching public import #15257, which is still pending. Copybara reports internal checks failed for runs created at 22:29:13 UTC, but exposes no public cause. No source amendment or retry is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15188#issuecomment-6000677541",
           "https://github.com/google/gvisor/pull/15188#issuecomment-6002279588"
         ],
-        "reviewedAt": "2026-10-05T22:27:03.475369+00:00",
+        "reviewedAt": "2026-10-06T00:12:27.973926+00:00",
         "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2715,19 +2715,19 @@
       "url": "https://github.com/google/gvisor/pull/15335",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
-      "summary": "Opened ready for review after explicit user approval at 4e7f86be29e92b697aac1d205f94bd640ce8e854, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier actual ClangTidy checks passed for the mount header and the capability errno provider with musl. This is focused utility-source validation, not a broader musl-suite pass.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:49:06Z.",
+      "updatedAt": "2026-10-06T00:02:27.860240+00:00",
+      "summary": "Opened ready for review after explicit user approval at 4e7f86be29e92b697aac1d205f94bd640ce8e854, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier actual ClangTidy checks passed for the mount header and the capability errno provider with musl. This is focused utility-source validation, not a broader musl-suite pass.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:49:06Z.\n\nCopybara import now reports an error while migrating the change, with no diagnostic link. Public CI remains successful; an importer or source cause is not established.",
       "head": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
       "number": 15335,
       "reviewDecision": "APPROVED",
       "followup": {
-        "disposition": "upstream approved; import and checks monitored",
+        "disposition": "upstream approved; opaque Copybara import error",
         "owner": "external_sweeps",
-        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
+        "nextAction": "Await an actionable importer diagnostic or matching import. Public CI is successful; the status exposes only an error while migrating the change and no diagnostic link. No source cause or retry is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15335#pullrequestreview-5422078162"
         ],
-        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
+        "reviewedAt": "2026-10-06T00:02:27.860240+00:00",
         "sourceHead": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2758,18 +2758,6 @@
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
-    },
-    {
-      "id": "branch:iptables-handshake-deadline",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "iptables-handshake-deadline",
-      "title": "Bound the iptables startup handshake",
-      "url": "https://github.com/tamird/gvisor/tree/iptables-handshake-deadline",
-      "group": "tests",
-      "status": "superseded",
-      "updatedAt": "2026-10-05T17:24:09.234197+00:00",
-      "summary": "Superseded for proposed upstream delivery by the whole-lifecycle iptables context revision on iptables-test-action-deadline. Preserve this branch and its historical evidence until replacement validation and root-authorized cleanup; do not request a duplicate handshake PR.\n\nIndependent master-based candidate b3c3c85d363eaa8c2ab05911097b217437a4ef72 is the unchanged final patch rebased onto master 8bf3dc484b3d86e7a677994aad43a2a271fdbe13. It bounds the startup handshake and has no code prerequisite. The user-directed final amendment replaces TCPAddr construction with direct AddrPortFrom conversion and explains getIP’s RemoteAddr use for test traffic. The added helper tests remain removed. The immediately preceding d158 source has independent real-case validation: IPv4 passes in 1.91 seconds; IPv6 still fails in 10.24 seconds versus the original 130.79 seconds. Failed-parent outcome c83b2f2c7a9e and peer 1cfbc047c987 are retained. Equivalent-conversion review covers the final amendment; no new runtime run or test is claimed. This bounds waiting and does not itself fix reachability. The separate shared Docker readiness correction passes all sixteen focused network leaves; both corrections are integrated in MAIN 2cc814772. Contributor review was requested once; no upstream PR is authorized or open."
     },
     {
       "id": "pr:15309",
@@ -2881,10 +2869,10 @@
       "title": "Give iptables test phases separate deadlines",
       "url": "https://github.com/tamird/gvisor/tree/iptables-test-action-deadline",
       "group": "tests",
-      "status": "reconciliation in progress",
-      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
-      "summary": "Separates setup and traffic deadlines derived from the test context, bounds address exchange, cancels traffic before joining helpers, and gives log collection and Docker cleanup separate timed contexts. Current independent source 98507d833004461047a8b2d65386b90221d3e4cb. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Root is reconciling the user-identified overlap between the context, action-netip and sendIP changes. Upstream publication is held until the revised scopes are reviewed. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
-      "head": "98507d833004461047a8b2d65386b90221d3e4cb"
+      "status": "review pending",
+      "updatedAt": "2026-10-06T00:12:27.973926+00:00",
+      "summary": "Reconciled context revision f6440bec83e6b19ca844672fc68a398133f9a188 separates setup and traffic deadlines, replaces sendIP with the existing context-aware ConnectTCP helper, and gives logging and cleanup distinct bounded contexts. Focused parent df09b671-5f98-4552-90b3-ddcd3841bf21 on composition 853e1b401 passed in 230.635 seconds: all twelve IPv4/IPv6 leaves passed on both original 900-second AMD64 Firecracker owners without cached test results. Contributor review is pending. The older handshake topic is fully superseded by this context-aware connection path and has been retired after source/replacement and exact-ref checks; its b3c3c85d3 commit and evidence remain recorded. No broader netfilter or full-qualification pass is claimed.",
+      "head": "f6440bec83e6b19ca844672fc68a398133f9a188"
     },
     {
       "id": "pr:15319",
@@ -2946,8 +2934,8 @@
       "url": "https://github.com/tamird/gvisor/tree/netfilter-action-netip",
       "group": "tests",
       "status": "reconciliation in progress",
-      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
-      "summary": "Uses comparable netip values in iptables/nftables actions and shared helpers, with checked conversions at Docker, netlink and socket boundaries. Preserves IPv6 zones and corrects interface-address family selection. Current independent source 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e. Combined validation on a9141340c passed all 12 leaves / 18 XML entries without skips, on two actual uncached AMD64 Firecracker owners with original 900-second timeouts. Outcome d743b95e9f3a and root review bind 280 saved files; source/composition peers c9d4d94d07ab/1de2c1fd3c2b are closed. Root is reconciling the user-identified overlap between the context, action-netip and sendIP changes. Upstream publication is held until the revised scopes are reviewed. The companion topic is not a code prerequisite; no broader netfilter or full-qualification pass is claimed.",
+      "updatedAt": "2026-10-06T00:12:27.973926+00:00",
+      "summary": "Current public topic 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e remains held while root reconciles its overlap with the context replacement f6440bec8 and the peer-address work in PR #15321. The current source has not yet been published as that revised stack; no upstream PR is authorized. Earlier focused evidence belongs to the prior composition and remains historical, not proof of the forthcoming revision.",
       "head": "0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e"
     },
     {
@@ -2961,6 +2949,32 @@
       "status": "upstream restoration required",
       "updatedAt": "2026-10-05T22:19:52.797190+00:00",
       "summary": "Upstream rollback d38ccf24ae removes the save/restore support introduced in 8bf3dc484. Its public message identifies an automated rollback of CL 993737103 (Piper 993881815) without an explanatory cause. Root inspected the source: it removes the TUN restore implementation used by PR #15315, plus RestorableNetworkEndpoint, IPv6 endpoint.Restore, ndpState.restore and the Job helpers modified by #15318. Both source topics depend on restoration or an upstream replacement of this feature. This is an actual commit-linked dependency, not a new branch, issue, authorized rollback reversal or provider-capacity request. Existing canonical b498 still includes the earlier feature and its source-specific RBE evidence; that is not qualification of current master 4ac0fde02."
+    },
+    {
+      "id": "branch:native-test-platforms",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "native-test-platforms",
+      "title": "Run Go tests on selected native architectures",
+      "url": "https://github.com/tamird/gvisor/tree/native-test-platforms",
+      "group": "bazel",
+      "status": "review pending",
+      "head": "50a67753bff12f8e36f20f7b50cb4bdc9dce0d4a",
+      "updatedAt": "2026-10-06T00:02:27.860240+00:00",
+      "summary": "Independent upstream candidate exposing configured AMD64 and ARM64 variants through native Bazel test declarations, plus the existing atomicbitops suite and Nogo checks. This is a graph-owned extraction, not the fork qualifier framework, and has no LLVM prerequisite. One hosted invocation d25a7c7f passed both native architectures and all five test/Nogo owners. Its parent remains FAILED because collection assumptions did not match the actual outputs; saved evidence is being closed, with no rerun or whole-repository qualification claim. Contributor review is pending; no upstream PR is open."
+    },
+    {
+      "id": "branch:workflow-zizmor-pins",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "workflow-zizmor-pins",
+      "title": "Fix mandatory workflow security checks",
+      "url": "https://github.com/tamird/gvisor/tree/workflow-zizmor-pins",
+      "group": "bazel",
+      "status": "review pending",
+      "head": "0e4e43eef51bd5e5902fbf9e8f11d5f66ef9ed12",
+      "updatedAt": "2026-10-06T00:02:27.860240+00:00",
+      "summary": "Pins workflow actions and shares GitHub’s generated status URL through one job-level environment entry. The URL change satisfies the scanner; it is not evidence of an attacker-controlled URL. The relevant Go workflow changes are attributed to Jing Chen’s existing work. Hosted parent 6fc2a55b completed successfully with actionlint and offline zizmor reporting no findings; final input evidence is being collected. Contributor review is pending; no upstream PR is open."
     }
   ],
   "edges": [
