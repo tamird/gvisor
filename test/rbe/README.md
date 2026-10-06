@@ -154,9 +154,12 @@ For this phase only, the Bazel coordinator runs as root on the ephemeral Actions
 VM because its Docker strategy maps the coordinator's UID into the container.
 Compilation remains remote, and the original test owners run directly without
 the local-root frontend. Bazel stages their inputs, collects outputs and removes
-the containers. This checks whether gVisor can run through KVM, not just whether
-`/dev/kvm` exists. It does not qualify the full KVM syscall or benchmark suites,
-or Docker suites requiring outbound networking.
+the containers. A declared adapter first moves the setup and test processes
+into a cgroup leaf so the private daemon can enable controllers for its
+children. It verifies that both PID and cgroup namespaces differ from the
+coordinator before moving processes. This checks whether gVisor can run through
+KVM, not just whether `/dev/kvm` exists. It does not qualify the full KVM syscall
+or benchmark suites, or Docker suites requiring outbound networking.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
@@ -168,8 +171,8 @@ The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits ordinary local Actions jobs to 15 minutes. Local syscalls have a
 45-minute work limit within a 50-minute job. Local test results are not uploaded
 to the shared action cache. Its artifact contains each build/test execution
-log, host facts and profile selection metadata, excluding the credential
-configuration and raw build-event options. The
+log and host facts, plus native profile selection metadata where applicable,
+excluding the credential configuration and raw build-event options. The
 rootless smoke requires a nonroot 4K-page Linux host with working user
 namespaces. Like the Buildkite test hosts, the ephemeral Actions VM lifts
 Ubuntu's AppArmor unprivileged-user-namespace restriction for local tests;

@@ -47,6 +47,16 @@ sh_binary(
 
 # Applied with --run_under before the selected test initializes its daemon.
 sh_binary(
+    name = "docker_cgroup",
+    testonly = True,
+    srcs = ["docker_cgroup.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)
+
+# Applied with --run_under before the selected test initializes its daemon.
+sh_binary(
     name = "cgroup_v1",
     testonly = True,
     srcs = ["cgroup_v1.sh"],
