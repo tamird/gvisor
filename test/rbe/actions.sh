@@ -94,6 +94,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     [[ $(id -u) != 0 ]]
     [[ $(getconf PAGESIZE) == 4096 ]]
     sudo -n true
+    # Match the Buildkite test-host setup on this ephemeral Actions VM.
+    # Ubuntu's restriction prevents the rootless runtime's user namespace.
+    if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
+      sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns) == 0 ]]
+    fi
     ;;
   *) printf 'Unknown qualification execution mode.\n' >&2; exit 2 ;;
 esac

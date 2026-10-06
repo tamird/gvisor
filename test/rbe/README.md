@@ -102,8 +102,11 @@ and limits the Actions job to 15 minutes. Local test results are not uploaded
 to the shared action cache. Its artifact contains the execution log and host
 facts, not the credential configuration or raw build-event options. The
 rootless smoke requires a nonroot 4K-page Linux host with working user
-namespaces. Recorded device nodes do not establish usable KVM or vhost-net;
-this pilot adds no Docker, cgroup, 64K-page, alternate-kernel or GPU coverage.
+namespaces. Like the Buildkite test hosts, the ephemeral Actions VM lifts
+Ubuntu's AppArmor unprivileged-user-namespace restriction for local tests;
+AppArmor remains enabled. Recorded device nodes do not establish usable KVM
+or vhost-net; this pilot adds no Docker, cgroup, 64K-page, alternate-kernel or
+GPU coverage.
 
 This fork frontend skips the legacy builder and `runsc` artifact upload on its
 qualification and local-test pilot branches. Other pushes retain that job;
