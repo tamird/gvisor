@@ -19,6 +19,7 @@
 #include <linux/if.h>
 #include <linux/if_arp.h>
 #include <linux/if_ether.h>
+#include <linux/if_link.h>
 #include <linux/if_packet.h>
 #include <linux/if_tun.h>
 #include <linux/netlink.h>
