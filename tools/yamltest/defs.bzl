@@ -61,8 +61,10 @@ def _compile_yaml_test(**kwargs):
 # with_cfg requires the returned transition rule to be exported at module scope.
 # buildifier: disable=unused-variable
 _yaml_amd64_test, _yaml_amd64_transition = with_test_architecture(_compile_yaml_test, "amd64").build()
+
 # buildifier: disable=unused-variable
 _yaml_arm64_test, _yaml_arm64_transition = with_test_architecture(_compile_yaml_test, "arm64").build()
+
 # buildifier: disable=unused-variable
 _yaml_test_cgroup_v1_test, _yaml_test_cgroup_v1_transition = with_cgroup_v1(_compile_yaml_test)
 

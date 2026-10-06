@@ -184,8 +184,10 @@ def _compile_deps_test(**kwargs):
 # with_cfg requires the returned transition rule to be exported at module scope.
 # buildifier: disable=unused-variable
 _deps_amd64_test, _deps_amd64_transition = with_test_architecture(_compile_deps_test, "amd64").build()
+
 # buildifier: disable=unused-variable
 _deps_arm64_test, _deps_arm64_transition = with_test_architecture(_compile_deps_test, "arm64").build()
+
 # buildifier: disable=unused-variable
 _deps_test_cgroup_v1_test, _deps_test_cgroup_v1_transition = with_cgroup_v1(_compile_deps_test)
 
