@@ -20,7 +20,13 @@ cc_arm64_test, _cc_arm64_transition = with_test_architecture(_compile_cc_test, "
 cc_cgroup_v1_test, _cc_cgroup_v1_transition = with_cgroup_v1(_cc_test, implicit_targets = ["{name}.dwp", "{name}.stripped"])
 
 def cc_test(name, architectures = ["amd64", "arm64"], **kwargs):
-    """Declares a C++ test and optional native architecture variants."""
+    """Declares a C++ test and optional native architecture variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _cc_test(name = name, **kwargs)
     cgroup_v1_variant(name, cc_cgroup_v1_test, kwargs)
