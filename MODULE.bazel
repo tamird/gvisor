@@ -123,6 +123,15 @@ http_archive(
     urls = ["https://github.com/bazelbuild/buildtools/archive/v8.5.1.tar.gz"],
 )
 
+# Keep cpplint's source license available without relying on old wheel metadata.
+http_archive(
+    name = "cpplint",
+    build_file_content = 'exports_files(["cpplint.py", "LICENSE"])',
+    sha256 = "c23d204546fe976a68758763b673f37106af8a0026df9b616aee25e903303e94",
+    strip_prefix = "cpplint-2676b8abaa00063729a033660870bcf66cc5ac26",
+    urls = ["https://github.com/cpplint/cpplint/archive/2676b8abaa00063729a033660870bcf66cc5ac26.tar.gz"],
+)
+
 ### Python
 PYTHON_VERSION = "3.11"
 

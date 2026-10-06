@@ -1,4 +1,5 @@
 load("@lint_deps//:requirements.bzl", "requirement")
+load("@rules_python//python:defs.bzl", "py_binary")
 load("@rules_python//python/entry_points:py_console_script_binary.bzl", "py_console_script_binary")
 load("//tools:defs.bzl", "bzl_library")
 load(":defs.bzl", "gofmt_tools", "source_lint")
@@ -28,10 +29,10 @@ py_console_script_binary(
     pkg = requirement("codespell"),
 )
 
-py_console_script_binary(
+py_binary(
     name = "cpplint_tool",
-    pkg = requirement("cpplint"),
-    script = "cpplint",
+    srcs = ["@cpplint//:cpplint.py"],
+    main = "@cpplint//:cpplint.py",
 )
 
 source_lint(
