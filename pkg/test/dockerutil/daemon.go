@@ -464,6 +464,11 @@ func (d *testDaemon) close(failed bool) error {
 		if err := syscall.Unmount(filepath.Join(d.execRoot, "netns", "default"), 0); err != nil && !errors.Is(err, syscall.ENOENT) && !errors.Is(err, syscall.EINVAL) {
 			errs = append(errs, fmt.Errorf("unmount private Docker default network namespace: %w", err))
 		}
+		// Docker can retain its data-root bind mount when its path differs
+		// from the filesystem-relative root beneath a parent bind mount.
+		if err := syscall.Unmount(d.dataRoot, 0); err != nil && !errors.Is(err, syscall.ENOENT) && !errors.Is(err, syscall.EINVAL) {
+			errs = append(errs, fmt.Errorf("unmount private Docker data root: %w", err))
+		}
 		if err := os.RemoveAll(d.root); err != nil {
 			errs = append(errs, fmt.Errorf("remove private Docker state: %w", err))
 		}
