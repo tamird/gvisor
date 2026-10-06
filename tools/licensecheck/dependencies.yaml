@@ -154,6 +154,18 @@
   commit: f4b10eef3a7b114033d52c8d83ad43b105a150b3
   sha256: 2c8a2520ef58c3d2a6e9e0392ec2cea37adb17db4e00c903d48415fd809397f8
   license: Apache-2.0
+- dependency: com_github_bazelbuild_buildtools
+  version: https://github.com/bazelbuild/buildtools/archive/v8.5.1.tar.gz
+  retrieved: "2026-10-06"
+  commit: f6a1982250030df9c2d24a675a04f150ff6aca6b
+  sha256: f3b800e9f6ca60bdef3709440f393348f7c18a29f30814288a7326285c80aab9
+  license: Apache-2.0
+- dependency: cpplint
+  version: https://github.com/cpplint/cpplint/archive/2676b8abaa00063729a033660870bcf66cc5ac26.tar.gz
+  retrieved: "2026-10-06"
+  commit: 2676b8abaa00063729a033660870bcf66cc5ac26
+  sha256: c23d204546fe976a68758763b673f37106af8a0026df9b616aee25e903303e94
+  license: BSD-3-Clause
 - dependency: gawk
   version: https://mirror.bazel.build/ftp.gnu.org/gnu/gawk/gawk-5.3.2.tar.xz
   retrieved: "2026-09-29"
@@ -4250,6 +4262,12 @@
   commit: ""
   sha256: ecd351a4be9d35a9eaaba244a7687143c9c7d4aea6ac964e7e7ddab20cbcf4e7
   license: MIT
+- dependency: pypi/codespell-2.3.0-py3-none-any.whl
+  version: https://files.pythonhosted.org/packages/0e/20/b6019add11e84f821184234cea0ad91442373489ef7ccfa3d73a71b908fa/codespell-2.3.0-py3-none-any.whl
+  retrieved: "2026-10-06"
+  commit: ""
+  sha256: a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1
+  license: GPL-2.0
 - dependency: pypi/colorama-0.4.6-py2.py3-none-any.whl
   version: https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl
   retrieved: "2026-09-29"
