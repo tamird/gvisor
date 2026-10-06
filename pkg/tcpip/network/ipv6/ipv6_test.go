@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net"
 	"reflect"
 	"testing"
 
@@ -3032,21 +3031,21 @@ const (
 
 var (
 	incomingIPv6Addr = tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice(net.ParseIP("10::1").To16()),
+		Address:   testutil.MustParse6("10::1"),
 		PrefixLen: 64,
 	}
 	outgoingIPv6Addr = tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice(net.ParseIP("11::1").To16()),
+		Address:   testutil.MustParse6("11::1"),
 		PrefixLen: 64,
 	}
 	multicastIPv6Addr = tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice(net.ParseIP("ff00::").To16()),
+		Address:   testutil.MustParse6("ff00::"),
 		PrefixLen: 64,
 	}
-	remoteIPv6Addr1        = tcpip.AddrFromSlice(net.ParseIP("10::2").To16())
-	remoteIPv6Addr2        = tcpip.AddrFromSlice(net.ParseIP("11::2").To16())
-	unreachableIPv6Addr    = tcpip.AddrFromSlice(net.ParseIP("12::2").To16())
-	linkLocalIPv6Addr      = tcpip.AddrFromSlice(net.ParseIP("fe80::").To16())
+	remoteIPv6Addr1        = testutil.MustParse6("10::2")
+	remoteIPv6Addr2        = testutil.MustParse6("11::2")
+	unreachableIPv6Addr    = testutil.MustParse6("12::2")
+	linkLocalIPv6Addr      = testutil.MustParse6("fe80::")
 	defaultEndpointConfigs = map[tcpip.NICID]tcpip.AddressWithPrefix{
 		incomingNICID: incomingIPv6Addr,
 		outgoingNICID: outgoingIPv6Addr,
@@ -3851,14 +3850,14 @@ func TestIcmpRateLimit(t *testing.T) {
 		host1IPv6Addr = tcpip.ProtocolAddress{
 			Protocol: ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("10::1").To16()),
+				Address:   testutil.MustParse6("10::1"),
 				PrefixLen: 64,
 			},
 		}
 		host2IPv6Addr = tcpip.ProtocolAddress{
 			Protocol: ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("10::2").To16()),
+				Address:   testutil.MustParse6("10::2"),
 				PrefixLen: 64,
 			},
 		}

@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net"
 	"testing"
 	"time"
 
@@ -490,7 +489,7 @@ func TestForwarding(t *testing.T) {
 		{
 			name:                             "initializing source",
 			TTL:                              2,
-			srcAddr:                          tcpip.AddrFromSlice(net.ParseIP("0.0.0.255").To4()),
+			srcAddr:                          testutil.MustParse4("0.0.0.255"),
 			dstAddr:                          remoteIPv4Addr2,
 			expectedInitializingSourceErrors: 1,
 			expectPacketForwarded:            false,
@@ -1151,10 +1150,10 @@ func TestIPv4Sanity(t *testing.T) {
 	)
 	var (
 		ipv4Addr = tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.1.58").To4()),
+			Address:   testutil.MustParse4("192.168.1.58"),
 			PrefixLen: 24,
 		}
-		remoteIPv4Addr = tcpip.AddrFromSlice(net.ParseIP("10.0.0.1").To4())
+		remoteIPv4Addr = testutil.MustParse4("10.0.0.1")
 	)
 
 	tests := []struct {
@@ -3559,14 +3558,14 @@ func TestPacketQueuing(t *testing.T) {
 		host1IPv4Addr = tcpip.ProtocolAddress{
 			Protocol: ipv4.ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+				Address:   testutil.MustParse4("192.168.0.1"),
 				PrefixLen: 24,
 			},
 		}
 		host2IPv4Addr = tcpip.ProtocolAddress{
 			Protocol: ipv4.ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+				Address:   testutil.MustParse4("192.168.0.2"),
 				PrefixLen: 8,
 			},
 		}
@@ -3891,14 +3890,14 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 		localAddr = tcpip.ProtocolAddress{
 			Protocol: ipv4.ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+				Address:   testutil.MustParse4("192.168.0.1"),
 				PrefixLen: 24,
 			},
 		}
 		remoteAddr = tcpip.ProtocolAddress{
 			Protocol: ipv4.ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+				Address:   testutil.MustParse4("192.168.0.2"),
 				PrefixLen: 24,
 			},
 		}
@@ -4026,14 +4025,14 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 	localAddr := tcpip.ProtocolAddress{
 		Protocol: ipv4.ProtocolNumber,
 		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+			Address:   testutil.MustParse4("192.168.0.1"),
 			PrefixLen: 24,
 		},
 	}
 	remoteAddr := tcpip.ProtocolAddress{
 		Protocol: ipv4.ProtocolNumber,
 		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+			Address:   testutil.MustParse4("192.168.0.2"),
 			PrefixLen: 24,
 		},
 	}
@@ -4127,15 +4126,15 @@ func TestICMPEchoTemporaryAddressSuppressesReply(t *testing.T) {
 	assignedAddr := tcpip.ProtocolAddress{
 		Protocol: ipv4.ProtocolNumber,
 		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+			Address:   testutil.MustParse4("192.168.0.1"),
 			PrefixLen: 24,
 		},
 	}
-	temporaryAddr := tcpip.AddrFromSlice(net.ParseIP("192.168.0.99").To4())
+	temporaryAddr := testutil.MustParse4("192.168.0.99")
 	remoteAddr := tcpip.ProtocolAddress{
 		Protocol: ipv4.ProtocolNumber,
 		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+			Address:   testutil.MustParse4("192.168.0.2"),
 			PrefixLen: 24,
 		},
 	}
@@ -4204,14 +4203,14 @@ func TestIcmpRateLimit(t *testing.T) {
 		host1IPv4Addr = tcpip.ProtocolAddress{
 			Protocol: ipv4.ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.1").To4()),
+				Address:   testutil.MustParse4("192.168.0.1"),
 				PrefixLen: 24,
 			},
 		}
 		host2IPv4Addr = tcpip.ProtocolAddress{
 			Protocol: ipv4.ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("192.168.0.2").To4()),
+				Address:   testutil.MustParse4("192.168.0.2"),
 				PrefixLen: 24,
 			},
 		}
