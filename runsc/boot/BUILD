@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -177,6 +177,7 @@ go_test(
         "mount_hints_test.go",
         "vfs_test.go",
     ],
+    exec_properties = namespace_test_exec_properties(),
     library = ":boot",
     deps = [
         "//pkg/abi/linux",
