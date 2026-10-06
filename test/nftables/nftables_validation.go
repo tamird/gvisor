@@ -226,10 +226,10 @@ func (*tcpSNAT) Name() string {
 // has the source address: snatAddr.
 func (*tcpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Expected SNAT address of client connection to server.
-	snatAddr := "127.0.0.99"
+	snatAddr := netip.MustParseAddr("127.0.0.99")
 	ipMatch := "ip"
 	if ipv6 {
-		snatAddr = "fd00::99"
+		snatAddr = netip.MustParseAddr("fd00::99")
 		ipMatch = "ip6"
 	}
 	cmds := [][]string{
@@ -238,7 +238,7 @@ func (*tcpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) e
 		// Create input chain in NAT table.
 		{"add", "chain", "inet", "nat", "input", "{ type nat hook input priority 100; }"},
 		// Add rule to change source address to snatAddr for TCP packets to port 9000.
-		{"add", "rule", "inet", "nat", "input", "tcp", "dport", "9000", "counter", "snat", ipMatch, "to", snatAddr},
+		{"add", "rule", "inet", "nat", "input", "tcp", "dport", "9000", "counter", "snat", ipMatch, "to", snatAddr.String()},
 	}
 	for _, cmd := range cmds {
 		if err := nftCmd(cmd); err != nil {
@@ -246,41 +246,16 @@ func (*tcpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) e
 		}
 	}
 
-	// start the server inside gvisor.
-	l, err := net.Listen(netutils.TCPNetwork(ipv6), ":9000")
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	remoteAddr, err := netutils.ListenTCPFrom(ctx, 9000, ipv6)
 	if err != nil {
-		return fmt.Errorf("net.Listen failed: %v", err)
+		return fmt.Errorf("receive SNAT peer address: %w", err)
 	}
-	defer l.Close()
-
-	errCh := make(chan error, 1)
-	go func() {
-		log.Infof("Waiting for client connection")
-		conn, err := l.Accept()
-		if err != nil {
-			errCh <- err
-			return
-		}
-		defer conn.Close()
-		remoteAddr, _, err := net.SplitHostPort(conn.RemoteAddr().String())
-		if err != nil {
-			errCh <- fmt.Errorf("failed to parse the client addr, err: %v", err)
-			return
-		}
-		if !net.ParseIP(remoteAddr).Equal(net.ParseIP(snatAddr)) {
-			errCh <- fmt.Errorf("unexpected client addr: %s, expected addr: %s", remoteAddr, snatAddr)
-			return
-		}
-		errCh <- nil
-	}()
-
-	// Wait for error or timeout.
-	select {
-	case err := <-errCh:
-		return err
-	case <-time.After(30 * time.Second):
-		return fmt.Errorf("timeout waiting for the client connection")
+	if remoteAddr.Addr() != snatAddr {
+		return fmt.Errorf("unexpected client addr: %s, expected addr: %s", remoteAddr.Addr(), snatAddr)
 	}
+	return nil
 }
 
 // LocalAction are the commands that are ran on the test runner.
@@ -429,10 +404,10 @@ func (*udpSNAT) Name() string {
 // has the source address: snatAddr.
 func (*udpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// Expected SNAT address of client connection to server.
-	snatAddr := "127.0.0.99"
+	snatAddr := netip.MustParseAddr("127.0.0.99")
 	ipMatch := "ip"
 	if ipv6 {
-		snatAddr = "fd00::99"
+		snatAddr = netip.MustParseAddr("fd00::99")
 		ipMatch = "ip6"
 	}
 	cmds := [][]string{
@@ -441,7 +416,7 @@ func (*udpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) e
 		// Create input chain in NAT table.
 		{"add", "chain", "inet", "nat", "input", "{ type nat hook input priority 100; }"},
 		// Add rule to change source address to snatAddr for UDP packets to port 9000.
-		{"add", "rule", "inet", "nat", "input", "udp", "dport", "9000", "counter", "snat", ipMatch, "to", snatAddr},
+		{"add", "rule", "inet", "nat", "input", "udp", "dport", "9000", "counter", "snat", ipMatch, "to", snatAddr.String()},
 	}
 	for _, cmd := range cmds {
 		if err := nftCmd(cmd); err != nil {
@@ -449,42 +424,16 @@ func (*udpSNAT) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) e
 		}
 	}
 
-	// start the UDP server inside gvisor.
-	l, err := net.ListenPacket(netutils.UDPNetwork(ipv6), ":9000")
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	remoteAddr, err := netutils.ListenUDPFrom(ctx, 9000, ipv6)
 	if err != nil {
-		return fmt.Errorf("net.ListenPacket failed: %v", err)
+		return fmt.Errorf("receive SNAT peer address: %w", err)
 	}
-	defer l.Close()
-
-	errCh := make(chan error, 1)
-	go func() {
-		log.Infof("Waiting for client connection")
-		buf := make([]byte, 1024)
-		l.SetReadDeadline(time.Now().Add(30 * time.Second))
-		_, remoteAddrNet, err := l.ReadFrom(buf)
-		if err != nil {
-			errCh <- err
-			return
-		}
-		remoteAddr, _, err := net.SplitHostPort(remoteAddrNet.String())
-		if err != nil {
-			errCh <- fmt.Errorf("failed to parse the client addr, err: %v", err)
-			return
-		}
-		if !net.ParseIP(remoteAddr).Equal(net.ParseIP(snatAddr)) {
-			errCh <- fmt.Errorf("unexpected client addr: %s, expected addr: %s", remoteAddr, snatAddr)
-			return
-		}
-		errCh <- nil
-	}()
-
-	// Wait for error or timeout.
-	select {
-	case err := <-errCh:
-		return err
-	case <-time.After(30 * time.Second):
-		return fmt.Errorf("timeout waiting for the client connection")
+	if remoteAddr.Addr() != snatAddr {
+		return fmt.Errorf("unexpected client addr: %s, expected addr: %s", remoteAddr.Addr(), snatAddr)
 	}
+	return nil
 }
 
 // LocalAction are the commands that are ran on the test runner.
@@ -532,11 +481,11 @@ func (*mapTest) Name() string {
 func (t *mapTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	addrType := "ipv4_addr"
 	ipMatch := "ip"
-	snatAddr := "127.0.0.99"
+	snatAddr := netip.MustParseAddr("127.0.0.99")
 	if ipv6 {
 		addrType = "ipv6_addr"
 		ipMatch = "ip6"
-		snatAddr = "fd00::99"
+		snatAddr = netip.MustParseAddr("fd00::99")
 	}
 
 	//
@@ -591,7 +540,7 @@ func (t *mapTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool)
 		if err != nil {
 			return fmt.Errorf("failed to list client_snat_map: %v", err)
 		}
-		if !strings.Contains(out, ip.String()) || !strings.Contains(out, snatAddr) {
+		if !strings.Contains(out, ip.String()) || !strings.Contains(out, snatAddr.String()) {
 			return fmt.Errorf("unexpected normal map dump output: %s", out)
 		}
 
@@ -622,43 +571,15 @@ func (t *mapTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool)
 
 	// 4. Verify both maps behave correctly by listening on TCP port 9000.
 	// Packet must jump to snat_chain and get source IP translated to snatAddr.
-	l2, err := net.Listen(netutils.TCPNetwork(ipv6), ":9000")
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	remoteAddr, err := netutils.ListenTCPFrom(ctx, 9000, ipv6)
 	if err != nil {
-		return fmt.Errorf("second net.Listen failed: %v", err)
+		return fmt.Errorf("receive client address after SNAT: %w", err)
 	}
-
-	errCh2 := make(chan error, 1)
-	go func() {
-		defer l2.Close()
-		conn, err := l2.Accept()
-		if err != nil {
-			errCh2 <- err
-			return
-		}
-		defer conn.Close()
-
-		remoteAddr, _, err := net.SplitHostPort(conn.RemoteAddr().String())
-		if err != nil {
-			errCh2 <- fmt.Errorf("failed to parse client address, err: %v", err)
-			return
-		}
-		if !net.ParseIP(remoteAddr).Equal(net.ParseIP(snatAddr)) {
-			errCh2 <- fmt.Errorf("unexpected client address after SNAT: %s, expected: %s", remoteAddr, snatAddr)
-			return
-		}
-		errCh2 <- nil
-	}()
-
-	select {
-	case err := <-errCh2:
-		if err != nil {
-			return err
-		}
-	case <-time.After(15 * time.Second):
-		l2.Close()
-		return fmt.Errorf("timeout waiting for client TCP connection post-SNAT on port 9000")
+	if remoteAddr.Addr() != snatAddr {
+		return fmt.Errorf("unexpected client address after SNAT: %s, expected: %s", remoteAddr.Addr(), snatAddr)
 	}
-
 	return nil
 }
 
@@ -1044,30 +965,6 @@ func (t *ctTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool) 
 	return nil
 }
 
-// dialTCPWithReuseAddr dials a TCP connection with the SO_REUSEADDR and SO_LINGER option set.
-func dialTCPWithReuseAddr(ctx context.Context, localAddr, remoteAddr net.Addr) (net.Conn, error) {
-	network := localAddr.Network()
-	if network == "" {
-		network = remoteAddr.Network()
-	}
-	d := net.Dialer{
-		LocalAddr: localAddr,
-		Control: func(network, address string, c syscall.RawConn) error {
-			var err error
-			c.Control(func(fd uintptr) {
-				err = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
-			})
-			return err
-		},
-	}
-	conn, err := d.DialContext(ctx, network, remoteAddr.String())
-	if err != nil {
-		return nil, err
-	}
-	conn.(*net.TCPConn).SetLinger(0)
-	return conn, nil
-}
-
 // LocalAction implements TestCase.LocalAction.
 func (t *ctTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) error {
 	// 1. Sync with ContainerAction setup.
@@ -1092,26 +989,31 @@ func (t *ctTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) erro
 	// 2. Connect using source port 29007 (allowed port).
 	log.Infof("ctTest (LocalAction): Sending positive TCP packets to container (port 29007 -> 29008)")
 	{
-		localBind := "0.0.0.0:29007"
+		localIP := netip.IPv4Unspecified()
 		if ipv6 {
-			localBind = "[::]:29007"
+			localIP = netip.IPv6Unspecified()
 		}
-		localAddr, err := net.ResolveTCPAddr(netutils.TCPNetwork(ipv6), localBind)
-		if err != nil {
-			return fmt.Errorf("resolve local TCP addr failed: %v", err)
+		d := net.Dialer{
+			Control: func(network, address string, c syscall.RawConn) error {
+				var sockErr error
+				if err := c.Control(func(fd uintptr) {
+					sockErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_REUSEADDR, 1)
+				}); err != nil {
+					return err
+				}
+				return sockErr
+			},
 		}
-		remoteAddr, err := net.ResolveTCPAddr(netutils.TCPNetwork(ipv6), net.JoinHostPort(ip.String(), "29008"))
-		if err != nil {
-			return fmt.Errorf("resolve remote TCP addr failed: %v", err)
-		}
-
-		dialCtx, dialCancel := context.WithTimeout(ctx, 5*time.Second)
-		defer dialCancel()
-		conn, err := dialTCPWithReuseAddr(dialCtx, localAddr, remoteAddr)
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
+		conn, err := d.DialTCP(ctx, netutils.TCPNetwork(ipv6), netip.AddrPortFrom(localIP, 29007), netip.AddrPortFrom(ip, 29008))
 		if err != nil {
 			return fmt.Errorf("positive TCP dial failed: %v", err)
 		}
 		defer conn.Close()
+		if err := conn.SetLinger(0); err != nil {
+			return fmt.Errorf("set positive TCP linger: %w", err)
+		}
 
 		if _, err := conn.Write([]byte("remote_test")); err != nil {
 			return fmt.Errorf("failed to write positive TCP payload: %v", err)
