@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T09:13:37.363511+00:00",
+    "updatedAt": "2026-10-06T09:29:19.240889+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -898,19 +898,19 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T07:59:58.479021+00:00",
+      "updatedAt": "2026-10-06T09:26:21.259188+00:00",
       "summary": "The conflict rebase preserves all three metric source files and the approved commit message. It removes the upstream escape-analysis exemption attached to the map lookup that this change deletes. Etienne reapproved published head f5f0270289147db0614fd2eadc1ed15dcb652f81. Import #15248 now names that exact source head; its current checks remain separate from earlier import results. No new runtime, public comment or import retry was performed.",
       "followup": {
-        "disposition": "upstream approved; refreshed import CI pending",
+        "disposition": "upstream approved; source and import CI passed",
         "owner": "external_sweeps",
-        "nextAction": "Track matching import #15248 at 0361404cad2e4bded1145534bf526c4a6778dc53: its body still binds approved source f5f0270289147db0614fd2eadc1ed15dcb652f81. Internal build 31392 has passed; public build 49707 remains pending. Prior public build 49676 was explicitly canceled by eperot with one ARM64 64K shard incomplete and no current failed step; preserve it as historical incomplete CI. No source amendment or agent-triggered retry was performed.",
+        "nextAction": "Await maintainer landing of matching import #15248 at 0361404cad2e4bded1145534bf526c4a6778dc53, whose body binds approved source f5f0270289147db0614fd2eadc1ed15dcb652f81. Public build 49707 and internal build 31392 have passed; the source PR now also reports successful Copybara import and feedback statuses. Prior public build 49676 was explicitly canceled by eperot with one ARM64 64K shard incomplete and no current failed step; preserve it as historical incomplete CI. No source amendment or agent-triggered retry was performed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14879#pullrequestreview-5421564665",
           "https://github.com/google/gvisor/pull/15248",
           "https://buildkite.com/gvisor/pipeline/builds/49676",
           "https://buildkite.com/gvisor/pipeline/builds/49707"
         ],
-        "reviewedAt": "2026-10-06T07:32:35.441554+00:00",
+        "reviewedAt": "2026-10-06T09:26:21.259188+00:00",
         "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
