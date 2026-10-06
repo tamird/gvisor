@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-  "registryDate": "2026-10-06T18:52:40.043931+00:00",
+  "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+  "registryDate": "2026-10-06T21:03:06.905421+00:00",
   "prs": [
     {
       "number": 12470,
@@ -15,7 +15,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:56:32Z",
       "createdAt": "2026-01-09T14:43:53Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -317,10 +317,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:21:01Z",
       "createdAt": "2026-01-12T20:58:15Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -527,7 +527,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T11:28:05Z",
       "createdAt": "2026-08-21T17:35:33Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -686,7 +686,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T22:20:26Z",
           "createdAt": "2026-10-01T23:59:06Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -834,10 +834,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:20Z",
       "createdAt": "2026-08-22T11:55:42Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -972,10 +972,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:21Z",
       "createdAt": "2026-08-22T11:57:04Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1110,10 +1110,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:23Z",
       "createdAt": "2026-08-22T11:57:39Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1296,10 +1296,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:24:24Z",
       "createdAt": "2026-08-22T11:58:27Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -1434,7 +1434,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:39Z",
       "createdAt": "2026-08-24T04:14:33Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -1601,7 +1601,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T05:18:37Z",
           "createdAt": "2026-10-03T07:05:57Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -1753,13 +1753,15 @@
       "ref": "checklocks-restore-fixes",
       "head": "bacd163af4966ef1c8a7bf3ff917d7eafe5bf882",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T13:44:45Z",
+      "updatedAt": "2026-10-06T20:32:47Z",
       "createdAt": "2026-08-24T04:16:03Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "labels": [],
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -1838,6 +1840,22 @@
             }
           },
           {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-gE0g",
+            "url": "https://github.com/google/gvisor/pull/14360#pullrequestreview-5434246354",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:32:37Z",
+            "updatedAt": "2026-10-06T20:32:37Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "bacd163af4966ef1c8a7bf3ff917d7eafe5bf882"
+            }
+          },
+          {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6okxKI",
             "isResolved": true,
@@ -1875,7 +1893,7 @@
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 11,
+        "total": 12,
         "complete": true,
         "contexts": [
           {
@@ -1943,11 +1961,152 @@
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
+          },
+          {
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
           }
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15399,
+          "title": "Fix checkpoint waiter synchronization",
+          "url": "https://github.com/google/gvisor/pull/15399",
+          "status": "open",
+          "ref": "test/cl994597861",
+          "head": "a4b12f1db88ef160c96cfe8fc0680167159f3501",
+          "headOwner": "google",
+          "updatedAt": "2026-10-06T20:54:22Z",
+          "createdAt": "2026-10-06T20:54:21Z",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+          "reviewDecision": null,
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 16,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "generate",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529977924/job/112496557513",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "assign",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978047/job/112496559226",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529977999/job/112496559118",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "check-changes",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978027/job/112496559748",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529977939/job/112496557231",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529977933/job/112496557835",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978021/job/112496558037",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529977916/job/112496557780",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-config",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978027/job/112498299185",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-scan",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978027/job/112498300035",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-upload",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978027/job/112498301511",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-output",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529978027/job/112498300309",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/31488",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49794",
+                "app": null
+              },
+              {
+                "name": "go tests",
+                "state": "PENDING",
+                "url": null,
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              }
+            ]
+          },
+          "sourceHead": "bacd163af4966ef1c8a7bf3ff917d7eafe5bf882",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15399"
+        }
+      ]
     },
     {
       "number": 14361,
@@ -1959,10 +2118,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T06:33:25Z",
       "createdAt": "2026-08-24T04:16:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -2097,7 +2256,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:21:22Z",
       "createdAt": "2026-08-30T19:57:30Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -2338,7 +2497,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-30T23:48:42Z",
           "createdAt": "2026-09-22T01:10:22Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2492,10 +2651,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:14:23Z",
       "createdAt": "2026-08-30T19:57:56Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -2618,7 +2777,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T05:18:35Z",
       "createdAt": "2026-08-30T19:58:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -2777,7 +2936,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T04:58:55Z",
           "createdAt": "2026-10-02T23:40:10Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -2931,10 +3090,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:45:44Z",
       "createdAt": "2026-09-22T14:54:48Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -3350,7 +3509,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:00:52Z",
           "createdAt": "2026-09-25T18:51:28Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -3472,10 +3631,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T07:18:31Z",
           "createdAt": "2026-10-03T00:19:06Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -3596,7 +3755,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:39Z",
       "createdAt": "2026-09-22T15:41:48Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -3739,7 +3898,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T06:22:05Z",
           "createdAt": "2026-10-03T06:37:13Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -3893,7 +4052,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T17:32:19Z",
       "createdAt": "2026-09-25T01:16:55Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -4080,7 +4239,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T02:33:00Z",
           "createdAt": "2026-09-25T23:47:45Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4202,7 +4361,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T07:24:34Z",
           "createdAt": "2026-10-02T00:25:48Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -4356,7 +4515,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:22:11Z",
       "createdAt": "2026-09-25T01:16:58Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -4452,10 +4611,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:23:05Z",
       "createdAt": "2026-09-25T01:17:00Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -4601,10 +4760,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:31:50Z",
       "createdAt": "2026-09-25T01:22:37Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -4744,10 +4903,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T08:21:14Z",
           "createdAt": "2026-10-03T07:44:54Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -4868,7 +5027,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:09:40Z",
       "createdAt": "2026-09-25T01:22:40Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -5011,7 +5170,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T04:45:19Z",
           "createdAt": "2026-10-03T08:21:15Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5153,10 +5312,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T13:43:49Z",
       "createdAt": "2026-09-26T00:42:48Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -5310,10 +5469,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T06:47:35Z",
           "createdAt": "2026-10-03T06:47:33Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -5446,7 +5605,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T09:29:34Z",
       "createdAt": "2026-09-26T02:01:16Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -5716,7 +5875,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T02:39:46Z",
           "createdAt": "2026-10-02T18:59:24Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -5870,7 +6029,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:46:58Z",
       "createdAt": "2026-09-26T02:01:17Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6013,7 +6172,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T22:10:23Z",
           "createdAt": "2026-10-03T08:22:19Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6161,10 +6320,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:25:08Z",
       "createdAt": "2026-09-26T02:01:18Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -6299,7 +6458,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:56:59Z",
       "createdAt": "2026-09-26T02:01:20Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6442,7 +6601,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T04:49:15Z",
           "createdAt": "2026-10-03T07:43:57Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6590,7 +6749,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T02:30:11Z",
       "createdAt": "2026-09-26T02:01:22Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -6753,7 +6912,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T02:22:32Z",
           "createdAt": "2026-10-01T03:08:56Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -6907,7 +7066,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:57:00Z",
       "createdAt": "2026-09-26T14:07:49Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7050,7 +7209,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T04:29:17Z",
           "createdAt": "2026-10-03T08:20:45Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7204,7 +7363,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T19:16:08Z",
       "createdAt": "2026-09-26T18:15:29Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -7363,7 +7522,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T18:17:08Z",
           "createdAt": "2026-10-03T08:20:41Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7517,7 +7676,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T18:46:35Z",
       "createdAt": "2026-09-26T19:08:51Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -7616,7 +7775,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:46:27Z",
           "createdAt": "2026-09-29T18:15:45Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -7768,13 +7927,15 @@
       "ref": "process-vm-test-buffers",
       "head": "e0f75c3ea08d7b74e1c757e9034285142c551309",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T13:41:26Z",
+      "updatedAt": "2026-10-06T20:20:34Z",
       "createdAt": "2026-09-28T16:46:14Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "labels": [],
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -7823,12 +7984,28 @@
             "commit": {
               "oid": "e0f75c3ea08d7b74e1c757e9034285142c551309"
             }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-Yg3g",
+            "url": "https://github.com/google/gvisor/pull/15061#pullrequestreview-5434122462",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:20:20Z",
+            "updatedAt": "2026-10-06T20:20:20Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "e0f75c3ea08d7b74e1c757e9034285142c551309"
+            }
           }
         ]
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 11,
+        "total": 13,
         "complete": true,
         "contexts": [
           {
@@ -7896,11 +8073,158 @@
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
+          },
+          {
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
+          },
+          {
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
           }
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15394,
+          "title": "Allocate process_vm test buffers per case",
+          "url": "https://github.com/google/gvisor/pull/15394",
+          "status": "open",
+          "ref": "test/cl994589800",
+          "head": "39ac10eeab82d36ea460448293f759b0a543acae",
+          "headOwner": "google",
+          "updatedAt": "2026-10-06T20:39:00Z",
+          "createdAt": "2026-10-06T20:38:59Z",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+          "reviewDecision": null,
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 16,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "assign",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051175/job/112489995957",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051241/job/112489996186",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "check-changes",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051133/job/112489997247",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528050609/job/112489992781",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528050486/job/112489991857",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528050825/job/112489993248",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528050807/job/112489993045",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528050901/job/112489993526",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-config",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051133/job/112490842757",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-scan",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051133/job/112490848411",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-upload",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051133/job/112490853067",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-output",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528051133/job/112490852656",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49788",
+                "app": null
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31481",
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
+              }
+            ]
+          },
+          "sourceHead": "e0f75c3ea08d7b74e1c757e9034285142c551309",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15394"
+        }
+      ]
     },
     {
       "number": 15062,
@@ -7912,7 +8236,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:41Z",
       "createdAt": "2026-09-28T16:46:17Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8071,7 +8395,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T22:54:39Z",
           "createdAt": "2026-10-03T08:21:36Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8219,10 +8543,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:51:23Z",
       "createdAt": "2026-09-28T16:46:23Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -8333,7 +8657,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:22:46Z",
       "createdAt": "2026-09-28T17:47:35Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8434,7 +8758,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T19:06:34Z",
           "createdAt": "2026-10-01T17:51:08Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8588,7 +8912,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:40Z",
       "createdAt": "2026-09-28T17:47:39Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8731,7 +9055,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T05:14:31Z",
           "createdAt": "2026-10-03T08:25:08Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -8885,7 +9209,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T01:18:16Z",
       "createdAt": "2026-09-28T22:31:32Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -8986,7 +9310,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:13:49Z",
           "createdAt": "2026-09-29T10:31:11Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -9134,10 +9458,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:05:01Z",
       "createdAt": "2026-09-29T19:09:15Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -9276,7 +9600,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T10:17:39Z",
       "createdAt": "2026-09-29T19:09:25Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -9485,7 +9809,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T10:17:38Z",
           "createdAt": "2026-10-03T01:38:35Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -9639,7 +9963,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T01:11:23Z",
       "createdAt": "2026-09-29T19:23:01Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -9733,13 +10057,15 @@
       "ref": "lint-failure-propagation",
       "head": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T13:40:23Z",
+      "updatedAt": "2026-10-06T20:18:25Z",
       "createdAt": "2026-09-29T20:25:57Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "labels": [],
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -9810,6 +10136,22 @@
             }
           },
           {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-XODw",
+            "url": "https://github.com/google/gvisor/pull/15111#pullrequestreview-5434101263",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:18:13Z",
+            "updatedAt": "2026-10-06T20:18:13Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8"
+            }
+          },
+          {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6olZ3g",
             "isResolved": true,
@@ -9847,7 +10189,7 @@
       },
       "checks": {
         "state": "FAILURE",
-        "total": 11,
+        "total": 12,
         "complete": true,
         "contexts": [
           {
@@ -9915,11 +10257,152 @@
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
+          },
+          {
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
           }
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15396,
+          "title": "Propagate failures from source lint tools",
+          "url": "https://github.com/google/gvisor/pull/15396",
+          "status": "open",
+          "ref": "test/cl992760450",
+          "head": "7be5a0eddaff61e9eb360ba275f57dd739935a10",
+          "headOwner": "google",
+          "updatedAt": "2026-10-06T20:40:13Z",
+          "createdAt": "2026-10-06T20:40:12Z",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+          "reviewDecision": null,
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 16,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "assign",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207919/job/112490522614",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207990/job/112490522429",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "check-changes",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207876/job/112490526843",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528208012/job/112490523558",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207865/job/112490519935",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528208221/job/112490566288",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528208455/job/112490522280",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37528208318/job/112490522542",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-config",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207876/job/112491280989",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-scan",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207876/job/112491282089",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-upload",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207876/job/112491283449",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-output",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37528207876/job/112491283438",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49790",
+                "app": null
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31483",
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
+              }
+            ]
+          },
+          "sourceHead": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15396"
+        }
+      ]
     },
     {
       "number": 15114,
@@ -9931,10 +10414,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:24:40Z",
       "createdAt": "2026-09-29T20:59:48Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -10061,7 +10544,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:37:34Z",
       "createdAt": "2026-09-29T21:00:04Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -10202,7 +10685,7 @@
           "headOwner": "google",
           "updatedAt": "2026-09-29T23:49:24Z",
           "createdAt": "2026-09-29T21:28:51Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -10356,7 +10839,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T00:29:56Z",
       "createdAt": "2026-09-29T22:13:52Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -10457,7 +10940,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T00:23:18Z",
           "createdAt": "2026-09-30T21:47:09Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -10611,10 +11094,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:23:58Z",
       "createdAt": "2026-09-29T22:13:58Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -10754,10 +11237,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T03:55:16Z",
           "createdAt": "2026-10-03T07:41:31Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -10878,7 +11361,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:09:40Z",
       "createdAt": "2026-09-29T23:49:52Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -11021,7 +11504,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:23:13Z",
           "createdAt": "2026-10-01T18:51:05Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -11175,7 +11658,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:40Z",
       "createdAt": "2026-09-29T23:49:55Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -11318,7 +11801,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T22:42:52Z",
           "createdAt": "2026-10-03T08:21:59Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -11466,7 +11949,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:41Z",
       "createdAt": "2026-09-30T00:53:26Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -11625,7 +12108,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T02:13:47Z",
           "createdAt": "2026-10-03T08:23:51Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -11779,7 +12262,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:57:00Z",
       "createdAt": "2026-09-30T00:53:30Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -11922,7 +12405,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T04:40:52Z",
           "createdAt": "2026-10-03T08:23:00Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -12064,10 +12547,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T16:27:00Z",
       "createdAt": "2026-09-30T00:53:32Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -12251,10 +12734,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T16:49:34Z",
           "createdAt": "2026-10-03T08:19:39Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -12373,13 +12856,15 @@
       "ref": "syscall-atime-backing",
       "head": "dac54db335181f1fa10653fd357d66bac72f549b",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-03T00:01:29Z",
+      "updatedAt": "2026-10-06T19:00:30Z",
       "createdAt": "2026-09-30T00:53:35Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "labels": [],
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -12400,12 +12885,28 @@
               "login": "tamird",
               "__typename": "User"
             }
+          },
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ9kffg",
+            "url": "https://github.com/google/gvisor/pull/15133#pullrequestreview-5433270142",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T19:00:22Z",
+            "updatedAt": "2026-10-06T19:00:22Z",
+            "author": {
+              "login": "konstantin-s-bogom",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "dac54db335181f1fa10653fd357d66bac72f549b"
+            }
           }
         ]
       },
       "checks": {
         "state": "SUCCESS",
-        "total": 11,
+        "total": 13,
         "complete": true,
         "contexts": [
           {
@@ -12473,6 +12974,18 @@
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
+          },
+          {
+            "name": "feedback/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
+          },
+          {
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
           }
         ]
       },
@@ -12489,7 +13002,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:32:30Z",
       "createdAt": "2026-09-30T10:14:36Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12632,7 +13145,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:19:44Z",
           "createdAt": "2026-10-01T19:31:38Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -12780,7 +13293,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T10:11:09Z",
       "createdAt": "2026-09-30T10:14:39Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -12893,7 +13406,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T08:26:22Z",
           "createdAt": "2026-09-30T22:37:25Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -13047,7 +13560,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T21:19:41Z",
       "createdAt": "2026-09-30T10:14:42Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -13160,7 +13673,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T21:09:47Z",
           "createdAt": "2026-10-01T19:07:27Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -13314,7 +13827,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T07:08:07Z",
       "createdAt": "2026-09-30T10:14:45Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -13427,7 +13940,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T06:58:26Z",
           "createdAt": "2026-10-01T02:18:26Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -13575,7 +14088,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:09:40Z",
       "createdAt": "2026-09-30T10:17:14Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -13800,7 +14313,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T05:02:04Z",
           "createdAt": "2026-10-03T08:22:49Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -13948,7 +14461,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T19:52:46Z",
       "createdAt": "2026-09-30T10:22:42Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "CONFLICTING",
       "mergeState": "DIRTY",
@@ -14060,10 +14573,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:23:09Z",
       "createdAt": "2026-09-30T13:40:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -14190,10 +14703,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:17:45Z",
       "createdAt": "2026-09-30T13:40:10Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -14320,7 +14833,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:13:02Z",
       "createdAt": "2026-09-30T13:40:13Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -14491,7 +15004,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T02:18:03Z",
           "createdAt": "2026-10-01T19:29:32Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -14645,7 +15158,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:09:40Z",
       "createdAt": "2026-09-30T14:16:15Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -14788,7 +15301,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T10:44:46Z",
           "createdAt": "2026-10-03T07:22:11Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -14942,7 +15455,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:39Z",
       "createdAt": "2026-09-30T14:45:26Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -15101,7 +15614,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T06:09:20Z",
           "createdAt": "2026-10-03T08:21:05Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -15255,10 +15768,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-04T12:03:39Z",
       "createdAt": "2026-09-30T22:24:21Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -15369,7 +15882,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:39Z",
       "createdAt": "2026-09-30T22:30:02Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -15512,7 +16025,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T23:00:28Z",
           "createdAt": "2026-10-03T08:20:44Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -15666,7 +16179,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:40Z",
       "createdAt": "2026-09-30T22:30:05Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -15809,7 +16322,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T01:32:47Z",
           "createdAt": "2026-10-03T08:22:52Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -15957,7 +16470,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:40Z",
       "createdAt": "2026-09-30T22:30:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -16100,7 +16613,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T11:14:05Z",
           "createdAt": "2026-10-03T08:22:58Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -16248,7 +16761,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:53:26Z",
       "createdAt": "2026-09-30T22:30:10Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -16361,7 +16874,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T22:54:10Z",
           "createdAt": "2026-10-02T18:54:21Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -16515,7 +17028,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T11:31:47Z",
       "createdAt": "2026-09-30T22:38:16Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -16674,7 +17187,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T11:26:33Z",
           "createdAt": "2026-10-01T18:09:06Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -16826,7 +17339,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T04:47:46Z",
           "createdAt": "2026-10-03T01:45:41Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -16950,10 +17463,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T16:42:06Z",
       "createdAt": "2026-09-30T22:38:18Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -17089,14 +17602,14 @@
           "url": "https://github.com/google/gvisor/pull/15381",
           "status": "open",
           "ref": "test/cl994453068",
-          "head": "26ce0ec8af493754e90384faa8853d9655141cc4",
+          "head": "6370ad55f01159c0c0e5807cc48622c8a9ecb21e",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T17:05:06Z",
+          "updatedAt": "2026-10-06T20:06:19Z",
           "createdAt": "2026-10-06T17:05:04Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -17111,92 +17624,80 @@
             "items": []
           },
           "checks": {
-            "state": "SUCCESS",
-            "total": 16,
+            "state": "PENDING",
+            "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785443/job/112396934515",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785573/job/112396935320",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785431/job/112396933964",
+                "url": "https://github.com/google/gvisor/actions/runs/37523904290/job/112475921847",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785286/job/112396932451",
+                "url": "https://github.com/google/gvisor/actions/runs/37523908680/job/112475934512",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785224/job/112396931312",
+                "url": "https://github.com/google/gvisor/actions/runs/37523908575/job/112475934222",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785394/job/112396939267",
+                "url": "https://github.com/google/gvisor/actions/runs/37523908702/job/112475934650",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785245/job/112396932176",
+                "url": "https://github.com/google/gvisor/actions/runs/37523908776/job/112475935931",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785273/job/112396931949",
+                "url": "https://github.com/google/gvisor/actions/runs/37523908831/job/112475936420",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785431/job/112397977732",
+                "url": "https://github.com/google/gvisor/actions/runs/37523904290/job/112479698313",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785431/job/112397978010",
+                "url": "https://github.com/google/gvisor/actions/runs/37523904290/job/112479699659",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785431/job/112397978531",
+                "url": "https://github.com/google/gvisor/actions/runs/37523904290/job/112479701060",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37500785431/job/112397978576",
+                "url": "https://github.com/google/gvisor/actions/runs/37523904290/job/112479700662",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/internal",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31419",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/31470",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49728",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49778",
                 "app": null
               },
               {
@@ -17229,10 +17730,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:58:05Z",
       "createdAt": "2026-09-30T22:38:21Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -17372,10 +17873,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T03:18:37Z",
           "createdAt": "2026-10-03T08:20:16Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -17496,7 +17997,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T20:21:04Z",
       "createdAt": "2026-09-30T22:38:24Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -17643,7 +18144,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T20:14:01Z",
           "createdAt": "2026-10-02T18:52:22Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -17797,7 +18298,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-04T01:17:01Z",
       "createdAt": "2026-09-30T22:42:30Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -17956,7 +18457,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T01:17:00Z",
           "createdAt": "2026-10-03T08:20:40Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -18110,7 +18611,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-01T20:56:57Z",
       "createdAt": "2026-09-30T22:42:32Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -18223,7 +18724,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-01T20:48:05Z",
           "createdAt": "2026-10-01T17:52:04Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -18371,7 +18872,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T09:34:46Z",
       "createdAt": "2026-09-30T22:42:35Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -18508,7 +19009,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:18:31Z",
           "createdAt": "2026-10-02T18:50:53Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -18656,7 +19157,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:40Z",
       "createdAt": "2026-09-30T23:39:09Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -18881,7 +19382,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T10:53:40Z",
           "createdAt": "2026-10-03T08:22:29Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -19029,10 +19530,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T07:54:04Z",
       "createdAt": "2026-09-30T23:41:33Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -19188,10 +19689,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T03:12:12Z",
           "createdAt": "2026-10-03T08:22:47Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -19312,10 +19813,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:23:39Z",
       "createdAt": "2026-10-01T00:07:02Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -19454,7 +19955,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:41Z",
       "createdAt": "2026-10-01T02:15:11Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -19641,7 +20142,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T10:59:39Z",
           "createdAt": "2026-10-03T08:22:36Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -19789,10 +20290,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T17:26:23Z",
       "createdAt": "2026-10-01T10:12:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -19902,7 +20403,7 @@
         ]
       },
       "checks": {
-        "state": "SUCCESS",
+        "state": "FAILURE",
         "total": 13,
         "complete": true,
         "contexts": [
@@ -19967,16 +20468,16 @@
             "app": "GitHub Actions"
           },
           {
+            "name": "feedback/copybara",
+            "state": "FAILURE",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "cla/google",
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
-          },
-          {
-            "name": "feedback/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
           },
           {
             "name": "import/copybara",
@@ -19994,14 +20495,14 @@
           "url": "https://github.com/google/gvisor/pull/15382",
           "status": "open",
           "ref": "test/cl994475695",
-          "head": "a7f29236a5789c62fc76d00ce6073be25da33cd6",
+          "head": "733840464bdec8cd513fe0bedc1dd5df1796a2b6",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T18:33:43Z",
+          "updatedAt": "2026-10-06T19:53:39Z",
           "createdAt": "2026-10-06T17:39:37Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -20016,80 +20517,80 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "FAILURE",
             "total": 14,
             "complete": true,
             "contexts": [
               {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37512257827/job/112436134810",
+                "url": "https://github.com/google/gvisor/actions/runs/37522294211/job/112470495864",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37512260621/job/112436145492",
+                "url": "https://github.com/google/gvisor/actions/runs/37522299396/job/112470511955",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37512260509/job/112436143301",
+                "url": "https://github.com/google/gvisor/actions/runs/37522299261/job/112470511366",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37512260737/job/112436144508",
+                "url": "https://github.com/google/gvisor/actions/runs/37522299523/job/112470517538",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37512260653/job/112436146086",
+                "url": "https://github.com/google/gvisor/actions/runs/37522299472/job/112470512513",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37512260530/job/112436143804",
+                "url": "https://github.com/google/gvisor/actions/runs/37522299401/job/112470512211",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37512257827/job/112437193842",
+                "url": "https://github.com/google/gvisor/actions/runs/37522294211/job/112470920494",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37512257827/job/112437195272",
+                "url": "https://github.com/google/gvisor/actions/runs/37522294211/job/112470920924",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37512257827/job/112437195616",
+                "url": "https://github.com/google/gvisor/actions/runs/37522294211/job/112470921113",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37512257827/job/112437195570",
+                "url": "https://github.com/google/gvisor/actions/runs/37522294211/job/112470921416",
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31448",
+                "name": "buildkite/pipeline",
+                "state": "FAILURE",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49775",
                 "app": null
               },
               {
-                "name": "buildkite/pipeline",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49755",
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31467",
                 "app": null
               },
               {
@@ -20122,10 +20623,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T00:01:34Z",
       "createdAt": "2026-10-01T10:18:13Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -20236,10 +20737,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T16:10:57Z",
       "createdAt": "2026-10-01T13:18:55Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -20375,14 +20876,14 @@
           "url": "https://github.com/google/gvisor/pull/15378",
           "status": "open",
           "ref": "test/cl994436877",
-          "head": "128fe36ba04991982f4b2918eab163c8a2e4815d",
+          "head": "27e1ca9678b8bf2c8980cb7470b91c1b4cdae2c6",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T16:36:47Z",
+          "updatedAt": "2026-10-06T20:28:47Z",
           "createdAt": "2026-10-06T16:36:45Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -20397,92 +20898,80 @@
             "items": []
           },
           "checks": {
-            "state": "SUCCESS",
-            "total": 16,
+            "state": "PENDING",
+            "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076372/job/112384255701",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076334/job/112384255725",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076315/job/112384254747",
+                "url": "https://github.com/google/gvisor/actions/runs/37526751235/job/112485587834",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076199/job/112384252738",
+                "url": "https://github.com/google/gvisor/actions/runs/37526756246/job/112485601634",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076267/job/112384253239",
+                "url": "https://github.com/google/gvisor/actions/runs/37526756037/job/112485600728",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076202/job/112384252217",
+                "url": "https://github.com/google/gvisor/actions/runs/37526756149/job/112485601770",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076236/job/112384252648",
+                "url": "https://github.com/google/gvisor/actions/runs/37526756127/job/112485601384",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076183/job/112384274247",
+                "url": "https://github.com/google/gvisor/actions/runs/37526756179/job/112485602143",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076315/job/112386132480",
+                "url": "https://github.com/google/gvisor/actions/runs/37526751235/job/112488502217",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076315/job/112386132134",
+                "url": "https://github.com/google/gvisor/actions/runs/37526751235/job/112488502265",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076315/job/112386133293",
+                "url": "https://github.com/google/gvisor/actions/runs/37526751235/job/112488503445",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37497076315/job/112386134396",
+                "url": "https://github.com/google/gvisor/actions/runs/37526751235/job/112488503405",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/internal",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31410",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/31476",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49722",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49784",
                 "app": null
               },
               {
@@ -20515,7 +21004,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:53:26Z",
       "createdAt": "2026-10-01T13:36:08Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -20646,7 +21135,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T21:30:02Z",
           "createdAt": "2026-10-02T18:43:03Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -20800,7 +21289,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-03T09:34:22Z",
       "createdAt": "2026-10-01T13:36:19Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -20937,7 +21426,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T01:26:18Z",
           "createdAt": "2026-10-02T19:16:01Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -21079,7 +21568,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T17:54:49Z",
       "createdAt": "2026-10-01T15:53:05Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -21262,10 +21751,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T23:07:14Z",
           "createdAt": "2026-10-03T08:21:41Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -21386,10 +21875,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:23:36Z",
       "createdAt": "2026-10-01T15:53:08Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -21597,10 +22086,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T02:02:31Z",
           "createdAt": "2026-10-03T07:22:09Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -21721,10 +22210,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:51:23Z",
       "createdAt": "2026-10-01T15:55:39Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -21835,7 +22324,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-02T01:26:22Z",
       "createdAt": "2026-10-01T21:14:49Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -21978,7 +22467,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-02T01:20:08Z",
           "createdAt": "2026-10-02T00:07:07Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -22132,7 +22621,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T04:34:17Z",
       "createdAt": "2026-10-02T10:29:20Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -22291,10 +22780,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-04T02:00:07Z",
           "createdAt": "2026-10-03T08:14:35Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "CONFLICTING",
+          "mergeState": "DIRTY",
           "labels": [
             "exported"
           ],
@@ -22413,7 +22902,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T04:34:15Z",
           "createdAt": "2026-10-05T03:51:31Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -22559,13 +23048,15 @@
       "ref": "syscall-save-test-boolean",
       "head": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T13:41:36Z",
+      "updatedAt": "2026-10-06T20:33:25Z",
       "createdAt": "2026-10-02T12:55:53Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "labels": [],
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -22636,6 +23127,22 @@
             }
           },
           {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-gehg",
+            "url": "https://github.com/google/gvisor/pull/15217#pullrequestreview-5434252934",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:33:17Z",
+            "updatedAt": "2026-10-06T20:33:17Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "10ee73c8cf90ef1624282e216473b71fbab1cb32"
+            }
+          },
+          {
             "kind": "inline",
             "threadId": "PRRT_kwDOB9IlXs6ogHI-",
             "isResolved": true,
@@ -22673,7 +23180,7 @@
       },
       "checks": {
         "state": "FAILURE",
-        "total": 11,
+        "total": 12,
         "complete": true,
         "contexts": [
           {
@@ -22741,11 +23248,152 @@
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
+          },
+          {
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
           }
         ]
       },
       "importsComplete": true,
-      "imports": []
+      "imports": [
+        {
+          "number": 15398,
+          "title": "Honor the boolean save-mode environment flag",
+          "url": "https://github.com/google/gvisor/pull/15398",
+          "status": "open",
+          "ref": "test/cl994596494",
+          "head": "8ea1be04b72c0911118855a95b178b090453a746",
+          "headOwner": "google",
+          "updatedAt": "2026-10-06T20:54:02Z",
+          "createdAt": "2026-10-06T20:54:01Z",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+          "reviewDecision": null,
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
+          "labels": [
+            "exported"
+          ],
+          "labelsComplete": true,
+          "threads": {
+            "unresolved": 0,
+            "total": 0,
+            "complete": true
+          },
+          "feedback": {
+            "complete": true,
+            "items": []
+          },
+          "checks": {
+            "state": "PENDING",
+            "total": 16,
+            "complete": true,
+            "contexts": [
+              {
+                "name": "generate",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932247/job/112496409779",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "assign",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932693/job/112496412062",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "close",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932678/job/112496415439",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "check-changes",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932788/job/112496413105",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "scan-pr",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932019/job/112496408265",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "label",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529931945/job/112496410788",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "fileheader",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529931913/job/112496408188",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "lint",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37529931918/job/112496408247",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-config",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932788/job/112498126135",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-scan",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932788/job/112498127268",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-upload",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932788/job/112498127629",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "zizmor-output",
+                "state": "SKIPPED",
+                "url": "https://github.com/google/gvisor/actions/runs/37529932788/job/112498127563",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/internal",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/31486",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49793",
+                "app": null
+              },
+              {
+                "name": "go tests",
+                "state": "PENDING",
+                "url": null,
+                "app": null
+              },
+              {
+                "name": "cla/google",
+                "state": "SUCCESS",
+                "url": "https://cla.developers.google.com/about",
+                "app": "Google CLA"
+              }
+            ]
+          },
+          "sourceHead": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
+          "matchesSourceHead": true,
+          "relationshipEvidence": "https://github.com/google/gvisor/pull/15398"
+        }
+      ]
     },
     {
       "number": 15233,
@@ -22757,7 +23405,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:06:41Z",
       "createdAt": "2026-10-02T20:43:10Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -22968,7 +23616,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-03T22:31:38Z",
           "createdAt": "2026-10-03T08:21:53Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -23122,7 +23770,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T15:09:41Z",
       "createdAt": "2026-10-02T20:45:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -23281,7 +23929,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T04:55:29Z",
           "createdAt": "2026-10-03T08:19:24Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -23429,7 +24077,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T19:47:29Z",
       "createdAt": "2026-10-03T14:16:39Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -23572,7 +24220,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T19:25:18Z",
           "createdAt": "2026-10-05T00:28:08Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -23720,10 +24368,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:04:44Z",
       "createdAt": "2026-10-05T13:59:28Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -23833,10 +24481,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T14:11:46Z",
       "createdAt": "2026-10-05T14:06:25Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -23946,7 +24594,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T22:46:57Z",
       "createdAt": "2026-10-05T14:43:33Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -24089,7 +24737,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T21:55:25Z",
           "createdAt": "2026-10-05T18:54:45Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -24237,7 +24885,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:13:00Z",
       "createdAt": "2026-10-05T17:32:24Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -24368,7 +25016,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T22:27:46Z",
           "createdAt": "2026-10-05T18:24:44Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -24522,10 +25170,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T15:07:10Z",
       "createdAt": "2026-10-05T20:09:28Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -24604,9 +25252,9 @@
       "ref": "netfilter-listener-cancellation",
       "head": "7540239d5b6ede5248dadf079ffc8086e5f42a55",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T18:44:47Z",
+      "updatedAt": "2026-10-06T20:54:48Z",
       "createdAt": "2026-10-05T20:14:51Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -24773,7 +25421,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T18:44:45Z",
           "createdAt": "2026-10-06T16:58:23Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -24791,32 +25439,32 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "FAILURE",
             "total": 19,
             "complete": true,
             "contexts": [
               {
                 "name": "build",
-                "state": "IN_PROGRESS",
+                "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37513654484/job/112441450302",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37513647503/job/112440916365",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "generate",
-                "state": "IN_PROGRESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37513654576/job/112441600185",
                 "app": "GitHub Actions"
               },
               {
                 "name": "check-changes",
                 "state": "SUCCESS",
                 "url": "https://github.com/google/gvisor/actions/runs/37513644268/job/112440895141",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37513647503/job/112440916365",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "SUCCESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37513654576/job/112441600185",
                 "app": "GitHub Actions"
               },
               {
@@ -24874,15 +25522,9 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/internal",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/internal/builds/31450",
-                "app": null
-              },
-              {
-                "name": "buildkite/pgo-profiles",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pgo-profiles/builds/3063",
+                "name": "kokoro",
+                "state": "ERROR",
+                "url": null,
                 "app": null
               },
               {
@@ -24892,15 +25534,15 @@
                 "app": null
               },
               {
-                "name": "go tests",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/internal",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/internal/builds/31450",
                 "app": null
               },
               {
-                "name": "kokoro",
-                "state": "PENDING",
-                "url": null,
+                "name": "buildkite/pgo-profiles",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/pgo-profiles/builds/3063",
                 "app": null
               },
               {
@@ -24908,6 +25550,12 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
+              },
+              {
+                "name": "go tests",
+                "state": "SUCCESS",
+                "url": null,
+                "app": null
               }
             ]
           },
@@ -24927,10 +25575,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T15:06:49Z",
       "createdAt": "2026-10-05T20:17:15Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -25053,10 +25701,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T21:36:20Z",
       "createdAt": "2026-10-05T20:17:52Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -25088,7 +25736,7 @@
         ]
       },
       "checks": {
-        "state": "SUCCESS",
+        "state": "FAILURE",
         "total": 15,
         "complete": true,
         "contexts": [
@@ -25165,16 +25813,16 @@
             "app": "GitHub Actions"
           },
           {
+            "name": "feedback/copybara",
+            "state": "FAILURE",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "cla/google",
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
-          },
-          {
-            "name": "feedback/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
           },
           {
             "name": "import/copybara",
@@ -25192,14 +25840,14 @@
           "url": "https://github.com/google/gvisor/pull/15324",
           "status": "open",
           "ref": "test/cl993911818",
-          "head": "d11d78fe8b942cb6d6392dd82ffe484c6546c54e",
+          "head": "b960b014550771ebb8ebbdca9016d71fc8f8edff",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T03:58:01Z",
+          "updatedAt": "2026-10-06T20:05:14Z",
           "createdAt": "2026-10-05T21:52:23Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -25214,80 +25862,80 @@
             "items": []
           },
           "checks": {
-            "state": "SUCCESS",
+            "state": "PENDING",
             "total": 14,
             "complete": true,
             "contexts": [
               {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37411450657/job/112100567961",
+                "url": "https://github.com/google/gvisor/actions/runs/37523769152/job/112475464709",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37411452338/job/112100572150",
+                "url": "https://github.com/google/gvisor/actions/runs/37523774189/job/112475481186",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37411452369/job/112100571942",
+                "url": "https://github.com/google/gvisor/actions/runs/37523774159/job/112475479198",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37411452426/job/112100572211",
+                "url": "https://github.com/google/gvisor/actions/runs/37523774242/job/112475479300",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37411452350/job/112100572038",
+                "url": "https://github.com/google/gvisor/actions/runs/37523774199/job/112475479327",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37411452378/job/112100572104",
+                "url": "https://github.com/google/gvisor/actions/runs/37523774320/job/112475479835",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37411450657/job/112100743572",
+                "url": "https://github.com/google/gvisor/actions/runs/37523769152/job/112479476056",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37411450657/job/112100744260",
+                "url": "https://github.com/google/gvisor/actions/runs/37523769152/job/112479477419",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37411450657/job/112100745039",
+                "url": "https://github.com/google/gvisor/actions/runs/37523769152/job/112479478455",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37411450657/job/112100745377",
+                "url": "https://github.com/google/gvisor/actions/runs/37523769152/job/112479478129",
                 "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49777",
+                "app": null
               },
               {
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31380",
-                "app": null
-              },
-              {
-                "name": "buildkite/pipeline",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49689",
+                "url": "https://buildkite.com/gvisor/internal/builds/31469",
                 "app": null
               },
               {
@@ -25320,10 +25968,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T14:57:08Z",
       "createdAt": "2026-10-05T20:40:19Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeState": "DIRTY",
       "labels": [
         "ready to pull"
       ],
@@ -25463,10 +26111,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T18:19:43Z",
           "createdAt": "2026-10-06T15:35:24Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "CONFLICTING",
+          "mergeState": "DIRTY",
           "labels": [
             "exported"
           ],
@@ -25481,7 +26129,7 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 14,
             "complete": true,
             "contexts": [
@@ -25546,15 +26194,15 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/pipeline",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49746",
-                "app": null
-              },
-              {
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/31437",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49746",
                 "app": null
               },
               {
@@ -25587,10 +26235,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T21:36:51Z",
       "createdAt": "2026-10-05T21:06:34Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -25700,10 +26348,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:48:32Z",
       "createdAt": "2026-10-05T22:48:43Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -25838,10 +26486,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T14:22:42Z",
       "createdAt": "2026-10-05T22:48:48Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "CHANGES_REQUESTED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -26039,10 +26687,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:15:03Z",
       "createdAt": "2026-10-05T22:48:53Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -26178,14 +26826,14 @@
           "url": "https://github.com/google/gvisor/pull/15341",
           "status": "open",
           "ref": "test/cl993971343",
-          "head": "f4e2a3d9683b413767cfe443de28dc6f618609f4",
+          "head": "c93de520bb568a23d104d029c98bcb0526ccb26c",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T18:21:04Z",
+          "updatedAt": "2026-10-06T20:43:27Z",
           "createdAt": "2026-10-05T23:33:13Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -26207,73 +26855,73 @@
               {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37510615955/job/112430482596",
+                "url": "https://github.com/google/gvisor/actions/runs/37528595396/job/112491853842",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37510621842/job/112430499178",
+                "url": "https://github.com/google/gvisor/actions/runs/37528598750/job/112491869628",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37510621869/job/112430499422",
+                "url": "https://github.com/google/gvisor/actions/runs/37528598578/job/112491860977",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37510621860/job/112430498780",
+                "url": "https://github.com/google/gvisor/actions/runs/37528598735/job/112491862241",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37510621853/job/112430498778",
+                "url": "https://github.com/google/gvisor/actions/runs/37528598655/job/112491862255",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37510621925/job/112430500976",
+                "url": "https://github.com/google/gvisor/actions/runs/37528598880/job/112491862326",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37510615955/job/112431038283",
+                "url": "https://github.com/google/gvisor/actions/runs/37528595396/job/112492497399",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37510615955/job/112431039591",
+                "url": "https://github.com/google/gvisor/actions/runs/37528595396/job/112492498671",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37510615955/job/112431039931",
+                "url": "https://github.com/google/gvisor/actions/runs/37528595396/job/112492499544",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37510615955/job/112431040178",
+                "url": "https://github.com/google/gvisor/actions/runs/37528595396/job/112492499625",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49748",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49792",
                 "app": null
               },
               {
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31439",
+                "url": "https://buildkite.com/gvisor/internal/builds/31484",
                 "app": null
               },
               {
@@ -26306,10 +26954,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:14:30Z",
       "createdAt": "2026-10-05T22:48:59Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -26449,10 +27097,10 @@
           "headOwner": "google",
           "updatedAt": "2026-10-05T23:29:45Z",
           "createdAt": "2026-10-05T23:29:43Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -26585,7 +27233,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-05T23:28:28Z",
       "createdAt": "2026-10-05T22:49:03Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
@@ -26747,10 +27395,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T18:09:35Z",
       "createdAt": "2026-10-05T22:49:08Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -26798,7 +27446,7 @@
         ]
       },
       "checks": {
-        "state": "SUCCESS",
+        "state": "FAILURE",
         "total": 15,
         "complete": true,
         "contexts": [
@@ -26875,16 +27523,16 @@
             "app": "GitHub Actions"
           },
           {
+            "name": "feedback/copybara",
+            "state": "FAILURE",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "cla/google",
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
-          },
-          {
-            "name": "feedback/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
           },
           {
             "name": "import/copybara",
@@ -26902,14 +27550,14 @@
           "url": "https://github.com/google/gvisor/pull/15387",
           "status": "open",
           "ref": "test/cl994510267",
-          "head": "dbdb57f40a21e79908d86f2fa6ce25cf3a5749ca",
+          "head": "aa2dd24459c54f9750575f761a87f753ebd529ff",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T18:30:40Z",
+          "updatedAt": "2026-10-06T20:10:40Z",
           "createdAt": "2026-10-06T18:30:38Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -26925,91 +27573,79 @@
           },
           "checks": {
             "state": "PENDING",
-            "total": 16,
+            "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869611/job/112434792695",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869370/job/112434792941",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869528/job/112434791973",
+                "url": "https://github.com/google/gvisor/actions/runs/37524457492/job/112477803500",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869410/job/112434789559",
+                "url": "https://github.com/google/gvisor/actions/runs/37524459650/job/112477812460",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869247/job/112434798528",
+                "url": "https://github.com/google/gvisor/actions/runs/37524459560/job/112477808983",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869697/job/112434790429",
+                "url": "https://github.com/google/gvisor/actions/runs/37524459640/job/112477809277",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869445/job/112434790090",
+                "url": "https://github.com/google/gvisor/actions/runs/37524459522/job/112477808494",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869411/job/112434789953",
+                "url": "https://github.com/google/gvisor/actions/runs/37524459627/job/112477809733",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869528/job/112435798374",
+                "url": "https://github.com/google/gvisor/actions/runs/37524457492/job/112480714287",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869528/job/112435799807",
+                "url": "https://github.com/google/gvisor/actions/runs/37524457492/job/112480713722",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869528/job/112435800698",
+                "url": "https://github.com/google/gvisor/actions/runs/37524457492/job/112480714778",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37511869528/job/112435800619",
+                "url": "https://github.com/google/gvisor/actions/runs/37524457492/job/112480715344",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/pipeline",
                 "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49751",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49779",
                 "app": null
               },
               {
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31446",
+                "url": "https://buildkite.com/gvisor/internal/builds/31471",
                 "app": null
               },
               {
@@ -27042,7 +27678,7 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T04:51:11Z",
       "createdAt": "2026-10-05T22:49:13Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
       "mergeable": "UNKNOWN",
       "mergeState": "UNKNOWN",
@@ -27185,7 +27821,7 @@
           "headOwner": "google",
           "updatedAt": "2026-10-06T04:32:11Z",
           "createdAt": "2026-10-05T23:19:41Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
           "mergeable": "UNKNOWN",
           "mergeState": "UNKNOWN",
@@ -27339,10 +27975,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T00:55:47Z",
       "createdAt": "2026-10-05T23:19:22Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -27477,10 +28113,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T15:17:26Z",
       "createdAt": "2026-10-06T15:08:31Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -27590,10 +28226,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T16:29:25Z",
       "createdAt": "2026-10-06T16:16:58Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -27701,13 +28337,15 @@
       "ref": "arm64-page-size-setting",
       "head": "a7607b075285371fccfde2a179f20ac81cd46a21",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T16:17:01Z",
+      "updatedAt": "2026-10-06T20:08:33Z",
       "createdAt": "2026-10-06T16:17:00Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
-      "labels": [],
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
+      "labels": [
+        "ready to pull"
+      ],
       "labelsComplete": true,
       "threads": {
         "unresolved": 0,
@@ -27716,11 +28354,28 @@
       },
       "feedback": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-RFBQ",
+            "url": "https://github.com/google/gvisor/pull/15371#pullrequestreview-5434000645",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:08:16Z",
+            "updatedAt": "2026-10-06T20:08:16Z",
+            "author": {
+              "login": "aaltinaydev",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "a7607b075285371fccfde2a179f20ac81cd46a21"
+            }
+          }
+        ]
       },
       "checks": {
-        "state": "SUCCESS",
-        "total": 13,
+        "state": "FAILURE",
+        "total": 15,
         "complete": true,
         "contexts": [
           {
@@ -27796,10 +28451,22 @@
             "app": "GitHub Actions"
           },
           {
+            "name": "feedback/copybara",
+            "state": "FAILURE",
+            "url": null,
+            "app": null
+          },
+          {
             "name": "cla/google",
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
+          },
+          {
+            "name": "import/copybara",
+            "state": "SUCCESS",
+            "url": null,
+            "app": null
           }
         ]
       },
@@ -27816,10 +28483,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T17:28:49Z",
       "createdAt": "2026-10-06T16:17:02Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": "APPROVED",
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
       ],
@@ -27983,14 +28650,14 @@
           "url": "https://github.com/google/gvisor/pull/15384",
           "status": "open",
           "ref": "test/cl994482462",
-          "head": "2fb5767913ffb5321df1b83b0d1f1ccbffe821ff",
+          "head": "42c1a8901c31b9025332e14a12a2619910ab4f8a",
           "headOwner": "google",
-          "updatedAt": "2026-10-06T17:46:01Z",
+          "updatedAt": "2026-10-06T19:54:10Z",
           "createdAt": "2026-10-06T17:46:00Z",
-          "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+          "checkedAt": "2026-10-06T21:00:01.644789+00:00",
           "reviewDecision": null,
-          "mergeable": "UNKNOWN",
-          "mergeState": "UNKNOWN",
+          "mergeable": "MERGEABLE",
+          "mergeState": "BLOCKED",
           "labels": [
             "exported"
           ],
@@ -28005,92 +28672,80 @@
             "items": []
           },
           "checks": {
-            "state": "SUCCESS",
-            "total": 16,
+            "state": "PENDING",
+            "total": 14,
             "complete": true,
             "contexts": [
               {
-                "name": "assign",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086846/job/112414985750",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "close",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086761/job/112414985080",
-                "app": "GitHub Actions"
-              },
-              {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086725/job/112414985623",
+                "url": "https://github.com/google/gvisor/actions/runs/37522349532/job/112470682938",
                 "app": "GitHub Actions"
               },
               {
                 "name": "generate",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086686/job/112414983095",
+                "url": "https://github.com/google/gvisor/actions/runs/37522355513/job/112470700473",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086701/job/112414983609",
+                "url": "https://github.com/google/gvisor/actions/runs/37522355266/job/112470699668",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086673/job/112414983937",
+                "url": "https://github.com/google/gvisor/actions/runs/37522355240/job/112470704437",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086736/job/112414983474",
+                "url": "https://github.com/google/gvisor/actions/runs/37522355453/job/112470700832",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086870/job/112414984264",
+                "url": "https://github.com/google/gvisor/actions/runs/37522355351/job/112470701627",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086725/job/112415616571",
+                "url": "https://github.com/google/gvisor/actions/runs/37522349532/job/112471093432",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086725/job/112415618737",
+                "url": "https://github.com/google/gvisor/actions/runs/37522349532/job/112471094681",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086725/job/112415623646",
+                "url": "https://github.com/google/gvisor/actions/runs/37522349532/job/112471094041",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37506086725/job/112415622791",
+                "url": "https://github.com/google/gvisor/actions/runs/37522349532/job/112471095109",
                 "app": "GitHub Actions"
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/49776",
+                "app": null
               },
               {
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31430",
-                "app": null
-              },
-              {
-                "name": "buildkite/pipeline",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/49737",
+                "url": "https://buildkite.com/gvisor/internal/builds/31468",
                 "app": null
               },
               {
@@ -28123,10 +28778,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T16:30:17Z",
       "createdAt": "2026-10-06T16:17:07Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -28234,12 +28889,12 @@
       "ref": "xdp-network-setup",
       "head": "f0b67041d60450e623285250941df450b7f4bf31",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T16:30:26Z",
+      "updatedAt": "2026-10-06T20:05:32Z",
       "createdAt": "2026-10-06T16:17:09Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -28249,7 +28904,24 @@
       },
       "feedback": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-PZHA",
+            "url": "https://github.com/google/gvisor/pull/15374#pullrequestreview-5433973020",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:05:32Z",
+            "updatedAt": "2026-10-06T20:05:32Z",
+            "author": {
+              "login": "EtiennePerot",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "f0b67041d60450e623285250941df450b7f4bf31"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -28349,10 +29021,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T17:49:56Z",
       "createdAt": "2026-10-06T16:17:11Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -28462,10 +29134,10 @@
       "headOwner": "tamird",
       "updatedAt": "2026-10-06T16:30:27Z",
       "createdAt": "2026-10-06T16:17:13Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
       "reviewDecision": null,
-      "mergeable": "UNKNOWN",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -28573,10 +29245,10 @@
       "ref": "netfilter-test-contexts-review",
       "head": "0108067e45730adb0f5c7eeb400400e5527d78bf",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-06T18:50:12Z",
+      "updatedAt": "2026-10-06T20:52:33Z",
       "createdAt": "2026-10-06T18:43:53Z",
-      "checkedAt": "2026-10-06T18:50:25.773939+00:00",
-      "reviewDecision": null,
+      "checkedAt": "2026-10-06T21:00:01.644789+00:00",
+      "reviewDecision": "APPROVED",
       "mergeable": "MERGEABLE",
       "mergeState": "BLOCKED",
       "labels": [],
@@ -28588,19 +29260,30 @@
       },
       "feedback": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABQ-sESA",
+            "url": "https://github.com/google/gvisor/pull/15388#pullrequestreview-5434442824",
+            "body": "",
+            "state": "APPROVED",
+            "submittedAt": "2026-10-06T20:52:32Z",
+            "updatedAt": "2026-10-06T20:52:32Z",
+            "author": {
+              "login": "manninglucas",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "0108067e45730adb0f5c7eeb400400e5527d78bf"
+            }
+          }
+        ]
       },
       "checks": {
-        "state": "PENDING",
+        "state": "SUCCESS",
         "total": 13,
         "complete": true,
         "contexts": [
-          {
-            "name": "generate",
-            "state": "IN_PROGRESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37513554245/job/112440586741",
-            "app": "GitHub Actions"
-          },
           {
             "name": "assign",
             "state": "SUCCESS",
@@ -28617,6 +29300,12 @@
             "name": "check-changes",
             "state": "SUCCESS",
             "url": "https://github.com/google/gvisor/actions/runs/37513554126/job/112440587207",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "generate",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37513554245/job/112440586741",
             "app": "GitHub Actions"
           },
           {
@@ -28706,7 +29395,7 @@
     }
   },
   "limits": {
-    "requests": 27,
+    "requests": 28,
     "nestedPageSize": 100,
     "maxOpenPRs": 200
   }
