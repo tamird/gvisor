@@ -303,12 +303,50 @@ def universe(patterns_path: str) -> str:
     return ",".join(pattern for pattern in patterns if pattern)
 
 
-def select_variants(patterns_path: str, owners_path: str, actions_path: str, output_path: str, profile_path: str | None) -> None:
+def select_variants(
+    patterns_path: str,
+    owners_path: str,
+    actions_path: str,
+    output_path: str,
+    profile_path: str | None,
+    *,
+    local: bool = False,
+) -> None:
     owners = owner_labels(owners_path)
     expected = {owner + "_arm64" for owner in owners}
     requirements = test_requirements(actions_path)
     if requirements.keys() != expected:
         raise ValueError(f"Missing configured test owners: {sorted(expected - requirements.keys())}")
+    if local:
+        if profile_path is None:
+            raise ValueError("Local units require the canonical native unit profile")
+        original = configured_tests(profile_path)
+        eligible = expected & {label + "_arm64" for label in original}
+        selected = sorted(label for label in eligible if requirements[label]["workload-isolation-type"] == "firecracker")
+        if not selected:
+            raise ValueError("No native unit owners require the local namespace host")
+        groups: dict[str, list[str]] = {"root": [], "unprivileged": []}
+        for label in selected:
+            user = requirements[label].get("dockerUser")
+            if user == "root":
+                groups["root"].append(label)
+            elif user == "nobody":
+                groups["unprivileged"].append(label)
+            else:
+                raise ValueError(f"Unsupported local test identity for {label}: {requirements[label]}")
+        Path(output_path).write_text("".join(label + "\n" for label in selected))
+        for group, labels in groups.items():
+            Path(output_path + "." + group).write_text("".join(label + "\n" for label in labels))
+        print(json.dumps({
+            "partial_unit_selection": True,
+            "canonical_selection": profile_path,
+            "local_owners": groups,
+            "local_requirements": {label: requirements[label] for label in selected},
+            "unexecuted_remote_arm64_owners": sorted(eligible - set(selected)),
+            "unexecuted_shared_owners": sorted(set(original) - set(owners)),
+            "profile_excluded_variants": sorted(expected - eligible),
+        }, indent=2))
+        return
     unavailable = sorted(label for label, properties in requirements.items() if properties["workload-isolation-type"] == "firecracker")
     selected = sorted(expected - set(unavailable))
     if profile_path is None:
@@ -338,6 +376,7 @@ def main() -> None:
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
     select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
+    select.add_argument("--local", action="store_true", help="Select only native ARM namespace owners for the local host; report other owners as unexecuted")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
     container = commands.add_parser("container-targets")
@@ -375,7 +414,7 @@ def main() -> None:
     elif args.command == "actions":
         print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile)
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, local=args.local)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events)))
     elif args.command == "container-platform-targets":

@@ -90,8 +90,9 @@ job has a 50-minute timeout. Larger qualification runs can use the same entry
 point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
-For the local-test pilot, select `execution=local`, one lane (`smoke` or
-`bwrap`) and a single architecture (`amd64` or `arm64`). The existing
+For local tests, select `execution=local`, one lane (`smoke`, `bwrap` or
+`unit`) and a single architecture (`amd64` or `arm64`; local units require
+`arm64`). The existing
 architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -102,10 +103,21 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
+The local `unit` phase selects only graph-declared ARM64 variants that require
+the unavailable Firecracker namespace worker, intersected with the canonical
+unit profile. Its report lists the other remote ARM64 and shared owners as
+unexecuted. A successful local phase is partial unit qualification, not a pass
+for the complete unit lane. Tests declaring a root worker run under `sudo -E`;
+nonroot tests retain the unprivileged Actions identity. The two identities use
+separate invocations, with at most two local tests at once on the four-core
+host. Compilation keeps 400 remote jobs. This interim split does not provide
+mixed local and remote TestRunners in one invocation.
+
 The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits the Actions job to 15 minutes. Local test results are not uploaded
-to the shared action cache. Its artifact contains the execution log and host
-facts, not the credential configuration or raw build-event options. The
+to the shared action cache. Its artifact contains each build/test execution
+log, host facts and unit selection metadata, excluding the credential
+configuration and raw build-event options. The
 rootless smoke requires a nonroot 4K-page Linux host with working user
 namespaces. Like the Buildkite test hosts, the ephemeral Actions VM lifts
 Ubuntu's AppArmor unprivileged-user-namespace restriction for local tests;
