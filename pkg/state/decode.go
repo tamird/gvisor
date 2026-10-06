@@ -405,7 +405,10 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	if sl, ok := obj.Addr().Interface().(SaverLoader); ok {
+	value := obj.Addr().Interface()
+	if rte.binary {
+		loadBinary(value.(binaryObject), rte.Name, Source{internal: od})
+	} else if sl, ok := value.(SaverLoader); ok {
 		// Note: may be a registered empty struct which does not
 		// implement the saver/loader interfaces.
 		sl.StateLoad(ds.ctx, Source{internal: od})
