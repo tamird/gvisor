@@ -1093,7 +1093,8 @@ test/rbe/qualify.sh --arch=all unit release-repository syscalls
 ```
 
 Bazel analyzes the ordered `test/syscalls.targets` roots with each public
-architecture configuration and `--build_tests_only`. The selector reads that
+architecture configuration, including the separate ARM64 64K-page systrap
+profile, and `--build_tests_only`. The selector reads that
 invocation's configured top-level test events, then checks the actual variants'
 TestRunner configurations and worker properties. It reports KVM and ARM64
 Firecracker omissions explicitly. It separately reports Nogo owners selected
@@ -1102,6 +1103,23 @@ by public CI but excluded by the established RBE runtime policy; the dedicated
 ptrace/systrap owners; it excludes native tests. Native syscall wrappers also
 retain their existing privileged namespace fixtures, rather than being treated
 as ordinary OCI tests.
+
+The `syscalls-arm64-64k` configuration shares the public CI selection of systrap
+owners without save/restore. It sets `--//tools/bazeldefs:page_size=64k`, replacing
+`--define=pagesize=64k`. The setting accepts `4k` (the default) or `64k`; existing
+page-size config labels still govern Go build tags and the systrap C trampoline.
+Each selected owner has a manual `<owner>_64k_arm64` variant that configures its
+runner, runtime and test dependencies together. Page size remains separate from
+the CPU architecture interface, so ordinary and 64K variants can share a build.
+
+The mixed selector reports these required 64K owners as unavailable. No supported
+hosted ARM64 64K-kernel worker configuration is known; ordinary ARM64 execution
+and an OCI image do not establish that support. The declarations retain existing
+ARM64 syscall worker properties without inventing a kernel route. Directly
+requesting a 64K variant does not bypass runsc's existing fatal check that its
+compiled page size matches the host kernel before booting the sandbox. Analysis
+and cross-compilation can qualify the build graph, but cannot qualify this runtime
+lane. Enable execution only after selecting and verifying a supported 64K worker.
 
 The combined command keeps the original unit patterns and configuration,
 including build-only tests and non-test targets. Selected syscall owners must
