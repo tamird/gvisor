@@ -2456,12 +2456,24 @@
   commit: c3d1dcc932076c15b65b8b9acfff1d47ded2ebf9
   sha256: 6a981f24fd52237c4173a10ffffa0bbe28cbba0c3f303e6dd729bc8703330782
   license: Apache-2.0
+- dependency: module_proxy/exported_go_modules/github.com/google/go-github/v84
+  version: github.com/google/go-github/v84@v84.0.0
+  retrieved: "2026-10-06"
+  commit: 2830c69e81ae2b8f809ba498c09071d093585908
+  sha256: a123bfabac2393e30bc0608ad79ed1c82d0ac663f810a569e17b4ecd3db4655a
+  license: BSD-3-Clause
 - dependency: module_proxy/exported_go_modules/github.com/google/go-pkcs11
   version: github.com/google/go-pkcs11@v0.3.0
   retrieved: "2026-09-30"
   commit: c6f79328ddf90f25424ecb6e874c109718883daa
   sha256: 320852ebd4903089bf232f518fe724b40cd9f4131a30cb1c905d03e82225861b
   license: Apache-2.0
+- dependency: module_proxy/exported_go_modules/github.com/google/go-querystring
+  version: github.com/google/go-querystring@v1.2.0
+  retrieved: "2026-10-06"
+  commit: 59c17d91d3d41ba66bc4db00b458acc8c3220835
+  sha256: 57b7ce2b82b33c68f59a224c6dd1305753e5ee3eecbefd09d43423a14f541e31
+  license: BSD-3-Clause
 - dependency: module_proxy/exported_go_modules/github.com/google/gofuzz
   version: github.com/google/gofuzz@v1.2.0
   retrieved: "2026-09-30"
