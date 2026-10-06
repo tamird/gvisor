@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/netip"
 	"os"
 	"runtime"
-	"strings"
 	"syscall"
 
 	"golang.org/x/sys/unix"
@@ -44,25 +44,19 @@ import (
 )
 
 // DefaultLoopbackLink contains IP addresses and routes of "127.0.0.1/8" and
-// "::1/8" on "lo" interface.
+// "::1/128" on "lo" interface.
 var DefaultLoopbackLink = LoopbackLink{
 	Name: "lo",
-	Addresses: []IPWithPrefix{
-		{Address: net.IP("\x7f\x00\x00\x01"), PrefixLen: 8},
-		{Address: net.IPv6loopback, PrefixLen: 128},
+	Addresses: []netip.Prefix{
+		netip.MustParsePrefix("127.0.0.1/8"),
+		netip.MustParsePrefix("::1/128"),
 	},
 	Routes: []Route{
 		{
-			Destination: net.IPNet{
-				IP:   net.IPv4(0x7f, 0, 0, 0),
-				Mask: net.IPv4Mask(0xff, 0, 0, 0),
-			},
+			Destination: netip.MustParsePrefix("127.0.0.0/8"),
 		},
 		{
-			Destination: net.IPNet{
-				IP:   net.IPv6loopback,
-				Mask: net.IPMask(strings.Repeat("\xff", net.IPv6len)),
-			},
+			Destination: netip.MustParsePrefix("::1/128"),
 		},
 	},
 }
@@ -79,8 +73,8 @@ type Network struct {
 
 // Route represents a route in the network stack.
 type Route struct {
-	Destination net.IPNet
-	Gateway     net.IP
+	Destination netip.Prefix
+	Gateway     netip.Addr
 	MTU         uint32
 }
 
@@ -92,7 +86,7 @@ type DefaultRoute struct {
 
 // Neighbor represents an ARP/NDP neighbor entry to be added to the stack.
 type Neighbor struct {
-	IP           net.IP
+	IP           netip.Addr
 	HardwareAddr net.HardwareAddr
 }
 
@@ -101,7 +95,7 @@ type FDBasedLink struct {
 	Name              string
 	InterfaceIndex    int
 	MTU               int
-	Addresses         []IPWithPrefix
+	Addresses         []netip.Prefix
 	Routes            []Route
 	GSOMaxSize        uint32
 	GVisorGSOEnabled  bool
@@ -153,7 +147,7 @@ type XDPLink struct {
 	Name              string
 	InterfaceIndex    int
 	MTU               int
-	Addresses         []IPWithPrefix
+	Addresses         []netip.Prefix
 	Routes            []Route
 	TXChecksumOffload bool
 	RXChecksumOffload bool
@@ -173,7 +167,7 @@ type XDPLink struct {
 // LoopbackLink configures a loopback link.
 type LoopbackLink struct {
 	Name      string
-	Addresses []IPWithPrefix
+	Addresses []netip.Prefix
 	Routes    []Route
 	GVisorGRO bool
 }
@@ -221,32 +215,22 @@ type InitPluginStackArgs struct {
 	InitStr string
 }
 
-// IPWithPrefix is an address with its subnet prefix length.
-type IPWithPrefix struct {
-	// Address is a network address.
-	Address net.IP
-
-	// PrefixLen is the subnet prefix length.
-	PrefixLen int
-}
-
-func (ip IPWithPrefix) String() string {
-	return fmt.Sprintf("%s/%d", ip.Address, ip.PrefixLen)
-}
-
 // Empty returns true if route hasn't been set.
 func (r *Route) Empty() bool {
-	return r.Destination.IP == nil && r.Destination.Mask == nil && r.Gateway == nil
+	return !r.Destination.IsValid() && !r.Gateway.IsValid()
 }
 
 func (r *Route) toTcpipRoute(id tcpip.NICID) (tcpip.Route, error) {
-	subnet, err := tcpip.NewSubnet(ipToAddress(r.Destination.IP), ipMaskToAddressMask(r.Destination.Mask))
-	if err != nil {
-		return tcpip.Route{}, err
+	if !r.Destination.IsValid() || r.Destination != r.Destination.Masked() {
+		return tcpip.Route{}, fmt.Errorf("invalid route destination: %v", r.Destination)
 	}
+	subnet := tcpip.AddressWithPrefix{
+		Address:   tcpip.AddrFromSlice(r.Destination.Addr().AsSlice()),
+		PrefixLen: r.Destination.Bits(),
+	}.Subnet()
 	return tcpip.Route{
 		Destination: subnet,
-		Gateway:     ipToAddress(r.Gateway),
+		Gateway:     tcpip.AddrFromSlice(r.Gateway.AsSlice()),
 		NIC:         id,
 		MTU:         r.MTU,
 	}, nil
@@ -603,18 +587,18 @@ func (n *Network) CreateLinksAndRoutes(args *CreateLinksAndRoutesArgs, _ *struct
 
 // createNICWithAddrs creates a NIC in the network stack and adds the given
 // addresses.
-func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts stack.NICOptions, addrs []IPWithPrefix) error {
+func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts stack.NICOptions, addrs []netip.Prefix) error {
 	if err := n.Stack.CreateNICWithOptions(id, ep, opts); err != nil {
 		return fmt.Errorf("CreateNICWithOptions(%d, _, %+v) failed: %v", id, opts, err)
 	}
 
 	for _, addr := range addrs {
-		proto, tcpipAddr := ipToAddressAndProto(addr.Address)
+		proto, tcpipAddr := ipToAddressAndProto(addr.Addr())
 		protocolAddr := tcpip.ProtocolAddress{
 			Protocol: proto,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
 				Address:   tcpipAddr,
-				PrefixLen: addr.PrefixLen,
+				PrefixLen: addr.Bits(),
 			},
 		}
 		if err := n.Stack.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
@@ -625,24 +609,9 @@ func (n *Network) createNICWithAddrs(id tcpip.NICID, ep stack.LinkEndpoint, opts
 }
 
 // ipToAddressAndProto converts IP to tcpip.Address and a protocol number.
-//
-// Note: don't use 'len(ip)' to determine IP version because length is always 16.
-func ipToAddressAndProto(ip net.IP) (tcpip.NetworkProtocolNumber, tcpip.Address) {
-	if i4 := ip.To4(); i4 != nil {
-		return ipv4.ProtocolNumber, tcpip.AddrFromSlice(i4)
+func ipToAddressAndProto(ip netip.Addr) (tcpip.NetworkProtocolNumber, tcpip.Address) {
+	if ip.Is4() {
+		return ipv4.ProtocolNumber, tcpip.AddrFrom4(ip.As4())
 	}
-	return ipv6.ProtocolNumber, tcpip.AddrFromSlice(ip)
-}
-
-// ipToAddress converts IP to tcpip.Address, ignoring the protocol.
-func ipToAddress(ip net.IP) tcpip.Address {
-	_, addr := ipToAddressAndProto(ip)
-	return addr
-}
-
-// ipMaskToAddressMask converts IPMask to tcpip.AddressMask, ignoring the
-// protocol.
-func ipMaskToAddressMask(ipMask net.IPMask) tcpip.AddressMask {
-	addr := ipToAddress(net.IP(ipMask))
-	return tcpip.MaskFromBytes(addr.AsSlice())
+	return ipv6.ProtocolNumber, tcpip.AddrFromSlice(ip.AsSlice())
 }
