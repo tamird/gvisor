@@ -40,8 +40,9 @@ ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
-Local test execution currently supports only smoke on a matching Linux host;
-compilation remains remote. It does not provision remote runtime fixtures.
+Local test execution supports smoke, bwrap and the namespace-dependent subset
+of ARM64 unit tests on a matching Linux host. Compilation remains remote.
+The partial unit phase reports remote/shared owners that it does not execute.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -89,10 +90,14 @@ case "$test_execution" in
       amd64:x86_64|arm64:aarch64) ;;
       *) printf 'Local tests require a single matching host architecture.\n' >&2; exit 2 ;;
     esac
-    if [[ $# != 1 || ( $1 != smoke && $1 != bwrap ) ]]; then
-      printf 'Select one existing smoke or bwrap lane for local tests.\n' >&2
+    if (( $# != 1 )); then
+      printf 'Select one lane for local tests.\n' >&2
       exit 2
     fi
+    case "$1:$arch" in
+      smoke:*|bwrap:*|unit:arm64) ;;
+      *) printf 'Local tests support smoke, bwrap and ARM64 unit namespace owners.\n' >&2; exit 2 ;;
+    esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
@@ -286,6 +291,61 @@ select_unit_profile() {
     > "$selection_dir/unit-build-targets"
   cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
 }
+
+# Reuse the native unit graph, but only execute owners whose remote namespace
+# fixture is unavailable. This is explicitly a partial unit qualification.
+run_local_units() (
+  set -e
+  local selection_dir group phase_status status=0
+  local -a privilege=()
+  selection_dir=$(mktemp -d)
+  trap 'rm -rf "$selection_dir"' EXIT
+  python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
+  bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+  python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+  bazel aquery --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
+    --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+  analyze_profile test/unit.targets "$selection_dir/profile.json" \
+    --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
+  python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+    "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --local \
+    | tee "$selection_dir/selection.json"
+  # Preserve the selection, but never upload Bazel's parsed credential options.
+  mkdir -p "${RUNNER_TEMP:?}/qualification/unit-selection"
+  cp "$selection_dir/selection.json" "$selection_dir/actions.json" "$selection_dir/owners" \
+    "$selection_dir/targets"* "$RUNNER_TEMP/qualification/unit-selection/"
+  python3 - "$selection_dir/profile.json" "$RUNNER_TEMP/qualification/unit-selection/profile.json" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+keys = {"id", "children", "configured", "finished", "aborted"}
+with Path(sys.argv[2]).open("w") as output:
+    for line in Path(sys.argv[1]).read_text().splitlines():
+        event = json.loads(line)
+        output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
+PY
+  printf 'Partial ARM64 unit phase: only namespace-dependent owners run locally; reported remote/shared owners remain unexecuted.\n'
+  for group in root unprivileged; do
+    if [[ ! -s $selection_dir/targets.$group ]]; then
+      continue
+    fi
+    privilege=()
+    if [[ $group == root ]]; then
+      privilege=(--run_under='sudo -n -E')
+    fi
+    phase_status=0
+    bazel test --config=rbe --config=x86_64 --config=rbe-local-tests --keep_going \
+      --local_test_jobs=2 --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
+      --test_env=GO_TEST_WRAP_TESTV=1 "${privilege[@]}" \
+      --target_pattern_file="$selection_dir/targets.$group" || phase_status=$?
+    printf 'Local unit %s phase exited %d\n' "$group" "$phase_status"
+    if (( phase_status != 0 )); then
+      status=1
+    fi
+  done
+  return "$status"
+)
 
 select_cgroup_profile() {
   local selection_dir=$1 lane=$2 profile
@@ -638,6 +698,10 @@ run_lane() (
       targets=(//...)
       ;;
     unit|unit-v1)
+      if [[ $test_execution == local ]]; then
+        run_local_units
+        return
+      fi
       # test/unit.targets also retains non-test build targets and the existing
       # exclusions. Keep its selection separate from Nogo's positive tag filter.
       options=(--config=unit)
@@ -800,7 +864,11 @@ run_selection() {
     printf '\nRunning lane: %s\n' "$lane"
     run_lane "$lane"
     lane_status=$?
-    printf 'Lane %s exited %d\n' "$lane" "$lane_status"
+    if [[ $test_execution == local && $lane == unit ]]; then
+      printf 'Partial local unit phase exited %d; remote/shared owners were not executed.\n' "$lane_status"
+    else
+      printf 'Lane %s exited %d\n' "$lane" "$lane_status"
+    fi
     if (( lane_status != 0 )); then
       status=1
     fi

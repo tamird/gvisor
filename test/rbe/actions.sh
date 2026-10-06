@@ -64,10 +64,23 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
-    export qualification_execution_log="$RUNNER_TEMP/qualification/execution.binpb"
     bazel() {
-      command bazelisk --bazelrc="$qualification_rc" "$@" \
-        "--execution_log_compact_file=$qualification_execution_log"
+      local argument
+      local -a evidence=()
+      # Startup options may precede the command. Queries perform no spawns and
+      # do not accept execution-log options; each build/test keeps its own log.
+      for argument in "$@"; do
+        if [[ $argument == --* ]]; then
+          continue
+        fi
+        if [[ $argument == build || $argument == test ]]; then
+          evidence=(
+            "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
+          )
+        fi
+        break
+      done
+      command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}"
     }
     export -f bazel
 
@@ -76,6 +89,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       uname -a
       id
       printf 'page_size=%s\n' "$(getconf PAGESIZE)"
+      printf 'logical_cpus=%s\n' "$(getconf _NPROCESSORS_ONLN)"
       df -h "$PWD"
       ps -p 1 -o comm=
       stat -fc 'cgroup_filesystem=%T' /sys/fs/cgroup
