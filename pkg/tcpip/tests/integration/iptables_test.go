@@ -18,10 +18,12 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checker"
@@ -84,7 +86,7 @@ func genStackV6(t *testing.T) (*stack.Stack, *channel.Endpoint) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          header.IPv6ProtocolNumber,
-		AddressWithPrefix: dstAddrV6.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(dstAddrV6),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -105,7 +107,7 @@ func genStackV4(t *testing.T) (*stack.Stack, *channel.Endpoint) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          header.IPv4ProtocolNumber,
-		AddressWithPrefix: dstAddrV4.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(dstAddrV4),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -603,14 +605,14 @@ func TestIPTableWritePackets(t *testing.T) {
 			}
 			protocolAddrV6 := tcpip.ProtocolAddress{
 				Protocol:          header.IPv6ProtocolNumber,
-				AddressWithPrefix: srcAddrV6.WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(srcAddrV6),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddrV6, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddrV6, err)
 			}
 			protocolAddrV4 := tcpip.ProtocolAddress{
 				Protocol:          header.IPv4ProtocolNumber,
-				AddressWithPrefix: srcAddrV4.WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(srcAddrV4),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddrV4, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddrV4, err)
@@ -737,10 +739,10 @@ func TestForwardingHook(t *testing.T) {
 			netProto: ipv4.ProtocolNumber,
 			local:    false,
 			srcAddr:  utils.RemoteIPv4Addr,
-			dstAddr:  utils.Ipv4Addr2.AddressWithPrefix.Address,
+			dstAddr:  utils.Ipv4Addr2.AddressWithPrefix.Addr(),
 			rx:       rxICMPv4EchoReply,
 			checker: func(t *testing.T, v *buffer.View) {
-				forwardedICMPv4EchoReplyChecker(t, v, utils.RemoteIPv4Addr, utils.Ipv4Addr2.AddressWithPrefix.Address)
+				forwardedICMPv4EchoReplyChecker(t, v, utils.RemoteIPv4Addr, utils.Ipv4Addr2.AddressWithPrefix.Addr())
 			},
 		},
 		{
@@ -748,7 +750,7 @@ func TestForwardingHook(t *testing.T) {
 			netProto: ipv4.ProtocolNumber,
 			local:    true,
 			srcAddr:  utils.RemoteIPv4Addr,
-			dstAddr:  utils.Ipv4Addr.Address,
+			dstAddr:  utils.Ipv4Addr.Addr(),
 			rx:       rxICMPv4EchoReply,
 		},
 		{
@@ -756,10 +758,10 @@ func TestForwardingHook(t *testing.T) {
 			netProto: ipv6.ProtocolNumber,
 			local:    false,
 			srcAddr:  utils.RemoteIPv6Addr,
-			dstAddr:  utils.Ipv6Addr2.AddressWithPrefix.Address,
+			dstAddr:  utils.Ipv6Addr2.AddressWithPrefix.Addr(),
 			rx:       rxICMPv6EchoReply,
 			checker: func(t *testing.T, v *buffer.View) {
-				forwardedICMPv6EchoReplyChecker(t, v, utils.RemoteIPv6Addr, utils.Ipv6Addr2.AddressWithPrefix.Address)
+				forwardedICMPv6EchoReplyChecker(t, v, utils.RemoteIPv6Addr, utils.Ipv6Addr2.AddressWithPrefix.Addr())
 			},
 		},
 		{
@@ -767,7 +769,7 @@ func TestForwardingHook(t *testing.T) {
 			netProto: ipv6.ProtocolNumber,
 			local:    true,
 			srcAddr:  utils.RemoteIPv6Addr,
-			dstAddr:  utils.Ipv6Addr.Address,
+			dstAddr:  utils.Ipv6Addr.Addr(),
 			rx:       rxICMPv6EchoReply,
 		},
 	}
@@ -865,14 +867,14 @@ func TestForwardingHook(t *testing.T) {
 
 					protocolAddrV4 := tcpip.ProtocolAddress{
 						Protocol:          ipv4.ProtocolNumber,
-						AddressWithPrefix: utils.Ipv4Addr.Address.WithPrefix(),
+						AddressWithPrefix: tcpip.FullPrefix(utils.Ipv4Addr.Addr()),
 					}
 					if err := s.AddProtocolAddress(nicID2, protocolAddrV4, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID2, protocolAddrV4, err)
 					}
 					protocolAddrV6 := tcpip.ProtocolAddress{
 						Protocol:          ipv6.ProtocolNumber,
-						AddressWithPrefix: utils.Ipv6Addr.Address.WithPrefix(),
+						AddressWithPrefix: tcpip.FullPrefix(utils.Ipv6Addr.Addr()),
 					}
 					if err := s.AddProtocolAddress(nicID2, protocolAddrV6, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID2, protocolAddrV6, err)
@@ -981,11 +983,11 @@ func TestFilteringEchoPacketsWithLocalForwarding(t *testing.T) {
 			name:     "IPv4",
 			netProto: ipv4.ProtocolNumber,
 			rx: func(e *channel.Endpoint) {
-				utils.RxICMPv4EchoRequest(e, utils.RemoteIPv4Addr, utils.Ipv4Addr2.AddressWithPrefix.Address, ttl)
+				utils.RxICMPv4EchoRequest(e, utils.RemoteIPv4Addr, utils.Ipv4Addr2.AddressWithPrefix.Addr(), ttl)
 			},
 			checker: func(t *testing.T, v *buffer.View) {
 				checker.IPv4(t, v,
-					checker.SrcAddr(utils.Ipv4Addr2.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.Ipv4Addr2.AddressWithPrefix.Addr()),
 					checker.DstAddr(utils.RemoteIPv4Addr),
 					checker.ICMPv4(
 						checker.ICMPv4Type(header.ICMPv4EchoReply)))
@@ -995,11 +997,11 @@ func TestFilteringEchoPacketsWithLocalForwarding(t *testing.T) {
 			name:     "IPv6",
 			netProto: ipv6.ProtocolNumber,
 			rx: func(e *channel.Endpoint) {
-				utils.RxICMPv6EchoRequest(e, utils.RemoteIPv6Addr, utils.Ipv6Addr2.AddressWithPrefix.Address, ttl)
+				utils.RxICMPv6EchoRequest(e, utils.RemoteIPv6Addr, utils.Ipv6Addr2.AddressWithPrefix.Addr(), ttl)
 			},
 			checker: func(t *testing.T, v *buffer.View) {
 				checker.IPv6(t, v,
-					checker.SrcAddr(utils.Ipv6Addr2.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.Ipv6Addr2.AddressWithPrefix.Addr()),
 					checker.DstAddr(utils.RemoteIPv6Addr),
 					checker.ICMPv6(
 						checker.ICMPv6Type(header.ICMPv6EchoReply)))
@@ -1462,26 +1464,26 @@ func TestNATEcho(t *testing.T) {
 				{
 					name:               "SNAT",
 					natTypes:           snatTypes,
-					requestSrc:         utils.Host2IPv4Addr.AddressWithPrefix.Address,
-					requestDst:         utils.Host1IPv4Addr.AddressWithPrefix.Address,
-					expectedRequestSrc: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
-					expectedRequestDst: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+					requestSrc:         utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
+					requestDst:         utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
+					expectedRequestSrc: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+					expectedRequestDst: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 				},
 				{
 					name:               "DNAT",
 					natTypes:           []natType{dnatTarget},
-					requestSrc:         utils.Host2IPv4Addr.AddressWithPrefix.Address,
-					requestDst:         utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address,
-					expectedRequestSrc: utils.Host2IPv4Addr.AddressWithPrefix.Address,
-					expectedRequestDst: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+					requestSrc:         utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
+					requestDst:         utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr(),
+					expectedRequestSrc: utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
+					expectedRequestDst: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 				},
 				{
 					name:               "Twice-NAT",
 					natTypes:           twiceNATTypes,
-					requestSrc:         utils.Host2IPv4Addr.AddressWithPrefix.Address,
-					requestDst:         utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address,
-					expectedRequestSrc: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
-					expectedRequestDst: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+					requestSrc:         utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
+					requestDst:         utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr(),
+					expectedRequestSrc: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+					expectedRequestDst: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 				},
 			},
 		},
@@ -1496,26 +1498,26 @@ func TestNATEcho(t *testing.T) {
 				{
 					name:               "SNAT",
 					natTypes:           snatTypes,
-					requestSrc:         utils.Host2IPv6Addr.AddressWithPrefix.Address,
-					requestDst:         utils.Host1IPv6Addr.AddressWithPrefix.Address,
-					expectedRequestSrc: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
-					expectedRequestDst: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+					requestSrc:         utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
+					requestDst:         utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+					expectedRequestSrc: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+					expectedRequestDst: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 				},
 				{
 					name:               "DNAT",
 					natTypes:           []natType{dnatTarget},
-					requestSrc:         utils.Host2IPv6Addr.AddressWithPrefix.Address,
-					requestDst:         utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address,
-					expectedRequestSrc: utils.Host2IPv6Addr.AddressWithPrefix.Address,
-					expectedRequestDst: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+					requestSrc:         utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
+					requestDst:         utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr(),
+					expectedRequestSrc: utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
+					expectedRequestDst: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 				},
 				{
 					name:               "Twice-NAT",
 					natTypes:           twiceNATTypes,
-					requestSrc:         utils.Host2IPv6Addr.AddressWithPrefix.Address,
-					requestDst:         utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address,
-					expectedRequestSrc: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
-					expectedRequestDst: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+					requestSrc:         utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
+					requestDst:         utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr(),
+					expectedRequestSrc: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+					expectedRequestDst: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 				},
 			},
 		},
@@ -1646,10 +1648,10 @@ func TestNAT(t *testing.T) {
 
 				listenerStack := host1Stack
 				serverAddr := tcpip.FullAddress{
-					Addr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+					Addr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 					Port: listenPort,
 				}
-				serverConnectAddr := utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address
+				serverConnectAddr := utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()
 				clientConnectPort := serverAddr.Port
 				ep1, ep1WECH := newEP(t, listenerStack, proto, ipv4.ProtocolNumber)
 				ep2, ep2WECH := newEP(t, host2Stack, proto, ipv4.ProtocolNumber)
@@ -1660,10 +1662,10 @@ func TestNAT(t *testing.T) {
 					serverConnectAddr: serverConnectAddr,
 
 					clientEP:         ep2,
-					clientAddr:       utils.Host2IPv4Addr.AddressWithPrefix.Address,
+					clientAddr:       utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
 					clientReadableCH: ep2WECH,
 					clientConnectAddr: tcpip.FullAddress{
-						Addr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+						Addr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 						Port: clientConnectPort,
 					},
 				}
@@ -1680,10 +1682,10 @@ func TestNAT(t *testing.T) {
 				// to the router.
 				listenerStack := routerStack
 				serverAddr := tcpip.FullAddress{
-					Addr: utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address,
+					Addr: utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr(),
 					Port: listenPort,
 				}
-				serverConnectAddr := utils.Host2IPv4Addr.AddressWithPrefix.Address
+				serverConnectAddr := utils.Host2IPv4Addr.AddressWithPrefix.Addr()
 				// DNAT will update the destination port to what the server is
 				// bound to.
 				clientConnectPort := serverAddr.Port + 1
@@ -1696,10 +1698,10 @@ func TestNAT(t *testing.T) {
 					serverConnectAddr: serverConnectAddr,
 
 					clientEP:         ep2,
-					clientAddr:       utils.Host2IPv4Addr.AddressWithPrefix.Address,
+					clientAddr:       utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
 					clientReadableCH: ep2WECH,
 					clientConnectAddr: tcpip.FullAddress{
-						Addr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+						Addr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 						Port: clientConnectPort,
 					},
 				}
@@ -1714,10 +1716,10 @@ func TestNAT(t *testing.T) {
 
 				listenerStack := host1Stack
 				serverAddr := tcpip.FullAddress{
-					Addr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+					Addr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 					Port: listenPort,
 				}
-				serverConnectAddr := utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address
+				serverConnectAddr := utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()
 				clientConnectPort := serverAddr.Port
 				ep1, ep1WECH := newEP(t, listenerStack, proto, ipv4.ProtocolNumber)
 				ep2, ep2WECH := newEP(t, host2Stack, proto, ipv4.ProtocolNumber)
@@ -1728,10 +1730,10 @@ func TestNAT(t *testing.T) {
 					serverConnectAddr: serverConnectAddr,
 
 					clientEP:         ep2,
-					clientAddr:       utils.Host2IPv4Addr.AddressWithPrefix.Address,
+					clientAddr:       utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
 					clientReadableCH: ep2WECH,
 					clientConnectAddr: tcpip.FullAddress{
-						Addr: utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address,
+						Addr: utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr(),
 						Port: clientConnectPort,
 					},
 				}
@@ -1746,10 +1748,10 @@ func TestNAT(t *testing.T) {
 
 				listenerStack := host1Stack
 				serverAddr := tcpip.FullAddress{
-					Addr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+					Addr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 					Port: listenPort,
 				}
-				serverConnectAddr := utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address
+				serverConnectAddr := utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()
 				clientConnectPort := serverAddr.Port
 				ep1, ep1WECH := newEP(t, listenerStack, proto, ipv6.ProtocolNumber)
 				ep2, ep2WECH := newEP(t, host2Stack, proto, ipv6.ProtocolNumber)
@@ -1760,10 +1762,10 @@ func TestNAT(t *testing.T) {
 					serverConnectAddr: serverConnectAddr,
 
 					clientEP:         ep2,
-					clientAddr:       utils.Host2IPv6Addr.AddressWithPrefix.Address,
+					clientAddr:       utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
 					clientReadableCH: ep2WECH,
 					clientConnectAddr: tcpip.FullAddress{
-						Addr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+						Addr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 						Port: clientConnectPort,
 					},
 				}
@@ -1780,10 +1782,10 @@ func TestNAT(t *testing.T) {
 				// to the router.
 				listenerStack := routerStack
 				serverAddr := tcpip.FullAddress{
-					Addr: utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address,
+					Addr: utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr(),
 					Port: listenPort,
 				}
-				serverConnectAddr := utils.Host2IPv6Addr.AddressWithPrefix.Address
+				serverConnectAddr := utils.Host2IPv6Addr.AddressWithPrefix.Addr()
 				// DNAT will update the destination port to what the server is
 				// bound to.
 				clientConnectPort := serverAddr.Port + 1
@@ -1796,10 +1798,10 @@ func TestNAT(t *testing.T) {
 					serverConnectAddr: serverConnectAddr,
 
 					clientEP:         ep2,
-					clientAddr:       utils.Host2IPv6Addr.AddressWithPrefix.Address,
+					clientAddr:       utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
 					clientReadableCH: ep2WECH,
 					clientConnectAddr: tcpip.FullAddress{
-						Addr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+						Addr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 						Port: clientConnectPort,
 					},
 				}
@@ -1814,10 +1816,10 @@ func TestNAT(t *testing.T) {
 
 				listenerStack := host1Stack
 				serverAddr := tcpip.FullAddress{
-					Addr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+					Addr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 					Port: listenPort,
 				}
-				serverConnectAddr := utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address
+				serverConnectAddr := utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()
 				clientConnectPort := serverAddr.Port
 				ep1, ep1WECH := newEP(t, listenerStack, proto, ipv6.ProtocolNumber)
 				ep2, ep2WECH := newEP(t, host2Stack, proto, ipv6.ProtocolNumber)
@@ -1828,10 +1830,10 @@ func TestNAT(t *testing.T) {
 					serverConnectAddr: serverConnectAddr,
 
 					clientEP:         ep2,
-					clientAddr:       utils.Host2IPv6Addr.AddressWithPrefix.Address,
+					clientAddr:       utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
 					clientReadableCH: ep2WECH,
 					clientConnectAddr: tcpip.FullAddress{
-						Addr: utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address,
+						Addr: utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr(),
 						Port: clientConnectPort,
 					},
 				}
@@ -1886,7 +1888,7 @@ func TestNAT(t *testing.T) {
 					if err != nil {
 						t.Fatalf("ep.Accept(_): %s", err)
 					}
-					if diff := cmp.Diff(clientAddr, addr, checker.IgnoreCmpPath(
+					if diff := cmp.Diff(clientAddr, addr, cmpopts.EquateComparable(tcpip.Address{}), checker.IgnoreCmpPath(
 						"NIC",
 					)); diff != "" {
 						t.Errorf("accepted address mismatch (-want +got):\n%s", diff)
@@ -1996,7 +1998,7 @@ func TestNAT(t *testing.T) {
 								if subTest.needRemoteAddr {
 									readResult.RemoteAddr = expectedFrom
 								}
-								if diff := cmp.Diff(readResult, res, checker.IgnoreCmpPath(
+								if diff := cmp.Diff(readResult, res, cmpopts.EquateComparable(tcpip.Address{}), checker.IgnoreCmpPath(
 									"ControlMessages",
 									"RemoteAddr.NIC",
 								)); diff != "" {
@@ -2221,7 +2223,7 @@ func TestNATICMPError(t *testing.T) {
 		{
 			name:      "IPv4",
 			netProto:  ipv4.ProtocolNumber,
-			host1Addr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
+			host1Addr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 			icmpError: func(t *testing.T, original []byte, icmpType uint8) []byte {
 				hdr := prependable.New(header.IPv4MinimumSize + header.ICMPv4MinimumSize + len(original))
 				if n := copy(hdr.Prepend(len(original)), original); n != len(original) {
@@ -2235,8 +2237,8 @@ func TestNATICMPError(t *testing.T) {
 					hdr.Prepend(header.IPv4MinimumSize),
 					hdr.UsedLength(),
 					header.ICMPv4ProtocolNumber,
-					utils.Host1IPv4Addr.AddressWithPrefix.Address,
-					utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+					utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
+					utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
 				)
 				return hdr.View()
 			},
@@ -2248,8 +2250,8 @@ func TestNATICMPError(t *testing.T) {
 			},
 			checkNATedError: func(t *testing.T, v *buffer.View, original []byte, icmpType uint8) {
 				checker.IPv4(t, v,
-					checker.SrcAddr(utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address),
-					checker.DstAddr(utils.Host2IPv4Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr()),
+					checker.DstAddr(utils.Host2IPv4Addr.AddressWithPrefix.Addr()),
 					checker.ICMPv4(
 						checker.ICMPv4Type(header.ICMPv4Type(icmpType)),
 						checker.ICMPv4Checksum(),
@@ -2262,12 +2264,12 @@ func TestNATICMPError(t *testing.T) {
 					name:  "UDP",
 					proto: header.UDPProtocolNumber,
 					buf: func() []byte {
-						return udpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Address, utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address, srcPort, dstPort, dataSize)
+						return udpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Addr(), utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr(), srcPort, dstPort, dataSize)
 					}(),
 					checkNATed: func(t *testing.T, v *buffer.View) {
 						checker.IPv4(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Addr()),
 							checker.UDP(
 								checker.SrcPort(srcPort),
 								checker.DstPort(dstPort),
@@ -2279,12 +2281,12 @@ func TestNATICMPError(t *testing.T) {
 					name:  "TCP",
 					proto: header.TCPProtocolNumber,
 					buf: func() []byte {
-						return tcpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Address, utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address, srcPort, dstPort, dataSize)
+						return tcpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Addr(), utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr(), srcPort, dstPort, dataSize)
 					}(),
 					checkNATed: func(t *testing.T, v *buffer.View) {
 						checker.IPv4(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Addr()),
 							checker.TCP(
 								checker.SrcPort(srcPort),
 								checker.DstPort(dstPort),
@@ -2324,7 +2326,7 @@ func TestNATICMPError(t *testing.T) {
 		{
 			name:      "IPv6",
 			netProto:  ipv6.ProtocolNumber,
-			host1Addr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
+			host1Addr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 			icmpError: func(t *testing.T, original []byte, icmpType uint8) []byte {
 				payloadLen := header.ICMPv6MinimumSize + len(original)
 				hdr := prependable.New(header.IPv6MinimumSize + payloadLen)
@@ -2336,15 +2338,15 @@ func TestNATICMPError(t *testing.T) {
 				icmp.SetChecksum(0)
 				icmp.SetChecksum(header.ICMPv6Checksum(header.ICMPv6ChecksumParams{
 					Header: icmp,
-					Src:    utils.Host1IPv6Addr.AddressWithPrefix.Address,
-					Dst:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+					Src:    utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+					Dst:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 				}))
 				encodeIPv6Header(
 					hdr.Prepend(header.IPv6MinimumSize),
 					payloadLen,
 					header.ICMPv6ProtocolNumber,
-					utils.Host1IPv6Addr.AddressWithPrefix.Address,
-					utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+					utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+					utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 				)
 				return hdr.View()
 			},
@@ -2354,8 +2356,8 @@ func TestNATICMPError(t *testing.T) {
 			},
 			checkNATedError: func(t *testing.T, v *buffer.View, original []byte, icmpType uint8) {
 				checker.IPv6(t, v,
-					checker.SrcAddr(utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address),
-					checker.DstAddr(utils.Host2IPv6Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr()),
+					checker.DstAddr(utils.Host2IPv6Addr.AddressWithPrefix.Addr()),
 					checker.ICMPv6(
 						checker.ICMPv6Type(header.ICMPv6Type(icmpType)),
 						checker.ICMPv6Payload(original),
@@ -2367,12 +2369,12 @@ func TestNATICMPError(t *testing.T) {
 					name:  "UDP",
 					proto: header.UDPProtocolNumber,
 					buf: func() []byte {
-						return udpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Address, utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address, srcPort, dstPort, dataSize)
+						return udpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Addr(), utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr(), srcPort, dstPort, dataSize)
 					}(),
 					checkNATed: func(t *testing.T, v *buffer.View) {
 						checker.IPv6(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Addr()),
 							checker.UDP(
 								checker.SrcPort(srcPort),
 								checker.DstPort(dstPort),
@@ -2384,12 +2386,12 @@ func TestNATICMPError(t *testing.T) {
 					name:  "TCP",
 					proto: header.TCPProtocolNumber,
 					buf: func() []byte {
-						return tcpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Address, utils.RouterNIC2IPv6Addr.AddressWithPrefix.Address, srcPort, dstPort, dataSize)
+						return tcpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Addr(), utils.RouterNIC2IPv6Addr.AddressWithPrefix.Addr(), srcPort, dstPort, dataSize)
 					}(),
 					checkNATed: func(t *testing.T, v *buffer.View) {
 						checker.IPv6(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Addr()),
 							checker.TCP(
 								checker.SrcPort(srcPort),
 								checker.DstPort(dstPort),
@@ -2664,23 +2666,23 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 		{
 			name:           "IPv4",
 			netProto:       ipv4.ProtocolNumber,
-			routerNIC1Addr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+			routerNIC1Addr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
 			srcAddrs: []tcpip.Address{
-				utils.Ipv4Addr1.AddressWithPrefix.Address,
-				utils.Ipv4Addr2.AddressWithPrefix.Address,
-				utils.Ipv4Addr3.AddressWithPrefix.Address,
+				utils.Ipv4Addr1.AddressWithPrefix.Addr(),
+				utils.Ipv4Addr2.AddressWithPrefix.Addr(),
+				utils.Ipv4Addr3.AddressWithPrefix.Addr(),
 			},
 			transportTypes: []transportTypeTest{
 				{
 					name:  "UDP",
 					proto: header.UDPProtocolNumber,
 					buf: func(srcAddr tcpip.Address, srcPort uint16) []byte {
-						return udpv4Packet(srcAddr, utils.Host1IPv4Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */)
+						return udpv4Packet(srcAddr, utils.Host1IPv4Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */)
 					},
 					checkNATed: func(t *testing.T, v *buffer.View, originalSrcPort uint16, firstPacket bool, expectedRange portOrIdentRange) {
 						checker.IPv4(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Addr()),
 							checker.UDP(
 								checker.DstPort(dstPort),
 							),
@@ -2696,12 +2698,12 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 					name:  "TCP",
 					proto: header.TCPProtocolNumber,
 					buf: func(srcAddr tcpip.Address, srcPort uint16) []byte {
-						return tcpv4Packet(srcAddr, utils.Host1IPv4Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */)
+						return tcpv4Packet(srcAddr, utils.Host1IPv4Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */)
 					},
 					checkNATed: func(t *testing.T, v *buffer.View, originalSrcPort uint16, firstPacket bool, expectedRange portOrIdentRange) {
 						checker.IPv4(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Addr()),
 							checker.TCP(
 								checker.DstPort(dstPort),
 							),
@@ -2717,12 +2719,12 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 					name:  "ICMP Echo",
 					proto: header.ICMPv4ProtocolNumber,
 					buf: func(srcAddr tcpip.Address, ident uint16) []byte {
-						return icmpv4Packet(srcAddr, utils.Host1IPv4Addr.AddressWithPrefix.Address, header.ICMPv4Echo, ident)
+						return icmpv4Packet(srcAddr, utils.Host1IPv4Addr.AddressWithPrefix.Addr(), header.ICMPv4Echo, ident)
 					},
 					checkNATed: func(t *testing.T, v *buffer.View, originalIdent uint16, firstPacket bool, expectedRange portOrIdentRange) {
 						checker.IPv4(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv4Addr.AddressWithPrefix.Addr()),
 							checker.ICMPv4(
 								checker.ICMPv4Type(header.ICMPv4Echo),
 								checker.ICMPv4Checksum(),
@@ -2740,23 +2742,23 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 		{
 			name:           "IPv6",
 			netProto:       ipv6.ProtocolNumber,
-			routerNIC1Addr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+			routerNIC1Addr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 			srcAddrs: []tcpip.Address{
-				utils.Ipv6Addr1.AddressWithPrefix.Address,
-				utils.Ipv6Addr2.AddressWithPrefix.Address,
-				utils.Ipv6Addr2.AddressWithPrefix.Address,
+				utils.Ipv6Addr1.AddressWithPrefix.Addr(),
+				utils.Ipv6Addr2.AddressWithPrefix.Addr(),
+				utils.Ipv6Addr2.AddressWithPrefix.Addr(),
 			},
 			transportTypes: []transportTypeTest{
 				{
 					name:  "UDP",
 					proto: header.UDPProtocolNumber,
 					buf: func(srcAddr tcpip.Address, srcPort uint16) []byte {
-						return udpv6Packet(srcAddr, utils.Host1IPv6Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */)
+						return udpv6Packet(srcAddr, utils.Host1IPv6Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */)
 					},
 					checkNATed: func(t *testing.T, v *buffer.View, originalSrcPort uint16, firstPacket bool, expectedRange portOrIdentRange) {
 						checker.IPv6(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Addr()),
 							checker.UDP(
 								checker.DstPort(dstPort),
 							),
@@ -2772,12 +2774,12 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 					name:  "TCP",
 					proto: header.TCPProtocolNumber,
 					buf: func(srcAddr tcpip.Address, srcPort uint16) []byte {
-						return tcpv6Packet(srcAddr, utils.Host1IPv6Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */)
+						return tcpv6Packet(srcAddr, utils.Host1IPv6Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */)
 					},
 					checkNATed: func(t *testing.T, v *buffer.View, originalSrcPort uint16, firstPacket bool, expectedRange portOrIdentRange) {
 						checker.IPv6(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Addr()),
 							checker.TCP(
 								checker.DstPort(dstPort),
 							),
@@ -2793,12 +2795,12 @@ func TestSNATHandlePortOrIdentConflicts(t *testing.T) {
 					name:  "ICMP Echo",
 					proto: header.ICMPv6ProtocolNumber,
 					buf: func(srcAddr tcpip.Address, ident uint16) []byte {
-						return icmpv6Packet(srcAddr, utils.Host1IPv6Addr.AddressWithPrefix.Address, header.ICMPv6EchoRequest, ident)
+						return icmpv6Packet(srcAddr, utils.Host1IPv6Addr.AddressWithPrefix.Addr(), header.ICMPv6EchoRequest, ident)
 					},
 					checkNATed: func(t *testing.T, v *buffer.View, originalIdent uint16, firstPacket bool, expectedRange portOrIdentRange) {
 						checker.IPv6(t, v,
-							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
-							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Address),
+							checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
+							checker.DstAddr(utils.Host1IPv6Addr.AddressWithPrefix.Addr()),
 							checker.ICMPv6(
 								checker.ICMPv6Type(header.ICMPv6EchoRequest),
 							),
@@ -2987,10 +2989,10 @@ func TestSNATLocallyGeneratedTrafficPorts(t *testing.T) {
 	}
 	ipt.ForceReplaceTable(stack.NATID, table, false /* ipv6 */)
 
-	routerNIC2Addr := utils.RouterNIC2IPv4Addr.AddressWithPrefix.Address
-	ep1Addr := utils.Host1IPv4Addr.AddressWithPrefix.Address
+	routerNIC2Addr := utils.RouterNIC2IPv4Addr.AddressWithPrefix.Addr()
+	ep1Addr := utils.Host1IPv4Addr.AddressWithPrefix.Addr()
 	var ep1Port uint16 = 1234
-	ep2Addr := utils.Host2IPv4Addr.AddressWithPrefix.Address
+	ep2Addr := utils.Host2IPv4Addr.AddressWithPrefix.Addr()
 	var ep2Port uint16 = 2345
 
 	// Inject an incoming packet on NIC1 destined to an address that will be
@@ -3125,6 +3127,7 @@ func TestSNATLocallyGeneratedTrafficPorts(t *testing.T) {
 			Total: 0,
 		},
 		res,
+		cmpopts.EquateComparable(tcpip.Address{}),
 		checker.IgnoreCmpPath("ControlMessages"),
 	); diff != "" {
 		t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
@@ -3142,12 +3145,12 @@ func TestLocallyRoutedPackets(t *testing.T) {
 		{
 			name:     "IPv4",
 			netProto: ipv4.ProtocolNumber,
-			addr:     utils.Host1IPv4Addr.AddressWithPrefix.Address,
+			addr:     utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
 		},
 		{
 			name:     "IPv6",
 			netProto: ipv6.ProtocolNumber,
-			addr:     utils.Host1IPv6Addr.AddressWithPrefix.Address,
+			addr:     utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
 		},
 	}
 
@@ -3164,7 +3167,7 @@ func TestLocallyRoutedPackets(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          test.netProto,
-				AddressWithPrefix: test.addr.WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(test.addr),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -3172,7 +3175,7 @@ func TestLocallyRoutedPackets(t *testing.T) {
 
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: protocolAddr.AddressWithPrefix.Subnet(),
+					Destination: protocolAddr.AddressWithPrefix.Masked(),
 					NIC:         nicID,
 				},
 			})
@@ -3237,6 +3240,7 @@ func TestLocallyRoutedPackets(t *testing.T) {
 					Total: len(data),
 				},
 				res,
+				cmpopts.EquateComparable(tcpip.Address{}),
 				checker.IgnoreCmpPath("ControlMessages"),
 			); diff != "" {
 				t.Errorf("ep.Read: unexpected result (-want +got):\n%s", diff)
@@ -3297,11 +3301,11 @@ func TestRejectWith(t *testing.T) {
 	}
 
 	rxICMPv4EchoRequest := func(dst tcpip.Address) []byte {
-		return utils.ICMPv4Echo(utils.Host1IPv4Addr.AddressWithPrefix.Address, dst, ttl, header.ICMPv4Echo)
+		return utils.ICMPv4Echo(utils.Host1IPv4Addr.AddressWithPrefix.Addr(), dst, ttl, header.ICMPv4Echo)
 	}
 
 	rxICMPv6EchoRequest := func(dst tcpip.Address) []byte {
-		return utils.ICMPv6Echo(utils.Host1IPv6Addr.AddressWithPrefix.Address, dst, ttl, header.ICMPv6EchoRequest)
+		return utils.ICMPv6Echo(utils.Host1IPv6Addr.AddressWithPrefix.Addr(), dst, ttl, header.ICMPv6EchoRequest)
 	}
 
 	tests := []struct {
@@ -3325,7 +3329,7 @@ func TestRejectWith(t *testing.T) {
 				t.Helper()
 
 				checker.IPv4(t, v,
-					checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
 					checker.DstAddr(dstAddr),
 					checker.ICMPv4(
 						checker.ICMPv4Checksum(),
@@ -3338,24 +3342,24 @@ func TestRejectWith(t *testing.T) {
 			natHooks: []natHook{
 				{
 					hook:             stack.Input,
-					dstAddr:          utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+					dstAddr:          utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
 					matcher:          &icmpv4Matcher{icmpType: header.ICMPv4Echo},
-					errorICMPDstAddr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
-					errorICMPPayload: rxICMPv4EchoRequest(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
+					errorICMPDstAddr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
+					errorICMPPayload: rxICMPv4EchoRequest(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
 				},
 				{
 					hook:             stack.Forward,
-					dstAddr:          utils.Host2IPv4Addr.AddressWithPrefix.Address,
+					dstAddr:          utils.Host2IPv4Addr.AddressWithPrefix.Addr(),
 					matcher:          &icmpv4Matcher{icmpType: header.ICMPv4Echo},
-					errorICMPDstAddr: utils.Host1IPv4Addr.AddressWithPrefix.Address,
-					errorICMPPayload: rxICMPv4EchoRequest(utils.Host2IPv4Addr.AddressWithPrefix.Address),
+					errorICMPDstAddr: utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
+					errorICMPPayload: rxICMPv4EchoRequest(utils.Host2IPv4Addr.AddressWithPrefix.Addr()),
 				},
 				{
 					hook:             stack.Output,
-					dstAddr:          utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+					dstAddr:          utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
 					matcher:          &icmpv4Matcher{icmpType: header.ICMPv4EchoReply},
-					errorICMPDstAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
-					errorICMPPayload: utils.ICMPv4Echo(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address, utils.Host1IPv4Addr.AddressWithPrefix.Address, ttl, header.ICMPv4EchoReply),
+					errorICMPDstAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
+					errorICMPPayload: utils.ICMPv4Echo(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(), utils.Host1IPv4Addr.AddressWithPrefix.Addr(), ttl, header.ICMPv4EchoReply),
 				},
 			},
 			rejectTarget: func(t *testing.T, netProto stack.NetworkProtocol, rejectWith int) stack.Target {
@@ -3412,7 +3416,7 @@ func TestRejectWith(t *testing.T) {
 				t.Helper()
 
 				checker.IPv6(t, v,
-					checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
 					checker.DstAddr(dstAddr),
 					checker.ICMPv6(
 						checker.ICMPv6Type(header.ICMPv6Type(icmpType)),
@@ -3424,24 +3428,24 @@ func TestRejectWith(t *testing.T) {
 			natHooks: []natHook{
 				{
 					hook:             stack.Input,
-					dstAddr:          utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+					dstAddr:          utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 					matcher:          &icmpv6Matcher{icmpType: header.ICMPv6EchoRequest},
-					errorICMPDstAddr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
-					errorICMPPayload: rxICMPv6EchoRequest(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
+					errorICMPDstAddr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+					errorICMPPayload: rxICMPv6EchoRequest(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
 				},
 				{
 					hook:             stack.Forward,
-					dstAddr:          utils.Host2IPv6Addr.AddressWithPrefix.Address,
+					dstAddr:          utils.Host2IPv6Addr.AddressWithPrefix.Addr(),
 					matcher:          &icmpv6Matcher{icmpType: header.ICMPv6EchoRequest},
-					errorICMPDstAddr: utils.Host1IPv6Addr.AddressWithPrefix.Address,
-					errorICMPPayload: rxICMPv6EchoRequest(utils.Host2IPv6Addr.AddressWithPrefix.Address),
+					errorICMPDstAddr: utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+					errorICMPPayload: rxICMPv6EchoRequest(utils.Host2IPv6Addr.AddressWithPrefix.Addr()),
 				},
 				{
 					hook:             stack.Output,
-					dstAddr:          utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+					dstAddr:          utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 					matcher:          &icmpv6Matcher{icmpType: header.ICMPv6EchoReply},
-					errorICMPDstAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
-					errorICMPPayload: utils.ICMPv6Echo(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address, utils.Host1IPv6Addr.AddressWithPrefix.Address, ttl, header.ICMPv6EchoReply),
+					errorICMPDstAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
+					errorICMPPayload: utils.ICMPv6Echo(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(), utils.Host1IPv6Addr.AddressWithPrefix.Addr(), ttl, header.ICMPv6EchoReply),
 				},
 			},
 			rejectTarget: func(t *testing.T, netProto stack.NetworkProtocol, rejectWith int) stack.Target {
@@ -3560,8 +3564,8 @@ func TestRejectWithTCPReset(t *testing.T) {
 		{
 			name:       "IPv4",
 			netProto:   header.IPv4ProtocolNumber,
-			srcAddr:    utils.Host1IPv4Addr.AddressWithPrefix.Address,
-			dstAddr:    utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+			srcAddr:    utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
+			dstAddr:    utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
 			rejectWith: int(stack.RejectIPv4WithTCPReset),
 			genTCP: func(src, dst tcpip.Address) *stack.PacketBuffer {
 				return genTCP4WithOpts(tcpOpts{
@@ -3578,8 +3582,8 @@ func TestRejectWithTCPReset(t *testing.T) {
 		{
 			name:       "IPv6",
 			netProto:   header.IPv6ProtocolNumber,
-			srcAddr:    utils.Host1IPv6Addr.AddressWithPrefix.Address,
-			dstAddr:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+			srcAddr:    utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+			dstAddr:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 			rejectWith: int(stack.RejectIPv6WithTCPReset),
 			genTCP: func(src, dst tcpip.Address) *stack.PacketBuffer {
 				return genTCP6WithOpts(tcpOpts{
@@ -3596,8 +3600,8 @@ func TestRejectWithTCPReset(t *testing.T) {
 		{
 			name:       "IPv6 First Fragment",
 			netProto:   header.IPv6ProtocolNumber,
-			srcAddr:    utils.Host1IPv6Addr.AddressWithPrefix.Address,
-			dstAddr:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+			srcAddr:    utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+			dstAddr:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 			rejectWith: int(stack.RejectIPv6WithTCPReset),
 			genTCP: func(src, dst tcpip.Address) *stack.PacketBuffer {
 				return genTCP6WithOpts(tcpOpts{
@@ -3615,8 +3619,8 @@ func TestRejectWithTCPReset(t *testing.T) {
 		{
 			name:       "IPv6 Subsequent Fragment",
 			netProto:   header.IPv6ProtocolNumber,
-			srcAddr:    utils.Host1IPv6Addr.AddressWithPrefix.Address,
-			dstAddr:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address,
+			srcAddr:    utils.Host1IPv6Addr.AddressWithPrefix.Addr(),
+			dstAddr:    utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr(),
 			rejectWith: int(stack.RejectIPv6WithTCPReset),
 			genTCP: func(src, dst tcpip.Address) *stack.PacketBuffer {
 				return genTCP6WithOpts(tcpOpts{
@@ -3635,8 +3639,8 @@ func TestRejectWithTCPReset(t *testing.T) {
 		{
 			name:       "IPv4 Subsequent Fragment",
 			netProto:   header.IPv4ProtocolNumber,
-			srcAddr:    utils.Host1IPv4Addr.AddressWithPrefix.Address,
-			dstAddr:    utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address,
+			srcAddr:    utils.Host1IPv4Addr.AddressWithPrefix.Addr(),
+			dstAddr:    utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr(),
 			rejectWith: int(stack.RejectIPv4WithTCPReset),
 			genTCP: func(src, dst tcpip.Address) *stack.PacketBuffer {
 				return genTCP4WithOpts(tcpOpts{
@@ -3764,7 +3768,7 @@ func TestRejectResetsConnect(t *testing.T) {
 	tests := []struct {
 		name     string
 		netProto tcpip.NetworkProtocolNumber
-		addr     tcpip.AddressWithPrefix
+		addr     netip.Prefix
 		hook     stack.Hook
 	}{
 		{
@@ -3813,7 +3817,7 @@ func TestRejectResetsConnect(t *testing.T) {
 			}
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: test.addr.Subnet(),
+					Destination: test.addr.Masked(),
 					NIC:         nicID,
 				},
 			})
@@ -3865,7 +3869,7 @@ func TestRejectResetsConnect(t *testing.T) {
 			}
 			defer ep.Close()
 
-			connectAddr := tcpip.FullAddress{Addr: test.addr.Address, Port: port}
+			connectAddr := tcpip.FullAddress{Addr: test.addr.Addr(), Port: port}
 			if err := ep.Connect(connectAddr); err != nil {
 				if _, ok := err.(*tcpip.ErrConnectStarted); !ok {
 					t.Fatalf("ep.Connect(%#v): %s", connectAddr, err)
@@ -4151,10 +4155,10 @@ func TestMasqueradePortRange(t *testing.T) {
 			name:       "IPv4 UDP",
 			netProto:   ipv4.ProtocolNumber,
 			transProto: header.UDPProtocolNumber,
-			buf:        udpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Address, utils.Host1IPv4Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */),
+			buf:        udpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Addr(), utils.Host1IPv4Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */),
 			check: func(t *testing.T, v *buffer.View) {
 				checker.IPv4(t, v,
-					checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
 					checker.UDP(checker.SrcPort(mappedPort), checker.DstPort(dstPort)),
 				)
 			},
@@ -4163,10 +4167,10 @@ func TestMasqueradePortRange(t *testing.T) {
 			name:       "IPv4 TCP",
 			netProto:   ipv4.ProtocolNumber,
 			transProto: header.TCPProtocolNumber,
-			buf:        tcpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Address, utils.Host1IPv4Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */),
+			buf:        tcpv4Packet(utils.Host2IPv4Addr.AddressWithPrefix.Addr(), utils.Host1IPv4Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */),
 			check: func(t *testing.T, v *buffer.View) {
 				checker.IPv4(t, v,
-					checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC1IPv4Addr.AddressWithPrefix.Addr()),
 					checker.TCP(checker.SrcPort(mappedPort), checker.DstPort(dstPort)),
 				)
 			},
@@ -4175,10 +4179,10 @@ func TestMasqueradePortRange(t *testing.T) {
 			name:       "IPv6 UDP",
 			netProto:   ipv6.ProtocolNumber,
 			transProto: header.UDPProtocolNumber,
-			buf:        udpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Address, utils.Host1IPv6Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */),
+			buf:        udpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Addr(), utils.Host1IPv6Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */),
 			check: func(t *testing.T, v *buffer.View) {
 				checker.IPv6(t, v,
-					checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
 					checker.UDP(checker.SrcPort(mappedPort), checker.DstPort(dstPort)),
 				)
 			},
@@ -4187,10 +4191,10 @@ func TestMasqueradePortRange(t *testing.T) {
 			name:       "IPv6 TCP",
 			netProto:   ipv6.ProtocolNumber,
 			transProto: header.TCPProtocolNumber,
-			buf:        tcpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Address, utils.Host1IPv6Addr.AddressWithPrefix.Address, srcPort, dstPort, 0 /* dataSize */),
+			buf:        tcpv6Packet(utils.Host2IPv6Addr.AddressWithPrefix.Addr(), utils.Host1IPv6Addr.AddressWithPrefix.Addr(), srcPort, dstPort, 0 /* dataSize */),
 			check: func(t *testing.T, v *buffer.View) {
 				checker.IPv6(t, v,
-					checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Address),
+					checker.SrcAddr(utils.RouterNIC1IPv6Addr.AddressWithPrefix.Addr()),
 					checker.TCP(checker.SrcPort(mappedPort), checker.DstPort(dstPort)),
 				)
 			},

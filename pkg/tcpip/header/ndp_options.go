@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -649,13 +650,11 @@ func (o NDPPrefixInformation) Prefix() tcpip.Address {
 }
 
 // Subnet returns the Prefix field and Prefix Length field represented in a
-// tcpip.Subnet.
-func (o NDPPrefixInformation) Subnet() tcpip.Subnet {
-	addrWithPrefix := tcpip.AddressWithPrefix{
-		Address:   o.Prefix(),
-		PrefixLen: int(o.PrefixLength()),
-	}
-	return addrWithPrefix.Subnet()
+// netip.Prefix.
+func (o NDPPrefixInformation) Subnet() netip.Prefix {
+	addrWithPrefix := netip.PrefixFrom(o.Prefix(), min(int(o.PrefixLength()), IPv6AddressSize*8))
+
+	return addrWithPrefix.Masked()
 }
 
 // NDPRecursiveDNSServer is the NDP Recursive DNS Server option, as defined by
@@ -1018,10 +1017,10 @@ func (o NDPRouteInformation) RouteLifetime() time.Duration {
 }
 
 // Prefix returns the prefix of the destination subnet this route is for.
-func (o NDPRouteInformation) Prefix() (tcpip.Subnet, error) {
+func (o NDPRouteInformation) Prefix() (netip.Prefix, error) {
 	prefixLength := int(o.PrefixLength())
 	if max := IPv6AddressSize * 8; prefixLength > max {
-		return tcpip.Subnet{}, fmt.Errorf("got prefix length = %d, want <= %d", prefixLength, max)
+		return netip.Prefix{}, fmt.Errorf("got prefix length = %d, want <= %d", prefixLength, max)
 	}
 
 	prefix := o[ndpRouteInformationRoutePrefixIdx:]
@@ -1030,10 +1029,7 @@ func (o NDPRouteInformation) Prefix() (tcpip.Subnet, error) {
 		panic(fmt.Sprintf("got copy(addrBytes, prefix) = %d, want = %d", n, len(prefix)))
 	}
 
-	return tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFrom16(addrBytes),
-		PrefixLen: prefixLength,
-	}.Subnet(), nil
+	return netip.PrefixFrom(tcpip.AddrFrom16(addrBytes), prefixLength).Masked(), nil
 }
 
 func (o NDPRouteInformation) hasError() error {

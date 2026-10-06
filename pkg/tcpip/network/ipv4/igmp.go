@@ -529,7 +529,7 @@ func (igmp *igmpState) writePacketInner(buf *buffer.View, reportStat tcpip.Multi
 	if addressEndpoint == nil {
 		return false, nil
 	}
-	localAddr := addressEndpoint.AddressWithPrefix().Address
+	localAddr := addressEndpoint.AddressWithPrefix().Addr()
 	addressEndpoint.DecRef()
 	addressEndpoint = nil
 	if err := igmp.ep.addIPHeader(localAddr, destAddress, pkt, stack.NetworkHeaderParams{

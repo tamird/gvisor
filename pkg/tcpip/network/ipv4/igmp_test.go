@@ -15,6 +15,7 @@
 package ipv4_test
 
 import (
+	"net/netip"
 	"testing"
 	"time"
 
@@ -160,7 +161,7 @@ func TestIGMPV1Present(t *testing.T) {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{Address: stackAddr, PrefixLen: defaultPrefixLength},
+		AddressWithPrefix: netip.PrefixFrom(stackAddr, defaultPrefixLength),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -292,11 +293,8 @@ func TestSendQueuedIGMPReports(t *testing.T) {
 				}
 			}
 			protocolAddr := tcpip.ProtocolAddress{
-				Protocol: ipv4.ProtocolNumber,
-				AddressWithPrefix: tcpip.AddressWithPrefix{
-					Address:   stackAddr,
-					PrefixLen: defaultPrefixLength,
-				},
+				Protocol:          ipv4.ProtocolNumber,
+				AddressWithPrefix: netip.PrefixFrom(stackAddr, defaultPrefixLength),
 			}
 			// Multicast traffic is not accepted unless we have an address so add an
 			// address and check the version which receives a multicast packet.
@@ -304,8 +302,8 @@ func TestSendQueuedIGMPReports(t *testing.T) {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
 			}
 			checkVersion()
-			if err := s.RemoveAddress(nicID, protocolAddr.AddressWithPrefix.Address); err != nil {
-				t.Fatalf("RemoveAddress(%d, %s): %s", nicID, protocolAddr.AddressWithPrefix.Address, err)
+			if err := s.RemoveAddress(nicID, protocolAddr.AddressWithPrefix.Addr()); err != nil {
+				t.Fatalf("RemoveAddress(%d, %s): %s", nicID, protocolAddr.AddressWithPrefix.Addr(), err)
 			}
 
 			var reportCounter uint64
@@ -369,7 +367,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 	tests := []struct {
 		name                     string
 		messageType              header.IGMPType
-		stackAddresses           []tcpip.AddressWithPrefix
+		stackAddresses           []netip.Prefix
 		srcAddr                  tcpip.Address
 		includeRouterAlertOption bool
 		ttl                      uint8
@@ -380,7 +378,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "valid",
 			messageType:              header.IGMPLeaveGroup,
 			includeRouterAlertOption: true,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  remoteAddr,
 			ttl:                      1,
 			expectValidIGMP:          true,
@@ -390,7 +388,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "bad ttl",
 			messageType:              header.IGMPv1MembershipReport,
 			includeRouterAlertOption: true,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  remoteAddr,
 			ttl:                      2,
 			expectValidIGMP:          false,
@@ -400,7 +398,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "missing router alert ip option",
 			messageType:              header.IGMPv2MembershipReport,
 			includeRouterAlertOption: false,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  remoteAddr,
 			ttl:                      1,
 			expectValidIGMP:          false,
@@ -410,7 +408,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "igmp leave group and src ip does not belong to nic subnet",
 			messageType:              header.IGMPLeaveGroup,
 			includeRouterAlertOption: true,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  testutil.MustParse4("10.0.1.2"),
 			ttl:                      1,
 			expectValidIGMP:          false,
@@ -420,7 +418,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "igmp query and src ip does not belong to nic subnet",
 			messageType:              header.IGMPMembershipQuery,
 			includeRouterAlertOption: true,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  testutil.MustParse4("10.0.1.2"),
 			ttl:                      1,
 			expectValidIGMP:          true,
@@ -430,7 +428,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "igmp report v1 and src ip does not belong to nic subnet",
 			messageType:              header.IGMPv1MembershipReport,
 			includeRouterAlertOption: true,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  testutil.MustParse4("10.0.1.2"),
 			ttl:                      1,
 			expectValidIGMP:          false,
@@ -440,7 +438,7 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "igmp report v2 and src ip does not belong to nic subnet",
 			messageType:              header.IGMPv2MembershipReport,
 			includeRouterAlertOption: true,
-			stackAddresses:           []tcpip.AddressWithPrefix{{Address: stackAddr, PrefixLen: 24}},
+			stackAddresses:           []netip.Prefix{netip.PrefixFrom(stackAddr, 24)},
 			srcAddr:                  testutil.MustParse4("10.0.1.2"),
 			ttl:                      1,
 			expectValidIGMP:          false,
@@ -450,9 +448,9 @@ func TestIGMPPacketValidation(t *testing.T) {
 			name:                     "src ip belongs to the subnet of the nic's second address",
 			messageType:              header.IGMPv2MembershipReport,
 			includeRouterAlertOption: true,
-			stackAddresses: []tcpip.AddressWithPrefix{
-				{Address: testutil.MustParse4("10.0.15.1"), PrefixLen: 24},
-				{Address: stackAddr, PrefixLen: 24},
+			stackAddresses: []netip.Prefix{
+				netip.PrefixFrom(testutil.MustParse4("10.0.15.1"), 24),
+				netip.PrefixFrom(stackAddr, 24),
 			},
 			srcAddr:                 remoteAddr,
 			ttl:                     1,
@@ -531,7 +529,7 @@ func TestGetSetIGMPVersion(t *testing.T) {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{Address: stackAddr, PrefixLen: defaultPrefixLength},
+		AddressWithPrefix: netip.PrefixFrom(stackAddr, defaultPrefixLength),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)

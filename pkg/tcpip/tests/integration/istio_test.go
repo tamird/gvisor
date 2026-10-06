@@ -135,7 +135,7 @@ func newTestContext(t *testing.T) *testContext {
 	}
 	loopbackAddr := tcpip.ProtocolAddress{
 		Protocol:          header.IPv4ProtocolNumber,
-		AddressWithPrefix: loopbackIPv4Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(loopbackIPv4Addr),
 	}
 	if err := localStack.AddProtocolAddress(loopbackNICID, loopbackAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("localStack.AddProtocolAddress(%d, %+v, {}): %s", loopbackNICID, loopbackAddr, err)
@@ -154,7 +154,7 @@ func newTestContext(t *testing.T) *testContext {
 	for _, addr := range []tcpip.Address{localIPv4Addr1, localIPv4Addr2} {
 		localProtocolAddr := tcpip.ProtocolAddress{
 			Protocol:          header.IPv4ProtocolNumber,
-			AddressWithPrefix: addr.WithPrefix(),
+			AddressWithPrefix: tcpip.FullPrefix(addr),
 		}
 		if err := localStack.AddProtocolAddress(localNICID, localProtocolAddr, stack.AddressProperties{}); err != nil {
 			t.Fatalf("localStack.AddProtocolAddress(%d, %+v, {}): %s", localNICID, localProtocolAddr, err)
@@ -163,7 +163,7 @@ func newTestContext(t *testing.T) *testContext {
 
 	remoteProtocolAddr := tcpip.ProtocolAddress{
 		Protocol:          header.IPv4ProtocolNumber,
-		AddressWithPrefix: remoteIPv4Addr1.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(remoteIPv4Addr1),
 	}
 	if err := remoteStack.AddProtocolAddress(remoteNICID, remoteProtocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("remoteStack.AddProtocolAddress(%d, %+v, {}): %s", remoteNICID, remoteProtocolAddr, err)

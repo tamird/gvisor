@@ -567,7 +567,7 @@ func (cn *conn) configureMasquerade(pkt *PacketBuffer, route *Route, stk *Stack,
 	// Ref: net/netfilter/nf_nat_masquerade.c:nf_nat_masquerade_ipv[4|6]()
 	// Use the next hop address as the destination address if it is set.
 	nh := route.NextHop()
-	if nh.Len() == 0 {
+	if !nh.IsValid() {
 		nh = pkt.Network().DestinationAddress()
 	}
 
@@ -578,7 +578,7 @@ func (cn *conn) configureMasquerade(pkt *PacketBuffer, route *Route, stk *Stack,
 		// No address exists that we can use as a source address.
 		return false
 	}
-	address := ep.AddressWithPrefix().Address
+	address := ep.AddressWithPrefix().Addr()
 	ep.DecRef()
 
 	// Configure NAT for the packet to change the source address.

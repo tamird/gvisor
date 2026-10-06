@@ -18,6 +18,7 @@ package ipv4
 import (
 	"fmt"
 	"math"
+	"net/netip"
 	"reflect"
 	"time"
 
@@ -73,7 +74,7 @@ const (
 
 var martianPacketLogger = log.BasicRateLimitedLogger(time.Minute)
 
-var ipv4BroadcastAddr = header.IPv4Broadcast.WithPrefix()
+var ipv4BroadcastAddr = tcpip.FullPrefix(header.IPv4Broadcast)
 
 var _ stack.LinkResolvableNetworkEndpoint = (*endpoint)(nil)
 var _ stack.ForwardingNetworkEndpoint = (*endpoint)(nil)
@@ -378,10 +379,10 @@ func (e *endpoint) disableLocked() {
 	e.igmp.softLeaveAll()
 
 	// The address may have already been removed.
-	switch err := e.addressableEndpointState.RemovePermanentAddress(ipv4BroadcastAddr.Address); err.(type) {
+	switch err := e.addressableEndpointState.RemovePermanentAddress(ipv4BroadcastAddr.Addr()); err.(type) {
 	case nil, *tcpip.ErrBadLocalAddress:
 	default:
-		panic(fmt.Sprintf("unexpected error when removing address = %s: %s", ipv4BroadcastAddr.Address, err))
+		panic(fmt.Sprintf("unexpected error when removing address = %s: %s", ipv4BroadcastAddr.Addr(), err))
 	}
 
 	// Reset the IGMP V1 present flag.
@@ -1243,7 +1244,7 @@ func (e *endpoint) handleValidatedPacket(h header.IPv4, pkt *stack.PacketBuffer,
 	// Make sure the source address is not a subnet-local broadcast address.
 	if addressEndpoint := e.AcquireAssignedAddress(srcAddr, false /* createTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */); addressEndpoint != nil {
 		subnet := addressEndpoint.Subnet()
-		if subnet.IsBroadcast(srcAddr) {
+		if header.IsIPv4SubnetBroadcast(subnet, srcAddr) {
 			stats.ip.InvalidSourceAddressesReceived.Increment()
 			return
 		}
@@ -1281,8 +1282,8 @@ func (e *endpoint) handleValidatedPacket(h header.IPv4, pkt *stack.PacketBuffer,
 	// locally. Otherwise, if forwarding is enabled, it should be forwarded.
 	if addressEndpoint := e.AcquireAssignedAddress(dstAddr, e.nic.Promiscuous(), stack.CanBePrimaryEndpoint, true /* readOnly */); addressEndpoint != nil {
 		pkt.NetworkPacketInfo.LocalAddressTemporary = addressEndpoint.Temporary()
-		subnet := addressEndpoint.AddressWithPrefix().Subnet()
-		pkt.NetworkPacketInfo.LocalAddressBroadcast = subnet.IsBroadcast(dstAddr) || dstAddr == header.IPv4Broadcast
+		subnet := addressEndpoint.AddressWithPrefix().Masked()
+		pkt.NetworkPacketInfo.LocalAddressBroadcast = header.IsIPv4SubnetBroadcast(subnet, dstAddr) || dstAddr == header.IPv4Broadcast
 		e.deliverPacketLocally(h, pkt, inNICName)
 	} else if e.Forwarding() {
 		e.handleForwardingError(e.forwardUnicastPacket(pkt))
@@ -1504,7 +1505,7 @@ func (e *endpoint) Close() {
 }
 
 // AddAndAcquirePermanentAddress implements stack.AddressableEndpoint.
-func (e *endpoint) AddAndAcquirePermanentAddress(addr tcpip.AddressWithPrefix, properties stack.AddressProperties) (stack.AddressEndpoint, tcpip.Error) {
+func (e *endpoint) AddAndAcquirePermanentAddress(addr netip.Prefix, properties stack.AddressProperties) (stack.AddressEndpoint, tcpip.Error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -1544,7 +1545,7 @@ func (e *endpoint) SetLifetimes(addr tcpip.Address, lifetimes stack.AddressLifet
 }
 
 // MainAddress implements stack.AddressableEndpoint.
-func (e *endpoint) MainAddress() tcpip.AddressWithPrefix {
+func (e *endpoint) MainAddress() netip.Prefix {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.addressableEndpointState.MainAddress()
@@ -1560,7 +1561,7 @@ func (e *endpoint) AcquireAssignedAddress(localAddr tcpip.Address, allowTemp boo
 		subnet := addressEndpoint.Subnet()
 		// IPv4 has a notion of a subnet broadcast address and considers the
 		// loopback interface bound to an address's whole subnet (on linux).
-		return subnet.IsBroadcast(localAddr) || (loopback && subnet.Contains(localAddr))
+		return header.IsIPv4SubnetBroadcast(subnet, localAddr) || (loopback && subnet.Contains(localAddr))
 	}, allowTemp, tempPEB, readOnly)
 }
 
@@ -1580,14 +1581,14 @@ func (e *endpoint) acquireOutgoingPrimaryAddressRLocked(remoteAddr, srcHint tcpi
 }
 
 // PrimaryAddresses implements stack.AddressableEndpoint.
-func (e *endpoint) PrimaryAddresses() []tcpip.AddressWithPrefix {
+func (e *endpoint) PrimaryAddresses() []netip.Prefix {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.addressableEndpointState.PrimaryAddresses()
 }
 
 // PermanentAddresses implements stack.AddressableEndpoint.
-func (e *endpoint) PermanentAddresses() []tcpip.AddressWithPrefix {
+func (e *endpoint) PermanentAddresses() []netip.Prefix {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.addressableEndpointState.PermanentAddresses()
@@ -1912,7 +1913,7 @@ func (p *protocol) isSubnetLocalBroadcastAddress(addr tcpip.Address) bool {
 	for _, e := range p.eps {
 		if addressEndpoint := e.AcquireAssignedAddress(addr, false /* createTemp */, stack.NeverPrimaryEndpoint, true /* readOnly */); addressEndpoint != nil {
 			subnet := addressEndpoint.Subnet()
-			if subnet.IsBroadcast(addr) {
+			if header.IsIPv4SubnetBroadcast(subnet, addr) {
 				return true
 			}
 		}
@@ -2471,8 +2472,8 @@ func (e *endpoint) processIPOptions(pkt *stack.PacketBuffer, opts header.IPv4Opt
 	// TODO(https://gvisor.dev/issue/4586): This will need tweaking when we start
 	// really forwarding packets as we may need to get two addresses, for rx and
 	// tx interfaces. We will also have to take usage into account.
-	localAddress := e.MainAddress().Address
-	if localAddress.BitLen() == 0 {
+	localAddress := e.MainAddress().Addr()
+	if !localAddress.IsValid() {
 		h := header.IPv4(pkt.NetworkHeader().Slice())
 		dstAddr := h.DestinationAddress()
 		if pkt.NetworkPacketInfo.LocalAddressBroadcast || header.IsV4MulticastAddress(dstAddr) {

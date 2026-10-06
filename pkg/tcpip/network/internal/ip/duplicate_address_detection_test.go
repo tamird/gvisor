@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
@@ -190,7 +191,7 @@ func TestDADCheckDuplicateAddress(t *testing.T) {
 	}
 	clock.Advance(delta)
 	for i := 0; i < 2; i++ {
-		if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
+		if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 			t.Errorf("(i=%d) dad result mismatch (-want +got):\n%s", i, diff)
 		}
 	}
@@ -204,7 +205,7 @@ func TestDADCheckDuplicateAddress(t *testing.T) {
 	default:
 	}
 	clock.Advance(delta)
-	if diff := cmp.Diff(dadResult{Addr: addr2, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
+	if diff := cmp.Diff(dadResult{Addr: addr2, R: &stack.DADSucceeded{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 		t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 	}
 
@@ -217,7 +218,7 @@ func TestDADCheckDuplicateAddress(t *testing.T) {
 		t.Errorf("dad check mismatch (-want +got):\n%s", diff)
 	}
 	clock.Advance(dadConfig2Duration)
-	if diff := cmp.Diff(dadResult{Addr: addr2, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
+	if diff := cmp.Diff(dadResult{Addr: addr2, R: &stack.DADSucceeded{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 		t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 	}
 
@@ -257,18 +258,18 @@ func TestDADStop(t *testing.T) {
 	}
 
 	dad.stop(addr1, &stack.DADAborted{})
-	if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADAborted{}}, <-ch); diff != "" {
+	if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADAborted{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 		t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 	}
 
 	dad.stop(addr2, &stack.DADDupAddrDetected{})
-	if diff := cmp.Diff(dadResult{Addr: addr2, R: &stack.DADDupAddrDetected{}}, <-ch); diff != "" {
+	if diff := cmp.Diff(dadResult{Addr: addr2, R: &stack.DADDupAddrDetected{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 		t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 	}
 
 	dadResolutionDuration := time.Duration(dadConfigs.DupAddrDetectTransmits) * dadConfigs.RetransmitTimer
 	clock.Advance(dadResolutionDuration)
-	if diff := cmp.Diff(dadResult{Addr: addr3, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
+	if diff := cmp.Diff(dadResult{Addr: addr3, R: &stack.DADSucceeded{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 		t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 	}
 
@@ -281,7 +282,7 @@ func TestDADStop(t *testing.T) {
 		t.Errorf("dad check mismatch (-want +got):\n%s", diff)
 	}
 	clock.Advance(dadResolutionDuration)
-	if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
+	if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 		t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 	}
 
@@ -370,7 +371,7 @@ func TestNonce(t *testing.T) {
 				clock.Advance(dadConfigs.RetransmitTimer)
 			}
 
-			if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch); diff != "" {
+			if diff := cmp.Diff(dadResult{Addr: addr1, R: &stack.DADSucceeded{}}, <-ch, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 				t.Errorf("dad result mismatch (-want +got):\n%s", diff)
 			}
 

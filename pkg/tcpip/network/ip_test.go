@@ -17,10 +17,12 @@ package ip_test
 import (
 	"bytes"
 	"fmt"
+	"net/netip"
 	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sync"
@@ -57,15 +59,9 @@ var (
 	ipv6Gateway    = testutil.MustParse6("a00::3")
 )
 
-var localIPv4AddrWithPrefix = tcpip.AddressWithPrefix{
-	Address:   localIPv4Addr,
-	PrefixLen: 24,
-}
+var localIPv4AddrWithPrefix = netip.PrefixFrom(localIPv4Addr, 24)
 
-var localIPv6AddrWithPrefix = tcpip.AddressWithPrefix{
-	Address:   localIPv6Addr,
-	PrefixLen: 120,
-}
+var localIPv6AddrWithPrefix = netip.PrefixFrom(localIPv6Addr, 120)
 
 type transportError struct {
 	origin tcpip.SockErrOrigin
@@ -263,7 +259,7 @@ func buildIPv4Route(ctx testContext, local, remote tcpip.Address) (*stack.Route,
 	s.CreateNIC(nicID, loopback.New())
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: local.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(local),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		return nil, err
@@ -282,7 +278,7 @@ func buildIPv6Route(ctx testContext, local, remote tcpip.Address) (*stack.Route,
 	s.CreateNIC(nicID, loopback.New())
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv6.ProtocolNumber,
-		AddressWithPrefix: local.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(local),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		return nil, err
@@ -378,8 +374,8 @@ func (*testInterface) HandleNeighborConfirmation(tcpip.NetworkProtocolNumber, tc
 	return nil
 }
 
-func (*testInterface) PrimaryAddress(tcpip.NetworkProtocolNumber) (tcpip.AddressWithPrefix, tcpip.Error) {
-	return tcpip.AddressWithPrefix{}, nil
+func (*testInterface) PrimaryAddress(tcpip.NetworkProtocolNumber) (netip.Prefix, tcpip.Error) {
+	return netip.Prefix{}, nil
 }
 
 func (*testInterface) CheckLocalAddress(tcpip.NetworkProtocolNumber, tcpip.Address) bool {
@@ -496,8 +492,8 @@ func TestSourceAddressValidation(t *testing.T) {
 		{
 			name: "IPv4 subnet broadcast",
 			srcAddress: func() tcpip.Address {
-				subnet := localIPv4AddrWithPrefix.Subnet()
-				return subnet.Broadcast()
+				subnet := localIPv4AddrWithPrefix.Masked()
+				return header.IPv4SubnetBroadcast(subnet)
 			}(),
 			rxICMP: rxIPv4ICMP,
 			valid:  false,
@@ -671,7 +667,7 @@ func TestReceive(t *testing.T) {
 		protoFactory stack.NetworkProtocolFactory
 		protoNum     tcpip.NetworkProtocolNumber
 		v4           bool
-		epAddr       tcpip.AddressWithPrefix
+		epAddr       netip.Prefix
 		handlePacket func(*testing.T, stack.NetworkEndpoint, *testInterface)
 	}{
 		{
@@ -679,7 +675,7 @@ func TestReceive(t *testing.T) {
 			protoFactory: ipv4.NewProtocol,
 			protoNum:     ipv4.ProtocolNumber,
 			v4:           true,
-			epAddr:       localIPv4Addr.WithPrefix(),
+			epAddr:       tcpip.FullPrefix(localIPv4Addr),
 			handlePacket: func(t *testing.T, ep stack.NetworkEndpoint, nic *testInterface) {
 				const totalLen = header.IPv4MinimumSize + 30 /* payload length */
 
@@ -717,7 +713,7 @@ func TestReceive(t *testing.T) {
 			protoFactory: ipv6.NewProtocol,
 			protoNum:     ipv6.ProtocolNumber,
 			v4:           false,
-			epAddr:       localIPv6Addr.WithPrefix(),
+			epAddr:       tcpip.FullPrefix(localIPv6Addr),
 			handlePacket: func(t *testing.T, ep stack.NetworkEndpoint, nic *testInterface) {
 				const payloadLen = 30
 				view := make([]byte, header.IPv6MinimumSize+payloadLen)
@@ -951,7 +947,7 @@ func TestIPv4ReceiveControl(t *testing.T) {
 			if !ok {
 				t.Fatal("expected IPv4 network endpoint to implement stack.AddressableEndpoint")
 			}
-			addr := localIPv4Addr.WithPrefix()
+			addr := tcpip.FullPrefix(localIPv4Addr)
 			if ep, err := addressableEndpoint.AddAndAcquirePermanentAddress(addr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("addressableEndpoint.AddAndAcquirePermanentAddress(%s, {}): %s", addr, err)
 			} else {
@@ -1034,7 +1030,7 @@ func TestIPv4FragmentationReceive(t *testing.T) {
 	if !ok {
 		t.Fatal("expected IPv4 network endpoint to implement stack.AddressableEndpoint")
 	}
-	addr := localIPv4Addr.WithPrefix()
+	addr := tcpip.FullPrefix(localIPv4Addr)
 	if ep, err := addressableEndpoint.AddAndAcquirePermanentAddress(addr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("addressableEndpoint.AddAndAcquirePermanentAddress(%s, {}): %s", addr, err)
 	} else {
@@ -1315,7 +1311,7 @@ func TestIPv6ReceiveControl(t *testing.T) {
 			if !ok {
 				t.Fatal("expected IPv6 network endpoint to implement stack.AddressableEndpoint")
 			}
-			addr := localIPv6Addr.WithPrefix()
+			addr := tcpip.FullPrefix(localIPv6Addr)
 			if ep, err := addressableEndpoint.AddAndAcquirePermanentAddress(addr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("addressableEndpoint.AddAndAcquirePermanentAddress(%s, {}): %s", addr, err)
 			} else {
@@ -1384,7 +1380,7 @@ func TestWriteHeaderIncludedPacket(t *testing.T) {
 		name         string
 		protoFactory stack.NetworkProtocolFactory
 		protoNum     tcpip.NetworkProtocolNumber
-		nicAddr      tcpip.AddressWithPrefix
+		nicAddr      netip.Prefix
 		remoteAddr   tcpip.Address
 		pktGen       func(*testing.T, tcpip.Address) buffer.Buffer
 		checker      func(*testing.T, *stack.PacketBuffer, tcpip.Address)
@@ -1757,11 +1753,11 @@ func TestWriteHeaderIncludedPacket(t *testing.T) {
 			}{
 				{
 					name:    "unspecified source",
-					srcAddr: tcpip.AddrFromSlice([]byte(strings.Repeat("\x00", test.nicAddr.Address.Len()))),
+					srcAddr: tcpip.AddrFromSlice([]byte(strings.Repeat("\x00", test.nicAddr.Addr().BitLen()/8))),
 				},
 				{
 					name:    "random source",
-					srcAddr: tcpip.AddrFromSlice([]byte(strings.Repeat("\xab", test.nicAddr.Address.Len()))),
+					srcAddr: tcpip.AddrFromSlice([]byte(strings.Repeat("\xab", test.nicAddr.Addr().BitLen()/8))),
 				},
 			}
 
@@ -1788,11 +1784,11 @@ func TestWriteHeaderIncludedPacket(t *testing.T) {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
 					}
 
-					s.SetRouteTable([]tcpip.Route{{Destination: test.remoteAddr.WithPrefix().Subnet(), NIC: nicID}})
+					s.SetRouteTable([]tcpip.Route{{Destination: tcpip.FullPrefix(test.remoteAddr).Masked(), NIC: nicID}})
 
-					r, err := s.FindRoute(nicID, test.nicAddr.Address, test.remoteAddr, test.protoNum, false /* multicastLoop */)
+					r, err := s.FindRoute(nicID, test.nicAddr.Addr(), test.remoteAddr, test.protoNum, false /* multicastLoop */)
 					if err != nil {
-						t.Fatalf("s.FindRoute(%d, %s, %s, %d, false): %s", nicID, test.remoteAddr, test.nicAddr.Address, test.protoNum, err)
+						t.Fatalf("s.FindRoute(%d, %s, %s, %d, false): %s", nicID, test.remoteAddr, test.nicAddr.Addr(), test.protoNum, err)
 					}
 					defer r.Release()
 
@@ -2163,7 +2159,7 @@ func TestSetNICIDBeforeDeliveringToRawEndpoint(t *testing.T) {
 	tests := []struct {
 		name          string
 		proto         tcpip.NetworkProtocolNumber
-		addr          tcpip.AddressWithPrefix
+		addr          netip.Prefix
 		payloadOffset int
 	}{
 		{
@@ -2199,7 +2195,7 @@ func TestSetNICIDBeforeDeliveringToRawEndpoint(t *testing.T) {
 
 			s.SetRouteTable([]tcpip.Route{
 				{
-					Destination: test.addr.Subnet(),
+					Destination: test.addr.Masked(),
 					NIC:         nicID,
 				},
 			})
@@ -2215,7 +2211,7 @@ func TestSetNICIDBeforeDeliveringToRawEndpoint(t *testing.T) {
 
 			writeOpts := tcpip.WriteOptions{
 				To: &tcpip.FullAddress{
-					Addr: test.addr.Address,
+					Addr: test.addr.Addr(),
 				},
 			}
 			data := []byte{1, 2, 3, 4}
@@ -2240,7 +2236,7 @@ func TestSetNICIDBeforeDeliveringToRawEndpoint(t *testing.T) {
 			if diff := cmp.Diff(data, w.Bytes()[test.payloadOffset:]); diff != "" {
 				t.Errorf("payload mismatch (-want +got):\n%s", diff)
 			}
-			if diff := cmp.Diff(tcpip.FullAddress{Addr: test.addr.Address, NIC: nicID}, rr.RemoteAddr); diff != "" {
+			if diff := cmp.Diff(tcpip.FullAddress{Addr: test.addr.Addr(), NIC: nicID}, rr.RemoteAddr, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 				t.Errorf("remote addr mismatch (-want +got):\n%s", diff)
 			}
 		})

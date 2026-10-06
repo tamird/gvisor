@@ -18,6 +18,7 @@ package ipv6
 import (
 	"fmt"
 	"math"
+	"net/netip"
 	"reflect"
 	"sort"
 	"time"
@@ -114,13 +115,13 @@ const (
 //
 // MUST NOT BE MODIFIED.
 var policyTable = [...]struct {
-	subnet tcpip.Subnet
+	subnet netip.Prefix
 
 	label uint8
 }{
 	// ::1/128
 	{
-		subnet: header.IPv6Loopback.WithPrefix().Subnet(),
+		subnet: netip.PrefixFrom(header.IPv6Loopback, 128),
 		label:  0,
 	},
 	// ::ffff:0:0/96
@@ -130,27 +131,18 @@ var policyTable = [...]struct {
 	},
 	// 2001::/32 (Teredo prefix as per RFC 4380 section 2.6).
 	{
-		subnet: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom16([16]byte{0x20, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-			PrefixLen: 32,
-		}.Subnet(),
-		label: 5,
+		subnet: netip.PrefixFrom(netip.AddrFrom16([16]byte{0x20, 0x01}), 32),
+		label:  5,
 	},
 	// 2002::/16 (6to4 prefix as per RFC 3056 section 2).
 	{
-		subnet: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom16([16]byte{0x20, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-			PrefixLen: 16,
-		}.Subnet(),
-		label: 2,
+		subnet: netip.PrefixFrom(netip.AddrFrom16([16]byte{0x20, 0x02}), 16),
+		label:  2,
 	},
 	// fc00::/7 (Unique local addresses as per RFC 4193 section 3.1).
 	{
-		subnet: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom16([16]byte{0xfc, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-			PrefixLen: 7,
-		}.Subnet(),
-		label: 13,
+		subnet: netip.PrefixFrom(netip.AddrFrom16([16]byte{0xfc}), 7),
+		label:  13,
 	},
 	// ::/0
 	{
@@ -588,7 +580,7 @@ func (e *endpoint) Enable() tcpip.Error {
 	// was last enabled, other devices may have acquired the same addresses.
 	var err tcpip.Error
 	e.mu.addressableEndpointState.ForEachEndpoint(func(addressEndpoint stack.AddressEndpoint) bool {
-		addr := addressEndpoint.AddressWithPrefix().Address
+		addr := addressEndpoint.AddressWithPrefix().Addr()
 		if !header.IsV6UnicastAddress(addr) {
 			return true
 		}
@@ -648,7 +640,7 @@ func (e *endpoint) Enable() tcpip.Error {
 	if e.protocol.options.AutoGenLinkLocal && !e.nic.IsLoopback() {
 		// The valid and preferred lifetime is infinite for the auto-generated
 		// link-local address.
-		e.mu.ndp.doSLAAC(header.IPv6LinkLocalPrefix.Subnet(), header.NDPInfiniteLifetime, header.NDPInfiniteLifetime)
+		e.mu.ndp.doSLAAC(header.IPv6LinkLocalPrefix.Masked(), header.NDPInfiniteLifetime, header.NDPInfiniteLifetime)
 	}
 
 	e.mu.ndp.startSolicitingRouters()
@@ -708,8 +700,8 @@ func (e *endpoint) disableLocked() {
 		addrWithPrefix := addressEndpoint.AddressWithPrefix()
 		switch kind := addressEndpoint.GetKind(); kind {
 		case stack.Permanent, stack.PermanentTentative:
-			if header.IsV6UnicastAddress(addrWithPrefix.Address) {
-				e.mu.ndp.stopDuplicateAddressDetection(addrWithPrefix.Address, &stack.DADAborted{}) // +checklocksforce: ForEachEndpoint calls back synchronously with e.mu held.
+			if header.IsV6UnicastAddress(addrWithPrefix.Addr()) {
+				e.mu.ndp.stopDuplicateAddressDetection(addrWithPrefix.Addr(), &stack.DADAborted{}) // +checklocksforce: ForEachEndpoint calls back synchronously with e.mu held.
 			}
 		case stack.Temporary, stack.PermanentExpired:
 		default:
@@ -1072,7 +1064,7 @@ func validateAddressesForForwarding(h header.IPv6) ip.ForwardingError {
 	//   of IPv6 packets or in IPv6 Routing headers. An IPv6 packet with a
 	//   source address of unspecified must never be forwarded by an IPv6
 	//   router.
-	if srcAddr.Unspecified() {
+	if srcAddr.IsUnspecified() {
 		return &ip.ErrInitializingSourceAddress{}
 	}
 
@@ -2089,7 +2081,7 @@ func (e *endpoint) NetworkProtocolNumber() tcpip.NetworkProtocolNumber {
 }
 
 // AddAndAcquirePermanentAddress implements stack.AddressableEndpoint.
-func (e *endpoint) AddAndAcquirePermanentAddress(addr tcpip.AddressWithPrefix, properties stack.AddressProperties) (stack.AddressEndpoint, tcpip.Error) {
+func (e *endpoint) AddAndAcquirePermanentAddress(addr netip.Prefix, properties stack.AddressProperties) (stack.AddressEndpoint, tcpip.Error) {
 	// TODO(b/169350103): add checks here after making sure we no longer receive
 	// an empty address.
 	e.mu.Lock()
@@ -2113,23 +2105,23 @@ func (e *endpoint) AddAndAcquirePermanentAddress(addr tcpip.AddressWithPrefix, p
 // solicited-node multicast group and start duplicate address detection.
 //
 // +checklocks:e.mu.RWMutex
-func (e *endpoint) addAndAcquirePermanentAddressLocked(addr tcpip.AddressWithPrefix, properties stack.AddressProperties) (stack.AddressEndpoint, tcpip.Error) {
+func (e *endpoint) addAndAcquirePermanentAddressLocked(addr netip.Prefix, properties stack.AddressProperties) (stack.AddressEndpoint, tcpip.Error) {
 	addressEndpoint, err := e.mu.addressableEndpointState.AddAndAcquireAddress(addr, properties, stack.PermanentTentative)
 	if err != nil {
 		return nil, err
 	}
 
-	if !header.IsV6UnicastAddress(addr.Address) {
+	if !header.IsV6UnicastAddress(addr.Addr()) {
 		return addressEndpoint, nil
 	}
 
 	if e.Enabled() {
-		if err := e.mu.ndp.startDuplicateAddressDetection(addr.Address, addressEndpoint); err != nil {
+		if err := e.mu.ndp.startDuplicateAddressDetection(addr.Addr(), addressEndpoint); err != nil {
 			return nil, err
 		}
 	}
 
-	snmc := header.SolicitedNodeAddr(addr.Address)
+	snmc := header.SolicitedNodeAddr(addr.Addr())
 	if err := e.joinGroupLocked(snmc); err != nil {
 		// joinGroupLocked only returns an error if the group address is not a valid
 		// IPv6 multicast address.
@@ -2177,13 +2169,13 @@ func (e *endpoint) removePermanentEndpointLocked(addressEndpoint stack.AddressEn
 // +checklocks:e.mu.RWMutex
 func (e *endpoint) removePermanentEndpointInnerLocked(addressEndpoint stack.AddressEndpoint, reason stack.AddressRemovalReason, dadResult stack.DADResult) tcpip.Error {
 	addr := addressEndpoint.AddressWithPrefix()
-	e.mu.ndp.stopDuplicateAddressDetection(addr.Address, dadResult)
+	e.mu.ndp.stopDuplicateAddressDetection(addr.Addr(), dadResult)
 
 	if err := e.mu.addressableEndpointState.RemovePermanentEndpoint(addressEndpoint, reason); err != nil {
 		return err
 	}
 
-	snmc := header.SolicitedNodeAddr(addr.Address)
+	snmc := header.SolicitedNodeAddr(addr.Addr())
 	err := e.leaveGroupLocked(snmc)
 	// The endpoint may have already left the multicast group.
 	if _, ok := err.(*tcpip.ErrBadLocalAddress); ok {
@@ -2226,7 +2218,7 @@ func (e *endpoint) SetLifetimes(addr tcpip.Address, lifetimes stack.AddressLifet
 }
 
 // MainAddress implements stack.AddressableEndpoint.
-func (e *endpoint) MainAddress() tcpip.AddressWithPrefix {
+func (e *endpoint) MainAddress() netip.Prefix {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.mu.addressableEndpointState.MainAddress()
@@ -2264,7 +2256,7 @@ func (e *endpoint) getLinkLocalAddressRLocked() tcpip.Address {
 	var linkLocalAddr tcpip.Address
 	e.mu.addressableEndpointState.ForEachPrimaryEndpoint(func(addressEndpoint stack.AddressEndpoint) bool {
 		if addressEndpoint.IsAssigned(false /* allowExpired */) {
-			if addr := addressEndpoint.AddressWithPrefix().Address; header.IsV6LinkLocalUnicastAddress(addr) {
+			if addr := addressEndpoint.AddressWithPrefix().Addr(); header.IsV6LinkLocalUnicastAddress(addr) {
 				linkLocalAddr = addr
 				return false
 			}
@@ -2292,7 +2284,7 @@ func (e *endpoint) acquireOutgoingPrimaryAddressRLocked(remoteAddr, srcHint tcpi
 		matchingPrefix uint8
 	}
 
-	if remoteAddr.BitLen() == 0 {
+	if !remoteAddr.IsValid() {
 		return e.mu.addressableEndpointState.AcquireOutgoingPrimaryAddress(remoteAddr, srcHint, allowExpired)
 	}
 
@@ -2305,7 +2297,7 @@ func (e *endpoint) acquireOutgoingPrimaryAddressRLocked(remoteAddr, srcHint tcpi
 			return true
 		}
 
-		addr := addressEndpoint.AddressWithPrefix().Address
+		addr := addressEndpoint.AddressWithPrefix().Addr()
 		scope, err := header.ScopeForIPv6Address(addr)
 		if err != nil {
 			// Should never happen as we got r from the primary IPv6 endpoint list and
@@ -2319,7 +2311,7 @@ func (e *endpoint) acquireOutgoingPrimaryAddressRLocked(remoteAddr, srcHint tcpi
 			addr:            addr,
 			scope:           scope,
 			label:           getLabel(addr),
-			matchingPrefix:  remoteAddr.MatchingPrefix(addr),
+			matchingPrefix:  tcpip.MatchingPrefix(remoteAddr, addr),
 		})
 
 		return true
@@ -2401,14 +2393,14 @@ func (e *endpoint) acquireOutgoingPrimaryAddressRLocked(remoteAddr, srcHint tcpi
 }
 
 // PrimaryAddresses implements stack.AddressableEndpoint.
-func (e *endpoint) PrimaryAddresses() []tcpip.AddressWithPrefix {
+func (e *endpoint) PrimaryAddresses() []netip.Prefix {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.mu.addressableEndpointState.PrimaryAddresses()
 }
 
 // PermanentAddresses implements stack.AddressableEndpoint.
-func (e *endpoint) PermanentAddresses() []tcpip.AddressWithPrefix {
+func (e *endpoint) PermanentAddresses() []netip.Prefix {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 	return e.mu.addressableEndpointState.PermanentAddresses()

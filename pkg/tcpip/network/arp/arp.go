@@ -314,18 +314,18 @@ func (e *endpoint) LinkAddressRequest(targetAddr, localAddr tcpip.Address, remot
 		remoteLinkAddr = header.EthernetBroadcastAddress
 	}
 
-	if localAddr.BitLen() == 0 {
+	if !localAddr.IsValid() {
 		addr, err := e.nic.PrimaryAddress(header.IPv4ProtocolNumber)
 		if err != nil {
 			return err
 		}
 
-		if addr.Address.BitLen() == 0 {
+		if !addr.Addr().IsValid() {
 			stats.outgoingRequestInterfaceHasNoLocalAddressErrors.Increment()
 			return &tcpip.ErrNetworkUnreachable{}
 		}
 
-		localAddr = addr.Address
+		localAddr = addr.Addr()
 	} else if !e.nic.CheckLocalAddress(header.IPv4ProtocolNumber, localAddr) {
 		stats.outgoingRequestBadLocalAddressErrors.Increment()
 		return &tcpip.ErrBadLocalAddress{}

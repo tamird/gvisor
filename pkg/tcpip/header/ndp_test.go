@@ -20,12 +20,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/netip"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/testutil"
 )
@@ -68,7 +70,7 @@ func TestNDPRouteInformationOption(t *testing.T) {
 		prf            NDPRoutePreference
 		lifetimeS      uint32
 		prefixBytes    []byte
-		expectedPrefix tcpip.Subnet
+		expectedPrefix netip.Prefix
 
 		expectedErr error
 	}{
@@ -100,28 +102,22 @@ func TestNDPRouteInformationOption(t *testing.T) {
 			expectedPrefix: IPv6EmptySubnet,
 		},
 		{
-			name:         "Length=2 with Prefix Length in [1, 64] (1)",
-			length:       2,
-			prefixLength: 1,
-			prf:          LowRoutePreference,
-			lifetimeS:    1,
-			prefixBytes:  nil,
-			expectedPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))),
-				PrefixLen: 1,
-			}.Subnet(),
+			name:           "Length=2 with Prefix Length in [1, 64] (1)",
+			length:         2,
+			prefixLength:   1,
+			prf:            LowRoutePreference,
+			lifetimeS:      1,
+			prefixBytes:    nil,
+			expectedPrefix: netip.PrefixFrom(tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))), 1).Masked(),
 		},
 		{
-			name:         "Length=2 with Prefix Length in [1, 64] (64)",
-			length:       2,
-			prefixLength: 64,
-			prf:          HighRoutePreference,
-			lifetimeS:    1,
-			prefixBytes:  nil,
-			expectedPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))),
-				PrefixLen: 64,
-			}.Subnet(),
+			name:           "Length=2 with Prefix Length in [1, 64] (64)",
+			length:         2,
+			prefixLength:   64,
+			prf:            HighRoutePreference,
+			lifetimeS:      1,
+			prefixBytes:    nil,
+			expectedPrefix: netip.PrefixFrom(tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))), 64).Masked(),
 		},
 		{
 			name:         "Length=2 with Prefix Length > 64",
@@ -142,52 +138,40 @@ func TestNDPRouteInformationOption(t *testing.T) {
 			expectedPrefix: IPv6EmptySubnet,
 		},
 		{
-			name:         "Length=3 with Prefix Length in [1, 64] (1)",
-			length:       3,
-			prefixLength: 1,
-			prf:          LowRoutePreference,
-			lifetimeS:    1,
-			prefixBytes:  nil,
-			expectedPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))),
-				PrefixLen: 1,
-			}.Subnet(),
+			name:           "Length=3 with Prefix Length in [1, 64] (1)",
+			length:         3,
+			prefixLength:   1,
+			prf:            LowRoutePreference,
+			lifetimeS:      1,
+			prefixBytes:    nil,
+			expectedPrefix: netip.PrefixFrom(tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))), 1).Masked(),
 		},
 		{
-			name:         "Length=3 with Prefix Length in [1, 64] (64)",
-			length:       3,
-			prefixLength: 64,
-			prf:          HighRoutePreference,
-			lifetimeS:    1,
-			prefixBytes:  nil,
-			expectedPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))),
-				PrefixLen: 64,
-			}.Subnet(),
+			name:           "Length=3 with Prefix Length in [1, 64] (64)",
+			length:         3,
+			prefixLength:   64,
+			prf:            HighRoutePreference,
+			lifetimeS:      1,
+			prefixBytes:    nil,
+			expectedPrefix: netip.PrefixFrom(tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))), 64).Masked(),
 		},
 		{
-			name:         "Length=3 with Prefix Length in [65, 128] (65)",
-			length:       3,
-			prefixLength: 65,
-			prf:          HighRoutePreference,
-			lifetimeS:    1,
-			prefixBytes:  nil,
-			expectedPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))),
-				PrefixLen: 65,
-			}.Subnet(),
+			name:           "Length=3 with Prefix Length in [65, 128] (65)",
+			length:         3,
+			prefixLength:   65,
+			prf:            HighRoutePreference,
+			lifetimeS:      1,
+			prefixBytes:    nil,
+			expectedPrefix: netip.PrefixFrom(tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))), 65).Masked(),
 		},
 		{
-			name:         "Length=3 with Prefix Length in [65, 128] (128)",
-			length:       3,
-			prefixLength: 128,
-			prf:          HighRoutePreference,
-			lifetimeS:    1,
-			prefixBytes:  nil,
-			expectedPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))),
-				PrefixLen: 128,
-			}.Subnet(),
+			name:           "Length=3 with Prefix Length in [65, 128] (128)",
+			length:         3,
+			prefixLength:   128,
+			prf:            HighRoutePreference,
+			lifetimeS:      1,
+			prefixBytes:    nil,
+			expectedPrefix: netip.PrefixFrom(tcpip.AddrFrom16Slice([]byte(strings.Repeat("\x00", IPv6AddressSize))), 128).Masked(),
 		},
 		{
 			name:         "Length=3 with (invalid) Prefix Length > 128",
@@ -725,7 +709,7 @@ func TestOpts(t *testing.T) {
 				}
 				if addrs, err := rdnss.Addresses(); err != nil {
 					t.Errorf("Addresses(): %s", err)
-				} else if diff := cmp.Diff([]tcpip.Address{address}, addrs); diff != "" {
+				} else if diff := cmp.Diff([]tcpip.Address{address}, addrs, cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 					t.Errorf("mismatched addresses (-want +got):\n%s", diff)
 				}
 			},

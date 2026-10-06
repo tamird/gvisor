@@ -17,6 +17,7 @@ package header_test
 import (
 	"bytes"
 	"crypto/sha256"
+	"net/netip"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -66,26 +67,26 @@ func TestAppendOpaqueInterfaceIdentifier(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		prefix     tcpip.Subnet
+		prefix     netip.Prefix
 		nicName    string
 		dadCounter uint8
 		secretKey  []byte
 	}{
 		{
 			name:       "SecretKey of minimum size",
-			prefix:     header.IPv6LinkLocalPrefix.Subnet(),
+			prefix:     header.IPv6LinkLocalPrefix.Masked(),
 			nicName:    "eth0",
 			dadCounter: 0,
 			secretKey:  secretKeyBuf[:header.OpaqueIIDSecretKeyMinBytes],
 		},
 		{
 			name: "SecretKey of less than minimum size",
-			prefix: func() tcpip.Subnet {
-				addrWithPrefix := tcpip.AddressWithPrefix{
-					Address:   tcpip.AddrFrom16Slice([]byte("\x01\x02\x03\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
-					PrefixLen: header.IIDOffsetInIPv6Address * 8,
-				}
-				return addrWithPrefix.Subnet()
+			prefix: func() netip.Prefix {
+				addrWithPrefix := netip.PrefixFrom(
+					tcpip.AddrFrom16Slice([]byte("\x01\x02\x03\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
+					header.IIDOffsetInIPv6Address*8)
+
+				return addrWithPrefix.Masked()
 			}(),
 			nicName:    "eth10",
 			dadCounter: 1,
@@ -93,12 +94,12 @@ func TestAppendOpaqueInterfaceIdentifier(t *testing.T) {
 		},
 		{
 			name: "SecretKey of more than minimum size",
-			prefix: func() tcpip.Subnet {
-				addrWithPrefix := tcpip.AddressWithPrefix{
-					Address:   tcpip.AddrFrom16Slice([]byte("\x01\x02\x03\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
-					PrefixLen: header.IIDOffsetInIPv6Address * 8,
-				}
-				return addrWithPrefix.Subnet()
+			prefix: func() netip.Prefix {
+				addrWithPrefix := netip.PrefixFrom(
+					tcpip.AddrFrom16Slice([]byte("\x01\x02\x03\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
+					header.IIDOffsetInIPv6Address*8)
+
+				return addrWithPrefix.Masked()
 			}(),
 			nicName:    "eth11",
 			dadCounter: 2,
@@ -106,12 +107,12 @@ func TestAppendOpaqueInterfaceIdentifier(t *testing.T) {
 		},
 		{
 			name: "Nil SecretKey and empty nicName",
-			prefix: func() tcpip.Subnet {
-				addrWithPrefix := tcpip.AddressWithPrefix{
-					Address:   tcpip.AddrFrom16Slice([]byte("\x01\x02\x03\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
-					PrefixLen: header.IIDOffsetInIPv6Address * 8,
-				}
-				return addrWithPrefix.Subnet()
+			prefix: func() netip.Prefix {
+				addrWithPrefix := netip.PrefixFrom(
+					tcpip.AddrFrom16Slice([]byte("\x01\x02\x03\x05\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
+					header.IIDOffsetInIPv6Address*8)
+
+				return addrWithPrefix.Masked()
 			}(),
 			nicName:    "",
 			dadCounter: 3,
@@ -122,7 +123,7 @@ func TestAppendOpaqueInterfaceIdentifier(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			h := sha256.New()
-			prefixID := test.prefix.ID()
+			prefixID := test.prefix.Addr()
 			h.Write(prefixID.AsSlice()[:header.IIDOffsetInIPv6Address])
 			h.Write([]byte(test.nicName))
 			h.Write([]byte{test.dadCounter})
@@ -160,11 +161,11 @@ func TestLinkLocalAddrWithOpaqueIID(t *testing.T) {
 		t.Fatalf("expected rand.Read to read %d bytes, read %d bytes", want, n)
 	}
 
-	prefix := header.IPv6LinkLocalPrefix.Subnet()
+	prefix := header.IPv6LinkLocalPrefix.Masked()
 
 	tests := []struct {
 		name       string
-		prefix     tcpip.Subnet
+		prefix     netip.Prefix
 		nicName    string
 		dadCounter uint8
 		secretKey  []byte

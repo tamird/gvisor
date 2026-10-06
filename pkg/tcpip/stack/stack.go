@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/netip"
 	"sync/atomic"
 	"time"
 
@@ -344,7 +345,7 @@ func (t *TransportEndpointInfo) AddrNetProtoLocked(addr tcpip.FullAddress, v6onl
 		}
 	}
 
-	switch t.ID.LocalAddress.BitLen() {
+	switch t.ID.Local.Addr().BitLen() {
 	case header.IPv4AddressSizeBits:
 		if addr.Addr.BitLen() == header.IPv6AddressSizeBits {
 			return tcpip.FullAddress{}, 0, &tcpip.ErrInvalidEndpointState{}
@@ -355,11 +356,11 @@ func (t *TransportEndpointInfo) AddrNetProtoLocked(addr tcpip.FullAddress, v6onl
 		}
 	}
 
-	if !bind && addr.Addr.Unspecified() {
+	if !bind && (!addr.Addr.IsValid() || addr.Addr.IsUnspecified()) {
 		// If the destination address isn't set, Linux sets it to the
 		// source address. If a source address isn't set either, it
 		// sets both to the loopback address.
-		if t.ID.LocalAddress.Unspecified() {
+		if !t.ID.Local.Addr().IsValid() || t.ID.Local.Addr().IsUnspecified() {
 			switch netProto {
 			case header.IPv4ProtocolNumber:
 				addr.Addr = header.IPv4Loopback
@@ -367,7 +368,7 @@ func (t *TransportEndpointInfo) AddrNetProtoLocked(addr tcpip.FullAddress, v6onl
 				addr.Addr = header.IPv6Loopback
 			}
 		} else {
-			addr.Addr = t.ID.LocalAddress
+			addr.Addr = t.ID.Local.Addr()
 		}
 	}
 
@@ -838,10 +839,11 @@ func (s *Stack) AddRoute(route tcpip.Route) {
 
 // +checklocks:s.routeMu
 func (s *Stack) addRouteLocked(route *tcpip.Route) {
-	routePrefix := route.Destination.Prefix()
+	route.Destination = route.Destination.Masked()
+	routePrefix := route.Destination.Bits()
 	n := s.routeTable.Front()
 	for ; n != nil; n = n.Next() {
-		if n.Destination.Prefix() < routePrefix {
+		if n.Destination.Bits() < routePrefix {
 			s.routeTable.InsertBefore(n, route)
 			return
 		}
@@ -1413,20 +1415,20 @@ func (s *Stack) AllAddresses() map[tcpip.NICID][]tcpip.ProtocolAddress {
 // for the given NIC and protocol. If no non-deprecated primary addresses exist,
 // a deprecated address will be returned. If no deprecated addresses exist, the
 // zero value will be returned.
-func (s *Stack) GetMainNICAddress(id tcpip.NICID, protocol tcpip.NetworkProtocolNumber) (tcpip.AddressWithPrefix, tcpip.Error) {
+func (s *Stack) GetMainNICAddress(id tcpip.NICID, protocol tcpip.NetworkProtocolNumber) (netip.Prefix, tcpip.Error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	nic, ok := s.nics[id]
 	if !ok {
-		return tcpip.AddressWithPrefix{}, &tcpip.ErrUnknownNICID{}
+		return netip.Prefix{}, &tcpip.ErrUnknownNICID{}
 	}
 
 	return nic.PrimaryAddress(protocol)
 }
 
 func (s *Stack) getAddressEP(nic *nic, localAddr, remoteAddr, srcHint tcpip.Address, netProto tcpip.NetworkProtocolNumber) AssignableAddressEndpoint {
-	if localAddr.BitLen() == 0 {
+	if !localAddr.IsValid() {
 		return nic.primaryEndpoint(netProto, remoteAddr, srcHint)
 	}
 	return nic.findEndpoint(netProto, localAddr, CanBePrimaryEndpoint)
@@ -1532,7 +1534,7 @@ func (s *Stack) loopbackLocalRoute(localAddressNIC *nic, localAddr, remoteAddr t
 //
 // +checklocksread:s.mu
 func (s *Stack) findLocalRouteRLocked(localAddressNICID tcpip.NICID, localAddr, remoteAddr tcpip.Address, netProto tcpip.NetworkProtocolNumber) *Route {
-	if localAddr.BitLen() == 0 {
+	if !localAddr.IsValid() {
 		localAddr = remoteAddr
 	}
 
@@ -1677,7 +1679,7 @@ func (s *Stack) FindRoute(id tcpip.NICID, localAddr, remoteAddr tcpip.Address, n
 		defer s.routeMu.RUnlock()
 
 		for route := s.routeTable.Front(); route != nil; route = route.Next() {
-			if remoteAddr.BitLen() != 0 && !route.Destination.Contains(remoteAddr) {
+			if remoteAddr.IsValid() && !route.Destination.Contains(remoteAddr) {
 				continue
 			}
 
@@ -2573,7 +2575,7 @@ func isSubnetBroadcastOnNIC(nic *nic, protocol tcpip.NetworkProtocolNumber, addr
 
 	subnet := addressEndpoint.Subnet()
 	addressEndpoint.DecRef()
-	return subnet.IsBroadcast(addr)
+	return header.IsIPv4SubnetBroadcast(subnet, addr)
 }
 
 // IsSubnetBroadcast returns true if the provided address is a subnet-local

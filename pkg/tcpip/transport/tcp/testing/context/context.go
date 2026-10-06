@@ -19,6 +19,7 @@ package context
 import (
 	"bytes"
 	"context"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -78,16 +79,10 @@ var (
 )
 
 // StackAddrWithPrefix is StackAddr with its associated prefix length.
-var StackAddrWithPrefix = tcpip.AddressWithPrefix{
-	Address:   StackAddr,
-	PrefixLen: 24,
-}
+var StackAddrWithPrefix = netip.PrefixFrom(StackAddr, 24)
 
 // StackV6AddrWithPrefix is StackV6Addr with its associated prefix length.
-var StackV6AddrWithPrefix = tcpip.AddressWithPrefix{
-	Address:   StackV6Addr,
-	PrefixLen: header.IIDOffsetInIPv6Address * 8,
-}
+var StackV6AddrWithPrefix = netip.PrefixFrom(StackV6Addr, header.IIDOffsetInIPv6Address*8)
 
 // Headers is used to represent the TCP header fields when building a
 // new packet.
