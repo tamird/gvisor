@@ -90,12 +90,17 @@ job has a 50-minute timeout. Larger qualification runs can use the same entry
 point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
-For the local-test pilot, select `execution=local`, `lanes=smoke` and a single
-architecture (`amd64` or `arm64`). The existing architecture-specific release
-smoke runs on `ubuntu-24.04` or `ubuntu-24.04-arm`; Bazel compilation still uses
-BuildBuddy RBE with no local fallback. The repository selects Bazel's version
+For the local-test pilot, select `execution=local`, one lane (`smoke` or
+`bwrap`) and a single architecture (`amd64` or `arm64`). The existing
+architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
+Bazel compilation still uses BuildBuddy RBE with no local fallback. The
+repository selects Bazel's version
 through the runner's installed Bazelisk. The connection uses the same secret
 in a temporary configuration that is removed after the command.
+
+The `bwrap` lane uses its existing integration test and runs only that test
+process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
+unprivileged Actions user. The lane retains the existing test cases and skips.
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits the Actions job to 15 minutes. Local test results are not uploaded

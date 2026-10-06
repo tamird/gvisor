@@ -89,8 +89,8 @@ case "$test_execution" in
       amd64:x86_64|arm64:aarch64) ;;
       *) printf 'Local tests require a single matching host architecture.\n' >&2; exit 2 ;;
     esac
-    if [[ $# != 1 || $1 != smoke ]]; then
-      printf 'The local-test pilot supports only the existing smoke lane.\n' >&2
+    if [[ $# != 1 || ( $1 != smoke && $1 != bwrap ) ]]; then
+      printf 'Select one existing smoke or bwrap lane for local tests.\n' >&2
       exit 2
     fi
     ;;
@@ -682,7 +682,15 @@ run_lane() (
       fi
       shared_test_targets "$lane" "$arch"
       ;;
-    do|docker|root|portforward|bwrap|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
+    bwrap)
+      shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        targets=("${targets[0]}_$arch")
+        # Match make bwrap-tests: only the test process needs root.
+        options+=(--run_under='sudo -n -E' --test_arg=-test.v)
+      fi
+      ;;
+    do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
       if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2
