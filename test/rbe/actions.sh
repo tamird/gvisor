@@ -55,12 +55,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     qualification_rc=$(mktemp)
     temporary_files+=("$qualification_rc")
     export qualification_rc
-    # Bazel's Docker strategy runs each test as the coordinator's UID. Startup
-    # needs root for its nested daemon; other lanes retain the nonroot server.
+    # Bazel's Docker strategy runs each test as the coordinator's UID. These
+    # lanes need root for their nested daemon; others retain the nonroot server.
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
-    if [[ ${lanes[*]} == startup && $QUALIFICATION_ARCH == amd64 ]]; then
-      qualification_root_bazel=true
+    if [[ $QUALIFICATION_ARCH == amd64 ]]; then
+      case "${lanes[*]}" in
+        startup|posture|portforward) qualification_root_bazel=true ;;
+      esac
     fi
     export qualification_root_bazel
     {

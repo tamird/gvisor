@@ -92,8 +92,9 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls` or `startup`) and a single architecture (`amd64` or `arm64`;
-local unit and syscall profiles require `arm64`, and startup requires `amd64`).
+`unit`, `syscalls`, `startup`, `posture` or `portforward`) and a single
+architecture (`amd64` or `arm64`; local unit and syscall profiles require
+`arm64`, while startup, posture and portforward require `amd64`).
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -142,15 +143,17 @@ separate workflow concurrency keys. Direct callers use
 `--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
 provide the same Linux host tools. Omitting the bucket selects the full profile.
 
-The local AMD64 `startup` phase retains the complete maintained startup suite,
-including KVM. Bazel's Docker strategy gives each test a privileged container
+The local AMD64 `startup`, `posture` and `portforward` phases retain their
+complete maintained suites, including the KVM startup and posture variants.
+Bazel's Docker strategy gives each test a privileged container
 and private network namespace: separate daemon sockets alone do not isolate
-Docker's bridge and firewall rules. These startup cases load declared image
-archives and require no outbound network. The containers use the same pinned
+Docker's bridge and firewall rules. These suites load declared image archives
+and communicate within their containers without outbound networking.
+The containers use the same pinned
 Docker-tools image as the remote fixtures, with declared runtime and sidecars.
 The Actions host supplies the outer Docker engine, kernel and devices.
 
-For this phase only, the Bazel coordinator runs as root on the ephemeral Actions
+For these phases, the Bazel coordinator runs as root on the ephemeral Actions
 VM because its Docker strategy maps the coordinator's UID into the container.
 Compilation remains remote, and the original test owners run directly without
 the local-root frontend. Bazel stages their inputs, collects outputs and removes
@@ -159,15 +162,21 @@ so nested Docker uses the host disk for writable layers. It moves the setup
 and test processes into a cgroup leaf so the private daemon can enable
 controllers for its children. It verifies that both PID and cgroup namespaces
 differ from the coordinator before either change. This checks whether gVisor
-can run through KVM, not just whether `/dev/kvm` exists. It does not qualify
-the full KVM syscall or benchmark suites, or Docker suites requiring outbound
-networking.
+can run through KVM, not just whether `/dev/kvm` exists. Posture retains all six
+security configurations; portforward exercises both sandbox and host networking
+with the declared Redis and nginx images. This does not qualify the full KVM
+syscall or benchmark suites, or Docker suites requiring outbound networking.
+Bazel's Docker strategy selects either no network or the host network;
+enabling the latter would lose the private daemons' firewall isolation.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
   --ref rbe-actions-kvm-startup \
   -f lanes=startup -f architecture=amd64 -f execution=local
 ```
+
+Select `lanes=posture` or `lanes=portforward` for those suites. Run each dispatch
+after the preceding run finishes, since this branch shares a concurrency key.
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits ordinary local Actions jobs to 15 minutes. Local syscalls have a

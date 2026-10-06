@@ -41,9 +41,9 @@ image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ARM64 unit/syscall tests and AMD64
-startup on a matching Linux host. Compilation remains remote. Hybrid profiles run in one
-invocation: native namespace owners run locally; ordinary native and shared
-owners run remotely.
+startup/posture/portforward on a matching Linux host. Compilation remains
+remote. Hybrid profiles run in one invocation: native namespace owners run
+locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
 USAGE
@@ -100,8 +100,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|startup:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 startup.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|startup:amd64|posture:amd64|portforward:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 startup/posture/portforward.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -782,29 +782,9 @@ run_lane() (
       fi
       shared_test_targets "$lane" "$arch"
       ;;
-    posture)
-      options=(--test_tag_filters=-requires-kvm)
+    posture|startup)
       shared_test_targets "$lane" "$arch"
-      ;;
-    startup)
-      shared_test_targets "$lane" "$arch"
-      if [[ $test_execution == local ]]; then
-        # The owned daemons need separate firewall state. These startup cases
-        # load declared images and need no network outside their containers.
-        options=(
-          --strategy=TestRunner=docker
-          --local_test_jobs=2
-          --experimental_enable_docker_sandbox
-          --experimental_docker_privileged
-          --noexperimental_docker_use_customized_images
-          --noincompatible_legacy_local_fallback
-          --sandbox_default_allow_network=false
-          --test_env=GO_TEST_WRAP_TESTV=1
-          --run_under=//test/rbe:docker_setup
-          "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
-          "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
-        )
-      else
+      if [[ $test_execution == remote ]]; then
         options=(--test_tag_filters=-requires-kvm)
       fi
       ;;
@@ -884,6 +864,25 @@ run_lane() (
     fi
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
+      case "$lane" in
+        startup|posture|portforward)
+          # Each owned daemon needs separate firewall state. These suites
+          # communicate within their containers without outbound networking.
+          options+=(
+            --strategy=TestRunner=docker
+            --local_test_jobs=2
+            --experimental_enable_docker_sandbox
+            --experimental_docker_privileged
+            --noexperimental_docker_use_customized_images
+            --noincompatible_legacy_local_fallback
+            --sandbox_default_allow_network=false
+            --test_env=GO_TEST_WRAP_TESTV=1
+            --run_under=//test/rbe:docker_setup
+            "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+            "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
+          )
+          ;;
+      esac
       options=(--config=rbe-local-tests "${options[@]}")
     elif [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
