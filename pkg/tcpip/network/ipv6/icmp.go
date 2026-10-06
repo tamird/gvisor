@@ -940,14 +940,14 @@ func (e *endpoint) LinkAddressRequest(targetAddr, localAddr tcpip.Address, remot
 		remoteLinkAddr = header.EthernetAddressFromMulticastIPv6Address(remoteAddr)
 	}
 
-	if localAddr.BitLen() == 0 {
+	if !localAddr.IsValid() {
 		// Find an address that we can use as our source address.
 		addressEndpoint := e.AcquireOutgoingPrimaryAddress(remoteAddr, tcpip.Address{} /* srcHint */, false /* allowExpired */)
 		if addressEndpoint == nil {
 			return &tcpip.ErrNetworkUnreachable{}
 		}
 
-		localAddr = addressEndpoint.AddressWithPrefix().Address
+		localAddr = addressEndpoint.AddressWithPrefix().Addr()
 		addressEndpoint.DecRef()
 	} else if !e.checkLocalAddress(localAddr) {
 		// The provided local address is not assigned to us.

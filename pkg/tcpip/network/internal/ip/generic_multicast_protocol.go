@@ -808,7 +808,7 @@ func (g *GenericMulticastProtocolState) HandleQueryV2Locked(groupAddress tcpip.A
 		return
 	}
 
-	if groupAddress.Unspecified() {
+	if !groupAddress.IsValid() || groupAddress.IsUnspecified() {
 		if g.generalQueryV2Timer == nil {
 			// TODO(https://issuetracker.google.com/264799098): Create timer on
 			// initialization instead of lazily creating the timer since the timer
@@ -957,7 +957,7 @@ func (g *GenericMulticastProtocolState) handleQueryInnerLocked(groupAddress tcpi
 	//   In a Query message, the Multicast Address field is set to zero when
 	//   sending a General Query, and set to a specific IPv6 multicast address
 	//   when sending a Multicast-Address-Specific Query.
-	if groupAddress.Unspecified() {
+	if !groupAddress.IsValid() || groupAddress.IsUnspecified() {
 		// This is a general query as the group address is unspecified.
 		for groupAddress, info := range g.memberships {
 			g.setDelayTimerForAddressLocked(groupAddress, &info, maxResponseTime)

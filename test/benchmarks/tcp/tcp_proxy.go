@@ -22,6 +22,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/netip"
 	"os"
 	"os/signal"
 	"regexp"
@@ -167,30 +168,14 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	} else {
 		parsedAddr = tcpip.AddrFrom4Slice(net.ParseIP(*addr).To4())
 	}
-	parsedBytes := parsedAddr.AsSlice()
-	var parsedDest tcpip.Address      // Filled in below.
-	var parsedMask tcpip.AddressMask  // Filled in below.
-	var parsedDest6 tcpip.Address     // Filled in below.
-	var parsedMask6 tcpip.AddressMask // Filled in below.
 	switch *mask {
-	case 8:
-		parsedDest = tcpip.AddrFrom4([4]byte{parsedBytes[0], 0, 0, 0})
-		parsedMask = tcpip.MaskFromBytes([]byte{0xff, 0, 0, 0})
-		parsedDest6 = tcpip.AddrFrom16Slice(append([]byte{parsedBytes[0]}, make([]byte, 15)...))
-		parsedMask6 = tcpip.MaskFromBytes(append([]byte{0xff}, make([]byte, 15)...))
-	case 16:
-		parsedDest = tcpip.AddrFrom4([4]byte{parsedBytes[0], parsedBytes[1], 0, 0})
-		parsedMask = tcpip.MaskFromBytes([]byte{0xff, 0xff, 0, 0})
-		parsedDest6 = tcpip.AddrFrom16Slice(append([]byte{parsedBytes[0], parsedBytes[1]}, make([]byte, 14)...))
-		parsedMask6 = tcpip.MaskFromBytes(append([]byte{0xff, 0xff}, make([]byte, 14)...))
-	case 24:
-		parsedDest = tcpip.AddrFrom4([4]byte{parsedBytes[0], parsedBytes[1], parsedBytes[2], 0})
-		parsedMask = tcpip.MaskFromBytes([]byte{0xff, 0xff, 0xff, 0})
-		parsedDest6 = tcpip.AddrFrom16Slice(append([]byte{parsedBytes[0], parsedBytes[1], parsedBytes[2]}, make([]byte, 13)...))
-		parsedMask6 = tcpip.MaskFromBytes(append([]byte{0xff, 0xff, 0xff}, make([]byte, 13)...))
+	case 8, 16, 24:
 	default:
-		// This is just laziness; we don't expect a different mask.
 		return nil, func() error { return nil }, fmt.Errorf("mask %d not supported", *mask)
+	}
+	subnet := netip.PrefixFrom(parsedAddr, *mask)
+	if !subnet.IsValid() {
+		return nil, func() error { return nil }, fmt.Errorf("invalid prefix length %d for %s", *mask, parsedAddr)
 	}
 
 	var probeFile *os.File
@@ -268,32 +253,14 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          proto,
-		AddressWithPrefix: parsedAddr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(parsedAddr),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		return nil, probeFile.Close, fmt.Errorf("error adding IP address %+v to %q: %s", protocolAddr, *iface, err)
 	}
 
-	subnet4, err := tcpip.NewSubnet(parsedDest, parsedMask)
-	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
-	}
-	subnet6, err := tcpip.NewSubnet(parsedDest6, parsedMask6)
-	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
-	}
-
-	// Add default route; we only support
-	s.SetRouteTable([]tcpip.Route{
-		{
-			Destination: subnet4,
-			NIC:         nicID,
-		},
-		{
-			Destination: subnet6,
-			NIC:         nicID,
-		},
-	})
+	// Route the configured network through the device.
+	s.SetRouteTable([]tcpip.Route{{Destination: subnet.Masked(), NIC: nicID}})
 
 	// Set protocol options.
 	{

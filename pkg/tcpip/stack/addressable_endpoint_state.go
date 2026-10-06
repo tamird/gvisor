@@ -16,9 +16,9 @@ package stack
 
 import (
 	"fmt"
+	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
-	"gvisor.dev/gvisor/pkg/tcpip/header"
 )
 
 func (lifetimes *AddressLifetimes) sanitize() {
@@ -151,11 +151,11 @@ func (a *AddressableEndpointState) releaseAddressStateLocked(addrState *addressS
 			break
 		}
 	}
-	delete(a.endpoints, addrState.addr.Address)
+	delete(a.endpoints, addrState.addr.Addr())
 }
 
 // AddAndAcquirePermanentAddress implements AddressableEndpoint.
-func (a *AddressableEndpointState) AddAndAcquirePermanentAddress(addr tcpip.AddressWithPrefix, properties AddressProperties) (AddressEndpoint, tcpip.Error) {
+func (a *AddressableEndpointState) AddAndAcquirePermanentAddress(addr netip.Prefix, properties AddressProperties) (AddressEndpoint, tcpip.Error) {
 	return a.AddAndAcquireAddress(addr, properties, Permanent)
 }
 
@@ -164,14 +164,14 @@ func (a *AddressableEndpointState) AddAndAcquirePermanentAddress(addr tcpip.Addr
 // Returns *tcpip.ErrDuplicateAddress if the address exists.
 //
 // The temporary address's endpoint is acquired and returned.
-func (a *AddressableEndpointState) AddAndAcquireTemporaryAddress(addr tcpip.AddressWithPrefix, peb PrimaryEndpointBehavior) (AddressEndpoint, tcpip.Error) {
+func (a *AddressableEndpointState) AddAndAcquireTemporaryAddress(addr netip.Prefix, peb PrimaryEndpointBehavior) (AddressEndpoint, tcpip.Error) {
 	return a.AddAndAcquireAddress(addr, AddressProperties{PEB: peb}, Temporary)
 }
 
 // AddAndAcquireAddress adds an address with the specified kind.
 //
 // Returns *tcpip.ErrDuplicateAddress if the address exists.
-func (a *AddressableEndpointState) AddAndAcquireAddress(addr tcpip.AddressWithPrefix, properties AddressProperties, kind AddressKind) (AddressEndpoint, tcpip.Error) {
+func (a *AddressableEndpointState) AddAndAcquireAddress(addr netip.Prefix, properties AddressProperties, kind AddressKind) (AddressEndpoint, tcpip.Error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	ep, err := a.addAndAcquireAddressLocked(addr, properties, kind)
@@ -205,7 +205,7 @@ func (a *AddressableEndpointState) AddAndAcquireAddress(addr tcpip.AddressWithPr
 // returned, regardless the kind of address that is being added.
 //
 // +checklocks:a.mu
-func (a *AddressableEndpointState) addAndAcquireAddressLocked(addr tcpip.AddressWithPrefix, properties AddressProperties, kind AddressKind) (*addressState, tcpip.Error) {
+func (a *AddressableEndpointState) addAndAcquireAddressLocked(addr netip.Prefix, properties AddressProperties, kind AddressKind) (*addressState, tcpip.Error) {
 	var permanent bool
 	switch kind {
 	case PermanentExpired:
@@ -219,7 +219,7 @@ func (a *AddressableEndpointState) addAndAcquireAddressLocked(addr tcpip.Address
 	// attemptAddToPrimary is false when the address is already in the primary
 	// address list.
 	attemptAddToPrimary := true
-	addrState, ok := a.endpoints[addr.Address]
+	addrState, ok := a.endpoints[addr.Addr()]
 	if ok {
 		if !permanent {
 			// We are adding a non-permanent address but the address exists. No need
@@ -269,12 +269,9 @@ func (a *AddressableEndpointState) addAndAcquireAddressLocked(addr tcpip.Address
 			addressableEndpointState: a,
 			addr:                     addr,
 			temporary:                properties.Temporary,
-			// Cache the subnet in addrState to avoid calls to addr.Subnet() as that
-			// results in allocations on every call.
-			subnet: addr.Subnet(),
 		}
 		addrState.refs.InitRefs()
-		a.endpoints[addr.Address] = addrState
+		a.endpoints[addr.Addr()] = addrState
 		// We never promote an address to temporary - it can only be added as such.
 		// If we are actually adding a permanent address, it is promoted below.
 		addrState.kind = Temporary
@@ -436,7 +433,7 @@ func (a *AddressableEndpointState) SetLifetimes(addr tcpip.Address, lifetimes Ad
 }
 
 // MainAddress implements AddressableEndpoint.
-func (a *AddressableEndpointState) MainAddress() tcpip.AddressWithPrefix {
+func (a *AddressableEndpointState) MainAddress() netip.Prefix {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -451,7 +448,7 @@ func (a *AddressableEndpointState) MainAddress() tcpip.AddressWithPrefix {
 		}
 	})
 	if ep == nil {
-		return tcpip.AddressWithPrefix{}
+		return netip.Prefix{}
 	}
 	addr := ep.AddressWithPrefix()
 	// Note that when ep must have a ref count >=2, because its ref count
@@ -473,7 +470,7 @@ func (a *AddressableEndpointState) acquirePrimaryAddressRLocked(remoteAddr, srcH
 	// IPv6 handles source IP selection elsewhere. We have to do source
 	// selection only for IPv4, in which case ep is never deprecated. Thus
 	// we don't have to worry about refcounts.
-	if remoteAddr.Len() == header.IPv4AddressSize && remoteAddr != (tcpip.Address{}) {
+	if remoteAddr.Is4() {
 		var best *addressState
 		var bestLen uint8
 		for _, state := range a.primary {
@@ -481,11 +478,11 @@ func (a *AddressableEndpointState) acquirePrimaryAddressRLocked(remoteAddr, srcH
 				continue
 			}
 			// Source hint takes precedent over prefix matching.
-			if state.addr.Address == srcHint && srcHint != (tcpip.Address{}) {
+			if state.addr.Addr() == srcHint && srcHint != (tcpip.Address{}) {
 				best = state
 				break
 			}
-			stateLen := state.addr.Address.MatchingPrefix(remoteAddr)
+			stateLen := tcpip.MatchingPrefix(state.addr.Addr(), remoteAddr)
 			if best == nil || bestLen < stateLen {
 				best = state
 				bestLen = stateLen
@@ -601,7 +598,7 @@ func (a *AddressableEndpointState) AcquireAssignedAddressOrMatching(localAddr tc
 	}
 
 	// Proceed to add a new temporary endpoint.
-	addr := localAddr.WithPrefix()
+	addr := tcpip.FullPrefix(localAddr)
 	ep, err := a.addAndAcquireAddressLocked(addr, AddressProperties{PEB: tempPEB, Temporary: true}, Temporary)
 	if err != nil {
 		// addAndAcquireAddressLocked only returns an error if the address is
@@ -676,11 +673,11 @@ func (a *AddressableEndpointState) AcquireOutgoingPrimaryAddress(remoteAddr tcpi
 }
 
 // PrimaryAddresses implements AddressableEndpoint.
-func (a *AddressableEndpointState) PrimaryAddresses() []tcpip.AddressWithPrefix {
+func (a *AddressableEndpointState) PrimaryAddresses() []netip.Prefix {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	var addrs []tcpip.AddressWithPrefix
+	var addrs []netip.Prefix
 	if a.options.HiddenWhileDisabled && !a.networkEndpoint.Enabled() {
 		return addrs
 	}
@@ -703,11 +700,11 @@ func (a *AddressableEndpointState) PrimaryAddresses() []tcpip.AddressWithPrefix 
 }
 
 // PermanentAddresses implements AddressableEndpoint.
-func (a *AddressableEndpointState) PermanentAddresses() []tcpip.AddressWithPrefix {
+func (a *AddressableEndpointState) PermanentAddresses() []netip.Prefix {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	var addrs []tcpip.AddressWithPrefix
+	var addrs []netip.Prefix
 	for _, ep := range a.endpoints {
 		if !ep.GetKind().IsPermanent() {
 			continue
@@ -740,8 +737,7 @@ var _ AddressEndpoint = (*addressState)(nil)
 // addressState holds state for an address.
 type addressState struct {
 	addressableEndpointState *AddressableEndpointState
-	addr                     tcpip.AddressWithPrefix
-	subnet                   tcpip.Subnet
+	addr                     netip.Prefix
 	temporary                bool
 
 	// Lock ordering (from outer to inner lock ordering):
@@ -770,13 +766,13 @@ type addressState struct {
 }
 
 // AddressWithPrefix implements AddressEndpoint.
-func (a *addressState) AddressWithPrefix() tcpip.AddressWithPrefix {
+func (a *addressState) AddressWithPrefix() netip.Prefix {
 	return a.addr
 }
 
 // Subnet implements AddressEndpoint.
-func (a *addressState) Subnet() tcpip.Subnet {
-	return a.subnet
+func (a *addressState) Subnet() netip.Prefix {
+	return a.addr.Masked()
 }
 
 // GetKind implements AddressEndpoint.

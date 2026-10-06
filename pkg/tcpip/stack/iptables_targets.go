@@ -279,7 +279,7 @@ func (rt *RedirectTarget) Action(pkt *PacketBuffer, hook Hook, r *Route, address
 		}
 	case Prerouting:
 		// addressEP is expected to be set for the prerouting hook.
-		address = addressEP.MainAddress().Address
+		address = addressEP.MainAddress().Addr()
 	case Input, Forward, Postrouting:
 		log.BugTracebackOnce(fmt.Errorf("%s not supported for REDIRECT", hook))
 		return RuleDrop, 0
@@ -429,7 +429,7 @@ func (mt *MasqueradeTarget) Action(pkt *PacketBuffer, hook Hook, r *Route, addre
 		return RuleDrop, 0
 	}
 
-	address := ep.AddressWithPrefix().Address
+	address := ep.AddressWithPrefix().Addr()
 	ep.DecRef()
 	if mt.Ports.Size != 0 {
 		return natAction(pkt, hook, r, mt.Ports, address, false /* dnat */, true /* changePort */, true /* changeAddress */)

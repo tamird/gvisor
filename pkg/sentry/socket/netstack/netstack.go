@@ -812,7 +812,7 @@ func (s *sock) checkFamily(family uint16, exact bool) bool {
 //
 // TODO(gvisor.dev/issue/1556): remove this function.
 func (s *sock) mapFamily(addr tcpip.FullAddress, family uint16) tcpip.FullAddress {
-	if addr.Addr.BitLen() == 0 && s.family == linux.AF_INET6 && family == linux.AF_INET {
+	if !addr.Addr.IsValid() && s.family == linux.AF_INET6 && family == linux.AF_INET {
 		addr.Addr = tcpip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00})
 	}
 	return addr

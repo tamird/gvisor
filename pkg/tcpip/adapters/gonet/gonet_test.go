@@ -144,7 +144,7 @@ func TestCloseReader(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -207,7 +207,7 @@ func TestCloseReaderWithForwarder(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -271,7 +271,7 @@ func TestCloseRead(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -333,7 +333,7 @@ func TestCloseWrite(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -401,7 +401,7 @@ func TestCloseStack(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -464,7 +464,7 @@ func TestUDPForwarder(t *testing.T) {
 	addr1 := tcpip.FullAddress{NIC: NICID, Addr: ip1, Port: 11211}
 	protocolAddr1 := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: ip1.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(ip1),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr1, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr1, err)
@@ -473,7 +473,7 @@ func TestUDPForwarder(t *testing.T) {
 	addr2 := tcpip.FullAddress{NIC: NICID, Addr: ip2, Port: 11311}
 	protocolAddr2 := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: ip2.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(ip2),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr2, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr2, err)
@@ -545,7 +545,7 @@ func TestDeadlineChange(t *testing.T) {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -606,7 +606,7 @@ func TestPacketConnTransfer(t *testing.T) {
 	addr1 := tcpip.FullAddress{NIC: NICID, Addr: ip1, Port: 11211}
 	protocolAddr1 := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: ip1.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(ip1),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr1, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr1, err)
@@ -615,7 +615,7 @@ func TestPacketConnTransfer(t *testing.T) {
 	addr2 := tcpip.FullAddress{NIC: NICID, Addr: ip2, Port: 11311}
 	protocolAddr2 := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: ip2.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(ip2),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr2, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr2, err)
@@ -674,7 +674,7 @@ func TestConnectedPacketConnTransfer(t *testing.T) {
 	addr := tcpip.FullAddress{NIC: NICID, Addr: ip, Port: 11211}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: ip.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(ip),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -724,7 +724,7 @@ func makePipe() (c1, c2 net.Conn, stop func(), err error) {
 	addr := tcpip.FullAddress{NIC: NICID, Addr: ip, Port: 11211}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: ip.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(ip),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		return nil, nil, nil, fmt.Errorf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -843,7 +843,7 @@ func TestDialContextTCPCanceled(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -875,7 +875,7 @@ func TestDialContextTCPTimeout(t *testing.T) {
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.Addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 	}
 	if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)
@@ -939,7 +939,7 @@ func TestInterruptListender(t *testing.T) {
 			}
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: addr.Addr.WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(addr.Addr),
 			}
 			if err := s.AddProtocolAddress(NICID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", NICID, protocolAddr, err)

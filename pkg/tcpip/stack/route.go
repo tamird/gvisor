@@ -146,8 +146,8 @@ func (r *Route) fieldsLocked() RouteInfo {
 //
 // Returns an empty route if validation fails.
 func constructAndValidateRoute(netProto tcpip.NetworkProtocolNumber, addressEndpoint AssignableAddressEndpoint, localAddressNIC, outgoingNIC *nic, gateway, localAddr, remoteAddr tcpip.Address, handleLocal, multicastLoop bool, mtu uint32) *Route {
-	if localAddr.BitLen() == 0 {
-		localAddr = addressEndpoint.AddressWithPrefix().Address
+	if !localAddr.IsValid() {
+		localAddr = addressEndpoint.AddressWithPrefix().Addr()
 	}
 
 	if localAddressNIC != outgoingNIC && header.IsV6LinkLocalUnicastAddress(localAddr) {
@@ -156,7 +156,7 @@ func constructAndValidateRoute(netProto tcpip.NetworkProtocolNumber, addressEndp
 	}
 
 	// If no remote address is provided, use the local address.
-	if remoteAddr.BitLen() == 0 {
+	if !remoteAddr.IsValid() {
 		remoteAddr = localAddr
 	}
 
@@ -183,8 +183,8 @@ func makeRoute(netProto tcpip.NetworkProtocolNumber, gateway, localAddr, remoteA
 		panic("cannot create a route with NICs from different stacks")
 	}
 
-	if localAddr.BitLen() == 0 {
-		localAddr = localAddressEndpoint.AddressWithPrefix().Address
+	if !localAddr.IsValid() {
+		localAddr = localAddressEndpoint.AddressWithPrefix().Addr()
 	}
 
 	loop := PacketOut
@@ -199,7 +199,7 @@ func makeRoute(netProto tcpip.NetworkProtocolNumber, gateway, localAddr, remoteA
 			loop |= PacketLoop
 		} else if remoteAddr == header.IPv4Broadcast {
 			loop |= PacketLoop
-		} else if subnet := localAddressEndpoint.AddressWithPrefix().Subnet(); subnet.IsBroadcast(remoteAddr) {
+		} else if subnet := localAddressEndpoint.AddressWithPrefix().Masked(); header.IsIPv4SubnetBroadcast(subnet, remoteAddr) {
 			loop |= PacketLoop
 		}
 	}
@@ -217,7 +217,7 @@ func makeRoute(netProto tcpip.NetworkProtocolNumber, gateway, localAddr, remoteA
 		}
 	}
 
-	if gateway.BitLen() > 0 {
+	if gateway.IsValid() {
 		r.routeInfo.NextHop = gateway
 		return r
 	}
@@ -231,7 +231,7 @@ func makeRoute(netProto tcpip.NetworkProtocolNumber, gateway, localAddr, remoteA
 		return r
 	}
 
-	if subnet := localAddressEndpoint.Subnet(); subnet.IsBroadcast(remoteAddr) {
+	if subnet := localAddressEndpoint.Subnet(); header.IsIPv4SubnetBroadcast(subnet, remoteAddr) {
 		r.ResolveWith(header.EthernetBroadcastAddress)
 		return r
 	}
@@ -449,7 +449,7 @@ func (r *Route) setCachedNeighborEntry(entry *neighborEntry) {
 }
 
 func (r *Route) nextHop() tcpip.Address {
-	if r.NextHop().BitLen() == 0 {
+	if !r.NextHop().IsValid() {
 		return r.RemoteAddress()
 	}
 	return r.NextHop()
@@ -580,7 +580,7 @@ func (r *Route) isV4Broadcast(addr tcpip.Address) bool {
 	}
 
 	subnet := localAddressEndpoint.Subnet()
-	return subnet.IsBroadcast(addr)
+	return header.IsIPv4SubnetBroadcast(subnet, addr)
 }
 
 // IsOutboundBroadcast returns true if the route is for an outbound broadcast

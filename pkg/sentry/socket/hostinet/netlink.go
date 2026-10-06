@@ -287,16 +287,19 @@ func doNetlinkInterfaceRequest(typ, flags uint16, idx uint32, addr inet.Interfac
 	// Local address.
 	localAddr := tcpip.AddrFromSlice(addr.Addr)
 	if addr.Family == linux.AF_INET {
-		localAddr = localAddr.To4()
+		localAddr = localAddr.Unmap()
+		if !localAddr.Is4() {
+			return fmt.Errorf("invalid IPv4 interface address %s", localAddr)
+		}
 	}
 	rtLocal := linux.RtAttr{
-		Len:  linux.SizeOfRtAttr + uint16(localAddr.Len()),
+		Len:  linux.SizeOfRtAttr + uint16(localAddr.BitLen()/8),
 		Type: linux.IFA_LOCAL,
 	}
 	localAddrBs := primitive.ByteSlice(localAddr.AsSlice())
 	// Peer is always the local address for us.
 	rtPeer := linux.RtAttr{
-		Len:  linux.SizeOfRtAttr + uint16(localAddr.Len()),
+		Len:  linux.SizeOfRtAttr + uint16(localAddr.BitLen()/8),
 		Type: linux.IFA_ADDRESS,
 	}
 	peerAddrBs := primitive.ByteSlice(localAddr.AsSlice())

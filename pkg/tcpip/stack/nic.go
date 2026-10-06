@@ -16,6 +16,7 @@ package stack
 
 import (
 	"fmt"
+	"net/netip"
 	"reflect"
 	"sort"
 
@@ -597,15 +598,15 @@ func (n *nic) primaryAddresses() []tcpip.ProtocolAddress {
 }
 
 // PrimaryAddress implements NetworkInterface.
-func (n *nic) PrimaryAddress(proto tcpip.NetworkProtocolNumber) (tcpip.AddressWithPrefix, tcpip.Error) {
+func (n *nic) PrimaryAddress(proto tcpip.NetworkProtocolNumber) (netip.Prefix, tcpip.Error) {
 	ep := n.getNetworkEndpoint(proto)
 	if ep == nil {
-		return tcpip.AddressWithPrefix{}, &tcpip.ErrUnknownProtocol{}
+		return netip.Prefix{}, &tcpip.ErrUnknownProtocol{}
 	}
 
 	addressableEndpoint, ok := ep.(AddressableEndpoint)
 	if !ok {
-		return tcpip.AddressWithPrefix{}, &tcpip.ErrNotSupported{}
+		return netip.Prefix{}, &tcpip.ErrNotSupported{}
 	}
 
 	return addressableEndpoint.MainAddress(), nil
@@ -879,12 +880,7 @@ func (n *nic) deliverTransportPacket(protocol tcpip.TransportProtocolNumber, pkt
 	}
 
 	src, dst := netProto.ParseAddresses(pkt.NetworkHeader().Slice())
-	id := TransportEndpointID{
-		LocalPort:     dstPort,
-		LocalAddress:  dst,
-		RemotePort:    srcPort,
-		RemoteAddress: src,
-	}
+	id := TransportEndpointID{Local: netip.AddrPortFrom(dst, dstPort), Remote: netip.AddrPortFrom(src, srcPort)}
 	if n.stack.demux.deliverPacket(protocol, pkt, id) {
 		return TransportPacketHandled, false
 	}
@@ -934,7 +930,7 @@ func (n *nic) DeliverTransportError(local, remote tcpip.Address, net tcpip.Netwo
 		return
 	}
 
-	id := TransportEndpointID{srcPort, local, dstPort, remote}
+	id := TransportEndpointID{Local: netip.AddrPortFrom(local, srcPort), Remote: netip.AddrPortFrom(remote, dstPort)}
 	if n.stack.demux.deliverError(n, net, trans, transErr, pkt, id) {
 		return
 	}

@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -5806,7 +5807,7 @@ func TestCompatOperationDeepCopy(t *testing.T) {
 				},
 				infoData: []byte{1, 2, 3},
 			},
-			opts: cmp.AllowUnexported(compatNATTarget{}, natTargetInfo{}),
+			opts: cmp.Options{cmp.AllowUnexported(compatNATTarget{}), cmpopts.EquateComparable(natTargetInfo{})},
 		},
 		{
 			name: "noop match",
@@ -6279,10 +6280,10 @@ func TestCompatAddrtypeMatchEvaluation(t *testing.T) {
 				pkt = stack.NewPacketBuffer(stack.PacketBufferOptions{})
 			} else {
 				fields := arbitraryIPv4Fields()
-				if tc.srcAddr.Len() > 0 {
+				if tc.srcAddr.IsValid() {
 					fields.SrcAddr = tc.srcAddr
 				}
-				if tc.dstAddr.Len() > 0 {
+				if tc.dstAddr.IsValid() {
 					fields.DstAddr = tc.dstAddr
 				}
 				pkt = makeIPv4Packet(header.IPv4MinimumSize, fields)

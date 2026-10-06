@@ -17,6 +17,7 @@ package stack
 import (
 	"encoding/binary"
 	"math"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -381,11 +382,8 @@ func fwdTestNetFactory(t *testing.T, proto *fwdTestNetworkProtocol) (*faketime.M
 		t.Fatal("CreateNIC #1 failed:", err)
 	}
 	protocolAddr1 := tcpip.ProtocolAddress{
-		Protocol: fwdTestNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fwdTestNetDefaultPrefixLen,
-		},
+		Protocol:          fwdTestNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00")), fwdTestNetDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr1, AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr1, err)
@@ -401,11 +399,8 @@ func fwdTestNetFactory(t *testing.T, proto *fwdTestNetworkProtocol) (*faketime.M
 		t.Fatal("CreateNIC #2 failed:", err)
 	}
 	protocolAddr2 := tcpip.ProtocolAddress{
-		Protocol: fwdTestNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom4Slice([]byte("\x02\x00\x00\x00")),
-			PrefixLen: fwdTestNetDefaultPrefixLen,
-		},
+		Protocol:          fwdTestNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFrom4Slice([]byte("\x02\x00\x00\x00")), fwdTestNetDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(2, protocolAddr2, AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 2, protocolAddr2, err)
@@ -424,10 +419,7 @@ func fwdTestNetFactory(t *testing.T, proto *fwdTestNetworkProtocol) (*faketime.M
 
 	// Route all packets to NIC 2.
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, NIC: 2}})
 	}
 

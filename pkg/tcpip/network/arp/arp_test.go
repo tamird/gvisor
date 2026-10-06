@@ -157,7 +157,7 @@ func makeTestContext(t *testing.T, eventDepth int, packetDepth int) testContext 
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: stackAddr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(stackAddr),
 	}
 	if err := tc.s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -374,7 +374,7 @@ func TestDirectRequest(t *testing.T) {
 						State:    stack.Stale,
 					},
 				}
-				if diff := cmp.Diff(want, got, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt")); diff != "" {
+				if diff := cmp.Diff(want, got, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt"), cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 					t.Errorf("got invalid event (-want +got):\n%s", diff)
 				}
 			} else {
@@ -389,8 +389,8 @@ func TestDirectRequest(t *testing.T) {
 			neighborByAddr := make(map[tcpip.Address]stack.NeighborEntry)
 			for _, n := range neighbors {
 				if existing, ok := neighborByAddr[n.Addr]; ok {
-					if diff := cmp.Diff(existing, n); diff != "" {
-						t.Fatalf("duplicate neighbor entry found (-existing +got):\n%s", diff)
+					if existing != n {
+						t.Fatalf("duplicate neighbor entries: existing=%+v, new=%+v", existing, n)
 					}
 					t.Fatalf("exact neighbor entry duplicate found for addr=%s", n.Addr)
 				}
@@ -472,7 +472,7 @@ func TestReplyPacketType(t *testing.T) {
 						State:    stack.Stale,
 					},
 				}
-				if diff := cmp.Diff(want, got, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt")); diff != "" {
+				if diff := cmp.Diff(want, got, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt"), cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 					t.Errorf("got invalid event (-want +got):\n%s", diff)
 				}
 			} else {
@@ -505,7 +505,7 @@ func TestReplyPacketType(t *testing.T) {
 						State:    stack.Reachable,
 					},
 				}
-				if diff := cmp.Diff(want, got, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt")); diff != "" {
+				if diff := cmp.Diff(want, got, cmp.AllowUnexported(eventInfo{}), cmpopts.IgnoreFields(stack.NeighborEntry{}, "UpdatedAt"), cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 					t.Errorf("got invalid event (-want +got):\n%s", diff)
 				}
 			}
@@ -679,10 +679,10 @@ func TestLinkAddressRequest(t *testing.T) {
 				t.Fatalf("expected %T to implement stack.LinkAddressResolver", ep)
 			}
 
-			if test.nicAddr.Len() != 0 {
+			if test.nicAddr.IsValid() {
 				protocolAddr := tcpip.ProtocolAddress{
 					Protocol:          ipv4.ProtocolNumber,
-					AddressWithPrefix: test.nicAddr.WithPrefix(),
+					AddressWithPrefix: tcpip.FullPrefix(test.nicAddr),
 				}
 				if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 					t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
