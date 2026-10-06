@@ -216,9 +216,8 @@ governance-regen: ## Regenerates the files derived from governance/maintainers.y
 	@$(call run,//governance/tools/maintainers:maintainers_gen,-input governance/maintainers.yaml -areas governance/areas.yaml -format CODEOWNERS -output CODEOWNERS)
 .PHONY: governance-regen
 
-governance-check: governance-regen ## Checks that the files derived from governance/*.yaml are in sync. Can't be a bazel test because it requires visibility across the whole codebase to check for subdirectories' existence.
-	@git diff --exit-code -- CODEOWNERS MAINTAINERS.md || \
-		(echo "Generated governance files are out of sync. Please run \`make governance-regen\`." >&2; exit 1)
+governance-check: ## Checks that the files derived from governance/*.yaml are in sync.
+	@$(call test,//governance:generated_files_test)
 .PHONY: governance-check
 
 license-check: ## Checks that tools/licensecheck/dependencies.yaml has an entry for every dependency.

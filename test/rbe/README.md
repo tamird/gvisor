@@ -110,11 +110,16 @@ The dispatcher supplies the declared Go SDK to bootstrap that installer. The
 `lint-cc` lane calls `make lint-cc DOCKER_BUILD=false`, retaining its configured
 compile actions and declared remote clang-tidy tool.
 
-The `governance` lane calls `make governance-check DOCKER_BUILD=false` in the
-checkout, retaining the generator's directory validation and generated-file
-comparison. The `license-check` lane calls `make license-check DOCKER_BUILD=false`
+The `governance` lane runs `//governance:generated_files_test`. The existing
+generator runs remotely with the complete indexed source tree, preserving
+its area-directory checks. Two file-comparison tests check its outputs
+against CODEOWNERS and MAINTAINERS.md without modifying the checkout.
+Directory checks use indexed paths; an untracked directory cannot satisfy
+them. This lane can share a mixed-platform invocation with the other tests.
+
+The `license-check` lane calls `make license-check DOCKER_BUILD=false`
 to compare the checked-in license catalog with the current dependency graph and
-license policy. These four source lanes require the hosted AMD64 coordinator.
+license policy. These three source lanes require the hosted AMD64 coordinator.
 Their scoped Bazel configuration preserves the caller's rc files and does not
 introduce a cache or output base.
 

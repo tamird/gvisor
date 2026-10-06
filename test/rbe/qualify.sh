@@ -91,7 +91,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -152,9 +152,6 @@ run_source_lane() (
     lint-cc)
       make lint-cc DOCKER_BUILD=false
       ;;
-    governance)
-      make governance-check DOCKER_BUILD=false
-      ;;
     license-check)
       make license-check DOCKER_BUILD=false
       ;;
@@ -181,6 +178,7 @@ shared_test_targets() {
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
+    governance) targets=(//governance:generated_files_test) ;;
     overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
     containerd) targets=(//test/root:crictl_test_owned) ;;
     fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
@@ -473,7 +471,7 @@ run_platform_matrix() (
         # verifier. Its own transition preserves opt/strip=sometimes.
         printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
         ;;
-      plugin-network|do|root|portforward|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata)
+      plugin-network|do|root|portforward|workflows|governance|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
@@ -596,7 +594,7 @@ run_lane() (
       command=build
       targets=(//tools/codeql:all)
       ;;
-    lint|lint-cc|governance|license-check)
+    lint|lint-cc|license-check)
       if [[ $arch != amd64 ]]; then
         printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
         return 2
@@ -656,7 +654,7 @@ run_lane() (
       fi
       shared_test_targets "$lane" "$arch"
       ;;
-    do|docker|root|portforward|bwrap|workflows|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
+    do|docker|root|portforward|bwrap|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
       if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2
