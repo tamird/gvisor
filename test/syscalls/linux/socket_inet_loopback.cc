@@ -522,65 +522,37 @@ TEST_P(SocketInetLoopbackTest, TCPUnblockWaitOnLocalRdHUp) {
   TestAddress const& connector = param.connector;
   constexpr int kTimeout = 100000;
 
-  // Setup listening socket
   FileDescriptor const listen_fd = ASSERT_NO_ERRNO_AND_VALUE(
       Socket(listener.family(), SOCK_STREAM, IPPROTO_TCP));
   sockaddr_storage listen_addr = listener.addr;
-  FileDescriptor accepted;
-
-  // Bind and listen on socket
   ASSERT_THAT(
       bind(listen_fd.get(), AsSockAddr(&listen_addr), listener.addr_len),
       SyscallSucceeds());
   ASSERT_THAT(listen(listen_fd.get(), SOMAXCONN), SyscallSucceeds());
 
-  ScopedThread t1([&] {
-    // Accept connections
-    accepted =
-        ASSERT_NO_ERRNO_AND_VALUE(Accept(listen_fd.get(), nullptr, nullptr));
+  socklen_t addrlen = listener.addr_len;
+  ASSERT_THAT(getsockname(listen_fd.get(), AsSockAddr(&listen_addr), &addrlen),
+              SyscallSucceeds());
+  uint16_t const port =
+      ASSERT_NO_ERRNO_AND_VALUE(AddrPort(listener.family(), listen_addr));
+  FileDescriptor conn_fd = ASSERT_NO_ERRNO_AND_VALUE(
+      Socket(connector.family(), SOCK_STREAM, IPPROTO_TCP));
+  sockaddr_storage conn_addr = connector.addr;
+  ASSERT_NO_ERRNO(SetAddrPort(connector.family(), &conn_addr, port));
+  ASSERT_THAT(RetryEINTR(connect)(conn_fd.get(), AsSockAddr(&conn_addr),
+                                connector.addr_len),
+              SyscallSucceeds());
+  FileDescriptor accepted =
+      ASSERT_NO_ERRNO_AND_VALUE(Accept(listen_fd.get(), nullptr, nullptr));
+
+  ScopedThread receiver([&] {
     int data = 1234;
     ASSERT_THAT(RetryEINTR(recv)(accepted.get(), &data, sizeof(data), 0),
                 SyscallSucceedsWithValue(0));
   });
+  ASSERT_THAT(shutdown(accepted.get(), SHUT_RD), SyscallSucceeds());
+  receiver.Join();
 
-  ScopedThread t2([&] {
-    // Get the port bound by the listening socket.
-    socklen_t addrlen = listener.addr_len;
-    ASSERT_THAT(
-        getsockname(listen_fd.get(), AsSockAddr(&listen_addr), &addrlen),
-        SyscallSucceeds());
-    uint16_t const port =
-        ASSERT_NO_ERRNO_AND_VALUE(AddrPort(listener.family(), listen_addr));
-    FileDescriptor conn_fd = ASSERT_NO_ERRNO_AND_VALUE(
-        Socket(connector.family(), SOCK_STREAM, IPPROTO_TCP));
-    sockaddr_storage conn_addr = connector.addr;
-    ASSERT_NO_ERRNO(SetAddrPort(connector.family(), &conn_addr, port));
-
-    for (int i = 0; i < 10; i++) {
-      // Connect to listening socket
-      int ret;
-      ASSERT_THAT(
-          ret = RetryEINTR(connect)(conn_fd.get(), AsSockAddr(&conn_addr),
-                                    connector.addr_len),
-          SyscallSucceeds());
-      if (ret == 0) {
-        // Connect succeeded
-        break;
-      }
-
-      // Connect failed
-      EXPECT_THAT(ret, SyscallFailsWithErrno(EINPROGRESS));
-      // Sleep to wait for Accept on another thread
-      // since we got errno=Connection refused
-      absl::SleepFor(absl::Milliseconds(50));
-    }
-
-    // Shutdown read
-    shutdown(accepted.get(), SHUT_RD);
-  });
-  t1.Join();
-  t2.Join();
-  // Poll accepted fd for POLLRDHUP
   struct pollfd pfd = {
       .fd = accepted.get(),
       .events = POLLIN | POLLRDHUP,
