@@ -16,7 +16,7 @@
 # Root test fixture for disposable Actions VMs with an unprivileged Bazel server.
 set -euo pipefail
 if (( EUID != 0 )); then
-  exec sudo -n -E -- "$0" "$@"
+  exec sudo -n -E -- unshare --mount --propagation private -- "$0" "$@"
 fi
 [[ ${SUDO_UID:?} =~ ^[0-9]+$ && $SUDO_UID != 0 && ${SUDO_GID:?} =~ ^[0-9]+$ ]]
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
@@ -61,6 +61,12 @@ for directory in "${test_directories[@]}"; do
   chown root:root -- "$directory"
   stat -c 'Test directory ready: %a %u:%g %n' "$directory"
 done
+
+# Overlay backing files must not hold the gofer's root mount writable. Give the
+# existing scratch directory its own mount without changing its filesystem.
+findmnt --target "$test_tmp" --output ID,TARGET,FSTYPE,OPTIONS
+mount --bind "$test_tmp" "$test_tmp"
+findmnt --target "$test_tmp" --output ID,TARGET,FSTYPE,OPTIONS
 
 # Some root tests re-exec the declared runtime as nobody. Grant directory
 # traversal only; leave file modes and data, including the credential RC, alone.
