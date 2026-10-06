@@ -23,7 +23,7 @@ lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container contai
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
-       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--syscall-bucket=0..14] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -40,9 +40,12 @@ ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
-Local test execution supports smoke, bwrap and ARM64 unit tests on a matching
-Linux host. Compilation remains remote. Units run in one invocation: native
-namespace owners run locally; ordinary native and shared owners run remotely.
+Local test execution supports smoke, bwrap and ARM64 unit/syscall tests on a
+matching Linux host. Compilation remains remote. Hybrid profiles run in one
+invocation: native namespace owners run locally; ordinary native and shared
+owners run remotely.
+An optional syscall bucket selects one existing hash15 partition, not the full
+profile. Its report retains every unexecuted bucket owner.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -66,12 +69,14 @@ if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
 fi
 arch=amd64
 test_execution=remote
+syscall_bucket=
 header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
   case "$1" in
     --arch=*) arch=${1#--arch=} ;;
     --test-execution=*) test_execution=${1#--test-execution=} ;;
+    --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -95,12 +100,18 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64) ;;
-      *) printf 'Local tests support smoke, bwrap and the ARM64 unit profile.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|syscalls:arm64) ;;
+      *) printf 'Local tests support smoke, bwrap and ARM64 unit/syscall profiles.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
+if [[ -n $syscall_bucket ]]; then
+  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $arch != arm64 || $# != 1 || ${1:-} != syscalls ]]; then
+    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls.\n' >&2
+    exit 2
+  fi
+fi
 if [[ $# == 1 && $1 == amd64 ]]; then
   if [[ $arch != amd64 ]]; then
     printf 'The amd64 profile requires --arch=amd64.\n' >&2
@@ -237,7 +248,7 @@ analyze_profile() {
 select_test_profile() {
   local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
   shift 4
-  local -a selection_options=() page_size_options=()
+  local -a selection_options=() page_size_options=() routing_options=()
   prefix=$selection_dir/$lane-$target_arch
   if [[ $target_arch == arm64 ]]; then
     target_config=aarch64
@@ -248,11 +259,19 @@ select_test_profile() {
   if [[ $lane == syscalls-64k ]]; then
     page_size_options=(--page-size=64k)
   fi
+  if [[ $test_execution == local ]]; then
+    routing_options=(--//tools/bazeldefs:local_test_architecture=arm64)
+    selection_options+=(--hybrid)
+    if [[ -n $syscall_bucket ]]; then
+      selection_options+=("--syscall-bucket=$syscall_bucket")
+    fi
+  fi
   analyze_profile "$roots" "$prefix-profile.json" \
     --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
     "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" > "$prefix.query"
   bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+    "${routing_options[@]}" \
     --output=jsonproto --include_artifacts=false \
     "--build_event_json_file=$prefix-routing.json" \
     "--query_file=$prefix.query" > "$prefix-actions.json"
@@ -292,44 +311,61 @@ select_unit_profile() {
   cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
 }
 
-# Reuse the native unit graph and canonical profile in one invocation. The
+# Reuse the native graph and canonical profile in one invocation. The
 # frontend owns local namespace requirements; ordinary/shared tests stay remote.
-run_hybrid_units() (
+run_hybrid_profile() (
   set -e
-  local selection_dir
+  local lane=$1 selection_dir
+  local -a lane_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
-  python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
-  bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
-  python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
-  bazel aquery --config=rbe-matrix --config=x86_64 \
-    --//tools/bazeldefs:local_test_architecture=arm64 --output=jsonproto --include_artifacts=false \
-    --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
-  analyze_profile test/unit.targets "$selection_dir/profile.json" \
-    --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
-  python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
-    "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
-    | tee "$selection_dir/selection.json"
+  if [[ $lane == unit ]]; then
+    python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
+    bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+    python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+    bazel aquery --config=rbe-matrix --config=x86_64 \
+      --//tools/bazeldefs:local_test_architecture=arm64 --output=jsonproto --include_artifacts=false \
+      --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+    analyze_profile test/unit.targets "$selection_dir/profile.json" \
+      --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
+    python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+      "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
+      | tee "$selection_dir/selection.json"
+  else
+    lane_options=(--cxxopt=-Werror)
+    select_syscall_profile "$selection_dir" "$lane" arm64 | tee "$selection_dir/selection.json"
+    cp "$selection_dir/$lane-arm64-targets" "$selection_dir/targets"
+    cp "$selection_dir/$lane-arm64-actions.json" "$selection_dir/actions.json"
+    cp "$selection_dir/$lane-arm64-profile.json" "$selection_dir/profile.json"
+  fi
   # Preserve the selection, but never upload Bazel's parsed credential options.
-  mkdir -p "${RUNNER_TEMP:?}/qualification/unit-selection"
-  cp "$selection_dir/selection.json" "$selection_dir/actions.json" "$selection_dir/owners" \
-    "$selection_dir/targets"* "$RUNNER_TEMP/qualification/unit-selection/"
-  python3 - "$selection_dir/profile.json" "$RUNNER_TEMP/qualification/unit-selection/profile.json" <<'PY'
+  mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
+  cp "$selection_dir/selection.json" "$selection_dir/actions.json" \
+    "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
+  if [[ -f $selection_dir/owners ]]; then
+    cp "$selection_dir/owners" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
+  python3 - "$selection_dir" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY'
 import json
 from pathlib import Path
 import sys
 
 keys = {"id", "children", "configured", "finished", "aborted"}
-with Path(sys.argv[2]).open("w") as output:
-    for line in Path(sys.argv[1]).read_text().splitlines():
-        event = json.loads(line)
-        output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
+for source in Path(sys.argv[1]).glob("*.json"):
+    if source.name == "profile.json" or source.name.endswith("-routing.json"):
+        with (Path(sys.argv[2]) / source.name).open("w") as output:
+            for line in source.read_text().splitlines():
+                event = json.loads(line)
+                output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
-  printf 'ARM64 unit profile: namespace owners run locally; ordinary native and shared owners run remotely in the same invocation.\n'
+  printf 'ARM64 %s profile: namespace owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$lane"
+  if [[ -n $syscall_bucket ]]; then
+    printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
+  fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     --//tools/bazeldefs:local_test_architecture=arm64 \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
-    --test_env=GO_TEST_WRAP_TESTV=1 --target_pattern_file="$selection_dir/targets"
+    --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" --target_pattern_file="$selection_dir/targets"
 )
 
 select_cgroup_profile() {
@@ -684,7 +720,7 @@ run_lane() (
       ;;
     unit|unit-v1)
       if [[ $test_execution == local ]]; then
-        run_hybrid_units
+        run_hybrid_profile unit
         return
       fi
       # test/unit.targets also retains non-test build targets and the existing
@@ -802,6 +838,10 @@ run_lane() (
       targets=(//website:image)
       ;;
     syscalls|syscalls-save|syscalls-resume)
+      if [[ $test_execution == local ]]; then
+        run_hybrid_profile "$lane"
+        return
+      fi
       options=(--target_pattern_file=test/syscalls.targets --cxxopt=-Werror)
       case "$lane" in
         syscalls)

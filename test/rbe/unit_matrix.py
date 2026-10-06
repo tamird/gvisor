@@ -247,6 +247,29 @@ def profile_targets(events_path: str, architecture: str, page_size: str = "4k") 
     return sorted(label + suffix for label in targets)
 
 
+def hybrid_local_owners(
+    selected: set[str], requirements: dict[str, dict[str, str]],
+) -> dict[str, list[str]]:
+    """Check the same graph-owned locality and identity contract for each lane."""
+    groups: dict[str, list[str]] = {"root": [], "unprivileged": []}
+    for label in sorted(selected):
+        properties = requirements[label]
+        if properties["workload-isolation-type"] != "firecracker":
+            if "no-remote-exec" in properties or "no-remote" in properties:
+                raise ValueError(f"Ordinary native frontend forbids remote execution: {label}")
+            continue
+        if "no-remote-exec" not in properties:
+            raise ValueError(f"Native namespace frontend is not local: {label}")
+        user = properties.get("dockerUser")
+        if user == "root":
+            groups["root"].append(label)
+        elif user == "nobody":
+            groups["unprivileged"].append(label)
+        else:
+            raise ValueError(f"Unsupported local test identity for {label}: {properties}")
+    return groups
+
+
 def select_profile(
     profile_path: str,
     architecture: str,
@@ -256,7 +279,13 @@ def select_profile(
     *,
     syscall_policy: bool,
     page_size: str = "4k",
+    hybrid: bool = False,
+    syscall_bucket: int | None = None,
 ) -> None:
+    if hybrid and (not syscall_policy or architecture != "arm64" or page_size != "4k"):
+        raise ValueError("Hybrid syscall execution requires the ARM64 4K profile")
+    if syscall_bucket is not None and not hybrid:
+        raise ValueError("Syscall buckets require hybrid execution")
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture, page_size))
     configured = configured_tests(events_path)
@@ -281,9 +310,24 @@ def select_profile(
             unavailable[variant] = "KVM execution is unavailable."
         elif page_size == "64k":
             unavailable[variant] = "ARM64 64K-page syscall execution has no supported remote worker configuration."
-        elif architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
+        elif not hybrid and architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
-    selected = sorted(expected - unavailable.keys() - policy_excluded.keys())
+    eligible = expected - unavailable.keys() - policy_excluded.keys()
+    buckets: dict[str, list[str]] = {}
+    if syscall_bucket is not None:
+        buckets = {str(bucket): [] for bucket in range(15)}
+        for label in sorted(eligible):
+            tags = [tag[len("hash15:"):] for tag in configured[label].tags if tag.startswith("hash15:")]
+            if len(tags) != 1 or tags[0] not in buckets:
+                raise ValueError(f"Expected one graph-declared hash15 bucket for {label}: {tags}")
+            buckets[tags[0]].append(label)
+        selected = buckets[str(syscall_bucket)]
+        if not selected:
+            raise ValueError(f"The canonical profile has no owners in syscall bucket {syscall_bucket}")
+    else:
+        selected = sorted(eligible)
+    groups = hybrid_local_owners(set(selected), requirements) if hybrid else {}
+    local = {label for group in groups.values() for label in group}
     Path(output_path).write_text("".join(label + "\n" for label in selected))
     print(json.dumps({
         "profile_architecture": architecture,
@@ -293,6 +337,12 @@ def select_profile(
         "selected_owners": selected,
         "unavailable_owners": unavailable,
         "policy_excluded_owners": policy_excluded,
+        "local_owners": groups,
+        "local_requirements": {label: requirements[label] for label in sorted(local)},
+        "remote_owners": sorted(set(selected) - local),
+        "syscall_bucket": syscall_bucket,
+        "syscall_buckets": buckets,
+        "unexecuted_bucket_owners": sorted(eligible - set(selected)),
     }, indent=2))
 
 
@@ -325,21 +375,8 @@ def select_variants(
         selected = sorted(label for label in eligible if requirements[label]["workload-isolation-type"] == "firecracker")
         if not selected:
             raise ValueError("No native unit owners require the local namespace host")
-        groups: dict[str, list[str]] = {"root": [], "unprivileged": []}
-        for label in selected:
-            if "no-remote-exec" not in requirements[label]:
-                raise ValueError(f"Native namespace frontend is not local: {label}")
-            user = requirements[label].get("dockerUser")
-            if user == "root":
-                groups["root"].append(label)
-            elif user == "nobody":
-                groups["unprivileged"].append(label)
-            else:
-                raise ValueError(f"Unsupported local test identity for {label}: {requirements[label]}")
+        groups = hybrid_local_owners(eligible, requirements)
         remote = sorted(eligible - set(selected))
-        for label in remote:
-            if "no-remote-exec" in requirements[label] or "no-remote" in requirements[label]:
-                raise ValueError(f"Ordinary native frontend forbids remote execution: {label}")
         shared = sorted(set(original) - set(owners))
         targets = sorted(eligible | set(shared))
         Path(output_path).write_text("".join(label + "\n" for label in targets))
@@ -410,6 +447,8 @@ def main() -> None:
     for name in ("events", "actions", "output"):
         profile.add_argument(name)
     profile.add_argument("--syscall-policy", action="store_true", help="Apply the existing syscall runtime exclusions")
+    profile.add_argument("--hybrid", action="store_true", help="Run graph-declared native namespace owners locally")
+    profile.add_argument("--syscall-bucket", type=int, choices=range(15), help="Select one existing hash15 bucket and report the full partition")
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
@@ -457,7 +496,7 @@ def main() -> None:
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture, args.page_size)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, syscall_bucket=args.syscall_bucket)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:
