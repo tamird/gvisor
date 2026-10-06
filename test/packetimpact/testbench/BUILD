@@ -29,7 +29,6 @@ go_library(
         "//test/packetimpact/proto:posix_server_go_proto",
         "@com_github_google_go_cmp//cmp:go_default_library",
         "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
-        "@com_github_mohae_deepcopy//:go_default_library",
         "@org_golang_google_grpc//:go_default_library",
         "@org_golang_google_grpc//keepalive:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
@@ -45,6 +44,5 @@ go_test(
     deps = [
         "//pkg/tcpip",
         "//pkg/tcpip/header",
-        "@com_github_mohae_deepcopy//:go_default_library",
     ],
 )

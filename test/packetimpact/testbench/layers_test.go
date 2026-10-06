@@ -17,10 +17,10 @@ package testbench
 import (
 	"bytes"
 	"encoding/hex"
-	"net"
+	"net/netip"
+	"reflect"
 	"testing"
 
-	"github.com/mohae/deepcopy"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 )
@@ -47,12 +47,148 @@ func TestLayerMatch(t *testing.T) {
 		{emptyPayload, fullPayload, false},
 		{fullPayload, fullPayload, true},
 		{emptyTCP, fullTCP, true},
+		{&IPv4{}, &IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.1"))}, true},
+		{&IPv4{SrcAddr: Address(netip.Addr{})}, &IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.1"))}, true},
+		{&IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.1"))}, &IPv4{SrcAddr: Address(netip.MustParseAddr("::ffff:192.0.2.1"))}, true},
+		{&IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.1"))}, &IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.2"))}, false},
 	} {
 		if got := tt.a.match(tt.b); got != tt.want {
 			t.Errorf("%s.match(%s) = %t, want %t", tt.a, tt.b, got, tt.want)
 		}
 		if got := tt.b.match(tt.a); got != tt.want {
 			t.Errorf("%s.match(%s) = %t, want %t", tt.b, tt.a, got, tt.want)
+		}
+	}
+}
+
+func TestLayerClone(t *testing.T) {
+	options := header.IPv4Options{1, 2, 3, 4}
+	original := &IPv4{
+		LayerBase: LayerBase{prevLayer: &Ether{}, nextLayer: &TCP{}},
+		SrcAddr:   Address(netip.MustParseAddr("192.0.2.1")),
+		TTL:       Uint8(64),
+		Options:   &options,
+	}
+	clone := cloneLayer(original).(*IPv4)
+	if clone.Prev() != nil || clone.next() != nil {
+		t.Fatal("clone retained adjacent layers")
+	}
+	if *clone.SrcAddr != *original.SrcAddr || *clone.TTL != *original.TTL || !bytes.Equal(*clone.Options, options) {
+		t.Fatalf("clone = %s, want fields from %s", clone, original)
+	}
+	*clone.SrcAddr = netip.MustParseAddr("192.0.2.2")
+	*clone.TTL = 1
+	(*clone.Options)[0] = 9
+	if *original.SrcAddr != netip.MustParseAddr("192.0.2.1") || *original.TTL != 64 || options[0] != 1 {
+		t.Fatalf("changing clone changed original: %s", original)
+	}
+	if clone.DstAddr != nil {
+		t.Fatalf("clone.DstAddr = %v, want nil", clone.DstAddr)
+	}
+
+	// A pointer to a slice and a slice field both preserve nil versus empty,
+	// and neither may share mutable backing storage with the source.
+	for _, data := range [][]byte{nil, {}, {1, 2, 3}} {
+		p := &Payload{Bytes: data}
+		copied := cloneLayer(p).(*Payload)
+		if !reflect.DeepEqual(copied.Bytes, data) {
+			t.Fatalf("cloned bytes = %#v, want %#v", copied.Bytes, data)
+		}
+		if len(data) != 0 {
+			copied.Bytes[0] = 9
+			if data[0] != 1 {
+				t.Fatal("changing cloned payload changed original")
+			}
+		}
+		opts := header.IPv4Options(data)
+		ip := cloneLayer(&IPv4{Options: &opts}).(*IPv4)
+		if ip.Options == nil || !reflect.DeepEqual(*ip.Options, opts) {
+			t.Fatalf("cloned options = %#v, want pointer to %#v", ip.Options, opts)
+		}
+	}
+}
+
+func TestLayerAddresses(t *testing.T) {
+	for _, tt := range []struct {
+		name         string
+		addr         *netip.Addr
+		wire4, wire6 string
+	}{
+		{"nil", nil, "00000000", "00000000000000000000000000000000"},
+		{"invalid", Address(netip.Addr{}), "00000000", "00000000000000000000000000000000"},
+		{"ipv4", Address(netip.MustParseAddr("192.0.2.1")), "c0000201", ""},
+		{"ipv4 unspecified", Address(netip.IPv4Unspecified()), "00000000", ""},
+		{"ipv6", Address(netip.MustParseAddr("2001:db8::1")), "", "20010db8000000000000000000000001"},
+		{"ipv6 unspecified", Address(netip.IPv6Unspecified()), "", "00000000000000000000000000000000"},
+		{"mapped ipv4", Address(netip.MustParseAddr("::ffff:192.0.2.1")), "", "00000000000000000000ffffc0000201"},
+		{"zoned ipv6", Address(netip.MustParseAddr("fe80::1%eth0")), "", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, version := range []int{4, 6} {
+				var ip Layer
+				var want string
+				if version == 4 {
+					ip = &IPv4{SrcAddr: tt.addr, DstAddr: tt.addr, Protocol: Uint8(uint8(header.TCPProtocolNumber))}
+					want = tt.wire4
+				} else {
+					ip = &IPv6{SrcAddr: tt.addr, DstAddr: tt.addr, NextHeader: Uint8(uint8(header.TCPProtocolNumber))}
+					want = tt.wire6
+				}
+				got, err := ip.ToBytes()
+				if want == "" {
+					if err == nil {
+						t.Errorf("IPv%d.ToBytes accepted %v", version, tt.addr)
+					}
+					// A transport layer can be serialized separately. Its checksum
+					// must reject the same invalid network-layer addresses.
+					tcp := &TCP{LayerBase: LayerBase{prevLayer: ip}}
+					if _, err := tcp.ToBytes(); err == nil {
+						t.Errorf("TCP checksum accepted IPv%d address %v", version, tt.addr)
+					}
+					if version == 6 {
+						icmp := &ICMPv6{LayerBase: LayerBase{prevLayer: ip}}
+						if _, err := icmp.ToBytes(); err == nil {
+							t.Errorf("ICMPv6 checksum accepted address %v", tt.addr)
+						}
+					}
+					continue
+				}
+				if err != nil {
+					t.Fatalf("IPv%d.ToBytes: %v", version, err)
+				}
+				var src, dst tcpip.Address
+				if version == 4 {
+					h := header.IPv4(got)
+					src, dst = h.SourceAddress(), h.DestinationAddress()
+				} else {
+					h := header.IPv6(got)
+					src, dst = h.SourceAddress(), h.DestinationAddress()
+				}
+				if hex.EncodeToString(src.AsSlice()) != want || hex.EncodeToString(dst.AsSlice()) != want {
+					t.Errorf("IPv%d addresses = %x, %x; want %s", version, src.AsSlice(), dst.AsSlice(), want)
+				}
+			}
+		})
+	}
+	// A valid source must not hide an invalid destination in either the
+	// network header or the independently callable checksum path.
+	for _, ip := range []Layer{
+		&IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.1")), DstAddr: Address(netip.MustParseAddr("::1")), Protocol: Uint8(uint8(header.TCPProtocolNumber))},
+		&IPv6{SrcAddr: Address(netip.MustParseAddr("::1")), DstAddr: Address(netip.MustParseAddr("192.0.2.1")), NextHeader: Uint8(uint8(header.TCPProtocolNumber))},
+		&IPv6{SrcAddr: Address(netip.MustParseAddr("::1")), DstAddr: Address(netip.MustParseAddr("fe80::1%eth0")), NextHeader: Uint8(uint8(header.TCPProtocolNumber))},
+	} {
+		if _, err := ip.ToBytes(); err == nil {
+			t.Errorf("ToBytes accepted invalid destination: %s", ip)
+		}
+		tcp := &TCP{LayerBase: LayerBase{prevLayer: ip}}
+		if _, err := tcp.ToBytes(); err == nil {
+			t.Errorf("TCP checksum accepted invalid destination: %s", ip)
+		}
+		if _, ok := ip.(*IPv6); ok {
+			icmp := &ICMPv6{LayerBase: LayerBase{prevLayer: ip}}
+			if _, err := icmp.ToBytes(); err == nil {
+				t.Errorf("ICMPv6 checksum accepted invalid destination: %s", ip)
+			}
 		}
 	}
 }
@@ -106,6 +242,7 @@ func TestLayerMerge(t *testing.T) {
 		a, b Layer
 		want Layer
 	}{
+		{&IPv4{SrcAddr: Address(netip.MustParseAddr("192.0.2.1"))}, &IPv4{SrcAddr: Address(netip.Addr{})}, &IPv4{SrcAddr: Address(netip.Addr{})}},
 		{&TCP{AckNum: nil}, &TCP{AckNum: nil}, &TCP{AckNum: nil}},
 		{&TCP{AckNum: nil}, &TCP{AckNum: zero}, &TCP{AckNum: zero}},
 		{&TCP{AckNum: nil}, &TCP{AckNum: one}, &TCP{AckNum: one}},
@@ -154,7 +291,7 @@ func TestLayerMerge(t *testing.T) {
 		{&Payload{Bytes: bar}, &Payload{Bytes: bar}, &Payload{Bytes: bar}},
 		{&Payload{Bytes: bar}, nil, &Payload{Bytes: bar}},
 	} {
-		a := deepcopy.Copy(tt.a).(Layer)
+		a := cloneLayer(tt.a)
 		if err := a.merge(tt.b); err != nil {
 			t.Errorf("%s.merge(%s) = %s, wanted nil", tt.a, tt.b, err)
 			continue
@@ -219,8 +356,8 @@ func TestLayerStringFormat(t *testing.T) {
 				TTL:            Uint8(64),
 				Protocol:       Uint8(6),
 				Checksum:       Uint16(0x2e2b),
-				SrcAddr:        Address(tcpip.AddrFrom4Slice([]byte{197, 34, 63, 10})),
-				DstAddr:        Address(tcpip.AddrFrom4Slice([]byte{197, 34, 63, 20})),
+				SrcAddr:        Address(netip.MustParseAddr("197.34.63.10")),
+				DstAddr:        Address(netip.MustParseAddr("197.34.63.20")),
 			},
 			want: "&testbench.IPv4{" +
 				"IHL:5 " +
@@ -429,8 +566,8 @@ func TestTCPOptions(t *testing.T) {
 					TTL:            Uint8(64),
 					Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
 					Checksum:       Uint16(0xf977),
-					SrcAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.2").To4())),
-					DstAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.1").To4())),
+					SrcAddr:        Address(netip.MustParseAddr("192.168.0.2")),
+					DstAddr:        Address(netip.MustParseAddr("192.168.0.1")),
 				},
 				&TCP{
 					SrcPort:       Uint16(12345),
@@ -473,8 +610,8 @@ func TestTCPOptions(t *testing.T) {
 					TTL:            Uint8(64),
 					Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
 					Checksum:       Uint16(0xf96c),
-					SrcAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.2").To4())),
-					DstAddr:        Address(tcpip.AddrFrom4Slice(net.ParseIP("192.168.0.1").To4())),
+					SrcAddr:        Address(netip.MustParseAddr("192.168.0.2")),
+					DstAddr:        Address(netip.MustParseAddr("192.168.0.1")),
 				},
 				&TCP{
 					SrcPort:       Uint16(12345),
@@ -526,8 +663,8 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 			},
 			wantLayers: []Layer{
 				&IPv6{
-					SrcAddr: Address(tcpip.AddrFrom16Slice(net.ParseIP("::1"))),
-					DstAddr: Address(tcpip.AddrFrom16Slice(net.ParseIP("fe80::dead:beef"))),
+					SrcAddr: Address(netip.MustParseAddr("::1")),
+					DstAddr: Address(netip.MustParseAddr("fe80::dead:beef")),
 				},
 				&IPv6HopByHopOptionsExtHdr{
 					NextHeader: IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
@@ -553,8 +690,8 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 			},
 			wantLayers: []Layer{
 				&IPv6{
-					SrcAddr: Address(tcpip.AddrFromSlice(net.ParseIP("::1"))),
-					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
+					SrcAddr: Address(netip.MustParseAddr("::1")),
+					DstAddr: Address(netip.MustParseAddr("fe80::dead:beef")),
 				},
 				&IPv6HopByHopOptionsExtHdr{
 					NextHeader: IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
@@ -582,8 +719,8 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 			},
 			wantLayers: []Layer{
 				&IPv6{
-					SrcAddr: Address(tcpip.AddrFromSlice(net.ParseIP("::1"))),
-					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
+					SrcAddr: Address(netip.MustParseAddr("::1")),
+					DstAddr: Address(netip.MustParseAddr("fe80::dead:beef")),
 				},
 				&IPv6HopByHopOptionsExtHdr{
 					NextHeader: IPv6ExtHdrIdent(header.IPv6DestinationOptionsExtHdrIdentifier),
@@ -616,8 +753,8 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 			},
 			wantLayers: []Layer{
 				&IPv6{
-					SrcAddr: Address(tcpip.AddrFromSlice(net.ParseIP("::1"))),
-					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
+					SrcAddr: Address(netip.MustParseAddr("::1")),
+					DstAddr: Address(netip.MustParseAddr("fe80::dead:beef")),
 				},
 				&IPv6HopByHopOptionsExtHdr{
 					NextHeader: IPv6ExtHdrIdent(header.IPv6FragmentExtHdrIdentifier),
@@ -651,8 +788,8 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 			},
 			wantLayers: []Layer{
 				&IPv6{
-					SrcAddr: Address(tcpip.AddrFromSlice(net.ParseIP("::1"))),
-					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
+					SrcAddr: Address(netip.MustParseAddr("::1")),
+					DstAddr: Address(netip.MustParseAddr("fe80::dead:beef")),
 				},
 				&IPv6DestinationOptionsExtHdr{
 					NextHeader: IPv6ExtHdrIdent(header.IPv6FragmentExtHdrIdentifier),
@@ -684,8 +821,8 @@ func TestIPv6ExtHdrOptions(t *testing.T) {
 			},
 			wantLayers: []Layer{
 				&IPv6{
-					SrcAddr: Address(tcpip.AddrFromSlice(net.ParseIP("::1"))),
-					DstAddr: Address(tcpip.AddrFromSlice(net.ParseIP("fe80::dead:beef"))),
+					SrcAddr: Address(netip.MustParseAddr("::1")),
+					DstAddr: Address(netip.MustParseAddr("fe80::dead:beef")),
 				},
 				&IPv6FragmentExtHdr{
 					NextHeader:     IPv6ExtHdrIdent(header.IPv6NoNextHeaderIdentifier),
@@ -754,8 +891,8 @@ func TestEthernetPadding(t *testing.T) {
 			TTL:            Uint8(64),
 			Protocol:       Uint8(uint8(header.TCPProtocolNumber)),
 			Checksum:       Uint16(0x2dba),
-			SrcAddr:        Address(tcpip.AddrFromSlice([]byte("\xac\x00\x00\x02"))),
-			DstAddr:        Address(tcpip.AddrFromSlice([]byte("\xac\x00\x00\x01"))),
+			SrcAddr:        Address(netip.MustParseAddr("172.0.0.2")),
+			DstAddr:        Address(netip.MustParseAddr("172.0.0.1")),
 		},
 		&TCP{
 			SrcPort:       Uint16(31806),

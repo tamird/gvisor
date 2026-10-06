@@ -22,7 +22,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sys/unix"
-	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/test/packetimpact/testbench"
 )
 
@@ -85,13 +84,13 @@ func (test *udpTest) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo netip
 		udpConn := dut.Net.NewUDPIPv4(t, outgoingUDP, incomingUDP)
 		conn = &udpConn
 		ipLayer = &testbench.IPv4{
-			DstAddr: testbench.Address(tcpip.AddrFrom4(sendTo.As4())),
+			DstAddr: testbench.Address(sendTo),
 		}
 	} else {
 		udpConn := dut.Net.NewUDPIPv6(t, outgoingUDP, incomingUDP)
 		conn = &udpConn
 		ipLayer = &testbench.IPv6{
-			DstAddr: testbench.Address(tcpip.AddrFrom16(sendTo.As16())),
+			DstAddr: testbench.Address(sendTo),
 		}
 	}
 	t.Cleanup(func() {

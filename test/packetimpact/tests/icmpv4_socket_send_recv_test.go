@@ -16,7 +16,6 @@ package generic_dgram_socket_send_recv_test
 
 import (
 	"context"
-	"net"
 	"net/netip"
 	"testing"
 	"time"
@@ -68,10 +67,10 @@ func (test *icmpV4Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo ne
 	})
 
 	// An incompatible IPv6 destination has no expected IPv4 address. Keep
-	// the raw layer's nil address wildcard for those socket error cases.
-	var dstAddr net.IP
+	// the raw layer's invalid address wildcard for those socket error cases.
+	var dstAddr netip.Addr
 	if sendTo.Is4() {
-		dstAddr = sendTo.AsSlice()
+		dstAddr = sendTo
 	}
 	return icmpV4TestEnv{
 		socketFD: socketFD,
