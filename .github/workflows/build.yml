@@ -4,6 +4,27 @@ name: CI
   push:
     branches:
       - "*"
+  workflow_dispatch:
+    inputs:
+      lanes:
+        description: Space-separated qualification lanes
+        type: string
+        default: smoke
+        required: true
+      architecture:
+        description: Target architecture selection
+        type: choice
+        options: [amd64, arm64, all]
+        default: amd64
+      header_base:
+        description: Full comparison commit SHA for license-headers
+        type: string
+      cos_catalog_url:
+        description: HTTPS URL of the complete gcloud COS image catalog
+        type: string
+      cos_catalog_sha256:
+        description: SHA256 of the COS catalog
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -11,6 +32,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || github.ref != 'refs/heads/rbe-qualification-upstream-refresh')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -21,7 +43,7 @@ jobs:
         sudo -E apt update && sudo -E apt install -y make
 
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
     - name: build
       run: |
@@ -29,7 +51,64 @@ jobs:
           make copy TARGETS=runsc DESTINATION=bin/
 
     - name: Upload runsc
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
           name: runsc
           path: bin/runsc
+
+  remote-qualification:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/rbe-qualification-upstream-refresh'
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+    steps:
+    - name: Check the Remote Bazel credential
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
+
+    - name: Checkout the triggering commit
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+
+    - name: Download the pinned BuildBuddy CLI
+      shell: bash
+      run: |
+        curl --fail --silent --show-error --location --max-time 120 \
+          https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 \
+          --output "$RUNNER_TEMP/bb"
+        printf '%s  %s\n' \
+          f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb \
+          "$RUNNER_TEMP/bb" | sha256sum --check --strict
+        chmod +x "$RUNNER_TEMP/bb"
+
+    - name: Qualify on Remote Bazel
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GIT_REPO_DEFAULT_BRANCH: master
+        QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
+        QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
+        QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
+        QUALIFICATION_COS_URL: ${{ inputs.cos_catalog_url }}
+        QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+        REMOTE_TIMEOUT: ${{ github.event_name == 'workflow_dispatch' && '45m' || '15m' }}
+      run: |
+        exec "$RUNNER_TEMP/bb" remote \
+          --run_from_commit="$GITHUB_SHA" \
+          --os=linux --arch=amd64 \
+          --runner_exec_properties=EstimatedCPU=4 \
+          --runner_exec_properties=EstimatedMemory=16GB \
+          --runner_exec_properties=EstimatedFreeDiskBytes=40GB \
+          --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
+          --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
+          --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
+          --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
+          --env="QUALIFICATION_COS_URL=$QUALIFICATION_COS_URL" \
+          --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
+          --timeout="$REMOTE_TIMEOUT" --disable_retry \
+          --script='bash test/rbe/actions.sh'

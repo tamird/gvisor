@@ -43,6 +43,44 @@ results apply to the recorded source, selected tests and actual workers.
 Declaring a lane does not establish that its tests pass, and failures remain
 part of the qualification result.
 
+## GitHub Actions frontend
+
+On `tamird/gvisor`, a push to `rbe-qualification-upstream-refresh` runs the
+`smoke` lane through the pinned BuildBuddy CLI. The Actions worker submits the
+immutable triggering commit; Bazel and the tests run on hosted Linux workers.
+The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
+read-only repository permissions and does not persist the checkout credential.
+Pull requests and other branches cannot enter this credentialed job.
+
+The existing CI workflow also accepts a manual dispatch on that branch. Pass
+space-separated `lanes` and an `architecture` selection; the qualification
+script remains the owner of their meaning and test selection. For example:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-qualification-upstream-refresh \
+  -f lanes='smoke workflows' -f architecture=all
+```
+
+For `license-headers`, supply the full comparison SHA as `header_base`. The
+remote coordinator fetches complete history for that commit and the tested
+commit before qualification. For `cos-metadata` or the full `amd64` profile,
+provide the complete gcloud catalog described below at an HTTPS URL and pass
+`cos_catalog_url` and `cos_catalog_sha256`. The coordinator verifies its digest
+and removes its temporary copy after the run. These inputs are public metadata,
+not credentials; preserve the catalog's capture time with the result.
+
+The CLI returns the remote status. Pushes have a 15-minute remote timeout;
+manual selections have 45 minutes, with automatic retries disabled. The Actions
+job has a 50-minute timeout. Larger qualification runs can use the same entry
+point directly on Remote Bazel with an appropriate explicit work limit.
+Missing workers, input errors and failed tests remain failures.
+
+This fork frontend skips the legacy builder and `runsc` artifact upload on its
+qualification branch. Other pushes retain that job; release artifacts remain
+owned by the existing release lanes. A smoke result does not establish full
+public qualification.
+
 ## Linux kernel coverage
 
 Linux serves as both the host for gVisor and the native reference for syscall
