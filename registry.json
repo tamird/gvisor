@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T07:18:45.330171+00:00",
+    "updatedAt": "2026-10-06T07:32:35.441554+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -898,18 +898,19 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T04:23:30.141857+00:00",
+      "updatedAt": "2026-10-06T07:32:35.441554+00:00",
       "summary": "The conflict rebase preserves all three metric source files and the approved commit message. It removes the upstream escape-analysis exemption attached to the map lookup that this change deletes. Etienne reapproved published head f5f0270289147db0614fd2eadc1ed15dcb652f81. Import #15248 now names that exact source head; its current checks remain separate from earlier import results. No new runtime, public comment or import retry was performed.",
       "followup": {
-        "disposition": "upstream approved; public import CI canceled",
+        "disposition": "upstream approved; refreshed import CI pending",
         "owner": "external_sweeps",
-        "nextAction": "Track matching import #15248; public build 49676 was explicitly canceled by eperot via the UI at 04:17 UTC with 1 ARM64 64K shard incomplete. There are zero current failed steps, and all historical failed attempts have passing replacements. The import internal and other checks pass. This is incomplete CI, not a demonstrated source regression; no source amendment or retry is inferred from the canceled rollup or the older opaque source Copybara failure.",
+        "nextAction": "Track matching import #15248 at 0361404cad2e4bded1145534bf526c4a6778dc53: its body still binds approved source f5f0270289147db0614fd2eadc1ed15dcb652f81. New public build 49707 and internal build 31392 are pending. Prior public build 49676 was explicitly canceled by eperot with one ARM64 64K shard incomplete and no current failed step; preserve it as historical incomplete CI. No source amendment or agent-triggered retry was performed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14879#pullrequestreview-5421564665",
           "https://github.com/google/gvisor/pull/15248",
-          "https://buildkite.com/gvisor/pipeline/builds/49676"
+          "https://buildkite.com/gvisor/pipeline/builds/49676",
+          "https://buildkite.com/gvisor/pipeline/builds/49707"
         ],
-        "reviewedAt": "2026-10-06T04:17:47.831933+00:00",
+        "reviewedAt": "2026-10-06T07:32:35.441554+00:00",
         "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
