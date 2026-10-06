@@ -19,8 +19,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net"
-	"net/netip"
 	"os"
 	"slices"
 	"sync"
@@ -28,7 +26,6 @@ import (
 
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/test/netutils"
 )
 
@@ -155,20 +152,26 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	ctx, cancel := context.WithTimeout(context.Background(), TestTimeout)
+	ctx, cancel := context.WithTimeout(t.Context(), TestTimeout)
 	defer cancel()
 
 	d := dockerutil.MakeContainer(ctx, t)
-	defer func() {
-		if logs, err := d.Logs(context.Background()); err != nil {
-			log.Infof("Failed to retrieve container logs.")
+	// Testing cancels t.Context before cleanup. Give logging and removal
+	// independent deadlines so a log retrieval timeout does not prevent removal.
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), TestTimeout)
+		defer cancel()
+		d.CleanUp(ctx)
+	})
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), TestTimeout)
+		defer cancel()
+		if logs, err := d.Logs(ctx); err != nil {
+			log.Infof("Failed to retrieve container logs: %v", err)
 		} else {
 			log.Infof("=== Container logs: ===\n%s", logs)
 		}
-		// Use a new context, as cleanup should run even when we
-		// timeout.
-		d.CleanUp(context.Background())
-	}()
+	})
 
 	// Create and start the container.
 	opts := dockerutil.RunOpts{
@@ -200,23 +203,25 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		t.FailNow()
 	}
 
-	// Give the container our IP.
-	if err := sendIP(ctx, ip); err != nil {
+	// The container learns our IP from the connection's source address;
+	// ConnectTCP closes the connection without sending a payload.
+	if err := netutils.ConnectTCP(ctx, ip, IPExchangePort, ipv6); err != nil {
 		log.Infof("failed to send IP to container: %v", err)
 		t.FailNow()
 	}
 
-	// Give the actions their full timeout after container setup and the
-	// address exchange, including the wait required by negative tests.
-	actionCtx, cancelAction := context.WithTimeout(context.Background(), TestTimeout)
-	defer cancelAction()
+	// Drop checks need their full observation window; slow container setup
+	// may have consumed most of the setup context's deadline.
+	cancel()
+	ctx, cancel = context.WithTimeout(t.Context(), TestTimeout)
+	defer cancel()
 
 	// Run our side of the test.
 	errCh := make(chan error, 2)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := test.LocalAction(actionCtx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
+		if err := test.LocalAction(ctx, ip, ipv6); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("LocalAction failed: %v", err)
 		} else {
 			errCh <- nil
@@ -233,7 +238,7 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		// Wait for the final statement. This structure has the side
 		// effect that all container logs will appear within the
 		// individual test context.
-		if _, err := d.WaitForOutput(actionCtx, TerminalStatement, TestTimeout); err != nil && !errors.Is(err, context.Canceled) {
+		if _, err := d.WaitForOutput(ctx, TerminalStatement, TestTimeout); err != nil && !errors.Is(err, context.Canceled) {
 			errCh <- fmt.Errorf("ContainerAction failed: %v", err)
 		} else {
 			errCh <- nil
@@ -248,26 +253,6 @@ func iptablesTest(t *testing.T, test TestCase, ipv6 bool) {
 			t.Fatal(err)
 		}
 	}
-}
-
-func sendIP(ctx context.Context, ip net.IP) error {
-	addr, _ := netip.AddrFromSlice(ip)
-	contAddr := netip.AddrPortFrom(addr, IPExchangePort)
-	var conn *net.TCPConn
-	var dialer net.Dialer
-	// The container may not be listening when we first connect, so retry
-	// upon error. Each connection attempt shares the test's deadline.
-	cb := func() error {
-		c, err := dialer.DialTCP(ctx, "tcp", netip.AddrPort{}, contAddr)
-		conn = c
-		return err
-	}
-	if err := testutil.PollContext(ctx, cb); err != nil {
-		return fmt.Errorf("connecting to %v: %w", contAddr, err)
-	}
-	// The container's getIP uses RemoteAddr() to learn where to send test
-	// traffic, so we can close the connection without writing a payload.
-	return conn.Close()
 }
 
 func TestFilterInputDropUDP(t *testing.T) {

@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net"
+	"net/netip"
 	"os"
 	"path"
 	"path/filepath"
@@ -576,27 +576,26 @@ func (c *Container) NetworkSandboxKey(ctx context.Context) (string, error) {
 var ErrNoIP = errors.New("no IP available")
 
 // FindIP returns the IP address of the container.
-func (c *Container) FindIP(ctx context.Context, ipv6 bool) (net.IP, error) {
+func (c *Container) FindIP(ctx context.Context, ipv6 bool) (netip.Addr, error) {
 	resp, err := c.client.ContainerInspect(ctx, c.id)
 	if err != nil {
-		return nil, err
+		return netip.Addr{}, err
 	}
 
-	var ip net.IP
+	addr := resp.NetworkSettings.DefaultNetworkSettings.IPAddress
 	if ipv6 {
-		ip = net.ParseIP(resp.NetworkSettings.DefaultNetworkSettings.GlobalIPv6Address)
-	} else {
-		ip = net.ParseIP(resp.NetworkSettings.DefaultNetworkSettings.IPAddress)
+		addr = resp.NetworkSettings.DefaultNetworkSettings.GlobalIPv6Address
 	}
-	if ip == nil {
-		return net.IP{}, ErrNoIP
+	ip, err := netip.ParseAddr(addr)
+	if err != nil || ip.Zone() != "" {
+		return netip.Addr{}, ErrNoIP
 	}
 	if ipv6 {
 		if err := waitForOwnedIPv6Gateway(ctx, c.client, resp.NetworkSettings.DefaultNetworkSettings.IPv6Gateway); err != nil {
-			return nil, err
+			return netip.Addr{}, err
 		}
 	}
-	return ip, nil
+	return ip.Unmap(), nil
 }
 
 // FindPort returns the host port that is mapped to 'sandboxPort'.
