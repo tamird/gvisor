@@ -530,7 +530,7 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()
-	if sl, ok := obj.Addr().Interface().(SaverLoader); ok {
+	if sl, ok := stateObject(obj.Addr().Interface()).(SaverLoader); ok {
 		// Note: may be a registered empty struct which does not
 		// implement the saver/loader interfaces.
 		sl.StateSave(Sink{internal: oe})

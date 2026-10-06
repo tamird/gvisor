@@ -16,7 +16,17 @@ package tests
 
 import (
 	"context"
+	"net/netip"
 )
+
+// +stateify savable
+type netipContainer struct {
+	address   netip.Addr
+	pointer   *netip.Addr
+	addresses []netip.Addr
+	byAddress map[netip.Addr]int
+	value     any
+}
 
 type unregisteredEmptyStruct struct{}
 
