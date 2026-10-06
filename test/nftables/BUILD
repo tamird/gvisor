@@ -44,7 +44,7 @@ docker_test(
     deps = [
         "//pkg/log",
         "//pkg/test/dockerutil",
-        "//test/netutils",
+        "//test/netutils/container",
     ],
 )
 
