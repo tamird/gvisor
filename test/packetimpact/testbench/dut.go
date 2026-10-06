@@ -17,7 +17,6 @@ package testbench
 import (
 	"context"
 	"encoding/binary"
-	"fmt"
 	"net/netip"
 	"testing"
 	"time"
