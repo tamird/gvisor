@@ -114,6 +114,14 @@ http_archive(
     ],
 )
 
+# Use buildifier's maintained source target instead of installing a binary.
+http_archive(
+    name = "com_github_bazelbuild_buildtools",
+    sha256 = "f3b800e9f6ca60bdef3709440f393348f7c18a29f30814288a7326285c80aab9",
+    strip_prefix = "buildtools-8.5.1",
+    urls = ["https://github.com/bazelbuild/buildtools/archive/v8.5.1.tar.gz"],
+)
+
 ### Python
 PYTHON_VERSION = "3.11"
 
@@ -135,7 +143,14 @@ pip.parse(
     python_version = PYTHON_VERSION,
     requirements_lock = "//tools/python_distribution:requirements.txt",
 )
-use_repo(pip, "python_distribution_deps")
+pip.parse(
+    download_only = True,
+    experimental_index_url = "https://pypi.org/simple",
+    hub_name = "lint_deps",
+    python_version = PYTHON_VERSION,
+    requirements_lock = "//tools/lint:requirements.txt",
+)
+use_repo(pip, "lint_deps", "python_distribution_deps")
 
 ### Test tools from Ubuntu packages
 # Keep all package resolution at an immutable snapshot. No package installation
@@ -1262,7 +1277,48 @@ filegroup(name = "files", srcs = glob(["**"], exclude = ["BUILD.bazel"]))
 
 analysis_sources = use_repo_rule("//tools/source_inputs:repositories.bzl", "analysis_sources")
 
-analysis_sources(name = "analysis_sources")
+# Canonical source-lint membership. The runners consume these manifests instead
+# of maintaining another path matcher.
+analysis_sources(
+    name = "analysis_sources",
+    groups = {
+        "bazel": [
+            "BUILD",
+            "*/BUILD",
+            "*.bzl",
+            "WORKSPACE",
+            "MODULE.bazel",
+        ],
+        "cc": [
+            "*.c",
+            "*.cc",
+            "*.h",
+        ],
+        "clang_configs": [
+            ".clang-format",
+            "*/.clang-format",
+            "_clang-format",
+            "*/_clang-format",
+            ".clang-format-ignore",
+            "*/.clang-format-ignore",
+        ],
+        "cpplint_configs": [
+            "CPPLINT.cfg",
+            "*/CPPLINT.cfg",
+        ],
+        "docs": [
+            "*.md",
+            "*.html",
+        ],
+        "go": ["*.go"],
+        "spelling_configs": [
+            "setup.cfg",
+            ".codespellrc",
+            "pyproject.toml",
+            "tools/.codespellrc",
+        ],
+    },
+)
 
 http_archive(
     name = "libpluginstack",
@@ -1430,6 +1486,9 @@ go_sdk.from_file(
     patch_strip = 1,
     patches = ["//tools:go_types_memoize.patch"],
 )
+
+# Formatter minimum only; from_file above remains the default compiler SDK.
+go_sdk.download(version = "1.27.0")
 use_repo(go_sdk, "go_host_compatible_sdk_label")
 
 module_proxy = use_repo_rule("//tools/go_export:repositories.bzl", "module_proxy")

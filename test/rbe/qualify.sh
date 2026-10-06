@@ -91,7 +91,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -128,7 +128,7 @@ gaps
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
 run_source_lane() (
-  local lane=$1 qualification_rc go_root
+  local lane=$1 qualification_rc
   qualification_rc=$(mktemp)
   trap 'rm -f "$qualification_rc"' EXIT
   export qualification_rc
@@ -139,16 +139,6 @@ run_source_lane() (
   }
   export -f bazel
   case "$lane" in
-    lint)
-      # Bootstrap the existing installer's Go resolver from the declared SDK;
-      # lint.sh still owns the formatter version and canonical Go caches.
-      go_root=$(bazel run @io_bazel_rules_go//go -- env GOROOT)
-      if [[ $go_root != /* || $go_root == *$'\n'* || ! -x $go_root/bin/go ]]; then
-        printf 'Declared Go SDK did not provide an executable absolute GOROOT: %s\n' "$go_root" >&2
-        exit 1
-      fi
-      PATH="$go_root/bin:$PATH" make lint DOCKER_BUILD=false
-      ;;
     lint-cc)
       make lint-cc DOCKER_BUILD=false
       ;;
@@ -181,6 +171,7 @@ shared_test_targets() {
     portforward) targets=(//test/root:portforward_test_owned) ;;
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
+    lint) targets=(//tools/lint:lint_tests) ;;
     overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
     containerd) targets=(//test/root:crictl_test_owned) ;;
     fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
@@ -473,7 +464,7 @@ run_platform_matrix() (
         # verifier. Its own transition preserves opt/strip=sometimes.
         printf '%s\n' '//runsc:runsc-plugin-stack-build' >> "$selection_dir/targets"
         ;;
-      plugin-network|do|root|portforward|workflows|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata)
+      plugin-network|do|root|portforward|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|cos-metadata)
         shared_test_targets "$lane" amd64
         if [[ $lane == language-* ]]; then
           language_test_options
@@ -596,7 +587,14 @@ run_lane() (
       command=build
       targets=(//tools/codeql:all)
       ;;
-    lint|lint-cc|governance|license-check)
+    lint)
+      if [[ $arch != amd64 ]]; then
+        printf 'Source lint tools run on AMD64 workers.\n' >&2
+        return 2
+      fi
+      shared_test_targets "$lane" "$arch"
+      ;;
+    lint-cc|governance|license-check)
       if [[ $arch != amd64 ]]; then
         printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
         return 2

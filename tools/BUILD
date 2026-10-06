@@ -94,10 +94,6 @@ py_test(
     name = "lint_test",
     srcs = ["lint_test.py"],
     args = ["$(rootpath :lint.sh)"],
-    data = [
-        "lint.sh",
-        "//:.clang-format",
-        "//:go.mod",
-    ],
+    data = ["lint.sh"],
     main = "lint_test.py",
 )

@@ -69,15 +69,26 @@ def _analysis_sources_impl(ctx):
 
     ctx.file("manifest.json", json.encode(names))
     exports = ["manifest.json"] + mirrored
-    ctx.file("BUILD.bazel", "\n".join([
+    declarations = [
         "package(default_visibility = %s)" % repr(["//visibility:public"]),
-        "exports_files(%s)" % repr(exports),
         "filegroup(name = %s, srcs = %s)" % (repr("files"), repr(mirrored)),
-    ]) + "\n")
+    ]
+    for group, pathspecs in ctx.attr.groups.items():
+        selected = [name for name in _git(ctx, root, ["ls-files", "-z", "--"] + pathspecs).split("\000") if name]
+        manifest = group + ".json"
+        ctx.file(manifest, json.encode(selected))
+        exports.append(manifest)
+        declarations.append("filegroup(name = %s, srcs = %s)" % (
+            repr(group + "_files"),
+            repr(["files/" + name + ".source" for name in selected]),
+        ))
+    declarations.append("exports_files(%s)" % repr(exports))
+    ctx.file("BUILD.bazel", "\n".join(declarations) + "\n")
 
 analysis_sources = repository_rule(
     implementation = _analysis_sources_impl,
     attrs = {
+        "groups": attr.string_list_dict(doc = "Named subsets, selected by Git pathspecs."),
         "root": attr.label(default = "//:MODULE.bazel", allow_single_file = True),
     },
     local = True,
