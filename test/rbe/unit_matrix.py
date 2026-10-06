@@ -310,16 +310,16 @@ def select_variants(
     output_path: str,
     profile_path: str | None,
     *,
-    local: bool = False,
+    hybrid: bool = False,
 ) -> None:
     owners = owner_labels(owners_path)
     expected = {owner + "_arm64" for owner in owners}
     requirements = test_requirements(actions_path)
     if requirements.keys() != expected:
         raise ValueError(f"Missing configured test owners: {sorted(expected - requirements.keys())}")
-    if local:
+    if hybrid:
         if profile_path is None:
-            raise ValueError("Local units require the canonical native unit profile")
+            raise ValueError("Hybrid units require the canonical native unit profile")
         original = configured_tests(profile_path)
         eligible = expected & {label + "_arm64" for label in original}
         selected = sorted(label for label in eligible if requirements[label]["workload-isolation-type"] == "firecracker")
@@ -327,6 +327,8 @@ def select_variants(
             raise ValueError("No native unit owners require the local namespace host")
         groups: dict[str, list[str]] = {"root": [], "unprivileged": []}
         for label in selected:
+            if "no-remote-exec" not in requirements[label]:
+                raise ValueError(f"Native namespace frontend is not local: {label}")
             user = requirements[label].get("dockerUser")
             if user == "root":
                 groups["root"].append(label)
@@ -334,16 +336,20 @@ def select_variants(
                 groups["unprivileged"].append(label)
             else:
                 raise ValueError(f"Unsupported local test identity for {label}: {requirements[label]}")
-        Path(output_path).write_text("".join(label + "\n" for label in selected))
-        for group, labels in groups.items():
-            Path(output_path + "." + group).write_text("".join(label + "\n" for label in labels))
+        remote = sorted(eligible - set(selected))
+        for label in remote:
+            if "no-remote-exec" in requirements[label] or "no-remote" in requirements[label]:
+                raise ValueError(f"Ordinary native frontend forbids remote execution: {label}")
+        shared = sorted(set(original) - set(owners))
+        targets = sorted(eligible | set(shared))
+        Path(output_path).write_text("".join(label + "\n" for label in targets))
         print(json.dumps({
-            "partial_unit_selection": True,
             "canonical_selection": profile_path,
+            "selected_owners": targets,
             "local_owners": groups,
             "local_requirements": {label: requirements[label] for label in selected},
-            "unexecuted_remote_arm64_owners": sorted(eligible - set(selected)),
-            "unexecuted_shared_owners": sorted(set(original) - set(owners)),
+            "remote_arm64_owners": remote,
+            "shared_owners": shared,
             "profile_excluded_variants": sorted(expected - eligible),
         }, indent=2))
         return
@@ -376,7 +382,7 @@ def main() -> None:
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
     select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
-    select.add_argument("--local", action="store_true", help="Select only native ARM namespace owners for the local host; report other owners as unexecuted")
+    select.add_argument("--hybrid", action="store_true", help="Select the canonical ARM profile with namespace owners local and ordinary/shared owners remote")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
     container = commands.add_parser("container-targets")
@@ -414,7 +420,7 @@ def main() -> None:
     elif args.command == "actions":
         print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, local=args.local)
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events)))
     elif args.command == "container-platform-targets":

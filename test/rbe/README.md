@@ -51,7 +51,7 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-local-tests` pilot branch permits manual dispatches only.
+`rbe-actions-hybrid-unit` pilot branch permits manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -103,19 +103,21 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
-The local `unit` phase selects only graph-declared ARM64 variants that require
-the unavailable Firecracker namespace worker, intersected with the canonical
-unit profile. Its report lists the other remote ARM64 and shared owners as
-unexecuted. A successful local phase is partial unit qualification, not a pass
-for the complete unit lane. Tests declaring a root worker run under `sudo -E`.
-Their declared fixture permits traversal to `runsc` for tests that re-exec it
-as `nobody`, and returns undeclared-output ownership to the Bazel user before
-output validation. It changes only directory search permission along the
-resolved runtime path and ownership within that test's output directory.
-Nonroot tests retain the unprivileged Actions identity. The two identities use
-separate invocations, with at most two local tests at once on the four-core
-host. Compilation keeps 400 remote jobs. This interim split does not provide
-mixed local and remote TestRunners in one invocation.
+The `unit` phase intersects the graph-declared ARM64 variants with the
+canonical unit profile and runs one test invocation. Native namespace tests
+whose remote Firecracker worker is unavailable run locally; ordinary ARM64
+units and shared AMD64 checks run remotely. The report records all selected
+owners and their execution requirements. This covers the selected ARM64 test
+profile, not the separate AMD64 unit profile or filtered build-only targets.
+Root test frontends invoke the existing local-root fixture, which permits
+traversal to `runsc` for tests that re-exec it as `nobody` and returns output
+ownership to the Bazel user before validation. It changes only directory search
+permission along the resolved runtime path and ownership within that test's
+output directory. Nonroot tests retain the unprivileged Actions identity.
+Bazel's caller-supplied `run_under` remains outside the frontend executable.
+Only these native namespace TestRunners require local execution; compiler tags
+and actions remain unchanged. At most two local tests run at once on the
+four-core host, while remote work keeps 400 jobs.
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits the Actions job to 15 minutes. Local test results are not uploaded

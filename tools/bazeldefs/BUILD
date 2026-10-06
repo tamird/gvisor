@@ -49,6 +49,16 @@ config_setting(
     define_values = {"rbe": "true"},
 )
 
+string_flag(
+    name = "local_test_architecture",
+    build_setting_default = "",
+    values = [
+        "",
+        "amd64",
+        "arm64",
+    ],
+)
+
 # Individual tests must be able to select the cgroup-v1 fixture. Bazel forbids
 # Starlark transitions from changing --define, so use a build setting instead.
 # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/starlark/FunctionTransitionUtil.java#L305-L313
@@ -136,7 +146,11 @@ bzl_library(
     name = "test_architectures_bzl",
     srcs = ["test_architectures.bzl"],
     visibility = ["//:sandbox"],
-    deps = ["@with_cfg.bzl//:with_cfg"],
+    deps = [
+        "@bazel_skylib//lib:shell",
+        "@bazel_skylib//rules:common_settings",
+        "@with_cfg.bzl//:with_cfg",
+    ],
 )
 
 # Keep Go's pure/cgo mode in its build settings, not the target platform:

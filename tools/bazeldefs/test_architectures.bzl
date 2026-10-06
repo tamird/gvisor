@@ -1,6 +1,8 @@
 """Architecture variants of maintained test declarations."""
 
-load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("@bazel_skylib//lib:shell.bzl", "shell")
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
+load("@with_cfg.bzl//:with_cfg.bzl", "frontend_test", "with_cfg")
 
 _ARCHITECTURES = {
     "amd64": struct(
@@ -17,10 +19,75 @@ _ARCHITECTURES = {
     ),
 }
 
+def _native_frontend_impl(ctx):
+    providers = ctx.super()
+    local_architecture = ctx.attr._local_test_architecture[BuildSettingInfo].value
+    constraints = [target.label for target in ctx.attr.exec_compatible_with]
+    if not local_architecture or _ARCHITECTURES[local_architecture].constraint not in constraints:
+        return providers
+    if ctx.attr.exec_properties.get("test.workload-isolation-type") != "firecracker":
+        return providers
+
+    user = ctx.attr.exec_properties.get("test.dockerUser")
+    if user not in ["root", "nobody"]:
+        fail("unsupported local namespace test identity: %s" % user)
+    if "no-local" in ctx.attr.tags:
+        fail("local namespace test is tagged no-local")
+    original_execution = ctx.attr.exports[testing.ExecutionInfo] if testing.ExecutionInfo in ctx.attr.exports else None
+    requirements = dict(original_execution.requirements) if original_execution else {}
+    if "no-local" in requirements:
+        fail("local namespace test requires no-local")
+    requirements["no-remote-exec"] = ""
+
+    result = []
+    for provider in providers:
+        if provider == original_execution:
+            continue
+        if user == "root" and type(provider) == "DefaultInfo":
+            # Keep Bazel's run_under outside this executable. Only the existing
+            # root fixture and this test run as root, never the Bazel server.
+            executable = ctx.actions.declare_file(ctx.label.name + ".local_root")
+            ctx.actions.write(
+                executable,
+                "#!/bin/bash\nexec \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
+                    shell.quote("/" + ctx.executable._local_root.short_path),
+                    shell.quote("/" + provider.files_to_run.executable.short_path),
+                ),
+                is_executable = True,
+            )
+            helper_runfiles = ctx.runfiles(files = [executable, ctx.executable._local_root]).merge(
+                ctx.attr._local_root[DefaultInfo].default_runfiles,
+            )
+            provider = DefaultInfo(
+                executable = executable,
+                files = provider.files,
+                default_runfiles = provider.default_runfiles.merge(helper_runfiles),
+                data_runfiles = provider.data_runfiles.merge(helper_runfiles),
+            )
+        result.append(provider)
+    return result + [testing.ExecutionInfo(
+        requirements = requirements,
+        exec_group = original_execution.exec_group if original_execution else "test",
+    )]
+
+_native_frontend_test = rule(
+    implementation = _native_frontend_impl,
+    parent = frontend_test,
+    attrs = {
+        "_local_root": attr.label(default = Label("//test/rbe:local_root"), executable = True, cfg = "target"),
+        "_local_test_architecture": attr.label(default = Label("//tools/bazeldefs:local_test_architecture")),
+    },
+)
+
 def with_test_architecture(test_rule, architecture, static = False, extra_providers = [], implicit_targets = None):
     """Returns a with_cfg builder that preserves the test's other configuration."""
     target = _ARCHITECTURES[architecture]
-    return with_cfg(test_rule, extra_providers = extra_providers, implicit_targets = implicit_targets).set("cpu", target.cpu).set(
+    return with_cfg(
+        test_rule,
+        test_frontend = _native_frontend_test,
+        extra_providers = extra_providers if testing.ExecutionInfo in extra_providers else extra_providers + [testing.ExecutionInfo],
+        implicit_targets = implicit_targets,
+    ).set("cpu", target.cpu).set(
         "platforms",
         [target.static_platform if static else target.platform],
     )
