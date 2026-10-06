@@ -191,7 +191,7 @@ shared_test_targets() {
     bwrap) targets=(//runsc/cmd/alias/bwrap:bwrap_integration_test) ;;
     license-headers) targets=(//tools:license_headers_test) ;;
     workflows) targets=(//:github_actions_test //:github_workflows_test //:buildkite_pipelines_test) ;;
-    governance) targets=(//governance:generated_files_test) ;;
+    governance) targets=(//:governance-check) ;;
     lint) targets=(//tools/lint:lint_tests) ;;
     overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
     containerd) targets=(//test/root:crictl_test_owned) ;;

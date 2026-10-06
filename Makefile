@@ -212,12 +212,11 @@ dev: $(RUNTIME_BIN) ## Installs a set of local runtimes. Requires sudo.
 .PHONY: dev
 
 governance-regen: ## Regenerates the files derived from governance/maintainers.yaml and governance/areas.yaml.
-	@$(call run,//governance/tools/maintainers:maintainers_gen,-input governance/maintainers.yaml -areas governance/areas.yaml -format MAINTAINERS.md -output MAINTAINERS.md)
-	@$(call run,//governance/tools/maintainers:maintainers_gen,-input governance/maintainers.yaml -areas governance/areas.yaml -format CODEOWNERS -output CODEOWNERS)
+	@$(call wrapper,$(BAZEL) run $(BASE_OPTIONS) $(BAZEL_OPTIONS) //:governance-regen)
 .PHONY: governance-regen
 
 governance-check: ## Checks that the files derived from governance/*.yaml are in sync.
-	@$(call test,//governance:generated_files_test)
+	@$(call test,//:governance-check)
 .PHONY: governance-check
 
 license-check: ## Checks that tools/licensecheck/dependencies.yaml has an entry for every dependency.

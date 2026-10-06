@@ -206,12 +206,12 @@ aspect and report outputs; each configured compile retains its actual arguments
 and declared inputs. It can accompany `--arch=all` lanes but remains a separate
 AMD64 build invocation, so those recursive roots do not run unrelated tests.
 
-The `governance` lane runs `//governance:generated_files_test`. The existing
-generator runs remotely with the complete indexed source tree, preserving
-its area-directory checks. Two file-comparison tests check its outputs
-against CODEOWNERS and MAINTAINERS.md without modifying the checkout.
-Directory checks use indexed paths; an untracked directory cannot satisfy
-them. This lane can share a mixed-platform invocation with the other tests.
+The `governance` lane runs `//:governance-check`. Its remote generator consumes
+the governance YAML files and a watched list of repository directory names.
+The comparison tests check CODEOWNERS and MAINTAINERS.md against those outputs
+without modifying the checkout. Run `bazel run //:governance-regen` to copy the
+same generated outputs into the source tree. This lane can share a
+mixed-platform invocation with the other tests.
 
 The `license-check` lane calls `make license-check DOCKER_BUILD=false`
 to compare the checked-in license catalog with the current dependency graph and

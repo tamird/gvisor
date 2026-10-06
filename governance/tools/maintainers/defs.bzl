@@ -12,37 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generate governance files using the declared repository inputs."""
+"""Generate the governance artifacts from their declared inputs."""
 
-def _governance_files_impl(ctx):
-    # The generator infers the repository root from areas.yaml's location.
-    # Retain the full indexed directory tree, including paths outside packages.
-    inputs = ctx.attr._sources[DefaultInfo].files
-    for output in [ctx.outputs.codeowners, ctx.outputs.maintainers]:
-        args = ctx.actions.args()
-        args.add("-input", ctx.file._roster)
-        args.add("-areas", ctx.file._areas)
-        args.add("-format", output.basename)
-        args.add("-output", output)
-        ctx.actions.run(
-            executable = ctx.attr._generator[DefaultInfo].files_to_run,
-            arguments = [args],
-            inputs = inputs,
-            outputs = [output],
-            mnemonic = "Governance",
-            progress_message = "Generating " + output.basename,
+def governance_files(name):
+    """Generate CODEOWNERS and MAINTAINERS.md under name."""
+    for format in ["CODEOWNERS", "MAINTAINERS.md"]:
+        native.genrule(
+            name = name + "_" + format,
+            srcs = [
+                "areas.yaml",
+                "maintainers.yaml",
+                "@source_directories//:directories.json",
+            ],
+            outs = [name + "/" + format],
+            cmd = "$(execpath //governance/tools/maintainers:maintainers_gen) " +
+                  "-input $(location maintainers.yaml) " +
+                  "-areas $(location areas.yaml) " +
+                  "-directories $(location @source_directories//:directories.json) " +
+                  "-format " + format + " -output $@",
+            tools = ["//governance/tools/maintainers:maintainers_gen"],
+            visibility = ["//:__pkg__"],
         )
-
-governance_files = rule(
-    implementation = _governance_files_impl,
-    attrs = {
-        "_areas": attr.label(default = "@analysis_sources//:files/governance/areas.yaml.source", allow_single_file = True),
-        "_generator": attr.label(default = "//governance/tools/maintainers:maintainers_gen", executable = True, cfg = "exec"),
-        "_roster": attr.label(default = "@analysis_sources//:files/governance/maintainers.yaml.source", allow_single_file = True),
-        "_sources": attr.label(default = "@analysis_sources//:files"),
-    },
-    outputs = {
-        "codeowners": "%{name}/CODEOWNERS",
-        "maintainers": "%{name}/MAINTAINERS.md",
-    },
-)
