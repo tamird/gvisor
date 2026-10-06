@@ -1513,7 +1513,7 @@ type Route struct {
 func (r Route) String() string {
 	var out strings.Builder
 	_, _ = fmt.Fprintf(&out, "%s", r.Destination)
-	if r.Gateway.length > 0 {
+	if r.Gateway.IsValid() {
 		_, _ = fmt.Fprintf(&out, " via %s", r.Gateway)
 	}
 	_, _ = fmt.Fprintf(&out, " nic %d", r.NIC)
