@@ -15,8 +15,11 @@
 package lisafs_test
 
 import (
+	"slices"
 	"testing"
 
+	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/lisafs"
 	"gvisor.dev/gvisor/pkg/lisafs/testsuite"
 	"gvisor.dev/gvisor/pkg/log"
@@ -59,4 +62,49 @@ func (tester) BindSupported() bool {
 
 func TestFSGofer(t *testing.T) {
 	testsuite.RunAllLocalFSTests(t, tester{})
+}
+
+func TestXattrWithoutReadPermission(t *testing.T) {
+	dir := t.TempDir()
+	if err := unix.Chmod(dir, 0300); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := unix.Chmod(dir, 0700); err != nil {
+			t.Errorf("restore directory permissions: %v", err)
+		}
+	})
+	// The connection must fall back to O_PATH; privileged reads would miss the
+	// bug even though the directory has no read permission.
+	if fd, err := unix.Open(dir, unix.O_RDONLY|unix.O_DIRECTORY, 0); err == nil {
+		unix.Close(fd)
+		t.Skip("requires directory read permission to be enforced")
+	} else if err != unix.EACCES {
+		t.Fatalf("open unreadable directory: got %v, want EACCES", err)
+	}
+	testsuite.RunTest(t, tester{}, "directory", func(ctx context.Context, t *testing.T, _ testsuite.Tester, fd lisafs.ClientFD) {
+		const name, value = "user.test", "value"
+		if err := fd.SetXattr(ctx, name, value, 0); err != nil {
+			t.Fatalf("SetXattr: %v", err)
+		}
+		if names, err := fd.ListXattr(ctx, 0); err != nil || !slices.Contains(names, name) {
+			t.Fatalf("ListXattr: got %v, %v; want %q", names, err, name)
+		}
+		if _, err := fd.GetXattr(ctx, name, 0); err != unix.EACCES {
+			t.Fatalf("GetXattr without read permission: got %v, want EACCES", err)
+		}
+		// Adding read permission does not change the existing O_PATH descriptor.
+		if err := unix.Chmod(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := fd.GetXattr(ctx, name, 0); err != nil || got != value {
+			t.Fatalf("GetXattr: got %q, %v; want %q", got, err, value)
+		}
+		if err := fd.RemoveXattr(ctx, name); err != nil {
+			t.Fatalf("RemoveXattr: %v", err)
+		}
+		if names, err := fd.ListXattr(ctx, 0); err != nil || slices.Contains(names, name) {
+			t.Fatalf("ListXattr after removal: got %v, %v; want no %q", names, err, name)
+		}
+	}, dir)
 }

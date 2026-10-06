@@ -31,9 +31,11 @@ go_test(
     srcs = ["lisafs_test.go"],
     deps = [
         ":fsgofer",
+        "//pkg/context",
         "//pkg/lisafs",
         "//pkg/lisafs/testsuite",
         "//pkg/log",
         "//runsc/config",
+        "@org_golang_x_sys//unix:go_default_library",
     ],
 )
