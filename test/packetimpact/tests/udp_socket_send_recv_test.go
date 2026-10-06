@@ -16,7 +16,7 @@ package generic_dgram_socket_send_recv_test
 
 import (
 	"context"
-	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -26,8 +26,8 @@ import (
 	"gvisor.dev/gvisor/test/packetimpact/testbench"
 )
 
-func maxUDPPayloadSize(addr net.IP) int {
-	if addr.To4() != nil {
+func maxUDPPayloadSize(addr netip.Addr) int {
+	if addr.Is4() {
 		return maxUDPv4PayloadSize
 	}
 	return maxUDPv6PayloadSize
@@ -52,7 +52,7 @@ type udpTestEnv struct {
 
 type udpTest struct{}
 
-func (test *udpTest) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) udpTestEnv {
+func (test *udpTest) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) udpTestEnv {
 	t.Helper()
 
 	var (
@@ -61,7 +61,7 @@ func (test *udpTest) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo net.I
 	)
 
 	// Tell the DUT to create a socket.
-	if bindTo != nil {
+	if bindTo.IsValid() {
 		var remotePort uint16
 		socketFD, remotePort = dut.CreateBoundSocket(t, unix.SOCK_DGRAM, unix.IPPROTO_UDP, bindTo)
 		outgoingUDP.DstPort = &remotePort
@@ -81,17 +81,17 @@ func (test *udpTest) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo net.I
 	// Create a socket on the test runner.
 	var conn udpConn
 	var ipLayer testbench.Layer
-	if addr := sendTo.To4(); addr != nil {
+	if sendTo.Is4() {
 		udpConn := dut.Net.NewUDPIPv4(t, outgoingUDP, incomingUDP)
 		conn = &udpConn
 		ipLayer = &testbench.IPv4{
-			DstAddr: testbench.Address(tcpip.AddrFrom4Slice(addr)),
+			DstAddr: testbench.Address(tcpip.AddrFrom4(sendTo.As4())),
 		}
 	} else {
 		udpConn := dut.Net.NewUDPIPv6(t, outgoingUDP, incomingUDP)
 		conn = &udpConn
 		ipLayer = &testbench.IPv6{
-			DstAddr: testbench.Address(tcpip.AddrFrom16Slice(sendTo.To16())),
+			DstAddr: testbench.Address(tcpip.AddrFrom16(sendTo.As16())),
 		}
 	}
 	t.Cleanup(func() {
@@ -109,12 +109,12 @@ func (test *udpTest) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo net.I
 	}
 }
 
-func (test *udpTest) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) {
+func (test *udpTest) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) {
 	wantErrno := unix.Errno(0)
 
-	if sendTo.To4() == nil {
+	if !sendTo.Is4() {
 		// If sendTo is an IPv6 address.
-		if bindTo.To4() != nil {
+		if bindTo.Is4() {
 			// But bindTo is an IPv4 address, we expect EAFNOSUPPORT.
 			wantErrno = unix.EAFNOSUPPORT
 
@@ -126,12 +126,12 @@ func (test *udpTest) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP
 		}
 	} else {
 		// If sendTo is an IPv4 address.
-		if bindTo.Equal(dut.Net.RemoteIPv6) {
+		if bindTo == dut.Net.RemoteIPv6 {
 			// if bindTo is dut's IPv6 address, we expect ENETUNREACH.
 			wantErrno = unix.ENETUNREACH
 		}
 
-		if !bindToDevice && !bindTo.Equal(dut.Net.RemoteIPv4) && (sendTo.Equal(net.IPv4bcast) || sendTo.Equal(net.IPv4allsys)) {
+		if !bindToDevice && bindTo != dut.Net.RemoteIPv4 && (sendTo == netip.MustParseAddr("255.255.255.255") || sendTo == netip.MustParseAddr("224.0.0.1")) {
 			// if not binding to a device, bindTo is not dut's IPv4 addression and sendTo is
 			// 255.255.255.255 or 224.0.0.1, we expect ENETUNERACH.
 			wantErrno = unix.ENETUNREACH
@@ -158,18 +158,18 @@ func (test *udpTest) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP
 	} {
 		t.Run(name, func(t *testing.T) {
 			var destSockaddr unix.Sockaddr
-			if sendTo4 := sendTo.To4(); sendTo4 != nil {
+			if sendTo.Is4() {
 				addr := unix.SockaddrInet4{
 					Port: int(env.conn.SrcPort(t)),
+					Addr: sendTo.As4(),
 				}
-				copy(addr.Addr[:], sendTo4)
 				destSockaddr = &addr
 			} else {
 				addr := unix.SockaddrInet6{
 					Port:   int(env.conn.SrcPort(t)),
+					Addr:   sendTo.As16(),
 					ZoneId: dut.Net.RemoteDevID,
 				}
-				copy(addr.Addr[:], sendTo.To16())
 				destSockaddr = &addr
 			}
 
@@ -201,23 +201,23 @@ func (test *udpTest) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP
 	}
 }
 
-func (test *udpTest) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) {
+func (test *udpTest) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) {
 	subnetBroadcast := dut.Net.SubnetBroadcast()
 
 	expectPacket := true
 	switch {
-	case bindTo.Equal(sendTo):
-	case bindTo.Equal(net.IPv4zero) && sameIPVersion(bindTo, sendTo) && !sendTo.Equal(dut.Net.LocalIPv4):
-	case bindTo.Equal(net.IPv6zero) && isBroadcast(dut, sendTo):
-	case bindTo.Equal(net.IPv6zero) && isRemoteAddr(dut, sendTo):
-	case bindTo.Equal(subnetBroadcast) && sendTo.Equal(subnetBroadcast):
+	case bindTo == sendTo:
+	case bindTo == netip.IPv4Unspecified() && sendTo.Is4() && sendTo != dut.Net.LocalIPv4:
+	case bindTo == netip.IPv6Unspecified() && isBroadcast(dut, sendTo):
+	case bindTo == netip.IPv6Unspecified() && isRemoteAddr(dut, sendTo):
+	case bindTo == subnetBroadcast && sendTo == subnetBroadcast:
 	default:
 		expectPacket = false
 	}
 
 	// TODO(gvisor.dev/issue/5956): Remove this if statement once gVisor
 	// restricts ICMP sockets to receive only from unicast addresses.
-	if (dut.Uname.IsGvisor() || dut.Uname.IsFuchsia()) && bindTo.Equal(net.IPv6zero) && sendTo.Equal(net.IPv4allsys) {
+	if (dut.Uname.IsGvisor() || dut.Uname.IsFuchsia()) && bindTo == netip.IPv6Unspecified() && sendTo == netip.MustParseAddr("224.0.0.1") {
 		expectPacket = true
 	}
 

@@ -17,6 +17,7 @@ package generic_dgram_socket_send_recv_test
 import (
 	"context"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -46,14 +47,14 @@ type icmpV6TestEnv struct {
 //   - Different expectPacket and wantErrno for send and receive
 type icmpV6Test struct{}
 
-func (test *icmpV6Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) icmpV6TestEnv {
+func (test *icmpV6Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) icmpV6TestEnv {
 	t.Helper()
 
 	// Tell the DUT to create a socket.
 	var socketFD int32
 	var ident uint16
 
-	if bindTo != nil {
+	if bindTo.IsValid() {
 		socketFD, ident = dut.CreateBoundSocket(t, unix.SOCK_DGRAM, unix.IPPROTO_ICMPV6, bindTo)
 	} else {
 		// An unbound socket will auto-bind to IN6ADDR_ANY_INIT.
@@ -73,7 +74,9 @@ func (test *icmpV6Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo ne
 		conn.Close(t)
 	})
 
-	dstAddr := sendTo.To16()
+	// Preserve the mapped IPv6 representation for IPv4 destination cases.
+	addr := sendTo.As16()
+	dstAddr := net.IP(addr[:])
 	return icmpV6TestEnv{
 		socketFD: socketFD,
 		ident:    ident,
@@ -87,23 +90,23 @@ func (test *icmpV6Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo ne
 	}
 }
 
-func (test *icmpV6Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) {
-	if bindTo.To4() != nil || bindTo.IsMulticast() {
+func (test *icmpV6Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) {
+	if bindTo.Is4() || bindTo.IsMulticast() {
 		// ICMPv6 sockets cannot bind to IPv4 or multicast addresses.
 		return
 	}
 
-	expectPacket := sendTo.Equal(dut.Net.LocalIPv6)
+	expectPacket := sendTo == dut.Net.LocalIPv6
 	wantErrno := unix.Errno(0)
 
-	if sendTo.To4() != nil {
+	if sendTo.Is4() {
 		wantErrno = unix.EINVAL
 
 		// TODO(gvisor.dev/issue/5966): Remove this if statement once ICMPv6 sockets
 		// return EINVAL after calling sendto with an IPv4 address.
 		if dut.Uname.IsGvisor() || dut.Uname.IsFuchsia() {
 			wantErrno = unix.ENETUNREACH
-			if !bindTo.Equal(dut.Net.RemoteIPv6) && (bindToDevice || isInTestSubnetV4(dut, sendTo)) {
+			if bindTo != dut.Net.RemoteIPv6 && (bindToDevice || isInTestSubnetV4(dut, sendTo)) {
 				wantErrno = unix.Errno(0)
 			}
 		}
@@ -126,9 +129,9 @@ func (test *icmpV6Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 				t.Fatalf("icmpLayer.ToBytes() = %s", err)
 			}
 			destSockaddr := unix.SockaddrInet6{
+				Addr:   sendTo.As16(),
 				ZoneId: dut.Net.RemoteDevID,
 			}
-			copy(destSockaddr.Addr[:], sendTo.To16())
 
 			// Tell the DUT to send a packet out the ICMPv6 socket.
 			gotRet, gotErrno := dut.SendToWithErrno(context.Background(), t, env.socketFD, bytes, 0, &destSockaddr)
@@ -159,24 +162,24 @@ func (test *icmpV6Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 	}
 }
 
-func (test *icmpV6Test) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) {
-	if bindTo.To4() != nil || bindTo.IsMulticast() {
+func (test *icmpV6Test) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) {
+	if bindTo.Is4() || bindTo.IsMulticast() {
 		// ICMPv6 sockets cannot bind to IPv4 or multicast addresses.
 		return
 	}
 
 	expectPacket := true
 	switch {
-	case bindTo.Equal(dut.Net.RemoteIPv6) && sendTo.Equal(dut.Net.RemoteIPv6):
-	case bindTo.Equal(net.IPv6zero) && sendTo.Equal(dut.Net.RemoteIPv6):
-	case bindTo.Equal(net.IPv6zero) && sendTo.Equal(net.IPv6linklocalallnodes):
+	case bindTo == dut.Net.RemoteIPv6 && sendTo == dut.Net.RemoteIPv6:
+	case bindTo == netip.IPv6Unspecified() && sendTo == dut.Net.RemoteIPv6:
+	case bindTo == netip.IPv6Unspecified() && sendTo == netip.MustParseAddr("ff02::1"):
 	default:
 		expectPacket = false
 	}
 
 	// TODO(gvisor.dev/issue/5763): Remove this if statement once gVisor
 	// restricts ICMP sockets to receive only from unicast addresses.
-	if (dut.Uname.IsGvisor() || dut.Uname.IsFuchsia()) && bindTo.Equal(net.IPv6zero) && isBroadcastOrMulticast(dut, sendTo) {
+	if (dut.Uname.IsGvisor() || dut.Uname.IsFuchsia()) && bindTo == netip.IPv6Unspecified() && isBroadcastOrMulticast(dut, sendTo) {
 		expectPacket = false
 	}
 

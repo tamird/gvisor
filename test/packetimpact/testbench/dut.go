@@ -17,8 +17,7 @@ package testbench
 import (
 	"context"
 	"encoding/binary"
-	"fmt"
-	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -56,7 +55,7 @@ func (info *DUTInfo) ConnectToDUT(t *testing.T) DUT {
 	t.Helper()
 
 	n := info.Net
-	posixServerAddress := net.JoinHostPort(n.POSIXServerIP.String(), fmt.Sprintf("%d", n.POSIXServerPort))
+	posixServerAddress := netip.AddrPortFrom(n.POSIXServerIP, n.POSIXServerPort).String()
 	conn, err := grpc.Dial(posixServerAddress, grpc.WithInsecure(), grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: RPCKeepalive}))
 	if err != nil {
 		t.Fatalf("failed to grpc.Dial(%s): %s", posixServerAddress, err)
@@ -131,20 +130,20 @@ func (dut *DUT) protoToSockaddr(t *testing.T, sa *pb.Sockaddr) unix.Sockaddr {
 // CreateBoundSocket makes a new socket on the DUT, with type typ and protocol
 // proto, and bound to the IP address addr. Returns the new file descriptor and
 // the port that was selected on the DUT.
-func (dut *DUT) CreateBoundSocket(t *testing.T, typ, proto int32, addr net.IP) (int32, uint16) {
+func (dut *DUT) CreateBoundSocket(t *testing.T, typ, proto int32, addr netip.Addr) (int32, uint16) {
 	t.Helper()
 
+	if addr.Zone() != "" {
+		t.Fatalf("IP address %s must use the DUT's interface scope", addr)
+	}
 	var fd int32
-	if addr.To4() != nil {
+	if addr.Is4() || addr.Is4In6() {
 		fd = dut.Socket(t, unix.AF_INET, typ, proto)
-		sa := unix.SockaddrInet4{}
-		copy(sa.Addr[:], addr.To4())
+		sa := unix.SockaddrInet4{Addr: addr.As4()}
 		dut.Bind(t, fd, &sa)
-	} else if addr.To16() != nil {
+	} else if addr.Is6() {
 		fd = dut.Socket(t, unix.AF_INET6, typ, proto)
-		sa := unix.SockaddrInet6{}
-		copy(sa.Addr[:], addr.To16())
-		sa.ZoneId = dut.Net.RemoteDevID
+		sa := unix.SockaddrInet6{Addr: addr.As16(), ZoneId: dut.Net.RemoteDevID}
 		dut.Bind(t, fd, &sa)
 	} else {
 		t.Fatalf("invalid IP address: %s", addr)
