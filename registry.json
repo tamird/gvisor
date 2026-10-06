@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T03:32:26.483228+00:00",
+    "updatedAt": "2026-10-06T04:05:37.577072+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -925,17 +925,17 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T00:43:28.457482+00:00",
+      "updatedAt": "2026-10-06T04:00:52.781492+00:00",
       "summary": "The approved conflict rebase preserves the three source files, commit message and author date; its only AIO overlap adds the requestReady annotation over the new upstream implementation. Independent source peer d25ca27de554 closed. Etienne reapproved published head 47ac9acd486edafa1c43cf30b18c78442f8492e8. Import #15242 now names that exact source head; its current checks remain separate from the earlier import results. No new runtime, public comment or import retry was performed.",
       "followup": {
-        "disposition": "upstream approved; opaque internal-check failure",
+        "disposition": "upstream approved; matching import checks passed",
         "owner": "external_sweeps",
-        "nextAction": "Track matching public import #15242, which remains pending. The source Copybara failure exposes only failed internal checks, with no public cause; no source amendment or retry is inferred.",
+        "nextAction": "Track landing of matching import #15242 at a21196f14: all checks pass in the 03:58 UTC snapshot, including public build 49673. Source Copybara retains its earlier opaque internal failure; no source amendment or retry is inferred from that older status.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14504#pullrequestreview-5421551262",
           "https://github.com/google/gvisor/pull/15242"
         ],
-        "reviewedAt": "2026-10-06T00:43:28.457482+00:00",
+        "reviewedAt": "2026-10-06T03:58:02.529490+00:00",
         "sourceHead": "47ac9acd486edafa1c43cf30b18c78442f8492e8",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2084,17 +2084,17 @@
       "summary": "The requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. Etienne’s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 now matches this source; its latest internal build failed without a public cause while its public pipeline remains pending. Current check states are retained in the paired snapshot.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T02:41:40.595864+00:00",
+      "updatedAt": "2026-10-06T03:37:46.006585+00:00",
       "followup": {
         "disposition": "upstream approved; opaque internal-check failure",
         "owner": "external_sweeps",
-        "nextAction": "Track matching import #15257 at 131edbdee: internal build 31359 now failed without a publicly exposed cause, while public build 49669 remains pending. Source Copybara also reports an internal failure. No source amendment or retry is inferred.",
+        "nextAction": "Track matching import #15257 at 131edbdee: public build 49669 passes, while internal build 31359 remains failed without a publicly exposed cause. Source Copybara also reports an internal failure. No source amendment or retry is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15188#issuecomment-6000677541",
           "https://github.com/google/gvisor/pull/15188#issuecomment-6002279588",
           "https://github.com/google/gvisor/pull/15257"
         ],
-        "reviewedAt": "2026-10-06T02:38:24.628644+00:00",
+        "reviewedAt": "2026-10-06T03:37:46.006585+00:00",
         "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2888,18 +2888,18 @@
       "url": "https://github.com/google/gvisor/pull/15319",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-05T22:12:29.534300+00:00",
+      "updatedAt": "2026-10-06T04:00:52.781492+00:00",
       "summary": "Approved by relkochta on the exact source at 21:36 UTC; matching Copybara import #15324 is open at e8dff5c9b5f8745afc38f3695e868daba337c569 with checks pending. Source checks pass.\n\nOpened as ready-for-review PR #15319 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 05accd6eadb331394c93c0a45898710829deb89f is based on master 658c9c101 and has no open code prerequisite. It removes the unused 108-line dockerutil.Network wrapper and its BUILD source entry; its final callers were removed with the legacy packetimpact runner in f5482c508 in 2021. Existing exec_test passes remotely on validation composition e489084d7: parent https://app.buildbuddy.io/invocation/21a86d00-81fb-4f7d-a817-b5653320978b completes in 87.260 seconds, with outcome 64f40662245e binding 21 source captures, 58 evidence files and one actual action. No new tests or code dependency on the netip migration are introduced. The approved source is now published in this PR. The exact source is included in canonical b4982500d.",
       "number": 15319,
       "followup": {
-        "disposition": "approved; opaque internal import failure",
+        "disposition": "upstream approved; matching import refreshed",
         "owner": "external_sweeps",
-        "nextAction": "Track public feedback and matching import #15324. The public status reports an internal-check failure from the 21:50 run, without a public cause; no internal link access, retry or source amendment is justified.",
+        "nextAction": "Track refreshed matching import #15324 at d11d78fe8: public build 49689 and internal 31380 are pending in the 03:58 UTC snapshot. The preceding import head passed all checks; that result is not assigned to this new head. Source Copybara retains its earlier opaque internal failure, with no public cause or inferred source revision/retry.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15319",
           "https://github.com/google/gvisor/pull/15324"
         ],
-        "reviewedAt": "2026-10-05T22:47:35.646948+00:00",
+        "reviewedAt": "2026-10-06T03:58:02.529490+00:00",
         "sourceHead": "05accd6eadb331394c93c0a45898710829deb89f",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -3019,6 +3019,32 @@
       "head": "b4769f20ef370597a2d478c4c7fecbf58aff6445",
       "updatedAt": "2026-10-06T03:32:26.483228+00:00",
       "summary": "Independent master-b996 source correction with complete source/record reviews closed. Preserves ARM64 reserved slot 259 after generated headers removed the generic marker, and selects RISC-V unassigned slot 257 instead of implemented hwprobe 258. Existing ENOSYS and seccomp assertions remain intact. It addresses a concrete ARM64 compilation error from the full 659-owner build. The corrected integration c65d805387 builds all 659 ARM64 64K roots with the same requested cohort and normal compilation caches. Outcome 290a0abe5ee3 and independent peer 17f22b529933 close this build scope. Contributor review/open-PR approval was requested once and remains pending. This is build-only evidence on the hermetic integration, with no GNU qualification, upstream PR or runtime pass claimed. The RISC-V slot is verified against primary Linux source; this ARM64 build does not compile or execute RISC-V."
+    },
+    {
+      "id": "branch:xdp-network-setup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "xdp-network-setup",
+      "title": "Repair XDP network setup calls",
+      "url": "https://github.com/tamird/gvisor/tree/xdp-network-setup",
+      "group": "runtime",
+      "status": "review pending",
+      "head": "73b4aafbea6fe7b5285cc27b7a702428686ad5d9",
+      "updatedAt": "2026-10-06T04:05:37.577072+00:00",
+      "summary": "Independent master-b996 API repair with complete source and record reviews. Restores the still-registered synchronous network RPC name, removes the deleted disconnect-field initializer, and carries the existing IPv6 setting through tagged and default signatures. Redirect setup still initializes sentry UMEM/rings before host bind. Hosted before/after proof reproduced the four baseline error families, then built the corrected tagged and default runsc roots successfully; parent 8598f846 passed in 283.278 seconds and an independent saved-evidence review closed. This is build-only evidence: no AF_XDP hardware, runtime or restore qualification. Contributor review and permission to open the PR have been requested once and remain pending. The validation composition is not a separate upstream candidate."
+    },
+    {
+      "id": "branch:runsc-network-netip",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "runsc-network-netip",
+      "title": "Use netip for runsc network configuration",
+      "url": "https://github.com/tamird/gvisor/tree/runsc-network-netip",
+      "group": "runtime",
+      "status": "validation pending",
+      "head": "0892085df717091448c68c5b90b7fa3434d088b3",
+      "updatedAt": "2026-10-06T04:05:37.577072+00:00",
+      "summary": "Independent master-b996 migration with complete source and record reviews. Uses typed addresses and prefixes for runsc network arguments, checked conversion at host netlink boundaries, and existing namespace and real container RPC assertions. Hosted validation exposed a TestNetworkConfig comparison panic on private netip fields; the source owner is correcting the comparison and closing the retained result. No passing result or upstream submission is claimed. The separate XDP API repair is composed only to validate the already-broken tagged consumer. These independent source topics have no landing dependency on each other. Contributor review awaits the source-bound result; the validation composition is not a separate upstream candidate."
     }
   ],
   "edges": [
