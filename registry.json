@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T22:52:03.754884+00:00",
+    "updatedAt": "2026-10-06T23:02:53.446257+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1932,14 +1932,14 @@
       "url": "https://github.com/google/gvisor/pull/15180",
       "group": "runtime",
       "status": "open",
-      "summary": "The approved named maxMTU correction is published at ab6a165dd67a4107ed99a322dc380c11eea772e4 after a patch-equivalent rebase onto current master 8a2c50492. The rebase includes the already-landed workflow correction that caused the old-head zizmor failure. The current head is approved and matching import #15382 is active. The approved reply https://github.com/google/gvisor/pull/15180#discussion_r4198261362 is verified and its thread is resolved. The arithmetic and prior runtime evidence are unchanged.\n\nMatching import #15382 has one current unreplaced failed job in public pipeline 49799: C++ lint exits 2. Complete public job metadata distinguishes historical failed attempts from their later replacements; ten jobs were scheduled and two running at the bounded read. The job log stream returns HTTP 403, so the exact lint diagnostic and source cause remain unavailable. The earlier source Copybara/internal failure is retained separately; no source amendment or retry is inferred.",
+      "summary": "The approved MTU change is published at 21f7fd7b924a28562b4549258ef8a886019d9ef6, rebased onto current master dd185 with the complete prior patch and message unchanged. The only new source changes are direct linux/if_link.h and linux/rtnetlink.h includes. These fix all four actual include-cleaner diagnostics from matching import #15382 pipeline 49799. The complete public JSON log was recovered after its separate stream endpoint denied access. Independent source review passed; normal signing and exact-lease SSH publication succeeded. GitHub reports MERGEABLE, fresh lint/fileheader pass and generation remains pending. No new runtime pass or public reply is claimed.\n\nThe earlier approved maxMTU reply https://github.com/google/gvisor/pull/15180#discussion_r4198261362 remains verified and its thread resolved. The arithmetic and prior runtime evidence are unchanged. The earlier opaque Copybara failure and old import C++ lint failure remain historical results, not evidence against the new head.",
       "number": 15180,
       "reviewDecision": "",
-      "updatedAt": "2026-10-06T22:52:03.754884+00:00",
+      "updatedAt": "2026-10-06T23:02:53.446257+00:00",
       "followup": {
-        "disposition": "approved; C++ lint diagnostic unavailable",
+        "disposition": "approved correction delivered; fresh CI pending",
         "owner": "external_sweeps",
-        "nextAction": "Track matching import #15382 and obtain its actual C++ lint diagnostic if it becomes public. Do not infer a source fix or retry from the rollup alone.",
+        "nextAction": "Observe fresh current-head CI and a matching import; do not reuse old import15382 as current-head validation.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15180#discussion_r4197784155",
           "https://github.com/tamird/gvisor/commit/328e282108ea9b52c5de6d8131dd18c98f42ec67",
@@ -1948,14 +1948,15 @@
           "https://github.com/google/gvisor/pull/15180#pullrequestreview-5432129662",
           "https://github.com/google/gvisor/pull/15382",
           "https://github.com/google/gvisor/pull/15180",
-          "https://buildkite.com/gvisor/pipeline/builds/49799#01a11340-cd13-44d8-a64f-a94402f21ebe"
+          "https://buildkite.com/gvisor/pipeline/builds/49799#01a11340-cd13-44d8-a64f-a94402f21ebe",
+          "https://github.com/tamird/gvisor/commit/21f7fd7b924a28562b4549258ef8a886019d9ef6"
         ],
-        "reviewedAt": "2026-10-06T22:52:03.754884+00:00",
-        "sourceHead": "ab6a165dd67a4107ed99a322dc380c11eea772e4",
+        "reviewedAt": "2026-10-06T23:02:53.446257+00:00",
+        "sourceHead": "21f7fd7b924a28562b4549258ef8a886019d9ef6",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
-      "head": "ab6a165dd67a4107ed99a322dc380c11eea772e4"
+      "head": "21f7fd7b924a28562b4549258ef8a886019d9ef6"
     },
     {
       "id": "pr:15181",
@@ -2412,21 +2413,21 @@
       "url": "https://github.com/google/gvisor/pull/15332",
       "group": "tests",
       "status": "merged",
-      "summary": "Merged through matching import #15341 at dd18583820c558954e16a27e7f1cabc2b36d85f8. Complete replacement review and narrow source-branch retirement are in progress; retained compilation/listing evidence does not claim benchmark runtime.\n\nOpened ready for review after explicit user approval at 22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier validation rebuilt all five originally failing target/configuration pairs and verified all 43 benchmark listing names. This is compilation/listing evidence, not a measured benchmark or KVM runtime. The new head changes only stale commit prose after the source-preserving rebase.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:57Z.",
+      "summary": "Merged through matching import #15341 at dd18583820c558954e16a27e7f1cabc2b36d85f8. Complete replacement and original-record review passed independently: source22c is the merge second parent and its full1296-byte patch equals the landing. The sole obsolete send-recv-benchmark-ranges local/fork refs are retired after live identity/ownership gates. Validation compositions remain preserved; retained compilation/listing evidence does not claim benchmark runtime.\n\nOpened ready for review after explicit user approval at 22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier validation rebuilt all five originally failing target/configuration pairs and verified all 43 benchmark listing names. This is compilation/listing evidence, not a measured benchmark or KVM runtime. The new head changes only stale commit prose after the source-preserving rebase.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:57Z.",
       "head": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
       "number": 15332,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T22:52:03.754884+00:00",
+      "updatedAt": "2026-10-06T23:02:53.446257+00:00",
       "followup": {
-        "disposition": "merged; replacement review in progress",
+        "disposition": "merged; obsolete source branch retired",
         "owner": "external_sweeps",
-        "nextAction": "Finish complete source/landing comparison and independent peer, then exact live gates before retiring the sole obsolete branch.",
+        "nextAction": "No source delivery remains. Preserve validation compositions and historical evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15332#pullrequestreview-5421811742",
           "https://github.com/google/gvisor/pull/15341",
           "https://buildkite.com/gvisor/pipeline/builds/49680"
         ],
-        "reviewedAt": "2026-10-06T22:52:03.754884+00:00",
+        "reviewedAt": "2026-10-06T23:02:53.446257+00:00",
         "sourceHead": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -3698,18 +3699,19 @@
       "title": "Migrate core network addresses and endpoints to netip",
       "url": "https://github.com/tamird/gvisor/commit/321eb47673d6bfd6ab2a09dead1e75c540d43db5",
       "group": "runtime",
-      "status": "comparison correction; focused validation pending",
-      "updatedAt": "2026-10-06T22:52:03.754884+00:00",
-      "summary": "The published core-first prototype uses actual netip address, prefix and address-port values across the stack, with the shared checkpoint-state codec as a real prerequisite. Independent source reviews cover production boundaries, route fixtures and comparison contracts. This is implementation work; no upstream submission is requested yet.\n\nThe initial full build at validation 4a3d5857a fails in parent 74811 after 722.705 seconds: 7,646 configured roots, 3,294 successful and 4,352 unsuccessful, no skipped roots or TestResult events. Compiler diagnostics identify a remaining next-hop Len call in nat.go and old endpoint tuple fields in a qualification-only iptables test. Those two call sites are subsequently corrected; no successful full graph or runtime result is claimed. Earlier prototypes and failure evidence remain preserved.\n\nThe second build at f13 retains failure: 3,601 of 7,646 configured roots succeeded, with the remaining diagnostic in duplicate TCP probe-ID conversion. After its source correction, the third build at 179a reaches 7,642 successful roots and four failed roots caused by two test-source omissions. Both are corrected at ca297/27f2. The full package run then passes 222 of 226 runtime owners and all 149 Nogo owners; the four failures are go-cmp private-field panics in DAD, NAT deep copy, neighbor-cache and NUD tests. No production failure is established by these panics.\n\nReviewed source 321eb47673d6bfd6ab2a09dead1e75c540d43db5 corrects those owning comparison contracts and direct BUILD dependencies; validation composition 062f3cd15c15e1e8ddd1689420b714bfdf185da9 preserves the implementation. The focused four-owner/four-Nogo method requires all eight actual runtime owners and their original shard/timeout contracts. Submission/result remain owned by the implementation agent. Earlier failed parents remain failed; no full graph or runtime qualification is claimed.",
+      "status": "package comparison corrections pass",
+      "updatedAt": "2026-10-06T23:02:53.446257+00:00",
+      "summary": "The published core-first prototype uses actual netip address, prefix and address-port values across the stack, with the shared checkpoint-state codec as a real prerequisite. Independent source reviews cover production boundaries, route fixtures and comparison contracts. This is implementation work; no upstream submission is requested yet.\n\nThe initial full build at validation 4a3d5857a fails in parent 74811 after 722.705 seconds: 7,646 configured roots, 3,294 successful and 4,352 unsuccessful, no skipped roots or TestResult events. Compiler diagnostics identify a remaining next-hop Len call in nat.go and old endpoint tuple fields in a qualification-only iptables test. Those two call sites are subsequently corrected; no successful full graph or runtime result is claimed. Earlier prototypes and failure evidence remain preserved.\n\nThe second build at f13 retains failure: 3,601 of 7,646 configured roots succeeded, with the remaining diagnostic in duplicate TCP probe-ID conversion. After its source correction, the third build at 179a reaches 7,642 successful roots and four failed roots caused by two test-source omissions. Both are corrected at ca297/27f2. The full package run then passes 222 of 226 runtime owners and all 149 Nogo owners; the four failures are go-cmp private-field panics in DAD, NAT deep copy, neighbor-cache and NUD tests. No production failure is established by these panics.\n\nReviewed source 321eb47673d6bfd6ab2a09dead1e75c540d43db5 corrects those owning comparison contracts and direct BUILD dependencies; validation composition 062f3cd15c15e1e8ddd1689420b714bfdf185da9 preserves the implementation. Focused parent 5d3653c1 at062f passes all eight requested owners in15 actual uncached remote shards, preserving original60/300-second timeouts. All four corrected Go owners and their four Nogo owners pass. Independent saved peer f51999746960 verifies986 evidence files,265 source bindings, eight actual Action/Command joins and every result log/XML digest. Original1744 remains failed with222of226 owners passing and149Nogo passing; the focused correction is separate evidence, not a full package rerun. Go XML is nonverbose, so no complete internal-case or skip-count claim is made. Earlier failed parents remain failed; no full graph or runtime qualification is claimed.",
       "followup": {
-        "disposition": "source correction published; focused validation pending",
+        "disposition": "package correction validated; broader validation in progress",
         "owner": "restore_integration_review",
-        "nextAction": "Execute the reviewed exact eight-owner continuation and close its actual result, preserving prior failures.",
+        "nextAction": "Complete the separately owned socket, restore and performance evidence before an upstream-readiness claim.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/321eb47673d6bfd6ab2a09dead1e75c540d43db5",
-          "https://github.com/tamird/gvisor/commit/062f3cd15c15e1e8ddd1689420b714bfdf185da9"
+          "https://github.com/tamird/gvisor/commit/062f3cd15c15e1e8ddd1689420b714bfdf185da9",
+          "https://app.buildbuddy.io/invocation/5d3653c1-2c1d-48af-94a7-56b1e62dc950"
         ],
-        "reviewedAt": "2026-10-06T22:52:03.754884+00:00",
+        "reviewedAt": "2026-10-06T23:02:53.446257+00:00",
         "sourceHead": "321eb47673d6bfd6ab2a09dead1e75c540d43db5"
       }
     }
