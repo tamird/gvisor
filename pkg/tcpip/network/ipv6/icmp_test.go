@@ -16,7 +16,6 @@ package ipv6
 
 import (
 	"bytes"
-	"net"
 	"reflect"
 	"strings"
 	"testing"
@@ -34,6 +33,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/link/sniffer"
 	"gvisor.dev/gvisor/pkg/tcpip/prependable"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+	"gvisor.dev/gvisor/pkg/tcpip/testutil"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/icmp"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
 	"gvisor.dev/gvisor/pkg/waiter"
@@ -234,14 +234,14 @@ func TestICMPEchoDefaultHandlerControlsReply(t *testing.T) {
 		localAddr = tcpip.ProtocolAddress{
 			Protocol: ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("a::1").To16()),
+				Address:   testutil.MustParse6("a::1"),
 				PrefixLen: 64,
 			},
 		}
 		remoteAddr = tcpip.ProtocolAddress{
 			Protocol: ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("a::2").To16()),
+				Address:   testutil.MustParse6("a::2"),
 				PrefixLen: 64,
 			},
 		}
@@ -364,14 +364,14 @@ func TestICMPEchoRegisteredEndpointDoesNotSuppressReply(t *testing.T) {
 	localAddr := tcpip.ProtocolAddress{
 		Protocol: ProtocolNumber,
 		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("a::1").To16()),
+			Address:   testutil.MustParse6("a::1"),
 			PrefixLen: 64,
 		},
 	}
 	remoteAddr := tcpip.ProtocolAddress{
 		Protocol: ProtocolNumber,
 		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice(net.ParseIP("a::2").To16()),
+			Address:   testutil.MustParse6("a::2"),
 			PrefixLen: 64,
 		},
 	}
@@ -1614,14 +1614,14 @@ func TestPacketQueing(t *testing.T) {
 		host1IPv6Addr = tcpip.ProtocolAddress{
 			Protocol: ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("a::1").To16()),
+				Address:   testutil.MustParse6("a::1"),
 				PrefixLen: 64,
 			},
 		}
 		host2IPv6Addr = tcpip.ProtocolAddress{
 			Protocol: ProtocolNumber,
 			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   tcpip.AddrFromSlice(net.ParseIP("a::2").To16()),
+				Address:   testutil.MustParse6("a::2"),
 				PrefixLen: 64,
 			},
 		}

@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"net"
 	"sort"
 	"testing"
 	"time"
@@ -4584,8 +4583,8 @@ func TestFindRouteWithForwarding(t *testing.T) {
 		remoteAddr:         remoteAddr,
 	}
 
-	globalIPv6Addr1 := tcpip.AddrFrom16Slice(net.ParseIP("a::1").To16())
-	globalIPv6Addr2 := tcpip.AddrFrom16Slice(net.ParseIP("a::2").To16())
+	globalIPv6Addr1 := testutil.MustParse6("a::1")
+	globalIPv6Addr2 := testutil.MustParse6("a::2")
 
 	ipv6LinkLocalNIC1WithGlobalRemote := netCfg{
 		proto:              ipv6.ProtocolNumber,
