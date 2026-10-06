@@ -29,7 +29,7 @@ import (
 // Setup starts the container with runner copied into /runner and exchanges IP
 // addresses before returning. Setup, log collection and removal each receive
 // their own timeout; callers must create a separate context for test traffic.
-func Setup(t *testing.T, timeout time.Duration, opts dockerutil.RunOpts, runner string, ipv6 bool, port int, args ...string) (*dockerutil.Container, netip.Addr) {
+func Setup(t *testing.T, timeout time.Duration, opts dockerutil.RunOpts, runner string, ipv6 bool, port uint16, args ...string) (*dockerutil.Container, netip.Addr) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(t.Context(), timeout)
 	defer cancel()
