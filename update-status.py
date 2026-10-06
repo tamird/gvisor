@@ -68,9 +68,12 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
             text=True, capture_output=True, check=False, timeout=60,
         )
         if result.returncode:
-            # Retry this read-only query once for a TLS transport failure.
-            if attempt == 0 and requests < REQUEST_LIMIT and "net/http: TLS handshake timeout" in result.stderr:
-                print("GitHub TLS handshake timed out; retrying once within the request cap", file=sys.stderr)
+            # Retry this read-only query once for an interrupted transport.
+            interrupted = any(error in result.stderr for error in (
+                "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
+            ))
+            if attempt == 0 and requests < REQUEST_LIMIT and interrupted:
+                print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
                 continue
             raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
         response = json.loads(result.stdout)
