@@ -49,10 +49,10 @@ def main() -> None:
         work = Path(tmp)
         source = work / "source"
         source.mkdir()
-        for number, name in enumerate(names):
+        for name in names:
             target = source / name
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copyfile(manifest.parent / "files" / str(number), target)
+            shutil.copyfile(manifest.parent / "files" / (name + ".source"), target)
         shutil.copyfile(manifest, output / "sources.json")
 
         # The Python extractor discovers its interpreter through PATH. Use the

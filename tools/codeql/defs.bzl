@@ -71,9 +71,9 @@ _ATTRS = {
     "language": attr.string(mandatory = True, values = ["go", "javascript", "python", "ruby"]),
     "_bundle": attr.label(default = "@codeql_bundle//:files"),
     "_codeql": attr.label(default = "@codeql_bundle//:codeql", allow_single_file = True),
-    "_manifest": attr.label(default = "@codeql_sources//:manifest.json", allow_single_file = True),
+    "_manifest": attr.label(default = "@analysis_sources//:manifest.json", allow_single_file = True),
     "_runner": attr.label(default = "//tools/codeql:analyze", executable = True, cfg = "exec"),
-    "_sources": attr.label(default = "@codeql_sources//:files"),
+    "_sources": attr.label(default = "@analysis_sources//:files"),
 }
 
 def _with_analysis_platform(rule):

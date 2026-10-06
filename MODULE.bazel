@@ -1260,9 +1260,9 @@ filegroup(name = "files", srcs = glob(["**"], exclude = ["BUILD.bazel"]))
     urls = ["https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.27.1/codeql-bundle-linux64.tar.gz"],
 )
 
-analysis_sources = use_repo_rule("//tools/codeql:repositories.bzl", "analysis_sources")
+analysis_sources = use_repo_rule("//tools/source_inputs:repositories.bzl", "analysis_sources")
 
-analysis_sources(name = "codeql_sources")
+analysis_sources(name = "analysis_sources")
 
 http_archive(
     name = "libpluginstack",
@@ -1488,7 +1488,7 @@ module_proxy(
     goarch = "amd64",
     goos = "linux",
     resolved_modules = "@bazel_gazelle_go_repository_config//:modules.json",
-    source_manifest = "@codeql_sources//:manifest.json",
+    source_manifest = "@analysis_sources//:manifest.json",
 )
 
 use_repo(

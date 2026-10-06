@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Declare the complete tracked source input for static analysis."""
+"""Declare indexed source inputs with their current contents."""
 
 def _git(ctx, root, args):
     git = ctx.which("git")
@@ -38,6 +38,7 @@ def _analysis_sources_impl(ctx):
         ctx.watch(shared_index)
 
     names = []
+    mirrored = []
     for entry in _git(ctx, root, ["ls-files", "--stage", "-z"]).split("\000"):
         if not entry:
             continue
@@ -52,19 +53,27 @@ def _analysis_sources_impl(ctx):
         if not str(source.realpath).startswith(str(root.realpath) + "/"):
             fail("Analysis source resolves outside the checkout: " + name)
 
-        # Flat names avoid turning the source BUILD files into nested packages.
-        # The action restores paths, but only needs current file contents, not
-        # executable bits or symlink metadata. Files remain ordinary Bazel inputs.
-        ctx.symlink(source, "files/" + str(len(names)))
+        # A suffix keeps source BUILD files from defining Bazel packages while
+        # stable paths avoid invalidating every input when index membership changes.
+        mirrored.append("files/" + name + ".source")
         names.append(name)
     if not names:
         fail("No tracked analysis sources found")
+    mirrors = {name: True for name in mirrored}
+    for name, mirror in zip(names, mirrored):
+        parts = mirror.split("/")
+        for i in range(1, len(parts)):
+            if "/".join(parts[:i]) in mirrors:
+                fail("Source file/directory collision after adding .source: " + name)
+        ctx.symlink(root.get_child(name), mirror)
+
     ctx.file("manifest.json", json.encode(names))
-    ctx.file("BUILD.bazel", """
-package(default_visibility = ["//visibility:public"])
-exports_files(["manifest.json"])
-filegroup(name = "files", srcs = glob(["files/*"]))
-""")
+    exports = ["manifest.json"] + mirrored
+    ctx.file("BUILD.bazel", "\n".join([
+        "package(default_visibility = %s)" % repr(["//visibility:public"]),
+        "exports_files(%s)" % repr(exports),
+        "filegroup(name = %s, srcs = %s)" % (repr("files"), repr(mirrored)),
+    ]) + "\n")
 
 analysis_sources = repository_rule(
     implementation = _analysis_sources_impl,

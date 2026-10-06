@@ -112,8 +112,8 @@ def _module_proxy_impl(ctx):
         # Watch each file so content edits invalidate resolution even when
         # the manifest's indexed path list remains unchanged.
         manifest = ctx.path(ctx.attr.source_manifest)
-        for number, name in enumerate(json.decode(ctx.read(manifest))):
-            source = manifest.dirname.get_child("files", str(number))
+        for name in json.decode(ctx.read(manifest)):
+            source = manifest.dirname.get_child("files", name + ".source")
             ctx.watch(source)
             ctx.symlink(source, "source/" + name)
 
@@ -221,7 +221,7 @@ module_proxy = repository_rule(
         "go_mod": attr.label(mandatory = True, allow_single_file = True),
         "go_sum": attr.label(mandatory = True, allow_single_file = True),
         "resolved_modules": attr.label(allow_single_file = True, doc = "Optional Gazelle module archive metadata for a distinct analysis profile; does not apply Bazel dependency source patches."),
-        "source_manifest": attr.label(allow_single_file = True, doc = "Indexed analysis paths with numbered files alongside the manifest; required with resolved_modules."),
+        "source_manifest": attr.label(allow_single_file = True, doc = "Indexed analysis paths with files/<path>.source alongside the manifest; required with resolved_modules."),
         "packages": attr.string_list(doc = "Optional exact package roots in go_mod's source tree; empty resolves the full module graph."),
         "goos": attr.string(doc = "GOOS for package selection."),
         "goarch": attr.string(doc = "GOARCH for package selection."),
