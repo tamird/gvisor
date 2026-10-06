@@ -62,6 +62,29 @@ var allowedSyscalls = seccomp.MakeSyscallRules(map[uintptr]seccomp.SyscallRule{
 			seccomp.EqualTo(unix.F_ADD_SEALS),
 		},
 	},
+	// DirectFS still delegates socket and symlink xattrs to the gofer.
+	unix.SYS_FGETXATTR: seccomp.PerArg{
+		seccomp.NonNegativeFD{},
+		seccomp.AnyValue{},
+		seccomp.AnyValue{},
+		seccomp.AnyValue{},
+	},
+	unix.SYS_FLISTXATTR: seccomp.PerArg{
+		seccomp.NonNegativeFD{},
+		seccomp.AnyValue{},
+		seccomp.AnyValue{},
+	},
+	unix.SYS_FREMOVEXATTR: seccomp.PerArg{
+		seccomp.NonNegativeFD{},
+		seccomp.AnyValue{},
+	},
+	unix.SYS_FSETXATTR: seccomp.PerArg{
+		seccomp.NonNegativeFD{},
+		seccomp.AnyValue{},
+		seccomp.AnyValue{},
+		seccomp.AnyValue{},
+		seccomp.AnyValue{},
+	},
 	unix.SYS_STATX: seccomp.PerArg{
 		seccomp.NonNegativeFD{},
 		seccomp.AnyValue{},
@@ -252,28 +275,6 @@ var lisafsFilters = seccomp.MakeSyscallRules(map[uintptr]seccomp.SyscallRule{
 	unix.SYS_FALLOCATE: seccomp.PerArg{
 		seccomp.AnyValue{},
 		seccomp.EqualTo(0),
-	},
-	unix.SYS_FGETXATTR: seccomp.PerArg{
-		seccomp.NonNegativeFD{},
-		seccomp.AnyValue{},
-		seccomp.AnyValue{},
-		seccomp.AnyValue{},
-	},
-	unix.SYS_FLISTXATTR: seccomp.PerArg{
-		seccomp.NonNegativeFD{},
-		seccomp.AnyValue{},
-		seccomp.AnyValue{},
-	},
-	unix.SYS_FREMOVEXATTR: seccomp.PerArg{
-		seccomp.NonNegativeFD{},
-		seccomp.AnyValue{},
-	},
-	unix.SYS_FSETXATTR: seccomp.PerArg{
-		seccomp.NonNegativeFD{},
-		seccomp.AnyValue{},
-		seccomp.AnyValue{},
-		seccomp.AnyValue{},
-		seccomp.AnyValue{},
 	},
 	unix.SYS_FSTATFS:    seccomp.MatchAll{},
 	unix.SYS_GETDENTS64: seccomp.MatchAll{},
