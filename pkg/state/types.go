@@ -92,7 +92,7 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 // lookupNameFields extracts the name and fields from an object.
 func lookupNameFields(typ reflect.Type) (string, []string, bool) {
 	v := reflect.Zero(reflect.PtrTo(typ)).Interface()
-	t, ok := v.(Type)
+	t, ok := stateObject(v).(Type)
 	if !ok {
 		// Is this a primitive?
 		if typ.Kind() == reflect.Interface {
@@ -336,8 +336,13 @@ func Release() {
 //
 // This must be called on init and only done once.
 func Register(t Type) {
+	register(t, reflect.TypeOf(t))
+}
+
+// register associates the state methods with the type restored from an
+// interface. For an external type, t provides its methods through an adapter.
+func register(t Type, typ reflect.Type) {
 	name := t.StateTypeName()
-	typ := reflect.TypeOf(t)
 	if raceEnabled {
 		assertValidType(name, t.StateFields())
 		// Register must always be called on pointers.
