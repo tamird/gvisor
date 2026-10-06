@@ -102,12 +102,12 @@ limit, pass `--jobs` after `--config=rbe` or `--config=rbe-arm64`.
 The `workflows` lane runs the declared actionlint check and the existing GitHub
 and Buildkite schema tests. Actionlint uses the same workflow inputs as the
 GitHub schema check; `tools/lint.sh actions` invokes that same Bazel owner.
-The separate `lint` lane calls `make lint DOCKER_BUILD=false`: five existing
-formatting and spelling checks run on the hosted coordinator, while actionlint
-runs as its declared remote test. The existing lint installer retains its tool
-versions, tracked-file selection, configuration discovery and canonical caches.
-The dispatcher supplies the declared Go SDK to bootstrap that installer. The
-`lint-cc` lane calls `make lint-cc DOCKER_BUILD=false`, retaining its configured
+The separate `lint` lane runs five declared formatting and spelling tests
+concurrently, including alongside other `--arch=all` lanes on AMD64 workers.
+Their tools and checker-specific indexed sources are Bazel inputs;
+configuration files retain their project-relative paths. `make lint-fix` uses
+the same selection and formatter implementation with host-native executables.
+The `lint-cc` lane calls `make lint-cc DOCKER_BUILD=false`, retaining its configured
 compile actions and declared remote clang-tidy tool.
 
 The `governance` lane runs `//governance:generated_files_test`. The existing
