@@ -17,6 +17,7 @@ package testbench
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"testing"
 	"time"
 
@@ -56,12 +57,10 @@ func (n *DUTTestNet) pickPort(domain, typ int) (fd int, port uint16, err error) 
 	var sa unix.Sockaddr
 	switch domain {
 	case unix.AF_INET:
-		var sa4 unix.SockaddrInet4
-		copy(sa4.Addr[:], n.LocalIPv4)
+		sa4 := unix.SockaddrInet4{Addr: n.LocalIPv4.As4()}
 		sa = &sa4
 	case unix.AF_INET6:
-		sa6 := unix.SockaddrInet6{ZoneId: n.LocalDevID}
-		copy(sa6.Addr[:], n.LocalIPv6)
+		sa6 := unix.SockaddrInet6{Addr: n.LocalIPv6.As16(), ZoneId: n.LocalDevID}
 		sa = &sa6
 	default:
 		return -1, 0, fmt.Errorf("invalid domain %d, it should be one of unix.AF_INET or unix.AF_INET6", domain)
@@ -162,8 +161,8 @@ var _ layerState = (*ipv4State)(nil)
 
 // newIPv4State creates a new ipv4State.
 func (n *DUTTestNet) newIPv4State(out, in IPv4) (*ipv4State, error) {
-	lIP := n.LocalIPv4
-	rIP := n.RemoteIPv4
+	lIP := net.IP(n.LocalIPv4.AsSlice())
+	rIP := net.IP(n.RemoteIPv4.AsSlice())
 	s := ipv4State{
 		out: IPv4{SrcAddr: &lIP, DstAddr: &rIP},
 		in:  IPv4{SrcAddr: &rIP, DstAddr: &lIP},
@@ -207,8 +206,8 @@ var _ layerState = (*ipv6State)(nil)
 
 // newIPv6State creates a new ipv6State.
 func (n *DUTTestNet) newIPv6State(out, in IPv6) (*ipv6State, error) {
-	lIP := n.LocalIPv6
-	rIP := n.RemoteIPv6
+	lIP := net.IP(n.LocalIPv6.AsSlice())
+	rIP := net.IP(n.RemoteIPv6.AsSlice())
 	s := ipv6State{
 		out: IPv6{SrcAddr: &lIP, DstAddr: &rIP},
 		in:  IPv6{SrcAddr: &rIP, DstAddr: &lIP},

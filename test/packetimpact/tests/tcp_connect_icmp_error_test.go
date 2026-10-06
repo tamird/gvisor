@@ -56,7 +56,7 @@ func TestTCPConnectICMPError(t *testing.T) {
 	conn := dut.Net.NewTCPIPv4(t, testbench.TCP{SrcPort: &port, DstPort: &clientPort}, testbench.TCP{SrcPort: &clientPort, DstPort: &port})
 	defer conn.Close(t)
 	sa := unix.SockaddrInet4{Port: int(port)}
-	copy(sa.Addr[:], dut.Net.LocalIPv4)
+	sa.Addr = dut.Net.LocalIPv4.As4()
 	// Bring the dut to SYN-SENT state with a non-blocking connect.
 	dut.Connect(t, clientFD, &sa)
 	tcp, err := conn.Expect(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagSyn)}, time.Second)

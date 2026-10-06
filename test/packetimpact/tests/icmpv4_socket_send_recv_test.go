@@ -17,6 +17,7 @@ package generic_dgram_socket_send_recv_test
 import (
 	"context"
 	"net"
+	"net/netip"
 	"testing"
 	"time"
 
@@ -39,14 +40,14 @@ type icmpV4TestEnv struct {
 
 type icmpV4Test struct{}
 
-func (test *icmpV4Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) icmpV4TestEnv {
+func (test *icmpV4Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) icmpV4TestEnv {
 	t.Helper()
 
 	// Tell the DUT to create a socket.
 	var socketFD int32
 	var ident uint16
 
-	if bindTo != nil {
+	if bindTo.IsValid() {
 		socketFD, ident = dut.CreateBoundSocket(t, unix.SOCK_DGRAM, unix.IPPROTO_ICMP, bindTo)
 	} else {
 		// An unbound socket will auto-bind to INADDR_ANY.
@@ -66,7 +67,12 @@ func (test *icmpV4Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo ne
 		conn.Close(t)
 	})
 
-	dstAddr := sendTo.To4()
+	// An incompatible IPv6 destination has no expected IPv4 address. Keep
+	// the raw layer's nil address wildcard for those socket error cases.
+	var dstAddr net.IP
+	if sendTo.Is4() {
+		dstAddr = sendTo.AsSlice()
+	}
 	return icmpV4TestEnv{
 		socketFD: socketFD,
 		ident:    ident,
@@ -80,14 +86,14 @@ func (test *icmpV4Test) setup(t *testing.T, dut testbench.DUT, bindTo, sendTo ne
 	}
 }
 
-func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) {
-	if bindTo.To4() == nil || isBroadcastOrMulticast(dut, bindTo) {
+func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) {
+	if !bindTo.Is4() || isBroadcastOrMulticast(dut, bindTo) {
 		// ICMPv4 sockets cannot bind to IPv6, broadcast, or multicast
 		// addresses.
 		return
 	}
 
-	isV4 := sendTo.To4() != nil
+	isV4 := sendTo.Is4()
 
 	// TODO(gvisor.dev/issue/5681): Remove this case once ICMP sockets allow
 	// sending to broadcast and multicast addresses.
@@ -101,7 +107,7 @@ func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 	expectNetworkUnreachable := true
 	// We don't expect ENETUNREACH if any of the following is true:
 	// 1. bindTo is specified.
-	if !bindTo.Equal(net.IPv4zero) {
+	if bindTo != netip.IPv4Unspecified() {
 		expectNetworkUnreachable = false
 	}
 	// 2. We are binding to a device.
@@ -109,7 +115,7 @@ func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 		expectNetworkUnreachable = false
 	}
 	// 3. sendTo is neither 224.0.0.1 nor 255.255.255.255.
-	if !sendTo.Equal(net.IPv4bcast) && !sendTo.Equal(net.IPv4allsys) {
+	if sendTo != netip.MustParseAddr("255.255.255.255") && sendTo != netip.MustParseAddr("224.0.0.1") {
 		expectNetworkUnreachable = false
 	}
 
@@ -120,7 +126,7 @@ func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 		expectPacket = false
 	}
 	// 2. sendTo is the dut itself.
-	if sendTo.Equal(dut.Net.RemoteIPv4) {
+	if sendTo == dut.Net.RemoteIPv4 {
 		expectPacket = false
 	}
 	// 3. we are expecting ENETUNREACH.
@@ -145,7 +151,9 @@ func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 				t.Fatalf("icmpLayer.ToBytes() = %s", err)
 			}
 			destSockaddr := unix.SockaddrInet4{}
-			copy(destSockaddr.Addr[:], sendTo.To4())
+			if isV4 {
+				destSockaddr.Addr = sendTo.As4()
+			}
 
 			// Tell the DUT to send a packet out the ICMP socket.
 			ret, err := dut.SendToWithErrno(context.Background(), t, env.socketFD, bytes, 0, &destSockaddr)
@@ -175,18 +183,18 @@ func (test *icmpV4Test) Send(t *testing.T, dut testbench.DUT, bindTo, sendTo net
 	}
 }
 
-func (test *icmpV4Test) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo net.IP, bindToDevice bool) {
-	if bindTo.To4() == nil || isBroadcastOrMulticast(dut, bindTo) {
+func (test *icmpV4Test) Receive(t *testing.T, dut testbench.DUT, bindTo, sendTo netip.Addr, bindToDevice bool) {
+	if !bindTo.Is4() || isBroadcastOrMulticast(dut, bindTo) {
 		// ICMPv4 sockets cannot bind to IPv6, broadcast, or multicast
 		// addresses.
 		return
 	}
 
-	expectPacket := (bindTo.Equal(dut.Net.RemoteIPv4) || bindTo.Equal(net.IPv4zero)) && sendTo.Equal(dut.Net.RemoteIPv4)
+	expectPacket := (bindTo == dut.Net.RemoteIPv4 || bindTo == netip.IPv4Unspecified()) && sendTo == dut.Net.RemoteIPv4
 
 	// TODO(gvisor.dev/issue/5763): Remove this if statement once gVisor
 	// restricts ICMP sockets to receive only from unicast addresses.
-	if (dut.Uname.IsGvisor() || dut.Uname.IsFuchsia()) && bindTo.Equal(net.IPv4zero) && isBroadcastOrMulticast(dut, sendTo) {
+	if (dut.Uname.IsGvisor() || dut.Uname.IsFuchsia()) && bindTo == netip.IPv4Unspecified() && isBroadcastOrMulticast(dut, sendTo) {
 		expectPacket = true
 	}
 
