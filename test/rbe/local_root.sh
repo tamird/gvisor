@@ -24,8 +24,14 @@ out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
 cleanup() {
   local status=$?
   trap - EXIT
+  local outputs=("$out")
+  # Go tests write XML as root; Bazel must own it to normalize output permissions.
+  # Other tests leave XML generation to Bazel after this fixture exits.
+  if [[ -e ${XML_OUTPUT_FILE:?} || -L $XML_OUTPUT_FILE ]]; then
+    outputs+=("$XML_OUTPUT_FILE")
+  fi
   # Do not follow output symlinks or change ownership elsewhere in the cache.
-  if ! chown -hR "$SUDO_UID:$SUDO_GID" -- "$out"; then
+  if ! chown -hR "$SUDO_UID:$SUDO_GID" -- "${outputs[@]}"; then
     printf 'Failed to return test output ownership to Bazel.\n' >&2
     if (( status == 0 )); then status=1; fi
   fi
