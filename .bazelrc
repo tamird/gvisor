@@ -46,6 +46,8 @@ build --build_tag_filters=-nogo
 # Select the ordinary syscall tests used by public CI.
 build:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
 build:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
+build:syscalls-arm64-64k --test_tag_filters=-allsave,runsc_systrap
+build:syscalls-arm64-64k --//tools/bazeldefs:page_size=64k
 
 # Keep Nogo selection shared by analysis, tests and make nogo-tests.
 build:nogo --test_tag_filters=nogo --build_tests_only

@@ -2,7 +2,7 @@
 
 load("@bazel_skylib//:bzl_library.bzl", _bzl_library = "bzl_library")
 load("@bazel_skylib//rules:build_test.bzl", _build_test = "build_test")
-load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag")
+load("@bazel_skylib//rules:common_settings.bzl", _BuildSettingInfo = "BuildSettingInfo", _bool_flag = "bool_flag", _string_flag = "string_flag")
 load("@bazel_skylib//rules:expand_template.bzl", _expand_template = "expand_template")
 load("@bazel_skylib//rules:native_binary.bzl", _native_test = "native_test")
 load("@bazel_skylib//rules/directory:providers.bzl", "DirectoryInfo")
@@ -15,6 +15,7 @@ load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test
 
 bzl_library = _bzl_library
 bool_flag = _bool_flag
+string_flag = _string_flag
 BuildSettingInfo = _BuildSettingInfo
 expand_template = _expand_template
 

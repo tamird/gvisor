@@ -225,7 +225,7 @@ analyze_profile() {
 select_test_profile() {
   local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
   shift 4
-  local -a selection_options=()
+  local -a selection_options=() page_size_options=()
   prefix=$selection_dir/$lane-$target_arch
   if [[ $target_arch == arm64 ]]; then
     target_config=aarch64
@@ -233,17 +233,20 @@ select_test_profile() {
   if [[ $lane == syscalls* ]]; then
     selection_options=(--syscall-policy)
   fi
+  if [[ $lane == syscalls-64k ]]; then
+    page_size_options=(--page-size=64k)
+  fi
   analyze_profile "$roots" "$prefix-profile.json" \
     --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
-    "$prefix-profile.json" "$target_arch" > "$prefix.query"
+    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" > "$prefix.query"
   bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
     --output=jsonproto --include_artifacts=false \
     "--build_event_json_file=$prefix-routing.json" \
     "--query_file=$prefix.query" > "$prefix-actions.json"
   python3 test/rbe/unit_matrix.py select-profile \
     "$prefix-profile.json" "$target_arch" "$prefix-routing.json" \
-    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}"
+    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}" "${page_size_options[@]}"
 }
 
 select_syscall_profile() {
@@ -251,6 +254,7 @@ select_syscall_profile() {
   local -a profile_options=()
   case "$lane" in
     syscalls) profile_options=("--config=syscalls-$syscall_arch") ;;
+    syscalls-64k) profile_options=(--config=syscalls-arm64-64k) ;;
     syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
     syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
     *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
@@ -404,6 +408,7 @@ run_platform_matrix() (
         include_syscalls=true
         select_syscall_profile "$selection_dir" "$lane" amd64
         select_syscall_profile "$selection_dir" "$lane" arm64
+        select_syscall_profile "$selection_dir" syscalls-64k arm64
         if [[ $include_unit == true || $explicit_unit == true || $include_checkpoints == true ]]; then
           # Global -allsave would discard the explicitly requested checkpoint
           # profiles. Use their separately selected owners in a combined run.
@@ -419,6 +424,7 @@ run_platform_matrix() (
           fi
         fi
         cat "$selection_dir/syscalls-arm64-targets" >> "$selection_dir/explicit-targets"
+        cat "$selection_dir/syscalls-64k-arm64-targets" >> "$selection_dir/explicit-targets"
         ;;
       syscalls-save|syscalls-resume)
         include_syscalls=true

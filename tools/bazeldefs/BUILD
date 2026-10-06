@@ -1,6 +1,6 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
-load("//tools:defs.bzl", "bool_flag", "bzl_library")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag")
 load(":platforms.bzl", "docker_exec_properties")
 
 package(
@@ -193,10 +193,21 @@ genrule(
     visibility = ["//:sandbox"],
 )
 
+# A build setting lets individual test targets select their page size without
+# changing unrelated --define values in the same invocation.
+string_flag(
+    name = "page_size",
+    build_setting_default = "4k",
+    values = [
+        "4k",
+        "64k",
+    ],
+)
+
 # Page size configurations for ARM64
 config_setting(
     name = "pagesize_64k",
-    define_values = {"pagesize": "64k"},
+    flag_values = {":page_size": "64k"},
 )
 
 # Combined config: ARM64 with 64K page size
@@ -205,5 +216,5 @@ config_setting(
     constraint_values = [
         "@platforms//cpu:aarch64",
     ],
-    define_values = {"pagesize": "64k"},
+    flag_values = {":page_size": "64k"},
 )

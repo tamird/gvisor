@@ -227,14 +227,24 @@ def container_platform_targets(events_path: str) -> list[str]:
     return sorted(selected)
 
 
-def profile_targets(events_path: str, architecture: str) -> list[str]:
+def profile_suffix(architecture: str, page_size: str) -> str:
+    if page_size == "64k":
+        if architecture != "arm64":
+            raise ValueError("The public 64K syscall profile requires ARM64")
+        return "_64k_arm64"
+    return "_arm64" if architecture == "arm64" else ""
+
+
+def profile_targets(events_path: str, architecture: str, page_size: str = "4k") -> list[str]:
     targets = configured_tests(events_path)
-    if architecture == "amd64":
+    suffix = profile_suffix(architecture, page_size)
+    if not suffix:
         return sorted(targets)
-    missing = sorted(label for label, target in targets.items() if "rbe-has-arm64-variant" not in target.tags)
+    tag = "rbe-has" + suffix.replace("_", "-") + "-variant"
+    missing = sorted(label for label, target in targets.items() if tag not in target.tags)
     if missing:
-        raise ValueError(f"Profile owners without ARM64 variants: {missing}")
-    return sorted(label + "_arm64" for label in targets)
+        raise ValueError(f"Profile owners without {suffix} variants: {missing}")
+    return sorted(label + suffix for label in targets)
 
 
 def select_profile(
@@ -245,9 +255,10 @@ def select_profile(
     output_path: str,
     *,
     syscall_policy: bool,
+    page_size: str = "4k",
 ) -> None:
     original = configured_tests(profile_path)
-    expected = set(profile_targets(profile_path, architecture))
+    expected = set(profile_targets(profile_path, architecture, page_size))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
         raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
@@ -261,19 +272,22 @@ def select_profile(
     unavailable: dict[str, str] = {}
     policy_excluded: dict[str, str] = {}
     for label, target in original.items():
-        variant = label if architecture == "amd64" else label + "_arm64"
+        variant = label + profile_suffix(architecture, page_size)
         # The standalone RBE syscall lane also leaves Nogo to its own lane.
         # Keep this policy distinct from unavailable runtime capabilities.
         if syscall_policy and "nogo" in target.tags:
             policy_excluded[variant] = "Nogo runs in the dedicated nogo lane."
         elif syscall_policy and "runsc_kvm" in target.tags:
             unavailable[variant] = "KVM execution is unavailable."
+        elif page_size == "64k":
+            unavailable[variant] = "ARM64 64K-page syscall execution has no supported remote worker configuration."
         elif architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
     selected = sorted(expected - unavailable.keys() - policy_excluded.keys())
     Path(output_path).write_text("".join(label + "\n" for label in selected))
     print(json.dumps({
         "profile_architecture": architecture,
+        "profile_page_size": page_size,
         "canonical_profile": profile_path,
         "canonical_owners": sorted(original),
         "selected_owners": selected,
@@ -343,9 +357,11 @@ def main() -> None:
         profile = commands.add_parser(command)
         profile.add_argument("events")
         profile.add_argument("architecture", choices=("amd64", "arm64"))
+        profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
     profile = commands.add_parser("select-profile")
     profile.add_argument("profile")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
+    profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
     for name in ("events", "actions", "output"):
         profile.add_argument(name)
     profile.add_argument("--syscall-policy", action="store_true", help="Apply the existing syscall runtime exclusions")
@@ -392,11 +408,11 @@ def main() -> None:
             "limitation": "KVM identities come from loading only; their configurations and execution remain unqualified.",
         }, indent=2))
     elif args.command == "profile-actions":
-        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture)) + ")")
+        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size)) + ")")
     elif args.command == "profile-targets":
-        print("\n".join(profile_targets(args.events, args.architecture)))
+        print("\n".join(profile_targets(args.events, args.architecture, args.page_size)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:

@@ -24,6 +24,7 @@ def _compile_runner_test(compile_exec_compatible_with, **kwargs):
 
 runner_amd64_test, _runner_amd64_transition = with_test_architecture(_compile_runner_test, "amd64", extra_providers = [testing.ExecutionInfo]).build()
 runner_arm64_test, _runner_arm64_transition = with_test_architecture(_compile_runner_test, "arm64", extra_providers = [testing.ExecutionInfo]).build()
+runner_arm64_64k_test, _runner_arm64_64k_transition = with_test_architecture(_compile_runner_test, "arm64", extra_providers = [testing.ExecutionInfo]).set(Label("//tools/bazeldefs:page_size"), "64k").build()
 
 def _syscall_test(
         test,
@@ -159,6 +160,11 @@ def _syscall_test(
     # Preserve explicit caller properties, including configurable values.
     kwargs.setdefault("exec_properties", syscall_test_exec_properties(platform, network_tools, memory))
 
+    # Match the public ARM64 64K lane: systrap without checkpoint variants.
+    arm64_64k = platform == "systrap" and "allsave" not in tags
+    if arm64_64k:
+        tags.append("rbe-has-64k-arm64-variant")
+
     attributes = dict(kwargs)
     attributes.update(
         test = test,
@@ -174,6 +180,13 @@ def _syscall_test(
         {"amd64": runner_amd64_test, "arm64": runner_arm64_test},
         dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
     )
+    if arm64_64k:
+        test_architecture_variants(
+            name + "_64k",
+            ["arm64"],
+            {"arm64": runner_arm64_64k_test},
+            dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
+        )
 
 def all_platforms():
     """All platforms returns a list of all platforms."""
