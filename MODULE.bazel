@@ -1676,6 +1676,7 @@ use_repo(
     "org_golang_x_mod",
     "org_golang_x_net",
     "org_golang_x_oauth2",
+    "org_golang_x_perf",
     "org_golang_x_sync",
     "org_golang_x_sys",
     "org_golang_x_telemetry",
@@ -1721,6 +1722,19 @@ go_deps.module(
     path = "golang.org/x/mod",
     sum = "h1:JJjpVx6myfUsUdAzZuOSTTmRE0PfZeNWzzvKrP7amb4=",
     version = "v0.36.0",
+)
+go_deps.module(
+    indirect = True,
+    path = "github.com/aclements/go-moremath",
+    sum = "h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=",
+    version = "v0.0.0-20210112150236-f10218a38794",
+)
+
+# Benchmark reporting for this core-address validation branch only.
+go_deps.module(
+    path = "golang.org/x/perf",
+    sum = "h1:nyQ/b4GTH65GoH7T/JFxssBadcBB57DTy6JNyQEfZBA=",
+    version = "v0.0.0-20260929162123-406019bb8b68",
 )
 go_deps.module(
     path = "golang.org/x/sync",
