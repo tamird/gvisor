@@ -16,9 +16,7 @@ package tcpip
 
 import (
 	"bytes"
-	"fmt"
 	"io"
-	"net"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -170,60 +168,6 @@ func TestSubnetCreationDifferentLength(t *testing.T) {
 	}
 }
 
-func TestAddressString(t *testing.T) {
-	for _, want := range []string{
-		// Taken from stdlib.
-		"2001:db8::123:12:1",
-		"2001:db8::1",
-		"2001:db8:0:1:0:1:0:1",
-		"2001:db8:1:0:1:0:1:0",
-		"2001::1:0:0:1",
-		"2001:db8:0:0:1::",
-		"2001:db8::1:0:0:1",
-		"2001:db8::a:b:c:d",
-
-		// Leading zeros.
-		"::1",
-		// Trailing zeros.
-		"8::",
-		// No zeros.
-		"1:1:1:1:1:1:1:1",
-		// Longer sequence is after other zeros, but not at the end.
-		"1:0:0:1::1",
-		// Longer sequence is at the beginning, shorter sequence is at
-		// the end.
-		"::1:1:1:0:0",
-		// Longer sequence is not at the beginning, shorter sequence is
-		// at the end.
-		"1::1:1:0:0",
-		// Longer sequence is at the beginning, shorter sequence is not
-		// at the end.
-		"::1:1:0:0:1",
-		// Neither sequence is at an end, longer is after shorter.
-		"1:0:0:1::1",
-		// Shorter sequence is at the beginning, longer sequence is not
-		// at the end.
-		"0:0:1:1::1",
-		// Shorter sequence is at the beginning, longer sequence is at
-		// the end.
-		"0:0:1:1:1::",
-		// Short sequences at both ends, longer one in the middle.
-		"0:1:1::1:1:0",
-		// Short sequences at both ends, longer one in the middle.
-		"0:1::1:0:0",
-		// Short sequences at both ends, longer one in the middle.
-		"0:0:1::1:0",
-		// Longer sequence surrounded by shorter sequences, but none at
-		// the end.
-		"1:0:1::1:0:1",
-	} {
-		addr := AddrFromSlice(net.ParseIP(want))
-		if got := addr.String(); got != want {
-			t.Errorf("Address(%x).String() = '%s', want = '%s'", addr, got, want)
-		}
-	}
-}
-
 func TestAddressWithPrefixSubnet(t *testing.T) {
 	tests := []struct {
 		addr       string
@@ -255,86 +199,45 @@ func TestAddressWithPrefixSubnet(t *testing.T) {
 	}
 }
 
-func TestAddressUnspecified(t *testing.T) {
-	tests := []struct {
-		addr        string
-		unspecified bool
-	}{
-		{
-			addr:        "",
-			unspecified: true,
-		},
-		{
-			addr:        "\x00",
-			unspecified: true,
-		},
-		{
-			addr:        "\x01",
-			unspecified: false,
-		},
-		{
-			addr:        "\x00\x00",
-			unspecified: true,
-		},
-		{
-			addr:        "\x01\x00",
-			unspecified: false,
-		},
-		{
-			addr:        "\x00\x01",
-			unspecified: false,
-		},
-		{
-			addr:        "\x01\x01",
-			unspecified: false,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("addr=%s", test.addr), func(t *testing.T) {
-			if got := AddrFromSlice(padTo4(test.addr)).Unspecified(); got != test.unspecified {
-				t.Fatalf("got addr.Unspecified() = %t, want = %t", got, test.unspecified)
-			}
-		})
-	}
-}
-
 func TestAddressMatchingPrefix(t *testing.T) {
 	tests := []struct {
-		addrA  string
-		addrB  string
+		addrA  Address
+		addrB  Address
 		prefix uint8
 	}{
 		{
-			addrA:  "\x01\x01",
-			addrB:  "\x01\x01",
+			addrA:  AddrFromSlice(padTo4("\x01\x01")),
+			addrB:  AddrFromSlice(padTo4("\x01\x01")),
 			prefix: 32,
 		},
 		{
-			addrA:  "\x01\x01",
-			addrB:  "\x01\x00",
+			addrA:  AddrFromSlice(padTo4("\x01\x01")),
+			addrB:  AddrFromSlice(padTo4("\x01\x00")),
 			prefix: 15,
 		},
 		{
-			addrA:  "\x01\x01",
-			addrB:  "\x81\x00",
+			addrA:  AddrFromSlice(padTo4("\x01\x01")),
+			addrB:  AddrFromSlice(padTo4("\x81\x00")),
 			prefix: 0,
 		},
 		{
-			addrA:  "\x01\x01",
-			addrB:  "\x01\x80",
+			addrA:  AddrFromSlice(padTo4("\x01\x01")),
+			addrB:  AddrFromSlice(padTo4("\x01\x80")),
 			prefix: 8,
 		},
 		{
-			addrA:  "\x01\x01",
-			addrB:  "\x02\x80",
+			addrA:  AddrFromSlice(padTo4("\x01\x01")),
+			addrB:  AddrFromSlice(padTo4("\x02\x80")),
 			prefix: 6,
 		},
+		{addrA: Address{}, addrB: Address{}, prefix: 0},
+		{addrA: AddrFrom16([16]byte{15: 1}), addrB: AddrFrom16([16]byte{15: 1}), prefix: 128},
+		{addrA: AddrFrom16([16]byte{15: 1}), addrB: AddrFrom16([16]byte{15: 3}), prefix: 126},
 	}
 
 	for _, test := range tests {
-		if got := AddrFromSlice(padTo4(test.addrA)).MatchingPrefix(AddrFromSlice(padTo4(test.addrB))); got != test.prefix {
-			t.Errorf("got (%s).MatchingPrefix(%s) = %d, want = %d", test.addrA, test.addrB, got, test.prefix)
+		if got := MatchingPrefix(test.addrA, test.addrB); got != test.prefix {
+			t.Errorf("got MatchingPrefix(%s, %s) = %d, want = %d", test.addrA, test.addrB, got, test.prefix)
 		}
 	}
 }

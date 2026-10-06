@@ -124,6 +124,7 @@ go_test(
     name = "tcpip_test",
     size = "small",
     srcs = [
+        "address_bench_test.go",
         "errors_test.go",
         "tcpip_test.go",
     ],
