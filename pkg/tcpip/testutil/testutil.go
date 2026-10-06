@@ -17,7 +17,7 @@ package testutil
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 	"reflect"
 	"strconv"
 	"strings"
@@ -28,21 +28,21 @@ import (
 // MustParse4 parses an IPv4 string (e.g. "192.168.1.1") into a tcpip.Address.
 // Passing an IPv4-mapped IPv6 address will yield only the 4 IPv4 bytes.
 func MustParse4(addr string) tcpip.Address {
-	ip := net.ParseIP(addr).To4()
-	if ip == nil {
+	ip, err := netip.ParseAddr(addr)
+	if err != nil || ip.Zone() != "" || !ip.Unmap().Is4() {
 		panic(fmt.Sprintf("Parse4 expects IPv4 addresses, but was passed %q", addr))
 	}
-	return tcpip.AddrFrom4Slice(ip)
+	return tcpip.AddrFrom4(ip.As4())
 }
 
 // MustParse6 parses an IPv6 string (e.g. "fe80::1") into a tcpip.Address. Passing
 // an IPv4 address will yield an IPv4-mapped IPv6 address.
 func MustParse6(addr string) tcpip.Address {
-	ip := net.ParseIP(addr).To16()
-	if ip == nil {
+	ip, err := netip.ParseAddr(addr)
+	if err != nil || ip.Zone() != "" {
 		panic(fmt.Sprintf("Parse6 was passed malformed address %q", addr))
 	}
-	return tcpip.AddrFrom16Slice(ip)
+	return tcpip.AddrFrom16(ip.As16())
 }
 
 // MustParseSubnet4 parses an IPv4 subnet string (e.g. "192.168.1.0/24") into a
