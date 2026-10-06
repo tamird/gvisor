@@ -2,7 +2,7 @@
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
-load("@with_cfg.bzl//:with_cfg.bzl", "frontend_test", "with_cfg")
+load("@with_cfg.bzl//:with_cfg.bzl", "FrontendInfo", "frontend_test", "with_cfg")
 
 _ARCHITECTURES = {
     "amd64": struct(
@@ -46,16 +46,17 @@ def _native_frontend_impl(ctx):
         if user == "root" and type(provider) == "DefaultInfo":
             # Keep Bazel's run_under outside this executable. Only the existing
             # root fixture and this test run as root, never the Bazel server.
+            original_executable = ctx.attr.exports[FrontendInfo].executable
             executable = ctx.actions.declare_file(ctx.label.name + ".local_root")
             ctx.actions.write(
                 executable,
                 "#!/bin/bash\nexec \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
                     shell.quote("/" + ctx.executable._local_root.short_path),
-                    shell.quote("/" + provider.files_to_run.executable.short_path),
+                    shell.quote("/" + original_executable.short_path),
                 ),
                 is_executable = True,
             )
-            helper_runfiles = ctx.runfiles(files = [executable, ctx.executable._local_root]).merge(
+            helper_runfiles = ctx.runfiles(files = [executable, original_executable, ctx.executable._local_root]).merge(
                 ctx.attr._local_root[DefaultInfo].default_runfiles,
             )
             provider = DefaultInfo(

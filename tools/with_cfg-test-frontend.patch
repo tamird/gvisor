@@ -7,36 +7,41 @@
 diff --git a/with_cfg.bzl b/with_cfg.bzl
 --- a/with_cfg.bzl
 +++ b/with_cfg.bzl
-@@ -1,4 +1,5 @@
+@@ -1,4 +1,6 @@
 -load("//with_cfg:defs.bzl", _original_settings = "original_settings", _with_cfg = "with_cfg")
-+load("//with_cfg:defs.bzl", _original_settings = "original_settings", _frontend_test = "frontend_test", _with_cfg = "with_cfg")
++load("//with_cfg:defs.bzl", _FrontendInfo = "FrontendInfo", _frontend_test = "frontend_test", _original_settings = "original_settings", _with_cfg = "with_cfg")
  
  with_cfg = _with_cfg
  original_settings = _original_settings
 +frontend_test = _frontend_test
++FrontendInfo = _FrontendInfo
 diff --git a/with_cfg/defs.bzl b/with_cfg/defs.bzl
 --- a/with_cfg/defs.bzl
 +++ b/with_cfg/defs.bzl
 @@ -1,3 +1,4 @@
-+load("//with_cfg/private:frontend.bzl", _frontend_test = "frontend_test")
++load("//with_cfg/private:frontend.bzl", _FrontendInfo = "FrontendInfo", _frontend_test = "frontend_test")
  load("//with_cfg/private:original_settings.bzl", _original_settings = "original_settings")
  load("//with_cfg/private:with_cfg.bzl", _with_cfg = "with_cfg")
  
-@@ -5,3 +6,4 @@
+@@ -5,3 +6,5 @@
  
  with_cfg = _with_cfg
  original_settings = _original_settings
 +frontend_test = _frontend_test
++FrontendInfo = _FrontendInfo
 diff --git a/with_cfg/private/frontend.bzl b/with_cfg/private/frontend.bzl
 --- a/with_cfg/private/frontend.bzl
 +++ b/with_cfg/private/frontend.bzl
-@@ -1,7 +1,7 @@
+@@ -1,7 +1,9 @@
  load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
- load(":providers.bzl", "FrontendInfo")
+-load(":providers.bzl", "FrontendInfo")
++load(":providers.bzl", _FrontendInfo = "FrontendInfo")
  
 -visibility("private")
 +visibility("//with_cfg/...")
  
++FrontendInfo = _FrontendInfo
++
  def get_frontend(*, executable, test):
      if test:
 @@ -103,6 +103,9 @@
