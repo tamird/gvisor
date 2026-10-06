@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T16:10:23.448669+00:00",
+    "updatedAt": "2026-10-06T16:20:35.542654+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1979,16 +1979,17 @@
       "followup": {
         "disposition": "awaiting upstream review or import",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Observe exact import lineage after the current-head approval; no substantive revision request remains.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15183"
+          "https://github.com/google/gvisor/pull/15183",
+          "https://github.com/google/gvisor/pull/15183#pullrequestreview-5431358903"
         ],
-        "reviewedAt": "2026-10-05T22:09:09.871793+00:00",
+        "reviewedAt": "2026-10-06T16:20:35.542654+00:00",
         "sourceHead": "e2f202dd4555d7377a51205bd8e5f382ca4209b3",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
-      "updatedAt": "2026-10-05T22:12:29.534300+00:00"
+      "updatedAt": "2026-10-06T16:20:35.542654+00:00"
     },
     {
       "id": "pr:15184",
@@ -2444,27 +2445,30 @@
       "summary": "Deferred outside current RBE delivery. This optional Go upgrade experiment is not a prerequisite: retained Go 1.26 link evidence supports the current compiler plan. Its refs and historical evidence remain preserved; no new upgrade work or validation is scheduled.\n\nPublic and tracked at 1047109d167d6a82b725f3bf5c5d3301acb15dbc, one commit directly on upstream d3d566ad19. Selects released Go 1.27.1 and explicitly selects the patched SDK for coverage; go.mod and tools/build_cover.sh are byte-identical to historical compiler precursor 577443168. Source/record peers and static Bash/diff checks pass. Subsequent source and prior exported-module build evidence do not establish this upgrade as a compiler prerequisite: Go 1.26 final static links retain the required flags. The independent branch is preserved. The focused existing GNU/static-auto race test passed on primary d3f with Go 1.26; ELF postprocessing remains pending, and the upgrade remains outside the final compiler plan. The b9/1cb hosted gate remains evidence for its actual Go 1.27 composition; fresh result closure is pending. No upstream PR or contributor approval is claimed."
     },
     {
-      "id": "branch:benchmark-thread-safety-current",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15376",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "benchmark-thread-safety-current",
-      "title": "Fix Benchmark annotations for libc++",
-      "url": "https://github.com/tamird/gvisor/tree/benchmark-thread-safety-current",
+      "title": "Fix Benchmark annotations with Clang and libc++",
+      "url": "https://github.com/google/gvisor/pull/15376",
       "group": "bazel",
-      "status": "review requested",
-      "summary": "Contributor review was requested on October 6 for the revised exact f18737bed commit, including the requested direct upstream commit URLs. No upstream PR is authorized or open yet.\n\nCurrent disposition: revision ready. Root owns the user-requested citation correction and delivery.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nPublic source f18737bed47bbdc3da9ea51dda485c0c94cb43e5 adds the requested direct upstream commit URLs to MODULE.bazel and the patch header. Its tested supplier patch and build behavior are unchanged. Contributor review remains pending; no PR is open.\n\nEarlier reviewed source:\n\nCurrent public and tracked source 2e48ae7bc4ac110b18752567872493aa9878d0b1 is rebased onto upstream 8a2c5049262ca84ea9c0981ac82eed02110d4ba7. Independent source review confirms the complete patch is unchanged; the allocator record is wrapping-only. Existing source-specific evidence is reused, with no fresh runtime or GNU compilation claim. One combined contributor review request for the refreshed three candidates is pending; no upstream PR is opened.\n\nEarlier source evidence:\n\nStanding disposition: contributor review is pending. The independent audit found no forgotten publication approval; root is reconciling the existing decision and source freshness before delivery.\n\nPublic, clean and tracked at 19ead085f40e4d945da8ced8e10c5b84ae6673e2, one independently reviewed commit directly on current upstream d3d566ad1979a92cb76918a18cba6e51fe252393. Backports google/benchmark 82a895089 for the libc++ mutex annotations exposed by the selected Clang thread-safety checks. It has no compiler prerequisite. Latest released Benchmark 1.9.5 predates this fix; its mutex header is byte-identical to the selected 1.8.4 header. The successor keeps the exact compiler-validated patch body and moves its purpose comment into the owning commit. Retained LLVM 23 normal builds on both target CPUs passed with Benchmark 1.9.5; no fresh standalone GNU build or whole-Benchmark-1.8.4 Clang pass is claimed. Contributor review has been requested; no upstream PR or approval exists yet. Predecessor benchmark-thread-safety@3972acde20d65d6e7440ae90560ed962335518c3 and original b63ff054a remain preserved; actual compiler copies be5a3e07f and 430252e1cb retain their evidence.",
+      "status": "open",
+      "summary": "Opened ready for review after explicit user approval at f18737bed47bbdc3da9ea51dda485c0c94cb43e5. Exact title, description, master base and head were read back from GitHub.\n\nBackports upstream Benchmark 82a895089 with the requested direct commit URLs. Existing compiler evidence is reused because the supplier patch is unchanged; latest released Benchmark 1.9.5 does not contain the fix. No fresh standalone GNU build claim.",
       "head": "f18737bed47bbdc3da9ea51dda485c0c94cb43e5",
-      "updatedAt": "2026-10-06T15:59:28.111113+00:00",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the current contributor response to the revised source/record.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/f18737bed47bbdc3da9ea51dda485c0c94cb43e5"
+          "https://github.com/google/gvisor/pull/15376"
         ],
-        "reviewedAt": "2026-10-06T15:59:28.111113+00:00",
-        "sourceHead": "f18737bed47bbdc3da9ea51dda485c0c94cb43e5"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "f18737bed47bbdc3da9ea51dda485c0c94cb43e5",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15376
     },
     {
       "id": "branch:abseil-lifetime-attributes-current",
@@ -3089,18 +3093,18 @@
       "title": "Give netfilter test phases separate deadlines",
       "url": "https://github.com/tamird/gvisor/tree/netfilter-test-contexts-review",
       "group": "tests",
-      "status": "review requested",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nThe complete shared context proposal is public at 2a02ce5cc98c2cf4ff86eb8a95d86b7a4b7ffde2, independently based on upstream b9961ddfa. Both iptables and nftables now use the same setup, traffic and cleanup lifetime mechanism, the shared context-aware ConnectTCP handshake, and no duplicate sendIP payload path. This replaces the narrower pending f644 proposal; old source refs and evidence are preserved. Contributor review was requested once and remains pending, with no upstream PR.\n\nThe exact-source integration rbe-netfilter-findip@621c14365 has completed parent 734c030c-508d-46ff-8f8d-3b66884f9d7a with status OK in 176.031 seconds. Independent result review is complete: all twelve direct consumer builds and fourteen selected leaves across four runtime owners pass, with no skips. Twenty XML entries, four actual uncached 900-second AMD64 Firecracker actions, host executable/config inputs and the exact source are verified. This is focused validation, not full netfilter or public-CI qualification.\n\nEarlier narrower context evidence:\n\nReconciled context revision f6440bec83e6b19ca844672fc68a398133f9a188 separates setup and traffic deadlines, replaces sendIP with the existing context-aware ConnectTCP helper, and gives logging and cleanup distinct bounded contexts. Focused parent df09b671-5f98-4552-90b3-ddcd3841bf21 on composition 853e1b401 passed in 230.635 seconds: all twelve IPv4/IPv6 leaves passed on both original 900-second AMD64 Firecracker owners without cached test results. Contributor review is pending. The older handshake topic is fully superseded by this context-aware connection path and has been retired after source/replacement and exact-ref checks; its b3c3c85d3 commit and evidence remain recorded. No broader netfilter or full-qualification pass is claimed.",
+      "status": "revision required",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "User review requires consolidating duplicated iptables/nftables harness mechanisms before upstream submission. Root owns the revision; the current b8656cba840b2d42e244c1b88699b3c608551e4f source is preserved and no PR is authorized.\n\nEarlier source-bound integration 621c14365 passed parent 734c030c in 176.031 seconds: twelve direct consumer builds and fourteen selected leaves across four runtime owners, with twenty XML entries and no skips. Four actual uncached 900-second AMD64 Firecracker actions and host executable/config inputs were verified. This evidence applies to the earlier preserved implementation; the requested consolidation needs its own source and validation closure. The older standalone handshake was superseded and retired with its recovery identity retained.",
       "head": "b8656cba840b2d42e244c1b88699b3c608551e4f",
       "followup": {
-        "disposition": "review requested",
+        "disposition": "revision required",
         "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "nextAction": "Consolidate duplicated iptables/nftables harness mechanisms as requested, then present the complete revised source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b8656cba840b2d42e244c1b88699b3c608551e4f"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
         "sourceHead": "b8656cba840b2d42e244c1b88699b3c608551e4f"
       }
     },
@@ -3192,119 +3196,134 @@
       "summary": "Upstream rollback d38ccf24ae removes the save/restore support introduced in 8bf3dc484. Its public message identifies an automated rollback of CL 993737103 (Piper 993881815) without an explanatory cause. Root inspected the source: it removes the TUN restore implementation used by PR #15315, plus RestorableNetworkEndpoint, IPv6 endpoint.Restore, ndpState.restore and the Job helpers modified by #15318. Both source topics depend on restoration or an upstream replacement of this feature. This is an actual commit-linked dependency, not a new branch, issue, authorized rollback reversal or provider-capacity request. Existing canonical b498 still includes the earlier feature and its source-specific RBE evidence; that is not qualification of current master 4ac0fde02."
     },
     {
-      "id": "branch:native-test-platforms",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15370",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "native-test-platforms",
       "title": "Run Go and C++ tests on native architectures",
-      "url": "https://github.com/tamird/gvisor/tree/native-test-platforms",
+      "url": "https://github.com/google/gvisor/pull/15370",
       "group": "bazel",
-      "status": "review requested",
+      "status": "open",
       "head": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent combined Go/C++ proposal exposing configured AMD64 and ARM64 tests through native Bazel declarations, without the fork qualifier framework or an LLVM prerequisite. The Go and C++ source and saved-result reviews are closed. Individual tests pass, including both native architectures and the Go test/Nogo owners; both parent harness failures remain recorded and do not become successful parent runs. This single candidate supersedes the separate C++ predecessor, whose ref and evidence remain preserved. Contributor review is pending; no upstream PR is open.",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "Opened ready for review after explicit user approval at 33dce4c9a01207885a5dcb52f16f5a8c1c804a5a. Exact title, description, master base and head were read back from GitHub.\n\nIndependent Go/C++ graph-native architecture variants. Earlier individual Go/C++ tests and both CPU/Nogo source proofs remain applicable after the unchanged patch rebase; the original parent harness failures remain recorded.",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/33dce4c9a01207885a5dcb52f16f5a8c1c804a5a"
+          "https://github.com/google/gvisor/pull/15370"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
-        "sourceHead": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15370
     },
     {
-      "id": "branch:arm64-page-size-setting",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15371",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "arm64-page-size-setting",
       "title": "Make ARM64 page size a Bazel build setting",
-      "url": "https://github.com/tamird/gvisor/tree/arm64-page-size-setting",
+      "url": "https://github.com/google/gvisor/pull/15371",
       "group": "bazel",
-      "status": "review requested",
+      "status": "open",
       "head": "a7607b075285371fccfde2a179f20ac81cd46a21",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent five-file proposal based on master b9961ddfa, with both source reviews closed. A constrained 4K/64K build setting preserves existing Go and systrap C consumers; the public CI config continues through BAZEL_OPTIONS to configure both Make runtime builds and tests. It is the setting/config prerequisite for the separate fork 64K graph, with no RBE or worker dependency of its own. The source-bound fork graph proof preserves all public selections and builds representative mixed 4K/64K ARM64 runtime closures. Its independent result review is closed; all 659 configured 64K owners remain explicitly unavailable for runtime. Contributor review/open-PR approval is pending, and no upstream PR exists.",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "Opened ready for review after explicit user approval at a7607b075285371fccfde2a179f20ac81cd46a21. Exact title, description, master base and head were read back from GitHub.\n\nIndependent page-size build setting and public CI configuration. Existing graph proof preserves the original public selections, and the corrected qualification composition built all 659 ARM64 64K roots. No 64K runtime or worker-capacity claim.",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/a7607b075285371fccfde2a179f20ac81cd46a21"
+          "https://github.com/google/gvisor/pull/15371"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
-        "sourceHead": "a7607b075285371fccfde2a179f20ac81cd46a21"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "a7607b075285371fccfde2a179f20ac81cd46a21",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15371
     },
     {
-      "id": "branch:syscall-x86-constants",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15372",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "syscall-x86-constants",
       "title": "Scope x86 syscall test constants to their users",
-      "url": "https://github.com/tamird/gvisor/tree/syscall-x86-constants",
+      "url": "https://github.com/google/gvisor/pull/15372",
       "group": "tests",
-      "status": "review requested",
+      "status": "open",
       "head": "11cac738545da07df5b4f3c6e87ac7dfdf9d365c",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent master-b996 source correction with complete source/record reviews closed. Moves the ptrace constant into its sole x86 test and the time constant into the existing x86 guard, preserving values and assertions without skips or warning suppression. It addresses a concrete ARM64 compilation error from the full 659-owner build. The corrected integration c65d805387 builds all 659 ARM64 64K roots with the same requested cohort and normal compilation caches. Outcome 290a0abe5ee3 and independent peer 17f22b529933 close this build scope. Contributor review/open-PR approval was requested once and remains pending. This is build-only evidence on the hermetic integration, with no GNU qualification, upstream PR or runtime pass claimed.",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "Opened ready for review after explicit user approval at 11cac738545da07df5b4f3c6e87ac7dfdf9d365c. Exact title, description, master base and head were read back from GitHub.\n\nScopes x86-only constants so ARM64 compilation succeeds. The corrected qualification composition built all 659 ARM64 64K roots; original failed builds remain recorded. No runtime claim.",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/11cac738545da07df5b4f3c6e87ac7dfdf9d365c"
+          "https://github.com/google/gvisor/pull/15372"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
-        "sourceHead": "11cac738545da07df5b4f3c6e87ac7dfdf9d365c"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "11cac738545da07df5b4f3c6e87ac7dfdf9d365c",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15372
     },
     {
-      "id": "branch:syscall-reserved-slots",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15373",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "syscall-reserved-slots",
       "title": "Use documented unassigned syscall numbers in tests",
-      "url": "https://github.com/tamird/gvisor/tree/syscall-reserved-slots",
+      "url": "https://github.com/google/gvisor/pull/15373",
       "group": "tests",
-      "status": "review requested",
+      "status": "open",
       "head": "6b486edc3bc79722811c7dab7adc2c5e31e3def7",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent master-b996 source correction with complete source/record reviews closed. Preserves ARM64 reserved slot 259 after generated headers removed the generic marker, and selects RISC-V unassigned slot 257 instead of implemented hwprobe 258. Existing ENOSYS and seccomp assertions remain intact. It addresses a concrete ARM64 compilation error from the full 659-owner build. The corrected integration c65d805387 builds all 659 ARM64 64K roots with the same requested cohort and normal compilation caches. Outcome 290a0abe5ee3 and independent peer 17f22b529933 close this build scope. Contributor review/open-PR approval was requested once and remains pending. This is build-only evidence on the hermetic integration, with no GNU qualification, upstream PR or runtime pass claimed. The RISC-V slot is verified against primary Linux source; this ARM64 build does not compile or execute RISC-V.",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "Opened ready for review after explicit user approval at 6b486edc3bc79722811c7dab7adc2c5e31e3def7. Exact title, description, master base and head were read back from GitHub.\n\nUses documented unassigned ARM64/RISC-V syscall slots. The corrected qualification composition built all 659 ARM64 64K roots; no RISC-V execution or runtime claim.",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/6b486edc3bc79722811c7dab7adc2c5e31e3def7"
+          "https://github.com/google/gvisor/pull/15373"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
-        "sourceHead": "6b486edc3bc79722811c7dab7adc2c5e31e3def7"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "6b486edc3bc79722811c7dab7adc2c5e31e3def7",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15373
     },
     {
-      "id": "branch:xdp-network-setup",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15374",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "xdp-network-setup",
       "title": "Repair XDP network setup calls",
-      "url": "https://github.com/tamird/gvisor/tree/xdp-network-setup",
+      "url": "https://github.com/google/gvisor/pull/15374",
       "group": "runtime",
-      "status": "review requested",
+      "status": "open",
       "head": "f0b67041d60450e623285250941df450b7f4bf31",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent master-b996 API repair with complete source and record reviews. Restores the still-registered synchronous network RPC name, removes the deleted disconnect-field initializer, and carries the existing IPv6 setting through tagged and default signatures. Redirect setup still initializes sentry UMEM/rings before host bind. Hosted before/after proof reproduced the four baseline error families, then built the corrected tagged and default runsc roots successfully; parent 8598f846 passed in 283.278 seconds and an independent saved-evidence review closed. This is build-only evidence: no AF_XDP hardware, runtime or restore qualification. Contributor review and permission to open the PR have been requested once and remain pending. The validation composition is not a separate upstream candidate.",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "Opened ready for review after explicit user approval at f0b67041d60450e623285250941df450b7f4bf31. Exact title, description, master base and head were read back from GitHub.\n\nRepairs stale tagged XDP setup APIs while preserving synchronous UMEM/ring initialization ordering. Existing before/after tagged and default builds pass after the correction; no XDP runtime or new restore support claim.",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/f0b67041d60450e623285250941df450b7f4bf31"
+          "https://github.com/google/gvisor/pull/15374"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
-        "sourceHead": "f0b67041d60450e623285250941df450b7f4bf31"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "f0b67041d60450e623285250941df450b7f4bf31",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15374
     },
     {
       "id": "branch:runsc-network-netip",
@@ -3386,17 +3405,17 @@
       "title": "Check generated governance files with Bazel",
       "url": "https://github.com/tamird/gvisor/tree/governance-bazel-check",
       "group": "rbe",
-      "status": "review requested",
-      "updatedAt": "2026-10-06T15:38:54.476824+00:00",
-      "summary": "Contributor review was requested on October 6 for this exact refreshed candidate in one of three concrete batches: seven netip/cleanup changes, five platform changes, and two governance/context changes. The complete source edits and records are unchanged on upstream 8a2c50492; existing validation is reused without a fresh runtime claim. No upstream PR has been authorized or opened for this candidate.\n\nRetained source and validation evidence:\n\nIndependent upstream candidate includes the minimal generic source owner, two generator actions and canonical freshness comparisons; it has no CodeQL or RBE source dependency. Standalone hosted parent 17e3c3b6 passes in 57.672 seconds with upstream Bazel 8.3.1: both uncached comparisons and both actual generator actions pass, outputs equal committed CODEOWNERS/MAINTAINERS, and source remains unchanged. Saved evidence review dbf91465800c closes all 75 files and sixteen source blobs. Identical generator/rule sources retain the earlier stale-output and missing-area negative proof. The original validation preflight failure is preserved. Contributor review/open-PR decision is pending; no roster, schema, access or policy change.",
+      "status": "revision required",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "User review requires a source revision: Move regeneration into Bazel as requested, then present the complete revised source. Current head is preserved; no upstream PR is authorized.\n\nIndependent upstream candidate includes the minimal generic source owner, two generator actions and canonical freshness comparisons; it has no CodeQL or RBE source dependency. Standalone hosted parent 17e3c3b6 passes in 57.672 seconds with upstream Bazel 8.3.1: both uncached comparisons and both actual generator actions pass, outputs equal committed CODEOWNERS/MAINTAINERS, and source remains unchanged. Saved evidence review dbf91465800c closes all 75 files and sixteen source blobs. Identical generator/rule sources retain the earlier stale-output and missing-area negative proof. The original validation preflight failure is preserved. The earlier validation remains applicable to the preserved head; no roster, schema, access or policy change.",
       "followup": {
-        "disposition": "review requested",
+        "disposition": "revision required",
         "owner": "root",
-        "nextAction": "Await the response to the current concrete contributor request; open an upstream PR only after approval.",
+        "nextAction": "Move regeneration into Bazel as requested, then present the complete revised source.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/15a0c7740bd8282af5af1d7a26287b1d5b602e25"
         ],
-        "reviewedAt": "2026-10-06T15:38:54.476824+00:00",
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
         "sourceHead": "15a0c7740bd8282af5af1d7a26287b1d5b602e25"
       }
     },
@@ -3542,27 +3561,30 @@
       }
     },
     {
-      "id": "branch:bazel-8-8-1",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15375",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "bazel-8-8-1",
       "head": "c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883",
-      "title": "Update Bazel 8 to 8.8.1",
-      "url": "https://github.com/tamird/gvisor/tree/bazel-8-8-1",
+      "title": "Update Bazel to 8.8.1",
+      "url": "https://github.com/google/gvisor/pull/15375",
       "group": "bazel",
-      "status": "review requested",
-      "updatedAt": "2026-10-06T15:59:28.111113+00:00",
-      "summary": "Independent upstream-based release update. Contributor review was requested on October 6 for this exact published commit; no upstream PR is authorized or open yet.\n\nBazel 8.8.1 passes both the independent upstream-based module graph and the qualification module graph. Parent 05f755e6 at integration 3b4c629ef passes in 243.128 seconds: representative runsc and socket-test roots build, and two actual uncached 300-second AMD64 OCI Nogo owners pass with both AMD64 and ARM64 analysis markers. Outcome 53b2fa475858 and independent peer c8d029efdfc5 close the saved proof. Original 0cae remains a pre-workload method failure. This is not a standalone GNU build, ARM runtime or a fresh full-tree build.",
+      "status": "open",
+      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
+      "summary": "Opened ready for review after explicit user approval at c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883. Exact title, description, master base and head were read back from GitHub.\n\nBazel 8.8.1 passed standalone and qualification module graphs, representative runsc/socket builds, and two actual uncached AMD64 OCI Nogo owners with both CPU analysis markers. Outcome 53b2fa475858 and independent peer c8d029efdfc5 retain the original pre-workload method failure. No fresh full-tree or ARM runtime claim.",
       "followup": {
-        "disposition": "review requested",
-        "owner": "root",
-        "nextAction": "Await the current concrete contributor request before opening an upstream PR.",
+        "disposition": "awaiting upstream review or import",
+        "owner": "external_sweeps",
+        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883"
+          "https://github.com/google/gvisor/pull/15375"
         ],
-        "reviewedAt": "2026-10-06T15:59:28.111113+00:00",
-        "sourceHead": "c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883"
-      }
+        "reviewedAt": "2026-10-06T16:18:15.561131+00:00",
+        "sourceHead": "c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15375
     }
   ],
   "edges": [
@@ -4451,7 +4473,7 @@
       ]
     },
     {
-      "from": "branch:benchmark-thread-safety-current",
+      "from": "pr:15376",
       "to": "branch:hermetic-compiler-review",
       "type": "depends_on",
       "reason": "Includes the required Benchmark annotation backport. The refreshed independent current-master branch preserves that exact backport body; it does not depend on the compiler.",
