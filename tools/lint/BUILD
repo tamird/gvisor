@@ -1,5 +1,5 @@
 load("@lint_deps//:requirements.bzl", "requirement")
-load("@rules_python//python:defs.bzl", "py_binary")
+load("@rules_python//python:defs.bzl", "py_binary", "py_test")
 load("@rules_python//python/entry_points:py_console_script_binary.bzl", "py_console_script_binary")
 load("//tools:defs.bzl", "bzl_library")
 load(":defs.bzl", "gofmt_tools", "source_lint")
@@ -84,4 +84,33 @@ test_suite(
         ":gofmt",
         ":spelling",
     ],
+)
+
+# Qualification-only owner; never included in the maintained lint proposal.
+py_test(
+    name = "formatter_parity_test",
+    size = "medium",
+    timeout = "long",
+    srcs = ["formatter_parity.py"],
+    args = [
+        "--old=$(rlocationpath @lint_previous_clang_format//:clang-format)",
+        "--new=$(rlocationpath @llvm//tools:clang-format)",
+        "--sources=$(rlocationpath @analysis_sources//:cc.json)",
+        "--configs=$(rlocationpath @analysis_sources//:clang_configs.json)",
+    ],
+    data = [
+        "@analysis_sources//:cc.json",
+        "@analysis_sources//:cc_files",
+        "@analysis_sources//:clang_configs.json",
+        "@analysis_sources//:clang_configs_files",
+        "@lint_previous_clang_format//:clang-format",
+        "@llvm//tools:clang-format",
+    ],
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    main = "formatter_parity.py",
+    tags = ["manual"],
+    deps = ["@rules_python//python/runfiles"],
 )
