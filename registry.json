@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T02:04:34.927892+00:00",
+    "updatedAt": "2026-10-06T02:12:37.779684+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2866,14 +2866,14 @@
       "id": "branch:iptables-test-action-deadline",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "iptables-test-action-deadline",
-      "title": "Give iptables test phases separate deadlines",
-      "url": "https://github.com/tamird/gvisor/tree/iptables-test-action-deadline",
+      "ref": "netfilter-test-contexts-review",
+      "title": "Give netfilter test phases separate deadlines",
+      "url": "https://github.com/tamird/gvisor/tree/netfilter-test-contexts-review",
       "group": "tests",
-      "status": "review pending",
-      "updatedAt": "2026-10-06T00:12:27.973926+00:00",
-      "summary": "Reconciled context revision f6440bec83e6b19ca844672fc68a398133f9a188 separates setup and traffic deadlines, replaces sendIP with the existing context-aware ConnectTCP helper, and gives logging and cleanup distinct bounded contexts. Focused parent df09b671-5f98-4552-90b3-ddcd3841bf21 on composition 853e1b401 passed in 230.635 seconds: all twelve IPv4/IPv6 leaves passed on both original 900-second AMD64 Firecracker owners without cached test results. Contributor review is pending. The older handshake topic is fully superseded by this context-aware connection path and has been retired after source/replacement and exact-ref checks; its b3c3c85d3 commit and evidence remain recorded. No broader netfilter or full-qualification pass is claimed.",
-      "head": "f6440bec83e6b19ca844672fc68a398133f9a188"
+      "status": "evidence review pending",
+      "updatedAt": "2026-10-06T02:12:37.779684+00:00",
+      "summary": "The complete shared context proposal is public at 2a02ce5cc98c2cf4ff86eb8a95d86b7a4b7ffde2, independently based on upstream b9961ddfa. Both iptables and nftables now use the same setup, traffic and cleanup lifetime mechanism, the shared context-aware ConnectTCP handshake, and no duplicate sendIP payload path. This replaces the narrower pending f644 proposal; old source refs and evidence are preserved. Contributor review remains pending, with no upstream PR.\n\nThe exact-source integration rbe-netfilter-findip@621c14365 has completed parent 734c030c-508d-46ff-8f8d-3b66884f9d7a with status OK in 176.031 seconds. The owner reports all twelve compile consumers and fourteen selected leaves across four runtime owners passing, with no skips; final action/input evidence collection and independent result review are pending. This is focused validation, not full netfilter or public-CI qualification.\n\nEarlier narrower context evidence:\n\nReconciled context revision f6440bec83e6b19ca844672fc68a398133f9a188 separates setup and traffic deadlines, replaces sendIP with the existing context-aware ConnectTCP helper, and gives logging and cleanup distinct bounded contexts. Focused parent df09b671-5f98-4552-90b3-ddcd3841bf21 on composition 853e1b401 passed in 230.635 seconds: all twelve IPv4/IPv6 leaves passed on both original 900-second AMD64 Firecracker owners without cached test results. Contributor review is pending. The older handshake topic is fully superseded by this context-aware connection path and has been retired after source/replacement and exact-ref checks; its b3c3c85d3 commit and evidence remain recorded. No broader netfilter or full-qualification pass is claimed.",
+      "head": "2a02ce5cc98c2cf4ff86eb8a95d86b7a4b7ffde2"
     },
     {
       "id": "pr:15319",
@@ -2930,14 +2930,14 @@
       "id": "branch:netfilter-action-netip",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "netfilter-action-netip",
-      "title": "Use netip addresses in netfilter test actions",
-      "url": "https://github.com/tamird/gvisor/tree/netfilter-action-netip",
+      "ref": "netfilter-action-findip-contexts-review",
+      "title": "Use netip in Docker and netfilter tests",
+      "url": "https://github.com/tamird/gvisor/tree/netfilter-action-findip-contexts-review",
       "group": "tests",
-      "status": "reconciliation in progress",
-      "updatedAt": "2026-10-06T00:12:27.973926+00:00",
-      "summary": "Current public topic 0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e remains held while root reconciles its overlap with the context replacement f6440bec8 and the peer-address work in PR #15321. The current source has not yet been published as that revised stack; no upstream PR is authorized. Earlier focused evidence belongs to the prior composition and remains historical, not proof of the forthcoming revision.",
-      "head": "0810cb5b35b3879f6eab7ae5d0e4d77b2fdb7d6e"
+      "status": "evidence review pending",
+      "updatedAt": "2026-10-06T02:12:37.779684+00:00",
+      "summary": "Revised public source 4e371a5e1625c8a57d263ce001ad9fb9c0a1739b moves parsing and normalization into the typed Docker FindIP boundary, updates its consumers and the netfilter action/helper interfaces, and preserves the full original-destination checks. Source and record reviews pass. This is an explicit stack on the peer-address change in PR #15321 and the complete shared netfilter context proposal; it is not a third independent overlapping topic. The earlier 0810 ref remains preserved. Contributor review is pending and no upstream PR is open.\n\nIntegration rbe-netfilter-findip@621c14365 has completed parent 734c030c-508d-46ff-8f8d-3b66884f9d7a with status OK in 176.031 seconds. The owner reports twelve compile consumers and fourteen selected runtime leaves passing with no skips; final action/input evidence collection and independent result review remain pending. Earlier migration results stay tied to their original source, and this focused run is not full qualification.",
+      "head": "4e371a5e1625c8a57d263ce001ad9fb9c0a1739b"
     },
     {
       "id": "upstream:tun-ndp-restore-rollback",
@@ -4174,6 +4174,26 @@
       "evidence": [
         "https://github.com/tamird/gvisor/tree/apt-license-enumeration-upstream",
         "https://github.com/tamird/gvisor/tree/apt-license-catalog-review"
+      ]
+    },
+    {
+      "from": "pr:15321",
+      "to": "branch:netfilter-action-netip",
+      "type": "depends_on",
+      "reason": "The action migration consumes the typed netfilter peer-address APIs from PR #15321.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15321",
+        "https://github.com/tamird/gvisor/tree/netfilter-action-findip-contexts-review"
+      ]
+    },
+    {
+      "from": "branch:iptables-test-action-deadline",
+      "to": "branch:netfilter-action-netip",
+      "type": "depends_on",
+      "reason": "The action migration is stacked after the shared context and handshake replacement used by both netfilter harnesses.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/tree/netfilter-test-contexts-review",
+        "https://github.com/tamird/gvisor/tree/netfilter-action-findip-contexts-review"
       ]
     }
   ]
