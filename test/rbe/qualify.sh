@@ -800,7 +800,7 @@ run_lane() (
           --noincompatible_legacy_local_fallback
           --sandbox_default_allow_network=false
           --test_env=GO_TEST_WRAP_TESTV=1
-          --run_under=//test/rbe:docker_cgroup
+          --run_under=//test/rbe:docker_setup
           "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
           "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
         )

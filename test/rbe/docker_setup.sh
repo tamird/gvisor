@@ -23,6 +23,12 @@ container_pid_ns=$(readlink /proc/self/ns/pid)
 [[ $(< /proc/self/cgroup) == '0::/' ]]
 [[ $(stat -f -c %T /sys/fs/cgroup) == cgroup2fs ]]
 
+# Keep overlay2's writable layers off the outer container's overlay filesystem,
+# which rejected their mount. Bazel mounts TEST_TMPDIR from the host disk;
+# expose it at /tmp to retain the private daemon's short socket paths.
+mount --bind "${TEST_TMPDIR:?}" /tmp
+stat -f -c 'Docker scratch filesystem: %T' /tmp
+
 # A cgroup namespace's root is still a non-root cgroup in the host hierarchy.
 # Its controllers cannot serve Docker's children while test processes occupy it.
 # https://github.com/torvalds/linux/blob/2d8a435cb/Documentation/admin-guide/cgroup-v2.rst#L510-L534

@@ -154,12 +154,14 @@ For this phase only, the Bazel coordinator runs as root on the ephemeral Actions
 VM because its Docker strategy maps the coordinator's UID into the container.
 Compilation remains remote, and the original test owners run directly without
 the local-root frontend. Bazel stages their inputs, collects outputs and removes
-the containers. A declared adapter first moves the setup and test processes
-into a cgroup leaf so the private daemon can enable controllers for its
-children. It verifies that both PID and cgroup namespaces differ from the
-coordinator before moving processes. This checks whether gVisor can run through
-KVM, not just whether `/dev/kvm` exists. It does not qualify the full KVM syscall
-or benchmark suites, or Docker suites requiring outbound networking.
+the containers. A declared adapter binds Bazel's temporary directory to `/tmp`
+so nested Docker uses the host disk for writable layers. It moves the setup
+and test processes into a cgroup leaf so the private daemon can enable
+controllers for its children. It verifies that both PID and cgroup namespaces
+differ from the coordinator before either change. This checks whether gVisor
+can run through KVM, not just whether `/dev/kvm` exists. It does not qualify
+the full KVM syscall or benchmark suites, or Docker suites requiring outbound
+networking.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
