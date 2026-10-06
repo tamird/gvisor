@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
@@ -172,7 +173,7 @@ func TestNUDFunctions(t *testing.T) {
 					if diff := cmp.Diff(
 						[]stack.NeighborEntry{{Addr: llAddr2, LinkAddr: linkAddr1, State: stack.Static, UpdatedAt: clock.NowMonotonic()}},
 						neighbors,
-						cmp.AllowUnexported(tcpip.MonotonicTime{}),
+						cmpopts.EquateComparable(stack.NeighborEntry{}),
 					); diff != "" {
 						t.Errorf("neighbors mismatch (-want +got):\n%s", diff)
 					}

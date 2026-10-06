@@ -165,7 +165,7 @@ func TestIPv6JoinLeaveSolicitedNodeAddressPerformsMLD(t *testing.T) {
 			// solicited-node group.
 			protocolAddr := tcpip.ProtocolAddress{
 				Protocol:          ipv6.ProtocolNumber,
-				AddressWithPrefix: linkLocalAddr.WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(linkLocalAddr),
 			}
 			if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -331,7 +331,7 @@ func TestSendQueuedMLDReports(t *testing.T) {
 					properties := stack.AddressProperties{PEB: stack.FirstPrimaryEndpoint}
 					globalProtocolAddr := tcpip.ProtocolAddress{
 						Protocol:          ipv6.ProtocolNumber,
-						AddressWithPrefix: globalAddr.WithPrefix(),
+						AddressWithPrefix: tcpip.FullPrefix(globalAddr),
 					}
 					if err := s.AddProtocolAddress(nicID, globalProtocolAddr, properties); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, %+v): %s", nicID, globalProtocolAddr, properties, err)
@@ -367,7 +367,7 @@ func TestSendQueuedMLDReports(t *testing.T) {
 					// address and globalMulticastAddr.
 					linkLocalProtocolAddr := tcpip.ProtocolAddress{
 						Protocol:          ipv6.ProtocolNumber,
-						AddressWithPrefix: linkLocalAddr.WithPrefix(),
+						AddressWithPrefix: tcpip.FullPrefix(linkLocalAddr),
 					}
 					if err := s.AddProtocolAddress(nicID, linkLocalProtocolAddr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, linkLocalProtocolAddr, err)
@@ -701,7 +701,7 @@ func TestMLDSkipProtocol(t *testing.T) {
 
 					protocolAddr := tcpip.ProtocolAddress{
 						Protocol:          ipv6.ProtocolNumber,
-						AddressWithPrefix: linkLocalAddr.WithPrefix(),
+						AddressWithPrefix: tcpip.FullPrefix(linkLocalAddr),
 					}
 					if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -771,7 +771,7 @@ func TestGetSetMLDVersion(t *testing.T) {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv6.ProtocolNumber,
-		AddressWithPrefix: linkLocalAddr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(linkLocalAddr),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)

@@ -29,7 +29,6 @@ import (
 	"net/netip"
 	"os"
 	"strconv"
-	"strings"
 
 	"gvisor.dev/gvisor/pkg/rawfile"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -125,13 +124,13 @@ func main() {
 	}
 	parsedAddr = parsedAddr.Unmap()
 
-	var addrWithPrefix tcpip.AddressWithPrefix
+	var addrWithPrefix netip.Prefix
 	var proto tcpip.NetworkProtocolNumber
 	if parsedAddr.Is4() {
-		addrWithPrefix = tcpip.AddrFrom4(parsedAddr.As4()).WithPrefix()
+		addrWithPrefix = tcpip.FullPrefix(parsedAddr)
 		proto = ipv4.ProtocolNumber
 	} else {
-		addrWithPrefix = tcpip.AddrFrom16(parsedAddr.As16()).WithPrefix()
+		addrWithPrefix = tcpip.FullPrefix(parsedAddr)
 		proto = ipv6.ProtocolNumber
 	}
 
@@ -183,10 +182,7 @@ func main() {
 		log.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 
-	subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte(strings.Repeat("\x00", addrWithPrefix.Address.Len()))), tcpip.MaskFrom(strings.Repeat("\x00", addrWithPrefix.Address.Len())))
-	if err != nil {
-		log.Fatal(err)
-	}
+	subnet := netip.PrefixFrom(addrWithPrefix.Addr(), 0).Masked()
 
 	// Add default route.
 	s.SetRouteTable([]tcpip.Route{

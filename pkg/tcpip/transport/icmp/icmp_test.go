@@ -66,7 +66,7 @@ func addNICWithDefaultRoute(t *testing.T, s *stack.Stack, id tcpip.NICID, name s
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addrV4.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addrV4),
 	}
 	if err := s.AddProtocolAddress(id, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", id, protocolAddr, err)

@@ -928,10 +928,10 @@ func (ct *ConnTrack) originalDst(epID TransportEndpointID, netProto tcpip.Networ
 	// Lookup the connection. The reply's original destination
 	// describes the original address.
 	tid := tupleID{
-		srcAddr:                   epID.LocalAddress,
-		srcPortOrEchoRequestIdent: epID.LocalPort,
-		dstAddr:                   epID.RemoteAddress,
-		dstPortOrEchoReplyIdent:   epID.RemotePort,
+		srcAddr:                   epID.Local.Addr(),
+		srcPortOrEchoRequestIdent: epID.Local.Port(),
+		dstAddr:                   epID.Remote.Addr(),
+		dstPortOrEchoReplyIdent:   epID.Remote.Port(),
 		transProto:                transProto,
 		netProto:                  netProto,
 	}

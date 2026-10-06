@@ -16,6 +16,7 @@ package ip_test
 
 import (
 	"fmt"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -188,18 +189,15 @@ func createStackWithLinkEndpoint(t *testing.T, v4, mgpEnabled bool, e stack.Link
 		t.Fatalf("CreateNIC(%d, _) = %s", nicID, err)
 	}
 	addr := tcpip.ProtocolAddress{
-		Protocol: ipv4.ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   stackIPv4Addr,
-			PrefixLen: defaultIPv4PrefixLength,
-		},
+		Protocol:          ipv4.ProtocolNumber,
+		AddressWithPrefix: netip.PrefixFrom(stackIPv4Addr, defaultIPv4PrefixLength),
 	}
 	if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, addr, err)
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv6.ProtocolNumber,
-		AddressWithPrefix: linkLocalIPv6Addr1.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(linkLocalIPv6Addr1),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -501,7 +499,7 @@ func TestMGPReceiveCounters(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			ctx := newMulticastTestContext(t, test.groupAddress.Len() == header.IPv4AddressSize /* v4 */, true /* mgpEnabled */)
+			ctx := newMulticastTestContext(t, test.groupAddress.Is4() /* v4 */, true /* mgpEnabled */)
 			defer ctx.cleanup()
 
 			test.rxMGPkt(ctx.e, test.headerType, test.maxRespTime, test.groupAddress, 0 /* extraLength */)
@@ -958,7 +956,7 @@ func TestMGPQueryMessages(t *testing.T) {
 			}{
 				{
 					name:          "Unspecified",
-					multicastAddr: tcpip.AddrFromSlice([]byte(strings.Repeat("\x00", test.multicastAddr.Len()))),
+					multicastAddr: tcpip.AddrFromSlice([]byte(strings.Repeat("\x00", test.multicastAddr.BitLen()/8))),
 					expectReport:  true,
 				},
 				{

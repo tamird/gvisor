@@ -18,6 +18,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
+	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
@@ -167,26 +168,17 @@ var (
 // IPv6EmptySubnet is the empty IPv6 subnet. It may also be known as the
 // catch-all or wildcard subnet. That is, all IPv6 addresses are considered to
 // be contained within this subnet.
-var IPv6EmptySubnet = tcpip.AddressWithPrefix{
-	Address:   IPv6Any,
-	PrefixLen: 0,
-}.Subnet()
+var IPv6EmptySubnet = netip.PrefixFrom(IPv6Any, 0)
 
 // IPv4MappedIPv6Subnet is the prefix for an IPv4 mapped IPv6 address as defined
 // by RFC 4291 section 2.5.5.
-var IPv4MappedIPv6Subnet = tcpip.AddressWithPrefix{
-	Address:   tcpip.AddrFrom16([16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0x00, 0x00, 0x00, 0x00}),
-	PrefixLen: 96,
-}.Subnet()
+var IPv4MappedIPv6Subnet = netip.MustParsePrefix("::ffff:0:0/96")
 
 // IPv6LinkLocalPrefix is the prefix for IPv6 link-local addresses, as defined
 // by RFC 4291 section 2.5.6.
 //
 // The prefix is fe80::/64
-var IPv6LinkLocalPrefix = tcpip.AddressWithPrefix{
-	Address:   tcpip.AddrFrom16([16]byte{0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}),
-	PrefixLen: 64,
-}
+var IPv6LinkLocalPrefix = netip.MustParsePrefix("fe80::/64")
 
 // PayloadLength returns the value of the "payload length" field of the ipv6
 // header.
@@ -513,13 +505,13 @@ func IsV6LinkLocalMulticastAddress(addr tcpip.Address) bool {
 //
 // If buf has enough capacity for the IID (IIDSize bytes), a new underlying
 // array for the buffer will not be allocated.
-func AppendOpaqueInterfaceIdentifier(buf []byte, prefix tcpip.Subnet, nicName string, dadCounter uint8, secretKey []byte) []byte {
+func AppendOpaqueInterfaceIdentifier(buf []byte, prefix netip.Prefix, nicName string, dadCounter uint8, secretKey []byte) []byte {
 	// As per RFC 7217 section 5, the opaque identifier can be generated as a
 	// cryptographic hash of the concatenation of each of the function parameters.
 	// Note, we omit the optional Network_ID field.
 	h := sha256.New()
 	// h.Write never returns an error.
-	prefixID := prefix.ID()
+	prefixID := prefix.Addr()
 	h.Write([]byte(prefixID.AsSlice()[:IIDOffsetInIPv6Address]))
 	h.Write([]byte(nicName))
 	h.Write([]byte{dadCounter})
@@ -539,7 +531,7 @@ func LinkLocalAddrWithOpaqueIID(nicName string, dadCounter uint8, secretKey []by
 		1: 0x80,
 	}
 
-	return tcpip.AddrFrom16([16]byte(AppendOpaqueInterfaceIdentifier(lladdrb[:IIDOffsetInIPv6Address], IPv6LinkLocalPrefix.Subnet(), nicName, dadCounter, secretKey)))
+	return tcpip.AddrFrom16([16]byte(AppendOpaqueInterfaceIdentifier(lladdrb[:IIDOffsetInIPv6Address], IPv6LinkLocalPrefix.Masked(), nicName, dadCounter, secretKey)))
 }
 
 // IPv6AddressScope is the scope of an IPv6 address.
@@ -598,7 +590,7 @@ func InitialTempIID(initialTempIIDHistory []byte, seed []byte, nicID tcpip.NICID
 // used when generating a new temporary IID.
 //
 // Panics if tempIIDHistory is not at least IIDSize bytes.
-func GenerateTempIPv6SLAACAddr(tempIIDHistory []byte, stableAddr tcpip.Address) tcpip.AddressWithPrefix {
+func GenerateTempIPv6SLAACAddr(tempIIDHistory []byte, stableAddr tcpip.Address) netip.Prefix {
 	addrBytes := stableAddr.As16()
 	h := sha256.New()
 	h.Write(tempIIDHistory)
@@ -616,10 +608,7 @@ func GenerateTempIPv6SLAACAddr(tempIIDHistory []byte, stableAddr tcpip.Address) 
 		panic(fmt.Sprintf("copied %d IID bytes, expected %d bytes", n, IIDSize))
 	}
 
-	return tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFrom16(addrBytes),
-		PrefixLen: IIDOffsetInIPv6Address * 8,
-	}
+	return netip.PrefixFrom(tcpip.AddrFrom16(addrBytes), IIDOffsetInIPv6Address*8)
 }
 
 // IPv6MulticastScope is the scope of a multicast IPv6 address, as defined by

@@ -389,8 +389,8 @@ func ReceiveIPPacketInfo(want tcpip.IPPacketInfo) ControlMessagesChecker {
 		t.Helper()
 		if !cm.HasIPPacketInfo {
 			t.Error("got cm.HasIPPacketInfo = false, want = true")
-		} else if diff := cmp.Diff(want, cm.PacketInfo); diff != "" {
-			t.Errorf("IPPacketInfo mismatch (-want +got):\n%s", diff)
+		} else if got := cm.PacketInfo; got != want {
+			t.Errorf("got IPPacketInfo = %+v, want = %+v", got, want)
 		}
 	}
 }
@@ -413,8 +413,8 @@ func ReceiveIPv6PacketInfo(want tcpip.IPv6PacketInfo) ControlMessagesChecker {
 		t.Helper()
 		if !cm.HasIPv6PacketInfo {
 			t.Error("got cm.HasIPv6PacketInfo = false, want = true")
-		} else if diff := cmp.Diff(want, cm.IPv6PacketInfo); diff != "" {
-			t.Errorf("IPv6PacketInfo mismatch (-want +got):\n%s", diff)
+		} else if got := cm.IPv6PacketInfo; got != want {
+			t.Errorf("got IPv6PacketInfo = %+v, want = %+v", got, want)
 		}
 	}
 }
@@ -437,8 +437,8 @@ func ReceiveOriginalDstAddr(want tcpip.FullAddress) ControlMessagesChecker {
 		t.Helper()
 		if !cm.HasOriginalDstAddress {
 			t.Error("got cm.HasOriginalDstAddress = false, want = true")
-		} else if diff := cmp.Diff(want, cm.OriginalDstAddress); diff != "" {
-			t.Errorf("OriginalDstAddress mismatch (-want +got):\n%s", diff)
+		} else if got := cm.OriginalDstAddress; got != want {
+			t.Errorf("got OriginalDstAddress = %+v, want = %+v", got, want)
 		}
 	}
 }

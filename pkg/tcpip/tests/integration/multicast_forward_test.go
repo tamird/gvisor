@@ -16,6 +16,7 @@ package multicast_forward_test
 
 import (
 	"fmt"
+	"net/netip"
 	"os"
 	"testing"
 	"time"
@@ -115,14 +116,14 @@ var (
 		remoteUnicastAddr:      utils.RemoteIPv6Addr,
 	}
 
-	v4EndpointAddrs = map[endpointAddrType]tcpip.AddressWithPrefix{
+	v4EndpointAddrs = map[endpointAddrType]netip.Prefix{
 		incomingEndpointAddr: utils.RouterNIC1IPv4Addr.AddressWithPrefix,
 		otherEndpointAddr:    utils.Host1IPv4Addr.AddressWithPrefix,
 		outgoingEndpointAddr: utils.RouterNIC2IPv4Addr.AddressWithPrefix,
 		otherOutgoingNICID:   utils.Host2IPv4Addr.AddressWithPrefix,
 	}
 
-	v6EndpointAddrs = map[endpointAddrType]tcpip.AddressWithPrefix{
+	v6EndpointAddrs = map[endpointAddrType]netip.Prefix{
 		incomingEndpointAddr: utils.RouterNIC1IPv6Addr.AddressWithPrefix,
 		otherEndpointAddr:    utils.Host1IPv6Addr.AddressWithPrefix,
 		outgoingEndpointAddr: utils.RouterNIC2IPv6Addr.AddressWithPrefix,
@@ -147,7 +148,7 @@ func getAddr(protocol tcpip.NetworkProtocolNumber, addrType addrType) tcpip.Addr
 	}
 }
 
-func getEndpointAddr(protocol tcpip.NetworkProtocolNumber, addrType endpointAddrType) tcpip.AddressWithPrefix {
+func getEndpointAddr(protocol tcpip.NetworkProtocolNumber, addrType endpointAddrType) netip.Prefix {
 	switch protocol {
 	case ipv4.ProtocolNumber:
 		if addr, ok := v4EndpointAddrs[addrType]; ok {
@@ -1122,7 +1123,7 @@ func TestMulticastForwarding(t *testing.T) {
 				}
 
 				if test.joinMulticastGroup {
-					checkEchoReply(t, protocol, p, getEndpointAddr(protocol, incomingEpAddrType).Address, srcAddr)
+					checkEchoReply(t, protocol, p, getEndpointAddr(protocol, incomingEpAddrType).Addr(), srcAddr)
 					p.DecRef()
 				}
 
@@ -1133,7 +1134,7 @@ func TestMulticastForwarding(t *testing.T) {
 					return nil
 				}()
 
-				if diff := cmp.Diff(wantUnexpectedInputInterfaceEvent, eventDispatcher.onUnexpectedInputInterfaceData, cmp.AllowUnexported(onUnexpectedInputInterfaceData{})); diff != "" {
+				if diff := cmp.Diff(wantUnexpectedInputInterfaceEvent, eventDispatcher.onUnexpectedInputInterfaceData, cmp.AllowUnexported(onUnexpectedInputInterfaceData{}), cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 					t.Errorf("onUnexpectedInputInterfaceData mismatch (-want +got):\n%s", diff)
 				}
 
@@ -1144,7 +1145,7 @@ func TestMulticastForwarding(t *testing.T) {
 					return nil
 				}()
 
-				if diff := cmp.Diff(wantMissingRouteEvent, eventDispatcher.onMissingRouteData, cmp.AllowUnexported(onMissingRouteData{})); diff != "" {
+				if diff := cmp.Diff(wantMissingRouteEvent, eventDispatcher.onMissingRouteData, cmp.AllowUnexported(onMissingRouteData{}), cmpopts.EquateComparable(tcpip.Address{})); diff != "" {
 					t.Errorf("onMissingRouteData mismatch (-want +got):\n%s", diff)
 				}
 			})

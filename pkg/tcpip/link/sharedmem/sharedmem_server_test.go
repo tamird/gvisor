@@ -22,8 +22,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
-	"strconv"
 	"strings"
 	"syscall"
 	"testing"
@@ -98,13 +98,13 @@ func newStackWithOptions(stackOpts stackOptions) (*stack.Stack, error) {
 	// Add Protocol Address.
 	protocolNum := ipv4.ProtocolNumber
 	routeTable := []tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: nicID}}
-	if stackOpts.addr.Len() == 16 {
+	if stackOpts.addr.Is6() {
 		routeTable = []tcpip.Route{{Destination: header.IPv6EmptySubnet, NIC: nicID}}
 		protocolNum = ipv6.ProtocolNumber
 	}
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          protocolNum,
-		AddressWithPrefix: stackOpts.addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(stackOpts.addr),
 	}
 	if err := st.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		return nil, fmt.Errorf("AddProtocolAddress(%d, %v, {}): %s", nicID, protocolAddr, err)
@@ -214,7 +214,7 @@ func makeRequest(serverAddr tcpip.FullAddress, clientStk *stack.Stack) (*http.Re
 	// Close idle "keep alive" connections. If any connections remain open after
 	// a test ends, DoLeakCheck() will erroneously detect leaked packets.
 	defer httpClient.CloseIdleConnections()
-	serverURL := fmt.Sprintf("http://%s/", net.JoinHostPort(net.IP(serverAddr.Addr.AsSlice()).String(), strconv.Itoa(int(serverAddr.Port))))
+	serverURL := fmt.Sprintf("http://%s/", netip.AddrPortFrom(serverAddr.Addr, serverAddr.Port))
 	response, err := httpClient.Get(serverURL)
 	return response, err
 }

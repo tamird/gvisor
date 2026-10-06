@@ -16,6 +16,7 @@ package stack
 
 import (
 	"fmt"
+	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -35,19 +36,12 @@ type NetworkEndpointID struct {
 //
 // +stateify savable
 type TransportEndpointID struct {
-	// LocalPort is the local port associated with the endpoint.
-	LocalPort uint16
+	// Local identifies the local endpoint. Its port is the echo identifier for ICMP.
+	// An invalid address with a nonzero port represents a wildcard binding.
+	Local netip.AddrPort
 
-	// LocalAddress is the local [network layer] address associated with
-	// the endpoint.
-	LocalAddress tcpip.Address
-
-	// RemotePort is the remote port associated with the endpoint.
-	RemotePort uint16
-
-	// RemoteAddress it the remote [network layer] address associated with
-	// the endpoint.
-	RemoteAddress tcpip.Address
+	// Remote identifies the remote endpoint.
+	Remote netip.AddrPort
 }
 
 // NetworkPacketInfo holds information about a network layer packet.
@@ -617,10 +611,10 @@ type AddressDispatcher interface {
 // assigned to a NetworkEndpoint.
 type AssignableAddressEndpoint interface {
 	// AddressWithPrefix returns the endpoint's address.
-	AddressWithPrefix() tcpip.AddressWithPrefix
+	AddressWithPrefix() netip.Prefix
 
 	// Subnet returns the subnet of the endpoint's address.
-	Subnet() tcpip.Subnet
+	Subnet() netip.Prefix
 
 	// IsAssigned returns whether or not the endpoint is considered bound
 	// to its NetworkEndpoint.
@@ -737,7 +731,7 @@ type AddressableEndpoint interface {
 	// Returns *tcpip.ErrDuplicateAddress if the address exists.
 	//
 	// Acquires and returns the AddressEndpoint for the added address.
-	AddAndAcquirePermanentAddress(addr tcpip.AddressWithPrefix, properties AddressProperties) (AddressEndpoint, tcpip.Error)
+	AddAndAcquirePermanentAddress(addr netip.Prefix, properties AddressProperties) (AddressEndpoint, tcpip.Error)
 
 	// RemovePermanentAddress removes the passed address if it is a permanent
 	// address.
@@ -754,7 +748,7 @@ type AddressableEndpoint interface {
 	SetLifetimes(addr tcpip.Address, lifetimes AddressLifetimes) tcpip.Error
 
 	// MainAddress returns the endpoint's primary permanent address.
-	MainAddress() tcpip.AddressWithPrefix
+	MainAddress() netip.Prefix
 
 	// AcquireAssignedAddress returns an address endpoint for the passed address
 	// that is considered bound to the endpoint, optionally creating a temporary
@@ -777,10 +771,10 @@ type AddressableEndpoint interface {
 	AcquireOutgoingPrimaryAddress(remoteAddr, srcHint tcpip.Address, allowExpired bool) AddressEndpoint
 
 	// PrimaryAddresses returns the primary addresses.
-	PrimaryAddresses() []tcpip.AddressWithPrefix
+	PrimaryAddresses() []netip.Prefix
 
 	// PermanentAddresses returns all the permanent addresses.
-	PermanentAddresses() []tcpip.AddressWithPrefix
+	PermanentAddresses() []netip.Prefix
 }
 
 // NDPEndpoint is a network endpoint that supports NDP.
@@ -827,7 +821,7 @@ type NetworkInterface interface {
 	// address exists. If no non-deprecated addresses exist, the first deprecated
 	// address will be returned. If no deprecated addresses exist, the zero value
 	// will be returned.
-	PrimaryAddress(tcpip.NetworkProtocolNumber) (tcpip.AddressWithPrefix, tcpip.Error)
+	PrimaryAddress(tcpip.NetworkProtocolNumber) (netip.Prefix, tcpip.Error)
 
 	// CheckLocalAddress returns true if the address exists on the interface.
 	CheckLocalAddress(tcpip.NetworkProtocolNumber, tcpip.Address) bool

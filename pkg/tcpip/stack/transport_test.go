@@ -17,6 +17,7 @@ package stack_test
 import (
 	"bytes"
 	"io"
+	"net/netip"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -93,7 +94,7 @@ func (*fakeTransportEndpoint) Read(io.Writer, tcpip.ReadOptions) (tcpip.ReadResu
 }
 
 func (f *fakeTransportEndpoint) Write(p tcpip.Payloader, opts tcpip.WriteOptions) (int64, tcpip.Error) {
-	if f.route.RemoteAddress().Len() == 0 {
+	if !f.route.RemoteAddress().IsValid() {
 		return 0, &tcpip.ErrHostUnreachable{}
 	}
 
@@ -149,7 +150,7 @@ func (f *fakeTransportEndpoint) Connect(addr tcpip.FullAddress) tcpip.Error {
 	}
 
 	// Try to register so that we can start receiving packets.
-	f.ID.RemoteAddress = addr.Addr
+	f.ID.Remote = netip.AddrPortFrom(addr.Addr, f.ID.Remote.Port())
 	err = f.proto.stack.RegisterTransportEndpoint([]tcpip.NetworkProtocolNumber{fakeNetNumber}, fakeTransNumber, f.ID, f, ports.Flags{}, 0 /* bindToDevice */)
 	if err != nil {
 		r.Release()
@@ -189,7 +190,7 @@ func (f *fakeTransportEndpoint) Bind(a tcpip.FullAddress) tcpip.Error {
 	if err := f.proto.stack.RegisterTransportEndpoint(
 		[]tcpip.NetworkProtocolNumber{fakeNetNumber},
 		fakeTransNumber,
-		stack.TransportEndpointID{LocalAddress: a.Addr},
+		stack.TransportEndpointID{Local: netip.AddrPortFrom(a.Addr, 0)},
 		f,
 		ports.Flags{},
 		0, /* bindtoDevice */
@@ -364,19 +365,13 @@ func TestTransportReceive(t *testing.T) {
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -442,19 +437,13 @@ func TestTransportControlReceive(t *testing.T) {
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -526,21 +515,15 @@ func TestTransportSend(t *testing.T) {
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 

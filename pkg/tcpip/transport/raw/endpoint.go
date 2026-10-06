@@ -626,7 +626,7 @@ func (e *endpoint) HandlePacket(pkt *stack.PacketBuffer) {
 		case transport.DatagramEndpointStateConnected:
 			// If connected, only accept packets from the remote address we
 			// connected to.
-			if info.ID.RemoteAddress != srcAddr {
+			if info.ID.Remote.Addr() != srcAddr {
 				return false
 			}
 

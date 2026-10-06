@@ -21,6 +21,8 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"net/netip"
+	"slices"
 	"sort"
 	"testing"
 	"testing/synctest"
@@ -109,11 +111,11 @@ func TestRemoveNICWaitsForLinkResolution(t *testing.T) {
 					t.Fatalf("CreateNIC: %s", err)
 				}
 				local := tcpip.AddrFrom4([4]byte{192, 0, 2, 1})
-				addr := tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: tcpip.AddressWithPrefix{Address: local, PrefixLen: 24}}
+				addr := tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: netip.PrefixFrom(local, 24)}
 				if err := s.AddProtocolAddress(1, addr, stack.AddressProperties{}); err != nil {
 					t.Fatalf("AddProtocolAddress: %s", err)
 				}
-				s.SetRouteTable([]tcpip.Route{{Destination: addr.AddressWithPrefix.Subnet(), NIC: 1}})
+				s.SetRouteTable([]tcpip.Route{{Destination: addr.AddressWithPrefix.Masked(), NIC: 1}})
 				count := 1
 				if overflow {
 					// The queue admits 64 pending resolutions; the 65th dispatches
@@ -246,7 +248,7 @@ const (
 	protocolNumberOffset = 8
 )
 
-func checkGetMainNICAddress(s *stack.Stack, nicID tcpip.NICID, proto tcpip.NetworkProtocolNumber, want tcpip.AddressWithPrefix) error {
+func checkGetMainNICAddress(s *stack.Stack, nicID tcpip.NICID, proto tcpip.NetworkProtocolNumber, want netip.Prefix) error {
 	if addr, err := s.GetMainNICAddress(nicID, proto); err != nil {
 		return fmt.Errorf("stack.GetMainNICAddress(%d, %d): %s", nicID, proto, err)
 	} else if addr != want {
@@ -627,7 +629,7 @@ type addressDispatcher struct {
 	changedCh chan addressChangedEvent
 	removedCh chan stack.AddressRemovalReason
 	nicid     tcpip.NICID
-	addr      tcpip.AddressWithPrefix
+	addr      netip.Prefix
 	lifetimes stack.AddressLifetimes
 	state     stack.AddressAssignmentState
 }
@@ -739,22 +741,16 @@ func TestNetworkReceive(t *testing.T) {
 	}
 
 	protocolAddr1 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr1, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr1, err)
 	}
 
 	protocolAddr2 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom4Slice([]byte("\x02\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFrom4Slice([]byte("\x02\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr2, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr2, err)
@@ -914,19 +910,13 @@ func TestNetworkSend(t *testing.T) {
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -938,8 +928,8 @@ func TestNetworkSend(t *testing.T) {
 
 func TestNetworkSendMultiRoute(t *testing.T) {
 	// Create a stack with the fake network protocol, two nics, and two
-	// addresses per nic, the first nic has odd address, the second one has
-	// even addresses.
+	// addresses per nic, the first nic has upper-half address, the second one has
+	// lower-half addresses.
 	s := stack.New(stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{fakeNetFactory},
 	})
@@ -950,22 +940,16 @@ func TestNetworkSendMultiRoute(t *testing.T) {
 	}
 
 	protocolAddr1 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr1, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr1, err)
 	}
 
 	protocolAddr3 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr3, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr3, err)
@@ -977,49 +961,37 @@ func TestNetworkSendMultiRoute(t *testing.T) {
 	}
 
 	protocolAddr2 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(2, protocolAddr2, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 2, protocolAddr2, err)
 	}
 
 	protocolAddr4 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(2, protocolAddr4, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 2, protocolAddr4, err)
 	}
 
-	// Set a route table that sends all packets with odd destination
-	// addresses through the first NIC, and all even destination address
+	// Set a route table that sends all packets with upper-half destination
+	// addresses through the first NIC, and all lower-half destination address
 	// through the second one.
 	{
-		subnet0, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x01\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		subnet1, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00")), tcpip.MaskFrom("\x01\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet0 := netip.MustParsePrefix("0.0.0.0/1")
+		subnet1 := netip.MustParsePrefix("128.0.0.0/1")
 		s.SetRouteTable([]tcpip.Route{
 			{Destination: subnet1, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1},
 			{Destination: subnet0, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 2},
 		})
 	}
 
-	// Send a packet to an odd destination.
-	testSendTo(t, s, "\x05\x00\x00\x00", ep1, nil)
+	// Send a packet to an upper-half destination.
+	testSendTo(t, s, "\x85\x00\x00\x00", ep1, nil)
 
-	// Send a packet to an even destination.
+	// Send a packet to a lower-half destination.
 	testSendTo(t, s, "\x06\x00\x00\x00", ep2, nil)
 }
 
@@ -1239,9 +1211,9 @@ func TestRouteWithDownNIC(t *testing.T) {
 	const unspecifiedNIC = 0
 	const nicID1 = 1
 	const nicID2 = 2
-	addr1 := tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00"))
+	addr1 := tcpip.AddrFrom4Slice([]byte("\x81\x00\x00\x00"))
 	addr2 := tcpip.AddrFrom4Slice([]byte("\x02\x00\x00\x00"))
-	nic1Dst := tcpip.AddrFrom4Slice([]byte("\x05\x00\x00\x00"))
+	nic1Dst := tcpip.AddrFrom4Slice([]byte("\x85\x00\x00\x00"))
 	nic2Dst := tcpip.AddrFrom4Slice([]byte("\x06\x00\x00\x00"))
 	nic1RouteMTU := 1500
 	nic2RouteMTU := 1460
@@ -1262,11 +1234,8 @@ func TestRouteWithDownNIC(t *testing.T) {
 		}
 
 		protocolAddr1 := tcpip.ProtocolAddress{
-			Protocol: fakeNetNumber,
-			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   addr1,
-				PrefixLen: fakeDefaultPrefixLen,
-			},
+			Protocol:          fakeNetNumber,
+			AddressWithPrefix: netip.PrefixFrom(addr1, fakeDefaultPrefixLen),
 		}
 		if err := s.AddProtocolAddress(nicID1, protocolAddr1, stack.AddressProperties{}); err != nil {
 			t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID1, protocolAddr1, err)
@@ -1278,28 +1247,19 @@ func TestRouteWithDownNIC(t *testing.T) {
 		}
 
 		protocolAddr2 := tcpip.ProtocolAddress{
-			Protocol: fakeNetNumber,
-			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   addr2,
-				PrefixLen: fakeDefaultPrefixLen,
-			},
+			Protocol:          fakeNetNumber,
+			AddressWithPrefix: netip.PrefixFrom(addr2, fakeDefaultPrefixLen),
 		}
 		if err := s.AddProtocolAddress(nicID2, protocolAddr2, stack.AddressProperties{}); err != nil {
 			t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID2, protocolAddr2, err)
 		}
 
-		// Set a route table that sends all packets with odd destination
-		// addresses through the first NIC, and all even destination address
+		// Set a route table that sends all packets with upper-half destination
+		// addresses through the first NIC, and all lower-half destination address
 		// through the second one.
 		{
-			subnet0, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x01\x00\x00\x00"))
-			if err != nil {
-				t.Fatal(err)
-			}
-			subnet1, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x01\x00\x00\x00")), tcpip.MaskFrom("\x01\x00\x00\x00"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			subnet0 := netip.MustParsePrefix("0.0.0.0/1")
+			subnet1 := netip.MustParsePrefix("128.0.0.0/1")
 			s.SetRouteTable([]tcpip.Route{
 				{Destination: subnet1, Gateway: tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), NIC: nicID1, MTU: uint32(nic1RouteMTU)},
 				{Destination: subnet0, Gateway: tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), NIC: nicID2, MTU: uint32(nic2RouteMTU)},
@@ -1316,18 +1276,18 @@ func TestRouteWithDownNIC(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				s, _, _ := setup(t)
 
-				// Test routes to odd address.
-				testRoute(t, s, unspecifiedNIC, tcpip.Address{}, tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), addr1, nic1RouteMTUAtNetworkLayer)
-				testRoute(t, s, unspecifiedNIC, addr1, tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), addr1, nic1RouteMTUAtNetworkLayer)
-				testRoute(t, s, nicID1, addr1, tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), addr1, nic1RouteMTUAtNetworkLayer)
+				// Test routes to upper-half address.
+				testRoute(t, s, unspecifiedNIC, tcpip.Address{}, tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), addr1, nic1RouteMTUAtNetworkLayer)
+				testRoute(t, s, unspecifiedNIC, addr1, tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), addr1, nic1RouteMTUAtNetworkLayer)
+				testRoute(t, s, nicID1, addr1, tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), addr1, nic1RouteMTUAtNetworkLayer)
 
-				// Test routes to even address.
+				// Test routes to lower-half address.
 				testRoute(t, s, unspecifiedNIC, tcpip.Address{}, tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), addr2, nic2RouteMTUAtNetworkLayer)
 				testRoute(t, s, unspecifiedNIC, addr2, tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), addr2, nic2RouteMTUAtNetworkLayer)
 				testRoute(t, s, nicID2, addr2, tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), addr2, nic2RouteMTUAtNetworkLayer)
 
-				// Bringing NIC1 down should result in no routes to odd addresses. Routes to
-				// even addresses should continue to be available as NIC2 is still up.
+				// Bringing NIC1 down should result in no routes to upper-half addresses. Routes to
+				// lower-half addresses should continue to be available as NIC2 is still up.
 				if err := test.downFn(s, nicID1); err != nil {
 					t.Fatalf("test.downFn(_, %d): %s", nicID1, err)
 				}
@@ -1338,8 +1298,8 @@ func TestRouteWithDownNIC(t *testing.T) {
 				testRoute(t, s, unspecifiedNIC, addr2, nic2Dst, addr2, nic2RouteMTUAtNetworkLayer)
 				testRoute(t, s, nicID2, addr2, nic2Dst, addr2, nic2RouteMTUAtNetworkLayer)
 
-				// Bringing NIC2 down should result in no routes to even addresses. No
-				// route should be available to any address as routes to odd addresses
+				// Bringing NIC2 down should result in no routes to lower-half addresses. No
+				// route should be available to any address as routes to upper-half addresses
 				// were made unavailable by bringing NIC1 down above.
 				if err := test.downFn(s, nicID2); err != nil {
 					t.Fatalf("test.downFn(_, %d): %s", nicID2, err)
@@ -1352,8 +1312,8 @@ func TestRouteWithDownNIC(t *testing.T) {
 				testNoRoute(t, s, nicID2, addr2, nic2Dst)
 
 				if upFn := test.upFn; upFn != nil {
-					// Bringing NIC1 up should make routes to odd addresses available
-					// again. Routes to even addresses should continue to be unavailable
+					// Bringing NIC1 up should make routes to upper-half addresses available
+					// again. Routes to lower-half addresses should continue to be unavailable
 					// as NIC2 is still down.
 					if err := upFn(s, nicID1); err != nil {
 						t.Fatalf("test.upFn(_, %d): %s", nicID1, err)
@@ -1430,8 +1390,8 @@ func TestRouteWithDownNIC(t *testing.T) {
 
 func TestRoutes(t *testing.T) {
 	// Create a stack with the fake network protocol, two nics, and two
-	// addresses per nic, the first nic has odd address, the second one has
-	// even addresses.
+	// addresses per nic, the first nic has upper-half address, the second one has
+	// lower-half addresses.
 	s := stack.New(stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{fakeNetFactory},
 	})
@@ -1442,22 +1402,16 @@ func TestRoutes(t *testing.T) {
 	}
 
 	protocolAddr1 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr1, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr1, err)
 	}
 
 	protocolAddr3 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr3, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr3, err)
@@ -1469,43 +1423,31 @@ func TestRoutes(t *testing.T) {
 	}
 
 	protocolAddr2 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(2, protocolAddr2, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 2, protocolAddr2, err)
 	}
 
 	protocolAddr4 := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")),
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(2, protocolAddr4, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 2, protocolAddr4, err)
 	}
 
-	// Set a route table that sends all packets with odd destination
-	// addresses through the first NIC, and all even destination address
+	// Set a route table that sends all packets with upper-half destination
+	// addresses through the first NIC, and all lower-half destination address
 	// through the second one.
 	nic1RouteMTU := 1500
 	nic1RouteMTUAtNetworkLayer := nic1RouteMTU - fakeNetHeaderLen
 	nic2RouteMTU := 1460
 	nic2RouteMTUAtNetworkLayer := nic2RouteMTU - fakeNetHeaderLen
 	{
-		subnet0, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x01\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		subnet1, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), tcpip.MaskFrom("\x01\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet0 := netip.MustParsePrefix("0.0.0.0/1")
+		subnet1 := netip.MustParsePrefix("128.0.0.0/1")
 
 		s.SetRouteTable([]tcpip.Route{
 			{Destination: subnet1, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1, MTU: uint32(nic1RouteMTU)},
@@ -1513,31 +1455,31 @@ func TestRoutes(t *testing.T) {
 		})
 	}
 
-	// Test routes to odd address.
-	testRoute(t, s, 0, tcpip.Address{}, tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
-	testRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
-	testRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
-	testRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
-	testRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
+	// Test routes to upper-half address.
+	testRoute(t, s, 0, tcpip.Address{}, tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
+	testRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
+	testRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
+	testRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
+	testRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), nic1RouteMTUAtNetworkLayer)
 
-	// Test routes to even address.
+	// Test routes to lower-half address.
 	testRoute(t, s, 0, tcpip.Address{}, tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), nic2RouteMTUAtNetworkLayer)
 	testRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), nic2RouteMTUAtNetworkLayer)
 	testRoute(t, s, 2, tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), nic2RouteMTUAtNetworkLayer)
 	testRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), nic2RouteMTUAtNetworkLayer)
 	testRoute(t, s, 2, tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), nic2RouteMTUAtNetworkLayer)
 
-	// Try to send to odd numbered address from even numbered ones, then
+	// Try to send to upper-half address from lower-half ones, then
 	// vice-versa.
-	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")))
-	testNoRoute(t, s, 2, tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")))
-	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")))
-	testNoRoute(t, s, 2, tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x05\x00\x00\x00")))
+	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")))
+	testNoRoute(t, s, 2, tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")))
+	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")))
+	testNoRoute(t, s, 2, tcpip.AddrFromSlice([]byte("\x04\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x85\x00\x00\x00")))
 
-	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
-	testNoRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
-	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
-	testNoRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
+	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
+	testNoRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x81\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
+	testNoRoute(t, s, 0, tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
+	testNoRoute(t, s, 1, tcpip.AddrFromSlice([]byte("\x83\x00\x00\x00")), tcpip.AddrFromSlice([]byte("\x06\x00\x00\x00")))
 }
 
 func TestAddressRemoval(t *testing.T) {
@@ -1555,20 +1497,14 @@ func TestAddressRemoval(t *testing.T) {
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   localAddr,
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(localAddr, fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
@@ -1612,20 +1548,14 @@ func TestAddressRemovalWithRouteHeld(t *testing.T) {
 	buf := make([]byte, 30)
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   localAddr,
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(localAddr, fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
@@ -1663,11 +1593,11 @@ func verifyAddress(t *testing.T, s *stack.Stack, nicID tcpip.NICID, addr tcpip.A
 	if !ok {
 		t.Fatalf("NICInfo() failed to find nicID=%d", nicID)
 	}
-	if addr.Len() == 0 {
+	if !addr.IsValid() {
 		// No address given, verify that there is no address assigned to the NIC.
 		for _, a := range info.ProtocolAddresses {
-			if a.Protocol == fakeNetNumber && a.AddressWithPrefix != (tcpip.AddressWithPrefix{}) {
-				t.Errorf("verify no-address: got = %s, want = %s", a.AddressWithPrefix, tcpip.AddressWithPrefix{})
+			if a.Protocol == fakeNetNumber && a.AddressWithPrefix != (netip.Prefix{}) {
+				t.Errorf("verify no-address: got = %s, want = %s", a.AddressWithPrefix, netip.Prefix{})
 			}
 		}
 		return
@@ -1677,10 +1607,10 @@ func verifyAddress(t *testing.T, s *stack.Stack, nicID tcpip.NICID, addr tcpip.A
 	found := false
 	for _, a := range info.ProtocolAddresses {
 		if a.Protocol == fakeNetNumber {
-			if a.AddressWithPrefix.Address == addr {
+			if a.AddressWithPrefix.Addr() == addr {
 				found = true
 			} else {
-				t.Errorf("verify address: got = %s, want = %s", a.AddressWithPrefix.Address, addr)
+				t.Errorf("verify address: got = %s, want = %s", a.AddressWithPrefix.Addr(), addr)
 			}
 		}
 	}
@@ -1713,10 +1643,7 @@ func TestEndpointExpiration(t *testing.T) {
 				}
 
 				{
-					subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-					if err != nil {
-						t.Fatal(err)
-					}
+					subnet := header.IPv4EmptySubnet
 					s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 				}
 
@@ -1755,11 +1682,8 @@ func TestEndpointExpiration(t *testing.T) {
 				// 2. Add Address, everything should work.
 				//-----------------------
 				protocolAddr := tcpip.ProtocolAddress{
-					Protocol: fakeNetNumber,
-					AddressWithPrefix: tcpip.AddressWithPrefix{
-						Address:   localAddr,
-						PrefixLen: fakeDefaultPrefixLen,
-					},
+					Protocol:          fakeNetNumber,
+					AddressWithPrefix: netip.PrefixFrom(localAddr, fakeDefaultPrefixLen),
 				}
 				if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 					t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -1878,10 +1802,7 @@ func TestPromiscuousMode(t *testing.T) {
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
@@ -1929,10 +1850,7 @@ func TestExternalSendWithHandleLocal(t *testing.T) {
 		dstAddr   = tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00"))
 	)
 
-	subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	subnet := header.IPv4EmptySubnet
 
 	tests := []struct {
 		name           string
@@ -1974,11 +1892,8 @@ func TestExternalSendWithHandleLocal(t *testing.T) {
 						t.Fatalf("s.CreateNIC(%d, _): %s", nicID, err)
 					}
 					protocolAddr := tcpip.ProtocolAddress{
-						Protocol: fakeNetNumber,
-						AddressWithPrefix: tcpip.AddressWithPrefix{
-							Address:   localAddr,
-							PrefixLen: fakeDefaultPrefixLen,
-						},
+						Protocol:          fakeNetNumber,
+						AddressWithPrefix: netip.PrefixFrom(localAddr, fakeDefaultPrefixLen),
 					}
 					if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -2038,21 +1953,15 @@ func TestSpoofingWithAddress(t *testing.T) {
 	}
 
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   localAddr,
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(localAddr, fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
@@ -2111,10 +2020,7 @@ func TestSpoofingNoAddress(t *testing.T) {
 	}
 
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
@@ -2166,7 +2072,7 @@ func TestOutgoingBroadcastWithEmptyRouteTable(t *testing.T) {
 		}
 	}
 
-	protoAddr := tcpip.ProtocolAddress{Protocol: fakeNetNumber, AddressWithPrefix: tcpip.AddressWithPrefix{Address: header.IPv4Any}}
+	protoAddr := tcpip.ProtocolAddress{Protocol: fakeNetNumber, AddressWithPrefix: netip.PrefixFrom(header.IPv4Any, 0)}
 	if err := s.AddProtocolAddress(1, protoAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(1, %+v, {}) failed: %s", protoAddr, err)
 	}
@@ -2192,12 +2098,12 @@ func TestOutgoingBroadcastWithEmptyRouteTable(t *testing.T) {
 }
 
 func TestOutgoingBroadcastWithRouteTable(t *testing.T) {
-	defaultAddr := tcpip.AddressWithPrefix{Address: header.IPv4Any}
+	defaultAddr := netip.PrefixFrom(header.IPv4Any, 0)
 	// Local subnet on NIC1: 192.168.1.58/24, gateway 192.168.1.1.
-	nic1Addr := tcpip.AddressWithPrefix{Address: tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")), PrefixLen: 24}
+	nic1Addr := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")), 24)
 	nic1Gateway := testutil.MustParse4("192.168.1.1")
 	// Local subnet on NIC2: 10.10.10.5/24, gateway 10.10.10.1.
-	nic2Addr := tcpip.AddressWithPrefix{Address: tcpip.AddrFromSlice([]byte("\x0a\x0a\x0a\x05")), PrefixLen: 24}
+	nic2Addr := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x0a\x0a\x0a\x05")), 24)
 	nic2Gateway := testutil.MustParse4("10.10.10.1")
 
 	// Create a new stack with two NICs.
@@ -2223,20 +2129,20 @@ func TestOutgoingBroadcastWithRouteTable(t *testing.T) {
 
 	// Set the initial route table.
 	rt := []tcpip.Route{
-		{Destination: nic1Addr.Subnet(), NIC: 1},
-		{Destination: nic2Addr.Subnet(), NIC: 2},
-		{Destination: defaultAddr.Subnet(), Gateway: nic2Gateway, NIC: 2},
-		{Destination: defaultAddr.Subnet(), Gateway: nic1Gateway, NIC: 1},
+		{Destination: nic1Addr.Masked(), NIC: 1},
+		{Destination: nic2Addr.Masked(), NIC: 2},
+		{Destination: defaultAddr.Masked(), Gateway: nic2Gateway, NIC: 2},
+		{Destination: defaultAddr.Masked(), Gateway: nic1Gateway, NIC: 1},
 	}
 	s.SetRouteTable(rt)
 
 	// When an interface is given, the route for a broadcast goes through it.
-	r, err := s.FindRoute(1, nic1Addr.Address, header.IPv4Broadcast, fakeNetNumber, false /* multicastLoop */)
+	r, err := s.FindRoute(1, nic1Addr.Addr(), header.IPv4Broadcast, fakeNetNumber, false /* multicastLoop */)
 	if err != nil {
-		t.Fatalf("FindRoute(1, %v, %v, %d) failed: %v", nic1Addr.Address, header.IPv4Broadcast, fakeNetNumber, err)
+		t.Fatalf("FindRoute(1, %v, %v, %d) failed: %v", nic1Addr.Addr(), header.IPv4Broadcast, fakeNetNumber, err)
 	}
-	if r.LocalAddress() != nic1Addr.Address {
-		t.Errorf("got Route.LocalAddress() = %s, want = %s", r.LocalAddress(), nic1Addr.Address)
+	if r.LocalAddress() != nic1Addr.Addr() {
+		t.Errorf("got Route.LocalAddress() = %s, want = %s", r.LocalAddress(), nic1Addr.Addr())
 	}
 
 	if r.RemoteAddress() != header.IPv4Broadcast {
@@ -2249,8 +2155,8 @@ func TestOutgoingBroadcastWithRouteTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRoute(0, \"\", %s, %d) failed: %s", header.IPv4Broadcast, fakeNetNumber, err)
 	}
-	if r.LocalAddress() != nic2Addr.Address {
-		t.Errorf("got Route.LocalAddress() = %s, want = %s", r.LocalAddress(), nic2Addr.Address)
+	if r.LocalAddress() != nic2Addr.Addr() {
+		t.Errorf("got Route.LocalAddress() = %s, want = %s", r.LocalAddress(), nic2Addr.Addr())
 	}
 
 	if r.RemoteAddress() != header.IPv4Broadcast {
@@ -2260,7 +2166,7 @@ func TestOutgoingBroadcastWithRouteTable(t *testing.T) {
 	// 2. Case: Having an explicit route for broadcast will select that one.
 	rt = append(
 		[]tcpip.Route{
-			{Destination: header.IPv4Broadcast.WithPrefix().Subnet(), NIC: 1},
+			{Destination: tcpip.FullPrefix(header.IPv4Broadcast).Masked(), NIC: 1},
 		},
 		rt...,
 	)
@@ -2269,8 +2175,8 @@ func TestOutgoingBroadcastWithRouteTable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("FindRoute(0, \"\", %s, %d) failed: %s", header.IPv4Broadcast, fakeNetNumber, err)
 	}
-	if r.LocalAddress() != nic1Addr.Address {
-		t.Errorf("got Route.LocalAddress() = %s, want = %s", r.LocalAddress(), nic1Addr.Address)
+	if r.LocalAddress() != nic1Addr.Addr() {
+		t.Errorf("got Route.LocalAddress() = %s, want = %s", r.LocalAddress(), nic1Addr.Addr())
 	}
 
 	if r.RemoteAddress() != header.IPv4Broadcast {
@@ -2341,11 +2247,8 @@ func TestMulticastOrIPv6LinkLocalNeedsNoRoute(t *testing.T) {
 			}
 
 			protocolAddr := tcpip.ProtocolAddress{
-				Protocol: fakeNetNumber,
-				AddressWithPrefix: tcpip.AddressWithPrefix{
-					Address:   anyAddr,
-					PrefixLen: fakeDefaultPrefixLen,
-				},
+				Protocol:          fakeNetNumber,
+				AddressWithPrefix: netip.PrefixFrom(anyAddr, fakeDefaultPrefixLen),
 			}
 			if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)
@@ -2414,7 +2317,7 @@ func TestGetMainNICAddressAddPrimaryNonPrimary(t *testing.T) {
 							}
 							// Insert <canBe> primary and <never> never-primary addresses.
 							// Each one will add a network endpoint to the NIC.
-							primaryAddrAdded := make(map[tcpip.AddressWithPrefix]struct{})
+							primaryAddrAdded := make(map[netip.Prefix]struct{})
 							for i := 0; i < canBe+never; i++ {
 								var behavior stack.PrimaryEndpointBehavior
 								if i < canBe {
@@ -2429,7 +2332,7 @@ func TestGetMainNICAddressAddPrimaryNonPrimary(t *testing.T) {
 								if behavior == stack.CanBePrimaryEndpoint {
 									protocolAddress := tcpip.ProtocolAddress{
 										Protocol:          fakeNetNumber,
-										AddressWithPrefix: address.WithPrefix(),
+										AddressWithPrefix: tcpip.FullPrefix(address),
 									}
 									if err := s.AddProtocolAddress(nicID, protocolAddress, properties); err != nil {
 										t.Fatalf("AddProtocolAddress(%d, %+v, %+v): %s", nicID, protocolAddress, properties, err)
@@ -2438,11 +2341,8 @@ func TestGetMainNICAddressAddPrimaryNonPrimary(t *testing.T) {
 									primaryAddrAdded[protocolAddress.AddressWithPrefix] = struct{}{}
 								} else {
 									protocolAddress := tcpip.ProtocolAddress{
-										Protocol: fakeNetNumber,
-										AddressWithPrefix: tcpip.AddressWithPrefix{
-											Address:   address,
-											PrefixLen: fakeDefaultPrefixLen,
-										},
+										Protocol:          fakeNetNumber,
+										AddressWithPrefix: netip.PrefixFrom(address, fakeDefaultPrefixLen),
 									}
 									if err := s.AddProtocolAddress(nicID, protocolAddress, properties); err != nil {
 										t.Fatalf("AddProtocolAddress(%d, %+v, %+v): %s", nicID, protocolAddress, properties, err)
@@ -2458,7 +2358,7 @@ func TestGetMainNICAddressAddPrimaryNonPrimary(t *testing.T) {
 							}
 							if len(primaryAddrAdded) == 0 {
 								// No primary addresses present.
-								if wantAddr := (tcpip.AddressWithPrefix{}); gotAddr != wantAddr {
+								if wantAddr := (netip.Prefix{}); gotAddr != wantAddr {
 									t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, gotAddr, wantAddr)
 								}
 							} else {
@@ -2489,7 +2389,7 @@ func TestGetMainNICAddressErrors(t *testing.T) {
 	// Sanity check with a successful call.
 	if addr, err := s.GetMainNICAddress(nicID, ipv4.ProtocolNumber); err != nil {
 		t.Errorf("s.GetMainNICAddress(%d, %d): %s", nicID, ipv4.ProtocolNumber, err)
-	} else if want := (tcpip.AddressWithPrefix{}); addr != want {
+	} else if want := (netip.Prefix{}); addr != want {
 		t.Errorf("got s.GetMainNICAddress(%d, %d) = %s, want = %s", nicID, ipv4.ProtocolNumber, addr, want)
 	}
 
@@ -2534,11 +2434,8 @@ func TestGetMainNICAddressAddRemove(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			protocolAddress := tcpip.ProtocolAddress{
-				Protocol: fakeNetNumber,
-				AddressWithPrefix: tcpip.AddressWithPrefix{
-					Address:   tc.address,
-					PrefixLen: tc.prefixLen,
-				},
+				Protocol:          fakeNetNumber,
+				AddressWithPrefix: netip.PrefixFrom(tc.address, tc.prefixLen),
 			}
 			if err := s.AddProtocolAddress(1, protocolAddress, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(1, %+v, {}): %s", protocolAddress, err)
@@ -2549,12 +2446,12 @@ func TestGetMainNICAddressAddRemove(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if err := s.RemoveAddress(1, protocolAddress.AddressWithPrefix.Address); err != nil {
+			if err := s.RemoveAddress(1, protocolAddress.AddressWithPrefix.Addr()); err != nil {
 				t.Fatal("RemoveAddress failed:", err)
 			}
 
 			// Check that we get no address after removal.
-			if err := checkGetMainNICAddress(s, 1, fakeNetNumber, tcpip.AddressWithPrefix{}); err != nil {
+			if err := checkGetMainNICAddress(s, 1, fakeNetNumber, netip.Prefix{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -2577,10 +2474,10 @@ func verifyAddresses(t *testing.T, expectedAddresses, gotAddresses []tcpip.Proto
 	}
 
 	sort.Slice(gotAddresses, func(i, j int) bool {
-		return string(gotAddresses[i].AddressWithPrefix.Address.AsSlice()) < string(gotAddresses[j].AddressWithPrefix.Address.AsSlice())
+		return string(gotAddresses[i].AddressWithPrefix.Addr().AsSlice()) < string(gotAddresses[j].AddressWithPrefix.Addr().AsSlice())
 	})
 	sort.Slice(expectedAddresses, func(i, j int) bool {
-		return string(expectedAddresses[i].AddressWithPrefix.Address.AsSlice()) < string(expectedAddresses[j].AddressWithPrefix.Address.AsSlice())
+		return string(expectedAddresses[i].AddressWithPrefix.Addr().AsSlice()) < string(expectedAddresses[j].AddressWithPrefix.Addr().AsSlice())
 	})
 
 	for i, gotAddr := range gotAddresses {
@@ -2621,18 +2518,15 @@ func TestAddProtocolAddress(t *testing.T) {
 							Temporary:  temporary,
 						}
 						protocolAddr := tcpip.ProtocolAddress{
-							Protocol: fakeNetNumber,
-							AddressWithPrefix: tcpip.AddressWithPrefix{
-								Address:   address,
-								PrefixLen: fakeDefaultPrefixLen,
-							},
+							Protocol:          fakeNetNumber,
+							AddressWithPrefix: netip.PrefixFrom(address, fakeDefaultPrefixLen),
 						}
 						if err := s.AddProtocolAddress(nicID, protocolAddr, properties); err != nil {
 							t.Fatalf("AddProtocolAddress(%d, %+v, %+v) failed: %s", nicID, protocolAddr, properties, err)
 						}
 						wantAddresses = append(wantAddresses, tcpip.ProtocolAddress{
 							Protocol:          fakeNetNumber,
-							AddressWithPrefix: tcpip.AddressWithPrefix{Address: address, PrefixLen: fakeDefaultPrefixLen},
+							AddressWithPrefix: netip.PrefixFrom(address, fakeDefaultPrefixLen),
 						})
 					}
 				}
@@ -2769,21 +2663,15 @@ func TestNICStats(t *testing.T) {
 			t.Fatal("CreateNIC failed: ", err)
 		}
 		protocolAddr := tcpip.ProtocolAddress{
-			Protocol: fakeNetNumber,
-			AddressWithPrefix: tcpip.AddressWithPrefix{
-				Address:   nic.addr,
-				PrefixLen: fakeDefaultPrefixLen,
-			},
+			Protocol:          fakeNetNumber,
+			AddressWithPrefix: netip.PrefixFrom(nic.addr, fakeDefaultPrefixLen),
 		}
 		if err := s.AddProtocolAddress(nicid, protocolAddr, stack.AddressProperties{}); err != nil {
 			t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicid, protocolAddr, err)
 		}
 
 		{
-			subnet, err := tcpip.NewSubnet(nic.addr, tcpip.MaskFrom("\xff\x00\x00\x00"))
-			if err != nil {
-				t.Fatal(err)
-			}
+			subnet := netip.PrefixFrom(nic.addr, 8)
 			s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: nicid}})
 		}
 
@@ -3097,12 +2985,9 @@ func TestNICAutoGenLinkLocalAddr(t *testing.T) {
 				t.Fatalf("s.EnableNIC(%d): %s", nicID, err)
 			}
 
-			var expectedMainAddr tcpip.AddressWithPrefix
+			var expectedMainAddr netip.Prefix
 			if test.shouldGen {
-				expectedMainAddr = tcpip.AddressWithPrefix{
-					Address:   test.expectedAddr,
-					PrefixLen: header.IPv6LinkLocalPrefix.PrefixLen,
-				}
+				expectedMainAddr = netip.PrefixFrom(test.expectedAddr, header.IPv6LinkLocalPrefix.Bits())
 
 				// Should have auto-generated an address and resolved immediately (DAD
 				// is disabled).
@@ -3126,7 +3011,7 @@ func TestNICAutoGenLinkLocalAddr(t *testing.T) {
 			if err := s.DisableNIC(nicID); err != nil {
 				t.Fatalf("s.DisableNIC(%d): %s", nicID, err)
 			}
-			if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, tcpip.AddressWithPrefix{}); err != nil {
+			if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, netip.Prefix{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -3173,7 +3058,7 @@ func TestNoLinkLocalAutoGenForLoopbackNIC(t *testing.T) {
 				t.Fatalf("CreateNICWithOptions(%d, _, %+v) = %s", nicID, nicOpts, err)
 			}
 
-			if err := checkGetMainNICAddress(s, 1, header.IPv6ProtocolNumber, tcpip.AddressWithPrefix{}); err != nil {
+			if err := checkGetMainNICAddress(s, 1, header.IPv6ProtocolNumber, netip.Prefix{}); err != nil {
 				t.Fatal(err)
 			}
 		})
@@ -3207,7 +3092,7 @@ func TestNICAutoGenAddrDoesDAD(t *testing.T) {
 
 	// Address should not be considered bound to the
 	// NIC yet (DAD ongoing).
-	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, tcpip.AddressWithPrefix{}); err != nil {
+	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, netip.Prefix{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -3227,7 +3112,7 @@ func TestNICAutoGenAddrDoesDAD(t *testing.T) {
 		// means something is wrong.
 		t.Fatal("timed out waiting for DAD resolution")
 	}
-	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, tcpip.AddressWithPrefix{Address: linkLocalAddr, PrefixLen: header.IPv6LinkLocalPrefix.PrefixLen}); err != nil {
+	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, netip.PrefixFrom(linkLocalAddr, header.IPv6LinkLocalPrefix.Bits())); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -3262,11 +3147,8 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 				address1 := tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00"))
 				properties := stack.AddressProperties{PEB: pi}
 				protocolAddr := tcpip.ProtocolAddress{
-					Protocol: fakeNetNumber,
-					AddressWithPrefix: tcpip.AddressWithPrefix{
-						Address:   address1,
-						PrefixLen: fakeDefaultPrefixLen,
-					},
+					Protocol:          fakeNetNumber,
+					AddressWithPrefix: netip.PrefixFrom(address1, fakeDefaultPrefixLen),
 				}
 				if err := s.AddProtocolAddress(nicID, protocolAddr, properties); err != nil {
 					t.Fatalf("AddProtocolAddress(%d, %+v, %+v): %s", nicID, protocolAddr, properties, err)
@@ -3276,19 +3158,16 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 					t.Fatalf("GetMainNICAddress(%d, %d): %s", nicID, fakeNetNumber, err)
 				}
 				if pi == stack.NeverPrimaryEndpoint {
-					if want := (tcpip.AddressWithPrefix{}); addr != want {
+					if want := (netip.Prefix{}); addr != want {
 						t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, addr, want)
 
 					}
-				} else if addr.Address != address1 {
-					t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, addr.Address, address1)
+				} else if addr.Addr() != address1 {
+					t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, addr.Addr(), address1)
 				}
 
 				{
-					subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-					if err != nil {
-						t.Fatalf("NewSubnet failed: %v", err)
-					}
+					subnet := header.IPv4EmptySubnet
 					s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 				}
 
@@ -3319,11 +3198,8 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 				// FirstPrimaryEndpoint.
 				address3 := tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00"))
 				protocolAddr3 := tcpip.ProtocolAddress{
-					Protocol: fakeNetNumber,
-					AddressWithPrefix: tcpip.AddressWithPrefix{
-						Address:   address3,
-						PrefixLen: fakeDefaultPrefixLen,
-					},
+					Protocol:          fakeNetNumber,
+					AddressWithPrefix: netip.PrefixFrom(address3, fakeDefaultPrefixLen),
 				}
 				properties = stack.AddressProperties{PEB: stack.FirstPrimaryEndpoint}
 				if err := s.AddProtocolAddress(nicID, protocolAddr3, properties); err != nil {
@@ -3334,11 +3210,8 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 				// make sure the new peb was respected.
 				// (The address should just be promoted now).
 				protocolAddr1 := tcpip.ProtocolAddress{
-					Protocol: fakeNetNumber,
-					AddressWithPrefix: tcpip.AddressWithPrefix{
-						Address:   address1,
-						PrefixLen: fakeDefaultPrefixLen,
-					},
+					Protocol:          fakeNetNumber,
+					AddressWithPrefix: netip.PrefixFrom(address1, fakeDefaultPrefixLen),
 				}
 				properties = stack.AddressProperties{PEB: ps}
 				if err := s.AddProtocolAddress(nicID, protocolAddr1, properties); err != nil {
@@ -3346,7 +3219,7 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 				}
 				var primaryAddrs []tcpip.Address
 				for _, pa := range s.NICInfo()[nicID].ProtocolAddresses {
-					primaryAddrs = append(primaryAddrs, pa.AddressWithPrefix.Address)
+					primaryAddrs = append(primaryAddrs, pa.AddressWithPrefix.Addr())
 				}
 				var expectedList []tcpip.Address
 				switch ps {
@@ -3365,7 +3238,7 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 						tcpip.AddrFromSlice([]byte("\x03\x00\x00\x00")),
 					}
 				}
-				if !cmp.Equal(primaryAddrs, expectedList) {
+				if !slices.Equal(primaryAddrs, expectedList) {
 					t.Fatalf("got NIC's primary addresses = %v, want = %v", primaryAddrs, expectedList)
 				}
 
@@ -3382,12 +3255,12 @@ func TestNewPEBOnPromotionToPermanent(t *testing.T) {
 					t.Fatalf("GetMainNICAddress(%d, %d): %s", nicID, fakeNetNumber, err)
 				}
 				if ps == stack.NeverPrimaryEndpoint {
-					if want := (tcpip.AddressWithPrefix{}); addr != want {
+					if want := (netip.Prefix{}); addr != want {
 						t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, addr, want)
 					}
 				} else {
-					if addr.Address != address1 {
-						t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, addr.Address, address1)
+					if addr.Addr() != address1 {
+						t.Fatalf("got GetMainNICAddress(%d, %d) = %s, want = %s", nicID, fakeNetNumber, addr.Addr(), address1)
 					}
 				}
 			})
@@ -3423,8 +3296,8 @@ func TestIPv6SourceAddressSelectionScopeAndSameAddress(t *testing.T) {
 
 	var tempIIDHistory [header.IIDSize]byte
 	header.InitialTempIID(tempIIDHistory[:], nil, nicID)
-	tempGlobalAddr1 := header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], stableGlobalAddr1.Address).Address
-	tempGlobalAddr2 := header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], stableGlobalAddr2.Address).Address
+	tempGlobalAddr1 := header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], stableGlobalAddr1.Addr()).Addr()
+	tempGlobalAddr2 := header.GenerateTempIPv6SLAACAddr(tempIIDHistory[:], stableGlobalAddr2.Addr()).Addr()
 
 	type addressWithProperties struct {
 		addr       tcpip.Address
@@ -3434,9 +3307,9 @@ func TestIPv6SourceAddressSelectionScopeAndSameAddress(t *testing.T) {
 	// Rule 3 is also tested by NDP's AutoGenAddr test.
 	tests := []struct {
 		name                                   string
-		slaacPrefixForTempAddrBeforeNICAddrAdd tcpip.AddressWithPrefix
+		slaacPrefixForTempAddrBeforeNICAddrAdd netip.Prefix
 		nicAddrs                               []addressWithProperties
-		slaacPrefixForTempAddrAfterNICAddrAdd  tcpip.AddressWithPrefix
+		slaacPrefixForTempAddrAfterNICAddrAdd  netip.Prefix
 		remoteAddr                             tcpip.Address
 		expectedLocalAddr                      tcpip.Address
 	}{
@@ -3811,21 +3684,21 @@ func TestIPv6SourceAddressSelectionScopeAndSameAddress(t *testing.T) {
 				t.Fatalf("CreateNIC(%d, _) = %s", nicID, err)
 			}
 
-			if test.slaacPrefixForTempAddrBeforeNICAddrAdd != (tcpip.AddressWithPrefix{}) {
+			if test.slaacPrefixForTempAddrBeforeNICAddrAdd != (netip.Prefix{}) {
 				e.InjectInbound(header.IPv6ProtocolNumber, raBufWithPI(llAddr3, 0, test.slaacPrefixForTempAddrBeforeNICAddrAdd, true, true, lifetimeSeconds, lifetimeSeconds))
 			}
 
 			for _, a := range test.nicAddrs {
 				protocolAddr := tcpip.ProtocolAddress{
 					Protocol:          ipv6.ProtocolNumber,
-					AddressWithPrefix: a.addr.WithPrefix(),
+					AddressWithPrefix: tcpip.FullPrefix(a.addr),
 				}
 				if err := s.AddProtocolAddress(nicID, protocolAddr, a.properties); err != nil {
 					t.Fatalf("AddProtocolAddress(%d, %+v, %+v): %s", nicID, protocolAddr, a.properties, err)
 				}
 			}
 
-			if test.slaacPrefixForTempAddrAfterNICAddrAdd != (tcpip.AddressWithPrefix{}) {
+			if test.slaacPrefixForTempAddrAfterNICAddrAdd != (netip.Prefix{}) {
 				e.InjectInbound(header.IPv6ProtocolNumber, raBufWithPI(llAddr3, 0, test.slaacPrefixForTempAddrAfterNICAddrAdd, true, true, lifetimeSeconds, lifetimeSeconds))
 			}
 
@@ -3849,7 +3722,7 @@ func TestIPv6SourceAddressSelectionScopeAndSameAddress(t *testing.T) {
 			}
 			defer addressEP.DecRef()
 
-			if got := addressEP.AddressWithPrefix().Address; got != test.expectedLocalAddr {
+			if got := addressEP.AddressWithPrefix().Addr(); got != test.expectedLocalAddr {
 				t.Errorf("got local address = %s, want = %s", got, test.expectedLocalAddr)
 			}
 		})
@@ -3859,11 +3732,8 @@ func TestIPv6SourceAddressSelectionScopeAndSameAddress(t *testing.T) {
 func TestAddRemoveIPv4BroadcastAddressOnNICEnableDisable(t *testing.T) {
 	const nicID = 1
 	broadcastAddr := tcpip.ProtocolAddress{
-		Protocol: header.IPv4ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   header.IPv4Broadcast,
-			PrefixLen: 32,
-		},
+		Protocol:          header.IPv4ProtocolNumber,
+		AddressWithPrefix: netip.PrefixFrom(header.IPv4Broadcast, 32),
 	}
 
 	e := loopback.New()
@@ -3929,7 +3799,7 @@ func TestLeaveIPv6SolicitedNodeAddrBeforeAddrRemoval(t *testing.T) {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv6.ProtocolNumber,
-		AddressWithPrefix: addr1.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr1),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
@@ -4081,11 +3951,8 @@ func TestDoDADWhenNICEnabled(t *testing.T) {
 	}
 
 	addr := tcpip.ProtocolAddress{
-		Protocol: header.IPv6ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   llAddr1,
-			PrefixLen: 128,
-		},
+		Protocol:          header.IPv6ProtocolNumber,
+		AddressWithPrefix: netip.PrefixFrom(llAddr1, 128),
 	}
 	if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, addr, err)
@@ -4097,7 +3964,7 @@ func TestDoDADWhenNICEnabled(t *testing.T) {
 	}
 
 	// Address should be tentative so it should not be a main address.
-	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, tcpip.AddressWithPrefix{}); err != nil {
+	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, netip.Prefix{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -4110,7 +3977,7 @@ func TestDoDADWhenNICEnabled(t *testing.T) {
 	}
 
 	// Address should not be considered bound to the NIC yet (DAD ongoing).
-	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, tcpip.AddressWithPrefix{}); err != nil {
+	if err := checkGetMainNICAddress(s, nicID, header.IPv6ProtocolNumber, netip.Prefix{}); err != nil {
 		t.Fatal(err)
 	}
 
@@ -4118,7 +3985,7 @@ func TestDoDADWhenNICEnabled(t *testing.T) {
 	clock.Advance(dadTransmits * retransmitTimer)
 	select {
 	case e := <-ndpDisp.dadC:
-		if diff := checkDADEvent(e, nicID, addr.AddressWithPrefix.Address, &stack.DADSucceeded{}); diff != "" {
+		if diff := checkDADEvent(e, nicID, addr.AddressWithPrefix.Addr(), &stack.DADSucceeded{}); diff != "" {
 			t.Errorf("dad event mismatch (-want +got):\n%s", diff)
 		}
 	default:
@@ -4230,42 +4097,32 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 		nicID1           = 1
 	)
 
-	defaultAddr := tcpip.AddressWithPrefix{
-		Address:   header.IPv4Any,
-		PrefixLen: 0,
-	}
-	defaultSubnet := defaultAddr.Subnet()
-	ipv4Addr := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")),
-		PrefixLen: 24,
-	}
-	ipv4Subnet := ipv4Addr.Subnet()
-	ipv4SubnetBcast := ipv4Subnet.Broadcast()
+	defaultAddr := netip.PrefixFrom(header.IPv4Any, 0)
+
+	defaultSubnet := defaultAddr.Masked()
+	ipv4Addr := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")), 24)
+
+	ipv4Subnet := ipv4Addr.Masked()
+	ipv4SubnetBcast := header.IPv4SubnetBroadcast(ipv4Subnet)
 	ipv4Gateway := testutil.MustParse4("192.168.1.1")
-	ipv4AddrPrefix31 := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")),
-		PrefixLen: 31,
-	}
-	ipv4Subnet31 := ipv4AddrPrefix31.Subnet()
-	ipv4Subnet31Bcast := ipv4Subnet31.Broadcast()
-	ipv4AddrPrefix32 := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")),
-		PrefixLen: 32,
-	}
-	ipv4Subnet32 := ipv4AddrPrefix32.Subnet()
-	ipv4Subnet32Bcast := ipv4Subnet32.Broadcast()
-	ipv6Addr := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice([]byte("\x20\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01")),
-		PrefixLen: 64,
-	}
-	ipv6Subnet := ipv6Addr.Subnet()
-	ipv6SubnetBcast := ipv6Subnet.Broadcast()
-	remNetAddr := tcpip.AddressWithPrefix{
-		Address:   tcpip.AddrFromSlice([]byte("\x64\x0a\x7b\x18")),
-		PrefixLen: 24,
-	}
-	remNetSubnet := remNetAddr.Subnet()
-	remNetSubnetBcast := remNetSubnet.Broadcast()
+	ipv4AddrPrefix31 := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")), 31)
+
+	ipv4Subnet31 := ipv4AddrPrefix31.Masked()
+	ipv4Subnet31Bcast := header.IPv4SubnetBroadcast(ipv4Subnet31)
+	ipv4AddrPrefix32 := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\xc0\xa8\x01\x3a")), 32)
+
+	ipv4Subnet32 := ipv4AddrPrefix32.Masked()
+	ipv4Subnet32Bcast := header.IPv4SubnetBroadcast(ipv4Subnet32)
+	ipv6Addr := netip.PrefixFrom(
+		tcpip.AddrFromSlice([]byte("\x20\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01")),
+		64)
+
+	ipv6Subnet := ipv6Addr.Masked()
+	ipv6SubnetBcast := tcpip.AddrFrom16([16]byte{0x20, 0x0a, 0, 0, 0, 0, 0, 0, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff})
+	remNetAddr := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x64\x0a\x7b\x18")), 24)
+
+	remNetSubnet := remNetAddr.Masked()
+	remNetSubnetBcast := header.IPv4SubnetBroadcast(remNetSubnet)
 
 	tests := []struct {
 		name                      string
@@ -4293,7 +4150,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 				},
 			},
 			remoteAddr:                ipv4SubnetBcast,
-			expectedLocalAddress:      ipv4Addr.Address,
+			expectedLocalAddress:      ipv4Addr.Addr(),
 			expectedRemoteAddress:     ipv4SubnetBcast,
 			expectedRemoteLinkAddress: header.EthernetBroadcastAddress,
 			expectedNetProto:          header.IPv4ProtocolNumber,
@@ -4314,7 +4171,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 				},
 			},
 			remoteAddr:            ipv4Subnet31Bcast,
-			expectedLocalAddress:  ipv4AddrPrefix31.Address,
+			expectedLocalAddress:  ipv4AddrPrefix31.Addr(),
 			expectedRemoteAddress: ipv4Subnet31Bcast,
 			expectedNetProto:      header.IPv4ProtocolNumber,
 			expectedLoop:          stack.PacketOut,
@@ -4334,7 +4191,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 				},
 			},
 			remoteAddr:            ipv4Subnet32Bcast,
-			expectedLocalAddress:  ipv4AddrPrefix32.Address,
+			expectedLocalAddress:  ipv4AddrPrefix32.Addr(),
 			expectedRemoteAddress: ipv4Subnet32Bcast,
 			expectedNetProto:      header.IPv4ProtocolNumber,
 			expectedLoop:          stack.PacketOut,
@@ -4353,7 +4210,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 				},
 			},
 			remoteAddr:            ipv6SubnetBcast,
-			expectedLocalAddress:  ipv6Addr.Address,
+			expectedLocalAddress:  ipv6Addr.Addr(),
 			expectedRemoteAddress: ipv6SubnetBcast,
 			expectedNetProto:      header.IPv6ProtocolNumber,
 			expectedLoop:          stack.PacketOut,
@@ -4374,7 +4231,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 				},
 			},
 			remoteAddr:            remNetSubnetBcast,
-			expectedLocalAddress:  ipv4Addr.Address,
+			expectedLocalAddress:  ipv4Addr.Addr(),
 			expectedRemoteAddress: remNetSubnetBcast,
 			expectedNextHop:       ipv4Gateway,
 			expectedNetProto:      header.IPv4ProtocolNumber,
@@ -4397,7 +4254,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 				},
 			},
 			remoteAddr:            remNetSubnetBcast,
-			expectedLocalAddress:  ipv4Addr.Address,
+			expectedLocalAddress:  ipv4Addr.Addr(),
 			expectedRemoteAddress: remNetSubnetBcast,
 			expectedNextHop:       ipv4Gateway,
 			expectedNetProto:      header.IPv4ProtocolNumber,
@@ -4422,7 +4279,7 @@ func TestOutgoingSubnetBroadcast(t *testing.T) {
 			s.SetRouteTable(test.routes)
 
 			var netProto tcpip.NetworkProtocolNumber
-			switch l := test.remoteAddr.Len(); l {
+			switch l := test.remoteAddr.BitLen() / 8; l {
 			case header.IPv4AddressSize:
 				netProto = header.IPv4ProtocolNumber
 			case header.IPv6AddressSize:
@@ -4472,11 +4329,8 @@ func TestResolveWith(t *testing.T) {
 		t.Fatalf("CreateNIC(%d, _): %s", nicID, err)
 	}
 	addr := tcpip.ProtocolAddress{
-		Protocol: header.IPv4ProtocolNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFrom4Slice([]byte{192, 168, 1, 58}),
-			PrefixLen: 24,
-		},
+		Protocol:          header.IPv4ProtocolNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFrom4Slice([]byte{192, 168, 1, 58}), 24),
 	}
 	if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, addr, err)
@@ -4523,20 +4377,14 @@ func TestRouteReleaseAfterAddrRemoval(t *testing.T) {
 		t.Fatalf("CreateNIC(%d, _): %s", nicID, err)
 	}
 	protocolAddr := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   localAddr,
-			PrefixLen: fakeDefaultPrefixLen,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(localAddr, fakeDefaultPrefixLen),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddr, err)
 	}
 	{
-		subnet, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-		if err != nil {
-			t.Fatal(err)
-		}
+		subnet := header.IPv4EmptySubnet
 		s.SetRouteTable([]tcpip.Route{{Destination: subnet, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}})
 	}
 
@@ -4612,11 +4460,8 @@ func TestGetMainNICAddressWhenNICDisabled(t *testing.T) {
 	}
 
 	protocolAddress := tcpip.ProtocolAddress{
-		Protocol: fakeNetNumber,
-		AddressWithPrefix: tcpip.AddressWithPrefix{
-			Address:   tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")),
-			PrefixLen: 32,
-		},
+		Protocol:          fakeNetNumber,
+		AddressWithPrefix: netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), 32),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddress, stack.AddressProperties{}); err != nil {
 		t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID, protocolAddress, err)
@@ -4639,37 +4484,43 @@ func TestGetMainNICAddressWhenNICDisabled(t *testing.T) {
 // TestAddRoute tests Stack.AddRoute
 func TestAddRoute(t *testing.T) {
 	s := stack.New(stack.Options{})
-
-	subnet1, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	subnet2, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00")), tcpip.MaskFrom("\xff\x00\x00\x00"))
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	expected := []tcpip.Route{
-		{Destination: subnet2, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1},
-		{Destination: subnet1, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1},
+		{Destination: netip.MustParsePrefix("1.0.0.0/8"), NIC: 1},
+		{Destination: header.IPv4EmptySubnet, NIC: 1},
 	}
-
-	// Initialize the route table with one route.
-	s.SetRouteTable([]tcpip.Route{expected[0]})
-
-	// Add another route.
-	s.AddRoute(expected[1])
-
-	rt := s.GetRouteTable()
-	if got, want := len(rt), len(expected); got != want {
-		t.Fatalf("Unexpected route table length got = %d, want = %d", got, want)
-	}
-	for i, route := range rt {
-		if got, want := route, expected[i]; !got.Equal(want) {
-			t.Fatalf("Unexpected route got = %#v, want = %#v", got, want)
+	checkRoutes := func() {
+		t.Helper()
+		routes := s.GetRouteTable()
+		if len(routes) != len(expected) {
+			t.Fatalf("GetRouteTable() = %+v, want %+v", routes, expected)
+		}
+		for i, got := range routes {
+			want := expected[i]
+			if got.Destination != want.Destination || got.NIC != want.NIC || got.Gateway != want.Gateway {
+				t.Errorf("route %d = %+v, want %+v", i, got, want)
+			}
 		}
 	}
+
+	// Both insertion paths must mask host bits and retain prefix ordering.
+	s.SetRouteTable([]tcpip.Route{{Destination: netip.MustParsePrefix("1.2.3.4/8"), NIC: 1}})
+	s.AddRoute(tcpip.Route{Destination: netip.MustParsePrefix("192.0.2.1/0"), NIC: 1})
+	checkRoutes()
+
+	// Different host bits identify the same route for replacement and removal.
+	replacement := tcpip.Route{
+		Destination: netip.MustParsePrefix("1.9.8.7/8"),
+		Gateway:     testutil.MustParse4("1.0.0.2"),
+		NIC:         1,
+	}
+	s.ReplaceRoute(replacement)
+	expected[0].Gateway = replacement.Gateway
+	checkRoutes()
+	if got := s.RemoveRoutes(func(route tcpip.Route) bool { return route.Equal(replacement) }); got != 1 {
+		t.Fatalf("RemoveRoutes() removed %d routes, want 1", got)
+	}
+	expected = expected[1:]
+	checkRoutes()
 }
 
 // TestRemoveRoutes tests Stack.RemoveRoutes
@@ -4677,20 +4528,11 @@ func TestRemoveRoutes(t *testing.T) {
 	s := stack.New(stack.Options{})
 
 	addressToRemove := tcpip.AddrFromSlice([]byte("\x01\x00\x00\x00"))
-	subnet1, err := tcpip.NewSubnet(addressToRemove, tcpip.MaskFrom("\x01\x00\x00\x00"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	subnet1 := netip.PrefixFrom(addressToRemove, 8)
 
-	subnet2, err := tcpip.NewSubnet(addressToRemove, tcpip.MaskFrom("\x01\x00\x00\x00"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	subnet2 := netip.PrefixFrom(addressToRemove, 8)
 
-	subnet3, err := tcpip.NewSubnet(tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), tcpip.MaskFrom("\x02\x00\x00\x00"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	subnet3 := netip.PrefixFrom(tcpip.AddrFromSlice([]byte("\x02\x00\x00\x00")), 8)
 
 	routeList := []tcpip.Route{
 		{Destination: subnet1, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1},
@@ -4702,7 +4544,7 @@ func TestRemoveRoutes(t *testing.T) {
 
 	// Remove routes with the specific address.
 	removed := s.RemoveRoutes(func(r tcpip.Route) bool {
-		return r.Destination.ID() == addressToRemove
+		return r.Destination.Addr() == addressToRemove
 	})
 
 	expected := []tcpip.Route{{Destination: subnet3, Gateway: tcpip.AddrFromSlice([]byte("\x00\x00\x00\x00")), NIC: 1}}
@@ -4735,16 +4577,16 @@ func TestFindRouteWithForwarding(t *testing.T) {
 	type netCfg struct {
 		proto              tcpip.NetworkProtocolNumber
 		factory            stack.NetworkProtocolFactory
-		nic1AddrWithPrefix tcpip.AddressWithPrefix
-		nic2AddrWithPrefix tcpip.AddressWithPrefix
+		nic1AddrWithPrefix netip.Prefix
+		nic2AddrWithPrefix netip.Prefix
 		remoteAddr         tcpip.Address
 	}
 
 	fakeNetCfg := netCfg{
 		proto:              fakeNetNumber,
 		factory:            fakeNetFactory,
-		nic1AddrWithPrefix: tcpip.AddressWithPrefix{Address: nic1Addr, PrefixLen: fakeDefaultPrefixLen},
-		nic2AddrWithPrefix: tcpip.AddressWithPrefix{Address: nic2Addr, PrefixLen: fakeDefaultPrefixLen},
+		nic1AddrWithPrefix: netip.PrefixFrom(nic1Addr, fakeDefaultPrefixLen),
+		nic2AddrWithPrefix: netip.PrefixFrom(nic2Addr, fakeDefaultPrefixLen),
 		remoteAddr:         remoteAddr,
 	}
 
@@ -4754,22 +4596,22 @@ func TestFindRouteWithForwarding(t *testing.T) {
 	ipv6LinkLocalNIC1WithGlobalRemote := netCfg{
 		proto:              ipv6.ProtocolNumber,
 		factory:            ipv6.NewProtocol,
-		nic1AddrWithPrefix: llAddr1.WithPrefix(),
-		nic2AddrWithPrefix: globalIPv6Addr2.WithPrefix(),
+		nic1AddrWithPrefix: tcpip.FullPrefix(llAddr1),
+		nic2AddrWithPrefix: tcpip.FullPrefix(globalIPv6Addr2),
 		remoteAddr:         globalIPv6Addr1,
 	}
 	ipv6GlobalNIC1WithLinkLocalRemote := netCfg{
 		proto:              ipv6.ProtocolNumber,
 		factory:            ipv6.NewProtocol,
-		nic1AddrWithPrefix: globalIPv6Addr1.WithPrefix(),
-		nic2AddrWithPrefix: llAddr1.WithPrefix(),
+		nic1AddrWithPrefix: tcpip.FullPrefix(globalIPv6Addr1),
+		nic2AddrWithPrefix: tcpip.FullPrefix(llAddr1),
 		remoteAddr:         llAddr2,
 	}
 	ipv6GlobalNIC1WithLinkLocalMulticastRemote := netCfg{
 		proto:              ipv6.ProtocolNumber,
 		factory:            ipv6.NewProtocol,
-		nic1AddrWithPrefix: globalIPv6Addr1.WithPrefix(),
-		nic2AddrWithPrefix: globalIPv6Addr2.WithPrefix(),
+		nic1AddrWithPrefix: tcpip.FullPrefix(globalIPv6Addr1),
+		nic2AddrWithPrefix: tcpip.FullPrefix(globalIPv6Addr2),
 		remoteAddr:         tcpip.AddrFromSlice([]byte("\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01")),
 	}
 
@@ -4780,7 +4622,7 @@ func TestFindRouteWithForwarding(t *testing.T) {
 		forwardingEnabled bool
 
 		addrNIC             tcpip.NICID
-		localAddrWithPrefix tcpip.AddressWithPrefix
+		localAddrWithPrefix netip.Prefix
 
 		findRouteErr          tcpip.Error
 		dependentOnForwarding bool
@@ -5031,22 +4873,22 @@ func TestFindRouteWithForwarding(t *testing.T) {
 				t.Fatalf("SetForwardingDefaultAndAllNICs(%d, %t): %s", test.netCfg.proto, test.forwardingEnabled, err)
 			}
 
-			s.SetRouteTable([]tcpip.Route{{Destination: test.netCfg.remoteAddr.WithPrefix().Subnet(), NIC: nicID2}})
+			s.SetRouteTable([]tcpip.Route{{Destination: tcpip.FullPrefix(test.netCfg.remoteAddr).Masked(), NIC: nicID2}})
 
-			r, err := s.FindRoute(test.addrNIC, test.localAddrWithPrefix.Address, test.netCfg.remoteAddr, test.netCfg.proto, false /* multicastLoop */)
+			r, err := s.FindRoute(test.addrNIC, test.localAddrWithPrefix.Addr(), test.netCfg.remoteAddr, test.netCfg.proto, false /* multicastLoop */)
 			if err == nil {
 				defer r.Release()
 			}
 			if diff := cmp.Diff(test.findRouteErr, err); diff != "" {
-				t.Fatalf("unexpected error from FindRoute(%d, %s, %s, %d, false), (-want, +got):\n%s", test.addrNIC, test.localAddrWithPrefix.Address, test.netCfg.remoteAddr, test.netCfg.proto, diff)
+				t.Fatalf("unexpected error from FindRoute(%d, %s, %s, %d, false), (-want, +got):\n%s", test.addrNIC, test.localAddrWithPrefix.Addr(), test.netCfg.remoteAddr, test.netCfg.proto, diff)
 			}
 
 			if test.findRouteErr != nil {
 				return
 			}
 
-			if r.LocalAddress() != test.localAddrWithPrefix.Address {
-				t.Errorf("got r.LocalAddress() = %s, want = %s", r.LocalAddress(), test.localAddrWithPrefix.Address)
+			if r.LocalAddress() != test.localAddrWithPrefix.Addr() {
+				t.Errorf("got r.LocalAddress() = %s, want = %s", r.LocalAddress(), test.localAddrWithPrefix.Addr())
 			}
 			if r.RemoteAddress() != test.netCfg.remoteAddr {
 				t.Errorf("got r.RemoteAddress() = %s, want = %s", r.RemoteAddress(), test.netCfg.remoteAddr)
@@ -5070,8 +4912,8 @@ func TestFindRouteWithForwarding(t *testing.T) {
 				t.Fatal("packet not sent through ep2")
 			}
 			defer pkt.DecRef()
-			if pkt.EgressRoute.LocalAddress != test.localAddrWithPrefix.Address {
-				t.Errorf("got pkt.EgressRoute.LocalAddress = %s, want = %s", pkt.EgressRoute.LocalAddress, test.localAddrWithPrefix.Address)
+			if pkt.EgressRoute.LocalAddress != test.localAddrWithPrefix.Addr() {
+				t.Errorf("got pkt.EgressRoute.LocalAddress = %s, want = %s", pkt.EgressRoute.LocalAddress, test.localAddrWithPrefix.Addr())
 			}
 			if pkt.EgressRoute.RemoteAddress != test.netCfg.remoteAddr {
 				t.Errorf("got pkt.EgressRoute.RemoteAddress = %s, want = %s", pkt.EgressRoute.RemoteAddress, test.netCfg.remoteAddr)
@@ -5153,7 +4995,7 @@ func TestFindRoutePrefersLocalAddrOnlyForLocallyGeneratedTraffic(t *testing.T) {
 			// traffic to an address that we do not own.
 			protocolAddr1 := tcpip.ProtocolAddress{
 				Protocol:          fakeNetNumber,
-				AddressWithPrefix: tcpip.AddressWithPrefix{Address: nic1Addr, PrefixLen: fakeDefaultPrefixLen},
+				AddressWithPrefix: netip.PrefixFrom(nic1Addr, fakeDefaultPrefixLen),
 			}
 			if err := s.AddProtocolAddress(nicID1, protocolAddr1, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", nicID1, protocolAddr1, err)
@@ -5163,14 +5005,11 @@ func TestFindRoutePrefersLocalAddrOnlyForLocallyGeneratedTraffic(t *testing.T) {
 				t.Fatalf("SetForwardingDefaultAndAllNICs(%d, %t): %s", fakeNetNumber, true, err)
 			}
 
-			unspecifiedSubnet := func() tcpip.Subnet {
-				unspecifiedSubnet, err := tcpip.NewSubnet(tcpip.AddrFrom4Slice([]byte("\x00\x00\x00\x00")), tcpip.MaskFrom("\x00\x00\x00\x00"))
-				if err != nil {
-					t.Fatal(err)
-				}
+			unspecifiedSubnet := func() netip.Prefix {
+				unspecifiedSubnet := header.IPv4EmptySubnet
 				return unspecifiedSubnet
 			}()
-			s.SetRouteTable([]tcpip.Route{{Destination: nic2Addr.WithPrefix().Subnet(), NIC: nicID2}, {Destination: unspecifiedSubnet, Gateway: gatewayAddr, NIC: nicID1}})
+			s.SetRouteTable([]tcpip.Route{{Destination: tcpip.FullPrefix(nic2Addr).Masked(), NIC: nicID2}, {Destination: unspecifiedSubnet, Gateway: gatewayAddr, NIC: nicID1}})
 
 			r, err := s.FindRoute(0, test.localAddr, test.remoteAddr, fakeNetNumber, false /* multicastLoop */)
 			if err != nil {
@@ -5242,7 +5081,7 @@ func TestAddMulticastRoute(t *testing.T) {
 				fakeNet := s.NetworkProtocolInstance(fakeNetNumber).(*fakeNetworkProtocol)
 
 				expectedAddMulticastRouteData := addMulticastRouteData{addresses, route}
-				if !cmp.Equal(fakeNet.addMulticastRouteData, expectedAddMulticastRouteData, cmp.AllowUnexported(addMulticastRouteData{}, stack.MulticastRoute{})) {
+				if !cmp.Equal(fakeNet.addMulticastRouteData, expectedAddMulticastRouteData, cmp.AllowUnexported(addMulticastRouteData{}, stack.MulticastRoute{}), cmpopts.EquateComparable(tcpip.Address{})) {
 					t.Errorf("fakeNet.addMulticastRouteData = %#v, want = %#v", fakeNet.addMulticastRouteData, expectedAddMulticastRouteData)
 				}
 			}
@@ -5294,7 +5133,7 @@ func TestRemoveMulticastRoute(t *testing.T) {
 
 			if test.wantErr == nil {
 				fakeNet := s.NetworkProtocolInstance(fakeNetNumber).(*fakeNetworkProtocol)
-				if !cmp.Equal(fakeNet.removeMulticastRouteData, addresses) {
+				if fakeNet.removeMulticastRouteData != addresses {
 					t.Errorf("fakeNet.removeMulticastRouteData = %#v, want = %#v", fakeNet.removeMulticastRouteData, addresses)
 				}
 			}
@@ -5346,7 +5185,7 @@ func TestMulticastRouteLastUsedTime(t *testing.T) {
 			if test.wantErr == nil {
 				fakeNet := s.NetworkProtocolInstance(fakeNetNumber).(*fakeNetworkProtocol)
 
-				if !cmp.Equal(fakeNet.multicastRouteLastUsedTimeData, addresses) {
+				if fakeNet.multicastRouteLastUsedTimeData != addresses {
 					t.Errorf("fakeNet.multicastRouteLastUsedTimeData = %#v, want = %#v", fakeNet.multicastRouteLastUsedTimeData, addresses)
 				}
 			}
@@ -5705,6 +5544,7 @@ func TestClearNeighborCacheOnNICDisable(t *testing.T) {
 		} else if diff := cmp.Diff(
 			[]stack.NeighborEntry{{Addr: addr.addr, LinkAddr: linkAddr, State: stack.Static, UpdatedAt: clock.NowMonotonic()}},
 			neighbors,
+			cmpopts.EquateComparable(tcpip.Address{}),
 			cmp.AllowUnexported(tcpip.MonotonicTime{}),
 		); diff != "" {
 			t.Fatalf("proto=%d neighbors mismatch (-want +got):\n%s", addr.proto, diff)
@@ -5997,11 +5837,8 @@ func TestFindRoute(t *testing.T) {
 				}
 				for _, addr := range nic.addresses {
 					protocolAddr := tcpip.ProtocolAddress{
-						Protocol: header.IPv4ProtocolNumber,
-						AddressWithPrefix: tcpip.AddressWithPrefix{
-							Address:   testutil.MustParse4(addr),
-							PrefixLen: prefixLen,
-						},
+						Protocol:          header.IPv4ProtocolNumber,
+						AddressWithPrefix: netip.PrefixFrom(testutil.MustParse4(addr), prefixLen),
 					}
 					if err := stk.AddProtocolAddress(nic.id, protocolAddr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)

@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"math"
+	"net/netip"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -99,7 +100,7 @@ func TestStateUpdates(t *testing.T) {
 
 			addr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: testutil.MustParse4("1.2.3.4").WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(testutil.MustParse4("1.2.3.4")),
 			}
 			if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", nicID, addr, err)
@@ -251,7 +252,7 @@ func TestSndBuf(t *testing.T) {
 
 			addr := tcpip.ProtocolAddress{
 				Protocol:          ipv4.ProtocolNumber,
-				AddressWithPrefix: testutil.MustParse4("1.2.3.4").WithPrefix(),
+				AddressWithPrefix: tcpip.FullPrefix(testutil.MustParse4("1.2.3.4")),
 			}
 			if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 				t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", nicID, addr, err)
@@ -457,7 +458,7 @@ func TestDeviceReturnErrNoBufferSpace(t *testing.T) {
 
 					addr := tcpip.ProtocolAddress{
 						Protocol:          networkTest.netProto,
-						AddressWithPrefix: networkTest.localAddr.WithPrefix(),
+						AddressWithPrefix: tcpip.FullPrefix(networkTest.localAddr),
 					}
 					if err := s.AddProtocolAddress(nicID, addr, stack.AddressProperties{}); err != nil {
 						t.Fatalf("AddProtocolAddress(%d, %#v, {}): %s", nicID, addr, err)
@@ -540,21 +541,21 @@ func TestMulticastLoop(t *testing.T) {
 	for _, netProto := range []struct {
 		name            string
 		num             tcpip.NetworkProtocolNumber
-		localAddr       tcpip.AddressWithPrefix
+		localAddr       netip.Prefix
 		destAddr        tcpip.Address
 		rawSocketHdrLen int
 	}{
 		{
 			name:            "IPv4",
 			num:             header.IPv4ProtocolNumber,
-			localAddr:       testutil.MustParse4("1.2.3.4").WithPrefix(),
+			localAddr:       tcpip.FullPrefix(testutil.MustParse4("1.2.3.4")),
 			destAddr:        header.IPv4AllSystems,
 			rawSocketHdrLen: header.IPv4MinimumSize,
 		},
 		{
 			name:            "IPv6",
 			num:             header.IPv6ProtocolNumber,
-			localAddr:       testutil.MustParse6("a::1").WithPrefix(),
+			localAddr:       tcpip.FullPrefix(testutil.MustParse6("a::1")),
 			destAddr:        header.IPv6AllNodesMulticastAddress,
 			rawSocketHdrLen: 0,
 		},
@@ -684,7 +685,7 @@ func TestIPv6PacketInfo(t *testing.T) {
 
 	type localNICAddr struct {
 		nicID tcpip.NICID
-		addr  tcpip.AddressWithPrefix
+		addr  netip.Prefix
 	}
 
 	type testCase struct {
@@ -708,11 +709,11 @@ func TestIPv6PacketInfo(t *testing.T) {
 	localAddrs := []localNICAddr{
 		{
 			nicID: nicID1,
-			addr:  ipv6Addr1.WithPrefix(),
+			addr:  tcpip.FullPrefix(ipv6Addr1),
 		},
 		{
 			nicID: nicID2,
-			addr:  ipv6Addr2.WithPrefix(),
+			addr:  tcpip.FullPrefix(ipv6Addr2),
 		},
 	}
 

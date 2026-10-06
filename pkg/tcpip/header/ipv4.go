@@ -17,6 +17,7 @@ package header
 import (
 	"encoding/binary"
 	"fmt"
+	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -191,32 +192,14 @@ const (
 
 // ipv4LinkLocalUnicastSubnet is the IPv4 link local unicast subnet as defined
 // by RFC 3927 section 1.
-var ipv4LinkLocalUnicastSubnet = func() tcpip.Subnet {
-	subnet, err := tcpip.NewSubnet(tcpip.AddrFrom4([4]byte{0xa9, 0xfe, 0x00, 0x00}), tcpip.MaskFrom("\xff\xff\x00\x00"))
-	if err != nil {
-		panic(err)
-	}
-	return subnet
-}()
+var ipv4LinkLocalUnicastSubnet = netip.MustParsePrefix("169.254.0.0/16")
 
 // ipv4LinkLocalMulticastSubnet is the IPv4 link local multicast subnet as
 // defined by RFC 5771 section 4.
-var ipv4LinkLocalMulticastSubnet = func() tcpip.Subnet {
-	subnet, err := tcpip.NewSubnet(tcpip.AddrFrom4([4]byte{0xe0, 0x00, 0x00, 0x00}), tcpip.MaskFrom("\xff\xff\xff\x00"))
-	if err != nil {
-		panic(err)
-	}
-	return subnet
-}()
+var ipv4LinkLocalMulticastSubnet = netip.MustParsePrefix("224.0.0.0/24")
 
 // IPv4EmptySubnet is the empty IPv4 subnet.
-var IPv4EmptySubnet = func() tcpip.Subnet {
-	subnet, err := tcpip.NewSubnet(IPv4Any, tcpip.MaskFrom("\x00\x00\x00\x00"))
-	if err != nil {
-		panic(err)
-	}
-	return subnet
-}()
+var IPv4EmptySubnet = netip.PrefixFrom(IPv4Any, 0)
 
 // IPv4CurrentNetworkSubnet is the subnet of addresses for the current network,
 // per RFC 6890 section 2.2.2,
@@ -235,22 +218,28 @@ var IPv4EmptySubnet = func() tcpip.Subnet {
 //	| Global               | False                      |
 //	| Reserved-by-Protocol | True                       |
 //	+----------------------+----------------------------+
-var IPv4CurrentNetworkSubnet = func() tcpip.Subnet {
-	subnet, err := tcpip.NewSubnet(IPv4Any, tcpip.MaskFrom("\xff\x00\x00\x00"))
-	if err != nil {
-		panic(err)
-	}
-	return subnet
-}()
+var IPv4CurrentNetworkSubnet = netip.PrefixFrom(IPv4Any, 8)
 
 // IPv4LoopbackSubnet is the loopback subnet for IPv4.
-var IPv4LoopbackSubnet = func() tcpip.Subnet {
-	subnet, err := tcpip.NewSubnet(tcpip.AddrFrom4([4]byte{0x7f, 0x00, 0x00, 0x00}), tcpip.MaskFrom("\xff\x00\x00\x00"))
-	if err != nil {
-		panic(err)
+var IPv4LoopbackSubnet = netip.MustParsePrefix("127.0.0.0/8")
+
+// IPv4SubnetBroadcast returns the address with every host bit set in subnet.
+// subnet must be a valid IPv4 prefix.
+func IPv4SubnetBroadcast(subnet netip.Prefix) tcpip.Address {
+	if !subnet.IsValid() || !subnet.Addr().Is4() {
+		panic(fmt.Sprintf("invalid IPv4 subnet %s", subnet))
 	}
-	return subnet
-}()
+	addr := subnet.Addr().As4()
+	binary.BigEndian.PutUint32(addr[:], binary.BigEndian.Uint32(addr[:])|uint32(1<<(32-subnet.Bits())-1))
+	return netip.AddrFrom4(addr)
+}
+
+// IsIPv4SubnetBroadcast reports whether addr is the broadcast address of subnet.
+func IsIPv4SubnetBroadcast(subnet netip.Prefix, addr tcpip.Address) bool {
+	// RFC 3021 gives /31 links two host addresses. A /32 is a host route,
+	// so neither has a subnet broadcast address.
+	return subnet.IsValid() && subnet.Addr().Is4() && subnet.Bits() <= 30 && addr == IPv4SubnetBroadcast(subnet)
+}
 
 // IPVersion returns the version of IP used in the given packet. It returns -1
 // if the packet is not large enough to contain the version field.
