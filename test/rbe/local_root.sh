@@ -21,17 +21,28 @@ fi
 [[ ${SUDO_UID:?} =~ ^[0-9]+$ && $SUDO_UID != 0 && ${SUDO_GID:?} =~ ^[0-9]+$ ]]
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
 [[ -d $out && ! -L $out ]]
+test_tmp=${TEST_TMPDIR:?}
+test_directories=("$test_tmp")
+if [[ -n ${TEST_PREMATURE_EXIT_FILE:-} ]]; then
+  test_directories+=("$(dirname "$TEST_PREMATURE_EXIT_FILE")")
+fi
 cleanup() {
   local status=$?
   trap - EXIT
-  local outputs=("$out")
+  local outputs=("$out" "$test_tmp")
   # Go tests write XML as root; Bazel must own it to normalize output permissions.
   # Other tests leave XML generation to Bazel after this fixture exits.
   if [[ -e ${XML_OUTPUT_FILE:?} || -L $XML_OUTPUT_FILE ]]; then
     outputs+=("$XML_OUTPUT_FILE")
   fi
+  if [[ -n ${TEST_PREMATURE_EXIT_FILE:-} && ( -e $TEST_PREMATURE_EXIT_FILE || -L $TEST_PREMATURE_EXIT_FILE ) ]]; then
+    outputs+=("$TEST_PREMATURE_EXIT_FILE")
+  fi
   # Do not follow output symlinks or change ownership elsewhere in the cache.
-  if ! chown -hR "$SUDO_UID:$SUDO_GID" -- "${outputs[@]}"; then
+  local cleanup_status=0
+  chown -hR "$SUDO_UID:$SUDO_GID" -- "${outputs[@]}" || cleanup_status=1
+  chown -h "$SUDO_UID:$SUDO_GID" -- "${test_directories[@]}" || cleanup_status=1
+  if (( cleanup_status != 0 )); then
     printf 'Failed to return test output ownership to Bazel.\n' >&2
     if (( status == 0 )); then status=1; fi
   fi
@@ -40,6 +51,16 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
+
+# The syscall runner maps guest root to host root. Bazel's unprivileged
+# directories must belong to that identity for scratch files and GTest's
+# premature-exit marker; keep their existing modes and marker protocol.
+for directory in "${test_directories[@]}"; do
+  [[ -d $directory && ! -L $directory ]]
+  stat -c 'Test directory before: %a %u:%g %n' "$directory"
+  chown root:root -- "$directory"
+  stat -c 'Test directory ready: %a %u:%g %n' "$directory"
+done
 
 # Some root tests re-exec the declared runtime as nobody. Grant directory
 # traversal only; leave file modes and data, including the credential RC, alone.
