@@ -358,6 +358,20 @@ for source in Path(sys.argv[1]).glob("*.json"):
                 event = json.loads(line)
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
+  # Disposable correction proof: retain the canonical selection above.
+  python3 - "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/focused-targets" <<'PY'
+from pathlib import Path
+import sys
+
+owners = {
+    "//test/syscalls:xattr_test_runsc_systrap_directfs_arm64",
+    "//test/syscalls:socket_inet_loopback_test_runsc_systrap_hostnet_arm64",
+}
+selected = set(Path(sys.argv[1]).read_text().splitlines())
+assert owners <= selected, owners - selected
+Path(sys.argv[2]).write_text("\n".join(sorted(owners)) + "\n")
+Path(sys.argv[1]).write_text(Path(sys.argv[2]).read_text())
+PY
   printf 'ARM64 %s profile: namespace owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
