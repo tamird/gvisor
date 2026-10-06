@@ -17,6 +17,7 @@ package ip
 import (
 	"fmt"
 	"math/rand"
+	"net/netip"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/sync"
@@ -139,7 +140,7 @@ type multicastGroupState struct {
 	//
 	// Indicates that there is a pending source-specific query response for the
 	// multicast address.
-	queriedIncludeSources map[tcpip.Address]struct{}
+	queriedIncludeSources map[netip.Addr]struct{}
 
 	deleteScheduled bool
 }
@@ -197,7 +198,7 @@ const (
 // MulticastGroupProtocolV2ReportBuilder is a builder for a V2 report.
 type MulticastGroupProtocolV2ReportBuilder interface {
 	// AddRecord adds a record to the report.
-	AddRecord(recordType MulticastGroupProtocolV2ReportRecordType, groupAddress tcpip.Address)
+	AddRecord(recordType MulticastGroupProtocolV2ReportRecordType, groupAddress netip.Addr)
 
 	// Send sends the report.
 	//
@@ -225,14 +226,14 @@ type MulticastGroupProtocol interface {
 	//
 	// Returns false if the caller should queue the report to be sent later. Note,
 	// returning false does not mean that the receiver hit an error.
-	SendReport(groupAddress tcpip.Address) (sent bool, err tcpip.Error)
+	SendReport(groupAddress netip.Addr) (sent bool, err tcpip.Error)
 
 	// SendLeave sends a multicast leave for the specified group address.
-	SendLeave(groupAddress tcpip.Address) tcpip.Error
+	SendLeave(groupAddress netip.Addr) tcpip.Error
 
 	// ShouldPerformProtocol returns true iff the protocol should be performed for
 	// the specified group.
-	ShouldPerformProtocol(tcpip.Address) bool
+	ShouldPerformProtocol(netip.Addr) bool
 
 	// NewReportV2Builder creates a new V2 builder.
 	NewReportV2Builder() MulticastGroupProtocolV2ReportBuilder
@@ -282,7 +283,7 @@ type GenericMulticastProtocolState struct {
 	opts GenericMulticastProtocolOptions
 
 	// memberships holds group addresses and their associated state.
-	memberships map[tcpip.Address]multicastGroupState
+	memberships map[netip.Addr]multicastGroupState
 
 	// protocolMU is the mutex used to protect the protocol.
 	protocolMU *sync.RWMutex `state:"nosave"`
@@ -371,7 +372,7 @@ func (g *GenericMulticastProtocolState) Init(protocolMU *sync.RWMutex, opts Gene
 
 	*g = GenericMulticastProtocolState{
 		opts:               opts,
-		memberships:        make(map[tcpip.Address]multicastGroupState),
+		memberships:        make(map[netip.Addr]multicastGroupState),
 		protocolMU:         protocolMU,
 		robustnessVariable: DefaultRobustnessVariable,
 		queryInterval:      DefaultQueryInterval,
@@ -395,11 +396,11 @@ func (g *GenericMulticastProtocolState) MakeAllNonMemberLocked() {
 	g.cancelV2ReportTimers()
 
 	var v2ReportBuilder MulticastGroupProtocolV2ReportBuilder
-	var handler func(tcpip.Address, *multicastGroupState)
+	var handler func(netip.Addr, *multicastGroupState)
 	switch g.mode {
 	case protocolModeV2:
 		v2ReportBuilder = g.opts.Protocol.NewReportV2Builder()
-		handler = func(groupAddress tcpip.Address, info *multicastGroupState) {
+		handler = func(groupAddress netip.Addr, info *multicastGroupState) {
 			info.cancelDelayedReportJob()
 
 			// Send a report immediately to announce us leaving the group.
@@ -517,7 +518,7 @@ func (g *GenericMulticastProtocolState) SendQueuedReportsLocked() {
 // JoinGroupLocked handles joining a new group.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) JoinGroupLocked(groupAddress tcpip.Address) {
+func (g *GenericMulticastProtocolState) JoinGroupLocked(groupAddress netip.Addr) {
 	info, ok := g.memberships[groupAddress]
 	if ok {
 		info.joins++
@@ -559,7 +560,7 @@ func (g *GenericMulticastProtocolState) JoinGroupLocked(groupAddress tcpip.Addre
 				info.clearQueriedIncludeSources()
 				g.memberships[groupAddress] = info
 			}),
-			queriedIncludeSources: make(map[tcpip.Address]struct{}),
+			queriedIncludeSources: make(map[netip.Addr]struct{}),
 		}
 	}
 
@@ -574,13 +575,13 @@ func (g *GenericMulticastProtocolState) JoinGroupLocked(groupAddress tcpip.Addre
 // IsLocallyJoinedRLocked returns true if the group is locally joined.
 //
 // Precondition: g.protocolMU must be read locked.
-func (g *GenericMulticastProtocolState) IsLocallyJoinedRLocked(groupAddress tcpip.Address) bool {
+func (g *GenericMulticastProtocolState) IsLocallyJoinedRLocked(groupAddress netip.Addr) bool {
 	info, ok := g.memberships[groupAddress]
 	return ok && !info.deleteScheduled
 }
 
 func (g *GenericMulticastProtocolState) sendV2ReportAndMaybeScheduleChangedTimer(
-	groupAddress tcpip.Address,
+	groupAddress netip.Addr,
 	info *multicastGroupState,
 	recordType MulticastGroupProtocolV2ReportRecordType,
 ) bool {
@@ -667,7 +668,7 @@ func (g *GenericMulticastProtocolState) scheduleStateChangedTimer() {
 // Returns false if the group is not currently joined.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) LeaveGroupLocked(groupAddress tcpip.Address) bool {
+func (g *GenericMulticastProtocolState) LeaveGroupLocked(groupAddress netip.Addr) bool {
 	info, ok := g.memberships[groupAddress]
 	if !ok || info.joins == 0 {
 		return false
@@ -709,7 +710,7 @@ func (g *GenericMulticastProtocolState) LeaveGroupLocked(groupAddress tcpip.Addr
 // HandleQueryV2Locked handles a V2 query.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) HandleQueryV2Locked(groupAddress tcpip.Address, maxResponseCode uint16, sources header.AddressIterator, robustnessVariable uint8, queryInterval time.Duration) {
+func (g *GenericMulticastProtocolState) HandleQueryV2Locked(groupAddress netip.Addr, maxResponseCode uint16, sources header.AddressIterator, robustnessVariable uint8, queryInterval time.Duration) {
 	if !g.opts.Protocol.Enabled() {
 		return
 	}
@@ -808,7 +809,7 @@ func (g *GenericMulticastProtocolState) HandleQueryV2Locked(groupAddress tcpip.A
 		return
 	}
 
-	if groupAddress.Unspecified() {
+	if !groupAddress.IsValid() || groupAddress.IsUnspecified() {
 		if g.generalQueryV2Timer == nil {
 			// TODO(https://issuetracker.google.com/264799098): Create timer on
 			// initialization instead of lazily creating the timer since the timer
@@ -894,7 +895,7 @@ func (g *GenericMulticastProtocolState) HandleQueryV2Locked(groupAddress tcpip.A
 // the maximum response time.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) HandleQueryLocked(groupAddress tcpip.Address, maxResponseTime time.Duration) {
+func (g *GenericMulticastProtocolState) HandleQueryLocked(groupAddress netip.Addr, maxResponseTime time.Duration) {
 	if !g.opts.Protocol.Enabled() {
 		return
 	}
@@ -943,7 +944,7 @@ func (g *GenericMulticastProtocolState) HandleQueryLocked(groupAddress tcpip.Add
 	g.handleQueryInnerLocked(groupAddress, maxResponseTime)
 }
 
-func (g *GenericMulticastProtocolState) handleQueryInnerLocked(groupAddress tcpip.Address, maxResponseTime time.Duration) {
+func (g *GenericMulticastProtocolState) handleQueryInnerLocked(groupAddress netip.Addr, maxResponseTime time.Duration) {
 	maxResponseTime = g.calculateDelayTimerDuration(maxResponseTime)
 
 	// As per RFC 2236 section 2.4 (for IGMPv2),
@@ -957,7 +958,7 @@ func (g *GenericMulticastProtocolState) handleQueryInnerLocked(groupAddress tcpi
 	//   In a Query message, the Multicast Address field is set to zero when
 	//   sending a General Query, and set to a specific IPv6 multicast address
 	//   when sending a Multicast-Address-Specific Query.
-	if groupAddress.Unspecified() {
+	if !groupAddress.IsValid() || groupAddress.IsUnspecified() {
 		// This is a general query as the group address is unspecified.
 		for groupAddress, info := range g.memberships {
 			g.setDelayTimerForAddressLocked(groupAddress, &info, maxResponseTime)
@@ -975,7 +976,7 @@ func (g *GenericMulticastProtocolState) handleQueryInnerLocked(groupAddress tcpi
 // cancelled and the host state for the group transitions to idle.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) HandleReportLocked(groupAddress tcpip.Address) {
+func (g *GenericMulticastProtocolState) HandleReportLocked(groupAddress netip.Addr) {
 	if !g.opts.Protocol.Enabled() {
 		return
 	}
@@ -1002,7 +1003,7 @@ func (g *GenericMulticastProtocolState) HandleReportLocked(groupAddress tcpip.Ad
 // initializeNewMemberLocked initializes a new group membership.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) initializeNewMemberLocked(groupAddress tcpip.Address, info *multicastGroupState, callersV2ReportBuilder MulticastGroupProtocolV2ReportBuilder) {
+func (g *GenericMulticastProtocolState) initializeNewMemberLocked(groupAddress netip.Addr, info *multicastGroupState, callersV2ReportBuilder MulticastGroupProtocolV2ReportBuilder) {
 	if !g.shouldPerformForGroup(groupAddress) {
 		return
 	}
@@ -1026,14 +1027,14 @@ func (g *GenericMulticastProtocolState) initializeNewMemberLocked(groupAddress t
 	}
 }
 
-func (g *GenericMulticastProtocolState) shouldPerformForGroup(groupAddress tcpip.Address) bool {
+func (g *GenericMulticastProtocolState) shouldPerformForGroup(groupAddress netip.Addr) bool {
 	return g.opts.Protocol.ShouldPerformProtocol(groupAddress) && g.opts.Protocol.Enabled()
 }
 
 // maybeSendReportLocked attempts to send a report for a group.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) maybeSendReportLocked(groupAddress tcpip.Address, info *multicastGroupState) {
+func (g *GenericMulticastProtocolState) maybeSendReportLocked(groupAddress netip.Addr, info *multicastGroupState) {
 	if info.transmissionLeft == 0 {
 		return
 	}
@@ -1071,7 +1072,7 @@ func (g *GenericMulticastProtocolState) maybeSendReportLocked(groupAddress tcpip
 }
 
 // maybeSendLeave attempts to send a leave message.
-func (g *GenericMulticastProtocolState) maybeSendLeave(groupAddress tcpip.Address, lastToSendReport bool) {
+func (g *GenericMulticastProtocolState) maybeSendLeave(groupAddress netip.Addr, lastToSendReport bool) {
 	if !g.shouldPerformForGroup(groupAddress) || !lastToSendReport {
 		return
 	}
@@ -1130,7 +1131,7 @@ func (g *GenericMulticastProtocolState) maybeSendLeave(groupAddress tcpip.Addres
 // non-member/listener state.
 //
 // Precondition: g.protocolMU must be locked.
-func (g *GenericMulticastProtocolState) transitionToNonMemberLocked(groupAddress tcpip.Address, info *multicastGroupState) {
+func (g *GenericMulticastProtocolState) transitionToNonMemberLocked(groupAddress netip.Addr, info *multicastGroupState) {
 	info.cancelDelayedReportJob()
 	g.maybeSendLeave(groupAddress, info.lastToSendReport)
 	info.lastToSendReport = false
@@ -1139,7 +1140,7 @@ func (g *GenericMulticastProtocolState) transitionToNonMemberLocked(groupAddress
 // setDelayTimerForAddressLocked sets timer to send a delayed report.
 //
 // Precondition: g.protocolMU MUST be locked.
-func (g *GenericMulticastProtocolState) setDelayTimerForAddressLocked(groupAddress tcpip.Address, info *multicastGroupState, maxResponseTime time.Duration) {
+func (g *GenericMulticastProtocolState) setDelayTimerForAddressLocked(groupAddress netip.Addr, info *multicastGroupState, maxResponseTime time.Duration) {
 	if !g.shouldPerformForGroup(groupAddress) {
 		return
 	}

@@ -17,6 +17,7 @@ package state
 import (
 	"context"
 	"encoding"
+	"net/netip"
 	"reflect"
 	"sort"
 	"time"
@@ -454,4 +455,7 @@ func register(typ reflect.Type, t Type) {
 
 func init() {
 	Register((*time.Time)(nil))
+	Register((*netip.Addr)(nil))
+	Register((*netip.Prefix)(nil))
+	Register((*netip.AddrPort)(nil))
 }

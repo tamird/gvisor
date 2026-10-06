@@ -21,7 +21,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"gvisor.dev/gvisor/pkg/rand"
-	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/test/packetimpact/testbench"
@@ -114,8 +113,8 @@ func TestIPv6FragmentReassembly(t *testing.T) {
 			conn := dut.Net.NewIPv6Conn(t, testbench.IPv6{}, testbench.IPv6{})
 			defer conn.Close(t)
 
-			lIP := tcpip.AddrFrom16(dut.Net.LocalIPv6.As16())
-			rIP := tcpip.AddrFrom16(dut.Net.RemoteIPv6.As16())
+			lIP := dut.Net.LocalIPv6
+			rIP := dut.Net.RemoteIPv6
 
 			data := make([]byte, test.ipPayloadLen)
 			icmp := header.ICMPv6(data[:header.ICMPv6HeaderSize])
