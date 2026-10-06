@@ -199,6 +199,7 @@ go_test(
         "//runsc/fsgofer",
         "//runsc/specutils",
         "@com_github_google_go_cmp//cmp:go_default_library",
+        "@com_github_google_go_cmp//cmp/cmpopts:go_default_library",
         "@com_github_moby_sys_capability//:go_default_library",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
