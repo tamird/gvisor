@@ -800,12 +800,10 @@ run_lane() (
           --noincompatible_legacy_local_fallback
           --sandbox_default_allow_network=false
           --test_env=GO_TEST_WRAP_TESTV=1
+          --run_under=//test/rbe:docker_cgroup
+          "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+          "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
         )
-        mkdir -p "${RUNNER_TEMP:?}/qualification/startup-selection"
-        bazel aquery --config=rbe --config=x86_64 --strip=never \
-          --output=jsonproto --include_artifacts=false \
-          "mnemonic(\"^TestRunner$\", tests(set(${targets[*]})))" \
-          > "$RUNNER_TEMP/qualification/startup-selection/actions.json"
       else
         options=(--test_tag_filters=-requires-kvm)
       fi
