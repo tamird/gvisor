@@ -107,8 +107,12 @@ The local `unit` phase selects only graph-declared ARM64 variants that require
 the unavailable Firecracker namespace worker, intersected with the canonical
 unit profile. Its report lists the other remote ARM64 and shared owners as
 unexecuted. A successful local phase is partial unit qualification, not a pass
-for the complete unit lane. Tests declaring a root worker run under `sudo -E`;
-nonroot tests retain the unprivileged Actions identity. The two identities use
+for the complete unit lane. Tests declaring a root worker run under `sudo -E`.
+Their declared fixture permits traversal to `runsc` for tests that re-exec it
+as `nobody`, and returns undeclared-output ownership to the Bazel user before
+output validation. It changes only directory search permission along the
+resolved runtime path and ownership within that test's output directory.
+Nonroot tests retain the unprivileged Actions identity. The two identities use
 separate invocations, with at most two local tests at once on the four-core
 host. Compilation keeps 400 remote jobs. This interim split does not provide
 mixed local and remote TestRunners in one invocation.
