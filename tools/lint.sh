@@ -60,8 +60,7 @@ for check in "${optional[@]+"${optional[@]}"}"; do
     actions)
       make test OPTIONS=--enable_runfiles TARGETS=//:github_actions_test || status=1 ;;
     clang-tidy)
-      bazel build --aspects=//tools/clang_tidy:clang_tidy.bzl%clang_tidy \
-        --output_groups=clang_tidy //test/... //tools/... || status=1 ;;
+      bazel build --config=lint-cc || status=1 ;;
   esac
 done
 exit "$status"

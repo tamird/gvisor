@@ -107,8 +107,11 @@ concurrently, including alongside other `--arch=all` lanes on AMD64 workers.
 Their tools and checker-specific indexed sources are Bazel inputs;
 configuration files retain their project-relative paths. `make lint-fix` uses
 the same selection and formatter implementation with host-native executables.
-The `lint-cc` lane calls `make lint-cc DOCKER_BUILD=false`, retaining its configured
-compile actions and declared remote clang-tidy tool.
+The `lint-cc` lane builds `--config=lint-cc`, shared with `make lint-cc`.
+The config owns the recursive `//test/...` and `//tools/...` roots, clang-tidy
+aspect and report outputs; each configured compile retains its actual arguments
+and declared inputs. It can accompany `--arch=all` lanes but remains a separate
+AMD64 build invocation, so those recursive roots do not run unrelated tests.
 
 The `governance` lane runs `//governance:generated_files_test`. The existing
 generator runs remotely with the complete indexed source tree, preserving
@@ -119,9 +122,9 @@ them. This lane can share a mixed-platform invocation with the other tests.
 
 The `license-check` lane calls `make license-check DOCKER_BUILD=false`
 to compare the checked-in license catalog with the current dependency graph and
-license policy. These three source lanes require the hosted AMD64 coordinator.
-Their scoped Bazel configuration preserves the caller's rc files and does not
-introduce a cache or output base.
+license policy. This lane requires the hosted AMD64 coordinator. Its scoped
+Bazel configuration preserves the caller's rc files and does not introduce a
+cache or output base.
 
 The `license-headers` lane resolves `--header-base` and HEAD to immutable commit
 IDs, then checks newly added files as the declared `//tools:license_headers_test`.

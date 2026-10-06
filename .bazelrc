@@ -49,6 +49,11 @@ build:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
 build:syscalls-arm64-64k --test_tag_filters=-allsave,runsc_systrap
 build:syscalls-arm64-64k --//tools/bazeldefs:page_size=64k
 
+# Keep clang-tidy's recursive roots and aspect outputs shared with make lint-cc.
+build:lint-cc --aspects=//tools/clang_tidy:clang_tidy.bzl%clang_tidy
+build:lint-cc --output_groups=clang_tidy
+build:lint-cc --target_pattern_file=tools/clang_tidy/targets
+
 # Keep Nogo selection shared by analysis, tests and make nogo-tests.
 build:nogo --test_tag_filters=nogo --build_tests_only
 

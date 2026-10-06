@@ -35,6 +35,7 @@ remain errors.
 The all architecture selection combines unit, release-repository and syscalls
 with the target-configured test lanes described in test/rbe/README.md.
 Presubmit builds run separately for each requested CPU in the same job.
+Clang-tidy retains a separate AMD64 aspect build over its recursive roots.
 ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
@@ -92,7 +93,7 @@ fi
 for lane in "$@"; do
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
@@ -130,8 +131,8 @@ gaps
 
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
-run_source_lane() (
-  local lane=$1 qualification_rc
+run_license_check() (
+  local qualification_rc
   qualification_rc=$(mktemp)
   trap 'rm -f "$qualification_rc"' EXIT
   export qualification_rc
@@ -141,14 +142,7 @@ run_source_lane() (
     command bazel --bazelrc="$qualification_rc" "$@"
   }
   export -f bazel
-  case "$lane" in
-    lint-cc)
-      make lint-cc DOCKER_BUILD=false
-      ;;
-    license-check)
-      make license-check DOCKER_BUILD=false
-      ;;
-  esac
+  make license-check DOCKER_BUILD=false
 )
 
 # Set the caller's targets array from the same owning suites for standalone and
@@ -596,12 +590,20 @@ run_lane() (
       fi
       shared_test_targets "$lane" "$arch"
       ;;
-    lint-cc|license-check)
+    lint-cc)
+      if [[ $arch == arm64 ]]; then
+        printf 'The public clang-tidy lane is declared for AMD64.\n' >&2
+        return 2
+      fi
+      command=build
+      options=(--config=lint-cc)
+      ;;
+    license-check)
       if [[ $arch != amd64 ]]; then
         printf 'Hosted source tools are qualified only on the AMD64 coordinator.\n' >&2
         return 2
       fi
-      run_source_lane "$lane"
+      run_license_check
       return "$?"
       ;;
     license-headers)
@@ -754,9 +756,9 @@ run_selection() {
   local status=0 lane lane_status
   local -a matrix_lanes=()
   for lane in "$@"; do
-    # Wildcard presubmit builds keep their public loading filters and cannot
-    # join a test invocation, which would also execute their test targets.
-    if [[ $arch == all && $lane != presubmit-build ]]; then
+    # Recursive builds keep their own loading filters and output groups. A test
+    # invocation would also execute unrelated tests below those package roots.
+    if [[ $arch == all && $lane != presubmit-build && $lane != lint-cc ]]; then
       matrix_lanes+=("$lane")
       continue
     fi
