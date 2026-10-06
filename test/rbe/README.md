@@ -104,7 +104,7 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
-The `unit`, `syscalls` and `startup` phases intersect graph-declared architecture
+The `unit` and `syscalls` phases intersect graph-declared architecture
 variants with their canonical profiles and run one test invocation. Native
 namespace tests run locally; ordinary native tests and shared checks stay
 remote. The report records all selected owners and their execution requirements.
@@ -143,10 +143,20 @@ separate workflow concurrency keys. Direct callers use
 provide the same Linux host tools. Omitting the bucket selects the full profile.
 
 The local AMD64 `startup` phase retains the complete maintained startup suite,
-including KVM. Its existing Docker fixtures use the declared daemon, runtime,
-sidecars and image archives; the host supplies kernel capabilities. This checks
-whether the Actions host can run gVisor through KVM, not just whether `/dev/kvm`
-exists. It does not qualify the full KVM syscall or benchmark suites.
+including KVM. Bazel's Docker strategy gives each test a privileged container
+and private network namespace: separate daemon sockets alone do not isolate
+Docker's bridge and firewall rules. These startup cases load declared image
+archives and require no outbound network. The containers use the same pinned
+Docker-tools image as the remote fixtures, with declared runtime and sidecars.
+The Actions host supplies the outer Docker engine, kernel and devices.
+
+For this phase only, the Bazel coordinator runs as root on the ephemeral Actions
+VM because its Docker strategy maps the coordinator's UID into the container.
+Compilation remains remote, and the original test owners run directly without
+the local-root frontend. Bazel stages their inputs, collects outputs and removes
+the containers. This checks whether gVisor can run through KVM, not just whether
+`/dev/kvm` exists. It does not qualify the full KVM syscall or benchmark suites,
+or Docker suites requiring outbound networking.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
@@ -164,8 +174,8 @@ rootless smoke requires a nonroot 4K-page Linux host with working user
 namespaces. Like the Buildkite test hosts, the ephemeral Actions VM lifts
 Ubuntu's AppArmor unprivileged-user-namespace restriction for local tests;
 AppArmor remains enabled. Recorded device nodes do not establish usable KVM
-or vhost-net; this pilot adds no Docker, cgroup, 64K-page, alternate-kernel or
-GPU coverage.
+or vhost-net. Coverage is limited to the selected suite; the pilot adds no
+64K-page, alternate-kernel or GPU coverage.
 
 This fork frontend skips the legacy builder and `runsc` artifact upload on its
 qualification and local-test pilot branches. Other pushes retain that job;

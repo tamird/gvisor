@@ -227,21 +227,17 @@ def container_platform_targets(events_path: str) -> list[str]:
     return sorted(selected)
 
 
-def profile_suffix(architecture: str, page_size: str, *, hybrid: bool = False) -> str:
+def profile_suffix(architecture: str, page_size: str) -> str:
     if page_size == "64k":
         if architecture != "arm64":
             raise ValueError("The public 64K syscall profile requires ARM64")
         return "_64k_arm64"
-    # Local namespace routing belongs to the explicit architecture frontend,
-    # including AMD64; the ordinary target has no such frontend.
-    return "_" + architecture if hybrid or architecture == "arm64" else ""
+    return "_arm64" if architecture == "arm64" else ""
 
 
-def profile_targets(
-    events_path: str, architecture: str, page_size: str = "4k", *, hybrid: bool = False,
-) -> list[str]:
+def profile_targets(events_path: str, architecture: str, page_size: str = "4k") -> list[str]:
     targets = configured_tests(events_path)
-    suffix = profile_suffix(architecture, page_size, hybrid=hybrid)
+    suffix = profile_suffix(architecture, page_size)
     if not suffix:
         return sorted(targets)
     tag = "rbe-has" + suffix.replace("_", "-") + "-variant"
@@ -286,12 +282,12 @@ def select_profile(
     hybrid: bool = False,
     syscall_bucket: int | None = None,
 ) -> None:
-    if hybrid and page_size != "4k":
-        raise ValueError("Hybrid execution requires a 4K host")
-    if syscall_bucket is not None and (not hybrid or not syscall_policy or architecture != "arm64"):
-        raise ValueError("Syscall buckets require hybrid ARM64 syscall execution")
+    if hybrid and (not syscall_policy or architecture != "arm64" or page_size != "4k"):
+        raise ValueError("Hybrid syscall execution requires the ARM64 4K profile")
+    if syscall_bucket is not None and not hybrid:
+        raise ValueError("Syscall buckets require hybrid execution")
     original = configured_tests(profile_path)
-    expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid))
+    expected = set(profile_targets(profile_path, architecture, page_size))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
         raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
@@ -305,7 +301,7 @@ def select_profile(
     unavailable: dict[str, str] = {}
     policy_excluded: dict[str, str] = {}
     for label, target in original.items():
-        variant = label + profile_suffix(architecture, page_size, hybrid=hybrid)
+        variant = label + profile_suffix(architecture, page_size)
         # The standalone RBE syscall lane also leaves Nogo to its own lane.
         # Keep this policy distinct from unavailable runtime capabilities.
         if syscall_policy and "nogo" in target.tags:
@@ -444,7 +440,6 @@ def main() -> None:
         profile.add_argument("events")
         profile.add_argument("architecture", choices=("amd64", "arm64"))
         profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
-        profile.add_argument("--hybrid", action="store_true", help="Select explicit architecture frontends for local namespace routing")
     profile = commands.add_parser("select-profile")
     profile.add_argument("profile")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
@@ -497,9 +492,9 @@ def main() -> None:
             "limitation": "KVM identities come from loading only; their configurations and execution remain unqualified.",
         }, indent=2))
     elif args.command == "profile-actions":
-        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid)) + ")")
+        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size)) + ")")
     elif args.command == "profile-targets":
-        print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid)))
+        print("\n".join(profile_targets(args.events, args.architecture, args.page_size)))
     elif args.command == "select-profile":
         select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, syscall_bucket=args.syscall_bucket)
     else:

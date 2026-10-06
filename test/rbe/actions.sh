@@ -55,6 +55,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     qualification_rc=$(mktemp)
     temporary_files+=("$qualification_rc")
     export qualification_rc
+    # Bazel's Docker strategy runs each test as the coordinator's UID. Startup
+    # needs root for its nested daemon; other lanes retain the nonroot server.
+    # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
+    qualification_root_bazel=false
+    if [[ ${lanes[*]} == startup && $QUALIFICATION_ARCH == amd64 ]]; then
+      qualification_root_bazel=true
+    fi
+    export qualification_root_bazel
     {
       printf '%s\n' \
         'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
@@ -83,7 +91,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         fi
         break
       done
-      command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}"
+      if [[ $qualification_root_bazel == true ]]; then
+        sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" \
+          "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}"
+      else
+        command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}"
+      fi
     }
     export -f bazel
 
