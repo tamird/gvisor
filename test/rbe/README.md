@@ -123,9 +123,15 @@ license policy. These three source lanes require the hosted AMD64 coordinator.
 Their scoped Bazel configuration preserves the caller's rc files and does not
 introduce a cache or output base.
 
-The `license-headers` lane passes `--header-base` to the existing
-`tools/check_license_headers.sh` owner. It retains that owner's added-file
-selection and exclusions. The `python-distributions` lane builds
+The `license-headers` lane resolves `--header-base` and HEAD to immutable commit
+IDs, then checks newly added files as the declared `//tools:license_headers_test`.
+It can join `--arch=all` invocations. The existing shell checker owns the header
+policy and exclusions; its standalone CLI also selects this test. The repository
+input rule watches current contents, including absent added paths, and uses
+explicit 50% rename detection to exclude renamed files. Present inputs must
+resolve within the checkout to avoid uploading outside symlink targets.
+Ordinary graph queries need no comparison base; running the manual test without one fails clearly.
+The `python-distributions` lane builds
 `//sandboxexec/sandbox/python:dist` with the canonical metadata's version;
 registry version discovery, installation and publication are separate work.
 The `codeql` lane runs the workflow's Go, JavaScript, Python and Ruby analyses as

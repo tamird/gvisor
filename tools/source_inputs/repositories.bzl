@@ -12,16 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Declare indexed source inputs with their current contents."""
+"""Declare selected source inputs with their current contents."""
 
 def _git(ctx, root, args):
     git = ctx.which("git")
     if git == None:
-        fail("Git is required to enumerate the tracked analysis sources")
+        fail("Git is required to select source inputs")
     result = ctx.execute([git, "-C", str(root)] + args)
     if result.return_code:
-        fail("Cannot enumerate analysis sources: " + result.stderr)
+        fail("Cannot select source inputs: " + result.stderr)
     return result.stdout
+
+def _mirror_sources(ctx, root, names):
+    # A suffix keeps source BUILD files from defining Bazel packages while
+    # stable paths avoid invalidating every input when membership changes.
+    mirrored = ["files/" + name + ".source" for name in names]
+    mirrors = {name: True for name in mirrored}
+    for name, mirror in zip(names, mirrored):
+        parts = mirror.split("/")
+        for i in range(1, len(parts)):
+            if "/".join(parts[:i]) in mirrors:
+                fail("Source file/directory collision after adding .source: " + name)
+        source = root.get_child(name)
+
+        # Declared remote inputs must not upload targets outside the checkout.
+        if not str(source.realpath).startswith(str(root.realpath) + "/"):
+            fail("Source resolves outside the checkout: " + name)
+        ctx.symlink(source, mirror)
+
+    return mirrored
 
 def _analysis_sources_impl(ctx):
     root = ctx.path(ctx.attr.root).dirname
@@ -38,7 +57,6 @@ def _analysis_sources_impl(ctx):
         ctx.watch(shared_index)
 
     names = []
-    mirrored = []
     for entry in _git(ctx, root, ["ls-files", "--stage", "-z"]).split("\000"):
         if not entry:
             continue
@@ -50,22 +68,11 @@ def _analysis_sources_impl(ctx):
         ctx.watch(source)
         if not source.exists or source.is_dir:
             fail("Analysis source must be an existing file: " + name)
-        if not str(source.realpath).startswith(str(root.realpath) + "/"):
-            fail("Analysis source resolves outside the checkout: " + name)
 
-        # A suffix keeps source BUILD files from defining Bazel packages while
-        # stable paths avoid invalidating every input when index membership changes.
-        mirrored.append("files/" + name + ".source")
         names.append(name)
     if not names:
         fail("No tracked analysis sources found")
-    mirrors = {name: True for name in mirrored}
-    for name, mirror in zip(names, mirrored):
-        parts = mirror.split("/")
-        for i in range(1, len(parts)):
-            if "/".join(parts[:i]) in mirrors:
-                fail("Source file/directory collision after adding .source: " + name)
-        ctx.symlink(root.get_child(name), mirror)
+    mirrored = _mirror_sources(ctx, root, names)
 
     ctx.file("manifest.json", json.encode(names))
     exports = ["manifest.json"] + mirrored
@@ -77,6 +84,58 @@ def _analysis_sources_impl(ctx):
 
 analysis_sources = repository_rule(
     implementation = _analysis_sources_impl,
+    attrs = {
+        "root": attr.label(default = "//:MODULE.bazel", allow_single_file = True),
+    },
+    local = True,
+)
+
+def _added_sources_impl(ctx):
+    root = ctx.path(ctx.attr.root).dirname
+    base = ctx.getenv("GVISOR_HEADER_BASE", "")
+    head = ctx.getenv("GVISOR_HEADER_HEAD", "")
+    names = []
+    if base or head:
+        for revision in [base, head]:
+            resolved = _git(ctx, root, ["rev-parse", "--verify", "--end-of-options", revision + "^{commit}"]).strip()
+            if revision != resolved:
+                fail("License header inputs require full commit IDs for GVISOR_HEADER_BASE and GVISOR_HEADER_HEAD")
+
+        # The public header policy excludes renamed files. Make the standard
+        # similarity threshold explicit instead of inheriting diff.renames.
+        names = [name for name in _git(ctx, root, [
+            "diff",
+            "--name-only",
+            "--diff-filter=A",
+            "--find-renames=50%",
+            "-z",
+            base + "..." + head,
+            "--",
+        ]).split("\000") if name]
+
+    present = []
+    for name in names:
+        source = root.get_child(name)
+
+        # A deleted added file is skipped by the policy. Watch it first so
+        # restoring that path invalidates a previous skipped result.
+        ctx.watch(source)
+        if source.exists and not source.is_dir:
+            present.append(name)
+    mirrored = _mirror_sources(ctx, root, present)
+
+    # Empty revision fields let ordinary graph queries load this manual test.
+    # The checker rejects them before checking any file, rather than passing an
+    # unconfigured comparison as an empty added-file set.
+    ctx.file("manifest", "\000".join([base, head] + present) + "\000")
+    ctx.file("BUILD.bazel", "\n".join([
+        "package(default_visibility = %s)" % repr(["//visibility:public"]),
+        "exports_files(%s)" % repr(["manifest"] + mirrored),
+        "filegroup(name = %s, srcs = %s)" % (repr("files"), repr(mirrored)),
+    ]) + "\n")
+
+added_sources = repository_rule(
+    implementation = _added_sources_impl,
     attrs = {
         "root": attr.label(default = "//:MODULE.bazel", allow_single_file = True),
     },
