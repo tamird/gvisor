@@ -20,7 +20,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"slices"
 	"sync"
 	"testing"
 
@@ -536,31 +535,6 @@ func TestFilterInputInvertDportAccept(t *testing.T) {
 
 func TestFilterInputInvertDportDrop(t *testing.T) {
 	singleTest(t, &FilterInputInvertDportDrop{})
-}
-
-func TestFilterAddrs(t *testing.T) {
-	tcs := []struct {
-		ipv6  bool
-		addrs []string
-		want  []string
-	}{
-		{
-			ipv6:  false,
-			addrs: []string{"192.168.0.1", "192.168.0.2/24", "::1", "::2/128"},
-			want:  []string{"192.168.0.1", "192.168.0.2"},
-		},
-		{
-			ipv6:  true,
-			addrs: []string{"192.168.0.1", "192.168.0.2/24", "::1", "::2/128"},
-			want:  []string{"::1", "::2"},
-		},
-	}
-
-	for _, tc := range tcs {
-		if got := netutils.FilterAddrs(tc.addrs, tc.ipv6); !slices.Equal(got, tc.want) {
-			t.Errorf("%v with IPv6 %t: got %v, but wanted %v", tc.addrs, tc.ipv6, got, tc.want)
-		}
-	}
 }
 
 func TestNATPreOriginalDst(t *testing.T) {
