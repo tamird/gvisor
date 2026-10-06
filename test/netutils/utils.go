@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"strings"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/test/testutil"
@@ -161,9 +160,9 @@ func ConnectTCP(ctx context.Context, ip netip.Addr, port uint16, ipv6 bool) erro
 	return nil
 }
 
-// LocalAddrs returns a list of local network interface addresses. When ipv6 is
-// true, only IPv6 addresses are returned. Otherwise only IPv4 addresses are
-// returned.
+// LocalAddrs returns local network interface IP addresses without prefixes.
+// When ipv6 is true, only IPv6 addresses are returned. Otherwise only IPv4
+// addresses are returned.
 func LocalAddrs(ipv6 bool) ([]string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -171,30 +170,20 @@ func LocalAddrs(ipv6 bool) ([]string, error) {
 	}
 	addrStrs := make([]string, 0, len(addrs))
 	for _, addr := range addrs {
-		// Add only IPv4 or only IPv6 addresses.
-		parts := strings.Split(addr.String(), "/")
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bad interface address: %q", addr.String())
+		ipnet, ok := addr.(*net.IPNet)
+		if !ok {
+			return nil, fmt.Errorf("unexpected interface address type %T", addr)
 		}
-		if isIPv6 := net.ParseIP(parts[0]).To4() == nil; isIPv6 == ipv6 {
-			addrStrs = append(addrStrs, addr.String())
+		ip, ok := netip.AddrFromSlice(ipnet.IP)
+		if !ok {
+			return nil, fmt.Errorf("invalid interface IP address: %v", ipnet.IP)
 		}
-	}
-	return FilterAddrs(addrStrs, ipv6), nil
-}
-
-// FilterAddrs filters a list of IP addresses and returns only IPv4 or
-// IPv6 addresses.
-func FilterAddrs(addrs []string, ipv6 bool) []string {
-	addrStrs := make([]string, 0, len(addrs))
-	for _, addr := range addrs {
-		// Add only IPv4 or only IPv6 addresses.
-		parts := strings.Split(addr, "/")
-		if isIPv6 := net.ParseIP(parts[0]).To4() == nil; isIPv6 == ipv6 {
-			addrStrs = append(addrStrs, parts[0])
+		ip = ip.Unmap()
+		if ip.Is6() == ipv6 {
+			addrStrs = append(addrStrs, ip.String())
 		}
 	}
-	return addrStrs
+	return addrStrs, nil
 }
 
 // GetInterfaceName returns the name of the interface other than loopback.
