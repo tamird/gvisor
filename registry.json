@@ -240,7 +240,7 @@
       "updatedAt": "2026-10-06T22:06:17.706548+00:00",
       "summary": "The authorized October 2/3 rebase is published at dac54db335181f1fa10653fd357d66bac72f549b on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15133#issuecomment-5963372005. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nkonstantin-s-bogom approved this exact source at 2026-10-06T19:00:22Z; the review contains no additional source request.\n\nMatching-source Copybara import #15402 is open at 701c0776b485bb6ee6fe5a17128a5c1204b14eb3. Its current checks and feedback remain independently recorded in the live snapshot.",
       "followup": {
-        "disposition": "approved; matching-source import in progress",
+        "disposition": "approved; matching-source import awaiting checks",
         "owner": "external_sweeps",
         "nextAction": "Track import #15402 checks and landing against exact source dac54db335; no new human source request.",
         "evidence": [
