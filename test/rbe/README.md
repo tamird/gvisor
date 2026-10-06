@@ -51,7 +51,7 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-hybrid-unit` pilot branch permits manual dispatches only.
+`rbe-actions-arm64-syscalls` pilot branch permits manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -90,9 +90,9 @@ job has a 50-minute timeout. Larger qualification runs can use the same entry
 point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
-For local tests, select `execution=local`, one lane (`smoke`, `bwrap` or
-`unit`) and a single architecture (`amd64` or `arm64`; local units require
-`arm64`). The existing
+For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
+`unit` or `syscalls`) and a single architecture (`amd64` or `arm64`; local unit
+and syscall profiles require `arm64`). The existing
 architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -103,12 +103,12 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
-The `unit` phase intersects the graph-declared ARM64 variants with the
-canonical unit profile and runs one test invocation. Native namespace tests
+The `unit` and `syscalls` phases intersect the graph-declared ARM64 variants with
+their canonical profiles and run one test invocation. Native namespace tests
 whose remote Firecracker worker is unavailable run locally; ordinary ARM64
 units and shared AMD64 checks run remotely. The report records all selected
 owners and their execution requirements. This covers the selected ARM64 test
-profile, not the separate AMD64 unit profile or filtered build-only targets.
+profile, not the separate AMD64 profile or filtered build-only targets.
 Root test frontends invoke the existing local-root fixture, which permits
 traversal to `runsc` for tests that re-exec it as `nobody` and returns output
 ownership to the Bazel user before validation. It changes only directory search
@@ -119,10 +119,33 @@ Only these native namespace TestRunners require local execution; compiler tags
 and actions remain unchanged. At most two local tests run at once on the
 four-core host, while remote work keeps 400 jobs.
 
+The syscall phase selects the existing `syscalls-arm64` 4K-page profile. It
+retains the public ptrace/systrap selection and excludes checkpoint and KVM
+tests. Actions installs `iproute2` and `netcat-openbsd` for the existing
+rtnetlink owners. Their versions and the complete selected owner set are saved
+with the result. To bound each job, optionally select one of the syscall
+macro's existing `hash15` buckets:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-arm64-syscalls \
+  -f lanes=syscalls -f architecture=arm64 -f execution=local \
+  -f syscall_bucket=0
+```
+
+Buckets range from 0 through 14. The selector first resolves the complete
+canonical profile, then records its disjoint bucket partition and unexecuted
+owners. A successful bucket is partial coverage; the union of all buckets on
+the same source is required to cover this profile. Different buckets have
+separate workflow concurrency keys. Direct callers use
+`--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
+provide the same Linux host tools. Omitting the bucket selects the full profile.
+
 The pilot runs one uncached test attempt, keeps the original target timeout,
-and limits the Actions job to 15 minutes. Local test results are not uploaded
+and limits ordinary local Actions jobs to 15 minutes. Local syscalls have a
+45-minute work limit within a 50-minute job. Local test results are not uploaded
 to the shared action cache. Its artifact contains each build/test execution
-log, host facts and unit selection metadata, excluding the credential
+log, host facts and profile selection metadata, excluding the credential
 configuration and raw build-event options. The
 rootless smoke requires a nonroot 4K-page Linux host with working user
 namespaces. Like the Buildkite test hosts, the ephemeral Actions VM lifts

@@ -21,6 +21,9 @@ name: CI
         type: choice
         options: [remote, local]
         default: remote
+      syscall_bucket:
+        description: Optional hash15 bucket (0..14) for local ARM64 syscalls
+        type: string
       header_base:
         description: Full comparison commit SHA for license-headers
         type: string
@@ -32,12 +35,12 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.syscall_bucket }}
   cancel-in-progress: true
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-hybrid-unit'))
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-arm64-syscalls'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -62,9 +65,9 @@ jobs:
           path: bin/runsc
 
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || (github.ref == 'refs/heads/rbe-actions-hybrid-unit' && github.event_name == 'workflow_dispatch'))
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || (github.ref == 'refs/heads/rbe-actions-arm64-syscalls' && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && 15 || 50 }}
+    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes != 'syscalls' && 15 || 50 }}
     permissions:
       contents: read
     env:
@@ -72,6 +75,7 @@ jobs:
       QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution }}
       QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
+      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
       QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
       QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
       QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
@@ -117,6 +121,7 @@ jobs:
           --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
           --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
           --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
+          --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
           --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
           --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
@@ -125,6 +130,7 @@ jobs:
 
     - name: Compile on RBE and test on Actions
       if: inputs.execution == 'local'
+      timeout-minutes: ${{ inputs.lanes == 'syscalls' && 45 || 15 }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
