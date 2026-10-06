@@ -51,7 +51,8 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-arm64-syscalls` pilot branch permits manual dispatches only.
+`rbe-actions-arm64-syscalls` and `rbe-actions-kvm-startup` pilot branches permit
+manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -91,9 +92,9 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit` or `syscalls`) and a single architecture (`amd64` or `arm64`; local unit
-and syscall profiles require `arm64`). The existing
-architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
+`unit`, `syscalls` or `startup`) and a single architecture (`amd64` or `arm64`;
+local unit and syscall profiles require `arm64`, and startup requires `amd64`).
+The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
 through the runner's installed Bazelisk. The connection uses the same secret
@@ -103,12 +104,12 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
-The `unit` and `syscalls` phases intersect the graph-declared ARM64 variants with
-their canonical profiles and run one test invocation. Native namespace tests
-whose remote Firecracker worker is unavailable run locally; ordinary ARM64
-units and shared AMD64 checks run remotely. The report records all selected
-owners and their execution requirements. This covers the selected ARM64 test
-profile, not the separate AMD64 profile or filtered build-only targets.
+The `unit`, `syscalls` and `startup` phases intersect graph-declared architecture
+variants with their canonical profiles and run one test invocation. Native
+namespace tests run locally; ordinary native tests and shared checks stay
+remote. The report records all selected owners and their execution requirements.
+Coverage applies to the chosen architecture and profile; it excludes other
+profiles and filtered build-only targets.
 Root test frontends invoke the existing local-root fixture, which permits
 traversal to `runsc` for tests that re-exec it as `nobody` and returns output
 ownership to the Bazel user before validation. It changes only directory search
@@ -140,6 +141,18 @@ the same source is required to cover this profile. Different buckets have
 separate workflow concurrency keys. Direct callers use
 `--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
 provide the same Linux host tools. Omitting the bucket selects the full profile.
+
+The local AMD64 `startup` phase retains the complete maintained startup suite,
+including KVM. Its existing Docker fixtures use the declared daemon, runtime,
+sidecars and image archives; the host supplies kernel capabilities. This checks
+whether the Actions host can run gVisor through KVM, not just whether `/dev/kvm`
+exists. It does not qualify the full KVM syscall or benchmark suites.
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-kvm-startup \
+  -f lanes=startup -f architecture=amd64 -f execution=local
+```
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits ordinary local Actions jobs to 15 minutes. Local syscalls have a
