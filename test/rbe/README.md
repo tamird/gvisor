@@ -65,10 +65,23 @@ gh workflow run build.yml --repo tamird/gvisor \
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested
 commit before qualification. For `cos-metadata` or the full `amd64` profile,
-provide the complete gcloud catalog described below at an HTTPS URL and pass
-`cos_catalog_url` and `cos_catalog_sha256`. The coordinator verifies its digest
-and removes its temporary copy after the run. These inputs are public metadata,
-not credentials; preserve the catalog's capture time with the result.
+pass the complete gcloud catalog described below as gzip/base64 data with its
+uncompressed SHA256. Compression reduces the payload; all dispatch inputs must
+fit GitHub's [65,535-character limit](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#onworkflow_dispatchinputs).
+For a captured catalog at `$COS_IMAGES_JSON`:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-qualification-upstream-refresh \
+  -f lanes='cos-metadata workflows' -f architecture=all \
+  -f "cos_catalog_gzip_base64=$(gzip -n -c "$COS_IMAGES_JSON" | base64 | tr -d '\n')" \
+  -f "cos_catalog_sha256=$(sha256sum "$COS_IMAGES_JSON" | cut -d ' ' -f 1)"
+```
+
+The coordinator decodes the catalog, verifies its digest and removes its
+temporary copy after the run. No catalog hosting or GCP credentials are needed
+on the Actions or Remote Bazel workers. Preserve the catalog's capture time
+with the result; these inputs contain public metadata, not credentials.
 
 The CLI returns the remote status. Pushes have a 15-minute remote timeout;
 manual selections have 45 minutes, with automatic retries disabled. The Actions

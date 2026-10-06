@@ -19,11 +19,11 @@ name: CI
       header_base:
         description: Full comparison commit SHA for license-headers
         type: string
-      cos_catalog_url:
-        description: HTTPS URL of the complete gcloud COS image catalog
+      cos_catalog_gzip_base64:
+        description: Gzip/base64-encoded complete gcloud COS image catalog
         type: string
       cos_catalog_sha256:
-        description: SHA256 of the COS catalog
+        description: SHA256 of the uncompressed COS catalog
         type: string
 
 concurrency:
@@ -94,7 +94,7 @@ jobs:
         QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
         QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
         QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-        QUALIFICATION_COS_URL: ${{ inputs.cos_catalog_url }}
+        QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
         QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
         REMOTE_TIMEOUT: ${{ github.event_name == 'workflow_dispatch' && '45m' || '15m' }}
       run: |
@@ -108,7 +108,7 @@ jobs:
           --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
           --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
-          --env="QUALIFICATION_COS_URL=$QUALIFICATION_COS_URL" \
+          --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
           --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
           --timeout="$REMOTE_TIMEOUT" --disable_retry \
           --script='bash test/rbe/actions.sh'

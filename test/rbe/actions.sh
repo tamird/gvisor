@@ -52,16 +52,15 @@ if [[ -n $QUALIFICATION_HEADER_BASE ]]; then
   options+=("--header-base=$QUALIFICATION_HEADER_BASE")
 fi
 
-if [[ -n $QUALIFICATION_COS_URL || -n $QUALIFICATION_COS_SHA256 ]]; then
-  if [[ -z $QUALIFICATION_COS_URL || ! $QUALIFICATION_COS_SHA256 =~ ^[0-9a-f]{64}$ ]]; then
-    printf 'Supply both a COS catalog URL and its SHA256.\n' >&2
+if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
+  if [[ -z $QUALIFICATION_COS_GZIP_BASE64 || ! $QUALIFICATION_COS_SHA256 =~ ^[0-9a-f]{64}$ ]]; then
+    printf 'Supply both a gzip/base64 COS catalog and its uncompressed SHA256.\n' >&2
     exit 2
   fi
   COS_IMAGES_JSON=$(mktemp)
   export COS_IMAGES_JSON
   trap 'rm -f "$COS_IMAGES_JSON"' EXIT
-  curl --proto '=https' --proto-redir '=https' --fail --silent --show-error \
-    --location --max-time 120 --url "$QUALIFICATION_COS_URL" --output "$COS_IMAGES_JSON"
+  printf '%s' "$QUALIFICATION_COS_GZIP_BASE64" | base64 --decode | gzip --decompress > "$COS_IMAGES_JSON"
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
 fi
 
