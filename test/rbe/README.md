@@ -50,7 +50,8 @@ On `tamird/gvisor`, a push to `rbe-qualification-upstream-refresh` runs the
 immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
-Pull requests and other branches cannot enter this credentialed job.
+Pull requests cannot enter this credentialed job. The separate
+`rbe-actions-local-tests` pilot branch permits manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -89,10 +90,25 @@ job has a 50-minute timeout. Larger qualification runs can use the same entry
 point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
+For the local-test pilot, select `execution=local`, `lanes=smoke` and a single
+architecture (`amd64` or `arm64`). The existing architecture-specific release
+smoke runs on `ubuntu-24.04` or `ubuntu-24.04-arm`; Bazel compilation still uses
+BuildBuddy RBE with no local fallback. The repository selects Bazel's version
+through the runner's installed Bazelisk. The connection uses the same secret
+in a temporary configuration that is removed after the command.
+
+The pilot runs one uncached test attempt, keeps the original target timeout,
+and limits the Actions job to 15 minutes. Local test results are not uploaded
+to the shared action cache. Its artifact contains the execution log and host
+facts, not the credential configuration or raw build-event options. The
+rootless smoke requires a nonroot 4K-page Linux host with working user
+namespaces. Recorded device nodes do not establish usable KVM or vhost-net;
+this pilot adds no Docker, cgroup, 64K-page, alternate-kernel or GPU coverage.
+
 This fork frontend skips the legacy builder and `runsc` artifact upload on its
-qualification branch. Other pushes retain that job; release artifacts remain
-owned by the existing release lanes. A smoke result does not establish full
-public qualification.
+qualification and local-test pilot branches. Other pushes retain that job;
+release artifacts remain owned by the existing release lanes. A smoke result
+does not establish full public qualification.
 
 ## Linux kernel coverage
 

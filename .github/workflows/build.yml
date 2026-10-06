@@ -16,6 +16,11 @@ name: CI
         type: choice
         options: [amd64, arm64, all]
         default: amd64
+      execution:
+        description: Run tests on BuildBuddy or this Actions runner
+        type: choice
+        options: [remote, local]
+        default: remote
       header_base:
         description: Full comparison commit SHA for license-headers
         type: string
@@ -32,7 +37,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || github.ref != 'refs/heads/rbe-qualification-upstream-refresh')
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-local-tests'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,11 +62,19 @@ jobs:
           path: bin/runsc
 
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/rbe-qualification-upstream-refresh'
-    runs-on: ubuntu-latest
-    timeout-minutes: 50
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || (github.ref == 'refs/heads/rbe-actions-local-tests' && github.event_name == 'workflow_dispatch'))
+    runs-on: ${{ inputs.execution == 'local' && inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: ${{ inputs.execution == 'local' && 15 || 50 }}
     permissions:
       contents: read
+    env:
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution }}
+      QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
+      QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
+      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
+      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
+      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
     steps:
     - name: Check the Remote Bazel credential
       shell: bash
@@ -76,6 +89,7 @@ jobs:
         persist-credentials: false
 
     - name: Download the pinned BuildBuddy CLI
+      if: inputs.execution != 'local'
       shell: bash
       run: |
         curl --fail --silent --show-error --location --max-time 120 \
@@ -87,15 +101,11 @@ jobs:
         chmod +x "$RUNNER_TEMP/bb"
 
     - name: Qualify on Remote Bazel
+      if: inputs.execution != 'local'
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
         GIT_REPO_DEFAULT_BRANCH: master
-        QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
-        QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
-        QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-        QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-        QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
         REMOTE_TIMEOUT: ${{ github.event_name == 'workflow_dispatch' && '45m' || '15m' }}
       run: |
         exec "$RUNNER_TEMP/bb" remote \
@@ -112,3 +122,18 @@ jobs:
           --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
           --timeout="$REMOTE_TIMEOUT" --disable_retry \
           --script='bash test/rbe/actions.sh'
+
+    - name: Compile on RBE and test on Actions
+      if: inputs.execution == 'local'
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: bash test/rbe/actions.sh
+
+    - name: Retain local test placement and host facts
+      if: always() && inputs.execution == 'local'
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: qualification-${{ inputs.architecture }}
+        path: ${{ runner.temp }}/qualification
+        if-no-files-found: error

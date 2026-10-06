@@ -23,7 +23,7 @@ lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container contai
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
-       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -40,6 +40,8 @@ ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
+Local test execution currently supports only smoke on a matching Linux host;
+compilation remains remote. It does not provision remote runtime fixtures.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -62,11 +64,13 @@ if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
   exit 0
 fi
 arch=amd64
+test_execution=remote
 header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
   case "$1" in
     --arch=*) arch=${1#--arch=} ;;
+    --test-execution=*) test_execution=${1#--test-execution=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -77,6 +81,20 @@ case "$arch" in
   arm64) architecture_config=aarch64 ;;
   all) architecture_config=x86_64 ;;
   *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
+esac
+case "$test_execution" in
+  remote) ;;
+  local)
+    case "$arch:$(uname -m)" in
+      amd64:x86_64|arm64:aarch64) ;;
+      *) printf 'Local tests require a single matching host architecture.\n' >&2; exit 2 ;;
+    esac
+    if [[ $# != 1 || $1 != smoke ]]; then
+      printf 'The local-test pilot supports only the existing smoke lane.\n' >&2
+      exit 2
+    fi
+    ;;
+  *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
 if [[ $# == 1 && $1 == amd64 ]]; then
   if [[ $arch != amd64 ]]; then
@@ -126,8 +144,10 @@ for lane in "$@"; do
   fi
 done
 
-printf 'Selected remote lanes for Linux %s: %s\n' "$arch" "$*"
-gaps
+printf 'Selected lanes for Linux %s (%s tests): %s\n' "$arch" "$test_execution" "$*"
+if [[ $test_execution == remote ]]; then
+  gaps
+fi
 
 # Scope remote configuration to direct Bazel calls and Make's Bash recipes
 # without changing user rc files or credentials.
@@ -632,6 +652,11 @@ run_lane() (
       ;;
     smoke)
       targets=(//:release_smoke_test)
+      if [[ $test_execution == local ]]; then
+        # The existing variant binds the release and TestRunner to this CPU,
+        # independently of the preferred remote compilation platform.
+        targets=("//:release_smoke_test_$arch")
+      fi
       ;;
     smoke-race)
       targets=(//:release_smoke_race_test)
@@ -743,7 +768,9 @@ run_lane() (
       options+=(--strip=never)
     fi
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
-    if [[ $arch == arm64 ]]; then
+    if [[ $test_execution == local ]]; then
+      options+=(--config=rbe-local-tests)
+    elif [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi

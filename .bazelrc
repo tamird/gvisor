@@ -77,6 +77,14 @@ build:rbe-common --noremote_local_fallback
 build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
 
+# Keep compilation on RBE while a native Linux coordinator runs the tests.
+# Local results describe that host, not the remote platform's runtime fixture.
+test:rbe-local-tests --strategy=TestRunner=local
+test:rbe-local-tests --local_test_jobs=1
+test:rbe-local-tests --nocache_test_results
+test:rbe-local-tests --flaky_test_attempts=1
+build:rbe-local-tests --noremote_upload_local_results
+
 build:rbe --config=rbe-common
 # Architecture-specific generators may need the other native CPU even when
 # the requested build or test lane selects only one target architecture.
