@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T02:20:41.416290+00:00",
+    "updatedAt": "2026-10-06T02:41:40.595864+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1488,10 +1488,10 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13603",
       "group": "rbe",
       "status": "unavailable",
-      "summary": "The actual ARM64 Firecracker scheduling attempt reports no registered executor, zero workers and zero named cases. Ordinary ARM64 OCI execution is separately qualified. A distinct new upstream CI lane at e05c55f50fe10227e3dcc149cd6db6556aff315a uses the arm64-64k queue and --define=pagesize=64k. Its Bazel entrypoint and hosted worker contract remain unqualified; ordinary ARM64 or Firecracker evidence does not establish 64K-page support. No new external issue or provider probe is authorized.",
+      "summary": "The actual ARM64 Firecracker scheduling attempt reports no registered executor, zero workers and zero named cases. Ordinary ARM64 OCI execution is separately qualified. The upstream CI lane at e05c55f50 uses an arm64-64k queue. Fork graph preparation is now public on rbe-arm64-64k-syscalls at fcb52c4994ce644bebd83a8a70c6a30e97dd4bb7: one constrained page-size setting, the public CI/Make configuration, manual ARM64 64K syscall siblings, and explicit unavailable reporting. Both source reviews passed. Remote graph analysis and cross-build have not run, and no supported hosted 64K-kernel worker or runtime evidence exists. Ordinary ARM64 or Firecracker evidence does not establish 64K-page support. This is fork preparation, with no upstream PR or new provider request.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13603,
-      "updatedAt": "2026-10-06T00:55:26.852031+00:00"
+      "updatedAt": "2026-10-06T02:39:30.779491+00:00"
     },
     {
       "id": "external:vhost",
@@ -2081,19 +2081,20 @@
       "url": "https://github.com/google/gvisor/pull/15188",
       "group": "tests",
       "status": "open",
-      "summary": "The requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. The October 5 19:24 UTC sweep reports all current-head checks SUCCESS. Etienne’s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 still refers to the prior 9099a8c50 source and is not evidence for the new head.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
+      "summary": "The requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. Etienne’s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 now matches this source; its latest internal build failed without a public cause while its public pipeline remains pending. Current check states are retained in the paired snapshot.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T00:12:27.973926+00:00",
+      "updatedAt": "2026-10-06T02:41:40.595864+00:00",
       "followup": {
         "disposition": "upstream approved; opaque internal-check failure",
         "owner": "external_sweeps",
-        "nextAction": "Track the matching public import #15257, which is still pending. Copybara reports internal checks failed for runs created at 22:29:13 UTC, but exposes no public cause. No source amendment or retry is inferred.",
+        "nextAction": "Track matching import #15257 at 131edbdee: internal build 31359 now failed without a publicly exposed cause, while public build 49669 remains pending. Source Copybara also reports an internal failure. No source amendment or retry is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15188#issuecomment-6000677541",
-          "https://github.com/google/gvisor/pull/15188#issuecomment-6002279588"
+          "https://github.com/google/gvisor/pull/15188#issuecomment-6002279588",
+          "https://github.com/google/gvisor/pull/15257"
         ],
-        "reviewedAt": "2026-10-06T00:12:27.973926+00:00",
+        "reviewedAt": "2026-10-06T02:38:24.628644+00:00",
         "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -2528,19 +2529,20 @@
       "url": "https://github.com/google/gvisor/pull/15333",
       "group": "tests",
       "status": "open",
-      "summary": "Opened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:23Z.",
+      "summary": "Opened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:23Z.\n\nMatching import #15339 at eec76d397 reported a failed rollup after eperot canceled public build 49634. Its ten ARM64 64K jobs were canceled; all four earlier failed jobs had successful automatic replacements, leaving no failed step. CI remains incomplete; this does not establish a new source regression.",
       "head": "73d62b335ccacd564193b201c861b482e0c1ab18",
       "number": 15333,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-05T23:53:16.050924+00:00",
+      "updatedAt": "2026-10-06T02:28:17.614573+00:00",
       "followup": {
-        "disposition": "upstream approved; import and checks monitored",
+        "disposition": "upstream approved; matching import CI canceled",
         "owner": "external_sweeps",
-        "nextAction": "Track any matching import and exact-head checks. Approval does not imply landing; no source change or duplicate review request is needed.",
+        "nextAction": "Track the matching import after maintainer cancellation. All historical failed jobs passed automatic retries; do not treat this rollup as a new source failure or initiate a retry.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15333#pullrequestreview-5421807283"
+          "https://github.com/google/gvisor/pull/15333#pullrequestreview-5421807283",
+          "https://buildkite.com/gvisor/pipeline/builds/49634"
         ],
-        "reviewedAt": "2026-10-05T23:53:16.050924+00:00",
+        "reviewedAt": "2026-10-06T02:28:17.614573+00:00",
         "sourceHead": "73d62b335ccacd564193b201c861b482e0c1ab18",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
