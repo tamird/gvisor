@@ -77,16 +77,14 @@ func DUTInfo(ifaces dut.Ifaces) (testbench.DUTInfo, error) {
 		return testbench.DUTInfo{}, err
 	}
 
-	prefix, _ := testIPv4.Mask.Size()
-
 	return testbench.DUTInfo{
 		Net: &testbench.DUTTestNet{
-			RemoteIPv6:       testIPv6.IP,
-			RemoteIPv4:       testIPv4.IP.To4(),
-			IPv4PrefixLength: prefix,
+			RemoteIPv6:       testIPv6.Addr(),
+			RemoteIPv4:       testIPv4.Addr(),
+			IPv4PrefixLength: testIPv4.Bits(),
 			RemoteDevID:      uint32(testLink.Attrs().Index),
 			RemoteDevName:    ifaces.Test,
-			POSIXServerIP:    ctrlIPv4.IP.To4(),
+			POSIXServerIP:    ctrlIPv4.Addr(),
 			POSIXServerPort:  dut.PosixServerPort,
 			RemoteMAC:        testLink.Attrs().HardwareAddr,
 		},
