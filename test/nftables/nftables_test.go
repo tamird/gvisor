@@ -18,14 +18,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"sync"
 	"testing"
-	"time"
 
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/test/dockerutil"
-	"gvisor.dev/gvisor/pkg/test/testutil"
+	"gvisor.dev/gvisor/test/netutils"
 )
 
 // singleTest runs a TestCase. Each test follows a pattern:
@@ -59,20 +57,26 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	ctx, cancel := context.WithTimeout(context.Background(), test.Timeout())
+	ctx, cancel := context.WithTimeout(t.Context(), test.Timeout())
 	defer cancel()
 
 	d := dockerutil.MakeContainer(ctx, t)
-	defer func() {
-		if logs, err := d.Logs(context.Background()); err != nil {
-			log.Infof("Failed to retrieve container logs.\n")
+	// Testing cancels t.Context before cleanup. Give logging and removal
+	// independent deadlines so a log retrieval timeout does not prevent removal.
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), test.Timeout())
+		defer cancel()
+		d.CleanUp(ctx)
+	})
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), test.Timeout())
+		defer cancel()
+		if logs, err := d.Logs(ctx); err != nil {
+			log.Infof("Failed to retrieve container logs: %v", err)
 		} else {
 			log.Infof("=== Container logs: ===\n%s\n", logs)
 		}
-		// Use a new context, as cleanup should run even when we
-		// timeout.
-		d.CleanUp(context.Background())
-	}()
+	})
 
 	// Create and start the container.
 	opts := dockerutil.RunOpts{
@@ -102,11 +106,18 @@ func nftablesTest(t *testing.T, test TestCase, ipv6 bool) {
 		t.FailNow()
 	}
 
-	// Give the container our IP.
-	if err := sendIP(ip, test.Timeout()); err != nil {
+	// The container learns our IP from the connection's source address;
+	// ConnectTCP closes the connection without sending a payload.
+	if err := netutils.ConnectTCP(ctx, ip, IPExchangePort, ipv6); err != nil {
 		log.Infof("failed to send IP to container: %v", err)
 		t.FailNow()
 	}
+
+	// Drop checks need their full observation window; slow container setup
+	// may have consumed most of the setup context's deadline.
+	cancel()
+	ctx, cancel = context.WithTimeout(t.Context(), test.Timeout())
+	defer cancel()
 
 	// Run our side of the test.
 	errCh := make(chan error, 2)
@@ -155,26 +166,4 @@ func TestNftablesValidation(t *testing.T) {
 	for _, tc := range validationTests {
 		singleTest(t, tc)
 	}
-}
-
-func sendIP(ip net.IP, timeout time.Duration) error {
-	contAddr := net.TCPAddr{
-		IP:   ip,
-		Port: IPExchangePort,
-	}
-	var conn *net.TCPConn
-	// The container may not be listening when we first connect, so retry
-	// upon error.
-	cb := func() error {
-		c, err := net.DialTCP("tcp", nil, &contAddr)
-		conn = c
-		return err
-	}
-	if err := testutil.Poll(cb, timeout); err != nil {
-		return fmt.Errorf("timed out waiting to send IP, most recent error: %v", err)
-	}
-	if _, err := conn.Write([]byte{0}); err != nil {
-		return fmt.Errorf("error writing to container: %v", err)
-	}
-	return nil
 }
