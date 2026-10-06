@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-06T05:02:36.233940+00:00",
+    "updatedAt": "2026-10-06T05:21:51.759723+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -924,22 +924,22 @@
       "title": "checklocks: guard AIO and logger state",
       "url": "https://github.com/google/gvisor/pull/14504",
       "group": "analysis",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-06T04:23:30.141857+00:00",
-      "summary": "The approved conflict rebase preserves the three source files, commit message and author date; its only AIO overlap adds the requestReady annotation over the new upstream implementation. Independent source peer d25ca27de554 closed. Etienne reapproved published head 47ac9acd486edafa1c43cf30b18c78442f8492e8. Import #15242 now names that exact source head; its current checks remain separate from the earlier import results. No new runtime, public comment or import retry was performed.\n\nThe 2026-10-06 04:56 UTC snapshot shows the current source and matching import #15242 passing all checks, including public build 49690. No new source change or retry was initiated.",
+      "updatedAt": "2026-10-06T05:21:51.759723+00:00",
+      "summary": "Merged via import #15242 at 27248e2e8c3810e375425da9f9ba46f847cc03a6 on 2026-10-06 04:58 UTC. The complete four-file logger/AIO patch at 47ac9acd486edafa1c43cf30b18c78442f8492e8 equals the landing first-parent diff, and that original source is the merge second parent. Public build 49690 and internal checks passed before landing. Independent replacement review and final live ownership checks closed; the exact local and remote topic branches are retired, with source and record preserved upstream.",
       "followup": {
-        "disposition": "upstream approved; matching import checks running",
+        "disposition": "landed; obsolete branch retired",
         "owner": "external_sweeps",
-        "nextAction": "Track matching import #15242 at fbf594737: generation, Go and internal checks pass; public build 49690 remains pending in the 04:17 UTC snapshot. Earlier head results and the older opaque source Copybara failure remain separate; no source amendment or retry is inferred.",
+        "nextAction": "No source or branch cleanup remains for this landed topic.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14504#pullrequestreview-5421551262",
-          "https://github.com/google/gvisor/pull/15242"
+          "https://github.com/google/gvisor/pull/14504",
+          "https://github.com/google/gvisor/commit/27248e2e8c3810e375425da9f9ba46f847cc03a6"
         ],
-        "reviewedAt": "2026-10-06T04:17:47.831933+00:00",
+        "reviewedAt": "2026-10-06T05:21:51.759723+00:00",
         "sourceHead": "47ac9acd486edafa1c43cf30b18c78442f8492e8",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -3058,7 +3058,7 @@
       "url": "https://github.com/tamird/gvisor/tree/rbe-shared-source-inputs",
       "group": "rbe",
       "status": "scope pending",
-      "summary": "Public shared precursor replaces the CodeQL-owned source repository with a generic indexed/current-content source owner and stable exported paths. CodeQL and module_proxy consumers migrate together on this integration branch; governance and the pending lint implementation consume this owner. Source reviews pass. Governance evidence validates its own use only; separate CodeQL/module_proxy compatibility proof remains pending. Root is extracting the minimal generic owner with governance onto current upstream so delivery does not inherit an unnecessary CodeQL stack. No upstream PR or full compatibility claim."
+      "summary": "Public shared precursor replaces the CodeQL-owned source repository with a generic indexed/current-content source owner and stable exported paths. CodeQL and module_proxy consumers migrate together on this integration branch; governance and declared lint consume this owner. Source reviews pass. Governance use is validated, while separate CodeQL/module_proxy compatibility proof remains pending. The minimal generic owner is also included in the independent governance-bazel-check candidate, avoiding an upstream CodeQL dependency. No full compatibility claim."
     },
     {
       "id": "branch:rbe-governance-check",
@@ -3069,8 +3069,34 @@
       "title": "Run governance freshness checks remotely",
       "url": "https://github.com/tamird/gvisor/tree/rbe-governance-check",
       "group": "rbe",
-      "status": "scope pending",
-      "summary": "Public integration depends on shared source inputs. Hosted parent 100a9301 passes in 38.659 seconds: both canonical comparisons pass, stale CODEOWNERS fails without rewriting it, and a nonexistent area fails with the original generator diagnostic. Independent review cda96667451f binds 147 retained files, eighteen source blobs, five TestRunner and four generator actions; successful generated outputs equal committed files and the checkout is restored. This is Linux AMD64 governance evidence only. No roster, schema, access or policy changes. A source-reviewed independent upstream extraction is prepared locally; its publication and standalone validation are pending."
+      "status": "validation only",
+      "summary": "Preserved governance integration on shared source inputs. Hosted parent 100a9301 passes in 38.659 seconds: both canonical comparisons pass, stale CODEOWNERS fails without rewriting it, and a nonexistent area fails with the original generator diagnostic. Independent review binds 147 retained files, eighteen source blobs, five TestRunner and four generator actions; generated outputs equal committed files and the checkout is restored. The independent governance-bazel-check candidate now contains the minimal upstream change and has its own standalone proof. This integration is not an additional upstream candidate."
+    },
+    {
+      "id": "branch:governance-bazel-check",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "governance-bazel-check",
+      "head": "afe13110452169137490282a8dce60fc502718c0",
+      "title": "Check generated governance files with Bazel",
+      "url": "https://github.com/tamird/gvisor/tree/governance-bazel-check",
+      "group": "rbe",
+      "status": "review pending",
+      "updatedAt": "2026-10-06T05:21:51.759723+00:00",
+      "summary": "Independent upstream candidate includes the minimal generic source owner, two generator actions and canonical freshness comparisons; it has no CodeQL or RBE source dependency. Standalone hosted parent 17e3c3b6 passes in 57.672 seconds with upstream Bazel 8.3.1: both uncached comparisons and both actual generator actions pass, outputs equal committed CODEOWNERS/MAINTAINERS, and source remains unchanged. Saved evidence review dbf91465800c closes all 75 files and sixteen source blobs. Identical generator/rule sources retain the earlier stale-output and missing-area negative proof. The original validation preflight failure is preserved. Contributor review/open-PR decision is pending; no roster, schema, access or policy change."
+    },
+    {
+      "id": "branch:rbe-declared-lint-tools",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "rbe-declared-lint-tools",
+      "head": "6d4da110d97941d90c5f15fff484c363cff4566a",
+      "title": "Run lint checks with declared Bazel inputs and tools",
+      "url": "https://github.com/tamird/gvisor/tree/rbe-declared-lint-tools",
+      "group": "rbe",
+      "status": "validation pending",
+      "updatedAt": "2026-10-06T05:21:51.759723+00:00",
+      "summary": "Public source-reviewed lint implementation on the shared indexed source owner. One selection policy supplies checker-specific source/config subsets to five checks; formatter/tool dependencies are declared, old installers are removed, buildifier warnings remain failures, and optional action/clang-tidy checks retain their continuation behavior. Hosted checker/formatter parity, changed-input/fix behavior, compiler SDK and license validation are active. The old-wheel parity composition is diagnostic only. No successful runtime or dependency-license result is claimed yet; upstream extraction and contributor review remain pending."
     }
   ],
   "edges": [
@@ -4295,10 +4321,20 @@
       "from": "branch:rbe-shared-source-inputs",
       "to": "branch:rbe-governance-check",
       "type": "depends_on",
-      "reason": "The governance actions consume the generic indexed directory hierarchy and exported current source files supplied by this precursor. The planned standalone extraction combines the minimal owner without CodeQL.",
+      "reason": "This preserved integration consumes the generic indexed hierarchy and current source files supplied by the precursor. Its independent upstream candidate includes the minimal owner itself.",
       "evidence": [
         "https://github.com/tamird/gvisor/tree/rbe-shared-source-inputs",
         "https://github.com/tamird/gvisor/tree/rbe-governance-check"
+      ]
+    },
+    {
+      "from": "branch:rbe-shared-source-inputs",
+      "to": "branch:rbe-declared-lint-tools",
+      "type": "depends_on",
+      "reason": "The declared lint implementation consumes the generic indexed source repository and extends its checker-specific selection groups.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/tree/rbe-shared-source-inputs",
+        "https://github.com/tamird/gvisor/tree/rbe-declared-lint-tools"
       ]
     }
   ]
