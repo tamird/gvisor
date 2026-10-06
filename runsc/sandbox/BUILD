@@ -42,7 +42,6 @@ go_library(
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/state/statefile",
         "//pkg/sync",
-        "//pkg/tcpip/header",
         "//pkg/tcpip/stack",
         "//pkg/urpc",
         "//pkg/xdp",

@@ -17,7 +17,7 @@ package boot
 import (
 	"fmt"
 	"math/rand"
-	"net"
+	"net/netip"
 	"os"
 	"strings"
 	"testing"
@@ -652,15 +652,12 @@ func TestNetworkConfig(t *testing.T) {
 		LoopbackLinks: []LoopbackLink{
 			{
 				Name: "lo",
-				Addresses: []IPWithPrefix{
-					{Address: net.IP("\x7f\x00\x00\x01"), PrefixLen: 8},
+				Addresses: []netip.Prefix{
+					netip.MustParsePrefix("127.0.0.1/8"),
 				},
 				Routes: []Route{
 					{
-						Destination: net.IPNet{
-							IP:   net.IP{127, 0, 0, 0},
-							Mask: net.IPMask{255, 0, 0, 0},
-						},
+						Destination: netip.MustParsePrefix("127.0.0.0/8"),
 					},
 				},
 			},

@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -29,7 +30,6 @@ import (
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/socket/plugin"
-	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/urpc"
 	"gvisor.dev/gvisor/runsc/boot"
@@ -251,33 +251,43 @@ func isRootNetNS() (bool, error) {
 	}
 }
 
-func addrBitLength(ip net.IP) int {
-	if ip.To4() != nil {
-		return 8 * net.IPv4len
+// prefixFromIPNet preserves the host bits needed by interface addresses. Route
+// callers mask the resulting prefix separately.
+func prefixFromIPNet(ipNet *net.IPNet) (netip.Prefix, error) {
+	addr, ok := netip.AddrFromSlice(ipNet.IP)
+	if !ok {
+		return netip.Prefix{}, fmt.Errorf("invalid IP address: %v", ipNet.IP)
 	}
-	return 8 * net.IPv6len
+	addr = addr.Unmap()
+	mask := ipNet.Mask
+	if addr.Is4() && len(mask) == net.IPv6len {
+		// net.IPNet permits IPv4 addresses with a 16-byte mask; as in net,
+		// only its final four bytes describe the IPv4 prefix.
+		mask = mask[net.IPv6len-net.IPv4len:]
+	}
+	ones, bits := mask.Size()
+	if bits != addr.BitLen() {
+		return netip.Prefix{}, fmt.Errorf("invalid mask %v for address %v", ipNet.Mask, addr)
+	}
+	return netip.PrefixFrom(addr, ones), nil
 }
 
 // removeLinkAddresses removes IP addresses from the host NIC for a link.
-func removeLinkAddresses(linkName string, addresses []boot.IPWithPrefix) error {
+func removeLinkAddresses(linkName string, addresses []netip.Prefix) error {
 	ifaceLink, err := netlink.LinkByName(linkName)
 	if err != nil {
 		return fmt.Errorf("getting link for interface %q: %w", linkName, err)
 	}
 	for _, addr := range addresses {
-		ipNet := &net.IPNet{
-			IP:   addr.Address,
-			Mask: net.CIDRMask(addr.PrefixLen, addrBitLength(addr.Address)),
-		}
-		if err := removeAddress(ifaceLink, ipNet.String()); err != nil {
+		if err := removeAddress(ifaceLink, addr.String()); err != nil {
 			// If we encounter an error while deleting the ip,
 			// verify the ip is still present on the interface.
-			if present, err := isAddressOnInterface(linkName, ipNet); err != nil {
-				return fmt.Errorf("checking if address %v is on interface %q: %w", ipNet, linkName, err)
+			if present, err := isAddressOnInterface(linkName, addr); err != nil {
+				return fmt.Errorf("checking if address %v is on interface %q: %w", addr, linkName, err)
 			} else if !present {
 				continue
 			}
-			return fmt.Errorf("removing address %v from device %q: %w", ipNet, linkName, err)
+			return fmt.Errorf("removing address %v from device %q: %w", addr, linkName, err)
 		}
 	}
 	return nil
@@ -319,19 +329,23 @@ func collectLinksAndRoutes(conf *config.Config, disableIPv6 bool) (boot.CreateLi
 			continue
 		}
 
-		var ipAddrs []*net.IPNet
+		var addresses []netip.Prefix
 		for _, ifaddr := range allAddrs {
 			ipNet, ok := ifaddr.(*net.IPNet)
 			if !ok {
 				return boot.CreateLinksAndRoutesArgs{}, fmt.Errorf("address is not IPNet: %+v", ifaddr)
 			}
+			addr, err := prefixFromIPNet(ipNet)
+			if err != nil {
+				return boot.CreateLinksAndRoutesArgs{}, err
+			}
 			// Do not add IPv6 addresses when IPv6 is disabled.
-			if disableIPv6 && ipNet.IP.To4() == nil {
+			if disableIPv6 && addr.Addr().Is6() {
 				continue
 			}
-			ipAddrs = append(ipAddrs, ipNet)
+			addresses = append(addresses, addr)
 		}
-		if len(ipAddrs) == 0 {
+		if len(addresses) == 0 {
 			log.Warningf("No usable IP addresses found for interface %q, skipping", iface.Name)
 			continue
 		}
@@ -347,9 +361,13 @@ func collectLinksAndRoutes(conf *config.Config, disableIPv6 bool) (boot.CreateLi
 			// There are only two "good" states NUD_PERMANENT and NUD_REACHABLE,
 			// but NUD_REACHABLE is fully dynamic and will be re-probed anyway.
 			if n.State == netlink.NUD_PERMANENT {
+				addr, ok := netip.AddrFromSlice(n.IP)
+				if !ok {
+					return boot.CreateLinksAndRoutesArgs{}, fmt.Errorf("invalid neighbor address: %v", n.IP)
+				}
 				log.Debugf("Copying a static ARP entry: %+v %+v", n.IP, n.HardwareAddr)
 				// No flags are copied because Stack.AddStaticNeighbor does not support flags right now.
-				neighbors = append(neighbors, boot.Neighbor{IP: n.IP, HardwareAddr: n.HardwareAddr})
+				neighbors = append(neighbors, boot.Neighbor{IP: addr.Unmap(), HardwareAddr: n.HardwareAddr})
 			}
 		}
 
@@ -381,13 +399,6 @@ func collectLinksAndRoutes(conf *config.Config, disableIPv6 bool) (boot.CreateLi
 			return boot.CreateLinksAndRoutesArgs{}, fmt.Errorf("getting link for interface %q: %w", iface.Name, err)
 		}
 		linkAddress := ifaceLink.Attrs().HardwareAddr
-
-		// Collect the addresses for the interface.
-		var addresses []boot.IPWithPrefix
-		for _, addr := range ipAddrs {
-			prefix, _ := addr.Mask.Size()
-			addresses = append(addresses, boot.IPWithPrefix{Address: addr.IP, PrefixLen: prefix})
-		}
 
 		if conf.XDP.Mode == config.XDPModeNS {
 			args.XDPLinks = append(args.XDPLinks, boot.XDPLink{
@@ -596,7 +607,7 @@ func initPluginStack(conn *urpc.Client, pid int, conf *config.Config) error {
 }
 
 // isAddressOnInterface checks if an address is on an interface
-func isAddressOnInterface(ifaceName string, addr *net.IPNet) (bool, error) {
+func isAddressOnInterface(ifaceName string, addr netip.Prefix) (bool, error) {
 	iface, err := net.InterfaceByName(ifaceName)
 	if err != nil {
 		return false, fmt.Errorf("getting interface by name %q: %w", ifaceName, err)
@@ -611,7 +622,11 @@ func isAddressOnInterface(ifaceName string, addr *net.IPNet) (bool, error) {
 			log.Warningf("Can't cast address to *net.IPNet, skipping: %+v", ifaceAddr)
 			continue
 		}
-		if ipNet.String() == addr.String() {
+		prefix, err := prefixFromIPNet(ipNet)
+		if err != nil {
+			return false, err
+		}
+		if prefix == addr {
 			return true, nil
 		}
 	}
@@ -701,23 +716,21 @@ func loopbackLink(conf *config.Config, iface net.Interface, addrs []net.Addr, di
 			return boot.LoopbackLink{}, fmt.Errorf("address is not IPNet: %+v", addr)
 		}
 
-		if disableIPv6 && ipNet.IP.To4() == nil {
+		prefix, err := prefixFromIPNet(ipNet)
+		if err != nil {
+			return boot.LoopbackLink{}, err
+		}
+		if disableIPv6 && prefix.Addr().Is6() {
 			continue
 		}
-		prefix, _ := ipNet.Mask.Size()
-		link.Addresses = append(link.Addresses, boot.IPWithPrefix{
-			Address:   ipNet.IP,
-			PrefixLen: prefix,
-		})
+		link.Addresses = append(link.Addresses, prefix)
 
 		// Synthesize a subnet route from the address. These routes
 		// (e.g. 127.0.0.0/8) are in the kernel's "local" routing table
 		// and won't be returned by routesForIface which queries the
 		// main routing table.
-		dst := *ipNet
-		dst.IP = dst.IP.Mask(dst.Mask)
 		link.Routes = append(link.Routes, boot.Route{
-			Destination: dst,
+			Destination: prefix.Masked(),
 		})
 	}
 
@@ -750,6 +763,15 @@ func routesForIface(iface net.Interface, disableIPv6 bool) ([]boot.Route, *boot.
 	var routes []boot.Route
 	for _, r := range rs {
 		mtu := uint32(r.MTU)
+		var gateway netip.Addr
+		if r.Gw != nil {
+			var ok bool
+			gateway, ok = netip.AddrFromSlice(r.Gw)
+			if !ok {
+				return nil, nil, nil, fmt.Errorf("invalid gateway address: %v for route: %+v", r.Gw, r)
+			}
+			gateway = gateway.Unmap()
+		}
 
 		// Is it a default route?
 		if r.Dst == nil {
@@ -757,48 +779,42 @@ func routesForIface(iface net.Interface, disableIPv6 bool) ([]boot.Route, *boot.
 				return nil, nil, nil, fmt.Errorf("default route with no gateway %q: %+v", iface.Name, r)
 			}
 			// Create a catch all route to the gateway.
-			switch len(r.Gw) {
-			case header.IPv4AddressSize:
+			switch {
+			case gateway.Is4():
 				if defv4 != nil {
 					return nil, nil, nil, fmt.Errorf("more than one default route found %q, def: %+v, route: %+v", iface.Name, defv4, r)
 				}
 				defv4 = &boot.Route{
-					Destination: net.IPNet{
-						IP:   net.IPv4zero,
-						Mask: net.IPMask(net.IPv4zero),
-					},
-					Gateway: r.Gw,
-					MTU:     mtu,
+					Destination: netip.PrefixFrom(netip.IPv4Unspecified(), 0),
+					Gateway:     gateway,
+					MTU:         mtu,
 				}
-			case header.IPv6AddressSize:
+			case gateway.Is6():
 				if defv6 != nil {
 					return nil, nil, nil, fmt.Errorf("more than one default route found %q, def: %+v, route: %+v", iface.Name, defv6, r)
 				}
 
 				if !disableIPv6 {
 					defv6 = &boot.Route{
-						Destination: net.IPNet{
-							IP:   net.IPv6zero,
-							Mask: net.IPMask(net.IPv6zero),
-						},
-						Gateway: r.Gw,
-						MTU:     mtu,
+						Destination: netip.PrefixFrom(netip.IPv6Unspecified(), 0),
+						Gateway:     gateway,
+						MTU:         mtu,
 					}
 				}
-			default:
-				return nil, nil, nil, fmt.Errorf("unexpected address size for gateway: %+v for route: %+v", r.Gw, r)
 			}
 			continue
 		}
 
-		dst := *r.Dst
-		if disableIPv6 && dst.IP.To4() == nil {
+		dst, err := prefixFromIPNet(r.Dst)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+		if disableIPv6 && dst.Addr().Is6() {
 			continue
 		}
-		dst.IP = dst.IP.Mask(dst.Mask)
 		routes = append(routes, boot.Route{
-			Destination: dst,
-			Gateway:     r.Gw,
+			Destination: dst.Masked(),
+			Gateway:     gateway,
 			MTU:         mtu,
 		})
 	}
