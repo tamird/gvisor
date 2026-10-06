@@ -75,10 +75,10 @@ sh_test(
 
 [
     test_architecture_variants(
-        "sanity_test",
-        [arch],
-        {arch: test_rule},
-        {
+        name = "sanity_test",
+        architectures = [arch],
+        test_rules = {arch: test_rule},
+        kwargs = {
             "srcs": ["sanity_test.sh"],
             "args": ["$(location :sanity_nogo_%s)" % arch],
             "data": [":sanity_nogo_%s" % arch],

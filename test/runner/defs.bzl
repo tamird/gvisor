@@ -16,6 +16,8 @@ _platform_support_env_vars = {
 
 # Keep the public syscall compiler policy on this graph, rather than imposing
 # it on unit and release targets in the same invocation.
+# with_cfg requires the returned transition rule to be exported at module scope.
+# buildifier: disable=unused-variable
 _runner_test, _runner_compilation_transition = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"]).build()
 
 def _compile_runner_test(compile_exec_compatible_with, **kwargs):

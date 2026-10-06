@@ -36,8 +36,12 @@ _go_generics_test = rule(
 def _compile_go_generics_test(**kwargs):
     _go_generics_test(**kwargs)
 
+# with_cfg requires the returned transition rule to be exported at module scope.
+# buildifier: disable=unused-variable
 _go_generics_amd64_test, _go_generics_amd64_transition = with_test_architecture(_compile_go_generics_test, "amd64").build()
+# buildifier: disable=unused-variable
 _go_generics_arm64_test, _go_generics_arm64_transition = with_test_architecture(_compile_go_generics_test, "arm64").build()
+# buildifier: disable=unused-variable
 _go_generics_cgroup_v1_test, _go_generics_cgroup_v1_transition = with_cgroup_v1(_compile_go_generics_test)
 
 def go_generics_test(name, inputs, output, types = None, consts = None, architectures = ["amd64", "arm64"], **kwargs):

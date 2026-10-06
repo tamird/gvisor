@@ -2008,8 +2008,8 @@ TEST(PtraceTest, Int3) {
 }
 
 TEST(PtraceTest, Sysemu_PokeUser) {
-  // PTRACE_SYSEMU is not defined until glibc 2.27 (c48831d0eebf "linux/x86: sync
-  // sys/ptrace.h with Linux 4.14 [BZ #22433]").
+  // PTRACE_SYSEMU is not defined until glibc 2.27 (c48831d0eebf "linux/x86:
+  // sync sys/ptrace.h with Linux 4.14 [BZ #22433]").
   constexpr auto kPtraceSysemu = static_cast<__ptrace_request>(31);
 
   constexpr int kSysemuHelperFirstExitCode = 126;

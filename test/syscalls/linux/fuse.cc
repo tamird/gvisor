@@ -26,9 +26,9 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-// glibc 2.30+ gets statx from linux/stat.h. glibc 2.28/2.29 and musl define it in
-// sys/stat.h instead, and including linux/stat.h conflicts with those definitions.
-// https://github.com/bminor/glibc/commit/5dad6ffbb
+// glibc 2.30+ gets statx from linux/stat.h. glibc 2.28/2.29 and musl define it
+// in sys/stat.h instead, and including linux/stat.h conflicts with those
+// definitions. https://github.com/bminor/glibc/commit/5dad6ffbb
 #if defined(__GLIBC__) && \
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 30))
 #include <linux/stat.h>

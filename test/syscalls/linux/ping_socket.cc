@@ -113,7 +113,7 @@ class PingSocketPayloadTest : public ::testing::TestWithParam<int> {};
 TEST_P(PingSocketPayloadTest, PayloadTooLarge) {
   const int family = GetParam();
   const int protocol = family == AF_INET ? static_cast<int>(IPPROTO_ICMP)
-                                       : static_cast<int>(IPPROTO_ICMPV6);
+                                         : static_cast<int>(IPPROTO_ICMPV6);
   auto result = Socket(family, SOCK_DGRAM, protocol);
   if (!result.ok()) {
     ASSERT_EQ(result.error().errno_value(), EACCES);

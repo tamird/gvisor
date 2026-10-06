@@ -55,7 +55,13 @@ def cgroup_v1_tags(tags):
     return tags + ["rbe-has-cgroup-v1-variant"]
 
 def cgroup_v1_variant(name, test_rule, kwargs):
-    """Declares the same test with an explicit, manual AMD64 cgroup profile."""
+    """Declares the same test with an explicit, manual AMD64 cgroup profile.
+
+    Args:
+        name: Original test target name.
+        test_rule: Configured test rule for the variant.
+        kwargs: Complete attributes of the original test declaration.
+    """
     attributes = dict(kwargs)
     attributes["tags"] = attributes.get("tags", []) + ["manual", "no-local"]
     attributes["target_compatible_with"] = attributes.get("target_compatible_with", []) + select({
@@ -65,7 +71,13 @@ def cgroup_v1_variant(name, test_rule, kwargs):
     test_rule(name = name + "_cgroup_v1", **attributes)
 
 def cgroup_v2_variant(name, test_rule, kwargs):
-    """Declares the same test with a rule-owned cgroup-v2 environment."""
+    """Declares the same test with a rule-owned cgroup-v2 environment.
+
+    Args:
+        name: Original test target name.
+        test_rule: Configured test rule for the variant.
+        kwargs: Complete attributes of the original test declaration.
+    """
 
     # Preserve the ordinary target's environment for Make's CGROUPV2 override.
     attributes = dict(kwargs)

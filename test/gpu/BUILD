@@ -207,6 +207,7 @@ go_test(
     srcs = ["cos_gpu_compatibility_test.go"],
     # Prepared by tools/gpu/cos_metadata_input.sh. Compilation does not need a
     # catalog; executing this explicit manual test fails if none was supplied.
+    # buildifier: disable=constant-glob
     data = glob(
         ["cos_metadata_input/images.json"],
         allow_empty = True,

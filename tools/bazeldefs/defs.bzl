@@ -24,7 +24,13 @@ build_arm64_test, _build_arm64_transition = with_test_architecture(_build_test, 
 build_test_cgroup_v1_test, _build_test_cgroup_v1_transition = with_cgroup_v1(_build_test)
 
 def build_test(name, architectures = ["amd64", "arm64"], **kwargs):
-    """Declares the original test and manual architecture/cgroup variants."""
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _build_test(name = name, **kwargs)
     cgroup_v1_variant(name, build_test_cgroup_v1_test, kwargs)
@@ -40,7 +46,14 @@ native_arm64_test, _native_arm64_transition = with_test_architecture(_native_tes
 native_test_cgroup_v1_test, _native_test_cgroup_v1_transition = with_cgroup_v1(_native_test)
 
 def native_test(name, architectures = ["amd64", "arm64"], cgroup_v2 = False, **kwargs):
-    """Declares the original test and manual architecture/cgroup variants."""
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        cgroup_v2: Whether to add a rule-owned cgroup-v2 variant.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     if cgroup_v2:
         kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
@@ -60,7 +73,13 @@ py_arm64_test, _py_arm64_transition = with_test_architecture(_py_test, "arm64").
 py_test_cgroup_v1_test, _py_test_cgroup_v1_transition = with_cgroup_v1(_py_test)
 
 def py_test(name, architectures = ["amd64", "arm64"], **kwargs):
-    """Declares the original test and manual architecture/cgroup variants."""
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _py_test(name = name, **kwargs)
     cgroup_v1_variant(name, py_test_cgroup_v1_test, kwargs)
@@ -76,7 +95,13 @@ sh_arm64_test, _sh_arm64_transition = with_test_architecture(_sh_test, "arm64").
 sh_test_cgroup_v1_test, _sh_test_cgroup_v1_transition = with_cgroup_v1(_sh_test)
 
 def sh_test(name, architectures = ["amd64", "arm64"], **kwargs):
-    """Declares the original test and manual architecture/cgroup variants."""
+    """Declares the original test and manual architecture/cgroup variants.
+
+    Args:
+        name: Original test target name.
+        architectures: Additional native architecture variants.
+        **kwargs: Attributes forwarded to the underlying test rule.
+    """
     kwargs["tags"] = cgroup_v1_tags(test_architecture_tags(architectures, kwargs.get("tags", [])))
     _sh_test(name = name, **kwargs)
     cgroup_v1_variant(name, sh_test_cgroup_v1_test, kwargs)

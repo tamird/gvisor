@@ -45,7 +45,10 @@ release_files(
     sidecars = SIDECARS | {
         "//runsc/cmd/sentry:gvisor_sentry_plugin_stack": "gvisor_sentry_plugin_stack",
     },
-    tags = ["manual", "network_plugins"],
+    tags = [
+        "manual",
+        "network_plugins",
+    ],
     target_compatible_with = ["@platforms//cpu:x86_64"],
     visibility = ["//visibility:public"],
 )
@@ -87,8 +90,19 @@ release_files(
 # Preserve Make's three do-tests commands. Rootless cases must start without
 # privileges so they exercise capability acquisition in a new user namespace.
 _DO_VARIANTS = [
-    ("rootless", ["--rootless"], "nobody"),
-    ("rootless_network_none", ["--rootless", "--network=none"], "nobody"),
+    (
+        "rootless",
+        ["--rootless"],
+        "nobody",
+    ),
+    (
+        "rootless_network_none",
+        [
+            "--rootless",
+            "--network=none",
+        ],
+        "nobody",
+    ),
     ("root", [], "root"),
 ]
 
@@ -107,9 +121,9 @@ _DO_VARIANTS = [
             "true",
         ],
         exec_properties = namespace_test_exec_properties(
-            user = user,
             # The privileged case sets up networking with ip and iptables.
             image = RBE_NETWORK_TOOLS_IMAGE,
+            user = user,
         ),
         tags = ["manual"],
     )
