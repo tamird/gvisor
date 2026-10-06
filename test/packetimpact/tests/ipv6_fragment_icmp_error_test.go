@@ -47,8 +47,8 @@ func fragmentedICMPEchoRequest(t *testing.T, n *testbench.DUTTestNet, conn *test
 	icmpv6Header.SetSequence(0)
 	cksum := header.ICMPv6Checksum(header.ICMPv6ChecksumParams{
 		Header:      icmpv6Header,
-		Src:         tcpip.AddrFrom16Slice(n.LocalIPv6),
-		Dst:         tcpip.AddrFrom16Slice(n.RemoteIPv6),
+		Src:         tcpip.AddrFrom16(n.LocalIPv6.As16()),
+		Dst:         tcpip.AddrFrom16(n.RemoteIPv6.As16()),
 		PayloadCsum: checksum.Checksum(payload, 0 /* initial */),
 		PayloadLen:  len(payload),
 	})

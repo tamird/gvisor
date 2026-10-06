@@ -16,7 +16,7 @@ package udp_any_addr_recv_unicast_test
 
 import (
 	"flag"
-	"net"
+	"net/netip"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -30,15 +30,16 @@ func init() {
 
 func TestAnyRecvUnicastUDP(t *testing.T) {
 	dut := testbench.NewDUT(t)
-	boundFD, remotePort := dut.CreateBoundSocket(t, unix.SOCK_DGRAM, unix.IPPROTO_UDP, net.IPv4zero)
+	boundFD, remotePort := dut.CreateBoundSocket(t, unix.SOCK_DGRAM, unix.IPPROTO_UDP, netip.IPv4Unspecified())
 	defer dut.Close(t, boundFD)
 	conn := dut.Net.NewUDPIPv4(t, testbench.UDP{DstPort: &remotePort}, testbench.UDP{SrcPort: &remotePort})
 	defer conn.Close(t)
 
 	payload := testbench.GenerateRandomPayload(t, 1<<10 /* 1 KiB */)
+	remoteIPv4 := dut.Net.RemoteIPv4
 	conn.SendIP(
 		t,
-		testbench.IPv4{DstAddr: &dut.Net.RemoteIPv4},
+		testbench.IPv4{DstAddr: &remoteIPv4},
 		testbench.UDP{},
 		&testbench.Payload{Bytes: payload},
 	)

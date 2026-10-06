@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mohae/deepcopy"
 	"go.uber.org/multierr"
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -56,12 +55,10 @@ func (n *DUTTestNet) pickPort(domain, typ int) (fd int, port uint16, err error) 
 	var sa unix.Sockaddr
 	switch domain {
 	case unix.AF_INET:
-		var sa4 unix.SockaddrInet4
-		copy(sa4.Addr[:], n.LocalIPv4)
+		sa4 := unix.SockaddrInet4{Addr: n.LocalIPv4.As4()}
 		sa = &sa4
 	case unix.AF_INET6:
-		sa6 := unix.SockaddrInet6{ZoneId: n.LocalDevID}
-		copy(sa6.Addr[:], n.LocalIPv6)
+		sa6 := unix.SockaddrInet6{Addr: n.LocalIPv6.As16(), ZoneId: n.LocalDevID}
 		sa = &sa6
 	default:
 		return -1, 0, fmt.Errorf("invalid domain %d, it should be one of unix.AF_INET or unix.AF_INET6", domain)
@@ -133,12 +130,12 @@ func (n *DUTTestNet) newEtherState(out, in Ether) (*etherState, error) {
 }
 
 func (s *etherState) outgoing() Layer {
-	return deepcopy.Copy(&s.out).(Layer)
+	return cloneLayer(&s.out)
 }
 
 // incoming implements layerState.incoming.
 func (s *etherState) incoming(Layer) Layer {
-	return deepcopy.Copy(&s.in).(Layer)
+	return cloneLayer(&s.in)
 }
 
 func (*etherState) sent(Layer) error {
@@ -178,12 +175,12 @@ func (n *DUTTestNet) newIPv4State(out, in IPv4) (*ipv4State, error) {
 }
 
 func (s *ipv4State) outgoing() Layer {
-	return deepcopy.Copy(&s.out).(Layer)
+	return cloneLayer(&s.out)
 }
 
 // incoming implements layerState.incoming.
 func (s *ipv4State) incoming(Layer) Layer {
-	return deepcopy.Copy(&s.in).(Layer)
+	return cloneLayer(&s.in)
 }
 
 func (*ipv4State) sent(Layer) error {
@@ -224,11 +221,11 @@ func (n *DUTTestNet) newIPv6State(out, in IPv6) (*ipv6State, error) {
 
 // outgoing returns an outgoing layer to be sent in a frame.
 func (s *ipv6State) outgoing() Layer {
-	return deepcopy.Copy(&s.out).(Layer)
+	return cloneLayer(&s.out)
 }
 
 func (s *ipv6State) incoming(Layer) Layer {
-	return deepcopy.Copy(&s.in).(Layer)
+	return cloneLayer(&s.in)
 }
 
 func (s *ipv6State) sent(Layer) error {
@@ -286,14 +283,14 @@ func (n *DUTTestNet) newTCPState(domain int, out, in TCP) (*tcpState, error) {
 }
 
 func (s *tcpState) outgoing() Layer {
-	newOutgoing := deepcopy.Copy(s.out).(TCP)
+	newOutgoing := cloneLayer(&s.out).(*TCP)
 	if s.localSeqNum != nil {
 		newOutgoing.SeqNum = Uint32(uint32(*s.localSeqNum))
 	}
 	if s.remoteSeqNum != nil {
 		newOutgoing.AckNum = Uint32(uint32(*s.remoteSeqNum))
 	}
-	return &newOutgoing
+	return newOutgoing
 }
 
 // incoming implements layerState.incoming.
@@ -302,7 +299,7 @@ func (s *tcpState) incoming(received Layer) Layer {
 	if !ok {
 		return nil
 	}
-	newIn := deepcopy.Copy(s.in).(TCP)
+	newIn := cloneLayer(&s.in).(*TCP)
 	if s.remoteSeqNum != nil {
 		newIn.SeqNum = Uint32(uint32(*s.remoteSeqNum))
 	}
@@ -312,7 +309,7 @@ func (s *tcpState) incoming(received Layer) Layer {
 		// header if ACK is not set.
 		newIn.AckNum = Uint32(uint32(*seq))
 	}
-	return &newIn
+	return newIn
 }
 
 func (s *tcpState) sent(sent Layer) error {
@@ -388,12 +385,12 @@ func (n *DUTTestNet) newUDPState(domain int, out, in UDP) (*udpState, error) {
 }
 
 func (s *udpState) outgoing() Layer {
-	return deepcopy.Copy(&s.out).(Layer)
+	return cloneLayer(&s.out)
 }
 
 // incoming implements layerState.incoming.
 func (s *udpState) incoming(Layer) Layer {
-	return deepcopy.Copy(&s.in).(Layer)
+	return cloneLayer(&s.in)
 }
 
 func (*udpState) sent(l Layer) error {
@@ -837,7 +834,7 @@ func (conn *TCPIPv4) LocalAddr(t *testing.T) *unix.SockaddrInet4 {
 	t.Helper()
 
 	sa := &unix.SockaddrInet4{Port: int(*conn.tcpState(t).out.SrcPort)}
-	copy(sa.Addr[:], *conn.ipv4State(t).out.SrcAddr)
+	sa.Addr = conn.ipv4State(t).out.SrcAddr.As4()
 	return sa
 }
 
@@ -1014,7 +1011,7 @@ func (conn *UDPIPv4) LocalAddr(t *testing.T) *unix.SockaddrInet4 {
 	t.Helper()
 
 	sa := &unix.SockaddrInet4{Port: int(*conn.udpState(t).out.SrcPort)}
-	copy(sa.Addr[:], *conn.ipv4State(t).out.SrcAddr)
+	sa.Addr = conn.ipv4State(t).out.SrcAddr.As4()
 	return sa
 }
 
@@ -1145,7 +1142,7 @@ func (conn *UDPIPv6) LocalAddr(t *testing.T, zoneID uint32) *unix.SockaddrInet6 
 		// ID of the remote interface.
 		ZoneId: zoneID,
 	}
-	copy(sa.Addr[:], *conn.ipv6State(t).out.SrcAddr)
+	sa.Addr = conn.ipv6State(t).out.SrcAddr.As16()
 	return sa
 }
 

@@ -18,7 +18,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"net"
+	"net/netip"
 	"testing"
 
 	"golang.org/x/sys/unix"
@@ -39,17 +39,16 @@ func TestDiscardsUDPPacketsWithMcastSourceAddressV4(t *testing.T) {
 	conn := dut.Net.NewUDPIPv4(t, testbench.UDP{DstPort: &remotePort}, testbench.UDP{SrcPort: &remotePort})
 	defer conn.Close(t)
 
-	for _, mcastAddr := range []net.IP{
-		net.IPv4allsys,
-		net.IPv4allrouter,
-		net.IPv4(224, 0, 1, 42),
-		net.IPv4(232, 1, 2, 3),
+	for _, mcastAddr := range []netip.Addr{
+		netip.MustParseAddr("224.0.0.1"),
+		netip.MustParseAddr("224.0.0.2"),
+		netip.MustParseAddr("224.0.1.42"),
+		netip.MustParseAddr("232.1.2.3"),
 	} {
 		t.Run(fmt.Sprintf("srcaddr=%s", mcastAddr), func(t *testing.T) {
-			addr := mcastAddr.To4()
 			conn.SendIP(
 				t,
-				testbench.IPv4{SrcAddr: &addr},
+				testbench.IPv4{SrcAddr: &mcastAddr},
 				testbench.UDP{},
 				&testbench.Payload{Bytes: []byte("test payload")},
 			)
@@ -70,18 +69,17 @@ func TestDiscardsUDPPacketsWithMcastSourceAddressV6(t *testing.T) {
 	conn := dut.Net.NewUDPIPv6(t, testbench.UDP{DstPort: &remotePort}, testbench.UDP{SrcPort: &remotePort})
 	defer conn.Close(t)
 
-	for _, mcastAddr := range []net.IP{
-		net.IPv6interfacelocalallnodes,
-		net.IPv6linklocalallnodes,
-		net.IPv6linklocalallrouters,
-		net.ParseIP("ff01::42"),
-		net.ParseIP("ff02::4242"),
+	for _, mcastAddr := range []netip.Addr{
+		netip.MustParseAddr("ff01::1"),
+		netip.MustParseAddr("ff02::1"),
+		netip.MustParseAddr("ff02::2"),
+		netip.MustParseAddr("ff01::42"),
+		netip.MustParseAddr("ff02::4242"),
 	} {
 		t.Run(fmt.Sprintf("srcaddr=%s", mcastAddr), func(t *testing.T) {
-			addr := mcastAddr.To16()
 			conn.SendIPv6(
 				t,
-				testbench.IPv6{SrcAddr: &addr},
+				testbench.IPv6{SrcAddr: &mcastAddr},
 				testbench.UDP{},
 				&testbench.Payload{Bytes: []byte("test payload")},
 			)
