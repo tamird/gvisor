@@ -16,7 +16,6 @@ package udp_any_addr_recv_unicast_test
 
 import (
 	"flag"
-	"net"
 	"net/netip"
 	"testing"
 
@@ -37,7 +36,7 @@ func TestAnyRecvUnicastUDP(t *testing.T) {
 	defer conn.Close(t)
 
 	payload := testbench.GenerateRandomPayload(t, 1<<10 /* 1 KiB */)
-	remoteIPv4 := net.IP(dut.Net.RemoteIPv4.AsSlice())
+	remoteIPv4 := dut.Net.RemoteIPv4
 	conn.SendIP(
 		t,
 		testbench.IPv4{DstAddr: &remoteIPv4},
