@@ -71,6 +71,7 @@ go_library(
         "deferred_list.go",
         "encode.go",
         "encode_unsafe.go",
+        "netip.go",
         "ods_list.go",
         "state.go",
         "state_norace.go",
