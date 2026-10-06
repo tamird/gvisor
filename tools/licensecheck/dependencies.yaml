@@ -7,10 +7,10 @@
 # classification limitation, not a successful automatic audit.
 # LicenseRef entries are manually audited and require re-audit when their artifact pin changes.
 - dependency: abseil-cpp
-  version: https://github.com/abseil/abseil-cpp/releases/download/20250814.1/abseil-cpp-20250814.1.tar.gz
-  retrieved: "2026-08-27"
-  commit: d38452e1ee03523a208362186fd42248ff2609f6
-  sha256: 1692f77d1739bacf3f94337188b78583cf09bab7e420d2dc6c5605a4f86785a1
+  version: https://github.com/abseil/abseil-cpp/releases/download/20260817.0/abseil-cpp-20260817.0.tar.gz
+  retrieved: "2026-10-06"
+  commit: 2065f4ded0558c6f89fee67c8e5228feb4eb960e
+  sha256: f7e05179df39c45434cad433f5783840bb3788ef322976f9138bc6b72b3a107d
   license: Apache-2.0
 - dependency: actionlint_darwin_amd64
   version: https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_darwin_amd64.tar.gz
@@ -3237,10 +3237,10 @@
   sha256: ""
   license: NOASSERTION
 - dependency: googletest
-  version: https://github.com/google/googletest/releases/download/v1.17.0/googletest-1.17.0.tar.gz
-  retrieved: "2026-08-27"
-  commit: 52eb8108c5bdec04579160ae17225d66034bd723
-  sha256: 65fab701d9829d38cb77c14acdc431d2108bfdbf8979e40eb8ae567edf10b27c
+  version: https://github.com/google/googletest/releases/download/v1.18.0/googletest-1.18.0.tar.gz
+  retrieved: "2026-10-06"
+  commit: 063de7e9578f82b369302001269680b4b1553359
+  sha256: 6e3191c1455468b3fc35a417fb565c1c5071aee1b7e7f85e30cf48a98d37d8b5
   license: BSD-3-Clause
 - dependency: gopkg.in/evanphx/json-patch.v4
   version: v4.12.0
@@ -9294,10 +9294,10 @@
     - BSD-3-Clause
     - GPL-2.0-only
 - dependency: protobuf
-  version: https://github.com/protocolbuffers/protobuf/releases/download/v33.4/protobuf-33.4.bazel.tar.gz
-  retrieved: "2026-08-27"
-  commit: edaa823d8b36a8656d7b2b9241b7d0bfe50af878
-  sha256: 687e98a471973b5c5fd711750c40b8b82c0ade33f649db65e00b290f29345a2b
+  version: https://github.com/protocolbuffers/protobuf/releases/download/v35.0/protobuf-35.0.bazel.tar.gz
+  retrieved: "2026-10-06"
+  commit: e59364c38e10de3686a3305ff11fbfc59a10dbd8
+  sha256: a437a5ce61309842e1def919ea8af060ae8f5307c346568948e84dc6a3d95bdd
   license: BSD-3-Clause
 - dependency: protoc-gen-validate
   version: https://github.com/bufbuild/protoc-gen-validate/archive/refs/tags/v1.3.0.tar.gz
