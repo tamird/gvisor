@@ -397,6 +397,33 @@ for source in Path(sys.argv[1]).glob("*.json"):
                 event = json.loads(line)
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
+  # Disposable qualification intersection; the complete maintained selection
+  # above remains in the artifact, and the source interface is unchanged.
+  [[ $arch == amd64 && $lane == syscalls && -z $syscall_bucket ]]
+  python3 - "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY_FOCUS'
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+artifacts = Path(sys.argv[2])
+canonical = set(path.read_text().splitlines())
+selected = {
+    "//test/syscalls:cgroup2_test_native_amd64",
+    "//test/syscalls:cgroup2_test_runsc_systrap_shared_amd64"
+}
+assert selected <= canonical, sorted(selected - canonical)
+text = "".join(label + "\n" for label in sorted(selected))
+(artifacts / "focused-targets").write_text(text)
+(artifacts / "unexecuted-targets").write_text("".join(label + "\n" for label in sorted(canonical - selected)))
+(artifacts / "focused-selection.json").write_text(json.dumps({
+    "complete_profile_owners": sorted(canonical),
+    "selected_owners": sorted(selected),
+    "unexecuted_owners": sorted(canonical - selected),
+    "scope": "Two complete current cgroup2 owners: native initial-namespace fixture and shared systrap hierarchy; 86 source cases per owner.",
+}, indent=2) + "\n")
+path.write_text(text)
+PY_FOCUS
   printf '%s %s profile: namespace/KVM owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$arch" "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
