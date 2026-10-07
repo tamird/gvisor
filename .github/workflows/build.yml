@@ -4,13 +4,46 @@ name: CI
   push:
     branches:
       - "*"
+  workflow_dispatch:
+    inputs:
+      lanes:
+        description: Space-separated qualification lanes
+        type: string
+        default: smoke
+        required: true
+      architecture:
+        description: Target architecture selection
+        type: choice
+        options: [amd64, arm64, all]
+        default: amd64
+      execution:
+        description: Run tests on BuildBuddy or this Actions runner
+        type: choice
+        options: [remote, local]
+        default: remote
+      syscall_bucket:
+        description: Optional hash15 bucket (0..14) for local syscall lanes
+        type: string
+      benchmark_target:
+        description: Optional individual target from the continuous benchmark suite
+        type: string
+      header_base:
+        description: Full comparison commit SHA for license-headers
+        type: string
+      cos_catalog_gzip_base64:
+        description: Gzip/base64-encoded complete gcloud COS image catalog
+        type: string
+      cos_catalog_sha256:
+        description: SHA256 of the uncompressed COS catalog
+        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}
   cancel-in-progress: true
 
 jobs:
   build:
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-cgroup2-membership-validation' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-kvm-startup'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,3 +66,85 @@ jobs:
       with:
           name: runsc
           path: bin/runsc
+
+  remote-qualification:
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-cgroup2-membership-validation' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-kvm-startup') && github.event_name == 'workflow_dispatch'))
+    runs-on: ${{ inputs.execution == 'local' && inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: ${{ inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && 15 || 50) }}
+    permissions:
+      contents: read
+    env:
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution }}
+      QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
+      QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
+      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
+      QUALIFICATION_BENCHMARK_TARGET: ${{ inputs.benchmark_target }}
+      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
+      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
+      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
+    steps:
+    - name: Check the Remote Bazel credential
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
+
+    - name: Checkout the triggering commit
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      with:
+        ref: ${{ github.sha }}
+        persist-credentials: false
+
+    - name: Download the pinned BuildBuddy CLI
+      if: inputs.execution != 'local'
+      shell: bash
+      run: |
+        curl --fail --silent --show-error --location --max-time 120 \
+          https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 \
+          --output "$RUNNER_TEMP/bb"
+        printf '%s  %s\n' \
+          f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb \
+          "$RUNNER_TEMP/bb" | sha256sum --check --strict
+        chmod +x "$RUNNER_TEMP/bb"
+
+    - name: Qualify on Remote Bazel
+      if: inputs.execution != 'local'
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+        GIT_REPO_DEFAULT_BRANCH: master
+        REMOTE_TIMEOUT: ${{ github.event_name == 'workflow_dispatch' && '45m' || '15m' }}
+      run: |
+        exec "$RUNNER_TEMP/bb" remote \
+          --run_from_commit="$GITHUB_SHA" \
+          --os=linux --arch=amd64 \
+          --runner_exec_properties=EstimatedCPU=4 \
+          --runner_exec_properties=EstimatedMemory=16GB \
+          --runner_exec_properties=EstimatedFreeDiskBytes=40GB \
+          --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
+          --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
+          --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
+          --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
+          --env="QUALIFICATION_BENCHMARK_TARGET=$QUALIFICATION_BENCHMARK_TARGET" \
+          --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
+          --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
+          --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
+          --timeout="$REMOTE_TIMEOUT" --disable_retry \
+          --script='bash test/rbe/actions.sh'
+
+    - name: Compile on RBE and test on Actions
+      if: inputs.execution == 'local'
+      timeout-minutes: ${{ contains(fromJSON('["benchmarks","cpu-images","gpu-images"]'), inputs.lanes) && 70 || ((inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network') && 45 || 15) }}
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: bash test/rbe/actions.sh
+
+    - name: Retain local test placement and host facts
+      if: always() && inputs.execution == 'local'
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: qualification-${{ inputs.architecture }}
+        path: ${{ runner.temp }}/qualification
+        if-no-files-found: error

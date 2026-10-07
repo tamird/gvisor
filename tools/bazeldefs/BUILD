@@ -1,6 +1,6 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
-load("//tools:defs.bzl", "bzl_library", "target_emulators")
+load("//tools:defs.bzl", "bzl_library", "string_flag", "target_emulators")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -38,6 +38,25 @@ platform(
 config_setting(
     name = "rbe",
     define_values = {"rbe": "true"},
+)
+
+string_flag(
+    name = "local_test_architecture",
+    build_setting_default = "",
+    values = [
+        "",
+        "amd64",
+        "arm64",
+    ],
+)
+
+string_flag(
+    name = "local_test_backend",
+    build_setting_default = "local",
+    values = [
+        "local",
+        "docker",
+    ],
 )
 
 # BPF uses the downloaded compiler and its matching resource directory.
@@ -176,4 +195,15 @@ config_setting(
         "@platforms//cpu:aarch64",
     ],
     define_values = {"pagesize": "64k"},
+)
+
+bzl_library(
+    name = "test_architectures_bzl",
+    srcs = ["test_architectures.bzl"],
+    visibility = ["//:sandbox"],
+    deps = [
+        "@bazel_skylib//lib:shell",
+        "@bazel_skylib//rules:common_settings",
+        "@with_cfg.bzl//:with_cfg",
+    ],
 )

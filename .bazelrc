@@ -44,8 +44,8 @@ build:plugin-tldk --@io_bazel_rules_go//go/config:pure=false --define=plugin_tld
 build --build_tag_filters=-nogo
 
 # Select the ordinary syscall tests used by public CI.
-test:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
-test:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
+build:syscalls-amd64 --test_tag_filters=-allsave,-runsc_slimvm
+build:syscalls-arm64 --test_tag_filters=-allsave,runsc_ptrace,runsc_systrap
 
 # Set flags for x86_64.
 build:x86_64 --cpu=k8
@@ -70,6 +70,20 @@ build:rbe-common --noremote_local_fallback
 build:rbe-common --remote_cache_compression
 test:rbe-common --strategy=TestRunner=remote
 
+# Keep compilation on RBE while a native Linux coordinator runs the tests.
+# Local results describe that host, not the remote platform's runtime fixture.
+test:rbe-local-tests --strategy=TestRunner=local
+test:rbe-local-tests --local_test_jobs=1
+test:rbe-local-tests --nocache_test_results
+test:rbe-local-tests --flaky_test_attempts=1
+build:rbe-local-tests --noremote_upload_local_results
+
+# Native namespace frontends alone require local execution. Other tests keep
+# the remote strategy; compilation has no local strategy or failure fallback.
+build:rbe-hybrid-tests --config=rbe-local-tests
+test:rbe-hybrid-tests --strategy=TestRunner=remote,local
+test:rbe-hybrid-tests --local_test_jobs=2
+
 build:rbe --config=rbe-common
 # Architecture-specific generators may need the other native CPU even when
 # the requested build or test lane selects only one target architecture.
@@ -84,3 +98,9 @@ build:rbe-arm64 --host_platform=//tools/bazeldefs:rbe_linux_arm64
 # Use prebuilt protoc to speed up builds.
 common --@com_google_protobuf//bazel/toolchains:prefer_prebuilt_protoc
 common --incompatible_enable_proto_toolchain_resolution=true
+
+# One graph can compile and execute explicit AMD64 and ARM64 test variants.
+# Target-owned execution constraints select the worker without a host-platform
+# override; test.* properties continue to select isolated runtime fixtures.
+build:rbe-matrix --config=rbe-common
+build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64

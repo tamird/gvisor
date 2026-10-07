@@ -12,6 +12,14 @@ bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "llvm", version = "0.8.24")
 bazel_dep(name = "libbpf", version = "1.7.0")
 bazel_dep(name = "with_cfg.bzl", version = "1.0.0")
+
+# Reuse the upstream test frontend for per-target test-action transitions.
+single_version_override(
+    module_name = "with_cfg.bzl",
+    patch_strip = 1,
+    patches = ["//tools:with_cfg-test-frontend.patch"],
+)
+
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "rules_foreign_cc", version = "0.16.0")
 bazel_dep(name = "libbacktrace", version = "1.0.0-20250926-7939218.bcr.2")

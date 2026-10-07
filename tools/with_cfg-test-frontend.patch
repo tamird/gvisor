@@ -1,0 +1,130 @@
+# Allow a test variant to configure its actual TestRunner through an incoming
+# transition while reusing with_cfg's argument, runfiles and provider forwarding.
+# Based on with_cfg.bzl v1.0.0. Its frontend and builder are unchanged on
+# upstream main a33b1b2d2. Neither exposes a
+# public frontend override; the released wrapper transitions only its inputs.
+# Remove this patch when with_cfg exposes an equivalent public frontend API.
+diff --git a/with_cfg.bzl b/with_cfg.bzl
+--- a/with_cfg.bzl
++++ b/with_cfg.bzl
+@@ -1,4 +1,6 @@
+-load("//with_cfg:defs.bzl", _original_settings = "original_settings", _with_cfg = "with_cfg")
++load("//with_cfg:defs.bzl", _FrontendInfo = "FrontendInfo", _frontend_test = "frontend_test", _original_settings = "original_settings", _with_cfg = "with_cfg")
+ 
+ with_cfg = _with_cfg
+ original_settings = _original_settings
++frontend_test = _frontend_test
++FrontendInfo = _FrontendInfo
+diff --git a/with_cfg/defs.bzl b/with_cfg/defs.bzl
+--- a/with_cfg/defs.bzl
++++ b/with_cfg/defs.bzl
+@@ -1,3 +1,4 @@
++load("//with_cfg/private:frontend.bzl", _FrontendInfo = "FrontendInfo", _frontend_test = "frontend_test")
+ load("//with_cfg/private:original_settings.bzl", _original_settings = "original_settings")
+ load("//with_cfg/private:with_cfg.bzl", _with_cfg = "with_cfg")
+ 
+@@ -5,3 +6,5 @@
+ 
+ with_cfg = _with_cfg
+ original_settings = _original_settings
++frontend_test = _frontend_test
++FrontendInfo = _FrontendInfo
+diff --git a/with_cfg/private/frontend.bzl b/with_cfg/private/frontend.bzl
+--- a/with_cfg/private/frontend.bzl
++++ b/with_cfg/private/frontend.bzl
+@@ -1,7 +1,9 @@
+ load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
+-load(":providers.bzl", "FrontendInfo")
++load(":providers.bzl", _FrontendInfo = "FrontendInfo")
+ 
+-visibility("private")
++visibility("//with_cfg/...")
+ 
++FrontendInfo = _FrontendInfo
++
+ def get_frontend(*, executable, test):
+     if test:
+@@ -103,6 +103,9 @@
+ _frontend_executable = rule(_frontend_impl, attrs = _frontend_attrs, executable = True)
+ _frontend_test = rule(_frontend_impl, attrs = _frontend_attrs | _frontend_test_attrs, test = True)
+ 
++# Public parent for callers that configure the outer test action.
++frontend_test = _frontend_test
++
+ def _frontend_default(*, name, exports, **kwargs):
+     native.alias(
+         name = name,
+diff --git a/with_cfg/private/providers.bzl b/with_cfg/private/providers.bzl
+--- a/with_cfg/private/providers.bzl
++++ b/with_cfg/private/providers.bzl
+@@ -12,6 +12,7 @@
+     "supports_extension",
+     "supports_inheritance",
+     "test",
++    "test_frontend",
+ ])
+ 
+ ArgsInfo = provider(fields = [
+diff --git a/with_cfg/private/with_cfg.bzl b/with_cfg/private/with_cfg.bzl
+--- a/with_cfg/private/with_cfg.bzl
++++ b/with_cfg/private/with_cfg.bzl
+@@ -15,7 +15,8 @@
+         *,
+         executable = None,
+         implicit_targets = None,
+-        extra_providers = []):
++        extra_providers = [],
++        test_frontend = None):
+     """Creates a new rule out of an existing one with modified Bazel flags or build settings.
+ 
+     Example:
+@@ -48,6 +49,11 @@
+         </ul>
+         Not required for rules shipped with Bazel (`cc_*`, `java_*`).
+       extra_providers: Additional providers to forward from the base rule or macro.
++      test_frontend: Optional test rule inheriting the public `frontend_test` rule.
++        This selects the wrapper implementation even for extendable rules. An
++        incoming transition on the supplied frontend configures the actual test
++        action as well as its dependencies. It must preserve the inherited
++        attributes and provider contract. Only supported for tests.
+ 
+     Returns:
+       A builder with the following methods:
+@@ -109,6 +115,8 @@
+     # Bazel enforces that a rule is a test rule if and only if its name ends with "_test", so we
+     # do not allow overriding this.
+     test = is_test(rule_name)
++    if test_frontend != None and not test:
++        fail("test_frontend is only supported for test rules")
+     if implicit_targets == None:
+         implicit_targets = get_implicit_targets(rule_name)
+ 
+@@ -125,6 +133,7 @@
+         kind = kind,
+         executable = executable,
+         test = test,
++        test_frontend = test_frontend,
+         implicit_targets = implicit_targets,
+         providers = _all_providers(extra_providers),
+         native = _is_native(kind),
+diff --git a/with_cfg/private/builder.bzl b/with_cfg/private/builder.bzl
+--- a/with_cfg/private/builder.bzl
++++ b/with_cfg/private/builder.bzl
+@@ -89,7 +89,7 @@
+     )
+ 
+     # Resetting attributes is not yet supported with the extended rule approach.
+-    if bazel_features.rules.rule_extension_apis_available and rule_info.supports_extension and not attrs_to_reset:
++    if bazel_features.rules.rule_extension_apis_available and rule_info.supports_extension and not attrs_to_reset and rule_info.test_frontend == None:
+         transitioned_rule = make_transitioned_rule(
+             rule_info = rule_info,
+             transition = transition,
+@@ -111,7 +111,7 @@
+         values = values,
+         original_settings_label = original_settings_label,
+     )
+-    frontend = get_frontend(
++    frontend = rule_info.test_frontend or get_frontend(
+         executable = rule_info.executable,
+         test = rule_info.test,
+     )

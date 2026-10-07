@@ -1,6 +1,9 @@
 """Defines a rule for syscall test targets."""
 
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
+load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
+load(":runner_test.bzl", _runner_test_rule = "runner_test")
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
 _platform_support_env_vars = {
@@ -11,68 +14,18 @@ _platform_support_env_vars = {
     for platform, support in platform_capabilities.items()
 }
 
-def _runner_test_impl(ctx):
-    # Generate a runner binary.
-    runner = ctx.actions.declare_file(ctx.label.name)
-    setup = ""
-    if ctx.attr.requires_atime:
-        setup = "%s --require-atime " % ctx.executable._setup_container.short_path
-    runner_content = "\n".join([
-        "#!/bin/bash",
-        "set -euf -x -o pipefail",
-        "if [[ -n \"${TEST_UNDECLARED_OUTPUTS_DIR}\" ]]; then",
-        "  mkdir -p \"${TEST_UNDECLARED_OUTPUTS_DIR}\"",
-        "  chmod a+rwx \"${TEST_UNDECLARED_OUTPUTS_DIR}\"",
-        "fi",
-        "exec %s%s %s \"$@\" %s\n" % (
-            setup,
-            ctx.files.runner[0].short_path,
-            " ".join(ctx.attr.runner_args),
-            ctx.files.test[0].short_path,
-        ),
-    ])
-    ctx.actions.write(runner, runner_content, is_executable = True)
+# Keep the public syscall compiler policy on this graph, rather than imposing
+# it on unit and release targets in the same invocation.
+# with_cfg requires the returned transition rule to be exported at module scope.
+# buildifier: disable=unused-variable
+_runner_test, _runner_compilation_transition = with_cfg(_runner_test_rule, extra_providers = [testing.ExecutionInfo]).extend("cxxopt", ["-Werror"]).build()
 
-    # Return with all transitive files.
-    runfiles = ctx.runfiles(
-        transitive_files = depset(transitive = [
-            target.data_runfiles.files
-            for target in (ctx.attr.runner, ctx.attr.test)
-            if hasattr(target, "data_runfiles")
-        ]),
-        files = ctx.files.runner + ctx.files.test,
-        collect_default = True,
-        collect_data = True,
-    )
-    if ctx.attr.requires_atime:
-        runfiles = runfiles.merge(ctx.attr._setup_container[DefaultInfo].default_runfiles)
-        runfiles = runfiles.merge(ctx.runfiles(files = [ctx.executable._setup_container]))
-    return [DefaultInfo(executable = runner, runfiles = runfiles)]
+def _compile_runner_test(compile_exec_compatible_with, **kwargs):
+    kwargs["exec_compatible_with"] = compile_exec_compatible_with
+    _runner_test(**kwargs)
 
-_runner_test = rule(
-    attrs = {
-        "runner": attr.label(
-            default = "//test/runner:runner",
-        ),
-        "test": attr.label(
-            mandatory = True,
-        ),
-        "runner_args": attr.string_list(),
-        "requires_atime": attr.bool(
-            doc = "Enable host-backed atime updates; requires CAP_SYS_ADMIN on noatime mounts.",
-        ),
-        "_setup_container": attr.label(
-            default = "//test/runner/setup_container",
-            executable = True,
-            cfg = "target",
-        ),
-        "data": attr.label_list(
-            allow_files = True,
-        ),
-    },
-    test = True,
-    implementation = _runner_test_impl,
-)
+runner_amd64_test, _runner_amd64_transition = with_test_architecture(_compile_runner_test, "amd64", extra_providers = [testing.ExecutionInfo]).build()
+runner_arm64_test, _runner_arm64_transition = with_test_architecture(_compile_runner_test, "arm64", extra_providers = [testing.ExecutionInfo]).build()
 
 def _syscall_test(
         test,
@@ -209,15 +162,20 @@ def _syscall_test(
 
     kwargs.setdefault("exec_properties", syscall_test_exec_properties(platform))
 
-    # Call the rule above.
-    _runner_test(
-        name = name,
+    attributes = dict(kwargs)
+    attributes.update(
         test = test,
         # Native always uses a host directory; FUSE variants use guest tmpfs.
         requires_atime = requires_atime and (platform == "native" or not use_tmpfs),
         runner_args = runner_args,
-        tags = tags,
-        **kwargs
+        tags = test_architecture_tags(["amd64", "arm64"], tags),
+    )
+    _runner_test(name = name, **attributes)
+    test_architecture_variants(
+        name,
+        ["amd64", "arm64"],
+        {"amd64": runner_amd64_test, "arm64": runner_arm64_test},
+        dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
     )
 
 def all_platforms():

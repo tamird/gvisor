@@ -79,6 +79,9 @@ syscall_test(
     size = "large",
     in_sandbox_cgroup = "v2",
     shard_count = more_shards,
+    # Native execution must reach the v1 hierarchy-creation check after the
+    # initial-cgroup-namespace permission check.
+    tags = ["requires-initial-cgroup-namespace"],
     test = "//test/syscalls/linux:cgroup2_test",
 )
 
