@@ -97,6 +97,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/'
+      # Root Bazel does not inherit the GitHub environment. Record the checked
+      # checkout identity explicitly for both coordinator users.
+      printf 'build:buildbuddy_remote_executor --build_metadata=COMMIT_SHA=%s\n' "$QUALIFICATION_COMMIT"
+      printf 'build:buildbuddy_remote_executor --build_metadata=REPO_URL=%s/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
+      printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
     } > "$qualification_rc"
