@@ -255,12 +255,6 @@ analyzers:
         # See above.
         - "symbol \"runtime_pollWaitCanceled\".*"
         - "symbol \"runtime_procPin\".*"
-  SA1019: # Use of deprecated identifier.
-    # disable for now due to misattribution from golang.org/issue/44195.
-    generated:
-      exclude: [".*"]
-    internal:
-      exclude: [".*"]
   SA2001: # Empty critical section.
     internal:
       exclude:
