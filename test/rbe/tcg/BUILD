@@ -59,14 +59,21 @@ flatten(
     tags = ["manual"],
     tars = [
         "@tcg_arm64_guest//base-files/arm64",
+        "@tcg_arm64_guest//base-passwd/arm64",
         "@tcg_arm64_guest//bash/arm64",
         "@tcg_arm64_guest//busybox-static/arm64",
         "@tcg_arm64_guest//coreutils/arm64",
+        "@tcg_arm64_guest//debianutils/arm64",
+        "@tcg_arm64_guest//file/arm64",
+        "@tcg_arm64_guest//findutils/arm64",
+        "@tcg_arm64_guest//grep/arm64",
         "@tcg_arm64_guest//iproute2/arm64",
         "@tcg_arm64_guest//kmod/arm64",
         "@tcg_arm64_guest//libc-bin/arm64",
         "@tcg_arm64_guest//mount/arm64",
         "@tcg_arm64_guest//netcat-openbsd/arm64",
+        "@tcg_arm64_guest//procps/arm64",
+        "@tcg_arm64_guest//sed/arm64",
     ],
 )
 

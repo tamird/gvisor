@@ -103,9 +103,14 @@ cp "$init" "$root/init"
 chmod 0755 "$root/init"
 mkdir -p "$root/proc" "$root/sys" "$root/dev" "$root/run" "$root/tmp" "$root/input" "$root/result" "$root/work"
 chmod 1777 "$root/tmp"
+# base-passwd normally installs these databases from its maintainer script.
+# Copy its declared defaults because image construction only extracts archives.
+cp "$root/usr/share/base-passwd/passwd.master" "$root/etc/passwd"
+cp "$root/usr/share/base-passwd/group.master" "$root/etc/group"
 # APT archives do not run update-alternatives.
 ln -sfn bash "$root/bin/sh"
 ln -sfn nc.openbsd "$root/bin/nc"
+ln -sfn which.debianutils "$root/usr/bin/which"
 # cpio owns numeric IDs, independent of the remote action's uid.
 cd "$root"
 host_tool usr/bin/find . -print0 | host_tool bin/cpio --null -o --format=newc --owner=0:0 --reproducible | host_tool bin/gzip -n > "$initramfs_out"

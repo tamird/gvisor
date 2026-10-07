@@ -281,9 +281,14 @@ release_apt.install(
     dependency_set = "tcg_arm64_guest",
     packages = [
         "base-files:arm64",
+        "base-passwd:arm64",
         "bash:arm64",
         "busybox-static:arm64",
         "coreutils:arm64",
+        "debianutils:arm64",
+        "file:arm64",
+        "findutils:arm64",
+        "grep:arm64",
         "iproute2:arm64",
         # Also expose this existing kernel dependency to the RC userspace target.
         "kmod:arm64",
@@ -291,6 +296,8 @@ release_apt.install(
         "linux-image-6.8.0-138-generic-64k:arm64 (= 6.8.0-138.138~22.04.1)",
         "mount:arm64",
         "netcat-openbsd:arm64",
+        "procps:arm64",
+        "sed:arm64",
     ],
     suites = [
         "jammy",
