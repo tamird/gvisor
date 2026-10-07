@@ -898,8 +898,8 @@ run_lane() (
     if [[ $test_execution == local ]]; then
       case "$lane" in
         startup|posture|portforward|root|benchmarks)
-          # Each owned daemon needs separate firewall state. These suites
-          # communicate within their containers without outbound networking.
+          # Each owned daemon needs separate firewall state. The benchmark
+          # fixture can attach this private namespace to the job's bridge.
           options+=(
             --strategy=TestRunner=docker
             --local_test_jobs=2
@@ -913,6 +913,13 @@ run_lane() (
             "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
             "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
           )
+          if [[ $lane == benchmarks ]]; then
+            options+=(
+              --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
+              "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local benchmarks through test/rbe/actions.sh}"
+              "--test_env=GVISOR_HOST_NET_NS=$(readlink /proc/self/ns/net)"
+            )
+          fi
           ;;
       esac
       options=(--config=rbe-local-tests "${options[@]}")

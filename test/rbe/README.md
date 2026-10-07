@@ -163,6 +163,14 @@ provide the same Linux host tools. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
 
+Local benchmark jobs create one temporary Docker bridge for outbound downloads
+inside the timed build workloads. The sandbox setup identifies its own Bazel
+container, joins that bridge without sharing the host network namespace, and
+unmounts the host Docker socket before starting the test. Docker removes each
+endpoint with its sandbox; the coordinator removes the bridge after Bazel
+returns and reports cleanup failures. The Actions coordinator supplies this job-owned network through
+`test/rbe/actions.sh`, using its run ID and attempt for the bridge name.
+
 Continuous benchmarks can exceed one Actions job when queued together. To
 qualify individual owners concurrently, pass `benchmark_target` with one label
 from `tests(//test/benchmarks:continuous_tests)`:

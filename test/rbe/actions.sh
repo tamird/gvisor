@@ -43,7 +43,20 @@ if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
   options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
 fi
 temporary_files=()
-trap 'rm -f -- "${temporary_files[@]}"' EXIT
+GVISOR_DOCKER_NETWORK=
+cleanup() {
+  local status=$?
+  rm -f -- "${temporary_files[@]}"
+  if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
+    # Bazel has removed its --rm test containers before returning. An endpoint
+    # left behind is a cleanup failure, not a reason to force-disconnect it.
+    if ! sudo -n docker --host=unix:///var/run/docker.sock network rm "$GVISOR_DOCKER_NETWORK"; then
+      if (( status == 0 )); then status=1; fi
+    fi
+  fi
+  exit "$status"
+}
+trap cleanup EXIT
 
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) ;;
@@ -68,6 +81,15 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       esac
     fi
     export qualification_root_bazel
+    if [[ ${lanes[*]} == benchmarks ]]; then
+      # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
+      # keeps each nested daemon's firewall in its own network namespace.
+      [[ -S /var/run/docker.sock ]]
+      GVISOR_DOCKER_NETWORK=$(sudo -n docker --host=unix:///var/run/docker.sock network create \
+        --driver bridge "gvisor-qualification-${GITHUB_RUN_ID:?}-${GITHUB_RUN_ATTEMPT:?}")
+      [[ $GVISOR_DOCKER_NETWORK =~ ^[0-9a-f]{64}$ ]]
+      export GVISOR_DOCKER_NETWORK
+    fi
     {
       printf '%s\n' \
         'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
