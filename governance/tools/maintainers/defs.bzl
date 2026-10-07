@@ -20,13 +20,13 @@ def governance_files(name):
         native.genrule(
             name = name + "_" + format,
             srcs = [
-                "areas.yaml",
+                "@governance_areas//:areas.yaml",
                 "maintainers.yaml",
             ],
             outs = [name + "/" + format],
             cmd = "$(execpath //governance/tools/maintainers:maintainers_gen) " +
                   "-input $(location maintainers.yaml) " +
-                  "-areas $(location areas.yaml) " +
+                  "-areas $(location @governance_areas//:areas.yaml) " +
                   "-format " + format + " -output $@",
             tools = ["//governance/tools/maintainers:maintainers_gen"],
             visibility = ["//:__pkg__"],

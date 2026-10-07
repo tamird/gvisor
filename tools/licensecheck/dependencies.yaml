@@ -9466,6 +9466,12 @@
   commit: ee656c7534f5d7dc23d44dd611689568f72017a6
   sha256: 49535f3c3370004309da50194c09bbfc528d4702424dd46e7d56a278a3dfc15d
   license: Apache-2.0
+- dependency: yq.bzl
+  version: https://github.com/bazel-contrib/yq.bzl/releases/download/v0.4.0/yq.bzl-v0.4.0.tar.gz
+  retrieved: "2026-10-07"
+  commit: 417d98fd7a9836a488ec57467c2eb78c25b30205
+  sha256: 58dddbe703a26df30f79a6335ab13f4a4a0c128dc2f9371ec7a4722e12f258cc
+  license: Apache-2.0
 - dependency: zlib-ng
   version: https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.3.3.tar.gz
   retrieved: "2026-09-27"

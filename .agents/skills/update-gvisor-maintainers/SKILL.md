@@ -50,9 +50,9 @@ Each entry under `areas:` in `areas.yaml`:
 
 `status` is one of three, and it drives everything downstream:
 
-Status                    | Reviews | Merge permissions | `MAINTAINERS.md`
-------------------------- | ------- | ----------------- | ----------------
-`ACTIVE`                  | yes     | yes               | main table
+Status                      | Reviews | Merge permissions | `MAINTAINERS.md`
+--------------------------- | ------- | ----------------- | ----------------
+`ACTIVE`                    | yes     | yes               | main table
 `HIATUS_SINCE:YYYY-MM-DD`   | no      | yes               | main table
 `EMERITUS_SINCE:YYYY-MM-DD` | no      | no                | emeritus table
 
