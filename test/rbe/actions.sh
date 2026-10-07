@@ -61,7 +61,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     qualification_root_bazel=false
     if [[ $QUALIFICATION_ARCH == amd64 ]]; then
       case "${lanes[*]}" in
-        startup|posture|portforward|root) qualification_root_bazel=true ;;
+        startup|posture|portforward|root|benchmarks) qualification_root_bazel=true ;;
       esac
     fi
     export qualification_root_bazel

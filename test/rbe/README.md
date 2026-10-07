@@ -92,9 +92,10 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls`, `startup`, `posture`, `portforward` or `root`) and a single
-architecture (`amd64` or `arm64`; local unit and syscall profiles require
-`arm64`, while startup, posture, portforward and root require `amd64`).
+`unit`, `syscalls`, `startup`, `posture`, `portforward`, `root` or `benchmarks`)
+and a single architecture (`amd64` or `arm64`; local unit and syscall profiles
+require `arm64`, while startup, posture, portforward, root and benchmarks
+require `amd64`).
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -143,8 +144,8 @@ separate workflow concurrency keys. Direct callers use
 `--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
 provide the same Linux host tools. Omitting the bucket selects the full profile.
 
-The local AMD64 `startup`, `posture`, `portforward` and `root` phases retain
-their complete maintained suites, including the KVM startup and posture variants.
+The local AMD64 `startup`, `posture`, `portforward`, `root` and `benchmarks`
+phases retain their complete maintained suites, including the KVM variants.
 Bazel's Docker strategy gives each test a privileged container
 and private network namespace: separate daemon sockets alone do not isolate
 Docker's bridge and firewall rules. These suites load declared image archives
@@ -167,8 +168,11 @@ security configurations; portforward exercises both sandbox and host networking
 with the declared Redis and nginx images. The root lane retains its ordinary
 root suite and the native systemd fixture, which runs that suite with the
 systemd cgroup manager. Existing cgroup-version skips remain visible. These
-lanes do not qualify the full KVM syscall or benchmark suites, or Docker
-suites requiring outbound networking.
+lanes do not qualify the full KVM syscall suite or Docker suites requiring
+outbound networking. Local continuous benchmarks retain their declared KVM,
+systrap and runc variants, workload filters and iteration controls. Their
+results establish only the selected workloads; shared-host timings do not
+establish comparative performance.
 Bazel's Docker strategy selects either no network or the host network;
 enabling the latter would lose the private daemons' firewall isolation.
 
@@ -178,13 +182,15 @@ gh workflow run build.yml --repo tamird/gvisor \
   -f lanes=startup -f architecture=amd64 -f execution=local
 ```
 
-Select `lanes=posture`, `lanes=portforward` or `lanes=root` for those suites.
+Select `lanes=posture`, `lanes=portforward`, `lanes=root` or `lanes=benchmarks`
+for those suites.
 Run each dispatch after the preceding run finishes, since this branch shares
 a concurrency key.
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
-and limits ordinary local Actions jobs to 15 minutes. Local syscalls have a
-45-minute work limit within a 50-minute job. Local test results are not uploaded
+and limits ordinary local Actions jobs to 15 minutes. Local syscall and
+benchmark lanes have a 45-minute work limit within a 50-minute job.
+Local test results are not uploaded
 to the shared action cache. Its artifact contains each build/test execution
 log and host facts, plus native profile selection metadata where applicable,
 excluding the credential configuration and raw build-event options. The

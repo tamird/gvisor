@@ -67,7 +67,7 @@ jobs:
   remote-qualification:
     if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-arm64-syscalls' || github.ref == 'refs/heads/rbe-actions-kvm-startup') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes != 'syscalls' && 15 || 50 }}
+    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes != 'syscalls' && inputs.lanes != 'benchmarks' && 15 || 50 }}
     permissions:
       contents: read
     env:
@@ -130,7 +130,7 @@ jobs:
 
     - name: Compile on RBE and test on Actions
       if: inputs.execution == 'local'
-      timeout-minutes: ${{ inputs.lanes == 'syscalls' && 45 || 15 }}
+      timeout-minutes: ${{ (inputs.lanes == 'syscalls' || inputs.lanes == 'benchmarks') && 45 || 15 }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
