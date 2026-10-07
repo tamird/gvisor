@@ -799,6 +799,19 @@ run_lane() (
         options=(--test_tag_filters=-requires-kvm)
       fi
       shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        # Disposable qualification proof; keep the full maintained selection.
+        local selection_dir="${RUNNER_TEMP:?}/qualification/benchmarks-selection"
+        local selected=//test/benchmarks/network:iperf_test_continuous_kvm_owned
+        mkdir -p "$selection_dir"
+        bazel query --output=label 'tests(//test/benchmarks:continuous_tests)' \
+          > "$selection_dir/canonical-targets"
+        grep -Fx -- "$selected" "$selection_dir/canonical-targets" \
+          > "$selection_dir/focused-targets"
+        grep -Fvx -- "$selected" "$selection_dir/canonical-targets" \
+          > "$selection_dir/unexecuted-targets"
+        targets=("$selected")
+      fi
       ;;
     language-directfs|language-goferfs)
       if [[ $arch != amd64 ]]; then
