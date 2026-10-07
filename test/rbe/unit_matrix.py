@@ -227,17 +227,27 @@ def container_platform_targets(events_path: str) -> list[str]:
     return sorted(selected)
 
 
-def profile_suffix(architecture: str, page_size: str) -> str:
+def profile_suffix(architecture: str, page_size: str, *, hybrid: bool = False) -> str:
     if page_size == "64k":
         if architecture != "arm64":
             raise ValueError("The public 64K syscall profile requires ARM64")
         return "_64k_arm64"
-    return "_arm64" if architecture == "arm64" else ""
+    return "_" + architecture if architecture == "arm64" or hybrid else ""
 
 
-def profile_targets(events_path: str, architecture: str, page_size: str = "4k") -> list[str]:
+def profile_targets(
+    events_path: str, architecture: str, page_size: str = "4k", *, hybrid: bool = False,
+) -> list[str]:
     targets = configured_tests(events_path)
-    suffix = profile_suffix(architecture, page_size)
+    if hybrid and architecture == "amd64":
+        # The local AMD64 lane fills only the public profile's KVM gap.
+        targets = {
+            label: target for label, target in targets.items()
+            if "runsc_kvm" in target.tags and "nogo" not in target.tags
+        }
+        if not targets:
+            raise ValueError("The public AMD64 profile contains no KVM syscall owners")
+    suffix = profile_suffix(architecture, page_size, hybrid=hybrid)
     if not suffix:
         return sorted(targets)
     tag = "rbe-has" + suffix.replace("_", "-") + "-variant"
@@ -248,19 +258,19 @@ def profile_targets(events_path: str, architecture: str, page_size: str = "4k") 
 
 
 def hybrid_local_owners(
-    selected: set[str], requirements: dict[str, dict[str, str]],
+    selected: set[str], requirements: dict[str, dict[str, str]], *, kvm: bool = False,
 ) -> dict[str, list[str]]:
     """Check the same graph-owned locality and identity contract for each lane."""
     groups: dict[str, list[str]] = {"root": [], "unprivileged": []}
     for label in sorted(selected):
         properties = requirements[label]
-        if properties["workload-isolation-type"] != "firecracker":
+        if not kvm and properties["workload-isolation-type"] != "firecracker":
             if "no-remote-exec" in properties or "no-remote" in properties:
                 raise ValueError(f"Ordinary native frontend forbids remote execution: {label}")
             continue
         if "no-remote-exec" not in properties:
             raise ValueError(f"Native namespace frontend is not local: {label}")
-        user = properties.get("dockerUser")
+        user = "root" if kvm else properties.get("dockerUser")
         if user == "root":
             groups["root"].append(label)
         elif user == "nobody":
@@ -282,12 +292,12 @@ def select_profile(
     hybrid: bool = False,
     syscall_bucket: int | None = None,
 ) -> None:
-    if hybrid and (not syscall_policy or architecture != "arm64" or page_size != "4k"):
-        raise ValueError("Hybrid syscall execution requires the ARM64 4K profile")
+    if hybrid and (not syscall_policy or page_size != "4k"):
+        raise ValueError("Hybrid syscall execution requires a native 4K syscall profile")
     if syscall_bucket is not None and not hybrid:
         raise ValueError("Syscall buckets require hybrid execution")
     original = configured_tests(profile_path)
-    expected = set(profile_targets(profile_path, architecture, page_size))
+    expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
         raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
@@ -301,12 +311,15 @@ def select_profile(
     unavailable: dict[str, str] = {}
     policy_excluded: dict[str, str] = {}
     for label, target in original.items():
-        variant = label + profile_suffix(architecture, page_size)
+        if hybrid and architecture == "amd64" and "runsc_kvm" not in target.tags:
+            policy_excluded[label] = "Outside the local KVM-only syscall lane; not executed by this invocation."
+            continue
+        variant = label + profile_suffix(architecture, page_size, hybrid=hybrid)
         # The standalone RBE syscall lane also leaves Nogo to its own lane.
         # Keep this policy distinct from unavailable runtime capabilities.
         if syscall_policy and "nogo" in target.tags:
             policy_excluded[variant] = "Nogo runs in the dedicated nogo lane."
-        elif syscall_policy and "runsc_kvm" in target.tags:
+        elif syscall_policy and "runsc_kvm" in target.tags and not (hybrid and architecture == "amd64"):
             unavailable[variant] = "KVM execution is unavailable."
         elif page_size == "64k":
             unavailable[variant] = "ARM64 64K-page syscall execution has no supported remote worker configuration."
@@ -326,7 +339,7 @@ def select_profile(
             raise ValueError(f"The canonical profile has no owners in syscall bucket {syscall_bucket}")
     else:
         selected = sorted(eligible)
-    groups = hybrid_local_owners(set(selected), requirements) if hybrid else {}
+    groups = hybrid_local_owners(set(selected), requirements, kvm=architecture == "amd64") if hybrid else {}
     local = {label for group in groups.values() for label in group}
     Path(output_path).write_text("".join(label + "\n" for label in selected))
     print(json.dumps({
@@ -440,6 +453,7 @@ def main() -> None:
         profile.add_argument("events")
         profile.add_argument("architecture", choices=("amd64", "arm64"))
         profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
+        profile.add_argument("--hybrid", action="store_true", help="Select native local variants; AMD64 selects only KVM syscall owners")
     profile = commands.add_parser("select-profile")
     profile.add_argument("profile")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
@@ -492,9 +506,9 @@ def main() -> None:
             "limitation": "KVM identities come from loading only; their configurations and execution remain unqualified.",
         }, indent=2))
     elif args.command == "profile-actions":
-        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size)) + ")")
+        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid)) + ")")
     elif args.command == "profile-targets":
-        print("\n".join(profile_targets(args.events, args.architecture, args.page_size)))
+        print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid)))
     elif args.command == "select-profile":
         select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, syscall_bucket=args.syscall_bucket)
     else:

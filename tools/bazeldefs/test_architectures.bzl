@@ -25,10 +25,14 @@ def _native_frontend_impl(ctx):
     constraints = [target.label for target in ctx.attr.exec_compatible_with]
     if not local_architecture or _ARCHITECTURES[local_architecture].constraint not in constraints:
         return providers
-    if ctx.attr.exec_properties.get("test.workload-isolation-type") != "firecracker":
+
+    # The syscall macro declares KVM through its public platform tag. Its
+    # remote properties deliberately make no claim of a KVM-capable worker.
+    local_kvm = local_architecture == "amd64" and "runsc_kvm" in ctx.attr.tags
+    if not local_kvm and ctx.attr.exec_properties.get("test.workload-isolation-type") != "firecracker":
         return providers
 
-    user = ctx.attr.exec_properties.get("test.dockerUser")
+    user = "root" if local_kvm else ctx.attr.exec_properties.get("test.dockerUser")
     if user not in ["root", "nobody"]:
         fail("unsupported local namespace test identity: %s" % user)
     if "no-local" in ctx.attr.tags:

@@ -51,8 +51,8 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-arm64-syscalls` and `rbe-actions-kvm-startup` pilot branches permit
-manual dispatches only.
+`rbe-actions-kvm-syscalls`, `rbe-actions-kvm-startup` and
+`rbe-actions-benchmark-partitions` pilot branches permit manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -92,10 +92,10 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls`, `startup`, `posture`, `portforward`, `root` or `benchmarks`)
-and a single architecture (`amd64` or `arm64`; local unit and syscall profiles
-require `arm64`, while startup, posture, portforward, root and benchmarks
-require `amd64`).
+`unit`, `syscalls`, `syscalls-kvm`, `startup`, `posture`, `portforward`, `root`
+or `benchmarks`) and a single architecture (`amd64` or `arm64`; local unit
+and ordinary syscall profiles require `arm64`, while KVM syscalls, startup,
+posture, portforward, root and benchmarks require `amd64`).
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -106,10 +106,10 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
-The `unit` and `syscalls` phases intersect graph-declared architecture
+The `unit`, `syscalls` and `syscalls-kvm` phases intersect graph-declared architecture
 variants with their canonical profiles and run one test invocation. Native
-namespace tests run locally; ordinary native tests and shared checks stay
-remote. The report records all selected owners and their execution requirements.
+namespace tests and selected KVM syscall tests run locally; ordinary native
+tests and shared checks stay remote. The report records all selected owners and their execution requirements.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
 Root test frontends invoke the existing local-root fixture, which permits
@@ -118,11 +118,11 @@ ownership to the Bazel user before validation. It changes only directory search
 permission along the resolved runtime path and ownership within that test's
 output directory. Nonroot tests retain the unprivileged Actions identity.
 Bazel's caller-supplied `run_under` remains outside the frontend executable.
-Only these native namespace TestRunners require local execution; compiler tags
+Only these native namespace/KVM TestRunners require local execution; compiler tags
 and actions remain unchanged. At most two local tests run at once on the
 four-core host, while remote work keeps 400 jobs.
 
-The syscall phase selects the existing `syscalls-arm64` 4K-page profile. It
+The ARM64 syscall phase selects the existing `syscalls-arm64` 4K-page profile. It
 retains the public ptrace/systrap selection and excludes checkpoint and KVM
 tests. Actions installs `iproute2` and `netcat-openbsd` for the existing
 rtnetlink owners. Their versions and the complete selected owner set are saved
@@ -131,8 +131,25 @@ macro's existing `hash15` buckets:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-arm64-syscalls \
+  --ref rbe-qualification-upstream-refresh \
   -f lanes=syscalls -f architecture=arm64 -f execution=local \
+  -f syscall_bucket=0
+```
+
+The AMD64 `syscalls-kvm` lane starts from the public `syscalls-amd64`
+profile and selects its existing `runsc_kvm` owners. Nogo remains in its own
+lane; other public-profile owners are reported as unexecuted. The selector
+requires each chosen owner to declare an AMD64 variant and uses that frontend
+with the same shard count, arguments and timeout. Its KVM tag selects the
+existing local-root fixture without claiming a remote KVM worker exists.
+The host must provide a readable and writable `/dev/kvm` to root; actual tests
+establish whether the device supports this runtime. The same network tools
+and hash buckets apply:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-kvm-syscalls \
+  -f lanes=syscalls-kvm -f architecture=amd64 -f execution=local \
   -f syscall_bucket=0
 ```
 
@@ -142,7 +159,28 @@ owners. A successful bucket is partial coverage; the union of all buckets on
 the same source is required to cover this profile. Different buckets have
 separate workflow concurrency keys. Direct callers use
 `--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
-provide the same Linux host tools. Omitting the bucket selects the full profile.
+provide the same Linux host tools. For KVM, use
+`--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
+Omitting the bucket selects the full chosen profile, or its KVM subset.
+
+Continuous benchmarks can exceed one Actions job when queued together. To
+qualify individual owners concurrently, pass `benchmark_target` with one label
+from `tests(//test/benchmarks:continuous_tests)`:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-benchmark-partitions \
+  -f lanes=benchmarks -f architecture=amd64 -f execution=local \
+  -f benchmark_target=//test/benchmarks/fs:bazel_test_continuous_grpc_kvm_owned
+```
+
+The dispatcher checks suite membership and records the complete suite and the
+selected target. Distinct targets have separate workflow concurrency keys.
+Each keeps its original benchmark arguments and one-hour test timeout; the
+Actions step allows 70 minutes for compilation and execution, with another
+five minutes for setup and artifact upload. A passing target covers only that
+owner. Direct callers use `--benchmark-target=LABEL` with local AMD64
+benchmarks and provide `RUNNER_TEMP` for the selection report.
 
 The local AMD64 `startup`, `posture`, `portforward`, `root` and `benchmarks`
 phases retain their complete maintained suites, including the KVM variants.

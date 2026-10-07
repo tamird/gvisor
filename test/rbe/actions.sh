@@ -39,6 +39,9 @@ options=("--arch=$QUALIFICATION_ARCH")
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi
+if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
+  options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
+fi
 temporary_files=()
 trap 'rm -f -- "${temporary_files[@]}"' EXIT
 
@@ -132,12 +135,17 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns) == 0 ]]
     fi
-    if [[ ${lanes[*]} == syscalls ]]; then
+    if [[ ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-kvm ]]; then
       # The maintained rtnetlink syscall owners invoke ip and OpenBSD nc.
       sudo -n apt-get update
       sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
       dpkg-query -W iproute2 netcat-openbsd | tee "$RUNNER_TEMP/qualification/network-tools.txt"
       command -v ip nc
+    fi
+    if [[ ${lanes[*]} == syscalls-kvm ]]; then
+      [[ -c /dev/kvm ]]
+      sudo -n test -r /dev/kvm
+      sudo -n test -w /dev/kvm
     fi
     ;;
   *) printf 'Unknown qualification execution mode.\n' >&2; exit 2 ;;
