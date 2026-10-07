@@ -427,6 +427,8 @@ record["selected_owners"] = [label]
 record["diagnostic_unexecuted_owners"] = [owner for owner in selected if owner != label]
 record["diagnostic_test_filter"] = "All/SocketInetLoopbackIsolatedTest.TCPActiveCloseTimeWaitTest/ListenV4Loopback_ConnectV4Any"
 record["diagnostic_sharding"] = "disabled; one existing case, original owner has eight shards"
+record["diagnostic_test_timeout_seconds"] = 60
+record["diagnostic_runner_delay"] = "2m; sandbox creation before intentional Bazel timeout"
 path.write_text(json.dumps(record, indent=2) + "\n")
 PYFOCUS
   if [[ -n ${RUNNER_TEMP:-} ]]; then
@@ -440,6 +442,7 @@ PYFOCUS
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     "${options[@]}" --test_sharding_strategy=disabled \
     --test_filter=All/SocketInetLoopbackIsolatedTest.TCPActiveCloseTimeWaitTest/ListenV4Loopback_ConnectV4Any \
+    --test_timeout=60 --test_arg=--delay-for-debugger=2m \
     --target_pattern_file="$selection_dir/targets"
 )
 
