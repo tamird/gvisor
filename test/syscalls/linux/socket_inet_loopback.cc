@@ -540,7 +540,7 @@ TEST_P(SocketInetLoopbackTest, TCPUnblockWaitOnLocalRdHUp) {
   sockaddr_storage conn_addr = connector.addr;
   ASSERT_NO_ERRNO(SetAddrPort(connector.family(), &conn_addr, port));
   ASSERT_THAT(RetryEINTR(connect)(conn_fd.get(), AsSockAddr(&conn_addr),
-                                connector.addr_len),
+                                  connector.addr_len),
               SyscallSucceeds());
   FileDescriptor accepted =
       ASSERT_NO_ERRNO_AND_VALUE(Accept(listen_fd.get(), nullptr, nullptr));
