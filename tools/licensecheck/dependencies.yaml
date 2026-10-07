@@ -2307,6 +2307,12 @@
     - GPL-2.0-or-later
     - GPL-3.0
     - GPL-3.0-or-later
+- dependency: apt/tcg_arm64_guest/arm64/base-passwd
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/base-passwd/base-passwd_3.5.52build1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 854dff825eb08dce248e111497952cdf0f81caf8776a8c754d7d4b4d8773f179
+  license: GPL-2.0
 - dependency: apt/tcg_arm64_guest/arm64/bash
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/b/bash/bash_5.1-6ubuntu1.1_arm64.deb
   retrieved: "2026-10-07"
@@ -2356,6 +2362,24 @@
     - BSD-2-Clause
     - GPL-2.0
     - GPL-2.0-or-later
+- dependency: apt/tcg_arm64_guest/arm64/file
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/file/file_5.41-3ubuntu0.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: e3e6ff11f1f1f323d664d829e2c8d05a38f55c4e56f597110be99c325337e099
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
+- dependency: apt/tcg_arm64_guest/arm64/findutils
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/findutils/findutils_4.8.0-1ubuntu3_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: b116bc1f7a81977492cf9d7816ae870fe94dd403b05dc6d916d55cc1b0804d6a
+  license:
+    - GFDL-1.3
+    - GPL-3.0
+    - GPL-3.0-or-later
 - dependency: apt/tcg_arm64_guest/arm64/gcc-12-base
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gcc-12/gcc-12-base_12.3.0-1ubuntu1~22.04.3_arm64.deb
   retrieved: "2026-10-07"
@@ -2380,6 +2404,23 @@
     - Spencer-94
     - Unicode-DFS-2015
     - Zlib
+- dependency: apt/tcg_arm64_guest/arm64/grep
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/grep/grep_3.7-1build1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: f2868ffee67a20994d55b678197a98c48f132e45cc08b6dbf53c8a3dbd6ec8e8
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+- dependency: apt/tcg_arm64_guest/arm64/init-system-helpers
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/init-system-helpers/init-system-helpers_1.62_all.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 810bc27b9b3cecab056d80d726de535ca68f00fcd955683bf46674d779f4e710
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - GPL-2.0-or-later
 - dependency: apt/tcg_arm64_guest/arm64/iproute2
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/i/iproute2/iproute2_5.15.0-1ubuntu2.2_arm64.deb
   retrieved: "2026-10-07"
@@ -2527,6 +2568,12 @@
   commit: ""
   sha256: e5b672aeaca690b3b7ee97b03dbc07ddb49be7b6ea0a770fa6707666ca1cef59
   license: BSD-3-Clause
+- dependency: apt/tcg_arm64_guest/arm64/libdebconfclient0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/c/cdebconf/libdebconfclient0_0.261ubuntu1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: d10e596418d28faaadbff0f30edaa405965dc9f61a9d594a22286dcc46805e23
+  license: BSD-2-Clause
 - dependency: apt/tcg_arm64_guest/arm64/libelf1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/e/elfutils/libelf1_0.186-1ubuntu0.1_arm64.deb
   retrieved: "2026-10-07"
@@ -2561,6 +2608,17 @@
     - Spencer-94
     - Unicode-DFS-2015
     - Zlib
+- dependency: apt/tcg_arm64_guest/arm64/libgcrypt20
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libg/libgcrypt20/libgcrypt20_1.9.4-3ubuntu3.3_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: bd98a709641e7e61c8798bb84030886a96fd56424b053a6e9996a8391ce20597
+  license:
+    - BSD-3-Clause
+    - GPL-2.0
+    - LGPL-2.1-or-later
+    - LGPL-3.0
+    - MIT
 - dependency: apt/tcg_arm64_guest/arm64/libgmp10
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/g/gmp/libgmp10_6.2.1+dfsg-3ubuntu1_arm64.deb
   retrieved: "2026-10-07"
@@ -2571,6 +2629,16 @@
     - GPL-3.0
     - GPL-3.0-or-later
     - LGPL-3.0
+- dependency: apt/tcg_arm64_guest/arm64/libgpg-error0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libg/libgpg-error/libgpg-error0_1.43-3_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: ffa9029cdeb2786e0db1f614f3d2205f75f466a66b25e22aa89ecdf814491875
+  license:
+    - GPL-3.0
+    - GPL-3.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
 - dependency: apt/tcg_arm64_guest/arm64/libkmod2
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/k/kmod/libkmod2_29-1ubuntu1.1_arm64.deb
   retrieved: "2026-10-07"
@@ -2579,6 +2647,15 @@
   license:
     - GPL-2.0
     - LGPL-2.1
+- dependency: apt/tcg_arm64_guest/arm64/liblz4-1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/l/lz4/liblz4-1_1.9.3-2build2_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 3e2274893e0963c758f0d18ba80d033736909373247a7deb211e9ff590a09133
+  license:
+    - BSD-2-Clause
+    - GPL-2.0
+    - GPL-2.0-only
 - dependency: apt/tcg_arm64_guest/arm64/liblzma5
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/x/xz-utils/liblzma5_5.2.5-2ubuntu1.1_arm64.deb
   retrieved: "2026-10-07"
@@ -2593,6 +2670,24 @@
     - LGPL-2.0
     - LGPL-2.1
     - LGPL-2.1-or-later
+- dependency: apt/tcg_arm64_guest/arm64/libmagic-mgc
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/file/libmagic-mgc_5.41-3ubuntu0.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 473256b36775f06dc5f9b12f1802283f9d6c3fdd7b8c32fb1bee7557b21c7087
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
+- dependency: apt/tcg_arm64_guest/arm64/libmagic1
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/f/file/libmagic1_5.41-3ubuntu0.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 7c5130462313694453965d42ea2b9af1b1886e9598709fea6eb59b19801bd875
+  license:
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - ISC
 - dependency: apt/tcg_arm64_guest/arm64/libmd0
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libm/libmd/libmd0_1.0.4-1build1_arm64.deb
   retrieved: "2026-10-07"
@@ -2632,12 +2727,46 @@
     - LGPL-3.0
     - LGPL-3.0-or-later
     - MIT
+- dependency: apt/tcg_arm64_guest/arm64/libncurses6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libncurses6_6.3-2ubuntu0.3_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 5a6fdc731d7c5f2c180de3367b8b482fe108369e5af3125104db4f8151fce9bc
+  license:
+    - BSD-3-Clause
+    - MIT
+- dependency: apt/tcg_arm64_guest/arm64/libncursesw6
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libncursesw6_6.3-2ubuntu0.3_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 587257cb8455cf87dc963bc73cec4142ecba187cc9de7d3973f07b245d8bc6d7
+  license:
+    - BSD-3-Clause
+    - MIT
 - dependency: apt/tcg_arm64_guest/arm64/libpcre2-8-0
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pcre2/libpcre2-8-0_10.39-3ubuntu0.1_arm64.deb
   retrieved: "2026-10-07"
   commit: ""
   sha256: b85beefd54108f1c34a89cb26688eb1b2eeaa099e4995091295a1d39f9c67a91
   license: BSD-3-Clause
+- dependency: apt/tcg_arm64_guest/arm64/libpcre3
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/pcre3/libpcre3_8.39-13ubuntu0.22.04.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: ff6766bf08ccdb87b684339cceeb64a35bb34412b4978d7d0798a9bca6b71a22
+  license: BSD-3-Clause
+- dependency: apt/tcg_arm64_guest/arm64/libprocps8
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/procps/libprocps8_3.3.17-6ubuntu2.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: af989708c63833697b9bbd4da9704399919cc0f0d6ac337ce876e51a24f85c1a
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
 - dependency: apt/tcg_arm64_guest/arm64/libselinux1
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/libs/libselinux/libselinux1_3.3-1build2_arm64.deb
   retrieved: "2026-10-07"
@@ -2676,6 +2805,19 @@
     - Artistic-1.0-Perl
     - GPL-1.0
     - GPL-1.0-or-later
+- dependency: apt/tcg_arm64_guest/arm64/libsystemd0
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/systemd/libsystemd0_249.11-0ubuntu3.22_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 9805c8c136fd41d9bff355297fdf6f811529960908711f647e38e1fd39a198ec
+  license:
+    - CC0-1.0
+    - GPL-2.0
+    - GPL-2.0-only
+    - GPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+    - MIT
 - dependency: apt/tcg_arm64_guest/arm64/libtinfo6
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/n/ncurses/libtinfo6_6.3-2ubuntu0.3_arm64.deb
   retrieved: "2026-10-07"
@@ -2794,6 +2936,24 @@
     - Unicode-DFS-2015
     - Zlib
     - bzip2-1.0.6
+- dependency: apt/tcg_arm64_guest/arm64/procps
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/p/procps/procps_3.3.17-6ubuntu2.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 1427d78e933d0b47b562ffba54f21c8eb4b3141ca1d6d4ca97e649fda5693608
+  license:
+    - GPL-2.0
+    - GPL-2.0-or-later
+    - LGPL-2.0
+    - LGPL-2.0-or-later
+    - LGPL-2.1
+    - LGPL-2.1-or-later
+- dependency: apt/tcg_arm64_guest/arm64/sed
+  version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/s/sed/sed_4.8-1ubuntu2.1_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 98acc3421842c068ed3d5f688163ede0f4c7218c8329dc860d6d8728bde04082
+  license: LicenseRef-Sed-Copyright-60886b626
 - dependency: apt/tcg_arm64_guest/arm64/tar
   version: https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/t/tar/tar_1.34+dfsg-1ubuntu0.1.22.04.6_arm64.deb
   retrieved: "2026-10-07"
