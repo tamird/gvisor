@@ -35,6 +35,14 @@ def _native_frontend_impl(ctx):
     user = "root" if local_kvm else ctx.attr.exec_properties.get("test.dockerUser")
     if user not in ["root", "nobody"]:
         fail("unsupported local namespace test identity: %s" % user)
+    docker = ctx.attr._local_test_backend[BuildSettingInfo].value == "docker"
+    if docker and user != "root":
+        fail("the Docker namespace fixture requires a root test identity")
+    initial_cgroup = "native" in ctx.attr.tags and "requires-initial-cgroup-namespace" in ctx.attr.tags
+    if initial_cgroup:
+        if user != "root":
+            fail("the initial cgroup namespace fixture requires a root test identity")
+        docker = False
     if "no-local" in ctx.attr.tags:
         fail("local namespace test is tagged no-local")
     original_execution = ctx.attr.exports[testing.ExecutionInfo] if testing.ExecutionInfo in ctx.attr.exports else None
@@ -42,26 +50,35 @@ def _native_frontend_impl(ctx):
     if "no-local" in requirements:
         fail("local namespace test requires no-local")
     requirements["no-remote-exec"] = ""
+    if initial_cgroup:
+        # Docker's private cgroup namespace cannot create v1 hierarchies. Keep
+        # this restriction on the TestRunner, independent of compilation.
+        requirements["no-sandbox"] = ""
 
     result = []
     for provider in providers:
         if provider == original_execution:
             continue
         if user == "root" and type(provider) == "DefaultInfo":
-            # Keep Bazel's run_under outside this executable. Only the existing
-            # root fixture and this test run as root, never the Bazel server.
+            # Keep Bazel's run_under outside this executable. Docker tests use
+            # their private cgroup hierarchy; host-local tests acquire root and
+            # return output ownership to the unprivileged Bazel server.
+            helper = ctx.attr._docker_setup if docker else ctx.attr._local_root
+            helper_executable = ctx.executable._docker_setup if docker else ctx.executable._local_root
             original_executable = ctx.attr.exports[FrontendInfo].executable
-            executable = ctx.actions.declare_file(ctx.label.name + ".local_root")
+            executable = ctx.actions.declare_file(ctx.label.name + (".docker_setup" if docker else ".local_root"))
             ctx.actions.write(
                 executable,
-                "#!/bin/bash\nexec \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
-                    shell.quote("/" + ctx.executable._local_root.short_path),
+                "#!/bin/bash\n%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
+                    "exec sudo -n -E -- unshare --mount --propagation private --" if initial_cgroup else "exec",
+                    shell.quote("/" + helper_executable.short_path),
+                    " --initial-cgroup-namespace" if initial_cgroup else "",
                     shell.quote("/" + original_executable.short_path),
                 ),
                 is_executable = True,
             )
-            helper_runfiles = ctx.runfiles(files = [executable, original_executable, ctx.executable._local_root]).merge(
-                ctx.attr._local_root[DefaultInfo].default_runfiles,
+            helper_runfiles = ctx.runfiles(files = [executable, original_executable, helper_executable]).merge(
+                helper[DefaultInfo].default_runfiles,
             )
             provider = DefaultInfo(
                 executable = executable,
@@ -79,8 +96,10 @@ _native_frontend_test = rule(
     implementation = _native_frontend_impl,
     parent = frontend_test,
     attrs = {
+        "_docker_setup": attr.label(default = Label("//test/rbe:docker_setup"), executable = True, cfg = "target"),
         "_local_root": attr.label(default = Label("//test/rbe:local_root"), executable = True, cfg = "target"),
         "_local_test_architecture": attr.label(default = Label("//tools/bazeldefs:local_test_architecture")),
+        "_local_test_backend": attr.label(default = Label("//tools/bazeldefs:local_test_backend")),
     },
 )
 
