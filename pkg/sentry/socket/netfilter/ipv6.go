@@ -37,15 +37,10 @@ var emptyIPv6Filter = stack.IPHeaderFilter{
 // format expected by the iptables tool. Linux stores each table as a binary
 // blob that can only be traversed by parsing a little data, reading some
 // offsets, jumping to those offsets, parsing again, etc.
-func convertNetstackToBinary6(stk *stack.Stack, tablename linux.TableName) (linux.KernelIP6TGetEntries, linux.IPTGetinfo, error) {
-	// The table name has to fit in the struct.
-	if linux.XT_TABLE_MAXNAMELEN < len(tablename) {
-		return linux.KernelIP6TGetEntries{}, linux.IPTGetinfo{}, fmt.Errorf("table name %q too long", tablename)
-	}
-
+func convertNetstackToBinary6(stk *stack.Stack, tablename linux.TableName) (linux.KernelIP6TGetEntries, linux.IPTGetinfo, *syserr.Error) {
 	id, ok := nameToID[tablename.String()]
 	if !ok {
-		return linux.KernelIP6TGetEntries{}, linux.IPTGetinfo{}, fmt.Errorf("couldn't find table %q", tablename)
+		return linux.KernelIP6TGetEntries{}, linux.IPTGetinfo{}, syserr.ErrNoFileOrDir
 	}
 
 	// Setup the info struct, which is the same in IPv4 and IPv6.
