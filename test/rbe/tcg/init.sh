@@ -20,8 +20,10 @@ export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 exec </dev/console >/dev/console 2>&1
 mount -t proc proc /proc
 mount -t sysfs sysfs /sys
-mkdir -p /dev/pts /sys/fs/cgroup
+mkdir -p /dev/pts /dev/shm /sys/fs/cgroup
 mount -t devpts devpts /dev/pts
+mount -t tmpfs -o mode=1777,nosuid,nodev tmpfs /dev/shm
+ln -s /proc/self/fd /dev/fd
 mount -t cgroup2 none /sys/fs/cgroup
 modprobe 9pnet_virtio
 modprobe 9p
