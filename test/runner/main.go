@@ -20,6 +20,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -365,7 +366,7 @@ func deleteSandbox(args []string, id string) error {
 // runsc logs will be saved to a path in TEST_UNDECLARED_OUTPUTS_DIR.
 //
 // Returns an error if the sandboxed application exits non-zero.
-func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
+func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	var extraFiles []*os.File
 	var passFDArgs []string
 
@@ -395,6 +396,23 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) error {
 				return fmt.Errorf("creating XML report: %w", err)
 			}
 			defer xmlFile.Close()
+			defer func() {
+				// Shell tests may not write XML. Remove only the empty
+				// placeholder after execution so Bazel can create its report.
+				info, err := os.Stat(xmlPath)
+				if os.IsNotExist(err) {
+					return
+				}
+				if err != nil {
+					retErr = errors.Join(retErr, fmt.Errorf("stat XML report: %w", err))
+					return
+				}
+				if info.Size() == 0 {
+					if err := os.Remove(xmlPath); err != nil && !os.IsNotExist(err) {
+						retErr = errors.Join(retErr, fmt.Errorf("removing empty XML report: %w", err))
+					}
+				}
+			}()
 			// Use the first guest descriptor after stdio, before tests allocate
 			// their own descriptors (including close_range test ranges).
 			const xmlGuestFD = 3
