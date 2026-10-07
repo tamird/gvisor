@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -41,8 +41,8 @@ image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ARM64 unit/syscall tests and AMD64
-startup/posture/portforward on a matching Linux host. Compilation remains
-remote. Hybrid profiles run in one invocation: native namespace owners run
+KVM syscalls and startup/posture/portforward on a matching Linux host.
+Compilation remains remote. Hybrid profiles run in one invocation: native namespace owners run
 locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
@@ -100,15 +100,15 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|startup:amd64|posture:amd64|portforward:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 startup/posture/portforward.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 KVM syscalls/startup/posture/portforward.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
 if [[ -n $syscall_bucket ]]; then
-  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $arch != arm64 || $# != 1 || ${1:-} != syscalls ]]; then
-    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls.\n' >&2
+  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $# != 1 || ( $arch:${1:-} != arm64:syscalls && $arch:${1:-} != amd64:syscalls-kvm ) ]]; then
+    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls or AMD64 syscalls-kvm.\n' >&2
     exit 2
   fi
 fi
@@ -117,7 +117,11 @@ if [[ $# == 1 && $1 == amd64 ]]; then
     printf 'The amd64 profile requires --arch=amd64.\n' >&2
     exit 2
   fi
-  set -- "${lanes[@]}"
+  set --
+  for lane in "${lanes[@]}"; do
+    # KVM syscall execution belongs to the separate local-host profile.
+    if [[ $lane != syscalls-kvm ]]; then set -- "$@" "$lane"; fi
+  done
 fi
 if (( $# == 0 )); then
   usage >&2
@@ -125,6 +129,10 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
+  if [[ $lane == syscalls-kvm && ( $test_execution != local || $arch != amd64 ) ]]; then
+    printf 'The KVM syscall lane requires local AMD64 execution.\n' >&2
+    exit 2
+  fi
   if [[ $arch == all ]]; then
     case "$lane" in
       presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
@@ -132,7 +140,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -248,7 +256,7 @@ analyze_profile() {
 select_test_profile() {
   local selection_dir=$1 lane=$2 target_arch=$3 roots=$4 target_config=x86_64 prefix
   shift 4
-  local -a selection_options=() page_size_options=() routing_options=()
+  local -a selection_options=() page_size_options=() routing_options=() variant_options=()
   prefix=$selection_dir/$lane-$target_arch
   if [[ $target_arch == arm64 ]]; then
     target_config=aarch64
@@ -260,7 +268,8 @@ select_test_profile() {
     page_size_options=(--page-size=64k)
   fi
   if [[ $test_execution == local ]]; then
-    routing_options=(--//tools/bazeldefs:local_test_architecture=arm64)
+    routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch")
+    variant_options=(--hybrid)
     selection_options+=(--hybrid)
     if [[ -n $syscall_bucket ]]; then
       selection_options+=("--syscall-bucket=$syscall_bucket")
@@ -269,7 +278,7 @@ select_test_profile() {
   analyze_profile "$roots" "$prefix-profile.json" \
     --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
-    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" > "$prefix.query"
+    "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" "${variant_options[@]}" > "$prefix.query"
   bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
     "${routing_options[@]}" \
     --output=jsonproto --include_artifacts=false \
@@ -284,7 +293,7 @@ select_syscall_profile() {
   local selection_dir=$1 lane=$2 syscall_arch=$3
   local -a profile_options=()
   case "$lane" in
-    syscalls) profile_options=("--config=syscalls-$syscall_arch") ;;
+    syscalls|syscalls-kvm) profile_options=("--config=syscalls-$syscall_arch") ;;
     syscalls-64k) profile_options=(--config=syscalls-arm64-64k) ;;
     syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
     syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
@@ -333,10 +342,10 @@ run_hybrid_profile() (
       | tee "$selection_dir/selection.json"
   else
     lane_options=(--cxxopt=-Werror)
-    select_syscall_profile "$selection_dir" "$lane" arm64 | tee "$selection_dir/selection.json"
-    cp "$selection_dir/$lane-arm64-targets" "$selection_dir/targets"
-    cp "$selection_dir/$lane-arm64-actions.json" "$selection_dir/actions.json"
-    cp "$selection_dir/$lane-arm64-profile.json" "$selection_dir/profile.json"
+    select_syscall_profile "$selection_dir" "$lane" "$arch" | tee "$selection_dir/selection.json"
+    cp "$selection_dir/$lane-$arch-targets" "$selection_dir/targets"
+    cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
+    cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
   fi
   # Preserve the selection, but never upload Bazel's parsed credential options.
   mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
@@ -358,12 +367,12 @@ for source in Path(sys.argv[1]).glob("*.json"):
                 event = json.loads(line)
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
-  printf 'ARM64 %s profile: namespace owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$lane"
+  printf '%s %s profile: namespace/KVM owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$arch" "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
-    --//tools/bazeldefs:local_test_architecture=arm64 \
+    "--//tools/bazeldefs:local_test_architecture=$arch" \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" --target_pattern_file="$selection_dir/targets"
 )
@@ -835,7 +844,7 @@ run_lane() (
       command=build
       targets=(//website:image)
       ;;
-    syscalls|syscalls-save|syscalls-resume)
+    syscalls|syscalls-kvm|syscalls-save|syscalls-resume)
       if [[ $test_execution == local ]]; then
         run_hybrid_profile "$lane"
         return
