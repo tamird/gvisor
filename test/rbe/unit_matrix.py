@@ -453,6 +453,7 @@ def main() -> None:
     query.add_argument("patterns")
     actions = commands.add_parser("actions")
     actions.add_argument("owners")
+    actions.add_argument("--exact", action="store_true", help="Query these configured labels without adding ARM64 variants")
     select = commands.add_parser("select")
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
@@ -499,7 +500,8 @@ def main() -> None:
     if args.command == "query":
         print(owner_query(args.patterns))
     elif args.command == "actions":
-        print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
+        suffix = "" if args.exact else "_arm64"
+        print('mnemonic("^TestRunner$", ' + target_set([owner + suffix for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
         select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, amd64_profile=args.amd64_profile)
     elif args.command == "cgroup-targets":
