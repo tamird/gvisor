@@ -23,6 +23,8 @@ package(
     licenses = ["notice"],
 )
 
+exports_files(["amd64_rc_source.config"])
+
 sh_binary(
     name = "build_image",
     srcs = ["build_image.sh"],
