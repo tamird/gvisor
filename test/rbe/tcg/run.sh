@@ -90,10 +90,33 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
 qemu_pid=""
 cleanup() {
   local status=$?
-  trap - EXIT
+  trap - EXIT TERM INT
+  set +e
   if [[ -n "$qemu_pid" ]]; then
-    kill "$qemu_pid" 2>/dev/null || true
+    # Reap the writer before inspecting its disk, even if it is unresponsive.
+    kill -KILL "$qemu_pid" 2>/dev/null || true
     wait "$qemu_pid" 2>/dev/null || true
+  fi
+  if [[ "$status" != 0 && ! -f "$result/exit_status" ]]; then
+    local recovery="${TEST_UNDECLARED_OUTPUTS_DIR}/guest-recovery"
+    mkdir -p "$recovery"
+    printf '%s\n' \
+      "Original host exit status: $status" \
+      'Incomplete guest disk recovery; no journal replay or completion claim.' \
+      'Guest memory and uncommitted filesystem writes may be absent.' \
+      > "$recovery/README.txt"
+    # The existing e2fsprogs input supplies debugfs. Without -w it only reads
+    # the stopped guest disk. Keep partial files and diagnostics if extraction
+    # fails or exhausts this bounded cleanup window; never promote recovered
+    # XML or shard status into a completed outer test result.
+    (
+      cd "$recovery" || exit
+      host_tool usr/bin/timeout --signal=KILL 5 \
+        "$loader" --inhibit-cache --library-path "$libraries" \
+        "$host/sbin/debugfs" -R 'rdump /outputs /harness /test.xml /shard_status .' \
+        "$scratch/scratch.ext4"
+    ) > "$recovery/debugfs.log" 2>&1
+    printf '%s\n' "$?" > "$recovery/debugfs_exit_status"
   fi
   rm -rf "$scratch"
   exit "$status"
