@@ -148,11 +148,3 @@ jobs:
         name: qualification-${{ inputs.architecture }}
         path: ${{ runner.temp }}/qualification
         if-no-files-found: error
-
-    - name: Retain the AMD64 guest results
-      if: always() && inputs.execution == 'local' && inputs.lanes == 'syscalls-rc-pilot'
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: amd64-rc-guests
-        path: bazel-testlogs/test/syscalls/*_rc_kvm/
-        if-no-files-found: error
