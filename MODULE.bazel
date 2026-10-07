@@ -35,11 +35,6 @@ bazel_dep(name = "protoc-gen-validate", version = "1.3.0")
 bazel_dep(name = "xds", version = "0.0.0-20251210-ee656c7")
 bazel_dep(name = "cel-spec", version = "0.25.1")
 
-# Directory names are sufficient to validate the paths in governance/areas.yaml.
-source_directories = use_repo_rule("//governance/tools/maintainers:repositories.bzl", "source_directories")
-
-source_directories(name = "source_directories")
-
 # Reuse the upstream test frontend for per-target test-action transitions.
 single_version_override(
     module_name = "with_cfg.bzl",

@@ -215,7 +215,7 @@ governance-regen: ## Regenerates the files derived from governance/maintainers.y
 	@$(call wrapper,$(BAZEL) run $(BASE_OPTIONS) $(BAZEL_OPTIONS) //:governance-regen)
 .PHONY: governance-regen
 
-governance-check: ## Checks that the files derived from governance/*.yaml are in sync.
+governance-check: ## Checks that the files derived from governance data are in sync.
 	@$(call test,//:governance-check)
 .PHONY: governance-check
 

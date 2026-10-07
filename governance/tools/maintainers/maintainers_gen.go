@@ -18,7 +18,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"maps"
@@ -31,11 +30,10 @@ import (
 )
 
 var (
-	directoriesPath = flag.String("directories", "", "path to the JSON array of repository directories")
-	input           = flag.String("input", "", "path to maintainers.yaml")
-	areasPath       = flag.String("areas", "", "path to areas.yaml")
-	format          = flag.String("format", "MAINTAINERS.md", `output format: "MAINTAINERS.md" or "CODEOWNERS"`)
-	output          = flag.String("output", "", "path to write to; defaults to stdout")
+	input     = flag.String("input", "", "path to maintainers.yaml")
+	areasPath = flag.String("areas", "", "path to areas.yaml")
+	format    = flag.String("format", "MAINTAINERS.md", `output format: "MAINTAINERS.md" or "CODEOWNERS"`)
+	output    = flag.String("output", "", "path to write to; defaults to stdout")
 )
 
 // pastAffiliation is a past employer of a maintainer.
@@ -177,17 +175,9 @@ func parseRoster(yamlData []byte, areasByName map[string]area) (*roster, error) 
 	return &r, nil
 }
 
-// generateCODEOWNERS renders `CODEOWNERS` contents. All area paths must
-// appear in the sorted directory list. Only areas with enforced_review get a
-// CODEOWNERS section.
-func generateCODEOWNERS(r *roster, areasByName map[string]area, directories []string) ([]byte, error) {
-	for _, name := range slices.Sorted(maps.Keys(areasByName)) {
-		for _, p := range areasByName[name].Paths {
-			if _, ok := slices.BinarySearch(directories, p); !ok {
-				return nil, fmt.Errorf("area %q: path %q is not a repository directory", name, p)
-			}
-		}
-	}
+// generateCODEOWNERS renders `CODEOWNERS` contents. Only areas with
+// enforced_review get a CODEOWNERS section.
+func generateCODEOWNERS(r *roster, areasByName map[string]area) ([]byte, error) {
 	ownersByArea := make(map[string][]string)
 	for _, m := range r.Maintainers {
 		for _, a := range m.Areas {
@@ -320,8 +310,8 @@ maintainer nomination process.
 
 func main() {
 	flag.Parse()
-	if *input == "" || *areasPath == "" || *directoriesPath == "" {
-		fmt.Fprintln(os.Stderr, "must specify -input, -areas, and -directories")
+	if *input == "" || *areasPath == "" {
+		fmt.Fprintln(os.Stderr, "must specify -input and -areas")
 		os.Exit(1)
 	}
 	areasData, err := os.ReadFile(*areasPath)
@@ -334,17 +324,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "cannot parse %s: %v\n", *areasPath, err)
 		os.Exit(1)
 	}
-	directoryData, err := os.ReadFile(*directoriesPath)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "cannot read directories: %v\n", err)
-		os.Exit(1)
-	}
-	var directories []string
-	if err := json.Unmarshal(directoryData, &directories); err != nil {
-		fmt.Fprintf(os.Stderr, "cannot parse %s: %v\n", *directoriesPath, err)
-		os.Exit(1)
-	}
-	slices.Sort(directories)
 	yamlData, err := os.ReadFile(*input)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "cannot read roster: %v\n", err)
@@ -360,7 +339,7 @@ func main() {
 	case "MAINTAINERS.md":
 		outData, err = generateMaintainersMD(r)
 	case "CODEOWNERS":
-		outData, err = generateCODEOWNERS(r, areasByName, directories)
+		outData, err = generateCODEOWNERS(r, areasByName)
 	default:
 		err = fmt.Errorf("invalid format %q", *format)
 	}

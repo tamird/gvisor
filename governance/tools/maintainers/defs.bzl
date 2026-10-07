@@ -22,13 +22,11 @@ def governance_files(name):
             srcs = [
                 "areas.yaml",
                 "maintainers.yaml",
-                "@source_directories//:directories.json",
             ],
             outs = [name + "/" + format],
             cmd = "$(execpath //governance/tools/maintainers:maintainers_gen) " +
                   "-input $(location maintainers.yaml) " +
                   "-areas $(location areas.yaml) " +
-                  "-directories $(location @source_directories//:directories.json) " +
                   "-format " + format + " -output $@",
             tools = ["//governance/tools/maintainers:maintainers_gen"],
             visibility = ["//:__pkg__"],
