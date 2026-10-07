@@ -1,4 +1,6 @@
 test name,bug id,comment
+ext/bcmath/tests/GHSA-x692-q9x7-8c3f.phpt,https://github.com/php/php-src/commit/3855c7c14,Broken test: missing bcmath requirement causes undefined bccomp() on native Linux; remove after PHP includes the upstream fix
+ext/pdo_pgsql/tests/transations_deprecations.phpt,,Broken test: requires pdo_pgsql but declares only pdo; undefined PDO::PGSQL_TRANSACTION_IDLE on native Linux
 tests/output/stream_isatty_err.phpt,,Fails on Buildkite because container needs to be run with a pseudo-TTY
 tests/output/stream_isatty_in-err.phpt,,Fails on Buildkite because container needs to be run with a pseudo-TTY
 tests/output/stream_isatty_in-out.phpt,,Fails on Buildkite because container needs to be run with a pseudo-TTY
