@@ -41,7 +41,8 @@ image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
-and AMD64 KVM syscalls, plugin-network and startup/posture/portforward/root/benchmarks.
+and AMD64 KVM syscalls, nftables, plugin-network and
+startup/posture/portforward/root/benchmarks.
 Compilation remains remote. Hybrid profiles run in one invocation: native namespace owners run
 locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
@@ -104,8 +105,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/nftables/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -964,7 +965,7 @@ run_lane() (
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
-        plugin-network|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
+        plugin-network|nftables|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
           # Each owned daemon needs separate firewall state. The fixture
           # can attach this private namespace to the job's bridge.
           docker_test_options

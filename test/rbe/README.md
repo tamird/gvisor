@@ -56,8 +56,9 @@ Pull requests cannot enter this credentialed job. The separate
 `rbe-actions-amd64-syscalls`,
 `rbe-actions-kvm-startup`,
 `rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
-`rbe-actions-arm64-docker`, `rbe-actions-arm64-images` and
-`rbe-actions-plugin-network` pilot branches permit manual dispatches only.
+`rbe-actions-arm64-docker`, `rbe-actions-arm64-images`,
+`rbe-actions-plugin-network` and `rbe-actions-nftables` pilot branches permit
+manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -98,11 +99,12 @@ Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
 `unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `startup`, `posture`,
-`portforward`, `root`, `plugin-network`,
+`portforward`, `root`, `plugin-network`, `nftables`,
 `docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
 (`amd64` or `arm64`). Ordinary syscalls support both architectures. Local unit,
 save-resume syscall, Docker and image profiles require `arm64`; KVM syscalls,
-startup, posture, portforward, root, plugin-network and benchmarks require `amd64`.
+startup, posture, portforward, root, plugin-network, nftables and benchmarks
+require `amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -1264,6 +1266,26 @@ suite under both runc and runsc, plus the native netfilter syscall binary in
 the nftables image. Their private bridges use the IPv6 configuration documented
 by those suites. Runtime modes are shared with the installed Make adapters.
 Existing unsupported nftables cases retain their explicit skips.
+
+The full nftables lane can also run on an AMD64 Actions host through the existing
+privileged Docker fixture, while compilation stays on RBE:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-nftables \
+  -f lanes=nftables -f architecture=amd64 -f execution=local
+```
+
+This route selects the same `//test/nftables:owned_tests` suite and loads
+`nfnetlink` and `nf_tables` on the host, matching both public Make targets.
+Each owner keeps its declared images and private IPv6-capable Docker bridge;
+these tests exchange traffic within that namespace and need no outbound job
+bridge. The root coordinator and Docker adapter provide the same private
+PID/cgroup namespaces and disk-backed scratch as the other local Docker lanes.
+Each test retains its original 900-second timeout; the Actions step allows
+45 minutes, with a 50-minute job limit. Results must account for actual
+IPv4/IPv6 cases and skips, including native syscall cases printed to stdout
+when the outer wrapper has no testcase XML.
 
 Packetdrill retains all seven scripts against Linux and netstack. The wire
 server and Linux DUT explicitly use runc; the netstack DUT uses the declared
