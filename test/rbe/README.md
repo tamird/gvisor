@@ -1416,14 +1416,19 @@ Each selected owner has a manual `<owner>_64k_arm64` variant that configures its
 runner, runtime and test dependencies together. Page size remains separate from
 the CPU architecture interface, so ordinary and 64K variants can share a build.
 
-The mixed selector reports these required 64K owners as unavailable. No supported
-hosted ARM64 64K-kernel worker configuration is known; ordinary ARM64 execution
-and an OCI image do not establish that support. The declarations retain existing
-ARM64 syscall worker properties without inventing a kernel route. Directly
-requesting a 64K variant does not bypass runsc's existing fatal check that its
-compiled page size matches the host kernel before booting the sandbox. Analysis
-and cross-compilation can qualify the build graph, but cannot qualify this runtime
-lane. Enable execution only after selecting and verifying a supported 64K worker.
+The mixed selector maps this profile to manual `<owner>_64k_tcg` frontends.
+They run the existing ARM64 payload inside a pinned 64K Linux guest using
+QEMU full-system software translation on an unprivileged AMD64 OCI worker.
+The guest checks its actual page size before running the payload; runsc retains
+its own page-size check. Original arguments, shards and deadlines remain in
+force, including guest boot and output transfer. This route needs no host KVM
+or namespace privileges. See [the guest contract](tcg/README.md) for inputs,
+resource estimates and output handling.
+
+Use `test/rbe/qualify.sh --arch=arm64 syscalls-64k` for the separate profile,
+optionally with `--syscall-bucket=0..14` to select an existing hash15 partition.
+The report lists every unexecuted owner; declared routing is not a claim that
+the whole profile has passed.
 
 The combined command keeps the original unit patterns and configuration,
 including build-only tests and non-test targets. Selected syscall owners must

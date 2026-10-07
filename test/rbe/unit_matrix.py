@@ -231,7 +231,7 @@ def profile_suffix(architecture: str, page_size: str, *, hybrid: bool = False) -
     if page_size == "64k":
         if architecture != "arm64":
             raise ValueError("The public 64K syscall profile requires ARM64")
-        return "_64k_arm64"
+        return "_64k_tcg"
     return "_" + architecture if architecture == "arm64" or hybrid else ""
 
 
@@ -299,20 +299,28 @@ def select_profile(
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
         raise ValueError("Hybrid syscall execution requires a native 4K syscall profile")
-    if syscall_bucket is not None and not hybrid:
-        raise ValueError("Syscall buckets require hybrid execution")
+    if syscall_bucket is not None and not (hybrid or syscall_policy and page_size == "64k"):
+        raise ValueError("Syscall buckets require hybrid or ARM64 64K TCG execution")
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
         raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
+    execution_architecture = "amd64" if page_size == "64k" else architecture
     requirements = test_requirements(
         actions_path,
-        architecture,
+        execution_architecture,
         {label: target.configuration for label, target in configured.items()},
     )
     if requirements.keys() != expected:
         raise ValueError(f"Missing profile TestRunners: {sorted(expected - requirements.keys())}")
+    if page_size == "64k":
+        for label, target in configured.items():
+            properties = requirements[label]
+            if not {"arm64-64k-tcg", "runsc_systrap", "no-local"} <= set(target.tags) or "allsave" in target.tags:
+                raise ValueError(f"Unexpected 64K TCG variant: {label}: {target.tags}")
+            if properties.get("dockerUser") != "nobody" or properties["workload-isolation-type"] != "oci":
+                raise ValueError(f"Expected unprivileged TCG worker: {label}: {properties}")
     unavailable: dict[str, str] = {}
     policy_excluded: dict[str, str] = {}
     for label, target in original.items():
@@ -329,8 +337,6 @@ def select_profile(
                 policy_excluded[label] = "KVM runs in the dedicated syscalls-kvm lane."
             else:
                 unavailable[variant] = "KVM execution is unavailable."
-        elif page_size == "64k":
-            unavailable[variant] = "ARM64 64K-page syscall execution has no supported remote worker configuration."
         elif not hybrid and architecture == "arm64" and requirements[variant]["workload-isolation-type"] == "firecracker":
             unavailable[variant] = "ARM64 Firecracker execution is unavailable."
     eligible = expected - unavailable.keys() - policy_excluded.keys()

@@ -56,7 +56,6 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
-        tcg_64k = False,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -167,7 +166,7 @@ def _syscall_test(
     # Match the public ARM64 64K lane: systrap without checkpoint variants.
     arm64_64k = platform == "systrap" and "allsave" not in tags
     if arm64_64k:
-        tags.append("rbe-has-64k-arm64-variant")
+        tags += ["rbe-has-64k-arm64-variant", "rbe-has-64k-tcg-variant"]
 
     attributes = dict(kwargs)
     attributes.update(
@@ -191,14 +190,14 @@ def _syscall_test(
             {"arm64": runner_arm64_64k_test},
             dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
         )
-        if tcg_64k:
-            arm64_tcg_test(
-                name = name + "_64k_tcg",
-                payload = ":" + name + "_64k_arm64",
-                # Runtime policy belongs to the guest. Preserve the owning
-                # test's arguments, shard count and original timeout.
-                **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
-            )
+        arm64_tcg_test(
+            name = name + "_64k_tcg",
+            payload = ":" + name + "_64k_arm64",
+            tags = attributes["tags"],
+            # Runtime policy belongs to the guest. Preserve the owning
+            # test's arguments, shard count and original timeout.
+            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+        )
 
 def all_platforms():
     """All platforms returns a list of all platforms."""

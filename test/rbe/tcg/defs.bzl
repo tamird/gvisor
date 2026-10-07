@@ -111,7 +111,7 @@ _tcg_test = rule(
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )
 
-def arm64_tcg_test(name, payload, **kwargs):
+def arm64_tcg_test(name, payload, tags, **kwargs):
     """Wraps a declared ARM64 payload, preserving its caller-owned test attributes."""
     pkg_tar(
         name = name + "_payload",
@@ -137,6 +137,6 @@ def arm64_tcg_test(name, payload, **kwargs):
             "test.nonroot-workspace": "true",
             "test.workload-isolation-type": "oci",
         },
-        tags = ["manual", "no-local", "arm64-64k-tcg"],
+        tags = tags + ["manual", "no-local", "arm64-64k-tcg"],
         **kwargs
     )

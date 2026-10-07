@@ -1,23 +1,33 @@
-# ARM64 64K full-system pilot
+# ARM64 64K full-system syscall tests
 
 This frontend runs an existing ARM64 syscall target inside a Linux guest with
 64K pages. QEMU uses software translation (`-accel tcg`), so the remote OCI
 worker needs neither `/dev/kvm` nor root privileges. This is full-system
 emulation, not qemu-user.
 
-The owning syscall declaration opts in with `tcg_64k = True`. It supplies the
-same payload, arguments, size, timeout and shard count to the manual TCG
-frontend. The first bounded qualification selects only:
+The owning syscall macro declares a manual `<owner>_64k_tcg` frontend for
+each systrap owner without checkpoint modes. Its payload is the existing
+`<owner>_64k_arm64` frontend, which configures the runner, runtime and test
+together. Arguments, size, timeout, shards and the original hash15 bucket
+come from that owner. Select the public profile or one existing partition:
 
 ```sh
-bazel test --config=rbe --config=x86_64 --nocache_test_results \
-  //test/syscalls:mincore_test_runsc_systrap_shared_64k_tcg
+test/rbe/qualify.sh --arch=arm64 --syscall-bucket=0 syscalls-64k
 ```
 
-The original medium timeout is 300 seconds, including guest boot and output
-transfer. The pilot requests two emulated CPUs and 3 GiB guest memory; the OCI
-action requests two CPUs, 6 GB memory and 8 GB scratch space. These are resource
-bounds, not measured performance or qualification of the other 64K owners.
+The selector first analyzes the unchanged public `syscalls-arm64-64k` profile,
+then checks each declared TCG TestRunner's AMD64 OCI routing. Native, ptrace,
+KVM and checkpoint owners remain outside this profile. A partition report
+retains all unexecuted owners. Selecting an owner does not establish that it
+passes under emulation.
+
+Original test deadlines include guest boot and output transfer; small tests
+retain 60 seconds and medium tests retain 300 seconds. Each action requests
+two emulated CPUs and 3 GiB guest memory; the OCI action requests two CPUs,
+6 GB memory and 8 GB scratch space. This is the resource allocation used by
+the pilot, including QEMU and kernel overhead; it is not evidence that every
+owner fits. Qualification compares configured payload and outer requirements
+and retains failures without extending deadlines for software emulation.
 
 QEMU 6.2 and the Ubuntu 6.8.0-138 generic-64k kernel come from the existing
 20260928 APT snapshot. Package dependency resolution owns their transitive
