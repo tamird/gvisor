@@ -19,11 +19,11 @@ package sandbox
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -331,10 +331,7 @@ type Sandbox struct {
 // newID returns a unique ID for the sandbox.
 func newID() string {
 	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		// rand.Read never returns an error, and always fills b entirely.
-		panic(fmt.Sprintf("failed to generate random bytes for sandbox ID: %v", err))
-	}
+	rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }
 
@@ -797,9 +794,7 @@ func WithLeaveRunning(leaveRunning bool) SnapshotOption {
 
 func newSnapshotID() SnapshotID {
 	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		panic(fmt.Sprintf("failed to generate random bytes for snapshot ID: %v", err))
-	}
+	rand.Read(b)
 	return SnapshotID(fmt.Sprintf("snap-%x", b))
 }
 

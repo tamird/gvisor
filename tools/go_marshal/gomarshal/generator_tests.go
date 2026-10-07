@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"go/ast"
 	"io"
-	"strings"
+	"unicode"
 )
 
 var standardImports = []string{
@@ -77,7 +77,9 @@ func (g *testGenerator) typeName() string {
 }
 
 func (g *testGenerator) testFuncName(base string) string {
-	return fmt.Sprintf("%s%s", base, strings.Title(g.t.Name.Name))
+	name := []rune(g.t.Name.Name)
+	name[0] = unicode.ToTitle(name[0])
+	return base + string(name)
 }
 
 func (g *testGenerator) inTestFunction(name string, body func()) {

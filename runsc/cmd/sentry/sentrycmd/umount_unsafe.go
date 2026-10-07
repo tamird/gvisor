@@ -17,7 +17,6 @@ package sentrycmd
 import (
 	"context"
 	"os"
-	"syscall"
 	"unsafe"
 
 	"github.com/google/subcommands"
@@ -77,9 +76,13 @@ func (u *Umount) Execute(_ context.Context, f *flag.FlagSet, args ...any) subcom
 		util.Fatalf("unable to read from the sync descriptor: %v, error %v", l, err)
 	}
 
+	dir, err := unix.BytePtrFromString(dirPath)
+	if err != nil {
+		util.Fatalf("Invalid directory path %q: %v", dirPath, err)
+	}
 	if _, _, errno := unix.RawSyscall(
 		unix.SYS_UMOUNT2,
-		uintptr(unsafe.Pointer(syscall.StringBytePtr(dirPath))),
+		uintptr(unsafe.Pointer(dir)),
 		uintptr(linux.MNT_DETACH), 0); errno != 0 {
 		util.Fatalf("Unable to umount %s: errno %v", dirPath, errno)
 	}
