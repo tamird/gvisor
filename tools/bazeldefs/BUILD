@@ -59,6 +59,15 @@ string_flag(
     ],
 )
 
+string_flag(
+    name = "local_test_backend",
+    build_setting_default = "local",
+    values = [
+        "local",
+        "docker",
+    ],
+)
+
 # Individual tests must be able to select the cgroup-v1 fixture. Bazel forbids
 # Starlark transitions from changing --define, so use a build setting instead.
 # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/analysis/starlark/FunctionTransitionUtil.java#L305-L313
