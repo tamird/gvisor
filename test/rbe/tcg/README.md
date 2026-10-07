@@ -1,4 +1,4 @@
-# ARM64 full-system syscall tests
+# Full-system syscall tests
 
 This frontend runs an existing ARM64 syscall target inside a declared Linux
 guest with its selected kernel and page size. QEMU uses software translation
@@ -66,8 +66,34 @@ The init checks the declared release and page size before running tests.
 
 The release string matches the October 2 public RC workers. It does not
 establish that this package has the same binary or config as a Buildkite
-worker, nor does it qualify the mutable RC queues. Full AMD64 RC execution
-also requires KVM inside its guest; this ARM64 software-emulation route does
-not supply that separate contract.
+worker, nor does it qualify the mutable RC queues. AMD64 RC execution also
+requires KVM inside its guest; the ARM64 software-emulation route does not
+supply that separate contract.
+
+The AMD64 pilot reuses the image producer, runfiles transport and result
+handling with `qemu-system-x86_64 -cpu host -accel kvm`. Its pinned AMD64
+image and modules come from the same mainline build as the ARM64 RC guest.
+The producer preserves the x86 bzImage and includes the vendor KVM modules
+and their dependencies. The guest checks its release, 4K page size, CPU
+virtualization flags and KVM device before running the selected payload.
+Those checks alone do not establish that nested KVM works: the pilot also
+runs the original gVisor KVM mincore test, alongside Linux, ptrace and
+systrap variants.
+
+On the `rbe-amd64-rc-kernel` fork branch:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-amd64-rc-kernel \
+  -f lanes=syscalls-rc-pilot -f architecture=amd64 -f execution=local
+```
+
+Compilation and guest-image assembly run on RBE. Only TestRunner actions run
+on the Actions host, one at a time, each with two virtual CPUs, 3 GiB memory
+and a private 4 GiB disk. The original 300-second mincore deadline includes
+boot and result transfer; the workflow has a 45-minute work limit. There is
+no software-emulation fallback for absent KVM. Guest logs, XML, kernel facts
+and spawn placement are retained. This four-owner pilot is not the full
+AMD64 RC qualification profile.
 
 [published build metadata]: https://kernel.ubuntu.com/mainline/v7.3-rc3/

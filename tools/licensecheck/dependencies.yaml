@@ -5191,6 +5191,18 @@
   commit: 407a9675e6d9af1200b5f57f9ca52ec6cdacce74
   sha256: aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d
   license: Apache-2.0
+- dependency: kvm_amd64_rc_image
+  version: https://kernel.ubuntu.com/mainline/v7.3-rc3/amd64/linux-image-unsigned-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_amd64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: 5f2788b423366969fb819827aef682854871afb4f4851ef25b8341eef90359dd
+  license: GPL-2.0-only
+- dependency: kvm_amd64_rc_modules
+  version: https://kernel.ubuntu.com/mainline/v7.3-rc3/amd64/linux-modules-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_amd64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: a8569d30cf9a24e38341df57b3d336e5c68121be73481aa22f068f1a21444852
+  license: GPL-2.0-only
 - dependency: kythe_release
   version: https://github.com/kythe/kythe/releases/download/v0.0.74/kythe-v0.0.74.tar.gz
   retrieved: "2026-09-30"

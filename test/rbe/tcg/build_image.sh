@@ -25,7 +25,9 @@ kernel_out="$(realpath -m "$6")"
 initramfs_out="$(realpath -m "$7")"
 page_size="$8"
 zstd="$(realpath "$9")"
-shift 9
+architecture="${10}"
+read -r -a kernel_modules <<< "${11}"
+shift 11
 staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 mkdir "$staging/host" "$staging/root"
@@ -51,7 +53,14 @@ kernel="$root/boot/vmlinuz-$release"
 # section. Its public header supplies the offset, size and compression type:
 # https://github.com/torvalds/linux/blob/fd73f4a66/drivers/firmware/efi/libstub/zboot-header.S#L19-L27
 read -r dos image_type < <(host_tool usr/bin/od -An -tx4 -N8 "$kernel")
-if [[ "$dos" == 00005a4d && "$image_type" == 676d697a ]]; then
+if [[ "$architecture" == amd64 ]]; then
+  # x86 boot protocol: HdrS signature and the XLF_KERNEL_64 flag.
+  # https://docs.kernel.org/arch/x86/boot.html
+  read -r magic < <(host_tool usr/bin/od -An -tx4 -j514 -N4 "$kernel")
+  read -r flags < <(host_tool usr/bin/od -An -tu2 -j566 -N2 "$kernel")
+  [[ "$magic" == 53726448 && "$((flags & 1))" == 1 && "$page_size" == 4096 ]]
+  cp "$kernel" "$kernel_out"
+elif [[ "$dos" == 00005a4d && "$image_type" == 676d697a ]]; then
   read -r compression < <(host_tool usr/bin/od -An -tx1 -j24 -N5 "$kernel")
   [[ "$compression" == "7a 73 74 64 00" ]]
   read -r offset size < <(host_tool usr/bin/od -An -tu4 -j8 -N8 "$kernel")
@@ -71,11 +80,10 @@ if [[ -d "$root/usr/lib/modules/$release" && ! -e "$root/lib/modules/$release" ]
   mkdir -p "$root/lib/modules"
   mv "$root/usr/lib/modules/$release" "$root/lib/modules/"
 fi
-# Retain exactly the module closure used by this board and output transport.
-# virtio-blk, virtio-pci, ext4 and devtmpfs are built into both pinned kernels.
+# Retain the selected board, output transport and virtualization module closure.
 kmod_tool depmod -b "$root" "$release"
 mkdir "$staging/modules"
-for module in 9p 9pnet_virtio overlay; do
+for module in "${kernel_modules[@]}"; do
   kmod_tool modprobe -C /dev/null -d "$root" -S "$release" --show-depends "$module"
 done > "$staging/modules.txt"
 while read -r operation path remainder; do
@@ -90,6 +98,7 @@ cp -a "$staging/modules/." "$root/lib/modules/$release/"
 kmod_tool depmod -b "$root" "$release"
 rm -rf "${root:?}/boot"
 printf 'readonly expected_kernel_release=%q\nreadonly expected_page_size=%q\n' "$release" "$page_size" > "$root/etc/gvisor-test-kernel"
+printf 'readonly expected_architecture=%q\n' "$architecture" >> "$root/etc/gvisor-test-kernel"
 cp "$init" "$root/init"
 chmod 0755 "$root/init"
 mkdir -p "$root/proc" "$root/sys" "$root/dev" "$root/run" "$root/tmp" "$root/input" "$root/result" "$root/work"

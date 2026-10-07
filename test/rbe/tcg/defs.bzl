@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Full-system ARM64 tests with declared QEMU and guest inputs."""
+"""Full-system tests with declared QEMU and guest inputs."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("//tools:defs.bzl", "pkg_tar")
-load("//tools/bazeldefs:defs.bzl", "arch_config", "arm64_config", "transition_allowlist")
+load("//tools/bazeldefs:defs.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
 
-_guest_transition = transition(implementation = arm64_config, inputs = [], outputs = arch_config)
+def _guest_config(settings, attr):
+    if attr.architecture == "amd64":
+        return amd64_config(settings, attr)
+    return arm64_config(settings, attr)
+
+_guest_transition = transition(implementation = _guest_config, inputs = [], outputs = arch_config)
 
 TcgImageInfo = provider(
     doc = "Declared kernel and initramfs for a full-system test guest.",
-    fields = ["kernel", "initramfs"],
+    fields = ["kernel", "initramfs", "architecture"],
 )
 
 def _image_impl(ctx):
@@ -42,17 +47,19 @@ def _image_impl(ctx):
             initramfs.path,
             str(ctx.attr.page_size),
             ctx.executable._zstd.path,
+            ctx.attr.architecture,
+            " ".join(ctx.attr.kernel_modules),
         ] + [archive.path for archive in ctx.files.kernel_archives],
         inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init] + ctx.files.kernel_archives,
         tools = [ctx.attr._builder[DefaultInfo].files_to_run, ctx.attr._zstd[DefaultInfo].files_to_run, tar.tarinfo.binary],
         outputs = [kernel, initramfs],
         env = tar.tarinfo.default_env,
         mnemonic = "TcgGuestImage",
-        progress_message = "Preparing the ARM64 guest with %s" % ctx.attr.kernel_release,
+        progress_message = "Preparing the %s guest with %s" % (ctx.attr.architecture, ctx.attr.kernel_release),
     )
     return [
         DefaultInfo(files = depset([kernel, initramfs])),
-        TcgImageInfo(kernel = kernel, initramfs = initramfs),
+        TcgImageInfo(kernel = kernel, initramfs = initramfs, architecture = ctx.attr.architecture),
     ]
 
 tcg_image = rule(
@@ -64,6 +71,8 @@ tcg_image = rule(
         "init": attr.label(allow_single_file = True, mandatory = True),
         "kernel_release": attr.string(mandatory = True),
         "kernel_archives": attr.label_list(allow_files = True),
+        "architecture": attr.string(default = "arm64", values = ["amd64", "arm64"]),
+        "kernel_modules": attr.string_list(default = ["9p", "9pnet_virtio", "overlay"]),
         "page_size": attr.int(default = 65536, values = [4096, 65536]),
         "_zstd": attr.label(default = Label("@llvm_zstd//:zstd_cli"), executable = True, cfg = "exec"),
         "_builder": attr.label(default = Label(":build_image"), executable = True, cfg = "exec"),
@@ -78,17 +87,21 @@ def _tcg_test_impl(ctx):
     if payload_runfiles.symlinks.to_list() or payload_runfiles.root_symlinks.to_list():
         fail("TCG payload requires runfiles aliases unsupported by pkg_tar")
     image = ctx.attr.image[TcgImageInfo]
+    architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
+    if image.architecture != architecture:
+        fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
-    inputs = [ctx.file.archive, ctx.file._host_tools, image.kernel, image.initramfs, ctx.executable._launcher, tar.tarinfo.binary]
+    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, tar.tarinfo.binary]
     arguments = [
-        ctx.file._host_tools.short_path,
+        ctx.file.host_tools.short_path,
         image.kernel.short_path,
         image.initramfs.short_path,
         ctx.file.archive.short_path,
         ctx.executable.payload.short_path,
         tar.tarinfo.binary.short_path,
         str(ctx.attr.payload.label),
+        ctx.attr.machine,
     ]
     ctx.actions.write(
         executable,
@@ -109,15 +122,15 @@ _tcg_test = rule(
     attrs = {
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
-        "_host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )
 
-def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
-    """Wraps a declared ARM64 payload, preserving its caller-owned test attributes."""
+def _guest_test(name, payload, tags, image, **kwargs):
     pkg_tar(
         name = name + "_payload",
         testonly = True,
@@ -133,6 +146,17 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
         image = image,
         archive = ":" + name + "_payload",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+        tags = tags + ["manual"],
+        **kwargs
+    )
+
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
+    """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
+    _guest_test(
+        name = name,
+        payload = payload,
+        image = image,
+        tags = tags + ["no-local"],
         exec_properties = {
             "test.EstimatedCPU": "2",
             "test.EstimatedMemory": "6GB",
@@ -143,6 +167,19 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
             "test.nonroot-workspace": "true",
             "test.workload-isolation-type": "oci",
         },
-        tags = tags + ["manual", "no-local"],
+        **kwargs
+    )
+
+def amd64_kvm_test(name, payload, tags, image, **kwargs):
+    """Wraps an AMD64 payload for a host with nested KVM, keeping builds remote."""
+    _guest_test(
+        name = name,
+        payload = payload,
+        image = image,
+        machine = "amd64_kvm",
+        host_tools = "@kvm_host_tools//:flat",
+        # Only the VM process needs the host device. Its declared inputs and
+        # payload remain ordinary remotely executable build actions.
+        tags = tags + ["no-remote-exec", "no-sandbox"],
         **kwargs
     )

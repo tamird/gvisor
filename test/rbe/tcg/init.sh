@@ -31,7 +31,7 @@ finish() {
   local status=$?
   trap - EXIT
   set +e
-  # The host export belongs to the unprivileged QEMU process, not guest root.
+  # When QEMU runs unprivileged, guest root must not replace the export owner.
   if [[ -d /work/outputs ]]; then cp -a --no-preserve=ownership /work/outputs /result/ || status=125; fi
   if [[ -f /work/test.xml ]]; then cp /work/test.xml /result/test.xml || status=125; fi
   printf '%s\n' "$status" > /result/exit_status
@@ -47,6 +47,22 @@ uname -a | tee /result/kernel.txt
 page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt
 [[ "$page_size" == "${expected_page_size:?}" ]]
+if [[ "${expected_architecture:?}" == amd64 ]]; then
+  # Host KVM access alone does not prove the CPU exposes virtualization to this
+  # extra guest layer. Require the vendor module and device before the payload.
+  flags=
+  while read -r key colon flags; do
+    [[ "$key" == flags && "$colon" == : ]] && break
+  done < /proc/cpuinfo
+  case " $flags " in
+    *" vmx "*) module=kvm_intel ;;
+    *" svm "*) module=kvm_amd ;;
+    *) echo 'The guest CPU does not expose VMX or SVM.'; exit 1 ;;
+  esac
+  modprobe "$module"
+  [[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]]
+  printf 'Guest KVM module: %s\n' "$module" | tee /result/kvm.txt
+fi
 mount -t ext4 /dev/vda /work
 mkdir -p /work/payload /work/tmp /work/outputs
 chmod 1777 /work/tmp

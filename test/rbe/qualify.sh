@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-64k syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -40,6 +40,8 @@ Clang-tidy retains a separate AMD64 aspect build over its recursive roots.
 ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The remote syscalls-64k lane selects the public ARM64 64K systrap profile.
+The local AMD64 syscalls-rc-pilot lane runs four mincore owners in a pinned
+RC guest, including nested KVM. It does not select the full RC profile.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
@@ -107,7 +109,7 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|plugin-network:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
       *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
@@ -131,7 +133,7 @@ if [[ $# == 1 && $1 == amd64 ]]; then
   set --
   for lane in "${lanes[@]}"; do
     # KVM syscall execution belongs to the separate local-host profile.
-    if [[ $lane != syscalls-kvm && $lane != syscalls-64k ]]; then set -- "$@" "$lane"; fi
+    if [[ $lane != syscalls-kvm && $lane != syscalls-rc-pilot && $lane != syscalls-64k ]]; then set -- "$@" "$lane"; fi
   done
 fi
 if (( $# == 0 )); then
@@ -144,7 +146,7 @@ for lane in "$@"; do
     printf 'The 64K syscall lane requires --arch=arm64 and remote TCG execution.\n' >&2
     exit 2
   fi
-  if [[ $lane == syscalls-kvm && ( $test_execution != local || $arch != amd64 ) ]]; then
+  if [[ ( $lane == syscalls-kvm || $lane == syscalls-rc-pilot ) && ( $test_execution != local || $arch != amd64 ) ]]; then
     printf 'The KVM syscall lane requires local AMD64 execution.\n' >&2
     exit 2
   fi
@@ -155,7 +157,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-64k|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -967,6 +969,17 @@ run_lane() (
       fi
       command=build
       targets=(//website:image)
+      ;;
+    syscalls-rc-pilot)
+      # Preserve original mincore arguments, shards and deadlines. The guest
+      # must exercise runsc's KVM platform, not merely expose /dev/kvm.
+      targets=(
+        //test/syscalls:mincore_test_native_rc_kvm
+        //test/syscalls:mincore_test_runsc_ptrace_rc_kvm
+        //test/syscalls:mincore_test_runsc_systrap_shared_rc_kvm
+        //test/syscalls:mincore_test_runsc_kvm_rc_kvm
+      )
+      options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
       ;;
     syscalls-64k)
       run_tcg_profile

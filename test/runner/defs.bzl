@@ -1,7 +1,7 @@
 """Defines a rule for syscall test targets."""
 
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
-load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":runner_test.bzl", _runner_test_rule = "runner_test")
@@ -206,6 +206,15 @@ def _syscall_test(
             payload = ":" + name + "_arm64",
             image = "//test/rbe/tcg:rc_guest",
             tags = attributes["tags"] + ["arm64-rc-tcg"],
+            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+        )
+
+    if rc_kernel and platform in ["native", "ptrace", "systrap", "kvm"] and "allsave" not in tags:
+        amd64_kvm_test(
+            name = name + "_rc_kvm",
+            payload = ":" + name + "_amd64",
+            image = "//test/rbe/tcg:amd64_rc_guest",
+            tags = attributes["tags"] + ["amd64-rc-kvm"],
             **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
 

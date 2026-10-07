@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Unprivileged host process; only the emulated guest has kernel privileges.
+# The selected machine determines whether the host needs KVM device access.
 set -euo pipefail
 host_archive="$(realpath "$1")"
 kernel="$(realpath "$2")"
@@ -22,12 +22,37 @@ payload_archive="$(realpath "$4")"
 payload="$5"
 tar_tool="$(realpath "$6")"
 payload_label="$7"
-shift 7
+machine="$8"
+shift 8
+case "$machine" in
+  arm64_tcg)
+    emulator=qemu-system-aarch64
+    machine_options=(-machine "virt-6.2,gic-version=3" -cpu cortex-a57 -accel "tcg,thread=multi")
+    console=ttyAMA0
+    ;;
+  amd64_kvm)
+    [[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]]
+    emulator=qemu-system-x86_64
+    # The RC guest must retain VMX/SVM so the payload can run gVisor's KVM
+    # platform. Never fall back to emulation if this host cannot provide it.
+    # https://docs.kernel.org/virt/kvm/x86/running-nested-guests.html
+    machine_options=(-machine pc-i440fx-6.2 -cpu host -accel kvm)
+    console=ttyS0
+    ;;
+  *) printf 'Unsupported guest machine: %s\n' "$machine" >&2; exit 1 ;;
+esac
 scratch="$(mktemp -d "${TEST_TMPDIR}/tcg.XXXXXX")"
 result="${TEST_UNDECLARED_OUTPUTS_DIR}/guest"
 mkdir -p "$scratch/host" "$scratch/input" "$result"
 "$tar_tool" -xf "$host_archive" -C "$scratch/host" --no-same-owner
 host="$scratch/host"
+if [[ "$machine" == amd64_kvm ]]; then
+  # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
+  # Select the declared BIOS instead of the host's /usr/share/seabios.
+  # https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/q/qemu/qemu_6.2+dfsg-2ubuntu6.31.debian.tar.xz
+  [[ -r "$host/usr/share/seabios/bios-256k.bin" ]]
+  machine_options+=(-bios "$host/usr/share/seabios/bios-256k.bin")
+fi
 loader="$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
 libraries="$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu"
 host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "${@:2}"; }
@@ -67,14 +92,14 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
-# No host devices, networking, acceleration fallback or privileged mounts.
+# Networking and privileged host mounts are not needed by the guest transport.
 QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
-  "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/qemu-system-aarch64" \
+  "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
   -no-user-config -nodefaults -display none -monitor none \
-  -machine virt-6.2,gic-version=3 -cpu cortex-a57 -accel tcg,thread=multi \
+  "${machine_options[@]}" \
   -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" -initrd "$initramfs" \
-  -append 'console=ttyAMA0 rdinit=/init panic=-1' \
+  -append "console=$console rdinit=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \
   -drive "file=$scratch/scratch.ext4,format=raw,if=none,id=scratch" \
   -device virtio-blk-pci,drive=scratch \

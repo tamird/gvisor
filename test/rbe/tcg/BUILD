@@ -89,6 +89,33 @@ tcg_image(
     tags = ["manual"],
 )
 
+tcg_image(
+    name = "amd64_rc_guest",
+    testonly = True,
+    architecture = "amd64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    guest = "@kvm_amd64_guest//:flat",
+    host_tools = "@kvm_host_tools//:flat",
+    init = "init.sh",
+    kernel_archives = [
+        "@kvm_amd64_rc_image//:data.tar",
+        "@kvm_amd64_rc_modules//:data.tar",
+    ],
+    kernel_modules = [
+        "9p",
+        "9pnet_virtio",
+        "overlay",
+        "kvm_intel",
+        "kvm_amd",
+    ],
+    kernel_release = "7.3.0-070300rc3-generic",
+    page_size = 4096,
+    tags = ["manual"],
+)
+
 bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],

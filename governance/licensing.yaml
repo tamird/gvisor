@@ -1833,3 +1833,19 @@ exceptions:
       The matching modules package carries the same audited GPL-2 notice
       as tcg_arm64_rc_image. Used only by that manual RC test guest, with
       the notice and complete GPL-2 text retained.
+  - dependency: kvm_amd64_rc_image
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned Ubuntu mainline package's embedded copyright notice was
+      audited directly. Used only by the manual AMD64 RC test guest, not
+      as a declared input to gVisor release artifacts; retain its notice
+      and the guest's complete GPL-2 text. Automatic archive classification
+      does not support this upstream URL.
+  - dependency: kvm_amd64_rc_modules
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned Ubuntu mainline package's embedded copyright notice was
+      audited directly. Used only by the manual AMD64 RC test guest, not
+      as a declared input to gVisor release artifacts; retain its notice
+      and the guest's complete GPL-2 text. Automatic archive classification
+      does not support this upstream URL.
