@@ -15,11 +15,8 @@
 package state
 
 import (
-	"context"
-	"encoding"
 	"reflect"
 	"sort"
-	"time"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
@@ -95,8 +92,8 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 // lookupNameFields extracts the name and fields from an object.
 func lookupNameFields(typ reflect.Type) (string, []string, bool) {
 	v := reflect.Zero(reflect.PtrTo(typ)).Interface()
-	t := stateObject(v)
-	if t == nil {
+	t, ok := v.(Type)
+	if !ok {
 		// Is this a primitive?
 		if typ.Kind() == reflect.Interface {
 			return interfaceType, nil, true
@@ -335,78 +332,12 @@ func Release() {
 	reverseTypeDatabase = nil
 }
 
-// binaryObject is a value with a self-contained binary representation.
-type binaryObject interface {
-	encoding.BinaryMarshaler
-	encoding.BinaryUnmarshaler
-}
-
-// binaryState adapts a foreign struct without exposing its representation to
-// the object graph. Its binary codec owns any internal pointer relationships.
-type binaryState struct {
-	value binaryObject
-}
-
-func (b binaryState) StateTypeName() string {
-	typ := reflect.TypeOf(b.value).Elem()
-	return typ.PkgPath() + "." + typ.Name()
-}
-
-func (binaryState) StateFields() []string { return []string{"value"} }
-
-func (b binaryState) StateSave(s Sink) {
-	data, err := b.value.MarshalBinary()
-	if err != nil {
-		Failf("encoding %s: %w", b.StateTypeName(), err)
-	}
-	// Strings decode inline. A deferred slice could leave a map key incomplete
-	// when decodeMap inserts it into the restored map.
-	s.SaveValue(0, string(data))
-}
-
-func (b binaryState) StateLoad(_ context.Context, s Source) {
-	var data string
-	s.Load(0, &data)
-	if err := b.value.UnmarshalBinary([]byte(data)); err != nil {
-		Failf("decoding %s: %w", b.StateTypeName(), err)
-	}
-}
-
-// stateObject supplies state methods for foreign structs while preserving
-// explicit state methods and the original types in fields, maps and interfaces.
-func stateObject(obj any) Type {
-	switch value := obj.(type) {
-	case Type:
-		return value
-	case binaryObject:
-		typ := reflect.TypeOf(obj)
-		// Custom state methods are only invoked for structs. Other kinds
-		// are encoded directly by encodeObject.
-		if typ.Kind() == reflect.Pointer && typ.Elem().Kind() == reflect.Struct && typ.Elem().Name() != "" {
-			return binaryState{value}
-		}
-	}
-	return nil
-}
-
-// Register registers a pointer to a type implementing Type, or a named struct
-// implementing both encoding.BinaryMarshaler and encoding.BinaryUnmarshaler.
-// Explicit state methods take precedence over binary encoding.
+// Register registers a type.
 //
-// This must be called on init and only done once. Registration lets Load
-// reconstruct concrete types held in interfaces without a preceding Save.
-func Register(obj any) {
-	t := stateObject(obj)
-	if t == nil {
-		Failf("cannot register %T: no state methods or supported binary codec", obj)
-	}
-	register(reflect.TypeOf(obj), t)
-}
-
-// register associates state methods with the original type restored from an
-// interface, which may differ from the adapter that provides the methods.
-func register(typ reflect.Type, t Type) {
+// This must be called on init and only done once.
+func Register(t Type) {
 	name := t.StateTypeName()
+	typ := reflect.TypeOf(t)
 	if raceEnabled {
 		assertValidType(name, t.StateFields())
 		// Register must always be called on pointers.
@@ -450,8 +381,4 @@ func register(typ reflect.Type, t Type) {
 		reverseTypeDatabase[typ] = name
 	}
 	globalTypeDatabase[name] = typ
-}
-
-func init() {
-	Register((*time.Time)(nil))
 }

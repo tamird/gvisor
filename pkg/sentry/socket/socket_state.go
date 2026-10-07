@@ -12,33 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package netstack
+package socket
 
 import (
 	"context"
 	"time"
-
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-// +checklocksexclude:s.readMu
-func (s *sock) saveTimestamp() int64 {
-	s.readMu.Lock()
-	defer s.readMu.Unlock()
-	return s.timestamp.UnixNano()
+func (i *IPControlMessages) saveTimestamp() int64 {
+	return i.Timestamp.UnixNano()
 }
 
-// +checklocksexclude:s.readMu
-func (s *sock) loadTimestamp(_ context.Context, nsec int64) {
-	s.readMu.Lock()
-	defer s.readMu.Unlock()
-	s.timestamp = time.Unix(0, nsec)
-}
-
-func (s *Stack) saveStack() *stack.Stack {
-	return s.Stack
-}
-
-func (s *Stack) loadStack(_ context.Context, st *stack.Stack) {
-	s.Stack = st
+func (i *IPControlMessages) loadTimestamp(_ context.Context, nsec int64) {
+	i.Timestamp = time.Unix(0, nsec)
 }

@@ -458,7 +458,7 @@ type sock struct {
 	// valid when timestampValid is true.
 	//
 	// +checklocks:readMu
-	timestamp time.Time
+	timestamp time.Time `state:".(int64)"`
 
 	// TODO(b/153685824): Move this to SocketOptions.
 	// sockOptInq corresponds to TCP_INQ.

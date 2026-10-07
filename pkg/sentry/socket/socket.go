@@ -160,7 +160,7 @@ type IPControlMessages struct {
 
 	// Timestamp is the time that the last packet used to create the read data
 	// was received.
-	Timestamp time.Time
+	Timestamp time.Time `state:".(int64)"`
 
 	// HasInq indicates whether Inq is valid/set.
 	HasInq bool
