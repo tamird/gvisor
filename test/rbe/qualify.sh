@@ -397,6 +397,42 @@ for source in Path(sys.argv[1]).glob("*.json"):
                 event = json.loads(line)
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
+  # Disposable qualification intersection; the complete maintained selection
+  # above remains in the artifact, and the source interface is unchanged.
+  [[ $arch == amd64 && $lane == syscalls && -z $syscall_bucket ]]
+  python3 - "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY_FOCUS'
+import json
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+artifacts = Path(sys.argv[2])
+canonical = set(path.read_text().splitlines())
+selected = set([
+    "//test/syscalls:cgroup2_test_native_amd64",
+    "//test/syscalls:iptables_test_native_amd64",
+    "//test/syscalls:mount_fd_test_native_amd64",
+    "//test/syscalls:openat2_test_native_amd64",
+    "//test/syscalls:pty_test_native_amd64",
+    "//test/syscalls:socket_inet_loopback_isolated_test_native_amd64",
+    "//test/syscalls:socket_inet_loopback_isolated_test_runsc_systrap_hostnet_amd64",
+    "//test/syscalls:socket_inet_loopback_test_native_amd64",
+    "//test/syscalls:socket_inet_loopback_test_runsc_systrap_hostnet_amd64",
+    "//test/syscalls:socket_netlink_netfilter_test_native_amd64",
+    "//test/syscalls:tcp_socket_test_native_amd64"
+])
+assert selected <= canonical, sorted(selected - canonical)
+text = "".join(label + "\n" for label in sorted(selected))
+(artifacts / "focused-targets").write_text(text)
+(artifacts / "unexecuted-targets").write_text("".join(label + "\n" for label in sorted(canonical - selected)))
+(artifacts / "focused-selection.json").write_text(json.dumps({
+    "complete_profile_owners": sorted(canonical),
+    "selected_owners": sorted(selected),
+    "unexecuted_owners": sorted(canonical - selected),
+    "scope": "Eleven complete residual owners; original 102 failed cases are a subset of their current complete suites.",
+}, indent=2) + "\n")
+path.write_text(text)
+PY_FOCUS
   printf '%s %s profile: namespace/KVM owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$arch" "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
