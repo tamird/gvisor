@@ -260,6 +260,10 @@ analyzers:
       suppress:
         # MergePackageFiles still requires ast.Package; no name resolution is used.
         - '^ast\.Package has been deprecated '
+        # Nogo's Go 1.27 compiler archives require NewReader before Read.
+        # Remove when the export-data producer switches to cmd/export:
+        # https://github.com/golang/tools/blob/ea2f152dc/go/gcexportdata/gcexportdata.go#L25-L34
+        - '^gcexportdata\.NewReader is deprecated:'
         # OCI prestart hooks remain supported for existing container configurations.
         - '^(c\.Spec|spec)\.Hooks\.Prestart is deprecated:'
         # The cgroup v1 controller still honors this setting on older host kernels.
