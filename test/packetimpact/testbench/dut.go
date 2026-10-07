@@ -23,6 +23,7 @@ import (
 
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	bin "gvisor.dev/gvisor/pkg/binary"
@@ -56,9 +57,9 @@ func (info *DUTInfo) ConnectToDUT(t *testing.T) DUT {
 
 	n := info.Net
 	posixServerAddress := netip.AddrPortFrom(n.POSIXServerIP, n.POSIXServerPort).String()
-	conn, err := grpc.Dial(posixServerAddress, grpc.WithInsecure(), grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: RPCKeepalive}))
+	conn, err := grpc.NewClient(posixServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: RPCKeepalive}))
 	if err != nil {
-		t.Fatalf("failed to grpc.Dial(%s): %s", posixServerAddress, err)
+		t.Fatalf("failed to grpc.NewClient(%s): %s", posixServerAddress, err)
 	}
 	posixServer := NewPOSIXClient(conn)
 	return DUT{
