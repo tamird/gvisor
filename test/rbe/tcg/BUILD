@@ -55,6 +55,7 @@ bzl_library(
     deps = [
         "//tools:defs_bzl",
         "//tools/bazeldefs:defs_bzl",
+        "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
     ],
 )

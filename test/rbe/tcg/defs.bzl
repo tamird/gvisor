@@ -17,6 +17,7 @@
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("//tools:defs.bzl", "pkg_tar")
 load("//tools/bazeldefs:defs.bzl", "arch_config", "arm64_config", "transition_allowlist")
+load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
 
 _guest_transition = transition(implementation = arm64_config, inputs = [], outputs = arch_config)
 
@@ -130,6 +131,8 @@ def arm64_tcg_test(name, payload, **kwargs):
             "test.EstimatedCPU": "2",
             "test.EstimatedMemory": "6GB",
             "test.EstimatedFreeDiskBytes": "8GB",
+            # Bazel's undeclared-output collection requires file and zip.
+            "test.container-image": RBE_DOCKER_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
             "test.nonroot-workspace": "true",
             "test.workload-isolation-type": "oci",

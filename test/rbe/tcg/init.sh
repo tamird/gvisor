@@ -31,7 +31,8 @@ finish() {
   local status=$?
   trap - EXIT
   set +e
-  if [[ -d /work/outputs ]]; then cp -a /work/outputs /result/ || status=125; fi
+  # The host export belongs to the unprivileged QEMU process, not guest root.
+  if [[ -d /work/outputs ]]; then cp -a --no-preserve=ownership /work/outputs /result/ || status=125; fi
   if [[ -f /work/test.xml ]]; then cp /work/test.xml /result/test.xml || status=125; fi
   printf '%s\n' "$status" > /result/exit_status
   sync

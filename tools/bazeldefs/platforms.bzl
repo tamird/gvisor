@@ -2,7 +2,7 @@
 
 # BuildBuddy's Ubuntu 22.04 image supplies iptables 1.8.7 and Docker 24.
 # Docker 28 breaks checkpoint/restore: https://github.com/moby/moby/issues/50750.
-_RBE_DOCKER_IMAGE = "docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3"
+RBE_DOCKER_TOOLS_IMAGE = "docker://gcr.io/flame-public/rbe-ubuntu22-04@sha256:0d84a80bb0fc36ba5381942adcf6493249594dcc9044845c617b78c9b621cae3"
 
 # AMD64/ARM64 networking runtime with CA trust, iptables-nft, iproute2 and
 # OpenBSD netcat.
@@ -47,7 +47,7 @@ def docker_exec_properties(free_disk, memory = None, exec_group = "test"):
         prefix + "EstimatedCPU": "4",
         prefix + "EstimatedMemory": memory if memory != None else "4GB",
         prefix + "EstimatedFreeDiskBytes": free_disk,
-        prefix + "container-image": _RBE_DOCKER_IMAGE,
+        prefix + "container-image": RBE_DOCKER_TOOLS_IMAGE,
         prefix + "dockerUser": "root",
         prefix + "network": "external",
         prefix + "network-enable-ipv6": "true",
