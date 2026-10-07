@@ -410,16 +410,7 @@ artifacts = Path(sys.argv[2])
 canonical = set(path.read_text().splitlines())
 selected = set([
     "//test/syscalls:cgroup2_test_native_amd64",
-    "//test/syscalls:iptables_test_native_amd64",
-    "//test/syscalls:mount_fd_test_native_amd64",
-    "//test/syscalls:openat2_test_native_amd64",
-    "//test/syscalls:pty_test_native_amd64",
-    "//test/syscalls:socket_inet_loopback_isolated_test_native_amd64",
-    "//test/syscalls:socket_inet_loopback_isolated_test_runsc_systrap_hostnet_amd64",
-    "//test/syscalls:socket_inet_loopback_test_native_amd64",
-    "//test/syscalls:socket_inet_loopback_test_runsc_systrap_hostnet_amd64",
-    "//test/syscalls:socket_netlink_netfilter_test_native_amd64",
-    "//test/syscalls:tcp_socket_test_native_amd64"
+    "//test/syscalls:cgroup2_test_runsc_systrap_shared_amd64"
 ])
 assert selected <= canonical, sorted(selected - canonical)
 text = "".join(label + "\n" for label in sorted(selected))
@@ -429,7 +420,7 @@ text = "".join(label + "\n" for label in sorted(selected))
     "complete_profile_owners": sorted(canonical),
     "selected_owners": sorted(selected),
     "unexecuted_owners": sorted(canonical - selected),
-    "scope": "Eleven complete residual owners; original 102 failed cases are a subset of their current complete suites.",
+    "scope": "Two complete cgroup2 owners: native namespace-root fixture and shared systrap hierarchy-root regression.",
 }, indent=2) + "\n")
 path.write_text(text)
 PY_FOCUS
