@@ -45,6 +45,10 @@ the guest's original XML and exit status, requires an explicit completion
 record, and kills/reaps QEMU on interruption. A successful QEMU shutdown alone
 does not count as a passing test.
 
+The launcher forwards Bazel's shard coordinates and GoogleTest aliases with
+a guest-local status path. It acknowledges sharding to Bazel only after the
+payload writes that status file; the original runner still partitions cases.
+
 The macro also declares manual `<owner>_rc_tcg` frontends for ordinary ARM64
 ptrace and systrap owners without checkpoint modes. They use the same
 transport with a separately declared 4K guest. Select the public
