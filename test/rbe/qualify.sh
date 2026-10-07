@@ -445,7 +445,7 @@ for action in actions:
 PY_ACTIONS
   bazel build "${arm_options[@]}" //test/syscalls:cgroup2_test_native_arm64
   bazel cquery "${arm_options[@]}" //test/syscalls:cgroup2_test_native_arm64 \
-    --output=starlark --starlark:expr='target[DefaultInfo].files_to_run.executable.path' \
+    --output=starlark --starlark:expr='providers(target)["DefaultInfo"].files_to_run.executable.path' \
     > "$arm_artifacts/native-frontend-path.txt"
   local arm_executable
   arm_executable=$(< "$arm_artifacts/native-frontend-path.txt")
