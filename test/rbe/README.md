@@ -53,6 +53,7 @@ The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
 `rbe-actions-kvm-syscalls`, `rbe-actions-arm64-resume`,
+`rbe-actions-amd64-syscalls`,
 `rbe-actions-kvm-startup`,
 `rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
 `rbe-actions-arm64-docker` and `rbe-actions-arm64-images` pilot branches permit
@@ -99,8 +100,8 @@ For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
 `unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `startup`, `posture`,
 `portforward`, `root`,
 `docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
-(`amd64` or `arm64`). Local unit, ordinary/save-resume syscall, Docker and image profiles
-require `arm64`; KVM syscalls,
+(`amd64` or `arm64`). Ordinary syscalls support both architectures. Local unit,
+save-resume syscall, Docker and image profiles require `arm64`; KVM syscalls,
 startup, posture, portforward, root and benchmarks require `amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
@@ -119,7 +120,8 @@ locally; ordinary native tests and shared checks stay remote. The report records
 all selected owners and their execution requirements.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
-Root test frontends invoke the existing local-root fixture, which permits
+On ARM64 and in the AMD64 KVM lane, root test frontends invoke the existing
+local-root fixture, which permits
 traversal to `runsc` for tests that re-exec it as `nobody` and returns output
 ownership to the Bazel user before validation. It changes only directory search
 permission along the resolved runtime path and ownership within that test's
@@ -128,6 +130,21 @@ Bazel's caller-supplied `run_under` remains outside the frontend executable.
 Only these native namespace/KVM TestRunners require local execution; compiler tags
 and actions remain unchanged. At most two local tests run at once on the
 four-core host, while remote work keeps 400 jobs.
+
+The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
+leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends
+invoke the existing Docker fixture instead of the local-root fixture. Native
+cgroup tests alter controllers and need a private cgroup hierarchy as well as
+private PID, mount and network namespaces. The Actions coordinator runs Bazel
+as root for Docker's UID mapping; compilation and ordinary shared tests stay
+remote. Each test retains its declared image, executable, runfiles, arguments,
+shards and timeout. The fixture rejects non-root namespace identities rather
+than changing them. It uses the private network without the outbound bridge.
+
+Select `lanes=syscalls`, `architecture=amd64` and `execution=local` for this
+route. The same hash15 partition option is available. A bounded selection or
+passing bucket qualifies only its reported owners; prior failures and other
+unexecuted owners remain separate.
 
 The ordinary ARM64 syscall phase selects the existing `syscalls-arm64` 4K-page
 profile. It retains the public ptrace/systrap selection and excludes checkpoint

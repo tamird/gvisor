@@ -40,8 +40,8 @@ ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
-Local execution supports smoke, bwrap, ARM64 unit/syscall tests and AMD64
-KVM syscalls and startup/posture/portforward/root/benchmarks on a matching Linux host.
+Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
+and AMD64 KVM syscalls and startup/posture/portforward/root/benchmarks.
 Compilation remains remote. Hybrid profiles run in one invocation: native namespace owners run
 locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
@@ -104,8 +104,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall/Docker/image profiles and AMD64 KVM syscalls/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -247,6 +247,22 @@ language_test_options() {
   done
 }
 
+# Docker owns the PID/cgroup/network namespaces; the declared fixture prepares
+# their scratch and controllers. Compilation retains the remote-only strategy.
+docker_test_options() {
+  options+=(
+    --local_test_jobs=2
+    --experimental_enable_docker_sandbox
+    --experimental_docker_privileged
+    --noexperimental_docker_use_customized_images
+    --noincompatible_legacy_local_fallback
+    --sandbox_default_allow_network=false
+    --test_env=GO_TEST_WRAP_TESTV=1
+    "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+    "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
+  )
+}
+
 # A file keeps large ordered target lists below Linux's argument-size limit.
 # Aquery ignores target_pattern_file; apply this config after the caller's options.
 analyze_profile() {
@@ -279,6 +295,12 @@ select_test_profile() {
     routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch")
     variant_options=(--hybrid)
     selection_options+=(--hybrid)
+    if [[ $lane == syscalls-kvm ]]; then
+      variant_options+=(--kvm-only)
+      selection_options+=(--kvm-only)
+    elif [[ $lane == syscalls && $target_arch == amd64 ]]; then
+      routing_options+=(--//tools/bazeldefs:local_test_backend=docker)
+    fi
     if [[ -n $syscall_bucket ]]; then
       selection_options+=("--syscall-bucket=$syscall_bucket")
     fi
@@ -333,7 +355,7 @@ select_unit_profile() {
 run_hybrid_profile() (
   set -e
   local lane=$1 selection_dir
-  local -a lane_options=()
+  local -a lane_options=() options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   if [[ $lane == unit ]]; then
@@ -379,10 +401,14 @@ PY
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
   fi
+  if [[ $lane == syscalls && $arch == amd64 ]]; then
+    docker_test_options
+    options+=("--strategy=TestRunner=remote,docker" --//tools/bazeldefs:local_test_backend=docker)
+  fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     "--//tools/bazeldefs:local_test_architecture=$arch" \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
-    --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" --target_pattern_file="$selection_dir/targets"
+    --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
 )
 
 select_cgroup_profile() {
@@ -900,19 +926,8 @@ run_lane() (
         startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
           # Each owned daemon needs separate firewall state. The fixture
           # can attach this private namespace to the job's bridge.
-          options+=(
-            --strategy=TestRunner=docker
-            --local_test_jobs=2
-            --experimental_enable_docker_sandbox
-            --experimental_docker_privileged
-            --noexperimental_docker_use_customized_images
-            --noincompatible_legacy_local_fallback
-            --sandbox_default_allow_network=false
-            --test_env=GO_TEST_WRAP_TESTV=1
-            --run_under=//test/rbe:docker_setup
-            "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
-            "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
-          )
+          docker_test_options
+          options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
           if [[ $lane == benchmarks || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
             options+=(
               --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
