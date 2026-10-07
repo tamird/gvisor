@@ -227,7 +227,13 @@ def container_platform_targets(events_path: str) -> list[str]:
     return sorted(selected)
 
 
-def profile_suffix(architecture: str, page_size: str, *, hybrid: bool = False) -> str:
+def profile_suffix(
+    architecture: str, page_size: str, *, hybrid: bool = False, rc_kernel: bool = False,
+) -> str:
+    if rc_kernel:
+        if architecture != "arm64" or page_size != "4k" or hybrid:
+            raise ValueError("The RC syscall profile requires remote ARM64 4K TCG execution")
+        return "_rc_tcg"
     if page_size == "64k":
         if architecture != "arm64":
             raise ValueError("The public 64K syscall profile requires ARM64")
@@ -237,7 +243,7 @@ def profile_suffix(architecture: str, page_size: str, *, hybrid: bool = False) -
 
 def profile_targets(
     events_path: str, architecture: str, page_size: str = "4k", *, hybrid: bool = False,
-    kvm_only: bool = False,
+    kvm_only: bool = False, rc_kernel: bool = False,
 ) -> list[str]:
     targets = configured_tests(events_path)
     if kvm_only and (not hybrid or architecture != "amd64"):
@@ -251,7 +257,7 @@ def profile_targets(
         }
         if not targets:
             raise ValueError("The public profile contains no eligible syscall owners")
-    suffix = profile_suffix(architecture, page_size, hybrid=hybrid)
+    suffix = profile_suffix(architecture, page_size, hybrid=hybrid, rc_kernel=rc_kernel)
     if not suffix:
         return sorted(targets)
     tag = "rbe-has" + suffix.replace("_", "-") + "-variant"
@@ -295,18 +301,20 @@ def select_profile(
     page_size: str = "4k",
     hybrid: bool = False,
     kvm_only: bool = False,
+    rc_kernel: bool = False,
     syscall_bucket: int | None = None,
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
         raise ValueError("Hybrid syscall execution requires a native 4K syscall profile")
-    if syscall_bucket is not None and not (hybrid or syscall_policy and page_size == "64k"):
-        raise ValueError("Syscall buckets require hybrid or ARM64 64K TCG execution")
+    tcg = page_size == "64k" or rc_kernel
+    if syscall_bucket is not None and not (hybrid or syscall_policy and tcg):
+        raise ValueError("Syscall buckets require hybrid or ARM64 TCG execution")
     original = configured_tests(profile_path)
-    expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only))
+    expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only, rc_kernel=rc_kernel))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
         raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
-    execution_architecture = "amd64" if page_size == "64k" else architecture
+    execution_architecture = "amd64" if tcg else architecture
     requirements = test_requirements(
         actions_path,
         execution_architecture,
@@ -314,11 +322,13 @@ def select_profile(
     )
     if requirements.keys() != expected:
         raise ValueError(f"Missing profile TestRunners: {sorted(expected - requirements.keys())}")
-    if page_size == "64k":
+    if tcg:
         for label, target in configured.items():
             properties = requirements[label]
-            if not {"arm64-64k-tcg", "runsc_systrap", "no-local"} <= set(target.tags) or "allsave" in target.tags:
-                raise ValueError(f"Unexpected 64K TCG variant: {label}: {target.tags}")
+            tag = "arm64-rc-tcg" if rc_kernel else "arm64-64k-tcg"
+            platforms = {"runsc_ptrace", "runsc_systrap"} if rc_kernel else {"runsc_systrap"}
+            if not {tag, "no-local"} <= set(target.tags) or not platforms.intersection(target.tags) or "allsave" in target.tags:
+                raise ValueError(f"Unexpected TCG variant: {label}: {target.tags}")
             if properties.get("dockerUser") != "nobody" or properties["workload-isolation-type"] != "oci":
                 raise ValueError(f"Expected unprivileged TCG worker: {label}: {properties}")
     unavailable: dict[str, str] = {}
@@ -327,7 +337,7 @@ def select_profile(
         if kvm_only and "runsc_kvm" not in target.tags:
             policy_excluded[label] = "Outside the local KVM-only syscall lane; not executed by this invocation."
             continue
-        variant = label + profile_suffix(architecture, page_size, hybrid=hybrid)
+        variant = label + profile_suffix(architecture, page_size, hybrid=hybrid, rc_kernel=rc_kernel)
         # The standalone RBE syscall lane also leaves Nogo to its own lane.
         # Keep this policy distinct from unavailable runtime capabilities.
         if syscall_policy and "nogo" in target.tags:
@@ -366,6 +376,7 @@ def select_profile(
     print(json.dumps({
         "profile_architecture": architecture,
         "profile_page_size": page_size,
+        **({"profile_kernel": "rc"} if rc_kernel else {}),
         "canonical_profile": profile_path,
         "canonical_owners": sorted(original),
         "selected_owners": selected,
@@ -475,12 +486,14 @@ def main() -> None:
         profile.add_argument("events")
         profile.add_argument("architecture", choices=("amd64", "arm64"))
         profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
+        profile.add_argument("--rc-kernel", action="store_true", help="Select the declared ARM64 RC guest")
         profile.add_argument("--hybrid", action="store_true", help="Select native local variants")
         profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
     profile = commands.add_parser("select-profile")
     profile.add_argument("profile")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
     profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
+    profile.add_argument("--rc-kernel", action="store_true", help="Select the declared ARM64 RC guest")
     for name in ("events", "actions", "output"):
         profile.add_argument(name)
     profile.add_argument("--syscall-policy", action="store_true", help="Apply the existing syscall runtime exclusions")
@@ -530,11 +543,11 @@ def main() -> None:
             "limitation": "KVM identities come from loading only; their configurations and execution remain unqualified.",
         }, indent=2))
     elif args.command == "profile-actions":
-        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only)) + ")")
+        print('mnemonic("^TestRunner$", ' + target_set(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)) + ")")
     elif args.command == "profile-targets":
-        print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only)))
+        print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, syscall_bucket=args.syscall_bucket)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, syscall_bucket=args.syscall_bucket)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:

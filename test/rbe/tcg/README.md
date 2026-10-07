@@ -45,14 +45,22 @@ the guest's original XML and exit status, requires an explicit completion
 record, and kills/reaps QEMU on interruption. A successful QEMU shutdown alone
 does not count as a passing test.
 
-The mincore declaration also exposes manual `<owner>_rc_tcg` frontends for
-ordinary ARM64 ptrace and systrap payloads. They use the same transport with
-a separately declared 4K guest. For a bounded comparison, select
-`//test/syscalls:mincore_test_runsc_ptrace_rc_tcg` and
-`//test/syscalls:mincore_test_runsc_systrap_shared_rc_tcg`, with
-`--//tools/bazeldefs:local_test_architecture=`. The existing ARM64 frontend
-owns payload architecture; the outer TestRunner remains AMD64 OCI. Original
-arguments, shards and deadlines also include RC guest boot and output return.
+The macro also declares manual `<owner>_rc_tcg` frontends for ordinary ARM64
+ptrace and systrap owners without checkpoint modes. They use the same
+transport with a separately declared 4K guest. Select the public
+`syscalls-arm64` profile with the RC image, or one existing hash15 partition:
+
+```sh
+test/rbe/qualify.sh --arch=arm64 --syscall-bucket=0 syscalls-rc
+```
+
+The selector requires each canonical owner to declare its RC frontend. The
+existing `<owner>_arm64` frontend owns payload architecture; the outer
+TestRunner remains AMD64 OCI. The qualifier clears the native local-execution
+setting and selects 4K pages. Native, KVM and checkpoint owners remain outside
+this public profile. Arguments, shards and original deadlines also include
+RC guest boot and output return. The resource allocation described above
+applies to both guest routes.
 
 This guest uses the Ubuntu mainline image and modules for
 `7.3.0-070300rc3-generic`, pinned by their published archive hashes in

@@ -169,6 +169,11 @@ def _syscall_test(
     if arm64_64k:
         tags += ["rbe-has-64k-arm64-variant", "rbe-has-64k-tcg-variant"]
 
+    # The public ARM64 RC lane uses ordinary ptrace and systrap payloads.
+    arm64_rc = platform in ["ptrace", "systrap"] and "allsave" not in tags
+    if arm64_rc:
+        tags.append("rbe-has-rc-tcg-variant")
+
     attributes = dict(kwargs)
     attributes.update(
         test = test,
@@ -200,7 +205,7 @@ def _syscall_test(
             **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
 
-    if rc_kernel and platform in ["ptrace", "systrap"] and "allsave" not in tags:
+    if arm64_rc:
         arm64_tcg_test(
             name = name + "_rc_tcg",
             payload = ":" + name + "_arm64",

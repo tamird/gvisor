@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -28,8 +28,8 @@ Usage: test/rbe/qualify.sh --header-base=REV amd64
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
 target architecture is AMD64. Tests use matching execution workers, except
-syscalls-64k, whose ARM64 payloads use QEMU TCG on AMD64 OCI workers. Builds
-prefer AMD64 workers while retaining declared native generator requirements.
+syscalls-64k and syscalls-rc, whose ARM64 payloads use QEMU TCG on AMD64 OCI
+workers. Builds prefer AMD64 workers while retaining declared native generator requirements.
 This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
@@ -42,6 +42,7 @@ image-source lanes; unavailable workers are reported before execution.
 The remote syscalls-64k lane selects the public ARM64 64K systrap profile.
 The local AMD64 syscalls-rc-pilot lane runs four mincore owners in a pinned
 RC guest, including nested KVM. It does not select the full RC profile.
+The remote syscalls-rc lane selects the public ordinary ARM64 RC profile.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
@@ -60,7 +61,7 @@ gaps() {
   cat <<'GAPS'
 Environment limits: remote execution does not supply KVM, slimvm, ARM64
 Firecracker, arbitrary alternate kernels, or GPU/TPU runtime environments.
-The syscalls-64k route supplies one pinned ARM64 64K kernel through QEMU TCG.
+The syscalls-64k and syscalls-rc routes supply pinned ARM64 kernels through QEMU TCG.
 Selecting a lane does not establish a passing result or full public CI coverage.
 GAPS
 }
@@ -116,8 +117,8 @@ case "$test_execution" in
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
 if [[ -n $syscall_bucket ]]; then
-  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k ) ]]; then
-    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls/syscalls-resume, local AMD64 syscalls-kvm, or remote ARM64 syscalls-64k.\n' >&2
+  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k && $test_execution:$arch:${1:-} != remote:arm64:syscalls-rc ) ]]; then
+    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls/syscalls-resume, local AMD64 syscalls-kvm, or remote ARM64 syscalls-64k/syscalls-rc.\n' >&2
     exit 2
   fi
 fi
@@ -133,7 +134,7 @@ if [[ $# == 1 && $1 == amd64 ]]; then
   set --
   for lane in "${lanes[@]}"; do
     # KVM syscall execution belongs to the separate local-host profile.
-    if [[ $lane != syscalls-kvm && $lane != syscalls-rc-pilot && $lane != syscalls-64k ]]; then set -- "$@" "$lane"; fi
+    if [[ $lane != syscalls-kvm && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
   done
 fi
 if (( $# == 0 )); then
@@ -142,8 +143,8 @@ if (( $# == 0 )); then
 fi
 # Validate every requested lane before starting any work.
 for lane in "$@"; do
-  if [[ $lane == syscalls-64k && ( $test_execution != remote || $arch != arm64 ) ]]; then
-    printf 'The 64K syscall lane requires --arch=arm64 and remote TCG execution.\n' >&2
+  if [[ ( $lane == syscalls-64k || $lane == syscalls-rc ) && ( $test_execution != remote || $arch != arm64 ) ]]; then
+    printf 'The TCG syscall lanes require --arch=arm64 and remote TCG execution.\n' >&2
     exit 2
   fi
   if [[ ( $lane == syscalls-kvm || $lane == syscalls-rc-pilot ) && ( $test_execution != local || $arch != amd64 ) ]]; then
@@ -157,7 +158,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -297,8 +298,13 @@ select_test_profile() {
   if [[ $lane == syscalls* ]]; then
     selection_options=(--syscall-policy)
   fi
-  if [[ $lane == syscalls-64k ]]; then
-    page_size_options=(--page-size=64k)
+  if [[ $lane == syscalls-64k || $lane == syscalls-rc ]]; then
+    if [[ $lane == syscalls-64k ]]; then
+      page_size_options=(--page-size=64k)
+    else
+      page_size_options=(--rc-kernel)
+    fi
+    routing_options=(--//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k)
     if [[ -n $syscall_bucket ]]; then
       selection_options+=("--syscall-bucket=$syscall_bucket")
     fi
@@ -337,6 +343,7 @@ select_syscall_profile() {
   case "$lane" in
     syscalls|syscalls-kvm) profile_options=("--config=syscalls-$syscall_arch") ;;
     syscalls-64k) profile_options=(--config=syscalls-arm64-64k) ;;
+    syscalls-rc) profile_options=(--config=syscalls-arm64 --//tools/bazeldefs:page_size=4k) ;;
     syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
     syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
     *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
@@ -346,20 +353,21 @@ select_syscall_profile() {
 }
 
 # Each selected owner runs remotely in its own full-system guest. The payload
-# transition owns ARM64/64K compilation; the outer QEMU process runs on AMD64.
+# transition owns ARM64 compilation; the outer QEMU process runs on AMD64.
 run_tcg_profile() (
   set -e
-  local selection_dir
+  local lane=$1 selection_dir
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
-  select_syscall_profile "$selection_dir" syscalls-64k arm64 | tee "$selection_dir/selection.json"
-  cp "$selection_dir/syscalls-64k-arm64-targets" "$selection_dir/targets"
-  cp "$selection_dir/syscalls-64k-arm64-actions.json" "$selection_dir/actions.json"
-  cp "$selection_dir/syscalls-64k-arm64-profile.json" "$selection_dir/profile.json"
+  select_syscall_profile "$selection_dir" "$lane" arm64 | tee "$selection_dir/selection.json"
+  cp "$selection_dir/$lane-arm64-targets" "$selection_dir/targets"
+  cp "$selection_dir/$lane-arm64-actions.json" "$selection_dir/actions.json"
+  cp "$selection_dir/$lane-arm64-profile.json" "$selection_dir/profile.json"
   if [[ -n ${RUNNER_TEMP:-} ]]; then
-    save_profile_selection "$selection_dir" syscalls-64k
+    save_profile_selection "$selection_dir" "$lane"
   fi
   bazel test --config=rbe --config=x86_64 --keep_going \
+    --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     --target_pattern_file="$selection_dir/targets"
 )
@@ -981,8 +989,8 @@ run_lane() (
       )
       options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
       ;;
-    syscalls-64k)
-      run_tcg_profile
+    syscalls-64k|syscalls-rc)
+      run_tcg_profile "$lane"
       return
       ;;
     syscalls|syscalls-kvm|syscalls-save|syscalls-resume)
