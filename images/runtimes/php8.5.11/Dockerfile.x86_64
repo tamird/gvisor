@@ -8,19 +8,15 @@ RUN apt-get update && apt-get install -y \
   libsqlite3-dev \
   libtool \
   libxml2-dev \
-  patch \
   pkg-config \
   re2c
 
 WORKDIR /root
-ARG VERSION=8.3.35
+ARG VERSION=8.5.11
 RUN curl --fail --location -o php-${VERSION}.tar.gz https://www.php.net/distributions/php-${VERSION}.tar.gz
-RUN echo "e60396276fd57e8210f88919d9acd4aab98d65fbb7f431c13285ca1fb04ff205  php-${VERSION}.tar.gz" | sha256sum --check -
+RUN echo "338630ba9450f0b938bef8d740162c61c33bf64a1b421c6333c01df8a9fdb0ab  php-${VERSION}.tar.gz" | sha256sum --check -
 RUN tar -zxf php-${VERSION}.tar.gz
 
 WORKDIR /root/php-${VERSION}
-COPY gh17469-extensions.patch /tmp/gh17469-extensions.patch
-RUN patch -p1 --batch --forward --fuzz=0 < /tmp/gh17469-extensions.patch \
-  && rm /tmp/gh17469-extensions.patch
 RUN ./configure
 RUN make -j $(nproc)

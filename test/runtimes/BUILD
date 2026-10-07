@@ -31,8 +31,8 @@ _RUNTIMES = {
         partitions = 10,
         shard_count = most_shards,
     ),
-    "php8.3.35": dict(
-        exclude_file = "exclude/php8.3.35.csv",
+    "php8.5.11": dict(
+        exclude_file = "exclude/php8.5.11.csv",
         lang = "php",
         partitions = 2,
         shard_count = more_shards,
