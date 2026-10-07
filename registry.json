@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-07T13:26:41.003609+00:00",
+    "updatedAt": "2026-10-07T13:34:51.976666+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1820,20 +1820,20 @@
       "title": "Avoid Make during CodeQL Go extraction",
       "url": "https://github.com/tamird/gvisor/tree/codeql-go-dependencies",
       "group": "analysis",
-      "status": "preparation backlog",
-      "summary": "Source reconciliation against verified upstream e1bc74024 is complete: this functional change remains unlanded. Both old hunk contexts cross Actions pins; preserve current checkout/setup-go/CodeQL SHAs and reapply only Go download/no-op autobuild override. No source prerequisite. Old full checkout extraction errors remain; confirm the current pinned autobuilder still consumes the existing override before contributor review. Root will assign the required refresh and review. There is no current unanswered contributor question for this candidate.\n\nEarlier source and validation record (historical requests are not current unanswered questions):\n\nPublished source 8a965e8cc downloads Go dependencies in a separate step that stops on download failure and suppresses automatic Make discovery, preserving the full checkout extraction pattern. The exact Go steps pass in the four-language GitHub Actions CodeQL run at 26d37ff9d: 1,818 checkout Go files are processed, but 216 packages report extraction errors, including missing generated imports and methods. Scan success is not complete type coverage or zero findings. Integrated in ae3d5c420; contributor review remains pending and no PR is open. This historical GitHub Actions run does not establish RBE CodeQL qualification.",
-      "updatedAt": "2026-10-07T12:22:26.432620+00:00",
+      "status": "contributor review requested",
+      "summary": "The independent refresh is public and tracked at 80eb0052f602fce7f07b0c3d490ac2610c06d706 on upstream e1bc. Its nine Go-specific workflow lines are unchanged: download modules in a separate failure-enforcing step, then use the supported no-op autobuild override. Every current upstream pinned action is preserved. Independent source/record peer 86a92a7ef889 verifies the selected Action defaults to CodeQL CLI 2.27.1 and its autobuilder is exactly the cited supported implementation. Root has issued the actual contributor review question for this exact head; the answer is pending and no upstream PR is open.\n\nRecovered primary metadata confirms all four language jobs in historical Actions https://github.com/tamird/gvisor/actions/runs/36811535837 succeeded at 26d37ff9d with the same Go workflow mechanism. Prior extraction records report 1,818 checkout Go files and 216 package errors, including unavailable generated imports and methods. Those detailed extractor logs were not reverified during this refresh. Scan success does not establish complete type coverage, zero findings, a fresh run at 80eb or RBE CodeQL qualification.",
+      "updatedAt": "2026-10-07T13:34:51.976666+00:00",
       "followup": {
-        "disposition": "preparation backlog",
+        "disposition": "contributor review requested",
         "owner": "root",
-        "nextAction": "Both old hunk contexts cross Actions pins; preserve current checkout/setup-go/CodeQL SHAs and reapply only Go download/no-op autobuild override. No source prerequisite. Old full-checkout extraction errors remain; confirm the current pinned autobuilder still consumes the existing override before contributor review. Prepare the bounded source refresh/review before a new contributor question.",
+        "nextAction": "Await the contributor response to the actual exact-head review question before opening the independent PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8a965e8ccf16fb93415f76fcf1bbe53fc089cdd2"
+          "https://github.com/tamird/gvisor/commit/80eb0052f602fce7f07b0c3d490ac2610c06d706"
         ],
-        "reviewedAt": "2026-10-07T12:22:26.432620+00:00",
-        "sourceHead": "8a965e8ccf16fb93415f76fcf1bbe53fc089cdd2"
+        "reviewedAt": "2026-10-07T13:34:51.976666+00:00",
+        "sourceHead": "80eb0052f602fce7f07b0c3d490ac2610c06d706"
       },
-      "head": "8a965e8ccf16fb93415f76fcf1bbe53fc089cdd2"
+      "head": "80eb0052f602fce7f07b0c3d490ac2610c06d706"
     },
     {
       "id": "branch:containerd-cni-plugins",
@@ -1843,17 +1843,17 @@
       "title": "Update containerd harness CNI plugins",
       "url": "https://github.com/tamird/gvisor/tree/containerd-cni-plugins-refresh",
       "group": "tests",
-      "status": "ready for contributor review",
-      "summary": "The independent refresh is public and tracked at 47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7 on upstream e1bc. It changes only the containerd harness CNI pin from 1.6.2 to 1.9.1; the Dockerfile, entrypoint and CNI configuration match the previously validated image context exactly. Source/record peer 7ccabff0b264 is closed, and the original 14f branch is preserved. Root owns the contributor review request; no new question or upstream PR has been issued yet.\n\nThe recovered primary evidence has three successful historical parent/child pairs and all four AMD64 containerd owners PASSED. Actual source-image logs build the v1.9.1 archive. The original closed evidence reported loopback protocol checks and 68 passing full-lane leaves, but those log/XML CAS objects are now unavailable; this refresh verifies primary owner statuses and exact image source, without claiming fresh leaf verification or a new standalone run. Upstream retry support motivates the update, but the original EINTR operation and cause remain unknown. No ARM runtime or registry publication is claimed.",
-      "updatedAt": "2026-10-07T13:23:37.583546+00:00",
+      "status": "contributor review requested",
+      "summary": "The independent refresh is public and tracked at 47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7 on upstream e1bc. It changes only the containerd harness CNI pin from 1.6.2 to 1.9.1; the Dockerfile, entrypoint and CNI configuration match the previously validated image context exactly. Source/record peer 7ccabff0b264 is closed, and the original 14f branch is preserved. Root has issued the concrete contributor review question for this exact public head; the answer is pending. No upstream PR is open.\n\nThe recovered primary evidence has three successful historical parent/child pairs and all four AMD64 containerd owners PASSED. Actual source-image logs build the v1.9.1 archive. The original closed evidence reported loopback protocol checks and 68 passing full-lane leaves, but those log/XML CAS objects are now unavailable; this refresh verifies primary owner statuses and exact image source, without claiming fresh leaf verification or a new standalone run. Upstream retry support motivates the update, but the original EINTR operation and cause remain unknown. No ARM runtime or registry publication is claimed.",
+      "updatedAt": "2026-10-07T13:34:51.976666+00:00",
       "followup": {
-        "disposition": "ready for contributor review",
+        "disposition": "contributor review requested",
         "owner": "root",
-        "nextAction": "Issue the concrete review question for exact 47a97dbfc before opening a PR.",
+        "nextAction": "Await the contributor response to the actual exact-head review question before opening the independent PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7"
         ],
-        "reviewedAt": "2026-10-07T13:23:37.583546+00:00",
+        "reviewedAt": "2026-10-07T13:34:51.976666+00:00",
         "sourceHead": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7"
       },
       "head": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7"
@@ -2984,20 +2984,20 @@
       "title": "Find license notices in Go module archives",
       "url": "https://github.com/tamird/gvisor/tree/licensecheck-module-notices",
       "group": "release",
-      "status": "preparation backlog",
-      "summary": "Source reconciliation against verified upstream e1bc74024 is complete: this functional change remains unlanded. All six changed path states equal old base; all nine hunk contexts remain. 4389 supersedes88ed; no code prerequisite. Keep distinct from open commit-metadata fix and held classifier/policy work. Existing Fetch completed; ten unchanged-policy mismatches are not a source-test failure or policy approval. Root will assign the required refresh and review. There is no current unanswered contributor question for this candidate.\n\nEarlier source and validation record (historical requests are not current unanswered questions):\n\nPublic standalone licensecheck-module-notices is now amended to 4389ede80d41089cfa0e81cfd01383e5070b7012, directly based on master aa42986c0959256e89b340b9c3db8a16dbb4ad6b with no source prerequisite. It discovers conventional root notices and README grants while excluding .go implementation files. The actual LICENSE.docs files remain included, and unrecognized notices still fail. The amended source and record are independently reviewed. Exact composition ddd00243c9 passes the complete owning unit suite (70 XML entries including all eight module-notice cases) and both target CPU Nogo analyses on two actual uncached AMD64 OCI workers. Canonical Fetch now retrieves all 459 CodeQL-profile records successfully. The parent remains FAILED solely on ten unchanged-policy mismatches, with no missing entries; outcome 13ab648f879d and independent peer 85ca40de8a7d retain that distinction. The previous contributor request for 88ed is superseded; contributor review for exact 4389 was requested once and remains pending. No upstream PR is open.\n\nThe earlier 88ed source remains preserved with its successful validation: composition a350f47cf5bb9c3cb99396fa331502da532a6c42 adds only the existing #15036 interpreter prerequisite. Parent bedacbee-7506-41dc-9de8-e29c16481a0d passes in 100.199 seconds with the complete owning unit suite and both target CPU Nogo analyses on two actual uncached AMD64 OCI workers. Outcome 62aff645a0fa and independent peer 90e9f255b60d bind that earlier result. A subsequent canonical audit exposed license.go as a falsely selected notice; its failed result is retained separately from the amendment. No root logex requirement, catalog or policy change is adopted.",
-      "updatedAt": "2026-10-07T12:22:26.432620+00:00",
+      "status": "contributor review requested",
+      "summary": "The independent refresh is public and tracked at ab530acc88806b98731ccf9b01a221360452d86d on upstream e1bc. All six source blobs equal the previously reviewed 4389 proposal; its message now states the narrow archive-notice behavior. It discovers conventional root notices and complete README grants, excludes .go implementation files and still rejects unrecognized notices. Independent source/evidence review binds the owning functions, all three notice fixtures and the eight-case TestModuleLicenses suite to actual tested ddd00243c. Root has issued the concrete contributor review question for this exact head; the answer is pending and no upstream PR is open.\n\nThe retained ddd002 composition passes the complete unit suite (70 XML entries, including eight module-notice cases) and both target CPU Nogo analyses on two uncached AMD64 OCI workers. Canonical Fetch retrieves all 459 CodeQL-profile records; that historical parent remains Failed solely for ten unchanged-policy mismatches, not missing notices or failed source tests. Existing outcome 13ab648f879d and independent peer 85ca40de8a7d preserve this distinction. This refresh adopts no catalog or policy change and remains separate from commit-metadata PR #15416 and the explicit holds on #15114, #15145 and #15146. Earlier 88ed evidence remains historical and is superseded by the corrected notice selection.",
+      "updatedAt": "2026-10-07T13:34:51.976666+00:00",
       "followup": {
-        "disposition": "preparation backlog",
+        "disposition": "contributor review requested",
         "owner": "root",
-        "nextAction": "All six changed path states equal old base; all nine hunk contexts remain. 4389 supersedes88ed; no code prerequisite. Keep distinct from open commit-metadata fix and held classifier/policy work. Existing Fetch completed; ten unchanged-policy mismatches are not a source-test failure or policy approval. Prepare the bounded source refresh/review before a new contributor question.",
+        "nextAction": "Await the contributor response to the actual exact-head review question before opening the independent PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4389ede80d41089cfa0e81cfd01383e5070b7012"
+          "https://github.com/tamird/gvisor/commit/ab530acc88806b98731ccf9b01a221360452d86d"
         ],
-        "reviewedAt": "2026-10-07T12:22:26.432620+00:00",
-        "sourceHead": "4389ede80d41089cfa0e81cfd01383e5070b7012"
+        "reviewedAt": "2026-10-07T13:34:51.976666+00:00",
+        "sourceHead": "ab530acc88806b98731ccf9b01a221360452d86d"
       },
-      "head": "4389ede80d41089cfa0e81cfd01383e5070b7012"
+      "head": "ab530acc88806b98731ccf9b01a221360452d86d"
     },
     {
       "id": "pr:15322",
