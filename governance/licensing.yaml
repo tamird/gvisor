@@ -878,6 +878,13 @@ exceptions:
       only by manual full-system 64K-page tests. Their package copyright
       notices are retained. They are not linked into or packaged with
       gVisor release artifacts.
+  - dependency: apt/tcg_arm64_guest/arm64/base-passwd
+    license: GPL-2.0
+    exception_rationale: &guest_harness_tools_rationale >-
+      These pinned packages supply account defaults and standard tools
+      for the declared manual full-system test guest. Their copyright
+      notices and referenced common-license texts are retained in that
+      guest. They are not declared inputs to gVisor release artifacts.
   - dependency: apt/tcg_arm64_guest/arm64/bash
     license: &tcg_bash_licenses
       - BSD-4-Clause-UC
@@ -903,9 +910,26 @@ exceptions:
   - dependency: apt/tcg_arm64_guest/arm64/dpkg
     license: *apt_dpkg_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/findutils
+    license:
+      - GFDL-1.3
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/gcc-12-base
     license: *apt_gcc_12_base_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/grep
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/init-system-helpers
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - GPL-2.0-or-later
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/iproute2
     license: *tcg_busybox_static_licenses
     exception_rationale: *tcg_tools_rationale
@@ -978,12 +1002,33 @@ exceptions:
   - dependency: apt/tcg_arm64_guest/arm64/libgcc-s1
     license: *apt_gcc_12_base_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libgcrypt20
+    license:
+      - BSD-3-Clause
+      - GPL-2.0
+      - LGPL-2.1-or-later
+      - LGPL-3.0
+      - MIT
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/libgmp10
     license: *tcg_libelf1_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libgpg-error0
+    license:
+      - GPL-3.0
+      - GPL-3.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/libkmod2
     license: *tcg_kmod_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/liblz4-1
+    license:
+      - BSD-2-Clause
+      - GPL-2.0
+      - GPL-2.0-only
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/liblzma5
     license: *apt_liblzma5_licenses
     exception_rationale: *tcg_tools_rationale
@@ -1000,6 +1045,15 @@ exceptions:
   - dependency: apt/tcg_arm64_guest/arm64/libmount1
     license: *apt_libuuid1_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libprocps8
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/libselinux1
     license: *apt_libselinux1_licenses
     exception_rationale: *tcg_tools_rationale
@@ -1009,6 +1063,16 @@ exceptions:
   - dependency: apt/tcg_arm64_guest/arm64/libssl3
     license: *apt_libssl3_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/libsystemd0
+    license:
+      - CC0-1.0
+      - GPL-2.0
+      - GPL-2.0-only
+      - GPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+      - MIT
+    exception_rationale: *guest_harness_tools_rationale
   - dependency: apt/tcg_arm64_guest/arm64/libxtables12
     license: &tcg_libxtables12_licenses
       - Artistic-1.0-Perl
@@ -1042,6 +1106,24 @@ exceptions:
   - dependency: apt/tcg_arm64_guest/arm64/perl-base
     license: *apt_libperl5_34_licenses
     exception_rationale: *tcg_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/procps
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - LGPL-2.0
+      - LGPL-2.0-or-later
+      - LGPL-2.1
+      - LGPL-2.1-or-later
+    exception_rationale: *guest_harness_tools_rationale
+  - dependency: apt/tcg_arm64_guest/arm64/sed
+    license: LicenseRef-Sed-Copyright-60886b626
+    exception_rationale: >-
+      The pinned package's copyright and embedded manual were audited
+      directly: GNU sed is GPL-3.0-or-later and its retained manual is
+      GFDL-1.3-or-later, with no invariant sections or cover texts.
+      Automatic classification omits the manual's terms. Used only by
+      the declared manual test guest, which retains both notices and
+      complete license texts, not as a gVisor release-artifact input.
   - dependency: apt/tcg_arm64_guest/arm64/tar
     license: *apt_libgdbm_compat4_licenses
     exception_rationale: *tcg_tools_rationale
@@ -1833,85 +1915,3 @@ exceptions:
       The matching modules package carries the same audited GPL-2 notice
       as tcg_arm64_rc_image. Used only by that manual RC test guest, with
       the notice and complete GPL-2 text retained.
-  - dependency: apt/tcg_arm64_guest/arm64/base-passwd
-    license: GPL-2.0
-    exception_rationale: &guest_harness_tools_rationale >-
-      These pinned packages supply account defaults and standard tools
-      for the declared manual full-system test guest. Their copyright
-      notices and referenced common-license texts are retained in that
-      guest. They are not declared inputs to gVisor release artifacts.
-  - dependency: apt/tcg_arm64_guest/arm64/findutils
-    license:
-      - GFDL-1.3
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/grep
-    license:
-      - GPL-3.0
-      - GPL-3.0-or-later
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/init-system-helpers
-    license:
-      - BSD-3-Clause
-      - GPL-2.0
-      - GPL-2.0-or-later
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/libgcrypt20
-    license:
-      - BSD-3-Clause
-      - GPL-2.0
-      - LGPL-2.1-or-later
-      - LGPL-3.0
-      - MIT
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/libgpg-error0
-    license:
-      - GPL-3.0
-      - GPL-3.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/liblz4-1
-    license:
-      - BSD-2-Clause
-      - GPL-2.0
-      - GPL-2.0-only
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/libprocps8
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.0
-      - LGPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/libsystemd0
-    license:
-      - CC0-1.0
-      - GPL-2.0
-      - GPL-2.0-only
-      - GPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-      - MIT
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/procps
-    license:
-      - GPL-2.0
-      - GPL-2.0-or-later
-      - LGPL-2.0
-      - LGPL-2.0-or-later
-      - LGPL-2.1
-      - LGPL-2.1-or-later
-    exception_rationale: *guest_harness_tools_rationale
-  - dependency: apt/tcg_arm64_guest/arm64/sed
-    license: LicenseRef-Sed-Copyright-60886b626
-    exception_rationale: >-
-      The pinned package's copyright and embedded manual were audited
-      directly: GNU sed is GPL-3.0-or-later and its retained manual is
-      GFDL-1.3-or-later, with no invariant sections or cover texts.
-      Automatic classification omits the manual's terms. Used only by
-      the declared manual test guest, which retains both notices and
-      complete license texts, not as a gVisor release-artifact input.
