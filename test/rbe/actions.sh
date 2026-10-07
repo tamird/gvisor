@@ -44,8 +44,27 @@ if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
 fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
+qualification_kernel_since=
 cleanup() {
   local status=$?
+  if [[ -n $qualification_kernel_since ]]; then
+    # Disposable plugin diagnosis: retain only runtime seccomp/OOM records.
+    # Do not change audit settings or clear the host's kernel log.
+    local kernel_status=0
+    sudo -n env TZ=UTC dmesg --time-format=iso --since="$qualification_kernel_since" \
+      2> "$RUNNER_TEMP/qualification/kernel-runtime-stderr.txt" | awk '
+      /type=(1326|SECCOMP)|seccomp|oom-kill|Killed process/ &&
+      /comm="(gvisor|runsc)|exe="[^"]*\/(gvisor|runsc)|task=(gvisor|runsc)|Killed process [0-9]+ \((gvisor|runsc)/ {
+        print
+        count++
+      }
+      END { printf "matching_runtime_records=%d\n", count }
+    ' > "$RUNNER_TEMP/qualification/kernel-runtime.txt" || kernel_status=$?
+    printf 'since_utc=%s\ncaptured_utc=%s\ncapture_exit=%d\n' \
+      "$qualification_kernel_since" "$(date -u '+%Y-%m-%d %H:%M:%S')" "$kernel_status" \
+      > "$RUNNER_TEMP/qualification/kernel-runtime-status.txt"
+    if (( kernel_status != 0 && status == 0 )); then status=1; fi
+  fi
   rm -f -- "${temporary_files[@]}"
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
@@ -102,6 +121,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
+    if [[ ${lanes[*]} == plugin-network ]]; then
+      qualification_kernel_since=$(date -u '+%Y-%m-%d %H:%M:%S')
+    fi
     bazel() {
       local argument
       local -a evidence=()
