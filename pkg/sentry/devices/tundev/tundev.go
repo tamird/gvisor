@@ -143,15 +143,8 @@ func (fd *tunFD) Read(ctx context.Context, dst usermem.IOSequence, opts vfs.Read
 	if err != nil {
 		return 0, err
 	}
-	size := data.Size()
-	reader := data.AsBufferReader()
-	defer reader.Close()
-	n, err := io.CopyN(dst.Writer(ctx), &reader, dst.NumBytes())
-	if n > 0 && n < size {
-		// Not an error for partial copying. Packet truncated.
-		err = nil
-	}
-	return n, err
+	defer data.Release()
+	return data.ReadToWriter(dst.Writer(ctx), dst.NumBytes())
 }
 
 // PWrite implements vfs.FileDescriptionImpl.PWrite.

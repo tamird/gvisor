@@ -16,6 +16,7 @@ package tun
 
 import (
 	"fmt"
+	"io"
 
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/context"
@@ -247,29 +248,28 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 	}
 
 	dataLen := data.Size()
+	reader := io.NewSectionReader(data, 0, dataLen)
 
 	// Packet information.
 	var pktInfoHdr PacketInfoHeader
 	if !flags.NoPacketInfo {
 		var hdr [PacketInfoHeaderSize]byte
-		if n, _ := data.ReadAt(hdr[:], 0); n != len(hdr) {
+		if _, err := io.ReadFull(reader, hdr[:]); err != nil {
 			// Ignore bad packet.
 			return dataLen, nil
 		}
 		pktInfoHdr = PacketInfoHeader(hdr[:])
-		data.TrimFront(PacketInfoHeaderSize)
 	}
 
 	// Ethernet header (TAP only).
 	var ethHdr header.Ethernet
 	if flags.TAP {
 		var hdr [header.EthernetMinimumSize]byte
-		if n, _ := data.ReadAt(hdr[:], 0); n != len(hdr) {
+		if _, err := io.ReadFull(reader, hdr[:]); err != nil {
 			// Ignore bad packet.
 			return dataLen, nil
 		}
 		ethHdr = header.Ethernet(hdr[:])
-		data.TrimFront(header.EthernetMinimumSize)
 	}
 
 	// Try to determine network protocol number, default zero.
@@ -283,7 +283,7 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 		// TUN interface with IFF_NO_PI enabled, thus
 		// we need to determine protocol from version field
 		var first [1]byte
-		if n, _ := data.ReadAt(first[:], 0); n == 0 {
+		if _, err := io.ReadFull(reader, first[:]); err != nil {
 			// Ignore bad packet.
 			return dataLen, nil
 		}
@@ -296,6 +296,7 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 		}
 	}
 
+	data.TrimFront(int64(len(pktInfoHdr) + len(ethHdr)))
 	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 		ReserveHeaderBytes: len(ethHdr),
 		Payload:            data.Clone(),
