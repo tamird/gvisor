@@ -81,7 +81,9 @@ grep -Fx "0::/${parent}/${container}/init.scope" "/proc/${pid}/cgroup" || \
 timeout 120 docker exec "${container}" bash -c '
   until systemctl is-system-running --quiet; do sleep 0.2; done
 '
-docker exec -i "${container}" bash -se <<'SETUP'
+# Setup must also leave the cgroup root before systemd enables controllers.
+docker exec -i "${container}" systemd-run --scope --quiet --unit=root-setup \
+  --slice=system.slice --expand-environment=no bash -se <<'SETUP'
 set -euo pipefail
 test "$(cat /proc/1/comm)" = systemd
 test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
@@ -96,8 +98,12 @@ CONFIG
 /fixture/configure_runtime --runsc=/fixture/runtime/runsc --name=runsc \
   --config=/etc/docker/daemon.json -- --sidecar-usage-policy=STRICT \
   --debug --debug-log=/tmp/runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log
+# Make the memory controller available to Docker while it discovers support
+# for swap limits, before any container requests can be stripped of them.
+systemctl set-property --runtime docker.service MemoryAccounting=yes
 systemctl start docker.service
 test "$(docker info --format '{{.CgroupDriver}}/{{.CgroupVersion}}')" = systemd/2
+test "$(docker info --format '{{.SwapLimit}}')" = true
 docker info
 docker load --input /alpine.tar
 docker load --input /ubuntu.tar
