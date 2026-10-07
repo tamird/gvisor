@@ -69,7 +69,9 @@ bzl_library(
 docker_daemon_config(
     name = "php_concat_profile_config",
     testonly = True,
-    images = [":php8.5.11_image_amd64_tar"],
+    # The diagnostic parent materializes the prior source-built archive and
+    # verifies SHA256 2960bf6f07cc9820e0c6be40edf22dfaeca62554121e67fd94504b43e75c2748.
+    images = [":php_concat_profile_image.tar"],
     runtime_args = [
         "--platform=systrap",
         "--watchdog-action=panic",
