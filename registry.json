@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-07T03:05:20.989616+00:00",
+    "updatedAt": "2026-10-07T03:54:47.497375+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1027,12 +1027,12 @@
       "group": "analysis",
       "status": "merged",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-07T01:53:48.190114+00:00",
-      "summary": "Source PR #14360 and matching import #15399 are merged as confirmed by the 01:51 UTC October 7 snapshot. The recorded landing prerequisite for draft #14348 is satisfied; root owns that dependent source refresh. Complete replacement review and exact-ref retirement gates remain before deleting the obsolete source branch.\n\nHistorical source and delivery evidence:\n\nThe requested split is now published after user approval. Existing PR #14360 contains only checkpoint waiters/startup synchronization at bacd163af4966ef1c8a7bf3ff917d7eafe5bf882; independent allocator changes are PR #15322 at 5beefd1b7. Root verified both signed/tracked heads on master 083093288. The reply links the split and the original thread is resolved: https://github.com/google/gvisor/pull/14360#discussion_r4189365631. The 22:19 canonical snapshot independently confirms that reply and thread resolution.\n\nEarlier scoped validation on the reviewed compiler base: checkpoint parent 12b81a5d-188c-487d-b6a0-189983692edb at e0f99fef9 runs the complete kernel suite (66 XML entries, 24 top-level cases, 62 leaves including both regressions) plus two both-CPU Nogo owners; allocator parent bdb2ca0e-c3c1-48af-8f36-9b2196a9618a at 23f01dc1c runs the complete allocator suite (50 entries, two top-level cases, 49 leaves including restore regression) plus three both-CPU Nogo owners. Outcomes 9df0ee5af19b/141fcc4bb597 and independent peer e75fac416715 bind seven actual uncached AMD64 OCI owners, 25/28 source blobs and all zero exits. The initial missing-toolchain failures remain retained. Validation refs are not additional upstream candidates; no ARM runtime, raw-master or full checkpoint/restore claim. Both split topics are published; the existing #14348 landing hold remains.\n\nEtiennePerot approved this exact source at 2026-10-06T20:32:37Z; the review contains no additional source request.\n\nMatching import #15399 refreshes to 7fe097ee0 with Buildkite pipeline49838 failing during checkout. The saved job inventory records 149 final exit-128 jobs. Two complete primary logs (AMD64 smoke and cgroup-v2 unit) both show repeated HTTP403 cloning google/gvisor before any project command; no checkpoint source/test failure is established. No retry or source amendment was issued.\n\nThe 00:20 UTC October 7 snapshot records matching-source import #15399 refreshed to 532a19fdb0d0bb0464edbdb2e871ba8868a58046. Its new pipeline 49844 and internal 31533 are pending. The previous 49838 checkout-403 failure is retained as historical evidence, not a current-head source failure.\n\nAt 01:40 UTC October 7, the same import head 532a19fdb has passed both internal 31533 and public pipeline 49844. Source feedback/copybara is now successful; source and import remain open, awaiting actual landing.",
+      "updatedAt": "2026-10-07T03:51:33.223495+00:00",
+      "summary": "Source PR #14360 and matching import #15399 are merged as confirmed by the 01:51 UTC October 7 snapshot. The dependent draft #14348 has been consolidated into #15322 and retired. Complete eight-file source/landing review ba78a419e5cf confirms every substantive source line is preserved in the actual merge. The obsolete checklocks-restore-fixes local and remote refs are now deleted after fresh identity, occupancy and dependency checks; receipt ba50b1f4d108 verifies remote404 and local/tracking absence. All validation compositions remain preserved.\n\nHistorical source and delivery evidence:\n\nThe requested split is now published after user approval. Existing PR #14360 contains only checkpoint waiters/startup synchronization at bacd163af4966ef1c8a7bf3ff917d7eafe5bf882; independent allocator changes are PR #15322 at 5beefd1b7. Root verified both signed/tracked heads on master 083093288. The reply links the split and the original thread is resolved: https://github.com/google/gvisor/pull/14360#discussion_r4189365631. The 22:19 canonical snapshot independently confirms that reply and thread resolution.\n\nEarlier scoped validation on the reviewed compiler base: checkpoint parent 12b81a5d-188c-487d-b6a0-189983692edb at e0f99fef9 runs the complete kernel suite (66 XML entries, 24 top-level cases, 62 leaves including both regressions) plus two both-CPU Nogo owners; allocator parent bdb2ca0e-c3c1-48af-8f36-9b2196a9618a at 23f01dc1c runs the complete allocator suite (50 entries, two top-level cases, 49 leaves including restore regression) plus three both-CPU Nogo owners. Outcomes 9df0ee5af19b/141fcc4bb597 and independent peer e75fac416715 bind seven actual uncached AMD64 OCI owners, 25/28 source blobs and all zero exits. The initial missing-toolchain failures remain retained. Validation refs are not additional upstream candidates; no ARM runtime, raw-master or full checkpoint/restore claim. Both split topics are published; the existing #14348 landing hold remains.\n\nEtiennePerot approved this exact source at 2026-10-06T20:32:37Z; the review contains no additional source request.\n\nMatching import #15399 refreshes to 7fe097ee0 with Buildkite pipeline49838 failing during checkout. The saved job inventory records 149 final exit-128 jobs. Two complete primary logs (AMD64 smoke and cgroup-v2 unit) both show repeated HTTP403 cloning google/gvisor before any project command; no checkpoint source/test failure is established. No retry or source amendment was issued.\n\nThe 00:20 UTC October 7 snapshot records matching-source import #15399 refreshed to 532a19fdb0d0bb0464edbdb2e871ba8868a58046. Its new pipeline 49844 and internal 31533 are pending. The previous 49838 checkout-403 failure is retained as historical evidence, not a current-head source failure.\n\nAt 01:40 UTC October 7, the same import head 532a19fdb has passed both internal 31533 and public pipeline 49844. Source feedback/copybara is now successful; source and import remain open, awaiting actual landing.",
       "followup": {
-        "disposition": "merged; replacement review and branch retirement pending",
+        "disposition": "merged; named local and remote topic branches retired",
         "owner": "external_sweeps",
-        "nextAction": "Verify the complete landed patch and named dependencies, obtain independent replacement review, then retire only the obsolete checklocks-restore-fixes refs under the standing cleanup authorization.",
+        "nextAction": "No remaining delivery or cleanup action for the original topic; preserve source-specific evidence and compositions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14360#discussion_r4189365631",
           "https://github.com/google/gvisor/pull/15322",
@@ -1041,7 +1041,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/49838",
           "https://buildkite.com/gvisor/pipeline/builds/49844"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-07T03:51:33.223495+00:00",
         "sourceHead": "bacd163af4966ef1c8a7bf3ff917d7eafe5bf882",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -1070,22 +1070,24 @@
       "title": "checklocks: enforce memory and restore ownership",
       "url": "https://github.com/google/gvisor/pull/14348",
       "group": "analysis",
-      "status": "draft",
+      "status": "closed",
       "reviewDecision": "",
-      "updatedAt": "2026-10-07T02:55:49.568116+00:00",
-      "summary": "Prerequisite #14360 has merged. Complete overlap review found that #15322 owns the newer allocator synchronization and regression test; only three atomic-field annotations and their fixture contracts remain independently useful. Their exact consolidation is now source-reviewed and remotely validated at public 7a0b5bb44; a concrete contributor request to amend #15322 and retire this superseded draft is pending. This public draft stays unchanged until the approved replacement is delivered and verified. Current mergeability is recorded by the live snapshot.",
+      "updatedAt": "2026-10-07T03:17:25.139348+00:00",
+      "summary": "Closed as superseded after the contributor-approved remaining atomic-field contracts were published in #15322 at 7a0b5bb44. The earlier extracted work is covered by #14237, #14351 and #14360. Independent complete-scope peer 063ab20d617e found no independent residual; this is supersession, not a claim of byte-identical landing.\n\nThe attributed closure explanation is verified at https://github.com/google/gvisor/pull/14348#issuecomment-6030152065 . Exact named local and remote checklocks-pgalloc-async-state refs were deleted after live head, occupancy and dependency checks. The original 58b093bd6 recovery ref and all validation compositions remain preserved. Receipt 5135767fbd11 verifies actual closure, remote 404 and local/tracking absence.",
       "followup": {
-        "disposition": "retirement depends on #15322 delivery",
+        "disposition": "closed as superseded; named local and remote branches retired",
         "owner": "external_sweeps",
-        "nextAction": "Await the answer to the concrete #15322 amendment-and-retirement request, verify the replacement delivery, then close and retire this superseded draft under the applicable authorization.",
+        "nextAction": "No remaining source delivery action for this draft; follow replacement #15322.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14348#issuecomment-5963584566",
-          "https://github.com/tamird/gvisor/commit/7a0b5bb44e53d46b30df93d813b08c1a5bf143a6"
+          "https://github.com/tamird/gvisor/commit/7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
+          "https://github.com/google/gvisor/pull/15322",
+          "https://github.com/google/gvisor/pull/14348#issuecomment-6030152065"
         ],
-        "reviewedAt": "2026-10-07T02:55:49.568116+00:00",
+        "reviewedAt": "2026-10-07T03:17:25.139348+00:00",
         "sourceHead": "58b093bd6b6a0dbe4c6b516c379d5013cc973722",
         "reviewDecision": null,
-        "mergeable": "CONFLICTING"
+        "mergeable": null
       }
     },
     {
@@ -1094,25 +1096,27 @@
       "number": 14345,
       "repo": "google/gvisor",
       "ref": "checklocks-seccheck-state",
-      "title": "checklocks: guard task and IPC state",
+      "title": "Check kernel task and signal locking contracts",
       "url": "https://github.com/google/gvisor/pull/14345",
       "group": "analysis",
-      "status": "draft",
+      "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-08-30T18:34:03Z",
-      "summary": "The authorized October 2/3 rebase is published at 465af2b28ffd8b01a181d21f637876c8680d93d9 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14345#issuecomment-5963584316. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
+      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
+      "summary": "All visible checks pass at the published head in the 03:52 snapshot. Current mergeability is UNKNOWN; earlier MERGEABLE readback is historical.\n\nThe contributor-approved narrowed kernel change is published at de2a5dd01af28c23dedcaf2e934ec808f8051c55. It is ready for review, with the exact reviewed description and matching local/fork/tracking refs; publication receipt 1ede380a067d records OPEN/MERGEABLE after the older snapshot. It declares existing TaskSet, signal and atomic ownership, and fixes the exposed parent-death-signal locking, signal-error lock reacquisition and exit-status read.\n\nThe prior exact production source passed 68 XML entries and 26 roots normally and with the race detector. A narrow cgroup checker annotation continuation passes the two owning Nogo targets with both CPU analyses and original 300-second timeouts. Outcome 9d72abf63c65 and independent saved peer retain the original failed parent, two actual uncached AMD64 OCI analyzer actions and BEP-bound XML. No ARM runtime, 64K or full-repository result is claimed.",
       "followup": {
-        "disposition": "retained draft scope",
-        "owner": "root",
-        "nextAction": "Prior consolidation was answered; retain unlanded kernel/TaskSet/futex scope rather than treating the broad draft as a fresh review unit.",
+        "disposition": "approved narrowed change delivered; tracking CI and review",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact published-head CI and human review; the older broad draft is no longer the current scope.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874"
+          "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
+          "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
-        "sourceHead": "465af2b28ffd8b01a181d21f637876c8680d93d9",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
+        "sourceHead": "de2a5dd01af28c23dedcaf2e934ec808f8051c55",
         "reviewDecision": null,
         "mergeable": "UNKNOWN"
-      }
+      },
+      "head": "de2a5dd01af28c23dedcaf2e934ec808f8051c55"
     },
     {
       "id": "pr:14343",
@@ -1120,25 +1124,27 @@
       "number": 14343,
       "repo": "google/gvisor",
       "ref": "checklocks-vfs-state",
-      "title": "checklocks: enforce filesystem ownership",
+      "title": "Check TMPFS and VFS locking contracts",
       "url": "https://github.com/google/gvisor/pull/14343",
       "group": "analysis",
-      "status": "draft",
+      "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-08-30T18:34:00Z",
-      "summary": "The authorized October 2/3 rebase is published at 152df38c6bac0ef3285e02fc73e844da77f97117 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14343#issuecomment-5963584115. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
+      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
+      "summary": "The contributor-approved narrowed TMPFS/VFS change is now published at 6c70cb26bc6e6d806dbf03a67b83bf00930b91d0. The PR is ready for review rather than draft, with the exact reviewed title and description; publication receipt c76354abed03 verifies matching local/fork/tracking refs and MERGEABLE readback. All visible new-head checks pass in the 03:52 snapshot; current mergeability is UNKNOWN.\n\nComplete source peers cover all fourteen owning files and the corrected stateify lifetime contracts. Paired remote evidence retains the original failed Nogo result, then closes the narrow four RENAME_EXCHANGE annotations and guarded tar fixture. Existing VFS and TMPFS suites pass 39 and 149 XML entries respectively; both owning Nogo targets pass both CPU analyses. Outcome 829ae7ce7755 and independent saved peer ad019a716f4c close this combined result. No ARM runtime or full repository result is claimed. Earlier broad source and failed evidence remain preserved.",
       "followup": {
-        "disposition": "retained draft scope",
-        "owner": "root",
-        "nextAction": "Retain unlanded TMPFS/VFS and FD-table scope; no new maintainer request.",
+        "disposition": "approved narrowed change delivered; tracking CI and review",
+        "owner": "external_sweeps",
+        "nextAction": "Track current narrowed-head CI and substantive review; old broad-draft comments do not describe the published scope.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14343#issuecomment-5390710435"
+          "https://github.com/google/gvisor/pull/14343#issuecomment-5390710435",
+          "https://github.com/tamird/gvisor/commit/6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
-        "sourceHead": "152df38c6bac0ef3285e02fc73e844da77f97117",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
+        "sourceHead": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0",
         "reviewDecision": null,
         "mergeable": "UNKNOWN"
-      }
+      },
+      "head": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
     },
     {
       "id": "pr:14338",
@@ -1253,21 +1259,21 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The October 4 conflict rebase is published at c17616f3bc7e1b0a32a07b456ea495072b66d837 on master 95ed905fb406e26326b263b2b3cb4ee78985a022. Plugin behavior and patch payloads are preserved; the rebase retains the upstream dependency pins and the already-landed nlohmann_json record, including its retrieval date. GitHub reports MERGEABLE, and all visible checks are successful in the 12:33 UTC snapshot; explicitly skipped checks remain skipped. The complete relationship read finds no linked Copybara import. The open source prerequisite remains active; no new public comment or import retry was sent.\n\nEarlier source-specific evidence and publication history:\n\nThe authorized October 2/3 rebase is published at 9f19b422abdec1069193628fd898877118f479fc on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15153#issuecomment-5963410894. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Open after the contributor-approved documentation revision at 0c229c451. Patch payloads are byte-identical to validated 827c20885: both static AMD64 binaries and archive-backed Cgo backtrace pass, and the canonical audit accepts all 184 dependencies. GNU compatibility was checked on the hosted coordinator; no new hermetic remote-action result is claimed. Initial PR checks are running.",
+      "summary": "The 03:52 snapshot reports a new source conflict at unchanged head c17616f3bc7e1b0a32a07b456ea495072b66d837. Existing visible checks pass. The assigned next action is exact conflict diagnosis and source/approval reconciliation; no new source or rebase has been published.\n\nThe October 4 conflict rebase is published at c17616f3bc7e1b0a32a07b456ea495072b66d837 on master 95ed905fb406e26326b263b2b3cb4ee78985a022. Plugin behavior and patch payloads are preserved; the rebase retains the upstream dependency pins and the already-landed nlohmann_json record, including its retrieval date. GitHub reports MERGEABLE, and all visible checks are successful in the 12:33 UTC snapshot; explicitly skipped checks remain skipped. The complete relationship read finds no linked Copybara import. The open source prerequisite remains active; no new public comment or import retry was sent.\n\nEarlier source-specific evidence and publication history:\n\nThe authorized October 2/3 rebase is published at 9f19b422abdec1069193628fd898877118f479fc on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15153#issuecomment-5963410894. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Open after the contributor-approved documentation revision at 0c229c451. Patch payloads are byte-identical to validated 827c20885: both static AMD64 binaries and archive-backed Cgo backtrace pass, and the canonical audit accepts all 184 dependencies. GNU compatibility was checked on the hosted coordinator; no new hermetic remote-action result is claimed. Initial PR checks are running.",
       "number": 15153,
       "reviewDecision": null,
       "updatedAt": "2026-10-04T12:35:11.492672+00:00",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "assigned: diagnose current source conflict",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Inspect the exact current conflict and prerequisite state, then coordinate a reviewed mechanical refresh in the assigned checkout if appropriate. Preserve original patch and checks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15153"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
         "sourceHead": "c17616f3bc7e1b0a32a07b456ea495072b66d837",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -2510,7 +2516,7 @@
       "status": "open",
       "summary": "Opened as approved PR #15414 after prerequisite #15375 merged through import #15405. The one-commit candidate was mechanically rebased onto current master bc1d178bb; its complete source patch remains identical to approved 6316d7e3a. The published head and exact reviewed description are verified. The 02:49 UTC snapshot reports all visible CI successful and mergeability MERGEABLE. No human review has arrived yet.\n\nParent 76c6f7fa at integration d73674684 passes in 486.766 seconds under Bazel 8.8.1: the actual posix_server consumer builds, integrated Fetch/Verify accepts 1,349 generated entries, and standalone acb7c6bfc Fetch/Verify accepts 191 generated entries. Outcome 3a5a283b932b and independent peer aa1a410a389a bind all sixty source captures and saved results. The graph selects Abseil 20260817.0, gRPC 1.84.0, protobuf 35.1, Googletest 1.18.0 and the minimum released Envoy correction 0.0.0-20260130-84e8436.\n\nThe integrated catalog adds Envoy, removes unused colorama and updates four pin/date records; the standalone catalog adds Envoy and updates six pin/date records. Exact generated bytes were adopted at bc3b3a391 and 1105052f8, then record-only amendments produced current heads 6316d7e3a and 33457c908 with unchanged trees and parents. Independent adoption peer bcaa65fb1a9c and publication receipt f2af484f8ccd close that binding. Existing license values and policy remain unchanged. The standalone GNU C++ consumer remains unexecuted because no supported remote image with its absolute GCC toolchain was established. Gloop remains outside the current depth-one license enumeration; no complete transitive audit, runtime or warning-free build is claimed.\n\nEarlier gRPC/protobuf and Envoy analysis failures are retained. The lifetime-annotation backport at 17d324f223 and its historical compiler-stack relationship are preserved as predecessor evidence. They are not an additional active upstream proposal or an independent dependency on the release candidate.",
       "head": "c6192533a521c9e008d40d029f85cf2eb2b99db8",
-      "updatedAt": "2026-10-07T02:55:49.568116+00:00",
+      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
       "followup": {
         "disposition": "awaiting upstream review or import",
         "owner": "external_sweeps",
@@ -2521,9 +2527,9 @@
           "https://app.buildbuddy.io/invocation/76c6f7fa-e90e-4f63-9e74-37cf17843ee7",
           "https://github.com/google/gvisor/pull/15414"
         ],
-        "reviewedAt": "2026-10-07T02:38:06.677347+00:00",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
         "sourceHead": "c6192533a521c9e008d40d029f85cf2eb2b99db8",
-        "mergeable": "MERGEABLE",
+        "mergeable": "UNKNOWN",
         "reviewDecision": null
       },
       "number": 15414
@@ -2652,21 +2658,24 @@
       "url": "https://github.com/google/gvisor/pull/15306",
       "group": "runtime",
       "status": "open",
-      "summary": "Contributor approval after #15216 has been applied: PR #15306 is open for review at e16cf7c2826bf341b8b20578c8672a81d36931ff, one commit on master d3f4faffa86eddec1deea94229c39f2305105529. The mechanical rebase preserves the approved topic and commit message; production blobs are unchanged. The only surrounding fixture differences are upstream linux/stat.h and AT_STATX_DONT_SYNC compatibility definitions. Independent peer 0d3f7b11e1fe closes rebase and delivery checks. Existing positive and negative validation is reused without a fresh runtime claim. No linked import is present in the bounded new-PR observation.\n\nEarlier source and validation record:\n\nPublic standalone 30abd7f82c99b9d5fe7cd2d08269d70bed7759c1 is based on refreshed prerequisite 23a37ab07aa34c4dac8cd5860478762d295d3f46. This mechanical refresh preserves the exact source patch and message from tested predecessor 28c6d7919219de37c5231d7a2c4f17af12c043f5 on 0486ca96a; no new runtime result is inferred. It treats FUSE_ACCESS ENOSYS as success and caches that connection-wide result after existing credential and local permission checks; other errors still propagate. Its independent case checks EACCES, first ENOSYS, then another inode/mask without another ACCESS request, using the shared cancellable server. Source/record and exact rebase peers pass.\n\nParent aa7b2967-5e14-47d0-a143-da770157497c at qualification source 2312c35925f83941fb458045261e6992bd3ed608 closed PASS_POSITIVES_WITH_EXPECTED_ACCESS_NEGATIVE in 170.401 seconds (831a3683a0bc). Full native/shared owners each pass six cases including AccessUnsupported and Fallocate, with only existing LookupUpdatesInode skipped. AccessUnsupported passes in 1/10 ms. The owning Go package passes without named XML counts; Nogo on AMD64 completes both AMD64/ARM64 analyses. Restoring only the pre-ACCESS connection/inode files preserves the v4 statx correction and yields an actual named FAILED result in 23 ms: second access ENOSYS 38, third access EACCES 13. Root's saved-log review is closed; the separate retained-evidence peer is closing. Actual root AMD64 Firecracker and OCI worker identities are bound. The contributor approved publication after prerequisite #15216 lands; that authorization is retained and does not require a renewed contributor request. No ACCESS upstream PR exists yet. No native ARM, checkpoint/concurrency stress or broad permission-matrix claim is made; the negative and all preceding fixture failures retain their states.",
+      "summary": "xinzhong approved exact head e16cf7c2826bf341b8b20578c8672a81d36931ff at 2026-10-07T03:11:50Z; the approval contains no additional source request. The ready-to-pull label and successful import/copybara status are present. Matching-source import #15418 is now open at ba5b7d197065ae12fdb775817173593624ae23be; its checks remain pending.\n\nContributor approval after #15216 has been applied: PR #15306 is open for review at e16cf7c2826bf341b8b20578c8672a81d36931ff, one commit on master d3f4faffa86eddec1deea94229c39f2305105529. The mechanical rebase preserves the approved topic and commit message; production blobs are unchanged. The only surrounding fixture differences are upstream linux/stat.h and AT_STATX_DONT_SYNC compatibility definitions. Independent peer 0d3f7b11e1fe closes rebase and delivery checks. Existing positive and negative validation is reused without a fresh runtime claim. No linked import is present in the bounded new-PR observation.\n\nEarlier source and validation record:\n\nPublic standalone 30abd7f82c99b9d5fe7cd2d08269d70bed7759c1 is based on refreshed prerequisite 23a37ab07aa34c4dac8cd5860478762d295d3f46. This mechanical refresh preserves the exact source patch and message from tested predecessor 28c6d7919219de37c5231d7a2c4f17af12c043f5 on 0486ca96a; no new runtime result is inferred. It treats FUSE_ACCESS ENOSYS as success and caches that connection-wide result after existing credential and local permission checks; other errors still propagate. Its independent case checks EACCES, first ENOSYS, then another inode/mask without another ACCESS request, using the shared cancellable server. Source/record and exact rebase peers pass.\n\nParent aa7b2967-5e14-47d0-a143-da770157497c at qualification source 2312c35925f83941fb458045261e6992bd3ed608 closed PASS_POSITIVES_WITH_EXPECTED_ACCESS_NEGATIVE in 170.401 seconds (831a3683a0bc). Full native/shared owners each pass six cases including AccessUnsupported and Fallocate, with only existing LookupUpdatesInode skipped. AccessUnsupported passes in 1/10 ms. The owning Go package passes without named XML counts; Nogo on AMD64 completes both AMD64/ARM64 analyses. Restoring only the pre-ACCESS connection/inode files preserves the v4 statx correction and yields an actual named FAILED result in 23 ms: second access ENOSYS 38, third access EACCES 13. Root's saved-log review is closed; the separate retained-evidence peer is closing. Actual root AMD64 Firecracker and OCI worker identities are bound. The contributor approved publication after prerequisite #15216 lands; that authorization is retained and does not require a renewed contributor request. No ACCESS upstream PR exists yet. No native ARM, checkpoint/concurrency stress or broad permission-matrix claim is made; the negative and all preceding fixture failures retain their states.",
       "number": 15306,
-      "updatedAt": "2026-10-05T14:03:07.549134+00:00",
+      "updatedAt": "2026-10-07T03:51:33.223495+00:00",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "maintainer approved; tracking import and landing",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Track actual import, current-head CI and landing; do not treat approval or import status alone as merge.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15306"
+          "https://github.com/google/gvisor/pull/15306#pullrequestreview-5437213266",
+          "https://github.com/google/gvisor/pull/15306",
+          "https://github.com/google/gvisor/pull/15418"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
         "sourceHead": "e16cf7c2826bf341b8b20578c8672a81d36931ff",
-        "reviewDecision": null,
-        "mergeable": "UNKNOWN"
-      }
+        "reviewDecision": "APPROVED",
+        "mergeable": "MERGEABLE"
+      },
+      "reviewDecision": "APPROVED"
     },
     {
       "id": "pr:15217",
@@ -2951,23 +2960,24 @@
       "url": "https://github.com/google/gvisor/pull/15322",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-07T02:55:49.568116+00:00",
-      "summary": "The live approved PR remains unchanged at 5beefd1b7. A concrete contributor review request is now pending for https://github.com/tamird/gvisor/commit/7a0b5bb44e53d46b30df93d813b08c1a5bf143a6 . It folds the three remaining atomic-field annotations and fixture ownership contracts from draft #14348 into this change while preserving the newer PagesFileOffset, save/restore and watchdog behavior. Complete combined-source peer 144cdefb4f72 passes.\n\nParent 297da469 passes in 389.868 seconds on the fresh-master compiler composition 7ebe3911f. The existing normal AMD64 allocator suite passes 50 XML entries / 49 leaves without skips, including LoadFromWithUpdateUsage. Four owning Nogo targets pass both CPU analyses. Outcome 42ce2a511cda and independent saved peer c6577aa23e10 bind five actual uncached remote actions, original 60/300-second timeouts, all eleven standalone source blobs and the complete patch. No 64K or ARM runtime result is claimed. Public amendment awaits the answer to the concrete review request; draft #14348 remains unchanged until that delivery is verified.",
+      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
+      "summary": "The contributor-approved consolidation is now published on the live PR at 7a0b5bb44e53d46b30df93d813b08c1a5bf143a6, with matching local/fork/tracking refs and the exact reviewed description. It folds the three remaining atomic-field annotations and fixture ownership contracts from draft #14348 into this change while preserving the newer PagesFileOffset, save/restore and watchdog behavior. Complete combined-source peer 144cdefb4f72 passes.\n\nParent 297da469 passes in 389.868 seconds on the fresh-master compiler composition 7ebe3911f. The existing normal AMD64 allocator suite passes 50 XML entries / 49 leaves without skips, including LoadFromWithUpdateUsage. Four owning Nogo targets pass both CPU analyses. Outcome 42ce2a511cda and independent saved peer c6577aa23e10 bind five actual uncached remote actions, original 60/300-second timeouts, all eleven standalone source blobs and the complete patch. No 64K or ARM runtime result is claimed. Publication is verified OPEN/MERGEABLE. All visible new-head checks pass in the 03:52 snapshot. Superseded draft #14348 is closed and its exact named local/remote branches are retired; its recovery head remains preserved. Original failure and earlier source heads remain preserved.",
       "number": 15322,
       "followup": {
-        "disposition": "contributor amendment review requested",
+        "disposition": "approved amendment delivered; tracking CI and review",
         "owner": "external_sweeps (delivery)",
-        "nextAction": "Await the answer to the concrete 7a0b5bb44 amendment and superseded-draft retirement request. After approval, verify current refs, publish #15322, then close the replacement/cleanup gates for #14348.",
+        "nextAction": "Track exact published-head CI, human review and import. The superseded draft retirement is complete.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15322",
           "https://github.com/tamird/gvisor/commit/7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
           "https://app.buildbuddy.io/invocation/297da469-0931-42e3-a213-9f7124543cf0"
         ],
-        "reviewedAt": "2026-10-07T02:55:49.568116+00:00",
-        "sourceHead": "5beefd1b7b562f9281af61a9b84659b51a396161",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
+        "sourceHead": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
-      }
+      },
+      "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6"
     },
     {
       "id": "pr:15335",
@@ -3460,21 +3470,21 @@
       "updatedAt": "2026-10-06T21:23:11.306363+00:00"
     },
     {
-      "id": "branch:governance-bazel-check",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15415",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "governance-bazel-check",
       "head": "32367edb9a73a6bbc1f0daa6c8968c1e9a927c76",
-      "title": "Generate and check governance files with Bazel",
-      "url": "https://github.com/tamird/gvisor/commit/32367edb9a73a6bbc1f0daa6c8968c1e9a927c76",
+      "title": "Generate governance files with Bazel",
+      "url": "https://github.com/google/gvisor/pull/15415",
       "group": "rbe",
-      "status": "review requested",
-      "updatedAt": "2026-10-07T02:38:06.677347+00:00",
-      "summary": "The revised YAML-based candidate 32367edb9 retains directory-existence validation and the requested table alignment. It preserves the original YAML and auto-assigner consumer, uses native Bazel generation and comparison tests, and validates only the listed paths without Git discovery or a full-tree scan. The new contributor review request is pending; earlier rejected requests are no longer pending.\n\nParent c83337b7 passes in 122.765 seconds at f146c4aa8. Both stale outputs fail actual uncached remote comparisons; native regeneration repairs them and both uncached comparisons pass. The run operates without Git metadata. Same-server missing, file, added-directory, directory-to-file and removed-directory cases have their expected outcomes; outside-directory symlinks remain accepted as in the original os.Stat contract. Source is restored cleanly. Independent saved peer 7819f0a30bff verifies 174 files, 21 Git bindings and eight digest-bound log/XML outputs. Generated CODEOWNERS and MAINTAINERS remain exact original bytes. Canonical Fetch and Verify accept 192 entries; the sole added record is yq.bzl 0.4.0 Apache-2.0. Final 32367 adopts those exact generated catalog bytes. The audit retains the existing toolchain-repository exclusion.\n\nHistorical validation of the now-superseded directory-check removal: Parent c76dfb7b passes in 92.732 seconds. Both stale outputs fail actual uncached remote comparisons; native regeneration repairs them and both uncached comparisons pass. The run operates without Git metadata and restores source cleanly. Independent peer bc7bb9b11c11 verifies 106 files, 20 Git objects and four BEP/log/XML joins. Generated CODEOWNERS returns byte-for-byte to the original YAML-based output; MAINTAINERS and the canonical 191-entry catalog are unchanged. Directory-existence validation is deliberately removed under the revised requirement. The final public revision 3676d3aa9 adopts that exact header and restores the baseline YAML schema example in the owning skill. It differs from source-equivalent 788246d97 only in its clearer commit message; no executable or data behavior changed after validation.\n\nHistorical validation of the superseded JSON revision: Parent 7132363a passes in 98.004 seconds at a90c900e7. Two stale generated outputs fail their remote comparisons; native regeneration repairs them and both actual uncached comparisons pass. No-Git operation and same-server missing/file/outside-symlink/added/directory-to-file/removal checks have their expected outcomes, with final source restored. Independent saved peer d533c9c581bb verifies 173 files, 20 Git objects and four BEP/log/XML joins. MAINTAINERS remains byte-identical; the only CODEOWNERS change is its source header. Canonical Fetch and Verify accept 191 entries with an unchanged catalog.\n\nThe earlier native-Starlark and yq revisions remain superseded. Their source-specific validation and the original missing-output method failure are retained as historical evidence, not approval of those designs.",
+      "status": "open",
+      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
+      "summary": "All visible checks pass at the published head in the 03:52 snapshot. Current mergeability is UNKNOWN; earlier MERGEABLE readback is historical.\n\nThe revised YAML-based candidate 32367edb9 retains directory-existence validation and the requested table alignment. It preserves the original YAML and auto-assigner consumer, uses native Bazel generation and comparison tests, and validates only the listed paths without Git discovery or a full-tree scan. The contributor approved this revision, and PR #15415 is now open at the exact reviewed head. Earlier rejected requests are no longer pending.\n\nParent c83337b7 passes in 122.765 seconds at f146c4aa8. Both stale outputs fail actual uncached remote comparisons; native regeneration repairs them and both uncached comparisons pass. The run operates without Git metadata. Same-server missing, file, added-directory, directory-to-file and removed-directory cases have their expected outcomes; outside-directory symlinks remain accepted as in the original os.Stat contract. Source is restored cleanly. Independent saved peer 7819f0a30bff verifies 174 files, 21 Git bindings and eight digest-bound log/XML outputs. Generated CODEOWNERS and MAINTAINERS remain exact original bytes. Canonical Fetch and Verify accept 192 entries; the sole added record is yq.bzl 0.4.0 Apache-2.0. Final 32367 adopts those exact generated catalog bytes. The audit retains the existing toolchain-repository exclusion.\n\nHistorical validation of the now-superseded directory-check removal: Parent c76dfb7b passes in 92.732 seconds. Both stale outputs fail actual uncached remote comparisons; native regeneration repairs them and both uncached comparisons pass. The run operates without Git metadata and restores source cleanly. Independent peer bc7bb9b11c11 verifies 106 files, 20 Git objects and four BEP/log/XML joins. Generated CODEOWNERS returns byte-for-byte to the original YAML-based output; MAINTAINERS and the canonical 191-entry catalog are unchanged. Directory-existence validation is deliberately removed under the revised requirement. The final public revision 3676d3aa9 adopts that exact header and restores the baseline YAML schema example in the owning skill. It differs from source-equivalent 788246d97 only in its clearer commit message; no executable or data behavior changed after validation.\n\nHistorical validation of the superseded JSON revision: Parent 7132363a passes in 98.004 seconds at a90c900e7. Two stale generated outputs fail their remote comparisons; native regeneration repairs them and both actual uncached comparisons pass. No-Git operation and same-server missing/file/outside-symlink/added/directory-to-file/removal checks have their expected outcomes, with final source restored. Independent saved peer d533c9c581bb verifies 173 files, 20 Git objects and four BEP/log/XML joins. MAINTAINERS remains byte-identical; the only CODEOWNERS change is its source header. Canonical Fetch and Verify accept 191 entries with an unchanged catalog.\n\nThe earlier native-Starlark and yq revisions remain superseded. Their source-specific validation and the original missing-output method failure are retained as historical evidence, not approval of those designs.",
       "followup": {
-        "disposition": "contributor review requested",
-        "owner": "root",
-        "nextAction": "Await the answer to the concrete revised-candidate review request; no upstream PR is open.",
+        "disposition": "approved source delivered; tracking upstream CI and review",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact-head CI, human review, dependencies and import through the sole existing sweep.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/31c890672c46c7b76dde37bc2265c95ddde6e070",
           "https://app.buildbuddy.io/invocation/ae6df444-65ac-4982-9f26-a14bc21150c4",
@@ -3491,11 +3501,14 @@
           "https://github.com/tamird/gvisor/commit/788246d97a5756f4526e4d017caa2d520b6f8f32",
           "https://github.com/tamird/gvisor/commit/3676d3aa92d69ccc033b6a5c7220d1a408c1da78",
           "https://github.com/tamird/gvisor/commit/32367edb9a73a6bbc1f0daa6c8968c1e9a927c76",
-          "https://app.buildbuddy.io/invocation/c83337b7-5521-4b3b-b88a-a03e10de7922"
+          "https://app.buildbuddy.io/invocation/c83337b7-5521-4b3b-b88a-a03e10de7922",
+          "https://github.com/google/gvisor/pull/15415"
         ],
-        "reviewedAt": "2026-10-07T02:38:06.677347+00:00",
-        "sourceHead": "32367edb9a73a6bbc1f0daa6c8968c1e9a927c76"
-      }
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
+        "sourceHead": "32367edb9a73a6bbc1f0daa6c8968c1e9a927c76",
+        "mergeable": "UNKNOWN"
+      },
+      "number": 15415
     },
     {
       "id": "branch:rbe-declared-lint-tools",
@@ -3703,22 +3716,23 @@
       "url": "https://github.com/google/gvisor/pull/15401",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-06T21:35:32.683472+00:00",
-      "summary": "Opened after contributor review and the requested motivation correction at exact ca7331879bf94aa8becd0fd92d819449ca492459. The existing UDP distribution test now covers 5,000 distinct source-port flows with two packets each, preserving the 10,000-packet budget, per-flow affinity check and five-percentage-point tolerance. The observed failure was an endpoint receiving 28% instead of the expected third.\n\nFocused remote validation at unchanged source b655c7c96 passes all fourteen existing leaves with no skips. A fixed-budget comparison then passes 100 runs each of old and new samples, with zero failing runs in either group. This does not measure a reduction in failure rate or reproduce the original random seed. Original eight shards, sixty-second timeouts and failures remain preserved; no full unit-suite, ARM or production-hash-defect claim follows. Initial upstream checks are monitored separately; no new reviewer comment was posted.",
+      "updatedAt": "2026-10-07T03:51:33.223495+00:00",
+      "summary": "milantracy approved exact head ca7331879bf94aa8becd0fd92d819449ca492459 at 2026-10-07T03:11:42Z; the approval contains no additional source request. The ready-to-pull label and successful import/copybara status are present. Matching-source import #15419 is now open at 8ae6eec64fd87d2d895590fa0b2891c0340d97a6; its checks remain pending.\n\nOpened after contributor review and the requested motivation correction at exact ca7331879bf94aa8becd0fd92d819449ca492459. The existing UDP distribution test now covers 5,000 distinct source-port flows with two packets each, preserving the 10,000-packet budget, per-flow affinity check and five-percentage-point tolerance. The observed failure was an endpoint receiving 28% instead of the expected third.\n\nFocused remote validation at unchanged source b655c7c96 passes all fourteen existing leaves with no skips. A fixed-budget comparison then passes 100 runs each of old and new samples, with zero failing runs in either group. This does not measure a reduction in failure rate or reproduce the original random seed. Original eight shards, sixty-second timeouts and failures remain preserved; no full unit-suite, ARM or production-hash-defect claim follows. Initial upstream checks are monitored separately; no new reviewer comment was posted.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "maintainer approved; tracking import and landing",
         "owner": "external_sweeps",
-        "nextAction": "Track current-head CI, full human review threads and exact-source imports under the existing sole sweep.",
+        "nextAction": "Track actual import, current-head CI and landing; do not treat approval or import status alone as merge.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15401#pullrequestreview-5437212369",
           "https://github.com/google/gvisor/pull/15401",
-          "https://github.com/tamird/gvisor/commit/ca7331879bf94aa8becd0fd92d819449ca492459",
-          "https://app.buildbuddy.io/invocation/46c778c0-2c2a-462b-b9b5-7f073ec1cce9"
+          "https://github.com/google/gvisor/pull/15419"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
         "sourceHead": "ca7331879bf94aa8becd0fd92d819449ca492459",
-        "reviewDecision": null,
-        "mergeable": "UNKNOWN"
-      }
+        "reviewDecision": "APPROVED",
+        "mergeable": "MERGEABLE"
+      },
+      "reviewDecision": "APPROVED"
     },
     {
       "id": "branch:tcpip-netip-core",
@@ -3757,47 +3771,53 @@
       "url": "https://github.com/google/gvisor/pull/15413",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-07T02:38:06.677347+00:00",
-      "summary": "Opened as PR #15413 under the contributor approval to use the latest upgraded modules. Public head 78a4931c5f714b6d6c6dbbd16d88b01ff74edab6 contains Go 1.27.1 and nine verified latest x/* module versions. The added mod/tools/telemetry updates follow the current dependency graph. The 02:28 UTC snapshot reports all visible CI successful and mergeability MERGEABLE. No human feedback is present.\n\nParent d5991fce passes in 646.112 seconds at standalone 1cb53fa13 and integration 697ba3879. Normal, coverage and race runtime binaries build; three actual uncached AMD64 OCI Nogo owners pass both CPU analyses with original 300-second timeouts. The normal release smoke passes on an uncached AMD64 Firecracker/nobody action with its original 900-second timeout. All four XML entries pass without skips. Independent saved peer 3689e45e8f08 verifies the archive, 53 Git bindings, four Action/Command/stdout joins and final catalog-only adoption. Standalone canonical Fetch and Verify accept 190 entries. This does not claim race/coverage runtime, standalone GNU execution or a full suite.\n\nThe actual generated catalog changes 32 records: nine upgraded modules and 23 unchanged records whose optional GitHub commit metadata was lost during rate-limit fallback. The final PR adopts only the nine byte-exact upgraded-module blocks, independently bound to current official origins and archive hashes; all other 181 records retain their prior bytes. Keys, license sets and policy remain unchanged. The generator metadata-retention defect is separately owned; the full raw generated output remains saved.\n\nEarlier source-specific evidence, before the latest module updates:\n\nParent 57b6044b passes in 603.071 seconds at validation 56056a4ab. Normal, coverage and race runtime binaries build successfully; three actual uncached AMD64 OCI Nogo owners pass both CPU analyses with original 300-second timeouts. The normal release smoke passes on one actual uncached AMD64 Firecracker/nobody TestRunner with its original 900-second timeout. All four XML entries pass without skips. Independent peer d0075023bb1c verifies 284 files and four raw Action/Command/stdout joins. Standalone graph and canonical Fetch/Verify accept 190 entries; only six x/* version/commit/hash/date fields change, with licenses/policy unchanged. Final source adopts the exact generated catalog. This does not claim race/coverage runtime, standalone GNU execution or a full suite.\n\nThe original Go-only validation at ca66d82da remains failed (parent a264030a, 845.874 seconds): normal/coverage, race and smoke compilation fail on missing http2.TrailerPrefix. Its eight passing unit owners and three Nogo owners remain separate earlier-source evidence; they were not rerun or relabeled as validation of the corrected source.",
+      "updatedAt": "2026-10-07T03:14:24.284770+00:00",
+      "summary": "Milan approved exact head 78a4931c5f714b6d6c6dbbd16d88b01ff74edab6 on October 7 and said he will trigger presubmit pipelines. The ready-to-pull label is present; all currently visible checks pass. Matching-source import #15417 is now open at f45da05f1e5056bac4f333b863ccc983e8948009, with its public pipeline pending. The 03:52 source mergeability is UNKNOWN.\n\nOpened as PR #15413 under the contributor approval to use the latest upgraded modules. Public head 78a4931c5f714b6d6c6dbbd16d88b01ff74edab6 contains Go 1.27.1 and nine verified latest x/* module versions. The added mod/tools/telemetry updates follow the current dependency graph. The 02:28 UTC snapshot reports all visible CI successful and mergeability MERGEABLE. No human feedback is present.\n\nParent d5991fce passes in 646.112 seconds at standalone 1cb53fa13 and integration 697ba3879. Normal, coverage and race runtime binaries build; three actual uncached AMD64 OCI Nogo owners pass both CPU analyses with original 300-second timeouts. The normal release smoke passes on an uncached AMD64 Firecracker/nobody action with its original 900-second timeout. All four XML entries pass without skips. Independent saved peer 3689e45e8f08 verifies the archive, 53 Git bindings, four Action/Command/stdout joins and final catalog-only adoption. Standalone canonical Fetch and Verify accept 190 entries. This does not claim race/coverage runtime, standalone GNU execution or a full suite.\n\nThe actual generated catalog changes 32 records: nine upgraded modules and 23 unchanged records whose optional GitHub commit metadata was lost during rate-limit fallback. The final PR adopts only the nine byte-exact upgraded-module blocks, independently bound to current official origins and archive hashes; all other 181 records retain their prior bytes. Keys, license sets and policy remain unchanged. The generator metadata-retention defect is separately owned; the full raw generated output remains saved.\n\nEarlier source-specific evidence, before the latest module updates:\n\nParent 57b6044b passes in 603.071 seconds at validation 56056a4ab. Normal, coverage and race runtime binaries build successfully; three actual uncached AMD64 OCI Nogo owners pass both CPU analyses with original 300-second timeouts. The normal release smoke passes on one actual uncached AMD64 Firecracker/nobody TestRunner with its original 900-second timeout. All four XML entries pass without skips. Independent peer d0075023bb1c verifies 284 files and four raw Action/Command/stdout joins. Standalone graph and canonical Fetch/Verify accept 190 entries; only six x/* version/commit/hash/date fields change, with licenses/policy unchanged. Final source adopts the exact generated catalog. This does not claim race/coverage runtime, standalone GNU execution or a full suite.\n\nThe original Go-only validation at ca66d82da remains failed (parent a264030a, 845.874 seconds): normal/coverage, race and smoke compilation fail on missing http2.TrailerPrefix. Its eight passing unit owners and three Nogo owners remain separate earlier-source evidence; they were not rerun or relabeled as validation of the corrected source.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "maintainer approved; presubmit and import pending",
         "owner": "external_sweeps",
-        "nextAction": "Track exact-head CI, complete human feedback and actual import lineage in the sole scheduled sweep.",
+        "nextAction": "Track the maintainer-triggered presubmits and actual import without treating approval or existing checks as a landing.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15413",
           "https://app.buildbuddy.io/invocation/d5991fce-7674-48c9-8939-ce437c731126",
-          "https://github.com/tamird/gvisor/commit/78a4931c5f714b6d6c6dbbd16d88b01ff74edab6"
+          "https://github.com/tamird/gvisor/commit/78a4931c5f714b6d6c6dbbd16d88b01ff74edab6",
+          "https://github.com/google/gvisor/pull/15413#pullrequestreview-5437183290",
+          "https://github.com/google/gvisor/pull/15417"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
         "sourceHead": "78a4931c5f714b6d6c6dbbd16d88b01ff74edab6",
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN"
       },
-      "number": 15413
+      "number": 15413,
+      "reviewDecision": "APPROVED"
     },
     {
-      "id": "branch:license-go-commit-metadata",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15416",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "license-go-commit-metadata",
       "head": "d0d1a2a13b6780095986864fa2f7536d5834f9b9",
       "title": "Preserve known Go module commit metadata",
-      "url": "https://github.com/tamird/gvisor/commit/d0d1a2a13b6780095986864fa2f7536d5834f9b9",
+      "url": "https://github.com/google/gvisor/pull/15416",
       "group": "release",
-      "status": "review requested",
-      "updatedAt": "2026-10-07T02:57:02.605494+00:00",
-      "summary": "A concrete contributor question is pending for this independent metadata-retention fix. Fetch keeps a prior Go module commit only when the fresh lookup has no commit and the module version and nonempty ZIP hash match. Fresh license results and nonempty commits remain authoritative; retrieval dates are retained only when the complete record is unchanged. This is a source correction, not a license-policy approval.\n\nParent 06830b2d passes in 118.408 seconds at exact d0d1a2a13. The existing checker passes all four roots without skips on one uncached remote AMD64 OCI action with its original 60-second timeout. Canonical Fetch and Verify accept 190 entries and produce a byte-identical catalog. Outcome 607161f6e640 and independent saved peer efda85edb7c6 bind 131 files, 21 source records and the actual Action/Command/stdout/XML join. Fresh pre-reconciliation metadata was not logged, so this run does not identify which requests exercised the fallback. No catalog or policy change was adopted.",
+      "status": "open",
+      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
+      "summary": "All visible checks pass at the published head in the 03:52 snapshot. Current mergeability is UNKNOWN; earlier MERGEABLE readback is historical.\n\nThe contributor-approved independent metadata-retention fix is now open as PR #15416 at the exact reviewed head. Fetch keeps a prior Go module commit only when the fresh lookup has no commit and the module version and nonempty ZIP hash match. Fresh license results and nonempty commits remain authoritative; retrieval dates are retained only when the complete record is unchanged. This is a source correction, not a license-policy approval.\n\nParent 06830b2d passes in 118.408 seconds at exact d0d1a2a13. The existing checker passes all four roots without skips on one uncached remote AMD64 OCI action with its original 60-second timeout. Canonical Fetch and Verify accept 190 entries and produce a byte-identical catalog. Outcome 607161f6e640 and independent saved peer efda85edb7c6 bind 131 files, 21 source records and the actual Action/Command/stdout/XML join. Fresh pre-reconciliation metadata was not logged, so this run does not identify which requests exercised the fallback. No catalog or policy change was adopted.",
       "followup": {
-        "disposition": "contributor review requested",
-        "owner": "root",
-        "nextAction": "Await the answer to the concrete d0d1a2a13 source-review question before opening an upstream PR.",
+        "disposition": "approved source delivered; tracking upstream CI and review",
+        "owner": "external_sweeps",
+        "nextAction": "Track exact-head CI, human review, dependencies and import through the sole existing sweep.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d0d1a2a13b6780095986864fa2f7536d5834f9b9",
-          "https://app.buildbuddy.io/invocation/06830b2d-b071-4da3-8d99-633dede68c38"
+          "https://app.buildbuddy.io/invocation/06830b2d-b071-4da3-8d99-633dede68c38",
+          "https://github.com/google/gvisor/pull/15416"
         ],
-        "reviewedAt": "2026-10-07T02:57:02.605494+00:00",
-        "sourceHead": "d0d1a2a13b6780095986864fa2f7536d5834f9b9"
-      }
+        "reviewedAt": "2026-10-07T03:54:47.497375+00:00",
+        "sourceHead": "d0d1a2a13b6780095986864fa2f7536d5834f9b9",
+        "mergeable": "UNKNOWN"
+      },
+      "number": 15416
     }
   ],
   "edges": [
@@ -3834,8 +3854,8 @@
     {
       "from": "pr:14360",
       "to": "pr:14348",
-      "type": "depends_on",
-      "reason": "Explicit landing prerequisite in the PR description.",
+      "type": "includes",
+      "reason": "Historical prerequisite landed; remaining draft scope was consolidated in #15322 before closure.",
       "evidence": "https://github.com/google/gvisor/pull/14348"
     },
     {
@@ -5061,8 +5081,8 @@
     {
       "from": "pr:15322",
       "to": "pr:14348",
-      "type": "depends_on",
-      "reason": "Retirement of the older draft awaits consolidation and validation of its remaining atomic-field annotations in the newer allocator change.",
+      "type": "includes",
+      "reason": "The contributor-approved replacement now contains the remaining atomic contracts; the older draft is closed and its named branches retired.",
       "evidence": "https://github.com/google/gvisor/pull/15322"
     }
   ]
