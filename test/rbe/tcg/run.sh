@@ -73,6 +73,11 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
   if [[ -n "${TEST_SHARD_STATUS_FILE:-}" ]]; then
     printf 'export TEST_SHARD_STATUS_FILE=/result/shard_status\n'
   fi
+  # Mirror test-setup.sh's GoogleTest aliases using the guest status path.
+  # Discovery acknowledges sharding; the runner owns case partitioning.
+  if [[ -v TEST_TOTAL_SHARDS ]] && (( TEST_TOTAL_SHARDS != 0 )); then
+    printf 'export GTEST_SHARD_INDEX="$TEST_SHARD_INDEX"\nexport GTEST_TOTAL_SHARDS="$TEST_TOTAL_SHARDS"\nexport GTEST_SHARD_STATUS_FILE="$TEST_SHARD_STATUS_FILE"\n'
+  fi
   printf 'export RUNFILES_DIR="$TEST_SRCDIR"\nunset RUNFILES_MANIFEST_FILE\ncd "$TEST_SRCDIR/$TEST_WORKSPACE"\n'
   printf 'exec %q' "./$payload"
   if (( $# )); then printf ' %q' "$@"; fi
