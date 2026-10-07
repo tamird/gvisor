@@ -410,7 +410,6 @@ artifacts = Path(sys.argv[2])
 canonical = set(path.read_text().splitlines())
 selected = {
     "//test/syscalls:cgroup2_test_native_amd64",
-    "//test/syscalls:cgroup2_test_runsc_systrap_shared_amd64"
 }
 assert selected <= canonical, sorted(selected - canonical)
 text = "".join(label + "\n" for label in sorted(selected))
@@ -420,7 +419,7 @@ text = "".join(label + "\n" for label in sorted(selected))
     "complete_profile_owners": sorted(canonical),
     "selected_owners": sorted(selected),
     "unexecuted_owners": sorted(canonical - selected),
-    "scope": "Two complete current cgroup2 owners: native initial-namespace fixture and shared systrap hierarchy; 86 source cases per owner.",
+    "scope": "One complete current native cgroup2 owner after restoring the existing native runner prerequisite; 86 source cases. Prior shared systrap pass is retained.",
 }, indent=2) + "\n")
 path.write_text(text)
 PY_FOCUS
