@@ -1,9 +1,10 @@
 # Full-system syscall tests
 
-This frontend runs an existing ARM64 syscall target inside a declared Linux
-guest with its selected kernel and page size. QEMU uses software translation
-(`-accel tcg`), so the remote OCI worker needs neither `/dev/kvm` nor root
-privileges. This is full-system emulation, not qemu-user.
+This frontend runs an existing syscall target inside a declared Linux guest
+with its selected kernel and page size. ARM64 uses QEMU software translation
+(`-accel tcg`) on an unprivileged remote OCI worker. AMD64 RC guests use host
+KVM and expose virtualization to their existing runsc KVM payloads. Both
+routes boot a complete guest kernel.
 
 The owning syscall macro declares a manual `<owner>_64k_tcg` frontend for
 each systrap owner without checkpoint modes. Its payload is the existing
@@ -111,5 +112,29 @@ boot and result transfer; the workflow has a 45-minute work limit. There is
 no software-emulation fallback for absent KVM. Guest logs, XML, kernel facts
 and spawn placement are retained. This four-owner pilot is not the full
 AMD64 RC qualification profile.
+
+The `syscalls-rc` lane also selects the complete public AMD64 profile, mapping
+native, ptrace, systrap and KVM owners to declared `<owner>_rc_kvm` frontends.
+Each guest keeps its original owner arguments, shards and deadline. The
+userspace includes the same declared harness tools and account databases as
+ARM64; image construction still runs no package maintainer scripts.
+
+Use the `rbe-rc-profiles` fork branch for graph-selected RC profiles:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-rc-profiles \
+  -f lanes=syscalls-rc -f architecture=all -f execution=local
+```
+
+`architecture=amd64` selects only the AMD64 profile. `all` combines both
+public profiles in one invocation: AMD64 guest TestRunners run locally,
+serially, while ARM64 TCG TestRunners and all compilation remain remote.
+Both payloads explicitly use 4K pages without a native host fixture. Nogo
+retains its dedicated lane, and the original hash15 buckets remain available.
+The Actions work/job limits are 70/75 minutes; they do not extend individual
+test deadlines or guarantee that the full profile fits. Selection reports
+retain skipped partitions, and completed-owner evidence remains necessary
+before claiming runtime coverage.
 
 [published build metadata]: https://kernel.ubuntu.com/mainline/v7.3-rc3/

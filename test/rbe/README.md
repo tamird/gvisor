@@ -1432,19 +1432,30 @@ optionally with `--syscall-bucket=0..14` to select an existing hash15 partition.
 The report lists every unexecuted owner; declared routing is not a claim that
 the whole profile has passed.
 
-The `syscalls-rc` lane uses the public `syscalls-arm64` selection and maps its
-ordinary ptrace/systrap owners to manual `<owner>_rc_tcg` frontends. Their
-payloads are the existing `<owner>_arm64` variants with 4K pages, running in
-the separately pinned Ubuntu RC guest through the same TCG transport:
+The `syscalls-rc` lane selects each requested CPU's public ordinary syscall
+profile. ARM64 maps ptrace/systrap owners to manual `<owner>_rc_tcg` frontends.
+Their existing `<owner>_arm64` payloads use 4K pages in the pinned Ubuntu RC
+guest, with remote AMD64 OCI workers running QEMU TCG:
 
 ```sh
 test/rbe/qualify.sh --arch=arm64 syscalls-rc
 ```
 
-This lane also accepts an existing hash15 bucket and retains the owning
-arguments, shards and deadlines. It selects no native, KVM or checkpoint
+AMD64 maps native, ptrace, systrap and KVM owners from `syscalls-amd64` to
+`<owner>_rc_kvm` frontends. They run on an AMD64 Actions host with nested KVM;
+their existing `<owner>_amd64` payloads also use 4K pages. Both profiles can
+share one invocation, with compilation remote and AMD64 guests serialized:
+
+```sh
+test/rbe/qualify.sh --arch=all --test-execution=local syscalls-rc
+```
+
+Use `--arch=amd64` for that profile alone. Either route accepts an existing
+hash15 bucket and retains the owning arguments, shards and deadlines. Nogo
+keeps its dedicated lane; the public profiles exclude checkpoint owners.
+The report preserves each CPU's canonical selection and all unexecuted bucket
 owners. Guest capabilities and full-profile timing require qualification;
-the two mincore pilots do not establish that every selected owner can run.
+declaring these routes does not establish that every selected owner can run.
 
 The combined command keeps the original unit patterns and configuration,
 including build-only tests and non-test targets. Selected syscall owners must

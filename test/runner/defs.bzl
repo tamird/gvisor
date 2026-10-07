@@ -56,7 +56,6 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
-        rc_kernel = False,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -173,6 +172,9 @@ def _syscall_test(
     arm64_rc = platform in ["ptrace", "systrap"] and "allsave" not in tags
     if arm64_rc:
         tags.append("rbe-has-rc-tcg-variant")
+    amd64_rc = platform in ["native", "ptrace", "systrap", "kvm"] and "allsave" not in tags
+    if amd64_rc:
+        tags.append("rbe-has-rc-kvm-variant")
 
     attributes = dict(kwargs)
     attributes.update(
@@ -214,7 +216,7 @@ def _syscall_test(
             **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
 
-    if rc_kernel and platform in ["native", "ptrace", "systrap", "kvm"] and "allsave" not in tags:
+    if amd64_rc:
         amd64_kvm_test(
             name = name + "_rc_kvm",
             payload = ":" + name + "_amd64",

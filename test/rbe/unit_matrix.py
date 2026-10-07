@@ -231,9 +231,9 @@ def profile_suffix(
     architecture: str, page_size: str, *, hybrid: bool = False, rc_kernel: bool = False,
 ) -> str:
     if rc_kernel:
-        if architecture != "arm64" or page_size != "4k" or hybrid:
-            raise ValueError("The RC syscall profile requires remote ARM64 4K TCG execution")
-        return "_rc_tcg"
+        if page_size != "4k" or hybrid:
+            raise ValueError("RC guests require ordinary 4K payloads without host-native routing")
+        return "_rc_kvm" if architecture == "amd64" else "_rc_tcg"
     if page_size == "64k":
         if architecture != "arm64":
             raise ValueError("The public 64K syscall profile requires ARM64")
@@ -248,6 +248,9 @@ def profile_targets(
     targets = configured_tests(events_path)
     if kvm_only and (not hybrid or architecture != "amd64"):
         raise ValueError("The KVM-only profile requires hybrid AMD64 execution")
+    if rc_kernel:
+        # Nogo retains its own lane; only syscall payloads run in RC guests.
+        targets = {label: target for label, target in targets.items() if "nogo" not in target.tags}
     if hybrid:
         # Filter before requiring native variants: Nogo owns its separate lane,
         # and the KVM lane is independent of ordinary namespace execution.
@@ -306,15 +309,15 @@ def select_profile(
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
         raise ValueError("Hybrid syscall execution requires a native 4K syscall profile")
-    tcg = page_size == "64k" or rc_kernel
-    if syscall_bucket is not None and not (hybrid or syscall_policy and tcg):
-        raise ValueError("Syscall buckets require hybrid or ARM64 TCG execution")
+    guest = page_size == "64k" or rc_kernel
+    if syscall_bucket is not None and not (hybrid or syscall_policy and guest):
+        raise ValueError("Syscall buckets require hybrid or guest execution")
     original = configured_tests(profile_path)
     expected = set(profile_targets(profile_path, architecture, page_size, hybrid=hybrid, kvm_only=kvm_only, rc_kernel=rc_kernel))
     configured = configured_tests(events_path)
     if configured.keys() != expected:
         raise ValueError(f"Configured owners differ from profile: {sorted(configured.keys() ^ expected)}")
-    execution_architecture = "amd64" if tcg else architecture
+    execution_architecture = "amd64" if guest else architecture
     requirements = test_requirements(
         actions_path,
         execution_architecture,
@@ -322,15 +325,26 @@ def select_profile(
     )
     if requirements.keys() != expected:
         raise ValueError(f"Missing profile TestRunners: {sorted(expected - requirements.keys())}")
-    if tcg:
+    if guest:
         for label, target in configured.items():
             properties = requirements[label]
-            tag = "arm64-rc-tcg" if rc_kernel else "arm64-64k-tcg"
-            platforms = {"runsc_ptrace", "runsc_systrap"} if rc_kernel else {"runsc_systrap"}
-            if not {tag, "no-local"} <= set(target.tags) or not platforms.intersection(target.tags) or "allsave" in target.tags:
-                raise ValueError(f"Unexpected TCG variant: {label}: {target.tags}")
-            if properties.get("dockerUser") != "nobody" or properties["workload-isolation-type"] != "oci":
-                raise ValueError(f"Expected unprivileged TCG worker: {label}: {properties}")
+            if rc_kernel and architecture == "amd64":
+                required_tags = {"amd64-rc-kvm", "no-remote-exec", "no-sandbox"}
+                platforms = {"native", "runsc_ptrace", "runsc_systrap", "runsc_kvm"}
+                if not {"no-remote-exec", "no-sandbox"} <= properties.keys() or "no-local" in properties:
+                    raise ValueError(f"Expected local KVM guest: {label}: {properties}")
+            else:
+                required_tags = {"arm64-rc-tcg" if rc_kernel else "arm64-64k-tcg", "no-local"}
+                platforms = {"runsc_ptrace", "runsc_systrap"} if rc_kernel else {"runsc_systrap"}
+                if (
+                    properties.get("dockerUser") != "nobody"
+                    or properties["workload-isolation-type"] != "oci"
+                    or "no-local" not in properties
+                    or {"no-remote-exec", "no-remote"}.intersection(properties)
+                ):
+                    raise ValueError(f"Expected unprivileged TCG worker: {label}: {properties}")
+            if not required_tags <= set(target.tags) or not platforms.intersection(target.tags) or "allsave" in target.tags:
+                raise ValueError(f"Unexpected guest variant: {label}: {target.tags}")
     unavailable: dict[str, str] = {}
     policy_excluded: dict[str, str] = {}
     for label, target in original.items():
@@ -341,8 +355,8 @@ def select_profile(
         # The standalone RBE syscall lane also leaves Nogo to its own lane.
         # Keep this policy distinct from unavailable runtime capabilities.
         if syscall_policy and "nogo" in target.tags:
-            policy_excluded[label if hybrid else variant] = "Nogo runs in the dedicated nogo lane."
-        elif syscall_policy and "runsc_kvm" in target.tags and not kvm_only:
+            policy_excluded[label if hybrid or rc_kernel else variant] = "Nogo runs in the dedicated nogo lane."
+        elif syscall_policy and "runsc_kvm" in target.tags and not kvm_only and not rc_kernel:
             if hybrid:
                 policy_excluded[label] = "KVM runs in the dedicated syscalls-kvm lane."
             else:
@@ -364,10 +378,12 @@ def select_profile(
     else:
         selected = sorted(eligible)
     groups = hybrid_local_owners(set(selected), requirements, kvm=kvm_only) if hybrid else {}
+    if rc_kernel and architecture == "amd64":
+        groups = {"root": selected, "unprivileged": []}
     local = {label for group in groups.values() for label in group}
     initial_cgroup = sorted(
         label for label in local
-        if {"native", "requires-initial-cgroup-namespace"} <= set(configured[label].tags)
+        if not rc_kernel and {"native", "requires-initial-cgroup-namespace"} <= set(configured[label].tags)
     )
     for label in initial_cgroup:
         if "no-sandbox" not in requirements[label]:
@@ -461,6 +477,7 @@ def main() -> None:
     query.add_argument("patterns")
     actions = commands.add_parser("actions")
     actions.add_argument("owners")
+    actions.add_argument("--exact", action="store_true", help="Query these configured labels without adding ARM64 variants")
     select = commands.add_parser("select")
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
@@ -486,14 +503,14 @@ def main() -> None:
         profile.add_argument("events")
         profile.add_argument("architecture", choices=("amd64", "arm64"))
         profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
-        profile.add_argument("--rc-kernel", action="store_true", help="Select the declared ARM64 RC guest")
+        profile.add_argument("--rc-kernel", action="store_true", help="Select the declared RC guest for this architecture")
         profile.add_argument("--hybrid", action="store_true", help="Select native local variants")
         profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
     profile = commands.add_parser("select-profile")
     profile.add_argument("profile")
     profile.add_argument("architecture", choices=("amd64", "arm64"))
     profile.add_argument("--page-size", choices=("4k", "64k"), default="4k")
-    profile.add_argument("--rc-kernel", action="store_true", help="Select the declared ARM64 RC guest")
+    profile.add_argument("--rc-kernel", action="store_true", help="Select the declared RC guest for this architecture")
     for name in ("events", "actions", "output"):
         profile.add_argument(name)
     profile.add_argument("--syscall-policy", action="store_true", help="Apply the existing syscall runtime exclusions")
@@ -508,7 +525,8 @@ def main() -> None:
     if args.command == "query":
         print(owner_query(args.patterns))
     elif args.command == "actions":
-        print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
+        suffix = "" if args.exact else "_arm64"
+        print('mnemonic("^TestRunner$", ' + target_set([owner + suffix for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
         select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid)
     elif args.command == "cgroup-targets":
