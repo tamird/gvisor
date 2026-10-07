@@ -1,3 +1,4 @@
+load("//test/docker:defs.bzl", "docker_daemon_config")
 load("//test/runtimes:defs.bzl", "runtime_tests")
 load("//tools:defs.bzl", "bzl_library", "go_test", "more_shards", "most_shards")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
@@ -64,18 +65,30 @@ bzl_library(
     ],
 )
 
-# Fork-only diagnostic: compare the same concatenation workload on one worker.
-# A successful diagnostic does not qualify the upstream PHPT timing assertion.
+# Fork-only profile of the released concatenation body in one sandbox.
+docker_daemon_config(
+    name = "php_concat_profile_config",
+    testonly = True,
+    images = [":php8.5.11_image_amd64_tar"],
+    runtime_args = [
+        "--platform=systrap",
+        "--watchdog-action=panic",
+        "--directfs=true",
+        "--profile=true",
+    ],
+    tags = ["manual"],
+)
+
 go_test(
-    name = "php_timing_diagnostic",
+    name = "php_concat_profile_diagnostic",
     size = "large",
     timeout = "long",
     srcs = ["php_timing_test.go"],
     args = [
-        "--docker_test_config=$(rootpath :php8.5.11_directfs_docker_config)",
+        "--docker_test_config=$(rootpath :php_concat_profile_config)",
         "-test.v",
     ],
-    data = [":php8.5.11_directfs_docker_config"],
+    data = [":php_concat_profile_config"],
     exec_properties = docker_test_exec_properties(free_disk = "20GB"),
     rundir = ".",
     tags = ["manual"],

@@ -19,7 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -31,10 +31,8 @@ func TestMain(m *testing.M) {
 	os.Exit(dockerutil.RunTests(m.Run))
 }
 
-// This fork-only diagnostic executes the released test body, while reporting
-// its measured loop time rather than requiring the two-second assertion to pass.
-// CPU and fault deltas cover the evaluated body, including array setup and
-// output; loop_seconds is the test's own measurement of the loop.
+// Execute the released body unchanged. Its two-second assertion is reported,
+// not used as a qualification gate under profiling.
 const phpTiming = `
 $source = file_get_contents("Zend/tests/concat/concat_003.phpt");
 if (hash("sha256", $source) !== "be2ac2b32e73c3c7030c08f777d5878306b0cbfa3b3e56f22bfd64ea8af24c8a") {
@@ -42,51 +40,61 @@ if (hash("sha256", $source) !== "be2ac2b32e73c3c7030c08f777d5878306b0cbfa3b3e56f
 }
 $sections = explode("--FILE--\n", $source, 2);
 $code = explode("--EXPECT--\n", $sections[1], 2)[0];
-$code = str_replace("array_fill(0, 220000,", "array_fill(0, " . $argv[1] . ",", $code, $count);
-if ($count !== 1) {
-    throw new Exception("expected one input-size substitution");
-}
-$before = getrusage();
 eval("?>" . $code);
-$after = getrusage();
 echo json_encode([
     "php" => PHP_VERSION,
-    "items" => (int)$argv[1],
+    "items" => 220000,
     "loop_seconds" => $t,
-    "user_seconds" => $after["ru_utime.tv_sec"] - $before["ru_utime.tv_sec"] + ($after["ru_utime.tv_usec"] - $before["ru_utime.tv_usec"]) / 1000000,
-    "system_seconds" => $after["ru_stime.tv_sec"] - $before["ru_stime.tv_sec"] + ($after["ru_stime.tv_usec"] - $before["ru_stime.tv_usec"]) / 1000000,
-    "minor_faults" => $after["ru_minflt"] - $before["ru_minflt"],
-    "major_faults" => $after["ru_majflt"] - $before["ru_majflt"],
+    "loop_start_unix_seconds" => $time,
+    "pid" => getmypid(),
 ], JSON_THROW_ON_ERROR), "\n";
 `
 
-func TestPHPConcatenationTiming(t *testing.T) {
-	ctx := t.Context()
-	native := dockerutil.MakeNativeContainer(ctx, t)
-	sandbox := dockerutil.MakeContainer(ctx, t)
-	containers := []*dockerutil.Container{native, sandbox}
-	for _, c := range containers {
-		t.Cleanup(func() {
-			ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), 15*time.Second)
-			defer cancel()
-			if err := c.CleanUp(ctx); err != nil {
-				t.Errorf("container cleanup: %v", err)
-			}
-		})
-		if err := c.Spawn(ctx, dockerutil.RunOpts{Image: "runtimes/php8.5.11"}, "sleep", "infinity"); err != nil {
-			t.Fatal(err)
+func TestPHPConcatenationProfile(t *testing.T) {
+	outputDir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR")
+	if outputDir == "" {
+		t.Fatal("profile requires TEST_UNDECLARED_OUTPUTS_DIR")
+	}
+	profileDir := filepath.Join(outputDir, "php-profile")
+	for name, value := range map[string]string{
+		"pprof-cpu":      "true",
+		"pprof-duration": "60s",
+		"pprof-dir":      profileDir,
+	} {
+		if err := flag.Set(name, value); err != nil {
+			t.Fatalf("profile flag %s: %v", name, err)
 		}
 	}
-	for iteration := range 10 {
-		for _, size := range []int{110000, 220000, 440000} {
-			for order := range 2 {
-				index := (iteration + order) % 2
-				output, err := containers[index].Exec(ctx, dockerutil.ExecOpts{}, "/root/php-8.5.11/sapi/cli/php", "-n", "-r", phpTiming, strconv.Itoa(size))
-				if err != nil {
-					t.Fatalf("runtime=%d iteration=%d size=%d: %v\n%s", index, iteration, size, err, output)
-				}
-				fmt.Printf("PHP_TIMING runtime=%s iteration=%d size=%d\n%s\n", []string{"native", "directfs"}[index], iteration, size, output)
-			}
+	ctx := t.Context()
+	sandbox := dockerutil.MakeContainer(ctx, t)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(t.Context()), 15*time.Second)
+		defer cancel()
+		if err := sandbox.CleanUp(ctx); err != nil {
+			t.Errorf("container cleanup: %v", err)
 		}
+		// The fixture logs profiler failures; require its actual output after
+		// cleanup has stopped and joined the collector. Parsing is external.
+		profile := filepath.Join(profileDir, dockerutil.Runtime(), t.Name(), "runtimes/php8.5.11/cpu.pprof")
+		info, err := os.Stat(profile)
+		if err != nil {
+			t.Fatalf("CPU profile: %v", err)
+		}
+		if !info.Mode().IsRegular() || info.Size() == 0 {
+			t.Fatalf("CPU profile is not a nonempty regular file: %v", info)
+		}
+		fmt.Printf("PHP_PROFILE bytes=%d\n", info.Size())
+	})
+	if err := sandbox.Spawn(ctx, dockerutil.RunOpts{Image: "runtimes/php8.5.11"}, "sleep", "infinity"); err != nil {
+		t.Fatal(err)
+	}
+	// The existing collector starts after ContainerStart. These execs include
+	// PHP startup and array setup; loop_seconds covers only the original loop.
+	for iteration := range 10 {
+		output, err := sandbox.Exec(ctx, dockerutil.ExecOpts{}, "/root/php-8.5.11/sapi/cli/php", "-n", "-r", phpTiming)
+		if err != nil {
+			t.Fatalf("iteration=%d: %v\n%s", iteration, err, output)
+		}
+		fmt.Printf("PHP_TIMING runtime=directfs iteration=%d size=220000\n%s\n", iteration, output)
 	}
 }
