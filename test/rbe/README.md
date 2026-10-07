@@ -28,7 +28,8 @@ This remote profile does not replace the full public CI matrix. It omits the KVM
 variants of posture, startup, continuous benchmarks and syscall tests, as well
 as slimvm. Public CI uses AMD64 save/restore and ARM64 save/resume;
 `--arch=all` follows that mapping. Standalone checkpoint lanes use the requested
-`--arch`, defaulting to AMD64. ARM64 checkpoints require Firecracker capacity.
+`--arch`, defaulting to AMD64. Remote ARM64 checkpoints require Firecracker
+capacity; ARM64 save/resume can instead use the native Actions executor.
 The root lane retains its cgroupfs owner and, on AMD64, also runs the complete
 root suite under native systemd in a private PID, cgroup and mount namespace.
 The test, Docker and runsc share that view and a writable delegated cgroup
@@ -51,7 +52,8 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-kvm-syscalls`, `rbe-actions-kvm-startup`,
+`rbe-actions-kvm-syscalls`, `rbe-actions-arm64-resume`,
+`rbe-actions-kvm-startup`,
 `rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
 `rbe-actions-arm64-docker` and `rbe-actions-arm64-images` pilot branches permit
 manual dispatches only.
@@ -94,9 +96,10 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls`, `syscalls-kvm`, `startup`, `posture`, `portforward`, `root`,
+`unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `startup`, `posture`,
+`portforward`, `root`,
 `docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
-(`amd64` or `arm64`). Local unit, ordinary syscall, Docker and image profiles
+(`amd64` or `arm64`). Local unit, ordinary/save-resume syscall, Docker and image profiles
 require `arm64`; KVM syscalls,
 startup, posture, portforward, root and benchmarks require `amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
@@ -109,10 +112,11 @@ The `bwrap` lane uses its existing integration test and runs only that test
 process under `sudo -E`, matching `make bwrap-tests`. Bazel continues as the
 unprivileged Actions user. The lane retains the existing test cases and skips.
 
-The `unit`, `syscalls` and `syscalls-kvm` phases intersect graph-declared architecture
-variants with their canonical profiles and run one test invocation. Native
-namespace tests and selected KVM syscall tests run locally; ordinary native
-tests and shared checks stay remote. The report records all selected owners and their execution requirements.
+The `unit`, `syscalls`, `syscalls-resume` and `syscalls-kvm` phases intersect
+graph-declared architecture variants with their canonical profiles and run one
+test invocation. Native namespace tests and selected KVM syscall tests run
+locally; ordinary native tests and shared checks stay remote. The report records
+all selected owners and their execution requirements.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
 Root test frontends invoke the existing local-root fixture, which permits
@@ -125,9 +129,9 @@ Only these native namespace/KVM TestRunners require local execution; compiler ta
 and actions remain unchanged. At most two local tests run at once on the
 four-core host, while remote work keeps 400 jobs.
 
-The ARM64 syscall phase selects the existing `syscalls-arm64` 4K-page profile. It
-retains the public ptrace/systrap selection and excludes checkpoint and KVM
-tests. Actions installs `iproute2` and `netcat-openbsd` for the existing
+The ordinary ARM64 syscall phase selects the existing `syscalls-arm64` 4K-page
+profile. It retains the public ptrace/systrap selection and excludes checkpoint
+and KVM tests. Actions installs `iproute2` and `netcat-openbsd` for the existing
 rtnetlink owners. Their versions and the complete selected owner set are saved
 with the result. To bound each job, optionally select one of the syscall
 macro's existing `hash15` buckets:
@@ -136,6 +140,18 @@ macro's existing `hash15` buckets:
 gh workflow run build.yml --repo tamird/gvisor \
   --ref rbe-qualification-upstream-refresh \
   -f lanes=syscalls -f architecture=arm64 -f execution=local \
+  -f syscall_bucket=0
+```
+
+The ARM64 `syscalls-resume` lane uses the public `save_resume` tag over the
+same syscall roots. The runner declares this tag for its supported systrap
+variants and retains their autosave/resume arguments, shard counts and
+timeouts. It uses the same native frontend, host tools and hash buckets:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-arm64-resume \
+  -f lanes=syscalls-resume -f architecture=arm64 -f execution=local \
   -f syscall_bucket=0
 ```
 
@@ -162,7 +178,8 @@ owners. A successful bucket is partial coverage; the union of all buckets on
 the same source is required to cover this profile. Different buckets have
 separate workflow concurrency keys. Direct callers use
 `--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
-provide the same Linux host tools. For KVM, use
+provide the same Linux host tools. Replace `syscalls` with `syscalls-resume`
+for the save/resume profile. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
 
@@ -1255,8 +1272,10 @@ test/rbe/qualify.sh --arch=arm64 syscalls-resume
 These reuse `test/syscalls.targets` and the runner's supported platform selection.
 They do not change the default `syscalls` lane, which excludes save variants.
 The public jobs exercise save/restore on AMD64 and save/resume on ARM64. ARM64
-namespace execution still requires Firecracker capacity; the lane must fail
-when those workers are unavailable. Declaring a lane does not establish that
+namespace owners can use the local Actions executor with
+`--arch=arm64 --test-execution=local syscalls-resume` and the existing hash15
+buckets. Remote execution still requires Firecracker capacity and fails when
+those workers are unavailable. Declaring a lane does not establish that
 its tests pass or complete the full save/restore matrix.
 
 With `--arch=all`, both checkpoint lanes use those public architectures and can
