@@ -38,12 +38,12 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}
   cancel-in-progress: true
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-kvm-startup'))
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-kvm-startup'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,9 +68,9 @@ jobs:
           path: bin/runsc
 
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-kvm-startup') && github.event_name == 'workflow_dispatch'))
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-kvm-startup') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && inputs.architecture == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes == 'benchmarks' && 75 || (inputs.execution == 'local' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'docker' && 15 || 50) }}
+    timeout-minutes: ${{ inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'docker' && 15 || 50) }}
     permissions:
       contents: read
     env:
@@ -135,7 +135,7 @@ jobs:
 
     - name: Compile on RBE and test on Actions
       if: inputs.execution == 'local'
-      timeout-minutes: ${{ inputs.lanes == 'benchmarks' && 70 || ((inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'docker') && 45 || 15) }}
+      timeout-minutes: ${{ contains(fromJSON('["benchmarks","cpu-images","gpu-images"]'), inputs.lanes) && 70 || ((inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'docker') && 45 || 15) }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}

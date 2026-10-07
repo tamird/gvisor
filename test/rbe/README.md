@@ -52,8 +52,9 @@ The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
 `rbe-actions-kvm-syscalls`, `rbe-actions-kvm-startup`,
-`rbe-actions-benchmark-partitions`, `rbe-actions-docker-network` and
-`rbe-actions-arm64-docker` pilot branches permit manual dispatches only.
+`rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
+`rbe-actions-arm64-docker` and `rbe-actions-arm64-images` pilot branches permit
+manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -94,8 +95,9 @@ Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
 `unit`, `syscalls`, `syscalls-kvm`, `startup`, `posture`, `portforward`, `root`,
-`docker` or `benchmarks`) and a single architecture (`amd64` or `arm64`). Local
-unit, ordinary syscall and Docker profiles require `arm64`; KVM syscalls,
+`docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
+(`amd64` or `arm64`). Local unit, ordinary syscall, Docker and image profiles
+require `arm64`; KVM syscalls,
 startup, posture, portforward, root and benchmarks require `amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
@@ -164,13 +166,19 @@ provide the same Linux host tools. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
 
-Local benchmark and Docker jobs create one temporary Docker bridge for
+Local benchmark, Docker and image jobs create one temporary Docker bridge for
 outbound downloads in build workloads and package-installation fixtures. The sandbox setup identifies its own Bazel
 container, joins that bridge without sharing the host network namespace, and
 unmounts the host Docker socket before starting the test. Docker removes each
 endpoint with its sandbox; the coordinator removes the bridge after Bazel
 returns and reports cleanup failures. The Actions coordinator supplies this job-owned network through
 `test/rbe/actions.sh`, using its run ID and attempt for the bridge name.
+
+The ARM64 `cpu-images` and `gpu-images` lanes run their existing two-shard
+source-image checks using the same private Docker fixture. They inspect or build
+workload images; the GPU image check does not execute workloads on a GPU.
+Each lane gets a 70-minute step and 75-minute job so both original one-hour
+shards can finish, with at most two local tests and remote compilation unchanged.
 
 Continuous benchmarks can exceed one Actions job when queued together. To
 qualify individual owners concurrently, pass `benchmark_target` with one label
