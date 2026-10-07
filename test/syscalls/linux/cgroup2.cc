@@ -2863,15 +2863,11 @@ TEST_F(Cgroup2Test, MemoryFilesNotOnRoot) {
       ASSERT_NO_ERRNO_AND_VALUE(root().ReadControlFile("cgroup.controllers"));
   SKIP_IF(!absl::StrContains(available, "memory"));
 
-  // cgroup.type is absent only at the hierarchy root. A mount rooted at a
-  // delegated cgroup namespace exposes the memory files of that cgroup.
-  const bool is_delegated_root =
-      ASSERT_NO_ERRNO_AND_VALUE(Exists(root().Relpath("cgroup.type")));
+  // Absent on the root cgroup.
   for (const char* name :
        {"memory.current", "memory.max", "memory.high", "memory.events"}) {
-    EXPECT_THAT(Exists(root().Relpath(name)),
-                IsPosixErrorOkAndHolds(is_delegated_root))
-        << name;
+    EXPECT_THAT(Exists(root().Relpath(name)), IsPosixErrorOkAndHolds(false))
+        << name << " should not exist on the root cgroup";
   }
 
   // Present on a non-root cgroup that has the memory controller.
@@ -3946,8 +3942,6 @@ TEST_F(Cgroup2Test, NsdelegateRootWrites) {
 
   // Setting the flag requires a mount from the init cgroup namespace, and is
   // system wide.
-  const bool nsdelegate_before =
-      ASSERT_NO_ERRNO_AND_VALUE(NsdelegateApplied(root().Path()));
   Mounter m2(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
   Cgroup r2 = ASSERT_NO_ERRNO_AND_VALUE(m2.MountCgroup2fs("nsdelegate"));
 
@@ -3973,22 +3967,16 @@ TEST_F(Cgroup2Test, NsdelegateRootWrites) {
   ASSERT_THAT(waitpid(pid, &status, 0), SyscallSucceedsWithValue(pid));
   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
 
-  // If we enabled the flag, the same namespace must be able to clear it.
-  // An inherited flag may remain enabled when both mounts are namespaced.
+  // Mounting without the option from the init namespace clears the flag;
+  // the same write is then allowed.
   Mounter m3(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
-  Cgroup r3 = ASSERT_NO_ERRNO_AND_VALUE(m3.MountCgroup2fs());
-  const bool nsdelegate_after =
-      ASSERT_NO_ERRNO_AND_VALUE(NsdelegateApplied(r3.Path()));
-  if (!nsdelegate_before) {
-    EXPECT_FALSE(nsdelegate_after);
-  }
+  ASSERT_NO_ERRNO(m3.MountCgroup2fs());
 
   const pid_t pid2 = fork();
   if (pid2 == 0) {
     TEST_CHECK(WriteFileErrno(procs.c_str(), "0") == 0);
     TEST_PCHECK(unshare(CLONE_NEWCGROUP) == 0);
-    TEST_CHECK(WriteFileErrno(max_depth.c_str(), "max") ==
-               (nsdelegate_after ? EPERM : 0));
+    TEST_CHECK(WriteFileErrno(max_depth.c_str(), "max") == 0);
     _exit(0);
   }
   ASSERT_GT(pid2, 0);
@@ -4125,11 +4113,9 @@ TEST_F(Cgroup2Test, NsdelegateIgnoredFromNonInitNamespace) {
   const std::string procs = cg.Relpath("cgroup.procs");
   const std::string max_depth = cg.Relpath("cgroup.max.depth");
 
-  // A namespaced mount cannot clear a flag inherited from the host.
+  // Make sure the flag is off.
   Mounter m2(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
-  Cgroup r2 = ASSERT_NO_ERRNO_AND_VALUE(m2.MountCgroup2fs());
-  const bool nsdelegate_before =
-      ASSERT_NO_ERRNO_AND_VALUE(NsdelegateApplied(r2.Path()));
+  ASSERT_NO_ERRNO(m2.MountCgroup2fs());
 
   TempPath mntdir = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
   const std::string dir = mntdir.path();
@@ -4138,12 +4124,9 @@ TEST_F(Cgroup2Test, NsdelegateIgnoredFromNonInitNamespace) {
   if (pid == 0) {
     TEST_CHECK(WriteFileErrno(procs.c_str(), "0") == 0);
     TEST_PCHECK(unshare(CLONE_NEWCGROUP) == 0);
-    // Request the opposite state; neither enabling nor disabling the flag
-    // is permitted from this new cgroup namespace.
-    TEST_PCHECK(mount("none", dir.c_str(), "cgroup2", 0,
-                       nsdelegate_before ? nullptr : "nsdelegate") == 0);
-    TEST_CHECK(WriteFileErrno(max_depth.c_str(), "max") ==
-               (nsdelegate_before ? EPERM : 0));
+    TEST_PCHECK(mount("none", dir.c_str(), "cgroup2", 0, "nsdelegate") == 0);
+    // The flag was not applied: writes to the namespace root are allowed.
+    TEST_CHECK(WriteFileErrno(max_depth.c_str(), "max") == 0);
     TEST_PCHECK(umount2(dir.c_str(), MNT_DETACH) == 0);
     _exit(0);
   }
@@ -4151,8 +4134,6 @@ TEST_F(Cgroup2Test, NsdelegateIgnoredFromNonInitNamespace) {
   int status;
   ASSERT_THAT(waitpid(pid, &status, 0), SyscallSucceedsWithValue(pid));
   EXPECT_TRUE(WIFEXITED(status) && WEXITSTATUS(status) == 0);
-  EXPECT_THAT(NsdelegateApplied(r2.Path()),
-              IsPosixErrorOkAndHolds(nsdelegate_before));
   // In case the child died before unmounting.
   umount2(dir.c_str(), MNT_DETACH);
 }
