@@ -1,4 +1,5 @@
-load("//tools:defs.bzl", "cc_binary", "go_binary", "proto_library")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "proto_library")
+load(":defs.bzl", "gnu_cc_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -11,7 +12,16 @@ proto_library(
     visibility = ["//tools/ioctl_sniffer:__subpackages__"],
 )
 
-cc_binary(
+bzl_library(
+    name = "defs_bzl",
+    srcs = ["defs.bzl"],
+    deps = [
+        "//tools:defs_bzl",
+        "@with_cfg.bzl//:with_cfg",
+    ],
+)
+
+gnu_cc_binary(
     name = "ioctl_hook",
     srcs = [
         "ioctl_hook.cc",
@@ -45,9 +55,9 @@ go_binary(
         # `:ioctl_hook`'s actual output file.
         ":ioctl_hook",  # keep
     ],
-    features = ["fully_static_link"],
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
+    static = True,
     visibility = [
         "//:sandbox",
     ],
