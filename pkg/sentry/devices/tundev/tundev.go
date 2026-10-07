@@ -16,7 +16,6 @@
 package tundev
 
 import (
-	"io"
 	"time"
 
 	"golang.org/x/sys/unix"
