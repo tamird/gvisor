@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-07T18:02:51.181304+00:00",
+    "updatedAt": "2026-10-07T18:12:14.953185+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2114,15 +2114,15 @@
       "group": "runtime",
       "status": "code dependency",
       "summary": "Current disposition: code dependency. Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nPublished source fcac43da2 adds opt-in lifetime commitment to allocation accounting and checkpoint metadata, preserving retained zero pages through save/restore and resetting policy on final release or reuse. Its complete allocator owner passes 61 XML entries and both owning Nogo targets pass AMD64 and ARM64. The separate concrete mapped-owner validation now also covers asynchronous restore; qualification includes both changes. Contributor review remains pending.",
-      "updatedAt": "2026-10-06T15:18:27.120662+00:00",
+      "updatedAt": "2026-10-07T18:12:14.953185+00:00",
       "followup": {
         "disposition": "code dependency",
         "owner": "root",
-        "nextAction": "Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.",
+        "nextAction": "Wait for prerequisite PR #15181 to land, then refresh the dependent source and obtain contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/tree/pgalloc-retained-commitment"
         ],
-        "reviewedAt": "2026-10-06T15:18:27.120662+00:00",
+        "reviewedAt": "2026-10-07T18:12:14.953185+00:00",
         "sourceHead": "fcac43da2278f5e1d3b59155e384bb13b6ecb7ec"
       }
     },
@@ -2172,15 +2172,15 @@
       "group": "runtime",
       "status": "code dependency",
       "summary": "Current disposition: code dependency. Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.\n\nEarlier source and validation record (historical request wording does not establish a current unanswered question):\n\nPublished source 2d5d095d0 supplies bounded committed MemoryFile storage owners and a fallible restore barrier before buffer consumers. Validation on 0e1bc8980 passes all 67 allocator and 326 buffer XML entries plus five Nogo owners on AMD64 and ARM64, including synchronous/asynchronous checkpoint and cold-cleanup cases. Qualification integrates the validated source. TUN allocation and its size guard are unchanged; contributor review is pending.",
-      "updatedAt": "2026-10-06T15:18:27.120662+00:00",
+      "updatedAt": "2026-10-07T18:12:14.953185+00:00",
       "followup": {
         "disposition": "code dependency",
         "owner": "root",
-        "nextAction": "Root to reconcile the actual source prerequisite or replacement. Preserve source; a review request alone cannot clear the dependency.",
+        "nextAction": "Wait for PR #15443 and pgalloc-retained-commitment to land, then refresh the dependent source and obtain contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/tree/pgalloc-buffer-storage"
         ],
-        "reviewedAt": "2026-10-06T15:18:27.120662+00:00",
+        "reviewedAt": "2026-10-07T18:12:14.953185+00:00",
         "sourceHead": "2d5d095d07a34d9130f2c0314b8d8f3dbef6b52d"
       }
     },
