@@ -39,10 +39,14 @@ func TestCgoThreadClone(t *testing.T) {
 	}
 	for _, cgo := range []bool{false, true} {
 		rules, denyRules := Rules(Options{CgoEnabled: cgo})
-		program := seccomp.Program{RuleSets: []seccomp.RuleSet{
-			{Rules: denyRules},
-			{Rules: rules, Action: seccomp.Allow},
-		}}
+		program := seccomp.Program{
+			RuleSets: []seccomp.RuleSet{
+				{Rules: denyRules},
+				{Rules: rules, Action: seccomp.Allow},
+			},
+			// Interpret the filter without querying the host's seccomp support.
+			Options: seccomp.ProgramOptions{DefaultAction: seccomp.KillProcess},
+		}
 		insns, _, err := program.Build()
 		if err != nil {
 			t.Fatal(err)
@@ -67,7 +71,7 @@ func TestCgoThreadClone(t *testing.T) {
 			if err != nil {
 				t.Fatalf("cgo=%t %s: %v", cgo, tc.name, err)
 			}
-			if allowed := got == uint32(seccomp.Allow); allowed != tc.allowed {
+			if allowed := got == uint32(linux.SECCOMP_RET_ALLOW); allowed != tc.allowed {
 				t.Errorf("cgo=%t %s: action=%#x, want allowed=%t", cgo, tc.name, got, tc.allowed)
 			}
 		}
