@@ -179,13 +179,11 @@ func controlMessageBenchmark(b *testing.B) (tcpip.ReceivableControlMessages, []b
 func BenchmarkControlMessageEncoding(b *testing.B) {
 	message, encoded := controlMessageBenchmark(b)
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if _, err := state.Save(b.Context(), io.Discard, &message); err != nil {
 			b.Fatal(err)
 		}
 	}
-	b.StopTimer()
 	b.ReportMetric(float64(len(encoded)), "wire-B/op")
 }
 
@@ -194,13 +192,11 @@ func BenchmarkControlMessageDecoding(b *testing.B) {
 	var restored tcpip.ReceivableControlMessages
 	var reader bytes.Reader
 	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		reader.Reset(encoded)
 		if _, err := state.Load(b.Context(), &reader, &restored); err != nil {
 			b.Fatal(err)
 		}
 	}
-	b.StopTimer()
 	b.ReportMetric(float64(len(encoded)), "wire-B/op")
 }
