@@ -57,7 +57,11 @@ func (info *DUTInfo) ConnectToDUT(t *testing.T) DUT {
 
 	n := info.Net
 	posixServerAddress := netip.AddrPortFrom(n.POSIXServerIP, n.POSIXServerPort).String()
-	conn, err := grpc.NewClient(posixServerAddress, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: RPCKeepalive}))
+	conn, err := grpc.NewClient(
+		posixServerAddress,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{Timeout: RPCKeepalive}),
+	)
 	if err != nil {
 		t.Fatalf("failed to grpc.NewClient(%s): %s", posixServerAddress, err)
 	}

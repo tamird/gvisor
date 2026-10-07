@@ -175,7 +175,17 @@ func (h *HTTPBenchmark) runRound(ctx context.Context, t *testing.T, round Round,
 	if err != nil {
 		t.Fatalf("Failed to initialize benchmark recorder: %v", err)
 	}
-	if err := recorder.RecordIters(ctx, fmt.Sprintf("%s/%dThreads/%sQPS", cases.Title(language.Und, cases.NoLower).String(h.Name), round.NumThreads, qpsText), numRequests, data...); err != nil {
+	if err := recorder.RecordIters(
+		ctx,
+		fmt.Sprintf(
+			"%s/%dThreads/%sQPS",
+			cases.Title(language.Und, cases.NoLower).String(h.Name),
+			round.NumThreads,
+			qpsText,
+		),
+		numRequests,
+		data...,
+	); err != nil {
 		t.Fatalf("Failed to record benchmark data: %v", err)
 	}
 }

@@ -463,7 +463,13 @@ func getTupleID(pkt *PacketBuffer) (tupleID, getTupleIDDisposition) {
 		}
 
 		// TODO(https://gvisor.dev/issue/6789): Handle extension headers.
-		if tid, ok := getTupleIDForPacketInICMPError(pkt, v6NetAndTransHdr, header.IPv6ProtocolNumber, header.IPv6MinimumSize, tcpip.TransportProtocolNumber(header.IPv6(h).NextHeader())); ok {
+		if tid, ok := getTupleIDForPacketInICMPError(
+			pkt,
+			v6NetAndTransHdr,
+			header.IPv6ProtocolNumber,
+			header.IPv6MinimumSize,
+			tcpip.TransportProtocolNumber(header.IPv6(h).NextHeader()),
+		); ok {
 			// Do not create a new connection in response to an ICMP error.
 			return tid, getTupleIDOKAndDontAllowNewConn
 		}

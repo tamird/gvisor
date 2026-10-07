@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"go/ast"
 	"io"
-	"unicode"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var standardImports = []string{
@@ -77,9 +79,7 @@ func (g *testGenerator) typeName() string {
 }
 
 func (g *testGenerator) testFuncName(base string) string {
-	name := []rune(g.t.Name.Name)
-	name[0] = unicode.ToTitle(name[0])
-	return base + string(name)
+	return base + cases.Title(language.Und, cases.NoLower).String(g.t.Name.Name)
 }
 
 func (g *testGenerator) inTestFunction(name string, body func()) {
