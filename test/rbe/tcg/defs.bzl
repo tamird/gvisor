@@ -167,6 +167,9 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
             "test.container-image": RBE_DOCKER_TOOLS_IMAGE,
             "test.dockerUser": "nobody",
             "test.nonroot-workspace": "true",
+            # Preserve the test deadline while allowing stopped-guest recovery
+            # and Bazel's undeclared-output packaging before forced termination.
+            "test.termination-grace-period": "30s",
             "test.workload-isolation-type": "oci",
         },
         **kwargs
