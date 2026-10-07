@@ -133,13 +133,25 @@ four-core host, while remote work keeps 400 jobs.
 
 The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
 leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends
-invoke the existing Docker fixture instead of the local-root fixture. Native
-cgroup tests alter controllers and need a private cgroup hierarchy as well as
-private PID, mount and network namespaces. The Actions coordinator runs Bazel
-as root for Docker's UID mapping; compilation and ordinary shared tests stay
-remote. Each test retains its declared image, executable, runfiles, arguments,
-shards and timeout. The fixture rejects non-root namespace identities rather
-than changing them. It uses the private network without the outbound bridge.
+normally invoke the Docker fixture for private PID, cgroup, mount and network
+namespaces. The Actions coordinator runs Bazel as root for Docker's UID mapping;
+compilation and ordinary shared tests stay remote. Docker tests retain their
+declared images. The fixture rejects non-root namespace identities rather than
+changing them and uses the private network without the outbound bridge.
+
+On either architecture, a native owner tagged
+`requires-initial-cgroup-namespace` uses the local-root fixture on the disposable
+hosted VM, including when other owners use Docker. Linux rejects creation of a v1
+hierarchy in a delegated cgroup namespace before checking whether its controller
+is busy in v2. This route requires the coordinator to share PID 1's PID and
+cgroup namespaces, and the test to preserve them while owning a private mount
+namespace. The helper checks the hierarchy root, rejects a preexisting `test`
+group, and records and restores the root controller set and complete cgroup2
+mount options for each shard. Sudo preserves the root or unprivileged Bazel
+coordinator's output ownership. Restoration failures fail the test. Selecting any
+such owner serializes local tests; remote compilation still uses 400 jobs.
+These owners use the VM's kernel and tools, not the remote image. All owners
+retain their executable, runfiles, arguments, shards and original timeouts.
 
 Select `lanes=syscalls`, `architecture=amd64` and `execution=local` for this
 route. The same hash15 partition option is available. A bounded selection or

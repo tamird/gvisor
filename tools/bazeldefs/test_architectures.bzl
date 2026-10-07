@@ -38,6 +38,11 @@ def _native_frontend_impl(ctx):
     docker = ctx.attr._local_test_backend[BuildSettingInfo].value == "docker"
     if docker and user != "root":
         fail("the Docker namespace fixture requires a root test identity")
+    initial_cgroup = "native" in ctx.attr.tags and "requires-initial-cgroup-namespace" in ctx.attr.tags
+    if initial_cgroup:
+        if user != "root":
+            fail("the initial cgroup namespace fixture requires a root test identity")
+        docker = False
     if "no-local" in ctx.attr.tags:
         fail("local namespace test is tagged no-local")
     original_execution = ctx.attr.exports[testing.ExecutionInfo] if testing.ExecutionInfo in ctx.attr.exports else None
@@ -45,6 +50,10 @@ def _native_frontend_impl(ctx):
     if "no-local" in requirements:
         fail("local namespace test requires no-local")
     requirements["no-remote-exec"] = ""
+    if initial_cgroup:
+        # Docker's private cgroup namespace cannot create v1 hierarchies. Keep
+        # this restriction on the TestRunner, independent of compilation.
+        requirements["no-sandbox"] = ""
 
     result = []
     for provider in providers:
@@ -60,8 +69,10 @@ def _native_frontend_impl(ctx):
             executable = ctx.actions.declare_file(ctx.label.name + (".docker_setup" if docker else ".local_root"))
             ctx.actions.write(
                 executable,
-                "#!/bin/bash\nexec \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
+                "#!/bin/bash\n%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s%s \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"%s \"$@\"\n" % (
+                    "exec sudo -n -E -- unshare --mount --propagation private --" if initial_cgroup else "exec",
                     shell.quote("/" + helper_executable.short_path),
+                    " --initial-cgroup-namespace" if initial_cgroup else "",
                     shell.quote("/" + original_executable.short_path),
                 ),
                 is_executable = True,

@@ -403,7 +403,33 @@ PY
   fi
   if [[ $lane == syscalls && $arch == amd64 ]]; then
     docker_test_options
-    options+=("--strategy=TestRunner=remote,docker" --//tools/bazeldefs:local_test_backend=docker)
+    options+=("--strategy=TestRunner=remote,docker,local" --//tools/bazeldefs:local_test_backend=docker)
+  fi
+  local initial_cgroup
+  initial_cgroup=$(python3 - "$selection_dir/selection.json" "$selection_dir/targets" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+selection = json.loads(Path(sys.argv[1]).read_text())
+targets = set(Path(sys.argv[2]).read_text().splitlines())
+print("true" if targets.intersection(selection.get("initial_cgroup_owners", [])) else "false")
+PY
+  )
+  if [[ $initial_cgroup == true ]]; then
+    # This route owns global cgroup settings on a disposable hosted VM. The
+    # workflow runs directly on that VM, so PID 1 identifies its namespaces.
+    [[ ${GITHUB_ACTIONS:-} == true && ${RUNNER_ENVIRONMENT:-} == github-hosted ]]
+    [[ $(< /proc/1/comm) == systemd ]]
+    [[ $(readlink /proc/self/ns/pid) == "$(readlink /proc/1/ns/pid)" ]]
+    [[ $(readlink /proc/self/ns/cgroup) == "$(readlink /proc/1/ns/cgroup)" ]]
+    [[ ! -e /sys/fs/cgroup/cgroup.type ]]
+    # Other local tests must not overlap changes to the root controllers or
+    # mount flags. Each original shard restores its snapshot before returning.
+    options+=(--local_test_jobs=1
+      "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
+      "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+      "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     "--//tools/bazeldefs:local_test_architecture=$arch" \
