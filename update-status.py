@@ -14,7 +14,7 @@ REGISTRY = json.loads((ROOT / "registry.json").read_text())
 REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
 CHECKED_AT = datetime.now(timezone.utc).isoformat()
-REQUEST_LIMIT = 32
+REQUEST_LIMIT = 40
 PR_BATCH_SIZE = 8
 requests = 0
 
