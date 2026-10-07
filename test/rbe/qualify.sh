@@ -485,7 +485,28 @@ run_hybrid_profile() (
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
   fi
+  # Keep the full declared profile as evidence before selecting the complete
+  # owner used to compare native ARM hardware with the retained RC TCG result.
+  [[ $lane == syscalls && $arch == arm64 && $test_execution == local ]]
+  [[ -z $syscall_bucket ]]
+  python3 - "$selection_dir" <<'PY_PING'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+full = root.joinpath("targets").read_text().splitlines()
+selected = {"//test/syscalls:ping_socket_test_runsc_systrap_directfs_arm64"}
+assert len(full) == len(set(full))
+assert selected <= set(full), "Ping owner absent from maintained ARM profile"
+root.joinpath("full-targets.json").write_text(json.dumps(full, indent=2) + "\n")
+root.joinpath("focused-targets.json").write_text(json.dumps(sorted(selected), indent=2) + "\n")
+root.joinpath("unexecuted-targets.json").write_text(json.dumps(sorted(set(full) - selected), indent=2) + "\n")
+root.joinpath("targets").write_text("".join(label + "\n" for label in sorted(selected)))
+PY_PING
   save_profile_selection "$selection_dir" "$lane"
+  cp "$selection_dir/"{full,focused,unexecuted}-targets.json \
+    "$RUNNER_TEMP/qualification/$lane-selection/"
   printf '%s %s profile: namespace/KVM owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$arch" "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
