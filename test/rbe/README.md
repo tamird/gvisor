@@ -336,7 +336,7 @@ The current kernel environments are:
 | Hosted Firecracker | AMD64 | Observed Linux 6.1.0 in the October 2, 2026 qualification runs; partial qualification with remaining failures. |
 | Hosted Firecracker | ARM64 | No execution capacity verified; no guest kernel qualified. |
 | Public CI ordinary syscall pools | AMD64 / ARM64 | Linux 6.8.0-1069-gcp, observed October 2, 2026. |
-| Public CI release-candidate syscall pools | AMD64 / ARM64 | Linux 7.3.0-070300rc3-generic, observed October 2, 2026; no equivalent RBE kernel selection is established. |
+| Public CI release-candidate syscall pools | AMD64 / ARM64 | Linux 7.3.0-070300rc3-generic, observed October 2, 2026; these pools change over time. |
 
 The [public pipeline](../../.buildkite/pipeline.yaml) defines these CI pools.
 Public master builds [49276](https://buildkite.com/gvisor/pipeline/builds/49276)
@@ -350,7 +350,9 @@ configuration and exposed devices also affect test behavior. Qualification
 reports must identify the actual worker kernel release/build and available
 configuration evidence, with uncached results for that environment. Passing on
 one observed kernel does not qualify another kernel or a release-candidate lane.
-Supported immutable kernel selection and its effect on cache identity remain
+The ARM64 TCG routes below instead declare their guest kernels as build inputs;
+they do not establish binary/config equivalence with the public workers.
+Provider-native kernel selection and its effect on cache identity remain
 [provider requirements](https://github.com/buildbuddy-io/buildbuddy/issues/13523).
 
 ## Selecting qualification lanes
@@ -1429,6 +1431,20 @@ Use `test/rbe/qualify.sh --arch=arm64 syscalls-64k` for the separate profile,
 optionally with `--syscall-bucket=0..14` to select an existing hash15 partition.
 The report lists every unexecuted owner; declared routing is not a claim that
 the whole profile has passed.
+
+The `syscalls-rc` lane uses the public `syscalls-arm64` selection and maps its
+ordinary ptrace/systrap owners to manual `<owner>_rc_tcg` frontends. Their
+payloads are the existing `<owner>_arm64` variants with 4K pages, running in
+the separately pinned Ubuntu RC guest through the same TCG transport:
+
+```sh
+test/rbe/qualify.sh --arch=arm64 syscalls-rc
+```
+
+This lane also accepts an existing hash15 bucket and retains the owning
+arguments, shards and deadlines. It selects no native, KVM or checkpoint
+owners. Guest capabilities and full-profile timing require qualification;
+the two mincore pilots do not establish that every selected owner can run.
 
 The combined command keeps the original unit patterns and configuration,
 including build-only tests and non-test targets. Selected syscall owners must
