@@ -397,6 +397,71 @@ for source in Path(sys.argv[1]).glob("*.json"):
                 event = json.loads(line)
                 output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
 PY
+  # Analyze the unchanged ARM profile and build its initial-namespace frontend
+  # without executing ARM tests on this AMD64 host.
+  local arm_dir=$selection_dir/arm-check
+  local arm_artifacts=$RUNNER_TEMP/qualification/arm-check
+  mkdir -p "$arm_dir" "$arm_artifacts"
+  select_syscall_profile "$arm_dir" syscalls arm64 | tee "$arm_dir/selection.json"
+  cp "$arm_dir/selection.json" "$arm_dir/syscalls-arm64-targets" \
+    "$arm_dir/syscalls-arm64-actions.json" "$arm_artifacts/"
+  python3 - "$arm_dir" "$arm_artifacts" <<'PY_ARM'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+directory, artifacts = map(Path, sys.argv[1:])
+targets = directory.joinpath("syscalls-arm64-targets").read_bytes()
+assert hashlib.sha256(targets).hexdigest() == "a5dfb00b49fb9d6dd6908cf84dfec188e1496869b155bfa9cd9e01bd97fd55f6"
+selection = json.loads(directory.joinpath("selection.json").read_text())
+assert len(selection["selected_owners"]) == 916, selection["selected_owners"]
+assert selection["initial_cgroup_owners"] == [], selection["initial_cgroup_owners"]
+keys = {"id", "children", "configured", "finished", "aborted"}
+for name in ("syscalls-arm64-profile.json", "syscalls-arm64-routing.json"):
+    with artifacts.joinpath(name).open("w") as output:
+        for line in directory.joinpath(name).read_text().splitlines():
+            event = json.loads(line)
+            output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
+PY_ARM
+  local -a arm_options=(--config=rbe --config=x86_64 --strip=never --cxxopt=-Werror
+    --//tools/bazeldefs:local_test_architecture=arm64 --//tools/bazeldefs:local_test_backend=local)
+  bazel aquery "${arm_options[@]}" --output=jsonproto --include_artifacts=false \
+    'mnemonic(TestRunner, //test/syscalls:cgroup2_test_native_arm64)' > "$arm_artifacts/native-actions.json"
+  python3 - "$arm_artifacts/native-actions.json" <<'PY_ACTIONS'
+import json
+from pathlib import Path
+import sys
+
+graph = json.loads(Path(sys.argv[1]).read_text())
+actions = graph["actions"]
+assert len(actions) == 4, len(actions)
+targets = {target["id"]: target["label"] for target in graph["targets"]}
+for action in actions:
+    assert action["mnemonic"] == "TestRunner", action["mnemonic"]
+    assert targets[action["targetId"]] == "//test/syscalls:cgroup2_test_native_arm64", action
+    requirements = {item["key"]: item.get("value", "") for item in action["executionInfo"]}
+    assert {"no-remote-exec", "no-sandbox"} <= requirements.keys(), requirements
+PY_ACTIONS
+  bazel build "${arm_options[@]}" //test/syscalls:cgroup2_test_native_arm64
+  bazel cquery "${arm_options[@]}" //test/syscalls:cgroup2_test_native_arm64 \
+    --output=starlark --starlark:expr='target[DefaultInfo].files_to_run.executable.path' \
+    > "$arm_artifacts/native-frontend-path.txt"
+  local arm_executable
+  arm_executable=$(< "$arm_artifacts/native-frontend-path.txt")
+  [[ $arm_executable == bazel-out/* && $arm_executable != *$'\n'* ]]
+  sudo -n test -x "$arm_executable"
+  # Only the root Bazel output needs privilege; the artifact stays runner-owned.
+  # shellcheck disable=SC2024
+  sudo -n cat -- "$arm_executable" > "$arm_artifacts/native-frontend.sh"
+  python3 - "$arm_artifacts/native-frontend.sh" <<'PY_FRONTEND'
+from pathlib import Path
+import sys
+
+script = Path(sys.argv[1]).read_text()
+assert "exec sudo -n -E -- unshare --mount --propagation private --" in script, script
+assert "/test/rbe/local_root" in script and " --initial-cgroup-namespace " in script, script
+PY_FRONTEND
   # Disposable qualification intersection; the complete maintained selection
   # above remains in the artifact, and the source interface is unchanged.
   [[ $arch == amd64 && $lane == syscalls && -z $syscall_bucket ]]
@@ -409,8 +474,7 @@ path = Path(sys.argv[1])
 artifacts = Path(sys.argv[2])
 canonical = set(path.read_text().splitlines())
 selected = set([
-    "//test/syscalls:cgroup2_test_native_amd64",
-    "//test/syscalls:cgroup2_test_runsc_systrap_shared_amd64"
+    "//test/syscalls:cgroup2_test_native_amd64"
 ])
 assert selected <= canonical, sorted(selected - canonical)
 text = "".join(label + "\n" for label in sorted(selected))
@@ -420,7 +484,7 @@ text = "".join(label + "\n" for label in sorted(selected))
     "complete_profile_owners": sorted(canonical),
     "selected_owners": sorted(selected),
     "unexecuted_owners": sorted(canonical - selected),
-    "scope": "Two complete cgroup2 owners: native namespace-root fixture and shared systrap hierarchy-root regression.",
+    "scope": "Complete native cgroup2 owner in the initial cgroup namespace; the passed shared systrap owner is not repeated.",
 }, indent=2) + "\n")
 path.write_text(text)
 PY_FOCUS
@@ -430,7 +494,33 @@ PY_FOCUS
   fi
   if [[ $lane == syscalls && $arch == amd64 ]]; then
     docker_test_options
-    options+=("--strategy=TestRunner=remote,docker" --//tools/bazeldefs:local_test_backend=docker)
+    options+=("--strategy=TestRunner=remote,docker,local" --//tools/bazeldefs:local_test_backend=docker)
+  fi
+  local initial_cgroup
+  initial_cgroup=$(python3 - "$selection_dir/selection.json" "$selection_dir/targets" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+selection = json.loads(Path(sys.argv[1]).read_text())
+targets = set(Path(sys.argv[2]).read_text().splitlines())
+print("true" if targets.intersection(selection.get("initial_cgroup_owners", [])) else "false")
+PY
+  )
+  if [[ $initial_cgroup == true ]]; then
+    # This route owns global cgroup settings on a disposable hosted VM. The
+    # workflow runs directly on that VM, so PID 1 identifies its namespaces.
+    [[ ${GITHUB_ACTIONS:-} == true && ${RUNNER_ENVIRONMENT:-} == github-hosted ]]
+    [[ $(< /proc/1/comm) == systemd ]]
+    [[ $(readlink /proc/self/ns/pid) == "$(readlink /proc/1/ns/pid)" ]]
+    [[ $(readlink /proc/self/ns/cgroup) == "$(readlink /proc/1/ns/cgroup)" ]]
+    [[ ! -e /sys/fs/cgroup/cgroup.type ]]
+    # Other local tests must not overlap changes to the root controllers or
+    # mount flags. Each original shard restores its snapshot before returning.
+    options+=(--local_test_jobs=1
+      "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
+      "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+      "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     "--//tools/bazeldefs:local_test_architecture=$arch" \

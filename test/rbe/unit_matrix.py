@@ -349,6 +349,13 @@ def select_profile(
         selected = sorted(eligible)
     groups = hybrid_local_owners(set(selected), requirements, kvm=kvm_only) if hybrid else {}
     local = {label for group in groups.values() for label in group}
+    initial_cgroup = sorted(
+        label for label in local
+        if {"native", "requires-initial-cgroup-namespace"} <= set(configured[label].tags)
+    )
+    for label in initial_cgroup:
+        if "no-sandbox" not in requirements[label]:
+            raise ValueError(f"Initial cgroup namespace owner lacks no-sandbox: {label}")
     Path(output_path).write_text("".join(label + "\n" for label in selected))
     print(json.dumps({
         "profile_architecture": architecture,
@@ -359,6 +366,7 @@ def select_profile(
         "unavailable_owners": unavailable,
         "policy_excluded_owners": policy_excluded,
         "local_owners": groups,
+        "initial_cgroup_owners": initial_cgroup,
         "local_requirements": {label: requirements[label] for label in sorted(local)},
         "remote_owners": sorted(set(selected) - local),
         "syscall_bucket": syscall_bucket,
