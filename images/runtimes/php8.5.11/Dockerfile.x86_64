@@ -12,8 +12,9 @@ RUN apt-get update && apt-get install -y \
   re2c
 
 WORKDIR /root
-ARG VERSION=8.3.7
-RUN curl -o php-${VERSION}.tar.gz https://www.php.net/distributions/php-${VERSION}.tar.gz
+ARG VERSION=8.5.11
+RUN curl --fail --location -o php-${VERSION}.tar.gz https://www.php.net/distributions/php-${VERSION}.tar.gz
+RUN echo "338630ba9450f0b938bef8d740162c61c33bf64a1b421c6333c01df8a9fdb0ab  php-${VERSION}.tar.gz" | sha256sum --check -
 RUN tar -zxf php-${VERSION}.tar.gz
 
 WORKDIR /root/php-${VERSION}
