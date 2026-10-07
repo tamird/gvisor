@@ -43,7 +43,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup'))
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-actions-nested-kvm'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,6 +66,48 @@ jobs:
       with:
           name: runsc
           path: bin/runsc
+
+  nested-kvm-capabilities:
+    if: github.repository == 'tamird/gvisor' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/rbe-actions-nested-kvm' && inputs.lanes == 'kvm-capabilities'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+    - name: Inspect nested virtualization prerequisites
+      shell: bash
+      run: |
+        set -euo pipefail
+        mkdir -p "$RUNNER_TEMP/qualification"
+        exec > >(tee "$RUNNER_TEMP/qualification/kvm-host.txt") 2>&1
+        uname -a
+        lscpu
+        ls -l /dev/kvm
+        sudo -n test -r /dev/kvm
+        sudo -n test -w /dev/kvm
+        # These are necessary host settings, not proof of a working nested guest.
+        # https://docs.kernel.org/virt/kvm/x86/running-nested-guests.html
+        flags=$(awk -F: '/^flags/{print $2; exit}' /proc/cpuinfo)
+        case " $flags " in
+          *" vmx "*) module=kvm_intel ;;
+          *" svm "*) module=kvm_amd ;;
+          *) echo 'The runner does not expose VMX or SVM.'; exit 1 ;;
+        esac
+        parameter="/sys/module/$module/parameters/nested"
+        nested=$(sudo -n cat "$parameter")
+        printf '%s=%s\n' "$parameter" "$nested"
+        case "$nested" in
+          Y|1) ;;
+          *) echo 'The runner does not have nested KVM enabled.'; exit 1 ;;
+        esac
+
+    - name: Retain host capability observations
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: nested-kvm-host
+        path: ${{ runner.temp }}/qualification
+        if-no-files-found: error
 
   remote-qualification:
     if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup') && github.event_name == 'workflow_dispatch'))
