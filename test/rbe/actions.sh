@@ -138,6 +138,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       id
       printf 'page_size=%s\n' "$(getconf PAGESIZE)"
       printf 'logical_cpus=%s\n' "$(getconf _NPROCESSORS_ONLN)"
+      awk '$1 == "MemTotal:" { print }' /proc/meminfo
       df -h "$PWD"
       ps -p 1 -o comm=
       stat -fc 'cgroup_filesystem=%T' /sys/fs/cgroup

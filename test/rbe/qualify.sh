@@ -413,6 +413,8 @@ PYOWNERS
     "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
   if [[ -f $selection_dir/combined-actions.json ]]; then
     cp "$selection_dir/combined-actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
+    # Read the heap limit from the same server that analyzed the mixed graph.
+    bazel info max-heap-size > "$RUNNER_TEMP/qualification/$lane-selection/max-heap-size.txt"
   fi
   if [[ -f $selection_dir/owners ]]; then
     cp "$selection_dir/owners" "$RUNNER_TEMP/qualification/$lane-selection/"

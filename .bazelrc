@@ -68,9 +68,6 @@ build:unit --build_tag_filters=-network_plugins
 build:rbe-common --config=buildbuddy_remote_executor
 # Keep remote workers fed independently of the coordinator's CPU count.
 build:rbe-common --jobs=400
-# Uploads otherwise hold the action-preparation semaphore and delay new work.
-# https://github.com/bazelbuild/bazel/issues/28734
-build:rbe-common --noexperimental_throttle_remote_action_building
 build:rbe-common --define=rbe=true
 build:rbe-common --spawn_strategy=remote
 build:rbe-common --noremote_local_fallback
