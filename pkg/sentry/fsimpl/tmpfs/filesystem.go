@@ -733,14 +733,16 @@ func (fs *filesystem) RenameAt(ctx context.Context, rp *vfs.ResolvingPath, oldPa
 			// If exactly one of the exchanged files is a directory, its ".."
 			// entry (and the reference that it holds on its parent, see
 			// MkdirAt) moves from one parent directory to the other.
+			// Both parents belong to fs, whose mu remains held; checklocks
+			// cannot follow their inode-owner aliases.
 			if renamed.inode.isDir() && !replaced.inode.isDir() {
-				oldParentDir.inode.decLinksLocked(ctx)
-				newParentDir.inode.incLinksLocked()
+				oldParentDir.inode.decLinksLocked(ctx) // +checklocksignore
+				newParentDir.inode.incLinksLocked()    // +checklocksignore
 				oldParentDir.inode.decRef(ctx)
 				newParentDir.inode.incRef()
 			} else if !renamed.inode.isDir() && replaced.inode.isDir() {
-				newParentDir.inode.decLinksLocked(ctx)
-				oldParentDir.inode.incLinksLocked()
+				newParentDir.inode.decLinksLocked(ctx) // +checklocksignore
+				oldParentDir.inode.incLinksLocked()    // +checklocksignore
 				newParentDir.inode.decRef(ctx)
 				oldParentDir.inode.incRef()
 			}
