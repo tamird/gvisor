@@ -41,8 +41,8 @@ image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ARM64 unit/syscall tests and AMD64
-startup/posture/portforward/root on a matching Linux host. Compilation remains
-remote. Hybrid profiles run in one invocation: native namespace owners run
+startup/posture/portforward/root/benchmarks on a matching Linux host.
+Compilation remains remote. Hybrid profiles run in one invocation: native namespace owners run
 locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
@@ -100,8 +100,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|startup:amd64|posture:amd64|portforward:amd64|root:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 startup/posture/portforward/root.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -795,7 +795,9 @@ run_lane() (
       fi
       # CI reports these jobs as soft failures. Keep their status visible here;
       # --keep_going still collects the other complete benchmark workloads.
-      options=(--test_tag_filters=-requires-kvm)
+      if [[ $test_execution == remote ]]; then
+        options=(--test_tag_filters=-requires-kvm)
+      fi
       shared_test_targets "$lane" "$arch"
       ;;
     language-directfs|language-goferfs)
@@ -865,7 +867,7 @@ run_lane() (
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
-        startup|posture|portforward|root)
+        startup|posture|portforward|root|benchmarks)
           # Each owned daemon needs separate firewall state. These suites
           # communicate within their containers without outbound networking.
           options+=(
