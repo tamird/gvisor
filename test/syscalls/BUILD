@@ -1027,6 +1027,12 @@ syscall_test(
 
 syscall_test(
     add_hostinet = True,
+    # Fork validation uses the established namespace worker for this family.
+    exec_properties = {
+        "test.dockerUser": "root",
+        "test.network-enable-ipv6": "true",
+        "test.workload-isolation-type": "firecracker",
+    },
     test = "//test/syscalls/linux:socket_netlink_route_test",
 )
 
