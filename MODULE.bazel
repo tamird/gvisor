@@ -276,6 +276,8 @@ release_apt.install(
         "busybox-static:arm64",
         "coreutils:arm64",
         "iproute2:arm64",
+        # Also expose this existing kernel dependency to the RC userspace target.
+        "kmod:arm64",
         "libc-bin:arm64",
         "linux-image-6.8.0-138-generic-64k:arm64 (= 6.8.0-138.138~22.04.1)",
         "mount:arm64",
@@ -288,6 +290,23 @@ release_apt.install(
     ],
 )
 use_repo(release_apt, "container_test_tools", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
+
+# Ubuntu's mainline test packages pin the historical RC release, not the
+# mutable Buildkite worker image. Keep the image and modules from one build.
+# https://kernel.ubuntu.com/mainline/v7.3-rc3/
+http_archive(
+    name = "tcg_arm64_rc_image",
+    build_file_content = 'exports_files(["data.tar"], visibility = ["//visibility:public"])',
+    sha256 = "bacb979087904b64b8e79cd918b627e719dbdf03bb544d45c19130f09b96e992",
+    urls = ["https://kernel.ubuntu.com/mainline/v7.3-rc3/arm64/linux-image-unsigned-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_arm64.deb"],
+)
+
+http_archive(
+    name = "tcg_arm64_rc_modules",
+    build_file_content = 'exports_files(["data.tar"], visibility = ["//visibility:public"])',
+    sha256 = "f53cf3cae52f0773cca517f77b8ec94f4437971e90ba0e5e75e14f5d0bac9822",
+    urls = ["https://kernel.ubuntu.com/mainline/v7.3-rc3/arm64/linux-modules-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_arm64.deb"],
+)
 
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")

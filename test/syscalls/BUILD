@@ -437,6 +437,7 @@ syscall_test(
 )
 
 syscall_test(
+    rc_kernel = True,
     test = "//test/syscalls/linux:mincore_test",
 )
 

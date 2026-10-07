@@ -11310,6 +11310,18 @@
   commit: 24ad16804920694279a5c8fd2db4469db59fdbba
   sha256: fea07e17117bf264f78bd4fc522c6b07a843cdcd82c6dfbeafa5bdaff70ae198
   license: Apache-2.0
+- dependency: tcg_arm64_rc_image
+  version: https://kernel.ubuntu.com/mainline/v7.3-rc3/arm64/linux-image-unsigned-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: bacb979087904b64b8e79cd918b627e719dbdf03bb544d45c19130f09b96e992
+  license: GPL-2.0-only
+- dependency: tcg_arm64_rc_modules
+  version: https://kernel.ubuntu.com/mainline/v7.3-rc3/arm64/linux-modules-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_arm64.deb
+  retrieved: "2026-10-07"
+  commit: ""
+  sha256: f53cf3cae52f0773cca517f77b8ec94f4437971e90ba0e5e75e14f5d0bac9822
+  license: GPL-2.0-only
 - dependency: with_cfg.bzl
   version: https://github.com/fmeum/with_cfg.bzl/releases/download/v1.0.0/with_cfg.bzl-v1.0.0.tar.gz
   retrieved: "2026-09-29"

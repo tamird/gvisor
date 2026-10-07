@@ -39,10 +39,14 @@ finish() {
   /bin/busybox poweroff -f
 }
 trap finish EXIT
+# Generated from the selected image declaration, not the outer worker.
+# shellcheck disable=SC1091
+source /etc/gvisor-test-kernel
 uname -a | tee /result/kernel.txt
+[[ "$(uname -r)" == "${expected_kernel_release:?}" ]]
 page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt
-[[ "$page_size" == 65536 ]]
+[[ "$page_size" == "${expected_page_size:?}" ]]
 mount -t ext4 /dev/vda /work
 mkdir -p /work/payload /work/tmp /work/outputs
 chmod 1777 /work/tmp

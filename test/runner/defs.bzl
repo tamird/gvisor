@@ -56,6 +56,7 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
+        rc_kernel = False,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -193,9 +194,18 @@ def _syscall_test(
         arm64_tcg_test(
             name = name + "_64k_tcg",
             payload = ":" + name + "_64k_arm64",
-            tags = attributes["tags"],
+            tags = attributes["tags"] + ["arm64-64k-tcg"],
             # Runtime policy belongs to the guest. Preserve the owning
             # test's arguments, shard count and original timeout.
+            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+        )
+
+    if rc_kernel and platform in ["ptrace", "systrap"] and "allsave" not in tags:
+        arm64_tcg_test(
+            name = name + "_rc_tcg",
+            payload = ":" + name + "_arm64",
+            image = "//test/rbe/tcg:rc_guest",
+            tags = attributes["tags"] + ["arm64-rc-tcg"],
             **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
 

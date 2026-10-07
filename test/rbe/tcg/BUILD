@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "bzl_library")
 load(":defs.bzl", "tcg_image")
@@ -46,6 +47,45 @@ tcg_image(
     host_tools = "@tcg_host_tools//:flat",
     init = "init.sh",
     kernel_release = "6.8.0-138-generic-64k",
+    tags = ["manual"],
+)
+
+# Reuse the declared userspace and its transitive dependencies without carrying
+# the separate 64K kernel into the RC guest.
+flatten(
+    name = "rc_userspace",
+    testonly = True,
+    deduplicate = True,
+    tags = ["manual"],
+    tars = [
+        "@tcg_arm64_guest//base-files/arm64",
+        "@tcg_arm64_guest//bash/arm64",
+        "@tcg_arm64_guest//busybox-static/arm64",
+        "@tcg_arm64_guest//coreutils/arm64",
+        "@tcg_arm64_guest//iproute2/arm64",
+        "@tcg_arm64_guest//kmod/arm64",
+        "@tcg_arm64_guest//libc-bin/arm64",
+        "@tcg_arm64_guest//mount/arm64",
+        "@tcg_arm64_guest//netcat-openbsd/arm64",
+    ],
+)
+
+tcg_image(
+    name = "rc_guest",
+    testonly = True,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    guest = ":rc_userspace",
+    host_tools = "@tcg_host_tools//:flat",
+    init = "init.sh",
+    kernel_archives = [
+        "@tcg_arm64_rc_image//:data.tar",
+        "@tcg_arm64_rc_modules//:data.tar",
+    ],
+    kernel_release = "7.3.0-070300rc3-generic",
+    page_size = 4096,
     tags = ["manual"],
 )
 

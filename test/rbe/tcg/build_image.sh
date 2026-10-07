@@ -23,11 +23,17 @@ init="$(realpath "$4")"
 release="$5"
 kernel_out="$(realpath -m "$6")"
 initramfs_out="$(realpath -m "$7")"
+page_size="$8"
+zstd="$(realpath "$9")"
+shift 9
 staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 mkdir "$staging/host" "$staging/root"
 "$tar_tool" -xf "$host_archive" -C "$staging/host" --no-same-owner
 "$tar_tool" -xf "$guest_archive" -C "$staging/root" --no-same-owner
+for archive in "$@"; do
+  "$tar_tool" -xf "$archive" -C "$staging/root" --no-same-owner
+done
 host="$staging/host"
 root="$staging/root"
 # Match the existing declared EROFS tools' loader contract. Absolute loader
@@ -40,9 +46,33 @@ kmod_tool() {
   "$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2" --inhibit-cache --argv0 "$1" \
     --library-path "$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu" "$host/bin/kmod" "${@:2}"
 }
-cp "$root/boot/vmlinuz-$release" "$kernel_out"
+kernel="$root/boot/vmlinuz-$release"
+# zboot stores the compressed payload inside .text, not in a separate PE
+# section. Its public header supplies the offset, size and compression type:
+# https://github.com/torvalds/linux/blob/fd73f4a66/drivers/firmware/efi/libstub/zboot-header.S#L19-L27
+read -r dos image_type < <(host_tool usr/bin/od -An -tx4 -N8 "$kernel")
+if [[ "$dos" == 00005a4d && "$image_type" == 676d697a ]]; then
+  read -r compression < <(host_tool usr/bin/od -An -tx1 -j24 -N5 "$kernel")
+  [[ "$compression" == "7a 73 74 64 00" ]]
+  read -r offset size < <(host_tool usr/bin/od -An -tu4 -j8 -N8 "$kernel")
+  [[ "$offset" -ge 64 && "$size" -gt 0 && "$((offset + size))" -le "$(host_tool usr/bin/stat -c %s "$kernel")" ]]
+  host_tool bin/dd if="$kernel" bs=1M iflag=skip_bytes,count_bytes skip="$offset" count="$size" status=none | "$zstd" -dc > "$kernel_out"
+  read -r magic < <(host_tool usr/bin/od -An -tx4 -j56 -N4 "$kernel_out")
+  [[ "$magic" == 644d5241 ]]
+  read -r image_size flags < <(host_tool usr/bin/od -An -tu8 -j16 -N16 "$kernel_out")
+  [[ "$image_size" -ge 64 && "$image_size" -le "$(host_tool usr/bin/stat -c %s "$kernel_out")" ]]
+  [[ "$page_size" == "$((1 << (10 + 2 * ((flags >> 1) & 3))))" ]]
+else
+  # QEMU accepts both the ordinary ARM64 Image and its gzip representation.
+  cp "$kernel" "$kernel_out"
+fi
+# Newer Ubuntu module packages use /usr/lib; Jammy kmod uses /lib/modules.
+if [[ -d "$root/usr/lib/modules/$release" && ! -e "$root/lib/modules/$release" ]]; then
+  mkdir -p "$root/lib/modules"
+  mv "$root/usr/lib/modules/$release" "$root/lib/modules/"
+fi
 # Retain exactly the module closure used by this board and output transport.
-# virtio-blk, virtio-pci, ext4 and devtmpfs are built into the pinned kernel.
+# virtio-blk, virtio-pci, ext4 and devtmpfs are built into both pinned kernels.
 kmod_tool depmod -b "$root" "$release"
 mkdir "$staging/modules"
 for module in 9p 9pnet_virtio overlay; do
@@ -59,6 +89,7 @@ rm -rf "$root/lib/modules/$release/kernel"
 cp -a "$staging/modules/." "$root/lib/modules/$release/"
 kmod_tool depmod -b "$root" "$release"
 rm -rf "${root:?}/boot"
+printf 'readonly expected_kernel_release=%q\nreadonly expected_page_size=%q\n' "$release" "$page_size" > "$root/etc/gvisor-test-kernel"
 cp "$init" "$root/init"
 chmod 0755 "$root/init"
 mkdir -p "$root/proc" "$root/sys" "$root/dev" "$root/run" "$root/tmp" "$root/input" "$root/result" "$root/work"

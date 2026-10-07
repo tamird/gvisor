@@ -1819,3 +1819,17 @@ exceptions:
       grant. These tools are not distribution runtime requirements or payload
       files.
       The distribution action stages only the declared project sources.
+  - dependency: tcg_arm64_rc_image
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The pinned Ubuntu mainline package's embedded copyright notice was
+      audited directly. Used only by the manual RC test guest, not as a
+      declared input to gVisor release artifacts; retain its notice and
+      the guest's complete GPL-2 text. Automatic archive classification
+      does not support this upstream URL.
+  - dependency: tcg_arm64_rc_modules
+    license: GPL-2.0-only
+    exception_rationale: >-
+      The matching modules package carries the same audited GPL-2 notice
+      as tcg_arm64_rc_image. Used only by that manual RC test guest, with
+      the notice and complete GPL-2 text retained.

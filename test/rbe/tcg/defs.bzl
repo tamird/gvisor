@@ -40,13 +40,15 @@ def _image_impl(ctx):
             ctx.attr.kernel_release,
             kernel.path,
             initramfs.path,
-        ],
-        inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init],
-        tools = [ctx.attr._builder[DefaultInfo].files_to_run, tar.tarinfo.binary],
+            str(ctx.attr.page_size),
+            ctx.executable._zstd.path,
+        ] + [archive.path for archive in ctx.files.kernel_archives],
+        inputs = [ctx.file.host_tools, ctx.file.guest, ctx.file.init] + ctx.files.kernel_archives,
+        tools = [ctx.attr._builder[DefaultInfo].files_to_run, ctx.attr._zstd[DefaultInfo].files_to_run, tar.tarinfo.binary],
         outputs = [kernel, initramfs],
         env = tar.tarinfo.default_env,
         mnemonic = "TcgGuestImage",
-        progress_message = "Preparing the ARM64 64K guest",
+        progress_message = "Preparing the ARM64 guest with %s" % ctx.attr.kernel_release,
     )
     return [
         DefaultInfo(files = depset([kernel, initramfs])),
@@ -61,6 +63,9 @@ tcg_image = rule(
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "init": attr.label(allow_single_file = True, mandatory = True),
         "kernel_release": attr.string(mandatory = True),
+        "kernel_archives": attr.label_list(allow_files = True),
+        "page_size": attr.int(default = 65536, values = [4096, 65536]),
+        "_zstd": attr.label(default = Label("@llvm_zstd//:zstd_cli"), executable = True, cfg = "exec"),
         "_builder": attr.label(default = Label(":build_image"), executable = True, cfg = "exec"),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
@@ -72,7 +77,7 @@ def _tcg_test_impl(ctx):
     payload_runfiles = ctx.attr.payload[DefaultInfo].default_runfiles
     if payload_runfiles.symlinks.to_list() or payload_runfiles.root_symlinks.to_list():
         fail("TCG payload requires runfiles aliases unsupported by pkg_tar")
-    image = ctx.attr._image[TcgImageInfo]
+    image = ctx.attr.image[TcgImageInfo]
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     inputs = [ctx.file.archive, ctx.file._host_tools, image.kernel, image.initramfs, ctx.executable._launcher, tar.tarinfo.binary]
@@ -105,13 +110,13 @@ _tcg_test = rule(
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
         "_host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
-        "_image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
+        "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )
 
-def arm64_tcg_test(name, payload, tags, **kwargs):
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
     """Wraps a declared ARM64 payload, preserving its caller-owned test attributes."""
     pkg_tar(
         name = name + "_payload",
@@ -125,6 +130,7 @@ def arm64_tcg_test(name, payload, tags, **kwargs):
     _tcg_test(
         name = name,
         payload = payload,
+        image = image,
         archive = ":" + name + "_payload",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
         exec_properties = {
@@ -137,6 +143,6 @@ def arm64_tcg_test(name, payload, tags, **kwargs):
             "test.nonroot-workspace": "true",
             "test.workload-isolation-type": "oci",
         },
-        tags = tags + ["manual", "no-local", "arm64-64k-tcg"],
+        tags = tags + ["manual", "no-local"],
         **kwargs
     )
