@@ -96,7 +96,7 @@ func GetInfo(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, ipv6 bool
 		return linux.IPTGetinfo{}, syserr.FromError(err)
 	}
 
-	var err error
+	var err *syserr.Error
 	if ipv6 {
 		_, info, err = convertNetstackToBinary6(stack, info.Name)
 	} else {
@@ -104,7 +104,7 @@ func GetInfo(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, ipv6 bool
 	}
 	if err != nil {
 		nflog("couldn't convert iptables: %v", err)
-		return linux.IPTGetinfo{}, syserr.ErrInvalidArgument
+		return linux.IPTGetinfo{}, err
 	}
 
 	nflog("returning info: %+v", info)
@@ -120,12 +120,16 @@ func GetEntries4(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, outLe
 		return linux.KernelIPTGetEntries{}, syserr.FromError(err)
 	}
 
+	if outLen != userEntries.SizeBytes()+int(userEntries.Size) {
+		return linux.KernelIPTGetEntries{}, syserr.ErrInvalidArgument
+	}
+
 	// Convert netstack's iptables rules to something that the iptables
 	// tool can understand.
 	entries, _, err := convertNetstackToBinary4(stack, userEntries.Name)
 	if err != nil {
 		nflog("couldn't read entries: %v", err)
-		return linux.KernelIPTGetEntries{}, syserr.ErrInvalidArgument
+		return linux.KernelIPTGetEntries{}, err
 	}
 	if entries.SizeBytes() > outLen {
 		nflog("insufficient GetEntries output size: %d", uintptr(outLen))
@@ -145,12 +149,16 @@ func GetEntries6(t *kernel.Task, stack *stack.Stack, outPtr hostarch.Addr, outLe
 		return linux.KernelIP6TGetEntries{}, syserr.FromError(err)
 	}
 
+	if outLen != userEntries.SizeBytes()+int(userEntries.Size) {
+		return linux.KernelIP6TGetEntries{}, syserr.ErrInvalidArgument
+	}
+
 	// Convert netstack's iptables rules to something that the iptables
 	// tool can understand.
 	entries, _, err := convertNetstackToBinary6(stack, userEntries.Name)
 	if err != nil {
 		nflog("couldn't read entries: %v", err)
-		return linux.KernelIP6TGetEntries{}, syserr.ErrInvalidArgument
+		return linux.KernelIP6TGetEntries{}, err
 	}
 	if entries.SizeBytes() > outLen {
 		nflog("insufficient GetEntries output size: %d", uintptr(outLen))
