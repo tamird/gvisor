@@ -104,15 +104,15 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
       *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 KVM syscalls/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
 if [[ -n $syscall_bucket ]]; then
-  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $# != 1 || ( $arch:${1:-} != arm64:syscalls && $arch:${1:-} != amd64:syscalls-kvm ) ]]; then
-    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls or AMD64 syscalls-kvm.\n' >&2
+  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $# != 1 || ( $arch:${1:-} != arm64:syscalls && $arch:${1:-} != arm64:syscalls-resume && $arch:${1:-} != amd64:syscalls-kvm ) ]]; then
+    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls/syscalls-resume or AMD64 syscalls-kvm.\n' >&2
     exit 2
   fi
 fi
