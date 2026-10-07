@@ -57,7 +57,8 @@ Pull requests cannot enter this credentialed job. The separate
 `rbe-actions-kvm-startup`,
 `rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
 `rbe-actions-arm64-docker`, `rbe-actions-arm64-images`,
-`rbe-actions-plugin-network` and `rbe-actions-nftables` pilot branches permit
+`rbe-actions-plugin-network`, `rbe-actions-nftables` and
+`rbe-unit-mixed-hybrid` pilot branches permit
 manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
@@ -101,7 +102,11 @@ For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
 `unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `startup`, `posture`,
 `portforward`, `root`, `plugin-network`, `nftables`,
 `docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
-(`amd64` or `arm64`). Ordinary syscalls support both architectures. Local unit,
+(`amd64` or `arm64`). The unit lane also accepts `architecture=all`: an ARM64
+coordinator runs namespace-dependent ARM64 tests locally, while the complete
+AMD64 profile and ordinary ARM64 tests run on RBE in the same Bazel invocation.
+The original unit roots, exclusions and build-only work remain selected.
+Ordinary syscalls support both architectures. Local unit,
 save-resume syscall, Docker and image profiles require `arm64`; KVM syscalls,
 startup, posture, portforward, root, plugin-network, nftables and benchmarks
 require `amd64`.
