@@ -102,9 +102,17 @@ cleanup() {
     mkdir -p "$recovery"
     printf '%s\n' \
       "Original host exit status: $status" \
-      'Incomplete guest disk recovery; no journal replay or completion claim.' \
+      'Incomplete guest disk recovery after bounded journal replay; no completion claim.' \
       'Guest memory and uncommitted filesystem writes may be absent.' \
       > "$recovery/README.txt"
+    # Replay committed metadata on this stopped, disposable disk before reading
+    # its allocation bitmaps. journal_only excludes a full filesystem check;
+    # -p makes journal recovery noninteractive. Retain failures as diagnostics.
+    E2FSCK_CONFIG=/dev/null host_tool usr/bin/timeout --signal=KILL 5 \
+      "$loader" --inhibit-cache --library-path "$libraries" \
+      "$host/sbin/e2fsck" -p -E journal_only "$scratch/scratch.ext4" \
+      </dev/null > "$recovery/journal.log" 2>&1
+    printf '%s\n' "$?" > "$recovery/journal_exit_status"
     # The existing e2fsprogs input supplies debugfs. Without -w it only reads
     # the stopped guest disk. Keep partial files and diagnostics if extraction
     # fails or exhausts this bounded cleanup window; never promote recovered
