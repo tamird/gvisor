@@ -21,8 +21,10 @@ import (
 	"fmt"
 	"io"
 	"testing"
+	"time"
 
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
 // buildPtrObject builds a benchmark object.
@@ -150,4 +152,55 @@ func BenchmarkDecoding(b *testing.B) {
 			})
 		}
 	}
+}
+
+// controlMessageBenchmark uses a real timestamp-bearing state type. Its
+// timestamp used a UnixNano hook before the binary-codec change.
+func controlMessageBenchmark(b *testing.B) (tcpip.ReceivableControlMessages, []byte) {
+	b.Helper()
+	message := tcpip.ReceivableControlMessages{
+		HasTimestamp: true,
+		Timestamp:    time.Date(2026, time.October, 7, 12, 0, 0, 123456789, time.UTC),
+	}
+	var buf bytes.Buffer
+	if _, err := state.Save(b.Context(), &buf, &message); err != nil {
+		b.Fatal(err)
+	}
+	var restored tcpip.ReceivableControlMessages
+	if _, err := state.Load(b.Context(), bytes.NewReader(buf.Bytes()), &restored); err != nil {
+		b.Fatal(err)
+	}
+	if !restored.HasTimestamp || !restored.Timestamp.Equal(message.Timestamp) {
+		b.Fatalf("restored control message = %+v, want timestamp %v", restored, message.Timestamp)
+	}
+	return message, buf.Bytes()
+}
+
+func BenchmarkControlMessageEncoding(b *testing.B) {
+	message, encoded := controlMessageBenchmark(b)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if _, err := state.Save(b.Context(), io.Discard, &message); err != nil {
+			b.Fatal(err)
+		}
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(len(encoded)), "wire-B/op")
+}
+
+func BenchmarkControlMessageDecoding(b *testing.B) {
+	_, encoded := controlMessageBenchmark(b)
+	var restored tcpip.ReceivableControlMessages
+	var reader bytes.Reader
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		reader.Reset(encoded)
+		if _, err := state.Load(b.Context(), &reader, &restored); err != nil {
+			b.Fatal(err)
+		}
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(len(encoded)), "wire-B/op")
 }
