@@ -1,6 +1,5 @@
-load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
 load("//test/runtimes:defs.bzl", "runtime_tests")
-load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
+load("//tools:defs.bzl", "bzl_library", "go_test", "more_shards", "most_shards")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
@@ -65,40 +64,20 @@ bzl_library(
     ],
 )
 
-# Fork-only comparison of the three failures from the full PHP 8.5.11 run.
-# The native control uses the same source-built image and proctor.
-docker_daemon_config(
-    name = "php_upgrade_native_config",
-    testonly = True,
-    images = [":php8.5.11_image_amd64_tar"],
-    runtime = None,
-    tags = ["manual"],
-)
-
-[docker_command_test(
-    name = "php_upgrade_" + mode + "_diagnostic",
+# Fork-only diagnostic: compare the same concatenation workload on one worker.
+# A successful diagnostic does not qualify the upstream PHPT timing assertion.
+go_test(
+    name = "php_timing_diagnostic",
     size = "large",
     timeout = "long",
-    command = "//test/runtimes/runner",
-    command_args = [
-        "--lang=php",
-        "--image=php8.5.11",
-        "--batch=1",
-        "--tests=" + ",".join([
-            "ext/bcmath/tests/GHSA-x692-q9x7-8c3f.phpt",
-            "ext/pdo_pgsql/tests/transations_deprecations.phpt",
-            "Zend/tests/concat/concat_003.phpt",
-        ]),
-        "--runs_per_test=" + ("1" if mode == "native" else "5"),
-        "--flaky_short_circuit=false",
+    srcs = ["php_timing_test.go"],
+    args = [
+        "--docker_test_config=$(rootpath :php8.5.11_directfs_docker_config)",
+        "-test.v",
     ],
-    data = ["//test/runtimes/proctor"],
-    docker_config = ":php_upgrade_native_config" if mode == "native" else ":php8.5.11_" + mode + "_docker_config",
+    data = [":php8.5.11_directfs_docker_config"],
     exec_properties = docker_test_exec_properties(free_disk = "20GB"),
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
-) for mode in [
-    "native",
-    "directfs",
-    "goferfs",
-]]
+    deps = ["//pkg/test/dockerutil"],
+)
