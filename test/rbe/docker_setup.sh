@@ -23,6 +23,37 @@ container_pid_ns=$(readlink /proc/self/ns/pid)
 [[ $(< /proc/self/cgroup) == '0::/' ]]
 [[ $(stat -f -c %T /sys/fs/cgroup) == cgroup2fs ]]
 
+if [[ -n ${GVISOR_DOCKER_NETWORK:-} ]]; then
+  # Bazel only offers none or host networking. Attach this exact sandbox to
+  # the job-owned bridge before its private daemon starts, then remove access
+  # to the host Docker API before executing any test code.
+  socket=/run/gvisor-host-docker.sock
+  [[ -S $socket && $GVISOR_DOCKER_NETWORK =~ ^[0-9a-f]{64}$ ]]
+  host_docker=(docker --host="unix://$socket")
+  hostname=$(hostname)
+  [[ $hostname =~ ^[0-9a-f]{12}$ ]]
+  read -r container_id container_hostname command_id network_mode privileged < <(
+    "${host_docker[@]}" inspect --type=container --format \
+      '{{.Id}} {{.Config.Hostname}} {{index .Config.Labels "command_id"}} {{.HostConfig.NetworkMode}} {{.HostConfig.Privileged}}' "$hostname"
+  )
+  [[ $container_id =~ ^[0-9a-f]{64}$ && ${container_id:0:12} == "$hostname" ]]
+  [[ $container_hostname == "$hostname" && $command_id =~ ^[0-9a-f-]{36}$ ]]
+  [[ $network_mode == none && $privileged == true ]]
+  network_ns=$(readlink /proc/self/ns/net)
+  [[ $network_ns != "${GVISOR_HOST_NET_NS:?}" ]]
+  [[ $("${host_docker[@]}" exec "$container_id" readlink /proc/self/ns/net) == "$network_ns" ]]
+  [[ $("${host_docker[@]}" network inspect --format '{{.Driver}} {{.Internal}}' "$GVISOR_DOCKER_NETWORK") == 'bridge false' ]]
+  "${host_docker[@]}" network disconnect none "$container_id"
+  "${host_docker[@]}" network connect "$GVISOR_DOCKER_NETWORK" "$container_id"
+  [[ $(readlink /proc/self/ns/net) == "$network_ns" ]]
+  printf 'Attached Docker sandbox %s to job bridge %s in %s.\n' "$container_id" "$GVISOR_DOCKER_NETWORK" "$network_ns"
+  umount "$socket"
+  [[ ! -S $socket ]]
+  unset host_docker GVISOR_DOCKER_NETWORK
+  printf 'Host Docker socket removed before test execution.\n'
+  cat /proc/net/route /etc/resolv.conf
+fi
+
 # Keep overlay2's writable layers off the outer container's overlay filesystem,
 # which rejected their mount. Bazel mounts TEST_TMPDIR from the host disk;
 # expose it at /tmp to retain the private daemon's short socket paths.

@@ -24,7 +24,7 @@ below. Use `test/rbe/qualify.sh --list` to see the lanes and
 environment limits, or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
-This profile does not replace the full public CI matrix. It omits the KVM
+This remote profile does not replace the full public CI matrix. It omits the KVM
 variants of posture, startup, continuous benchmarks and syscall tests, as well
 as slimvm. Public CI uses AMD64 save/restore and ARM64 save/resume;
 `--arch=all` follows that mapping. Standalone checkpoint lanes use the requested
@@ -34,9 +34,9 @@ root suite under native systemd in a private PID, cgroup and mount namespace.
 The test, Docker and runsc share that view and a writable delegated cgroup
 subtree.
 Container tests use their own runtime variants; their systemd case checks
-serialized mock state and does not require a host systemd manager. KVM coverage
-remains unavailable. All variants remain available through their owning Bazel
-targets.
+serialized mock state and does not require a host systemd manager. Remote KVM
+worker capacity remains unavailable; the Actions frontend below supplies local
+KVM execution. All variants remain available through their owning Bazel targets.
 
 This document describes lane selection and environment requirements. Execution
 results apply to the recorded source, selected tests and actual workers.
@@ -163,6 +163,14 @@ provide the same Linux host tools. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
 
+Local benchmark jobs create one temporary Docker bridge for outbound downloads
+inside the timed build workloads. The sandbox setup identifies its own Bazel
+container, joins that bridge without sharing the host network namespace, and
+unmounts the host Docker socket before starting the test. Docker removes each
+endpoint with its sandbox; the coordinator removes the bridge after Bazel
+returns and reports cleanup failures. The Actions coordinator supplies this job-owned network through
+`test/rbe/actions.sh`, using its run ID and attempt for the bridge name.
+
 Continuous benchmarks can exceed one Actions job when queued together. To
 qualify individual owners concurrently, pass `benchmark_target` with one label
 from `tests(//test/benchmarks:continuous_tests)`:
@@ -186,10 +194,10 @@ The local AMD64 `startup`, `posture`, `portforward`, `root` and `benchmarks`
 phases retain their complete maintained suites, including the KVM variants.
 Bazel's Docker strategy gives each test a privileged container
 and private network namespace: separate daemon sockets alone do not isolate
-Docker's bridge and firewall rules. These suites load declared image archives
-and communicate within their containers without outbound networking.
-The containers use the same pinned
-Docker-tools image as the remote fixtures, with declared runtime and sidecars.
+Docker's bridge and firewall rules. These suites load declared image archives.
+The benchmark lane also uses the temporary bridge for downloads during timed
+builds. The containers use the same pinned Docker-tools image as the remote
+fixtures, with declared runtime and sidecars.
 The Actions host supplies the outer Docker engine, kernel and devices.
 
 For these phases, the Bazel coordinator runs as root on the ephemeral Actions
@@ -205,14 +213,12 @@ can run through KVM, not just whether `/dev/kvm` exists. Posture retains all six
 security configurations; portforward exercises both sandbox and host networking
 with the declared Redis and nginx images. The root lane retains its ordinary
 root suite and the native systemd fixture, which runs that suite with the
-systemd cgroup manager. Existing cgroup-version skips remain visible. These
-lanes do not qualify the full KVM syscall suite or Docker suites requiring
-outbound networking. Local continuous benchmarks retain their declared KVM,
-systrap and runc variants, workload filters and iteration controls. Their
+systemd cgroup manager. Existing cgroup-version skips remain visible. The
+separate `syscalls-kvm` lane owns KVM syscall selection. Local continuous
+benchmarks retain their declared KVM, systrap and runc variants, workload
+filters and iteration controls. Their
 results establish only the selected workloads; shared-host timings do not
 establish comparative performance.
-Bazel's Docker strategy selects either no network or the host network;
-enabling the latter would lose the private daemons' firewall isolation.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
