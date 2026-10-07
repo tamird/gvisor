@@ -80,7 +80,7 @@ def _tcg_test_impl(ctx):
     image = ctx.attr.image[TcgImageInfo]
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
-    inputs = [ctx.file.archive, ctx.file._host_tools, image.kernel, image.initramfs, ctx.executable._launcher, tar.tarinfo.binary]
+    inputs = [ctx.file.archive, ctx.file._host_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
     arguments = [
         ctx.file._host_tools.short_path,
         image.kernel.short_path,
@@ -89,6 +89,7 @@ def _tcg_test_impl(ctx):
         ctx.executable.payload.short_path,
         tar.tarinfo.binary.short_path,
         str(ctx.attr.payload.label),
+        ctx.file._test_setup.short_path,
     ]
     ctx.actions.write(
         executable,
@@ -112,6 +113,7 @@ _tcg_test = rule(
         "_host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
+        "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )

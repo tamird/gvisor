@@ -45,9 +45,13 @@ the guest's original XML and exit status, requires an explicit completion
 record, and kills/reaps QEMU on interruption. A successful QEMU shutdown alone
 does not count as a passing test.
 
-The launcher forwards Bazel's shard coordinates and GoogleTest aliases with
-a guest-local status path. It acknowledges sharding to Bazel only after the
-payload writes that status file; the original runner still partitions cases.
+The declared Bazel `test_setup` harness runs the payload inside the guest. It
+owns runfiles lookup, GoogleTest environment aliases, process cleanup and XML
+generation when a payload emits no report. That generated wrapper report does
+not establish that any syscall cases executed. Harness outputs and shard status
+stay on ext4 until completion, then return through the result export. Sharding
+is acknowledged to outer Bazel only when the payload writes its status file;
+the original runner still partitions cases.
 
 The macro also declares manual `<owner>_rc_tcg` frontends for ordinary ARM64
 ptrace and systrap owners without checkpoint modes. They use the same
