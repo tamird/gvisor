@@ -251,12 +251,16 @@ TEST(FuseTest, CloneFromUnconnectedDeviceFails) {
     // https://github.com/torvalds/linux/commit/da6fcc6db
     // Remove the older-kernel cases once the minimum supported Linux is 7.1.
     const auto version = ASSERT_NO_ERRNO_AND_VALUE(GetKernelVersion());
+    RecordProperty("kernel_version",
+                   absl::StrFormat("%d.%d.%d", version.major, version.minor,
+                                   version.micro));
     if (version.major > 7 ||
         (version.major == 7 && (version.minor > 0 || version.micro >= 2)) ||
         (version.major == 6 && version.minor == 18 && version.micro >= 25)) {
       expected_errno = EPERM;
     }
   }
+  RecordProperty("expected_errno", expected_errno);
   int fd1_num = fd1.get();
   EXPECT_THAT(ioctl(fd2.get(), FUSE_DEV_IOC_CLONE, &fd1_num),
               SyscallFailsWithErrno(expected_errno));

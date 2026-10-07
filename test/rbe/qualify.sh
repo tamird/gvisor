@@ -405,16 +405,81 @@ PY
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
   fi
+  # Disposable regression intersection; the maintained full profile above
+  # remains the source of owner identity, controls and omitted-owner accounting.
+  [[ $lane == syscalls-rc && $arch == amd64 && $test_execution == local ]]
+  [[ -z $syscall_bucket ]]
+  python3 - "$selection_dir" <<'PY_FOCUSED'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+full = root.joinpath("targets").read_text().splitlines()
+selected = {
+    "//test/syscalls:fuse_test_native_rc_kvm",
+    "//test/syscalls:fuse_test_runsc_systrap_shared_rc_kvm",
+}
+assert len(full) == len(set(full))
+assert selected <= set(full), "Regression owner absent from maintained profile"
+root.joinpath("full-targets.json").write_text(json.dumps(full, indent=2) + "\n")
+# The existing unqualified native owner keeps the ordinary remote kernel.
+ordinary_native, = [label[:-len("_rc_kvm")] for label in selected if label.endswith("_native_rc_kvm")]
+focused = selected | {ordinary_native}
+root.joinpath("focused-targets.json").write_text(json.dumps(sorted(focused), indent=2) + "\n")
+root.joinpath("focused-rc-targets.json").write_text(json.dumps(sorted(selected), indent=2) + "\n")
+root.joinpath("ordinary-native-target.json").write_text(json.dumps(ordinary_native) + "\n")
+root.joinpath("unexecuted-targets.json").write_text(json.dumps(sorted(set(full) - selected), indent=2) + "\n")
+root.joinpath("targets").write_text("".join(label + "\n" for label in sorted(focused)))
+PY_FOCUSED
   if [[ -n ${RUNNER_TEMP:-} ]]; then
     save_profile_selection "$selection_dir" "$lane"
+    cp "$selection_dir/"{full,focused,focused-rc,unexecuted}-targets.json \
+      "$selection_dir/ordinary-native-target.json" "$RUNNER_TEMP/qualification/$lane-selection/"
   fi
   if [[ $test_execution == local ]]; then
     options=(--config=rbe-hybrid-tests --local_test_jobs=1)
   fi
+  # Bind the extra ordinary owner to its remote contract before execution.
+  local focused_actions="$selection_dir/focused-actions.json"
+  local focused_query
+  focused_query="mnemonic(\"^TestRunner$\", set($(tr '\n' ' ' < "$selection_dir/targets")))"
+  bazel aquery --config=rbe --config=x86_64 \
+    --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
+    --strip=never --incompatible_sandbox_hermetic_tmp=false \
+    "${options[@]}" --test_filter=FuseTest.CloneFromUnconnectedDeviceFails \
+    --output=jsonproto --include_artifacts=false "$focused_query" > "$focused_actions"
+  python3 - "$selection_dir" <<'PY_FOCUSED_ROUTING'
+import json
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+raw = json.loads(root.joinpath("focused-actions.json").read_text())
+labels = {str(row["id"]): row["label"] for row in raw["targets"]}
+expected = set(json.loads(root.joinpath("focused-targets.json").read_text()))
+ordinary = json.loads(root.joinpath("ordinary-native-target.json").read_text())
+assert len(raw["actions"]) == 3
+assert {labels[str(row["targetId"])] for row in raw["actions"]} == expected
+for row in raw["actions"]:
+    label = labels[str(row["targetId"])]
+    properties = {item["key"]: item.get("value", "") for item in row["executionInfo"]}
+    if label == ordinary:
+        assert properties["workload-isolation-type"] == "firecracker"
+        assert properties["dockerUser"] == "root"
+        assert not {"local", "no-remote-exec"} & properties.keys()
+    else:
+        assert {"no-remote-exec", "no-sandbox"} <= properties.keys()
+print("Focused route: one ordinary remote native + two local RC guests")
+PY_FOCUSED_ROUTING
+  if [[ -n ${RUNNER_TEMP:-} ]]; then
+    cp "$focused_actions" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
   bazel test --config=rbe --config=x86_64 --keep_going \
     --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
-    "${options[@]}" --target_pattern_file="$selection_dir/targets"
+    "${options[@]}" --test_filter=FuseTest.CloneFromUnconnectedDeviceFails \
+    --experimental_throttle_remote_action_building \
+    --target_pattern_file="$selection_dir/targets"
 )
 
 # Expand the public unit selection before removing its lane-wide filters from
