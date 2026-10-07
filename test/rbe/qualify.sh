@@ -405,6 +405,30 @@ PY
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
   fi
+  # Disposable diagnostic: retain the maintained selection before choosing
+  # the original case whose bucket-7 action timed out.
+  [[ $lane == syscalls-rc && $arch == amd64 && $syscall_bucket == 7 ]]
+  python3 - "$selection_dir" <<'PYFOCUS'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+label = "//test/syscalls:socket_inet_loopback_isolated_test_runsc_kvm_rc_kvm"
+selected = (root / "targets").read_text().splitlines()
+assert selected.count(label) == 1, label
+(root / "all-targets").write_text("\n".join(selected) + "\n")
+(root / "targets").write_text(label + "\n")
+path = root / "selection.json"
+record = json.loads(path.read_text())
+assert set(record["selected_owners"]) == set(selected)
+record["original_selected_owners"] = record["selected_owners"]
+record["selected_owners"] = [label]
+record["diagnostic_unexecuted_owners"] = [owner for owner in selected if owner != label]
+record["diagnostic_test_filter"] = "All/SocketInetLoopbackIsolatedTest.TCPActiveCloseTimeWaitTest/ListenV4Loopback_ConnectV4Any"
+record["diagnostic_sharding"] = "disabled; one existing case, original owner has eight shards"
+path.write_text(json.dumps(record, indent=2) + "\n")
+PYFOCUS
   if [[ -n ${RUNNER_TEMP:-} ]]; then
     save_profile_selection "$selection_dir" "$lane"
   fi
@@ -414,7 +438,9 @@ PY
   bazel test --config=rbe --config=x86_64 --keep_going \
     --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
-    "${options[@]}" --target_pattern_file="$selection_dir/targets"
+    "${options[@]}" --test_sharding_strategy=disabled \
+    --test_filter=All/SocketInetLoopbackIsolatedTest.TCPActiveCloseTimeWaitTest/ListenV4Loopback_ConnectV4Any \
+    --target_pattern_file="$selection_dir/targets"
 )
 
 # Expand the public unit selection before removing its lane-wide filters from
