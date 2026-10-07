@@ -549,6 +549,14 @@ TEST_P(GetSockOptRequiresCapNetAdminTest, Validate) {
         // getsockopt is async signal safe, so it's okay to call it here.
         TEST_CHECK_ERRNO(getsockopt(sock_fd, SOL_IP, optname, optval, optlen),
                          EPERM);
+        if (optname == IPT_SO_GET_INFO) {
+          socklen_t invalid_len = 0;
+          TEST_CHECK_ERRNO(
+              getsockopt(sock_fd, SOL_IP, optname, optval, &invalid_len), EPERM);
+          invalid_len = *optlen + 1;
+          TEST_CHECK_ERRNO(
+              getsockopt(sock_fd, SOL_IP, optname, optval, &invalid_len), EPERM);
+        }
       }),
       IsPosixErrorOkAndHolds(0));
 }
