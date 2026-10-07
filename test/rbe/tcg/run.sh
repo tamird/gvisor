@@ -23,7 +23,8 @@ payload="$5"
 tar_tool="$(realpath "$6")"
 payload_label="$7"
 machine="$8"
-shift 8
+test_setup="$(realpath "$9")"
+shift 9
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -59,6 +60,7 @@ host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "
 # A private copy prevents the guest from modifying a Bazel input. The export
 # itself is read-only as well; the writable export contains only test outputs.
 cp "$payload_archive" "$scratch/input/payload.tar"
+cp "$test_setup" "$scratch/input/test-setup.sh"
 host_tool usr/bin/truncate -s 4G "$scratch/scratch.ext4"
 MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "$scratch/scratch.ext4"
 {
@@ -66,20 +68,22 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
   printf 'export TEST_SRCDIR=%q\n' "/work/payload/$payload.runfiles"
   printf 'export TEST_WORKSPACE=%q\n' "$TEST_WORKSPACE"
   printf 'export TEST_TARGET=%q\n' "$payload_label"
+  printf 'export TEST_BINARY=%q\n' "$payload"
   printf 'export TEST_TMPDIR=/work/tmp\nexport TEST_UNDECLARED_OUTPUTS_DIR=/work/outputs\nexport XML_OUTPUT_FILE=/work/test.xml\n'
+  # Keep the canonical harness's outputs on ext4 until the payload has exited.
+  for variable in TEST_PREMATURE_EXIT_FILE TEST_WARNINGS_OUTPUT_FILE TEST_LOGSPLITTER_OUTPUT_FILE TEST_INFRASTRUCTURE_FAILURE_FILE TEST_UNUSED_RUNFILES_LOG_FILE TEST_UNDECLARED_OUTPUTS_MANIFEST TEST_UNDECLARED_OUTPUTS_ANNOTATIONS TEST_UNDECLARED_OUTPUTS_ANNOTATIONS_DIR; do
+    printf 'export %s=/work/harness/%s\n' "$variable" "$variable"
+  done
   for variable in TEST_SHARD_INDEX TEST_TOTAL_SHARDS TEST_FILTER TEST_TIMEOUT TEST_SIZE TEST_RANDOM_SEED TESTBRIDGE_TEST_ONLY; do
     if [[ -v "$variable" ]]; then printf 'export %s=%q\n' "$variable" "${!variable}"; fi
   done
   if [[ -n "${TEST_SHARD_STATUS_FILE:-}" ]]; then
-    printf 'export TEST_SHARD_STATUS_FILE=/result/shard_status\n'
+    printf 'export TEST_SHARD_STATUS_FILE=/work/shard_status\n'
   fi
-  # Mirror test-setup.sh's GoogleTest aliases using the guest status path.
-  # Discovery acknowledges sharding; the runner owns case partitioning.
-  if [[ -v TEST_TOTAL_SHARDS ]] && (( TEST_TOTAL_SHARDS != 0 )); then
-    printf 'export GTEST_SHARD_INDEX="$TEST_SHARD_INDEX"\nexport GTEST_TOTAL_SHARDS="$TEST_TOTAL_SHARDS"\nexport GTEST_SHARD_STATUS_FILE="$TEST_SHARD_STATUS_FILE"\n'
-  fi
-  printf 'export RUNFILES_DIR="$TEST_SRCDIR"\nunset RUNFILES_MANIFEST_FILE\ncd "$TEST_SRCDIR/$TEST_WORKSPACE"\n'
-  printf 'exec %q' "./$payload"
+  # The guest harness owns aliases, runfiles lookup and fallback XML. The outer
+  # harness packages returned outputs, so the guest does not request a ZIP.
+  printf 'export RUNFILES_DIR="$TEST_SRCDIR"\nexport EXPERIMENTAL_SPLIT_XML_GENERATION=0\ncd /work/payload\n'
+  printf 'exec /bin/bash /input/test-setup.sh %q' "$payload"
   if (( $# )); then printf ' %q' "$@"; fi
   printf '\n'
 } > "$scratch/input/launch.sh"

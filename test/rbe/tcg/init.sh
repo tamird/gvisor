@@ -33,7 +33,9 @@ finish() {
   set +e
   # When QEMU runs unprivileged, guest root must not replace the export owner.
   if [[ -d /work/outputs ]]; then cp -a --no-preserve=ownership /work/outputs /result/ || status=125; fi
+  if [[ -d /work/harness ]]; then cp -a --no-preserve=ownership /work/harness /result/ || status=125; fi
   if [[ -f /work/test.xml ]]; then cp /work/test.xml /result/test.xml || status=125; fi
+  if [[ -f /work/shard_status ]]; then cp /work/shard_status /result/shard_status || status=125; fi
   printf '%s\n' "$status" > /result/exit_status
   sync
   /bin/busybox poweroff -f
@@ -64,7 +66,7 @@ if [[ "${expected_architecture:?}" == amd64 ]]; then
   printf 'Guest KVM module: %s\n' "$module" | tee /result/kvm.txt
 fi
 mount -t ext4 /dev/vda /work
-mkdir -p /work/payload /work/tmp /work/outputs
+mkdir -p /work/payload /work/tmp
 chmod 1777 /work/tmp
 # Gofer's read-only root remount needs its own mount, not the scratch disk root.
 mount --bind /work/tmp /work/tmp

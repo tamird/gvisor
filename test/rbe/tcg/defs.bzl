@@ -92,7 +92,7 @@ def _tcg_test_impl(ctx):
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
-    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, tar.tarinfo.binary]
+    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
@@ -102,6 +102,7 @@ def _tcg_test_impl(ctx):
         tar.tarinfo.binary.short_path,
         str(ctx.attr.payload.label),
         ctx.attr.machine,
+        ctx.file._test_setup.short_path,
     ]
     ctx.actions.write(
         executable,
@@ -126,6 +127,7 @@ _tcg_test = rule(
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
+        "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )
