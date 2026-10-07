@@ -23,7 +23,7 @@ lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container contai
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
-       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--syscall-bucket=0..14] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -46,6 +46,8 @@ Compilation remains remote. Hybrid profiles run in one invocation: native namesp
 locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
+A benchmark target selects one member of the continuous suite, retaining its
+original workload and timeout. Other suite members remain unexecuted.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -70,6 +72,7 @@ fi
 arch=amd64
 test_execution=remote
 syscall_bucket=
+benchmark_target=
 header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
@@ -77,6 +80,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --arch=*) arch=${1#--arch=} ;;
     --test-execution=*) test_execution=${1#--test-execution=} ;;
     --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
+    --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -111,6 +115,10 @@ if [[ -n $syscall_bucket ]]; then
     printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls or AMD64 syscalls-kvm.\n' >&2
     exit 2
   fi
+fi
+if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $# != 1 || ${1:-} != benchmarks ) ]]; then
+  printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
+  exit 2
 fi
 if [[ $# == 1 && $1 == amd64 ]]; then
   if [[ $arch != amd64 ]]; then
@@ -808,6 +816,19 @@ run_lane() (
         options=(--test_tag_filters=-requires-kvm)
       fi
       shared_test_targets "$lane" "$arch"
+      if [[ -n $benchmark_target ]]; then
+        local selection_dir=${RUNNER_TEMP:?}/qualification/benchmarks-selection
+        mkdir -p "$selection_dir"
+        # Query the owning suite rather than maintaining a second target list.
+        bazel query 'tests(//test/benchmarks:continuous_tests)' --output=label \
+          > "$selection_dir/canonical-targets"
+        if ! grep -Fxq -- "$benchmark_target" "$selection_dir/canonical-targets"; then
+          printf 'Not a continuous benchmark target: %s\n' "$benchmark_target" >&2
+          return 2
+        fi
+        printf '%s\n' "$benchmark_target" > "$selection_dir/selected-targets"
+        targets=("$benchmark_target")
+      fi
       ;;
     language-directfs|language-goferfs)
       if [[ $arch != amd64 ]]; then

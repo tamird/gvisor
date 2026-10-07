@@ -51,8 +51,8 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-kvm-syscalls` and `rbe-actions-kvm-startup` pilot branches permit
-manual dispatches only.
+`rbe-actions-kvm-syscalls`, `rbe-actions-kvm-startup` and
+`rbe-actions-benchmark-partitions` pilot branches permit manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -162,6 +162,25 @@ separate workflow concurrency keys. Direct callers use
 provide the same Linux host tools. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
+
+Continuous benchmarks can exceed one Actions job when queued together. To
+qualify individual owners concurrently, pass `benchmark_target` with one label
+from `tests(//test/benchmarks:continuous_tests)`:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-benchmark-partitions \
+  -f lanes=benchmarks -f architecture=amd64 -f execution=local \
+  -f benchmark_target=//test/benchmarks/fs:bazel_test_continuous_grpc_kvm_owned
+```
+
+The dispatcher checks suite membership and records the complete suite and the
+selected target. Distinct targets have separate workflow concurrency keys.
+Each keeps its original benchmark arguments and one-hour test timeout; the
+Actions step allows 70 minutes for compilation and execution, with another
+five minutes for setup and artifact upload. A passing target covers only that
+owner. Direct callers use `--benchmark-target=LABEL` with local AMD64
+benchmarks and provide `RUNNER_TEMP` for the selection report.
 
 The local AMD64 `startup`, `posture`, `portforward`, `root` and `benchmarks`
 phases retain their complete maintained suites, including the KVM variants.

@@ -39,6 +39,9 @@ options=("--arch=$QUALIFICATION_ARCH")
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi
+if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
+  options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
+fi
 temporary_files=()
 trap 'rm -f -- "${temporary_files[@]}"' EXIT
 
