@@ -107,11 +107,21 @@ docker_ready=true
 # Keep /proc, cgroup paths, Docker's PIDs and systemd's D-Bus PIDs in one view.
 # The OOM tests inspect their parent. Keep a waiting shell inside this PID
 # namespace; the direct docker exec process has an out-of-namespace parent.
+# Move that process into a systemd scope before starting the shell, so neither
+# the test nor its waiting parent blocks controller delegation at the root.
 set +e
 docker exec --env DOCKER_HOST=unix:///var/run/docker.sock \
   --env GVISOR_SIDECAR_BINARIES_DIR=/fixture/runtime/gvisor-bin \
   --env TEST_TIMEOUT="${TEST_TIMEOUT:?}" \
-  "${container}" bash -c '"$@"; exit "$?"' systemd-root \
+  "${container}" systemd-run --scope --quiet --unit=root-tests \
+  --slice=system.slice --expand-environment=no bash -c '
+    test "$(< /proc/self/cgroup)" = 0::/system.slice/root-tests.scope || exit 1
+    mapfile -t processes < /sys/fs/cgroup/cgroup.procs || exit 1
+    printf "Root-test membership: %s; root processes: %s\n" \
+      "$(< /proc/self/cgroup)" "${processes[*]}"
+    (( ${#processes[@]} == 0 )) || exit 1
+    "$@"; exit "$?"
+  ' systemd-root \
   /fixture/root_test --runtime=runsc \
   --config_path=/etc/docker/daemon.json -test.v \
   2>&1 | tee "${out}/root-test.log"
