@@ -405,8 +405,32 @@ PY
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
   fi
+  # Disposable regression intersection; the maintained full profile above
+  # remains the source of owner identity, controls and omitted-owner accounting.
+  [[ $lane == syscalls-rc && $arch == amd64 && $test_execution == local ]]
+  [[ -z $syscall_bucket ]]
+  python3 - "$selection_dir" <<'PY_FOCUSED'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+full = root.joinpath("targets").read_text().splitlines()
+selected = {
+    "//test/syscalls:fuse_test_native_rc_kvm",
+    "//test/syscalls:fuse_test_runsc_systrap_shared_rc_kvm",
+}
+assert len(full) == len(set(full))
+assert selected <= set(full), "Regression owner absent from maintained profile"
+root.joinpath("full-targets.json").write_text(json.dumps(full, indent=2) + "\n")
+root.joinpath("focused-targets.json").write_text(json.dumps(sorted(selected), indent=2) + "\n")
+root.joinpath("unexecuted-targets.json").write_text(json.dumps(sorted(set(full) - selected), indent=2) + "\n")
+root.joinpath("targets").write_text("".join(label + "\n" for label in sorted(selected)))
+PY_FOCUSED
   if [[ -n ${RUNNER_TEMP:-} ]]; then
     save_profile_selection "$selection_dir" "$lane"
+    cp "$selection_dir/"{full,focused,unexecuted}-targets.json \
+      "$RUNNER_TEMP/qualification/$lane-selection/"
   fi
   if [[ $test_execution == local ]]; then
     options=(--config=rbe-hybrid-tests --local_test_jobs=1)
