@@ -90,7 +90,10 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
 qemu_pid=""
 cleanup() {
   local status=$?
-  trap - EXIT TERM INT
+  # The executor and test harness may both signal the launcher. Keep a later
+  # TERM or INT from interrupting recovery; the executor's KILL is authoritative.
+  trap '' TERM INT
+  trap - EXIT
   set +e
   if [[ -n "$qemu_pid" ]]; then
     # Reap the writer before inspecting its disk, even if it is unresponsive.
