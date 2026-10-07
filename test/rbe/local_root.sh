@@ -45,6 +45,7 @@ test_tmp=${TEST_TMPDIR:?}
 if [[ $initial_cgroup == true ]]; then
   [[ $(stat -c %u "$out") == "$output_uid" && $(stat -c %u "$test_tmp") == "$output_uid" ]]
 fi
+scratch_alias_mounted=false
 original_controllers=
 original_cgroup_options=
 original_membership=
@@ -114,6 +115,13 @@ cleanup() {
   fi
   chown -hR "$output_uid:$output_gid" -- "${outputs[@]}" || cleanup_status=1
   chown -h "$output_uid:$output_gid" -- "${test_directories[@]}" || cleanup_status=1
+  if [[ $scratch_alias_mounted == true ]]; then
+    if umount /tmp; then
+      printf 'Initial cgroup scratch alias removed.\n'
+    else
+      cleanup_status=1
+    fi
+  fi
   if (( cleanup_status != 0 )); then
     printf 'Failed to restore the root test fixture.\n' >&2
     if (( status == 0 )); then status=1; fi
@@ -150,9 +158,42 @@ done
 
 # Overlay backing files must not hold the gofer's root mount writable. Give the
 # existing scratch directory its own mount without changing its filesystem.
+scratch_mount=$test_tmp
+if [[ $initial_cgroup == true ]]; then
+  # The native runner makes its child accessible after a UID change, but
+  # Bazel's cache ancestors can still prevent traversal. Expose only this
+  # shard's scratch at /tmp in the frontend's fresh private mount namespace.
+  fixture_mount_ns=$(readlink -v /proc/self/ns/mnt)
+  parent_mount_ns=$(readlink -v "/proc/$PPID/ns/mnt")
+  printf 'Scratch mount namespaces: fixture=%s parent=%s\n' "$fixture_mount_ns" "$parent_mount_ns"
+  [[ $fixture_mount_ns != "$parent_mount_ns" ]]
+  paths=("$test_tmp" "$out" "$(dirname "${XML_OUTPUT_FILE:?}")" "${TEST_SRCDIR:?}" "$PWD" "${1:?}")
+  if [[ -n ${TEST_PREMATURE_EXIT_FILE:-} ]]; then
+    paths+=("$(dirname "$TEST_PREMATURE_EXIT_FILE")")
+  fi
+  runtime=${TEST_SRCDIR}/${TEST_WORKSPACE:?}/release/runsc
+  if [[ -e $runtime ]]; then paths+=("$runtime"); fi
+  # Overlaying /tmp must not hide any path needed to execute or clean up.
+  for path in "${paths[@]}"; do
+    resolved=$(readlink -fv -- "$path")
+    if [[ $resolved == /tmp || $resolved == /tmp/* ]]; then
+      printf 'Private scratch mount would hide required path: %s\n' "$resolved" >&2
+      exit 1
+    fi
+  done
+  [[ $(stat -c %a "$test_tmp") =~ [1357]$ ]]
+  namei -l "$test_tmp"
+  scratch_mount=/tmp
+fi
 findmnt --target "$test_tmp" --output ID,TARGET,FSTYPE,OPTIONS
-mount --bind "$test_tmp" "$test_tmp"
-findmnt --target "$test_tmp" --output ID,TARGET,FSTYPE,OPTIONS
+mount --bind "$test_tmp" "$scratch_mount"
+if [[ $initial_cgroup == true ]]; then scratch_alias_mounted=true; fi
+findmnt --target "$scratch_mount" --output ID,TARGET,FSTYPE,OPTIONS
+if [[ $initial_cgroup == true ]]; then
+  [[ $(stat -c %d:%i "$test_tmp") == "$(stat -c %d:%i "$scratch_mount")" ]]
+  export TEST_TMPDIR=$scratch_mount
+  printf 'Initial cgroup scratch: %s -> %s\n' "$test_tmp" "$TEST_TMPDIR"
+fi
 
 # Some root tests re-exec the declared runtime as nobody. Grant directory
 # traversal only; leave file modes and data, including the credential RC, alone.
