@@ -55,8 +55,8 @@ Pull requests cannot enter this credentialed job. The separate
 `rbe-actions-kvm-syscalls`, `rbe-actions-arm64-resume`,
 `rbe-actions-kvm-startup`,
 `rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
-`rbe-actions-arm64-docker` and `rbe-actions-arm64-images` pilot branches permit
-manual dispatches only.
+`rbe-actions-arm64-docker`, `rbe-actions-arm64-images` and
+`rbe-actions-plugin-network` pilot branches permit manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -97,11 +97,12 @@ Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
 `unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `startup`, `posture`,
-`portforward`, `root`,
+`portforward`, `root`, `plugin-network`,
 `docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
 (`amd64` or `arm64`). Local unit, ordinary/save-resume syscall, Docker and image profiles
 require `arm64`; KVM syscalls,
-startup, posture, portforward, root and benchmarks require `amd64`.
+startup, posture, portforward, root, plugin-network and benchmarks require
+`amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -642,6 +643,17 @@ retains the `ConnectToSelf` filter on the image and integration suites. Only
 the integration suite currently contains a matching test. As in Make, this
 lane leaves the runtime platform at its default; its public agent's KVM
 capability requirement does not set `--platform=kvm`.
+
+For the same suite on an AMD64 Actions host, dispatch `plugin-network` with
+`execution=local`. The coordinator requires readable/writable `/dev/vhost-net`
+and `/dev/net/tun`; their presence alone does not establish plugin support.
+The existing privileged Docker fixture gives each test a private daemon,
+network namespace and disk-backed scratch, while compilation stays on RBE.
+The declared images are preloaded and `ConnectToSelf` needs no outbound network,
+so this lane does not attach the job bridge. Both maintained owners retain their
+original 900-second timeout and filter; an owner with no matching case does not
+provide runtime coverage. The local job retains two test slots and a 45-minute
+work limit within the 50-minute Actions job.
 
 Both plugin lanes also accept `--arch=all` alongside other lanes. They retain
 AMD64 targets; this adds no ARM64 plugin or vhost-net worker capability. The

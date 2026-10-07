@@ -76,7 +76,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:plugin-network|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
@@ -163,6 +163,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
       dpkg-query -W iproute2 netcat-openbsd | tee "$RUNNER_TEMP/qualification/network-tools.txt"
       command -v ip nc
+    fi
+    if [[ ${lanes[*]} == plugin-network ]]; then
+      # The plugin opens host vhost-net and TUN devices inside its sandbox.
+      for device in /dev/vhost-net /dev/net/tun; do
+        [[ -c $device ]]
+        sudo -n test -r "$device"
+        sudo -n test -w "$device"
+      done
     fi
     if [[ ${lanes[*]} == syscalls-kvm ]]; then
       [[ -c /dev/kvm ]]
