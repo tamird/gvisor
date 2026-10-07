@@ -510,16 +510,31 @@ PY
   if [[ $initial_cgroup == true ]]; then
     # This route owns global cgroup settings on a disposable hosted VM. The
     # workflow runs directly on that VM, so PID 1 identifies its namespaces.
-    [[ ${GITHUB_ACTIONS:-} == true && ${RUNNER_ENVIRONMENT:-} == github-hosted ]]
-    [[ $(< /proc/1/comm) == systemd ]]
-    [[ $(readlink /proc/self/ns/pid) == "$(readlink /proc/1/ns/pid)" ]]
-    [[ $(readlink /proc/self/ns/cgroup) == "$(readlink /proc/1/ns/cgroup)" ]]
-    [[ ! -e /sys/fs/cgroup/cgroup.type ]]
+    printf 'github_actions=%s\nrunner_environment=%s\npid1_comm=%s\n' \
+      "${GITHUB_ACTIONS:-}" "${RUNNER_ENVIRONMENT:-}" "$(< /proc/1/comm)" \
+      | tee "$RUNNER_TEMP/qualification/initial-cgroup-namespaces.txt"
+    if [[ ${GITHUB_ACTIONS:-} != true || ${RUNNER_ENVIRONMENT:-} != github-hosted || $(< /proc/1/comm) != systemd ]]; then
+      printf 'Initial cgroup tests require a hosted Actions VM with systemd as PID 1.\n' >&2
+      exit 1
+    fi
+    local coordinator_pid_ns coordinator_cgroup_ns init_pid_ns init_cgroup_ns
+    coordinator_pid_ns=$(readlink -v /proc/self/ns/pid)
+    coordinator_cgroup_ns=$(readlink -v /proc/self/ns/cgroup)
+    # Linux gates another user's namespace links with a ptrace access check.
+    init_pid_ns=$(sudo -n readlink -v /proc/1/ns/pid)
+    init_cgroup_ns=$(sudo -n readlink -v /proc/1/ns/cgroup)
+    printf 'coordinator_pid=%s\ninit_pid=%s\ncoordinator_cgroup=%s\ninit_cgroup=%s\n' \
+      "$coordinator_pid_ns" "$init_pid_ns" "$coordinator_cgroup_ns" "$init_cgroup_ns" \
+      | tee -a "$RUNNER_TEMP/qualification/initial-cgroup-namespaces.txt"
+    if [[ $coordinator_pid_ns != "$init_pid_ns" || $coordinator_cgroup_ns != "$init_cgroup_ns" || -e /sys/fs/cgroup/cgroup.type ]]; then
+      printf 'Initial cgroup tests require the VM PID/cgroup namespaces and hierarchy root.\n' >&2
+      exit 1
+    fi
     # Other local tests must not overlap changes to the root controllers or
     # mount flags. Each original shard restores its snapshot before returning.
     options+=(--local_test_jobs=1
-      "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
-      "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
+      "--test_env=GVISOR_HOST_PID_NS=$coordinator_pid_ns"
+      "--test_env=GVISOR_HOST_CGROUP_NS=$coordinator_cgroup_ns"
       "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
