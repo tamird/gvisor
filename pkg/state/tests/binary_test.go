@@ -42,11 +42,11 @@ func (*inner) MarshalBinary() ([]byte, error) { return nil, errBinary }
 func (*inner) UnmarshalBinary([]byte) error { return errBinary }
 
 type binaryFailure struct {
-	failSave bool
+	failMarshal bool
 }
 
 func (b *binaryFailure) MarshalBinary() ([]byte, error) {
-	if b.failSave {
+	if b.failMarshal {
 		return nil, errBinary
 	}
 	return nil, nil
@@ -56,7 +56,7 @@ func (*binaryFailure) UnmarshalBinary([]byte) error { return errBinary }
 
 func TestBinaryErrors(t *testing.T) {
 	var buf bytes.Buffer
-	if _, err := state.Save(t.Context(), &buf, &binaryFailure{failSave: true}); !errors.Is(err, errBinary) {
+	if _, err := state.Save(t.Context(), &buf, &binaryFailure{failMarshal: true}); !errors.Is(err, errBinary) {
 		t.Fatalf("Save = %v, want %v", err, errBinary)
 	}
 	buf.Reset()
