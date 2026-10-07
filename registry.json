@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-07T18:32:45.101571+00:00",
+    "updatedAt": "2026-10-07T18:42:51.907139+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -3418,12 +3418,12 @@
       "group": "tests",
       "status": "open",
       "head": "6b486edc3bc79722811c7dab7adc2c5e31e3def7",
-      "updatedAt": "2026-10-07T18:32:45.101571+00:00",
-      "summary": "At 18:27 UTC, maintainer kerumeto accepted the contributor\u2019s permalink objection, resolved all three review threads and approved unchanged live head 6b486edc3bc79722811c7dab7adc2c5e31e3def7. The PR is now ready to pull. The earlier shorthand-comment proposal b044 is unnecessary and remains unpublished to the live PR; no agent reply or amendment was made. Maintainer import and landing remain pending.\n\nKerumeto requested three comment-only citation changes on exact 6b486edc3bc79722811c7dab7adc2c5e31e3def7 at 2026-10-07 17:26:31 UTC: replace verbose Linux links with scripts/syscall.tbl line references in bad.cc and seccomp.cc. The signed separate review/syscall-reserved-slots-comments branch is public at b044e416ffd7d669e5d804f75c94afe924eb7e5a on e1bc. Root independently verified that only the three source comments change. The user subsequently asked in the upstream thread how shorthand line references would remain stable without permalinks. Root withdrew the stale contributor question. The user then said they were unsure and referred to the upstream permalink discussion, without authorizing publication; the shortened-reference proposal remains on hold. The live PR remains at 6b486, with no amendment or agent reply posted.\n\nOpened ready for review after explicit user approval at 6b486edc3bc79722811c7dab7adc2c5e31e3def7. Exact title, description, master base and head were read back from GitHub.\n\nUses documented unassigned ARM64/RISC-V syscall slots. The corrected qualification composition built all 659 ARM64 64K roots; no RISC-V execution or runtime claim.",
+      "updatedAt": "2026-10-07T18:42:51.907139+00:00",
+      "summary": "The 18:40 snapshot now has successful Copybara import and feedback contexts and all visible source checks passing at unchanged 6b486. No public import PR was discovered in that complete snapshot, and landing is not yet claimed.\n\nAt 18:27 UTC, maintainer kerumeto accepted the contributor\u2019s permalink objection, resolved all three review threads and approved unchanged live head 6b486edc3bc79722811c7dab7adc2c5e31e3def7. The PR is now ready to pull. The unnecessary b044 shorthand-comment proposal has been retired after a verified recovery bundle and exact leased remote/local branch deletion. Live syscall-reserved-slots remains 6b486edc3 locally, in tracking and on the remote. No agent reply or PR amendment was made. Maintainer import and landing remain pending.\n\nKerumeto requested three comment-only citation changes on exact 6b486edc3bc79722811c7dab7adc2c5e31e3def7 at 2026-10-07 17:26:31 UTC: replace verbose Linux links with scripts/syscall.tbl line references in bad.cc and seccomp.cc. The signed separate review/syscall-reserved-slots-comments branch is public at b044e416ffd7d669e5d804f75c94afe924eb7e5a on e1bc. Root independently verified that only the three source comments change. The user subsequently asked in the upstream thread how shorthand line references would remain stable without permalinks. Root withdrew the stale contributor question. The user then said they were unsure and referred to the upstream permalink discussion, without authorizing publication; the shortened-reference proposal remains on hold. The live PR remains at 6b486, with no amendment or agent reply posted.\n\nOpened ready for review after explicit user approval at 6b486edc3bc79722811c7dab7adc2c5e31e3def7. Exact title, description, master base and head were read back from GitHub.\n\nUses documented unassigned ARM64/RISC-V syscall slots. The corrected qualification composition built all 659 ARM64 64K roots; no RISC-V execution or runtime claim.",
       "followup": {
         "disposition": "approved unchanged; maintainer import pending",
         "owner": "external_sweeps",
-        "nextAction": "Follow maintainer import and landing of unchanged live 6b486. Do not publish the unnecessary b044 shorthand proposal or send a duplicate reply.",
+        "nextAction": "Follow maintainer import and landing of unchanged live 6b486. The unnecessary shorthand proposal is retired with recovery preserved; no source amendment or duplicate reply is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15373",
           "https://github.com/google/gvisor/pull/15373#pullrequestreview-5445886556",
@@ -3431,7 +3431,7 @@
           "https://github.com/google/gvisor/pull/15373#discussion_r4210491082",
           "https://github.com/google/gvisor/pull/15373#pullrequestreview-5446605622"
         ],
-        "reviewedAt": "2026-10-07T18:32:45.101571+00:00",
+        "reviewedAt": "2026-10-07T18:42:51.907139+00:00",
         "sourceHead": "6b486edc3bc79722811c7dab7adc2c5e31e3def7",
         "reviewDecision": null,
         "mergeable": "UNKNOWN"
