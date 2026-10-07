@@ -40,6 +40,7 @@ bzl_library(
     visibility = ["//visibility:private"],
     deps = [
         ":runner_test_bzl",
+        "//test/rbe/tcg:defs_bzl",
         "//tools:defs_bzl",
         "//tools/bazeldefs:test_architectures_bzl",
     ],

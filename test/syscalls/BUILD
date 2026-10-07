@@ -434,6 +434,7 @@ syscall_test(
 )
 
 syscall_test(
+    tcg_64k = True,
     test = "//test/syscalls/linux:mincore_test",
 )
 

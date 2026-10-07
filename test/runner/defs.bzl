@@ -1,6 +1,7 @@
 """Defines a rule for syscall test targets."""
 
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":runner_test.bzl", _runner_test_rule = "runner_test")
@@ -55,6 +56,7 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
+        tcg_64k = False,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -189,6 +191,14 @@ def _syscall_test(
             {"arm64": runner_arm64_64k_test},
             dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
         )
+        if tcg_64k:
+            arm64_tcg_test(
+                name = name + "_64k_tcg",
+                payload = ":" + name + "_64k_arm64",
+                # Runtime policy belongs to the guest. Preserve the owning
+                # test's arguments, shard count and original timeout.
+                **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+            )
 
 def all_platforms():
     """All platforms returns a list of all platforms."""
