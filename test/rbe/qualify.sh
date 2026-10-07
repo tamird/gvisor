@@ -104,8 +104,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|syscalls:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall profiles and AMD64 KVM syscalls/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|docker:arm64|syscalls:arm64|syscalls-kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ARM64 unit/syscall/Docker profiles and AMD64 KVM syscalls/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -897,9 +897,9 @@ run_lane() (
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
-        startup|posture|portforward|root|benchmarks)
-          # Each owned daemon needs separate firewall state. The benchmark
-          # fixture can attach this private namespace to the job's bridge.
+        startup|posture|portforward|root|benchmarks|docker)
+          # Each owned daemon needs separate firewall state. The fixture
+          # can attach this private namespace to the job's bridge.
           options+=(
             --strategy=TestRunner=docker
             --local_test_jobs=2
@@ -913,16 +913,21 @@ run_lane() (
             "--test_env=GVISOR_HOST_CGROUP_NS=$(readlink /proc/self/ns/cgroup)"
             "--test_env=GVISOR_HOST_PID_NS=$(readlink /proc/self/ns/pid)"
           )
-          if [[ $lane == benchmarks ]]; then
+          if [[ $lane == benchmarks || $lane == docker ]]; then
             options+=(
               --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
-              "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local benchmarks through test/rbe/actions.sh}"
+              "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local Docker tests through test/rbe/actions.sh}"
               "--test_env=GVISOR_HOST_NET_NS=$(readlink /proc/self/ns/net)"
             )
           fi
           ;;
       esac
       options=(--config=rbe-local-tests "${options[@]}")
+      if [[ $lane == docker && $arch == arm64 ]]; then
+        # The unmodified suite needs native test wrappers and run_under tools.
+        # Prefer ARM remote tools while Docker executes the tests on this host.
+        execution_config=rbe-arm64
+      fi
     elif [[ $arch == arm64 ]]; then
       execution_config=rbe-arm64
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'

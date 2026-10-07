@@ -75,13 +75,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # lanes need root for their nested daemon; others retain the nonroot server.
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
-    if [[ $QUALIFICATION_ARCH == amd64 ]]; then
-      case "${lanes[*]}" in
-        startup|posture|portforward|root|benchmarks) qualification_root_bazel=true ;;
-      esac
-    fi
+    case "$QUALIFICATION_ARCH:${lanes[*]}" in
+      amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker)
+        qualification_root_bazel=true
+        ;;
+    esac
     export qualification_root_bazel
-    if [[ ${lanes[*]} == benchmarks ]]; then
+    if [[ ${lanes[*]} == benchmarks || ${lanes[*]} == docker ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
       [[ -S /var/run/docker.sock ]]

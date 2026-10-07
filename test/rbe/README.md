@@ -51,8 +51,9 @@ immutable triggering commit; Bazel and the tests run on hosted Linux workers.
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
 Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-kvm-syscalls`, `rbe-actions-kvm-startup` and
-`rbe-actions-benchmark-partitions` pilot branches permit manual dispatches only.
+`rbe-actions-kvm-syscalls`, `rbe-actions-kvm-startup`,
+`rbe-actions-benchmark-partitions`, `rbe-actions-docker-network` and
+`rbe-actions-arm64-docker` pilot branches permit manual dispatches only.
 
 The existing CI workflow also accepts a manual dispatch on that branch. Pass
 space-separated `lanes` and an `architecture` selection; the qualification
@@ -92,10 +93,10 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls`, `syscalls-kvm`, `startup`, `posture`, `portforward`, `root`
-or `benchmarks`) and a single architecture (`amd64` or `arm64`; local unit
-and ordinary syscall profiles require `arm64`, while KVM syscalls, startup,
-posture, portforward, root and benchmarks require `amd64`).
+`unit`, `syscalls`, `syscalls-kvm`, `startup`, `posture`, `portforward`, `root`,
+`docker` or `benchmarks`) and a single architecture (`amd64` or `arm64`). Local
+unit, ordinary syscall and Docker profiles require `arm64`; KVM syscalls,
+startup, posture, portforward, root and benchmarks require `amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -163,8 +164,8 @@ provide the same Linux host tools. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
 
-Local benchmark jobs create one temporary Docker bridge for outbound downloads
-inside the timed build workloads. The sandbox setup identifies its own Bazel
+Local benchmark and Docker jobs create one temporary Docker bridge for
+outbound downloads in build workloads and package-installation fixtures. The sandbox setup identifies its own Bazel
 container, joins that bridge without sharing the host network namespace, and
 unmounts the host Docker socket before starting the test. Docker removes each
 endpoint with its sandbox; the coordinator removes the bridge after Bazel
@@ -190,13 +191,27 @@ five minutes for setup and artifact upload. A passing target covers only that
 owner. Direct callers use `--benchmark-target=LABEL` with local AMD64
 benchmarks and provide `RUNNER_TEMP` for the selection report.
 
+The local ARM64 `docker` lane runs the unchanged `//test/docker:owned_tests`
+suite using the same Docker sandbox described below. The existing `rbe-arm64`
+configuration selects native test wrappers and host tools; compilation remains
+remote. Bazel owns the suite membership, architecture compatibility and image
+selection. The job bridge permits the existing apt/apk fixture installations.
+This lane does not use the syscall local-root frontend or require
+ARM64 Firecracker capacity.
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref rbe-actions-arm64-docker \
+  -f lanes=docker -f architecture=arm64 -f execution=local
+```
+
 The local AMD64 `startup`, `posture`, `portforward`, `root` and `benchmarks`
 phases retain their complete maintained suites, including the KVM variants.
-Bazel's Docker strategy gives each test a privileged container
-and private network namespace: separate daemon sockets alone do not isolate
-Docker's bridge and firewall rules. These suites load declared image archives.
-The benchmark lane also uses the temporary bridge for downloads during timed
-builds. The containers use the same pinned Docker-tools image as the remote
+Together with ARM64 Docker, these use Bazel's Docker strategy to give each
+test a privileged container and private network namespace: separate daemon
+sockets alone do not isolate Docker's bridge and firewall rules. These suites load declared image archives.
+The benchmark and ARM64 Docker lanes use the temporary bridge for their
+downloads. The containers use the same pinned Docker-tools image as the remote
 fixtures, with declared runtime and sidecars.
 The Actions host supplies the outer Docker engine, kernel and devices.
 
@@ -232,8 +247,9 @@ Run each dispatch after the preceding run finishes, since this branch shares
 a concurrency key.
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
-and limits ordinary local Actions jobs to 15 minutes. Local syscall and
-benchmark lanes have a 45-minute work limit within a 50-minute job.
+and limits ordinary local Actions jobs to 15 minutes. Local syscall and Docker
+lanes have a 45-minute work limit within a 50-minute job; the separate benchmark
+limits are described above.
 Local test results are not uploaded
 to the shared action cache. Its artifact contains each build/test execution
 log and host facts, plus native profile selection metadata where applicable,
