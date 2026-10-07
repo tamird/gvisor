@@ -92,9 +92,9 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls`, `startup`, `posture` or `portforward`) and a single
+`unit`, `syscalls`, `startup`, `posture`, `portforward` or `root`) and a single
 architecture (`amd64` or `arm64`; local unit and syscall profiles require
-`arm64`, while startup, posture and portforward require `amd64`).
+`arm64`, while startup, posture, portforward and root require `amd64`).
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
 Bazel compilation still uses BuildBuddy RBE with no local fallback. The
 repository selects Bazel's version
@@ -143,8 +143,8 @@ separate workflow concurrency keys. Direct callers use
 `--arch=arm64 --test-execution=local --syscall-bucket=0 syscalls` and must
 provide the same Linux host tools. Omitting the bucket selects the full profile.
 
-The local AMD64 `startup`, `posture` and `portforward` phases retain their
-complete maintained suites, including the KVM startup and posture variants.
+The local AMD64 `startup`, `posture`, `portforward` and `root` phases retain
+their complete maintained suites, including the KVM startup and posture variants.
 Bazel's Docker strategy gives each test a privileged container
 and private network namespace: separate daemon sockets alone do not isolate
 Docker's bridge and firewall rules. These suites load declared image archives
@@ -164,8 +164,11 @@ controllers for its children. It verifies that both PID and cgroup namespaces
 differ from the coordinator before either change. This checks whether gVisor
 can run through KVM, not just whether `/dev/kvm` exists. Posture retains all six
 security configurations; portforward exercises both sandbox and host networking
-with the declared Redis and nginx images. This does not qualify the full KVM
-syscall or benchmark suites, or Docker suites requiring outbound networking.
+with the declared Redis and nginx images. The root lane retains its ordinary
+root suite and the native systemd fixture, which runs that suite with the
+systemd cgroup manager. Existing cgroup-version skips remain visible. These
+lanes do not qualify the full KVM syscall or benchmark suites, or Docker
+suites requiring outbound networking.
 Bazel's Docker strategy selects either no network or the host network;
 enabling the latter would lose the private daemons' firewall isolation.
 
@@ -175,8 +178,9 @@ gh workflow run build.yml --repo tamird/gvisor \
   -f lanes=startup -f architecture=amd64 -f execution=local
 ```
 
-Select `lanes=posture` or `lanes=portforward` for those suites. Run each dispatch
-after the preceding run finishes, since this branch shares a concurrency key.
+Select `lanes=posture`, `lanes=portforward` or `lanes=root` for those suites.
+Run each dispatch after the preceding run finishes, since this branch shares
+a concurrency key.
 
 The pilot runs one uncached test attempt, keeps the original target timeout,
 and limits ordinary local Actions jobs to 15 minutes. Local syscalls have a

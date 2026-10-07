@@ -81,7 +81,9 @@ grep -Fx "0::/${parent}/${container}/init.scope" "/proc/${pid}/cgroup" || \
 timeout 120 docker exec "${container}" bash -c '
   until systemctl is-system-running --quiet; do sleep 0.2; done
 '
-docker exec -i "${container}" bash -se <<'SETUP'
+# Setup must also leave the cgroup root before systemd enables controllers.
+docker exec -i "${container}" systemd-run --scope --quiet --unit=root-setup \
+  --slice=system.slice --expand-environment=no bash -se <<'SETUP'
 set -euo pipefail
 test "$(cat /proc/1/comm)" = systemd
 test "$(stat -f -c %T /sys/fs/cgroup)" = cgroup2fs
@@ -96,8 +98,12 @@ CONFIG
 /fixture/configure_runtime --runsc=/fixture/runtime/runsc --name=runsc \
   --config=/etc/docker/daemon.json -- --sidecar-usage-policy=STRICT \
   --debug --debug-log=/tmp/runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log
+# Make the memory controller available to Docker while it discovers support
+# for swap limits, before any container requests can be stripped of them.
+systemctl set-property --runtime docker.service MemoryAccounting=yes
 systemctl start docker.service
 test "$(docker info --format '{{.CgroupDriver}}/{{.CgroupVersion}}')" = systemd/2
+test "$(docker info --format '{{.SwapLimit}}')" = true
 docker info
 docker load --input /alpine.tar
 docker load --input /ubuntu.tar
@@ -107,11 +113,21 @@ docker_ready=true
 # Keep /proc, cgroup paths, Docker's PIDs and systemd's D-Bus PIDs in one view.
 # The OOM tests inspect their parent. Keep a waiting shell inside this PID
 # namespace; the direct docker exec process has an out-of-namespace parent.
+# Move that process into a systemd scope before starting the shell, so neither
+# the test nor its waiting parent blocks controller delegation at the root.
 set +e
 docker exec --env DOCKER_HOST=unix:///var/run/docker.sock \
   --env GVISOR_SIDECAR_BINARIES_DIR=/fixture/runtime/gvisor-bin \
   --env TEST_TIMEOUT="${TEST_TIMEOUT:?}" \
-  "${container}" bash -c '"$@"; exit "$?"' systemd-root \
+  "${container}" systemd-run --scope --quiet --unit=root-tests \
+  --slice=system.slice --expand-environment=no bash -c '
+    test "$(< /proc/self/cgroup)" = 0::/system.slice/root-tests.scope || exit 1
+    mapfile -t processes < /sys/fs/cgroup/cgroup.procs || exit 1
+    printf "Root-test membership: %s; root processes: %s\n" \
+      "$(< /proc/self/cgroup)" "${processes[*]}"
+    (( ${#processes[@]} == 0 )) || exit 1
+    "$@"; exit "$?"
+  ' systemd-root \
   /fixture/root_test --runtime=runsc \
   --config_path=/etc/docker/daemon.json -test.v \
   2>&1 | tee "${out}/root-test.log"
