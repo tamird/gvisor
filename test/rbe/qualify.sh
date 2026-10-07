@@ -387,10 +387,33 @@ run_hybrid_profile() (
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
   fi
+  if [[ $lane == unit && $arch == all ]]; then
+    # Capture both configured architectures, including each original shard.
+    python3 - "$selection_dir/selection.json" "$selection_dir/combined-owners" <<'PYOWNERS'
+import json
+from pathlib import Path
+import sys
+
+selected = json.loads(Path(sys.argv[1]).read_text())["selected_owners"]
+Path(sys.argv[2]).write_text("".join(label + "\n" for label in selected))
+PYOWNERS
+    python3 test/rbe/unit_matrix.py actions "$selection_dir/combined-owners" --exact \
+      > "$selection_dir/combined-actions.query"
+    bazel aquery --config=rbe --config=x86_64 --config=rbe-hybrid-tests --config=unit --strip=never \
+      --//tools/bazeldefs:local_test_architecture=arm64 \
+      --incompatible_sandbox_hermetic_tmp=false --test_env=GO_TEST_WRAP_TESTV=1 \
+      --output=jsonproto --include_artifacts=false \
+      --query_file="$selection_dir/combined-actions.query" > "$selection_dir/combined-actions.json"
+    # Reuse valid test results from the interrupted complete-lane attempt.
+    options+=(--cache_test_results=auto)
+  fi
   # Preserve the selection, but never upload Bazel's parsed credential options.
   mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
   cp "$selection_dir/selection.json" "$selection_dir/actions.json" \
     "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
+  if [[ -f $selection_dir/combined-actions.json ]]; then
+    cp "$selection_dir/combined-actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
   if [[ -f $selection_dir/owners ]]; then
     cp "$selection_dir/owners" "$RUNNER_TEMP/qualification/$lane-selection/"
   fi
