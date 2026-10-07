@@ -46,6 +46,7 @@
 #include <asm/poll.h>     // POLLIN, POLLNVAL, struct pollfd.
 #include <asm/unistd.h>   // __NR_* syscall numbers for the target arch.
 #include <linux/errno.h>  // EBADF, EBADFD, EINTR.
+#include <linux/ioctl.h>  // _IOWR.
 #include <linux/prctl.h>  // PR_SET_MM, PR_SET_TIMERSLACK.
 #include <linux/sched.h>  // SCHED_IDLE.
 
@@ -173,6 +174,59 @@ static long park(struct pollfd* pfd, struct kernel_timespec* timeout) {
   }
 }
 
+// Disposable diagnostic: version 0 of Linux's extensible PIDFD_GET_INFO ABI.
+// Older toolchain headers need not define this Linux 6.17 interface.
+struct diagnostic_pidfd_info {
+  unsigned long long mask;
+  unsigned long long cgroupid;
+  unsigned int ids[11];
+  int exit_code;
+};
+_Static_assert(sizeof(struct diagnostic_pidfd_info) == 64, "pidfd_info ABI");
+
+static void diagnostic_hex(const char* label, unsigned long value) {
+  unsigned long len = 0;
+  while (label[len]) {
+    len++;
+  }
+  sys5(__NR_write, 2, (long)label, len, 0, 0);
+  volatile char digits[17];
+  for (int i = 0; i < 16; i++) {
+    unsigned long digit = (value >> ((15 - i) * 4)) & 15;
+    digits[i] = digit < 10 ? '0' + digit : 'a' + digit - 10;
+  }
+  digits[16] = '\n';
+  sys5(__NR_write, 2, (long)digits, sizeof(digits), 0, 0);
+}
+
+static void diagnose_exit(struct pollfd* pfd) {
+  // Observe status before sys_exit closes the potentially slow pin ring.
+  // This diagnostic extends parking/ring lifetime by the finite poll below.
+  // Readability precedes release_task's publication of saved exit data. HUP
+  // means the task has been reaped. Do not request POLLIN or spin on a zombie.
+  // A single finite poll cannot stall the daemon's cleanup/reaping
+  // indefinitely.
+  pfd->events = 0;
+  pfd->revents = 0;
+  struct kernel_timespec timeout = {.tv_sec = 5, .tv_nsec = 0};
+  long waited = sys5(__NR_ppoll, (long)pfd, 1, (long)&timeout, 0, 0);
+  struct diagnostic_pidfd_info info;
+  volatile unsigned char* bytes = (volatile unsigned char*)&info;
+  for (unsigned long i = 0; i < sizeof(info); i++) {
+    bytes[i] = 0;
+  }
+  info.mask = 1UL << 3;  // PIDFD_INFO_EXIT.
+  long result =
+      sys5(__NR_ioctl, SANDBOX_PIDFD,
+           _IOWR(0xff, 11, struct diagnostic_pidfd_info), (long)&info, 0, 0);
+  diagnostic_hex("pidfd_poll=", waited);
+  diagnostic_hex("pidfd_revents=", pfd->revents);
+  diagnostic_hex("pidfd_ioctl=", result);
+  diagnostic_hex("pidfd_mask=", info.mask);
+  diagnostic_hex("pidfd_exit_valid=", result == 0 && (info.mask & (1UL << 3)));
+  diagnostic_hex("pidfd_wait_status=", (unsigned int)info.exit_code);
+}
+
 __attribute__((noreturn, used)) void fdparking_main(void) {
   // Make ourselves as low-priority as possible.
   int idle_prio = 0;
@@ -205,7 +259,11 @@ __attribute__((noreturn, used)) void fdparking_main(void) {
     // Long-term parking.
     n = park(&pfd, 0);
   }
-  sys_exit(n < 0 || (pfd.revents & POLLNVAL));
+  long status = n < 0 || (pfd.revents & POLLNVAL);
+  if (!status) {
+    diagnose_exit(&pfd);
+  }
+  sys_exit(status);
 }
 
 // Process entry point: pivot onto `park_stack` and call `fdparking_main`.
