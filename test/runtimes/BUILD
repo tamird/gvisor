@@ -77,6 +77,7 @@ go_test(
     ],
     data = [":php8.5.11_directfs_docker_config"],
     exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    rundir = ".",
     tags = ["manual"],
     target_compatible_with = ["@platforms//cpu:x86_64"],
     deps = ["//pkg/test/dockerutil"],
