@@ -390,7 +390,10 @@ def select_variants(
     profile_path: str | None,
     *,
     hybrid: bool = False,
+    amd64_profile: str | None = None,
 ) -> None:
+    if amd64_profile is not None and not hybrid:
+        raise ValueError("An additional AMD64 profile requires hybrid execution")
     owners = owner_labels(owners_path)
     expected = {owner + "_arm64" for owner in owners}
     requirements = test_requirements(actions_path)
@@ -407,14 +410,20 @@ def select_variants(
         groups = hybrid_local_owners(eligible, requirements)
         remote = sorted(eligible - set(selected))
         shared = sorted(set(original) - set(owners))
-        targets = sorted(eligible | set(shared))
-        Path(output_path).write_text("".join(label + "\n" for label in targets))
+        amd64 = set(configured_tests(amd64_profile)) if amd64_profile is not None else set()
+        targets = sorted(eligible | set(shared) | amd64)
+        # Keep recursive AMD64 roots and their build-only work. The explicit
+        # ARM64 variants retain the independently selected ARM64 profile.
+        patterns = Path(patterns_path).read_text().rstrip() + "\n" if amd64_profile is not None else ""
+        Path(output_path).write_text(patterns + "".join(label + "\n" for label in targets))
         print(json.dumps({
             "canonical_selection": profile_path,
+            "amd64_selection": amd64_profile,
             "selected_owners": targets,
             "local_owners": groups,
             "local_requirements": {label: requirements[label] for label in selected},
             "remote_arm64_owners": remote,
+            "remote_amd64_owners": sorted(amd64),
             "shared_owners": shared,
             "profile_excluded_variants": sorted(expected - eligible),
         }, indent=2))
@@ -449,6 +458,7 @@ def main() -> None:
         select.add_argument(name)
     select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
     select.add_argument("--hybrid", action="store_true", help="Select the canonical ARM profile with namespace owners local and ordinary/shared owners remote")
+    select.add_argument("--amd64-profile", help="Also retain the canonical AMD64 unit profile and build-only roots during hybrid execution")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
     container = commands.add_parser("container-targets")
@@ -491,7 +501,7 @@ def main() -> None:
     elif args.command == "actions":
         print('mnemonic("^TestRunner$", ' + target_set([owner + "_arm64" for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid)
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, amd64_profile=args.amd64_profile)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events)))
     elif args.command == "container-platform-targets":

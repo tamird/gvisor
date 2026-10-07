@@ -43,6 +43,8 @@ The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
 and AMD64 KVM syscalls, nftables, plugin-network and
 startup/posture/portforward/root/benchmarks.
+With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
+ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
 Compilation remains remote. Hybrid profiles run in one invocation: native namespace owners run
 locally; ordinary native and shared owners run remotely.
 An optional syscall bucket selects one existing hash15 partition, not the full
@@ -97,15 +99,15 @@ case "$test_execution" in
   remote) ;;
   local)
     case "$arch:$(uname -m)" in
-      amd64:x86_64|arm64:aarch64) ;;
-      *) printf 'Local tests require a single matching host architecture.\n' >&2; exit 2 ;;
+      amd64:x86_64|arm64:aarch64|all:aarch64) ;;
+      *) printf 'Local tests require a matching host architecture; mixed units require an ARM64 host.\n' >&2; exit 2 ;;
     esac
     if (( $# != 1 )); then
       printf 'Select one lane for local tests.\n' >&2
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
       *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/nftables/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
@@ -355,11 +357,12 @@ select_unit_profile() {
 # frontend owns local namespace requirements; ordinary/shared tests stay remote.
 run_hybrid_profile() (
   set -e
-  local lane=$1 selection_dir
-  local -a lane_options=() options=()
+  local lane=$1 selection_dir local_arch=$arch
+  local -a lane_options=() options=() selection_options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   if [[ $lane == unit ]]; then
+    local_arch=arm64
     python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
     bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
     python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
@@ -368,8 +371,14 @@ run_hybrid_profile() (
       --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
     analyze_profile test/unit.targets "$selection_dir/profile.json" \
       --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
+    if [[ $arch == all ]]; then
+      analyze_profile test/unit.targets "$selection_dir/amd64-profile.json" \
+        --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
+      selection_options+=(--amd64-profile "$selection_dir/amd64-profile.json")
+      lane_options+=(--config=unit)
+    fi
     python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
-      "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
+      "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid "${selection_options[@]}" \
       | tee "$selection_dir/selection.json"
   else
     lane_options=(--cxxopt=-Werror)
@@ -392,7 +401,7 @@ import sys
 
 keys = {"id", "children", "configured", "finished", "aborted"}
 for source in Path(sys.argv[1]).glob("*.json"):
-    if source.name == "profile.json" or source.name.endswith("-routing.json"):
+    if source.name in ("profile.json", "amd64-profile.json") or source.name.endswith("-routing.json"):
         with (Path(sys.argv[2]) / source.name).open("w") as output:
             for line in source.read_text().splitlines():
                 event = json.loads(line)
@@ -448,7 +457,7 @@ PY
       "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
-    "--//tools/bazeldefs:local_test_architecture=$arch" \
+    "--//tools/bazeldefs:local_test_architecture=$local_arch" \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
 )
@@ -1000,7 +1009,7 @@ run_selection() {
   for lane in "$@"; do
     # Recursive builds keep their own loading filters and output groups. A test
     # invocation would also execute unrelated tests below those package roots.
-    if [[ $arch == all && $lane != presubmit-build && $lane != lint-cc ]]; then
+    if [[ $arch == all && $test_execution == remote && $lane != presubmit-build && $lane != lint-cc ]]; then
       matrix_lanes+=("$lane")
       continue
     fi
