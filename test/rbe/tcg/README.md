@@ -47,12 +47,14 @@ record, and kills/reaps QEMU on interruption. A successful QEMU shutdown alone
 does not count as a passing test.
 
 If the guest does not return a completion record, failed host cleanup stops
-QEMU and attempts read-only recovery of its ext4 outputs with the declared
-`debugfs`. Recovery has a five-second cleanup bound and remains subject to
-the outer executor's termination grace. Files and extraction diagnostics go
-under `guest-recovery`, separate from completed results. No journal replay is
-performed, so files may be missing or incomplete; recovered XML and shard
-markers do not establish completion or change the original failure status.
+QEMU, replays the ext4 journal with the declared `e2fsck -E journal_only`,
+then attempts read-only extraction with `debugfs`. Each command has a
+five-second cleanup bound and remains subject to the outer executor's
+termination grace. Files and both commands' diagnostics go under
+`guest-recovery`, separate from completed results. Journal replay does not
+restore guest memory or uncommitted writes, so files may be missing or
+incomplete. Recovered XML and shard markers do not establish completion or
+change the original failure status.
 
 The declared Bazel `test_setup` harness runs the payload inside the guest. It
 owns runfiles lookup, GoogleTest environment aliases, process cleanup and XML
