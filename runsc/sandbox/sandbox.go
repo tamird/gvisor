@@ -1472,20 +1472,7 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 	log.Infof("Sandbox started, PID: %d", cmd.Process.Pid)
 
 	if pinRing != nil {
-		var parkingLog *os.File
-		if conf.Network == config.NetworkPlugin && conf.DebugLog != "" {
-			// Disposable diagnostic: bind the exact inherited pidfd's status to
-			// a declared runtime output, independent of containerd's stderr.
-			lfOpts.Command = "pidfd-exit"
-			parkingLog, err = specutils.OpenDebugLogFile(conf.DebugLog, lfOpts)
-			if err != nil {
-				log.Warningf("Opening pidfd diagnostic log: %v", err)
-			} else {
-				defer parkingLog.Close()
-				fmt.Fprintf(parkingLog, "sandbox_pid=%d\n", cmd.Process.Pid)
-			}
-		}
-		if err := spawnFDParking(pinRing, cmd.Process.Pid, parkingLog); err != nil {
+		if err := spawnFDParking(pinRing, cmd.Process.Pid); err != nil {
 			log.Warningf("Cannot spawn sidecar %q: %v. This slows down gVisor sandbox teardown.", gvisorbinaries.FDParking.Name, err)
 		}
 	}
@@ -1496,7 +1483,7 @@ func (s *Sandbox) createSandboxProcess(conf *config.Config, args *Args, startSyn
 // `ring` until the sandbox process `pid` has exited and thus keeps the
 // sandbox from being the last ref holder of the FDs pinned into the ring.
 // See `//pkg/pinring` and `//runsc/fdparking`.
-func spawnFDParking(ring *os.File, pid int, diagnosticLog *os.File) error {
+func spawnFDParking(ring *os.File, pid int) error {
 	pidfd, err := unix.PidfdOpen(pid, 0)
 	if err != nil {
 		return fmt.Errorf("pidfd_open(%d): %w", pid, err)
@@ -1507,14 +1494,10 @@ func spawnFDParking(ring *os.File, pid int, diagnosticLog *os.File) error {
 		return fmt.Errorf("cannot open %s: %w", os.DevNull, err)
 	}
 	defer devNull.Close()
-	stderr := devNull.Fd()
-	if diagnosticLog != nil {
-		stderr = diagnosticLog.Fd()
-	}
 	parkingPid, err := gvisorbinaries.FDParking.ForkExec(gvisorbinaries.Options{
 		// FDs 3 (sandbox pidfd) and 4 (pin ring) are what the
 		// `//runsc/fdparking` binary expects.
-		Files: []uintptr{devNull.Fd(), devNull.Fd(), stderr, uintptr(pidfd), ring.Fd()},
+		Files: []uintptr{devNull.Fd(), devNull.Fd(), devNull.Fd(), uintptr(pidfd), ring.Fd()},
 		// The sidecar must outlive this process and not die with its session.
 		SysProcAttr: &unix.SysProcAttr{Setsid: true},
 	})
