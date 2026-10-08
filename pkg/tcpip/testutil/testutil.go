@@ -19,49 +19,40 @@ import (
 	"fmt"
 	"net/netip"
 	"reflect"
-	"strconv"
 	"strings"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
-// MustParse4 parses an IPv4 string (e.g. "192.168.1.1") into a tcpip.Address.
+// MustParse4 parses an IPv4 string (e.g. "192.168.1.1") into a netip.Addr.
 // Passing an IPv4-mapped IPv6 address will yield only the 4 IPv4 bytes.
-func MustParse4(addr string) tcpip.Address {
+func MustParse4(addr string) netip.Addr {
 	ip, err := netip.ParseAddr(addr)
 	if err != nil || ip.Zone() != "" || !ip.Unmap().Is4() {
 		panic(fmt.Sprintf("Parse4 expects IPv4 addresses, but was passed %q", addr))
 	}
-	return tcpip.AddrFrom4(ip.As4())
+	return netip.AddrFrom4(ip.As4())
 }
 
-// MustParse6 parses an IPv6 string (e.g. "fe80::1") into a tcpip.Address. Passing
+// MustParse6 parses an IPv6 string (e.g. "fe80::1") into a netip.Addr. Passing
 // an IPv4 address will yield an IPv4-mapped IPv6 address.
-func MustParse6(addr string) tcpip.Address {
+func MustParse6(addr string) netip.Addr {
 	ip, err := netip.ParseAddr(addr)
 	if err != nil || ip.Zone() != "" {
 		panic(fmt.Sprintf("Parse6 was passed malformed address %q", addr))
 	}
-	return tcpip.AddrFrom16(ip.As16())
+	return netip.AddrFrom16(ip.As16())
 }
 
 // MustParseSubnet4 parses an IPv4 subnet string (e.g. "192.168.1.0/24") into a
-// tcpip.Subnet.
-func MustParseSubnet4(subnet string) tcpip.Subnet {
-	parts := strings.Split(subnet, "/")
-	if len(parts) != 2 {
-		panic(fmt.Sprintf("MustParseSubnet4 expected CIDR notation (<addr>/<prefixLen>), but got %q", subnet))
+// netip.Prefix.
+func MustParseSubnet4(subnet string) netip.Prefix {
+	prefix := netip.MustParsePrefix(subnet)
+	addr := prefix.Addr().Unmap()
+	if !addr.Is4() || prefix.Bits() > 32 {
+		panic(fmt.Sprintf("MustParseSubnet4 expects an IPv4 prefix, but was passed %q", subnet))
 	}
-	addr := MustParse4(parts[0])
-	prefixLen, err := strconv.Atoi(parts[1])
-	if err != nil {
-		panic(fmt.Sprintf("Failed to parse prefix length %q: %v", parts[1], err))
-	}
-	if prefixLen < 0 || prefixLen > 32 {
-		panic(fmt.Sprintf("Prefix length %d is invalid. It must be between 0 and 32", prefixLen))
-	}
-	prefixed := tcpip.AddressWithPrefix{Address: addr, PrefixLen: prefixLen}
-	return prefixed.Subnet()
+	return netip.PrefixFrom(addr, prefix.Bits()).Masked()
 }
 
 func checkFieldCounts(ref, multi reflect.Value) error {
