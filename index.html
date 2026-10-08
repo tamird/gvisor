@@ -8,8 +8,8 @@
   <meta name="description" content="Track gVisor reviews, imports, failing checks and time in each state alongside their dependencies.">
   <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=states-1">
-  <script src="app.js?v=states-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=states-2">
+  <script src="app.js?v=states-2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -28,7 +28,7 @@
     </div>
     <section class="state-toolbar" aria-label="Work state filters">
       <div id="state-filters" class="state-filters" role="group" aria-label="Filter by state; select multiple to match any"></div>
-      <details class="state-help"><summary>States &amp; ages</summary><p>States can overlap. Select several to match any. Counts follow search and workstream. “Needs review” includes open PRs without a reported approval and explicit contributor review requests. “Awaiting import” means approved or ready-to-pull with no current public import. Check failures, pending checks and unknown checks remain visible; it is not a merge-readiness claim. Failing checks include CI and import checks, not necessarily tests.</p><p>“obs” shows how long ago this state was first observed on the same revision, as of the snapshot. The transition may be older; continuity between scans is unknown. Exact GitHub merge/close times have no “obs”. Ages do not come from comment or update times. Select an item for dated evidence.</p></details>
+      <details class="state-help"><summary>States &amp; ages</summary><p>States can overlap. Select several to match any. Counts follow search and workstream. “Contributor review” means an actual pending decision on a linked candidate. “Maintainer review” means an open PR without reported approval or changes requested. “Awaiting import” means approved or ready-to-pull with no current public import; checks may still be failing or unknown. “Import PR open” identifies an existing exact-source import, not progress toward merge. “Waiting for merge” additionally requires nondraft, conflict-free source and import heads with complete green visible checks; it is an observation, not merge authorization. Failure labels identify the source or exact import PR; details link reported failing checks.</p><p>“obs” shows how long ago this state was first observed on the same revision, as of the snapshot. The transition may be older; continuity between scans is unknown. Exact GitHub merge/close times have no “obs”. Ages do not come from comment or update times. Select an item for dated evidence.</p></details>
     </section>
     <div class="workspace-body">
       <section class="work-pane" aria-label="Work inventory">
@@ -39,7 +39,7 @@
           <div id="graph-stage" class="graph-stage">
             <svg id="graph" tabindex="0" role="group" aria-label="Prerequisite to dependent graph. Drag to pan; use zoom controls or arrow keys."><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker><marker id="arrow-blocked" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z"/></marker></defs><g id="graph-content"></g></svg>
             <div class="map-controls" aria-label="Graph controls"><button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button><button id="fit">Fit</button><button id="reset-view">100%</button></div>
-            <span class="map-hint">R review · C checks · select for details · ↗ source · drag to pan</span>
+            <span class="map-hint">R maintainer · C source checks · select for details · ↗ source · drag to pan</span>
           </div>
         </section>
         <section id="table-pane" class="table-pane" aria-label="All work table" hidden>
@@ -49,7 +49,7 @@
             <th scope="col" class="numeric" aria-sort="descending"><button data-sort="impact" title="Unique downstream open PRs">Blocks</button></th>
             <th scope="col" class="numeric" aria-sort="none"><button data-sort="direct">Direct</button></th>
             <th scope="col" aria-sort="none"><button data-sort="age" title="Sort by oldest matching state at the snapshot">State · age</button></th>
-            <th scope="col" aria-sort="none"><button data-sort="review">Review</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="review">Maintainer review</button></th>
             <th scope="col" aria-sort="none"><button data-sort="checks">PR checks</button></th>
             <th scope="col">Import · own checks</th>
             <th scope="col" aria-sort="none"><button data-sort="group">Workstream</button></th>

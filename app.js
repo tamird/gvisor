@@ -4,10 +4,11 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
-const STATE_LABELS = { review: "Needs review", "changes-requested": "Changes requested",
-  "awaiting-import": "Awaiting import", importing: "Importing", failing: "Failing checks",
+const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "changes-requested": "Changes requested",
+  "awaiting-import": "Awaiting import", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
-const FILTER_STATES = ["review", "awaiting-import", "importing", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
+const FILTER_STATES = ["contributor-review", "maintainer-review", "awaiting-import", "importing", "waiting-merge", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
+const FAILURE_STATES = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"]);
 let stateFilters = new Set();
 const STALE_AGE = 2 * 60 * 60 * 1000;
 const CARD = { width: 216, height: 70, column: 264, row: 84 };
@@ -65,7 +66,7 @@ function status(node) {
 function reviewInfo(pr) {
   return ({ APPROVED: { text: "Approved", tone: "good", glyph: "✓" },
     CHANGES_REQUESTED: { text: "Changes requested", tone: "bad", glyph: "!" },
-    REVIEW_REQUIRED: { text: "Review needed", tone: "pending", glyph: "○" } })[pr?.reviewDecision]
+    REVIEW_REQUIRED: { text: "Maintainer review", tone: "pending", glyph: "○" } })[pr?.reviewDecision]
     || { text: "Not reported", tone: "unknown", glyph: "?" };
 }
 function checkInfo(pr) {
@@ -74,7 +75,7 @@ function checkInfo(pr) {
   const groups = { succeeded: 0, skipped: 0, neutral: 0, failed: 0, pending: 0, unknown: 0 };
   for (const check of checks.contexts) {
     const key = check.state === "SUCCESS" ? "succeeded" : check.state === "SKIPPED" ? "skipped" : check.state === "NEUTRAL" ? "neutral"
-      : ["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"].includes(check.state) ? "failed"
+      : FAILURE_STATES.has(check.state) ? "failed"
         : ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state) ? "pending" : "unknown";
     groups[key]++;
   }
@@ -141,6 +142,7 @@ function appendAttributes(container, node) {
     block.append(link(`#${imported.number} · ${imported.status} ↗`, imported.url), element("p", "detail-meta", imported.matchesSourceHead
       ? `Copybara footer matches source ${imported.sourceHead.slice(0, 9)}.`
       : `Older source: ${imported.sourceHead.slice(0, 9)}; current PR is ${pr.head.slice(0, 9)}. These checks do not validate the current source.`));
+    block.append(element("p", "detail-meta", imported.mergeable === "CONFLICTING" ? "Import has merge conflicts." : imported.mergeable === "MERGEABLE" ? "No reported import merge conflict." : "Import mergeability is unknown."));
     block.append(element("p", "detail-meta", `Import head ${imported.head.slice(0, 9)} · snapshot ${date(imported.checkedAt)}`));
     appendChecks(block, imported, "Import PR checks"); section.append(block);
   }
@@ -196,16 +198,40 @@ function age(record) {
   const duration = minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
   return `${record.basis === "observed" ? "obs " : ""}${duration}`;
 }
+function failureSources(node) {
+  const pr = node.github;
+  if (!pr) return [];
+  return [pr, ...pr.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))]
+    .filter(item => FAILURE_STATES.has(item.checks?.state) || item.checks?.contexts.some(check => FAILURE_STATES.has(check.state)))
+    .map(item => ({ ...item, failureLabel: item === pr ? "Source checks failing" : `Import #${item.number} failing` }));
+}
+function stateLabel(node, state) {
+  if (state === "failing") return failureSources(node).map(item => item.failureLabel).join("; ") || STATE_LABELS[state];
+  return STATE_LABELS[state];
+}
 function stateTitle(state, record) {
   if (record.basis === "unknown") return `${STATE_LABELS[state]} · Revision not recorded; state age unknown.`;
   return `${STATE_LABELS[state]} · ${record.basis === "observed" ? "Observed since" : "Transition recorded"} ${date(record.since)}. ${record.basis === "observed" ? "First observation in the retained interval; the state may have begun earlier. Continuity between snapshots is unknown." : "GitHub transition timestamp."}`;
 }
 function appendStates(parent, node, detail = false) {
   for (const [state, record] of Object.entries(states(node))) {
-    const item = element("span", `work-state ${state}`, `${STATE_LABELS[state]} ${age(record)}${record.qualifier ? " · " + record.qualifier : ""}`);
-    item.title = stateTitle(state, record);
+    const qualifier = state === "failing" || (state === "importing" && !detail) ? "" : record.qualifier;
+    const text = `${stateLabel(node, state)} ${age(record)}${qualifier ? " · " + qualifier : ""}`;
+    const failures = state === "failing" ? failureSources(node) : [];
+    const decision = state === "contributor-review" ? node.contributorReview : null;
+    const url = failures[0]?.url || decision?.url;
+    const item = url ? link(text, url, `work-state ${state}`) : element("span", `work-state ${state}`, text);
+    item.title = stateTitle(state, record) + (record.qualifier ? " " + record.qualifier : "");
     if (detail && record.basis !== "unknown") item.append(element("small", "state-origin", `${record.basis === "observed" ? "Observed since" : "Since"} ${date(record.since)}`));
     parent.append(item);
+    if (detail) for (const source of failures) {
+      const row = element("div", "state-failure-links");
+      row.append(link(source.failureLabel, source.url), document.createTextNode(": "));
+      for (const check of source.checks?.contexts || []) if (FAILURE_STATES.has(check.state)) {
+        row.append(check.url ? link(check.name, check.url) : element("span", "", `${check.name} (no public log URL)`), document.createTextNode("; "));
+      }
+      parent.append(row);
+    }
   }
 }
 function drawStateFilters() {
@@ -235,7 +261,7 @@ function restoreView() {
     // another item's camera or filters from the previous visit.
     if (location.hash && decodeURIComponent(location.hash.slice(1)) !== saved.selected) return false;
     view = saved.view === "table" ? "table" : "dag";
-    stateFilters = new Set((saved.stateFilters || []).filter((state) => FILTER_STATES.includes(state)));
+    stateFilters = new Set((saved.stateFilters || []).flatMap(state => state === "review" ? ["contributor-review", "maintainer-review"] : [state]).filter(state => FILTER_STATES.includes(state)));
     $("search").value = typeof saved.search === "string" ? saved.search : "";
     $("group-filter").value = typeof saved.group === "string" ? saved.group : "";
     $("show-resolved").checked = saved.resolved === true;
@@ -379,7 +405,7 @@ function drawGraph(nodes) {
     }
     const entries = Object.entries(states(node));
     const primary = entries.find(([state]) => stateFilters.has(state)) || entries[0];
-    const stateLine = primary ? `${STATE_LABELS[primary[0]]} ${age(primary[1])}${entries.length > 1 ? ` · +${entries.length - 1}` : ""}` : status(node);
+    const stateLine = primary ? `${stateLabel(node, primary[0])} ${age(primary[1])}${entries.length > 1 ? ` · +${entries.length - 1}` : ""}` : status(node);
     card.append(svg("text", { class: "node-state", x: 10, y: 61 }, wrap(stateLine, 35, 1)[0]));
     card.setAttribute("aria-label", `${label(node)}: ${node.title}. ${entries.map(([state, record]) => stateTitle(state, record)).join(" ")} Select details.`);
     card.append(svg("title", {}, `${node.title}\n${status(node)}\n${Object.entries(states(node)).map(([state, record]) => stateTitle(state, record)).join("\n")}${node.type === "pr" ? "\n" + attributeTitle(node) : ""}`));
@@ -502,18 +528,28 @@ function setFreshness(text, warning = false, live = false) {
   $("freshness-text").textContent = text;
   $("freshness-dot").className = `status-dot${warning ? " warning" : live ? " live" : ""}`;
 }
+function stateRecords(snapshot, node) {
+  const records = { ...(snapshot.workStates?.[node.id] || {}) };
+  if (records.review) {
+    if (node.type === "pr") records["maintainer-review"] ||= records.review;
+    else if (node.contributorReview?.status === "pending" && node.contributorReview.head === records.review.scope)
+      records["contributor-review"] ||= records.review;
+    delete records.review;
+  }
+  return records;
+}
 function applyLive(snapshot, nextRegistry = registry) {
   const scrollPositions = ["table-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openChecks = new Set([...$("details").querySelectorAll(".check-details[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
-  const nodes = registry.nodes.map((node) => ({ ...node, workStates: snapshot.workStates?.[node.id] || {} })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
+  const nodes = registry.nodes.map((node) => ({ ...node, workStates: stateRecords(snapshot, node) })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
   for (const pr of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const id = `pr:${pr.number}`, existing = ids.get(id);
     const branch = pr.ref ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === `${registry.meta.owner}/gvisor`) : null;
     const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
       status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
-      workStates: snapshot.workStates?.[id] || {}, github: pr.head ? pr : existing?.github };
+      workStates: stateRecords(snapshot, { ...existing, id, type: "pr" }), github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
     }
@@ -541,6 +577,11 @@ function applyLive(snapshot, nextRegistry = registry) {
 function validateRegistry(candidate) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
+  for (const node of candidate.nodes) {
+    const decision = node.contributorReview;
+    if (decision !== undefined && (!decision || decision.status !== "pending" || !/^[a-f0-9]{40}$/.test(decision.head) ||
+        decision.url !== `https://github.com/tamird/gvisor/commit/${decision.head}`)) throw new Error("Invalid contributor decision");
+  }
   const ids = new Set(candidate.nodes.map((node) => node.id));
   if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
 }
@@ -563,7 +604,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     for (const records of Object.values(snapshot.workStates)) {
       if (!records || Array.isArray(records) || typeof records !== "object") throw new Error("Invalid state records");
       for (const [state, record] of Object.entries(records)) {
-        if (!Object.hasOwn(STATE_LABELS, state) || !record || !["observed", "transition", "unknown"].includes(record.basis) ||
+        if ((!Object.hasOwn(STATE_LABELS, state) && state !== "review") || !record || !["observed", "transition", "unknown"].includes(record.basis) ||
             (record.basis === "unknown" ? record.scope !== null || record.since !== null :
               typeof record.scope !== "string" || !Number.isFinite(Date.parse(record.since)) || Date.parse(record.since) > Date.parse(snapshot.checkedAt)) || (record.qualifier != null && typeof record.qualifier !== "string")) throw new Error("Invalid state observation");
       }

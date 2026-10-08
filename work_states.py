@@ -1,4 +1,4 @@
-"""Derive overlapping work states and retain head-bound observation ages."""
+"""Derive overlapping work states and retain revision-bound observations."""
 
 from typing import Literal, TypedDict
 
@@ -27,6 +27,7 @@ ObservationMap = dict[str, dict[str, StateObservation]]
 
 FAILURES = {"FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"}
 PENDING = {"PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"}
+PASSED = {"SUCCESS", "SKIPPED", "NEUTRAL"}
 
 
 def check_states(pr: dict) -> set[str]:
@@ -35,8 +36,22 @@ def check_states(pr: dict) -> set[str]:
             if isinstance(state, str)}
 
 
+def checks_passed(pr: dict) -> bool:
+    checks = pr.get("checks") or {}
+    return bool(checks.get("complete") and checks.get("total", 0) > 0
+                and len(checks.get("contexts", [])) == checks["total"]
+                and checks.get("state") == "SUCCESS"
+                and check_states(pr) <= PASSED)
+
+
+def check_qualifier(pr: dict) -> str:
+    states = check_states(pr)
+    return ("Checks failing" if states & FAILURES else "Checks pending" if states & PENDING
+            else "Checks passed" if checks_passed(pr) else "Checks unknown")
+
+
 def pr_states(pr: dict) -> dict[str, StateEvidence]:
-    """Never infer import readiness from an approval or a green check alone."""
+    """Keep source review, public import progress and check provenance distinct."""
     head = pr["head"]
     if pr["status"] in {"merged", "closed"}:
         timestamp = pr.get("mergedAt" if pr["status"] == "merged" else "closedAt")
@@ -48,7 +63,9 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
     failures = [item for item in visible if check_states(item) & FAILURES]
     pending = [item for item in visible if check_states(item) & PENDING]
     if failures:
-        states["failing"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in failures)}
+        origins = ["Source checks failing" if item is pr else f"Import #{item['number']} failing" for item in failures]
+        states["failing"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in failures),
+                             "qualifier": "; ".join(origins)}
     if pending:
         states["checks-pending"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in pending)}
     if pr.get("mergeable") == "CONFLICTING":
@@ -58,39 +75,48 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
     elif pr.get("reviewDecision") == "CHANGES_REQUESTED":
         states["changes-requested"] = {"scope": head}
     elif pr.get("reviewDecision") != "APPROVED":
-        states["review"] = {"scope": head}
+        states["maintainer-review"] = {"scope": head}
+    eligible = (pr["status"] == "open" and pr.get("reviewDecision") != "CHANGES_REQUESTED"
+                and (pr.get("reviewDecision") == "APPROVED" or
+                     (pr.get("labelsComplete") and "ready to pull" in pr.get("labels", []))))
     if active:
-        states["importing"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in active)}
+        qualifiers = []
+        for item in active:
+            merge = {"CONFLICTING": "conflicts", "MERGEABLE": "no reported conflict"}.get(item.get("mergeable"), "mergeability unknown")
+            qualifiers.append(f"#{item['number']}: {item['status']}, {check_qualifier(item).lower()}, {merge}")
+        states["importing"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in active),
+                               "qualifier": "; ".join(qualifiers)}
+        ready = [item for item in active if item["status"] == "open"
+                 and item.get("mergeable") == "MERGEABLE"
+                 and item.get("reviewDecision") != "CHANGES_REQUESTED" and checks_passed(item)]
+        if (eligible and pr.get("importsComplete") and pr.get("mergeable") == "MERGEABLE"
+                and checks_passed(pr) and len(ready) == len(active)):
+            states["waiting-merge"] = {"scope": head + "," + ",".join(f"{item['number']}:{item['head']}" for item in ready),
+                                      "qualifier": ", ".join(f"Import #{item['number']}" for item in ready)}
     elif any(item["status"] == "merged" for item in imports):
         states["imported"] = {"scope": head}
-    elif (pr["status"] == "open" and pr.get("reviewDecision") != "CHANGES_REQUESTED"
-          and (pr.get("reviewDecision") == "APPROVED" or
-               (pr.get("labelsComplete") and "ready to pull" in pr.get("labels", [])))
-          and pr.get("importsComplete")):
-        checks = pr.get("checks")
-        qualifier = ("Checks unknown" if not checks or not checks.get("complete") else
-                     "Checks failing" if failures else "Checks pending" if pending else
-                     "Checks passed" if checks["state"] == "SUCCESS" else "Checks unknown")
-        states["awaiting-import"] = {"scope": head, "qualifier": qualifier}
+    elif eligible and pr.get("importsComplete"):
+        states["awaiting-import"] = {"scope": head, "qualifier": check_qualifier(pr)}
     return states
 
 
 def derive_states(prs: list[dict], registry: dict) -> StateMap:
     states = {f"pr:{pr['number']}": pr_states(pr) for pr in prs}
     promoted = {pr["ref"] for pr in prs if pr["status"] in {"open", "draft", "merged"}}
+    closed = {f"pr:{pr['number']}" for pr in prs if pr["status"] in {"closed", "merged"}}
     for node in registry["nodes"]:
-        if node["type"] != "branch" or node.get("ref") in promoted:
+        if node["id"] in closed or (node["type"] == "branch" and node.get("ref") in promoted):
             continue
-        # This is an explicit, curated request, never inferred from prose.
-        if node["status"].split(";")[0] == "contributor review requested":
-            states[node["id"]] = {"review": {"scope": node.get("head")}}
+        # Only the task owner records actual pending contributor decisions.
+        # GitHub approvals and branch prose cannot create this state.
+        decision = node.get("contributorReview")
+        if decision and decision["status"] == "pending":
+            states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision["head"]}
     return states
 
 
 def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: str) -> ObservationMap:
     current = derive_states(prs, registry)
-    # Backfill only the immediately preceding verified PR observation. Curated
-    # branch history cannot be reconstructed from the current registry.
     prior_prs = {f"pr:{pr['number']}": pr_states(pr) for pr in previous.get("prs", [])}
     history = previous.get("workStates", {})
     result: ObservationMap = {}
@@ -98,6 +124,12 @@ def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: s
         result[identity] = {}
         for state, evidence in states.items():
             old = history.get(identity, {}).get(state, {})
+            # Legacy PR review meant maintainer review. Legacy branch review
+            # was emitted only for an explicit contributor-review-requested
+            # status; require the same candidate and a still-pending decision.
+            if not old and ((state == "maintainer-review" and identity.startswith("pr:"))
+                            or (state == "contributor-review" and identity.startswith("branch:"))):
+                old = history.get(identity, {}).get("review", {})
             since: str | None
             basis: Literal["observed", "transition", "unknown"]
             if evidence["scope"] is None:

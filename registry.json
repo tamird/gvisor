@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T06:40:45.685313+00:00",
+    "updatedAt": "2026-10-08T06:49:30.927861+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -806,6 +806,11 @@
         "sourceHead": "61027644ef3258c2fe16a236861980d5ec7707ae",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "31f3ecac950b0c4aced7ddd16b107368729e2ee7",
+        "url": "https://github.com/tamird/gvisor/commit/31f3ecac950b0c4aced7ddd16b107368729e2ee7"
       }
     },
     {
@@ -2611,7 +2616,12 @@
         "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
       },
-      "number": 15414
+      "number": 15414,
+      "contributorReview": {
+        "status": "pending",
+        "head": "9179bfeaa6e872cf4f4b30bc4fa12e202dc5821e",
+        "url": "https://github.com/tamird/gvisor/commit/9179bfeaa6e872cf4f4b30bc4fa12e202dc5821e"
+      }
     },
     {
       "id": "pr:15368",
@@ -3100,7 +3110,12 @@
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
       },
-      "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6"
+      "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
+      "contributorReview": {
+        "status": "pending",
+        "head": "1644e8205f63bc3c0886221e22b0bfe61f949e17",
+        "url": "https://github.com/tamird/gvisor/commit/1644e8205f63bc3c0886221e22b0bfe61f949e17"
+      }
     },
     {
       "id": "pr:15335",
@@ -4327,6 +4342,11 @@
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "b2b91bc97d884c09f0c9e6296896467d6265f7aa",
+        "url": "https://github.com/tamird/gvisor/commit/b2b91bc97d884c09f0c9e6296896467d6265f7aa"
       }
     },
     {

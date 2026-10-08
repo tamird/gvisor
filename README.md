@@ -133,20 +133,30 @@ The state filters overlap: select several to match any. Counts follow search
 and workstream, independently of the other state buttons. The collector owns
 these classifications in `work_states.py`, and the UI consumes its snapshot:
 
-- **Needs review:** an open, nondraft PR without approval or changes requested,
-  including GitHub's null review decision (no approval reported); also an
-  explicitly curated contributor review request for a working branch.
-- **Changes requested**, **Draft** and **Conflicts:** the corresponding verified
-  GitHub attributes. Drafts do not enter the review or awaiting-import filters.
+- **Contributor review:** an actual pending decision recorded by the task owner
+  in the registry's `contributorReview` object (`status: pending`, exact candidate
+  `head` and commit `url`). This may be an amendment distinct from the live PR.
+  Remove the object when the decision is answered; GitHub review and prose do
+  not infer a contributor hold.
+- **Maintainer review:** an open, nondraft PR without approval or changes
+  requested, including GitHub's null review decision (no approval reported).
+- **Changes requested**, **Draft** and **Conflicts:** corresponding source PR
+  attributes. Drafts do not enter maintainer-review or awaiting-import filters.
 - **Awaiting import:** approval or a complete `ready to pull` label observation,
   no changes requested, and a complete import lookup without an active or merged
   exact-source import. Its check qualifier preserves passing, failing, pending
-  or unknown checks. This is waiting work, not a claim of import readiness.
-- **Importing:** an open verified Copybara PR for the current source revision.
-  Older-source imports remain visible in details but do not establish this state.
+  or unknown checks. This is waiting work, not an import request or readiness claim.
+- **Import PR open:** a verified open or draft Copybara PR for the current source
+  revision. Its qualifier states checks and conflict status; UNKNOWN is not
+  conflict-free. Older-source imports remain visible only as historical evidence.
+- **Waiting for merge:** an approved or ready-to-pull source PR and its current
+  imports are nondraft, MERGEABLE and have nonempty, complete green visible check
+  inventories and a complete import lookup, without changes requested. This observed public state grants no
+  merge authority and does not claim internal import progress.
 - **Failing checks** and **Checks pending:** current source or active exact-source
-  import checks. These include CI/infrastructure checks, not just tests. A stale
-  import failure stays in details without making the current source fail.
+  import checks, including CI/infrastructure checks. Each failure label names
+  the source or import PR; details link the failed checks. An old import failure
+  stays in details without making the current head fail.
 
 `workStates` stores each current state's scope, `since` and `basis`. Observed
 ages use the first retained observation of the same state and revision, not
@@ -156,10 +166,15 @@ starts a new interval. The first migration may reuse the immediately preceding
 verified PR snapshot, but does not invent historical branch transitions. This deployment also seeds
 observation dates from a bounded 96-commit history, stopping at each first
 state or revision mismatch and retaining its source snapshot URL.
+Legacy PR review ages map only to maintainer review. Legacy branch review ages
+carry into contributor review only for a still-pending decision on the same
+candidate; the old classifier emitted that branch state only for explicit
+contributor requests. A contributor amendment never inherits PR review age.
 A branch without a recorded revision has unknown age.
 GitHub's explicit merge/close timestamps are marked exact. Older snapshots
 without this optional field remain readable, with state filters disabled and
-an explicit history-unavailable message. No status is guessed in the browser.
+an explicit history-unavailable message. Legacy saved review filters expand to both review authorities; selection and
+viewport storage remain unchanged. No status is guessed in the browser.
 
 The table shows every current state and its age; click **State · age** to sort
 by the oldest matching state. DAG cards show one compact state/age row (`+N`
