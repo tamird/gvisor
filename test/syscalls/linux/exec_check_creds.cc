@@ -87,8 +87,8 @@ int main(int argc, char** argv, char** envp) {
   }
   int dumpability = prctl(PR_GET_DUMPABLE);
   if (dumpability != want_dumpability) {
-    std::cerr << "dumpability: got " << dumpability << ", want " << want_dumpability
-              << std::endl;
+    std::cerr << "dumpability: got " << dumpability << ", want "
+              << want_dumpability << std::endl;
     return 4;
   }
   if (argc == 4) {
