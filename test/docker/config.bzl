@@ -17,10 +17,12 @@ RUNTIME_VARIANTS = {
     "-cgroupv2": ["--in-sandbox-cgroup=v2"],
 }
 
-# Preserve the public overlay, software-GSO and host-network integration lanes.
+# Preserve the public KVM, overlay, software-GSO and host-network lanes.
 # The unnamed variant keeps each suite's existing default owned test.
 INTEGRATION_VARIANTS = [
     struct(name = "", args = []),
+    # Match the public KVM job's eight PARTITION/TOTAL_PARTITIONS values.
+    struct(name = "kvm", args = ["--platform=kvm"], partition_count = 8, tags = ["requires-kvm"]),
     struct(
         name = "overlay",
         args = ["--overlay2=all:dir=/tmp"],

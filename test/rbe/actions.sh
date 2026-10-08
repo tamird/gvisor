@@ -76,12 +76,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:plugin-network|amd64:nftables|amd64:moby|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
     export qualification_root_bazel
-    if [[ ${lanes[*]} == moby || ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
+    if [[ ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
       [[ -S /var/run/docker.sock ]]
@@ -183,7 +183,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         sudo -n test -w "$device"
       done
     fi
-    if [[ ${lanes[*]} == syscalls-kvm ]]; then
+    if [[ ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm ]]; then
       [[ -c /dev/kvm ]]
       sudo -n test -r /dev/kvm
       sudo -n test -w /dev/kvm
