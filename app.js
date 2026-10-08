@@ -696,7 +696,7 @@ function stateRecords(snapshot, node) {
     if (node.github.revisionChanged || node.github.statusChanged) {
       const pr = node.github, decision = effectiveReviewDecision(pr);
       // A partial REST response can revoke readiness, but cannot establish it.
-      for (const key of ["draft", "maintainer-review", "changes-requested", "awaiting-import", "waiting-merge"]) delete records[key];
+      for (const key of ["draft", "closed", "merged", "maintainer-review", "changes-requested", "awaiting-import", "waiting-merge"]) delete records[key];
       const state = pr.status === "draft" ? "draft" : pr.status === "open"
         ? decision === "CHANGES_REQUESTED" ? "changes-requested" : decision !== "APPROVED" ? "maintainer-review" : null : null;
       if (state) records[state] = pr.revisionChanged && state === "maintainer-review"
