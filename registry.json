@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T17:57:58.559823+00:00",
+    "updatedAt": "2026-10-08T18:06:41.967515+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4417,20 +4417,21 @@
       "url": "https://github.com/google/gvisor/pull/15500",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-08T07:32:45.579314+00:00",
-      "summary": "Contributor-approved PR #15500 is published at 603d14cbe. Root verified the exact head, author, description and publication; the live PR is mergeable and visible checks are pending in the 07:31 UTC snapshot. The approved source refresh preserves the reviewed error propagation and regression. No contributor hold remains.\n\nEarlier preparation and validation:\n\nContributor approved b74a956f4; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe source and commit record are reviewed, and root has issued the actual contributor question for this exact fork candidate. CopyFiles retained copy errors on Container, but configuration did not check them before container creation. The change returns that stored error at the owning configuration boundary, preserving the original cause rather than starting without the intended bind mount. The existing exec_test owner includes the new copy-failure regression; its source, execution and result evidence were independently reviewed with the Moby discovery packet. No upstream PR or public reply is claimed.",
+      "updatedAt": "2026-10-08T18:06:41.967515+00:00",
+      "summary": "The current head 603d14cbe received CHANGES_REQUESTED from konstantin-s-bogom at 18:03 UTC. The unresolved container.go comment asks to document how copyErr is recorded and ultimately checked, or consider a simpler owning design. The source owner is assessing that feedback; no amendment or reply has been made.\n\nEarlier preparation and validation:\n\nContributor approved b74a956f4; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe source and commit record are reviewed, and root has issued the actual contributor question for this exact fork candidate. CopyFiles retained copy errors on Container, but configuration did not check them before container creation. The change returns that stored error at the owning configuration boundary, preserving the original cause rather than starting without the intended bind mount. The existing exec_test owner includes the new copy-failure regression; its source, execution and result evidence were independently reviewed with the Moby discovery packet. No upstream PR or public reply is claimed.",
       "followup": {
-        "disposition": "Delivered; follow maintainer review and CI",
-        "owner": "external_sweeps",
-        "nextAction": "Follow current-head checks, maintainer review and import status.",
+        "disposition": "Maintainer changes requested: copy-error contract",
+        "owner": "root",
+        "nextAction": "Assess the complete CopyFiles/configuration error path and prepare the narrow documentation or design correction before publication.",
         "sourceHead": "603d14cbe3b167db8b9fee7768b3ca6c7741c2e5",
-        "reviewedAt": "2026-10-08T08:17:22.725941+00:00",
+        "reviewedAt": "2026-10-08T18:06:41.967515+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b74a956f42501ad3900060a19968d3dfc4937067",
           "https://github.com/tamird/gvisor/actions/runs/37721970197",
-          "https://github.com/google/gvisor/pull/15500"
+          "https://github.com/google/gvisor/pull/15500",
+          "https://github.com/google/gvisor/pull/15500#discussion_r4222470013"
         ],
-        "reviewDecision": null,
+        "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
       },
       "number": 15500
@@ -4445,19 +4446,20 @@
       "url": "https://github.com/google/gvisor/pull/15518",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-08T17:12:40.314968+00:00",
-      "summary": "Maintainer xinzhong reports that this empty public source and its BUILD targets are used by internal tests and asks to keep them. The cleanup is held for disposition; public indexed history did not establish the absence of internal consumers. No public reply or closure has been made. https://github.com/google/gvisor/pull/15518#issuecomment-6065656516\n\nEarlier observations:\n\nThe approved cleanup is open as #15518 at 77001d266. Current-head checks are successful as of the 17:06 UTC snapshot. No contributor decision remains.\n\nEarlier observations:\n\nPublished as https://github.com/google/gvisor/pull/15518 at 77001d266c64adf499952e8181eba844ed61ec6d on current master 254aeb360. The user-approved deletion is source-preserving after rebase (range-diff equal); normal signing and SSH publication succeeded. The initial PR was MERGEABLE with checks pending. No contributor decision remains.\n\nThe user approved exact 1955fe0b8. Root is preparing publication on the fresh base; no upstream PR is reported yet and no contributor decision remains pending.\n\nEarlier observations:\n\nThe root has issued a contributor review question for this exact public single-commit cleanup. It removes the empty socketopt_test.cc file and its cc_binary/syscall_test declarations: 44 deleted lines across three paths, with no test bodies removed. The public source has been empty since its introduction in 2267c24a4; exact-path history and all indexed references were reviewed. Historical full AMD qualification retains these zero-body wrappers separately from case coverage. Pointer-auth architecture selection is unchanged. No new runtime result or upstream PR is claimed.",
+      "updatedAt": "2026-10-08T18:06:41.967515+00:00",
+      "summary": "Maintainer xinzhong reports that the empty public source and BUILD targets are used by internal tests, so the deletion remains held. At 18:03 UTC the PR author requested replacing the deletion with comments explaining why the scaffolding exists. Root owns that disposition and source revision; the published deletion is still unchanged.\n\nEarlier observations:\n\nThe approved cleanup is open as #15518 at 77001d266. Current-head checks are successful as of the 17:06 UTC snapshot. No contributor decision remains.\n\nEarlier observations:\n\nPublished as https://github.com/google/gvisor/pull/15518 at 77001d266c64adf499952e8181eba844ed61ec6d on current master 254aeb360. The user-approved deletion is source-preserving after rebase (range-diff equal); normal signing and SSH publication succeeded. The initial PR was MERGEABLE with checks pending. No contributor decision remains.\n\nThe user approved exact 1955fe0b8. Root is preparing publication on the fresh base; no upstream PR is reported yet and no contributor decision remains pending.\n\nEarlier observations:\n\nThe root has issued a contributor review question for this exact public single-commit cleanup. It removes the empty socketopt_test.cc file and its cc_binary/syscall_test declarations: 44 deleted lines across three paths, with no test bodies removed. The public source has been empty since its introduction in 2267c24a4; exact-path history and all indexed references were reviewed. Historical full AMD qualification retains these zero-body wrappers separately from case coverage. Pointer-auth architecture selection is unchanged. No new runtime result or upstream PR is claimed.",
       "followup": {
-        "disposition": "Maintainer-requested hold: internal consumers",
+        "disposition": "Maintainer hold; documentation alternative requested",
         "owner": "root",
-        "nextAction": "Resolve disposition with the contributor before any public reply or closure; preserve all refs.",
+        "nextAction": "Preserve the internal-test scaffolding and assess the author’s requested explanatory-comment revision; do not close or reply without the assigned authorization.",
         "sourceHead": "77001d266c64adf499952e8181eba844ed61ec6d",
-        "reviewedAt": "2026-10-08T17:47:18.703051+00:00",
+        "reviewedAt": "2026-10-08T18:06:41.967515+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1955fe0b8d71ee41072b2e96c626eb03d3e187f0",
           "https://github.com/google/gvisor/commit/2267c24a41986e12cc72d136b9d6cc4ebaa2f927",
           "https://github.com/google/gvisor/pull/15518",
-          "https://github.com/google/gvisor/pull/15518#issuecomment-6065656516"
+          "https://github.com/google/gvisor/pull/15518#issuecomment-6065656516",
+          "https://github.com/google/gvisor/pull/15518#issuecomment-6066011185"
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
