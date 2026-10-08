@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T00:39:12.757706+00:00",
+    "updatedAt": "2026-10-08T00:47:05.454031+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -84,7 +84,7 @@
           "https://github.com/google/gvisor/pull/15147#issuecomment-6005123104",
           "https://github.com/google/gvisor/commit/ea3dcb1307fece751db9b40b8c2e37cd07b2efe7"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "ad67cc40192d4b659d0f679f3c3b161f8e434b0d",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -110,10 +110,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "c5e943bc48ce63b12fc67b826919b872ebd01a55",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -136,10 +136,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a9429cd833940fd776a4c44e792e322069b7bc6f",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -248,7 +248,7 @@
           "https://github.com/google/gvisor/pull/15133#pullrequestreview-5433270142",
           "https://github.com/google/gvisor/pull/15402"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "dac54db335181f1fa10653fd357d66bac72f549b",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -277,10 +277,10 @@
           "https://github.com/google/gvisor/pull/15132#pullrequestreview-5431540112",
           "https://github.com/google/gvisor/pull/15264"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -360,10 +360,10 @@
           "https://github.com/google/gvisor/pull/15120",
           "https://github.com/google/gvisor/pull/15259"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "8130f5a58fdd688379390fcbdf90a81b66149235",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -401,7 +401,7 @@
           "https://github.com/google/gvisor/commit/ff350d4ddae6327c71b529abd8a2df6ecd376fde",
           "https://github.com/google/gvisor/pull/15115#issuecomment-6004586713"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b89c01c4c4cada4c7cb0c34dc3c2479d583d7a22",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -427,10 +427,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6163d92a567f0983df38f57ec2596adc917ae78a",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -455,10 +455,10 @@
           "https://github.com/google/gvisor/pull/15111#pullrequestreview-5434101263",
           "https://github.com/google/gvisor/pull/15396"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -496,7 +496,7 @@
           "https://github.com/google/gvisor/commit/d3f4faffa86eddec1deea94229c39f2305105529",
           "https://github.com/tamird/gvisor/commit/8f772e58b6981a9e4c8da4acedebb2b89d1812b0"
         ],
-        "reviewedAt": "2026-10-07T04:08:38.226557+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e89cc398592a9e40b0d876bba1d2052e045d2314",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -522,10 +522,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15106"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "8d55f931860145475cae7e872db3784499faf855",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -590,10 +590,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15064"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "c058cddf269f5fe81bb4e261f6356ca764bb50ca",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -632,10 +632,10 @@
           "https://github.com/google/gvisor/pull/15061#pullrequestreview-5434122462",
           "https://github.com/google/gvisor/pull/15394"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e0f75c3ea08d7b74e1c757e9034285142c551309",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -728,10 +728,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15035#issuecomment-5858834825"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "ccc387fc0195c118b8e3f75c6116bbddcf49a936",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -754,7 +754,7 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15034"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a0979e57ffc32fc48c2860176e5b7f1e8c1609ce",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -796,10 +796,10 @@
           "https://github.com/google/gvisor/pull/15030#pullrequestreview-5439620358",
           "https://github.com/google/gvisor/pull/15255"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "61027644ef3258c2fe16a236861980d5ec7707ae",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -837,10 +837,10 @@
           "https://github.com/google/gvisor/pull/14988",
           "https://github.com/google/gvisor/pull/15261"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b69abbaaa9796a33b9f954cc00e6a70c04bde649",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -864,10 +864,10 @@
           "https://github.com/google/gvisor/pull/14986#discussion_r4172168041",
           "https://github.com/google/gvisor/pull/14986#pullrequestreview-5399555219"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e8c82dd30d419cc7bba8047f3535a632cb47e70c",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -935,10 +935,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/49676",
           "https://buildkite.com/gvisor/pipeline/builds/49707"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -962,7 +962,7 @@
           "https://github.com/google/gvisor/pull/14504",
           "https://github.com/google/gvisor/commit/27248e2e8c3810e375425da9f9ba46f847cc03a6"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "47ac9acd486edafa1c43cf30b18c78442f8492e8",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -988,10 +988,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/14503"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "0943d0f425c80d8a1b9372fcaba1b87711d51a92",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1028,10 +1028,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/14361"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "1a608a4d3199222ac1a94311e7ceff57cd8885a1",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1059,7 +1059,7 @@
           "https://buildkite.com/gvisor/pipeline/builds/49838",
           "https://buildkite.com/gvisor/pipeline/builds/49844"
         ],
-        "reviewedAt": "2026-10-07T03:51:33.223495+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "bacd163af4966ef1c8a7bf3ff917d7eafe5bf882",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -1102,10 +1102,10 @@
           "https://github.com/google/gvisor/pull/15322",
           "https://github.com/google/gvisor/pull/14348#issuecomment-6030152065"
         ],
-        "reviewedAt": "2026-10-07T03:17:25.139348+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "58b093bd6b6a0dbe4c6b516c379d5013cc973722",
         "reviewDecision": null,
-        "mergeable": null
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -1129,10 +1129,10 @@
           "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
           "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "de2a5dd01af28c23dedcaf2e934ec808f8051c55",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "de2a5dd01af28c23dedcaf2e934ec808f8051c55"
     },
@@ -1157,10 +1157,10 @@
           "https://github.com/google/gvisor/pull/14343#issuecomment-5390710435",
           "https://github.com/tamird/gvisor/commit/6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
     },
@@ -1184,10 +1184,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/14338#issuecomment-5390693410"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1225,10 +1225,10 @@
           "https://github.com/google/gvisor/pull/12483#issuecomment-3751204872",
           "https://github.com/google/gvisor/pull/12483#issuecomment-4603409011"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "9f15cc6f33d681c1cd051c2797a3172f0dc89efa",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1277,21 +1277,21 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "The 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe plugin change is mechanically refreshed on current master 265226683. Its only conflict combined the approved plugin license entries with already-landed QEMU entries; all seventeen added/removed edit sets and the approved message are unchanged. Independent mechanical peer 52a325b5ee3b passed. Normal signing and exact-lease SSH publication succeeded; current PR, fork and tracking identities match (receipt c0b48d4a2ba5). GitHub reports MERGEABLE; new-head CI is tracked separately. No new runtime result, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 03:52 snapshot reports a new source conflict at unchanged head c17616f3bc7e1b0a32a07b456ea495072b66d837. Existing visible checks pass. The assigned next action is exact conflict diagnosis and source/approval reconciliation; no new source or rebase has been published.\n\nThe October 4 conflict rebase is published at c17616f3bc7e1b0a32a07b456ea495072b66d837 on master 95ed905fb406e26326b263b2b3cb4ee78985a022. Plugin behavior and patch payloads are preserved; the rebase retains the upstream dependency pins and the already-landed nlohmann_json record, including its retrieval date. GitHub reports MERGEABLE, and all visible checks are successful in the 12:33 UTC snapshot; explicitly skipped checks remain skipped. The complete relationship read finds no linked Copybara import. The open source prerequisite remains active; no new public comment or import retry was sent.\n\nEarlier source-specific evidence and publication history:\n\nThe authorized October 2/3 rebase is published at 9f19b422abdec1069193628fd898877118f479fc on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15153#issuecomment-5963410894. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Open after the contributor-approved documentation revision at 0c229c451. Patch payloads are byte-identical to validated 827c20885: both static AMD64 binaries and archive-backed Cgo backtrace pass, and the canonical audit accepts all 184 dependencies. GNU compatibility was checked on the hosted coordinator; no new hermetic remote-action result is claimed. Initial PR checks are running.",
+      "summary": "The October 8 00:44 UTC complete snapshot reports a source conflict at the unchanged published head. Source reconciliation is assigned; the previously reviewed behavior and earlier validation remain recorded below. No refreshed head or new test result has been published.\n\nThe 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe plugin change is mechanically refreshed on current master 265226683. Its only conflict combined the approved plugin license entries with already-landed QEMU entries; all seventeen added/removed edit sets and the approved message are unchanged. Independent mechanical peer 52a325b5ee3b passed. Normal signing and exact-lease SSH publication succeeded; current PR, fork and tracking identities match (receipt c0b48d4a2ba5). GitHub reports MERGEABLE; new-head CI is tracked separately. No new runtime result, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 03:52 snapshot reports a new source conflict at unchanged head c17616f3bc7e1b0a32a07b456ea495072b66d837. Existing visible checks pass. The assigned next action is exact conflict diagnosis and source/approval reconciliation; no new source or rebase has been published.\n\nThe October 4 conflict rebase is published at c17616f3bc7e1b0a32a07b456ea495072b66d837 on master 95ed905fb406e26326b263b2b3cb4ee78985a022. Plugin behavior and patch payloads are preserved; the rebase retains the upstream dependency pins and the already-landed nlohmann_json record, including its retrieval date. GitHub reports MERGEABLE, and all visible checks are successful in the 12:33 UTC snapshot; explicitly skipped checks remain skipped. The complete relationship read finds no linked Copybara import. The open source prerequisite remains active; no new public comment or import retry was sent.\n\nEarlier source-specific evidence and publication history:\n\nThe authorized October 2/3 rebase is published at 9f19b422abdec1069193628fd898877118f479fc on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15153#issuecomment-5963410894. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Open after the contributor-approved documentation revision at 0c229c451. Patch payloads are byte-identical to validated 827c20885: both static AMD64 binaries and archive-backed Cgo backtrace pass, and the canonical audit accepts all 184 dependencies. GNU compatibility was checked on the hosted coordinator; no new hermetic remote-action result is claimed. Initial PR checks are running.",
       "number": 15153,
       "reviewDecision": null,
-      "updatedAt": "2026-10-07T04:58:43.169073+00:00",
+      "updatedAt": "2026-10-08T00:47:05.454031+00:00",
       "followup": {
-        "disposition": "delivered mechanical refresh; CI and review pending",
+        "disposition": "source conflict reconciliation assigned",
         "owner": "external_sweeps",
-        "nextAction": "Follow exact new-head CI, reviews and matching import. Preserve all earlier source-specific failures; do not infer a full pass from mergeability.",
+        "nextAction": "Read the exact conflict against current master, preserve the reviewed patch, and obtain independent source review before publishing a refresh. Preserve earlier failures separately.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15153"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "84f5f57bd79388ce5dec0b4c7d2f12bcdd89fe3a",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       },
       "head": "84f5f57bd79388ce5dec0b4c7d2f12bcdd89fe3a"
     },
@@ -1380,10 +1380,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15307"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b04fae38936fc090e1dcd624121c4bd0a832cbf1",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1606,7 +1606,7 @@
           "https://github.com/google/gvisor/pull/15160#pullrequestreview-5431711986",
           "https://github.com/google/gvisor/pull/15381"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e34ecd989257a01fc2bc592f7edcfec0185cabdb",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -1648,10 +1648,10 @@
           "https://github.com/google/gvisor/pull/15161",
           "https://github.com/google/gvisor/pull/15265"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6e908d714da848893f8c40798ca9fe632c31e8c1",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1763,10 +1763,10 @@
           "https://github.com/google/gvisor/pull/15169",
           "https://github.com/google/gvisor/pull/15279"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1836,10 +1836,10 @@
           "https://github.com/google/gvisor/pull/15442#pullrequestreview-5447266507",
           "https://github.com/google/gvisor/pull/15462"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6d761a9b934f72921f11460fd3c8cfc8186f3c55",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "6d761a9b934f72921f11460fd3c8cfc8186f3c55",
       "number": 15442,
@@ -1866,10 +1866,10 @@
           "https://github.com/google/gvisor/pull/15466",
           "https://github.com/google/gvisor/actions/runs/37683421774/job/113005000433"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
       "number": 15441
@@ -1934,10 +1934,10 @@
           "https://github.com/google/gvisor/pull/15330#pullrequestreview-5422073584",
           "https://github.com/google/gvisor/pull/15465"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1969,10 +1969,10 @@
           "https://github.com/google/gvisor/pull/15331#pullrequestreview-5445773971",
           "https://github.com/google/gvisor/pull/15452"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "443832c6b4f08c8e0157abeb37abc226533b7772",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2003,10 +2003,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/49799#01a11340-cd13-44d8-a64f-a94402f21ebe",
           "https://github.com/tamird/gvisor/commit/21f7fd7b924a28562b4549258ef8a886019d9ef6"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "21f7fd7b924a28562b4549258ef8a886019d9ef6",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "21f7fd7b924a28562b4549258ef8a886019d9ef6"
     },
@@ -2030,10 +2030,10 @@
           "https://github.com/google/gvisor/pull/15181",
           "https://github.com/tamird/gvisor/commit/069085391e6f3c5264f54b4d253356b1efec26be"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "069085391e6f3c5264f54b4d253356b1efec26be",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "updatedAt": "2026-10-07T08:35:21.745964+00:00",
       "head": "069085391e6f3c5264f54b4d253356b1efec26be"
@@ -2059,7 +2059,7 @@
           "https://github.com/google/gvisor/pull/15183#pullrequestreview-5431358903",
           "https://github.com/google/gvisor/pull/15378"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e2f202dd4555d7377a51205bd8e5f382ca4209b3",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -2113,10 +2113,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15443"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "1c636c974ff648d8e67fffb6280e01599e117bf5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "1c636c974ff648d8e67fffb6280e01599e117bf5",
       "number": 15443
@@ -2163,9 +2163,9 @@
           "https://github.com/google/gvisor/pull/15449",
           "https://github.com/google/gvisor/actions/runs/37655169313/job/112908325933"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "46ad8cc5b22b84e9116e68567532cab9e8b664c7",
       "number": 15449
@@ -2249,10 +2249,10 @@
           "https://github.com/google/gvisor/pull/15189",
           "https://github.com/tamird/gvisor/commit/2d9b81d097a4aa98e65d09393fbc8175964e91f8"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "2d9b81d097a4aa98e65d09393fbc8175964e91f8",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "2d9b81d097a4aa98e65d09393fbc8175964e91f8"
     },
@@ -2278,10 +2278,10 @@
           "https://github.com/google/gvisor/pull/15188#issuecomment-6002279588",
           "https://github.com/google/gvisor/pull/15257"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2317,7 +2317,7 @@
           "https://github.com/google/gvisor/pull/15245",
           "https://github.com/google/gvisor/pull/15430"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "3b3596833f3975e9d19d6c9f0e3a6e8ddadb9e01",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -2449,7 +2449,7 @@
           "https://github.com/google/gvisor/pull/15336#pullrequestreview-5421728875",
           "https://github.com/google/gvisor/pull/15338"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -2501,7 +2501,7 @@
           "https://github.com/google/gvisor/pull/15341",
           "https://buildkite.com/gvisor/pipeline/builds/49680"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -2525,10 +2525,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15436"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "587dd659205a6081de5224c543b1f4a514cac818",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "587dd659205a6081de5224c543b1f4a514cac818",
       "number": 15436
@@ -2564,10 +2564,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15376"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f18737bed47bbdc3da9ea51dda485c0c94cb43e5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15376
     },
@@ -2594,7 +2594,7 @@
           "https://github.com/google/gvisor/pull/15414",
           "https://github.com/tamird/gvisor/commit/39c96507e65884a7c307be128ba7f23dedc376a2"
         ],
-        "reviewedAt": "2026-10-08T00:33:19.282500+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "39c96507e65884a7c307be128ba7f23dedc376a2",
         "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
@@ -2621,10 +2621,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15368"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "fd0194dbcd3b64e2cc5ffb31c32c24698ca54390",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2645,10 +2645,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15435"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6348b07d95eb31f5efc502112610b356ef3dd56c",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "6348b07d95eb31f5efc502112610b356ef3dd56c",
       "number": 15435
@@ -2674,24 +2674,24 @@
       "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
       "status": "open",
-      "summary": "The 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe BPF change is mechanically refreshed on current master 265226683. The two helper conflicts preserve both landed emulator functions byte-for-byte alongside the approved BPF rule; all seven edit sets are unchanged. The earlier 0d35 Google Cloud SDK download failure and native rerun 403 remain historical failures; this publication resolves a separate actual source conflict. Independent mechanical peer 32e58aaa4670 passed. Normal signing and exact-lease SSH publication succeeded; current PR, fork and tracking identities match (receipt 1db88e21dd6a). GitHub reports MERGEABLE; new-head CI is tracked separately. No new runtime result, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 04:00 snapshot reports CONFLICTING at the current head after upstream target-emulator change265226683. Mechanical conflict diagnosis is assigned; previous CI failures remain separate.\n\nThe approved BPF change is refreshed on landed Bazel 8.8.1 at 0d35a2a12a00d0504ecf8ab63e4105ca2b3006a0. Its only conflict was the proposal’s old 8.5 pin; the rebase retains upstream 8.8.1 and removes that obsolete file delta. All seven remaining BPF and license patches match the approved source after excluding index/hunk coordinates. Independent peer 038fb4d62f05 closes the complete rebase and minimum-version wording; exact fork/PR/tracking/body readback is verified (receipt d1a735101397). It is MERGEABLE, with the existing APPROVED decision retained. No new public comment or runtime workload was added. The new-head generate job 37564117954 failed before compilation: its existing builder download of Google Cloud SDK 535.0.0 ended with curl HTTP/2 INTERNAL_ERROR and a truncated tar archive. The absent builder container then prevented //:gopath from starting. This establishes a download/setup failure, not a BPF compiler result. The failed log is retained. One authorized native failed-job rerun was requested, but GitHub refused it with HTTP 403 (repository admin rights required); no replacement job started.\n\nEtienne approved exact head b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7 on October 6. Copybara then reported an opaque migration error with no linked cause; upstream landing remains pending. Opened after explicit user approval at b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7. The independent topic supplies declared LLVM tools and headers for all seven BPF owners; Coral remains the C/C++ toolchain. Prior focused evidence verified fourteen real EM_BPF objects across both target CPU configurations and a 181-entry license audit. That parent failed only its total-action-count assertion; saved graph and artifact review closed the intended build contract. The refreshed topic preserves the reviewed implementation. No native ARM worker, BPF runtime or C++ execution is claimed.",
+      "summary": "The October 8 00:44 UTC complete snapshot reports a source conflict at the unchanged published head. Source reconciliation is assigned; the previously reviewed behavior and earlier validation remain recorded below. No refreshed head or new test result has been published.\n\nThe 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe BPF change is mechanically refreshed on current master 265226683. The two helper conflicts preserve both landed emulator functions byte-for-byte alongside the approved BPF rule; all seven edit sets are unchanged. The earlier 0d35 Google Cloud SDK download failure and native rerun 403 remain historical failures; this publication resolves a separate actual source conflict. Independent mechanical peer 32e58aaa4670 passed. Normal signing and exact-lease SSH publication succeeded; current PR, fork and tracking identities match (receipt 1db88e21dd6a). GitHub reports MERGEABLE; new-head CI is tracked separately. No new runtime result, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 04:00 snapshot reports CONFLICTING at the current head after upstream target-emulator change265226683. Mechanical conflict diagnosis is assigned; previous CI failures remain separate.\n\nThe approved BPF change is refreshed on landed Bazel 8.8.1 at 0d35a2a12a00d0504ecf8ab63e4105ca2b3006a0. Its only conflict was the proposal’s old 8.5 pin; the rebase retains upstream 8.8.1 and removes that obsolete file delta. All seven remaining BPF and license patches match the approved source after excluding index/hunk coordinates. Independent peer 038fb4d62f05 closes the complete rebase and minimum-version wording; exact fork/PR/tracking/body readback is verified (receipt d1a735101397). It is MERGEABLE, with the existing APPROVED decision retained. No new public comment or runtime workload was added. The new-head generate job 37564117954 failed before compilation: its existing builder download of Google Cloud SDK 535.0.0 ended with curl HTTP/2 INTERNAL_ERROR and a truncated tar archive. The absent builder container then prevented //:gopath from starting. This establishes a download/setup failure, not a BPF compiler result. The failed log is retained. One authorized native failed-job rerun was requested, but GitHub refused it with HTTP 403 (repository admin rights required); no replacement job started.\n\nEtienne approved exact head b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7 on October 6. Copybara then reported an opaque migration error with no linked cause; upstream landing remains pending. Opened after explicit user approval at b83a8902d8b8b49882bec5ab7fdd36009c5e4ff7. The independent topic supplies declared LLVM tools and headers for all seven BPF owners; Coral remains the C/C++ toolchain. Prior focused evidence verified fourteen real EM_BPF objects across both target CPU configurations and a 181-entry license audit. That parent failed only its total-action-count assertion; saved graph and artifact review closed the intended build contract. The refreshed topic preserves the reviewed implementation. No native ARM worker, BPF runtime or C++ execution is claimed.",
       "number": 15337,
       "head": "15917668c39c084c22a5912706f1c88a260612f3",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-07T04:58:43.169073+00:00",
+      "updatedAt": "2026-10-08T00:47:05.454031+00:00",
       "followup": {
-        "disposition": "delivered mechanical refresh; CI and review pending",
+        "disposition": "source conflict reconciliation assigned",
         "owner": "external_sweeps",
-        "nextAction": "Follow exact new-head CI, reviews and matching import. Preserve all earlier source-specific failures; do not infer a full pass from mergeability.",
+        "nextAction": "Read the exact conflict against current master, preserve the reviewed patch, and obtain independent source review before publishing a refresh. Preserve earlier failures separately.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15337#pullrequestreview-5422561286",
           "https://github.com/tamird/gvisor/commit/0d35a2a12a00d0504ecf8ab63e4105ca2b3006a0",
           "https://github.com/google/gvisor/actions/runs/37564117954/job/112607818943"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "15917668c39c084c22a5912706f1c88a260612f3",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -2752,7 +2752,7 @@
           "https://github.com/google/gvisor/pull/15306",
           "https://github.com/google/gvisor/pull/15418"
         ],
-        "reviewedAt": "2026-10-07T05:30:47.510515+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e16cf7c2826bf341b8b20578c8672a81d36931ff",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -2781,10 +2781,10 @@
           "https://github.com/google/gvisor/pull/15217#pullrequestreview-5434252934",
           "https://github.com/google/gvisor/pull/15398"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2860,10 +2860,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/49634",
           "https://github.com/google/gvisor/pull/15339"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "73d62b335ccacd564193b201c861b482e0c1ab18",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2893,7 +2893,7 @@
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049316326"
         ],
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
       },
@@ -2920,10 +2920,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15170#issuecomment-6004568678"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6b98f2ca05794e793f5fa70d7fb0b937ec79fa56",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2972,7 +2972,7 @@
           "https://github.com/google/gvisor/pull/15461"
         ],
         "sourceHead": "23f542cc7817c98519ba96a1856fae1c76e6757d",
-        "reviewedAt": "2026-10-08T00:22:54.758818+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
       },
@@ -3025,7 +3025,7 @@
           "https://github.com/google/gvisor/pull/15334#issuecomment-6005376258",
           "https://github.com/google/gvisor/commit/b9961ddfa6c68aa97538c1b81a21b49e734feedd"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "507fb1697568ee3aac7405722180d082f4018a4d",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -3050,10 +3050,10 @@
           "https://github.com/google/gvisor/pull/15444",
           "https://github.com/google/gvisor/pull/15444#pullrequestreview-5447753587"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
       "number": 15444,
@@ -3082,10 +3082,10 @@
           "https://github.com/tamird/gvisor/commit/1644e8205f63bc3c0886221e22b0bfe61f949e17",
           "https://app.buildbuddy.io/invocation/af70d136-107c-47c8-9ecd-f89178749ab0"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       },
       "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6"
     },
@@ -3113,7 +3113,7 @@
           "https://github.com/google/gvisor/pull/15387",
           "https://github.com/google/gvisor/pull/15335"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3139,7 +3139,7 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15308"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e5c4013efc560d176bfdec23206d68a5190be211",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3166,7 +3166,7 @@
           "https://github.com/google/gvisor/pull/15309",
           "https://github.com/google/gvisor/commit/aa1fef14e7a6b5c1098ec5f254abfb44438da67f"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6098e86dd0bfb5db160490a492cce8d325fa34f0",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3192,10 +3192,10 @@
           "https://github.com/google/gvisor/pull/15321#pullrequestreview-5430317148",
           "https://github.com/google/gvisor/pull/15369"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "reviewDecision": "APPROVED",
       "head": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5"
@@ -3221,7 +3221,7 @@
           "https://github.com/google/gvisor/pull/15316#issuecomment-6020912166",
           "https://github.com/google/gvisor/pull/15380"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "7540239d5b6ede5248dadf079ffc8086e5f42a55",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3249,10 +3249,10 @@
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -3276,10 +3276,10 @@
           "https://github.com/tamird/gvisor/commit/0108067e45730adb0f5c7eeb400400e5527d78bf",
           "https://github.com/google/gvisor/pull/15388#pullrequestreview-5434442824"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "0108067e45730adb0f5c7eeb400400e5527d78bf",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15388,
       "reviewDecision": "APPROVED"
@@ -3304,7 +3304,7 @@
           "https://github.com/google/gvisor/pull/15319",
           "https://github.com/google/gvisor/pull/15324"
         ],
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "05accd6eadb331394c93c0a45898710829deb89f",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3331,10 +3331,10 @@
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15318#issuecomment-6019188859"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "86a99a4cb330d57e13ca073adaa04a9b0d3d085b",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -3391,10 +3391,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15370"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15370
     },
@@ -3408,20 +3408,20 @@
       "group": "bazel",
       "status": "open",
       "head": "b4046e82c6a6f96836921c0f9a17f8326fcf50d2",
-      "updatedAt": "2026-10-07T04:58:43.169073+00:00",
-      "summary": "The 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe page-size change is mechanically refreshed on current master 265226683 at b4046e82c6a6f96836921c0f9a17f8326fcf50d2. Two load conflicts retain the approved string_flag export alongside upstream target_emulator and target_emulators. The original settings, pipeline selection and message are unchanged. Independent peer 638e8e73bc7a passed. Normal signing and exact-lease SSH publication succeeded; PR, fork and tracking identities match (receipt 53fc86288954). GitHub reports MERGEABLE; new-head CI remains under observation. The earlier opaque internal-check failure is retained separately. No new 64K runtime, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 04:00 snapshot reports CONFLICTING at the current head after upstream target-emulator change265226683. Mechanical conflict diagnosis is assigned; previous CI failures remain separate.\n\nOpened ready for review after explicit user approval at a7607b075285371fccfde2a179f20ac81cd46a21. Exact title, description, master base and head were read back from GitHub.\n\nIndependent page-size build setting and public CI configuration. Existing graph proof preserves the original public selections, and the corrected qualification composition built all 659 ARM64 64K roots. No 64K runtime or worker-capacity claim.\n\naaltinaydev approved this exact source at 2026-10-06T20:08:16Z; the review contains no additional source request.\n\nThe October 6 21:00 snapshot reports feedback/copybara failure. The primary status says Google internal checks failed; its diagnostic destination is not public. No public source-cause diagnostic or new code request is available.",
+      "updatedAt": "2026-10-08T00:47:05.454031+00:00",
+      "summary": "The October 8 00:44 UTC complete snapshot reports a source conflict at the unchanged published head. Source reconciliation is assigned; the previously reviewed behavior and earlier validation remain recorded below. No refreshed head or new test result has been published.\n\nThe 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe page-size change is mechanically refreshed on current master 265226683 at b4046e82c6a6f96836921c0f9a17f8326fcf50d2. Two load conflicts retain the approved string_flag export alongside upstream target_emulator and target_emulators. The original settings, pipeline selection and message are unchanged. Independent peer 638e8e73bc7a passed. Normal signing and exact-lease SSH publication succeeded; PR, fork and tracking identities match (receipt 53fc86288954). GitHub reports MERGEABLE; new-head CI remains under observation. The earlier opaque internal-check failure is retained separately. No new 64K runtime, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 04:00 snapshot reports CONFLICTING at the current head after upstream target-emulator change265226683. Mechanical conflict diagnosis is assigned; previous CI failures remain separate.\n\nOpened ready for review after explicit user approval at a7607b075285371fccfde2a179f20ac81cd46a21. Exact title, description, master base and head were read back from GitHub.\n\nIndependent page-size build setting and public CI configuration. Existing graph proof preserves the original public selections, and the corrected qualification composition built all 659 ARM64 64K roots. No 64K runtime or worker-capacity claim.\n\naaltinaydev approved this exact source at 2026-10-06T20:08:16Z; the review contains no additional source request.\n\nThe October 6 21:00 snapshot reports feedback/copybara failure. The primary status says Google internal checks failed; its diagnostic destination is not public. No public source-cause diagnostic or new code request is available.",
       "followup": {
-        "disposition": "delivered mechanical refresh; CI and review pending",
+        "disposition": "source conflict reconciliation assigned",
         "owner": "external_sweeps",
-        "nextAction": "Follow exact new-head CI, reviews and matching import. Retain the prior internal failure without inventing its cause.",
+        "nextAction": "Read the exact conflict against current master, preserve the reviewed patch, and obtain independent source review before publishing a refresh. Preserve earlier failures separately.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15371",
           "https://github.com/google/gvisor/pull/15371#pullrequestreview-5434000645"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b4046e82c6a6f96836921c0f9a17f8326fcf50d2",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       },
       "number": 15371,
       "reviewDecision": "APPROVED"
@@ -3442,7 +3442,7 @@
         "disposition": "merged; obsolete source branch retired",
         "owner": "external_sweeps",
         "nextAction": "No remaining source delivery or branch cleanup action.",
-        "reviewedAt": "2026-10-07T01:53:48.190114+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "99adc671d68485cbbeea855dd0d02cf27ee3ecfa",
         "evidence": [
           "https://github.com/google/gvisor/pull/15372",
@@ -3478,7 +3478,7 @@
           "https://github.com/google/gvisor/pull/15458",
           "https://buildkite.com/gvisor/pipeline/builds/49943#01a117f1-f8b0-4507-80ab-19a5b57051b5"
         ],
-        "reviewedAt": "2026-10-08T00:13:53.203494+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6b486edc3bc79722811c7dab7adc2c5e31e3def7",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3506,10 +3506,10 @@
           "https://github.com/google/gvisor/pull/15374",
           "https://github.com/google/gvisor/pull/15374#pullrequestreview-5433973020"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f0b67041d60450e623285250941df450b7f4bf31",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15374,
       "reviewDecision": "APPROVED"
@@ -3622,7 +3622,7 @@
           "https://github.com/google/gvisor/pull/15415",
           "https://github.com/tamird/gvisor/commit/865d0a1b029491173c4e5ed92ee7b51095dd75cd"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "865d0a1b029491173c4e5ed92ee7b51095dd75cd",
         "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
@@ -3791,7 +3791,7 @@
           "https://github.com/google/gvisor/pull/15375#pullrequestreview-5435382786",
           "https://github.com/google/gvisor/pull/15405"
         ],
-        "reviewedAt": "2026-10-07T02:52:59.986259+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3823,10 +3823,10 @@
           "https://github.com/google/gvisor/pull/15476#pullrequestreview-5449584223",
           "https://github.com/google/gvisor/pull/15476#issuecomment-6049376481"
         ],
-        "reviewedAt": "2026-10-08T00:33:19.282500+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "86ae36127d720e1b6da3034cd889babaf4030305",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15476
     },
@@ -3852,7 +3852,7 @@
           "https://github.com/google/gvisor/pull/15401",
           "https://github.com/google/gvisor/pull/15419"
         ],
-        "reviewedAt": "2026-10-07T04:58:43.169073+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "ca7331879bf94aa8becd0fd92d819449ca492459",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3910,7 +3910,7 @@
           "https://github.com/google/gvisor/pull/15413#pullrequestreview-5437183290",
           "https://github.com/google/gvisor/pull/15417"
         ],
-        "reviewedAt": "2026-10-08T00:33:19.282500+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "78a4931c5f714b6d6c6dbbd16d88b01ff74edab6",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
@@ -3940,9 +3940,9 @@
           "https://github.com/google/gvisor/pull/15416",
           "https://github.com/tamird/gvisor/commit/20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
-        "mergeable": "UNKNOWN",
+        "mergeable": "MERGEABLE",
         "reviewDecision": null
       },
       "number": 15416
@@ -3966,7 +3966,7 @@
           "https://github.com/google/gvisor/pull/15422",
           "https://github.com/tamird/gvisor/commit/32e30154fd6d2e7c26c0b103c22f1a88ba2c8413"
         ],
-        "reviewedAt": "2026-10-08T00:22:54.758818+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "32e30154fd6d2e7c26c0b103c22f1a88ba2c8413",
         "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
@@ -4057,10 +4057,10 @@
         "evidence": [
           "https://github.com/google/gvisor/pull/15463"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a9025ef7fbe9fe82230cefee3b81557499a39468",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -4121,7 +4121,7 @@
           "https://github.com/google/gvisor/blob/caf05c02c/test/syscalls/linux/exceptions.cc#L120-L123",
           "https://github.com/google/gvisor/pull/15425#issuecomment-6048395514"
         ],
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": "APPROVED",
         "mergeable": "UNKNOWN"
       }
@@ -4144,7 +4144,7 @@
         "owner": "external_sweeps",
         "sourceHead": "9cb7831f3fd3c5dbcacc19c9ca182f84cdb4b0d1",
         "nextAction": "Follow current rebased-head checks, maintainer review and actual import.",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15453",
           "https://app.buildbuddy.io/invocation/48e0c03d-3673-49e7-88fc-5454a705107d",
@@ -4171,7 +4171,7 @@
         "owner": "external_sweeps",
         "sourceHead": "5a0d23abf779ab5a73354524b242206fd4769445",
         "nextAction": "Monitor exact-head CI, review and eventual maintainer import; no merge or retry authorization is inferred.",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/8380b01ca65c44cb970ff31d67810cbe5250d384",
           "https://app.buildbuddy.io/invocation/769cf7cb-04af-4e9d-b6a4-79d1e5697aa0",
@@ -4182,7 +4182,7 @@
           "https://github.com/google/gvisor/pull/15473"
         ],
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15473
     },
@@ -4203,7 +4203,7 @@
         "owner": "external_sweeps",
         "sourceHead": "6651421761e44bdc752721e3e6ad831e036d19f6",
         "nextAction": "Monitor the exact import head and actual landing; no merge action is authorized.",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/6651421761e44bdc752721e3e6ad831e036d19f6",
           "https://app.buildbuddy.io/invocation/69c94a6e-5162-4070-96f3-88e8fa6075d5",
@@ -4212,7 +4212,7 @@
           "https://github.com/google/gvisor/pull/15479"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15477
     },
@@ -4232,7 +4232,7 @@
         "disposition": "maintainer approved; import visible, actual landing pending",
         "owner": "external_sweeps",
         "nextAction": "Monitor the exact import head and actual landing; no merge action is authorized.",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "4823d71dc6d67e7af5d2edaa85c32cf50e8a1eba",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4823d71dc6d67e7af5d2edaa85c32cf50e8a1eba",
@@ -4242,7 +4242,7 @@
           "https://github.com/google/gvisor/pull/15478"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15474
     },
@@ -4262,7 +4262,7 @@
         "disposition": "maintainer approved; visible checks pass",
         "owner": "external_sweeps",
         "nextAction": "Monitor the maintainer import and actual landing; no merge action is authorized.",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "09917ea648b5296c077fb11fd929697a2c1ef7e8",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/09917ea648b5296c077fb11fd929697a2c1ef7e8",
@@ -4271,7 +4271,7 @@
           "https://github.com/google/gvisor/pull/15475#pullrequestreview-5449462866"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15475
     },
@@ -4293,13 +4293,13 @@
         "owner": "external_sweeps",
         "nextAction": "Monitor exact-head checks, substantive review and eventual maintainer import. Do not merge or retry without authorization.",
         "sourceHead": "987306894fc94d878d6a5f6cc83547a03413ed9f",
-        "reviewedAt": "2026-10-08T00:09:08.325283+00:00",
+        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15472",
           "https://github.com/tamird/gvisor/actions/runs/37695275090"
         ],
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
