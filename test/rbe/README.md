@@ -123,9 +123,9 @@ unprivileged Actions user. The lane retains the existing test cases and skips.
 
 The `unit`, `syscalls`, `syscalls-resume` and `syscalls-kvm` phases intersect
 graph-declared architecture variants with their canonical profiles and run one
-test invocation. Native namespace tests and selected KVM syscall tests run
-locally; ordinary native tests and shared checks stay remote. The report records
-all selected owners and their execution requirements.
+test invocation. Tests requiring namespaces or KVM on the selected local
+architecture run on Actions; other configurations retain remote execution.
+The report records every selected test and its execution requirements.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
 On ARM64 and in the AMD64 KVM lane, root test frontends invoke the existing
@@ -142,9 +142,9 @@ four-core host, while remote work keeps 400 jobs.
 The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
 leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends
 normally invoke the Docker fixture for private PID, cgroup, mount and network
-namespaces. The Actions coordinator runs Bazel as root for Docker's UID mapping;
-compilation and ordinary shared tests stay remote. Docker tests retain their
-declared images. The fixture rejects non-root namespace identities rather than
+namespaces. The Actions coordinator runs Bazel as root for Docker's UID mapping.
+Compilation uses RBE; the selected syscall TestRunners use the Actions host.
+Docker tests retain their declared images. The fixture rejects non-root namespace identities rather than
 changing them and uses the private network without the outbound bridge.
 
 On either architecture, a native owner tagged
@@ -368,7 +368,7 @@ The current kernel environments are:
 | Hosted Firecracker | AMD64 | Observed Linux 6.1.0 in the October 2, 2026 qualification runs; partial qualification with remaining failures. |
 | Hosted Firecracker | ARM64 | No execution capacity verified; no guest kernel qualified. |
 | Public CI ordinary syscall pools | AMD64 / ARM64 | Linux 6.8.0-1069-gcp, observed October 2, 2026. |
-| Public CI release-candidate syscall pools | AMD64 / ARM64 | Linux 7.3.0-070300rc3-generic, observed October 2, 2026; no equivalent RBE kernel selection is established. |
+| Public CI release-candidate syscall pools | AMD64 / ARM64 | Linux 7.3.0-070300rc3-generic, observed October 2, 2026; these pools change over time. |
 
 The [public pipeline](../../.buildkite/pipeline.yaml) defines these CI pools.
 Public master builds [49276](https://buildkite.com/gvisor/pipeline/builds/49276)
@@ -382,7 +382,9 @@ configuration and exposed devices also affect test behavior. Qualification
 reports must identify the actual worker kernel release/build and available
 configuration evidence, with uncached results for that environment. Passing on
 one observed kernel does not qualify another kernel or a release-candidate lane.
-Supported immutable kernel selection and its effect on cache identity remain
+The ARM64 TCG routes below instead declare their guest kernels as build inputs;
+they do not establish binary/config equivalence with the public workers.
+Provider-native kernel selection and its effect on cache identity remain
 [provider requirements](https://github.com/buildbuddy-io/buildbuddy/issues/13523).
 
 ## Selecting qualification lanes
@@ -1158,7 +1160,7 @@ without an explicit architecture selector. Combined selection uses AMD64;
 standalone ARM64 execution requires Firecracker capacity. The other network
 conformance suites have separate lanes described below.
 
-The language runtime lanes retain the five public AMD64 suites: PHP 8.3.35,
+The language runtime lanes retain the five public AMD64 suites: PHP 8.5.11,
 Java 21, Go 1.22, Node 22.2.0 and Python 3.12.3. DirectFS matches presubmit;
 goferfs matches the continuous matrix:
 
@@ -1468,14 +1470,47 @@ Each selected owner has a manual `<owner>_64k_arm64` variant that configures its
 runner, runtime and test dependencies together. Page size remains separate from
 the CPU architecture interface, so ordinary and 64K variants can share a build.
 
-The mixed selector reports these required 64K owners as unavailable. No supported
-hosted ARM64 64K-kernel worker configuration is known; ordinary ARM64 execution
-and an OCI image do not establish that support. The declarations retain existing
-ARM64 syscall worker properties without inventing a kernel route. Directly
-requesting a 64K variant does not bypass runsc's existing fatal check that its
-compiled page size matches the host kernel before booting the sandbox. Analysis
-and cross-compilation can qualify the build graph, but cannot qualify this runtime
-lane. Enable execution only after selecting and verifying a supported 64K worker.
+The mixed selector maps this profile to manual `<owner>_64k_tcg` frontends.
+They run the existing ARM64 payload inside a pinned 64K Linux guest using
+QEMU full-system software translation on an unprivileged AMD64 OCI worker.
+The guest checks its actual page size before running the payload; runsc retains
+its own page-size check. Original arguments, shards and deadlines remain in
+force, including guest boot and output transfer. This route needs no host KVM
+or namespace privileges. See [the guest contract](tcg/README.md) for inputs,
+resource estimates and output handling.
+
+Use `test/rbe/qualify.sh --arch=arm64 syscalls-64k` for the separate profile,
+optionally with `--syscall-bucket=0..14` to select an existing hash15 partition.
+The report lists every unexecuted owner; declared routing is not a claim that
+the whole profile has passed.
+
+The `syscalls-rc` lane selects each requested CPU's public ordinary syscall
+profile. ARM64 maps ptrace/systrap owners to manual `<owner>_rc_tcg` frontends.
+Their existing `<owner>_arm64` payloads use 4K pages in the pinned Ubuntu RC
+guest, with remote AMD64 OCI workers running QEMU TCG:
+
+```sh
+test/rbe/qualify.sh --arch=arm64 syscalls-rc
+```
+
+AMD64 maps native, ptrace, systrap and KVM owners from `syscalls-amd64` to
+`<owner>_rc_kvm` frontends. They run on an AMD64 Actions host with nested KVM;
+their existing `<owner>_amd64` payloads also use 4K pages. Both profiles can
+share one invocation, with compilation remote and AMD64 guests serialized:
+
+```sh
+test/rbe/qualify.sh --arch=all --test-execution=local syscalls-rc
+```
+
+Use `--arch=amd64` for that profile alone. Either route accepts an existing
+hash15 bucket and retains the owning arguments, shards and deadlines. Nogo
+keeps its dedicated lane; the public profiles exclude checkpoint owners.
+The report preserves each CPU's canonical selection and all unexecuted bucket
+owners. Actions selects an AMD64 coordinator for this mixed RC lane, while
+mixed unit tests retain their ARM64 coordinator. RC dispatches allow 90 minutes
+of work and 95 minutes for the job; individual test deadlines are unchanged.
+Guest capabilities and full-profile timing require qualification;
+declaring these routes does not establish that every selected owner can run.
 
 The combined command keeps the original unit patterns and configuration,
 including build-only tests and non-test targets. Selected syscall owners must

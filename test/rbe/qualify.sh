@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -27,8 +27,10 @@ Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
-target architecture is AMD64. Tests use matching execution workers. Builds
-prefer AMD64 workers while retaining declared native generator requirements.
+target architecture is AMD64. Tests use matching execution workers, except
+syscalls-64k and ARM64 syscalls-rc, whose payloads use QEMU TCG on AMD64 OCI
+workers. AMD64 RC guests run locally with nested KVM. Builds prefer AMD64 workers
+while retaining declared native generator requirements.
 This is partial public CI coverage;
 selecting an architecture does not guarantee worker support. Existing failures
 remain errors.
@@ -38,15 +40,20 @@ Presubmit builds run separately for each requested CPU in the same job.
 Clang-tidy retains a separate AMD64 aspect build over its recursive roots.
 ARM64 selection follows the public unit, syscall, smoke, Docker, bwrap and
 image-source lanes; unavailable workers are reported before execution.
+The remote syscalls-64k lane selects the public ARM64 64K systrap profile.
+The local AMD64 syscalls-rc-pilot lane runs four mincore owners in a pinned
+RC guest, including nested KVM. It does not select the full RC profile.
+The syscalls-rc lane selects the public ordinary profile for each requested CPU.
+Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
-and AMD64 KVM package/integration tests, KVM syscalls, nftables, Moby, PHP,
+and AMD64 KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
 plugin-network and startup/posture/portforward/root/benchmarks.
 With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
 ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
-Compilation remains remote. Hybrid profiles run in one invocation: native namespace owners run
-locally; ordinary native and shared owners run remotely.
+Compilation remains remote. Hybrid profiles run in one invocation; each
+test uses the execution requirements recorded in its selection report.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
 A benchmark target selects one member of the continuous suite, retaining its
@@ -57,8 +64,9 @@ USAGE
 
 gaps() {
   cat <<'GAPS'
-Environment limits: this profile does not supply KVM, slimvm, ARM64
-Firecracker, alternate kernels, or GPU/TPU runtime environments.
+Environment limits: remote execution does not supply KVM, slimvm, ARM64
+Firecracker, arbitrary alternate kernels, or GPU/TPU runtime environments.
+The syscalls-64k and syscalls-rc routes supply pinned ARM64 kernels through QEMU TCG.
 Selecting a lane does not establish a passing result or full public CI coverage.
 GAPS
 }
@@ -99,23 +107,35 @@ case "$test_execution" in
   remote) ;;
   local)
     case "$arch:$(uname -m)" in
-      amd64:x86_64|arm64:aarch64|all:aarch64) ;;
-      *) printf 'Local tests require a matching host architecture; mixed units require an ARM64 host.\n' >&2; exit 2 ;;
+      amd64:x86_64|arm64:aarch64) ;;
+      all:aarch64)
+        if [[ $# != 1 || $1 != unit ]]; then
+          printf 'Mixed local execution on ARM64 requires the unit profile.\n' >&2
+          exit 2
+        fi
+        ;;
+      all:x86_64)
+        if [[ $# != 1 || $1 != syscalls-rc ]]; then
+          printf 'Mixed local execution is supported only for the RC guest profile.\n' >&2
+          exit 2
+        fi
+        ;;
+      *) printf 'Local tests require a single matching host architecture.\n' >&2; exit 2 ;;
     esac
     if (( $# != 1 )); then
       printf 'Select one lane for local tests.\n' >&2
       exit 2
     fi
     case "$1:$arch" in
-      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
       *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
 if [[ -n $syscall_bucket ]]; then
-  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $# != 1 || ( $arch:${1:-} != arm64:syscalls && $arch:${1:-} != arm64:syscalls-resume && $arch:${1:-} != amd64:syscalls && $arch:${1:-} != amd64:syscalls-kvm ) ]]; then
-    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls/syscalls-resume or AMD64 syscalls/syscalls-kvm.\n' >&2
+  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k && $test_execution:$arch:${1:-} != remote:arm64:syscalls-rc && $test_execution:$arch:${1:-} != local:amd64:syscalls-rc && $test_execution:$arch:${1:-} != local:all:syscalls-rc ) ]]; then
+    printf 'A syscall bucket must be 0..14 and requires a supported local or guest syscall profile.\n' >&2
     exit 2
   fi
 fi
@@ -130,8 +150,8 @@ if [[ $# == 1 && $1 == amd64 ]]; then
   fi
   set --
   for lane in "${lanes[@]}"; do
-    # KVM and Moby execution require their local-host profiles.
-    if [[ $lane != kvm && $lane != syscalls-kvm && $lane != moby ]]; then set -- "$@" "$lane"; fi
+    # Host-dependent and alternate-kernel lanes are selected explicitly.
+    if [[ $lane != kvm && $lane != syscalls-kvm && $lane != moby && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
   done
 fi
 if (( $# == 0 )); then
@@ -144,18 +164,26 @@ for lane in "$@"; do
     printf 'The public Moby lane requires local AMD64 execution with the cgroup-v2 Docker fixture.\n' >&2
     exit 2
   fi
-  if [[ ( $lane == kvm || $lane == syscalls-kvm ) && ( $test_execution != local || $arch != amd64 ) ]]; then
-    printf 'The KVM lanes require local AMD64 execution.\n' >&2
+  if [[ $lane == syscalls-64k && ( $test_execution != remote || $arch != arm64 ) ]]; then
+    printf 'The 64K syscall lane requires --arch=arm64 and remote TCG execution.\n' >&2
+    exit 2
+  fi
+  if [[ $lane == syscalls-rc && $test_execution:$arch != remote:arm64 && $test_execution:$arch != local:amd64 && $test_execution:$arch != local:all ]]; then
+    printf 'RC guests require remote ARM64 or local AMD64/all execution.\n' >&2
+    exit 2
+  fi
+  if [[ ( $lane == kvm || $lane == syscalls-kvm || $lane == syscalls-rc-pilot ) && ( $test_execution != local || $arch != amd64 ) ]]; then
+    printf 'The KVM syscall lane requires local AMD64 execution.\n' >&2
     exit 2
   fi
   if [[ $arch == all ]]; then
     case "$lane" in
-      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
+      presubmit-build|nogo|unit|unit-v1|container|container-v1|docker-v1|release-artifacts|release-repository|python-distributions|website|syscalls|syscalls-rc|syscalls-save|syscalls-resume|smoke|smoke-race|plugin-build|plugin-network|do|docker|root|portforward|bwrap|workflows|lint|language-directfs|language-goferfs|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|packetdrill|kubernetes|podman|syzkaller|go-export|codeql|cpu-images|gpu-images|cos-metadata|posture|startup|benchmarks|governance|license-headers|lint-cc) ;;
       *) printf 'Lane %s does not support the all architecture selection.\n' "$lane" >&2; exit 2 ;;
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -297,10 +325,18 @@ select_test_profile() {
   if [[ $lane == syscalls* ]]; then
     selection_options=(--syscall-policy)
   fi
-  if [[ $lane == syscalls-64k ]]; then
-    page_size_options=(--page-size=64k)
+  if [[ $lane == syscalls-64k || $lane == syscalls-rc ]]; then
+    if [[ $lane == syscalls-64k ]]; then
+      page_size_options=(--page-size=64k)
+    else
+      page_size_options=(--rc-kernel)
+    fi
+    routing_options=(--//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k)
+    if [[ -n $syscall_bucket ]]; then
+      selection_options+=("--syscall-bucket=$syscall_bucket")
+    fi
   fi
-  if [[ $test_execution == local ]]; then
+  if [[ $test_execution == local && $lane != syscalls-rc ]]; then
     routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch")
     variant_options=(--hybrid)
     selection_options+=(--hybrid)
@@ -334,6 +370,7 @@ select_syscall_profile() {
   case "$lane" in
     syscalls|syscalls-kvm) profile_options=("--config=syscalls-$syscall_arch") ;;
     syscalls-64k) profile_options=(--config=syscalls-arm64-64k) ;;
+    syscalls-rc) profile_options=("--config=syscalls-$syscall_arch" --//tools/bazeldefs:page_size=4k) ;;
     syscalls-save) profile_options=(--test_tag_filters=save_restore) ;;
     syscalls-resume) profile_options=(--test_tag_filters=save_resume) ;;
     *) printf 'Unknown syscall profile: %s\n' "$lane" >&2; return 2 ;;
@@ -341,6 +378,59 @@ select_syscall_profile() {
   select_test_profile "$selection_dir" "$lane" "$syscall_arch" \
     test/syscalls.targets "${profile_options[@]}"
 }
+
+# Each selected owner retains its own guest and original test deadline. ARM64
+# uses remote TCG; AMD64 uses local nested KVM. Both payloads compile remotely.
+run_guest_profile() (
+  set -e
+  local lane=$1 selection_dir target_arch
+  local -a architectures=("$arch") options=()
+  if [[ $arch == all ]]; then
+    architectures=(amd64 arm64)
+  fi
+  selection_dir=$(mktemp -d)
+  trap 'rm -rf "$selection_dir"' EXIT
+  for target_arch in "${architectures[@]}"; do
+    select_syscall_profile "$selection_dir" "$lane" "$target_arch" | tee "$selection_dir/$target_arch-selection.json"
+    cat "$selection_dir/$lane-$target_arch-targets" >> "$selection_dir/targets"
+  done
+  if [[ $arch == all ]]; then
+    # Reconcile the combined configuration with both independently selected
+    # public profiles before dispatching any TestRunner.
+    python3 test/rbe/unit_matrix.py actions "$selection_dir/targets" --exact > "$selection_dir/combined.query"
+    bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+      --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
+      --output=jsonproto --include_artifacts=false \
+      "--build_event_json_file=$selection_dir/profile.json" \
+      "--query_file=$selection_dir/combined.query" > "$selection_dir/actions.json"
+    python3 test/rbe/unit_matrix.py verify "$selection_dir/targets" "$selection_dir/profile.json"
+    python3 - "$selection_dir" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+profiles = {arch: json.loads((root / f"{arch}-selection.json").read_text()) for arch in ("amd64", "arm64")}
+selected = [label for profile in profiles.values() for label in profile["selected_owners"]]
+assert len(selected) == len(set(selected)), "RC architecture selections overlap"
+(root / "selection.json").write_text(json.dumps({"profile_architecture": "all", "profile_kernel": "rc", "profiles": profiles, "selected_owners": sorted(selected)}, indent=2) + "\n")
+PY
+  else
+    cp "$selection_dir/$arch-selection.json" "$selection_dir/selection.json"
+    cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
+    cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
+  fi
+  if [[ -n ${RUNNER_TEMP:-} ]]; then
+    save_profile_selection "$selection_dir" "$lane"
+  fi
+  if [[ $test_execution == local ]]; then
+    options=(--config=rbe-hybrid-tests --local_test_jobs=1)
+  fi
+  bazel test --config=rbe --config=x86_64 --keep_going \
+    --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
+    --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
+    "${options[@]}" --target_pattern_file="$selection_dir/targets"
+)
 
 # Expand the public unit selection before removing its lane-wide filters from
 # a mixed cgroup invocation. A separate analysis retains non-test build roots;
@@ -359,8 +449,37 @@ select_unit_profile() {
   cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
 }
 
+save_profile_selection() {
+  local selection_dir=$1 lane=$2
+  # Preserve the selection, but never upload Bazel's parsed credential options.
+  mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
+  cp "$selection_dir/selection.json" "$selection_dir/actions.json" \
+    "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
+  if [[ -f $selection_dir/combined-actions.json ]]; then
+    cp "$selection_dir/combined-actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
+    # Read the heap limit from the same server that analyzed the mixed graph.
+    bazel info max-heap-size > "$RUNNER_TEMP/qualification/$lane-selection/max-heap-size.txt"
+  fi
+  if [[ -f $selection_dir/owners ]]; then
+    cp "$selection_dir/owners" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
+  python3 - "$selection_dir" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+keys = {"id", "children", "configured", "finished", "aborted"}
+for source in Path(sys.argv[1]).glob("*.json"):
+    if source.name == "profile.json" or source.name.endswith(("-profile.json", "-routing.json")):
+        with (Path(sys.argv[2]) / source.name).open("w") as output:
+            for line in source.read_text().splitlines():
+                event = json.loads(line)
+                output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
+PY
+}
+
 # Reuse the native graph and canonical profile in one invocation. The
-# frontend owns local namespace requirements; ordinary/shared tests stay remote.
+# frontend owns each test's local namespace and execution requirements.
 run_hybrid_profile() (
   set -e
   local lane=$1 selection_dir local_arch=$arch
@@ -413,32 +532,8 @@ PYOWNERS
     # Reuse valid test results from the interrupted complete-lane attempt.
     options+=(--cache_test_results=auto)
   fi
-  # Preserve the selection, but never upload Bazel's parsed credential options.
-  mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
-  cp "$selection_dir/selection.json" "$selection_dir/actions.json" \
-    "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
-  if [[ -f $selection_dir/combined-actions.json ]]; then
-    cp "$selection_dir/combined-actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
-    # Read the heap limit from the same server that analyzed the mixed graph.
-    bazel info max-heap-size > "$RUNNER_TEMP/qualification/$lane-selection/max-heap-size.txt"
-  fi
-  if [[ -f $selection_dir/owners ]]; then
-    cp "$selection_dir/owners" "$RUNNER_TEMP/qualification/$lane-selection/"
-  fi
-  python3 - "$selection_dir" "$RUNNER_TEMP/qualification/$lane-selection" <<'PY'
-import json
-from pathlib import Path
-import sys
-
-keys = {"id", "children", "configured", "finished", "aborted"}
-for source in Path(sys.argv[1]).glob("*.json"):
-    if source.name in ("profile.json", "amd64-profile.json") or source.name.endswith("-routing.json"):
-        with (Path(sys.argv[2]) / source.name).open("w") as output:
-            for line in source.read_text().splitlines():
-                event = json.loads(line)
-                output.write(json.dumps({key: value for key, value in event.items() if key in keys}) + "\n")
-PY
-  printf '%s %s profile: namespace/KVM owners run locally; ordinary native and shared owners run remotely in the same invocation.\n' "$arch" "$lane"
+  save_profile_selection "$selection_dir" "$lane"
+  printf '%s %s profile: test placement follows the recorded per-target requirements; compilation stays remote.\n' "$arch" "$lane"
   if [[ -n $syscall_bucket ]]; then
     printf 'Running syscall hash15 bucket %s only; the other buckets remain unexecuted.\n' "$syscall_bucket"
   fi
@@ -994,6 +1089,21 @@ run_lane() (
       command=build
       targets=(//website:image)
       ;;
+    syscalls-rc-pilot)
+      # Preserve original mincore arguments, shards and deadlines. The guest
+      # must exercise runsc's KVM platform, not merely expose /dev/kvm.
+      targets=(
+        //test/syscalls:mincore_test_native_rc_kvm
+        //test/syscalls:mincore_test_runsc_ptrace_rc_kvm
+        //test/syscalls:mincore_test_runsc_systrap_shared_rc_kvm
+        //test/syscalls:mincore_test_runsc_kvm_rc_kvm
+      )
+      options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
+      ;;
+    syscalls-64k|syscalls-rc)
+      run_guest_profile "$lane"
+      return
+      ;;
     syscalls|syscalls-kvm|syscalls-save|syscalls-resume)
       if [[ $test_execution == local ]]; then
         run_hybrid_profile "$lane"
@@ -1063,7 +1173,7 @@ run_selection() {
   for lane in "$@"; do
     # Recursive builds keep their own loading filters and output groups. A test
     # invocation would also execute unrelated tests below those package roots.
-    if [[ $arch == all && $test_execution == remote && $lane != presubmit-build && $lane != lint-cc ]]; then
+    if [[ $arch == all && $test_execution == remote && $lane != presubmit-build && $lane != lint-cc && $lane != syscalls-rc ]]; then
       matrix_lanes+=("$lane")
       continue
     fi

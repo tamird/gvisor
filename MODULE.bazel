@@ -247,7 +247,122 @@ release_apt.install(
         "jammy-security",
     ],
 )
-use_repo(release_apt, "container_test_tools", "release_tools", "syzkaller_sysroot")
+
+# Full-system tests share declared host tools; only the emulators differ.
+_VM_HOST_PACKAGES = [
+    "base-files:amd64",
+    "coreutils:amd64",
+    "cpio:amd64",
+    "e2fsprogs:amd64",
+    "findutils:amd64",
+    "gzip:amd64",
+    "kmod:amd64",
+]
+
+release_apt.install(
+    dependency_set = "tcg_host_tools",
+    packages = _VM_HOST_PACKAGES + ["qemu-system-arm:amd64 (= 1:6.2+dfsg-2ubuntu6.31)"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+release_apt.install(
+    dependency_set = "kvm_host_tools",
+    packages = _VM_HOST_PACKAGES + ["qemu-system-x86:amd64 (= 1:6.2+dfsg-2ubuntu6.31)"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+release_apt.install(
+    dependency_set = "tcg_arm64_guest",
+    packages = [
+        "base-files:arm64",
+        "base-passwd:arm64",
+        "bash:arm64",
+        "busybox-static:arm64",
+        "coreutils:arm64",
+        "debianutils:arm64",
+        "file:arm64",
+        "findutils:arm64",
+        "grep:arm64",
+        "iproute2:arm64",
+        # Also expose this existing kernel dependency to the RC userspace target.
+        "kmod:arm64",
+        "libc-bin:arm64",
+        "linux-image-6.8.0-138-generic-64k:arm64 (= 6.8.0-138.138~22.04.1)",
+        "mount:arm64",
+        "netcat-openbsd:arm64",
+        "procps:arm64",
+        "sed:arm64",
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+release_apt.install(
+    dependency_set = "kvm_amd64_guest",
+    packages = [
+        "base-files:amd64",
+        "base-passwd:amd64",
+        "bash:amd64",
+        "busybox-static:amd64",
+        "coreutils:amd64",
+        "debianutils:amd64",
+        "file:amd64",
+        "findutils:amd64",
+        "grep:amd64",
+        "iproute2:amd64",
+        "kmod:amd64",
+        "libc-bin:amd64",
+        "mount:amd64",
+        "netcat-openbsd:amd64",
+        "procps:amd64",
+        "sed:amd64",
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+use_repo(release_apt, "container_test_tools", "kvm_amd64_guest", "kvm_host_tools", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
+
+# Ubuntu's mainline test packages pin the historical RC release, not the
+# mutable Buildkite worker image. Keep the image and modules from one build.
+# https://kernel.ubuntu.com/mainline/v7.3-rc3/
+http_archive(
+    name = "tcg_arm64_rc_image",
+    build_file_content = 'exports_files(["data.tar"], visibility = ["//visibility:public"])',
+    sha256 = "bacb979087904b64b8e79cd918b627e719dbdf03bb544d45c19130f09b96e992",
+    urls = ["https://kernel.ubuntu.com/mainline/v7.3-rc3/arm64/linux-image-unsigned-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_arm64.deb"],
+)
+
+http_archive(
+    name = "tcg_arm64_rc_modules",
+    build_file_content = 'exports_files(["data.tar"], visibility = ["//visibility:public"])',
+    sha256 = "f53cf3cae52f0773cca517f77b8ec94f4437971e90ba0e5e75e14f5d0bac9822",
+    urls = ["https://kernel.ubuntu.com/mainline/v7.3-rc3/arm64/linux-modules-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_arm64.deb"],
+)
+
+http_archive(
+    name = "kvm_amd64_rc_image",
+    build_file_content = 'exports_files(["data.tar"], visibility = ["//visibility:public"])',
+    sha256 = "5f2788b423366969fb819827aef682854871afb4f4851ef25b8341eef90359dd",
+    urls = ["https://kernel.ubuntu.com/mainline/v7.3-rc3/amd64/linux-image-unsigned-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_amd64.deb"],
+)
+
+http_archive(
+    name = "kvm_amd64_rc_modules",
+    build_file_content = 'exports_files(["data.tar"], visibility = ["//visibility:public"])',
+    sha256 = "a8569d30cf9a24e38341df57b3d336e5c68121be73481aa22f068f1a21444852",
+    urls = ["https://kernel.ubuntu.com/mainline/v7.3-rc3/amd64/linux-modules-7.3.0-070300rc3-generic_7.3.0-070300rc3.202609132247_amd64.deb"],
+)
 
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")

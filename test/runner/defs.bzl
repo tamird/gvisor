@@ -1,6 +1,7 @@
 """Defines a rule for syscall test targets."""
 
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":runner_test.bzl", _runner_test_rule = "runner_test")
@@ -165,7 +166,15 @@ def _syscall_test(
     # Match the public ARM64 64K lane: systrap without checkpoint variants.
     arm64_64k = platform == "systrap" and "allsave" not in tags
     if arm64_64k:
-        tags.append("rbe-has-64k-arm64-variant")
+        tags += ["rbe-has-64k-arm64-variant", "rbe-has-64k-tcg-variant"]
+
+    # The public ARM64 RC lane uses ordinary ptrace and systrap payloads.
+    arm64_rc = platform in ["ptrace", "systrap"] and "allsave" not in tags
+    if arm64_rc:
+        tags.append("rbe-has-rc-tcg-variant")
+    amd64_rc = platform in ["native", "ptrace", "systrap", "kvm"] and "allsave" not in tags
+    if amd64_rc:
+        tags.append("rbe-has-rc-kvm-variant")
 
     attributes = dict(kwargs)
     attributes.update(
@@ -188,6 +197,32 @@ def _syscall_test(
             ["arm64"],
             {"arm64": runner_arm64_64k_test},
             dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
+        )
+        arm64_tcg_test(
+            name = name + "_64k_tcg",
+            payload = ":" + name + "_64k_arm64",
+            tags = attributes["tags"] + ["arm64-64k-tcg"],
+            # Runtime policy belongs to the guest. Preserve the owning
+            # test's arguments, shard count and original timeout.
+            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+        )
+
+    if arm64_rc:
+        arm64_tcg_test(
+            name = name + "_rc_tcg",
+            payload = ":" + name + "_arm64",
+            image = "//test/rbe/tcg:rc_guest",
+            tags = attributes["tags"] + ["arm64-rc-tcg"],
+            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+        )
+
+    if amd64_rc:
+        amd64_kvm_test(
+            name = name + "_rc_kvm",
+            payload = ":" + name + "_amd64",
+            image = "//test/rbe/tcg:amd64_rc_guest",
+            tags = attributes["tags"] + ["amd64-rc-kvm"],
+            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
         )
 
 def all_platforms():
