@@ -422,7 +422,7 @@ func testClosureConditionalStructStore(first, second *oneGuardStruct, cond bool)
 	}
 	first.mu.Lock()
 	callPreconditions(saved.child)
-	callPreconditions(local.child) // +checklocksfail
+	callPreconditions(local.child) // +checklocksfail=must hold tc.mu|must hold tc.mu
 	first.mu.Unlock()
 }
 
