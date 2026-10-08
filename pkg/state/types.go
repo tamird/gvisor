@@ -46,21 +46,15 @@ func assertValidType(name string, fields []string) {
 	}
 }
 
-// typeInfo is immutable metadata shared by registered types and per-run entries.
-type typeInfo struct {
-	wire.Type
-	binary bool
-}
-
 // typeEntry is an entry in the typeDatabase.
 type typeEntry struct {
 	ID typeID
-	typeInfo
+	wire.Type
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
 type reconciledTypeEntry struct {
-	typeInfo
+	wire.Type
 	LocalType  reflect.Type
 	FieldOrder []int
 }
@@ -99,7 +93,7 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 }
 
 // lookupTypeInfo extracts the metadata for a type.
-func lookupTypeInfo(typ reflect.Type) (typeInfo, bool) {
+func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 	if info, ok := reverseTypeDatabase[typ]; ok {
 		return info, true
 	}
@@ -108,28 +102,28 @@ func lookupTypeInfo(typ reflect.Type) (typeInfo, bool) {
 	if !ok {
 		// Is this a primitive?
 		if typ.Kind() == reflect.Interface {
-			return typeInfo{Type: wire.Type{Name: interfaceType}}, true
+			return wire.Type{Name: interfaceType}, true
 		}
 		name := typ.Name()
 		if _, ok := primitiveTypeDatabase[name]; !ok {
 			// This is not a known type, and not a primitive. The
 			// encoder may proceed for anonymous empty structs, or
 			// it may deference the type pointer and try again.
-			return typeInfo{}, false
+			return wire.Type{}, false
 		}
-		return typeInfo{Type: wire.Type{Name: name}}, true
+		return wire.Type{Name: name}, true
 	}
 	// Sanity check the type.
 	if raceEnabled {
 		// Registered types were found above. Preserve the handling of
 		// unregistered embedded types and anonymous empty structs.
-		return typeInfo{}, false
+		return wire.Type{}, false
 	}
 	// Extract the name from the object.
 	name := t.StateTypeName()
 	fields := t.StateFields()
 	assertValidType(name, fields)
-	return typeInfo{Type: wire.Type{Name: name, Fields: fields}}, true
+	return wire.Type{Name: name, Fields: fields}, true
 }
 
 // Lookup looks up or registers the given object.
@@ -152,8 +146,8 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 		// Register the new type.
 		tdb.lastID++
 		te = &typeEntry{
-			ID:       tdb.lastID,
-			typeInfo: info,
+			ID:   tdb.lastID,
+			Type: info,
 		}
 
 		// All done.
@@ -242,7 +236,7 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 			id, name, fields, pending.Name, pending.Fields)
 	}
 	rte := &reconciledTypeEntry{
-		typeInfo:  info,
+		Type:      info,
 		LocalType: typ,
 	}
 	// If there are zero or one fields, then we skip allocating the field
@@ -327,7 +321,7 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 var globalTypeDatabase = map[string]reflect.Type{}
 
 // reverseTypeDatabase holds immutable metadata indexed by the original type.
-var reverseTypeDatabase = map[reflect.Type]typeInfo{}
+var reverseTypeDatabase = map[reflect.Type]wire.Type{}
 
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
@@ -335,6 +329,13 @@ var reverseTypeDatabase = map[reflect.Type]typeInfo{}
 func Release() {
 	globalTypeDatabase = nil
 	reverseTypeDatabase = nil
+}
+
+// stateObject supplies both metadata and state methods. SaverLoader methods
+// without Type metadata do not override a registered binary representation.
+type stateObject interface {
+	Type
+	SaverLoader
 }
 
 // binaryObject is a value with a self-contained binary representation.
@@ -402,7 +403,7 @@ func Register(t Type) {
 			}
 		}
 	}
-	register(typ, typeInfo{Type: wire.Type{Name: name, Fields: fields}})
+	register(typ, wire.Type{Name: name, Fields: fields})
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -417,17 +418,14 @@ func registerBinary(value binaryObject) {
 		Failf("cannot register binary codec for %T: expected a pointer to a named struct", value)
 	}
 	typ = typ.Elem()
-	register(typ, typeInfo{
-		Type: wire.Type{
-			Name:   typ.PkgPath() + "." + typ.Name(),
-			Fields: []string{"value"},
-		},
-		binary: true,
+	register(typ, wire.Type{
+		Name:   typ.PkgPath() + "." + typ.Name(),
+		Fields: []string{"value"},
 	})
 }
 
 // register publishes immutable metadata in the existing type databases.
-func register(typ reflect.Type, info typeInfo) {
+func register(typ reflect.Type, info wire.Type) {
 	// StateFields may return a shared slice. Registration owns its snapshot;
 	// per-run entries and pending wire types only read these fields.
 	info.Fields = slices.Clone(info.Fields)
