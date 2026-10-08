@@ -1,0 +1,45 @@
+name: Refresh work map
+
+"on":
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: work-map-publication
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  refresh:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - name: Check out the published site
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: gh-pages
+          fetch-depth: 1
+      - name: Collect and validate public GitHub metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 update-status.py
+      - name: Publish the complete snapshot
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- github-status.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'Refresh public GitHub work status'
+          # A concurrent curated/source publication must cause a non-fast-forward
+          # failure, never a merge or overwrite of the pair we collected against.
+          git push origin HEAD:gh-pages
+      - name: Request the configured Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/tamird/gvisor/pages/builds --jq '{status, url}'
