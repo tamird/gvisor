@@ -947,6 +947,30 @@ TEST_P(SocketInetLoopbackTest, TCPNonBlockingConnectClose) {
     // Use a large timeout to accommodate for retransmitted FINs.
     constexpr int kTimeout = 120000;
     int n = poll(&pfd, 1, kTimeout);
+    if (n != 1) {
+      const int poll_errno = errno;
+      struct tcp_info info = {};
+      socklen_t info_len = sizeof(info);
+      const int info_result =
+          getsockopt(accepted.get(), SOL_TCP, TCP_INFO, &info, &info_len);
+      const int info_errno = errno;
+      char byte;
+      const ssize_t peek_result =
+          recv(accepted.get(), &byte, sizeof(byte), MSG_PEEK | MSG_DONTWAIT);
+      const int peek_errno = errno;
+      const int state = info_result == 0 && info_len >= sizeof(info.tcpi_state)
+                            ? info.tcpi_state
+                            : -1;
+      std::cerr << "TCPNonBlockingConnectClose iteration=" << i << " poll=" << n
+                << " poll_errno=" << (n < 0 ? poll_errno : 0)
+                << " revents=" << pfd.revents << " tcp_info_result=" << info_result
+                << " tcp_info_errno=" << (info_result < 0 ? info_errno : 0)
+                << " tcp_info_bytes=" << info_len << " tcp_state=" << state
+                << " peek_result=" << peek_result
+                << " peek_errno=" << (peek_result < 0 ? peek_errno : 0)
+                << std::endl;
+      errno = poll_errno;
+    }
     ASSERT_GE(n, 0) << strerror(errno);
     ASSERT_EQ(n, 1);
     ASSERT_EQ(pfd.revents, POLLIN | POLLRDHUP);
