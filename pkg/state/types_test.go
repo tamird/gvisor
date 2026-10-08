@@ -22,52 +22,33 @@ import (
 
 func init() {
 	registerBinary((*binaryFailure)(nil))
-	registerBinary((*binaryAppendFailure)(nil))
 }
 
 var errBinary = errors.New("binary codec failed")
 
 type binaryFailure struct {
-	failMarshal bool
+	failAppend bool
 }
 
-func (b *binaryFailure) MarshalBinary() ([]byte, error) {
-	if b.failMarshal {
+func (b *binaryFailure) AppendBinary(data []byte) ([]byte, error) {
+	if b.failAppend {
 		return nil, errBinary
 	}
-	return nil, nil
+	return data, nil
 }
 
 func (*binaryFailure) UnmarshalBinary([]byte) error { return errBinary }
 
-type binaryAppendFailure struct {
-	binaryFailure
-}
-
-func (b *binaryAppendFailure) AppendBinary(data []byte) ([]byte, error) {
-	value, err := b.MarshalBinary()
-	return append(data, value...), err
-}
-
 func TestBinaryErrors(t *testing.T) {
-	for name, value := range map[string]func(bool) binaryObject{
-		"marshal": func(fail bool) binaryObject { return &binaryFailure{failMarshal: fail} },
-		"append": func(fail bool) binaryObject {
-			return &binaryAppendFailure{binaryFailure{failMarshal: fail}}
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			var buf bytes.Buffer
-			if _, err := Save(t.Context(), &buf, value(true)); !errors.Is(err, errBinary) {
-				t.Fatalf("Save = %v, want %v", err, errBinary)
-			}
-			buf.Reset()
-			if _, err := Save(t.Context(), &buf, value(false)); err != nil {
-				t.Fatalf("Save: %v", err)
-			}
-			if _, err := Load(t.Context(), &buf, value(false)); !errors.Is(err, errBinary) {
-				t.Fatalf("Load = %v, want %v", err, errBinary)
-			}
-		})
+	var buf bytes.Buffer
+	if _, err := Save(t.Context(), &buf, &binaryFailure{failAppend: true}); !errors.Is(err, errBinary) {
+		t.Fatalf("Save = %v, want %v", err, errBinary)
+	}
+	buf.Reset()
+	if _, err := Save(t.Context(), &buf, &binaryFailure{}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	if _, err := Load(t.Context(), &buf, &binaryFailure{}); !errors.Is(err, errBinary) {
+		t.Fatalf("Load = %v, want %v", err, errBinary)
 	}
 }

@@ -37,8 +37,6 @@ func TestBinaryValues(t *testing.T) {
 var errBinary = errors.New("binary codec failed")
 
 // Existing state methods must take precedence over binary methods.
-func (*inner) MarshalBinary() ([]byte, error) { return nil, errBinary }
-
 func (*inner) AppendBinary([]byte) ([]byte, error) { return nil, errBinary }
 
 func (*inner) UnmarshalBinary([]byte) error { return errBinary }
