@@ -54,6 +54,12 @@ cleanup() {
       if (( status == 0 )); then status=1; fi
     fi
   fi
+  if [[ ${lanes[*]} == language-goferfs && -d ${RUNNER_TEMP:-}/qualification ]]; then
+    git rev-parse HEAD > "$RUNNER_TEMP/qualification/source-after-head.txt" || status=1
+    git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/source-after.txt" || status=1
+    [[ $(<"$RUNNER_TEMP/qualification/source-after-head.txt") == "$QUALIFICATION_COMMIT" ]] || status=1
+    [[ ! -s $RUNNER_TEMP/qualification/source-after.txt ]] || status=1
+  fi
   exit "$status"
 }
 trap cleanup EXIT
@@ -76,12 +82,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:plugin-network|amd64:nftables|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:plugin-network|amd64:nftables|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|amd64:language-goferfs|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
     export qualification_root_bazel
-    if [[ ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
+    if [[ ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images || ${lanes[*]} == language-goferfs ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
       [[ -S /var/run/docker.sock ]]
@@ -90,12 +96,67 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       [[ $GVISOR_DOCKER_NETWORK =~ ^[0-9a-f]{64}$ ]]
       export GVISOR_DOCKER_NETWORK
     fi
+    if [[ ${lanes[*]} == language-goferfs ]]; then
+      # Reuse the exact source-built PHP image from the failed qualification.
+      # The complete hash is checked before Bazel can consume the declared file.
+      php_image="$PWD/test/runtimes/php_actions_image.tar"
+      [[ ! -e $php_image && ! -e $php_image.partial ]]
+      temporary_files+=("$php_image" "$php_image.partial")
+      mkdir -p "$RUNNER_TEMP/qualification"
+      timeout --signal=TERM --kill-after=5s 300s python3 - \
+        "$php_image" "$RUNNER_TEMP/qualification/php-image.json" <<'PHP_IMAGE'
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import sys
+import urllib.request
+
+path = Path(sys.argv[1])
+partial = path.with_suffix(path.suffix + ".partial")
+expected_hash = "b2c8e50d4da59ec192f0c83bd2c38b6031b6efe5db5cd24ac347e5e3e6207741"
+expected_size = 1062409728
+assert not path.exists() and not partial.exists()
+assert shutil.disk_usage(path.parent).free > expected_size + 1024 * 1024 * 1024
+uri = "bytestream://remote.buildbuddy.io/blobs/" + expected_hash + "/" + str(expected_size)
+request = urllib.request.Request(
+    "https://app.buildbuddy.io/api/v1/GetFile",
+    data=json.dumps({"uri": uri}).encode(),
+    headers={"Content-Type": "application/json", "x-buildbuddy-api-key": os.environ["BUILDBUDDY_API_KEY"]},
+)
+size = 0
+hasher = hashlib.sha256()
+with urllib.request.urlopen(request, timeout=60) as response, partial.open("xb") as destination:
+    assert response.status == 200, response.status
+    while chunk := response.read(1024 * 1024):
+        size += len(chunk)
+        assert size <= expected_size, size
+        hasher.update(chunk)
+        destination.write(chunk)
+assert size == expected_size and hasher.hexdigest() == expected_hash, (size, hasher.hexdigest())
+partial.replace(path)
+Path(sys.argv[2]).write_text(json.dumps({
+    "sourceParent": "9f65f5c6-a344-47e0-a4f0-76bbeb67cbcc",
+    "uri": uri,
+    "sha256": expected_hash,
+    "size": size,
+    "declaredInput": "test/runtimes/php_actions_image.tar",
+    "reusedSourceBuiltImage": True,
+}, indent=2) + "\n")
+PHP_IMAGE
+    fi
     {
       printf '%s\n' \
         'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/'
+      # Root Bazel does not inherit the GitHub environment. Preserve the
+      # checked-out source identity in the existing Actions adapter.
+      printf 'build:buildbuddy_remote_executor --build_metadata=COMMIT_SHA=%s\n' "$QUALIFICATION_COMMIT"
+      printf 'build:buildbuddy_remote_executor --build_metadata=REPO_URL=%s/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
+      printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
     } > "$qualification_rc"

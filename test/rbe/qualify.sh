@@ -105,8 +105,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/nftables/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      smoke:*|bwrap:*|unit:arm64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:*|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64|language-goferfs:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM syscalls/nftables/plugin-network/startup/posture/portforward/root/benchmarks/language-goferfs.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -905,6 +905,15 @@ run_lane() (
       fi
       language_test_options
       shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        # Diagnostic comparison: retain one complete original PHP owner.
+        local php_owner=//test/runtimes:php8.5.11_goferfs_1_owned
+        bazel query 'tests(//test/runtimes:goferfs_tests)' --output=label \
+          > "$RUNNER_TEMP/qualification/language-canonical-targets.txt"
+        grep -Fxq "$php_owner" "$RUNNER_TEMP/qualification/language-canonical-targets.txt"
+        targets=("$php_owner")
+        printf '%s\n' "$php_owner" > "$RUNNER_TEMP/qualification/language-selected-targets.txt"
+      fi
       ;;
     kubernetes)
       if [[ $arch != amd64 ]]; then
@@ -965,12 +974,16 @@ run_lane() (
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
-        plugin-network|nftables|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
+        plugin-network|nftables|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images|language-goferfs)
           # Each owned daemon needs separate firewall state. The fixture
           # can attach this private namespace to the job's bridge.
           docker_test_options
+          if [[ $lane == language-goferfs ]]; then
+            # Avoid competing PHP shards in this worker comparison.
+            options+=(--local_test_jobs=1)
+          fi
           options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
-          if [[ $lane == benchmarks || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
+          if [[ $lane == benchmarks || $lane == docker || $lane == cpu-images || $lane == gpu-images || $lane == language-goferfs ]]; then
             options+=(
               --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
               "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local Docker tests through test/rbe/actions.sh}"
