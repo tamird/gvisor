@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
   libsqlite3-dev \
   libtool \
   libxml2-dev \
+  patch \
   pkg-config \
   re2c
 
@@ -18,5 +19,9 @@ RUN echo "338630ba9450f0b938bef8d740162c61c33bf64a1b421c6333c01df8a9fdb0ab  php-
 RUN tar -zxf php-${VERSION}.tar.gz
 
 WORKDIR /root/php-${VERSION}
+COPY extensions.patch /tmp/extensions.patch
+RUN patch -p1 --fuzz=0 --no-backup-if-mismatch < /tmp/extensions.patch \
+  && rm -f /tmp/extensions.patch
+
 RUN ./configure
 RUN make -j $(nproc)

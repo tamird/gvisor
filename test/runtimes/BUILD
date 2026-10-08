@@ -82,3 +82,21 @@ go_test(
     target_compatible_with = ["@platforms//cpu:x86_64"],
     deps = ["//pkg/test/dockerutil"],
 )
+
+# Fork-only check of one corrected PHPT's missing-extension result.
+go_test(
+    name = "php_extension_metadata_diagnostic",
+    size = "large",
+    timeout = "long",
+    srcs = ["php_extension_metadata_test.go"],
+    args = [
+        "--docker_test_config=$(rootpath :php8.5.11_goferfs_docker_config)",
+        "-test.v",
+    ],
+    data = [":php8.5.11_goferfs_docker_config"],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    rundir = ".",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+    deps = ["//pkg/test/dockerutil"],
+)
