@@ -30,6 +30,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -844,14 +845,21 @@ TEST(PtraceTest, PrctlSetPtracerDoesNotPersistPastTracerThreadExit) {
   });
   t.Join();
 
-  // Sleep for a bit before verifying the invalidation. The thread exit above
-  // should cause the ptrace exception to be invalidated, but in Linux, this is
-  // not done immediately. The YAMA exception is dropped during
-  // __put_task_struct(), which occurs (at the earliest) one RCU grace period
-  // after exit_notify() ==> release_task().
-  SleepSafe(absl::Milliseconds(100));
+  // The YAMA exception is dropped during __put_task_struct(), after an RCU
+  // grace period. Joining the thread does not wait for that cleanup, so wait
+  // for the observable denial rather than assuming a fixed delay is enough.
+  const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::seconds(5);
+  int ret;
+  do {
+    ret = CheckPtraceAttach(tracee_tid);
+    if (ret < 0) {
+      break;
+    }
+    SleepSafe(absl::Milliseconds(10));
+  } while (std::chrono::steady_clock::now() < deadline);
 
-  TEST_CHECK(CheckPtraceAttach(tracee_tid) == -1);
+  TEST_CHECK(ret == -1);
   TEST_PCHECK(errno == EPERM);
   _exit(0);
 }
@@ -968,6 +976,9 @@ TEST(PtraceTest, PrctlClearPtracerDoesNotAffectCurrentTracer) {
   pid_t const tracee_pid = fork();
   if (tracee_pid == 0) {
     TEST_PCHECK(close(sockets[1]) == 0);
+    // /proc/PID/mem checks the tracer's effective capabilities against the
+    // tracee's permitted set. AutoCapability only cleared the effective bit.
+    TEST_CHECK(DropPermittedCapability(CAP_SYS_PTRACE).ok());
     TEST_PCHECK(prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY) == 0);
     MaybeSave();
     // Indicate that the prctl has been set.

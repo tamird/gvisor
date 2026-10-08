@@ -89,6 +89,7 @@ syscall_test(
 # memory charges survive task migration and cgroup removal and can pin controllers.
 syscall_test(
     in_sandbox_cgroup = "v2",
+    tags = ["requires-initial-cgroup-namespace"],
     test = "//test/syscalls/linux:cgroup2_transfer_test",
 )
 
