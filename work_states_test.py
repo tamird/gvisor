@@ -3,7 +3,7 @@
 import copy
 import unittest
 
-from work_states import pr_states, record_states, review_decision
+from work_states import pr_states, record_states, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
@@ -19,6 +19,21 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_unknown_retains_concrete_conflict_without_approval_credit(self):
+        old = original(mergeable="CONFLICTING", base="b" * 40, checkedAt="2026-10-01T00:00:00Z")
+        pr = {**old, "mergeable": "UNKNOWN", "base": "c" * 40}
+        observed = remember_mergeability(pr, old, "2026-10-02T00:00:00Z")
+        self.assertEqual(observed, {"state": "CONFLICTING", "head": old["head"], "base": old["base"], "checkedAt": old["checkedAt"]})
+        pr["mergeabilityObservation"] = observed
+        self.assertIn("Last observed conflict", pr_states(pr)["conflicts"]["qualifier"])
+        self.assertNotIn("waiting-merge", pr_states(pr))
+        self.assertEqual(remember_mergeability(pr, pr, "2026-10-03T00:00:00Z"), observed)
+        self.assertNotIn("conflicts", pr_states({**pr, "head": "d" * 40}))
+        clear = {**pr, "mergeable": "MERGEABLE"}
+        self.assertNotIn("conflicts", pr_states(clear))
+        self.assertEqual(remember_mergeability(clear, pr, "2026-10-03T00:00:00Z")["state"], "MERGEABLE")
+        self.assertNotIn("conflicts", pr_states(original(mergeable="UNKNOWN")))
+
     def test_approval_must_match_current_head_and_latest_review(self):
         pr = original(reviewDecision="APPROVED")
         self.assertEqual(review_decision(pr), "APPROVED")

@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from work_states import record_states, review_decision
+from work_states import record_states, remember_mergeability, review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -18,6 +18,8 @@ OWNER = REGISTRY["meta"]["owner"]
 REQUEST_LIMIT = 40
 PR_BATCH_SIZE = 8
 requests = 0
+query_cost = 0
+rate_remaining = None
 
 CHECKS = """
 commits(last:1) { nodes { commit { oid statusCheckRollup {
@@ -30,7 +32,7 @@ commits(last:1) { nodes { commit { oid statusCheckRollup {
 } } } }
 """
 FIELDS = """
-number title url state isDraft headRefName headRefOid updatedAt createdAt mergedAt closedAt
+number title url state isDraft headRefName headRefOid baseRefOid updatedAt createdAt mergedAt closedAt
 headRepository { owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
@@ -61,7 +63,8 @@ timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
 
 
 def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
-    global requests
+    global requests, query_cost, rate_remaining
+    query = query.rstrip().removesuffix("}") + " rateLimit { cost remaining } }"
     for attempt in range(2):
         requests += 1
         if requests > REQUEST_LIMIT:
@@ -83,7 +86,11 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
         response = json.loads(result.stdout)
         if response.get("errors"):
             raise RuntimeError(f"GitHub query failed: {response['errors']}")
-        return response["data"]
+        data = response["data"]
+        rate = data.pop("rateLimit")
+        query_cost += rate["cost"]
+        rate_remaining = rate["remaining"]
+        return data
 
 
 def public_url(value: str | None) -> str | None:
@@ -140,7 +147,7 @@ def normalize(pr: dict) -> dict:
     normalized = {
         "number": pr["number"], "title": pr["title"], "url": pr["url"],
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
-        "ref": pr["headRefName"], "head": pr["headRefOid"],
+        "ref": pr["headRefName"], "head": pr["headRefOid"], "base": pr["baseRefOid"],
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
         "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
         "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
@@ -149,6 +156,7 @@ def normalize(pr: dict) -> dict:
         "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
         "reviewRequestsComplete": not pr["reviewRequests"]["pageInfo"]["hasNextPage"],
         "mergeable": pr["mergeable"],
+        "mergeabilityCheckedAt": pr["_retrievedAt"],
         "mergeState": pr["mergeStateStatus"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
@@ -173,6 +181,7 @@ def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:
         for pr in response["repository"].values():
             if pr is None:
                 raise RuntimeError("A tracked public PR was unavailable; previous snapshot is unchanged")
+            pr["_retrievedAt"] = datetime.now(timezone.utc).isoformat()
             result[pr["number"]] = pr
     return result
 
@@ -274,17 +283,26 @@ def main() -> None:
     # A merge can occur while these bounded requests are in flight. Stamp the
     # completed observation, so its exact transition never appears in the future.
     checked_at = datetime.now(timezone.utc).isoformat()
+    prior_prs = {pr["number"]: pr for source in previous.get("prs", [])
+                 for pr in (source, *source.get("imports", []))}
     for source in prs:
         for item in (source, *source["imports"]):
             item["checkedAt"] = checked_at
+            item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(item["number"], {}), item["mergeabilityCheckedAt"])
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "prs": prs, "issues": issues,
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
-                "limits": {"requests": requests, "nestedPageSize": 100, "maxOpenPRs": 200}}
+                "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining, "nestedPageSize": 100, "maxOpenPRs": 200}}
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
+    # Run the same validator used by the browser before publishing any bytes.
+    validation = subprocess.run(["node", str(ROOT / "metadata-preflight.mjs"), str(ROOT), str(temporary)],
+                                check=False, capture_output=True, text=True, timeout=30)
+    if validation.returncode:
+        temporary.unlink()
+        raise RuntimeError(f"Client metadata validation failed: {validation.stderr.strip()}")
     temporary.replace(output)
-    print(f"Updated {len(prs)} PRs and {len(imported)} verified import PRs in {requests} GitHub requests.")
+    print(f"Updated {len(prs)} PRs and {len(imported)} verified import PRs in {requests} GitHub requests ({query_cost} GraphQL points).")
     prior_prs = {pr["number"]: pr for source in previous.get("prs", [])
                  for pr in (source, *source.get("imports", []))}
     for source in prs:

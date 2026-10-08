@@ -73,6 +73,34 @@ def review_decision(pr: dict) -> str | None:
     return "REVIEW_REQUIRED"
 
 
+class MergeabilityObservation(TypedDict):
+    state: Literal["MERGEABLE", "CONFLICTING"]
+    head: str
+    base: str | None
+    checkedAt: str
+
+
+def remember_mergeability(pr: dict, previous: dict, checked_at: str) -> MergeabilityObservation | None:
+    """UNKNOWN is a pending calculation, not evidence clearing a conflict."""
+    if pr.get("mergeable") in {"MERGEABLE", "CONFLICTING"}:
+        return {"state": pr["mergeable"], "head": pr["head"],
+                "base": pr.get("base"), "checkedAt": checked_at}
+    if observation := previous.get("mergeabilityObservation"):
+        return observation
+    if previous.get("mergeable") in {"MERGEABLE", "CONFLICTING"}:
+        return {"state": previous["mergeable"], "head": previous["head"],
+                "base": previous.get("base"), "checkedAt": previous["checkedAt"]}
+    return None
+
+
+def conflict_qualifier(pr: dict) -> str | None:
+    previous = pr.get("mergeabilityObservation")
+    if (pr.get("mergeable") == "UNKNOWN" and previous
+            and previous["state"] == "CONFLICTING" and previous["head"] == pr["head"]):
+        return f"Last observed conflict at {previous['checkedAt']}; GitHub is recomputing current mergeability"
+    return None
+
+
 def pr_states(pr: dict) -> dict[str, StateEvidence]:
     """Keep source review, public import progress and check provenance distinct."""
     head = pr["head"]
@@ -92,8 +120,8 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
                              "qualifier": "; ".join(origins)}
     if pending:
         states["checks-pending"] = {"scope": ",".join(f"{item['number']}:{item['head']}" for item in pending)}
-    if pr.get("mergeable") == "CONFLICTING":
-        states["conflicts"] = {"scope": head}
+    if pr.get("mergeable") == "CONFLICTING" or conflict_qualifier(pr):
+        states["conflicts"] = {"scope": head, "qualifier": conflict_qualifier(pr)}
     if pr["status"] == "draft":
         states["draft"] = {"scope": head}
     elif decision == "CHANGES_REQUESTED":

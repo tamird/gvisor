@@ -17,6 +17,8 @@ let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
 let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600, positions: new Map() };
 let refreshing = false, lastAttempt = 0, drag = null, moved = false;
+let liveSnapshot = null, conflictRequest = false, lastConflictAttempt = 0;
+const conflictResults = new Map();
 let lastNavigationURL = null, searchEditing = false, initializing = true;
 
 function element(tag, className, text) {
@@ -126,6 +128,67 @@ function appendChecks(container, pr, heading) {
   }
   container.append(section);
 }
+function conflictRecord(pr) {
+  const previous = pr.mergeabilityObservation;
+  if (pr.mergeable === "CONFLICTING") return { scope: pr.head, since: pr.conflictCheckedAt || pr.checkedAt, basis: "observed", qualifier: null };
+  if (pr.mergeable === "UNKNOWN" && previous?.state === "CONFLICTING" && previous.head === pr.head)
+    return { scope: pr.head, since: previous.checkedAt, basis: "observed", qualifier: "Last observed conflict; GitHub is recomputing current mergeability" };
+  return null;
+}
+function mergeDescription(pr) {
+  const previous = pr.mergeabilityObservation;
+  const current = pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "GitHub is recomputing mergeability";
+  const observed = previous ? ` Last observed ${previous.state === "CONFLICTING" ? "conflict" : "no conflict"} at ${date(previous.checkedAt)}, head ${previous.head.slice(0, 9)}, base ${previous.base?.slice(0, 9) || "not recorded"}.${previous.head !== pr.head ? " That observation belongs to an older head." : ""}` : " No previous concrete result is recorded.";
+  return current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
+}
+function withConflictResult(pr) {
+  const result = conflictResults.get(pr.number);
+  if (!result) return pr;
+  if (Date.parse(result.checkedAt) <= Date.parse(pr.mergeabilityCheckedAt || pr.checkedAt)) {
+    const observed = result.observation;
+    return pr.mergeable === "UNKNOWN" && observed?.head === pr.head &&
+      Date.parse(observed.checkedAt) > (pr.mergeabilityObservation ? Date.parse(pr.mergeabilityObservation.checkedAt) : -Infinity)
+      ? { ...pr, mergeabilityObservation: observed } : pr;
+  }
+  const changed = result.head !== pr.head;
+  const current = { ...pr, head: result.head, base: result.base, status: result.status,
+    mergeable: result.state, conflictCheckedAt: result.checkedAt, revisionChanged: changed };
+  if (changed) Object.assign(current, { reviewDecision: null, approvedHead: null, githubReviewDecision: null,
+    reviewsComplete: false, reviewRequestsComplete: false, checks: null, labels: [], labelsComplete: false,
+    importsComplete: false, imports: pr.imports.map(item => ({ ...item, matchesSourceHead: false })) });
+  current.mergeabilityObservation = result.observation || pr.mergeabilityObservation;
+  return current;
+}
+async function refreshConflict(number) {
+  if (conflictRequest || Date.now() - lastConflictAttempt < 10000) return;
+  conflictRequest = true; lastConflictAttempt = Date.now(); drawDetails();
+  let message;
+  try {
+    const response = await fetch(`https://api.github.com/repos/${registry.meta.repo}/pulls/${number}`, {
+      cache: "no-cache", credentials: "omit", headers: { Accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(10000) });
+    if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? "GitHub rate limit or access restriction; try later or open the PR" : `GitHub returned ${response.status}`);
+    const data = await response.json();
+    if (data.number !== number || data.html_url !== `https://github.com/${registry.meta.repo}/pull/${number}` ||
+        !/^[a-f0-9]{40}$/.test(data.head?.sha) || !/^[a-f0-9]{40}$/.test(data.base?.sha) ||
+        ![true, false, null].includes(data.mergeable) || !["open", "closed"].includes(data.state) || typeof data.merged !== "boolean")
+      throw new Error("GitHub returned an unexpected PR identity or mergeability result");
+    const result = { head: data.head.sha, base: data.base.sha, state: data.mergeable === true ? "MERGEABLE" : data.mergeable === false ? "CONFLICTING" : "UNKNOWN",
+      status: data.merged ? "merged" : data.state === "closed" ? "closed" : data.draft ? "draft" : "open", checkedAt: new Date().toISOString() };
+    // A newer unknown response must not erase a concrete result obtained in this tab.
+    const old = conflictResults.get(number);
+    result.observation = result.state === "UNKNOWN" ? old?.observation
+      : { state: result.state, head: result.head, base: result.base, checkedAt: result.checkedAt };
+    conflictResults.set(number, result);
+    applyLive(liveSnapshot);
+    message = `Conflicts checked directly on GitHub at ${date(result.checkedAt)}. Reviews and checks still use the published snapshot.`;
+  } catch (error) { message = `Conflict refresh unavailable: ${error.message}. Last displayed evidence is retained.`; }
+  finally {
+    conflictRequest = false; drawDetails();
+    const output = document.querySelector(`[data-conflict-message="${number}"]`);
+    if (output) output.textContent = message;
+  }
+}
+
 function appendAttributes(container, node) {
   if (node.type !== "pr") return;
   const section = element("section", "detail-section pr-attributes"), pr = node.github;
@@ -147,7 +210,13 @@ function appendAttributes(container, node) {
   }
   const threads = pr.threads;
   section.append(element("p", "detail-meta", threads.complete ? `${threads.unresolved} unresolved review threads` : `Thread count incomplete: ${threads.unresolved} unresolved among ${Math.min(100, threads.total)} of ${threads.total} threads.`));
-  section.append(element("p", "detail-meta", `${pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "Merge conflicts not yet determined"} · GitHub merge state: ${pr.mergeState.toLowerCase().replaceAll("_", " ")}`));
+  section.append(element("p", "detail-meta conflict-description", mergeDescription(pr)));
+  if (pr.revisionChanged) section.append(element("p", "detail-meta", "GitHub has a newer source head than the published snapshot. Review, checks and import eligibility are unavailable for this revision until the next collection."));
+  const refreshButton = button("Check conflicts on GitHub", () => refreshConflict(pr.number));
+  refreshButton.disabled = conflictRequest;
+  refreshButton.dataset.conflictRefresh = pr.number;
+  const refreshMessage = element("p", "detail-meta"); refreshMessage.dataset.conflictMessage = pr.number; refreshMessage.setAttribute("role", "status");
+  section.append(refreshButton, refreshMessage);
   const labels = element("div", "label-list");
   for (const name of pr.labels) labels.append(badge({ text: name, tone: "label" }));
   if (!pr.labels.length) labels.append(element("span", "attribute-unknown", "No labels reported"));
@@ -160,7 +229,7 @@ function appendAttributes(container, node) {
     block.append(link(`#${imported.number} · ${imported.status} ↗`, imported.url), element("p", "detail-meta", imported.matchesSourceHead
       ? `Copybara footer matches source ${imported.sourceHead.slice(0, 9)}.`
       : `Older source: ${imported.sourceHead.slice(0, 9)}; current PR is ${pr.head.slice(0, 9)}. These checks do not validate the current source.`));
-    block.append(element("p", "detail-meta", imported.mergeable === "CONFLICTING" ? "Import has merge conflicts." : imported.mergeable === "MERGEABLE" ? "No reported import merge conflict." : "Import mergeability is unknown."));
+    block.append(element("p", "detail-meta", mergeDescription(imported)));
     block.append(element("p", "detail-meta", `Import head ${imported.head.slice(0, 9)} · snapshot ${date(imported.checkedAt)}`));
     appendChecks(block, imported, "Import PR checks"); section.append(block);
   }
@@ -507,7 +576,7 @@ function drawTable(nodes) {
     if (node.type === "pr") {
       review.append(badge(reviewInfo(node.github), attributeTitle(node)));
       checks.append(badge(checkInfo(node.github), node.github ? `Original PR head ${node.github.head.slice(0, 9)}. ${checkInfo(node.github).detail}` : "No published check data."));
-      if (node.github?.mergeable === "CONFLICTING") state.append(badge({ text: "conflicts", tone: "bad" }));
+      if (node.github && conflictRecord(node.github)) state.append(badge({ text: node.github.mergeable === "CONFLICTING" ? "conflicts" : "last observed conflict", tone: "bad" }, mergeDescription(node.github)));
     } else { review.textContent = "—"; checks.textContent = "—"; }
     row.append(identity, title, element("td", "numeric reach-cell", String(reach.prs)), element("td", "numeric", String(reach.direct)),
       state, review, checks, importCell(node), element("td", "group-cell", groups.get(node.group) || ""));
@@ -612,15 +681,32 @@ function stateRecords(snapshot, node) {
       records["contributor-review"] ||= records.review;
     delete records.review;
   }
+  if (node.github) {
+    if (node.github.revisionChanged) {
+      for (const key of Object.keys(records)) delete records[key];
+      if (node.github.status === "open") records["maintainer-review"] = { scope: null, since: null, basis: "unknown", qualifier: "New head; approval has not been collected" };
+    }
+    const conflict = conflictRecord(node.github);
+    if (conflict && ["open", "draft"].includes(node.github.status)) records.conflicts = { ...conflict,
+      since: records.conflicts?.scope === conflict.scope ? records.conflicts.since : conflict.since };
+    else delete records.conflicts;
+    if (node.github.mergeable !== "MERGEABLE") delete records["waiting-merge"];
+    if (["merged", "closed"].includes(node.github.status) && node.github.conflictCheckedAt) {
+      for (const key of Object.keys(records)) delete records[key];
+      records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
+    }
+  }
   return records;
 }
 function applyLive(snapshot, nextRegistry = registry) {
+  liveSnapshot = snapshot;
   const scrollPositions = ["table-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openChecks = new Set([...$("details").querySelectorAll(".check-details[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
   const nodes = registry.nodes.map((node) => ({ ...node, workStates: stateRecords(snapshot, node) })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
-  for (const pr of [...snapshot.prs, ...(snapshot.resolved || [])]) {
+  for (const original of [...snapshot.prs, ...(snapshot.resolved || [])]) {
+    const pr = withConflictResult(original);
     const id = `pr:${pr.number}`, existing = ids.get(id);
     const branch = pr.ref ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === `${registry.meta.owner}/gvisor`) : null;
     const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
@@ -647,7 +733,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
   const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
   setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
-  $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot; the maintainer updates it with python3 update-status.py.";
+  $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled GitHub collection keeps it current; selected PR details can check conflicts directly on GitHub without a token.";
 }
 function validateRegistry(candidate) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
@@ -692,6 +778,12 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     if (!Number.isInteger(pr.number) || numbers.has(pr.number) || !Array.isArray(pr.imports)) throw new Error("Invalid PR inventory");
     numbers.add(pr.number);
     for (const item of [pr, ...pr.imports]) {
+      const observation = item.mergeabilityObservation;
+      if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation time");
+      if (item.base != null && !/^[a-f0-9]{40}$/.test(item.base)) throw new Error("Invalid PR base");
+      if (observation != null && (!["MERGEABLE", "CONFLICTING"].includes(observation.state) ||
+          !/^[a-f0-9]{40}$/.test(observation.head) || (observation.base != null && !/^[a-f0-9]{40}$/.test(observation.base)) ||
+          !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation");
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
     }

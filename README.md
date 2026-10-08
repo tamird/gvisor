@@ -6,9 +6,9 @@ working branches, and external capacity issues.
 **Site:** https://tamird.github.io/gvisor/
 
 This orphan `gh-pages` branch contains only the static site. It does not change
-upstream source, the fork's default branch, or its build workflows. GitHub Pages
-publishes the root of this branch with `.nojekyll`; there is no package install,
-bundler, scheduled job, database, or authentication in the browser.
+upstream source. GitHub Pages publishes the root of this branch with `.nojekyll`.
+The fork's default branch owns the scheduled `Refresh work map` workflow;
+there is no package install, bundler, database, or authentication in the browser.
 
 ## Keeping the map current
 
@@ -40,7 +40,23 @@ Run this from the Pages checkout with the existing authenticated GitHub CLI:
 python3 update-status.py
 ```
 
-Run it after registry edits, then review and commit the resulting
+The scheduled [Refresh work map workflow](https://github.com/tamird/gvisor/actions/workflows/work-map.yml)
+runs every 30 minutes (GitHub may delay scheduled jobs) and also supports manual
+dispatch. It uses the repository's `GITHUB_TOKEN` to read public metadata, then
+validates it with the unchanged client validator in `metadata-preflight.mjs`.
+Only a complete, valid `github-status.json` is committed. A normal push rejects
+concurrent branch changes, preserving curated edits; scheduled and manual runs
+share one concurrency group. The token never reaches the browser. Its commit
+explicitly requests the existing Pages build because token-authored pushes do
+not trigger Pages builds automatically. Two scheduled builds per hour stay
+below Pages' soft ten-build limit; manual dispatches and source publications
+also consume that allowance. Failed collection/publication keeps the previous
+snapshot visible with its original timestamp; workflow failures are visible at
+the link above. The collector records actual GraphQL cost and remaining budget.
+
+Manual collection uses the same script and is only needed for development or
+recovery; do not run a competing periodic publisher. Run it after registry edits,
+then review and commit the resulting
 `github-status.json` with those changes. The browser requires matching registry
 dates and falls back honestly during a partial deployment. This is
 a public-data update, not a build. The script needs Python 3.10+ and `gh`; it
@@ -54,8 +70,8 @@ payload. There is a 40-request ceiling and a 200-open-PR bound.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 
-The updater is the sole GitHub status/attribute owner. Each PR records its exact
-head SHA, observation time, GitHub review decision, labels, merge state, unresolved
+The updater owns the complete GitHub status/attribute snapshot. Each PR records its exact
+head and base SHAs, observation time, GitHub review decision, labels, merge state, unresolved
 review threads, and visible check/status rollup. Nested lists are bounded to 100
 entries; incomplete thread counts, label lists, check details and import lookups
 are explicitly marked. A null review decision is **not reported**, not approval.
@@ -90,7 +106,24 @@ own returned head SHA before publication.
 
 The browser loads this single published snapshot; **Reload snapshot** downloads
 both the registry and GitHub snapshot without querying GitHub or changing the
-observation time. A tab open across a deployment adopts the matching pair
+observation time. **Check conflicts on GitHub** in selected PR details makes
+one unauthenticated public REST request, bounded to ten seconds, with a ten-second
+click cooldown. It updates conflict evidence in that tab without claiming fresh
+reviews or checks. Rate-limit/network errors retain the displayed evidence and
+link to the PR; no automatic per-PR browser polling occurs (GitHub limits
+unauthenticated REST to 60 requests/hour per IP). If the head changed, approval,
+checks and import eligibility become unavailable until full collection catches
+up. A newer full snapshot supersedes the tab's older response.
+
+Concrete mergeability observations retain head, base and time. GitHub's
+`UNKNOWN`/null response means it is computing mergeability, not that a conflict
+has cleared. The Conflicts filter retains a same-head prior conflict, explicitly
+labeled **last observed conflict** until a concrete response replaces it; details
+show the original base and date. A prior result for another head is history only.
+Older snapshots may not have recorded the base; it remains unknown. A new
+MERGEABLE result clears the conflict. No unknown response grants merge readiness.
+
+A tab open across a deployment adopts the matching pair
 together. Mismatched published revisions leave the last good view and cache
 intact, with an explicit warning; a later reload can recover. The footer
 always shows the snapshot time and warns when it is over two hours old. A local
@@ -220,9 +253,12 @@ JavaScript syntax. Use the hosted browser check to exercise search, filters,
 selection, focus, Table sorting and switching, native links, snapshot fallback, PR attributes and verified import links. Confirm
 the served registry, GitHub snapshot and source files match the published commit.
 
-GitHub Pages is configured for `gh-pages` at `/`. Keep deployments on this
-branch. Enabling Pages does not require changing the repository's default
-branch or granting additional repository access.
+GitHub Pages remains configured for `gh-pages` at `/`. Keep site deployments on
+this branch. The scheduled workflow file lives on the fork's existing default
+`master` branch because GitHub schedules only workflows there. Its job grants
+only repository contents write and Pages write, with no pull-request or access
+administration permissions. The default branch and Pages publishing mode stay
+unchanged.
 
 Views are shareable: the URL records filters, DAG/table mode, search, workstream,
 resolved visibility, selected item and dependency focus. For example,
