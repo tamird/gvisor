@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#111917">
-  <meta name="description" content="Which gVisor PR blocks the most work? Explore recorded dependency chains and a compact, sortable inventory.">
+  <meta name="description" content="Track gVisor reviews, imports, failing checks and time in each state alongside their dependencies.">
   <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=attributes-1">
-  <script src="app.js?v=snapshot-pair-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=states-1">
+  <script src="app.js?v=states-1" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -26,8 +26,11 @@
       <label id="resolved-control" class="resolved-control"><input id="show-resolved" type="checkbox"> Show resolved</label>
       <button id="toolbar-reset" class="subtle">Reset</button>
     </div>
+    <section class="state-toolbar" aria-label="Work state filters">
+      <div id="state-filters" class="state-filters" role="group" aria-label="Filter by state; select multiple to match any"></div>
+      <details class="state-help"><summary>States &amp; ages</summary><p>States can overlap. Select several to match any. Counts follow search and workstream. “Needs review” includes open PRs without a reported approval and explicit contributor review requests. “Awaiting import” means approved or ready-to-pull with no current public import. Check failures, pending checks and unknown checks remain visible; it is not a merge-readiness claim. Failing checks include CI and import checks, not necessarily tests.</p><p>“obs” shows how long ago this state was first observed on the same revision, as of the snapshot. The transition may be older; continuity between scans is unknown. Exact GitHub merge/close times have no “obs”. Ages do not come from comment or update times. Select an item for dated evidence.</p></details>
+    </section>
     <div class="workspace-body">
-      <aside id="ranking" class="ranking" aria-label="Global dependency ranking"></aside>
       <section class="work-pane" aria-label="Work inventory">
         <div class="pane-bar"><span id="visible-count">Loading…</span><span id="filter-note"></span></div>
         <section id="dag-pane" aria-label="Dependency DAG">
@@ -45,7 +48,7 @@
             <th scope="col" aria-sort="none"><button data-sort="title">Title</button></th>
             <th scope="col" class="numeric" aria-sort="descending"><button data-sort="impact" title="Unique downstream open PRs">Blocks</button></th>
             <th scope="col" class="numeric" aria-sort="none"><button data-sort="direct">Direct</button></th>
-            <th scope="col" aria-sort="none"><button data-sort="status">Status</button></th>
+            <th scope="col" aria-sort="none"><button data-sort="age" title="Sort by oldest matching state at the snapshot">State · age</button></th>
             <th scope="col" aria-sort="none"><button data-sort="review">Review</button></th>
             <th scope="col" aria-sort="none"><button data-sort="checks">PR checks</button></th>
             <th scope="col">Import · own checks</th>

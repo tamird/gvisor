@@ -8,12 +8,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from work_states import record_states
+
 
 ROOT = Path(__file__).resolve().parent
 REGISTRY = json.loads((ROOT / "registry.json").read_text())
 REPO = REGISTRY["meta"]["repo"]
 OWNER = REGISTRY["meta"]["owner"]
-CHECKED_AT = datetime.now(timezone.utc).isoformat()
 REQUEST_LIMIT = 40
 PR_BATCH_SIZE = 8
 requests = 0
@@ -29,7 +30,7 @@ commits(last:1) { nodes { commit { oid statusCheckRollup {
 } } } }
 """
 FIELDS = """
-number title url state isDraft headRefName headRefOid updatedAt createdAt
+number title url state isDraft headRefName headRefOid updatedAt createdAt mergedAt closedAt
 headRepository { owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
@@ -138,7 +139,8 @@ def normalize(pr: dict) -> dict:
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
         "ref": pr["headRefName"], "head": pr["headRefOid"],
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
-        "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"], "checkedAt": CHECKED_AT,
+        "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
+        "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
         "reviewDecision": pr["reviewDecision"], "mergeable": pr["mergeable"],
         "mergeState": pr["mergeStateStatus"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
@@ -188,6 +190,8 @@ def main() -> None:
         previous = json.loads(output.read_text())
         if previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER:
             numbers.update(pr["number"] for pr in previous["prs"] if isinstance(pr.get("number"), int))
+        else:
+            previous = {}
     cursor = None
     open_numbers = set()
     total = None
@@ -256,8 +260,15 @@ def main() -> None:
             if value and value["issue"]:
                 issue = value["issue"]
                 issues[issue_ids[alias]] = {"githubState": issue["state"].lower(), "updatedAt": issue["updatedAt"]}
-    snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": CHECKED_AT,
+    # A merge can occur while these bounded requests are in flight. Stamp the
+    # completed observation, so its exact transition never appears in the future.
+    checked_at = datetime.now(timezone.utc).isoformat()
+    for source in prs:
+        for item in (source, *source["imports"]):
+            item["checkedAt"] = checked_at
+    snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "prs": prs, "issues": issues,
+                "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "nestedPageSize": 100, "maxOpenPRs": 200}}
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")

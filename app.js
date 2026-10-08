@@ -3,8 +3,14 @@
 const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
+const UI_KEY = "gvisor-work-map-view-v1";
+const STATE_LABELS = { review: "Needs review", "changes-requested": "Changes requested",
+  "awaiting-import": "Awaiting import", importing: "Importing", failing: "Failing checks",
+  "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
+const FILTER_STATES = ["review", "awaiting-import", "importing", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
+let stateFilters = new Set();
 const STALE_AGE = 2 * 60 * 60 * 1000;
-const CARD = { width: 216, height: 58, column: 264, row: 72 };
+const CARD = { width: 216, height: 70, column: 264, row: 84 };
 const READABLE_SCALE = .9;
 let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
@@ -158,11 +164,6 @@ function impact(id) {
   return { direct: direct.size, prs: [...seen].filter((other) => nodes.get(other)?.type === "pr").length,
     branches: [...seen].filter((other) => nodes.get(other)?.type === "branch").length };
 }
-function rankedPRs() {
-  return model.nodes.filter((node) => node.type === "pr" && !resolved(node))
-    .map((node) => ({ node, reach: impact(node.id) }))
-    .sort((a, b) => b.reach.prs - a.reach.prs || b.reach.direct - a.reach.direct || a.node.number - b.node.number);
-}
 function components() {
   const edges = activeDependencyEdges(), remaining = new Set(edges.flatMap((edge) => [edge.from, edge.to])), result = [];
   const nodes = nodeMap();
@@ -180,19 +181,80 @@ function components() {
   }
   return result.sort((a, b) => b.score - a.score || b.ids.size - a.ids.size);
 }
-function matches(node) {
+function matchesBase(node) {
   const search = $("search").value.trim().toLowerCase(), group = $("group-filter").value;
   return (!group || node.group === group) && (!search || `${label(node)} ${node.title} ${node.number || ""} ${node.ref || ""} ${node.summary || ""}`.toLowerCase().includes(search));
 }
+function states(node) { return node.workStates || {}; }
+function matches(node) {
+  return matchesBase(node) && (!model.statesAvailable || !stateFilters.size || [...stateFilters].some((state) => states(node)[state]));
+}
+function filtered() { return $("search").value.trim() || $("group-filter").value || (model.statesAvailable && stateFilters.size); }
+function age(record) {
+  if (record.basis === "unknown") return "age unknown";
+  const minutes = Math.max(0, Math.floor((Date.parse(model.checkedAt || new Date().toISOString()) - Date.parse(record.since)) / 60000));
+  const duration = minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
+  return `${record.basis === "observed" ? "obs " : ""}${duration}`;
+}
+function stateTitle(state, record) {
+  if (record.basis === "unknown") return `${STATE_LABELS[state]} · Revision not recorded; state age unknown.`;
+  return `${STATE_LABELS[state]} · ${record.basis === "observed" ? "Observed since" : "Transition recorded"} ${date(record.since)}. ${record.basis === "observed" ? "First observation in the retained interval; the state may have begun earlier. Continuity between snapshots is unknown." : "GitHub transition timestamp."}`;
+}
+function appendStates(parent, node, detail = false) {
+  for (const [state, record] of Object.entries(states(node))) {
+    const item = element("span", `work-state ${state}`, `${STATE_LABELS[state]} ${age(record)}${record.qualifier ? " · " + record.qualifier : ""}`);
+    item.title = stateTitle(state, record);
+    if (detail && record.basis !== "unknown") item.append(element("small", "state-origin", `${record.basis === "observed" ? "Observed since" : "Since"} ${date(record.since)}`));
+    parent.append(item);
+  }
+}
+function drawStateFilters() {
+  const counts = new Map(FILTER_STATES.map((state) => [state, 0]));
+  const candidates = model.nodes.filter((node) => matchesBase(node) && !resolved(node));
+  for (const node of candidates) for (const state of Object.keys(states(node))) if (counts.has(state)) counts.set(state, counts.get(state) + 1);
+  for (const control of $("state-filters").querySelectorAll("button")) {
+    const state = control.dataset.state;
+    control.setAttribute("aria-pressed", state ? stateFilters.has(state) : !stateFilters.size);
+    control.textContent = state ? `${STATE_LABELS[state]} ${model.statesAvailable ? counts.get(state) : "—"}` : `All ${model.nodes.filter((node) => matchesBase(node) && (!resolved(node) || $("show-resolved").checked)).length}`;
+    control.disabled = Boolean(state && !model.statesAvailable);
+  }
+}
+function stateAge(node) {
+  const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
+  return records.length ? Math.max(...records.map(([, record]) => Date.parse(model.checkedAt) - Date.parse(record.since))) : -1;
+}
+function saveView() {
+  try { localStorage.setItem(UI_KEY, JSON.stringify({ view, stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
+    search: $("search").value, group: $("group-filter").value, resolved: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
+}
+function restoreView() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(UI_KEY));
+    if (!saved) return false;
+    // A new deep link owns its focus and initial fit, rather than inheriting
+    // another item's camera or filters from the previous visit.
+    if (location.hash && decodeURIComponent(location.hash.slice(1)) !== saved.selected) return false;
+    view = saved.view === "table" ? "table" : "dag";
+    stateFilters = new Set((saved.stateFilters || []).filter((state) => FILTER_STATES.includes(state)));
+    $("search").value = typeof saved.search === "string" ? saved.search : "";
+    $("group-filter").value = typeof saved.group === "string" ? saved.group : "";
+    $("show-resolved").checked = saved.resolved === true;
+    selected = saved.selected || null; focus = saved.focus || null;
+    if ([saved.camera?.x, saved.camera?.y, saved.camera?.scale].every(Number.isFinite) && saved.camera.scale >= .12 && saved.camera.scale <= 2.5) camera = saved.camera;
+    if ([...document.querySelectorAll("[data-sort]")].some((control) => control.dataset.sort === saved.sortKey)) sortKey = saved.sortKey;
+    sortDirection = saved.sortDirection === 1 ? 1 : -1;
+    return true;
+  } catch { return false; }
+}
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
 function graphNodes() {
-  const chains = components(), filtering = $("search").value.trim() || $("group-filter").value;
+  const chains = components(), filtering = filtered();
   if (!filtering && !focus) return tableNodes();
   const ids = new Set((filtering ? tableNodes() : model.nodes.filter((node) => node.id === focus)).map((node) => node.id));
   for (const chain of chains) if ([...chain.ids].some((id) => ids.has(id))) for (const id of chain.ids) ids.add(id);
   return model.nodes.filter((node) => ids.has(node.id));
 }
-function applyCamera() { $("graph-content").setAttribute("transform", `translate(${camera.x},${camera.y}) scale(${camera.scale})`); }
+function applyCamera() { $("graph-content").setAttribute("transform", `translate(${camera.x},${camera.y}) scale(${camera.scale})`); saveView(); }
 function resetCamera(fit = true, overview = false) {
   if (view !== "dag") return;
   const box = $("graph-stage").getBoundingClientRect();
@@ -294,7 +356,7 @@ function drawGraph(nodes) {
       "data-from": edge.from, "data-to": edge.to }));
   }
   content.append(edges);
-  const filtering = $("search").value.trim() || $("group-filter").value;
+  const filtering = filtered();
   for (const node of nodes) {
     const pos = positions.get(node.id);
     const group = svg("g", { class: `node ${node.type}${selected === node.id ? " selected" : ""}${filtering && !matches(node) ? " context-node" : ""}`,
@@ -310,7 +372,12 @@ function drawGraph(nodes) {
         card.append(svg("text", { class: `node-attribute ${info.tone}`, x, y: 15, "aria-hidden": "true" }, `${prefix}${info.glyph}`));
       }
     }
-    card.append(svg("title", {}, `${node.title}\n${status(node)}${node.type === "pr" ? "\n" + attributeTitle(node) : ""}`));
+    const entries = Object.entries(states(node));
+    const primary = entries.find(([state]) => stateFilters.has(state)) || entries[0];
+    const stateLine = primary ? `${STATE_LABELS[primary[0]]} ${age(primary[1])}${entries.length > 1 ? ` · +${entries.length - 1}` : ""}` : status(node);
+    card.append(svg("text", { class: "node-state", x: 10, y: 61 }, wrap(stateLine, 35, 1)[0]));
+    card.setAttribute("aria-label", `${label(node)}: ${node.title}. ${entries.map(([state, record]) => stateTitle(state, record)).join(" ")} Select details.`);
+    card.append(svg("title", {}, `${node.title}\n${status(node)}\n${Object.entries(states(node)).map(([state, record]) => stateTitle(state, record)).join("\n")}${node.type === "pr" ? "\n" + attributeTitle(node) : ""}`));
     card.addEventListener("click", () => { if (!moved) select(node.id); });
     card.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) { event.preventDefault(); event.stopPropagation(); select(node.id); } });
     group.append(card);
@@ -331,7 +398,7 @@ function drawTable(nodes) {
   }
   const groups = new Map(model.groups.map((group) => [group.id, group.label]));
   const value = (node) => ({ impact: impact(node.id).prs, direct: impact(node.id).direct, title: node.title,
-    status: status(node), review: node.type === "pr" ? reviewInfo(node.github).text : "", checks: node.type === "pr" ? checkInfo(node.github).text : "",
+    age: stateAge(node), status: status(node), review: node.type === "pr" ? reviewInfo(node.github).text : "", checks: node.type === "pr" ? checkInfo(node.github).text : "",
     group: groups.get(node.group) || "", number: node.number || 0 })[sortKey];
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
   for (const node of nodes) {
@@ -340,7 +407,8 @@ function drawTable(nodes) {
     identity.append(link(label(node), node.url));
     const choose = button(node.title, () => select(node.id)); choose.dataset.node = node.id;
     title.append(choose);
-    const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell", status(node));
+    const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
+    state.append(element("span", "base-status", status(node))); appendStates(state, node);
     if (node.type === "pr") {
       review.append(badge(reviewInfo(node.github), attributeTitle(node)));
       checks.append(badge(checkInfo(node.github), node.github ? `Original PR head ${node.github.head.slice(0, 9)}. ${checkInfo(node.github).detail}` : "No published check data."));
@@ -362,6 +430,7 @@ function drawDetails() {
   if (node.summary) details.append(element("p", "detail-description", node.summary));
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
   if (node.type === "issue") details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
+  const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
   appendAttributes(details, node);
   const relations = [
     ["Requires", model.edges.filter((edge) => edge.to === node.id && edge.type !== "includes"), "from"],
@@ -383,7 +452,7 @@ function drawDetails() {
     details.append(section);
   }
   const chain = components().find((chain) => chain.ids.has(node.id));
-  const focused = view === "dag" && focus && (chain ? chain.ids.has(focus) : focus === node.id) && !$("search").value.trim() && !$("group-filter").value;
+  const focused = view === "dag" && focus && (chain ? chain.ids.has(focus) : focus === node.id) && !filtered();
   const focusButton = button(focused ? (chain ? "Showing this dependency chain" : "Showing this item") :
     (chain ? "Focus dependency chain" : "Focus item in DAG"), () => focusWork(node.id), "focus-button");
   focusButton.id = "focus-work"; focusButton.disabled = Boolean(focused); details.append(focusButton);
@@ -396,28 +465,8 @@ function select(id) {
   if (previous) document.querySelector(`${view === "dag" ? "#graph" : "#work-table"} [data-node="${CSS.escape(previous)}"]`)?.focus();
 }
 function focusWork(id) {
-  focus = id; selected = id; $("search").value = ""; $("group-filter").value = "";
+  focus = id; selected = id; $("search").value = ""; $("group-filter").value = ""; stateFilters.clear();
   history.replaceState(null, "", `#${encodeURIComponent(id)}`); setView("dag");
-}
-function drawRanking() {
-  const panel = $("ranking"); panel.replaceChildren();
-  panel.append(element("h2", "", "Most blocking PRs"), element("p", "ranking-explainer", "Unique downstream open PRs"));
-  const ranked = rankedPRs();
-  for (const {node, reach} of ranked.filter((item) => item.reach.prs > 0).slice(0, 5)) {
-    const row = element("div", "rank-row"), choose = button("", () => focusWork(node.id), "rank-choice");
-    choose.dataset.rank = node.id;
-    choose.append(element("span", "rank-number", label(node)), element("span", "rank-title", node.title), element("span", "rank-direct", `${reach.direct} direct`));
-    row.append(choose, element("strong", "rank-value", reach.prs)); panel.append(row);
-  }
-  panel.append(element("p", "ranking-note", "Counts are global. Drafts count; resolved prerequisites cut paths. Integration membership is excluded."));
-  const zero = ranked.filter((item) => !item.reach.prs).length;
-  panel.append(button(`${zero} PRs block no recorded PRs → Table`, () => { resetFilters(false); setView("table"); }, "table-link"));
-  const external = model.nodes.filter((node) => node.type === "issue" && activeDependencyEdges().some((edge) => edge.from === node.id));
-  if (external.length) {
-    panel.append(element("h3", "", "External capacity"));
-    for (const node of external) panel.append(button(node.title, () => focusWork(node.id), "external-rank"));
-    panel.append(element("p", "ranking-note", "Issue status does not establish deployment."));
-  }
 }
 function drawChainSelector() {
   const select = $("chain-filter"); select.replaceChildren();
@@ -427,38 +476,39 @@ function drawChainSelector() {
   const isolated = !chain && nodeMap().get(focus);
   if (isolated) { const option = element("option", "", `${label(isolated)} · ${isolated.title}`); option.value = isolated.id; select.append(option); }
   select.value = chain?.id || isolated?.id || "";
-  select.disabled = Boolean($("search").value.trim() || $("group-filter").value);
+  select.disabled = Boolean(filtered());
 }
 function render(reposition = false) {
   const dag = view === "dag";
-  $("dag-pane").hidden = !dag; $("table-pane").hidden = dag; $("ranking").hidden = !dag;
+  $("dag-pane").hidden = !dag; $("table-pane").hidden = dag;
   $("dag-view").setAttribute("aria-pressed", dag); $("table-view").setAttribute("aria-pressed", !dag);
   $("chain-control").hidden = !dag;
   const nodes = dag ? graphNodes() : tableNodes();
   $("visible-count").textContent = dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
-  $("filter-note").textContent = dag && ($("search").value.trim() || $("group-filter").value) ? "Matches with dependency context" : "";
+  $("filter-note").textContent = !model.statesAvailable ? "State history unavailable in this snapshot" : dag && filtered() ? "Matches with dependency context" : "";
   $("empty").hidden = nodes.length !== 0;
-  drawDetails();
-  if (dag) { drawGraph(nodes); drawRanking(); drawChainSelector(); } else drawTable(nodes);
+  drawDetails(); drawStateFilters();
+  if (dag) { drawGraph(nodes); drawChainSelector(); } else drawTable(nodes);
   $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items`;
   if (reposition) resetCamera();
+  saveView();
 }
 function setFreshness(text, warning = false, live = false) {
   $("freshness-text").textContent = text;
   $("freshness-dot").className = `status-dot${warning ? " warning" : live ? " live" : ""}`;
 }
 function applyLive(snapshot, nextRegistry = registry) {
-  const scrollPositions = ["table-pane", "details", "ranking"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
+  const scrollPositions = ["table-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openChecks = new Set([...$("details").querySelectorAll(".check-details[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
-  const nodes = registry.nodes.map((node) => ({ ...node })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
+  const nodes = registry.nodes.map((node) => ({ ...node, workStates: snapshot.workStates?.[node.id] || {} })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
   for (const pr of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const id = `pr:${pr.number}`, existing = ids.get(id);
     const branch = pr.ref ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === `${registry.meta.owner}/gvisor`) : null;
     const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
       status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
-      github: pr.head ? pr : existing?.github };
+      workStates: snapshot.workStates?.[id] || {}, github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
     }
@@ -467,7 +517,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   for (const node of nodes) if (snapshot.issues?.[node.id]) Object.assign(node, snapshot.issues[node.id]);
   const edges = registry.edges.map((edge) => ({ ...edge, from: aliases.get(edge.from) || edge.from, to: aliases.get(edge.to) || edge.to }))
     .filter((edge, index, all) => edge.from !== edge.to && all.findIndex((other) => other.from === edge.from && other.to === edge.to && other.type === edge.type) === index);
-  model = { ...registry, nodes: nodes.filter((node) => !aliases.has(node.id)), edges,
+  model = { ...registry, checkedAt: snapshot.checkedAt, statesAvailable: Boolean(snapshot.workStates), nodes: nodes.filter((node) => !aliases.has(node.id)), edges,
     groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
   if (aliases.has(selected)) selected = aliases.get(selected);
   if (aliases.has(focus)) focus = aliases.get(focus);
@@ -503,6 +553,17 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
   if (snapshot?.schema !== 1 || snapshot.repo !== nextRegistry.meta.repo || snapshot.owner !== nextRegistry.meta.owner ||
       !Number.isFinite(Date.parse(snapshot.checkedAt)) || !Array.isArray(snapshot.prs) || !snapshot.issues) throw new Error("Invalid GitHub snapshot");
   if (snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
+  if (snapshot.workStates !== undefined) {
+    if (!snapshot.workStates || Array.isArray(snapshot.workStates) || typeof snapshot.workStates !== "object") throw new Error("Invalid state history");
+    for (const records of Object.values(snapshot.workStates)) {
+      if (!records || Array.isArray(records) || typeof records !== "object") throw new Error("Invalid state records");
+      for (const [state, record] of Object.entries(records)) {
+        if (!Object.hasOwn(STATE_LABELS, state) || !record || !["observed", "transition", "unknown"].includes(record.basis) ||
+            (record.basis === "unknown" ? record.scope !== null || record.since !== null :
+              typeof record.scope !== "string" || !Number.isFinite(Date.parse(record.since)) || Date.parse(record.since) > Date.parse(snapshot.checkedAt)) || (record.qualifier != null && typeof record.qualifier !== "string")) throw new Error("Invalid state observation");
+      }
+    }
+  }
   const numbers = new Set();
   for (const pr of snapshot.prs) {
     if (!Number.isInteger(pr.number) || numbers.has(pr.number) || !Array.isArray(pr.imports)) throw new Error("Invalid PR inventory");
@@ -539,23 +600,32 @@ async function refresh(force = false) {
     applyLive(snapshot, nextRegistry);
     try { localStorage.setItem(CACHE_KEY, JSON.stringify(snapshot)); } catch { /* Storage is optional. */ }
   } catch (error) {
-    setFreshness(`Snapshot unavailable · ${error.message}. Keeping the last displayed data.`, true);
+    setFreshness(`Snapshot unavailable · ${error.message}. ${model.checkedAt ? `Keeping snapshot from ${date(model.checkedAt)}.` : "Keeping the registry; no GitHub snapshot is available."}`, true);
   } finally { refreshing = false; $("refresh").disabled = false; }
 }
 
 function setView(next) { view = next; render(true); }
 function resetFilters(redraw = true) {
-  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null;
+  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; stateFilters.clear();
   if (redraw) render(true);
 }
 function initialize() {
+  for (const state of ["", ...FILTER_STATES]) {
+    const control = button("", () => {
+      if (!state) stateFilters.clear();
+      else if (stateFilters.has(state)) stateFilters.delete(state);
+      else stateFilters.add(state);
+      render(true);
+    });
+    control.dataset.state = state; $("state-filters").append(control);
+  }
   $("search").addEventListener("input", () => render(true));
   for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => render(true));
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; history.replaceState(null, "", location.pathname + location.search); render(true); });
   for (const next of ["dag", "table"]) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
   document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => {
-    const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number"].includes(next) ? -1 : 1; sortKey = next; render();
+    const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number", "age"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
   $("refresh").addEventListener("click", () => refresh(true));
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
@@ -595,7 +665,7 @@ async function start() {
     updateRegistryControls();
     selected = decodeURIComponent(location.hash.slice(1)) || null;
     focus = selected && model.nodes.some((node) => node.id === selected) ? selected : null;
-    initialize(); render(true); refresh();
+    initialize(); const restored = restoreView(); render(!restored); refresh();
   } catch (error) { $("visible-count").textContent = "Registry unavailable"; setFreshness(error.message, true); }
 }
 start();

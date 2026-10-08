@@ -49,8 +49,8 @@ PRs, previously discovered/tracked closed PRs, and linked capacity issues.
 Previously discovered PR identities stay in the snapshot after closure, so a
 promoted branch does not reappear. One measured update fetched
 81 original PRs and ten verified import PRs in 21 requests. PR detail
-queries use batches of five to limit the combined check, review and timeline
-payload. There is a 32-request ceiling and a 200-open-PR bound.
+queries use batches of eight to limit the combined check, review and timeline
+payload. There is a 40-request ceiling and a 200-open-PR bound.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 
@@ -124,24 +124,55 @@ For an independent item, **Focus item in DAG** shows that item. The action is
 labeled as already showing the chain or item when it is focused. Choose
 **All work** or Reset to restore the complete graph.
 
-The compact **Most blocking PRs** rail counts unique downstream open PRs,
-including drafts, over the complete active model. Filters and chain selection
-do not alter these counts. A diamond counts a descendant only once. The direct
-count is separate; `includes` membership never contributes. Merged and closed
-PRs, and explicitly resolved blockers, cut paths. A closed provider issue whose
-deployment is unverified remains a blocker. External capacity is listed
-separately; branch-only work does not inflate PR counts. Reach is not severity,
-effort, or merge readiness.
+Blocking reach remains on graph cards, in the table and in item details. It
+counts unique downstream open PRs over active dependency edges, including
+drafts; integration membership does not contribute. This is not a severity,
+effort or merge-readiness score. There is no separate ranking section.
+
+The state filters overlap: select several to match any. Counts follow search
+and workstream, independently of the other state buttons. The collector owns
+these classifications in `work_states.py`, and the UI consumes its snapshot:
+
+- **Needs review:** an open, nondraft PR without approval or changes requested,
+  including GitHub's null review decision (no approval reported); also an
+  explicitly curated contributor review request for a working branch.
+- **Changes requested**, **Draft** and **Conflicts:** the corresponding verified
+  GitHub attributes. Drafts do not enter the review or awaiting-import filters.
+- **Awaiting import:** approval or a complete `ready to pull` label observation,
+  no changes requested, and a complete import lookup without an active or merged
+  exact-source import. Its check qualifier preserves passing, failing, pending
+  or unknown checks. This is waiting work, not a claim of import readiness.
+- **Importing:** an open verified Copybara PR for the current source revision.
+  Older-source imports remain visible in details but do not establish this state.
+- **Failing checks** and **Checks pending:** current source or active exact-source
+  import checks. These include CI/infrastructure checks, not just tests. A stale
+  import failure stays in details without making the current source fail.
+
+`workStates` stores each current state's scope, `since` and `basis`. Observed
+ages use the first retained observation of the same state and revision, not
+`updatedAt`, comments or refresh time. `obs` marks the age of the first observation as of the snapshot;
+continuity between scans is unknown. A state ending or its scoped revision changing
+starts a new interval. The first migration may reuse the immediately preceding
+verified PR snapshot, but does not invent historical branch transitions. This deployment also seeds
+observation dates from a bounded 96-commit history, stopping at each first
+state or revision mismatch and retaining its source snapshot URL.
+A branch without a recorded revision has unknown age.
+GitHub's explicit merge/close timestamps are marked exact. Older snapshots
+without this optional field remain readable, with state filters disabled and
+an explicit history-unavailable message. No status is guessed in the browser.
+
+The table shows every current state and its age; click **State · age** to sort
+by the oldest matching state. DAG cards show one compact state/age row (`+N`
+indicates additional states); details show all states and dated evidence.
 
 **Table** contains all tracked work, including isolated PRs and branches. It
-starts sorted by blocking reach; click the Item, Title, Blocks, Direct, Status,
+starts sorted by blocking reach; click the Item, Title, Blocks, Direct, State · age,
 Review, PR checks, or Workstream heading to change sort order. Click the item identifier to open
 its source, or its title to inspect details. Details consume space only while
 an item is selected and preserve all curated relationships, including integration
 membership, reasons, and evidence links. The compact Review, PR checks and
 Import columns expose the PR snapshot; details include labels, merge conflicts,
-review threads, exact revisions and each import’s own checks. DAG cards keep
-their height: small R/C indicators and hover text summarize review/check state.
+review threads, exact revisions and each import’s own checks. DAG cards retain small R/C indicators and hover text for review/check state.
 
 Search titles, numbers, refs, or summaries; filter by workstream. In DAG, matching
 chains retain their dependency context, and independent matches appear as nodes. The visible ↗ on every node is a native source anchor,
@@ -151,7 +182,8 @@ selection, with an adjacent source link.
 
 Drag the graph to pan; use arrow keys with the graph focused, zoom controls,
 or Control/Command + wheel. `/` focuses search and Escape closes details.
-Selection is stored in the URL fragment. A recorded cycle is reported instead
+Selection is stored in the URL fragment; optional local storage also retains
+view, filters, sort, focus and camera across a browser reload. A recorded cycle is reported instead
 of inventing a topological order. HTML references versioned JS and CSS URLs so
 a redesigned document does not reuse stale assets from an earlier layout.
 
