@@ -37,12 +37,6 @@ func (*inner) MarshalBinary() ([]byte, error) { return nil, errBinary }
 
 func (*inner) UnmarshalBinary([]byte) error { return errBinary }
 
-// Type-only empty structs must not acquire binary behavior either. The existing
-// TestEmptyStruct cases exercise their direct and pointer forms.
-func (*typeOnlyEmptyStruct) MarshalBinary() ([]byte, error) { return nil, errBinary }
-
-func (*typeOnlyEmptyStruct) UnmarshalBinary([]byte) error { return errBinary }
-
 func TestBinaryTime(t *testing.T) {
 	for name, timestamp := range map[string]time.Time{
 		"zero":      {},

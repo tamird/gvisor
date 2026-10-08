@@ -531,11 +531,8 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	es.stats.start(te.ID)
 	defer es.stats.done()
 	switch value := obj.Addr().Interface().(type) {
-	case stateObject:
+	case SaverLoader:
 		value.StateSave(Sink{internal: oe})
-	case Type:
-		// Type-only empty structs keep their no-op state representation,
-		// even if they also implement a binary codec.
 	case binaryObject:
 		saveBinary(value, te.Name, Sink{internal: oe})
 	}

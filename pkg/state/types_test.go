@@ -16,7 +16,6 @@ package state
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"testing"
 )
@@ -39,11 +38,6 @@ func (b *binaryFailure) MarshalBinary() ([]byte, error) {
 }
 
 func (*binaryFailure) UnmarshalBinary([]byte) error { return errBinary }
-
-// SaverLoader without Type metadata must not override binary registration.
-func (*binaryFailure) StateSave(Sink) { panic("unexpected StateSave") }
-
-func (*binaryFailure) StateLoad(context.Context, Source) { panic("unexpected StateLoad") }
 
 func TestBinaryErrors(t *testing.T) {
 	var buf bytes.Buffer

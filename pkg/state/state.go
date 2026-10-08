@@ -203,8 +203,7 @@ type Type interface {
 	// Fields is the set of fields for the object. Calls to Sink.Save and
 	// Source.Load must be made in-order with respect to these fields.
 	//
-	// The field list must be stable for the type. Register snapshots it for
-	// subsequent save and load operations.
+	// The field list must be stable for the type.
 	StateFields() []string
 }
 
