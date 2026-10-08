@@ -29,11 +29,13 @@ go_test(
     srcs = [
         "array_test.go",
         "bench_test.go",
+        "binary_test.go",
         "bool_test.go",
         "float_test.go",
         "integer_test.go",
         "load_test.go",
         "map_test.go",
+        "netip_test.go",
         "register_test.go",
         "string_test.go",
         "struct_test.go",

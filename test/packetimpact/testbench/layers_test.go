@@ -156,7 +156,7 @@ func TestLayerAddresses(t *testing.T) {
 				if err != nil {
 					t.Fatalf("IPv%d.ToBytes: %v", version, err)
 				}
-				var src, dst tcpip.Address
+				var src, dst netip.Addr
 				if version == 4 {
 					h := header.IPv4(got)
 					src, dst = h.SourceAddress(), h.DestinationAddress()

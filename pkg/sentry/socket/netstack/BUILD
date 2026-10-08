@@ -83,6 +83,12 @@ go_test(
     srcs = ["stack_test.go"],
     deps = [
         ":netstack",
+        "//pkg/abi/linux",
+        "//pkg/context",
+        "//pkg/marshal/primitive",
+        "//pkg/sentry/socket/netlink/nlmsg",
+        "//pkg/syserr",
+        "//pkg/tcpip",
         "//pkg/tcpip/link/channel",
         "//pkg/tcpip/stack",
     ],

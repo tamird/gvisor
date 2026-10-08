@@ -372,8 +372,8 @@ func (l *IPv4) ToBytes() ([]byte, error) {
 		TTL:            64,
 		Protocol:       0,
 		Checksum:       0,
-		SrcAddr:        tcpip.Address{},
-		DstAddr:        tcpip.Address{},
+		SrcAddr:        netip.Addr{},
+		DstAddr:        netip.Addr{},
 		Options:        nil,
 	}
 	if l.TOS != nil {
@@ -475,25 +475,25 @@ func Address(v netip.Addr) *netip.Addr {
 }
 
 // ipv4Address converts an optional layer address to its exact wire family.
-func ipv4Address(addr *netip.Addr) (tcpip.Address, error) {
+func ipv4Address(addr *netip.Addr) (netip.Addr, error) {
 	if addr == nil || !addr.IsValid() {
-		return tcpip.Address{}, nil
+		return netip.Addr{}, nil
 	}
 	if !addr.Is4() {
-		return tcpip.Address{}, fmt.Errorf("IPv4 layer requires an IPv4 address, got %s", addr)
+		return netip.Addr{}, fmt.Errorf("IPv4 layer requires an IPv4 address, got %s", addr)
 	}
-	return tcpip.AddrFrom4(addr.As4()), nil
+	return *addr, nil
 }
 
 // ipv6Address converts an optional layer address to its exact wire family.
-func ipv6Address(addr *netip.Addr) (tcpip.Address, error) {
+func ipv6Address(addr *netip.Addr) (netip.Addr, error) {
 	if addr == nil || !addr.IsValid() {
-		return tcpip.Address{}, nil
+		return netip.Addr{}, nil
 	}
 	if !addr.Is6() || addr.Zone() != "" {
-		return tcpip.Address{}, fmt.Errorf("IPv6 layer requires an unzoned IPv6 address, got %s", addr)
+		return netip.Addr{}, fmt.Errorf("IPv6 layer requires an unzoned IPv6 address, got %s", addr)
 	}
-	return tcpip.AddrFrom16(addr.As16()), nil
+	return *addr, nil
 }
 
 // parseIPv4 parses the bytes assuming that they start with an ipv4 header and

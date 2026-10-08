@@ -16,7 +16,32 @@ package tests
 
 import (
 	"context"
+	"net/netip"
+	"time"
 )
+
+// +stateify savable
+type netipContainer struct {
+	address         netip.Addr
+	prefix          netip.Prefix
+	addressPort     netip.AddrPort
+	addressPointer  *netip.Addr
+	prefixPointer   *netip.Prefix
+	addrPortPointer *netip.AddrPort
+	addresses       []netip.Addr
+	prefixes        []netip.Prefix
+	addressPorts    []netip.AddrPort
+	byAddress       map[netip.Addr]int
+	byPrefix        map[netip.Prefix]int
+	byAddressPort   map[netip.AddrPort]int
+	values          []any
+}
+
+// +stateify savable
+type timeContainer struct {
+	timestamp time.Time
+	pointer   *time.Time
+}
 
 type unregisteredEmptyStruct struct{}
 
