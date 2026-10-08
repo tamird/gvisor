@@ -41,7 +41,7 @@ image-source lanes; unavailable workers are reported before execution.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
-and AMD64 KVM package/integration tests, KVM syscalls, nftables, Moby,
+and AMD64 KVM package/integration tests, KVM syscalls, nftables, Moby, PHP,
 plugin-network and startup/posture/portforward/root/benchmarks.
 With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
 ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
@@ -107,8 +107,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM package/integration/syscall tests, nftables/Moby/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -945,6 +945,25 @@ run_lane() (
       fi
       language_test_options
       shared_test_targets "$lane" "$arch"
+      if [[ $test_execution == local ]]; then
+        # This fork qualification covers both public PHP filesystem modes in
+        # one invocation, sharing the current source-built image. Preserve each
+        # mode's two public partitions and the owning rules' four shards.
+        local selection_dir=${RUNNER_TEMP:?}/qualification/php-selection
+        mkdir -p "$selection_dir" || return
+        bazel query 'tests(//test/runtimes:php8.5.11_directfs_owned) union tests(//test/runtimes:php8.5.11_goferfs_owned)' \
+          --output=label > "$selection_dir/canonical-targets" || return
+        LC_ALL=C sort "$selection_dir/canonical-targets" > "$selection_dir/selected-targets" || return
+        printf '%s\n' \
+          '//test/runtimes:php8.5.11_directfs_1_owned' \
+          '//test/runtimes:php8.5.11_directfs_2_owned' \
+          '//test/runtimes:php8.5.11_goferfs_1_owned' \
+          '//test/runtimes:php8.5.11_goferfs_2_owned' \
+          > "$selection_dir/expected-targets" || return
+        diff -u "$selection_dir/expected-targets" "$selection_dir/selected-targets" || return
+        mapfile -t targets < "$selection_dir/selected-targets"
+        options+=(--runs_per_test=1)
+      fi
       ;;
     kubernetes)
       if [[ $arch != amd64 ]]; then
@@ -1005,12 +1024,16 @@ run_lane() (
     options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
-        plugin-network|nftables|moby|kvm|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
+        plugin-network|nftables|moby|kvm|language-goferfs|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
           # Each owned daemon needs separate firewall state. The fixture
           # can attach this private namespace to the job's bridge.
           docker_test_options
+          if [[ $lane == language-goferfs ]]; then
+            # Keep CPU-heavy PHP shards from competing on the same host.
+            options+=(--local_test_jobs=1)
+          fi
           options+=(--strategy=TestRunner=docker --run_under=//test/rbe:docker_setup)
-          if [[ $lane == moby || $lane == kvm || $lane == benchmarks || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
+          if [[ $lane == language-goferfs || $lane == moby || $lane == kvm || $lane == benchmarks || $lane == docker || $lane == cpu-images || $lane == gpu-images ]]; then
             options+=(
               --sandbox_add_mount_pair=/var/run/docker.sock:/run/gvisor-host-docker.sock
               "--test_env=GVISOR_DOCKER_NETWORK=${GVISOR_DOCKER_NETWORK:?Run local Docker tests through test/rbe/actions.sh}"
