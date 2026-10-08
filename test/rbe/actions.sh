@@ -112,9 +112,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           continue
         fi
         if [[ $argument == build || $argument == test ]]; then
-          evidence=(
-            "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
-          )
+          if [[ -n ${QUALIFICATION_PHASE:-} ]]; then
+            [[ $QUALIFICATION_PHASE =~ ^[a-z0-9-]+$ ]] || return 2
+            evidence=("--execution_log_compact_file=$RUNNER_TEMP/qualification/iperf/$QUALIFICATION_PHASE.binpb")
+          else
+            evidence=(
+              "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
+            )
+          fi
         fi
         break
       done
@@ -133,6 +138,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       id
       printf 'page_size=%s\n' "$(getconf PAGESIZE)"
       printf 'logical_cpus=%s\n' "$(getconf _NPROCESSORS_ONLN)"
+      lscpu
+      awk '$1 == "MemTotal:" { print }' /proc/meminfo
       df -h "$PWD"
       ps -p 1 -o comm=
       stat -fc 'cgroup_filesystem=%T' /sys/fs/cgroup
