@@ -70,7 +70,7 @@ func (f *fieldStruct) synthesize(s string, typ types.Type, _ *lockState) (string
 		// Should not happen as long as fieldList construction is correct.
 		panic(fmt.Sprintf("unable to resolve field %d in %s", f.Field, typ.String()))
 	}
-	return fmt.Sprintf("&(%s.%s)", s, field.Name()), field
+	return fieldKey(s, field), field
 }
 
 // fieldStructPtr is a pointer struct element.
@@ -85,7 +85,7 @@ func (f *fieldStructPtr) synthesize(s string, typ types.Type, ls *lockState) (st
 		// See above, this should not happen.
 		panic(fmt.Sprintf("unable to resolve ptr field %d in %s", f.Field, typ.String()))
 	}
-	value, _ := ls.loadKeyAndObject(fmt.Sprintf("&(%s.%s)", s, field.Name()), field)
+	value, _ := ls.loadKeyAndObject(fieldKey(s, field), field)
 	return value, field
 }
 

@@ -265,7 +265,71 @@ func (l *lockState) store(addr ssa.Value, v ssa.Value) {
 		known = local && localAddress(l.bound(addr), make(map[ssa.Value]struct{}))
 	}
 	l.modify()
+	if _, ok := v.Type().Underlying().(*types.Struct); ok {
+		l.forgetContents(addrKey)
+		l.storeValue(addrKey, valueIdentity{key: key, object: obj}, v.Type())
+		return
+	}
+	if _, ok := v.Type().Underlying().(*types.Array); ok {
+		l.forgetContents(addrKey)
+	}
 	l.stored[addrKey] = valueIdentity{key: key, object: obj, boolean: boolean && known, knownBoolean: known}
+}
+
+// fieldKey identifies field storage, independently of the value it contains.
+func fieldKey(base string, field types.Object) string {
+	return fmt.Sprintf("&(%s.%s)", base, field.Name())
+}
+
+// forgetContents invalidates cached subobjects after a whole-value store.
+// Pointer referents have their own identities and are not part of the copy.
+func (l *lockState) forgetContents(base string) {
+	l.modify()
+	maps.DeleteFunc(l.stored, func(key string, _ valueIdentity) bool {
+		for strings.HasPrefix(key, "&(") {
+			key = strings.TrimPrefix(key, "&(")
+			if strings.HasPrefix(key, base+".") || strings.HasPrefix(key, base+"[") {
+				return true
+			}
+		}
+		return false
+	})
+	l.unknownMemory = true
+}
+
+// storeValue copies field contents, not their addresses: a copied pointer still
+// refers to the original object, but an embedded mutex has distinct storage.
+func (l *lockState) storeValue(dst string, value valueIdentity, typ types.Type) {
+	if st, ok := typ.Underlying().(*types.Struct); ok {
+		for field := range st.Fields() {
+			key, obj := l.loadKeyAndObject(fieldKey(value.key, field), field)
+			l.storeValue(fieldKey(dst, field), valueIdentity{key: key, object: obj}, field.Type())
+		}
+	}
+	l.modify()
+	l.stored[dst] = value
+}
+
+// snapshot freezes value fields before later writes can change their source.
+// In particular, SSA represents a struct copy as a load followed by a store.
+func (l *lockState) snapshot(src string, obj types.Object, typ types.Type) valueIdentity {
+	switch st := typ.Underlying().(type) {
+	case *types.Struct:
+		value := valueIdentity{key: fmt.Sprintf("{memory:%d}", l.memoryIDs.Add(1)), object: obj}
+		for field := range st.Fields() {
+			contents := l.snapshot(fieldKey(src, field), field, field.Type())
+			l.modify()
+			l.stored[fieldKey(value.key, field)] = contents
+		}
+		return value
+	case *types.Array:
+		// Array elements are not tracked through copies. Keep the evaluated
+		// value distinct from mutable source storage nonetheless.
+		return valueIdentity{key: fmt.Sprintf("{memory:%d}", l.memoryIDs.Add(1)), object: obj}
+	default:
+		l.loadKeyAndObject(src, obj)
+		return l.stored[src]
+	}
 }
 
 // localAddress reports whether every use of an address is visible to inline
@@ -350,9 +414,9 @@ func (l *lockState) loadKeyAndObject(key string, obj types.Object) (string, type
 // must not be reloaded from its original address when the defer later runs.
 func (l *lockState) load(inst *ssa.UnOp) {
 	key, obj := l.valueAndObject(inst.X)
-	l.loadKeyAndObject(key, obj)
+	value := l.snapshot(key, obj, inst.Type())
 	l.modify()
-	l.loaded[inst] = l.stored[key]
+	l.loaded[inst] = value
 }
 
 // returnFrom imports a synchronous callee's effects while preserving the
@@ -487,7 +551,7 @@ func (l *lockState) valueAndObject(v ssa.Value) (string, types.Object) {
 		}
 		fieldObj := structType.Field(x.Field)
 		s, _ := l.valueAndObject(x.X)
-		return fmt.Sprintf("%s.%s", s, fieldObj.Name()), fieldObj
+		return l.loadKeyAndObject(fieldKey(s, fieldObj), fieldObj)
 	case *ssa.FieldAddr:
 		structType, ok := resolveStruct(x.X.Type())
 		if !ok {
@@ -496,7 +560,7 @@ func (l *lockState) valueAndObject(v ssa.Value) (string, types.Object) {
 		}
 		fieldObj := structType.Field(x.Field)
 		s, _ := l.valueAndObject(x.X)
-		return fmt.Sprintf("&(%s.%s)", s, fieldObj.Name()), fieldObj
+		return fieldKey(s, fieldObj), fieldObj
 	case *ssa.Index:
 		s, _ := l.valueAndObject(x.X)
 		i, _ := l.valueAndObject(x.Index)
