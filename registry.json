@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T05:26:36.285144+00:00",
+    "updatedAt": "2026-10-08T05:52:26.160988+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -265,10 +265,10 @@
       "group": "runtime",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-08T05:26:36.285144+00:00",
-      "summary": "At the 04:17 UTC snapshot, maintainer import #15264 refreshed from 5243a6f14 to b87cb3423. In the 05:25 UTC snapshot, internal Buildkite 31818 and Go checks have passed; public Buildkite 50110 remains pending. Public 50085 succeeded only at the preceding head; that success is not transferred. The source PR is unchanged and no landing is established.\n\nEarlier source and import observations:\n\nAt the 20:40 scan, the maintainer import state changed: #15264 at c634251f218b2e80a9f38b26bbbea42616a3cbab (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe enum-to-int compatibility correction is published with the evidence-backed reply. Earlier validation compiled the complete parameterized fixture with the actual GNU toolchain; the rebase adds no fresh runtime claim. Current published head abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7 adds only the CI-prescribed two-space formatting correction; no semantic or test change. https://github.com/google/gvisor/pull/15132#issuecomment-6004567900 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
+      "updatedAt": "2026-10-08T05:52:26.160988+00:00",
+      "summary": "At the 04:17 UTC snapshot, maintainer import #15264 refreshed from 5243a6f14 to b87cb3423. The 05:37 UTC recovery snapshot reports all visible checks successful, including public Buildkite 50110, internal 31818 and Go. The import remains open. Public 50085 succeeded only at the preceding head; that success is not transferred. The source PR is unchanged and no landing is established.\n\nEarlier source and import observations:\n\nAt the 20:40 scan, the maintainer import state changed: #15264 at c634251f218b2e80a9f38b26bbbea42616a3cbab (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe enum-to-int compatibility correction is published with the evidence-backed reply. Earlier validation compiled the complete parameterized fixture with the actual GNU toolchain; the rebase adds no fresh runtime claim. Current published head abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7 adds only the CI-prescribed two-space formatting correction; no semantic or test change. https://github.com/google/gvisor/pull/15132#issuecomment-6004567900 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "followup": {
-        "disposition": "maintainer import refreshed; current checks pending",
+        "disposition": "Current import checks passed; landing pending",
         "owner": "external_sweeps",
         "nextAction": "Follow the current exact-head import checks and actual landing. Preserve earlier results by head; no agent retry or merge.",
         "evidence": [
@@ -277,7 +277,7 @@
           "https://github.com/google/gvisor/pull/15132#pullrequestreview-5431540112",
           "https://github.com/google/gvisor/pull/15264"
         ],
-        "reviewedAt": "2026-10-08T05:26:36.285144+00:00",
+        "reviewedAt": "2026-10-08T05:52:26.160988+00:00",
         "sourceHead": "abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -619,23 +619,23 @@
       "title": "Allocate process_vm test buffers per case",
       "url": "https://github.com/google/gvisor/pull/15061",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-08T05:26:36.285144+00:00",
-      "summary": "The 05:25 UTC snapshot records successful visible checks on unchanged source e0f75c3ea and exact import #15394 at b722d648efbd0e958008061afecfdff5c7130995. Source feedback/copybara and public Buildkite 50108 are now SUCCESS. Both PRs remain open; successful checks do not establish landing or explain the earlier opaque internal failure.\n\nEarlier source-specific observations:\n\nThe 03:55 UTC snapshot records a new import head b722d648e for #15394. Public Buildkite 50108, internal 31816 and Go checks are pending; success at previous 94e1967d6 is not transferred. Source e0f75c3ea remains unchanged with its opaque internal feedback failure.\n\nAt 03:38:01 UTC on October 8, unchanged source e0f75c3ea received a new feedback/copybara FAILURE: the public status says Google internal checks failed for a run created October 7 at 23:30:42 UTC and links to internal changelist 994589800. The complete 03:45 snapshot still shows visible import #15394 at 94e1967d6 with successful checks. These are distinct observations; no public code-level cause is available. No source change, private-log request, retry or public comment is warranted by this evidence.\n\nEarlier source and import observations:\n\nAt the22:50 scan, source feedback/copybara and the current import #15394 public49985 checks are successful. The import remains open; this is not evidence of landing.\n\nEarlier source and import observations:\n\nAt the 21:20 scan, maintainer import #15394 refreshed to 02fa652a76bef406e556e54f11ac2925c6991680. New public 49985 and internal 31700 checks are pending; preceding-head successes are not transferred. Source feedback/copybara remains an opaque failure without a public code diagnosis.\n\nAt 20:50, source feedback/copybara changed to FAILURE without a public diagnostic link. Its refreshed import #15394 remains open with pending Buildkite checks; generate and go tests are successful by 21:00. No source cause, retry or maintainer action is inferred.\n\nAt the 20:40 scan, the maintainer import state changed: #15394 at 09dfbebc7a5776ecb9892eb5204c42f5304feb6c (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe prepared evidence-backed response is now posted under user approval: https://github.com/google/gvisor/pull/15061#issuecomment-6004570076. It distinguishes the estimated 300 MB workload from an unknown hard resource limit. No source change or new workload was needed; the maintainer has now approved the unchanged source.\n\nEtiennePerot approved this exact source at 2026-10-06T20:20:20Z; the review contains no additional source request.",
+      "updatedAt": "2026-10-08T05:52:26.160988+00:00",
+      "summary": "PR #15061 merged at 05:27:33 UTC on October 8, following maintainer import #15394 at 05:27:30. The source head is e0f75c3ea08d7b74e1c757e9034285142c551309; the import records final head fe90fa4f5f5f9d0c1cb22f75f8a69d61cc1c0970. Prior successful checks at import b722d648e and the earlier opaque internal failure remain tied to their recorded heads. This work is delivered.\n\nEarlier source-specific observations:\n\nThe 05:25 UTC snapshot records successful visible checks on unchanged source e0f75c3ea and exact import #15394 at b722d648efbd0e958008061afecfdff5c7130995. Source feedback/copybara and public Buildkite 50108 are now SUCCESS. Both PRs remain open; successful checks do not establish landing or explain the earlier opaque internal failure.\n\nEarlier source-specific observations:\n\nThe 03:55 UTC snapshot records a new import head b722d648e for #15394. Public Buildkite 50108, internal 31816 and Go checks are pending; success at previous 94e1967d6 is not transferred. Source e0f75c3ea remains unchanged with its opaque internal feedback failure.\n\nAt 03:38:01 UTC on October 8, unchanged source e0f75c3ea received a new feedback/copybara FAILURE: the public status says Google internal checks failed for a run created October 7 at 23:30:42 UTC and links to internal changelist 994589800. The complete 03:45 snapshot still shows visible import #15394 at 94e1967d6 with successful checks. These are distinct observations; no public code-level cause is available. No source change, private-log request, retry or public comment is warranted by this evidence.\n\nEarlier source and import observations:\n\nAt the22:50 scan, source feedback/copybara and the current import #15394 public49985 checks are successful. The import remains open; this is not evidence of landing.\n\nEarlier source and import observations:\n\nAt the 21:20 scan, maintainer import #15394 refreshed to 02fa652a76bef406e556e54f11ac2925c6991680. New public 49985 and internal 31700 checks are pending; preceding-head successes are not transferred. Source feedback/copybara remains an opaque failure without a public code diagnosis.\n\nAt 20:50, source feedback/copybara changed to FAILURE without a public diagnostic link. Its refreshed import #15394 remains open with pending Buildkite checks; generate and go tests are successful by 21:00. No source cause, retry or maintainer action is inferred.\n\nAt the 20:40 scan, the maintainer import state changed: #15394 at 09dfbebc7a5776ecb9892eb5204c42f5304feb6c (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe prepared evidence-backed response is now posted under user approval: https://github.com/google/gvisor/pull/15061#issuecomment-6004570076. It distinguishes the estimated 300 MB workload from an unknown hard resource limit. No source change or new workload was needed; the maintainer has now approved the unchanged source.\n\nEtiennePerot approved this exact source at 2026-10-06T20:20:20Z; the review contains no additional source request.",
       "followup": {
-        "disposition": "Source and current import checks passed; landing pending",
+        "disposition": "Merged through maintainer import",
         "owner": "external_sweeps",
-        "nextAction": "Monitor actual maintainer landing. Retain the earlier internal failure as historical and unexplained; no agent retry or merge.",
+        "nextAction": "No further delivery action; retain source and validation history.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15061#issuecomment-6004570076",
           "https://github.com/google/gvisor/pull/15061#pullrequestreview-5434122462",
           "https://github.com/google/gvisor/pull/15394"
         ],
-        "reviewedAt": "2026-10-08T05:26:36.285144+00:00",
+        "reviewedAt": "2026-10-08T05:52:26.160988+00:00",
         "sourceHead": "e0f75c3ea08d7b74e1c757e9034285142c551309",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -1846,7 +1846,7 @@
         "reviewedAt": "2026-10-08T01:17:13.987858+00:00",
         "sourceHead": "6d761a9b934f72921f11460fd3c8cfc8186f3c55",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "6d761a9b934f72921f11460fd3c8cfc8186f3c55",
       "number": 15442,
@@ -1876,7 +1876,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
       "number": 15441
@@ -2119,7 +2119,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "1c636c974ff648d8e67fffb6280e01599e117bf5",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "1c636c974ff648d8e67fffb6280e01599e117bf5",
       "number": 15443
@@ -2168,7 +2168,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "46ad8cc5b22b84e9116e68567532cab9e8b664c7",
       "number": 15449
@@ -2531,7 +2531,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "587dd659205a6081de5224c543b1f4a514cac818",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "587dd659205a6081de5224c543b1f4a514cac818",
       "number": 15436
@@ -2658,7 +2658,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6348b07d95eb31f5efc502112610b356ef3dd56c",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "6348b07d95eb31f5efc502112610b356ef3dd56c",
       "number": 15435
@@ -2906,7 +2906,7 @@
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
       "number": 15439
@@ -3064,7 +3064,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
       "number": 15444,
@@ -3290,7 +3290,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "0108067e45730adb0f5c7eeb400400e5527d78bf",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "number": 15388,
       "reviewDecision": "APPROVED"
@@ -3637,7 +3637,7 @@
         ],
         "reviewedAt": "2026-10-08T05:18:01.508425+00:00",
         "sourceHead": "865d0a1b029491173c4e5ed92ee7b51095dd75cd",
-        "mergeable": "MERGEABLE",
+        "mergeable": "UNKNOWN",
         "reviewDecision": "APPROVED"
       },
       "number": 15415
@@ -3961,7 +3961,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
-        "mergeable": "MERGEABLE",
+        "mergeable": "UNKNOWN",
         "reviewDecision": null
       },
       "number": 15416
@@ -3987,7 +3987,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "32e30154fd6d2e7c26c0b103c22f1a88ba2c8413",
-        "mergeable": "MERGEABLE",
+        "mergeable": "UNKNOWN",
         "reviewDecision": "APPROVED"
       },
       "repo": "google/gvisor"
@@ -4079,7 +4079,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a9025ef7fbe9fe82230cefee3b81557499a39468",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -4170,7 +4170,7 @@
           "https://app.buildbuddy.io/invocation/8a715376-a704-403b-8f64-13135f253c7d"
         ],
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -4201,7 +4201,7 @@
           "https://github.com/google/gvisor/pull/15473"
         ],
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "number": 15473
     },
@@ -4255,7 +4255,7 @@
           "https://github.com/google/gvisor/pull/15478"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "number": 15474
     },
@@ -4285,7 +4285,7 @@
           "https://github.com/google/gvisor/pull/15485"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "number": 15475
     },
@@ -4315,7 +4315,7 @@
           "https://github.com/tamird/gvisor/actions/runs/37709486990"
         ],
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
