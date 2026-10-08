@@ -23,10 +23,6 @@ import (
 	"gvisor.dev/gvisor/pkg/state"
 )
 
-func init() {
-	state.Register((*binaryFailure)(nil))
-}
-
 func TestBinaryValues(t *testing.T) {
 	timestamp := time.Date(2026, time.October, 7, 12, 0, 0, 1, time.UTC)
 	values := []any{time.Time{}, timestamp, map[time.Time]int{{}: 1, timestamp: 2}, inner{42}}
@@ -41,32 +37,11 @@ func (*inner) MarshalBinary() ([]byte, error) { return nil, errBinary }
 
 func (*inner) UnmarshalBinary([]byte) error { return errBinary }
 
-type binaryFailure struct {
-	failMarshal bool
-}
+// Type-only empty structs must not acquire binary behavior either. The existing
+// TestEmptyStruct cases exercise their direct and pointer forms.
+func (*typeOnlyEmptyStruct) MarshalBinary() ([]byte, error) { return nil, errBinary }
 
-func (b *binaryFailure) MarshalBinary() ([]byte, error) {
-	if b.failMarshal {
-		return nil, errBinary
-	}
-	return nil, nil
-}
-
-func (*binaryFailure) UnmarshalBinary([]byte) error { return errBinary }
-
-func TestBinaryErrors(t *testing.T) {
-	var buf bytes.Buffer
-	if _, err := state.Save(t.Context(), &buf, &binaryFailure{failMarshal: true}); !errors.Is(err, errBinary) {
-		t.Fatalf("Save = %v, want %v", err, errBinary)
-	}
-	buf.Reset()
-	if _, err := state.Save(t.Context(), &buf, &binaryFailure{}); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-	if _, err := state.Load(t.Context(), &buf, &binaryFailure{}); !errors.Is(err, errBinary) {
-		t.Fatalf("Load = %v, want %v", err, errBinary)
-	}
-}
+func (*typeOnlyEmptyStruct) UnmarshalBinary([]byte) error { return errBinary }
 
 func TestBinaryTime(t *testing.T) {
 	for name, timestamp := range map[string]time.Time{
