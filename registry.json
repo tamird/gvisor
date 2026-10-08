@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T14:58:38.230130+00:00",
+    "updatedAt": "2026-10-08T15:14:46.463788+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -3889,12 +3889,7 @@
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
       },
-      "number": 15476,
-      "contributorReview": {
-        "status": "delivered",
-        "head": "654339a2846f1232e0d62870434ceae7bb470085",
-        "url": "https://github.com/tamird/gvisor/commit/654339a2846f1232e0d62870434ceae7bb470085"
-      }
+      "number": 15476
     },
     {
       "id": "pr:15401",
