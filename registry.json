@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T22:09:14.127221+00:00",
+    "updatedAt": "2026-10-08T22:32:49.790009+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1388,18 +1388,19 @@
       "group": "tests",
       "status": "open",
       "summary": "PR #15307 is open for review at b04fae38936fc090e1dcd624121c4bd0a832cbf1, one commit on master d3f4faffa. The approved XML reporting change is preserved by the mechanical rebase after its passed-descriptor prerequisite #15141 landed. Independent source peer a72f513fa30a confirms the complete runner change and unchanged message. Existing runtime and XML evidence is reused without a fresh run. The current snapshot reports MERGEABLE and visible checks successful; no linked import is recorded.",
-      "updatedAt": "2026-10-05T14:43:10.177225+00:00",
+      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
       "number": 15307,
       "followup": {
-        "disposition": "awaiting upstream review or import",
+        "disposition": "Import PR open; checks pending",
         "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "nextAction": "Observe the linked exact-head import checks and landing; preserve current requested reviewers without duplicate outreach.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15307"
+          "https://github.com/google/gvisor/pull/15307",
+          "https://github.com/google/gvisor/pull/15543"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
         "sourceHead": "b04fae38936fc090e1dcd624121c4bd0a832cbf1",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
@@ -2541,16 +2542,17 @@
       "group": "tests",
       "status": "open",
       "summary": "The independent one-commit fork refresh at 587dd659205a6081de5224c543b1f4a514cac818 is public and tracked on verified upstream e1bc74024. Its complete readiness patch and message are unchanged from ed989cc203, preserving the separately landed argument-range cleanup. Independent source peer 21aefece98dc and publication 4bdf8584b0ca bind the refresh. BM_SendmsgTCP now retries only EAGAIN and waits for POLLOUT rather than the SIGPOLL code and 10ms timeout. The contributor approved this exact commit. Ready PR #15436 is now open against master with the reviewed message and thread attribution verified. Initial mergeability was unresolved; current CI, reviews and mergeability are shown in the synchronized snapshot. No new workload was run for delivery.\n\nThe complete current benchmark source is byte-identical to tested eb1aeec729. Corrected parent d453f10c-ab76-456a-b56f-27e4e90ceca2 passed four bounded native/systrap before-and-after 256 MiB, iteration-one rows with a separate 2 GB worker allocation. This proves execution, not throughput or forced EAGAIN-path coverage. Original parent dbdf442f remains failed from insufficient 300/500 MB worker memory, and its evidence is retained.",
-      "updatedAt": "2026-10-08T22:07:43.442034+00:00",
+      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
       "followup": {
-        "disposition": "Current-head approval; awaiting import",
+        "disposition": "Import PR open; checks pending",
         "owner": "external_sweeps",
-        "nextAction": "Observe import progress and current-head checks; keep the existing requested reviewers visible without duplicate outreach.",
+        "nextAction": "Observe the linked exact-head import checks and landing; preserve current requested reviewers without duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15436",
-          "https://github.com/google/gvisor/pull/15436#pullrequestreview-5463363909"
+          "https://github.com/google/gvisor/pull/15436#pullrequestreview-5463363909",
+          "https://github.com/google/gvisor/pull/15539"
         ],
-        "reviewedAt": "2026-10-08T22:07:43.442034+00:00",
+        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
         "sourceHead": "587dd659205a6081de5224c543b1f4a514cac818",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -4130,18 +4132,19 @@
       "group": "bazel",
       "status": "open",
       "summary": "All visible exact-head checks, including generate, are successful at 20:40. No maintainer review or landing is claimed.\n\nDelivered as ready PR #15463 after the contributor approved the code conditional on correcting its rules_go citation. Published a9025ef7fbe9fe82230cefee3b81557499a39468 retains the exact 60a source; references now cover incoming-static removal and mode.static re-addition at pinned 9792f1c07. Root verified one commit, exact 72-column body/current thread marker, OPEN/MERGEABLE and CI started. Fresh direct adoption read confirms the exact public head.\n\nEarlier source and validation evidence:\n\nThe independent six-callsite correction is public and tracked at 60a4c080d on current master. It sets the owning Go static attribute for tools and benchmark declarations that previously requested only the C/C++ fully_static_link feature. rules_go removes the incoming C linker static flag and restores it only when Go static mode is enabled. The observed race-shim PT_INTERP result exposed that pre-existing interface mismatch. Source peer c510db183816 is closed; this precursor has no LLVM dependency. Its six caller classes now have source-specific AMD64/ARM64 normal/race static-output evidence across compiler compositions 6614 and corrected 4cd (saved peers 078b18867e0f and 55aa5b34b797). The separate compiler-owned GNU preload boundary also has matching embedded bytes and an AMD64 GNU loader pass. Original failed parents remain retained. That earlier contributor request is now answered by the delivered PR above.",
-      "updatedAt": "2026-10-08T22:07:43.442034+00:00",
+      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
       "number": 15463,
       "reviewDecision": "REVIEW_REQUIRED",
       "followup": {
-        "disposition": "Current-head approval; awaiting import",
+        "disposition": "Import PR open; checks pending",
         "owner": "external_sweeps",
-        "nextAction": "Observe import progress and current-head checks; keep the existing requested reviewers visible without duplicate outreach.",
+        "nextAction": "Observe the linked exact-head import checks and landing; preserve current requested reviewers without duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15463",
-          "https://github.com/google/gvisor/pull/15463#pullrequestreview-5463334530"
+          "https://github.com/google/gvisor/pull/15463#pullrequestreview-5463334530",
+          "https://github.com/google/gvisor/pull/15536"
         ],
-        "reviewedAt": "2026-10-08T22:07:43.442034+00:00",
+        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
         "sourceHead": "a9025ef7fbe9fe82230cefee3b81557499a39468",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -4700,60 +4703,56 @@
       }
     },
     {
-      "id": "branch:x-net-0-60-0",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15541",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/x-net-0-60-0",
       "head": "fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
-      "title": "Update x/net to 0.60.0",
-      "url": "https://github.com/tamird/gvisor/commit/fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
+      "title": "Update golang.org/x/net to v0.60.0",
+      "url": "https://github.com/google/gvisor/pull/15541",
       "group": "bazel",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-08T22:06:11.269661+00:00",
-      "summary": "The final public candidate includes the generated license record. Independent source and saved-result reviews are closed: both-CPU grpc/gonet builds, 31 AMD gonet cases without skips, and canonical verification of 190 license records. Root has sent an actual contributor decision asking whether to open this PR using its commit message. It remains separate from Go 1.27.2; no upstream PR exists.\n\nEarlier observations:\n\nThe public x/net 0.60.0 candidate is 4d116a7fbd9471e0bd9f738bf5a3e2ee64a1c1fd on the existing Go 1.27.1 base, separate from the Go 1.27.2 upgrade. Remote parent 67767d42-0908-499e-bc06-11ac65b71b50 completed OK: the owner reports both-CPU grpc/gonet builds bound to SDK 1.27.1, 14 tagged HTTP2/nettest input joins, one original AMD gonet action with 31 passing cases and no skips, and canonical verification of 190 license records with only the net record changed. Independent saved-result review and publication of the generated catalog amendment remain pending. No contributor-review question or upstream PR has been opened.",
+      "status": "open",
+      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
+      "summary": "Delivered as PR #15541 at the exact reviewed candidate fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548. The contributor decision is complete; current GitHub review, CI and import progress are shown above. Existing source and saved-result evidence remains attached to this revision.\n\nEarlier observations:\n\nThe final public candidate includes the generated license record. Independent source and saved-result reviews are closed: both-CPU grpc/gonet builds, 31 AMD gonet cases without skips, and canonical verification of 190 license records. Root has sent an actual contributor decision asking whether to open this PR using its commit message. It remains separate from Go 1.27.2; no upstream PR exists.\n\nEarlier observations:\n\nThe public x/net 0.60.0 candidate is 4d116a7fbd9471e0bd9f738bf5a3e2ee64a1c1fd on the existing Go 1.27.1 base, separate from the Go 1.27.2 upgrade. Remote parent 67767d42-0908-499e-bc06-11ac65b71b50 completed OK: the owner reports both-CPU grpc/gonet builds bound to SDK 1.27.1, 14 tagged HTTP2/nettest input joins, one original AMD gonet action with 31 passing cases and no skips, and canonical verification of 190 license records with only the net record changed. Independent saved-result review and publication of the generated catalog amendment remain pending. No contributor-review question or upstream PR has been opened.",
       "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
-        "nextAction": "Await the actual pending contributor decision; no upstream PR has been opened.",
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "nextAction": "Follow current-head checks, requested maintainers and import progress through the sole event observer.",
         "sourceHead": "fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
-        "reviewedAt": "2026-10-08T22:06:11.269661+00:00",
+        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548"
+          "https://github.com/google/gvisor/pull/15541"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
-        "url": "https://github.com/tamird/gvisor/commit/fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548"
-      }
+      "number": 15541
     },
     {
-      "id": "branch:state-map-iteration",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15542",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/state-map-iteration",
-      "title": "Iterate checkpoint maps with MapRange",
+      "title": "Encode map entries with their iterator",
       "group": "runtime",
       "head": "a0e316efd10133110357e01938cbae646b73a7d8",
-      "url": "https://github.com/tamird/gvisor/commit/a0e316efd10133110357e01938cbae646b73a7d8",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-08T22:06:11.269661+00:00",
-      "summary": "The current-master candidate preserves the tested MapRange change and same-bit NaN-key regression. Independent source and correctness reviews are closed; the original baseline reproduces the invalid reflect.Value failure, and the corrected full external state suite plus both-CPU analyzers pass. Root has sent an actual contributor decision asking whether to open this PR using its commit message. No performance claim or upstream PR is made.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "a0e316efd10133110357e01938cbae646b73a7d8",
-        "url": "https://github.com/tamird/gvisor/commit/a0e316efd10133110357e01938cbae646b73a7d8"
-      },
+      "url": "https://github.com/google/gvisor/pull/15542",
+      "status": "open",
+      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
+      "summary": "Delivered as PR #15542 at the exact reviewed candidate a0e316efd10133110357e01938cbae646b73a7d8. The contributor decision is complete; current GitHub review, CI and import progress are shown above. Existing source and saved-result evidence remains attached to this revision.\n\nEarlier observations:\n\nThe current-master candidate preserves the tested MapRange change and same-bit NaN-key regression. Independent source and correctness reviews are closed; the original baseline reproduces the invalid reflect.Value failure, and the corrected full external state suite plus both-CPU analyzers pass. Root has sent an actual contributor decision asking whether to open this PR using its commit message. No performance claim or upstream PR is made.",
       "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
-        "nextAction": "Await the actual pending contributor decision; no upstream PR has been opened.",
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "nextAction": "Follow current-head checks, requested maintainers and import progress through the sole event observer.",
         "sourceHead": "a0e316efd10133110357e01938cbae646b73a7d8",
-        "reviewedAt": "2026-10-08T22:06:11.269661+00:00",
+        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/a0e316efd10133110357e01938cbae646b73a7d8"
+          "https://github.com/google/gvisor/pull/15542"
         ]
-      }
+      },
+      "number": 15542
     }
   ],
   "edges": [
