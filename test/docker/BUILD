@@ -272,6 +272,6 @@ source_image_archive(
         free_disk = "40GB",
         memory = "8GB",
     ),
-    image = "runtimes/php8.3.35",
+    image = "runtimes/php8.5.11",
     tags = ["manual"],
 )
