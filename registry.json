@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T18:06:41.967515+00:00",
+    "updatedAt": "2026-10-08T18:20:01.603216+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4149,21 +4149,23 @@
       "group": "tests",
       "head": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
       "status": "open",
-      "updatedAt": "2026-10-08T07:46:19.883462+00:00",
-      "summary": "Contributor-approved PR #15502 is published at a4fdb9d9f on master a926. The delivery owner verified exact source-equivalent edits, changed blobs, description, head and author; the live PR is mergeable and its current checks are pending. The slash-prefixed review ref preserves the original preparation ref and avoids unrelated legacy push CI. No contributor hold remains.\n\nEarlier preparation and validation:\n\nContributor approved 30dbbc37f; root owns publication of the source-equivalent refresh. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nPublic standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface’s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor’s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
+      "updatedAt": "2026-10-08T18:20:01.603216+00:00",
+      "summary": "The current a4fdb9d9 source received maintainer approval from konstantin-s-bogom at 18:04:59 UTC. The reviewer asked parth-opensrc to pull it in; no new review request is needed. No import is present in this complete snapshot. GitHub currently reports mergeability UNKNOWN, so conflict-free merge readiness is not established.\n\nEarlier preparation and validation:\n\nContributor approved 30dbbc37f; root owns publication of the source-equivalent refresh. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nPublic standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface’s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor’s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
       "followup": {
-        "disposition": "Delivered; follow maintainer review and CI",
+        "disposition": "Current-head approved; awaiting import",
         "owner": "external_sweeps",
-        "nextAction": "Follow current-head checks, maintainer review and import status.",
+        "nextAction": "Follow the existing maintainer import handoff and exact-head checks; do not re-request review.",
         "sourceHead": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
-        "reviewedAt": "2026-10-08T08:17:22.725941+00:00",
+        "reviewedAt": "2026-10-08T18:20:01.603216+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3e05d4b8a239b70503b795d8435c6a1a18e99ac0",
           "https://github.com/tamird/gvisor/actions/runs/37623291651",
-          "https://github.com/google/gvisor/pull/15502"
+          "https://github.com/google/gvisor/pull/15502",
+          "https://github.com/google/gvisor/pull/15502#pullrequestreview-5460906569",
+          "https://github.com/google/gvisor/pull/15502#issuecomment-6066053276"
         ],
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN"
       },
       "number": 15502
     },
