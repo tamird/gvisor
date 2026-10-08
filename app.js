@@ -589,13 +589,21 @@ function drawDetails() {
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
   close.setAttribute("aria-label", "Close details"); top.append(link(label(node) + " ↗", node.url), close);
   details.append(top, element("h2", "item-title", node.title), element("span", `status-pill ${node.status}`, status(node)));
+  // Service-owned attributes lead PR details; curated notes remain available
+  // separately without obscuring the current head, checks, or conflict refresh.
+  appendAttributes(details, node);
   const reach = impact(node.id);
   details.append(element("p", "detail-impact", `${reach.prs} downstream open PRs · ${reach.direct} direct`));
-  if (node.summary) details.append(element("p", "detail-description", node.summary));
+  if (node.summary) {
+    if (node.type === "pr") {
+      const notes = element("details", "curated-notes"); notes.dataset.pr = node.id;
+      notes.append(element("summary", "", "Curated notes and history"), element("p", "detail-description", node.summary));
+      details.append(notes);
+    } else details.append(element("p", "detail-description", node.summary));
+  }
   if (node.ref) details.append(element("p", "detail-meta", node.ref));
   if (node.type === "issue") details.append(element("p", "detail-meta", "Closed issue ≠ deployed capacity. Qualification remains curated."));
   const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
-  appendAttributes(details, node);
   const relations = [
     ["Proposed updates", model.edges.filter((edge) => edge.to === node.id && edge.role === "proposed_update"), "from"],
     ["Proposed update for", model.edges.filter((edge) => edge.from === node.id && edge.role === "proposed_update"), "to"],
@@ -710,7 +718,7 @@ function stateRecords(snapshot, node) {
 function applyLive(snapshot, nextRegistry = registry) {
   liveSnapshot = snapshot;
   const scrollPositions = ["table-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
-  const openChecks = new Set([...$("details").querySelectorAll(".check-details[open]")].map((section) => section.dataset.pr));
+  const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
   const nodes = registry.nodes.map((node) => ({ ...node, workStates: stateRecords(snapshot, node) })), ids = new Map(nodes.map((node) => [node.id, node])), aliases = new Map();
@@ -738,7 +746,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   // Status updates redraw the data, not the user's viewport. Initial render,
   // filters and explicit graph controls own fitting/recentering.
   render();
-  for (const section of $("details").querySelectorAll(".check-details")) section.open = openChecks.has(section.dataset.pr);
+  for (const section of $("details").querySelectorAll(".check-details, .curated-notes")) section.open = openSections.has(section.dataset.pr);
   for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
   const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
   setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
