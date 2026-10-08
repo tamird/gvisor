@@ -366,7 +366,23 @@ run_hybrid_profile() (
   local lane=$1 selection_dir local_arch=$arch
   local -a lane_options=() options=() selection_options=()
   selection_dir=$(mktemp -d)
-  trap 'rm -rf "$selection_dir"' EXIT
+  # Disposable validation: restore the sole comparison source on every exit.
+  native_harness_cleanup() {
+    local status=$?
+    trap - EXIT
+    if [[ -f $selection_dir/unix.after.cc ]]; then
+      cp "$selection_dir/unix.after.cc" test/syscalls/linux/socket_unix_non_stream.cc || status=1
+    fi
+    rm -rf "$selection_dir"
+    exit "$status"
+  }
+  trap native_harness_cleanup EXIT
+  trap 'exit 143' TERM
+  trap 'exit 130' INT
+  if [[ $lane != syscalls || $arch != amd64 || -n $syscall_bucket ]]; then
+    printf 'This diagnostic requires the complete AMD64 syscall graph.\n' >&2
+    exit 2
+  fi
   if [[ $lane == unit ]]; then
     local_arch=arm64
     python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
@@ -446,8 +462,159 @@ PY
     docker_test_options
     options+=("--strategy=TestRunner=remote,docker,local" --//tools/bazeldefs:local_test_backend=docker)
   fi
+  local artifacts="$RUNNER_TEMP/qualification/native-harness"
+  mkdir -p "$artifacts"
+  {
+    local kernel_config
+    kernel_config="/boot/config-$(uname -r)"
+    local config_pattern='^(# )?CONFIG_(CGROUPS|CGROUP_PIDS|MEMCG|MEMCG_V1|IP6_NF_IPTABLES|IP6_NF_NAT|IP6_NF_FILTER|SECURITY_YAMA|SECURITY_LANDLOCK)(=| )'
+    if [[ -r $kernel_config ]]; then
+      printf 'config_source=%s\n' "$kernel_config"
+      awk -v pattern="$config_pattern" '$0 ~ pattern { print }' "$kernel_config"
+    elif [[ -r /proc/config.gz ]]; then
+      printf 'config_source=/proc/config.gz\n'
+      gzip -dc /proc/config.gz | awk -v pattern="$config_pattern" '$0 ~ pattern { print }'
+    else
+      printf 'kernel config unavailable; no disabled-feature inference\n'
+    fi
+    awk '{ for (i = 1; i <= NF; i++) if ($i ~ /^(cgroup_no_v1|systemd.unified_cgroup_hierarchy)=/) print $i }' /proc/cmdline
+    if [[ -d /sys/module/ip6_tables ]]; then
+      printf 'ip6_tables sysfs entry after setup: present\n'
+    else
+      printf 'ip6_tables sysfs entry after setup: absent\n'
+    fi
+  } > "$artifacts/host-config.txt"
+  python3 - "$selection_dir" "$artifacts" <<'PYNATIVE_SELECTION'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+selection_dir, artifacts = map(Path, sys.argv[1:])
+oracle = json.loads(r'{"full_prior_owner_count":1172,"full_prior_owner_sha256":"ad8712ef9fa22b52ad6e062208b092a3c77550985aec2fbb75be77471929f7aa","owners":[{"label":"//test/syscalls:cgroup2_transfer_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"cgroup-after","prior_placement":"local-docker","expected_placement":"local-root","before":false},{"label":"//test/syscalls:cgroup2_transfer_test_runsc_systrap_shared_amd64","shards":1,"timeout_seconds":300,"phase":"cgroup-after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:exec_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:ip6tables_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:ip6tables_test_runsc_systrap_shared_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:landlock_v1_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:proc_test_native_amd64","shards":8,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:proc_test_runsc_ptrace_amd64","shards":8,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:proc_test_runsc_systrap_directfs_amd64","shards":8,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:proc_test_runsc_systrap_shared_amd64","shards":8,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:ptrace_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:ptrace_test_runsc_ptrace_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:ptrace_test_runsc_systrap_directfs_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:ptrace_test_runsc_systrap_shared_amd64","shards":1,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:socket_unix_dgram_local_test_native_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":true},{"label":"//test/syscalls:socket_unix_dgram_local_test_runsc_ptrace_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:socket_unix_dgram_local_test_runsc_systrap_directfs_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:socket_unix_dgram_local_test_runsc_systrap_shared_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:socket_unix_seqpacket_local_test_native_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":true},{"label":"//test/syscalls:socket_unix_seqpacket_local_test_runsc_ptrace_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:socket_unix_seqpacket_local_test_runsc_systrap_directfs_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false},{"label":"//test/syscalls:socket_unix_seqpacket_local_test_runsc_systrap_shared_amd64","shards":4,"timeout_seconds":300,"phase":"after","prior_placement":"local-docker","expected_placement":"local-docker","before":false}],"before_filter":"*/UnixNonStreamSocketPairTest.RecvMsgTooLarge/*"}')
+selection = json.loads((selection_dir / "selection.json").read_text())
+full = sorted(selection["selected_owners"])
+assert len(full) == oracle["full_prior_owner_count"]
+assert hashlib.sha256(("\n".join(full) + "\n").encode()).hexdigest() == oracle["full_prior_owner_sha256"]
+expected = {row["label"] for row in oracle["owners"]}
+assert len(expected) == 22 and expected.issubset(full)
+local = {label for labels in selection["local_owners"].values() for label in labels}
+assert expected.issubset(local)
+initial = "//test/syscalls:cgroup2_transfer_test_native_amd64"
+assert initial in selection["initial_cgroup_owners"]
+for phase in ("before", "after", "cgroup-after", "selected"):
+    labels = sorted(row["label"] for row in oracle["owners"] if
+                    phase == "selected" or
+                    (phase == "before" and row["before"]) or row["phase"] == phase)
+    (artifacts / (phase + "-targets")).write_text("".join(label + "\n" for label in labels))
+(artifacts / "selection.json").write_text(json.dumps({
+    "oracle": oracle, "unexecuted_owners": sorted(set(full) - expected),
+    "full_selection_sha256": hashlib.sha256((selection_dir / "selection.json").read_bytes()).hexdigest(),
+}, indent=2) + "\n")
+(artifacts / "selected.query").write_text("set(" + " ".join(sorted(expected)) + ")\n")
+PYNATIVE_SELECTION
+  bazel query --output=xml --query_file="$artifacts/selected.query" > "$artifacts/declarations.xml"
+  python3 - "$artifacts" <<'PYNATIVE_DECLARATIONS'
+import json
+from pathlib import Path
+import sys
+import xml.etree.ElementTree as ET
+
+artifacts = Path(sys.argv[1])
+rows = json.loads((artifacts / "selection.json").read_text())["oracle"]["owners"]
+rules = {rule.attrib["name"]: rule for rule in ET.parse(artifacts / "declarations.xml").getroot().findall("rule")}
+assert set(rules) == {row["label"] for row in rows}
+timeouts = {"short": 60, "moderate": 300, "long": 900, "eternal": 3600}
+for row in rows:
+    rule = rules[row["label"]]
+    values = {node.attrib["name"]: node.attrib.get("value") for node in rule if "name" in node.attrib}
+    assert max(1, int(values["shard_count"])) == row["shards"], (row, values)
+    assert timeouts[values["timeout"]] == row["timeout_seconds"], (row, values)
+(artifacts / "declarations-checked.json").write_text(json.dumps({"owners": len(rows), "shards": sum(row["shards"] for row in rows)}) + "\n")
+PYNATIVE_DECLARATIONS
+  cp test/syscalls/linux/socket_unix_non_stream.cc "$selection_dir/unix.after.cc"
+  cp "$selection_dir/unix.after.cc" "$artifacts/unix.after.cc"
+  local phase_status=0 aggregate_status=0
+  native_harness_phase() {
+    local phase=$1 phase_targets=$2
+    shift 2
+    python3 - "$artifacts" "$phase" <<'PYNATIVE_SOURCE'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+artifacts, phase = Path(sys.argv[1]), sys.argv[2]
+data = Path("test/syscalls/linux/socket_unix_non_stream.cc").read_bytes()
+expected = "eb194ee8607da87edbe49e9ff148534a01e8d728572b1aaefd99902c046115b8" if phase == "before" else "9c2cde1e4d28d8da25bda4f29e2aea1de57a8dbdfe23f1227d506b198751e32a"
+actual = hashlib.sha256(data).hexdigest()
+assert actual == expected, (phase, actual, expected)
+(artifacts / (phase + "-source.json")).write_text(json.dumps({"phase": phase, "unix_source_sha256": actual}) + "\n")
+PYNATIVE_SOURCE
+    set +e
+    bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
+      "--//tools/bazeldefs:local_test_architecture=$local_arch" \
+      --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
+      --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
+      --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" \
+      "--build_metadata=NATIVE_HARNESS_PHASE=$phase" \
+      "--build_event_json_file=$selection_dir/$phase-bep.json" \
+      "$@" --target_pattern_file="$phase_targets"
+    phase_status=$?
+    set -e
+    printf '%s\n' "$phase_status" > "$artifacts/$phase-exit-code"
+    if (( phase_status != 0 )); then aggregate_status=1; fi
+    python3 - "$selection_dir/$phase-bep.json" "$artifacts/$phase-bep.json" <<'PYNATIVE_BEP'
+import json
+from pathlib import Path
+import sys
+
+source, target = map(Path, sys.argv[1:])
+keys = {"id", "children", "started", "finished", "configured", "completed", "testResult", "testSummary", "aborted", "namedSetOfFiles"}
+errors = []
+with target.open("w") as output:
+    if source.exists():
+        for line_number, line in enumerate(source.read_text().splitlines(), 1):
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError as error:
+                errors.append({"line": line_number, "error": str(error)})
+                continue
+            if "started" in event:
+                safe = {"uuid", "startTime", "startTimeMillis", "command"}
+                event["started"] = {key: value for key, value in event["started"].items() if key in safe}
+            serialized = json.dumps({key: value for key, value in event.items() if key in keys})
+            assert "x-buildbuddy-api-key" not in serialized.lower()
+            output.write(serialized + "\n")
+    else:
+        errors.append({"error": "BEP absent"})
+target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
+PYNATIVE_BEP
+  }
+  python3 - <<'PYNATIVE_BEFORE'
+import hashlib
+from pathlib import Path
+
+path = Path("test/syscalls/linux/socket_unix_non_stream.cc")
+data = path.read_bytes()
+assert hashlib.sha256(data).hexdigest() == "9c2cde1e4d28d8da25bda4f29e2aea1de57a8dbdfe23f1227d506b198751e32a"
+old = b"const int write_size = std::min(rcvbuf, sndbuf) - kPageSize;"
+new = b"const int write_size = rcvbuf - kPageSize;"
+assert data.count(old) == 1
+data = data.replace(old, new)
+assert hashlib.sha256(data).hexdigest() == "eb194ee8607da87edbe49e9ff148534a01e8d728572b1aaefd99902c046115b8"
+path.write_bytes(data)
+PYNATIVE_BEFORE
+  cp test/syscalls/linux/socket_unix_non_stream.cc "$artifacts/unix.before.cc"
+  git diff -- test/syscalls/linux/socket_unix_non_stream.cc > "$artifacts/unix-before.patch"
+  native_harness_phase before "$artifacts/before-targets" \
+    '--test_filter=*/UnixNonStreamSocketPairTest.RecvMsgTooLarge/*'
+  cp "$selection_dir/unix.after.cc" test/syscalls/linux/socket_unix_non_stream.cc
+  cmp "$selection_dir/unix.after.cc" test/syscalls/linux/socket_unix_non_stream.cc
+  git diff --exit-code -- test/syscalls/linux/socket_unix_non_stream.cc
+  native_harness_phase after "$artifacts/after-targets"
   local initial_cgroup
-  initial_cgroup=$(python3 - "$selection_dir/selection.json" "$selection_dir/targets" <<'PY'
+  initial_cgroup=$(python3 - "$selection_dir/selection.json" "$artifacts/cgroup-after-targets" <<'PY'
 import json
 from pathlib import Path
 import sys
@@ -487,10 +654,12 @@ PY
       "--test_env=GVISOR_HOST_CGROUP_NS=$coordinator_cgroup_ns"
       "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
   fi
-  bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
-    "--//tools/bazeldefs:local_test_architecture=$local_arch" \
-    --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
-    --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
+  [[ $initial_cgroup == true ]]
+  native_harness_phase cgroup-after "$artifacts/cgroup-after-targets"
+  cmp "$selection_dir/unix.after.cc" test/syscalls/linux/socket_unix_non_stream.cc
+  git diff --exit-code -- test/syscalls/linux/socket_unix_non_stream.cc
+  printf '%s\n' "$aggregate_status" > "$artifacts/aggregate-exit-code"
+  return "$aggregate_status"
 )
 
 select_cgroup_profile() {
