@@ -16,13 +16,20 @@ go_binary(
     ],
 )
 
+# The proctor is copied as file data. Its static executable alias and default
+# output have different paths; expose one File for argument expansion.
+filegroup(
+    name = "runner_file",
+    srcs = [":runner"],
+)
+
 # Both entrypoints share the public sources, inputs and four shards.
 moby_test(
     name = "moby",
     srcs = ["moby_test.go"],
-    args = ["--proctor=$(rootpath :runner)"],
+    args = ["--proctor=$(rootpath :runner_file)"],
     data = [
-        ":runner",
+        ":runner_file",
         "//runsc",
     ],
     shard_count = more_shards,
