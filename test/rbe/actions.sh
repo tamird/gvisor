@@ -60,8 +60,18 @@ trap cleanup EXIT
 
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) ;;
-  local)
-    options+=(--test-execution=local)
+  local|remote-actions)
+    if [[ $QUALIFICATION_EXECUTION == local ]]; then
+      options+=(--test-execution=local)
+    else
+      # Hour-long guest tests need more runway than the hosted coordinator's
+      # observed one-hour cap. Only the coordinator moves; all guest actions
+      # retain their remote execution requirements and original deadlines.
+      if [[ $QUALIFICATION_ARCH != arm64 || ${lanes[*]} != syscalls-64k ]]; then
+        printf 'Remote tests on the Actions coordinator require the ARM64 64K profile.\n' >&2
+        exit 2
+      fi
+    fi
     # Keep the compiler and toolchain actions on the existing RBE platforms.
     # The repository version, not the runner image's default, selects Bazel.
     export USE_BAZEL_VERSION
@@ -104,12 +114,24 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+      if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+        printf '%s\n' \
+          'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
+          'test:buildbuddy_remote_executor --cache_test_results=auto' \
+          'test:buildbuddy_remote_executor --runs_per_test=1' \
+          'test:buildbuddy_remote_executor --flaky_test_attempts=1' \
+          'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
+      fi
     } > "$qualification_rc"
+    if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+      QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import time; print(time.monotonic()+7200)')
+      export QUALIFICATION_WORK_DEADLINE
+    fi
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
     bazel() {
-      local argument
+      local argument result=0 capture_status=0 raw_events="" events_output="" remaining
       local -a evidence=()
       # Startup options may precede the command. Queries perform no spawns and
       # do not accept execution-log options; each build/test keeps its own log.
@@ -122,14 +144,65 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
             "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
           )
         fi
+        if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
+          # Keep raw parsed options out of the uploaded artifact directory.
+          raw_events=$(mktemp)
+          events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
+          evidence+=("--build_event_json_file=$raw_events")
+        fi
         break
       done
-      if [[ $qualification_root_bazel == true ]]; then
+      if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+        remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
+        if (( remaining > 0 )); then
+          timeout --signal=INT --kill-after=30s "${remaining}s" \
+            "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        else
+          printf 'Qualification work deadline exhausted.\n' >&2
+          result=124
+        fi
+      elif [[ $qualification_root_bazel == true ]]; then
         sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" \
-          "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}"
+          "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       else
-        command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}"
+        command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       fi
+      if [[ -n $raw_events ]]; then
+        timeout --signal=TERM --kill-after=5s 600s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
+import json
+from pathlib import Path
+import sys
+
+source, target = map(Path, sys.argv[1:])
+keys = {"id", "children", "started", "finished", "configured", "completed", "testResult", "testSummary", "aborted", "namedSetOfFiles"}
+errors = []
+count = 0
+with source.open() as stream, target.open("w") as output:
+    for line_number, line in enumerate(stream, 1):
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError as error:
+            errors.append({"line": line_number, "error": str(error)})
+            continue
+        if "started" in event:
+            safe = {"uuid", "startTime", "startTimeMillis", "command"}
+            event["started"] = {key: value for key, value in event["started"].items() if key in safe}
+        serialized = json.dumps({key: value for key, value in event.items() if key in keys})
+        assert "x-buildbuddy-api-key" not in serialized.lower()
+        output.write(serialized + "\n")
+        count += 1
+if count == 0:
+    errors.append({"error": "No complete build events"})
+target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
+raise SystemExit(bool(errors))
+GUEST_EVENTS
+        rm -f "$raw_events"
+        printf '%s\n' "$result" > "$events_output.bazel-exit"
+        printf '%s\n' "$capture_status" > "$events_output.capture-exit"
+        if (( result == 0 )); then result=$capture_status; fi
+        return "$result"
+      fi
+      return "$result"
     }
     export -f bazel
 
@@ -160,45 +233,47 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       systemctl --version
       docker version || true
     } | tee "$RUNNER_TEMP/qualification/host.txt"
-    # The unchanged release smoke deliberately exercises unprivileged setup.
-    [[ $(id -u) != 0 ]]
-    [[ $(getconf PAGESIZE) == 4096 ]]
-    sudo -n true
-    # Match the Buildkite test-host setup on this ephemeral Actions VM.
-    # Ubuntu's restriction prevents the rootless runtime's user namespace.
-    if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
-      sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns) == 0 ]]
-    fi
-    if [[ ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-resume || ${lanes[*]} == syscalls-kvm ]]; then
-      # The maintained rtnetlink syscall owners invoke ip and OpenBSD nc.
-      sudo -n apt-get update
-      sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
-      dpkg-query -W iproute2 netcat-openbsd | tee "$RUNNER_TEMP/qualification/network-tools.txt"
-      command -v ip nc
-    fi
-    if [[ ${lanes[*]} == syscalls && $QUALIFICATION_ARCH == amd64 ]]; then
-      # The AMD64 profile includes native IPv6 netfilter tests; their raw
-      # sockopts do not load the legacy handler.
-      sudo -n modprobe ip6_tables
-    fi
-    if [[ ${lanes[*]} == nftables || ${lanes[*]} == moby ]]; then
-      # These suites exercise nftables in their private Docker namespaces.
-      sudo -n modprobe nfnetlink
-      sudo -n modprobe nf_tables
-    fi
-    if [[ ${lanes[*]} == plugin-network ]]; then
-      # The plugin opens host vhost-net and TUN devices inside its sandbox.
-      for device in /dev/vhost-net /dev/net/tun; do
-        [[ -c $device ]]
-        sudo -n test -r "$device"
-        sudo -n test -w "$device"
-      done
-    fi
-    if [[ ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
-      [[ -c /dev/kvm ]]
-      sudo -n test -r /dev/kvm
-      sudo -n test -w /dev/kvm
+    if [[ $QUALIFICATION_EXECUTION == local ]]; then
+      # The unchanged release smoke deliberately exercises unprivileged setup.
+      [[ $(id -u) != 0 ]]
+      [[ $(getconf PAGESIZE) == 4096 ]]
+      sudo -n true
+      # Match the Buildkite test-host setup on this ephemeral Actions VM.
+      # Ubuntu's restriction prevents the rootless runtime's user namespace.
+      if [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns 2>/dev/null) == 1 ]]; then
+        sudo -n sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        [[ $(sysctl -n kernel.apparmor_restrict_unprivileged_userns) == 0 ]]
+      fi
+      if [[ ${lanes[*]} == syscalls || ${lanes[*]} == syscalls-resume || ${lanes[*]} == syscalls-kvm ]]; then
+        # The maintained rtnetlink syscall owners invoke ip and OpenBSD nc.
+        sudo -n apt-get update
+        sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
+        dpkg-query -W iproute2 netcat-openbsd | tee "$RUNNER_TEMP/qualification/network-tools.txt"
+        command -v ip nc
+      fi
+      if [[ ${lanes[*]} == syscalls && $QUALIFICATION_ARCH == amd64 ]]; then
+        # The AMD64 profile includes native IPv6 netfilter tests; their raw
+        # sockopts do not load the legacy handler.
+        sudo -n modprobe ip6_tables
+      fi
+      if [[ ${lanes[*]} == nftables || ${lanes[*]} == moby ]]; then
+        # These suites exercise nftables in their private Docker namespaces.
+        sudo -n modprobe nfnetlink
+        sudo -n modprobe nf_tables
+      fi
+      if [[ ${lanes[*]} == plugin-network ]]; then
+        # The plugin opens host vhost-net and TUN devices inside its sandbox.
+        for device in /dev/vhost-net /dev/net/tun; do
+          [[ -c $device ]]
+          sudo -n test -r "$device"
+          sudo -n test -w "$device"
+        done
+      fi
+      if [[ ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
+        [[ -c /dev/kvm ]]
+        sudo -n test -r /dev/kvm
+        sudo -n test -w /dev/kvm
+      fi
     fi
     ;;
   *) printf 'Unknown qualification execution mode.\n' >&2; exit 2 ;;

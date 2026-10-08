@@ -93,10 +93,30 @@ on the Actions or Remote Bazel workers. Preserve the catalog's capture time
 with the result; these inputs contain public metadata, not credentials.
 
 The CLI returns the remote status. Pushes have a 15-minute remote timeout;
-manual selections have 45 minutes, with automatic retries disabled. The Actions
-job has a 50-minute timeout. Larger qualification runs can use the same entry
-point directly on Remote Bazel with an appropriate explicit work limit.
+ordinary manual selections have 45 minutes, with automatic retries disabled.
+Those Actions jobs have a 50-minute timeout. Hosted coordinator limits can be
+capped below the requested duration; inspect the accepted action timeout.
 Missing workers, input errors and failed tests remain failures.
+
+The complete ARM64 64K profile has two tests with original one-hour deadlines.
+For `lanes=syscalls-64k`, `architecture=arm64` and `execution=remote`, the
+workflow therefore coordinates Bazel directly on the standard AMD64 Actions
+runner. Compilation and every guest TestRunner remain on RBE; the Actions
+host does not need a 64K kernel, KVM, or local-test host configuration.
+The existing maintained selector runs the full profile with normal test-result
+caching, one attempt and 400 remote jobs. It uses a 120-minute shared work
+limit, a 145-minute execution/capture step and a 155-minute job; each test's
+original deadline is unchanged. Missing results after an outer deadline are
+incomplete qualification, not passes. The workflow retains the configured
+selection, compact execution log and sanitized test events. Remote outputs
+remain digest-addressed for finite collection; payload archives need not be
+downloaded to the coordinator.
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref qualification/arm64-64k-integration \
+  -f lanes=syscalls-64k -f architecture=arm64 -f execution=remote
+```
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
 `unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `kvm`, `startup`, `posture`,
