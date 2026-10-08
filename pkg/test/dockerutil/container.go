@@ -335,6 +335,9 @@ func (c *Container) create(ctx context.Context, profileImage string, conf *conta
 }
 
 func (c *Container) config(ctx context.Context, r RunOpts, args []string) (*container.Config, error) {
+	if c.copyErr != nil {
+		return nil, fmt.Errorf("copy container inputs: %w", c.copyErr)
+	}
 	env := append(r.Env, fmt.Sprintf("RUNSC_TEST_NAME=%s", c.Name))
 
 	image := testutil.ImageByName(r.Image)
