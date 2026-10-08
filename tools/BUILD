@@ -75,6 +75,8 @@ bzl_library(
 )
 
 exports_files([
+    "build_cover.sh",
+    "go-allow-internal.patch",
     "gazelle-module-metadata.patch",
     "llvm-linux-header-default.patch",
     "with_cfg-test-frontend.patch",

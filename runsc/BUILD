@@ -1,5 +1,6 @@
 load("//external/tools/plugin-stack:defs.bzl", "plugin_build")
 load("//tools:defs.bzl", "go_binary", "go_cov", "sh_test")
+load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -96,21 +97,37 @@ sh_test(
     data = [":runsc"],
 )
 
-go_cov(
+genrule(
     name = "runsc_coverage",
-    srcs = ["main.go"],
-    out = "runsc_cov",
-    gotags = [
-        "kcov",
-        "opensource",
+    srcs = [
+        "main.go",
+        "//:go.mod",
+        "//:go.sum",
+        "//:gopath",
+        "//tools:build_cover.sh",
+        "//tools:go-allow-internal.patch",
     ],
-    pure = True,
-    race = "off",
+    outs = ["runsc_cov"],
+    cmd =
+        "\"$(location //tools:build_cover.sh)\" " +
+        "\"$(location //runsc:runsc_cov)\" " +
+        "\"$(location //:gopath)\" " +
+        "\"$(location //:go.mod)\" " +
+        "\"$(location //:go.sum)\" " +
+        "\"$(location main.go)\" " +
+        "\"$(location //tools:go-allow-internal.patch)\" " +
+        "\"false\" ",
+    # Keep the legacy helper's host utilities local to this action. All
+    # transitive C/BPF prerequisites retain their declared toolchains.
+    exec_properties = {
+        "EstimatedCPU": "4",
+        "EstimatedFreeDiskBytes": "20GB",
+        "EstimatedMemory": "16GB",
+        "container-image": RBE_DOCKER_TOOLS_IMAGE,
+        "network": "external",
+        "workload-isolation-type": "oci",
+    },
     visibility = ["//debian:__pkg__"],
-    deps = [
-        "//runsc/cli/maincli",
-        "//runsc/version",
-    ],
 )
 
 go_cov(
