@@ -28,7 +28,7 @@ shift 9
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
-    machine_options=(-machine "virt-6.2,gic-version=3" -cpu cortex-a57 -accel "tcg,thread=multi")
+    machine_options=(-machine "virt-6.2,gic-version=3" -cpu max -accel "tcg,thread=multi")
     console=ttyAMA0
     ;;
   amd64_kvm)
