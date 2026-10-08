@@ -7,9 +7,7 @@ package(
 
 go_library(
     name = "socket",
-    srcs = [
-        "socket.go",
-    ],
+    srcs = ["socket.go"],
     visibility = ["//pkg/sentry:internal"],
     deps = [
         "//pkg/abi/linux",

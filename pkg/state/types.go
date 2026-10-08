@@ -97,7 +97,7 @@ func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 	if info, ok := reverseTypeDatabase[typ]; ok {
 		return info, true
 	}
-	v := reflect.Zero(reflect.PtrTo(typ)).Interface()
+	v := reflect.Zero(reflect.PointerTo(typ)).Interface()
 	t, ok := v.(Type)
 	if !ok {
 		// Is this a primitive?

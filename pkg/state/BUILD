@@ -90,8 +90,8 @@ go_library(
 )
 
 go_test(
-    name = "types_test",
+    name = "state_test",
     size = "small",
     srcs = ["types_test.go"],
-    library = ":state",
+    embed = [":state"],
 )
