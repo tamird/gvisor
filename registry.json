@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T10:00:38.534516+00:00",
+    "updatedAt": "2026-10-08T10:18:24.712118+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4365,20 +4365,21 @@
       "url": "https://github.com/google/gvisor/pull/15472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-08T10:00:38.534516+00:00",
-      "summary": "The live 987306894 PR received maintainer approval from milantracy at 2026-10-08 09:55:18 UTC and is labelled ready to pull. Its source checks are successful and GitHub reports MERGEABLE; no import PR is present in this complete snapshot. This approval is for the live source, not the unpublished-to-this-PR version-specific b2b91bc97 amendment. The contributor decision on that amendment remains pending and no live change or public reply has been made. Review: https://github.com/google/gvisor/pull/15472#pullrequestreview-5454795466\n\nEarlier observations:\n\nThe version-specific amendment is published for contributor review at b2b91bc97d884c09f0c9e6296896467d6265f7aa; the root has issued the approval question and no answer has been received. The live PR remains 987306894. The candidate expects exactly EPERM on native Linux 7.1+, 7.0.2+ and 6.18.25+, retaining EINVAL on the reviewed older series and in gVisor. Focused validation 37709486990 passed the existing case on native Linux 6.1.0 (EINVAL), native 7.3 RC (EPERM), and systrap (EINVAL), without skips. The candidate refresh preserves the tested case and helper. No live amendment or public reply has been made.\n\nEarlier delivered source and validation:\n\nThe contributor approved this independent FUSE errno compatibility correction. Ready PR #15472 is published with exact one-file source/body, attribution and thread metadata verified. Native Linux accepts EINVAL or EPERM for the unconnected clone case; the gVisor expectation remains strictly EINVAL. No skip or capability gate is added.\n\nFocused qualification passes both complete native and systrap_shared AMD64 RC owners:12 real cases pass and two existing LookupUpdatesInode skips remain. CloneFromUnconnectedDeviceFails executes and passes in both. Saved peer3d6e verifies original300s actions, all18 outputs, guest/source and remote producer joins. The prior bucket1 EPERM failure remains preserved; no full-bucket or ARM credit is claimed.",
+      "updatedAt": "2026-10-08T10:18:24.712118+00:00",
+      "summary": "Exact-head import PR #15505 is now open for the live 987306894 FUSE source. Its imported head is 62ee87b3c49afb890dc9f845f6c7e6528e67b0ec; GitHub reports MERGEABLE, lint has passed, and generate, Buildkite and Go checks are pending in the 10:17 UTC snapshot. The source PR remains approved. The separate contributor decision on the version-specific b2b91bc97 amendment remains pending; neither that amendment nor a new public reply has been published. Import: https://github.com/google/gvisor/pull/15505\n\nEarlier observations:\n\nThe live 987306894 PR received maintainer approval from milantracy at 2026-10-08 09:55:18 UTC and is labelled ready to pull. Its source checks are successful and GitHub reports MERGEABLE; no import PR is present in this complete snapshot. This approval is for the live source, not the unpublished-to-this-PR version-specific b2b91bc97 amendment. The contributor decision on that amendment remains pending and no live change or public reply has been made. Review: https://github.com/google/gvisor/pull/15472#pullrequestreview-5454795466\n\nEarlier observations:\n\nThe version-specific amendment is published for contributor review at b2b91bc97d884c09f0c9e6296896467d6265f7aa; the root has issued the approval question and no answer has been received. The live PR remains 987306894. The candidate expects exactly EPERM on native Linux 7.1+, 7.0.2+ and 6.18.25+, retaining EINVAL on the reviewed older series and in gVisor. Focused validation 37709486990 passed the existing case on native Linux 6.1.0 (EINVAL), native 7.3 RC (EPERM), and systrap (EINVAL), without skips. The candidate refresh preserves the tested case and helper. No live amendment or public reply has been made.\n\nEarlier delivered source and validation:\n\nThe contributor approved this independent FUSE errno compatibility correction. Ready PR #15472 is published with exact one-file source/body, attribution and thread metadata verified. Native Linux accepts EINVAL or EPERM for the unconnected clone case; the gVisor expectation remains strictly EINVAL. No skip or capability gate is added.\n\nFocused qualification passes both complete native and systrap_shared AMD64 RC owners:12 real cases pass and two existing LookupUpdatesInode skips remain. CloneFromUnconnectedDeviceFails executes and passes in both. Saved peer3d6e verifies original300s actions, all18 outputs, guest/source and remote producer joins. The prior bucket1 EPERM failure remains preserved; no full-bucket or ARM credit is claimed.",
       "followup": {
         "disposition": "Validated version-specific amendment; contributor review requested",
         "owner": "root",
         "nextAction": "Await the contributor response to b2b91bc97. Update the existing PR and reply only after approval.",
         "sourceHead": "987306894fc94d878d6a5f6cc83547a03413ed9f",
-        "reviewedAt": "2026-10-08T10:00:38.534516+00:00",
+        "reviewedAt": "2026-10-08T10:18:24.712118+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15472",
           "https://github.com/tamird/gvisor/actions/runs/37695275090",
           "https://github.com/tamird/gvisor/commit/b2b91bc97d884c09f0c9e6296896467d6265f7aa",
           "https://github.com/tamird/gvisor/actions/runs/37709486990",
-          "https://github.com/google/gvisor/pull/15472#pullrequestreview-5454795466"
+          "https://github.com/google/gvisor/pull/15472#pullrequestreview-5454795466",
+          "https://github.com/google/gvisor/pull/15505"
         ],
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -4440,6 +4441,35 @@
         "mergeable": "MERGEABLE"
       },
       "number": 15500
+    },
+    {
+      "id": "branch:remove-empty-socketopt-test",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/remove-empty-socketopt-test",
+      "head": "1955fe0b8d71ee41072b2e96c626eb03d3e187f0",
+      "title": "Remove empty socket-option test scaffolding",
+      "url": "https://github.com/tamird/gvisor/commit/1955fe0b8d71ee41072b2e96c626eb03d3e187f0",
+      "group": "tests",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-08T10:18:24.712118+00:00",
+      "summary": "The root has issued a contributor review question for this exact public single-commit cleanup. It removes the empty socketopt_test.cc file and its cc_binary/syscall_test declarations: 44 deleted lines across three paths, with no test bodies removed. The public source has been empty since its introduction in 2267c24a4; exact-path history and all indexed references were reviewed. Historical full AMD qualification retains these zero-body wrappers separately from case coverage. Pointer-auth architecture selection is unchanged. No new runtime result or upstream PR is claimed.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "1955fe0b8d71ee41072b2e96c626eb03d3e187f0",
+        "url": "https://github.com/tamird/gvisor/commit/1955fe0b8d71ee41072b2e96c626eb03d3e187f0"
+      },
+      "followup": {
+        "disposition": "Contributor review requested",
+        "owner": "root",
+        "nextAction": "Await the contributor decision on this exact cleanup before opening an upstream PR.",
+        "sourceHead": "1955fe0b8d71ee41072b2e96c626eb03d3e187f0",
+        "reviewedAt": "2026-10-08T10:18:24.712118+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1955fe0b8d71ee41072b2e96c626eb03d3e187f0",
+          "https://github.com/google/gvisor/commit/2267c24a41986e12cc72d136b9d6cc4ebaa2f927"
+        ]
+      }
     }
   ],
   "edges": [
