@@ -514,6 +514,16 @@ type elemType interface {
 	Elem() types.Type
 }
 
+// indexKey makes equal integer constants identify the same array element even
+// when SSA represents the index occurrences with separate Const objects.
+func (l *lockState) indexKey(v ssa.Value) string {
+	if c, ok := l.bound(v).(*ssa.Const); ok && c.Value != nil && c.Value.Kind() == constant.Int {
+		return c.Value.ExactString()
+	}
+	key, _ := l.valueAndObject(v)
+	return key
+}
+
 // valueAndObject returns a string for a given value, along with a source level
 // object (if available and relevant).
 //
@@ -563,12 +573,10 @@ func (l *lockState) valueAndObject(v ssa.Value) (string, types.Object) {
 		return fieldKey(s, fieldObj), fieldObj
 	case *ssa.Index:
 		s, _ := l.valueAndObject(x.X)
-		i, _ := l.valueAndObject(x.Index)
-		return fmt.Sprintf("%s[%s]", s, i), nil
+		return fmt.Sprintf("%s[%s]", s, l.indexKey(x.Index)), nil
 	case *ssa.IndexAddr:
 		s, _ := l.valueAndObject(x.X)
-		i, _ := l.valueAndObject(x.Index)
-		return fmt.Sprintf("&(%s[%s])", s, i), nil
+		return fmt.Sprintf("&(%s[%s])", s, l.indexKey(x.Index)), nil
 	case *ssa.Lookup:
 		s, _ := l.valueAndObject(x.X)
 		i, _ := l.valueAndObject(x.Index)
