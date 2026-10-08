@@ -1,0 +1,16 @@
+# PHP 8.5.11 declares only pdo, but these constants belong to pdo_pgsql.
+# Explicit PHPT selection bypasses extension-directory filtering. Declare
+# the driver so the upstream harness can report its missing prerequisite.
+# https://github.com/php/php-src/blob/678778973/ext/pdo_pgsql/pdo_pgsql.c#L181-L189
+
+diff --git a/ext/pdo_pgsql/tests/transations_deprecations.phpt b/ext/pdo_pgsql/tests/transations_deprecations.phpt
+--- a/ext/pdo_pgsql/tests/transations_deprecations.phpt
++++ b/ext/pdo_pgsql/tests/transations_deprecations.phpt
+@@ -2,6 +2,7 @@
+ Test PDO::PGSQL_TRANSACTION* constants.
+ --EXTENSIONS--
+ pdo
++pdo_pgsql
+ --SKIPIF--
+ <?php
+ if (substr(PHP_OS, 0, 3) == 'WIN') {
