@@ -130,7 +130,7 @@ function appendChecks(container, pr, heading) {
 }
 function conflictRecord(pr) {
   const previous = pr.mergeabilityObservation;
-  if (pr.mergeable === "CONFLICTING") return { scope: pr.head, since: pr.conflictCheckedAt || pr.checkedAt, basis: "observed", qualifier: null };
+  if (pr.mergeable === "CONFLICTING") return { scope: pr.head, since: pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt, basis: "observed", qualifier: null };
   if (pr.mergeable === "UNKNOWN" && previous?.state === "CONFLICTING" && previous.head === pr.head)
     return { scope: pr.head, since: previous.checkedAt, basis: "observed", qualifier: "Last observed conflict; GitHub is recomputing current mergeability" };
   return null;
@@ -139,7 +139,7 @@ function mergeDescription(pr) {
   const previous = pr.mergeabilityObservation;
   const current = pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "GitHub is recomputing mergeability";
   const observed = previous ? ` Last observed ${previous.state === "CONFLICTING" ? "conflict" : "no conflict"} at ${date(previous.checkedAt)}, head ${previous.head.slice(0, 9)}, base ${previous.base?.slice(0, 9) || "not recorded"}.${previous.head !== pr.head ? " That observation belongs to an older head." : ""}` : " No previous concrete result is recorded.";
-  return current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
+  return current + (pr.mergeable === "UNKNOWN" ? observed : ` · checked ${date(pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt)} · head ${pr.head.slice(0, 9)} · base ${pr.base?.slice(0, 9) || "not recorded"}`);
 }
 function withConflictResult(pr) {
   const result = conflictResults.get(pr.number);
@@ -152,7 +152,7 @@ function withConflictResult(pr) {
   }
   const changed = result.head !== pr.head;
   const current = { ...pr, head: result.head, base: result.base, status: result.status,
-    mergeable: result.state, conflictCheckedAt: result.checkedAt, revisionChanged: changed };
+    mergeable: result.state, conflictCheckedAt: result.checkedAt, revisionChanged: changed, statusChanged: result.status !== pr.status };
   if (changed) Object.assign(current, { reviewDecision: null, approvedHead: null, githubReviewDecision: null,
     reviewsComplete: false, reviewRequestsComplete: false, checks: null, labels: [], labelsComplete: false,
     importsComplete: false, imports: pr.imports.map(item => ({ ...item, matchesSourceHead: false })) });
@@ -684,7 +684,16 @@ function stateRecords(snapshot, node) {
   if (node.github) {
     if (node.github.revisionChanged) {
       for (const key of Object.keys(records)) delete records[key];
-      if (node.github.status === "open") records["maintainer-review"] = { scope: null, since: null, basis: "unknown", qualifier: "New head; approval has not been collected" };
+    }
+    if (node.github.revisionChanged || node.github.statusChanged) {
+      const pr = node.github, decision = effectiveReviewDecision(pr);
+      // A partial REST response can revoke readiness, but cannot establish it.
+      for (const key of ["draft", "maintainer-review", "changes-requested", "awaiting-import", "waiting-merge"]) delete records[key];
+      const state = pr.status === "draft" ? "draft" : pr.status === "open"
+        ? decision === "CHANGES_REQUESTED" ? "changes-requested" : decision !== "APPROVED" ? "maintainer-review" : null : null;
+      if (state) records[state] = pr.revisionChanged && state === "maintainer-review"
+        ? { scope: null, since: null, basis: "unknown", qualifier: "New head; approval has not been collected" }
+        : { scope: pr.head, since: pr.conflictCheckedAt, basis: "observed", qualifier: null };
     }
     const conflict = conflictRecord(node.github);
     if (conflict && ["open", "draft"].includes(node.github.status)) records.conflicts = { ...conflict,

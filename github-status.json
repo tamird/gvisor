@@ -2,8 +2,8 @@
   "schema": 1,
   "repo": "google/gvisor",
   "owner": "tamird",
-  "checkedAt": "2026-10-08T20:51:06.999435+00:00",
-  "registryDate": "2026-10-08T20:32:58.991662+00:00",
+  "checkedAt": "2026-10-08T21:03:07.766466+00:00",
+  "registryDate": "2026-10-08T21:05:14.556649+00:00",
   "prs": [
     {
       "number": 12470,
@@ -32,6 +32,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438446+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -322,12 +323,12 @@
       "approvedHead": "9b07362b8673d7f0195ffb3df468a0b3715e3b3c",
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9b07362b8673d7f0195ffb3df468a0b3715e3b3c",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:38.438446+00:00"
       }
     },
     {
@@ -348,6 +349,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438622+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -546,12 +548,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9f15cc6f33d681c1cd051c2797a3172f0dc89efa",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:38.438622+00:00"
       }
     },
     {
@@ -572,6 +574,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438624+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -738,6 +741,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042197+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -872,11 +876,11 @@
           "sourceHead": "2bf6f9791fa1640087175db414f78f434f81d0f7",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15208",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -906,6 +910,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438625+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -1032,12 +1037,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:38.438625+00:00"
       }
     },
     {
@@ -1063,6 +1068,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438626+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -1195,12 +1201,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0",
         "base": "18e273f3dce3635045e36ceedc894dbd0421ebaf",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:38.438626+00:00"
       }
     },
     {
@@ -1230,6 +1236,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438628+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -1410,12 +1417,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "de2a5dd01af28c23dedcaf2e934ec808f8051c55",
         "base": "18e273f3dce3635045e36ceedc894dbd0421ebaf",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:38.438628+00:00"
       }
     },
     {
@@ -1441,6 +1448,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438629+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -1579,12 +1587,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "58b093bd6b6a0dbe4c6b516c379d5013cc973722",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:38.438629+00:00"
       }
     },
     {
@@ -1614,6 +1622,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:38.438630+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -1788,6 +1797,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962142+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -1928,11 +1938,11 @@
           "sourceHead": "0ce4df8dce4711cff524a14dfc7165fc84172ac6",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15256",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -1970,6 +1980,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073016+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -2210,6 +2221,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316932+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -2344,11 +2356,11 @@
           "sourceHead": "bacd163af4966ef1c8a7bf3ff917d7eafe5bf882",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15399",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -2374,6 +2386,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073058+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -2500,12 +2513,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1a608a4d3199222ac1a94311e7ceff57cd8885a1",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:42.073058+00:00"
       }
     },
     {
@@ -2531,6 +2544,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073059+00:00",
       "mergeState": "DIRTY",
       "labels": [
         "ready to pull"
@@ -2779,6 +2793,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729597+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -2919,16 +2934,16 @@
           "sourceHead": "e14afdf075a7a3c6e34a87808dd27815cc6c3ab0",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/14871",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "c67d236a4cf356829acef7ee3ccf2591cbb9c0f6",
         "base": "252178ccf4d765ee5cb5301e4c54560b62bd7751",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:42.073059+00:00"
       }
     },
     {
@@ -2954,6 +2969,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073060+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -3068,12 +3084,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0943d0f425c80d8a1b9372fcaba1b87711d51a92",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:42.073060+00:00"
       }
     },
     {
@@ -3103,6 +3119,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073061+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -3269,6 +3286,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074564+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -3409,11 +3427,11 @@
           "sourceHead": "47ac9acd486edafa1c43cf30b18c78442f8492e8",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15242",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -3439,6 +3457,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073062+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -3865,6 +3884,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729691+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -3975,7 +3995,7 @@
           "sourceHead": "13e28b4f18e9749f3f794c93c96f3a8a52867188",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15001",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         },
         {
@@ -4009,6 +4029,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074565+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -4119,21 +4140,21 @@
           "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15248",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "4d9d282798ce2186f62649150fd0de57e63a5b91",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:46.074565+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "base": "95ed905fb406e26326b263b2b3cb4ee78985a022",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:42.073062+00:00"
       }
     },
     {
@@ -4163,6 +4184,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073062+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -4313,6 +4335,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074587+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -4453,11 +4476,11 @@
           "sourceHead": "dd582df2f644a3b4e5d2c94b3c583e8483af1029",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15254",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -4483,6 +4506,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:42.073063+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -4677,6 +4701,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729694+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -4787,7 +4812,7 @@
           "sourceHead": "f1ac1940debd1afd8eaed00a7b87c647918a8eec",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15022",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         },
         {
@@ -4808,6 +4833,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042203+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -4948,16 +4974,16 @@
           "sourceHead": "f1ac1940debd1afd8eaed00a7b87c647918a8eec",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15210",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ec9b0935a4d9db689dc7a3a2d1fc238c1811520e",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:42.073063+00:00"
       }
     },
     {
@@ -4987,6 +5013,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879327+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -5071,12 +5098,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "099fcd1a16c6bf16d70199e83083b1b6bd951c8a",
         "base": "c74ad32c5e90dd1aabba097159acb617799cd105",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:45.879327+00:00"
       }
     },
     {
@@ -5106,6 +5133,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879405+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -5243,12 +5271,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e8c82dd30d419cc7bba8047f3535a632cb47e70c",
         "base": "d3f4faffa86eddec1deea94229c39f2305105529",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:45.879405+00:00"
       }
     },
     {
@@ -5274,6 +5302,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879408+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -5433,6 +5462,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962152+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -5543,21 +5573,21 @@
           "sourceHead": "b69abbaaa9796a33b9f954cc00e6a70c04bde649",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15261",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "13461343e25fe7295410f2a6c3d88546c47f0260",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:47.962152+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b69abbaaa9796a33b9f954cc00e6a70c04bde649",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:45.879408+00:00"
       }
     },
     {
@@ -5587,6 +5617,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879409+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -5737,6 +5768,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353351+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -5865,11 +5897,11 @@
           "sourceHead": "6e036a388646de787e3f5c73f216fde06461ba74",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15271",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -5878,10 +5910,10 @@
       "url": "https://github.com/google/gvisor/pull/15030",
       "status": "open",
       "ref": "checklocks-closure-state",
-      "head": "61027644ef3258c2fe16a236861980d5ec7707ae",
-      "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
+      "head": "a807153cf320a6c79b68b8243257f26d0da30f8a",
+      "base": "0a438edc99965c50bac288b57f048db78a4d9006",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-08T00:58:00Z",
+      "updatedAt": "2026-10-08T21:00:27Z",
       "createdAt": "2026-09-26T00:42:48Z",
       "mergedAt": null,
       "closedAt": null,
@@ -5899,6 +5931,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879411+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -6003,68 +6036,74 @@
         ]
       },
       "checks": {
-        "state": "FAILURE",
-        "total": 13,
+        "state": "PENDING",
+        "total": 12,
         "complete": true,
         "contexts": [
           {
-            "name": "check-changes",
-            "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382863320/job/112008924648",
+            "name": "gazelle",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37843591618/job/113538818976",
             "app": "GitHub Actions"
           },
           {
             "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37843591601/job/113538818442",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "check-changes",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382866693/job/112008936049",
+            "url": "https://github.com/google/gvisor/actions/runs/37843587597/job/113538806783",
             "app": "GitHub Actions"
           },
           {
             "name": "scan-pr",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382866591/job/112008933952",
+            "url": "https://github.com/google/gvisor/actions/runs/37843591588/job/113538818280",
             "app": "GitHub Actions"
           },
           {
             "name": "label",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382867250/job/112008935186",
+            "url": "https://github.com/google/gvisor/actions/runs/37843591609/job/113538818111",
             "app": "GitHub Actions"
           },
           {
             "name": "fileheader",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382866540/job/112008934041",
+            "url": "https://github.com/google/gvisor/actions/runs/37843591571/job/113538818618",
             "app": "GitHub Actions"
           },
           {
             "name": "lint",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382866548/job/112008934105",
+            "url": "https://github.com/google/gvisor/actions/runs/37843591679/job/113538818391",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-config",
-            "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382863320/job/112009359509",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/37843587597/job/113539344136",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-scan",
-            "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382863320/job/112009449611",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/37843587597/job/113539344674",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-upload",
-            "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37382863320/job/112009605153",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/37843587597/job/113539346071",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-output",
-            "state": "FAILURE",
-            "url": "https://github.com/google/gvisor/actions/runs/37382863320/job/112009605243",
+            "state": "SKIPPED",
+            "url": "https://github.com/google/gvisor/actions/runs/37843587597/job/113539346565",
             "app": "GitHub Actions"
           },
           {
@@ -6072,23 +6111,11 @@
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
-          },
-          {
-            "name": "feedback/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
-          },
-          {
-            "name": "import/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
           }
         ]
       },
-      "reviewDecision": "APPROVED",
-      "approvedHead": "61027644ef3258c2fe16a236861980d5ec7707ae",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "approvedHead": null,
       "importsComplete": true,
       "imports": [
         {
@@ -6118,6 +6145,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962073+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -6232,23 +6260,23 @@
           "reviewDecision": null,
           "approvedHead": null,
           "sourceHead": "61027644ef3258c2fe16a236861980d5ec7707ae",
-          "matchesSourceHead": true,
+          "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15255",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "dac9a67c3663c69dceff9b165fc564d684f9666d",
             "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:47.962073+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
-        "head": "61027644ef3258c2fe16a236861980d5ec7707ae",
-        "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "head": "a807153cf320a6c79b68b8243257f26d0da30f8a",
+        "base": "0a438edc99965c50bac288b57f048db78a4d9006",
+        "checkedAt": "2026-10-08T21:01:45.879411+00:00"
       }
     },
     {
@@ -6274,6 +6302,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879412+00:00",
       "mergeState": "DIRTY",
       "labels": [
         "ready to pull"
@@ -6551,6 +6580,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074543+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -6691,16 +6721,16 @@
           "sourceHead": "43e2272333016adf07c2b814b5eb9e75eab5de22",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15228",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "48aea61aa95c21c351e457193e377511af16ba79",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:45.879412+00:00"
       }
     },
     {
@@ -6730,6 +6760,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879414+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -6880,6 +6911,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353400+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -7014,11 +7046,11 @@
           "sourceHead": "a0979e57ffc32fc48c2860176e5b7f1e8c1609ce",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15276",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -7044,6 +7076,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:45.879418+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -7170,12 +7203,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "ccc387fc0195c118b8e3f75c6116bbddcf49a936",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:45.879418+00:00"
       }
     },
     {
@@ -7196,6 +7229,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928102+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -7346,6 +7380,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962151+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -7480,11 +7515,11 @@
           "sourceHead": "fffb5e816b4a93e25c88d985bf5d0a766874c085",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15260",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -7514,6 +7549,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928176+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -7684,6 +7720,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424582+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -7824,11 +7861,11 @@
           "sourceHead": "64d84bfb1547c1dd83ba018577d56a981c2304b1",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15175",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -7858,6 +7895,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928179+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -8008,6 +8046,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081863+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -8148,11 +8187,11 @@
           "sourceHead": "07a47811d3191594e29410a63d3b27cbd4340928",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15269",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -8178,6 +8217,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928184+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -8344,6 +8384,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081861+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -8484,11 +8525,11 @@
           "sourceHead": "3e7bad01a0e19a247b7bed9427f9defd6b4b809a",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15267",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -8514,6 +8555,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928185+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -8620,6 +8662,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729697+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -8760,16 +8803,16 @@
           "sourceHead": "dca9ff69427c7507a15843648a24e858d6252654",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15104",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "4d09fd68d8da13d2ee678c7b6cf30e373c49ea79",
         "base": "aa5869c9615e99d579e886a2b7bf1ec6202f7cf3",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:48.928185+00:00"
       }
     },
     {
@@ -8799,6 +8842,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928187+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -8990,6 +9034,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531892+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -9124,11 +9169,11 @@
           "sourceHead": "e0f75c3ea08d7b74e1c757e9034285142c551309",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15394",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -9154,6 +9199,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928192+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -9320,6 +9366,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353395+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -9454,11 +9501,11 @@
           "sourceHead": "a6014c56559805062f9906bc8e2d8515695a9a00",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15272",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -9488,6 +9535,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:48.928194+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -9590,12 +9638,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c058cddf269f5fe81bb4e261f6356ca764bb50ca",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:48.928194+00:00"
       }
     },
     {
@@ -9621,6 +9669,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239355+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -9729,6 +9778,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424585+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -9869,11 +9919,11 @@
           "sourceHead": "17ac3a39539d10376f245e712bd6aad4a940fad3",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15191",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -9903,6 +9953,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239424+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -10053,6 +10104,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418271+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -10193,11 +10245,11 @@
           "sourceHead": "ff8a597f62b9d746708aa7cef0855dbcb5844031",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15285",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -10227,6 +10279,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239427+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -10335,6 +10388,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729696+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -10469,11 +10523,11 @@
           "sourceHead": "d229d43572ebcd2e5dc3182e1db402e8fb4e8a38",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15096",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -10503,6 +10557,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239431+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -10639,12 +10694,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0827e3e26b7f35218ebd0b6caa5bfdb8e3063557",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:52.239431+00:00"
       }
     },
     {
@@ -10670,6 +10725,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239433+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -10886,6 +10942,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074566+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -11026,11 +11083,11 @@
           "sourceHead": "e89cc398592a9e40b0d876bba1d2052e045d2314",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15250",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -11068,6 +11125,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239434+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -11152,12 +11210,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "185da4dff91690f16edeff61eaeb6d00047f2d7e",
         "base": "5f20848ea45a679f1de95417a62cde6e4974ed00",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:52.239434+00:00"
       }
     },
     {
@@ -11187,6 +11245,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239435+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -11432,6 +11491,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531893+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -11542,21 +11602,21 @@
           "sourceHead": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15396",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "5f6d1fa551b7e473863c34dc8b306971a4ae606b",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:58.531893+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:52.239435+00:00"
       }
     },
     {
@@ -11586,6 +11646,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:52.239437+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -11704,12 +11765,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "6163d92a567f0983df38f57ec2596adc917ae78a",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:52.239437+00:00"
       }
     },
     {
@@ -11735,6 +11796,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367602+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -11883,6 +11945,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729698+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -12023,16 +12086,16 @@
           "sourceHead": "1c8a4fd1d70d61f520f39d7cf9936d249650f93d",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15117",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b89c01c4c4cada4c7cb0c34dc3c2479d583d7a22",
         "base": "dae79243cdc11087571e4420b95f79cdf9b63f66",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:55.367602+00:00"
       }
     },
     {
@@ -12058,6 +12121,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367635+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -12166,6 +12230,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729703+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -12306,11 +12371,11 @@
           "sourceHead": "1981947ab11f465f7b60b7ccbb5dd5c83981706b",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15152",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -12340,6 +12405,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367672+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -12499,6 +12565,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962150+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -12609,21 +12676,21 @@
           "sourceHead": "8130f5a58fdd688379390fcbdf90a81b66149235",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15259",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "06d6aa0e95e65b0bb04ec19b4fa4d42ed397c999",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:47.962150+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8130f5a58fdd688379390fcbdf90a81b66149235",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:55.367672+00:00"
       }
     },
     {
@@ -12649,6 +12716,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367677+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -12799,6 +12867,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424592+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -12939,16 +13008,16 @@
           "sourceHead": "a2d673ba2e83dcb9ff9ac813645a427e0f21dd9b",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15196",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fbe2c70e38f2bb79397d06bc5ed7301dee6f9100",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:55.367677+00:00"
       }
     },
     {
@@ -12978,6 +13047,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367678+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -13128,6 +13198,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353400+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -13262,11 +13333,11 @@
           "sourceHead": "1ea4a9f75e0677d94ca3fc30245930d89626ba0a",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15275",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -13292,6 +13363,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367680+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -13458,6 +13530,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418269+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -13598,11 +13671,11 @@
           "sourceHead": "12b1959dd1fda59c42272d050a92aed53ef0f4aa",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15284",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -13632,6 +13705,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367682+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -13782,6 +13856,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418268+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -13910,11 +13985,11 @@
           "sourceHead": "9cfbe5fa81131101de3970a65d2256e8c1fcd9e9",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15283",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -13944,6 +14019,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:55.367683+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -14147,6 +14223,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081852+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -14275,11 +14352,11 @@
           "sourceHead": "abf65a03381b8e0cb18f5e1b0bdeaa9f15fe14c7",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15264",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -14305,6 +14382,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893919+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -14455,6 +14533,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316934+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -14595,11 +14674,11 @@
           "sourceHead": "dac54db335181f1fa10653fd357d66bac72f549b",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15402",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -14625,6 +14704,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893956+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -14775,6 +14855,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042130+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -14909,11 +14990,11 @@
           "sourceHead": "792cc8f9c687ce490028aeaffe3215506a3ce981",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15200",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -14939,6 +15020,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893958+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -15059,6 +15141,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:40.729705+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -15199,11 +15282,11 @@
           "sourceHead": "840fdc5ae1399ea2e0ff5f35db52d28dc66809fb",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15158",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -15229,6 +15312,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893960+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -15349,6 +15433,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424594+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -15489,11 +15574,11 @@
           "sourceHead": "1ada6ae0d8a92377b17a3692d729330ec8ad0d98",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15198",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -15519,6 +15604,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893962+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -15639,6 +15725,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424512+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -15773,11 +15860,11 @@
           "sourceHead": "4c3863927320e9f8fc85b47942d52a5eaefcb80e",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15174",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -15803,6 +15890,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893963+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -16035,6 +16123,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418262+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -16169,11 +16258,11 @@
           "sourceHead": "490148c39f219260f436f56e13827f18c590189c",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15280",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -16199,6 +16288,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893965+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -16299,12 +16389,12 @@
       "approvedHead": "2534cc989cd5392fdd7e28b31ebc47e99fae2af8",
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "2534cc989cd5392fdd7e28b31ebc47e99fae2af8",
         "base": "5f20848ea45a679f1de95417a62cde6e4974ed00",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:57.893965+00:00"
       }
     },
     {
@@ -16334,6 +16424,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:01:57.893966+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -16452,12 +16543,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a9429cd833940fd776a4c44e792e322069b7bc6f",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:01:57.893966+00:00"
       }
     },
     {
@@ -16487,6 +16578,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107412+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -16605,12 +16697,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "c5e943bc48ce63b12fc67b826919b872ebd01a55",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:01.107412+00:00"
       }
     },
     {
@@ -16636,6 +16728,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107481+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -16814,6 +16907,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424595+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -16954,16 +17048,16 @@
           "sourceHead": "72ab5296eea71c8e701861db18eacb0ff9ec3267",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15199",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "ad67cc40192d4b659d0f679f3c3b161f8e434b0d",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:01.107481+00:00"
       }
     },
     {
@@ -16993,6 +17087,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107484+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -17143,6 +17238,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962148+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -17283,11 +17379,11 @@
           "sourceHead": "ef35352fb6e31d11bbd30c6b605c5f3a55dfb28b",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15258",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -17313,6 +17409,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107485+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -17479,6 +17576,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081866+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -17619,11 +17717,11 @@
           "sourceHead": "eda1b757c3f94bb18cae1f02577793e1c1339db9",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15270",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -17653,6 +17751,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107487+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -17755,12 +17854,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "2e46e8773c00fc18281a742b610013832861fe2d",
         "base": "50131cdaedd547bb53de856483b42b0776eb50b6",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:01.107487+00:00"
       }
     },
     {
@@ -17790,6 +17889,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107488+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -17940,6 +18040,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081862+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -18080,11 +18181,11 @@
           "sourceHead": "91e15cbbcc4fd616dac06eb6521834d0ef1d82df",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15268",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -18114,6 +18215,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107490+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -18264,6 +18366,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418265+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -18398,11 +18501,11 @@
           "sourceHead": "15e7abef04ed3cf4498eef63186289451cabbae7",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15281",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -18432,6 +18535,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:01.107491+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -18582,6 +18686,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418266+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -18716,11 +18821,11 @@
           "sourceHead": "3c528de66b8682b1152491e9f7e661f99e818287",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15282",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -18746,6 +18851,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146323+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -18866,6 +18972,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042210+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -19006,11 +19113,11 @@
           "sourceHead": "4517288346ac3b7d6f7f81529769bba1322a771d",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15226",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -19036,6 +19143,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146397+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -19202,6 +19310,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424591+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -19342,7 +19451,7 @@
           "sourceHead": "768231db3c0851e808b0a35aa5d212dc27082437",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15195",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         },
         {
@@ -19363,6 +19472,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074567+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -19473,11 +19583,11 @@
           "sourceHead": "5e68f4ec51904694e614cef50af36bddb155c25e",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15251",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -19503,6 +19613,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146400+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -19653,6 +19764,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531886+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -19787,11 +19899,11 @@
           "sourceHead": "e34ecd989257a01fc2bc592f7edcfec0185cabdb",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15381",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -19821,6 +19933,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146402+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -19984,6 +20097,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081854+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -20094,21 +20208,21 @@
           "sourceHead": "6e908d714da848893f8c40798ca9fe632c31e8c1",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15265",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "e7c6c88cc6e75ca1f57769af06fd73042f2ac307",
             "base": "7a00984a40e3f3817da96f8477dfd6bee7666d48",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:50.081854+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6e908d714da848893f8c40798ca9fe632c31e8c1",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:04.146402+00:00"
       }
     },
     {
@@ -20134,6 +20248,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146406+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -20288,6 +20403,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042208+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -20428,11 +20544,11 @@
           "sourceHead": "b07ccec16daffe566b470cecd2bf36fb4385bcfa",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15225",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -20458,6 +20574,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146408+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -20624,6 +20741,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081859+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -20764,11 +20882,11 @@
           "sourceHead": "9ae038dec0c0d16ad73d282de5a952404ef6375e",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15266",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -20794,6 +20912,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146410+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -20914,6 +21033,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:42.424589+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -21048,11 +21168,11 @@
           "sourceHead": "79cadb7e9af1af19a11861f14123b8bac8390049",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15192",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -21078,6 +21198,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:04.146411+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -21222,6 +21343,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042206+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -21356,16 +21478,16 @@
           "sourceHead": "8bd2a60b504329d08410280954268b954369078e",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15224",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "3bb673cca464650b355f5afab941b6ac5140dfab",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:04.146411+00:00"
       }
     },
     {
@@ -21391,6 +21513,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484465+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -21623,6 +21746,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353401+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -21757,11 +21881,11 @@
           "sourceHead": "962441d4e400887e389079cc88ce7a19cee15597",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15277",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -21787,6 +21911,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484507+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -21966,6 +22091,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418228+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -22076,21 +22202,21 @@
           "sourceHead": "d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15279",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "23df6f270b5225111aeadea8cb970f1fdff47368",
             "base": "a926f0050372b634899e090932b88161dae717a4",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:54.418228+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:07.484507+00:00"
       }
     },
     {
@@ -22124,6 +22250,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484510+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -22254,12 +22381,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6b98f2ca05794e793f5fa70d7fb0b937ec79fa56",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:07.484510+00:00"
       }
     },
     {
@@ -22285,6 +22412,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484511+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -22488,6 +22616,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353402+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -22622,11 +22751,11 @@
           "sourceHead": "e2d25110c34214d141f8431feee29f414eb9b9f7",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15278",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -22652,6 +22781,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484512+00:00",
       "mergeState": "DIRTY",
       "labels": [
         "ready to pull"
@@ -22856,6 +22986,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531888+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -22966,21 +23097,21 @@
           "sourceHead": "ab6a165dd67a4107ed99a322dc380c11eea772e4",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15382",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "26e7da05debd66887d8edefaed3bf9ee3d3a717d",
             "base": "de345a477802c4393e7b06f8d5f5abb5710e5e25",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:58.531888+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "21f7fd7b924a28562b4549258ef8a886019d9ef6",
         "base": "dd18583820c558954e16a27e7f1cabc2b36d85f8",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:07.484512+00:00"
       }
     },
     {
@@ -23014,6 +23145,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484513+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -23116,12 +23248,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "d543737e0b8fe765d2401e0a7492f8ef4ebc779a",
         "base": "7e906108b59767e7a3e79aca3b3ec71acbd50c55",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:07.484513+00:00"
       }
     },
     {
@@ -23147,6 +23279,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484513+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -23297,6 +23430,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531816+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -23437,11 +23571,11 @@
           "sourceHead": "e2f202dd4555d7377a51205bd8e5f382ca4209b3",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15378",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -23467,6 +23601,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:07.484514+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -23605,6 +23740,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042205+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -23745,11 +23881,11 @@
           "sourceHead": "8b92e722d8e0d9caf4c68b4221e23ab828349dc3",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15223",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -23775,6 +23911,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032561+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -23919,6 +24056,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074563+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -24047,16 +24185,16 @@
           "sourceHead": "d996900c113ceaf69f9c7a6b3f9f9fb45c79dc8d",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15229",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "c542e0e29dc7166dac7a33c9eb5d07eef68b743b",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:11.032561+00:00"
       }
     },
     {
@@ -24082,6 +24220,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032586+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -24281,6 +24420,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353396+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -24391,21 +24531,21 @@
           "sourceHead": "5daf7d221cfa604c65f149e6d5795b82d93832eb",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15273",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "097b01dbeb6eb21b9eb51b6cf36c55eac7b4c2be",
             "base": "9509f51478e817ed4cdad0965850d7c328765110",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:52.353396+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5daf7d221cfa604c65f149e6d5795b82d93832eb",
         "base": "b65c70734a1bc7df49d000b911848b3ad2a9cce0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:11.032586+00:00"
       }
     },
     {
@@ -24435,6 +24575,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032587+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -24662,6 +24803,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962147+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -24772,21 +24914,21 @@
           "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15257",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "a990ad3eb7cc2fb56f57638f416b11a1fbb0f97b",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:47.962147+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "base": "658c9c10144f34bca6d35d471ed0a519df59f5f7",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:11.032587+00:00"
       }
     },
     {
@@ -24816,6 +24958,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032588+00:00",
       "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
@@ -24918,12 +25061,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "2d9b81d097a4aa98e65d09393fbc8175964e91f8",
         "base": "0f3de09f2e1a67b84fba14360dfe5b1f8349a3d9",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:11.032588+00:00"
       }
     },
     {
@@ -24953,6 +25096,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032589+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -25103,6 +25247,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:44.042201+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -25243,11 +25388,11 @@
           "sourceHead": "8202d0dc4a28d847dd86fc9f14ce2b5fde2fcaf6",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15209",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -25273,6 +25418,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032590+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -25439,6 +25585,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:47.962153+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -25549,12 +25696,12 @@
           "sourceHead": "b8dc9942806657dbaeb6c042b6d2ce3ac1db0e96",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15262",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "66f706244ca3daaa8ad3002fe29ce40e94269413",
             "base": "bda71af754d373a5e090c04ff726469051a56007",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:47.962153+00:00"
           }
         },
         {
@@ -25575,6 +25722,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469539+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -25709,11 +25857,11 @@
           "sourceHead": "b8dc9942806657dbaeb6c042b6d2ce3ac1db0e96",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15302",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -25739,6 +25887,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032594+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -25980,6 +26129,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316804+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -26090,21 +26240,21 @@
           "sourceHead": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15398",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "6ebc4192bdc4ad6c47c2f304f7e57cf4346ed6e5",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:00.316804+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:11.032594+00:00"
       }
     },
     {
@@ -26130,6 +26280,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:11.032595+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -26348,6 +26499,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:52.353399+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -26488,11 +26640,11 @@
           "sourceHead": "8a71f041aaaf781bab6dc46e64a0f8145b3b64f6",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15274",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -26518,6 +26670,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916014+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -26684,6 +26837,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:50.081787+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -26818,11 +26972,11 @@
           "sourceHead": "4aec3baa51836b10cf85c99f6ad1448e9a9489d8",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15263",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -26852,6 +27006,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916078+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -27002,6 +27157,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:54.418272+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -27136,11 +27292,11 @@
           "sourceHead": "3fd8e2cafc6f1e1c614165e9e7c0c13b98b13d61",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15294",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -27166,6 +27322,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916083+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -27316,6 +27473,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316939+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -27456,11 +27614,11 @@
           "sourceHead": "e16cf7c2826bf341b8b20578c8672a81d36931ff",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15418",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -27490,6 +27648,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916084+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -27591,12 +27750,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "b04fae38936fc090e1dcd624121c4bd0a832cbf1",
         "base": "d3f4faffa86eddec1deea94229c39f2305105529",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:13.916084+00:00"
       }
     },
     {
@@ -27626,6 +27785,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916086+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -27776,6 +27936,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469592+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -27910,11 +28071,11 @@
           "sourceHead": "e5c4013efc560d176bfdec23206d68a5190be211",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15313",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -27940,6 +28101,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916087+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -28087,6 +28249,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469590+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -28227,11 +28390,11 @@
           "sourceHead": "6098e86dd0bfb5db160490a492cce8d325fa34f0",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15312",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -28261,6 +28424,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916088+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -28333,12 +28497,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185",
         "base": "4ac0fde02f14168b882794357d30108f3868033f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:13.916088+00:00"
       }
     },
     {
@@ -28364,6 +28528,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:13.916089+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -28538,6 +28703,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531884+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -28678,11 +28844,11 @@
           "sourceHead": "7540239d5b6ede5248dadf079ffc8086e5f42a55",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15380",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -28712,6 +28878,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259297+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -28826,12 +28993,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "86a99a4cb330d57e13ca073adaa04a9b0d3d085b",
         "base": "08309328856784cb607d32081e2539aa215ffa29",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:17.259297+00:00"
       }
     },
     {
@@ -28857,6 +29024,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259354+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -29007,6 +29175,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469593+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -29141,11 +29310,11 @@
           "sourceHead": "05accd6eadb331394c93c0a45898710829deb89f",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15324",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -29171,6 +29340,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259359+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -29297,6 +29467,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469596+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -29407,21 +29578,21 @@
           "sourceHead": "45a2169c18c3662cb3127f0bd4bb4c2579c65555",
           "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15369",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "f090fec9bc9871b0d53f7634e3e886ab1c66f882",
             "base": "5d905ac86394068162da337efe11dcbc3427bb2e",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:56.469596+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5",
         "base": "de345a477802c4393e7b06f8d5f5abb5710e5e25",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:17.259359+00:00"
       }
     },
     {
@@ -29451,6 +29622,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259360+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -29540,12 +29712,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
         "base": "18e273f3dce3635045e36ceedc894dbd0421ebaf",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:17.259360+00:00"
       }
     },
     {
@@ -29575,6 +29747,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259362+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -29734,6 +29907,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856807+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -29856,21 +30030,21 @@
           "sourceHead": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15465",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "506a713330243aa7852f5bc9dced1fca8edd0ee6",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:02.856807+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:17.259362+00:00"
       }
     },
     {
@@ -29896,6 +30070,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259364+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -30146,6 +30321,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856566+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -30280,11 +30456,11 @@
           "sourceHead": "443832c6b4f08c8e0157abeb37abc226533b7772",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15452",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -30310,6 +30486,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259366+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -30460,6 +30637,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469596+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -30594,11 +30772,11 @@
           "sourceHead": "22c23f92b2a79b9f09eb6a41aa8e1cd7e160f538",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15341",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -30624,6 +30802,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:17.259370+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -30783,6 +30962,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469595+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -30893,21 +31073,21 @@
           "sourceHead": "73d62b335ccacd564193b201c861b482e0c1ab18",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15339",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "7572cd03c87293dc741c5858afee400f854fa76f",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:02:56.469595+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "73d62b335ccacd564193b201c861b482e0c1ab18",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:17.259370+00:00"
       }
     },
     {
@@ -30937,6 +31117,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864507+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -31087,12 +31268,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "507fb1697568ee3aac7405722180d082f4018a4d",
         "base": "aa1fef14e7a6b5c1098ec5f254abfb44438da67f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:20.864507+00:00"
       }
     },
     {
@@ -31118,6 +31299,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864578+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -31284,6 +31466,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531891+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -31424,11 +31607,11 @@
           "sourceHead": "4e7f86be29e92b697aac1d205f94bd640ce8e854",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15387",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -31454,6 +31637,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864583+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -31604,6 +31788,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:56.469594+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -31744,11 +31929,11 @@
           "sourceHead": "da9faf745bef96666b1672fbf814af4b8cdc0e52",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15338",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -31774,6 +31959,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864587+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -31882,12 +32068,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e899dca1fbf56133d8973c20261f4983ef8e4212",
         "base": "9c677decddedf3facb0223e4cd915b9e5ff93c93",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:20.864587+00:00"
       }
     },
     {
@@ -31917,6 +32103,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864588+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -32018,12 +32205,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fd0194dbcd3b64e2cc5ffb31c32c24698ca54390",
         "base": "8a2c5049262ca84ea9c0981ac82eed02110d4ba7",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:20.864588+00:00"
       }
     },
     {
@@ -32053,6 +32240,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864592+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -32148,12 +32336,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6822132f065661a1b6dff1aabbc388c82233449c",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:20.864592+00:00"
       }
     },
     {
@@ -32174,6 +32362,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864593+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -32294,12 +32483,12 @@
       "approvedHead": "2f5afbc58fc2672cd454f2862d22687f619af31c",
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "2f5afbc58fc2672cd454f2862d22687f619af31c",
         "base": "8ef4a5cd30c2762b4e41d6959d449c4d09abaa31",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:20.864593+00:00"
       }
     },
     {
@@ -32320,6 +32509,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:20.864595+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -32498,6 +32688,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:58.531889+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -32632,11 +32823,11 @@
           "sourceHead": "99adc671d68485cbbeea855dd0d02cf27ee3ecfa",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15384",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -32662,6 +32853,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621224+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -32958,6 +33150,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856803+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -33092,11 +33285,11 @@
           "sourceHead": "6b486edc3bc79722811c7dab7adc2c5e31e3def7",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15458",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -33122,6 +33315,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621287+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -33272,6 +33466,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261034+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -33406,11 +33601,11 @@
           "sourceHead": "f0b67041d60450e623285250941df450b7f4bf31",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15488",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -33440,6 +33635,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621290+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -33590,6 +33786,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316936+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -33730,11 +33927,11 @@
           "sourceHead": "c4d5c2cf1515dcfdf0a35e4bfe8c3da23ed3f883",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15405",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -33764,6 +33961,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621291+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -33865,12 +34063,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f18737bed47bbdc3da9ea51dda485c0c94cb43e5",
         "base": "8a2c5049262ca84ea9c0981ac82eed02110d4ba7",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:23.621291+00:00"
       }
     },
     {
@@ -33896,6 +34094,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621293+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -34055,6 +34254,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261028+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -34189,11 +34389,11 @@
           "sourceHead": "0108067e45730adb0f5c7eeb400400e5527d78bf",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15481",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -34223,6 +34423,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621294+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -34373,6 +34574,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316945+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -34507,11 +34709,11 @@
           "sourceHead": "ca7331879bf94aa8becd0fd92d819449ca492459",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15419",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -34541,6 +34743,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621296+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -34716,6 +34919,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316937+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -34844,11 +35048,11 @@
           "sourceHead": "78a4931c5f714b6d6c6dbbd16d88b01ff74edab6",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15417",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -34857,10 +35061,10 @@
       "url": "https://github.com/google/gvisor/pull/15414",
       "status": "open",
       "ref": "abseil-release",
-      "head": "39c96507e65884a7c307be128ba7f23dedc376a2",
-      "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
+      "head": "c8e00a8c4906320368e33f7de1e88e9aacb65fc8",
+      "base": "0a438edc99965c50bac288b57f048db78a4d9006",
       "headOwner": "tamird",
-      "updatedAt": "2026-10-08T00:05:11Z",
+      "updatedAt": "2026-10-08T20:58:59Z",
       "createdAt": "2026-10-07T02:35:42Z",
       "mergedAt": null,
       "closedAt": null,
@@ -34874,6 +35078,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:23.621297+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -34906,92 +35111,86 @@
         ]
       },
       "checks": {
-        "state": "FAILURE",
-        "total": 13,
+        "state": "PENDING",
+        "total": 12,
         "complete": true,
         "contexts": [
           {
-            "name": "check-changes",
-            "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37594366731/job/112703237305",
+            "name": "generate",
+            "state": "IN_PROGRESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37843434217/job/113538286989",
             "app": "GitHub Actions"
           },
           {
-            "name": "generate",
+            "name": "gazelle",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37594369330/job/112703245006",
+            "url": "https://github.com/google/gvisor/actions/runs/37843434226/job/113538286709",
+            "app": "GitHub Actions"
+          },
+          {
+            "name": "check-changes",
+            "state": "SUCCESS",
+            "url": "https://github.com/google/gvisor/actions/runs/37843430439/job/113538275907",
             "app": "GitHub Actions"
           },
           {
             "name": "scan-pr",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37594369230/job/112703244568",
+            "url": "https://github.com/google/gvisor/actions/runs/37843434019/job/113538285588",
             "app": "GitHub Actions"
           },
           {
             "name": "label",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37594369250/job/112703244387",
+            "url": "https://github.com/google/gvisor/actions/runs/37843434118/job/113538285488",
             "app": "GitHub Actions"
           },
           {
             "name": "fileheader",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37594369215/job/112703244412",
+            "url": "https://github.com/google/gvisor/actions/runs/37843434109/job/113538287385",
             "app": "GitHub Actions"
           },
           {
             "name": "lint",
             "state": "SUCCESS",
-            "url": "https://github.com/google/gvisor/actions/runs/37594369211/job/112703244610",
+            "url": "https://github.com/google/gvisor/actions/runs/37843434176/job/113538286849",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-config",
             "state": "SKIPPED",
-            "url": "https://github.com/google/gvisor/actions/runs/37594366731/job/112703565216",
+            "url": "https://github.com/google/gvisor/actions/runs/37843430439/job/113538816140",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-scan",
             "state": "SKIPPED",
-            "url": "https://github.com/google/gvisor/actions/runs/37594366731/job/112703565375",
+            "url": "https://github.com/google/gvisor/actions/runs/37843430439/job/113538817392",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-upload",
             "state": "SKIPPED",
-            "url": "https://github.com/google/gvisor/actions/runs/37594366731/job/112703565857",
+            "url": "https://github.com/google/gvisor/actions/runs/37843430439/job/113538818378",
             "app": "GitHub Actions"
           },
           {
             "name": "zizmor-output",
             "state": "SKIPPED",
-            "url": "https://github.com/google/gvisor/actions/runs/37594366731/job/112703565935",
+            "url": "https://github.com/google/gvisor/actions/runs/37843430439/job/113538817760",
             "app": "GitHub Actions"
-          },
-          {
-            "name": "feedback/copybara",
-            "state": "FAILURE",
-            "url": null,
-            "app": null
           },
           {
             "name": "cla/google",
             "state": "SUCCESS",
             "url": "https://cla.developers.google.com/about",
             "app": "Google CLA"
-          },
-          {
-            "name": "import/copybara",
-            "state": "SUCCESS",
-            "url": null,
-            "app": null
           }
         ]
       },
-      "reviewDecision": "APPROVED",
-      "approvedHead": "39c96507e65884a7c307be128ba7f23dedc376a2",
+      "reviewDecision": "REVIEW_REQUIRED",
+      "approvedHead": null,
       "importsComplete": true,
       "imports": [
         {
@@ -35012,6 +35211,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261031+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -35120,23 +35320,23 @@
           "reviewDecision": null,
           "approvedHead": null,
           "sourceHead": "39c96507e65884a7c307be128ba7f23dedc376a2",
-          "matchesSourceHead": true,
+          "matchesSourceHead": false,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15483",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "a74edee7d953f9a1f1f105eb7f66df0841fc20c0",
             "base": "c66c2773d81dafe732a869a28c2c3904bd67e72c",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:05.261031+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
-        "head": "39c96507e65884a7c307be128ba7f23dedc376a2",
-        "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "head": "c8e00a8c4906320368e33f7de1e88e9aacb65fc8",
+        "base": "0a438edc99965c50bac288b57f048db78a4d9006",
+        "checkedAt": "2026-10-08T21:02:23.621297+00:00"
       }
     },
     {
@@ -35166,6 +35366,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032653+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -35304,6 +35505,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:07.252743+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -35426,21 +35628,21 @@
           "sourceHead": "865d0a1b029491173c4e5ed92ee7b51095dd75cd",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15495",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "c84f7adbb53e9e6dc6db2db256537855e3cb7218",
             "base": "847fc885335eded97ad43ac9aeaec5dec692c617",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:07.252743+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "865d0a1b029491173c4e5ed92ee7b51095dd75cd",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:27.032653+00:00"
       }
     },
     {
@@ -35466,6 +35668,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032712+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -35604,6 +35807,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:07.252821+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -35732,21 +35936,21 @@
           "sourceHead": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15532",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "3a09509123c2368a05821da219dc6bf441800dfe",
             "base": "0a438edc99965c50bac288b57f048db78a4d9006",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:07.252821+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:27.032712+00:00"
       }
     },
     {
@@ -35776,6 +35980,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032715+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -35902,10 +36107,10 @@
           "url": "https://github.com/google/gvisor/pull/15482",
           "status": "open",
           "ref": "test/cl995451875",
-          "head": "6e75525a622938026dc9a81425eafd8aef414c57",
-          "base": "c4c8643085267e8c32c76f55fe7b8f39cac1bd99",
+          "head": "01dbb3e5d4bc73757170641a0b78dc1f602a63f5",
+          "base": "0a438edc99965c50bac288b57f048db78a4d9006",
           "headOwner": "google",
-          "updatedAt": "2026-10-08T20:16:25Z",
+          "updatedAt": "2026-10-08T21:01:17Z",
           "createdAt": "2026-10-08T00:20:23Z",
           "mergedAt": null,
           "closedAt": null,
@@ -35914,6 +36119,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261030+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -35929,86 +36135,92 @@
             "items": []
           },
           "checks": {
-            "state": "SUCCESS",
+            "state": "PENDING",
             "total": 15,
             "complete": true,
             "contexts": [
               {
                 "name": "gazelle",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838201013/job/113520574235",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37843770386/job/113539397477",
+                "app": "GitHub Actions"
+              },
+              {
+                "name": "generate",
+                "state": "IN_PROGRESS",
+                "url": "https://github.com/google/gvisor/actions/runs/37843770396/job/113539397169",
                 "app": "GitHub Actions"
               },
               {
                 "name": "check-changes",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838198168/job/113520566464",
-                "app": "GitHub Actions"
-              },
-              {
-                "name": "generate",
-                "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838201088/job/113520574035",
+                "url": "https://github.com/google/gvisor/actions/runs/37843766821/job/113539386900",
                 "app": "GitHub Actions"
               },
               {
                 "name": "scan-pr",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838200910/job/113520573152",
+                "url": "https://github.com/google/gvisor/actions/runs/37843770305/job/113539396584",
                 "app": "GitHub Actions"
               },
               {
                 "name": "label",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838200951/job/113520573681",
+                "url": "https://github.com/google/gvisor/actions/runs/37843770512/job/113539397535",
                 "app": "GitHub Actions"
               },
               {
                 "name": "fileheader",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838201150/job/113520574906",
+                "url": "https://github.com/google/gvisor/actions/runs/37843770352/job/113539396660",
                 "app": "GitHub Actions"
               },
               {
                 "name": "lint",
                 "state": "SUCCESS",
-                "url": "https://github.com/google/gvisor/actions/runs/37838200986/job/113520572474",
+                "url": "https://github.com/google/gvisor/actions/runs/37843770288/job/113539396277",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-config",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37838198168/job/113521094160",
+                "url": "https://github.com/google/gvisor/actions/runs/37843766821/job/113539833095",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-scan",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37838198168/job/113521094903",
+                "url": "https://github.com/google/gvisor/actions/runs/37843766821/job/113539834543",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-upload",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37838198168/job/113521096589",
+                "url": "https://github.com/google/gvisor/actions/runs/37843766821/job/113539834834",
                 "app": "GitHub Actions"
               },
               {
                 "name": "zizmor-output",
                 "state": "SKIPPED",
-                "url": "https://github.com/google/gvisor/actions/runs/37838198168/job/113521096253",
+                "url": "https://github.com/google/gvisor/actions/runs/37843766821/job/113539835189",
                 "app": "GitHub Actions"
               },
               {
                 "name": "buildkite/internal",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/internal/builds/31878",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/internal/builds/31885",
                 "app": null
               },
               {
                 "name": "buildkite/pipeline",
-                "state": "SUCCESS",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/50180",
+                "state": "PENDING",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/50187",
+                "app": null
+              },
+              {
+                "name": "go tests",
+                "state": "PENDING",
+                "url": null,
                 "app": null
               },
               {
@@ -36016,12 +36228,6 @@
                 "state": "SUCCESS",
                 "url": "https://cla.developers.google.com/about",
                 "app": "Google CLA"
-              },
-              {
-                "name": "go tests",
-                "state": "SUCCESS",
-                "url": null,
-                "app": null
               }
             ]
           },
@@ -36030,21 +36236,21 @@
           "sourceHead": "32e30154fd6d2e7c26c0b103c22f1a88ba2c8413",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15482",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
-            "head": "6e75525a622938026dc9a81425eafd8aef414c57",
-            "base": "c4c8643085267e8c32c76f55fe7b8f39cac1bd99",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "head": "01dbb3e5d4bc73757170641a0b78dc1f602a63f5",
+            "base": "0a438edc99965c50bac288b57f048db78a4d9006",
+            "checkedAt": "2026-10-08T21:03:05.261030+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "32e30154fd6d2e7c26c0b103c22f1a88ba2c8413",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:27.032715+00:00"
       }
     },
     {
@@ -36074,6 +36280,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032718+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -36175,12 +36382,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "6348b07d95eb31f5efc502112610b356ef3dd56c",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:27.032718+00:00"
       }
     },
     {
@@ -36210,6 +36417,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032720+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -36311,12 +36519,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "587dd659205a6081de5224c543b1f4a514cac818",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:27.032720+00:00"
       }
     },
     {
@@ -36342,6 +36550,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032721+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -36501,6 +36710,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856796+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -36635,7 +36845,7 @@
           "sourceHead": "3b3596833f3975e9d19d6c9f0e3a6e8ddadb9e01",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15455",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         },
         {
@@ -36669,6 +36879,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.260992+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -36803,7 +37014,7 @@
           "sourceHead": "3b3596833f3975e9d19d6c9f0e3a6e8ddadb9e01",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15468",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         },
         {
@@ -36837,6 +37048,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:02:46.074565+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -36971,11 +37183,11 @@
           "sourceHead": "3b3596833f3975e9d19d6c9f0e3a6e8ddadb9e01",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15245",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -37001,6 +37213,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032723+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -37164,6 +37377,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856804+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -37298,11 +37512,11 @@
           "sourceHead": "23f542cc7817c98519ba96a1856fae1c76e6757d",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15461",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -37336,6 +37550,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:27.032726+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -37555,12 +37770,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:27.032726+00:00"
       }
     },
     {
@@ -37586,6 +37801,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494818+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -37745,6 +37961,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856808+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -37867,21 +38084,21 @@
           "sourceHead": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15466",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "78c9970710218acecd8dffef1652953d357bbdff",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:02.856808+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:30.494818+00:00"
       }
     },
     {
@@ -37907,6 +38124,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494887+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -38070,6 +38288,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856805+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -38204,11 +38423,11 @@
           "sourceHead": "6d761a9b934f72921f11460fd3c8cfc8186f3c55",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15462",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -38238,6 +38457,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494889+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -38339,12 +38559,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "1c636c974ff648d8e67fffb6280e01599e117bf5",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:30.494889+00:00"
       }
     },
     {
@@ -38370,6 +38590,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494891+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -38484,12 +38705,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "0710ca870724323ba9abc5c5bcbc57cc674206e6",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:30.494891+00:00"
       }
     },
     {
@@ -38515,6 +38736,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494892+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -38674,6 +38896,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:00.316946+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -38808,7 +39031,7 @@
           "sourceHead": "01d6bdfd1d3068800ef303102b3538d97ad41017",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15448",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         },
         {
@@ -38838,6 +39061,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "CONFLICTING",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:02.856806+00:00",
           "mergeState": "DIRTY",
           "labels": [
             "exported"
@@ -38960,16 +39184,16 @@
           "sourceHead": "01d6bdfd1d3068800ef303102b3538d97ad41017",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15464",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "CONFLICTING",
             "head": "aafa3a243195be4a2eec00c0d28138115afe3d5f",
             "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:02.856806+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -38990,6 +39214,7 @@
       "reviewRequests": [],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494893+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -39091,12 +39316,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "46ad8cc5b22b84e9116e68567532cab9e8b664c7",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:30.494893+00:00"
       }
     },
     {
@@ -39126,6 +39351,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494895+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -39215,12 +39441,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9cb7831f3fd3c5dbcacc19c9ca182f84cdb4b0d1",
         "base": "5a0df01df2dde1f87751aaa522e4afd4da8ca889",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:30.494895+00:00"
       }
     },
     {
@@ -39250,6 +39476,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:30.494896+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -39351,12 +39578,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a9025ef7fbe9fe82230cefee3b81557499a39468",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:30.494896+00:00"
       }
     },
     {
@@ -39382,6 +39609,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568653+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -39532,6 +39760,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:07.252812+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -39547,7 +39776,7 @@
             "items": []
           },
           "checks": {
-            "state": "PENDING",
+            "state": "SUCCESS",
             "total": 20,
             "complete": true,
             "contexts": [
@@ -39642,12 +39871,6 @@
                 "app": "GitHub Actions"
               },
               {
-                "name": "buildkite/pipeline",
-                "state": "PENDING",
-                "url": "https://buildkite.com/gvisor/pipeline/builds/50165",
-                "app": null
-              },
-              {
                 "name": "buildkite/internal",
                 "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/internal/builds/31863",
@@ -39657,6 +39880,12 @@
                 "name": "buildkite/pgo-profiles",
                 "state": "SUCCESS",
                 "url": "https://buildkite.com/gvisor/pgo-profiles/builds/3123",
+                "app": null
+              },
+              {
+                "name": "buildkite/pipeline",
+                "state": "SUCCESS",
+                "url": "https://buildkite.com/gvisor/pipeline/builds/50165",
                 "app": null
               },
               {
@@ -39678,11 +39907,11 @@
           "sourceHead": "987306894fc94d878d6a5f6cc83547a03413ed9f",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15505",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -39712,6 +39941,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568803+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -39813,12 +40043,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5a0d23abf779ab5a73354524b242206fd4769445",
         "base": "e1bc74024391195e70f6b60210129b2ffd236e8f",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:33.568803+00:00"
       }
     },
     {
@@ -39848,6 +40078,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568809+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -40028,6 +40259,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261022+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -40162,11 +40394,11 @@
           "sourceHead": "4823d71dc6d67e7af5d2edaa85c32cf50e8a1eba",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15478",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -40192,6 +40424,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568811+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -40342,6 +40575,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261032+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -40476,11 +40710,11 @@
           "sourceHead": "09917ea648b5296c077fb11fd929697a2c1ef7e8",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15485",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -40514,6 +40748,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568812+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -40731,12 +40966,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9c1aeb0686a60878ecb92d6fe7694324dfabebbe",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:33.568812+00:00"
       }
     },
     {
@@ -40766,6 +41001,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568813+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -40929,6 +41165,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:05.261027+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -41063,11 +41300,11 @@
           "sourceHead": "6651421761e44bdc752721e3e6ad831e036d19f6",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15479",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": null
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": null
     },
     {
@@ -41097,6 +41334,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568815+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -41192,12 +41430,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "245963bfe174cedde6a58012a71eb639741606f1",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:33.568815+00:00"
       }
     },
     {
@@ -41223,6 +41461,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:33.568816+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -41341,12 +41580,12 @@
       "approvedHead": "73b3b76556e7cb8b6ac03d418fc2c0e00704845f",
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "73b3b76556e7cb8b6ac03d418fc2c0e00704845f",
         "base": "a926f0050372b634899e090932b88161dae717a4",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:33.568816+00:00"
       }
     },
     {
@@ -41372,6 +41611,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334590+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -41540,12 +41780,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "603d14cbe3b167db8b9fee7768b3ca6c7741c2e5",
         "base": "6c6e9fd61904ad1044c7ad89b070773586e9f308",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334590+00:00"
       }
     },
     {
@@ -41571,6 +41811,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334612+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -41697,12 +41938,12 @@
       "approvedHead": "7752e88ad95063877063f3c533fec732bbdf861e",
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "7752e88ad95063877063f3c533fec732bbdf861e",
         "base": "6c6e9fd61904ad1044c7ad89b070773586e9f308",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334612+00:00"
       }
     },
     {
@@ -41732,6 +41973,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334634+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -41862,12 +42104,12 @@
       "approvedHead": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
         "base": "6c6e9fd61904ad1044c7ad89b070773586e9f308",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334634+00:00"
       }
     },
     {
@@ -41897,6 +42139,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334635+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -41986,12 +42229,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "89f9caa31feb5fe9b4284d4b60f34a1e9c2dffdf",
         "base": "6c6e9fd61904ad1044c7ad89b070773586e9f308",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334635+00:00"
       }
     },
     {
@@ -42021,6 +42264,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334637+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -42128,12 +42372,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8f7a051d6429ece051c86b38a58db1afcaa03cef",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334637+00:00"
       }
     },
     {
@@ -42159,6 +42403,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334637+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -42315,6 +42560,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:07.252822+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -42443,21 +42689,21 @@
           "sourceHead": "8f032f4e1532d6c977610936d8d237440fbaf947",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15533",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "6e363ceaa26fea4df926ad12ffdbb160ae254845",
             "base": "0a438edc99965c50bac288b57f048db78a4d9006",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:07.252822+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "8f032f4e1532d6c977610936d8d237440fbaf947",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334637+00:00"
       }
     },
     {
@@ -42483,6 +42729,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334638+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -42639,6 +42886,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:07.252819+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -42767,21 +43015,21 @@
           "sourceHead": "72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15529",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "12a515b0d06afe9461d1bb816c1f1d41eb6bb080",
             "base": "17f40f7d567666c8c76ea03021e5a5ab4b1cafbc",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:07.252819+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334638+00:00"
       }
     },
     {
@@ -42811,6 +43059,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:37.334639+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -42906,12 +43155,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "9fbf12f248e4da1e3e4d607c68db9d226039b580",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:37.334639+00:00"
       }
     },
     {
@@ -42937,6 +43186,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:39.013186+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -43093,6 +43343,7 @@
           "reviewRequests": [],
           "reviewRequestsComplete": true,
           "mergeable": "MERGEABLE",
+          "mergeabilityCheckedAt": "2026-10-08T21:03:07.252817+00:00",
           "mergeState": "BLOCKED",
           "labels": [
             "exported"
@@ -43221,21 +43472,21 @@
           "sourceHead": "5f62039a6b8038a67523afef7f0fed9a1ec1d73d",
           "matchesSourceHead": true,
           "relationshipEvidence": "https://github.com/google/gvisor/pull/15520",
-          "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+          "checkedAt": "2026-10-08T21:03:07.766466+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "1c386971df2322dd3fc44d5ad27372bd2837ac30",
             "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-            "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+            "checkedAt": "2026-10-08T21:03:07.252817+00:00"
           }
         }
       ],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "5f62039a6b8038a67523afef7f0fed9a1ec1d73d",
         "base": "254aeb360ee148130c24b62f0655bc832a647fe0",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:39.013186+00:00"
       }
     },
     {
@@ -43265,6 +43516,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-08T21:02:39.013252+00:00",
       "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
@@ -43397,12 +43649,12 @@
       "approvedHead": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-08T20:51:06.999435+00:00",
+      "checkedAt": "2026-10-08T21:03:07.766466+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "e5665960fd5df4b8a673d50fffedc5fde9191410",
         "base": "0a438edc99965c50bac288b57f048db78a4d9006",
-        "checkedAt": "2026-10-08T20:51:06.999435+00:00"
+        "checkedAt": "2026-10-08T21:02:39.013252+00:00"
       }
     }
   ],
@@ -43602,17 +43854,17 @@
       }
     },
     "pr:15030": {
-      "failing": {
-        "scope": "15030:61027644ef3258c2fe16a236861980d5ec7707ae,15255:dac9a67c3663c69dceff9b165fc564d684f9666d",
-        "since": "2026-10-08T18:36:24.866400+00:00",
+      "checks-pending": {
+        "scope": "15030:a807153cf320a6c79b68b8243257f26d0da30f8a",
+        "since": "2026-10-08T21:03:07.766466+00:00",
         "basis": "observed",
-        "qualifier": "Source checks failing; Import #15255 failing"
+        "qualifier": null
       },
-      "importing": {
-        "scope": "15255:dac9a67c3663c69dceff9b165fc564d684f9666d",
-        "since": "2026-10-08T17:55:51.601931+00:00",
+      "maintainer-review": {
+        "scope": "a807153cf320a6c79b68b8243257f26d0da30f8a",
+        "since": "2026-10-08T21:03:07.766466+00:00",
         "basis": "observed",
-        "qualifier": "#15255: open, checks failing, no reported conflict"
+        "qualifier": "No effective approval for the current head"
       }
     },
     "pr:15033": {
@@ -44504,17 +44756,17 @@
       }
     },
     "pr:15414": {
-      "failing": {
-        "scope": "15414:39c96507e65884a7c307be128ba7f23dedc376a2,15483:a74edee7d953f9a1f1f105eb7f66df0841fc20c0",
-        "since": "2026-10-08T02:46:07.217251+00:00",
+      "checks-pending": {
+        "scope": "15414:c8e00a8c4906320368e33f7de1e88e9aacb65fc8",
+        "since": "2026-10-08T21:03:07.766466+00:00",
         "basis": "observed",
-        "qualifier": "Source checks failing; Import #15483 failing"
+        "qualifier": null
       },
-      "importing": {
-        "scope": "15483:a74edee7d953f9a1f1f105eb7f66df0841fc20c0",
-        "since": "2026-10-08T02:35:50.001239+00:00",
+      "maintainer-review": {
+        "scope": "c8e00a8c4906320368e33f7de1e88e9aacb65fc8",
+        "since": "2026-10-08T21:03:07.766466+00:00",
         "basis": "observed",
-        "qualifier": "#15483: open, checks failing, no reported conflict"
+        "qualifier": "No effective approval for the current head"
       }
     },
     "pr:15415": {
@@ -44552,11 +44804,17 @@
         "basis": "observed",
         "qualifier": "Source checks failing"
       },
-      "importing": {
-        "scope": "15482:6e75525a622938026dc9a81425eafd8aef414c57",
-        "since": "2026-10-08T20:19:10.306956+00:00",
+      "checks-pending": {
+        "scope": "15482:01dbb3e5d4bc73757170641a0b78dc1f602a63f5",
+        "since": "2026-10-08T21:03:07.766466+00:00",
         "basis": "observed",
-        "qualifier": "#15482: open, checks passed, no reported conflict"
+        "qualifier": null
+      },
+      "importing": {
+        "scope": "15482:01dbb3e5d4bc73757170641a0b78dc1f602a63f5",
+        "since": "2026-10-08T21:03:07.766466+00:00",
+        "basis": "observed",
+        "qualifier": "#15482: open, checks pending, no reported conflict"
       }
     },
     "pr:15435": {
@@ -44857,7 +45115,7 @@
   "limits": {
     "requests": 36,
     "graphqlCost": 298,
-    "graphqlRemaining": 3163,
+    "graphqlRemaining": 4583,
     "nestedPageSize": 100,
     "maxOpenPRs": 200
   }

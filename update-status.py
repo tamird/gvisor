@@ -303,8 +303,6 @@ def main() -> None:
         raise RuntimeError(f"Client metadata validation failed: {validation.stderr.strip()}")
     temporary.replace(output)
     print(f"Updated {len(prs)} PRs and {len(imported)} verified import PRs in {requests} GitHub requests ({query_cost} GraphQL points).")
-    prior_prs = {pr["number"]: pr for source in previous.get("prs", [])
-                 for pr in (source, *source.get("imports", []))}
     for source in prs:
         for pr in (source, *source["imports"]):
             changes = changed_feedback(pr, prior_prs.get(pr["number"], {}))
