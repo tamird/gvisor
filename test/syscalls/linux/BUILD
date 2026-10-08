@@ -1459,7 +1459,9 @@ cc_binary(
     malloc = "//test/util:errno_safe_allocator",
     deps = select_gtest() + [
         ":landlock_util",
+        "//test/util:capability_util",
         "//test/util:fs_util",
+        "//test/util:logging",
         "//test/util:multiprocess_util",
         "//test/util:posix_error",
         "//test/util:temp_path",
@@ -2421,6 +2423,23 @@ cc_binary(
 )
 
 cc_binary(
+    name = "proc_keys_test",
+    testonly = 1,
+    srcs = ["proc_keys.cc"],
+    linkstatic = 1,
+    malloc = "//test/util:errno_safe_allocator",
+    deps = select_gtest() + [
+        "//test/util:capability_util",
+        "//test/util:cleanup",
+        "//test/util:fs_util",
+        "//test/util:posix_error",
+        "//test/util:test_main",
+        "//test/util:test_util",
+        "@com_google_absl//absl/strings",
+    ],
+)
+
+cc_binary(
     name = "proc_net_test",
     testonly = 1,
     srcs = ["proc_net.cc"],
@@ -2556,6 +2575,7 @@ cc_binary(
         "//test/util:test_util",
         "//test/util:thread_util",
         "//test/util:time_util",
+        "//test/util:timer_util",
         "@com_google_absl//absl/flags:flag",
         "@com_google_absl//absl/strings",
         "@com_google_absl//absl/time",
