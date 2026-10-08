@@ -14,6 +14,7 @@ docker_image_archives(
     extra_images = CONTAINERD_IMAGES,
     source_archives = {
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
+        "moby": {"amd64": ":moby_source_amd64"},
     },
 )
 
@@ -33,6 +34,24 @@ source_image_archive(
         memory = "8GB",
     ),
     image = "containerd/harness",
+    tags = ["manual"],
+)
+
+# Reuse the public image context, including its precompiled Moby test binary.
+source_image_archive(
+    name = "moby_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    image = "moby",
     tags = ["manual"],
 )
 

@@ -112,6 +112,7 @@ COHORT_IMAGES = {
     "fsstress": ["basic/fsstress"],
     "iptables": ["iptables"],
     "nftables": ["nftables"],
+    "moby": ["moby"],
     "packetdrill": ["packetdrill"],
     "containerd": ["containerd/harness"],
     "startup": ["benchmarks/alpine"],
@@ -235,8 +236,9 @@ CONTAINERD_IMAGES = [
 # This existing systemd case only runs on AMD64.
 AMD64_RUNTIME_IMAGES = ["arch-systemd"]
 
-# These benchmark contexts have no canonical ARM64 Dockerfile or image.
+# These contexts have no canonical ARM64 Dockerfile or image.
 AMD64_IMAGES = AMD64_RUNTIME_IMAGES + [
+    "moby",
     "benchmarks/absl",
     "benchmarks/syscallbench",
     "benchmarks/tensorflow",

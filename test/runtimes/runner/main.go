@@ -51,6 +51,7 @@ func run() int {
 		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
+		Runner:            "test/runtimes/proctor/proctor_bin",
 		PerTestTimeout:    *perTestTimeout,
 		RunsPerTest:       *runsPerTest,
 		FlakyIsError:      *flakyIsError,
@@ -74,5 +75,5 @@ func run() int {
 			return tests[test]
 		}
 	}
-	return lib.RunTests(*lang, *image, filter, *batchSize, *timeout, proctorSettings)
+	return lib.RunTests(*lang, fmt.Sprintf("runtimes/%s", *image), filter, *batchSize, *timeout, proctorSettings)
 }

@@ -1460,3 +1460,27 @@ filters. The runner owns the public `-Werror` compiler option, so syscall tests
 retain that check without imposing it on unit or release compilation. Direct
 runner invocations now receive the same compiler check; an existing trailing
 `-Werror` is preserved without duplication.
+
+### Moby network integration
+
+The public AMD64 Moby lane runs its existing four shards with 360 seconds per
+shard on the Actions cgroup-v2 Docker fixture:
+
+```sh
+test/rbe/qualify.sh --arch=amd64 --test-execution=local moby
+```
+
+Launch it through the workflow's `moby`, `amd64`, and `local` inputs so the
+Actions entrypoint supplies the private network and credentials. The qualifier selects
+`//test/moby:moby_owned`; it retains the three upstream test source files and
+nine exclusions. Its private daemon loads the declared archive produced from
+`images/moby/Dockerfile.x86_64` by the existing source-image action. The image
+contains the source-selected Moby test binary and bundled test images. Source
+image construction retains the public mutable registry/package inputs and
+therefore requests no action cache reuse.
+
+The runtime receives Make's raw-socket, packet-socket-write and nftables flags.
+Each shard uses the existing private Docker network, cgroup-v2 namespace and
+disk-backed scratch setup; compilation remains remote. ARM64 is not selected,
+matching the public lane's outstanding ARM64 TODO. A discovery-only check is
+not evidence that the nested Docker daemon or Moby test cases passed.
