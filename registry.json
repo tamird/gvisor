@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T10:48:07.155748+00:00",
+    "updatedAt": "2026-10-08T11:01:37.762362+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -418,19 +418,19 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-03T07:54:01.123952+00:00",
-      "summary": "Etienne requested changes at 07:24:40 UTC on October 3: \u201cHold for a week for internal exceptions to propagate before this can be merged.\u201d https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222. The source remains open; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at 6163d92a567f0983df38f57ec2596adc917ae78a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15114#issuecomment-5963409102. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
+      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 6163d92a567f0983df38f57ec2596adc917ae78a. Preserve the one-week hold from October3 07:24:40 UTC, approximately October10 subject to maintainer confirmation. The new conflict does not override CHANGES_REQUESTED or justify bypassing the hold.\n\nEarlier source and review history:\n\nEtienne requested changes at 07:24:40 UTC on October 3: \u201cHold for a week for internal exceptions to propagate before this can be merged.\u201d https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222. The source remains open; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at 6163d92a567f0983df38f57ec2596adc917ae78a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15114#issuecomment-5963409102. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
       "followup": {
-        "disposition": "explicit maintainer time hold",
-        "owner": "root / upstream maintainer",
-        "nextAction": "Hold for a week from October 3 07:24 UTC for internal exceptions; approximately October 10, subject to maintainer confirmation. No source revision or bypass is justified.",
+        "disposition": "Maintainer time hold; current-base conflict",
+        "owner": "root",
+        "nextAction": "Preserve the one-week hold from October3 07:24:40 UTC, approximately October10 subject to maintainer confirmation. The new conflict does not override CHANGES_REQUESTED or justify bypassing the hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
         "sourceHead": "6163d92a567f0983df38f57ec2596adc917ae78a",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -513,19 +513,19 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-09-30T03:50:01Z",
-      "summary": "The authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
+      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 8d55f931860145475cae7e872db3784499faf855. Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.\n\nEarlier source and review history:\n\nThe authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "disposition": "Approved; current-base conflict",
+        "owner": "root",
+        "nextAction": "Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15106"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
         "sourceHead": "8d55f931860145475cae7e872db3784499faf855",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -719,19 +719,19 @@
       "group": "analysis",
       "status": "draft",
       "reviewDecision": "",
-      "updatedAt": "2026-10-05T20:39:56.720564+00:00",
-      "summary": "Standing follow-up: Current ccc387fc0 is a single commit directly on b65c70734, satisfying the earlier squash request. No duplicate amendment/reply; retain current draft disposition.\n\nThe authorized October 2/3 rebase is published at ccc387fc0195c118b8e3f75c6116bbddcf49a936 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15035#issuecomment-5963407255. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 12fa726ad failed lint on Buildifier target shorthand. Published correction ccc387fc01 changes only //tools/nogo:nogo to equivalent //tools/nogo. The original failed check is retained, with no runtime change or validation claim.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
+      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at ccc387fc0195c118b8e3f75c6116bbddcf49a936. Preserve the draft while assessing a source-preserving refresh. The earlier squash request is satisfied and prerequisite14502 has landed. No ready-for-review transition or public reply is authorized.\n\nEarlier source and review history:\n\nStanding follow-up: Current ccc387fc0 is a single commit directly on b65c70734, satisfying the earlier squash request. No duplicate amendment/reply; retain current draft disposition.\n\nThe authorized October 2/3 rebase is published at ccc387fc0195c118b8e3f75c6116bbddcf49a936 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15035#issuecomment-5963407255. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 12fa726ad failed lint on Buildifier target shorthand. Published correction ccc387fc01 changes only //tools/nogo:nogo to equivalent //tools/nogo. The original failed check is retained, with no runtime change or validation claim.",
       "followup": {
-        "disposition": "squash request source-satisfied; draft retained",
-        "owner": "external_sweeps",
-        "nextAction": "Current ccc387fc0 is a single commit directly on b65c70734, satisfying the earlier squash request. No duplicate amendment/reply; retain current draft disposition.",
+        "disposition": "Draft; current-base conflict",
+        "owner": "root",
+        "nextAction": "Preserve the draft while assessing a source-preserving refresh. The earlier squash request is satisfied and prerequisite14502 has landed. No ready-for-review transition or public reply is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15035#issuecomment-5858834825"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
         "sourceHead": "ccc387fc0195c118b8e3f75c6116bbddcf49a936",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -3073,20 +3073,20 @@
       "url": "https://github.com/google/gvisor/pull/15444",
       "group": "release",
       "status": "open",
-      "summary": "The current complete snapshot records ready-to-pull status. No upstream landing is inferred, and no merge action is authorized.\n\nmanninglucas approved exact head 5559ccedfe420fc9eb7bd19104527ee393a16bcf at 20:10:15 UTC on October 7. The review requests no changes and has no inline threads. The PR remains OPEN/MERGEABLE; the complete 20:10 scan has no matching public import or ready-to-pull label. Maintainer import and landing remain pending.\n\nReady PR #15444 is open at 5559ccedfe420fc9eb7bd19104527ee393a16bcf against master after the contributor\u2019s requested simplification. The revision removes redundant notice filename sorting and uses fs.ReadFile on the ZIP filesystem; final license sort/dedup and fail-closed notice behavior remain. Source peer 706e95a5cf2d and method peer 979b30125b17 are closed. Actual standalone validation https://app.buildbuddy.io/invocation/aeedb23e-6d1a-47c4-b7c5-cc27e74df53e completes OK in 78.273 seconds: the full unit owner includes all eight module-notice cases, and the owning Nogo passes both CPU analyses. Both uncached AMD64 OCI actions retain their original 60/300-second limits. Root verified the primary log/XML/Action evidence and exact published PR body/head; no canonical audit is claimed for this source-only revision.\n\nHistorical proposal and evidence:\n\nThe independent refresh is public and tracked at ab530acc88806b98731ccf9b01a221360452d86d on upstream e1bc. All six source blobs equal the previously reviewed 4389 proposal; its message now states the narrow archive-notice behavior. It discovers conventional root notices and complete README grants, excludes .go implementation files and still rejects unrecognized notices. Independent source/evidence review binds the owning functions, all three notice fixtures and the eight-case TestModuleLicenses suite to actual tested ddd00243c. That contributor feedback is resolved by the current delivered revision above.\n\nThe retained ddd002 composition passes the complete unit suite (70 XML entries, including eight module-notice cases) and both target CPU Nogo analyses on two uncached AMD64 OCI workers. Canonical Fetch retrieves all 459 CodeQL-profile records; that historical parent remains Failed solely for ten unchanged-policy mismatches, not missing notices or failed source tests. Existing outcome 13ab648f879d and independent peer 85ca40de8a7d preserve this distinction. This refresh adopts no catalog or policy change and remains separate from commit-metadata PR #15416 and the explicit holds on #15114, #15145 and #15146. Earlier 88ed evidence remains historical and is superseded by the corrected notice selection.",
-      "updatedAt": "2026-10-07T23:39:00.452375+00:00",
+      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 5559ccedfe420fc9eb7bd19104527ee393a16bcf. Root will assess a source-preserving refresh while retaining maintainer approval and ready-to-pull status. No exact active import or upstream landing is claimed.\n\nEarlier source and review history:\n\nThe current complete snapshot records ready-to-pull status. No upstream landing is inferred, and no merge action is authorized.\n\nmanninglucas approved exact head 5559ccedfe420fc9eb7bd19104527ee393a16bcf at 20:10:15 UTC on October 7. The review requests no changes and has no inline threads. The PR remains OPEN/MERGEABLE; the complete 20:10 scan has no matching public import or ready-to-pull label. Maintainer import and landing remain pending.\n\nReady PR #15444 is open at 5559ccedfe420fc9eb7bd19104527ee393a16bcf against master after the contributor\u2019s requested simplification. The revision removes redundant notice filename sorting and uses fs.ReadFile on the ZIP filesystem; final license sort/dedup and fail-closed notice behavior remain. Source peer 706e95a5cf2d and method peer 979b30125b17 are closed. Actual standalone validation https://app.buildbuddy.io/invocation/aeedb23e-6d1a-47c4-b7c5-cc27e74df53e completes OK in 78.273 seconds: the full unit owner includes all eight module-notice cases, and the owning Nogo passes both CPU analyses. Both uncached AMD64 OCI actions retain their original 60/300-second limits. Root verified the primary log/XML/Action evidence and exact published PR body/head; no canonical audit is claimed for this source-only revision.\n\nHistorical proposal and evidence:\n\nThe independent refresh is public and tracked at ab530acc88806b98731ccf9b01a221360452d86d on upstream e1bc. All six source blobs equal the previously reviewed 4389 proposal; its message now states the narrow archive-notice behavior. It discovers conventional root notices and complete README grants, excludes .go implementation files and still rejects unrecognized notices. Independent source/evidence review binds the owning functions, all three notice fixtures and the eight-case TestModuleLicenses suite to actual tested ddd00243c. That contributor feedback is resolved by the current delivered revision above.\n\nThe retained ddd002 composition passes the complete unit suite (70 XML entries, including eight module-notice cases) and both target CPU Nogo analyses on two uncached AMD64 OCI workers. Canonical Fetch retrieves all 459 CodeQL-profile records; that historical parent remains Failed solely for ten unchanged-policy mismatches, not missing notices or failed source tests. Existing outcome 13ab648f879d and independent peer 85ca40de8a7d preserve this distinction. This refresh adopts no catalog or policy change and remains separate from commit-metadata PR #15416 and the explicit holds on #15114, #15145 and #15146. Earlier 88ed evidence remains historical and is superseded by the corrected notice selection.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
       "followup": {
-        "disposition": "approved; maintainer import and landing pending",
-        "owner": "external_sweeps",
-        "nextAction": "Monitor maintainer import and actual landing; retain any existing source-specific hold.",
+        "disposition": "Approved; current-base conflict",
+        "owner": "root",
+        "nextAction": "Root will assess a source-preserving refresh while retaining maintainer approval and ready-to-pull status. No exact active import or upstream landing is claimed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15444",
           "https://github.com/google/gvisor/pull/15444#pullrequestreview-5447753587"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
         "sourceHead": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       },
       "head": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
       "number": 15444,
@@ -3420,19 +3420,19 @@
       "group": "bazel",
       "status": "open",
       "head": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a",
-      "updatedAt": "2026-10-06T16:18:15.561131+00:00",
-      "summary": "Opened ready for review after explicit user approval at 33dce4c9a01207885a5dcb52f16f5a8c1c804a5a. Exact title, description, master base and head were read back from GitHub.\n\nIndependent Go/C++ graph-native architecture variants. Earlier individual Go/C++ tests and both CPU/Nogo source proofs remain applicable after the unchanged patch rebase; the original parent harness failures remain recorded.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
+      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 33dce4c9a01207885a5dcb52f16f5a8c1c804a5a. Root will assess a source-preserving refresh. Complete current feedback has no unresolved thread or additional source hold.\n\nEarlier source and review history:\n\nOpened ready for review after explicit user approval at 33dce4c9a01207885a5dcb52f16f5a8c1c804a5a. Exact title, description, master base and head were read back from GitHub.\n\nIndependent Go/C++ graph-native architecture variants. Earlier individual Go/C++ tests and both CPU/Nogo source proofs remain applicable after the unchanged patch rebase; the original parent harness failures remain recorded.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "Observe current-head checks, complete human feedback and actual import lineage.",
+        "disposition": "Current-base conflict; maintainer review pending",
+        "owner": "root",
+        "nextAction": "Root will assess a source-preserving refresh. Complete current feedback has no unresolved thread or additional source hold.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15370"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
         "sourceHead": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       },
       "number": 15370
     },
@@ -4069,22 +4069,22 @@
       "url": "https://github.com/google/gvisor/pull/15498",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-08T07:08:04.910849+00:00",
-      "summary": "Contributor-approved PR #15498 is published at 3f7b30fec on current master a926. Exact source, description, author and publication were verified; the source-preserving refresh retains all six approved edit sequences. No contributor hold remains. The prior bounded validation remains tied to its tested source.\n\nEarlier preparation and validation:\n\nContributor approved 51a4d7127; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nIndependent six-file source on current master e1bc allows musl's exact legacy thread-clone flags in the Sentry and gofer cgo policies, preserving the Go rule and rejecting process, namespace and exit-signal variants. Both policy comments cite canonical musl source. The transplant preserves the upstream large test-size setting; five other source blobs and all rule/test bodies equal the validated maintained source. No Actions or diagnostic source is included.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nThe actual contributor question for exact 51a4d7127 has been issued and is pending. No upstream PR is open. The standalone branch was not rerun after its source-equivalent transplant.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
+      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 3f7b30fec3c54a9e340c31f215738beafd23d24e. Root will assess a source-preserving refresh of the delivered, contributor-approved filter change. No renewed contributor hold or semantic source revision is inferred.\n\nEarlier source and review history:\n\nContributor-approved PR #15498 is published at 3f7b30fec on current master a926. Exact source, description, author and publication were verified; the source-preserving refresh retains all six approved edit sequences. No contributor hold remains. The prior bounded validation remains tied to its tested source.\n\nEarlier preparation and validation:\n\nContributor approved 51a4d7127; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nIndependent six-file source on current master e1bc allows musl's exact legacy thread-clone flags in the Sentry and gofer cgo policies, preserving the Go rule and rejecting process, namespace and exit-signal variants. Both policy comments cite canonical musl source. The transplant preserves the upstream large test-size setting; five other source blobs and all rule/test bodies equal the validated maintained source. No Actions or diagnostic source is included.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nThe actual contributor question for exact 51a4d7127 has been issued and is pending. No upstream PR is open. The standalone branch was not rerun after its source-equivalent transplant.",
       "followup": {
-        "disposition": "Delivered; monitor maintainer review and CI",
+        "disposition": "Delivered; current-base conflict",
         "owner": "root",
-        "nextAction": "Follow the published PR checks, maintainer review and import status.",
+        "nextAction": "Root will assess a source-preserving refresh of the delivered, contributor-approved filter change. No renewed contributor hold or semantic source revision is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/51a4d71271c834d22cd97eb83baf6a5860465641",
           "https://github.com/tamird/gvisor/actions/runs/37592197370",
           "https://app.buildbuddy.io/invocation/71854863-069d-417e-a83b-e3719b87e387",
           "https://github.com/google/gvisor/pull/15498"
         ],
-        "reviewedAt": "2026-10-08T07:08:04.910849+00:00",
+        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
         "sourceHead": "3f7b30fec3c54a9e340c31f215738beafd23d24e",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "CONFLICTING"
       },
       "number": 15498
     },
@@ -4365,8 +4365,8 @@
       "url": "https://github.com/google/gvisor/pull/15472",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-08T10:18:24.712118+00:00",
-      "summary": "Exact-head import PR #15505 is now open for the live 987306894 FUSE source. Its imported head is 62ee87b3c49afb890dc9f845f6c7e6528e67b0ec; GitHub reports MERGEABLE, lint has passed, and generate, Buildkite and Go checks are pending in the 10:17 UTC snapshot. The source PR remains approved. The separate contributor decision on the version-specific b2b91bc97 amendment remains pending; neither that amendment nor a new public reply has been published. Import: https://github.com/google/gvisor/pull/15505\n\nEarlier observations:\n\nThe live 987306894 PR received maintainer approval from milantracy at 2026-10-08 09:55:18 UTC and is labelled ready to pull. Its source checks are successful and GitHub reports MERGEABLE; no import PR is present in this complete snapshot. This approval is for the live source, not the unpublished-to-this-PR version-specific b2b91bc97 amendment. The contributor decision on that amendment remains pending and no live change or public reply has been made. Review: https://github.com/google/gvisor/pull/15472#pullrequestreview-5454795466\n\nEarlier observations:\n\nThe version-specific amendment is published for contributor review at b2b91bc97d884c09f0c9e6296896467d6265f7aa; the root has issued the approval question and no answer has been received. The live PR remains 987306894. The candidate expects exactly EPERM on native Linux 7.1+, 7.0.2+ and 6.18.25+, retaining EINVAL on the reviewed older series and in gVisor. Focused validation 37709486990 passed the existing case on native Linux 6.1.0 (EINVAL), native 7.3 RC (EPERM), and systrap (EINVAL), without skips. The candidate refresh preserves the tested case and helper. No live amendment or public reply has been made.\n\nEarlier delivered source and validation:\n\nThe contributor approved this independent FUSE errno compatibility correction. Ready PR #15472 is published with exact one-file source/body, attribution and thread metadata verified. Native Linux accepts EINVAL or EPERM for the unconnected clone case; the gVisor expectation remains strictly EINVAL. No skip or capability gate is added.\n\nFocused qualification passes both complete native and systrap_shared AMD64 RC owners:12 real cases pass and two existing LookupUpdatesInode skips remain. CloneFromUnconnectedDeviceFails executes and passes in both. Saved peer3d6e verifies original300s actions, all18 outputs, guest/source and remote producer joins. The prior bucket1 EPERM failure remains preserved; no full-bucket or ARM credit is claimed.",
+      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
+      "summary": "Exact source-head import #15505 is open and mergeable; its complete current inventory of16 contexts is successful, including internal31844 and public pipeline50140. It is waiting for merge, not already merged. The separate contributor decision on stricter version-specific amendment b2b91bc97 remains pending; live source987306894 is unchanged.\n\nEarlier observations:\n\nExact-head import PR #15505 is now open for the live 987306894 FUSE source. Its imported head is 62ee87b3c49afb890dc9f845f6c7e6528e67b0ec; GitHub reports MERGEABLE, lint has passed, and generate, Buildkite and Go checks are pending in the 10:17 UTC snapshot. The source PR remains approved. The separate contributor decision on the version-specific b2b91bc97 amendment remains pending; neither that amendment nor a new public reply has been published. Import: https://github.com/google/gvisor/pull/15505\n\nEarlier observations:\n\nThe live 987306894 PR received maintainer approval from milantracy at 2026-10-08 09:55:18 UTC and is labelled ready to pull. Its source checks are successful and GitHub reports MERGEABLE; no import PR is present in this complete snapshot. This approval is for the live source, not the unpublished-to-this-PR version-specific b2b91bc97 amendment. The contributor decision on that amendment remains pending and no live change or public reply has been made. Review: https://github.com/google/gvisor/pull/15472#pullrequestreview-5454795466\n\nEarlier observations:\n\nThe version-specific amendment is published for contributor review at b2b91bc97d884c09f0c9e6296896467d6265f7aa; the root has issued the approval question and no answer has been received. The live PR remains 987306894. The candidate expects exactly EPERM on native Linux 7.1+, 7.0.2+ and 6.18.25+, retaining EINVAL on the reviewed older series and in gVisor. Focused validation 37709486990 passed the existing case on native Linux 6.1.0 (EINVAL), native 7.3 RC (EPERM), and systrap (EINVAL), without skips. The candidate refresh preserves the tested case and helper. No live amendment or public reply has been made.\n\nEarlier delivered source and validation:\n\nThe contributor approved this independent FUSE errno compatibility correction. Ready PR #15472 is published with exact one-file source/body, attribution and thread metadata verified. Native Linux accepts EINVAL or EPERM for the unconnected clone case; the gVisor expectation remains strictly EINVAL. No skip or capability gate is added.\n\nFocused qualification passes both complete native and systrap_shared AMD64 RC owners:12 real cases pass and two existing LookupUpdatesInode skips remain. CloneFromUnconnectedDeviceFails executes and passes in both. Saved peer3d6e verifies original300s actions, all18 outputs, guest/source and remote producer joins. The prior bucket1 EPERM failure remains preserved; no full-bucket or ARM credit is claimed.",
       "followup": {
         "disposition": "Validated version-specific amendment; contributor review requested",
         "owner": "root",
