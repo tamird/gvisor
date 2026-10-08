@@ -304,21 +304,15 @@ func Release() {
 
 // binaryObject is a value with a self-contained binary representation.
 type binaryObject interface {
-	encoding.BinaryMarshaler
+	encoding.BinaryAppender
 	encoding.BinaryUnmarshaler
 }
 
 // saveBinary encodes a foreign struct's self-contained representation. Its
 // binary codec owns any internal pointer relationships.
 func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
-	var data []byte
-	var err error
-	if appender, ok := value.(encoding.BinaryAppender); ok {
-		data, err = appender.AppendBinary(es.binaryBuf[:0])
-		es.binaryBuf = data
-	} else {
-		data, err = value.MarshalBinary()
-	}
+	data, err := value.AppendBinary(es.binaryBuf[:0])
+	es.binaryBuf = data
 	if err != nil {
 		Failf("encoding %s: %w", name, err)
 	}
