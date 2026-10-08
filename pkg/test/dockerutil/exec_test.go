@@ -16,10 +16,12 @@ package dockerutil
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -70,19 +72,16 @@ func TestWaitExitStatusBeforeStart(t *testing.T) {
 	}
 }
 
-func TestCopyFilesFailurePreventsConfiguration(t *testing.T) {
+func TestCopyFilesError(t *testing.T) {
 	c := Container{Name: "copy-input-error", logger: t}
 	t.Cleanup(func() {
 		for _, cleanup := range c.cleanups {
 			cleanup()
 		}
 	})
-	// CopyFiles accepts files. A directory must fail before the container
-	// can be configured.
-	source := t.TempDir()
-	opts := RunOpts{Image: "basic/alpine"}
-	c.CopyFiles(&opts, "/inputs", source)
-	if _, err := c.config(t.Context(), opts, nil); err == nil || !strings.Contains(err.Error(), source) {
-		t.Fatalf("config after copying directory %q: got %v, want the copy error", source, err)
+	source := filepath.Join(t.TempDir(), "missing")
+	var opts RunOpts
+	if err := c.CopyFiles(&opts, "/inputs", source); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("CopyFiles(%q): got %v, want %v", source, err, fs.ErrNotExist)
 	}
 }
