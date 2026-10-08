@@ -1029,6 +1029,41 @@ run_lane() (
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi
   fi
+  # Disposable discovery: getTests still starts the declared container and
+  # applies the original partition/filter logic; Go list mode never runs a batch.
+  [[ $lane == moby && $arch == amd64 && $test_execution == local && $command == test ]]
+  options+=(--test_arg=-test.list=batch_0)
+  local discovery_dir=${RUNNER_TEMP:?}/qualification/moby-discovery
+  mkdir -p "$discovery_dir"
+  bazel query 'tests(//test/moby:moby_owned)' --output=label > "$discovery_dir/targets"
+  [[ $(< "$discovery_dir/targets") == //test/moby:moby_owned ]]
+  bazel aquery "--config=$execution_config" "--config=$architecture_config" \
+    "${options[@]}" --output=jsonproto --include_artifacts=false \
+    'mnemonic("^TestRunner$", //test/moby:moby_owned)' > "$discovery_dir/actions.json"
+  python3 - "$discovery_dir/actions.json" <<'PY_MOBY_GRAPH'
+import json
+from pathlib import Path
+import sys
+raw = json.loads(Path(sys.argv[1]).read_text())
+labels = {str(row["id"]): row["label"] for row in raw["targets"]}
+actions = raw.get("actions", [])
+assert len(actions) == 4, ("Original Moby shard count", len(actions))
+for action in actions:
+    assert labels[str(action["targetId"])] == "//test/moby:moby_owned"
+    assert action["arguments"].count("-test.list=batch_0") == 1, action["arguments"]
+assert len({action["actionKey"] for action in actions}) == 4, "Duplicate shard actions"
+# Bazel8.8.1's aquery omits TestRunner environment values. Bind360s and exact
+# shard indices from the post-execution compact/Action evidence instead.
+print("Moby: four configured discovery actions; deadline/shard environment pending actual execution")
+PY_MOBY_GRAPH
+  # The upstream proctor split also changes the installed language entrypoint.
+  # Compile those two small consumers without executing a language suite.
+  bazel build "--config=$execution_config" "--config=$architecture_config" \
+    --strip=never //test/runtimes/runner:runner //test/runtimes/proctor:proctor_bin
+  # Exercise the real input-copy failure through the existing small unit owner.
+  # Keep it on RBE without the Moby Docker strategy or list-only arguments.
+  bazel test --config=rbe --config=x86_64 --strip=never --test_output=errors --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
+    //pkg/test/dockerutil:exec_test
   bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
     --keep_going "${options[@]}" "${header_options[@]}" "${targets[@]}"
 )
