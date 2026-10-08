@@ -366,7 +366,48 @@ run_hybrid_profile() (
   local lane=$1 selection_dir local_arch=$arch
   local -a lane_options=() options=() selection_options=()
   selection_dir=$(mktemp -d)
-  trap 'rm -rf "$selection_dir"' EXIT
+  local artifacts="$RUNNER_TEMP/qualification/keys-exec"
+  local keys_limit_saved=false
+  mkdir -p "$artifacts"
+  keys_restore_limit() {
+    local phase=$1 failed=0
+    timeout --signal=TERM --kill-after=2s 5s sudo -n tee \
+      /proc/sys/kernel/keys/maxkeys < "$selection_dir/maxkeys.before" >/dev/null || failed=1
+    cat /proc/sys/kernel/keys/maxkeys > "$artifacts/host-maxkeys-$phase.txt" || failed=1
+    cmp "$selection_dir/maxkeys.before" "$artifacts/host-maxkeys-$phase.txt" || failed=1
+    return "$failed"
+  }
+  keys_exec_cleanup() {
+    local status=$?
+    trap '' TERM INT
+    trap - EXIT
+    if [[ -f $selection_dir/proc_keys.after.cc ]]; then
+      cp "$selection_dir/proc_keys.after.cc" test/syscalls/linux/proc_keys.cc || status=1
+      cmp "$selection_dir/proc_keys.after.cc" test/syscalls/linux/proc_keys.cc || status=1
+    fi
+    if [[ $keys_limit_saved == true ]]; then
+      keys_restore_limit cleanup || status=1
+    fi
+    printf '%s\n' "$status" > "$artifacts/cleanup-exit-code"
+    rm -rf "$selection_dir"
+    exit "$status"
+  }
+  trap keys_exec_cleanup EXIT
+  trap 'exit 143' TERM
+  trap 'exit 130' INT
+  if [[ $lane != syscalls || $arch != amd64 || -n $syscall_bucket ]]; then
+    printf 'This diagnostic requires the complete AMD64 syscall graph.\n' >&2
+    exit 2
+  fi
+  cat /proc/sys/kernel/keys/maxkeys > "$selection_dir/maxkeys.before"
+  python3 - "$selection_dir/maxkeys.before" <<'PYKEYS_LIMIT'
+from pathlib import Path
+import sys
+value = Path(sys.argv[1]).read_bytes()
+assert value.strip().isdigit() and 1 <= int(value) <= 2147483647, value
+PYKEYS_LIMIT
+  keys_limit_saved=true
+  cp "$selection_dir/maxkeys.before" "$artifacts/host-maxkeys-before.txt"
   if [[ $lane == unit ]]; then
     local_arch=arm64
     python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
@@ -446,51 +487,148 @@ PY
     docker_test_options
     options+=("--strategy=TestRunner=remote,docker,local" --//tools/bazeldefs:local_test_backend=docker)
   fi
-  local initial_cgroup
-  initial_cgroup=$(python3 - "$selection_dir/selection.json" "$selection_dir/targets" <<'PY'
+  python3 - "$selection_dir" "$artifacts" <<'PYNATIVE_SELECTION'
+import hashlib
 import json
 from pathlib import Path
 import sys
 
-selection = json.loads(Path(sys.argv[1]).read_text())
-targets = set(Path(sys.argv[2]).read_text().splitlines())
-print("true" if targets.intersection(selection.get("initial_cgroup_owners", [])) else "false")
-PY
-  )
-  if [[ $initial_cgroup == true ]]; then
-    # This route owns global cgroup settings on a disposable hosted VM. The
-    # workflow runs directly on that VM, so PID 1 identifies its namespaces.
-    printf 'github_actions=%s\nrunner_environment=%s\npid1_comm=%s\n' \
-      "${GITHUB_ACTIONS:-}" "${RUNNER_ENVIRONMENT:-}" "$(< /proc/1/comm)" \
-      | tee "$RUNNER_TEMP/qualification/initial-cgroup-namespaces.txt"
-    if [[ ${GITHUB_ACTIONS:-} != true || ${RUNNER_ENVIRONMENT:-} != github-hosted || $(< /proc/1/comm) != systemd ]]; then
-      printf 'Initial cgroup tests require a hosted Actions VM with systemd as PID 1.\n' >&2
-      exit 1
+selection_dir, artifacts = map(Path, sys.argv[1:])
+oracle = json.loads(r'{"full_expected_owner_count":1176,"full_expected_owner_sha256":"34cd148e472a97ace77d75c747e195c3bebee52310e0e5766a3953fd3f969222","owners":[{"label":"//test/syscalls:exec_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":false},{"label":"//test/syscalls:exec_test_runsc_ptrace_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":false},{"label":"//test/syscalls:exec_test_runsc_systrap_directfs_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":false},{"label":"//test/syscalls:exec_test_runsc_systrap_overlay_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":false},{"label":"//test/syscalls:exec_test_runsc_systrap_shared_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":false},{"label":"//test/syscalls:proc_keys_test_native_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":true,"requires_exclusive_if_local":true},{"label":"//test/syscalls:proc_keys_test_runsc_ptrace_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":true},{"label":"//test/syscalls:proc_keys_test_runsc_systrap_directfs_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":true},{"label":"//test/syscalls:proc_keys_test_runsc_systrap_shared_amd64","shards":1,"timeout_seconds":300,"phase":"after","before":false,"requires_exclusive_if_local":true}],"before_set_filter":"ProcSysKernelKeysMax.SetMaxKeys","before_read_filter":"ProcSysKernelKeysMax.Exists:ProcSysKernelKeysMax.InvalidMaxKeysValue","before_source_sha256":"61ae4bdce31d9a91e7f573671ed55216346ed116473b4dff6823cfd15c31b10c","after_source_sha256":"f32d6c975b59718402bbbab693a853451a416c1415dd3302d3d675063ea24e84","priorFullSelection":{"path":"/private/tmp/gvisor-rbe-next/native-harness-validation-v2-artifacts/syscalls-selection/selection.json","sha256":"c061b3e377a0431b3fe82520fa7dd8477aa3f3a6a13eb6f6960b7594e32f7723"},"buildOnly":["//test/syscalls/linux:proc_test"]}')
+selection = json.loads((selection_dir / "selection.json").read_text())
+full = sorted(selection["selected_owners"])
+assert len(full) == oracle["full_expected_owner_count"]
+assert hashlib.sha256(("\n".join(full) + "\n").encode()).hexdigest() == oracle["full_expected_owner_sha256"]
+expected = {row["label"] for row in oracle["owners"]}
+assert len(expected) == 9 and expected.issubset(full)
+local = {label for labels in selection["local_owners"].values() for label in labels}
+assert expected.issubset(local)
+for phase in ("before-set", "before-read", "after", "selected"):
+    labels = sorted(row["label"] for row in oracle["owners"] if
+                    phase == "selected" or
+                    (phase.startswith("before-") and row["before"]) or row["phase"] == phase)
+    (artifacts / (phase + "-targets")).write_text("".join(label + "\n" for label in labels))
+(artifacts / "selection.json").write_text(json.dumps({
+    "oracle": oracle, "unexecuted_owners": sorted(set(full) - expected),
+    "full_selection_sha256": hashlib.sha256((selection_dir / "selection.json").read_bytes()).hexdigest(),
+}, indent=2) + "\n")
+(artifacts / "proc-build-targets").write_text("//test/syscalls/linux:proc_test\n")
+(artifacts / "selected.query").write_text("set(" + " ".join(sorted(expected)) + ")\n")
+PYNATIVE_SELECTION
+  bazel query --output=xml --xml:default_values --query_file="$artifacts/selected.query" > "$artifacts/declarations.xml"
+  python3 - "$artifacts" <<'PYNATIVE_DECLARATIONS'
+import json
+from pathlib import Path
+import sys
+import xml.etree.ElementTree as ET
+
+artifacts = Path(sys.argv[1])
+rows = json.loads((artifacts / "selection.json").read_text())["oracle"]["owners"]
+rules = {rule.attrib["name"]: rule for rule in ET.parse(artifacts / "declarations.xml").getroot().findall("rule")}
+assert set(rules) == {row["label"] for row in rows}
+timeouts = {"short": 60, "moderate": 300, "long": 900, "eternal": 3600}
+for row in rows:
+    rule = rules[row["label"]]
+    values = {node.attrib["name"]: node.attrib.get("value") for node in rule if "name" in node.attrib}
+    assert max(1, int(values["shard_count"])) == row["shards"], (row, values)
+    assert timeouts[values["timeout"]] == row["timeout_seconds"], (row, values)
+    tags = {item.attrib["value"] for attr in rule if attr.get("name") == "tags" for item in attr}
+    if row["requires_exclusive_if_local"]:
+        assert "exclusive-if-local" in tags, (row, tags)
+(artifacts / "declarations-checked.json").write_text(json.dumps({"owners": len(rows), "shards": sum(row["shards"] for row in rows)}) + "\n")
+PYNATIVE_DECLARATIONS
+  cp test/syscalls/linux/proc_keys.cc "$selection_dir/proc_keys.after.cc"
+  cp "$selection_dir/proc_keys.after.cc" "$artifacts/proc_keys.after.cc"
+  local phase_status=0 aggregate_status=0
+  keys_exec_phase() {
+    local phase=$1 phase_targets=$2 command=$3
+    shift 3
+    python3 - "$artifacts" "$phase" <<'PYNATIVE_SOURCE'
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+artifacts, phase = Path(sys.argv[1]), sys.argv[2]
+data = Path("test/syscalls/linux/proc_keys.cc").read_bytes()
+expected = "61ae4bdce31d9a91e7f573671ed55216346ed116473b4dff6823cfd15c31b10c" if phase.startswith("before-") else "f32d6c975b59718402bbbab693a853451a416c1415dd3302d3d675063ea24e84"
+actual = hashlib.sha256(data).hexdigest()
+assert actual == expected, (phase, actual, expected)
+(artifacts / (phase + "-source.json")).write_text(json.dumps({"phase": phase, "proc_keys_source_sha256": actual}) + "\n")
+PYNATIVE_SOURCE
+    local -a phase_options=()
+    if [[ $command == test ]]; then
+      phase_options=(--config=rbe-hybrid-tests "--//tools/bazeldefs:local_test_architecture=$local_arch"
+        --test_output=errors --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1
+        --test_env=GO_TEST_WRAP_TESTV=1 "${options[@]}")
     fi
-    local coordinator_pid_ns coordinator_cgroup_ns init_pid_ns init_cgroup_ns
-    coordinator_pid_ns=$(readlink -v /proc/self/ns/pid)
-    coordinator_cgroup_ns=$(readlink -v /proc/self/ns/cgroup)
-    # Linux gates another user's namespace links with a ptrace access check.
-    init_pid_ns=$(sudo -n readlink -v /proc/1/ns/pid)
-    init_cgroup_ns=$(sudo -n readlink -v /proc/1/ns/cgroup)
-    printf 'coordinator_pid=%s\ninit_pid=%s\ncoordinator_cgroup=%s\ninit_cgroup=%s\n' \
-      "$coordinator_pid_ns" "$init_pid_ns" "$coordinator_cgroup_ns" "$init_cgroup_ns" \
-      | tee -a "$RUNNER_TEMP/qualification/initial-cgroup-namespaces.txt"
-    if [[ $coordinator_pid_ns != "$init_pid_ns" || $coordinator_cgroup_ns != "$init_cgroup_ns" || -e /sys/fs/cgroup/cgroup.type ]]; then
-      printf 'Initial cgroup tests require the VM PID/cgroup namespaces and hierarchy root.\n' >&2
-      exit 1
-    fi
-    # Other local tests must not overlap changes to the root controllers or
-    # mount flags. Each original shard restores its snapshot before returning.
-    options+=(--local_test_jobs=1
-      "--test_env=GVISOR_HOST_PID_NS=$coordinator_pid_ns"
-      "--test_env=GVISOR_HOST_CGROUP_NS=$coordinator_cgroup_ns"
-      "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
-  fi
-  bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
-    "--//tools/bazeldefs:local_test_architecture=$local_arch" \
-    --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
-    --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
+    set +e
+    bazel "$command" --config=rbe --config=x86_64 --keep_going \
+      --strip=never --incompatible_sandbox_hermetic_tmp=false \
+      "${lane_options[@]}" "${phase_options[@]}" \
+      "--build_metadata=KEYS_EXEC_PHASE=$phase" \
+      "--build_event_json_file=$selection_dir/$phase-bep.json" \
+      "$@" --target_pattern_file="$phase_targets"
+    phase_status=$?
+    set -e
+    printf '%s\n' "$phase_status" > "$artifacts/$phase-exit-code"
+    if (( phase_status != 0 )); then aggregate_status=1; fi
+    python3 - "$selection_dir/$phase-bep.json" "$artifacts/$phase-bep.json" <<'PYNATIVE_BEP'
+import json
+from pathlib import Path
+import sys
+
+source, target = map(Path, sys.argv[1:])
+keys = {"id", "children", "started", "finished", "configured", "completed", "testResult", "testSummary", "aborted", "namedSetOfFiles"}
+errors = []
+with target.open("w") as output:
+    if source.exists():
+        for line_number, line in enumerate(source.read_text().splitlines(), 1):
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError as error:
+                errors.append({"line": line_number, "error": str(error)})
+                continue
+            if "started" in event:
+                safe = {"uuid", "startTime", "startTimeMillis", "command"}
+                event["started"] = {key: value for key, value in event["started"].items() if key in safe}
+            serialized = json.dumps({key: value for key, value in event.items() if key in keys})
+            assert "x-buildbuddy-api-key" not in serialized.lower()
+            output.write(serialized + "\n")
+    else:
+        errors.append({"error": "BEP absent"})
+target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
+PYNATIVE_BEP
+    cat /proc/sys/kernel/keys/maxkeys > "$artifacts/host-maxkeys-$phase.txt"
+  }
+  python3 - <<'PYKEYS_BEFORE'
+import base64
+import hashlib
+from pathlib import Path
+path = Path("test/syscalls/linux/proc_keys.cc")
+assert hashlib.sha256(path.read_bytes()).hexdigest() == "f32d6c975b59718402bbbab693a853451a416c1415dd3302d3d675063ea24e84"
+data = base64.b64decode("Ly8gQ29weXJpZ2h0IDIwMjYgVGhlIGdWaXNvciBBdXRob3JzLgovLwovLyBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UsIFZlcnNpb24gMi4wICh0aGUgIkxpY2Vuc2UiKTsKLy8geW91IG1heSBub3QgdXNlIHRoaXMgZmlsZSBleGNlcHQgaW4gY29tcGxpYW5jZSB3aXRoIHRoZSBMaWNlbnNlLgovLyBZb3UgbWF5IG9idGFpbiBhIGNvcHkgb2YgdGhlIExpY2Vuc2UgYXQKLy8KLy8gICAgIGh0dHA6Ly93d3cuYXBhY2hlLm9yZy9saWNlbnNlcy9MSUNFTlNFLTIuMAovLwovLyBVbmxlc3MgcmVxdWlyZWQgYnkgYXBwbGljYWJsZSBsYXcgb3IgYWdyZWVkIHRvIGluIHdyaXRpbmcsIHNvZnR3YXJlCi8vIGRpc3RyaWJ1dGVkIHVuZGVyIHRoZSBMaWNlbnNlIGlzIGRpc3RyaWJ1dGVkIG9uIGFuICJBUyBJUyIgQkFTSVMsCi8vIFdJVEhPVVQgV0FSUkFOVElFUyBPUiBDT05ESVRJT05TIE9GIEFOWSBLSU5ELCBlaXRoZXIgZXhwcmVzcyBvciBpbXBsaWVkLgovLyBTZWUgdGhlIExpY2Vuc2UgZm9yIHRoZSBzcGVjaWZpYyBsYW5ndWFnZSBnb3Zlcm5pbmcgcGVybWlzc2lvbnMgYW5kCi8vIGxpbWl0YXRpb25zIHVuZGVyIHRoZSBMaWNlbnNlLgoKI2luY2x1ZGUgPGVycm5vLmg+CiNpbmNsdWRlIDxsaW51eC9jYXBhYmlsaXR5Lmg+CgojaW5jbHVkZSA8Y3N0ZGludD4KI2luY2x1ZGUgPGxpbWl0cz4KI2luY2x1ZGUgPHN0cmluZz4KCiNpbmNsdWRlICJnbW9jay9nbW9jay5oIgojaW5jbHVkZSAiZ3Rlc3QvZ3Rlc3QuaCIKI2luY2x1ZGUgImFic2wvc3RyaW5ncy9udW1iZXJzLmgiCiNpbmNsdWRlICJhYnNsL3N0cmluZ3Mvc3RyX2NhdC5oIgojaW5jbHVkZSAidGVzdC91dGlsL2NhcGFiaWxpdHlfdXRpbC5oIgojaW5jbHVkZSAidGVzdC91dGlsL2NsZWFudXAuaCIKI2luY2x1ZGUgInRlc3QvdXRpbC9mc191dGlsLmgiCiNpbmNsdWRlICJ0ZXN0L3V0aWwvcG9zaXhfZXJyb3IuaCIKI2luY2x1ZGUgInRlc3QvdXRpbC90ZXN0X3V0aWwuaCIKCm5hbWVzcGFjZSBndmlzb3IgewpuYW1lc3BhY2UgdGVzdGluZyB7Cm5hbWVzcGFjZSB7CgpURVNUKFByb2NTeXNLZXJuZWxLZXlzTWF4LCBFeGlzdHMpIHsKICBhdXRvIG1heGtleXMgPQogICAgICBBU1NFUlRfTk9fRVJSTk9fQU5EX1ZBTFVFKEdldENvbnRlbnRzKCIvcHJvYy9zeXMva2VybmVsL2tleXMvbWF4a2V5cyIpKTsKICBpbnQzMl90IG1rOwogIEFTU0VSVF9UUlVFKGFic2w6OlNpbXBsZUF0b2kobWF4a2V5cywgJm1rKSk7CiAgRVhQRUNUX0VRKG1rLCAyMDApOwp9CgpURVNUKFByb2NTeXNLZXJuZWxLZXlzTWF4LCBJbnZhbGlkTWF4S2V5c1ZhbHVlKSB7CiAgU0tJUF9JRighQVNTRVJUX05PX0VSUk5PX0FORF9WQUxVRShIYXZlQ2FwYWJpbGl0eShDQVBfU1lTX0FETUlOKSkpOwogIEFTU0VSVF9USEFUKFNldENvbnRlbnRzKCIvcHJvYy9zeXMva2VybmVsL2tleXMvbWF4a2V5cyIsICItMSIpLAogICAgICAgICAgICAgIFBvc2l4RXJyb3JJcyhFSU5WQUwpKTsKICBhdXRvIG1heGtleXMgPQogICAgICBBU1NFUlRfTk9fRVJSTk9fQU5EX1ZBTFVFKEdldENvbnRlbnRzKCIvcHJvYy9zeXMva2VybmVsL2tleXMvbWF4a2V5cyIpKTsKICBpbnQzMl90IG1rOwogIEFTU0VSVF9UUlVFKGFic2w6OlNpbXBsZUF0b2kobWF4a2V5cywgJm1rKSk7CiAgRVhQRUNUX0VRKG1rLCAyMDApOwp9CgpURVNUKFByb2NTeXNLZXJuZWxLZXlzTWF4LCBTZXRNYXhLZXlzKSB7CiAgU0tJUF9JRighQVNTRVJUX05PX0VSUk5PX0FORF9WQUxVRShIYXZlQ2FwYWJpbGl0eShDQVBfU1lTX0FETUlOKSkpOwogIEFTU0VSVF9OT19FUlJOTyhTZXRDb250ZW50cygiL3Byb2Mvc3lzL2tlcm5lbC9rZXlzL21heGtleXMiLCAiMTAwIikpOwogIGF1dG8gbWF4a2V5cyA9CiAgICAgIEFTU0VSVF9OT19FUlJOT19BTkRfVkFMVUUoR2V0Q29udGVudHMoIi9wcm9jL3N5cy9rZXJuZWwva2V5cy9tYXhrZXlzIikpOwogIGludDMyX3QgbWs7CiAgQVNTRVJUX1RSVUUoYWJzbDo6U2ltcGxlQXRvaShtYXhrZXlzLCAmbWspKTsKICBFWFBFQ1RfRVEobWssIDEwMCk7Cn0KCn0gIC8vIG5hbWVzcGFjZQp9ICAvLyBuYW1lc3BhY2UgdGVzdGluZwp9ICAvLyBuYW1lc3BhY2UgZ3Zpc29yCg==", validate=True)
+assert hashlib.sha256(data).hexdigest() == "61ae4bdce31d9a91e7f573671ed55216346ed116473b4dff6823cfd15c31b10c"
+path.write_bytes(data)
+PYKEYS_BEFORE
+  cp test/syscalls/linux/proc_keys.cc "$artifacts/proc_keys.before.cc"
+  git diff -- test/syscalls/linux/proc_keys.cc > "$artifacts/before-source.patch"
+  keys_exec_phase before-set "$artifacts/before-set-targets" test \
+    --test_filter=ProcSysKernelKeysMax.SetMaxKeys
+  keys_exec_phase before-read "$artifacts/before-read-targets" test \
+    --test_filter=ProcSysKernelKeysMax.Exists:ProcSysKernelKeysMax.InvalidMaxKeysValue
+  cp "$selection_dir/proc_keys.after.cc" test/syscalls/linux/proc_keys.cc
+  cmp "$selection_dir/proc_keys.after.cc" test/syscalls/linux/proc_keys.cc
+  git diff --exit-code -- test/syscalls/linux/proc_keys.cc
+  keys_restore_limit after-before
+  keys_exec_phase proc-build "$artifacts/proc-build-targets" build
+  keys_exec_phase after "$artifacts/after-targets" test
+  # Check before cleanup, so restoration cannot hide a leaking corrected test.
+  cmp "$selection_dir/maxkeys.before" "$artifacts/host-maxkeys-after.txt"
+  cmp "$selection_dir/proc_keys.after.cc" test/syscalls/linux/proc_keys.cc
+  git diff --exit-code -- test/syscalls/linux/proc_keys.cc
+  printf '%s\n' "$aggregate_status" > "$artifacts/aggregate-exit-code"
+  return "$aggregate_status"
 )
 
 select_cgroup_profile() {
