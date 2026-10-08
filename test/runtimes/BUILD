@@ -1,5 +1,6 @@
 load("//test/runtimes:defs.bzl", "runtime_tests")
-load("//tools:defs.bzl", "bzl_library", "more_shards", "most_shards")
+load("//tools:defs.bzl", "bzl_library", "go_test", "more_shards", "most_shards")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -61,4 +62,22 @@ bzl_library(
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
     ],
+)
+
+# Fork-only check of one corrected PHPT's missing-extension result.
+go_test(
+    name = "php_extension_metadata_diagnostic",
+    size = "large",
+    timeout = "long",
+    srcs = ["php_extension_metadata_test.go"],
+    args = [
+        "--docker_test_config=$(rootpath :php8.5.11_goferfs_docker_config)",
+        "-test.v",
+    ],
+    data = [":php8.5.11_goferfs_docker_config"],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    rundir = ".",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//cpu:x86_64"],
+    deps = ["//pkg/test/dockerutil"],
 )
