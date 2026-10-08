@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T08:18:38.715976+00:00",
+    "updatedAt": "2026-10-08T08:47:23.564737+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -3276,18 +3276,18 @@
       "url": "https://github.com/google/gvisor/pull/15315",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-06T15:16:25.972530+00:00",
-      "summary": "On October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
+      "updatedAt": "2026-10-08T08:47:23.564737+00:00",
+      "summary": "The code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15315#issuecomment-6019195539. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nHistorical source 729318f57 had a public lint failure: https://github.com/google/gvisor/actions/runs/37367987748/job/111957737766. The actual log reports only clang-format failure and prints the required tuntap.cc whitespace changes; gofmt, cpplint, Buildifier and spelling pass. Root published the exact formatting-only correction at fbbeb1a403d52642fe5add8ad0cf0b626c04d185. The subsequent source conflict is the upstream feature rollback described above, not a formatting or runtime failure.\n\nOpened as ready-for-review PR #15315 after explicit user approval, at exact source 729318f57643f5504d55fdcd91995ffc807d1774. Root verified the title/body, master base, matching fork/tracking identity and MERGEABLE state. It preserves NIC Kind during network namespace moves and reconstructs close callbacks from the destination owner. The source is independently based on landed 8bf3dc484 with no open code prerequisite. Full post-fix TUN validation passes 21 actions, with 97 passing cases and four pre-existing skips; the actual Linux comparison case also passes. The earlier baseline remains unknown, so this is not a complete before/after causal proof. Exact source is included in canonical b4982500d without a new combined runtime claim. Current upstream review and checks are reported in the service snapshot; approval to publish is not a maintainer approval or landing.",
       "number": 15315,
       "followup": {
-        "disposition": "waiting for upstream TUN restoration and maintainer review",
+        "disposition": "Blocked on upstream restoration and maintainer review",
         "owner": "root",
-        "nextAction": "Preserve the reviewed head. The maintainer will review after another TUN restoration PR lands; its number is not stated. Compare complete replacement before rebasing or retiring this source.",
+        "nextAction": "Wait for the promised replacement to land, then compare the complete implementation against this retained source before any rebase or retirement.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T08:47:23.564737+00:00",
         "sourceHead": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185",
         "reviewDecision": null,
         "mergeable": "CONFLICTING"
@@ -3358,18 +3358,18 @@
       "url": "https://github.com/google/gvisor/pull/15318",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-06T15:16:25.972530+00:00",
-      "summary": "On October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
+      "updatedAt": "2026-10-08T08:47:23.564737+00:00",
+      "summary": "The code prerequisite remains absent through master 6c6e9fd61: root verified no post-rollback changes to the TUN, stack save/restore or IPv6 NDP paths. Stack.beforeSave still removes all NICs, and the preserved-NIC, restore-kind and restore-job APIs required by this source are absent. A source-preserving rebase is therefore not available. Retain this PR for comparison with the replacement promised in the October 6 maintainer comment, rather than treating it as obsolete: https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. No source amendment or public reply was made.\n\nEarlier observations:\n\nOn October 6, nybidari confirmed that another TUN restoration PR is in review and includes some of these changes; this PR will be reviewed after it lands. https://github.com/google/gvisor/pull/15318#issuecomment-6019188859. The replacement PR is not identified in that comment. The existing rollback dependency remains; no source reintroduction or automatic rebase is inferred.\n\nBlocked by upstream feature rollback d38ccf24ae: https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335. The existing reviewed source depends on removed save/restore APIs; restoration or a replacement upstream is required. The public rollback cause is unknown. Root preserved the source and did not force a rebase or reintroduce the feature.\n\nOpened as ready-for-review PR #15318 after explicit user approval. Root verified the exact reviewed source, body, master base and MERGEABLE state; upstream review and checks remain separate.\n\nIndependent public, tracked source 86a99a4cb330d57e13ca073adaa04a9b0d3d085b is based on landed master 8bf3dc484. It saves each shared Job with its monotonic deadline and completion state, rebinds the lock/callback on restore, and rearms pending NDP work. ManualClock retains time without live timers. Eight regression leaves fail before the fix and pass afterward; the post-fix validation also passes 176 full unit roots and four Nogo owners on both CPU targets. The after parent b5cecacd remains FAILED because of capture, while immutable CAS recovery closes all 23 actual test actions; independent peer a9d7cc6a510c binds that distinction. No parent-success or new combined full-matrix claim is made. The approved source is now published in this PR and has no open code prerequisite. Exact tested source is included in canonical b4982500d.",
       "number": 15318,
       "followup": {
-        "disposition": "waiting for upstream TUN restoration and maintainer review",
+        "disposition": "Blocked on upstream restoration and maintainer review",
         "owner": "root",
-        "nextAction": "Preserve the reviewed head. The maintainer will review after another TUN restoration PR lands; its number is not stated. Compare complete replacement before rebasing or retiring this source.",
+        "nextAction": "Wait for the promised replacement to land, then compare the complete implementation against this retained source before any rebase or retirement.",
         "evidence": [
           "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
           "https://github.com/google/gvisor/pull/15318#issuecomment-6019188859"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-08T08:47:23.564737+00:00",
         "sourceHead": "86a99a4cb330d57e13ca073adaa04a9b0d3d085b",
         "reviewDecision": null,
         "mergeable": "CONFLICTING"
@@ -3407,8 +3407,8 @@
       "url": "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
       "group": "runtime",
       "status": "upstream restoration required",
-      "updatedAt": "2026-10-05T22:19:52.797190+00:00",
-      "summary": "Upstream rollback d38ccf24ae removes the save/restore support introduced in 8bf3dc484. Its public message identifies an automated rollback of CL 993737103 (Piper 993881815) without an explanatory cause. Root inspected the source: it removes the TUN restore implementation used by PR #15315, plus RestorableNetworkEndpoint, IPv6 endpoint.Restore, ndpState.restore and the Job helpers modified by #15318. Both source topics depend on restoration or an upstream replacement of this feature. This is an actual commit-linked dependency, not a new branch, issue, authorized rollback reversal or provider-capacity request. Existing canonical b498 still includes the earlier feature and its source-specific RBE evidence; that is not qualification of current master 4ac0fde02."
+      "updatedAt": "2026-10-08T08:47:23.564737+00:00",
+      "summary": "Root rechecked master 6c6e9fd61904ad1044c7ad89b070773586e9f308 on October 8: no commits after rollback d38ccf24ae alter the relevant TUN, stack/save_restore.go or IPv6 NDP paths. Stack.beforeSave removes every NIC and the required restoration interfaces remain absent. PRs #15315 and #15318 are blocked on the maintainer's promised replacement, then need full source comparison; no reintroduction, rebase or obsolete closure is being performed.\n\nEarlier source evidence:\n\nUpstream rollback d38ccf24ae removes the save/restore support introduced in 8bf3dc484. Its public message identifies an automated rollback of CL 993737103 (Piper 993881815) without an explanatory cause. Root inspected the source: it removes the TUN restore implementation used by PR #15315, plus RestorableNetworkEndpoint, IPv6 endpoint.Restore, ndpState.restore and the Job helpers modified by #15318. Both source topics depend on restoration or an upstream replacement of this feature. This is an actual commit-linked dependency, not a new branch, issue, authorized rollback reversal or provider-capacity request. Existing canonical b498 still includes the earlier feature and its source-specific RBE evidence; that is not qualification of current master 4ac0fde02."
     },
     {
       "id": "pr:15370",
@@ -5570,20 +5570,22 @@
       "from": "upstream:tun-ndp-restore-rollback",
       "to": "pr:15315",
       "type": "blocked_by",
-      "reason": "The upstream rollback removes the save/restore interfaces this source changes; restoration or replacement is required. Public rollback cause is unknown.",
+      "reason": "Required NIC and restore-job interfaces are still absent through master 6c6e9fd61. The maintainer will review after the promised upstream restoration lands; a source-preserving rebase is currently unavailable.",
       "evidence": [
         "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
-        "https://github.com/google/gvisor/pull/15315"
+        "https://github.com/google/gvisor/pull/15315",
+        "https://github.com/google/gvisor/pull/15315#issuecomment-6019195539"
       ]
     },
     {
       "from": "upstream:tun-ndp-restore-rollback",
       "to": "pr:15318",
       "type": "blocked_by",
-      "reason": "The upstream rollback removes the save/restore interfaces this source changes; restoration or replacement is required. Public rollback cause is unknown.",
+      "reason": "Required NIC and restore-job interfaces are still absent through master 6c6e9fd61. The maintainer will review after the promised upstream restoration lands; a source-preserving rebase is currently unavailable.",
       "evidence": [
         "https://github.com/google/gvisor/commit/d38ccf24ae772afd763ccf6343185db6da438335",
-        "https://github.com/google/gvisor/pull/15318"
+        "https://github.com/google/gvisor/pull/15318",
+        "https://github.com/google/gvisor/pull/15318#issuecomment-6019188859"
       ]
     },
     {
