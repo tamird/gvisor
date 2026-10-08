@@ -142,6 +142,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       df -h "$PWD"
       ps -p 1 -o comm=
       stat -fc 'cgroup_filesystem=%T' /sys/fs/cgroup
+      sysctl fs.suid_dumpable
+      if [[ -d /sys/module/ip6_tables ]]; then
+        printf 'ip6_tables sysfs entry before setup: present\n'
+      else
+        printf 'ip6_tables sysfs entry before setup: absent\n'
+      fi
       for device in /dev/kvm /dev/vhost-net /dev/net/tun; do
         if [[ -c $device ]]; then
           ls -l "$device"
@@ -169,6 +175,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y iproute2 netcat-openbsd
       dpkg-query -W iproute2 netcat-openbsd | tee "$RUNNER_TEMP/qualification/network-tools.txt"
       command -v ip nc
+      # Raw IPv6 netfilter sockopts do not load their legacy handler.
+      sudo -n modprobe ip6_tables
     fi
     if [[ ${lanes[*]} == nftables || ${lanes[*]} == moby ]]; then
       # These suites exercise nftables in their private Docker namespaces.
