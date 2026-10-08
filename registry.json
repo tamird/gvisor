@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T06:26:53.612041+00:00",
+    "updatedAt": "2026-10-08T06:40:45.685313+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2468,18 +2468,18 @@
       "title": "Handle OOM score updates for exited processes",
       "url": "https://github.com/tamird/gvisor/tree/oom-score-exited-process",
       "group": "runtime",
-      "status": "contributor review requested",
-      "summary": "The independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained.",
-      "updatedAt": "2026-10-07T12:59:37.908533+00:00",
+      "status": "contributor approved; publication pending",
+      "summary": "Contributor approved after renaming checkErr to err; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent refresh is public and tracked at 5be0d814fd650cf2cbc33238fb92ab2cf9555943 on current upstream e1bc. All seven original edit sequences are preserved, including the OOM EACCES check and shared pidfd helper; newer CPU-quota tests/imports remain intact. Full source/record peer d537ff2eab33 is closed. A concrete contributor question is now pending for this exact head; no upstream PR is open.\n\nThe existing validation at 075db296f is reused. Primary parent 4d15fe5b-ae82-4797-b1e0-682498fc8f2e is recovered COMPLETE/OK with all nine target statuses PASSED. Five changed helper/regression functions are byte-identical to the tested source. Original saved outcome f7a1823af4eb and peer had closed the two OOM regressions, full specutils/sandbox suites and six both-CPU Nogo owners. The October 7 recovery obtained metadata and two small exit markers; the recorded source/verification CAS outputs were unavailable, so no complete archive recovery or new execution is claimed. Neither this proof nor the patch establishes the process state in historical Buildkite failures or covers the earlier mm-exit to pidfd-notification interval. The initial missing-import compilation failure remains retained.",
+      "updatedAt": "2026-10-08T06:40:45.685313+00:00",
       "followup": {
-        "disposition": "contributor review requested",
+        "disposition": "Contributor approved; publication pending",
         "owner": "root",
-        "nextAction": "Await the answer to the actual question for exact 5be0d814f before opening a PR.",
+        "nextAction": "Contributor approved after renaming checkErr to err; root owns correction and publication.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5be0d814fd650cf2cbc33238fb92ab2cf9555943"
         ],
         "sourceHead": "5be0d814fd650cf2cbc33238fb92ab2cf9555943",
-        "reviewedAt": "2026-10-07T12:59:37.908533+00:00"
+        "reviewedAt": "2026-10-08T06:40:45.685313+00:00"
       },
       "head": "5be0d814fd650cf2cbc33238fb92ab2cf9555943"
     },
@@ -4004,19 +4004,19 @@
       "title": "Return ENOENT for absent netfilter tables",
       "url": "https://github.com/tamird/gvisor/commit/2c9f0056d01895688c85b7d6e04c53b69afbe94d",
       "group": "runtime",
-      "status": "contributor review requested",
-      "updatedAt": "2026-10-07T07:10:23.533693+00:00",
-      "summary": "Standalone source on upstream acbaf278f corrects the existing IPv4/IPv6 GET_INFO and GET_ENTRIES absent-table errno exposed by the public Syzkaller smoke failure. The final amendment preserves Linux GET_INFO capability-before-size ordering; independent source and ABI review is closed. Final validation parent 23b87864 passes in 163.346 seconds at composition 6ea8acbf9: four actual uncached root/IPv6 Firecracker owners report 34 named leaves, with 33 passes and the sole existing native InitialState skip. All MissingTable and sixteen INFO permission cases execute. Two actual uncached OCI Nogo owners pass analysis for both CPUs. All six actions retain 300-second limits. Outcome 156427beac3e and independent saved peer 05b4361f1e49 bind the source, actual actions and results.\n\nInitial parent 8e7 remains failed: both baseline families reproduce EINVAL instead of ENOENT, nine systrap cases pass after correction, and all nine native Linux cases skip for missing capabilities. The corrected method uses canonical --config=rbe, activating the existing namespace-root/IPv6 Firecracker selector; no source or worker-declaration change was required. That original failure remains separate. The contributor review question for exact source 2c9f0056d has now been issued and awaits an answer; no upstream PR is open. No broader syscall-profile pass is claimed. The exact validated correction is now included in public canonical qualification head 6ea8acbf9; its automatic release smoke also passes.",
+      "status": "contributor approved; publication pending",
+      "updatedAt": "2026-10-08T06:40:45.685313+00:00",
+      "summary": "Contributor approved after correcting citation formatting from [2, 3] to separate references; root owns correction and publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nStandalone source on upstream acbaf278f corrects the existing IPv4/IPv6 GET_INFO and GET_ENTRIES absent-table errno exposed by the public Syzkaller smoke failure. The final amendment preserves Linux GET_INFO capability-before-size ordering; independent source and ABI review is closed. Final validation parent 23b87864 passes in 163.346 seconds at composition 6ea8acbf9: four actual uncached root/IPv6 Firecracker owners report 34 named leaves, with 33 passes and the sole existing native InitialState skip. All MissingTable and sixteen INFO permission cases execute. Two actual uncached OCI Nogo owners pass analysis for both CPUs. All six actions retain 300-second limits. Outcome 156427beac3e and independent saved peer 05b4361f1e49 bind the source, actual actions and results.\n\nInitial parent 8e7 remains failed: both baseline families reproduce EINVAL instead of ENOENT, nine systrap cases pass after correction, and all nine native Linux cases skip for missing capabilities. The corrected method uses canonical --config=rbe, activating the existing namespace-root/IPv6 Firecracker selector; no source or worker-declaration change was required. That original failure remains separate. The contributor review question for exact source 2c9f0056d has now been issued and awaits an answer; no upstream PR is open. No broader syscall-profile pass is claimed. The exact validated correction is now included in public canonical qualification head 6ea8acbf9; its automatic release smoke also passes.",
       "followup": {
-        "disposition": "contributor review requested",
+        "disposition": "Contributor approved; publication pending",
         "owner": "root",
-        "nextAction": "Await the actual contributor review decision for exact 2c9f0056d before opening the independent upstream PR; the source and bounded Linux/gVisor validation are complete.",
+        "nextAction": "Contributor approved after correcting citation formatting from [2, 3] to separate references; root owns correction and publication.",
         "evidence": [
           "https://buildkite.com/gvisor/pipeline/builds/49879#01a114dd-05ce-42c1-8321-2df04d84e781",
           "https://github.com/tamird/gvisor/commit/2c9f0056d01895688c85b7d6e04c53b69afbe94d",
           "https://app.buildbuddy.io/invocation/23b87864-ea78-44cf-95fb-65da9266351f"
         ],
-        "reviewedAt": "2026-10-07T07:06:50.544517+00:00",
+        "reviewedAt": "2026-10-08T06:40:45.685313+00:00",
         "sourceHead": "2c9f0056d01895688c85b7d6e04c53b69afbe94d"
       }
     },
@@ -4029,19 +4029,19 @@
       "title": "Allow libc thread creation in cgo filters",
       "url": "https://github.com/tamird/gvisor/commit/51a4d71271c834d22cd97eb83baf6a5860465641",
       "group": "runtime",
-      "status": "contributor review requested",
-      "updatedAt": "2026-10-07T08:35:21.745964+00:00",
-      "summary": "Independent six-file source on current master e1bc allows musl's exact legacy thread-clone flags in the Sentry and gofer cgo policies, preserving the Go rule and rejecting process, namespace and exit-signal variants. Both policy comments cite canonical musl source. The transplant preserves the upstream large test-size setting; five other source blobs and all rule/test bodies equal the validated maintained source. No Actions or diagnostic source is included.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nThe actual contributor question for exact 51a4d7127 has been issued and is pending. No upstream PR is open. The standalone branch was not rerun after its source-equivalent transplant.",
+      "status": "contributor approved; publication pending",
+      "updatedAt": "2026-10-08T06:40:45.685313+00:00",
+      "summary": "Contributor approved 51a4d7127; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nIndependent six-file source on current master e1bc allows musl's exact legacy thread-clone flags in the Sentry and gofer cgo policies, preserving the Go rule and rejecting process, namespace and exit-signal variants. Both policy comments cite canonical musl source. The transplant preserves the upstream large test-size setting; five other source blobs and all rule/test bodies equal the validated maintained source. No Actions or diagnostic source is included.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nThe actual contributor question for exact 51a4d7127 has been issued and is pending. No upstream PR is open. The standalone branch was not rerun after its source-equivalent transplant.",
       "followup": {
-        "disposition": "contributor review requested",
+        "disposition": "Contributor approved; publication pending",
         "owner": "root",
-        "nextAction": "Await the actual contributor decision for exact 51a4d7127 before opening the independent upstream PR.",
+        "nextAction": "Contributor approved 51a4d7127; root owns PR publication.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/51a4d71271c834d22cd97eb83baf6a5860465641",
           "https://github.com/tamird/gvisor/actions/runs/37592197370",
           "https://app.buildbuddy.io/invocation/71854863-069d-417e-a83b-e3719b87e387"
         ],
-        "reviewedAt": "2026-10-07T08:35:21.745964+00:00",
+        "reviewedAt": "2026-10-08T06:40:45.685313+00:00",
         "sourceHead": "51a4d71271c834d22cd97eb83baf6a5860465641"
       }
     },
@@ -4054,9 +4054,15 @@
       "title": "Restore original cgroup membership in tests",
       "url": "https://github.com/tamird/gvisor/commit/e49c868bb2e3b2a2a97d78afde5b5d72e24561ef",
       "group": "rbe",
-      "status": "contributor review requested; current 86 validation closed",
-      "summary": "The independent one-file proposal e49c868bb2e3b2a2a97d78afde5b5d72e24561ef preserves the test process\u2019s original unified cgroup membership and restores it during all seven scope cleanups and fixture teardown, reporting restoration errors. It contains no qualification adapter or delegated-root expectation changes. Complete source/record peer c424e9023b37 is closed. An actual contributor question now requests approval to open the PR; no upstream PR exists.\n\nThe exact current 86-case C++ source now has closed native/shared observations (cumulative outcome 3e99c8b7149b; independent peer 46a50858d4c8). Shared source 9dd86268d passes 85 cases and retains one source-defined Goferfs credential skip. Native recovery 50d292e8 passes 82 cases and retains four explicit skips; both credential cases execute and pass. The two newly added V1-controller cases skip because their current drain guards return EBUSY, so no native coverage is credited for them. The earlier 84-case result remains historical and is not relabeled.\n\nThe initial native setup failure at 9dd remains preserved: it omitted the qualified runner behavior that preserves the user namespace for privileged non-container tests. The exact existing prerequisite is restored in 50d292e8 without changing netstack_sr behavior (source peer 07d310d22b4e). All four controller/options/membership restorations and scratch-alias removals pass in the saved continuation. This proves the composed source with its required runner/fixture prerequisites, not the standalone branch on arbitrary hosts.\n\nThe separate canonical correction f22d74942 restores the three original initial-namespace assertions, keeping membership cleanup. It is now public canonical, and its automatic release smoke passes in 4.467 seconds (receipt 5717f2c0dba6); no cgroup workload was repeated solely for promotion.",
-      "updatedAt": "2026-10-07T11:49:09.597314+00:00"
+      "status": "contributor approved; publication pending",
+      "summary": "Contributor approved e49c868bb; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent one-file proposal e49c868bb2e3b2a2a97d78afde5b5d72e24561ef preserves the test process\u2019s original unified cgroup membership and restores it during all seven scope cleanups and fixture teardown, reporting restoration errors. It contains no qualification adapter or delegated-root expectation changes. Complete source/record peer c424e9023b37 is closed. An actual contributor question now requests approval to open the PR; no upstream PR exists.\n\nThe exact current 86-case C++ source now has closed native/shared observations (cumulative outcome 3e99c8b7149b; independent peer 46a50858d4c8). Shared source 9dd86268d passes 85 cases and retains one source-defined Goferfs credential skip. Native recovery 50d292e8 passes 82 cases and retains four explicit skips; both credential cases execute and pass. The two newly added V1-controller cases skip because their current drain guards return EBUSY, so no native coverage is credited for them. The earlier 84-case result remains historical and is not relabeled.\n\nThe initial native setup failure at 9dd remains preserved: it omitted the qualified runner behavior that preserves the user namespace for privileged non-container tests. The exact existing prerequisite is restored in 50d292e8 without changing netstack_sr behavior (source peer 07d310d22b4e). All four controller/options/membership restorations and scratch-alias removals pass in the saved continuation. This proves the composed source with its required runner/fixture prerequisites, not the standalone branch on arbitrary hosts.\n\nThe separate canonical correction f22d74942 restores the three original initial-namespace assertions, keeping membership cleanup. It is now public canonical, and its automatic release smoke passes in 4.467 seconds (receipt 5717f2c0dba6); no cgroup workload was repeated solely for promotion.",
+      "updatedAt": "2026-10-08T06:40:45.685313+00:00",
+      "followup": {
+        "disposition": "Contributor approved; publication pending",
+        "owner": "root",
+        "nextAction": "Contributor approved e49c868bb; root owns PR publication.",
+        "reviewedAt": "2026-10-08T06:40:45.685313+00:00"
+      }
     },
     {
       "id": "pr:15463",
@@ -4094,15 +4100,15 @@
       "url": "https://github.com/tamird/gvisor/tree/nftables-enable-veth-ipv6",
       "group": "tests",
       "head": "3e05d4b8a239b70503b795d8435c6a1a18e99ac0",
-      "status": "contributor review requested",
-      "updatedAt": "2026-10-07T12:59:37.908533+00:00",
-      "summary": "Public standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface\u2019s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor\u2019s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
+      "status": "contributor approved; publication pending",
+      "updatedAt": "2026-10-08T06:40:45.685313+00:00",
+      "summary": "Contributor approved 30dbbc37f; root owns publication of the source-equivalent refresh. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nPublic standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface\u2019s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor\u2019s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
       "followup": {
-        "disposition": "contributor review requested",
+        "disposition": "Contributor approved; publication pending",
         "owner": "root",
-        "nextAction": "Await the answer to the exact 3e05d4b8a contributor question before PR delivery.",
+        "nextAction": "Contributor approved 30dbbc37f; root owns publication of the source-equivalent refresh.",
         "sourceHead": "3e05d4b8a239b70503b795d8435c6a1a18e99ac0",
-        "reviewedAt": "2026-10-07T12:59:37.908533+00:00",
+        "reviewedAt": "2026-10-08T06:40:45.685313+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3e05d4b8a239b70503b795d8435c6a1a18e99ac0",
           "https://github.com/tamird/gvisor/actions/runs/37623291651"
@@ -4356,15 +4362,15 @@
       "title": "Report failed container input copies",
       "url": "https://github.com/tamird/gvisor/commit/b74a956f42501ad3900060a19968d3dfc4937067",
       "group": "tests",
-      "status": "contributor review requested",
-      "updatedAt": "2026-10-08T04:44:44.253770+00:00",
-      "summary": "The source and commit record are reviewed, and root has issued the actual contributor question for this exact fork candidate. CopyFiles retained copy errors on Container, but configuration did not check them before container creation. The change returns that stored error at the owning configuration boundary, preserving the original cause rather than starting without the intended bind mount. The existing exec_test owner includes the new copy-failure regression; its source, execution and result evidence were independently reviewed with the Moby discovery packet. No upstream PR or public reply is claimed.",
+      "status": "contributor approved; publication pending",
+      "updatedAt": "2026-10-08T06:40:45.685313+00:00",
+      "summary": "Contributor approved b74a956f4; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe source and commit record are reviewed, and root has issued the actual contributor question for this exact fork candidate. CopyFiles retained copy errors on Container, but configuration did not check them before container creation. The change returns that stored error at the owning configuration boundary, preserving the original cause rather than starting without the intended bind mount. The existing exec_test owner includes the new copy-failure regression; its source, execution and result evidence were independently reviewed with the Moby discovery packet. No upstream PR or public reply is claimed.",
       "followup": {
-        "disposition": "contributor review requested",
+        "disposition": "Contributor approved; publication pending",
         "owner": "root",
-        "nextAction": "Await the answer to the actual contributor question before opening a PR.",
+        "nextAction": "Contributor approved b74a956f4; root owns PR publication.",
         "sourceHead": "b74a956f42501ad3900060a19968d3dfc4937067",
-        "reviewedAt": "2026-10-08T04:44:44.253770+00:00",
+        "reviewedAt": "2026-10-08T06:40:45.685313+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/b74a956f42501ad3900060a19968d3dfc4937067",
           "https://github.com/tamird/gvisor/actions/runs/37721970197"
