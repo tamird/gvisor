@@ -99,7 +99,7 @@ point directly on Remote Bazel with an appropriate explicit work limit.
 Missing workers, input errors and failed tests remain failures.
 
 For local tests, select `execution=local`, one lane (`smoke`, `bwrap`,
-`unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `startup`, `posture`,
+`unit`, `syscalls`, `syscalls-resume`, `syscalls-kvm`, `kvm`, `startup`, `posture`,
 `portforward`, `root`, `plugin-network`, `nftables`,
 `docker`, `cpu-images`, `gpu-images` or `benchmarks`) and a single architecture
 (`amd64` or `arm64`). The unit lane also accepts `architecture=all`: an ARM64
@@ -107,7 +107,8 @@ coordinator runs namespace-dependent ARM64 tests locally, while the complete
 AMD64 profile and ordinary ARM64 tests run on RBE in the same Bazel invocation.
 The original unit roots, exclusions and build-only work remain selected.
 Ordinary syscalls support both architectures. Local unit,
-save-resume syscall, Docker and image profiles require `arm64`; KVM syscalls,
+save-resume syscall, Docker and image profiles require `arm64`; KVM package,
+integration and syscall tests,
 startup, posture, portforward, root, plugin-network, nftables and benchmarks
 require `amd64`.
 The architecture-specific test runs on `ubuntu-24.04` or `ubuntu-24.04-arm`;
@@ -189,6 +190,29 @@ gh workflow run build.yml --repo tamird/gvisor \
   --ref rbe-actions-arm64-resume \
   -f lanes=syscalls-resume -f architecture=arm64 -f execution=local \
   -f syscall_bucket=0
+```
+
+The local AMD64 `kvm` lane preserves public `make kvm-tests`: the pure
+`//pkg/sentry/platform/kvm:kvm_test` package test and the complete
+`//test/docker:kvm_tests` integration/image suite. The owning Docker variants
+register both `--platform=kvm` and the `-docker` runtime with
+`--net-raw --allow-packet-socket-write`. Original arguments, test deadlines
+and source-defined skips remain in effect.
+
+The package runs once; the integration and image suites each retain the public
+job's eight `PARTITION`/`TOTAL_PARTITIONS` name-hash partitions and their
+individual deadlines. All TestRunners use the existing privileged Docker fixture and pinned
+Docker-tools image. The fixture supplies private cgroup/PID/network namespaces
+and disk-backed scratch; its job bridge permits the suites' image downloads.
+The host must expose readable and writable `/dev/kvm` to root. Compilation
+remains remote, and non-RBE execution properties of the package test remain
+unchanged. This lane is selected explicitly rather than by the remote AMD64
+aggregate. Its work/job bounds are 45/50 minutes; incomplete work stays failed.
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref qualification/kvm-public-lane \
+  -f lanes=kvm -f architecture=amd64 -f execution=local
 ```
 
 The AMD64 `syscalls-kvm` lane starts from the public `syscalls-amd64`

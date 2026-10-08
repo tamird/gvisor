@@ -159,7 +159,8 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
       cohort: Default COHORT_IMAGES key; individual variants may override it.
       data: Other existing runtime inputs.
       args: Arguments shared by all variants.
-      runtime_variants: Optional runtime label, arguments, cohort, test_args, data and tags.
+      runtime_variants: Optional runtime label, arguments, cohort, test_args, data, tags
+        and partition_count. Partitions use the existing Docker test name hash.
         An empty name preserves the default owned test instead of an aggregate suite.
       ipv6: Whether the owned daemon provides IPv6 on its default bridge.
       memory: Optional test VM memory budget; defaults to the fixture's 4GB.
@@ -199,19 +200,38 @@ def owned_docker_test(name, cohort = None, data = [], args = [], runtime_variant
                 amd64 = [],
                 arm64 = ["@platforms//:incompatible"],
             )
-        go_test(
-            name = test,
-            nogo = False,
-            args = ["--docker_test_config=$(rootpath :" + config + ")"] + args + getattr(variant, "test_args", []),
-            data = data + [":" + config] + getattr(variant, "data", []),
-            rundir = ".",
-            # Image layers and container writes use the explicitly sized root disk.
-            exec_properties = docker_test_exec_properties(
-                free_disk = free_disk if free_disk != None else ("30GB" if variant_cohort == "image" else "20GB"),
-                memory = memory,
-            ),
-            **owned_kwargs
-        )
+        partition_count = getattr(variant, "partition_count", 1)
+        if partition_count < 1:
+            fail("partition_count must be positive for %s" % prefix)
+        partition_tests = []
+        for partition in range(1, partition_count + 1):
+            partition_test = test if partition_count == 1 else prefix + "_partition_%d_owned" % partition
+            partition_kwargs = dict(owned_kwargs)
+            if partition_count > 1:
+                # Keep the public Make partition algorithm and per-partition
+                # timeout. Bazel's Go sharding uses a different selection rule.
+                partition_kwargs["env"] = dict(owned_kwargs.get("env", {}), PARTITION = str(partition), TOTAL_PARTITIONS = str(partition_count))
+            go_test(
+                name = partition_test,
+                nogo = False,
+                args = ["--docker_test_config=$(rootpath :" + config + ")"] + args + getattr(variant, "test_args", []),
+                data = data + [":" + config] + getattr(variant, "data", []),
+                rundir = ".",
+                # Image layers and container writes use the explicitly sized root disk.
+                exec_properties = docker_test_exec_properties(
+                    free_disk = free_disk if free_disk != None else ("30GB" if variant_cohort == "image" else "20GB"),
+                    memory = memory,
+                ),
+                **partition_kwargs
+            )
+            partition_tests.append(partition_test)
+        if partition_count > 1:
+            native.test_suite(
+                name = test,
+                tests = partition_tests,
+                tags = owned_kwargs["tags"],
+                visibility = kwargs.get("visibility"),
+            )
         tests.append(test)
     if runtime_variants != None and name + "_owned" not in tests:
         native.test_suite(

@@ -1,4 +1,5 @@
 load("//tools:defs.bzl", "go_library", "go_test")
+load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -115,6 +116,7 @@ go_test(
         "kvm_test.go",
         "virtual_map_test.go",
     ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
     library = ":kvm",
     # FIXME(gvisor.dev/issue/3374): Not working with all build systems.
     nogo = False,
