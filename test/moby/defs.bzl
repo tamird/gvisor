@@ -14,7 +14,7 @@ _moby_timeout = transition(
     outputs = ["//command_line_option:test_timeout"],
 )
 
-_moby_frontend = rule(
+_moby_frontend_test = rule(
     implementation = lambda ctx: ctx.super(),
     parent = frontend_test,
     cfg = _moby_timeout,
@@ -22,7 +22,7 @@ _moby_frontend = rule(
 
 moby_go_test, _moby_go_transition = with_cfg(
     _go_test,
-    test_frontend = _moby_frontend,
+    test_frontend = _moby_frontend_test,
     extra_providers = [GoLibrary, GoArchive],
 ).build()
 
