@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T06:19:31.733743+00:00",
+    "updatedAt": "2026-10-08T06:26:53.612041+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -113,7 +113,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "c5e943bc48ce63b12fc67b826919b872ebd01a55",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -139,7 +139,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a9429cd833940fd776a4c44e792e322069b7bc6f",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -363,7 +363,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "8130f5a58fdd688379390fcbdf90a81b66149235",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -430,7 +430,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6163d92a567f0983df38f57ec2596adc917ae78a",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -458,7 +458,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f8cbf72aaf807407e493babd1c5958d8ad8cefc8",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -525,7 +525,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "8d55f931860145475cae7e872db3784499faf855",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -593,7 +593,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "c058cddf269f5fe81bb4e261f6356ca764bb50ca",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -731,7 +731,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "ccc387fc0195c118b8e3f75c6116bbddcf49a936",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -805,7 +805,7 @@
         "reviewedAt": "2026-10-08T04:04:11.404414+00:00",
         "sourceHead": "61027644ef3258c2fe16a236861980d5ec7707ae",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -846,7 +846,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b69abbaaa9796a33b9f954cc00e6a70c04bde649",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -873,7 +873,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "e8c82dd30d419cc7bba8047f3535a632cb47e70c",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -944,7 +944,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f5f0270289147db0614fd2eadc1ed15dcb652f81",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -997,7 +997,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "0943d0f425c80d8a1b9372fcaba1b87711d51a92",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1037,7 +1037,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "1a608a4d3199222ac1a94311e7ceff57cd8885a1",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1138,7 +1138,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "de2a5dd01af28c23dedcaf2e934ec808f8051c55",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "de2a5dd01af28c23dedcaf2e934ec808f8051c55"
     },
@@ -1166,7 +1166,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
     },
@@ -1193,7 +1193,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1234,7 +1234,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "9f15cc6f33d681c1cd051c2797a3172f0dc89efa",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1298,7 +1298,7 @@
         "reviewedAt": "2026-10-08T01:44:15.042971+00:00",
         "sourceHead": "2e46e8773c00fc18281a742b610013832861fe2d",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "2e46e8773c00fc18281a742b610013832861fe2d"
     },
@@ -1390,7 +1390,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "b04fae38936fc090e1dcd624121c4bd0a832cbf1",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1658,7 +1658,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6e908d714da848893f8c40798ca9fe632c31e8c1",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1773,7 +1773,7 @@
         "reviewedAt": "2026-10-08T05:58:24.560149+00:00",
         "sourceHead": "d601665d76e91c5c7b1c3999a9b5ee5c311ebfe1",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -1876,7 +1876,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "47a97dbfc61ddd62ce905b1f9d2b7a4dd5ad0ec7",
       "number": 15441
@@ -1949,7 +1949,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a75fe7b49c0e76a9428271bf7d3cf68719eeb7dc",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2010,7 +2010,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "21f7fd7b924a28562b4549258ef8a886019d9ef6",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "21f7fd7b924a28562b4549258ef8a886019d9ef6"
     },
@@ -2038,7 +2038,7 @@
         "reviewedAt": "2026-10-08T03:51:23.594895+00:00",
         "sourceHead": "d543737e0b8fe765d2401e0a7492f8ef4ebc779a",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "updatedAt": "2026-10-08T03:51:23.594895+00:00",
       "head": "d543737e0b8fe765d2401e0a7492f8ef4ebc779a"
@@ -2121,7 +2121,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "1c636c974ff648d8e67fffb6280e01599e117bf5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "1c636c974ff648d8e67fffb6280e01599e117bf5",
       "number": 15443
@@ -2170,7 +2170,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "46ad8cc5b22b84e9116e68567532cab9e8b664c7",
       "number": 15449
@@ -2257,7 +2257,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "2d9b81d097a4aa98e65d09393fbc8175964e91f8",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "2d9b81d097a4aa98e65d09393fbc8175964e91f8"
     },
@@ -2286,7 +2286,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "2a8efe7eaada9f144311acac49f65ed5bd818a10",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2533,7 +2533,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "587dd659205a6081de5224c543b1f4a514cac818",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "587dd659205a6081de5224c543b1f4a514cac818",
       "number": 15436
@@ -2572,7 +2572,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "f18737bed47bbdc3da9ea51dda485c0c94cb43e5",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15376
     },
@@ -2608,7 +2608,7 @@
         ],
         "reviewedAt": "2026-10-08T01:07:07.730583+00:00",
         "sourceHead": "39c96507e65884a7c307be128ba7f23dedc376a2",
-        "mergeable": "UNKNOWN",
+        "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
       },
       "number": 15414
@@ -2636,7 +2636,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "fd0194dbcd3b64e2cc5ffb31c32c24698ca54390",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2660,7 +2660,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6348b07d95eb31f5efc502112610b356ef3dd56c",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "6348b07d95eb31f5efc502112610b356ef3dd56c",
       "number": 15435
@@ -2704,7 +2704,7 @@
         "reviewedAt": "2026-10-08T01:01:37.484878+00:00",
         "sourceHead": "e899dca1fbf56133d8973c20261f4983ef8e4212",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2797,7 +2797,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "10ee73c8cf90ef1624282e216473b71fbab1cb32",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2876,7 +2876,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "73d62b335ccacd564193b201c861b482e0c1ab18",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -2908,7 +2908,7 @@
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
       "number": 15439
@@ -2936,7 +2936,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "6b98f2ca05794e793f5fa70d7fb0b937ec79fa56",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -3066,7 +3066,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
       "number": 15444,
@@ -3098,7 +3098,7 @@
         "reviewedAt": "2026-10-08T02:56:54.992915+00:00",
         "sourceHead": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "7a0b5bb44e53d46b30df93d813b08c1a5bf143a6"
     },
@@ -3208,7 +3208,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "reviewDecision": "APPROVED",
       "head": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5"
@@ -3265,7 +3265,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "fbbeb1a403d52642fe5add8ad0cf0b626c04d185",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -3347,7 +3347,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "86a99a4cb330d57e13ca073adaa04a9b0d3d085b",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "CONFLICTING"
       }
     },
     {
@@ -3407,7 +3407,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "33dce4c9a01207885a5dcb52f16f5a8c1c804a5a",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15370
     },
@@ -3435,7 +3435,7 @@
         "reviewedAt": "2026-10-08T01:04:43.522885+00:00",
         "sourceHead": "2f5afbc58fc2672cd454f2862d22687f619af31c",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15371,
       "reviewDecision": "APPROVED"
@@ -3523,7 +3523,7 @@
         "reviewedAt": "2026-10-08T06:19:31.733743+00:00",
         "sourceHead": "f0b67041d60450e623285250941df450b7f4bf31",
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15374,
       "reviewDecision": "APPROVED"
@@ -3639,7 +3639,7 @@
         ],
         "reviewedAt": "2026-10-08T06:07:21.446815+00:00",
         "sourceHead": "865d0a1b029491173c4e5ed92ee7b51095dd75cd",
-        "mergeable": "UNKNOWN",
+        "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
       },
       "number": 15415
@@ -3825,11 +3825,11 @@
       "group": "runtime",
       "status": "open",
       "updatedAt": "2026-10-08T05:20:12.255486+00:00",
-      "summary": "Approved codec metadata revision bfeafd451 is now the live, mergeable PR head. The wrapped description preserves its original thread marker; the updated timestamp benchmark results were posted at comment 6053509833 and independently read back by root. The pending contributor decision is fulfilled. Existing requested reviewer remains in place, and current CI is pending.\n\nEarlier observations:\n\nThe contributor approved prepared rebase bfeafd451 and requested updated timestamp benchmark results. Root owns the live PR publication and reply; the 05:55 snapshot still records live 86ae36127 and a conflict, so publication/conflict clearance is not yet claimed.\n\nEarlier observations:\n\nThe metadata-dispatch revision remains under the existing contributor decision. A source-preserving rebase is now published at bfeafd451816044ccf84e62f80a0c916e221605c on review/state-codec-current-base, based on master 706f61324. Independent review verifies identical ordered migration edits in all 26 paths, preserved author/date/message and the upstream reflect.PointerTo correction. The originally reviewed 8b9f192091716894804f06b76552e91b80195f79 remains preserved on its separate ref. No new approval question has been issued, no answer has been received and the live PR remains 86ae36127. GitHub reports that live head CONFLICTING/DIRTY in the 05:06 UTC snapshot; the pending candidate has not been published to the PR. Independent correctness review closes all 16 requested actions, including normal/race execution and both-CPU Nogo. The confirmation benchmark is also closed: 12 balanced same-worker blocks compare the original source, current PR and revision. Timestamp Save/Load medians were 8.066/10.164, 9.351/10.991 and 6.881/8.813 microseconds respectively; allocation counts were 80/138, 94/151 and 68/125, while encoded size remains 494/521/521 bytes. Revised map decoding is 2.49% slower than the current PR (p=.008), with no significant difference from the original (p=.682). These are focused serialization results, not whole-checkpoint or application-throughput measurements. The older result remains below; the proposed new benchmark reply has not been posted.\n\nEarlier published feedback and source-specific results:\n\nThe contributor replied at 00:28:24 UTC that optimization work is in progress after the measured timestamp-codec costs. Existing PR source remains 86ae36127d720e1b6da3034cd889babaf4030305; no improved-performance result is claimed.\n\nThe requested paired benchmark is closed and the user-authorized reply is published at comment6049376481. All 22 benchmark actions and 160 samples are source/producer-bound on the same Linux worker; parent failure was final cleanup only. Six ordinary leaves had no statistically significant timing change. The timestamp fixture measured Save +25.72% and Load +10.44%, allocations 80\u219294 and 138\u2192151, and wire size 494\u2192521 bytes. This identifies a performance concern for maintainer disposition; it is not a zero-cost or whole-checkpoint claim.\n\nEtiennePerot requested a benchmark of the added reflection overhead on exact head 86ae36127d720e1b6da3034cd889babaf4030305. The existing six state encoding/decoding subbenchmarks can compare ordinary generated-object dispatch; they do not measure the new time codec or complete checkpoint latency. Root is preparing a bounded paired baseline/candidate method. No benchmark result, public reply or new commitment is claimed.\n\nThe corrected86ae36127d720e1b6da3034cd889babaf4030305 head now has successful generate and all currently visible checks. The original codespell failure remains retained; the only source amendment was the verified three-occurrence field rename.\n\nUser-approved PR https://github.com/google/gvisor/pull/15476 is open at the exact reviewed source, with single master parent and MERGEABLE state at delivery. Its initial upstream lint failure was limited to codespell on the test field failSave at binary_test.go45/49/59; every other lint phase passed. Normal-signed correction86ae36127d720e1b6da3034cd889babaf4030305 is now published with an exact three-occurrence failMarshal rename and unchanged body. Source proof9736 preserves behavior/assertions; original failed CI remains retained and new-head CI is pending. \n\nThe revised time-codec precursor is public at 4dac264bbac5eda88ec618fbcfefd08e2d93e383. Its complete 24-path source review is closed, including generic binary codecs, ordinary time.Time registration, seven removed timestamp conversion hooks and explicit original-type registration. Validation 69c94a6e-5162-4070-96f3-88e8fa6075d5 at composition 0a9c4098a2b07e0727f9c49fa2ef20314629242f is now independently closed by saved peer 09b7bd1941da: all 13 uncached original-deadline actions pass, covering complete normal AMD64/ARM64 state suites, AMD64 race, nine both-CPU owning/consumer Nogo targets and the formatter owner. The 31,936 reported XML entries include roots and subtests; no skipped or failed entries were observed. Actual race linker/input evidence and all 379 indexed files are verified. This proves the selected state contracts and consumer compilation, not checkpoint migration runtime, cross-version compatibility or performance. The contributor approved the exact codec and helper changes; ready independent PRs #15476 and #15477 are published with exact source/body readback.\n\nThe earlier eight-path f998 revision has closed actual runtime evidence at composition f6f8b8048: full normal AMD64/ARM64 suites, AMD64 race, and both owning Nogo targets pass. Independent saved peer 721cb59e160b verified all 227 indexed files, raw actions, actual -race link input, Nogo producers and compact traces. The 31,918 reported XML entries are not a distinct leaf count. Parent https://app.buildbuddy.io/invocation/f51bbb17-f275-48c3-ba70-fe9ec8359336 remains Failed because its result oracle expected an obsolete race flag; the original failure is retained. This proof does not validate the new time migration or later core changes.\n\nEarlier source-specific history:\n\nThe contributor-requested generalization is public at standalone f9984e9e8 on current master e1bc. A shared binary-codec adapter accepts named foreign struct pointers through their public marshal/unmarshal methods, while existing state Type methods retain precedence. Netip registration uses the ordinary registry; the implementation has no netip-specific dispatch. Complete source peers 81bac2f054ef and 65b0ddd5b670 are closed. Tests cover an independent time.Time consumer, state-method precedence, codec errors, registration failures and netip equality/map/interface/alias contracts.\n\nValidation composition qualification/state-binary-codecs@f6f8b8048d1f7895d6d039b2b4ed7b30ffa8e065 preserves the exact complete eight-path standalone patch and changed blobs over the Go 1.27.1 canonical candidate 496f. Method peer b93dddc2cf92 closes full normal AMD64 and ARM64 state suites, full AMD64 race and two owning Nogo targets for both CPUs, with original 60/300-second deadlines and no case filter. The exact request was accepted once as https://app.buildbuddy.io/invocation/f51bbb17-f275-48c3-ba70-fe9ec8359336 under its sole restoration observer. Runtime results remain pending. There is no new contributor approval request or upstream PR for this revision, and the core migration still depends on this codec.\n\nEarlier source-specific review and validation history:\n\nThe earlier request for checkpoint codec 77657fc7450a6dd381df22e3f7dcffc9f4050b7a was answered with changes. Root asks to open this prerequisite PR first; the core netip migration will be submitted after the codec lands, avoiding an unnecessary stacked PR. This is an actual current review question, not an unasked backlog hold. The existing validated Addr, Prefix and AddrPort state contracts remain the source evidence.\n\nEarlier source and validation history:\n\nThe core-first migration prerequisite supports actual netip.Addr, netip.Prefix and netip.AddrPort values through their public binary encodings, without private-layout access or per-field wrappers. The shared adapter preserves canonical identity for map keys and interfaces, plus interior pointer aliases. Tests include invalid prefixes that retain an address, unmasked host bits and invalid-address/nonzero-port pairs. The one-commit source is refreshed to current master at 4caa13a7faf998a309851d6bd026cd45479d6ef8 with an unchanged complete pkg/state patch.\n\nFocused parent b335c645 at composition a629ea840 passes in 301.256 seconds. The expanded TestNetipValues fixture first fails as expected against the older Addr-only codec because netip.Prefix lacks SaverLoader. Corrected normal AMD64 and ARM64 owners each pass 25 top-level roots and 10,615 XML entries; the AMD64 race owner passes 28 roots and 10,661 XML entries, without skips. The Nogo owner reports both target CPUs passing. Independent saved peer dc0c1cab1e37 verifies all 42 source bindings, the archive manifest and five actual uncached remote BEP TestResult joins to log/XML digests, and confirms final source/HEAD restoration. No separate raw Action/worker-input walk or full-repository qualification is claimed. Contributor review is being prepared; the seven outer-boundary proposals remain held for reconciliation with the core design.",
+      "summary": "The 06:25 UTC snapshot reports all visible checks successful on live bfeafd451, which remains mergeable. The approved amendment and updated benchmark reply are delivered. Root is separately evaluating the user\u2019s newer codec-interface proposal; current CI success does not resolve that design request.\n\nEarlier observations:\n\nApproved codec metadata revision bfeafd451 is now the live, mergeable PR head. The wrapped description preserves its original thread marker; the updated timestamp benchmark results were posted at comment 6053509833 and independently read back by root. The pending contributor decision is fulfilled. Existing requested reviewer remains in place, and current CI is pending.\n\nEarlier observations:\n\nThe contributor approved prepared rebase bfeafd451 and requested updated timestamp benchmark results. Root owns the live PR publication and reply; the 05:55 snapshot still records live 86ae36127 and a conflict, so publication/conflict clearance is not yet claimed.\n\nEarlier observations:\n\nThe metadata-dispatch revision remains under the existing contributor decision. A source-preserving rebase is now published at bfeafd451816044ccf84e62f80a0c916e221605c on review/state-codec-current-base, based on master 706f61324. Independent review verifies identical ordered migration edits in all 26 paths, preserved author/date/message and the upstream reflect.PointerTo correction. The originally reviewed 8b9f192091716894804f06b76552e91b80195f79 remains preserved on its separate ref. No new approval question has been issued, no answer has been received and the live PR remains 86ae36127. GitHub reports that live head CONFLICTING/DIRTY in the 05:06 UTC snapshot; the pending candidate has not been published to the PR. Independent correctness review closes all 16 requested actions, including normal/race execution and both-CPU Nogo. The confirmation benchmark is also closed: 12 balanced same-worker blocks compare the original source, current PR and revision. Timestamp Save/Load medians were 8.066/10.164, 9.351/10.991 and 6.881/8.813 microseconds respectively; allocation counts were 80/138, 94/151 and 68/125, while encoded size remains 494/521/521 bytes. Revised map decoding is 2.49% slower than the current PR (p=.008), with no significant difference from the original (p=.682). These are focused serialization results, not whole-checkpoint or application-throughput measurements. The older result remains below; the proposed new benchmark reply has not been posted.\n\nEarlier published feedback and source-specific results:\n\nThe contributor replied at 00:28:24 UTC that optimization work is in progress after the measured timestamp-codec costs. Existing PR source remains 86ae36127d720e1b6da3034cd889babaf4030305; no improved-performance result is claimed.\n\nThe requested paired benchmark is closed and the user-authorized reply is published at comment6049376481. All 22 benchmark actions and 160 samples are source/producer-bound on the same Linux worker; parent failure was final cleanup only. Six ordinary leaves had no statistically significant timing change. The timestamp fixture measured Save +25.72% and Load +10.44%, allocations 80\u219294 and 138\u2192151, and wire size 494\u2192521 bytes. This identifies a performance concern for maintainer disposition; it is not a zero-cost or whole-checkpoint claim.\n\nEtiennePerot requested a benchmark of the added reflection overhead on exact head 86ae36127d720e1b6da3034cd889babaf4030305. The existing six state encoding/decoding subbenchmarks can compare ordinary generated-object dispatch; they do not measure the new time codec or complete checkpoint latency. Root is preparing a bounded paired baseline/candidate method. No benchmark result, public reply or new commitment is claimed.\n\nThe corrected86ae36127d720e1b6da3034cd889babaf4030305 head now has successful generate and all currently visible checks. The original codespell failure remains retained; the only source amendment was the verified three-occurrence field rename.\n\nUser-approved PR https://github.com/google/gvisor/pull/15476 is open at the exact reviewed source, with single master parent and MERGEABLE state at delivery. Its initial upstream lint failure was limited to codespell on the test field failSave at binary_test.go45/49/59; every other lint phase passed. Normal-signed correction86ae36127d720e1b6da3034cd889babaf4030305 is now published with an exact three-occurrence failMarshal rename and unchanged body. Source proof9736 preserves behavior/assertions; original failed CI remains retained and new-head CI is pending. \n\nThe revised time-codec precursor is public at 4dac264bbac5eda88ec618fbcfefd08e2d93e383. Its complete 24-path source review is closed, including generic binary codecs, ordinary time.Time registration, seven removed timestamp conversion hooks and explicit original-type registration. Validation 69c94a6e-5162-4070-96f3-88e8fa6075d5 at composition 0a9c4098a2b07e0727f9c49fa2ef20314629242f is now independently closed by saved peer 09b7bd1941da: all 13 uncached original-deadline actions pass, covering complete normal AMD64/ARM64 state suites, AMD64 race, nine both-CPU owning/consumer Nogo targets and the formatter owner. The 31,936 reported XML entries include roots and subtests; no skipped or failed entries were observed. Actual race linker/input evidence and all 379 indexed files are verified. This proves the selected state contracts and consumer compilation, not checkpoint migration runtime, cross-version compatibility or performance. The contributor approved the exact codec and helper changes; ready independent PRs #15476 and #15477 are published with exact source/body readback.\n\nThe earlier eight-path f998 revision has closed actual runtime evidence at composition f6f8b8048: full normal AMD64/ARM64 suites, AMD64 race, and both owning Nogo targets pass. Independent saved peer 721cb59e160b verified all 227 indexed files, raw actions, actual -race link input, Nogo producers and compact traces. The 31,918 reported XML entries are not a distinct leaf count. Parent https://app.buildbuddy.io/invocation/f51bbb17-f275-48c3-ba70-fe9ec8359336 remains Failed because its result oracle expected an obsolete race flag; the original failure is retained. This proof does not validate the new time migration or later core changes.\n\nEarlier source-specific history:\n\nThe contributor-requested generalization is public at standalone f9984e9e8 on current master e1bc. A shared binary-codec adapter accepts named foreign struct pointers through their public marshal/unmarshal methods, while existing state Type methods retain precedence. Netip registration uses the ordinary registry; the implementation has no netip-specific dispatch. Complete source peers 81bac2f054ef and 65b0ddd5b670 are closed. Tests cover an independent time.Time consumer, state-method precedence, codec errors, registration failures and netip equality/map/interface/alias contracts.\n\nValidation composition qualification/state-binary-codecs@f6f8b8048d1f7895d6d039b2b4ed7b30ffa8e065 preserves the exact complete eight-path standalone patch and changed blobs over the Go 1.27.1 canonical candidate 496f. Method peer b93dddc2cf92 closes full normal AMD64 and ARM64 state suites, full AMD64 race and two owning Nogo targets for both CPUs, with original 60/300-second deadlines and no case filter. The exact request was accepted once as https://app.buildbuddy.io/invocation/f51bbb17-f275-48c3-ba70-fe9ec8359336 under its sole restoration observer. Runtime results remain pending. There is no new contributor approval request or upstream PR for this revision, and the core migration still depends on this codec.\n\nEarlier source-specific review and validation history:\n\nThe earlier request for checkpoint codec 77657fc7450a6dd381df22e3f7dcffc9f4050b7a was answered with changes. Root asks to open this prerequisite PR first; the core netip migration will be submitted after the codec lands, avoiding an unnecessary stacked PR. This is an actual current review question, not an unasked backlog hold. The existing validated Addr, Prefix and AddrPort state contracts remain the source evidence.\n\nEarlier source and validation history:\n\nThe core-first migration prerequisite supports actual netip.Addr, netip.Prefix and netip.AddrPort values through their public binary encodings, without private-layout access or per-field wrappers. The shared adapter preserves canonical identity for map keys and interfaces, plus interior pointer aliases. Tests include invalid prefixes that retain an address, unmasked host bits and invalid-address/nonzero-port pairs. The one-commit source is refreshed to current master at 4caa13a7faf998a309851d6bd026cd45479d6ef8 with an unchanged complete pkg/state patch.\n\nFocused parent b335c645 at composition a629ea840 passes in 301.256 seconds. The expanded TestNetipValues fixture first fails as expected against the older Addr-only codec because netip.Prefix lacks SaverLoader. Corrected normal AMD64 and ARM64 owners each pass 25 top-level roots and 10,615 XML entries; the AMD64 race owner passes 28 roots and 10,661 XML entries, without skips. The Nogo owner reports both target CPUs passing. Independent saved peer dc0c1cab1e37 verifies all 42 source bindings, the archive manifest and five actual uncached remote BEP TestResult joins to log/XML digests, and confirms final source/HEAD restoration. No separate raw Action/worker-input walk or full-repository qualification is claimed. Contributor review is being prepared; the seven outer-boundary proposals remain held for reconciliation with the core design.",
       "followup": {
-        "disposition": "Approved amendment and benchmark reply delivered; CI pending",
-        "owner": "external_sweeps",
-        "nextAction": "Follow current-head checks and maintainer review; no duplicate reviewer request.",
+        "disposition": "Published checks passed; new interface proposal under review",
+        "owner": "root",
+        "nextAction": "Root evaluates the new interface proposal; continue current-head CI and maintainer monitoring without duplicate outreach.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/f9984e9e845cf07f7e11850d7f219d006ef17e55",
           "https://app.buildbuddy.io/invocation/69c94a6e-5162-4070-96f3-88e8fa6075d5",
@@ -3844,7 +3844,7 @@
           "https://github.com/tamird/gvisor/commit/bfeafd451816044ccf84e62f80a0c916e221605c",
           "https://github.com/google/gvisor/pull/15476#issuecomment-6053509833"
         ],
-        "reviewedAt": "2026-10-08T06:07:21.446815+00:00",
+        "reviewedAt": "2026-10-08T06:26:53.612041+00:00",
         "sourceHead": "bfeafd451816044ccf84e62f80a0c916e221605c",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -3964,7 +3964,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
-        "mergeable": "UNKNOWN",
+        "mergeable": "MERGEABLE",
         "reviewDecision": null
       },
       "number": 15416
@@ -3990,7 +3990,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "32e30154fd6d2e7c26c0b103c22f1a88ba2c8413",
-        "mergeable": "UNKNOWN",
+        "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED"
       },
       "repo": "google/gvisor"
@@ -4082,7 +4082,7 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "a9025ef7fbe9fe82230cefee3b81557499a39468",
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -4173,7 +4173,7 @@
           "https://app.buildbuddy.io/invocation/8a715376-a704-403b-8f64-13135f253c7d"
         ],
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
@@ -4204,7 +4204,7 @@
           "https://github.com/google/gvisor/pull/15473"
         ],
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15473
     },
@@ -4320,7 +4320,7 @@
           "https://github.com/tamird/gvisor/actions/runs/37709486990"
         ],
         "reviewDecision": null,
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       }
     },
     {
