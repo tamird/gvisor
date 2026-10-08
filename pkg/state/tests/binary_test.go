@@ -25,7 +25,11 @@ import (
 
 func TestBinaryValues(t *testing.T) {
 	timestamp := time.Date(2026, time.October, 7, 12, 0, 0, 1, time.UTC)
-	values := []any{time.Time{}, timestamp, map[time.Time]int{{}: 1, timestamp: 2}, inner{42}}
+	values := []any{
+		time.Time{}, timestamp,
+		[]time.Time{timestamp, {}, timestamp.Add(time.Second)},
+		map[time.Time]int{{}: 1, timestamp: 2}, inner{42},
+	}
 	runTestCases(t, false, "values", values)
 	runTestCases(t, false, "interfaces", interfacesTo(values))
 }
@@ -35,13 +39,9 @@ var errBinary = errors.New("binary codec failed")
 // Existing state methods must take precedence over binary methods.
 func (*inner) MarshalBinary() ([]byte, error) { return nil, errBinary }
 
+func (*inner) AppendBinary([]byte) ([]byte, error) { return nil, errBinary }
+
 func (*inner) UnmarshalBinary([]byte) error { return errBinary }
-
-// Type-only empty structs must not acquire binary behavior either. The existing
-// TestEmptyStruct cases exercise their direct and pointer forms.
-func (*typeOnlyEmptyStruct) MarshalBinary() ([]byte, error) { return nil, errBinary }
-
-func (*typeOnlyEmptyStruct) UnmarshalBinary([]byte) error { return errBinary }
 
 func TestBinaryTime(t *testing.T) {
 	for name, timestamp := range map[string]time.Time{

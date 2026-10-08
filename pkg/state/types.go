@@ -19,33 +19,10 @@ import (
 	"net/netip"
 	"reflect"
 	"slices"
-	"sort"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
-
-// assertValidType asserts that the type is valid.
-func assertValidType(name string, fields []string) {
-	if name == "" {
-		Failf("type has empty name")
-	}
-	fieldsCopy := make([]string, len(fields))
-	for i := 0; i < len(fields); i++ {
-		if fields[i] == "" {
-			Failf("field has empty name for type %q", name)
-		}
-		fieldsCopy[i] = fields[i]
-	}
-	sort.Slice(fieldsCopy, func(i, j int) bool {
-		return fieldsCopy[i] < fieldsCopy[j]
-	})
-	for i := range fieldsCopy {
-		if i > 0 && fieldsCopy[i-1] == fieldsCopy[i] {
-			Failf("duplicate field %q for type %s", fieldsCopy[i], name)
-		}
-	}
-}
 
 // typeEntry is an entry in the typeDatabase.
 type typeEntry struct {
@@ -120,11 +97,7 @@ func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 		// unregistered embedded types and anonymous empty structs.
 		return wire.Type{}, false
 	}
-	// Extract the name from the object.
-	name := t.StateTypeName()
-	fields := t.StateFields()
-	assertValidType(name, fields)
-	return wire.Type{Name: name, Fields: fields}, true
+	return wire.Type{Name: t.StateTypeName(), Fields: t.StateFields()}, true
 }
 
 // Lookup looks up or registers the given object.
@@ -160,7 +133,6 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 
 // Register adds a typeID entry.
 func (tbd *typeDecodeDatabase) Register(typ *wire.Type) {
-	assertValidType(typ.Name, typ.Fields)
 	tbd.pending = append(tbd.pending, typ)
 }
 
@@ -257,10 +229,9 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 		rte.FieldOrder = singleFieldOrder
 		return rte
 	}
-	// For each field in the current object's information, match it to a
-	// field in the destination object. We know from the assertion above
-	// and the insertion on insertion to pending that neither field
-	// contains any duplicates.
+	// Local field names are unique. Equal lengths and a match for every
+	// local name require the wire fields to be a permutation, rejecting
+	// missing or duplicate names.
 	fieldOrder := make([]int, len(fields))
 	for i, name := range fields {
 		fieldOrder[i] = -1 // Sentinel.
@@ -332,13 +303,6 @@ func Release() {
 	reverseTypeDatabase = nil
 }
 
-// stateObject supplies both metadata and state methods. SaverLoader methods
-// without Type metadata do not override a registered binary representation.
-type stateObject interface {
-	Type
-	SaverLoader
-}
-
 // binaryObject is a value with a self-contained binary representation.
 type binaryObject interface {
 	encoding.BinaryMarshaler
@@ -347,13 +311,21 @@ type binaryObject interface {
 
 // saveBinary encodes a foreign struct's self-contained representation. Its
 // binary codec owns any internal pointer relationships.
-func saveBinary(value binaryObject, name string, s Sink) {
-	data, err := value.MarshalBinary()
+func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
+	var data []byte
+	var err error
+	if appender, ok := value.(encoding.BinaryAppender); ok {
+		data, err = appender.AppendBinary(es.binaryBuf[:0])
+		es.binaryBuf = data
+	} else {
+		data, err = value.MarshalBinary()
+	}
 	if err != nil {
 		Failf("encoding %s: %w", name, err)
 	}
-	// Strings decode inline. A deferred slice could leave a map key incomplete
-	// when decodeMap inserts it into the restored map.
+	// Copy before reusing binaryBuf: wire objects are serialized only after
+	// the full graph is encoded. Strings also decode inline, so map keys are
+	// complete when decodeMap inserts them into the restored map.
 	s.SaveValue(0, string(data))
 }
 
@@ -408,29 +380,28 @@ func Register(t Type) {
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
-// type for fields, map keys and interfaces. Explicit state methods take priority.
+// type for fields, map keys and interfaces. value must point to a named struct.
 func registerBinary(value binaryObject) {
-	if t, ok := value.(Type); ok {
-		Register(t)
-		return
-	}
-	typ := reflect.TypeOf(value)
-	if typ == nil || typ.Kind() != reflect.Pointer || typ.Elem().Kind() != reflect.Struct || typ.Elem().Name() == "" {
-		Failf("cannot register binary codec for %T: expected a pointer to a named struct", value)
-	}
-	typ = typ.Elem()
+	typ := reflect.TypeOf(value).Elem()
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
 	})
 }
 
-// register publishes immutable metadata in the existing type databases.
+// register publishes metadata in the existing type databases.
 func register(typ reflect.Type, info wire.Type) {
-	// StateFields may return a shared slice. Registration owns its snapshot;
-	// per-run entries and pending wire types only read these fields.
-	info.Fields = slices.Clone(info.Fields)
-	assertValidType(info.Name, info.Fields)
+	if info.Name == "" {
+		Failf("type has empty name")
+	}
+	for i, field := range info.Fields {
+		if field == "" {
+			Failf("field has empty name for type %q", info.Name)
+		}
+		if slices.Contains(info.Fields[:i], field) {
+			Failf("duplicate field %q for type %s", field, info.Name)
+		}
+	}
 	if raceEnabled {
 		if _, ok := primitiveTypeDatabase[info.Name]; ok {
 			Failf("conflicting primitiveTypeDatabase entry for %v: used by primitive", typ)

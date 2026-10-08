@@ -78,6 +78,7 @@ go_library(
         "stats.go",
         "types.go",
     ],
+    importpath = "gvisor.dev/gvisor/pkg/state",
     marshal = False,
     stateify = False,
     visibility = [
@@ -90,8 +91,8 @@ go_library(
 )
 
 go_test(
-    name = "types_test",
+    name = "state_test",
     size = "small",
     srcs = ["types_test.go"],
-    library = ":state",
+    embed = [":state"],
 )
