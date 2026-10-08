@@ -14,7 +14,7 @@ const CARD = { width: 216, height: 70, column: 264, row: 84 };
 const READABLE_SCALE = .9;
 let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
-let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600 };
+let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600, positions: new Map() };
 let refreshing = false, lastAttempt = 0, drag = null, moved = false;
 
 function element(tag, className, text) {
@@ -261,6 +261,11 @@ function resetCamera(fit = true, overview = false) {
   const minimum = overview ? .12 : READABLE_SCALE;
   const scale = fit ? Math.max(minimum, Math.min((box.width - 48) / bounds.width, (box.height - 76) / bounds.height, 1.15)) : 1;
   camera = { x: Math.max(24, (box.width - bounds.width * scale) / 2), y: Math.max(24, (box.height - 44 - bounds.height * scale) / 2), scale };
+  const target = !overview && bounds.positions.get(focus);
+  if (target) {
+    camera.x = box.width / 2 - (target.x + CARD.width / 2) * scale;
+    camera.y = (box.height - 44) / 2 - (target.y + CARD.height / 2) * scale;
+  }
   applyCamera();
 }
 function zoom(factor, x, y) {
