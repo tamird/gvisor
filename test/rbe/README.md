@@ -241,6 +241,7 @@ separate workflow concurrency keys. Direct callers use
 provide the same Linux host tools. Replace `syscalls` with `syscalls-resume`
 for the save/resume profile. For KVM, use
 `--arch=amd64 --test-execution=local --syscall-bucket=0 syscalls-kvm`.
+Use `syscalls` instead of `syscalls-kvm` for the ordinary AMD64 profile.
 Omitting the bucket selects the full chosen profile, or its KVM subset.
 
 Local benchmark, Docker and image jobs create one temporary Docker bridge for
