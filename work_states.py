@@ -9,7 +9,7 @@ class ScopedState(TypedDict):
 
 class StateEvidence(ScopedState, total=False):
     transitionAt: str | None
-    qualifier: str
+    qualifier: str | None
 
 
 class Observation(ScopedState):
@@ -50,9 +50,33 @@ def check_qualifier(pr: dict) -> str:
             else "Checks passed" if checks_passed(pr) else "Checks unknown")
 
 
+def review_decision(pr: dict) -> str | None:
+    """Only current-head, still-effective reviews can supply approval credit."""
+    decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
+    if decision != "APPROVED":
+        return decision
+    if not pr.get("reviewsComplete") or not pr.get("reviewRequestsComplete"):
+        return "REVIEW_REQUIRED"
+    requested = {item.get("login") for item in pr.get("reviewRequests", []) if item.get("login")}
+    latest = {}
+    for item in pr.get("feedback", {}).get("items", []):
+        author = (item.get("author") or {}).get("login")
+        if (item.get("kind") != "review" or not author or not item.get("submittedAt")
+                or item.get("state") not in {"APPROVED", "CHANGES_REQUESTED", "DISMISSED"}):
+            continue
+        if author not in latest or item["submittedAt"] > latest[author]["submittedAt"]:
+            latest[author] = item
+    if any(author not in requested and item["state"] == "APPROVED"
+           and (item.get("commit") or {}).get("oid") == pr["head"]
+           for author, item in latest.items()):
+        return "APPROVED"
+    return "REVIEW_REQUIRED"
+
+
 def pr_states(pr: dict) -> dict[str, StateEvidence]:
     """Keep source review, public import progress and check provenance distinct."""
     head = pr["head"]
+    decision = review_decision(pr)
     if pr["status"] in {"merged", "closed"}:
         timestamp = pr.get("mergedAt" if pr["status"] == "merged" else "closedAt")
         return {pr["status"]: {"scope": head, "transitionAt": timestamp}}
@@ -72,13 +96,11 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
         states["conflicts"] = {"scope": head}
     if pr["status"] == "draft":
         states["draft"] = {"scope": head}
-    elif pr.get("reviewDecision") == "CHANGES_REQUESTED":
+    elif decision == "CHANGES_REQUESTED":
         states["changes-requested"] = {"scope": head}
-    elif pr.get("reviewDecision") != "APPROVED":
-        states["maintainer-review"] = {"scope": head}
-    eligible = (pr["status"] == "open" and pr.get("reviewDecision") != "CHANGES_REQUESTED"
-                and (pr.get("reviewDecision") == "APPROVED" or
-                     (pr.get("labelsComplete") and "ready to pull" in pr.get("labels", []))))
+    elif decision != "APPROVED":
+        states["maintainer-review"] = {"scope": head, "qualifier": "No effective approval for the current head" if pr.get("githubReviewDecision", pr.get("reviewDecision")) == "APPROVED" else None}
+    eligible = pr["status"] == "open" and decision == "APPROVED"
     if active:
         qualifiers = []
         for item in active:
@@ -88,7 +110,7 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
                                "qualifier": "; ".join(qualifiers)}
         ready = [item for item in active if item["status"] == "open"
                  and item.get("mergeable") == "MERGEABLE"
-                 and item.get("reviewDecision") != "CHANGES_REQUESTED" and checks_passed(item)]
+                 and review_decision(item) != "CHANGES_REQUESTED" and checks_passed(item)]
         if (eligible and pr.get("importsComplete") and pr.get("mergeable") == "MERGEABLE"
                 and checks_passed(pr) and len(ready) == len(active)):
             states["waiting-merge"] = {"scope": head + "," + ",".join(f"{item['number']}:{item['head']}" for item in ready),
@@ -105,10 +127,10 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
     promoted = {pr["ref"] for pr in prs if pr["status"] in {"open", "draft", "merged"}}
     closed = {f"pr:{pr['number']}" for pr in prs if pr["status"] in {"closed", "merged"}}
     for node in registry["nodes"]:
-        if node["id"] in closed or (node["type"] == "branch" and node.get("ref") in promoted):
+        if node["type"] != "branch" or node["id"] in closed or node.get("ref") in promoted:
             continue
         # Only the task owner records actual pending contributor decisions.
-        # GitHub approvals and branch prose cannot create this state.
+        # An unpublished amendment is its own branch, not the live PR's state.
         decision = node.get("contributorReview")
         if decision and decision["status"] == "pending":
             states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision["head"]}
@@ -118,6 +140,11 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
 def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: str) -> ObservationMap:
     current = derive_states(prs, registry)
     prior_prs = {f"pr:{pr['number']}": pr_states(pr) for pr in previous.get("prs", [])}
+    # The old collector's aggregate approval cannot backdate the first
+    # observation under the exact-head rule.
+    for pr in previous.get("prs", []):
+        if pr.get("reviewDecision") == "APPROVED" and "approvedHead" not in pr:
+            prior_prs[f"pr:{pr['number']}"].pop("maintainer-review", None)
     history = previous.get("workStates", {})
     result: ObservationMap = {}
     for identity, states in current.items():

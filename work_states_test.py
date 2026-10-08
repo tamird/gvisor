@@ -3,18 +3,47 @@
 import copy
 import unittest
 
-from work_states import pr_states, record_states
+from work_states import pr_states, record_states, review_decision
 
 
 def original(**changes: object) -> dict:
     pr = {"number": 1, "status": "open", "head": "a" * 40, "ref": "topic",
           "reviewDecision": None, "imports": [], "importsComplete": True,
           "labels": [], "labelsComplete": True, "checks": None}
+    if changes.get("reviewDecision") == "APPROVED":
+        pr.update(reviewsComplete=True, reviewRequestsComplete=True, reviewRequests=[],
+                  feedback={"items": [{"kind": "review", "state": "APPROVED", "submittedAt": "2026-09-01T00:00:00Z",
+                                       "author": {"login": "reviewer"}, "commit": {"oid": changes.get("head", pr["head"])}}]})
     pr.update(changes)
     return pr
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_approval_must_match_current_head_and_latest_review(self):
+        pr = original(reviewDecision="APPROVED")
+        self.assertEqual(review_decision(pr), "APPROVED")
+        pr["head"] = "b" * 40
+        self.assertEqual(set(pr_states(pr)), {"maintainer-review"})
+        self.assertEqual(set(pr_states({**pr, "labels": ["ready to pull"]})), {"maintainer-review"})
+        pr["feedback"]["items"][0]["commit"]["oid"] = pr["head"]
+        self.assertEqual(review_decision(pr), "APPROVED")
+        approval = pr["feedback"]["items"][0]
+        comment = {**approval, "state": "COMMENTED", "submittedAt": "2026-10-01T00:00:00Z"}
+        pr["feedback"]["items"].append(comment)
+        self.assertEqual(review_decision(pr), "APPROVED")
+        for change in ({"state": "DISMISSED"}, {"state": "CHANGES_REQUESTED"},
+                       {"state": "APPROVED", "commit": None}):
+            with self.subTest(change=change):
+                pr["feedback"]["items"][-1] = {**comment, **change}
+                self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        pr["feedback"]["items"] = [approval]
+        for change in ({"reviewsComplete": False}, {"reviewRequestsComplete": False},
+                       {"reviewRequests": [{"login": "reviewer"}]},
+                       {"feedback": {"items": [{**approval, "commit": None}]}}):
+            with self.subTest(change=change):
+                self.assertEqual(review_decision({**pr, **change}), "REVIEW_REQUIRED")
+        self.assertEqual(review_decision({**pr, "githubReviewDecision": "REVIEW_REQUIRED"}), "REVIEW_REQUIRED")
+
     def test_review_draft_and_changes_are_distinct(self):
         self.assertEqual(set(pr_states(original())), {"maintainer-review"})
         self.assertEqual(set(pr_states(original(status="draft"))), {"draft"})
@@ -26,7 +55,7 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(pr_states(approved)["awaiting-import"]["qualifier"], "Checks unknown")
         self.assertNotIn("awaiting-import", pr_states({**approved, "importsComplete": False}))
         labelled = original(labels=["ready to pull"])
-        self.assertEqual(set(pr_states(labelled)), {"maintainer-review", "awaiting-import"})
+        self.assertEqual(set(pr_states(labelled)), {"maintainer-review"})
         self.assertNotIn("awaiting-import", pr_states({**labelled, "labelsComplete": False}))
 
     def test_only_current_active_import_failure_counts(self):
@@ -97,16 +126,19 @@ class WorkStatesTest(unittest.TestCase):
         self.assertNotIn("waiting-merge", pr_states({**pr, "reviewDecision": "CHANGES_REQUESTED"}))
         self.assertNotIn("waiting-merge", pr_states({**pr, "checks": None}))
 
-    def test_contributor_amendment_is_independent_of_maintainer_approval(self):
+    def test_contributor_amendment_belongs_to_its_own_branch(self):
         node = {"id": "pr:1", "type": "pr", "status": "open",
                 "contributorReview": {"status": "pending", "head": "c" * 40}}
-        registry = {"nodes": [node]}
+        branch = {"id": "branch:amendment", "type": "branch", "ref": "review/amendment",
+                  "contributorReview": copy.deepcopy(node["contributorReview"])}
+        registry = {"nodes": [node, branch]}
         pr = original(reviewDecision="APPROVED")
         previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [pr],
                     "workStates": {"pr:1": {"review": {"scope": "c" * 40, "basis": "observed", "since": "2026-09-01T00:00:00Z"}}}}
         result = record_states([pr], registry, previous, "2026-10-02T00:00:00Z")
-        self.assertEqual(result["pr:1"]["contributor-review"]["scope"], "c" * 40)
-        self.assertEqual(result["pr:1"]["contributor-review"]["since"], "2026-10-02T00:00:00Z")
+        self.assertNotIn("contributor-review", result["pr:1"])
+        self.assertEqual(result["branch:amendment"]["contributor-review"]["scope"], "c" * 40)
+        self.assertEqual(result["branch:amendment"]["contributor-review"]["since"], "2026-10-02T00:00:00Z")
         self.assertNotIn("maintainer-review", result["pr:1"])
         del node["contributorReview"]
         self.assertNotIn("contributor-review", record_states([pr], registry, previous, "2026-10-02T00:00:00Z")["pr:1"])
@@ -126,6 +158,21 @@ class WorkStatesTest(unittest.TestCase):
         branch["contributorReview"]["head"] = "c" * 40
         result = record_states([pr], {"nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
         self.assertEqual(result["branch:other"]["contributor-review"]["since"], "2026-10-02T00:00:00Z")
+
+    def test_new_head_rule_does_not_backdate_changed_review_state(self):
+        pr = original(reviewDecision="APPROVED")
+        pr["head"] = "c" * 40
+        previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [pr], "workStates": {"pr:1": {}}}
+        recorded = record_states([pr], {"nodes": []}, previous, "2026-10-02T00:00:00Z")
+        self.assertEqual(recorded["pr:1"]["maintainer-review"]["since"], "2026-10-02T00:00:00Z")
+
+    def test_prepared_proposal_is_not_a_review_request(self):
+        branch = {"id": "branch:proposal", "type": "branch", "ref": "review/proposal",
+                  "head": "b" * 40, "status": "Prepared proposal"}
+        pr = original(reviewDecision="APPROVED")
+        result = record_states([pr], {"nodes": [branch]}, {}, "2026-10-02T00:00:00Z")
+        self.assertNotIn("branch:proposal", result)
+        self.assertEqual(set(result["pr:1"]), {"awaiting-import"})
 
 if __name__ == "__main__":
     unittest.main()

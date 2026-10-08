@@ -4,10 +4,10 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
-const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "changes-requested": "Changes requested",
+const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting import", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
-const FILTER_STATES = ["contributor-review", "maintainer-review", "awaiting-import", "importing", "waiting-merge", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
+const FILTER_STATES = ["contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
 const FAILURE_STATES = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"]);
 let stateFilters = new Set();
 const STALE_AGE = 2 * 60 * 60 * 1000;
@@ -17,6 +17,7 @@ let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
 let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600, positions: new Map() };
 let refreshing = false, lastAttempt = 0, drag = null, moved = false;
+let lastNavigationURL = null, searchEditing = false, initializing = true;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -63,10 +64,14 @@ function status(node) {
   }
   return ({ branch: "Working branch", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
 }
+function effectiveReviewDecision(pr) {
+  // Older cached snapshots have no current-head approval proof.
+  return pr?.reviewDecision === "APPROVED" && pr.approvedHead !== pr.head ? "REVIEW_REQUIRED" : pr?.reviewDecision;
+}
 function reviewInfo(pr) {
   return ({ APPROVED: { text: "Approved", tone: "good", glyph: "✓" },
     CHANGES_REQUESTED: { text: "Changes requested", tone: "bad", glyph: "!" },
-    REVIEW_REQUIRED: { text: "Maintainer review", tone: "pending", glyph: "○" } })[pr?.reviewDecision]
+    REVIEW_REQUIRED: { text: "Maintainer review", tone: "pending", glyph: "○" } })[effectiveReviewDecision(pr)]
     || { text: "Not reported", tone: "unknown", glyph: "?" };
 }
 function checkInfo(pr) {
@@ -126,7 +131,20 @@ function appendAttributes(container, node) {
   const section = element("section", "detail-section pr-attributes"), pr = node.github;
   section.append(element("h3", "", "PR attributes"));
   if (!pr) { section.append(element("p", "detail-description", "No published GitHub attributes for this PR yet. Reloading uses the latest published snapshot.")); container.append(section); return; }
-  section.append(badge(reviewInfo(pr), "GitHub reviewDecision; labels and comments do not grant approval."));
+  section.append(badge(reviewInfo(pr), "Approval requires an effective review of this exact source head. Labels and comments do not grant approval."));
+  const requests = pr.reviewRequests || [];
+  if (requests.length) section.append(element("p", "detail-meta", `Review requested from: ${requests.map(item => item.login || item.name || item.slug).join(", ")}`));
+  if (pr.reviewRequestsComplete === false) section.append(element("p", "detail-meta", "Review-request inventory incomplete."));
+  const approvals = (pr.feedback?.items || []).filter(item => item.kind === "review" && item.state === "APPROVED");
+  if (approvals.length) {
+    const history = element("details", "review-history"); history.append(element("summary", "", "Approval history"));
+    for (const item of approvals) {
+      const head = item.commit?.oid;
+      history.append(link(`${item.author?.login || "Unknown reviewer"} · ${head === pr.head ? "current" : "older or unknown"} commit ${head?.slice(0, 9) || "not recorded"}`, item.url), element("br"));
+    }
+    history.append(element("p", "detail-meta", "Historical approvals alone do not imply current approval; later reviews, dismissals and new review requests still apply."));
+    section.append(history);
+  }
   const threads = pr.threads;
   section.append(element("p", "detail-meta", threads.complete ? `${threads.unresolved} unresolved review threads` : `Thread count incomplete: ${threads.unresolved} unresolved among ${Math.min(100, threads.total)} of ${threads.total} threads.`));
   section.append(element("p", "detail-meta", `${pr.mergeable === "CONFLICTING" ? "Merge conflicts" : pr.mergeable === "MERGEABLE" ? "No reported merge conflict" : "Merge conflicts not yet determined"} · GitHub merge state: ${pr.mergeState.toLowerCase().replaceAll("_", " ")}`));
@@ -249,28 +267,74 @@ function stateAge(node) {
   const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
   return records.length ? Math.max(...records.map(([, record]) => Date.parse(model.checkedAt) - Date.parse(record.since))) : -1;
 }
+const URL_FIELDS = ["view", "state", "q", "group", "resolved", "focus"];
+function selectedFromURL() {
+  try { return decodeURIComponent(location.hash.slice(1)) || null; } catch { return null; }
+}
+function currentViewURL() {
+  const url = new URL(location.href); url.search = "";
+  url.searchParams.set("view", view);
+  for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
+  if ($("search").value) url.searchParams.set("q", $("search").value);
+  if ($("group-filter").value) url.searchParams.set("group", $("group-filter").value);
+  if ($("show-resolved").checked) url.searchParams.set("resolved", "1");
+  if (focus) url.searchParams.set("focus", focus);
+  url.hash = selected ? encodeURIComponent(selected) : "";
+  return url.pathname + url.search + url.hash;
+}
+function readViewURL() {
+  const params = new URL(location.href).searchParams;
+  return { explicit: URL_FIELDS.some(key => params.has(key)),
+    view: params.get("view") === "table" ? "table" : "dag",
+    stateFilters: params.getAll("state"), search: params.get("q") || "", group: params.get("group") || "",
+    resolved: params.get("resolved") === "1", selected: selectedFromURL(), focus: params.get("focus") || null };
+}
+function applyView(saved) {
+  view = saved.view === "table" ? "table" : "dag";
+  stateFilters = new Set((Array.isArray(saved.stateFilters) ? saved.stateFilters : []).flatMap(state =>
+    state === "review" ? ["contributor-review", "maintainer-review"] : [state]).filter(state => FILTER_STATES.includes(state)));
+  $("search").value = typeof saved.search === "string" ? saved.search : "";
+  $("group-filter").value = [...$("group-filter").options].some(option => option.value === saved.group) ? saved.group : "";
+  $("show-resolved").checked = saved.resolved === true;
+  const validID = id => typeof id === "string" && /^[^\s]{1,240}$/.test(id) ? id : null;
+  const ids = nodeMap();
+  selected = ids.has(validID(saved.selected)) ? saved.selected : null;
+  focus = ids.has(validID(saved.focus)) && !resolved(ids.get(saved.focus)) ? saved.focus : null;
+}
+function syncViewURL(navigation) {
+  if (initializing) return;
+  const next = currentViewURL();
+  if (next !== location.pathname + location.search + location.hash) history[navigation === "push" ? "pushState" : "replaceState"](null, "", next);
+  lastNavigationURL = location.href;
+}
 function saveView() {
-  try { localStorage.setItem(UI_KEY, JSON.stringify({ view, stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
+  if (initializing) return;
+  try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
     search: $("search").value, group: $("group-filter").value, resolved: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
 }
 function restoreView() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(UI_KEY));
-    if (!saved) return false;
-    // A new deep link owns its focus and initial fit, rather than inheriting
-    // another item's camera or filters from the previous visit.
-    if (location.hash && decodeURIComponent(location.hash.slice(1)) !== saved.selected) return false;
-    view = saved.view === "table" ? "table" : "dag";
-    stateFilters = new Set((saved.stateFilters || []).flatMap(state => state === "review" ? ["contributor-review", "maintainer-review"] : [state]).filter(state => FILTER_STATES.includes(state)));
-    $("search").value = typeof saved.search === "string" ? saved.search : "";
-    $("group-filter").value = typeof saved.group === "string" ? saved.group : "";
-    $("show-resolved").checked = saved.resolved === true;
-    selected = saved.selected || null; focus = saved.focus || null;
-    if ([saved.camera?.x, saved.camera?.y, saved.camera?.scale].every(Number.isFinite) && saved.camera.scale >= .12 && saved.camera.scale <= 2.5) camera = saved.camera;
-    if ([...document.querySelectorAll("[data-sort]")].some((control) => control.dataset.sort === saved.sortKey)) sortKey = saved.sortKey;
-    sortDirection = saved.sortDirection === 1 ? 1 : -1;
-    return true;
-  } catch { return false; }
+  let saved;
+  try { saved = JSON.parse(localStorage.getItem(UI_KEY)); } catch { /* Invalid preferences are ignored. */ }
+  const url = readViewURL();
+  if (url.explicit) applyView(url);
+  else if (saved && (!url.selected || url.selected === saved.selected)) applyView(saved);
+  else applyView({ ...url, focus: url.selected });
+  // Recipient preferences cannot override an explicit shared view. A reload
+  // of this same view may still restore its local pan and zoom.
+  const sameView = saved && (url.explicit ? saved.url === currentViewURL() : !url.selected || url.selected === saved.selected);
+  if (!sameView) return false;
+  if ([...document.querySelectorAll("[data-sort]")].some(control => control.dataset.sort === saved.sortKey)) sortKey = saved.sortKey;
+  sortDirection = saved.sortDirection === 1 ? 1 : -1;
+  if (![saved.camera?.x, saved.camera?.y, saved.camera?.scale].every(Number.isFinite) || saved.camera.scale < .12 || saved.camera.scale > 2.5) return false;
+  camera = saved.camera; return true;
+}
+function navigateFromURL() {
+  if (location.href === lastNavigationURL) return;
+  const url = readViewURL(); applyView(url.explicit ? url : { ...url, focus: url.selected });
+  const ids = nodeMap();
+  if (!ids.has(selected)) selected = null;
+  if (!ids.has(focus)) focus = null;
+  searchEditing = false; render(true);
 }
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
 function graphNodes() {
@@ -464,10 +528,12 @@ function drawDetails() {
   const statePanel = element("div", "detail-states"); appendStates(statePanel, node, true); details.append(statePanel);
   appendAttributes(details, node);
   const relations = [
-    ["Requires", model.edges.filter((edge) => edge.to === node.id && edge.type !== "includes"), "from"],
-    ["Needed by", model.edges.filter((edge) => edge.from === node.id && edge.type !== "includes"), "to"],
-    ["Includes", model.edges.filter((edge) => edge.to === node.id && edge.type === "includes"), "from"],
-    ["Included in", model.edges.filter((edge) => edge.from === node.id && edge.type === "includes"), "to"],
+    ["Proposed updates", model.edges.filter((edge) => edge.to === node.id && edge.role === "proposed_update"), "from"],
+    ["Proposed update for", model.edges.filter((edge) => edge.from === node.id && edge.role === "proposed_update"), "to"],
+    ["Requires", model.edges.filter((edge) => edge.to === node.id && ["depends_on", "blocked_by"].includes(edge.type)), "from"],
+    ["Needed by", model.edges.filter((edge) => edge.from === node.id && ["depends_on", "blocked_by"].includes(edge.type)), "to"],
+    ["Includes", model.edges.filter((edge) => edge.to === node.id && edge.type === "includes" && !edge.role), "from"],
+    ["Included in", model.edges.filter((edge) => edge.from === node.id && edge.type === "includes" && !edge.role), "to"],
   ];
   for (const [heading, edges, other] of relations) {
     if (!edges.length) continue;
@@ -475,12 +541,14 @@ function drawDetails() {
     for (const edge of edges) {
       const target = nodes.get(edge[other]); if (!target) continue;
       const relation = element("div", "relation");
-      relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link("↗", target.url, "relation-source"), element("p", "", edge.reason));
+      const sourceLabel = edge.role === "proposed_update" ? (other === "from" ? "Open proposed update ↗" : "Open live PR ↗") : "↗";
+      relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link(sourceLabel, target.url, "relation-source"), element("p", "", edge.reason));
       if (resolved(target)) relation.append(element("p", "", `Resolved: ${target.status}`));
       for (const [index, url] of (Array.isArray(edge.evidence) ? edge.evidence : [edge.evidence]).filter(Boolean).entries()) relation.append(link(`Evidence${index ? " " + (index + 1) : ""} ↗`, url, "evidence-link"));
       section.append(relation);
     }
-    details.append(section);
+    if (edges[0].role === "proposed_update") details.insertBefore(section, details.querySelector(".detail-impact"));
+    else details.append(section);
   }
   const chain = components().find((chain) => chain.ids.has(node.id));
   const focused = view === "dag" && focus && (chain ? chain.ids.has(focus) : focus === node.id) && !filtered();
@@ -491,13 +559,12 @@ function drawDetails() {
 }
 function select(id) {
   const previous = document.activeElement?.getAttribute("data-node"); selected = id;
-  history.replaceState(null, "", id ? `#${encodeURIComponent(id)}` : location.pathname + location.search);
-  render();
+  render(false, "push");
   if (previous) document.querySelector(`${view === "dag" ? "#graph" : "#work-table"} [data-node="${CSS.escape(previous)}"]`)?.focus();
 }
 function focusWork(id) {
   focus = id; selected = id; $("search").value = ""; $("group-filter").value = ""; stateFilters.clear();
-  history.replaceState(null, "", `#${encodeURIComponent(id)}`); setView("dag");
+  setView("dag");
 }
 function drawChainSelector() {
   const select = $("chain-filter"); select.replaceChildren();
@@ -509,7 +576,7 @@ function drawChainSelector() {
   select.value = chain?.id || isolated?.id || "";
   select.disabled = Boolean(filtered());
 }
-function render(reposition = false) {
+function render(reposition = false, navigation = "replace") {
   const dag = view === "dag";
   $("dag-pane").hidden = !dag; $("table-pane").hidden = dag;
   $("dag-view").setAttribute("aria-pressed", dag); $("table-view").setAttribute("aria-pressed", !dag);
@@ -522,7 +589,7 @@ function render(reposition = false) {
   if (dag) { drawGraph(nodes); drawChainSelector(); } else drawTable(nodes);
   $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items`;
   if (reposition) resetCamera();
-  saveView();
+  syncViewURL(navigation); saveView();
 }
 function setFreshness(text, warning = false, live = false) {
   $("freshness-text").textContent = text;
@@ -530,6 +597,15 @@ function setFreshness(text, warning = false, live = false) {
 }
 function stateRecords(snapshot, node) {
   const records = { ...(snapshot.workStates?.[node.id] || {}) };
+  // Older snapshots attached unpublished amendment decisions to live PRs.
+  if (node.type === "pr") delete records["contributor-review"];
+  // Keep the published state enum compatible with already-open older clients.
+  if (node.type === "branch" && node.status === "Prepared proposal") records["proposed-update"] = {
+    scope: node.head, since: null, basis: "unknown", qualifier: "Unpublished revision; observation age is not recorded" };
+  if (node.type === "pr" && node.github && node.github.status === "open" && effectiveReviewDecision(node.github) === "REVIEW_REQUIRED") {
+    records["maintainer-review"] ||= { scope: node.github.head, since: null, basis: "unknown", qualifier: "No effective approval recorded for this head" };
+    delete records["awaiting-import"]; delete records["waiting-merge"];
+  }
   if (records.review) {
     if (node.type === "pr") records["maintainer-review"] ||= records.review;
     else if (node.contributorReview?.status === "pending" && node.contributorReview.head === records.review.scope)
@@ -549,7 +625,7 @@ function applyLive(snapshot, nextRegistry = registry) {
     const branch = pr.ref ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === `${registry.meta.owner}/gvisor`) : null;
     const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
       status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
-      workStates: stateRecords(snapshot, { ...existing, id, type: "pr" }), github: pr.head ? pr : existing?.github };
+      workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
     }
@@ -564,7 +640,6 @@ function applyLive(snapshot, nextRegistry = registry) {
   if (aliases.has(focus)) focus = aliases.get(focus);
   if (selected && !model.nodes.some((node) => node.id === selected)) selected = null;
   if (focus && !model.nodes.some((node) => node.id === focus && !resolved(node))) focus = null;
-  history.replaceState(null, "", selected ? `#${encodeURIComponent(selected)}` : location.pathname + location.search);
   // Status updates redraw the data, not the user's viewport. Initial render,
   // filters and explicit graph controls own fitting/recentering.
   render();
@@ -584,6 +659,8 @@ function validateRegistry(candidate) {
   }
   const ids = new Set(candidate.nodes.map((node) => node.id));
   if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
+  for (const edge of candidate.edges) if (edge.role !== undefined && (edge.role !== "proposed_update" || edge.type !== "includes" ||
+      candidate.nodes.find(node => node.id === edge.from).type !== "branch" || candidate.nodes.find(node => node.id === edge.to).type !== "pr")) throw new Error("Invalid proposed update relationship");
 }
 function updateRegistryControls() {
   const group = $("group-filter").value;
@@ -650,10 +727,10 @@ async function refresh(force = false) {
   } finally { refreshing = false; $("refresh").disabled = false; }
 }
 
-function setView(next) { view = next; render(true); }
+function setView(next) { view = next; render(true, "push"); }
 function resetFilters(redraw = true) {
   $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; stateFilters.clear();
-  if (redraw) render(true);
+  if (redraw) render(true, "push");
 }
 function initialize() {
   for (const state of ["", ...FILTER_STATES]) {
@@ -661,13 +738,14 @@ function initialize() {
       if (!state) stateFilters.clear();
       else if (stateFilters.has(state)) stateFilters.delete(state);
       else stateFilters.add(state);
-      render(true);
+      render(true, "push");
     });
     control.dataset.state = state; $("state-filters").append(control);
   }
-  $("search").addEventListener("input", () => render(true));
-  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => render(true));
-  $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; history.replaceState(null, "", location.pathname + location.search); render(true); });
+  $("search").addEventListener("input", () => { render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
+  $("search").addEventListener("blur", () => { searchEditing = false; });
+  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => render(true, "push"));
+  $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; render(true, "push"); });
   for (const next of ["dag", "table"]) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
   document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => {
@@ -699,7 +777,8 @@ function initialize() {
     if (event.key === "/" && !["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) { event.preventDefault(); $("search").focus(); }
     if (event.key === "Escape") { $("search").blur(); select(null); }
   });
-  window.addEventListener("hashchange", () => { selected = decodeURIComponent(location.hash.slice(1)); render(); });
+  window.addEventListener("hashchange", navigateFromURL);
+  window.addEventListener("popstate", navigateFromURL);
   new ResizeObserver(() => { if (view === "dag" && model) drawGraph(graphNodes()); }).observe($("graph-stage"));
 }
 async function start() {
@@ -709,9 +788,10 @@ async function start() {
     registry = await response.json(); validateRegistry(registry);
     model = { ...registry, groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
     updateRegistryControls();
-    selected = decodeURIComponent(location.hash.slice(1)) || null;
-    focus = selected && model.nodes.some((node) => node.id === selected) ? selected : null;
-    initialize(); const restored = restoreView(); render(!restored); refresh();
+    // Resolve URLs against the full snapshot, including newly discovered PRs.
+    // A failed refresh leaves the validated registry as the known inventory.
+    await refresh();
+    initialize(); const restored = restoreView(); initializing = false; render(!restored);
   } catch (error) { $("visible-count").textContent = "Registry unavailable"; setFreshness(error.message, true); }
 }
 start();

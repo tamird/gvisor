@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from work_states import record_states
+from work_states import record_states, review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -40,6 +40,9 @@ comments(last:100) { pageInfo { hasPreviousPage } nodes {
 reviews(last:100) { pageInfo { hasPreviousPage } nodes {
   id url body state submittedAt updatedAt author { login __typename } commit { oid }
 } }
+reviewRequests(first:100) { pageInfo { hasNextPage } nodes { requestedReviewer {
+  __typename ... on User { login } ... on Team { name slug }
+} } }
 reviewThreads(first:100) { totalCount pageInfo { hasNextPage } nodes {
   id isResolved isOutdated path line
   comments(last:100) { pageInfo { hasPreviousPage } nodes {
@@ -134,14 +137,18 @@ def normalize(pr: dict) -> dict:
         checks = {"state": rollup["state"], "total": connection["totalCount"],
                   "complete": not connection["pageInfo"]["hasNextPage"], "contexts": contexts}
     threads = pr["reviewThreads"]
-    return {
+    normalized = {
         "number": pr["number"], "title": pr["title"], "url": pr["url"],
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
         "ref": pr["headRefName"], "head": pr["headRefOid"],
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
         "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
         "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
-        "reviewDecision": pr["reviewDecision"], "mergeable": pr["mergeable"],
+        "githubReviewDecision": pr["reviewDecision"],
+        "reviewsComplete": not pr["reviews"]["pageInfo"]["hasPreviousPage"],
+        "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
+        "reviewRequestsComplete": not pr["reviewRequests"]["pageInfo"]["hasNextPage"],
+        "mergeable": pr["mergeable"],
         "mergeState": pr["mergeStateStatus"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
@@ -150,6 +157,10 @@ def normalize(pr: dict) -> dict:
         "feedback": feedback(pr),
         "checks": checks,
     }
+
+    normalized["reviewDecision"] = review_decision(normalized)
+    normalized["approvedHead"] = normalized["head"] if normalized["reviewDecision"] == "APPROVED" else None
+    return normalized
 
 
 def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:

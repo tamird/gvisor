@@ -135,21 +135,31 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
 
 - **Contributor review:** an actual pending decision recorded by the task owner
   in the registry's `contributorReview` object (`status: pending`, exact candidate
-  `head` and commit `url`). This may be an amendment distinct from the live PR.
+  `head` and commit `url`) on an unpublished branch node. A proposed amendment
+  has its own node; it never changes the live PR's review state. Reconcile its
+  scope after newer imports or upstream changes before retaining a decision.
   Remove the object when the decision is answered; GitHub review and prose do
   not infer a contributor hold.
 - **Maintainer review:** an open, nondraft PR without approval or changes
   requested, including GitHub's null review decision (no approval reported).
+- **Prepared proposals:** unpublished candidate branches awaiting fresh scope
+  reconciliation, without an outstanding contributor decision. The live PR's
+  **Proposed updates** links open the exact public candidate; its return link
+  opens the live PR. These use the existing nonblocking `includes` edge type
+  with `role: proposed_update`; older clients show them as inclusion links.
+  They do not contribute to dependency chains or blocker counts. The proposal
+  filter derives from branch status locally, preserving the published state
+  enum for already-open clients; proposal age is explicitly unknown.
 - **Changes requested**, **Draft** and **Conflicts:** corresponding source PR
   attributes. Drafts do not enter maintainer-review or awaiting-import filters.
-- **Awaiting import:** approval or a complete `ready to pull` label observation,
-  no changes requested, and a complete import lookup without an active or merged
+- **Awaiting import:** effective approval for the current source head and
+  a complete import lookup without an active or merged
   exact-source import. Its check qualifier preserves passing, failing, pending
   or unknown checks. This is waiting work, not an import request or readiness claim.
 - **Import PR open:** a verified open or draft Copybara PR for the current source
   revision. Its qualifier states checks and conflict status; UNKNOWN is not
   conflict-free. Older-source imports remain visible only as historical evidence.
-- **Waiting for merge:** an approved or ready-to-pull source PR and its current
+- **Waiting for merge:** a source PR approved at its current head and its current
   imports are nondraft, MERGEABLE and have nonempty, complete green visible check
   inventories and a complete import lookup, without changes requested. This observed public state grants no
   merge authority and does not claim internal import progress.
@@ -213,3 +223,17 @@ the served registry, GitHub snapshot and source files match the published commit
 GitHub Pages is configured for `gh-pages` at `/`. Keep deployments on this
 branch. Enabling Pages does not require changing the repository's default
 branch or granting additional repository access.
+
+Views are shareable: the URL records filters, DAG/table mode, search, workstream,
+resolved visibility, selected item and dependency focus. For example,
+`?view=dag&state=awaiting-import` opens the Awaiting import filter even when the
+recipient saved a different view. Back/forward restores those selections. Exact
+pan/zoom stays local and survives reloads and metadata refreshes of the same view.
+Unknown filter values and stale item IDs are ignored.
+
+Approval credit requires GitHub's approved decision plus a latest effective
+approval whose commit matches the current PR head. Dismissed, older-head or
+missing-identity approvals supply no current credit. Review requests are retained;
+prior approvals remain available as history. Import readiness also requires
+current-head approval; a ready-to-pull label alone cannot supply it. Older cached snapshots without the
+new head-bound proof show Maintainer review until refreshed.
