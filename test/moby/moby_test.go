@@ -30,6 +30,7 @@ import (
 )
 
 var (
+	proctorPath = flag.String("proctor", "", "declared path to the Moby proctor executable")
 	testsFilter = flag.String("tests", testutil.StringFromEnv("RUNTIME_TESTS_FILTER", ""),
 		"if specified, runs only the given comma-separated list of test names")
 	batchSize = flag.Int("batch", 50, "number of test cases run in one command")
@@ -82,6 +83,10 @@ func TestMain(m *testing.M) {
 }
 
 func run() int {
+	if *proctorPath == "" {
+		slog.Error("proctor flag must not be empty")
+		return 1
+	}
 	if dockerutil.Runtime() == "" {
 		slog.Warn("no runtime specified, defaulting to runsc")
 		dockerutil.SetRuntime("runsc")
@@ -94,7 +99,7 @@ func run() int {
 		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
-		Runner: "test/moby/runner",
+		Runner: *proctorPath,
 		// Docker in Docker requires privileged mode.
 		Privileged:        !isGVisor,
 		CapAdd:            dockerInGvisorCapabilities(),

@@ -17,6 +17,8 @@ def _runtime_test_impl(ctx):
         ctx.attr.lang,
         "--image",
         ctx.attr.image,
+        "--proctor",
+        ctx.executable._proctor.short_path,
         "--batch",
         str(ctx.attr.batch),
     ]

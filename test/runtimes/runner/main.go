@@ -28,6 +28,7 @@ import (
 )
 
 var (
+	proctorPath       = flag.String("proctor", "", "declared path to the language proctor executable")
 	lang              = flag.String("lang", "", "language runtime to test")
 	image             = flag.String("image", "", "docker image with runtime tests")
 	excludeFile       = flag.String("exclude_file", "", "file containing list of tests to exclude, in CSV format with fields: test name, bug id, comment")
@@ -46,12 +47,12 @@ func main() {
 }
 
 func run() int {
-	if *lang == "" || *image == "" {
-		fmt.Fprintf(os.Stderr, "lang and image flags must not be empty\n")
+	if *lang == "" || *image == "" || *proctorPath == "" {
+		fmt.Fprintf(os.Stderr, "lang, image and proctor flags must not be empty\n")
 		return 1
 	}
 	proctorSettings := lib.ProctorSettings{
-		Runner:            "test/runtimes/proctor/proctor_bin",
+		Runner:            *proctorPath,
 		PerTestTimeout:    *perTestTimeout,
 		RunsPerTest:       *runsPerTest,
 		FlakyIsError:      *flakyIsError,

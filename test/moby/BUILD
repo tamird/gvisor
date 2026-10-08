@@ -20,6 +20,7 @@ go_binary(
 moby_test(
     name = "moby",
     srcs = ["moby_test.go"],
+    args = ["--proctor=$(rootpath :runner)"],
     data = [
         ":runner",
         "//runsc",

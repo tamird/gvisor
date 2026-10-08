@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -66,5 +67,22 @@ func TestWaitExitStatusBeforeStart(t *testing.T) {
 				t.Fatalf("WaitExitStatus() = %d, %v; want %d, nil", got, err, tc.exitCode)
 			}
 		})
+	}
+}
+
+func TestCopyFilesFailurePreventsConfiguration(t *testing.T) {
+	c := Container{Name: "copy-input-error", logger: t}
+	t.Cleanup(func() {
+		for _, cleanup := range c.cleanups {
+			cleanup()
+		}
+	})
+	// CopyFiles accepts files. A directory must fail before the container
+	// can be configured.
+	source := t.TempDir()
+	opts := RunOpts{Image: "basic/alpine"}
+	c.CopyFiles(&opts, "/inputs", source)
+	if _, err := c.config(t.Context(), opts, nil); err == nil || !strings.Contains(err.Error(), source) {
+		t.Fatalf("config after copying directory %q: got %v, want the copy error", source, err)
 	}
 }
