@@ -374,6 +374,67 @@ func testClosureStoredGuard(tc *oneGuardStruct) {
 	tc.mu.Unlock()
 }
 
+func testClosureCopiedGuard(first, second *oneGuardStruct) {
+	source := closurePointerGuard{child: first}
+	copy := source
+	source.child = second
+	first.mu.Lock()
+	callPreconditions(copy.child)
+	callPreconditions(source.child) // +checklocksfail
+	first.mu.Unlock()
+}
+
+func testClosureOverwriteGuard(first *oneGuardStruct, replacement closurePointerGuard) {
+	local := closurePointerGuard{child: first}
+	first.mu.Lock()
+	callPreconditions(local.child)
+	local = replacement
+	callPreconditions(local.child) // +checklocksfail
+	first.mu.Unlock()
+}
+
+func testClosureNestedCopy(first, second *oneGuardStruct) {
+	type nested struct {
+		inner closurePointerGuard
+	}
+	source := nested{inner: closurePointerGuard{child: first}}
+	copy := source
+	source.inner = closurePointerGuard{child: second}
+	first.mu.Lock()
+	callPreconditions(copy.inner.child)
+	callPreconditions(source.inner.child) // +checklocksfail
+	first.mu.Unlock()
+}
+
+func testClosureCopiedMutex(original *oneGuardStruct) {
+	original.mu.Lock()
+	copy := *original
+	callPreconditions(original)
+	callPreconditions(&copy) // +checklocksfail
+	original.mu.Unlock()
+}
+
+func testClosureConditionalStructStore(first, second *oneGuardStruct, cond bool) {
+	local := closurePointerGuard{child: first}
+	saved := local
+	if cond {
+		local = closurePointerGuard{child: second}
+	}
+	first.mu.Lock()
+	callPreconditions(saved.child)
+	callPreconditions(local.child) // +checklocksfail
+	first.mu.Unlock()
+}
+
+func testClosureOverwriteArray(first *oneGuardStruct, replacement [1]*oneGuardStruct) {
+	local := &[1]*oneGuardStruct{first}
+	first.mu.Lock()
+	callPreconditions(local[0])
+	*local = replacement
+	callPreconditions(local[0]) // +checklocksfail
+	first.mu.Unlock()
+}
+
 func testClosureConditionalGuard(tc *closurePointerGuard, first, second *oneGuardStruct, firstCond, secondCond bool) {
 	func() {
 		if firstCond {
