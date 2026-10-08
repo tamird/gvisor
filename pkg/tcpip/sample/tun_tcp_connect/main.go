@@ -106,10 +106,10 @@ func main() {
 	if err != nil || remoteIP.Zone() != "" || !remoteIP.Unmap().Is4() {
 		log.Fatalf("Bad remote IPv4 address: %q", remoteAddrName)
 	}
-	addr := tcpip.AddrFrom4(localIP.As4())
+	addr := netip.AddrFrom4(localIP.As4())
 	remote := tcpip.FullAddress{
 		NIC:  1,
-		Addr: tcpip.AddrFrom4(remoteIP.As4()),
+		Addr: netip.AddrFrom4(remoteIP.As4()),
 	}
 
 	var localPort uint16
@@ -152,7 +152,7 @@ func main() {
 
 	protocolAddr := tcpip.ProtocolAddress{
 		Protocol:          ipv4.ProtocolNumber,
-		AddressWithPrefix: addr.WithPrefix(),
+		AddressWithPrefix: tcpip.FullPrefix(addr),
 	}
 	if err := s.AddProtocolAddress(1, protocolAddr, stack.AddressProperties{}); err != nil {
 		log.Fatalf("AddProtocolAddress(%d, %+v, {}): %s", 1, protocolAddr, err)

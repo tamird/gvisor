@@ -16,9 +16,9 @@ package stack
 
 import (
 	"math/rand"
+	"net/netip"
 	"testing"
 
-	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/testutil"
@@ -41,7 +41,7 @@ var (
 	dstAddr    = testutil.MustParse6("c::3")
 )
 
-func v6PacketBufferWithSrcAddr(srcAddr tcpip.Address) *PacketBuffer {
+func v6PacketBufferWithSrcAddr(srcAddr netip.Addr) *PacketBuffer {
 	pkt := NewPacketBuffer(PacketBufferOptions{
 		ReserveHeaderBytes: header.IPv6MinimumSize + header.UDPMinimumSize,
 	})
@@ -147,10 +147,8 @@ func TestNATedConnectionReap(t *testing.T) {
 	}
 	replyTID := invertedReplyTID.reply()
 	epID := TransportEndpointID{
-		LocalAddress:  replyTID.srcAddr,
-		LocalPort:     replyTID.srcPortOrEchoRequestIdent,
-		RemoteAddress: replyTID.dstAddr,
-		RemotePort:    replyTID.dstPortOrEchoReplyIdent,
+		Local:  netip.AddrPortFrom(replyTID.srcAddr, replyTID.srcPortOrEchoRequestIdent),
+		Remote: netip.AddrPortFrom(replyTID.dstAddr, replyTID.dstPortOrEchoReplyIdent),
 	}
 	if addr, port, err := iptables.OriginalDst(epID, replyTID.netProto, replyTID.transProto); err != nil || addr != dstAddr || port != dstPort {
 		t.Fatalf("OriginalDst(%#v) = (%s, %d, %v), want = (%s, %d, nil)", epID, addr, port, err, dstAddr, dstPort)

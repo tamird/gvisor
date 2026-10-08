@@ -52,9 +52,9 @@ func expectedEthLayer(t *testing.T, dut testbench.DUT, socketFD int32, sendTo ne
 		}
 		if sendTo.IsMulticast() {
 			if sendTo.Is4() {
-				return header.EthernetAddressFromMulticastIPv4Address(tcpip.AddrFrom4(sendTo.As4()))
+				return header.EthernetAddressFromMulticastIPv4Address(sendTo)
 			}
-			return header.EthernetAddressFromMulticastIPv6Address(tcpip.AddrFrom16(sendTo.As16()))
+			return header.EthernetAddressFromMulticastIPv6Address(sendTo)
 		}
 		return ""
 	}()
