@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T22:32:49.790009+00:00",
+    "updatedAt": "2026-10-08T22:41:59.976845+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4425,26 +4425,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "docker-copy-input-errors",
-      "head": "603d14cbe3b167db8b9fee7768b3ca6c7741c2e5",
-      "title": "Report failed container input copies",
+      "head": "e49969d3e7a6696867870b4494557166442380b1",
+      "title": "Return errors directly from CopyFiles",
       "url": "https://github.com/google/gvisor/pull/15500",
       "group": "tests",
-      "status": "Direct CopyFiles error revision in progress",
-      "updatedAt": "2026-10-08T20:21:07.462811+00:00",
-      "summary": "A source-reviewed direct-error proposal is public at 91fff2795788b5bfbbce1e5c6e47d314b7820c94 and linked below under Proposed updates. Remote validation is now running in the separately linked proposal; live PR #15500 remains at 603d14cbe3b167db8b9fee7768b3ca6c7741c2e5. The proposal has no contributor-review hold and does not block the live PR as a code dependency.\n\nEarlier observations:\n\nThe author replied on October 8 at 18:25 UTC that CopyFiles should return errors directly and that the deferred copyErr field will be removed. Root owns that revision after the user confirmed it in chat. The live PR remains at 603d14cbe3b167db8b9fee7768b3ca6c7741c2e5; no new source or result is credited. Konstantin’s changes request and the unresolved discussion remain visible until the actual revision and review resolve them.\n\nEarlier observations:\n\nThe current head 603d14cbe received CHANGES_REQUESTED from konstantin-s-bogom at 18:03 UTC. The unresolved container.go comment asks to document how copyErr is recorded and ultimately checked, or consider a simpler owning design. The source owner is assessing that feedback; no amendment or reply has been made.\n\nEarlier preparation and validation:\n\nContributor approved b74a956f4; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe source and commit record are reviewed, and root has issued the actual contributor question for this exact fork candidate. CopyFiles retained copy errors on Container, but configuration did not check them before container creation. The change returns that stored error at the owning configuration boundary, preserving the original cause rather than starting without the intended bind mount. The existing exec_test owner includes the new copy-failure regression; its source, execution and result evidence were independently reviewed with the Moby discovery packet. No upstream PR or public reply is claimed.",
+      "status": "Direct-error amendment delivered; maintainer review remains",
+      "updatedAt": "2026-10-08T22:41:59.976845+00:00",
+      "summary": "The approved direct-error amendment is now published as e49969d3e7a6696867870b4494557166442380b1. CopyFiles returns staging errors directly and every maintained caller checks them. The source-preserving rebase retains the reviewed change. Independent saved evidence covers both-CPU caller builds, all 13 selected remote test actions and path-specific Nogo findings; the Ruby/FUSE iteration does not independently assert mount completion. The previous unpublished proposal has been delivered. GitHub still reports the existing maintainer changes request and unresolved thread; the new head does not dismiss that review.\n\nEarlier observations:\n\nA source-reviewed direct-error proposal is public at 91fff2795788b5bfbbce1e5c6e47d314b7820c94 and linked below under Proposed updates. Remote validation is now running in the separately linked proposal; live PR #15500 remains at 603d14cbe3b167db8b9fee7768b3ca6c7741c2e5. The proposal has no contributor-review hold and does not block the live PR as a code dependency.\n\nEarlier observations:\n\nThe author replied on October 8 at 18:25 UTC that CopyFiles should return errors directly and that the deferred copyErr field will be removed. Root owns that revision after the user confirmed it in chat. The live PR remains at 603d14cbe3b167db8b9fee7768b3ca6c7741c2e5; no new source or result is credited. Konstantin’s changes request and the unresolved discussion remain visible until the actual revision and review resolve them.\n\nEarlier observations:\n\nThe current head 603d14cbe received CHANGES_REQUESTED from konstantin-s-bogom at 18:03 UTC. The unresolved container.go comment asks to document how copyErr is recorded and ultimately checked, or consider a simpler owning design. The source owner is assessing that feedback; no amendment or reply has been made.\n\nEarlier preparation and validation:\n\nContributor approved b74a956f4; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe source and commit record are reviewed, and root has issued the actual contributor question for this exact fork candidate. CopyFiles retained copy errors on Container, but configuration did not check them before container creation. The change returns that stored error at the owning configuration boundary, preserving the original cause rather than starting without the intended bind mount. The existing exec_test owner includes the new copy-failure regression; its source, execution and result evidence were independently reviewed with the Moby discovery packet. No upstream PR or public reply is claimed.",
       "followup": {
-        "disposition": "Direct CopyFiles error revision in progress",
-        "owner": "root",
-        "nextAction": "Follow the separately linked direct-error proposal through its bounded validation; preserve the live PR review state.",
-        "sourceHead": "603d14cbe3b167db8b9fee7768b3ca6c7741c2e5",
-        "reviewedAt": "2026-10-08T18:30:15.827946+00:00",
+        "disposition": "Amendment delivered; await maintainer reassessment",
+        "owner": "external_sweeps",
+        "nextAction": "Observe the current head checks and maintainer response; no duplicate public reply.",
+        "sourceHead": "e49969d3e7a6696867870b4494557166442380b1",
+        "reviewedAt": "2026-10-08T22:41:59.976845+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/b74a956f42501ad3900060a19968d3dfc4937067",
-          "https://github.com/tamird/gvisor/actions/runs/37721970197",
           "https://github.com/google/gvisor/pull/15500",
+          "https://github.com/tamird/gvisor/commit/e49969d3e7a6696867870b4494557166442380b1",
           "https://github.com/google/gvisor/pull/15500#discussion_r4222470013",
-          "https://github.com/google/gvisor/pull/15500#discussion_r4222673082",
-          "https://github.com/tamird/gvisor/commit/91fff2795788b5bfbbce1e5c6e47d314b7820c94"
+          "https://app.buildbuddy.io/invocation/74a0d827-2b56-40f5-91cd-f16a436b3a01"
         ],
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -4673,32 +4671,6 @@
           "https://app.buildbuddy.io/invocation/bb9bad82-b632-4dc0-ae08-dc7babf813da",
           "https://app.buildbuddy.io/invocation/12218ffd-01c3-4f03-a934-6df172c38246",
           "https://app.buildbuddy.io/invocation/6dd18af3-5ded-4aec-8cb8-00241e0e7e7f"
-        ]
-      }
-    },
-    {
-      "id": "branch:proposal-pr-15500",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "review/docker-copy-direct-errors",
-      "head": "91fff2795788b5bfbbce1e5c6e47d314b7820c94",
-      "title": "Proposed direct CopyFiles error returns",
-      "url": "https://github.com/tamird/gvisor/commit/91fff2795788b5bfbbce1e5c6e47d314b7820c94",
-      "group": "tests",
-      "status": "Approved; saved result review pending",
-      "updatedAt": "2026-10-08T21:48:54.958312+00:00",
-      "summary": "The necessary same-source continuation 74a0d827-2b56-40f5-91cd-f16a436b3a01 completed OK. Original source, output and placement collection is still in progress, so its saved-result gate remains pending. The first parent’s shared-budget interruption and completed AMD builds remain separate evidence. The user already approved the direct-error amendment; root will deliver it after the result gate, without another contributor question.\n\nEarlier observations:\n\nThe user approved standalone91fff. The first parent f5e0 completed all eight AMD build roots, then exhausted its shared20-minute budget during ARM builds; no tests ran. The same-source continuation74a0d827-2b56-40f5-91cd-f16a436b3a01 is accepted with only the completed AMD build omitted, preserving eight ARM roots and13 test actions under40/45-minute bounds. It remains running; delivery awaits those results. No new contributor hold or public comment is required.\n\nEarlier preparation:\n\nThe bounded direct-error validation is accepted as f5e0ab64-49cb-44b4-9e4c-588ead83d58e at qualified457b323a7354b6af3da63f13aa6eafa54dddd7eb. Syscall owns the sole observer. It selects complete small units, both-CPU caller builds/Nogo, TestHttpd and the original one-iteration Ruby dirty/FUSE leaf; no outcome is credited yet.\n\nSource preparation:\n\nThe source-reviewed proposal returns CopyFiles staging errors directly, removes copyErr, and updates every maintained caller to handle the failure at the copy. FUSE staging now precedes container creation. The exact standalone head is 91fff2795788b5bfbbce1e5c6e47d314b7820c94. Syscall owns the bounded remote validation; no result is claimed yet. This proposal is separate from live PR #15500 at 603d14cbe and is not a merge prerequisite. No contributor-review question has been sent.",
-      "followup": {
-        "disposition": "Approved; saved result review pending",
-        "owner": "syscall_validation",
-        "nextAction": "Seal and independently review the remaining-gate evidence, then root delivers the authorized amendment.",
-        "sourceHead": "91fff2795788b5bfbbce1e5c6e47d314b7820c94",
-        "reviewedAt": "2026-10-08T21:48:54.958312+00:00",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/91fff2795788b5bfbbce1e5c6e47d314b7820c94",
-          "https://github.com/google/gvisor/pull/15500#discussion_r4222673082",
-          "https://app.buildbuddy.io/invocation/f5e0ab64-49cb-44b4-9e4c-588ead83d58e",
-          "https://app.buildbuddy.io/invocation/74a0d827-2b56-40f5-91cd-f16a436b3a01"
         ]
       }
     },
@@ -6105,16 +6077,6 @@
         "https://github.com/tamird/gvisor/commit/b2b91bc97d884c09f0c9e6296896467d6265f7aa"
       ],
       "role": "proposed_update"
-    },
-    {
-      "from": "branch:proposal-pr-15500",
-      "to": "pr:15500",
-      "type": "includes",
-      "role": "proposed_update",
-      "reason": "Prepared direct-error revision; validation pending. Separate from the live PR and not a dependency or contributor-review hold.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/91fff2795788b5bfbbce1e5c6e47d314b7820c94"
-      ]
     }
   ]
 }
