@@ -405,10 +405,13 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	if sl, ok := obj.Addr().Interface().(SaverLoader); ok {
-		// Note: may be a registered empty struct which does not
-		// implement the saver/loader interfaces.
-		sl.StateLoad(ds.ctx, Source{internal: od})
+	switch value := obj.Addr().Interface().(type) {
+	case stateObject:
+		value.StateLoad(ds.ctx, Source{internal: od})
+	case Type:
+		// Match the Type-only no-op representation selected by encodeStruct.
+	case binaryObject:
+		loadBinary(value, rte.Name, Source{internal: od})
 	}
 }
 
