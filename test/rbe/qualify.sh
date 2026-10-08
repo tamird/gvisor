@@ -513,7 +513,7 @@ for phase in ("before", "after", "cgroup-after", "selected"):
 }, indent=2) + "\n")
 (artifacts / "selected.query").write_text("set(" + " ".join(sorted(expected)) + ")\n")
 PYNATIVE_SELECTION
-  bazel query --output=xml --query_file="$artifacts/selected.query" > "$artifacts/declarations.xml"
+  bazel query --output=xml --xml:default_values --query_file="$artifacts/selected.query" > "$artifacts/declarations.xml"
   python3 - "$artifacts" <<'PYNATIVE_DECLARATIONS'
 import json
 from pathlib import Path
