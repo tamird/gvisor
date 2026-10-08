@@ -68,14 +68,14 @@ jobs:
           path: bin/runsc
 
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current') && github.event_name == 'workflow_dispatch'))
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current' || github.ref == 'refs/heads/qualification/arm64-64k-current') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
+    timeout-minutes: ${{ inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
     permissions:
       contents: read
     env:
       QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution }}
+      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 'remote-actions' || inputs.execution }}
       QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
       QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
@@ -97,7 +97,7 @@ jobs:
         persist-credentials: false
 
     - name: Download the pinned BuildBuddy CLI
-      if: inputs.execution != 'local'
+      if: inputs.execution != 'local' && inputs.lanes != 'syscalls-64k'
       shell: bash
       run: |
         curl --fail --silent --show-error --location --max-time 120 \
@@ -109,7 +109,7 @@ jobs:
         chmod +x "$RUNNER_TEMP/bb"
 
     - name: Qualify on Remote Bazel
-      if: inputs.execution != 'local'
+      if: inputs.execution != 'local' && inputs.lanes != 'syscalls-64k'
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
@@ -133,16 +133,16 @@ jobs:
           --timeout="$REMOTE_TIMEOUT" --disable_retry \
           --script='bash test/rbe/actions.sh'
 
-    - name: Compile on RBE and test on Actions
-      if: inputs.execution == 'local'
-      timeout-minutes: ${{ inputs.lanes == 'syscalls-rc' && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
+    - name: Coordinate qualification on Actions
+      if: inputs.execution == 'local' || inputs.lanes == 'syscalls-64k'
+      timeout-minutes: ${{ inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 145 || inputs.lanes == 'syscalls-rc' && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
       run: bash test/rbe/actions.sh
 
-    - name: Retain local test placement and host facts
-      if: always() && inputs.execution == 'local'
+    - name: Retain qualification placement and host facts
+      if: always() && (inputs.execution == 'local' || inputs.lanes == 'syscalls-64k')
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: qualification-${{ inputs.architecture }}
