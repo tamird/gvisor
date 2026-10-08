@@ -145,10 +145,8 @@ func TestRegisterBad(t *testing.T) {
 		firstField  = "a"
 		secondField = "b"
 	)
-	for name, object := range map[string]any{
+	for name, object := range map[string]state.Type{
 		"nil":                                     nil,
-		"value":                                   1,
-		"no-codec":                                new(int),
 		"non-struct-with-fields":                  newFakerOtherBadFields(goodName),
 		"non-struct-with-saverloader":             newFakerOtherSaverLoader(goodName),
 		"struct-without-saverloader":              &faker{Name: goodName},

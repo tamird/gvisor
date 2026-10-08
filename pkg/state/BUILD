@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library")
+load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
 
 package(
@@ -87,4 +87,11 @@ go_library(
         "//pkg/gohacks",
         "//pkg/state/wire",
     ],
+)
+
+go_test(
+    name = "types_test",
+    size = "small",
+    srcs = ["types_test.go"],
+    library = ":state",
 )
