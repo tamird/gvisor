@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-08T22:41:59.976845+00:00",
+    "updatedAt": "2026-10-08T23:04:37.625614+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4648,30 +4648,31 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/go-1-27-2",
-      "head": "b7d69cf82360e3175eb100288bf1bf149447f7c3",
+      "head": "36725b0af9315f5675c8d9ece87979a706e8cd1d",
       "title": "Update Go to 1.27.2",
       "url": "https://github.com/tamird/gvisor/tree/review/go-1-27-2",
       "group": "bazel",
-      "status": "Remaining validation in progress",
-      "updatedAt": "2026-10-08T21:48:54.958312+00:00",
-      "summary": "The two initial Go 1.27.2 parents remain Failed. Eight original unit actions passed with 21,320 XML entries and no skips; their actual compiler/linker inputs match the official 1.27.2 SDK. Build work exhausted its shared budget, while the first coverage runtime attempt failed during image retrieval before its test action. Necessary continuations f7c3907e-3865-4850-9a2d-f44e2af1bff2 and bb9bad82-b632-4dc0-ae08-dc7babf813da are accepted on helper-corrected source 315bc1a3ac493715db034315903ff7a18116a5f6, without repeating the six unaffected unit targets. The separate standalone audit verified an unchanged 190-record license catalog, but its legacy coverage action was blocked by a duplicate image property; the legacy-only continuation 6dd18af3-5ded-4aec-8cb8-00241e0e7e7f also failed before its coverage Genrule because existing standalone vdso/sysmsg/BPF prerequisites require undeclared host compilers. That evidence is under source/method disposition, with no retry yet. Restoration owns observation and reconciliation. No complete upgrade result or upstream PR is claimed.\n\nEarlier observations:\n\nTwo disjoint Go 1.27.2 parents are accepted on qualified source 47df1e9b9f982f29aaa0f003fb7dac977310a389: SDK/build/unit/Nogo/license validation 09fefbe6-8feb-4b2b-b170-67814a40a905 and coverage/race runtime 4cb91e3f-fe73-4832-8ea6-b24ef0b03975. Restoration owns their sole observer. The standalone b7d69 coverage builder is checked on its own source; qualified runtime evidence cannot substitute for it. No result is credited yet.\n\nSource preparation:\n\nThe separate Go 1.27.2 upgrade is published on the fork at b7d69cf82360e3175eb100288bf1bf149447f7c3, based on upstream cd5fba542e65863e7827d603299ac57210eb5b59. It changes the normal SDK declaration and rebuilt coverage SDK version. Independent source/message review confirms both retained Go patches match the new release source exactly; no module dependency changes are included. Restoration owns remote validation preparation, including the existing coverage/race route and canonical license generation. No runtime result, contributor-review question or upstream PR is claimed. Merged Go 1.27.1 PR #15413 and its earlier qualification evidence remain historical.",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-08T23:04:37.625614+00:00",
+      "summary": "Contributor review is now requested for the complete two-line Go 1.27.2 upgrade at 36725b0af9315f5675c8d9ece87979a706e8cd1d. The source-preserving refresh is based on upstream 0a438edc99965c50bac288b57f048db78a4d9006; no module dependencies or license records change. The corrected unit/ABI checks, normal release smoke, coverage/race runtime and canonical 190-record license verification passed. The original legacy coverage helper also produced a fresh Go 1.27.2 AMD64 executable using the qualified hermetic C/BPF prerequisites.\n\nThe standalone legacy build did not pass on the selected worker because existing prerequisites require undeclared host compilers; the qualified helper result does not erase that limitation. The helper still downloads bootstrap/source without content verification. Initial work-budget/infrastructure failures and the later ZIP-only output-oracle failure remain recorded; runtime evidence was recovered without rerunning tests. No full repository or syscall qualification is claimed. No upstream PR is open yet.\n\nEarlier observations:\n\nThe two initial Go 1.27.2 parents remain Failed. Eight original unit actions passed with 21,320 XML entries and no skips; their actual compiler/linker inputs match the official 1.27.2 SDK. Build work exhausted its shared budget, while the first coverage runtime attempt failed during image retrieval before its test action. Necessary continuations f7c3907e-3865-4850-9a2d-f44e2af1bff2 and bb9bad82-b632-4dc0-ae08-dc7babf813da are accepted on helper-corrected source 315bc1a3ac493715db034315903ff7a18116a5f6, without repeating the six unaffected unit targets. The separate standalone audit verified an unchanged 190-record license catalog, but its legacy coverage action was blocked by a duplicate image property; the legacy-only continuation 6dd18af3-5ded-4aec-8cb8-00241e0e7e7f also failed before its coverage Genrule because existing standalone vdso/sysmsg/BPF prerequisites require undeclared host compilers. That evidence is under source/method disposition, with no retry yet. Restoration owns observation and reconciliation. No complete upgrade result or upstream PR is claimed.\n\nEarlier observations:\n\nTwo disjoint Go 1.27.2 parents are accepted on qualified source 47df1e9b9f982f29aaa0f003fb7dac977310a389: SDK/build/unit/Nogo/license validation 09fefbe6-8feb-4b2b-b170-67814a40a905 and coverage/race runtime 4cb91e3f-fe73-4832-8ea6-b24ef0b03975. Restoration owns their sole observer. The standalone b7d69 coverage builder is checked on its own source; qualified runtime evidence cannot substitute for it. No result is credited yet.\n\nSource preparation:\n\nThe separate Go 1.27.2 upgrade is published on the fork at b7d69cf82360e3175eb100288bf1bf149447f7c3, based on upstream cd5fba542e65863e7827d603299ac57210eb5b59. It changes the normal SDK declaration and rebuilt coverage SDK version. Independent source/message review confirms both retained Go patches match the new release source exactly; no module dependency changes are included. Restoration owns remote validation preparation, including the existing coverage/race route and canonical license generation. No runtime result, contributor-review question or upstream PR is claimed. Merged Go 1.27.1 PR #15413 and its earlier qualification evidence remain historical.",
       "followup": {
-        "disposition": "Remaining validation in progress",
-        "owner": "restore_integration_review",
-        "nextAction": "Close the corrected or unfinished gates and reconcile the retained initial failures before contributor review.",
-        "sourceHead": "b7d69cf82360e3175eb100288bf1bf149447f7c3",
-        "reviewedAt": "2026-10-08T21:48:54.958312+00:00",
+        "disposition": "Awaiting contributor review",
+        "owner": "contributor",
+        "nextAction": "Review the exact published Go 1.27.2 commit and decide whether to open its PR.",
+        "sourceHead": "36725b0af9315f5675c8d9ece87979a706e8cd1d",
+        "reviewedAt": "2026-10-08T23:04:37.625614+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/b7d69cf82360e3175eb100288bf1bf149447f7c3",
+          "https://github.com/tamird/gvisor/commit/36725b0af9315f5675c8d9ece87979a706e8cd1d",
           "https://go.dev/doc/devel/release#go1.27.2",
-          "https://github.com/google/gvisor/pull/15413",
-          "https://app.buildbuddy.io/invocation/09fefbe6-8feb-4b2b-b170-67814a40a905",
-          "https://app.buildbuddy.io/invocation/4cb91e3f-fe73-4832-8ea6-b24ef0b03975",
           "https://app.buildbuddy.io/invocation/f7c3907e-3865-4850-9a2d-f44e2af1bff2",
           "https://app.buildbuddy.io/invocation/bb9bad82-b632-4dc0-ae08-dc7babf813da",
-          "https://app.buildbuddy.io/invocation/12218ffd-01c3-4f03-a934-6df172c38246",
-          "https://app.buildbuddy.io/invocation/6dd18af3-5ded-4aec-8cb8-00241e0e7e7f"
+          "https://app.buildbuddy.io/invocation/6e3cd4d7-7798-492c-9473-a6679b96760b"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "36725b0af9315f5675c8d9ece87979a706e8cd1d",
+        "url": "https://github.com/tamird/gvisor/commit/36725b0af9315f5675c8d9ece87979a706e8cd1d"
       }
     },
     {
