@@ -114,8 +114,8 @@ case "$test_execution" in
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
 if [[ -n $syscall_bucket ]]; then
-  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $# != 1 || ( $arch:${1:-} != arm64:syscalls && $arch:${1:-} != arm64:syscalls-resume && $arch:${1:-} != amd64:syscalls-kvm ) ]]; then
-    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls/syscalls-resume or AMD64 syscalls-kvm.\n' >&2
+  if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $test_execution != local || $# != 1 || ( $arch:${1:-} != arm64:syscalls && $arch:${1:-} != arm64:syscalls-resume && $arch:${1:-} != amd64:syscalls && $arch:${1:-} != amd64:syscalls-kvm ) ]]; then
+    printf 'A syscall bucket must be 0..14 and requires local ARM64 syscalls/syscalls-resume or AMD64 syscalls/syscalls-kvm.\n' >&2
     exit 2
   fi
 fi
