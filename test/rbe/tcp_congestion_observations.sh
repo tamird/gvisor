@@ -20,7 +20,7 @@ set -euo pipefail
 [[ $QUALIFICATION_BENCHMARK_TARGET == //test/benchmarks/tcp:tcp_benchmark ]]
 [[ $qualification_root_bazel == true ]]
 declare -F bazel >/dev/null
-out="$RUNNER_TEMP/qualification/tcp-congestion-observations"
+out="$RUNNER_TEMP/qualification/tcp-congestion-sharing"
 mkdir -p "$out"
 export out
 finish() {
@@ -80,35 +80,29 @@ options=(--config=rbe --config=x86_64 --remote_download_outputs=toplevel)
 bazel build "${options[@]}" \
   //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
   > "$out/build-stdout.txt" 2> "$out/build-stderr.txt"
-# The original source checks passed; this continuation only moves shell startup.
+# Prior Go/Nogo checks apply unchanged; this run checks the shell topology and lifecycle.
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
-# Check observations only: these short runs do not estimate CC performance.
-validate_trial() (
-  set -euo pipefail
-  trial=$1 streams=$2 probe=$3
-  for status in cleanup-exit iperf-exit receiver-exit; do
-    grep -Fxq 0 "$trial/results/$status.txt"
+# Only functional evidence: no goodput comparison or fairness calculation.
+validate_receiver() {
+  local dir=$1 streams=$2
+  for status in cleanup-exit iperf-exit receiver-exit flow-exit; do
+    grep -Fxq 0 "$dir/$status.txt"
   done
   jq -e --argjson streams "$streams" '
     (has("error") | not) and .start.test_start.num_streams == $streams and
     (.end.streams | length) == $streams and
-    .end.sum_received.sender == false and
-    .end.sum_received.bytes > 0 and .end.sum_received.bits_per_second > 0 and
+    .end.sum_received.sender == false and .end.sum_received.bytes > 0 and
+    .end.sum_received.bits_per_second > 0 and
     all(.end.streams[]; .receiver.sender == false and .receiver.bytes > 0 and .receiver.seconds > 0) and
     .end.sum_received.bytes == ([.end.streams[].receiver.bytes] | add) and
-    (.intervals | length > 0) and
-    all(.intervals[]; (.streams | length) == $streams)
-  ' "$trial/results/receiver.json"
-  grep -Eq '^BenchmarkTCP/.+ 1 [0-9.]+ Mb/s [0-9.]+ cpu-time$' "$trial/stdout.txt"
-  grep -Eq 'Mbits/sec.*receiver' "$trial/results/iperf.txt"
-  if [[ $probe == false ]]; then
-    [[ ! -e $trial/results/ping.txt && ! -e $trial/results/ping-phases.tsv ]]
-    exit 0
-  fi
-  grep -Eq '^[01]$' "$trial/results/ping-exit.txt"
-  # Unix timestamps are adjacent to boot-time reads, not an exact conversion.
-  # Require observed replies in each broad phase, without an RTT threshold.
-  awk -F '\t' '
+    (.intervals | length > 0) and all(.intervals[]; (.streams | length) == $streams)
+  ' "$dir/receiver.json"
+  grep -Eq 'Mbits/sec.*receiver' "$dir/iperf.txt"
+}
+validate_probe() {
+  local dir=$1 begin=$2 end=$3
+  grep -Eq '^[01]$' "$dir/ping-exit.txt"
+  awk -F '\t' -v begin="$begin" -v end="$end" '
     NR == FNR {
       if (FNR == 1) { if ($0 != "phase\tboottime_seconds\tunix_seconds") exit 1; next }
       names[++n] = $1; boot[n] = $2; wall[n] = $3
@@ -122,49 +116,151 @@ validate_trial() (
       if (now >= wall[3] && now <= wall[4]) drain++
     }
     END {
-      if (n != 4 || names[1] != "probe-launch" || names[2] != "client-operation-begin" ||
-          names[3] != "client-operation-end" || names[4] != "probe-stop" ||
-          boot[2]-boot[1] < 4.9 || boot[4]-boot[3] < 1.9 ||
+      if (n != 4 || names[1] != "probe-launch" || names[2] != begin || names[3] != end ||
+          names[4] != "probe-stop" || boot[2]-boot[1] < 4.9 || boot[4]-boot[3] < 1.9 ||
           before == 0 || operation == 0 || drain == 0) exit 1
-      printf "reply_samples baseline=%d client_operation=%d drain=%d\n", before, operation, drain
+      printf "reply_samples baseline=%d operation=%d drain=%d\n", before, operation, drain
     }
-  ' "$trial/results/ping-phases.tsv" "$trial/results/ping.txt"
+  ' "$dir/ping-phases.tsv" "$dir/ping.txt"
+}
+validate_single() (
+  set -euo pipefail
+  local trial=$1 streams=$2 probe=$3
+  validate_receiver "$trial/results" "$streams"
+  grep -Fxq 0 "$trial/results/topology-cleanup-exit.txt"
+  grep -Eq '^BenchmarkTCP/.+ 1 [0-9.]+ Mb/s [0-9.]+ cpu-time$' "$trial/stdout.txt"
+  if [[ $probe == true ]]; then
+    validate_probe "$trial/results" client-operation-begin client-operation-end
+  else
+    [[ ! -e $trial/results/ping.txt ]]
+  fi
+)
+validate_shared() (
+  set -euo pipefail
+  local trial=$1 delay=$2 dir=$1/results
+  grep -Fxq 0 "$dir/topology-cleanup-exit.txt"
+  for flow in primary secondary; do
+    validate_receiver "$dir/$flow" 1
+    grep -Eq "^BenchmarkTCP/flow=$flow/role=client/stack=(linux|netstack)/cc=(reno|cubic)/.+ 1 [0-9.]+ Mb/s [0-9.]+ cpu-time$" "$dir/$flow/benchmark.txt"
+    awk -F '\t' '
+      NR == 1 { if ($0 != "phase\tboottime_seconds\tunix_seconds") exit 1; next }
+      { names[++n]=$1; times[n]=$2; if (n>1 && times[n]<times[n-1]) exit 1 }
+      END { if (n!=3 || names[1]!="proxy-start" || names[2]!="client-operation-begin" || names[3]!="client-operation-end") exit 1 }
+    ' "$dir/$flow/flow-phases.tsv"
+  done
+  # A receive window is enclosed by that flow's client-operation markers.
+  # These are conservative bounds, not a point alignment of the two reports.
+  first_duration=$(jq -er '.end.sum_received.seconds' "$dir/primary/receiver.json")
+  second_duration=$(jq -er '.end.sum_received.seconds' "$dir/secondary/receiver.json")
+  awk -F '\t' -v delay="$delay" -v first_duration="$first_duration" -v second_duration="$second_duration" '
+    FNR==1 { file++; next }
+    { times[file,$1]=$2 }
+    END {
+      observed=times[2,"proxy-start"]-times[1,"proxy-start"]
+      if (delay>0 && observed<delay-0.1) exit 1
+      b1=times[1,"client-operation-begin"]; e1=times[1,"client-operation-end"]
+      b2=times[2,"client-operation-begin"]; e2=times[2,"client-operation-end"]
+      if (e1-b1<first_duration || e2-b2<second_duration) exit 1
+      latest_start=(e1-first_duration>e2-second_duration ? e1-first_duration : e2-second_duration)
+      earliest_end=(b1+first_duration<b2+second_duration ? b1+first_duration : b2+second_duration)
+      # Reserve one second for timestamp granularity and scheduling margins.
+      overlap=earliest_end-latest_start-1
+      if (overlap<=0) exit 1
+      printf "observed_start_delay=%f conservative_receive_window_overlap=%f\n", observed, overlap
+    }
+  ' "$dir/primary/flow-phases.tsv" "$dir/secondary/flow-phases.tsv"
+  [[ $(grep -c '^qdisc netem ' "$dir/qdisc-after.txt") == 2 ]]
+  grep -Fq client2.0 "$dir/interface-features.txt"
+  validate_probe "$dir" flows-begin flows-end
+)
+validate_term() (
+  set -euo pipefail
+  local dir=$1/results
+  grep -Fxq 0 "$dir/topology-cleanup-exit.txt"
+  for flow in primary secondary; do
+    grep -Fxq 143 "$dir/$flow/flow-exit.txt"
+    grep -Fxq 0 "$dir/$flow/cleanup-exit.txt"
+    grep -Fxq 143 "$dir/$flow/iperf-exit.txt"
+    [[ -s $dir/$flow/receiver-exit.txt ]]
+    grep -Fq client-operation-begin "$dir/$flow/flow-phases.tsv"
+  done
+  [[ ! -e $dir/ping.txt ]]
 )
 trial_status=0
-while read -r name cc streams probe; do
+while read -r name cc streams probe second delay; do
   trial="$out/$name"
   mkdir -p "$trial"
+  run_options=()
+  flags=(--linux-client)
   case "$name" in
-    linux-*) flags=(--linux-client) ;;
-    netstack-*) flags=(--client) ;;
+    netstack-*|both-*|term-*) flags=(--client) ;;
     server-*) flags=(--server) ;;
-    both-*) flags=(--client --server) ;;
+    ipv6-*) flags=(--client --ipv6) ;;
   esac
+  if [[ $name == both-cubic ]]; then flags=(--client --server); fi
+  duration=10
+  if [[ $second != none ]]; then
+    duration=12
+    second_stack=${second%%/*}
+    second_cc=${second#*/}
+    flags+=(--second-client "$second_stack" --second-start-delay "$delay")
+    # The native same-CC control exercises the documented default.
+    if [[ $name != linux-reno-shared ]]; then flags+=(--second-congestion-control "$second_cc"); fi
+  fi
   if [[ $probe == true ]]; then flags+=(--latency-probe); fi
+  if [[ $name == legacy-no-output ]]; then
+    duration=2
+  else
+    flags+=(--output-dir "$trial/results")
+  fi
+  expected=0
+  if [[ $name == term-mixed ]]; then
+    duration=30
+    expected=124
+    run_options+=(--run_under='timeout --signal=TERM --kill-after=15s 12s')
+  fi
   result=0
   timeout --signal=INT --kill-after=15s 90s bash -c 'bazel "$@"' _ run "${options[@]}" \
-    "--execution_log_compact_file=$trial/run-execution.binpb" \
+    "--execution_log_compact_file=$trial/run-execution.binpb" "${run_options[@]}" \
     //test/benchmarks/tcp:tcp_benchmark -- \
     "${flags[@]}" --no-user-ns --congestion-control "$cc" --ideal --latency 100 \
-    --rate 20 --queue-packets 100 --duration 10 --num-client-threads "$streams" --sack \
-    --disable-linux-gso --disable-linux-gro "${seed_args[@]}" --output-dir "$trial/results" \
+    --rate 20 --queue-packets 100 --duration "$duration" --num-client-threads "$streams" --sack \
+    --disable-linux-gso --disable-linux-gro "${seed_args[@]}" \
     > "$trial/stdout.txt" 2> "$trial/stderr.txt" || result=$?
   printf '%s\n' "$result" > "$trial/exit.txt"
-  if (( result != 0 )); then trial_status=1; continue; fi
-  # Keep errexit active inside the check; only its enclosing process status is
-  # handled as an expected observation failure so later trials still run.
+  if (( result != expected )); then trial_status=1; continue; fi
   set +e
-  validate_trial "$trial" "$streams" "$probe" > "$trial/observation-check.txt" 2>&1
-  result=$?
+  if [[ $name == term-mixed ]]; then
+    validate_term "$trial" > "$trial/observation-check.txt" 2>&1
+    result=$?
+  elif [[ $name == legacy-no-output ]]; then
+    grep -Eq '^BenchmarkTCP/role=client/stack=linux/cc=reno/.+ 1 [0-9.]+ Mb/s [0-9.]+ cpu-time$' "$trial/stdout.txt"
+    result=$?
+  elif [[ $second != none ]]; then
+    validate_shared "$trial" "$delay" > "$trial/observation-check.txt" 2>&1
+    result=$?
+  else
+    validate_single "$trial" "$streams" "$probe" > "$trial/observation-check.txt" 2>&1
+    result=$?
+  fi
   set -e
   printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
   if (( result != 0 )); then trial_status=1; fi
 done <<'TRIALS'
-linux-cubic cubic 2 true
-netstack-reno reno 1 true
-netstack-cubic cubic 2 true
-server-cubic cubic 2 true
-both-cubic cubic 1 true
+legacy-no-output reno 1 false none 0
+linux-reno reno 1 false none 0
+linux-cubic cubic 2 true none 0
+netstack-reno reno 1 true none 0
+netstack-cubic cubic 2 true none 0
+server-cubic cubic 2 true none 0
+both-cubic cubic 1 true none 0
+ipv6-netstack-cubic cubic 1 false none 0
+linux-reno-shared reno 1 true linux/reno 0
+netstack-cubic-shared cubic 1 true netstack/cubic 0
+netstack-cubic-native-reno cubic 1 true linux/reno 0
+linux-reno-netstack-cubic-late reno 1 true netstack/cubic 3
+netstack-cubic-reno-late cubic 1 true netstack/reno 3
+term-mixed cubic 1 false linux/reno 0
 TRIALS
 git diff --exit-code > "$out/source-after.diff" || trial_status=1
 printf '%s\n' "$trial_status" > "$out/final-exit.txt"

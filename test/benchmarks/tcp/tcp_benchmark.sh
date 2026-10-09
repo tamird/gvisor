@@ -52,6 +52,9 @@ queue_packets=1000     # The default netem queue limit, made explicit.
 seed=                  # Requires a tc/kernel combination that supports netem seed.
 output_dir=
 latency_probe=false
+second_client=
+second_congestion_control=
+second_start_delay=0
 helper_dir="$(dirname "$0")"
 netstack_opts=
 disable_linux_gso=
@@ -78,6 +81,18 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --client)
       client=true
+      ;;
+    --second-client)
+      shift
+      second_client=$1
+      ;;
+    --second-congestion-control)
+      shift
+      second_congestion_control=$1
+      ;;
+    --second-start-delay)
+      shift
+      second_start_delay=$1
       ;;
     --linux-client)
       linux_client=true
@@ -255,6 +270,9 @@ while [[ $# -gt 0 ]]; do
       echo " --help                show this message"
       echo " --verbose             verbose output"
       echo " --client              use netstack as the client"
+      echo " --second-client       add a linux or netstack sender sharing the same WAN (requires --output-dir)"
+      echo " --second-congestion-control  second sender's reno or cubic (default: first sender's choice)"
+      echo " --second-start-delay  seconds before starting the second flow (default 0, less than duration)"
       echo " --linux-client        print client stats in linux case"
       echo " --ideal               reset all network emulation"
       echo " --server              use netstack as the server"
@@ -300,6 +318,37 @@ if [[ -n $rate_mbps && ! $rate_mbps =~ ^[0-9]+([.][0-9]+)?$ ]] ||
    [[ ! $queue_packets =~ ^[1-9][0-9]*$ || ! $duration =~ ^[1-9][0-9]*$ || ! $num_client_threads =~ ^[1-9][0-9]*$ ]] ||
    [[ -n $seed && ! $seed =~ ^[0-9]+$ ]]; then
   echo "rate must be numeric, duration/queue limit/stream count positive integers, and seed unsigned" >&2
+  exit 1
+fi
+case "$second_client" in
+  ""|linux|netstack) ;;
+  *) echo "--second-client must be linux or netstack" >&2; exit 1 ;;
+esac
+if [[ ! $second_start_delay =~ ^[0-9]+$ ]]; then
+  echo "--second-start-delay must be a nonnegative integer" >&2
+  exit 1
+fi
+second_start_delay=$((10#$second_start_delay))
+if [[ -n $second_client ]]; then
+  second_congestion_control=${second_congestion_control:-$congestion_control}
+  case "$second_congestion_control" in
+    reno|cubic) ;;
+    *) echo "unsupported second congestion control: $second_congestion_control" >&2; exit 1 ;;
+  esac
+  if [[ -z $output_dir || -n $iperf_version_arg ]] || $server || $xdp; then
+    echo "shared-WAN mode requires --output-dir, IPv4, AF_PACKET and a native server" >&2
+    exit 1
+  fi
+  if (( second_start_delay >= duration )); then
+    echo "second flow must start before the first flow's requested duration ends" >&2
+    exit 1
+  fi
+  if [[ $netstack_opts == *profile=* || $netstack_opts == *tcp_probe_file=* ]]; then
+    echo "per-proxy profile files are not supported in shared-WAN mode" >&2
+    exit 1
+  fi
+elif [[ -n $second_congestion_control || $second_start_delay != 0 ]]; then
+  echo "second-flow options require --second-client" >&2
   exit 1
 fi
 if $latency_probe && [[ -z $output_dir ]]; then
@@ -348,6 +397,8 @@ record_settings() {
     "$client" "$server" "$congestion_control" "$mtu" "$duration" "$num_client_threads"
   printf 'rtt_ms=%s jitter_ms=%s loss_percent=%s duplicate_percent=%s rate_mbps=%s queue_packets=%s seed=%s\n' \
     "$latency" "$latency_variation" "$loss" "$duplicate" "${rate_mbps:-unlimited}" "$queue_packets" "${seed:-unspecified}"
+  printf 'second_client=%s second_congestion_control=%s second_start_delay=%s\n' \
+    "${second_client:-none}" "${second_congestion_control:-none}" "$second_start_delay"
   printf 'latency_probe=%s receiver_json=%s\n' "$latency_probe" "$([[ -n $output_dir ]] && echo true || echo false)"
   if [[ -n $output_dir ]]; then jq --version; fi
   if $latency_probe; then ping -V; fi
@@ -427,17 +478,15 @@ mount -t tmpfs netstack-bench /tmp
 # profiles. Ensure that tools are discoverable via the parent's PATH.
 export PATH=${PATH}
 
-# Add client, server interfaces.
-ip link add client.0 type veth peer name client.1
+# Add the server interfaces.
 ip link add server.0 type veth peer name server.1
 
 # Add network emulation devices.
 ip link add wan.0 type veth peer name wan.1
-client_pid=
-server_pid=
-iperf_pid=
 probe_pid=
-results_file=
+flow_pids=()
+flow_names=(primary secondary)
+bridge_devices=(server.1 wan.0 wan.1)
 stop_probe() {
   local status=0 signal_status=0
   if [[ -z \$probe_pid ]]; then return 0; fi
@@ -449,55 +498,47 @@ stop_probe() {
   printf '%s\n' "\$status" > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-exit.txt" || return 1
   if (( signal_status != 0 || status > 1 )); then return 1; fi
 }
-function cleanup {
+wait_flow() {
+  local index=\$1 flow_dir
+  # Keep the child status separate from capture failure: a requested TERM is
+  # not itself a failure to reap the child during outer cleanup.
+  waited_flow_status=0
+  wait "\${flow_pids[index]}" || waited_flow_status=\$?
+  unset 'flow_pids[index]'
+  if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+    flow_dir=\$TCP_BENCHMARK_OUTPUT_DIR
+    if [[ -n "${second_client}" ]]; then flow_dir+=/\${flow_names[index]}; fi
+    printf '%s\n' "\$waited_flow_status" > "\$flow_dir/flow-exit.txt"
+  fi
+}
+cleanup() {
   local status=\$? cleanup_status=0
   trap - EXIT
   set +e
   if ! stop_probe; then cleanup_status=1; fi
-  # Detach before deleting the bridge, including on a failed client run.
-  # Older kernels can otherwise hang:
-  # https://github.com/torvalds/linux/commit/1ce5cce89
-  for device in client.1 server.1 wan.0 wan.1; do
-    if ! ip link set "\$device" nomaster; then cleanup_status=1; fi
-  done
-  for pid in "\$client_pid" "\$server_pid"; do
-    if [[ -n \$pid ]]; then
+  for pid in "\${flow_pids[@]}"; do
+    if kill -0 "\$pid" 2>/dev/null; then
       if ! kill -TERM "\$pid"; then cleanup_status=1; fi
     fi
   done
-  for pid in "\$client_pid" "\$server_pid"; do
-    if [[ -n \$pid ]]; then
-      if ! wait "\$pid"; then cleanup_status=1; fi
-    fi
+  for index in "\${!flow_pids[@]}"; do
+    if ! wait_flow "\$index"; then cleanup_status=1; fi
   done
-  if [[ -n \$iperf_pid ]]; then
-    if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-      # timeout forwards termination to the one-off receiver and bounds
-      # shutdown even when its control connection is incomplete.
-      if kill -0 "\$iperf_pid" 2>/dev/null; then
-        if ! kill -TERM "\$iperf_pid"; then cleanup_status=1; fi
-      fi
-      receiver_status=0
-      wait "\$iperf_pid" || receiver_status=\$?
-      if ! printf '%s\n' "\$receiver_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-exit.txt"; then cleanup_status=1; fi
-    else
-      if ! kill -9 "\$iperf_pid"; then cleanup_status=1; fi
-      receiver_status=0
-      wait "\$iperf_pid" || receiver_status=\$?
-      if (( receiver_status != 137 )); then cleanup_status=1; fi
-    fi
-    iperf_pid=
-  fi
-  if [[ -n \$results_file && -z \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-    if ! rm -f "\$results_file"; then cleanup_status=1; fi
-  fi
+  # Detach before deleting the bridge, including on a failed flow.
+  # https://github.com/torvalds/linux/commit/1ce5cce89
+  for device in "\${bridge_devices[@]}"; do
+    if ! ip link set "\$device" nomaster; then cleanup_status=1; fi
+  done
   if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-    if ! printf '%s\n' "\$cleanup_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/cleanup-exit.txt"; then cleanup_status=1; fi
+    name=topology-cleanup-exit.txt
+    if ! printf '%s\n' "\$cleanup_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/\$name"; then cleanup_status=1; fi
   fi
   if (( status == 0 )); then status=\$cleanup_status; fi
   exit "\$status"
 }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 ip link set wan.0 up
 ip link set wan.1 up
@@ -505,7 +546,6 @@ ip link set wan.1 up
 # Enroll on the bridge.
 ip link add name br0 type bridge
 ip link add name br1 type bridge
-ip link set client.1 master br0
 ip link set server.1 master br1
 ip link set wan.0 master br0
 ip link set wan.1 master br1
@@ -513,7 +553,6 @@ ip link set br0 up
 ip link set br1 up
 
 # Set the MTU appropriately.
-ip link set client.0 mtu ${mtu}
 ip link set server.0 mtu ${mtu}
 ip link set wan.0 mtu ${mtu}
 ip link set wan.1 mtu ${mtu}
@@ -532,19 +571,40 @@ for device in wan.0 wan.1; do
     ${loss_opt} ${duplicate_opt} ${rate_opt} ${seed_opt}
 done
 
-# Start a client proxy.
-touch /tmp/client.netns
-unshare -n mount --bind /proc/self/ns/net /tmp/client.netns
-
-# Move the endpoint into the namespace.
-while ip link | grep client.0 > /dev/null; do
-  ip link set dev client.0 netns /tmp/client.netns
-done
-
-if ! ${client}; then
-  # Only add the address to NIC if netstack is not in use. Otherwise the host
-  # will also process the inbound SYN and send a RST back.
-  ${nsjoin_binary} /tmp/client.netns ip addr add ${client_proxy_addr}/${mask} dev client.0
+# Both clients attach to the same bridge and WAN queues. Keep their namespace,
+# native-address and offload setup identical, including the first client's IPv6
+# and Netstack/XDP address ownership rules.
+configure_client() {
+  local name=\$1 native_addr=\$2 proxy_addr=\$3 uses_netstack=\$4
+  local iface=\$name.0 peer=\$name.1 netns=/tmp/\$name.netns
+  ip link add "\$iface" type veth peer name "\$peer"
+  bridge_devices+=("\$peer")
+  ip link set "\$peer" master br0
+  ip link set "\$iface" mtu ${mtu}
+  touch "\$netns"
+  unshare -n mount --bind /proc/self/ns/net "\$netns"
+  ip link set dev "\$iface" netns "\$netns"
+  if ! \$uses_netstack; then
+    # The host must not also answer for a Netstack proxy's address.
+    ${nsjoin_binary} "\$netns" ip addr add "\$proxy_addr/${mask}" dev "\$iface"
+  fi
+  ${nsjoin_binary} "\$netns" ip addr add "\$native_addr/${mask}" dev "\$iface"
+  if [[ "${disable_linux_gso}" == 1 ]]; then
+    ${nsjoin_binary} "\$netns" ethtool -K "\$iface" tso off
+    ${nsjoin_binary} "\$netns" ethtool -K "\$iface" gso off
+  fi
+  if [[ "${disable_linux_gro}" == 1 ]]; then
+    ${nsjoin_binary} "\$netns" ethtool -K "\$iface" gro off
+  fi
+  ${nsjoin_binary} "\$netns" ip link set "\$iface" up
+  ${nsjoin_binary} "\$netns" ip link set lo up
+  ip link set "\$peer" up
+}
+configure_client client ${client_addr} ${client_proxy_addr} ${client}
+if [[ -n "${second_client}" ]]; then
+  second_uses_netstack=false
+  if [[ "${second_client}" == netstack ]]; then second_uses_netstack=true; fi
+  configure_client client2 10.0.0.5 10.0.0.6 "\$second_uses_netstack"
 fi
 
 # Start a server proxy.
@@ -560,32 +620,32 @@ if ! ${server}; then
   ${nsjoin_binary} /tmp/server.netns ip addr add ${server_proxy_addr}/${mask} dev server.0
 fi
 
-# Add client and server addresses, and bring everything up.
-${nsjoin_binary} /tmp/client.netns ip addr add ${client_addr}/${mask} dev client.0
+# Add the server address and bring its interface up.
 ${nsjoin_binary} /tmp/server.netns ip addr add ${server_addr}/${mask} dev server.0
 if [[ "${disable_linux_gso}" == "1" ]]; then
-  ${nsjoin_binary} /tmp/client.netns ethtool -K client.0 tso off
-  ${nsjoin_binary} /tmp/client.netns ethtool -K client.0 gso off
   ${nsjoin_binary} /tmp/server.netns ethtool -K server.0 tso off
   ${nsjoin_binary} /tmp/server.netns ethtool -K server.0 gso off
 fi
 if [[ "${disable_linux_gro}" == "1" ]]; then
-  ${nsjoin_binary} /tmp/client.netns ethtool -K client.0 gro off
   ${nsjoin_binary} /tmp/server.netns ethtool -K server.0 gro off
 fi
-${nsjoin_binary} /tmp/client.netns ip link set client.0 up
-${nsjoin_binary} /tmp/client.netns ip link set lo up
 ${nsjoin_binary} /tmp/server.netns ip link set server.0 up
 ${nsjoin_binary} /tmp/server.netns ip link set lo up
-ip link set dev client.1 up
 ip link set dev server.1 up
+
 
 record_features() {
   printf 'client.0\n'
   ${nsjoin_binary} /tmp/client.netns ethtool -k client.0
   printf 'server.0\n'
   ${nsjoin_binary} /tmp/server.netns ethtool -k server.0
-  for endpoint in client server; do
+  endpoints=(client server)
+  if [[ -n "${second_client}" ]]; then
+    printf 'client2.0\n'
+    ${nsjoin_binary} /tmp/client2.netns ethtool -k client2.0
+    endpoints+=(client2)
+  fi
+  for endpoint in "\${endpoints[@]}"; do
     printf 'native defaults in %s namespace\n' "\$endpoint"
     ${nsjoin_binary} /tmp/\$endpoint.netns sysctl \\
       net.ipv4.tcp_sack net.ipv4.tcp_recovery net.ipv4.tcp_moderate_rcvbuf \\
@@ -621,77 +681,274 @@ if ${latency_probe}; then
   sleep 5
 fi
 
-
-${nsjoin_binary} /tmp/server.netns ${server_args} &
-server_pid=\$!
-
-# A one-off receiver emits one complete JSON report, including receiver-side
-# intervals and per-stream results. Preserve the client's usual text output.
-if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-  timeout --signal=TERM --kill-after=5s $((duration + 60))s \
-    ${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} \
-    -p ${iperf_port} -s -1 -J -i 1 \
-    > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver.json" \
-    2> "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-stderr.txt" &
-else
-  ${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} -p ${iperf_port} -s >&2 &
-fi
-iperf_pid=\$!
-
-# Give services time to start.
-sleep 5
-
-${nsjoin_binary} /tmp/client.netns ${client_args} &
-client_pid=\$!
-
-
-# Show traffic information for the original uninstrumented native mode.
-if ! ${latency_probe} && ! ${client} && ! ${server}; then
-  ${nsjoin_binary} /tmp/client.netns ping -c 100 -i 0.001 -W 1 ${server_addr} >&2 || true
-fi
-
-if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-  results_file="\$TCP_BENCHMARK_OUTPUT_DIR/iperf.txt"
-else
-  results_file=\$(mktemp)
-fi
 record_qdiscs() {
   for device in wan.0 wan.1; do
     printf '%s\n' "\$device"
     tc -s -d qdisc show dev "\$device"
   done
 }
+
+run_flow() (
+  set -euo pipefail
+  flow=\$1
+  client_pid=
+  server_pid=
+  iperf_pid=
+  operation_pid=
+  results_file=
+  flow_netns=/tmp/client.netns
+  flow_client_addr=${client_addr}
+  flow_proxy_port=${proxy_port}
+  flow_iperf_port=${iperf_port}
+  flow_duration=${duration}
+  flow_cc=${congestion_control}
+  flow_stack=linux
+  if ${client}; then flow_stack=netstack; fi
+  flow_label=
+  client_command=(${client_args})
+  server_command=(${server_args})
+  if [[ -n "${second_client}" ]]; then
+    export TCP_BENCHMARK_OUTPUT_DIR="\$TCP_BENCHMARK_OUTPUT_DIR/\$flow"
+    flow_label="flow=\$flow/"
+  fi
+  if [[ \$flow == secondary ]]; then
+    flow_netns=/tmp/client2.netns
+    flow_client_addr=10.0.0.5
+    flow_proxy_port=$((proxy_port + 1))
+    flow_iperf_port=$((iperf_port + 1))
+    flow_duration=$((duration - second_start_delay))
+    flow_cc=${second_congestion_control}
+    flow_stack=${second_client}
+    server_command=("${proxy_binary}" "-congestion_control=\$flow_cc" -port "\$flow_proxy_port" -forward "${server_addr}:\$flow_iperf_port")
+    client_command=("${proxy_binary}" "-congestion_control=\$flow_cc" -port "\$flow_proxy_port" -forward "${server_proxy_addr}:\$flow_proxy_port")
+    if [[ \$flow_stack == netstack ]]; then
+      client_command+=(${netstack_opts} -client -mtu ${mtu} -iface client2.0 -addr 10.0.0.6 -mask ${mask} -gso=${gso} -swgso=${swgso} --gro=${gro} --xdp=false)
+    fi
+  fi
+  record_flow_phase() {
+    local uptime ignored
+    read -r uptime ignored < /proc/uptime
+    printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" >> "\$TCP_BENCHMARK_OUTPUT_DIR/flow-phases.tsv"
+  }
+  if [[ -n "${second_client}" ]]; then
+    printf 'phase\tboottime_seconds\tunix_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/flow-phases.tsv"
+    printf 'flow=%s client=%s congestion_control=%s duration=%s streams=%s\n' "\$flow" "\$flow_stack" "\$flow_cc" "\$flow_duration" '${num_client_threads}' > "\$TCP_BENCHMARK_OUTPUT_DIR/flow-settings.txt"
+    {
+      printf 'client_command: '
+      printf '%q ' "\${client_command[@]}"
+      printf '\nserver_command: '
+      printf '%q ' "\${server_command[@]}"
+      printf '\n'
+    } >> "\$TCP_BENCHMARK_OUTPUT_DIR/flow-settings.txt"
+    record_flow_phase proxy-start
+  fi
+  cleanup_flow() {
+    local status=\$? cleanup_status=0
+    trap - EXIT
+    set +e
+    if [[ -n \$operation_pid ]]; then
+      if kill -0 "\$operation_pid" 2>/dev/null; then
+        if ! kill -TERM "\$operation_pid"; then cleanup_status=1; fi
+      fi
+      operation_status=0
+      wait "\$operation_pid" || operation_status=\$?
+      if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+        if ! printf '%s\n' "\$operation_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"; then cleanup_status=1; fi
+      fi
+    fi
+    for pid in "\$client_pid" "\$server_pid"; do
+      if [[ -n \$pid ]]; then
+        if ! kill -TERM "\$pid"; then cleanup_status=1; fi
+      fi
+    done
+    for pid in "\$client_pid" "\$server_pid"; do
+      if [[ -n \$pid ]]; then
+        if ! wait "\$pid"; then cleanup_status=1; fi
+      fi
+    done
+    if [[ -n \$iperf_pid ]]; then
+      if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+        # timeout forwards termination to the one-off receiver and bounds
+        # shutdown even when its control connection is incomplete.
+        if kill -0 "\$iperf_pid" 2>/dev/null; then
+          if ! kill -TERM "\$iperf_pid"; then cleanup_status=1; fi
+        fi
+        receiver_status=0
+        wait "\$iperf_pid" || receiver_status=\$?
+        if ! printf '%s\n' "\$receiver_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-exit.txt"; then cleanup_status=1; fi
+      else
+        if ! kill -9 "\$iperf_pid"; then cleanup_status=1; fi
+        receiver_status=0
+        wait "\$iperf_pid" || receiver_status=\$?
+        if (( receiver_status != 137 )); then cleanup_status=1; fi
+      fi
+      iperf_pid=
+    fi
+    if [[ -n \$results_file && -z \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+      if ! rm -f "\$results_file"; then cleanup_status=1; fi
+    fi
+    if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+      if ! printf '%s\n' "\$cleanup_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/cleanup-exit.txt"; then cleanup_status=1; fi
+    fi
+    if (( status == 0 )); then status=\$cleanup_status; fi
+    exit "\$status"
+  }
+  trap cleanup_flow EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  ${nsjoin_binary} /tmp/server.netns "\${server_command[@]}" &
+  server_pid=\$!
+
+  # A one-off receiver emits one complete JSON report, including receiver-side
+  # intervals and per-stream results. Preserve the client's usual text output.
+  if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+    timeout --signal=TERM --kill-after=5s \$((flow_duration + 60))s \
+      ${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} \
+      -p \$flow_iperf_port -s -1 -J -i 1 \
+      > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver.json" \
+      2> "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-stderr.txt" &
+  else
+    ${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} -p \$flow_iperf_port -s >&2 &
+  fi
+  iperf_pid=\$!
+
+  # Give services time to start.
+  sleep 5
+
+  ${nsjoin_binary} "\$flow_netns" "\${client_command[@]}" &
+  client_pid=\$!
+
+  # Show traffic information for the original uninstrumented native mode.
+  if [[ -z "${second_client}" ]] && ! ${latency_probe} && ! ${client} && ! ${server}; then
+    ${nsjoin_binary} /tmp/client.netns ping -c 100 -i 0.001 -W 1 ${server_addr} >&2 || true
+  fi
+
+  if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+    results_file="\$TCP_BENCHMARK_OUTPUT_DIR/iperf.txt"
+  else
+    results_file=\$(mktemp)
+  fi
+
+  # Bound the whole client operation, including a blocked connection/control
+  # exchange, while leaving the requested measurement interval unchanged.
+  run_client() {
+    local connect_deadline=\$((SECONDS + 30)) result
+    while true; do
+      result=0
+      "\$@" > "\$results_file" 2>&1 || result=\$?
+      if grep -Eq "connect failed|unable to connect" "\$results_file" && (( SECONDS < connect_deadline )); then
+        sleep 0.1
+        continue
+      fi
+      return "\$result"
+    done
+  }
+  export -f run_client
+  export results_file
+  result=0
+  if ${latency_probe} && [[ -z "${second_client}" ]]; then record_probe_phase client-operation-begin; fi
+  if [[ -n "${second_client}" ]]; then record_flow_phase client-operation-begin; fi
+  timeout --signal=TERM --kill-after=5s \$((flow_duration + 30))s \\
+    /bin/bash -c 'run_client "\$@"' _ \\
+    ${nsjoin_binary} "\$flow_netns" ${iperf_binary_name} \\
+    ${iperf_version_arg} -p \$flow_proxy_port -c \$flow_client_addr -t \$flow_duration -f m -P ${num_client_threads} &
+  operation_pid=\$!
+  wait "\$operation_pid" || result=\$?
+  operation_pid=
+  if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+    printf '%s\n' "\$result" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"
+  fi
+  if ${latency_probe} && [[ -z "${second_client}" ]]; then record_probe_phase client-operation-end; fi
+  if [[ -n "${second_client}" ]]; then record_flow_phase client-operation-end; fi
+  cat "\$results_file" >&2
+  if (( result != 0 )); then exit "\$result"; fi
+  if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+    receiver_status=0
+    wait "\$iperf_pid" || receiver_status=\$?
+    printf '%s\n' "\$receiver_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-exit.txt"
+    iperf_pid=
+    if (( receiver_status != 0 )); then exit "\$receiver_status"; fi
+    # Reject an incomplete report, including valid JSON carrying an iperf error.
+    # Zero received bytes are a measurement, not a report-format error.
+    jq -e --argjson streams "${num_client_threads}" '
+      def receiver:
+        .sender == false and
+        (.bytes | type == "number") and .bytes >= 0 and
+        (.seconds | type == "number") and .seconds > 0 and
+        (.bits_per_second | type == "number") and .bits_per_second >= 0;
+      (has("error") | not) and
+      .start.test_start.num_streams == \$streams and
+      (.end.streams | length) == \$streams and
+      (.end.sum_received | receiver) and
+      all(.end.streams[]; .receiver | receiver) and
+      (.intervals | type == "array" and length > 0)
+    ' "\$TCP_BENCHMARK_OUTPUT_DIR/receiver.json" > /dev/null
+  fi
+
+  # Report delivered goodput. The final receiver row is the aggregate for -P.
+  mbits=\$(awk '/Mbits\/sec/ && /receiver/ { for (i=2; i<=NF; i++) if (\$i == "Mbits/sec") value=\$(i-1) } END { print value }' "\$results_file")
+  if [[ ! \$mbits =~ ^[0-9]+([.][0-9]+)?\$ ]]; then
+    echo "No receiver throughput in successful iperf output" >&2
+    exit 1
+  fi
+  client_cpu_ticks=\$(cat /proc/\$client_pid/stat \\
+    | awk '{print (\$14+\$15);}')
+  server_cpu_ticks=\$(cat /proc/\$server_pid/stat \\
+    | awk '{print (\$14+\$15);}')
+  ticks_per_sec=\$(getconf CLK_TCK)
+  client_cpu_load=\$(bc -l <<< \$client_cpu_ticks/\$ticks_per_sec/\$flow_duration)
+  server_cpu_load=\$(bc -l <<< \$server_cpu_ticks/\$ticks_per_sec/\$flow_duration)
+
+  hostgso=true
+  if [[ "${disable_linux_gso}" ]]; then
+    hostgso=false
+  fi
+  hostgro=true
+  if [[ "${disable_linux_gro}" ]]; then
+    hostgro=false
+  fi
+
+  if [[ -n "${second_client}" ]] || ${client}; then
+    echo "BenchmarkTCP/\${flow_label}role=client/stack=\$flow_stack/cc=\$flow_cc/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
+    exit 0
+  elif ${linux_client}; then
+    echo "BenchmarkTCP/\${flow_label}role=client/stack=linux/cc=\$flow_cc/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
+    exit 0
+  fi
+  stack=linux
+  if ${server}; then stack=netstack; fi
+  echo "BenchmarkTCP/\${flow_label}role=server/stack=\$stack/cc=\$flow_cc/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$server_cpu_load cpu-time"
+)
+
 if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
   record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-before.txt"
 fi
-
-# Bound the whole client operation, including a blocked connection/control
-# exchange, while leaving the requested measurement interval unchanged.
-run_client() {
-  local connect_deadline=\$((SECONDS + 30)) result
-  while true; do
-    result=0
-    "\$@" > "\$results_file" 2>&1 || result=\$?
-    if grep -Eq "connect failed|unable to connect" "\$results_file" && (( SECONDS < connect_deadline )); then
-      sleep 0.1
-      continue
-    fi
-    return "\$result"
-  done
-}
-export -f run_client
-export results_file
 result=0
-if ${latency_probe}; then record_probe_phase client-operation-begin; fi
-timeout --signal=TERM --kill-after=5s $((duration + 30))s \\
-  /bin/bash -c 'run_client "\$@"' _ \\
-  ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} \\
-  ${iperf_version_arg} -p ${proxy_port} -c ${client_addr} -t ${duration} -f m -P ${num_client_threads} || result=\$?
-if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-  printf '%s\n' "\$result" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"
+if [[ -n "${second_client}" ]]; then
+  mkdir -p "\$TCP_BENCHMARK_OUTPUT_DIR/primary" "\$TCP_BENCHMARK_OUTPUT_DIR/secondary"
+  if ${latency_probe}; then record_probe_phase flows-begin; fi
+  run_flow primary > "\$TCP_BENCHMARK_OUTPUT_DIR/primary/benchmark.txt" 2> "\$TCP_BENCHMARK_OUTPUT_DIR/primary/stderr.txt" &
+  flow_pids+=(\$!)
+  sleep ${second_start_delay}
+  run_flow secondary > "\$TCP_BENCHMARK_OUTPUT_DIR/secondary/benchmark.txt" 2> "\$TCP_BENCHMARK_OUTPUT_DIR/secondary/stderr.txt" &
+  flow_pids+=(\$!)
+else
+  run_flow primary &
+  flow_pids+=(\$!)
+fi
+for index in "\${!flow_pids[@]}"; do
+  capture_status=0
+  wait_flow "\$index" || capture_status=\$?
+  if (( waited_flow_status != 0 && result == 0 )); then result=\$waited_flow_status; fi
+  if (( capture_status != 0 && result == 0 )); then result=\$capture_status; fi
+done
+if [[ -n "${second_client}" ]]; then
+  if ${latency_probe}; then record_probe_phase flows-end; fi
+  for flow in primary secondary; do
+    cat "\$TCP_BENCHMARK_OUTPUT_DIR/\$flow/benchmark.txt"
+  done
 fi
 if ${latency_probe}; then
-  record_probe_phase client-operation-end
   if (( result == 0 )); then sleep 2; fi
   record_probe_phase probe-stop
   probe_status=0
@@ -701,62 +958,6 @@ fi
 if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
   record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-after.txt"
 fi
-cat "\$results_file" >&2
-if (( result != 0 )); then exit "\$result"; fi
-if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-  receiver_status=0
-  wait "\$iperf_pid" || receiver_status=\$?
-  printf '%s\n' "\$receiver_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-exit.txt"
-  iperf_pid=
-  if (( receiver_status != 0 )); then exit "\$receiver_status"; fi
-  # Reject an incomplete report, including valid JSON carrying an iperf error.
-  # Zero received bytes are a measurement, not a report-format error.
-  jq -e --argjson streams "${num_client_threads}" '
-    def receiver:
-      .sender == false and
-      (.bytes | type == "number") and .bytes >= 0 and
-      (.seconds | type == "number") and .seconds > 0 and
-      (.bits_per_second | type == "number") and .bits_per_second >= 0;
-    (has("error") | not) and
-    .start.test_start.num_streams == \$streams and
-    (.end.streams | length) == \$streams and
-    (.end.sum_received | receiver) and
-    all(.end.streams[]; .receiver | receiver) and
-    (.intervals | type == "array" and length > 0)
-  ' "\$TCP_BENCHMARK_OUTPUT_DIR/receiver.json" > /dev/null
-fi
+exit "\$result"
 
-# Report delivered goodput. The final receiver row is the aggregate for -P.
-mbits=\$(awk '/Mbits\/sec/ && /receiver/ { for (i=2; i<=NF; i++) if (\$i == "Mbits/sec") value=\$(i-1) } END { print value }' "\$results_file")
-if [[ ! \$mbits =~ ^[0-9]+([.][0-9]+)?\$ ]]; then
-  echo "No receiver throughput in successful iperf output" >&2
-  exit 1
-fi
-client_cpu_ticks=\$(cat /proc/\$client_pid/stat \\
-  | awk '{print (\$14+\$15);}')
-server_cpu_ticks=\$(cat /proc/\$server_pid/stat \\
-  | awk '{print (\$14+\$15);}')
-ticks_per_sec=\$(getconf CLK_TCK)
-client_cpu_load=\$(bc -l <<< \$client_cpu_ticks/\$ticks_per_sec/${duration})
-server_cpu_load=\$(bc -l <<< \$server_cpu_ticks/\$ticks_per_sec/${duration})
-
-hostgso=true
-if [[ "${disable_linux_gso}" ]]; then
-  hostgso=false
-fi
-hostgro=true
-if [[ "${disable_linux_gro}" ]]; then
-  hostgro=false
-fi
-
-if ${client}; then
-  echo "BenchmarkTCP/role=client/stack=netstack/cc=${congestion_control}/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
-  exit 0
-elif ${linux_client}; then
-  echo "BenchmarkTCP/role=client/stack=linux/cc=${congestion_control}/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
-  exit 0
-fi
-stack=linux
-if ${server}; then stack=netstack; fi
-echo "BenchmarkTCP/role=server/stack=\$stack/cc=${congestion_control}/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$server_cpu_load cpu-time"
 EOF
