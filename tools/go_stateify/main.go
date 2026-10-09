@@ -365,7 +365,7 @@ func main() {
 						_, pointerFields[name] = typ.(*ast.StarExpr)
 					}})
 					codecName := func(name string) string {
-						return fmt.Sprintf("stateCodec%s_%s", ts.Name.Name, name)
+						return fmt.Sprintf("stateCodec%d_%s_%s", len(ts.Name.Name), ts.Name.Name, name)
 					}
 					if generateSaverLoader {
 						emitCodec := func(name string) {

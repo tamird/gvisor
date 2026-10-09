@@ -116,7 +116,7 @@ func TestMultiNameFields(t *testing.T) {
 
 // typedFieldsWire describes the existing wire contract independently of the
 // generated field access path. It can also supply a different field order.
-func typedFieldsWire(t *testing.T, fields []string, values []wire.Object) []byte {
+func typedFieldsWire(t *testing.T, fields []string, values []wire.Object, extraTypes ...*wire.Type) []byte {
 	t.Helper()
 	var buf bytes.Buffer
 	w := wire.Writer{Writer: &buf}
@@ -124,6 +124,9 @@ func typedFieldsWire(t *testing.T, fields []string, values []wire.Object) []byte
 		t.Fatalf("WriteHeader: %v", err)
 	}
 	wire.Save(&w, &wire.Type{Name: (*typedFields)(nil).StateTypeName(), Fields: fields})
+	for _, typ := range extraTypes {
+		wire.Save(&w, typ)
+	}
 	wire.Save(&w, wire.Uint(1))
 	object := &wire.Struct{TypeID: 1}
 	object.Alloc(len(values))
@@ -202,10 +205,39 @@ func TestTypedFieldsWire(t *testing.T) {
 			}
 		})
 	}
+
+	// Interface wire values are decoded through their declared dynamic type.
+	// Matching scalar representations do not make distinct Go types assignable.
+	for _, test := range []struct {
+		name      string
+		typeName  string
+		wantError bool
+	}{
+		{"builtin-interface", "int16", true},
+		{"named-interface", (*typedSigned)(nil).StateTypeName(), false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			encodedValues := slices.Clone(values)
+			encodedValues[0] = &wire.Interface{Type: wire.TypeID(2), Value: wire.Int(-7)}
+			var loaded typedFields
+			_, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWire(t, fields, encodedValues, &wire.Type{Name: test.typeName})), &loaded)
+			if got, want := err != nil, test.wantError; got != want {
+				t.Fatalf("Load error = %v, want error %t", err, want)
+			}
+			if !test.wantError {
+				if got, want := loaded.signed, typedSigned(-7); got != want {
+					t.Errorf("loaded signed = %v, want %v", got, want)
+				}
+			}
+		})
+	}
+
 }
 
 func TestGeneratedFieldTypes(t *testing.T) {
 	runTestCases(t, false, "shadowed-and-imported", []any{
 		shadow.Value{Number: "not an integer", Duration: 3 * time.Second},
+		shadow.A_B{C: "first field"},
+		shadow.A{B_C: "second field"},
 	})
 }
