@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T18:07:09.455446+00:00",
+    "updatedAt": "2026-10-09T18:17:17.279160+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7032,7 +7032,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T18:07:09.455446+00:00",
+      "updatedAt": "2026-10-09T18:17:17.279160+00:00",
       "summary": "Optimization research has resumed. The existing source assessment identifies generated typed-field operations that can share the serializer\u2019s graph and wire mechanism. Prior findings remain below; no new prototype or speedup is claimed.",
       "findings": [
         {
@@ -7083,7 +7083,7 @@
           ]
         }
       ],
-      "nextStep": "Use the completed MapRange comparison, once its saved measurements are verified, and follow-up profiles to select the next generated or generic typed-field experiment. Preserve graph identity, wire format and handwritten hooks while testing justified reflection reductions with existing Save/Load fixtures.",
+      "nextStep": "Use the verified MapRange comparison and subsequent fixed-work benchmarks and profiles to select justified reflection, allocation and generated or generic typed-field experiments. Preserve graph identity, wire format and handwritten hooks while measuring the benefit of each change.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7096,8 +7096,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T18:07:09.455446+00:00",
-      "summary": "Optimization experiments are active. The first resumed comparison of the delivered MapRange algorithm completed successfully on the prior profiled codec cohort. Its measurements are awaiting saved-evidence verification; speedup remains unknown. The five original profiles remain the measured baseline.",
+      "updatedAt": "2026-10-09T18:17:17.279160+00:00",
+      "summary": "The first resumed experiment is independently verified: the delivered MapRange loop reduced the Map Save median time by 10.87% and allocated bytes by 17.31% in the existing normalized microbenchmark. Seven timing controls were inconclusive. This is one worker and one codec cohort, not a whole-checkpoint speedup.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7143,7 +7143,7 @@
           ]
         },
         {
-          "text": "The first resumed MapRange comparison completed successfully using eight existing benchmark leaves, 12 balanced AB/BA pairs, one-second measurements, GOMAXPROCS=1 and a fixed CPU on one remote worker. The only production difference is the delivered map-iterator loop. Completion alone does not establish a speedup: the saved measurements and source/runtime bindings are still being verified.",
+          "text": "Independent saved-result review verified all 192 measured rows, 12 balanced AB/BA pairs and the actual source-to-binary inputs. Map Save medians were 240.95 versus 214.75 ns per normalized unit (benchstat \u221210.87%, p=.020, 12 samples per side); allocated bytes were 156 versus 129 (\u221217.31%). None of the seven other timing comparisons was statistically significant in this run; this does not establish equivalence. The production difference is only the delivered MapRange loop.",
           "evidence": [
             {
               "label": "Completed MapRange comparison",
@@ -7158,9 +7158,22 @@
               "url": "https://github.com/tamird/gvisor/commit/1df3ad131e0fae5f6d0e6db3f49b33694bcb35e5"
             }
           ]
+        },
+        {
+          "text": "Source review withdrew the first one-line decoder preallocation candidate before testing. Normal referenced maps are eagerly allocated in decodeObject before decodeMap, so adding a size hint only in decodeMap misses the owning allocation path. No preallocation measurements were run; the next candidate must address the actual map-creation path.",
+          "evidence": [
+            {
+              "label": "Withdrawn one-line candidate 946447d01",
+              "url": "https://github.com/tamird/gvisor/commit/946447d01"
+            },
+            {
+              "label": "Decoder allocation ownership in the measured cohort",
+              "url": "https://github.com/tamird/gvisor/blob/57ece9dbf/pkg/state/decode.go"
+            }
+          ]
         }
       ],
-      "nextStep": "Verify the completed eight-leaf, 12-pair MapRange comparison, including actual source trees, binaries, CPU affinity and benchmark calibration. Then use measured changes to select the next experiment and profile remaining costs, including Stats and wire allocations.",
+      "nextStep": "Validate the prepared fixed-work benchmark, then target decoder-map preallocation at the code that actually creates referenced maps. Continue measurements and profiles to select further justified state optimizations, including Stats, wire allocations and typed-field operations.",
       "evidence": [
         {
           "label": "Studied production revision",
@@ -7169,6 +7182,61 @@
         {
           "label": "Map-iterator follow-up",
           "url": "https://github.com/google/gvisor/pull/15542"
+        },
+        {
+          "label": "Prepared fixed-work benchmark 52f771301",
+          "url": "https://github.com/tamird/gvisor/commit/52f771301"
+        },
+        {
+          "label": "Withdrawn one-line preallocation candidate 946447d01",
+          "url": "https://github.com/tamird/gvisor/commit/946447d01"
+        }
+      ],
+      "comparisons": [
+        {
+          "title": "MapRange: existing Map Save microbenchmark",
+          "description": "Go 1.27.1, one Linux AMD64 worker, fixed CPU affinity, GOMAXPROCS=1, 12 balanced before/after pairs and one-second measurements. The reported unit follows the existing benchmark calibration, not one complete Save call.",
+          "columns": [
+            "Measure",
+            "Before MapRange",
+            "After MapRange",
+            "Observed change"
+          ],
+          "rows": [
+            [
+              "Median time per normalized unit",
+              "240.95 ns",
+              "214.75 ns",
+              "\u221210.87%; p=.020, n=12 per side"
+            ],
+            [
+              "Allocated bytes per normalized unit",
+              "156 B",
+              "129 B",
+              "\u221217.31%"
+            ],
+            [
+              "Other timing comparisons",
+              "Seven retained controls",
+              "No statistically significant difference",
+              "Inconclusive; no equivalence claim"
+            ]
+          ],
+          "note": "All measured graph-fixture parameters were 1024. The ceil-batch normalization error was below 0.091% overall and 0.019% for Map Save. Integer allocs/op hides smaller allocation changes. CPU affinity does not establish exclusive capacity; repeated samples on one worker are not independent workers. No whole-checkpoint or other-architecture speedup is established.",
+          "evidence": [
+            {
+              "label": "Verified comparison run",
+              "url": "https://app.buildbuddy.io/invocation/0c042125-ad99-43ab-bf03-81ae81c39540"
+            },
+            {
+              "label": "Delivered MapRange repair #15542",
+              "url": "https://github.com/google/gvisor/pull/15542"
+            },
+            {
+              "label": "Exact experiment source 57ece9dbf",
+              "url": "https://github.com/tamird/gvisor/commit/57ece9dbf77006b7139d20e8bdf3f4d2191fc78d"
+            }
+          ]
         }
       ]
     },
