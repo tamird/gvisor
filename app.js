@@ -405,9 +405,10 @@ function restoreView() {
   let saved;
   try { saved = JSON.parse(localStorage.getItem(UI_KEY)); } catch { /* Invalid preferences are ignored. */ }
   const url = readViewURL();
+  if (saved) applyView(saved);
   if (url.explicit) applyView(url);
-  else if (saved && (!url.selected || url.selected === saved.selected)) applyView(saved);
-  else applyView({ ...url, focus: url.selected });
+  else if (!(saved && (!url.selected || url.selected === saved.selected)))
+    applyView({ ...url, focus: url.selected });
   // Recipient preferences cannot override an explicit shared view. A reload
   // of this same view may still restore its local pan and zoom.
   const sameView = saved && (url.explicit ? saved.url === currentViewURL() : !url.selected || url.selected === saved.selected);
