@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T13:06:58.290647+00:00",
+    "updatedAt": "2026-10-09T13:17:57.203091+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4902,57 +4902,61 @@
       }
     },
     {
-      "id": "branch:tcp-cubic-ack-credit",
+      "id": "branch:tcp-cubic-ack-tests-revised",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "tcp-cubic-ack-credit",
-      "head": "4742cda26c097ea47f47ac82c8848c30331e7beb",
+      "ref": "revise/tcp-cubic-ack-tests",
+      "head": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
       "title": "Preserve CUBIC ACK growth credit",
-      "url": "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb",
+      "url": "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f",
       "group": "runtime",
       "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
-      "summary": "The user accepted the CUBIC production change and requested test readability revisions. Simplify the CUBIC fixture comment and make each test\u2019s setup and behavioral purpose clear. The original reviewed head remains unchanged while an independently reviewed test-only revision runs its before/after validation. No replacement review question has been sent.\n\nPrior validation:\n\nIt preserves fractional ACK credit, bounds newly earned growth, resets credit after fast recovery, and carries excess ACKs across the slow-start threshold. Nine selected validation targets passed, including both architectures and an AMD64 race configuration. The packet phases are focused regressions; this is not a full e2e suite or performance result.",
+      "updatedAt": "2026-10-09T13:17:57.203091+00:00",
+      "summary": "The user is reviewing the revised CUBIC ACK-credit proposal before opening a PR. Production code remains byte-identical to the earlier accepted production change; the tests now use explicit small scenarios and clearer behavioral assertions. Revised tests reached seven expected before failures, then 14 passing architecture-specific unit leaves and two passing analyzer targets. The CUBIC packet operations are unchanged from their prior validation. Original topic commits remain preserved. This new exact-head review supersedes the answered request to revise the previous tests.",
       "followup": {
-        "disposition": "Contributor changes requested",
-        "owner": "syscall_validation",
-        "sourceHead": "4742cda26c097ea47f47ac82c8848c30331e7beb",
-        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
-        "nextAction": "Revise only the tests for legibility and behavioral coverage, obtain independent review, and revalidate before returning a new exact proposal to the user.",
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
+        "reviewedAt": "2026-10-09T13:17:57.203091+00:00",
+        "nextAction": "Await the user review of the revised tests and authorization to open the PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb"
+          "https://github.com/tamird/gvisor/compare/4742cda26...7a7b450fd",
+          "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f"
         ]
       },
-      "contributorChangesRequested": {
-        "head": "4742cda26c097ea47f47ac82c8848c30331e7beb",
-        "url": "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb"
+      "contributorReview": {
+        "status": "pending",
+        "head": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
+        "url": "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f"
       }
     },
     {
-      "id": "branch:tcp-reno-ack-credit",
+      "id": "branch:tcp-reno-ack-tests-revised",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "tcp-reno-ack-credit",
-      "head": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+      "ref": "revise/tcp-reno-ack-tests",
+      "head": "6f7518d05a0389933609bae5f2081bce883b483b",
       "title": "Consume Reno ACK credit before growing cwnd",
-      "url": "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+      "url": "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b",
       "group": "runtime",
       "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
-      "summary": "The user accepted the Reno production change and requested test readability revisions. Replace inscrutable setup and tables with short, explicit credit-consumption and credit-carry progressions. The original reviewed head remains unchanged while an independently reviewed test-only revision runs its before/after validation. No replacement review question has been sent.\n\nPrior validation:\n\nIt computes growth and remaining credit against the same original window, preventing spent credit from being reused or excess credit from being lost. Six selected validation targets passed, including both architectures and focused recovery cases.",
+      "updatedAt": "2026-10-09T13:17:57.203091+00:00",
+      "summary": "The user is reviewing the revised RENO ACK-credit proposal before opening a PR. Production code remains byte-identical to the earlier accepted production change; the tests now use explicit small scenarios and clearer behavioral assertions. Revised tests reached seven expected before failures, then 14 passing architecture-specific unit leaves and two passing analyzer targets. The CUBIC packet operations are unchanged from their prior validation. Original topic commits remain preserved. This new exact-head review supersedes the answered request to revise the previous tests.",
       "followup": {
-        "disposition": "Contributor changes requested",
-        "owner": "syscall_validation",
-        "sourceHead": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
-        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
-        "nextAction": "Revise only the tests for legibility and behavioral coverage, obtain independent review, and revalidate before returning a new exact proposal to the user.",
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "6f7518d05a0389933609bae5f2081bce883b483b",
+        "reviewedAt": "2026-10-09T13:17:57.203091+00:00",
+        "nextAction": "Await the user review of the revised tests and authorization to open the PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0"
+          "https://github.com/tamird/gvisor/compare/25bfc8d20...6f7518d05",
+          "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b"
         ]
       },
-      "contributorChangesRequested": {
-        "head": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
-        "url": "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0"
+      "contributorReview": {
+        "status": "pending",
+        "head": "6f7518d05a0389933609bae5f2081bce883b483b",
+        "url": "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b"
       }
     },
     {
@@ -6367,8 +6371,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
-      "summary": "Targeted controller and recovery correctness checks pass. One controlled high-BDP comparison favors the repaired CUBIC bundle over repaired Reno; broader performance and outage conclusions remain open. The user requested clearer tests for the first ACK-credit proposals.",
+      "updatedAt": "2026-10-09T13:17:57.203091+00:00",
+      "summary": "Targeted controller and recovery correctness checks pass. One controlled high-BDP comparison favors the repaired CUBIC bundle over repaired Reno; broader performance and outage conclusions remain open. The user is reviewing clearer tests for the first ACK-credit proposals.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6431,26 +6435,18 @@
           ]
         },
         {
-          "text": "The user accepted the production portions of the standalone CUBIC and Reno ACK-credit repairs and requested clearer tests. Independently reviewed test-only revisions now use explicit small credit-consumption and carry scenarios; their before/after remote validation is running. Original proposal heads remain unchanged. No replacement contributor-review question has been sent.",
+          "text": "After accepting the CUBIC and Reno production changes, the user requested clearer tests. The revised tests now use explicit small credit-consumption and carry scenarios. Seven expected before failures, 14 passing corrected architecture-specific unit leaves and two analyzer passes are independently verified; unchanged packet operations retain their prior evidence. The user is now reviewing the two revised exact-head proposals. Original topic commits remain preserved, and no upstream PR has been opened.",
           "evidence": [
             {
-              "label": "CUBIC proposal",
-              "url": "https://github.com/tamird/gvisor/commit/4742cda26"
+              "label": "Revised CUBIC test diff",
+              "url": "https://github.com/tamird/gvisor/compare/4742cda26...7a7b450fd"
             },
             {
-              "label": "Reno proposal",
-              "url": "https://github.com/tamird/gvisor/commit/25bfc8d20"
+              "label": "Revised Reno test diff",
+              "url": "https://github.com/tamird/gvisor/compare/25bfc8d20...6f7518d05"
             },
             {
-              "label": "Revised CUBIC tests",
-              "url": "https://github.com/tamird/gvisor/commit/5b30c85db"
-            },
-            {
-              "label": "Revised Reno tests",
-              "url": "https://github.com/tamird/gvisor/commit/6f7518d05"
-            },
-            {
-              "label": "Revised-test validation",
+              "label": "Revised-test before/after validation",
               "url": "https://app.buildbuddy.io/invocation/d976e990-e31c-4ee5-950f-3fbb1d6f19dd"
             }
           ]
