@@ -129,6 +129,68 @@ func TestCubicIdleExcludesOnlyCurrentEpoch(t *testing.T) {
 	}
 }
 
+func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = 100 * time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.LastRTT = rtt
+	c.CurrRTT = 2 * rtt
+	c.SampleCount = nRTTSample - 1
+	clock.Advance(rtt)
+	c.Update(1, 2*rtt, clock.NowMonotonic())
+	if c.s.Ssthresh != c.s.SndCwnd {
+		t.Fatal("HyStart did not end slow start")
+	}
+	if got, want := c.WMax, float64(c.s.SndCwnd); got != want {
+		t.Errorf("initial congestion-avoidance maximum = %f, want %f", got, want)
+	}
+	if age := clock.NowMonotonic().Sub(c.T); age != 0 {
+		t.Errorf("initial congestion-avoidance epoch age = %s, want 0", age)
+	}
+}
+
+func TestCubicFriendlyEstimateUsesACKs(t *testing.T) {
+	estimate := func(elapsed time.Duration, packetsAcked int) float64 {
+		clock := faketime.NewManualClock()
+		const rtt = 100 * time.Millisecond
+		c := newTestCubic(t, clock, rtt)
+		c.s.ep.mu.Lock()
+		defer c.s.ep.mu.Unlock()
+		c.HandleLossDetected()
+		c.s.leaveRecovery()
+		clock.Advance(elapsed)
+		c.Update(packetsAcked, rtt, clock.NowMonotonic())
+		return c.WEst
+	}
+	first := estimate(0, 10)
+	if delayed := estimate(time.Second, 10); delayed != first {
+		t.Errorf("equal ACK counts give different Reno estimates: immediate=%f delayed=%f", first, delayed)
+	}
+	if more := estimate(0, 20); more <= first {
+		t.Errorf("more ACKs did not increase the Reno estimate: first=%f more=%f", first, more)
+	}
+}
+
+func TestCubicFastConvergenceStartsAtCurrentWindow(t *testing.T) {
+	clock := faketime.NewManualClock()
+	c := newTestCubic(t, clock, 100*time.Millisecond)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	for range 2 {
+		c.HandleLossDetected()
+		c.s.leaveRecovery()
+	}
+	// Fast convergence changes the remembered maximum. The next epoch
+	// must still begin at the window the sender actually retained.
+	origin := c.cubicCwnd(-c.K)
+	want := float64(c.s.SndCwnd)
+	if origin < want-1 || origin > want+1 {
+		t.Fatalf("epoch curve starts at %f segments, want within one segment of %f", origin, want)
+	}
+}
+
 func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
 	clock := faketime.NewManualClock()
 	const rtt = 100 * time.Millisecond
