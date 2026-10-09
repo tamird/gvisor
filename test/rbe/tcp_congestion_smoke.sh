@@ -119,10 +119,10 @@ for variant in original cubic reno; do
   for helper in tcp_proxy nsjoin; do
     output=$(bazel cquery "${options[@]}" --output=files "//test/benchmarks/tcp:$helper" \
       2> "$directory/$helper-query-stderr.txt")
-    [[ $output == bazel-out/*/bin/test/benchmarks/tcp/$helper ]]
-    [[ -x $output ]]
     printf '%s\n' "$output" > "$directory/$helper-output.txt"
-    cp "$output" "$directory/helpers/$helper"
+    [[ $output == bazel-out/*/bin/test/benchmarks/tcp/$helper ]]
+    sudo -n install -m 755 -o "$(id -u)" -g "$(id -g)" -- \
+      "$output" "$directory/helpers/$helper"
   done
   sha256sum "$directory"/helpers/* > "$directory/helper-hashes.txt"
 done
