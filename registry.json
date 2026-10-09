@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T18:17:17.279160+00:00",
+    "updatedAt": "2026-10-09T18:39:05.122512+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6426,7 +6426,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T18:07:09.455446+00:00",
+      "updatedAt": "2026-10-09T18:39:05.122512+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -6727,7 +6727,7 @@
           ]
         },
         {
-          "text": "A separate standalone epoch proposal now has an accepted before/after unit and analyzer qualification. Its results remain pending verification; deliberate before failures are part of the method. The disabled-probe overhead correction is also prepared and source reviewed, with runtime measurement still pending. Neither preparation changes the source or results of the sharing studies above.",
+          "text": "The separate epoch qualification was accepted, but its outcome remains unknown after the bounded observation deadline: the hosting service did not expose an invocation or execution record. No startup or test result is established. The original acceptance is retained while the owner investigates the method and its disposition; no replacement run has been accepted. The disabled-probe overhead correction is source reviewed, with runtime measurement pending. These investigations do not alter the source or results of the sharing studies above.",
           "evidence": [
             {
               "label": "Epoch before/after qualification",
