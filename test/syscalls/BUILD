@@ -573,6 +573,7 @@ syscall_test(
     memory = "1GB",
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:ping_socket_test",
 )
 
@@ -780,6 +781,7 @@ syscall_test(
 
 syscall_test(
     shard_count = more_shards,
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:semaphore_test",
 )
 
@@ -994,6 +996,7 @@ syscall_test(
     shard_count = more_shards,
     # Takes too long under gotsan to run.
     tags = ["nogotsan"],
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:socket_ipv4_udp_unbound_loopback_nogotsan_test",
 )
 
@@ -1114,6 +1117,7 @@ syscall_test(
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
+    tcg_timeout = "eternal",
     test = "//test/syscalls/linux:socket_stress_test",
 )
 
@@ -1384,6 +1388,9 @@ syscall_test(
     # Linux sizes its host thread limit from guest RAM. The thousand-thread
     # case also needs ptrace tracer and tracee threads.
     memory = "1GB",
+    # The million-syscall case exceeded 14 minutes under TCG.
+    # https://app.buildbuddy.io/invocation/9bfda50e-d746-44a1-bb16-d73f686fca72
+    tcg_timeout = "eternal",
     test = "//test/syscalls/linux:processes_test",
 )
 

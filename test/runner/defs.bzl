@@ -56,6 +56,7 @@ def _syscall_test(
         network_tools = False,
         memory = None,
         requires_atime = False,
+        tcg_timeout = None,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -191,6 +192,12 @@ def _syscall_test(
         {"amd64": runner_amd64_test, "arm64": runner_arm64_test},
         dict(attributes, compile_exec_compatible_with = attributes.get("exec_compatible_with", [])),
     )
+
+    # Emulation may need more wall time than the native payload. Keep that
+    # allowance on the outer TCG tests, without changing native or KVM tests.
+    tcg_attributes = {key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+    if tcg_timeout != None:
+        tcg_attributes["timeout"] = tcg_timeout
     if arm64_64k:
         test_architecture_variants(
             name + "_64k",
@@ -202,9 +209,7 @@ def _syscall_test(
             name = name + "_64k_tcg",
             payload = ":" + name + "_64k_arm64",
             tags = attributes["tags"] + ["arm64-64k-tcg"],
-            # Runtime policy belongs to the guest. Preserve the owning
-            # test's arguments, shard count and original timeout.
-            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+            **tcg_attributes
         )
 
     if arm64_rc:
@@ -213,7 +218,7 @@ def _syscall_test(
             payload = ":" + name + "_arm64",
             image = "//test/rbe/tcg:rc_guest",
             tags = attributes["tags"] + ["arm64-rc-tcg"],
-            **{key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+            **tcg_attributes
         )
 
     if amd64_rc:
@@ -289,7 +294,8 @@ def syscall_test_variants(
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
-        and requires_atime enables host atime updates.
+        and requires_atime enables host atime updates. tcg_timeout overrides
+        the Bazel timeout category only for the outer ARM64 TCG tests.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -485,7 +491,8 @@ def syscall_test(
       in_sandbox_cgroup: cgroup version to use inside the sandbox.
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
-        and requires_atime enables host atime updates.
+        and requires_atime enables host atime updates. tcg_timeout overrides
+        the Bazel timeout category only for the outer ARM64 TCG tests.
     """
     if not tags:
         tags = []
