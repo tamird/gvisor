@@ -665,3 +665,109 @@ func TestSaveAfterRestoreWithReplaceConfig(t *testing.T) {
 		t.Fatalf("restoredStack2.CheckLocalAddress(IPv6) = %d, want %d", got, preservedNICID)
 	}
 }
+
+// TestSACKCreditsAfterRestore is a qualification witness using the separately
+// qualified StateSnapshot API. It is not part of the standalone SACK patch.
+func TestSACKCreditsAfterRestore(t *testing.T) {
+	const payload = 32
+	const mtu = header.IPv4MinimumSize + header.TCPMinimumSize + header.TCPOptionsMaximumSize + payload
+	c := testcontext.New(t, mtu)
+	defer c.Cleanup()
+	c.Stack().SetAllowLiveTCPMigration(true)
+	c.Stack().SetRemoveConf(true)
+	e2e.SetStackSACKPermitted(t, c, true)
+	e2e.SetStackTCPRecovery(t, c, 0)
+	// Keep ordinary retransmission outside the checkpoint operation; no
+	// custom clock or callback is serialized with the stack.
+	minRTO := tcpip.TCPMinRTOOption(time.Minute)
+	if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &minRTO); err != nil {
+		t.Fatalf("SetTransportProtocolOption(TCPMinRTOOption): %s", err)
+	}
+	e2e.CreateConnectedWithSACKAndTS(c)
+	data := make([]byte, 5*payload)
+	n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{})
+	if err != nil {
+		t.Fatalf("Write: %s", err)
+	}
+	if got, want := n, int64(len(data)); got != want {
+		t.Fatalf("Write = %d, want %d", got, want)
+	}
+	for offset := 0; offset < len(data); offset += payload {
+		c.ReceiveAndCheckPacketWithOptions(data, offset, payload, e2e.TSOptionSize)
+	}
+	seq := seqnum.Value(testcontext.TestInitialSequenceNumber).Add(1)
+	c.SendAck(seq, payload)
+	c.Stack().Pause()
+	c.Stack().Resume()
+	start := c.IRS.Add(1 + 2*payload)
+	c.SendAckWithSACK(seq, payload, []header.SACKBlock{{Start: start, End: start.Add(2 * payload)}})
+	c.Stack().Pause()
+	c.Stack().Resume()
+	before, err := c.EP.(*tcp.Endpoint).StateSnapshot()
+	if err != nil {
+		t.Fatalf("StateSnapshot before Save: %s", err)
+	}
+	if got, want := before.Sender.SackedOut, 2; got != want {
+		t.Fatalf("SackedOut before Save = %d, want %d", got, want)
+	}
+	if got, want := before.SndBufState.SndBufUsed, 4*payload; got != want {
+		t.Fatalf("queued bytes before Save = %d, want %d", got, want)
+	}
+	var saved bytes.Buffer
+	if _, err := state.Save(context.Background(), &saved, c.Stack()); err != nil {
+		t.Fatalf("Save: %s", err)
+	}
+	restored := stack.New(stack.Options{
+		TransportProtocols: []stack.TransportProtocolFactory{tcp.NewProtocol},
+		NetworkProtocols:   []stack.NetworkProtocolFactory{ipv4.NewProtocol, ipv6.NewProtocol},
+	})
+	defer restored.Destroy()
+	if _, err := state.Load(context.Background(), bytes.NewReader(saved.Bytes()), restored); err != nil {
+		t.Fatalf("Load: %s", err)
+	}
+	link := channel.New(1000, mtu, "")
+	if err := restored.CreateNIC(1, link); err != nil {
+		t.Fatalf("CreateNIC: %s", err)
+	}
+	if err := restored.AddProtocolAddress(1, tcpip.ProtocolAddress{
+		Protocol:          header.IPv4ProtocolNumber,
+		AddressWithPrefix: testcontext.StackAddrWithPrefix,
+	}, stack.AddressProperties{}); err != nil {
+		t.Fatalf("AddProtocolAddress: %s", err)
+	}
+	restored.SetRouteTable([]tcpip.Route{{Destination: header.IPv4EmptySubnet, NIC: 1}})
+	restored.Restore()
+	endpoints := restored.RegisteredEndpoints()
+	if got, want := len(endpoints), 1; got != want {
+		t.Fatalf("restored endpoints = %d, want %d", got, want)
+	}
+	ep, ok := endpoints[0].(*tcp.Endpoint)
+	if !ok {
+		t.Fatalf("restored endpoint = %T, want *tcp.Endpoint", endpoints[0])
+	}
+	after, err := ep.StateSnapshot()
+	if err != nil {
+		t.Fatalf("StateSnapshot after Restore: %s", err)
+	}
+	if got, want := after.ID, before.ID; got != want {
+		t.Errorf("restored connection identity = %+v, want %+v", got, want)
+	}
+	if got, want := after.Sender.SndUna, before.Sender.SndUna; got != want {
+		t.Errorf("restored SndUna = %d, want %d", got, want)
+	}
+	if got, want := after.Sender.SndNxt, before.Sender.SndNxt; got != want {
+		t.Errorf("restored SndNxt = %d, want %d", got, want)
+	}
+	if got, want := after.Sender.SndCwnd, before.Sender.SndCwnd; got != want {
+		t.Errorf("restored cwnd = %d, want %d (no RTO or new sender)", got, want)
+	}
+	if got, want := after.SndBufState.SndBufUsed, before.SndBufState.SndBufUsed; got != want {
+		t.Errorf("restored queued bytes = %d, want %d", got, want)
+	}
+	if got, want := len(after.SACK.ReceivedBlocks), 0; got != want {
+		t.Errorf("restored scoreboard ranges = %d, want %d", got, want)
+	}
+	if got, want := after.Sender.SackedOut, 0; got != want {
+		t.Errorf("restored SackedOut = %d, want %d", got, want)
+	}
+}
