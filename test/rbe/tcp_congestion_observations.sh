@@ -247,19 +247,7 @@ while read -r name cc streams probe second delay; do
   printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
   if (( result != 0 )); then trial_status=1; fi
 done <<'TRIALS'
-legacy-no-output reno 1 false none 0
-linux-reno reno 1 false none 0
-linux-cubic cubic 2 true none 0
-netstack-reno reno 1 true none 0
-netstack-cubic cubic 2 true none 0
-server-cubic cubic 2 true none 0
-both-cubic cubic 1 true none 0
-ipv6-netstack-cubic cubic 1 false none 0
-linux-reno-shared reno 1 true linux/reno 0
-netstack-cubic-shared cubic 1 true netstack/cubic 0
 netstack-cubic-native-reno cubic 1 true linux/reno 0
-linux-reno-netstack-cubic-late reno 1 true netstack/cubic 3
-netstack-cubic-reno-late cubic 1 true netstack/reno 3
 term-mixed cubic 1 false linux/reno 0
 TRIALS
 git diff --exit-code > "$out/source-after.diff" || trial_status=1

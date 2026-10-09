@@ -688,7 +688,7 @@ record_qdiscs() {
   done
 }
 
-run_flow() (
+run_flow() {
   set -euo pipefail
   flow=\$1
   client_pid=
@@ -918,7 +918,7 @@ run_flow() (
   stack=linux
   if ${server}; then stack=netstack; fi
   echo "BenchmarkTCP/\${flow_label}role=server/stack=\$stack/cc=\$flow_cc/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$server_cpu_load cpu-time"
-)
+}
 
 if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
   record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-before.txt"
