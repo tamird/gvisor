@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T23:05:58.863504+00:00",
+    "updatedAt": "2026-10-09T23:26:01.027382+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5227,17 +5227,18 @@
       "url": "https://github.com/google/gvisor/pull/15604",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T23:05:58.863504+00:00",
-      "summary": "The user-approved epoch change is delivered as PR #15604. Maintainer review is pending. A Gemini bot suggested replacing the pre-existing math.Pow expression with multiplication. Root classified it as a nonblocking optimization suggestion: the claimed speedup is unmeasured, and numerical operation order needs care. The reviewed epoch source stays unchanged; this is retained as a performance followup, not a maintainer amendment request. The user directly asked the bot for a citation and benchmark evidence in that thread.\n\nThe user-approved change is delivered as PR #15604 at exact reviewed head 928a07c28. The contributor decision is complete; current maintainer review and CI are shown from GitHub. Root verified the published title, body, author, base and ready state.\n\nEarlier proposal and validation record:\n\nThe user is reviewing this prepared CUBIC follow-up. It initializes congestion-avoidance curves from the actual recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate with fractional growth. Idle window reduction resets the growth state. The selected before/after unit and analyzer evidence is closed; the original oversized-request observation remains unknown. The earlier ACK-credit prerequisite #15579 has merged, so it is no longer an active source blocker. This proposal carries no standalone performance or historical-outage claim.",
+      "updatedAt": "2026-10-09T23:26:01.027382+00:00",
+      "summary": "Root is validating a one-expression cubic-polynomial amendment in response to the review thread. Etienne reported microbenchmark results of 13.670 to 1.912 ns and 12.625 to 1.934 ns (20 samples); the comment did not include its benchmark source or environment. The amendment is public at 98d5af4a3 and validation is running. A reply remains pending. The live PR stays at the user-approved epoch head 928a07c28; contributor review of the amendment will be requested after validation.\n\nThe delivered epoch change initializes curves from the recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate. Its selected before/after unit and analyzer evidence is closed. The earlier ACK-credit prerequisite #15579 has merged.",
       "followup": {
-        "disposition": "Maintainer review pending; bot suggestion nonblocking",
-        "owner": "external_sweeps",
+        "disposition": "Amendment validating; review-thread reply pending",
+        "owner": "root",
         "sourceHead": "928a07c285d90bc5e485c939935a10134d80bbc7",
-        "reviewedAt": "2026-10-09T22:34:34.055018+00:00",
-        "nextAction": "Observe current-head human review and CI. The bot optimization suggestion is retained in the active CUBIC investigation; no source edit, reply or resolution is inferred from it.",
+        "reviewedAt": "2026-10-09T23:26:01.027382+00:00",
+        "nextAction": "Finish validation of 98d5af4a3, request contributor review, then update the PR and answer the existing thread after approval. Keep the current PR head and unresolved thread visible until that work is delivered.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15604",
-          "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7",
+          "https://github.com/google/gvisor/pull/15604#discussion_r4235310519",
+          "https://github.com/tamird/gvisor/commit/98d5af4a32ab97ff02115b815ceda526d108d5ce",
+          "https://app.buildbuddy.io/invocation/d1ed9946-bff4-41d1-93e5-5fdc83ba76b9",
           "https://github.com/google/gvisor/pull/15604#discussion_r4235045411",
           "https://github.com/google/gvisor/pull/15604#discussion_r4235255164"
         ],
@@ -6615,7 +6616,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T22:34:34.055018+00:00",
+      "updatedAt": "2026-10-09T23:26:01.027382+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -6937,15 +6938,19 @@
           ]
         },
         {
-          "text": "A bot suggested replacing the pre-existing math.Pow(t, 3) cubic-polynomial calculation with direct multiplication in the epoch PR. Its claimed speedup is unmeasured, and changing operation order needs numerical scrutiny. Root kept the reviewed source unchanged and retained the suggestion as a nonblocking performance followup; it is not a human maintainer request or a measured result.",
+          "text": "In the epoch PR review, Etienne reported microbenchmark results for replacing math.Pow(t, 3) with multiplication: 13.670 to 1.912 ns and 12.625 to 1.934 ns, with 20 samples per version. The comment did not include benchmark source or environment. Root prepared the one-expression amendment at 98d5af4a3 and is validating it against the existing CUBIC tests. The live PR remains 928a07c28; a thread reply and subsequent contributor review are pending.",
           "evidence": [
             {
-              "label": "Original bot suggestion on the epoch PR",
-              "url": "https://github.com/google/gvisor/pull/15604#discussion_r4235045411"
+              "label": "Maintainer-reported microbenchmarks",
+              "url": "https://github.com/google/gvisor/pull/15604#discussion_r4235310519"
             },
             {
-              "label": "Reviewed epoch proposal",
-              "url": "https://github.com/google/gvisor/pull/15604"
+              "label": "One-expression amendment under validation",
+              "url": "https://github.com/tamird/gvisor/commit/98d5af4a32ab97ff02115b815ceda526d108d5ce"
+            },
+            {
+              "label": "Existing CUBIC validation running",
+              "url": "https://app.buildbuddy.io/invocation/d1ed9946-bff4-41d1-93e5-5fdc83ba76b9"
             }
           ]
         }
