@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T20:02:43.526698+00:00",
+    "updatedAt": "2026-10-09T20:17:55.863852+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4180,14 +4180,14 @@
       "group": "tests",
       "head": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
       "status": "open",
-      "updatedAt": "2026-10-08T18:20:01.603216+00:00",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
       "summary": "The current a4fdb9d9 source received maintainer approval from konstantin-s-bogom at 18:04:59 UTC. The reviewer asked parth-opensrc to pull it in; no new review request is needed. No import is present in this complete snapshot. GitHub currently reports mergeability UNKNOWN, so conflict-free merge readiness is not established.\n\nEarlier preparation and validation:\n\nContributor approved 30dbbc37f; root owns publication of the source-equivalent refresh. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nPublic standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface’s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor’s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
       "followup": {
-        "disposition": "Current-head approved; awaiting import",
+        "disposition": "Fresh current-head approval observed",
         "owner": "external_sweeps",
-        "nextAction": "Follow the existing maintainer import handoff and exact-head checks; do not re-request review.",
+        "nextAction": "Observe the matching import and current-head CI; no contributor decision remains.",
         "sourceHead": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
-        "reviewedAt": "2026-10-08T18:48:51.862003+00:00",
+        "reviewedAt": "2026-10-09T20:12:40.895923+00:00",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3e05d4b8a239b70503b795d8435c6a1a18e99ac0",
           "https://github.com/tamird/gvisor/actions/runs/37623291651",
@@ -4788,15 +4788,15 @@
       "title": "Initialize mmap fixture files with ftruncate",
       "url": "https://github.com/google/gvisor/pull/15561",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-09T17:52:54.269792+00:00",
+      "status": "merged",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
       "summary": "Konstantin approved the current mmap setup-fix head 2c12d3463 on October 9. It is ready to pull with passing checks; import and merge remain separate observations. No contributor decision remains.\n\nEarlier observations:\n\nThe user-approved change is now open as PR #15561 at 2c12d3463. The current-base rebase preserves the approved 9f62c55b2 patch, complete changed source bodies and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt replaces the unchecked one-byte initialization loop with checked ftruncate, preserving the required half-page zero-filled file, initial offset, mapping assertions and deadlines. On the qualified composition, all twelve original 300-second shards passed: both ARM64/64K owners report 118 cases each and native AMD64 reports 119, with no skips. The extra native case is Map32Bit, compiled only on x86_64. Actual changed source, fresh object/native binaries, payloads and all executed actions are joined to the original console and XML outputs. This is fixture correctness and completion evidence, not a measured speedup or a full 64K-profile pass. No upstream PR is open.",
       "followup": {
-        "disposition": "Current-head approved; awaiting import",
+        "disposition": "Merged upstream",
         "owner": "external_sweeps",
-        "nextAction": "Observe import and merge progress for the approved current head.",
+        "nextAction": "No source action remains; retain the delivered change and its validation evidence.",
         "sourceHead": "2c12d34638c19fce419004a482936e0f1a1b970b",
-        "reviewedAt": "2026-10-09T17:46:23.365254+00:00",
+        "reviewedAt": "2026-10-09T20:12:40.895923+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15561",
           "https://github.com/tamird/gvisor/commit/9f62c55b25ccfb745b14de5f91b13bb85b051f02",
@@ -4804,7 +4804,7 @@
           "https://github.com/google/gvisor/pull/15561#pullrequestreview-5473386337"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "number": 15561
     },
@@ -4817,15 +4817,15 @@
       "title": "Honor packet logging with network=none",
       "url": "https://github.com/google/gvisor/pull/15563",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-09T17:43:41.528385+00:00",
+      "status": "merged",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
       "summary": "Konstantin approved the current head 4c9fc9af5 on October 9. Current-head source checks pass; import and merge progress are separate observations. No contributor decision remains.\n\nEarlier observations:\n\nThe user-approved change is now open as PR #15563 at 4c9fc9af5. The current-base rebase preserves the approved 5043e2ec2 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIndependent source and saved-result reviews are closed. The same existing TCP case passed before and after at its original 900-second deadline; the retained logs contained no packet records before and sixteen matching send/receive records after, including SYN, SYNACK and FIN. Source, native binaries, actual actions, sandbox identity and the listener tuple are joined to those logs. The common fork-only fixture retained successful logs without removing their warning checks. This verifies logging behavior; it does not explain or resolve the earlier ARM64/64K TCP failure. No upstream PR is open.",
       "followup": {
-        "disposition": "Current-head approved; awaiting import",
+        "disposition": "Merged upstream",
         "owner": "external_sweeps",
-        "nextAction": "Observe import and merge progress for the approved current head through the sole collector.",
+        "nextAction": "No source action remains; retain the delivered change and its validation evidence.",
         "sourceHead": "4c9fc9af56c335bf7a6cf810b980112ec2ba86b1",
-        "reviewedAt": "2026-10-09T17:36:27.992866+00:00",
+        "reviewedAt": "2026-10-09T20:12:40.895923+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15563",
           "https://github.com/tamird/gvisor/commit/5043e2ec26059ee95f2b24b19589ce7660d97eb2",
@@ -4833,7 +4833,7 @@
           "https://github.com/google/gvisor/pull/15563#pullrequestreview-5473329267"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "number": 15563
     },
@@ -4874,16 +4874,19 @@
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
-      "status": "Full 64K failed; saved review complete",
-      "summary": "Independent saved-result review is complete for the current full ARM64 64K run. All 661 owners and 1,211 fresh original shards are accounted for: 652 owners pass, seven time out and two fail; shard totals are 1,194 passing, fifteen timed out and two failed. Corrected mmap/cgroup coverage passes ten actions and 348 actual cases, including all 56 identities in both cgroup reports. The original full profile still fails. The later cookie repair, now PR #15583, separately passes both complete loopback owners (16 shards). It is a different source and does not turn this original full-profile run into a pass. Canonical qualification is unchanged.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
-      "updatedAt": "2026-10-09T16:58:00.857342+00:00",
+      "status": "Full 64K failed; stress continuation running",
+      "summary": "The original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later six-owner timeout continuation at 19b passed five owners and 12 of 19 shards; all seven socket-stress shards timed out at 3600 seconds after earlier cases progressed. A source-reviewed follow-up at 3cd943971 is now running the same 33 stress cases as separate actions, keeping that continuation’s 3600-second deadlines and tracing. It uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the experimental native ARM64-host pilot is unchanged. This is fork qualification with no new pass credit or canonical promotion. The separate cookie repair #15583 passed both complete loopback owners (16 shards) on its own source; it does not turn the original full profile into a pass.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
       "followup": {
-        "disposition": "Full 64K failed; saved review complete",
+        "disposition": "Full 64K failed; stress continuation running",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-09T16:58:00.857342+00:00",
-        "nextAction": "Continue the remaining timeout investigation and track the delivered cookie repair #15583. Retain the original full-profile failure and do not promote canonical from partial follow-ups.",
+        "reviewedAt": "2026-10-09T20:17:55.863852+00:00",
+        "nextAction": "Observe the owner-run stress-shard continuation and retain the original full-profile and six-owner failures; canonical promotion remains with root.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/37985716856",
+          "https://github.com/tamird/gvisor/actions/runs/37975093514",
+          "https://github.com/tamird/gvisor/commit/3cd943971",
           "https://github.com/tamird/gvisor/actions/runs/37936357240",
           "https://github.com/tamird/gvisor/commit/c9bc07392",
           "https://github.com/tamird/gvisor/actions/runs/37893040742",
@@ -4966,18 +4969,18 @@
       "url": "https://github.com/google/gvisor/pull/15576",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
       "summary": "The user-approved Reno ACK-credit repair is now PR #15576, including the requested got/want assertion cleanup. Production behavior and test inputs retain their independently reviewed validation. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Fresh current-head approval observed",
         "owner": "external_sweeps",
         "sourceHead": "2f1ecd8af76a4221027522fa73612f2bf34af45b",
-        "reviewedAt": "2026-10-09T15:00:39.047132+00:00",
-        "nextAction": "Observe current-head checks, maintainer review and import status through the sole collector.",
+        "reviewedAt": "2026-10-09T20:12:40.895923+00:00",
+        "nextAction": "Observe the matching import and current-head CI; no contributor decision remains.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15576"
         ],
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
       "number": 15576
@@ -7081,8 +7084,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T18:17:17.279160+00:00",
-      "summary": "Optimization research has resumed. The existing source assessment identifies generated typed-field operations that can share the serializer’s graph and wire mechanism. Prior findings remain below; no new prototype or speedup is claimed.",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
+      "summary": "Optimization research is active. MapRange and a separate struct/header coallocation experiment now have verified measurements; the latter reduces selected Save allocation counts without a statistically significant timing change. Generated or generic typed-field operations remain a design avenue whose performance benefit is unmeasured.",
       "findings": [
         {
           "text": "go_stateify already emits typed field addresses, but Sink/Source erase them through any and reflection. Typed scalar-slot operations could preserve that information while sharing the existing object graph, wire values, registry, field reconciliation and hooks. The syntax-only generator cannot safely guess imported or shadowed scalar types; wider migration would need declared type information.",
@@ -7132,7 +7135,7 @@
           ]
         }
       ],
-      "nextStep": "Use the verified MapRange comparison and subsequent fixed-work benchmarks and profiles to select justified reflection, allocation and generated or generic typed-field experiments. Preserve graph identity, wire format and handwritten hooks while measuring the benefit of each change.",
+      "nextStep": "Use the fixed-work benchmarks and new allocation results to investigate remaining reflection, map-load and typed-field costs. Preserve graph identity, wire format and handwritten hooks while measuring each change.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7145,8 +7148,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T18:17:17.279160+00:00",
-      "summary": "The first resumed experiment is independently verified: the delivered MapRange loop reduced the Map Save median time by 10.87% and allocated bytes by 17.31% in the existing normalized microbenchmark. Seven timing controls were inconclusive. This is one worker and one codec cohort, not a whole-checkpoint speedup.",
+      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
+      "summary": "Two experiments now have independently verified findings. The delivered MapRange loop improved the studied Map Save microbenchmark. A separate struct/header coallocation prototype reduced allocation counts in control-message and UDP receive-queue Save, but none of its eleven timing comparisons was statistically significant. No whole-checkpoint speedup is established.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7220,9 +7223,30 @@
               "url": "https://github.com/tamird/gvisor/blob/57ece9dbf/pkg/state/decode.go"
             }
           ]
+        },
+        {
+          "text": "The struct/header coallocation experiment changes only encode.go and wire.go against the fixed-work baseline. Independent review verified 264 measured rows and 12 balanced before/after pairs per cohort. Control-message Save uses 11.76% fewer allocations; UDP queue Save uses 12.83%, 19.03% and 20.30% fewer at 1, 8 and 32 packets. All eleven timing comparisons are nonsignificant (smallest p=.060). Allocated bytes are essentially unchanged and serialized sizes are identical. This remains an experiment, not a ready PR or checkpoint-speedup claim.",
+          "evidence": [
+            {
+              "label": "Control-message and microbenchmark comparison",
+              "url": "https://app.buildbuddy.io/invocation/2023cba4-aaa8-4b99-8301-54e172f9e52c"
+            },
+            {
+              "label": "UDP receive-queue comparison",
+              "url": "https://app.buildbuddy.io/invocation/bf2b39f8-b6d9-4826-a666-bcecdac8c5cc"
+            },
+            {
+              "label": "Exact coallocation source ce1f52173",
+              "url": "https://github.com/tamird/gvisor/commit/ce1f521739d480ca1cb6f3ce42a677f9d7705e20"
+            },
+            {
+              "label": "Unchanged fixed-work baseline 5ffc5b276",
+              "url": "https://github.com/tamird/gvisor/commit/5ffc5b27692f50fb685bff456b0552bc1f806c6b"
+            }
+          ]
         }
       ],
-      "nextStep": "Validate the prepared fixed-work benchmark, then target decoder-map preallocation at the code that actually creates referenced maps. Continue measurements and profiles to select further justified state optimizations, including Stats, wire allocations and typed-field operations.",
+      "nextStep": "Investigate remaining reflection, map-load allocation ownership and generated or generic typed-field costs using the now-delivered fixed-work benchmarks. Measure each justified change and preserve graph identity, wire compatibility and handwritten hooks.",
       "evidence": [
         {
           "label": "Studied production revision",
@@ -7233,12 +7257,12 @@
           "url": "https://github.com/google/gvisor/pull/15542"
         },
         {
-          "label": "Prepared fixed-work benchmark 52f771301",
-          "url": "https://github.com/tamird/gvisor/commit/52f771301"
-        },
-        {
           "label": "Withdrawn one-line preallocation candidate 946447d01",
           "url": "https://github.com/tamird/gvisor/commit/946447d01"
+        },
+        {
+          "label": "Delivered fixed-work benchmark PR #15591",
+          "url": "https://github.com/google/gvisor/pull/15591"
         }
       ],
       "comparisons": [
@@ -7284,6 +7308,61 @@
             {
               "label": "Exact experiment source 57ece9dbf",
               "url": "https://github.com/tamird/gvisor/commit/57ece9dbf77006b7139d20e8bdf3f4d2191fc78d"
+            }
+          ]
+        },
+        {
+          "title": "Struct/header coallocation: allocation counts",
+          "description": "Median allocations per complete Save operation. Each cohort used 12 balanced before/after pairs on one fixed-CPU worker; the microbenchmark and UDP cohorts used separate workers. Baseline 5ffc5b276; candidate ce1f52173.",
+          "columns": [
+            "Workload",
+            "Before allocs/op",
+            "After allocs/op",
+            "Observed change"
+          ],
+          "rows": [
+            [
+              "Control-message Save",
+              "68",
+              "60",
+              "-11.76%"
+            ],
+            [
+              "UDP queue Save: 1 packet",
+              "187",
+              "163",
+              "-12.83%"
+            ],
+            [
+              "UDP queue Save: 8 packets",
+              "972",
+              "787",
+              "-19.03%"
+            ],
+            [
+              "UDP queue Save: 32 packets",
+              "3628.5",
+              "2892",
+              "-20.30%"
+            ]
+          ],
+          "note": "No timing comparison among the eight microbenchmarks and three UDP occupancies was statistically significant (minimum p=.060). This is not evidence of timing equivalence. Allocated bytes changed by at most about +0.021% and wire sizes were identical. Repeated pairs are not independent workers; these are allocation findings, not an end-to-end checkpoint speedup.",
+          "evidence": [
+            {
+              "label": "Control-message and microbenchmark comparison",
+              "url": "https://app.buildbuddy.io/invocation/2023cba4-aaa8-4b99-8301-54e172f9e52c"
+            },
+            {
+              "label": "UDP receive-queue comparison",
+              "url": "https://app.buildbuddy.io/invocation/bf2b39f8-b6d9-4826-a666-bcecdac8c5cc"
+            },
+            {
+              "label": "Exact coallocation source ce1f52173",
+              "url": "https://github.com/tamird/gvisor/commit/ce1f521739d480ca1cb6f3ce42a677f9d7705e20"
+            },
+            {
+              "label": "Unchanged fixed-work baseline 5ffc5b276",
+              "url": "https://github.com/tamird/gvisor/commit/5ffc5b27692f50fb685bff456b0552bc1f806c6b"
             }
           ]
         }
