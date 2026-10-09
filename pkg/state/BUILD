@@ -76,7 +76,7 @@ go_library(
         "state_norace.go",
         "state_race.go",
         "stats.go",
-        "typed.go",
+        "typed_unsafe.go",
         "types.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state",

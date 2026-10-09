@@ -79,10 +79,17 @@ func NewFieldCodec[T any](_ *T) FieldCodec[T] {
 // have the same underlying scalar representation. This includes defined types,
 // which would be missed by a type switch over the value. Pointer conversion is
 // confined here; graph objects continue to use the shared resolver.
-func scalarFieldCodec[T, U any](save func(Sink, int, *U), load func(Source, int, *U)) FieldCodec[T] {
+func scalarFieldCodec[T, U any](save func(Sink, int, *U), load func(*U, wire.Object) bool) FieldCodec[T] {
 	return FieldCodec[T]{
 		save: func(s Sink, slot int, value *T) { save(s, slot, (*U)(unsafe.Pointer(value))) },
-		load: func(s Source, slot int, value *T) { load(s, slot, (*U)(unsafe.Pointer(value))) },
+		load: func(s Source, slot int, value *T) {
+			encoded := s.field(slot)
+			if !load((*U)(unsafe.Pointer(value)), encoded) {
+				// The dynamic path must retain T: interface assignment checks
+				// depend on the field's actual type, not just its representation.
+				loadTypedFallback(s, value, encoded)
+			}
+		},
 	}
 }
 
@@ -136,16 +143,16 @@ func saveSigned[T signed](s Sink, slot int, value *T) {
 }
 
 // loadSigned loads a generated signed integer field with truncation checking.
-func loadSigned[T signed](s Source, slot int, value *T) {
-	encoded := s.field(slot)
+func loadSigned[T signed](value *T, encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Int:
 		*value = T(x)
 		checkInt(int64(x), int64(*value))
 	default:
-		loadTypedFallback(s, value, encoded)
+		return false
 	}
+	return true
 }
 
 // saveUnsigned saves a generated unsigned integer field, including defined types.
@@ -158,16 +165,16 @@ func saveUnsigned[T unsigned](s Sink, slot int, value *T) {
 }
 
 // loadUnsigned loads a generated unsigned integer field with truncation checking.
-func loadUnsigned[T unsigned](s Source, slot int, value *T) {
-	encoded := s.field(slot)
+func loadUnsigned[T unsigned](value *T, encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Uint:
 		*value = T(x)
 		checkUint(uint64(x), uint64(*value))
 	default:
-		loadTypedFallback(s, value, encoded)
+		return false
 	}
+	return true
 }
 
 // saveBool saves a generated boolean field, including defined types.
@@ -180,15 +187,15 @@ func saveBool[T ~bool](s Sink, slot int, value *T) {
 }
 
 // loadBool loads a generated boolean field.
-func loadBool[T ~bool](s Source, slot int, value *T) {
-	encoded := s.field(slot)
+func loadBool[T ~bool](value *T, encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Bool:
 		*value = T(x)
 	default:
-		loadTypedFallback(s, value, encoded)
+		return false
 	}
+	return true
 }
 
 // saveString saves a generated string field, including defined types.
@@ -202,15 +209,15 @@ func saveString[T ~string](s Sink, slot int, value *T) {
 }
 
 // loadString loads a generated string field.
-func loadString[T ~string](s Source, slot int, value *T) {
-	encoded := s.field(slot)
+func loadString[T ~string](value *T, encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case *wire.String:
 		*value = T(*x)
 	default:
-		loadTypedFallback(s, value, encoded)
+		return false
 	}
+	return true
 }
 
 // saveFloat saves a generated floating-point field at its declared width.
@@ -227,8 +234,7 @@ func saveFloat[T floating](s Sink, slot int, value *T) {
 }
 
 // loadFloat loads a generated floating-point field with truncation checking.
-func loadFloat[T floating](s Source, slot int, value *T) {
-	encoded := s.field(slot)
+func loadFloat[T floating](value *T, encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Float32:
@@ -237,8 +243,9 @@ func loadFloat[T floating](s Source, slot int, value *T) {
 		*value = T(x)
 		checkFloat(float64(x), float64(*value))
 	default:
-		loadTypedFallback(s, value, encoded)
+		return false
 	}
+	return true
 }
 
 // saveComplex saves a generated complex field at its declared width.
@@ -257,8 +264,7 @@ func saveComplex[T complexNumber](s Sink, slot int, value *T) {
 }
 
 // loadComplex loads a generated complex field with truncation checking.
-func loadComplex[T complexNumber](s Source, slot int, value *T) {
-	encoded := s.field(slot)
+func loadComplex[T complexNumber](value *T, encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case *wire.Complex64:
@@ -267,8 +273,9 @@ func loadComplex[T complexNumber](s Source, slot int, value *T) {
 		*value = T(*x)
 		checkComplex(complex128(*x), complex128(*value))
 	default:
-		loadTypedFallback(s, value, encoded)
+		return false
 	}
+	return true
 }
 
 // SavePointer saves a generated pointer field through the shared object graph.
