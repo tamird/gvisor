@@ -759,9 +759,26 @@ type Struct struct {
 	fields Object // Optionally noObjects or *multipleObjects.
 }
 
+// NewStruct allocates a struct with the given number of field slots.
+func NewStruct(slots int) *Struct {
+	if slots > 1 {
+		// Keep the slice header with the struct instead of allocating a
+		// separate header for the interface stored in Struct.fields.
+		s := &struct {
+			Struct
+			fields multipleObjects
+		}{fields: make(multipleObjects, slots)}
+		s.Struct.fields = &s.fields
+		return &s.Struct
+	}
+	s := new(Struct)
+	s.Alloc(slots)
+	return s
+}
+
 // Field returns a pointer to the given field slot.
 //
-// This must be called after Alloc.
+// The slots must be allocated by NewStruct or Alloc.
 func (s *Struct) Field(i int) *Object {
 	if fields, ok := s.fields.(*multipleObjects); ok {
 		return &((*fields)[i])
@@ -775,9 +792,9 @@ func (s *Struct) Field(i int) *Object {
 
 // Alloc allocates the given number of fields.
 //
-// This must be called before Add and Save.
+// This must be called before Field and save.
 //
-// Precondition: slots must be positive.
+// Precondition: slots must be non-negative.
 func (s *Struct) Alloc(slots int) {
 	switch {
 	case slots == 0:
@@ -815,8 +832,8 @@ func loadStruct(r *Reader) Struct {
 
 // save implements Object.save.
 //
-// Precondition: Alloc must have been called, and the fields all filled in
-// appropriately. See Alloc and Add for more details.
+// Precondition: NewStruct or Alloc initialized the field slots, and the
+// caller has filled them through Field.
 func (s *Struct) save(w *Writer) {
 	Uint(s.TypeID).save(w)
 	Save(w, s.fields)

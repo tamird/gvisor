@@ -488,38 +488,30 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		*dest = s
 		return
 	}
-	s := &wire.Struct{}
+	// Look up the field count before allocation so the wire struct and its
+	// field slice header can share an allocation.
+	te, ok := es.types.Lookup(obj.Type())
+	slots := 0
+	if te != nil {
+		slots = len(te.Fields)
+	} else if obj.NumField() != 0 {
+		Failf("struct %T does not implement SaverLoader", obj.Interface())
+	}
+	s := wire.NewStruct(slots)
 	*dest = s
 	es.encodedStructs[obj] = s
+	if te == nil {
+		// Unregistered empty structs have no fields or hooks. They still
+		// cannot be restored through interfaces without a registered type.
+		return
+	}
 
-	// Ensure that the obj is addressable. There are two cases when it is
-	// not. First, is when this is dispatched via SaveValue. Second, when
-	// this is a map key as a struct. Either way, we need to make a copy to
-	// obtain an addressable value.
+	// SaveValue and map keys may be unaddressable. Preserve the original
+	// value as the cache key, then make a copy for the state methods.
 	if !obj.CanAddr() {
 		localObj := reflect.New(obj.Type())
 		localObj.Elem().Set(obj)
 		obj = localObj.Elem()
-	}
-
-	// Look the type up in the database.
-	te, ok := es.types.Lookup(obj.Type())
-	if te == nil {
-		if obj.NumField() == 0 {
-			// Allow unregistered anonymous, empty structs. This
-			// will just return success without ever invoking the
-			// passed function. This uses the immutable EmptyStruct
-			// variable to prevent an allocation in this case.
-			//
-			// Note that this mechanism does *not* work for
-			// interfaces in general. So you can't dispatch
-			// non-registered empty structs via interfaces because
-			// then they can't be restored.
-			s.Alloc(0)
-			return
-		}
-		// We need a SaverLoader for struct types.
-		Failf("struct %T does not implement SaverLoader", obj.Interface())
 	}
 	if !ok {
 		// Queue the type to be serialized.
@@ -528,7 +520,6 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 
 	// Invoke the provided saver.
 	s.TypeID = wire.TypeID(te.ID)
-	s.Alloc(len(te.Fields))
 	oe := objectEncoder{
 		es:      es,
 		encoded: s,
