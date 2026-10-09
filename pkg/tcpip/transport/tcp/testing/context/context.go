@@ -348,7 +348,7 @@ func (c *Context) CheckNoPacket(errMsg string) {
 // that it is an IPv4 packet with the expected source and destination
 // addresses. If no packet is received in the specified timeout it will return
 // nil.
-func (c *Context) GetPacketWithTimeout(timeout time.Duration) *buffer.View {
+func (c *Context) GetPacketWithTimeout(timeout time.Duration) (result *buffer.View) {
 	c.t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -372,6 +372,12 @@ func (c *Context) GetPacketWithTimeout(timeout time.Duration) *buffer.View {
 	}
 
 	view := pkt.ToView()
+	// Transfer ownership only after the checks return; FailNow runs defers.
+	defer func() {
+		if result == nil {
+			view.Release()
+		}
+	}()
 
 	if pkt.GSOOptions.Type != stack.GSONone && pkt.GSOOptions.L3HdrLen != header.IPv4MinimumSize {
 		c.t.Errorf("got L3HdrLen = %d, want = %d", pkt.GSOOptions.L3HdrLen, header.IPv4MinimumSize)
@@ -400,7 +406,7 @@ func (c *Context) GetPacket() *buffer.View {
 // and verifies that it is an IPv4 packet with the expected source
 // and destination address. If no packet is available it will return
 // nil immediately.
-func (c *Context) GetPacketNonBlocking() *buffer.View {
+func (c *Context) GetPacketNonBlocking() (result *buffer.View) {
 	c.t.Helper()
 
 	pkt := c.linkEP.Read()
@@ -422,6 +428,12 @@ func (c *Context) GetPacketNonBlocking() *buffer.View {
 	}
 
 	view := pkt.ToView()
+	// Transfer ownership only after the checks return; FailNow runs defers.
+	defer func() {
+		if result == nil {
+			view.Release()
+		}
+	}()
 
 	checker.IPv4(c.t, view, checker.SrcAddr(StackAddr), checker.DstAddr(TestAddr))
 	return view
@@ -645,7 +657,7 @@ func (c *Context) CreateV6Endpoint(v6only bool) {
 
 // GetV6Packet reads a single packet from the link layer endpoint of the context
 // and asserts that it is an IPv6 Packet with the expected src/dest addresses.
-func (c *Context) GetV6Packet() *buffer.View {
+func (c *Context) GetV6Packet() (result *buffer.View) {
 	c.t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -661,6 +673,12 @@ func (c *Context) GetV6Packet() *buffer.View {
 		c.t.Fatalf("got pkt.NetworkProtocolNumber = %d, want = %d", got, want)
 	}
 	v := pkt.ToView()
+	// Transfer ownership only after the checks return; FailNow runs defers.
+	defer func() {
+		if result == nil {
+			v.Release()
+		}
+	}()
 
 	checker.IPv6(c.t, v, checker.SrcAddr(StackV6Addr), checker.DstAddr(TestV6Addr))
 	return v
