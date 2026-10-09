@@ -4,6 +4,7 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
+const VIEWS = ["dag", "table", "investigations"];
 const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting import", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
@@ -239,6 +240,8 @@ function appendAttributes(container, node) {
 }
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
+function investigationMap() { return new Map((registry.investigations || []).map(item => [item.id, item])); }
+function selectionMap() { return view === "investigations" ? investigationMap() : nodeMap(); }
 function activeDependencyEdges() {
   const active = new Set(model.nodes.filter((node) => !resolved(node) && node.status !== "resolved").map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
@@ -336,39 +339,54 @@ function stateAge(node) {
   const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
   return records.length ? Math.max(...records.map(([, record]) => Date.parse(model.checkedAt) - Date.parse(record.since))) : -1;
 }
-const URL_FIELDS = ["view", "state", "q", "group", "resolved", "focus"];
+const URL_FIELDS = ["view", "state", "q", "group", "resolved", "focus", "investigation-status"];
 function selectedFromURL() {
   try { return decodeURIComponent(location.hash.slice(1)) || null; } catch { return null; }
 }
-function currentViewURL() {
+function currentViewURL(selection = selected) {
   const url = new URL(location.href); url.search = "";
   url.searchParams.set("view", view);
-  for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
-  if ($("search").value) url.searchParams.set("q", $("search").value);
-  if ($("group-filter").value) url.searchParams.set("group", $("group-filter").value);
-  if ($("show-resolved").checked) url.searchParams.set("resolved", "1");
-  if (focus) url.searchParams.set("focus", focus);
-  url.hash = selected ? encodeURIComponent(selected) : "";
+  if (view === "investigations") {
+    if ($("investigation-search").value) url.searchParams.set("q", $("investigation-search").value);
+    if ($("investigation-filter").value) url.searchParams.set("investigation-status", $("investigation-filter").value);
+  } else {
+    for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
+    if ($("search").value) url.searchParams.set("q", $("search").value);
+    if ($("group-filter").value) url.searchParams.set("group", $("group-filter").value);
+    if ($("show-resolved").checked) url.searchParams.set("resolved", "1");
+    if (focus) url.searchParams.set("focus", focus);
+  }
+  url.hash = selection ? encodeURIComponent(selection) : "";
   return url.pathname + url.search + url.hash;
 }
 function readViewURL() {
   const params = new URL(location.href).searchParams;
   return { explicit: URL_FIELDS.some(key => params.has(key)),
-    view: params.get("view") === "table" ? "table" : "dag",
+    view: VIEWS.includes(params.get("view")) ? params.get("view") : "dag",
     stateFilters: params.getAll("state"), search: params.get("q") || "", group: params.get("group") || "",
+    investigationStatus: params.get("investigation-status") || "",
     resolved: params.get("resolved") === "1", selected: selectedFromURL(), focus: params.get("focus") || null };
 }
 function applyView(saved) {
-  view = saved.view === "table" ? "table" : "dag";
-  stateFilters = new Set((Array.isArray(saved.stateFilters) ? saved.stateFilters : []).flatMap(state =>
-    state === "review" ? ["contributor-review", "maintainer-review"] : [state]).filter(state => FILTER_STATES.includes(state)));
-  $("search").value = typeof saved.search === "string" ? saved.search : "";
-  $("group-filter").value = [...$("group-filter").options].some(option => option.value === saved.group) ? saved.group : "";
-  $("show-resolved").checked = saved.resolved === true;
+  view = VIEWS.includes(saved.view) ? saved.view : "dag";
   const validID = id => typeof id === "string" && /^[^\s]{1,240}$/.test(id) ? id : null;
   const ids = nodeMap();
-  selected = ids.has(validID(saved.selected)) ? saved.selected : null;
-  focus = ids.has(validID(saved.focus)) && !resolved(ids.get(saved.focus)) ? saved.focus : null;
+  // URLs affect their displayed area. Saved preferences can retain both areas
+  // without letting hidden PR filters change an investigation's results.
+  if (view !== "investigations" || typeof saved.workSearch === "string") {
+    stateFilters = new Set((Array.isArray(saved.stateFilters) ? saved.stateFilters : []).flatMap(state =>
+      state === "review" ? ["contributor-review", "maintainer-review"] : [state]).filter(state => FILTER_STATES.includes(state)));
+    $("search").value = typeof saved.workSearch === "string" ? saved.workSearch : typeof saved.search === "string" ? saved.search : "";
+    $("group-filter").value = [...$("group-filter").options].some(option => option.value === saved.group) ? saved.group : "";
+    $("show-resolved").checked = saved.resolved === true;
+    focus = ids.has(validID(saved.focus)) && !resolved(ids.get(saved.focus)) ? saved.focus : null;
+  }
+  if (view === "investigations" || typeof saved.investigationSearch === "string") {
+    $("investigation-search").value = typeof saved.investigationSearch === "string" ? saved.investigationSearch : typeof saved.search === "string" ? saved.search : "";
+    $("investigation-filter").value = ["active", "concluded"].includes(saved.investigationStatus) ? saved.investigationStatus : "";
+  }
+  selected = selectionMap().has(validID(saved.selected)) ? saved.selected : null;
+  if (view === "investigations" && selected && !investigationMatches(investigationMap().get(selected))) selected = null;
 }
 function syncViewURL(navigation) {
   if (initializing) return;
@@ -379,7 +397,9 @@ function syncViewURL(navigation) {
 function saveView() {
   if (initializing) return;
   try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
-    search: $("search").value, group: $("group-filter").value, resolved: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
+    search: view === "investigations" ? $("investigation-search").value : $("search").value,
+    workSearch: $("search").value, investigationSearch: $("investigation-search").value, investigationStatus: $("investigation-filter").value,
+    group: $("group-filter").value, resolved: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
 }
 function restoreView() {
   let saved;
@@ -401,11 +421,46 @@ function navigateFromURL() {
   if (location.href === lastNavigationURL) return;
   const url = readViewURL(); applyView(url.explicit ? url : { ...url, focus: url.selected });
   const ids = nodeMap();
-  if (!ids.has(selected)) selected = null;
+  if (!selectionMap().has(selected)) selected = null;
   if (!ids.has(focus)) focus = null;
   searchEditing = false; render(true);
+  if (view === "investigations" && selected)
+    document.querySelector(`[data-investigation="${CSS.escape(selected)}"]`)?.focus({ preventScroll: true });
 }
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
+function investigationMatches(item) {
+  const query = $("investigation-search").value.trim().toLowerCase(), state = $("investigation-filter").value;
+  const text = [item.title, item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text)].join(" ").toLowerCase();
+  return (!state || item.status === state) && (!query || text.includes(query));
+}
+function drawInvestigations() {
+  const list = $("investigation-list"); list.replaceChildren();
+  const items = [...investigationMap().values()].filter(investigationMatches)
+    .sort((a, b) => (a.status === "active" ? 0 : 1) - (b.status === "active" ? 0 : 1) || Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
+  for (const item of items) {
+    const card = element("article", `investigation-card${selected === item.id ? " selected" : ""}`); card.id = item.id;
+    const heading = element("h2"), control = element("a", "investigation-title", item.title);
+    control.href = currentViewURL(item.id); control.title = "Link to this investigation";
+    control.dataset.investigation = item.id; control.setAttribute("aria-current", selected === item.id ? "true" : "false"); heading.append(control);
+    card.append(heading, badge({ text: item.status === "active" ? "Active" : "Concluded", tone: item.status === "active" ? "pending" : "good" }),
+      element("span", "investigation-meta", `Owner: ${item.owner} · updated ${date(item.updatedAt)}`), element("p", "investigation-summary", item.summary));
+    if (item.findings.length) card.append(element("h3", "", "Findings"));
+    for (const finding of item.findings) {
+      const section = element("section", "investigation-finding"); section.append(element("p", "", finding.text));
+      const evidence = element("div", "investigation-evidence");
+      for (const source of finding.evidence) evidence.append(link(source.label + " ↗", source.url));
+      section.append(evidence); card.append(section);
+    }
+    if (item.nextStep) card.append(element("h3", "", item.status === "active" ? "Next step" : "Recommendation"), element("p", "", item.nextStep));
+    if (item.evidence.length) {
+      const evidence = element("div", "investigation-evidence");
+      for (const source of item.evidence) evidence.append(link(source.label + " ↗", source.url));
+      card.append(evidence);
+    }
+    list.append(card);
+  }
+  return items;
+}
 function graphNodes() {
   const chains = components(), filtering = filtered();
   if (!filtering && !focus) return tableNodes();
@@ -584,6 +639,7 @@ function drawTable(nodes) {
   }
 }
 function drawDetails() {
+  if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
   const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
   if (!node) return;
   const top = element("div", `detail-top ${node.type}`), close = button("×", () => select(null));
@@ -654,18 +710,23 @@ function drawChainSelector() {
   select.disabled = Boolean(filtered());
 }
 function render(reposition = false, navigation = "replace") {
-  const dag = view === "dag";
-  $("dag-pane").hidden = !dag; $("table-pane").hidden = dag;
-  $("dag-view").setAttribute("aria-pressed", dag); $("table-view").setAttribute("aria-pressed", !dag);
+  const dag = view === "dag", investigations = view === "investigations";
+  $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations;
+  for (const choice of VIEWS) $(`${choice}-view`).setAttribute("aria-pressed", view === choice);
+  document.body.classList.toggle("investigation-mode", investigations);
+  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations; $("resolved-control").hidden = investigations;
+  $("work-state-controls").hidden = investigations; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
   $("chain-control").hidden = !dag;
-  const nodes = dag ? graphNodes() : tableNodes();
-  $("visible-count").textContent = dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
-  $("filter-note").textContent = !model.statesAvailable ? "State history unavailable in this snapshot" : dag && filtered() ? "Matches with dependency context" : "";
+  const nodes = investigations ? drawInvestigations() : dag ? graphNodes() : tableNodes();
+  $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
+  $("filter-note").textContent = investigations ? "Research records · separate from GitHub status" : !model.statesAvailable ? "State history unavailable in this snapshot" : dag && filtered() ? "Matches with dependency context" : "";
   $("empty").hidden = nodes.length !== 0;
+  $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
   drawDetails(); drawStateFilters();
-  if (dag) { drawGraph(nodes); drawChainSelector(); } else drawTable(nodes);
-  $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items`;
-  if (reposition) resetCamera();
+  if (dag) { drawGraph(nodes); drawChainSelector(); } else if (!investigations) drawTable(nodes);
+  $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items · ${investigationMap().size} investigations`;
+  if (reposition && !investigations) resetCamera();
+  if (reposition && investigations && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
   syncViewURL(navigation); saveView();
 }
 function setFreshness(text, warning = false, live = false) {
@@ -717,7 +778,7 @@ function stateRecords(snapshot, node) {
 }
 function applyLive(snapshot, nextRegistry = registry) {
   liveSnapshot = snapshot;
-  const scrollPositions = ["table-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
+  const scrollPositions = ["table-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
@@ -741,7 +802,8 @@ function applyLive(snapshot, nextRegistry = registry) {
     groups: [...registry.groups, { id: "new", label: "New · not yet grouped" }] };
   if (aliases.has(selected)) selected = aliases.get(selected);
   if (aliases.has(focus)) focus = aliases.get(focus);
-  if (selected && !model.nodes.some((node) => node.id === selected)) selected = null;
+  if (selected && !selectionMap().has(selected)) selected = null;
+  if (view === "investigations" && selected && !investigationMatches(investigationMap().get(selected))) selected = null;
   if (focus && !model.nodes.some((node) => node.id === focus && !resolved(node))) focus = null;
   // Status updates redraw the data, not the user's viewport. Initial render,
   // filters and explicit graph controls own fitting/recentering.
@@ -750,7 +812,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
   const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
   setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
-  $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled GitHub collection keeps it current; selected PR details can check conflicts directly on GitHub without a token.";
+  $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled collection publishes new snapshots when its workflow completes; the timestamp remains authoritative. Selected PR details can check conflicts directly on GitHub without a token. Investigations are curated research records with their own update dates.";
 }
 function validateRegistry(candidate) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
@@ -764,6 +826,18 @@ function validateRegistry(candidate) {
   if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
   for (const edge of candidate.edges) if (edge.role !== undefined && (edge.role !== "proposed_update" || edge.type !== "includes" ||
       candidate.nodes.find(node => node.id === edge.from).type !== "branch" || candidate.nodes.find(node => node.id === edge.to).type !== "pr")) throw new Error("Invalid proposed update relationship");
+  if (candidate.investigations !== undefined) {
+    if (!Array.isArray(candidate.investigations)) throw new Error("Invalid investigations");
+    const evidenceValid = entries => Array.isArray(entries) && entries.every(entry => entry && typeof entry.label === "string" && entry.label.trim() && typeof entry.url === "string" && safeURL(entry.url));
+    for (const item of candidate.investigations) {
+      if (!item || typeof item.id !== "string" || !/^investigation:[a-z0-9][a-z0-9-]{0,79}$/.test(item.id) || ids.has(item.id) ||
+          !["active", "concluded"].includes(item.status) || ![item.title, item.owner, item.summary].every(value => typeof value === "string" && value.trim()) ||
+          !Number.isFinite(Date.parse(item.updatedAt)) || (item.nextStep !== undefined && typeof item.nextStep !== "string") || !evidenceValid(item.evidence) ||
+          !Array.isArray(item.findings) || !item.findings.every(finding => finding && typeof finding.text === "string" && finding.text.trim() && evidenceValid(finding.evidence)))
+        throw new Error("Invalid investigation record");
+      ids.add(item.id);
+    }
+  }
 }
 function updateRegistryControls() {
   const group = $("group-filter").value;
@@ -836,8 +910,16 @@ async function refresh(force = false) {
   } finally { refreshing = false; $("refresh").disabled = false; }
 }
 
-function setView(next) { view = next; render(true, "push"); }
+function setView(next) {
+  const investigationTransition = view === "investigations" || next === "investigations";
+  if (investigationTransition) selected = null;
+  view = next; searchEditing = false; render(!investigationTransition, "push");
+}
 function resetFilters(redraw = true) {
+  if (view === "investigations") {
+    $("investigation-search").value = ""; $("investigation-filter").value = ""; selected = null;
+    if (redraw) render(false, "push"); return;
+  }
   $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; stateFilters.clear();
   if (redraw) render(true, "push");
 }
@@ -853,9 +935,12 @@ function initialize() {
   }
   $("search").addEventListener("input", () => { render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("search").addEventListener("blur", () => { searchEditing = false; });
+  $("investigation-search").addEventListener("input", () => { selected = null; render(false, searchEditing ? "replace" : "push"); searchEditing = true; });
+  $("investigation-search").addEventListener("blur", () => { searchEditing = false; });
+  $("investigation-filter").addEventListener("change", () => { selected = null; render(false, "push"); });
   for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => render(true, "push"));
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; render(true, "push"); });
-  for (const next of ["dag", "table"]) $(`${next}-view`).addEventListener("click", () => setView(next));
+  for (const next of VIEWS) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
   document.querySelectorAll("[data-sort]").forEach((button) => button.addEventListener("click", () => {
     const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number", "age"].includes(next) ? -1 : 1; sortKey = next; render();
@@ -883,8 +968,8 @@ function initialize() {
     else if (["+", "="].includes(event.key)) zoom(1.2); else if (event.key === "-") zoom(1 / 1.2);
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "/" && !["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) { event.preventDefault(); $("search").focus(); }
-    if (event.key === "Escape") { $("search").blur(); select(null); }
+    if (event.key === "/" && !["INPUT", "SELECT", "TEXTAREA"].includes(document.activeElement.tagName)) { event.preventDefault(); $(view === "investigations" ? "investigation-search" : "search").focus(); }
+    if (event.key === "Escape") { $(view === "investigations" ? "investigation-search" : "search").blur(); select(null); }
   });
   window.addEventListener("hashchange", navigateFromURL);
   window.addEventListener("popstate", navigateFromURL);

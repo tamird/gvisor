@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <meta name="theme-color" content="#111917">
-  <meta name="description" content="Track gVisor reviews, imports, failing checks and time in each state alongside their dependencies.">
+  <meta name="description" content="Track gVisor reviews, imports and dependencies, with branchless investigations and their findings.">
   <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=attributes-20261008">
-  <script src="app.js?v=attributes-20261008" defer></script>
+  <link rel="stylesheet" href="style.css?v=investigations-20261009">
+  <script src="app.js?v=investigations-20261009" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -20,15 +20,17 @@
   </header>
   <main id="workspace">
     <div class="toolbar">
-      <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button></div>
+      <div class="view-switch" aria-label="View"><button id="dag-view" aria-pressed="true" aria-controls="dag-pane">Dependency DAG</button><button id="table-view" aria-pressed="false" aria-controls="table-pane">Table</button><button id="investigations-view" aria-pressed="false" aria-controls="investigations-pane">Investigations</button></div>
       <label class="search"><span class="sr-only">Search work</span><input id="search" type="search" placeholder="Search title, PR #, or branch" autocomplete="off"><kbd>/</kbd></label>
-      <label><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>
+      <label id="investigation-search-control" class="search" hidden><span class="sr-only">Search investigations</span><input id="investigation-search" type="search" placeholder="Search investigations and findings" autocomplete="off"><kbd>/</kbd></label>
+      <label id="group-control"><span class="sr-only">Workstream</span><select id="group-filter"><option value="">All workstreams</option></select></label>
       <label id="resolved-control" class="resolved-control"><input id="show-resolved" type="checkbox"> Show resolved</label>
+      <label id="investigation-filter-control" hidden><span class="sr-only">Investigation status</span><select id="investigation-filter"><option value="">All investigations</option><option value="active">Active</option><option value="concluded">Concluded</option></select></label>
       <button id="toolbar-reset" class="subtle">Reset</button>
     </div>
-    <section class="state-toolbar" aria-label="Work state filters">
+    <section id="work-state-controls" class="state-toolbar" aria-label="Work state filters">
       <div id="state-filters" class="state-filters" role="group" aria-label="Filter by state; select multiple to match any"></div>
-      <details class="state-help"><summary>States &amp; ages</summary><p>States can overlap. Select several to match any. Counts follow search and workstream. “Contributor review” means an actual pending decision on a linked candidate. “Maintainer review” means an open PR without reported approval or changes requested. “Awaiting import” means approved or ready-to-pull with no current public import; checks may still be failing or unknown. “Import PR open” identifies an existing exact-source import, not progress toward merge. “Waiting for merge” additionally requires nondraft, conflict-free source and import heads with complete green visible checks; it is an observation, not merge authorization. Failure labels identify the source or exact import PR; details link reported failing checks.</p><p>“obs” shows how long ago this state was first observed on the same revision, as of the snapshot. The transition may be older; continuity between scans is unknown. Exact GitHub merge/close times have no “obs”. Ages do not come from comment or update times. Select an item for dated evidence.</p></details>
+      <details class="state-help"><summary>States &amp; ages</summary><p>States can overlap. Select several to match any. Counts follow search and workstream. “Contributor review” means an actual pending decision on a linked candidate. “Maintainer review” means an open PR without effective current-head approval or changes requested. “Awaiting import” requires effective approval for the current source head and no current public import; checks may still be failing or unknown. “Import PR open” identifies an existing exact-source import, not progress toward merge. “Waiting for merge” additionally requires nondraft, conflict-free source and import heads with complete green visible checks; it is an observation, not merge authorization. Failure labels identify the source or exact import PR; details link reported failing checks.</p><p>“obs” shows how long ago this state was first observed on the same revision, as of the snapshot. The transition may be older; continuity between scans is unknown. Exact GitHub merge/close times have no “obs”. Ages do not come from comment or update times. Select an item for dated evidence.</p></details>
     </section>
     <div class="workspace-body">
       <section class="work-pane" aria-label="Work inventory">
@@ -54,6 +56,10 @@
             <th scope="col">Import · own checks</th>
             <th scope="col" aria-sort="none"><button data-sort="group">Workstream</button></th>
           </tr></thead><tbody></tbody></table>
+        </section>
+        <section id="investigations-pane" class="investigations-pane" aria-label="Investigations and findings" hidden>
+          <p class="investigation-intro">Research and tasks can start before a Git branch exists. Findings and evidence remain available after an investigation concludes.</p>
+          <div id="investigation-list"></div>
         </section>
         <div id="empty" class="empty" hidden><h2 id="empty-title">No matching work</h2><p id="empty-text">Try another search or reset the filters.</p><div><button id="reset-filters">Reset filters</button></div></div>
       </section>
