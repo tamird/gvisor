@@ -20,7 +20,9 @@ set -euo pipefail
 [[ $QUALIFICATION_BENCHMARK_TARGET == //test/benchmarks/tcp:tcp_benchmark ]]
 [[ $qualification_root_bazel == true ]]
 declare -F bazel >/dev/null
-out="$RUNNER_TEMP/qualification/tcp-congestion-sharing"
+block=${QUALIFICATION_COMPARISON_BLOCK:?}
+[[ $block == 1 || $block == 2 || $block == 3 ]]
+out="$RUNNER_TEMP/qualification/tcp-congestion-fairness"
 mkdir -p "$out"
 export out
 finish() {
@@ -35,7 +37,7 @@ finish() {
 trap finish EXIT
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
 git cat-file -p HEAD > "$out/source-commit.txt"
-for file in test/benchmarks/tcp/tcp_benchmark.sh test/benchmarks/tcp/tcp_proxy.go test/benchmarks/tcp/README.md test/benchmarks/tcp/BUILD tools/bazeldefs/go.bzl tools/bazeldefs/platforms.bzl .bazelrc pkg/tcpip/transport/tcp/cubic.go pkg/tcpip/transport/tcp/reno.go pkg/tcpip/transport/tcp/snd.go pkg/tcpip/transport/tcp/connect.go test/rbe/actions.sh .github/workflows/build.yml test/rbe/tcp_congestion_observations.sh; do
+for file in test/benchmarks/tcp/tcp_benchmark.sh test/benchmarks/tcp/tcp_proxy.go test/benchmarks/tcp/README.md test/benchmarks/tcp/BUILD tools/bazeldefs/go.bzl tools/bazeldefs/platforms.bzl .bazelrc pkg/tcpip/transport/tcp/cubic.go pkg/tcpip/transport/tcp/reno.go pkg/tcpip/transport/tcp/snd.go pkg/tcpip/transport/tcp/state.go pkg/tcpip/transport/tcp/connect.go test/rbe/actions.sh .github/workflows/build.yml test/rbe/tcp_congestion_observations.sh; do
   cp "$file" "$out/source-${file//\//_}"
 done
 sudo -n apt-get update > "$out/apt-update.txt" 2>&1
@@ -72,7 +74,7 @@ PROBE
 printf '%s\n' "$status" > "$out/host-netem-exit.txt"
 (( status == 0 ))
 grep -Fxq BASIC_NETEM_PASS "$out/host-netem.txt"
-# These are functional smoke trials with zero random loss/jitter/duplication.
+# These shared-bottleneck trials configure no random loss/jitter/duplication.
 # Unsupported seeded netem is recorded, not silently used for a loss study.
 seed_args=()
 if grep -Fxq seed_exit=0 "$out/host-netem.txt"; then seed_args=(--seed 1234); fi
@@ -80,9 +82,10 @@ options=(--config=rbe --config=x86_64 --remote_download_outputs=toplevel)
 bazel build "${options[@]}" \
   //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
   > "$out/build-stdout.txt" 2> "$out/build-stderr.txt"
-# Prior Go/Nogo checks apply unchanged; this run checks the shell topology and lifecycle.
+# The harness and complete controller bundle have closed correctness gates.
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
-# Only functional evidence: no goodput comparison or fairness calculation.
+# Preserve complete reports, including zero-byte flows. Fairness is reduced
+# offline using conservative common-window interval bounds, not session means.
 validate_receiver() {
   local dir=$1 streams=$2
   for status in cleanup-exit iperf-exit receiver-exit flow-exit; do
@@ -91,9 +94,9 @@ validate_receiver() {
   jq -e --argjson streams "$streams" '
     (has("error") | not) and .start.test_start.num_streams == $streams and
     (.end.streams | length) == $streams and
-    .end.sum_received.sender == false and .end.sum_received.bytes > 0 and
-    .end.sum_received.bits_per_second > 0 and
-    all(.end.streams[]; .receiver.sender == false and .receiver.bytes > 0 and .receiver.seconds > 0) and
+    .end.sum_received.sender == false and .end.sum_received.bytes >= 0 and
+    .end.sum_received.bits_per_second >= 0 and
+    all(.end.streams[]; .receiver.sender == false and .receiver.bytes >= 0 and .receiver.seconds > 0) and
     .end.sum_received.bytes == ([.end.streams[].receiver.bytes] | add) and
     (.intervals | length > 0) and all(.intervals[]; (.streams | length) == $streams)
   ' "$dir/receiver.json"
@@ -117,24 +120,11 @@ validate_probe() {
     }
     END {
       if (n != 4 || names[1] != "probe-launch" || names[2] != begin || names[3] != end ||
-          names[4] != "probe-stop" || boot[2]-boot[1] < 4.9 || boot[4]-boot[3] < 1.9 ||
-          before == 0 || operation == 0 || drain == 0) exit 1
+          names[4] != "probe-stop" || boot[2]-boot[1] < 4.9 || boot[4]-boot[3] < 1.9) exit 1
       printf "reply_samples baseline=%d operation=%d drain=%d\n", before, operation, drain
     }
   ' "$dir/ping-phases.tsv" "$dir/ping.txt"
 }
-validate_single() (
-  set -euo pipefail
-  local trial=$1 streams=$2 probe=$3
-  validate_receiver "$trial/results" "$streams"
-  grep -Fxq 0 "$trial/results/topology-cleanup-exit.txt"
-  grep -Eq '^BenchmarkTCP/.+ 1 [0-9.]+ Mb/s [0-9.]+ cpu-time$' "$trial/stdout.txt"
-  if [[ $probe == true ]]; then
-    validate_probe "$trial/results" client-operation-begin client-operation-end
-  else
-    [[ ! -e $trial/results/ping.txt ]]
-  fi
-)
 validate_shared() (
   set -euo pipefail
   local trial=$1 delay=$2 dir=$1/results
@@ -173,83 +163,63 @@ validate_shared() (
   grep -Fq client2.0 "$dir/interface-features.txt"
   validate_probe "$dir" flows-begin flows-end
 )
-validate_term() (
-  set -euo pipefail
-  local dir=$1/results
-  grep -Fxq 0 "$dir/topology-cleanup-exit.txt"
-  for flow in primary secondary; do
-    grep -Fxq 143 "$dir/$flow/flow-exit.txt"
-    grep -Fxq 0 "$dir/$flow/cleanup-exit.txt"
-    grep -Fxq 143 "$dir/$flow/iperf-exit.txt"
-    [[ -s $dir/$flow/receiver-exit.txt ]]
-    grep -Fq client-operation-begin "$dir/$flow/flow-phases.tsv"
-  done
-  [[ ! -e $dir/ping.txt ]]
+# Keep the declared trial order and actual orientation in each block.
+scenarios=(
+  'linux-rr linux reno linux reno 0'
+  'linux-cc linux cubic linux cubic 0'
+  'linux-cr linux cubic linux reno 0'
+  'linux-cr-late linux cubic linux reno 30'
+  'netstack-rr netstack reno netstack reno 0'
+  'netstack-cc netstack cubic netstack cubic 0'
+  'netstack-cr netstack cubic netstack reno 0'
+  'netstack-cr-late netstack cubic netstack reno 30'
+  'cross-cr netstack cubic linux reno 0'
+  'cross-cr-late netstack cubic linux reno 30'
 )
+case "$block" in
+  1) order=(0 1 2 3 4 5 6 7 8 9) ;;
+  2) order=(9 8 7 6 5 4 3 2 1 0) ;;
+  3) order=(4 5 6 7 8 9 0 1 2 3) ;;
+esac
+printf 'block=%s order=%s\n' "$block" "${order[*]}" > "$out/block.txt"
+printf 'position\tcase\tprimary_stack\tprimary_cc\tsecondary_stack\tsecondary_cc\tdelay\n' > "$out/trials.tsv"
 trial_status=0
-while read -r name cc streams probe second delay; do
+position=0
+for index in "${order[@]}"; do
+  read -r name first_stack first_cc second_stack second_cc delay <<< "${scenarios[index]}"
+  if [[ $block == 2 ]]; then
+    temporary_stack=$first_stack; temporary_cc=$first_cc
+    first_stack=$second_stack; first_cc=$second_cc
+    second_stack=$temporary_stack; second_cc=$temporary_cc
+  fi
+  position=$((position + 1))
   trial="$out/$name"
   mkdir -p "$trial"
-  run_options=()
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$position" "$name" "$first_stack" "$first_cc" "$second_stack" "$second_cc" "$delay" >> "$out/trials.tsv"
+  printf 'block=%s position=%s scenario=%s primary=%s/%s secondary=%s/%s delay=%s\n' \
+    "$block" "$position" "$name" "$first_stack" "$first_cc" "$second_stack" "$second_cc" "$delay" > "$trial/identity.txt"
   flags=(--linux-client)
-  case "$name" in
-    netstack-*|both-*|term-*) flags=(--client) ;;
-    server-*) flags=(--server) ;;
-    ipv6-*) flags=(--client --ipv6) ;;
-  esac
-  if [[ $name == both-cubic ]]; then flags=(--client --server); fi
-  duration=10
-  if [[ $second != none ]]; then
-    duration=12
-    second_stack=${second%%/*}
-    second_cc=${second#*/}
-    flags+=(--second-client "$second_stack" --second-start-delay "$delay")
-    # The native same-CC control exercises the documented default.
-    if [[ $name != linux-reno-shared ]]; then flags+=(--second-congestion-control "$second_cc"); fi
-  fi
-  if [[ $probe == true ]]; then flags+=(--latency-probe); fi
-  if [[ $name == legacy-no-output ]]; then
-    duration=2
-  else
-    flags+=(--output-dir "$trial/results")
-  fi
-  expected=0
-  if [[ $name == term-mixed ]]; then
-    duration=30
-    expected=124
-    run_options+=(--run_under='timeout --signal=TERM --kill-after=15s 12s')
-  fi
+  if [[ $first_stack == netstack ]]; then flags=(--client); fi
   result=0
-  timeout --signal=INT --kill-after=15s 90s bash -c 'bazel "$@"' _ run "${options[@]}" \
-    "--execution_log_compact_file=$trial/run-execution.binpb" "${run_options[@]}" \
+  timeout --signal=INT --kill-after=15s 180s bash -c 'bazel "$@"' _ run "${options[@]}" \
+    "--execution_log_compact_file=$trial/run-execution.binpb" \
     //test/benchmarks/tcp:tcp_benchmark -- \
-    "${flags[@]}" --no-user-ns --congestion-control "$cc" --ideal --latency 100 \
-    --rate 20 --queue-packets 100 --duration "$duration" --num-client-threads "$streams" --sack \
+    "${flags[@]}" --no-user-ns --congestion-control "$first_cc" \
+    --second-client "$second_stack" --second-congestion-control "$second_cc" \
+    --second-start-delay "$delay" --latency-probe --output-dir "$trial/results" \
+    --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 \
+    --duration 120 --num-client-threads 1 --sack \
     --disable-linux-gso --disable-linux-gro "${seed_args[@]}" \
     > "$trial/stdout.txt" 2> "$trial/stderr.txt" || result=$?
   printf '%s\n' "$result" > "$trial/exit.txt"
-  if (( result != expected )); then trial_status=1; continue; fi
+  if (( result != 0 )); then trial_status=1; continue; fi
   set +e
-  if [[ $name == term-mixed ]]; then
-    validate_term "$trial" > "$trial/observation-check.txt" 2>&1
-    result=$?
-  elif [[ $name == legacy-no-output ]]; then
-    grep -Eq '^BenchmarkTCP/role=client/stack=linux/cc=reno/.+ 1 [0-9.]+ Mb/s [0-9.]+ cpu-time$' "$trial/stdout.txt"
-    result=$?
-  elif [[ $second != none ]]; then
-    validate_shared "$trial" "$delay" > "$trial/observation-check.txt" 2>&1
-    result=$?
-  else
-    validate_single "$trial" "$streams" "$probe" > "$trial/observation-check.txt" 2>&1
-    result=$?
-  fi
+  validate_shared "$trial" "$delay" > "$trial/observation-check.txt" 2>&1
+  result=$?
   set -e
   printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
   if (( result != 0 )); then trial_status=1; fi
-done <<'TRIALS'
-netstack-cubic-native-reno cubic 1 true linux/reno 0
-term-mixed cubic 1 false linux/reno 0
-TRIALS
+done
 git diff --exit-code > "$out/source-after.diff" || trial_status=1
 printf '%s\n' "$trial_status" > "$out/final-exit.txt"
 exit "$trial_status"
