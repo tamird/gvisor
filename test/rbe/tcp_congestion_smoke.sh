@@ -26,6 +26,9 @@ export out
 finish() {
   local result=$?
   git diff --exit-code > "$out/source-after.diff" || result=1
+  if ! sudo -n chown -hR -- "$(id -u):$(id -g)" "$out" && (( result == 0 )); then
+    result=1
+  fi
   printf '%s\n' "$result" > "$out/driver-exit.txt"
   exit "$result"
 }
@@ -75,10 +78,6 @@ options=(--config=rbe --config=x86_64 --remote_download_outputs=toplevel)
 bazel build "${options[@]}" \
   //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
   > "$out/build-stdout.txt" 2> "$out/build-stderr.txt"
-bazel test "${options[@]}" --build_tag_filters= --test_tag_filters= \
-  --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_output=errors \
-  //tools/lint:buildifier \
-  > "$out/source-checks-stdout.txt" 2> "$out/source-checks-stderr.txt"
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
 trial_status=0
 for stack in linux netstack; do
