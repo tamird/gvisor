@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T11:16:35.120711+00:00",
+    "updatedAt": "2026-10-09T11:23:20.429651+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4993,6 +4993,37 @@
           "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
         ]
       }
+    },
+    {
+      "id": "branch:tcp-congestion-inheritance",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "investigate/tcp-congestion-inheritance",
+      "head": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
+      "title": "Inherit explicit TCP congestion control on accept",
+      "url": "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T11:23:20.429651+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
+        "url": "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165"
+      },
+      "summary": "The user is reviewing this standalone accepted-socket inheritance repair before opening a PR. Targeted corrected Go, native Linux and systrap tests plus two both-CPU analyzer targets passed. The expected before failures and the parent output-oracle failure remain recorded; quiet Go XML does not provide a named passing-case census.",
+      "followup": {
+        "disposition": "Contributor review requested",
+        "owner": "root",
+        "sourceHead": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
+        "reviewedAt": "2026-10-09T11:23:20.429651+00:00",
+        "nextAction": "Await the actual user decision on this exact standalone change before opening its PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
+          "https://github.com/tamird/gvisor/tree/investigate/tcp-congestion-inheritance",
+          "https://app.buildbuddy.io/invocation/828780c6-4bc1-467b-b4cc-e3d6c081bdad",
+          "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
+        ]
+      }
     }
   ],
   "edges": [
@@ -6354,7 +6385,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T11:16:35.120711+00:00",
+      "updatedAt": "2026-10-09T11:23:20.429651+00:00",
       "summary": "Targeted ACK-credit, idle and epoch corrections pass their correctness checks. A separate two-packet utilization regression remains under repair. The first controlled throughput comparison does not establish an improvement.",
       "findings": [
         {
@@ -6498,9 +6529,22 @@
               "url": "https://www.rfc-editor.org/rfc/rfc9438.html#section-5.8"
             }
           ]
+        },
+        {
+          "text": "A separate accepted-socket inheritance repair has passed its source and saved-result reviews, with expected before failures and passing corrected unit, native, sandbox and analyzer targets. The parent\u2019s output-oracle failure remains recorded, and quiet Go XML does not support a passing-case count. The exact standalone proposal is now awaiting the user\u2019s decision before a PR is opened.",
+          "evidence": [
+            {
+              "label": "Inheritance proposal awaiting contributor review",
+              "url": "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165"
+            },
+            {
+              "label": "Retained before/after validation",
+              "url": "https://app.buildbuddy.io/invocation/828780c6-4bc1-467b-b4cc-e3d6c081bdad"
+            }
+          ]
         }
       ],
-      "nextStep": "Validate the partial-utilization and listener-inheritance corrections, then assess all retained outcomes from the separate complete-controller throughput comparison.",
+      "nextStep": "Validate partial-utilization behavior, assess all outcomes from the running complete-controller comparison, and resolve the pending contributor decisions.",
       "evidence": [
         {
           "label": "Production CUBIC",
