@@ -109,3 +109,27 @@ type multiName struct {
 	x, y    int64
 	z       int32
 }
+
+// These defined types check that generated scalar operations preserve the
+// underlying representation without requiring an exact builtin type assertion.
+type typedSigned int16
+type typedUnsigned uint32
+type typedBool bool
+type typedString string
+type typedFloat float32
+type typedComplex complex64
+type typedPointer *typedFields
+
+// +stateify savable
+type typedFields struct {
+	signed   typedSigned
+	unsigned typedUnsigned
+	flag     typedBool
+	text     typedString
+	f32      typedFloat
+	f64      float64
+	c64      typedComplex
+	c128     complex128
+	zero     typedSigned
+	self     typedPointer
+}
