@@ -22,6 +22,21 @@ KVM and checkpoint owners remain outside this profile. A partition report
 retains all unexecuted owners. Selecting an owner does not establish that it
 passes under emulation.
 
+The default execution host remains AMD64. The `arm64_tcg_test` macro's
+explicit `host_architecture` parameter can select native ARM64 QEMU and
+filesystem tools on an ARM64 OCI worker. The manual
+`//test/syscalls:mincore_64k_{amd64,arm64}_host_test` pilots share the exact
+same guest image, payload target and runfiles archive. The parameter does
+not propagate through payload compilation as a build setting. The image
+producer remains on AMD64, and the separate AMD64 KVM path retains its
+device and host requirements. The full-profile qualifier continues to use
+its existing AMD64 route until the ARM64-host path is qualified.
+
+The launcher records the host architecture and declared QEMU version in its
+undeclared outputs. Host ISA similarity does not establish faster TCG
+execution; matched guest/payload bytes, original controls and actual results
+are needed before comparing the routes.
+
 Original test deadlines include guest boot and output transfer; small tests
 retain 60 seconds and medium tests retain 300 seconds. Each action requests
 two emulated CPUs and 3 GiB guest memory; the OCI action requests two CPUs,

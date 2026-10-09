@@ -1,3 +1,4 @@
+load("//test/rbe/tcg:defs.bzl", "arm64_tcg_test")
 load("//test/runner:defs.bzl", "syscall_test")
 load("//tools:defs.bzl", "more_shards", "most_shards")
 
@@ -440,6 +441,28 @@ syscall_test(
 syscall_test(
     test = "//test/syscalls/linux:mincore_test",
 )
+
+# Both pilots consume the very same declared guest and original runfiles tar.
+# Only execution-host tools/constraints differ; the original mincore owner is
+# one unsharded medium test with no extra arguments and a 300-second deadline.
+[
+    arm64_tcg_test(
+        name = "mincore_64k_%s_host_test" % architecture,
+        size = "medium",
+        archive = ":mincore_test_runsc_systrap_shared_64k_tcg_payload",
+        host_architecture = architecture,
+        payload = ":mincore_test_runsc_systrap_shared_64k_arm64",
+        tags = [
+            "block-network",
+            "requires-net:ipv4",
+            "requires-net:loopback",
+        ],
+    )
+    for architecture in [
+        "amd64",
+        "arm64",
+    ]
+]
 
 syscall_test(
     add_fusefs = True,

@@ -24,7 +24,8 @@ tar_tool="$(realpath "$6")"
 payload_label="$7"
 machine="$8"
 test_setup="$(realpath "$9")"
-shift 9
+host_architecture="${10}"
+shift 10
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -54,9 +55,17 @@ if [[ "$machine" == amd64_kvm ]]; then
   [[ -r "$host/usr/share/seabios/bios-256k.bin" ]]
   machine_options+=(-bios "$host/usr/share/seabios/bios-256k.bin")
 fi
-loader="$host/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
-libraries="$host/lib/x86_64-linux-gnu:$host/usr/lib/x86_64-linux-gnu"
+case "$host_architecture" in
+  amd64) triplet=x86_64-linux-gnu; loader_name=ld-linux-x86-64.so.2 ;;
+  arm64) triplet=aarch64-linux-gnu; loader_name=ld-linux-aarch64.so.1 ;;
+  *) printf 'Unsupported TCG host architecture: %s\n' "$host_architecture" >&2; exit 1 ;;
+esac
+loader="$host/lib/$triplet/$loader_name"
+libraries="$host/lib/$triplet:$host/usr/lib/$triplet"
 host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "${@:2}"; }
+# Retain the execution host and declared emulator identity beside guest facts.
+uname -m > "${TEST_UNDECLARED_OUTPUTS_DIR}/host-architecture.txt"
+host_tool "usr/bin/$emulator" --version > "${TEST_UNDECLARED_OUTPUTS_DIR}/qemu-version.txt"
 # A private copy prevents the guest from modifying a Bazel input. The export
 # itself is read-only as well; the writable export contains only test outputs.
 cp "$payload_archive" "$scratch/input/payload.tar"
@@ -136,7 +145,7 @@ trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
 # Networking and privileged host mounts are not needed by the guest transport.
-QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
+QEMU_MODULE_DIR="$host/usr/lib/$triplet/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \

@@ -90,7 +90,7 @@ def _tcg_test_impl(ctx):
     architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
     if image.architecture != architecture:
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
-    tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
+    tar = ctx.toolchains["@tar.bzl//tar/toolchain:type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
     arguments = [
@@ -103,6 +103,7 @@ def _tcg_test_impl(ctx):
         str(ctx.attr.payload.label),
         ctx.attr.machine,
         ctx.file._test_setup.short_path,
+        ctx.attr.host_architecture,
     ]
     ctx.actions.write(
         executable,
@@ -114,6 +115,7 @@ def _tcg_test_impl(ctx):
     runfiles = ctx.runfiles(files = inputs, transitive_files = tar.default.files).merge(ctx.attr._launcher[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(executable = executable, runfiles = runfiles),
+        OutputGroupInfo(host_tools = depset([ctx.file.host_tools, tar.tarinfo.binary])),
         testing.TestEnvironment(tar.tarinfo.default_env),
     ]
 
@@ -123,41 +125,54 @@ _tcg_test = rule(
     attrs = {
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
-        "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True, cfg = "exec"),
+        "host_architecture": attr.string(default = "amd64", values = ["amd64", "arm64"]),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
         "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
     },
-    toolchains = ["@tar.bzl//tar/toolchain:target_type"],
+    toolchains = ["@tar.bzl//tar/toolchain:type"],
 )
 
-def _guest_test(name, payload, tags, image, **kwargs):
-    pkg_tar(
-        name = name + "_payload",
-        testonly = True,
-        srcs = [payload],
-        include_runfiles = True,
-        strip_prefix = "/",
-        allow_duplicates_with_different_content = False,
-        tags = ["manual"],
-    )
+def _guest_test(name, payload, tags, image, host_architecture = "amd64", archive = None, **kwargs):
+    if archive == None:
+        archive = ":" + name + "_payload"
+        pkg_tar(
+            name = name + "_payload",
+            testonly = True,
+            srcs = [payload],
+            include_runfiles = True,
+            strip_prefix = "/",
+            allow_duplicates_with_different_content = False,
+            tags = ["manual"],
+        )
     _tcg_test(
         name = name,
         payload = payload,
         image = image,
-        archive = ":" + name + "_payload",
-        exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
+        archive = archive,
+        host_architecture = host_architecture,
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            {"amd64": "@platforms//cpu:x86_64", "arm64": "@platforms//cpu:aarch64"}[host_architecture],
+        ],
         tags = tags + ["manual"],
         **kwargs
     )
 
-def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
-    """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
+def arm64_tcg_test(name, payload, tags, image = Label(":guest"), host_architecture = "amd64", archive = None, **kwargs):
+    """Wraps an ARM64 payload for unprivileged emulation on a selected host."""
     _guest_test(
         name = name,
         payload = payload,
         image = image,
+        archive = archive,
+        host_architecture = host_architecture,
+        host_tools = {
+            "amd64": "@tcg_host_tools//:flat",
+            "arm64": "@tcg_arm64_host_tools//:flat",
+        }[host_architecture],
         tags = tags + ["no-local"],
         exec_properties = {
             "test.EstimatedCPU": "2",
