@@ -49,23 +49,26 @@ import (
 )
 
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
-	for _, recovery := range []string{"fast", "timeout"} {
-		for _, batch := range []int{1, 2, 10} {
-			t.Run(fmt.Sprintf("%s/segments_per_ack=%d", recovery, batch), func(t *testing.T) {
-				testCubicWindowGrowthAfterPacketLoss(t, recovery, batch)
+	for _, recovery := range []string{"fast_retransmit", "retransmission_timeout"} {
+		// Individual ACKs expose lost fractional credit; delayed and batched
+		// ACKs exercise the same progress requirement with different grouping.
+		for _, segmentsPerACK := range []int{1, 2, 10} {
+			t.Run(fmt.Sprintf("%s/segments_per_ack=%d", recovery, segmentsPerACK), func(t *testing.T) {
+				testCubicWindowGrowthAfterPacketLoss(t, recovery, segmentsPerACK)
 			})
 		}
 	}
 }
 
-func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, batch int) {
+func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segmentsPerACK int) {
 	t.Helper()
-	const payload = 32
+	const segmentBytes = 32
+	const slowStartRounds = 6
 	const rtt = 100 * time.Millisecond
 	clock := faketime.NewManualClock()
 	c := context.NewWithOpts(t, context.Options{
 		EnableV4: true,
-		MTU:      header.TCPMinimumSize + header.IPv4MinimumSize + payload,
+		MTU:      header.TCPMinimumSize + header.IPv4MinimumSize + segmentBytes,
 		Clock:    clock,
 	})
 	defer c.Cleanup()
@@ -73,79 +76,86 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, batch i
 	c.CreateConnected(789, 30000, -1)
 	// Pause drains queued TCP work before returning. With virtual time held
 	// still, the next step observes all effects of the ACK without sleeping.
-	ack := func(received int) {
-		c.SendAck(790, received)
+	ackAndWait := func(receivedBytes int) {
+		c.SendAck(790, receivedBytes)
 		c.Stack().Pause()
 		c.Stack().Resume()
 	}
-	info := func() tcpip.TCPInfoOption {
+	tcpInfo := func() tcpip.TCPInfoOption {
 		var info tcpip.TCPInfoOption
 		if err := c.EP.GetSockOpt(&info); err != nil {
 			t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
 		}
 		return info
 	}
-	data := make([]byte, 256<<10)
-	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
-		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+	// Keep data queued throughout warmup and every post-loss window, so an
+	// application-limited sender cannot explain a window that stops growing.
+	queuedData := make([]byte, 256<<10)
+	if n, err := c.EP.Write(bytes.NewReader(queuedData), tcpip.WriteOptions{}); err != nil || n != int64(len(queuedData)) {
+		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(queuedData))
 	}
-	received := 0
-	for round := 0; round < 6; round++ {
+	// Grow a large window before loss: in congestion avoidance the increase
+	// earned by one ACK is then less than a segment. The old implementation
+	// truncated each such increase instead of accumulating it across ACKs.
+	receivedBytes := 0
+	for round := 0; round < slowStartRounds; round++ {
 		for range tcp.InitialCwnd << round {
-			c.ReceiveAndCheckPacket(data, received, payload)
-			received += payload
+			c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
+			receivedBytes += segmentBytes
 		}
 		clock.Advance(rtt)
-		ack(received)
+		ackAndWait(receivedBytes)
 	}
-	beforeLoss := int(info().SndCwnd)
-	lostOffset := received
+	beforeLoss := int(tcpInfo().SndCwnd)
+	firstLostByte := receivedBytes
 	for range beforeLoss {
-		c.ReceiveAndCheckPacket(data, received, payload)
-		received += payload
+		c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
+		receivedBytes += segmentBytes
 	}
-	rounds := 1
-	if recovery == "timeout" {
+	recoveryWindows := 1
+	if recovery == "retransmission_timeout" {
 		// These packets were sent at the current virtual time. Withhold
 		// their ACKs until the actual retransmission timer expires.
-		clock.Advance(info().RTO)
-		if got := info().SndCwnd; got != 1 {
+		clock.Advance(tcpInfo().RTO)
+		if got := tcpInfo().SndCwnd; got != 1 {
 			t.Fatalf("cwnd after retransmission timeout = %d, want 1", got)
 		}
 		// After RTO the cubic epoch starts with K=0, so its initial
 		// growth is slower than after fast recovery.
-		rounds = 10
+		recoveryWindows = 10
 	} else {
 		clock.Advance(rtt)
 		// Retain later packets at the peer, but report the gap left by
 		// the first packet to trigger fast retransmission.
 		for range 3 {
-			ack(lostOffset)
+			ackAndWait(firstLostByte)
 		}
 	}
-	c.ReceiveAndCheckPacket(data, lostOffset, payload)
-	ack(received)
-	afterLoss := int(info().SndCwnd)
+	c.ReceiveAndCheckPacket(queuedData, firstLostByte, segmentBytes)
+	ackAndWait(receivedBytes)
+	afterLoss := int(tcpInfo().SndCwnd)
 	if afterLoss >= beforeLoss {
 		t.Fatalf("loss did not reduce cwnd: before=%d after=%d", beforeLoss, afterLoss)
 	}
-	for range rounds {
-		window := int(info().SndCwnd)
-		acked := received
+	// ACK a full window over one RTT, changing only ACK grouping. We check
+	// eventual growth, not an implementation-specific CUBIC window formula.
+	for range recoveryWindows {
+		window := int(tcpInfo().SndCwnd)
+		ackedBytes := receivedBytes
 		for range window {
-			c.ReceiveAndCheckPacket(data, received, payload)
-			received += payload
+			c.ReceiveAndCheckPacket(queuedData, receivedBytes, segmentBytes)
+			receivedBytes += segmentBytes
 		}
 		for remaining := window; remaining > 0; {
-			n := min(batch, remaining)
+			n := min(segmentsPerACK, remaining)
 			clock.Advance(rtt * time.Duration(n) / time.Duration(window))
-			acked += n * payload
-			ack(acked)
+			ackedBytes += n * segmentBytes
+			ackAndWait(ackedBytes)
 			remaining -= n
 		}
 	}
-	if got := int(info().SndCwnd); got <= afterLoss {
-		t.Fatalf("cwnd did not recover after %d windows of ACKs: before=%d after=%d", rounds, afterLoss, got)
+	if got := int(tcpInfo().SndCwnd); got <= afterLoss {
+		t.Fatalf("cwnd did not recover after %d windows of ACKs: before=%d after=%d", recoveryWindows, afterLoss, got)
 	}
 }
 

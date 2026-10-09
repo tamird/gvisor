@@ -24,7 +24,6 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-// newTestCubic initializes a sender with a 1000-segment window.
 func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) *cubicState {
 	t.Helper()
 	s := stack.New(stack.Options{Clock: clock})
@@ -35,7 +34,7 @@ func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) 
 	snd := &sender{
 		ep: &Endpoint{stack: s},
 		TCPSenderState: TCPSenderState{
-			SndCwnd:  1000,
+			SndCwnd:  InitialCwnd,
 			Ssthresh: InitialSsthresh,
 		},
 	}
@@ -50,6 +49,43 @@ func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) 
 }
 
 func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
+	for _, test := range []struct {
+		name            string
+		pendingSegments int
+		maxGrowth       int
+	}{
+		{name: "new_credit", pendingSegments: 0, maxGrowth: 1},
+		{name: "retained_credit", pendingSegments: 4, maxGrowth: 2},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			const rtt = 100 * time.Millisecond
+			c := newTestCubic(t, clock, rtt)
+			c.s.ep.mu.Lock()
+			defer c.s.ep.mu.Unlock()
+			c.HandleLossDetected()
+			c.s.leaveRecovery()
+			windowAfterLoss := c.s.SndCwnd
+
+			// The retained-credit case acknowledges four segments at the slow
+			// post-loss growth rate. At the later maximum rate, those credits
+			// could buy two segments, so they distinguish a stale-credit burst
+			// from the permitted one-segment increase.
+			c.Update(test.pendingSegments, rtt, clock.NowMonotonic())
+			// Make the time-based target much larger than the actual window.
+			// Two newly acknowledged segments may add at most one segment
+			// (RFC 9438 section 4.2). Earlier credit may add one more segment,
+			// but must not all become immediately spendable at the new rate.
+			clock.Advance(time.Minute)
+			c.Update(2, rtt, clock.NowMonotonic())
+			if got := c.s.SndCwnd; got > windowAfterLoss+test.maxGrowth {
+				t.Fatalf("2 newly acknowledged segments with %d pending credits grew cwnd from %d to %d, want growth <= %d", test.pendingSegments, windowAfterLoss, got, test.maxGrowth)
+			}
+		})
+	}
+}
+
+func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	clock := faketime.NewManualClock()
 	const rtt = 100 * time.Millisecond
 	c := newTestCubic(t, clock, rtt)
@@ -57,43 +93,25 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 	defer c.s.ep.mu.Unlock()
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
-	initial := c.s.SndCwnd
-	clock.Advance(time.Minute)
-	c.Update(10, rtt, clock.NowMonotonic())
-	// Even when the time-based target is far ahead, congestion avoidance
-	// must grow slower than slow start (RFC 9438 section 4.2).
-	if got := c.s.SndCwnd; got > initial+5 {
-		t.Fatalf("acknowledging 10 segments grew the window from %d to %d, want <= %d", initial, got, initial+5)
-	}
-}
-
-func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
-	clock := faketime.NewManualClock()
-	const rtt = time.Millisecond
-	c := newTestCubic(t, clock, rtt)
-	c.s.ep.mu.Lock()
-	defer c.s.ep.mu.Unlock()
-	c.HandleLossDetected()
-	c.s.leaveRecovery()
 	c.Update(3, rtt, clock.NowMonotonic())
-	initial := c.s.SndCwnd
-	credit := c.s.SndCAAckCount
-	if credit == 0 {
-		t.Fatal("ACKs did not accumulate growth credit")
-	}
+	windowBeforeZeroACK := c.s.SndCwnd
+	creditBeforeZeroACK := c.s.SndCAAckCount
+
+	// Advancing time raises the target, but without new ACKs neither the
+	// actual window nor the saved credit may change.
 	clock.Advance(time.Second)
 	c.Update(0, rtt, clock.NowMonotonic())
-	if got := c.s.SndCwnd; got != initial {
-		t.Fatalf("without acknowledged segments, cwnd = %d, want %d", got, initial)
+	if got := c.s.SndCwnd; got != windowBeforeZeroACK {
+		t.Errorf("no newly acknowledged segments: cwnd=%d, want unchanged %d", got, windowBeforeZeroACK)
 	}
-	if got := c.s.SndCAAckCount; got != credit {
-		t.Fatalf("without acknowledged segments, ACK credit = %d, want %d", got, credit)
+	if got := c.s.SndCAAckCount; got != creditBeforeZeroACK {
+		t.Errorf("no newly acknowledged segments: credit=%d, want unchanged %d", got, creditBeforeZeroACK)
 	}
 }
 
 func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	clock := faketime.NewManualClock()
-	const rtt = time.Millisecond
+	const rtt = 100 * time.Millisecond
 	c := newTestCubic(t, clock, rtt)
 	c.s.ep.mu.Lock()
 	defer c.s.ep.mu.Unlock()
@@ -103,11 +121,13 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
-	initial := c.s.SndCwnd
+	windowAfterSecondLoss := c.s.SndCwnd
 	clock.Advance(time.Second)
+	// One newly acknowledged segment cannot buy a segment even at the maximum growth rate.
+	// Retaining the three pre-recovery credits would incorrectly allow growth.
 	c.Update(1, rtt, clock.NowMonotonic())
-	if got := c.s.SndCwnd; got != initial {
-		t.Fatalf("first ACK after recovery spent earlier credit: cwnd = %d, want %d", got, initial)
+	if got := c.s.SndCwnd; got != windowAfterSecondLoss {
+		t.Fatalf("first acknowledged segment after recovery grew cwnd from %d to %d using old credit", windowAfterSecondLoss, got)
 	}
 }
 
@@ -117,12 +137,14 @@ func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
 	c := newTestCubic(t, clock, rtt)
 	c.s.ep.mu.Lock()
 	defer c.s.ep.mu.Unlock()
-	c.s.Ssthresh = c.s.SndCwnd + 5
-	c.Update(8, rtt, clock.NowMonotonic())
-	// Five acknowledged segments reach ssthresh; the other three must
-	// contribute to congestion avoidance instead of being discarded.
-	if got := c.s.SndCAAckCount; got != 3 {
-		t.Fatalf("congestion-avoidance ACK credit = %d, want 3", got)
+	c.s.Ssthresh = c.s.SndCwnd + 1
+
+	// Of two acknowledged segments, one reaches the slow-start threshold.
+	// The other must enter congestion avoidance, where one segment earns credit
+	// but cannot grow the window yet.
+	c.Update(2, rtt, clock.NowMonotonic())
+	if c.s.SndCwnd != c.s.Ssthresh || c.s.SndCAAckCount != 1 {
+		t.Fatalf("crossing ssthresh: cwnd=%d credit=%d, want %d and 1", c.s.SndCwnd, c.s.SndCAAckCount, c.s.Ssthresh)
 	}
 }
 
