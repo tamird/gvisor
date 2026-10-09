@@ -17,7 +17,6 @@ package main
 
 import (
 	"context"
-	"encoding/gob"
 	"flag"
 	"fmt"
 	"io"
@@ -56,27 +55,29 @@ var (
 	server  = flag.Bool("server", false, "use netstack for dial")
 
 	// Netstack-specific options.
-	mtu                = flag.Int("mtu", 1280, "mtu for network stack")
-	addr               = flag.String("addr", "", "address for tap-based netstack")
-	mask               = flag.Int("mask", 8, "mask size for address")
-	iface              = flag.String("iface", "", "network interface name to bind for netstack")
-	sack               = flag.Bool("sack", false, "enable SACK support for netstack")
-	rack               = flag.Bool("rack", true, "enable RACK in TCP")
-	moderateRecvBuf    = flag.Bool("moderate_recv_buf", true, "enable TCP Receive Buffer Auto-tuning")
-	congestionControl  = flag.String("congestion_control", "reno", "TCP congestion control for native and netstack sockets: reno or cubic")
-	gso                = flag.Int("gso", 0, "GSO maximum size")
-	swgso              = flag.Bool("swgso", false, "gVisor-level GSO")
-	gro                = flag.Bool("gro", false, "gVisor-level GRO")
-	clientTCPProbeFile = flag.String("client_tcp_probe_file", "", "if specified, installs a tcp probe to dump endpoint state to the specified file.")
-	serverTCPProbeFile = flag.String("server_tcp_probe_file", "", "if specified, installs a tcp probe to dump endpoint state to the specified file.")
-	cpuprofile         = flag.String("cpuprofile", "", "write cpu profile to the specified file.")
-	memprofile         = flag.String("memprofile", "", "write memory profile to the specified file.")
-	blockprofile       = flag.String("blockprofile", "", "write a goroutine blocking profile to the specified file.")
-	mutexprofile       = flag.String("mutexprofile", "", "write a mutex profile to the specified file.")
-	traceprofile       = flag.String("traceprofile", "", "write a 5s trace of the benchmark to the specified file.")
-	useIpv6            = flag.Bool("ipv6", false, "use ipv6 instead of ipv4.")
-	sniff              = flag.Bool("sniff", false, "log sniffed packets")
-	useXDP             = flag.Bool("xdp", false, "use AF_XDP as a link endpoint instead of fdbased")
+	mtu                   = flag.Int("mtu", 1280, "mtu for network stack")
+	addr                  = flag.String("addr", "", "address for tap-based netstack")
+	mask                  = flag.Int("mask", 8, "mask size for address")
+	iface                 = flag.String("iface", "", "network interface name to bind for netstack")
+	sack                  = flag.Bool("sack", false, "enable SACK support for netstack")
+	rack                  = flag.Bool("rack", true, "enable RACK in TCP")
+	moderateRecvBuf       = flag.Bool("moderate_recv_buf", true, "enable TCP Receive Buffer Auto-tuning")
+	congestionControl     = flag.String("congestion_control", "reno", "TCP congestion control for native and netstack sockets: reno or cubic")
+	gso                   = flag.Int("gso", 0, "GSO maximum size")
+	swgso                 = flag.Bool("swgso", false, "gVisor-level GSO")
+	gro                   = flag.Bool("gro", false, "gVisor-level GRO")
+	clientTCPProbeFile    = flag.String("client_tcp_probe_file", "", "write bounded per-packet TCP observations as JSON")
+	clientTCPSnapshotFile = flag.String("client_tcp_snapshot_file", "", "write periodic client TCP observations as JSON")
+	serverTCPSnapshotFile = flag.String("server_tcp_snapshot_file", "", "write periodic server TCP observations as JSON")
+	serverTCPProbeFile    = flag.String("server_tcp_probe_file", "", "write bounded per-packet TCP observations as JSON")
+	cpuprofile            = flag.String("cpuprofile", "", "write cpu profile to the specified file.")
+	memprofile            = flag.String("memprofile", "", "write memory profile to the specified file.")
+	blockprofile          = flag.String("blockprofile", "", "write a goroutine blocking profile to the specified file.")
+	mutexprofile          = flag.String("mutexprofile", "", "write a mutex profile to the specified file.")
+	traceprofile          = flag.String("traceprofile", "", "write a 5s trace of the benchmark to the specified file.")
+	useIpv6               = flag.Bool("ipv6", false, "use ipv6 instead of ipv4.")
+	sniff                 = flag.Bool("sniff", false, "log sniffed packets")
+	useXDP                = flag.Bool("xdp", false, "use AF_XDP as a link endpoint instead of fdbased")
 )
 
 type impl interface {
@@ -173,7 +174,7 @@ func setupNetwork(ifaceName string, numChannels int) (fds []int, err error) {
 	return nil, fmt.Errorf("failed to find interface: %v", ifaceName)
 }
 
-func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
+func newNetstackImpl(mode, probeFileName, snapshotFileName string) (impl, func() error, error) {
 	// Parse details.
 	var parsedAddr tcpip.Address
 	if *useIpv6 {
@@ -207,19 +208,20 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		return nil, func() error { return nil }, fmt.Errorf("mask %d not supported", *mask)
 	}
 
-	var probeFile *os.File
-	var err error
+	if probeFileName != "" && snapshotFileName != "" {
+		return nil, func() error { return nil }, fmt.Errorf("packet and periodic TCP observations are mutually exclusive")
+	}
+	path, observationMode := probeFileName, "packet"
+	if snapshotFileName != "" {
+		path, observationMode = snapshotFileName, "periodic"
+	}
+	recorder, err := newTCPRecorder(path, observationMode, mode)
+	if err != nil {
+		return nil, func() error { return nil }, err
+	}
 	var probe tcp.TCPProbeFunc
 	if probeFileName != "" {
-		probeFile, err = os.Create(probeFileName)
-		if err != nil {
-			return nil, func() error { return nil }, fmt.Errorf("failed to create tcp_probe file %s: %v", probeFileName, err)
-		}
-		probeEncoder := gob.NewEncoder(probeFile)
-		// Install a TCP Probe.
-		probe = func(state *tcp.TCPEndpointState) {
-			probeEncoder.Encode(state)
-		}
+		probe = recorder.recordPacket
 	}
 
 	// Create a new network stack.
@@ -242,7 +244,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		var fds []int
 		fds, err = setupNetwork(*iface, runtime.GOMAXPROCS(0))
 		if err != nil {
-			return nil, probeFile.Close, err
+			return nil, recorder.close, err
 		}
 		ep, err = fdbased.New(&fdbased.Options{
 			FDs:            fds,
@@ -264,7 +266,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		})
 	}
 	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("failed to create endpoint: %v", err)
+		return nil, recorder.close, fmt.Errorf("failed to create endpoint: %v", err)
 	}
 
 	if *sniff {
@@ -274,7 +276,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	qDisc := fifo.New(ep, runtime.GOMAXPROCS(0), 1000)
 	opts := stack.NICOptions{QDisc: qDisc}
 	if err := s.CreateNICWithOptions(nicID, ep, opts); err != nil {
-		return nil, probeFile.Close, fmt.Errorf("error creating NIC %q: %v", *iface, err)
+		return nil, recorder.close, fmt.Errorf("error creating NIC %q: %v", *iface, err)
 	}
 	proto := ipv4.ProtocolNumber
 	if *useIpv6 {
@@ -285,16 +287,16 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		AddressWithPrefix: parsedAddr.WithPrefix(),
 	}
 	if err := s.AddProtocolAddress(nicID, protocolAddr, stack.AddressProperties{}); err != nil {
-		return nil, probeFile.Close, fmt.Errorf("error adding IP address %+v to %q: %s", protocolAddr, *iface, err)
+		return nil, recorder.close, fmt.Errorf("error adding IP address %+v to %q: %s", protocolAddr, *iface, err)
 	}
 
 	subnet4, err := tcpip.NewSubnet(parsedDest, parsedMask)
 	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
+		return nil, recorder.close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
 	}
 	subnet6, err := tcpip.NewSubnet(parsedDest6, parsedMask6)
 	if err != nil {
-		return nil, probeFile.Close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
+		return nil, recorder.close, fmt.Errorf("tcpip.Subnet(%s, %s): %s", parsedDest, parsedMask, err)
 	}
 
 	// Add default route; we only support
@@ -313,7 +315,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	{
 		opt := tcpip.TCPSACKEnabled(*sack)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
-			return nil, probeFile.Close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%t)): %s", tcp.ProtocolNumber, opt, opt, err)
+			return nil, recorder.close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%t)): %s", tcp.ProtocolNumber, opt, opt, err)
 		}
 	}
 
@@ -321,7 +323,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	if !*rack {
 		opt := tcpip.TCPRecovery(0)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
-			return nil, probeFile.Close, fmt.Errorf("disabling RACK failed: %v", err)
+			return nil, recorder.close, fmt.Errorf("disabling RACK failed: %v", err)
 		}
 	}
 
@@ -329,7 +331,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	{
 		opt := tcpip.TCPModerateReceiveBufferOption(*moderateRecvBuf)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
-			return nil, probeFile.Close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%t)): %s", tcp.ProtocolNumber, opt, opt, err)
+			return nil, recorder.close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%t)): %s", tcp.ProtocolNumber, opt, opt, err)
 		}
 	}
 
@@ -337,17 +339,21 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 	{
 		opt := tcpip.CongestionControlOption(*congestionControl)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
-			return nil, probeFile.Close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%s)): %s", tcp.ProtocolNumber, opt, opt, err)
+			return nil, recorder.close, fmt.Errorf("SetTransportProtocolOption(%d, &%T(%s)): %s", tcp.ProtocolNumber, opt, opt, err)
 		}
 	}
 
 	log.Printf("netstack %s settings: congestion_control=%s sack=%t rack=%t moderate_recv_buf=%t packet_buffer_bytes=%d gso=%d swgso=%t gro=%t xdp=%t", mode, *congestionControl, *sack, *rack, *moderateRecvBuf, bufSize, *gso, *swgso, *gro, *useXDP)
 
+	if snapshotFileName != "" {
+		recorder.start(s)
+	}
+
 	return netstackImpl{
 		s:    s,
 		addr: parsedAddr,
 		mode: mode,
-	}, probeFile.Close, nil
+	}, recorder.close, nil
 }
 
 func (n netstackImpl) dial(address string) (net.Conn, error) {
@@ -405,6 +411,18 @@ func (n netstackImpl) printStats() {
 
 func main() {
 	flag.Parse()
+	captureStatus := 0
+	defer func() {
+		if captureStatus != 0 {
+			os.Exit(captureStatus)
+		}
+	}()
+	closeCapture := func(cleanup func() error) {
+		if err := cleanup(); err != nil {
+			log.Printf("TCP capture: %v", err)
+			captureStatus = 1
+		}
+	}
 	switch *congestionControl {
 	case "reno", "cubic":
 	default:
@@ -468,8 +486,8 @@ func main() {
 		cleanup func() error
 	)
 	if *server {
-		in, cleanup, err = newNetstackImpl("server", *serverTCPProbeFile)
-		defer cleanup()
+		in, cleanup, err = newNetstackImpl("server", *serverTCPProbeFile, *serverTCPSnapshotFile)
+		defer closeCapture(cleanup)
 
 	} else {
 		in = netImpl{}
@@ -478,8 +496,8 @@ func main() {
 		log.Fatalf("netstack error: %v", err)
 	}
 	if *client {
-		out, cleanup, err = newNetstackImpl("client", *clientTCPProbeFile)
-		defer cleanup()
+		out, cleanup, err = newNetstackImpl("client", *clientTCPProbeFile, *clientTCPSnapshotFile)
+		defer closeCapture(cleanup)
 	} else {
 		out = netImpl{}
 	}
@@ -520,7 +538,8 @@ func main() {
 				// successfully. Exhausted all available FDs?
 				log.Fatalf("accept error: %v", err)
 			}
-			log.Printf("incoming connection established.")
+			log.Printf("proxy connection: incoming remote=%s local=%s; outgoing local=%s remote=%s",
+				inConn.RemoteAddr(), inConn.LocalAddr(), next.LocalAddr(), next.RemoteAddr())
 
 			// Copy both ways. We wrap everything in another
 			// Reader/Writer to prevent optimizations that

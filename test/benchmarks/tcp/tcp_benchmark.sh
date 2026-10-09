@@ -52,6 +52,7 @@ queue_packets=1000     # The default netem queue limit, made explicit.
 seed=                  # Requires a tc/kernel combination that supports netem seed.
 output_dir=
 latency_probe=false
+tcp_observations=false
 second_client=
 second_congestion_control=
 second_start_delay=0
@@ -166,6 +167,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --moderate-recv-buf)
       netstack_opts="${netstack_opts} -moderate_recv_buf"
+      ;;
+    --tcp-observations)
+      tcp_observations=true
       ;;
     --latency-probe)
       latency_probe=true
@@ -286,6 +290,7 @@ while [[ $# -gt 0 ]]; do
       echo " --queue-packets       netem queue limit in each direction (default 1000)"
       echo " --seed                netem random seed (requires kernel and tc support)"
       echo " --output-dir          retain settings, versions, qdisc counters and raw iperf output"
+      echo " --tcp-observations    retain periodic Netstack/native WAN sender state (requires --output-dir and native server)"
       echo " --latency-probe       retain native ICMP RTT before/during/after the client operation (requires --output-dir)"
       echo " --duration            set the test duration (s)"
       echo " --latency             set the latency (ms)"
@@ -351,6 +356,16 @@ elif [[ -n $second_congestion_control || $second_start_delay != 0 ]]; then
   echo "second-flow options require --second-client" >&2
   exit 1
 fi
+if $tcp_observations; then
+  if [[ -z $output_dir ]] || $server; then
+    echo "--tcp-observations requires --output-dir and a native server" >&2
+    exit 1
+  fi
+  if [[ $netstack_opts == *tcp_probe_file=* ]]; then
+    echo "periodic and per-packet TCP observations are mutually exclusive" >&2
+    exit 1
+  fi
+fi
 if $latency_probe && [[ -z $output_dir ]]; then
   echo "--latency-probe requires --output-dir" >&2
   exit 1
@@ -402,6 +417,8 @@ record_settings() {
   printf 'latency_probe=%s receiver_json=%s\n' "$latency_probe" "$([[ -n $output_dir ]] && echo true || echo false)"
   if [[ -n $output_dir ]]; then jq --version; fi
   if $latency_probe; then ping -V; fi
+  printf 'tcp_observations=%s\n' "$tcp_observations"
+  if $tcp_observations; then ss -V; fi
   uname -a
   ip -Version
   tc -Version
@@ -695,6 +712,7 @@ run_flow() {
   server_pid=
   iperf_pid=
   operation_pid=
+  native_sampler_pid=
   results_file=
   flow_netns=/tmp/client.netns
   flow_client_addr=${client_addr}
@@ -724,6 +742,9 @@ run_flow() {
     if [[ \$flow_stack == netstack ]]; then
       client_command+=(${netstack_opts} -client -mtu ${mtu} -iface client2.0 -addr 10.0.0.6 -mask ${mask} -gso=${gso} -swgso=${swgso} --gro=${gro} --xdp=false)
     fi
+  fi
+  if ${tcp_observations} && [[ \$flow_stack == netstack ]]; then
+    client_command+=("-client_tcp_snapshot_file=\$TCP_BENCHMARK_OUTPUT_DIR/tcp-netstack.json")
   fi
   record_flow_phase() {
     local uptime ignored
@@ -755,6 +776,14 @@ run_flow() {
       if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
         if ! printf '%s\n' "\$operation_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"; then cleanup_status=1; fi
       fi
+    fi
+    if [[ -n \$native_sampler_pid ]]; then
+      sampler_status=0
+      if ! kill -TERM "\$native_sampler_pid"; then cleanup_status=1; fi
+      wait "\$native_sampler_pid" || sampler_status=\$?
+      if ! printf '%s\n' "\$sampler_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/tcp-native-exit.txt"; then cleanup_status=1; fi
+      if (( sampler_status != 0 )); then cleanup_status=1; fi
+      native_sampler_pid=
     fi
     for pid in "\$client_pid" "\$server_pid"; do
       if [[ -n \$pid ]]; then
@@ -817,6 +846,36 @@ run_flow() {
 
   ${nsjoin_binary} "\$flow_netns" "\${client_command[@]}" &
   client_pid=\$!
+
+  sample_native_tcp() {
+    local stop_requested=false sample=0 begin end wall ignored result
+    # Bash runs this trap after its bounded foreground query completes, so the
+    # last query has an END record and no unreaped background child survives.
+    trap 'stop_requested=true' TERM INT
+    while ! \$stop_requested; do
+      if (( sample == 6000 )); then
+        echo 'SS_CAPTURE_LIMIT_REACHED'
+        return 1
+      fi
+      read -r begin ignored < /proc/uptime
+      wall=\$(date +%s.%N)
+      printf 'SS_SAMPLE_BEGIN\t%s\t%s\t%s\n' "\$sample" "\$begin" "\$wall"
+      result=0
+      timeout --signal=TERM --kill-after=1s 2s \
+        ${nsjoin_binary} "\$flow_netns" ss -tinmH dst "${server_proxy_addr}" dport = ":\$flow_proxy_port" || result=\$?
+      read -r end ignored < /proc/uptime
+      printf 'SS_SAMPLE_END\t%s\t%s\t%s\t%s\n' "\$sample" "\$end" "\$(date +%s.%N)" "\$result"
+      if (( result != 0 )); then return "\$result"; fi
+      sample=\$((sample + 1))
+      if ! \$stop_requested; then sleep 0.1; fi
+    done
+    echo 'SS_CAPTURE_STOPPED'
+  }
+  if ${tcp_observations} && [[ \$flow_stack == linux ]]; then
+    sample_native_tcp > "\$TCP_BENCHMARK_OUTPUT_DIR/tcp-native.txt" \
+      2> "\$TCP_BENCHMARK_OUTPUT_DIR/tcp-native-stderr.txt" &
+    native_sampler_pid=\$!
+  fi
 
   # Show traffic information for the original uninstrumented native mode.
   if [[ -z "${second_client}" ]] && ! ${latency_probe} && ! ${client} && ! ${server}; then

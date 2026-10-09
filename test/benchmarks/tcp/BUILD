@@ -9,6 +9,7 @@ package(
 go_binary(
     name = "tcp_proxy",
     srcs = [
+        "tcp_observer.go",
         "tcp_proxy.go",
         "xdp.go",
     ],
@@ -16,6 +17,7 @@ go_binary(
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/rand",
+        "//pkg/sync",
         "//pkg/tcpip",
         "//pkg/tcpip/adapters/gonet",
         "//pkg/tcpip/link/fdbased",

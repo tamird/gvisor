@@ -186,3 +186,42 @@ Jain index or convergence time without establishing the alignment bound. The
 shared probe labels the entire interval as `flows-begin`/`flows-end`, including
 both flows' setup margins. It remains native ICMP path RTT, not either TCP
 stack's RTT or pure queue delay.
+
+### Optional TCP observations
+
+`--tcp-observations` requires `--output-dir` and a native server. Each
+Netstack sender writes `tcp-netstack.json` in its flow directory. The proxy
+samples registered TCP endpoints every 100 ms through `StateSnapshot`; its
+per-packet probe remains disabled. Each record includes a string socket tuple,
+congestion window, flight and SACK counts, peer window, send-buffer use,
+RTT/RTO, recovery state and CUBIC estimates. Durations are nanoseconds.
+`BootBeginNS` and `BootEndNS` bracket the snapshot on the VM's boot clock;
+`UnixNS` is the later recording time. Sampling can be delayed by scheduling or
+endpoint locking, so use actual bounds rather than assuming exact 10 Hz.
+
+Native senders retain `tcp-native.txt`: bounded `ss -tinmH` queries of the
+actual WAN destination and port, with begin/end uptime and Unix timestamps,
+status and tool version. An empty query before connection setup is valid;
+missing TCP_INFO fields are unknown. These records describe the Linux WAN
+sender, not the Netstack proxy's local ingress leg. Compare only correctly
+identified overlapping sockets and retain the sample timing uncertainty.
+
+The existing `--client_tcp_probe_file` and `--server_tcp_probe_file` options
+now write the same JSON record schema for explicit per-packet observations.
+Their timestamps describe callback invocation, not the duration of the earlier
+state copy. Packet and periodic capture are mutually exclusive. The old gob
+encoder ignored errors for state containing private address/time fields; a
+nonempty old file did not prove that a complete snapshot was captured.
+
+The Netstack recorder retains at most 12,000 records in memory and writes them
+after stopping its sampler. Reaching the cap, an encoding/write/close error, or
+a failed native query makes capture incomplete and the proxy/flow unsuccessful;
+raw partial output is retained. Closed or not-yet-connected endpoints increment
+`Unavailable`, rather than supplying zero-valued TCP metrics. Cleanup stops and
+reaps the native sampler and joins the Netstack sampler before output is closed.
+
+These optional diagnostics add work. They are for distinguishing window,
+application and recovery hypotheses, not uninstrumented throughput results.
+`Outstanding` alone is not the remembered cwnd-limited signal, and send-buffer
+usage includes data retained for retransmission. The recorded configured
+congestion-control name is not an independent socket-option readback.
