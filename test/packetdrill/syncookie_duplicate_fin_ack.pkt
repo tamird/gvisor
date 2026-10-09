@@ -51,3 +51,7 @@
 +0 fcntl(5, F_SETFL, O_RDWR|O_NONBLOCK) = 0
 +0 read(5, ..., 1) = -1 EAGAIN (Resource temporarily unavailable)
 +0 `printf 'PROBE_SECOND_ACCEPT_ESTABLISHED\n'; cat /proc/net/netstat`
+
+// Keep the wire server alive through the client-side checks above. Otherwise
+// its end-of-script cleanup injects this reset before those checks finish.
++0 < R. 2:2(0) ack 2 win 32768
