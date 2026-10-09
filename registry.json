@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T01:37:58.331050+00:00",
+    "updatedAt": "2026-10-09T02:11:43.078126+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4825,6 +4825,36 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5043e2ec26059ee95f2b24b19589ce7660d97eb2",
           "https://app.buildbuddy.io/invocation/a5a84cb4-77b4-4462-81ec-07ce23ce6bdc"
+        ]
+      }
+    },
+    {
+      "id": "branch:runner-xml-collation",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/runner-xml-collation",
+      "head": "fc05ca2668181f45b42463ce84d0d6f498032908",
+      "title": "Preserve complete XML cases and suite metadata",
+      "url": "https://github.com/tamird/gvisor/tree/review/runner-xml-collation",
+      "group": "tests",
+      "status": "Awaiting contributor review",
+      "updatedAt": "2026-10-09T02:11:43.078126+00:00",
+      "summary": "Contributor review was requested for this separate XML collation fix. It parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. No upstream PR is open for this collation change.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "fc05ca2668181f45b42463ce84d0d6f498032908",
+        "url": "https://github.com/tamird/gvisor/commit/fc05ca2668181f45b42463ce84d0d6f498032908"
+      },
+      "followup": {
+        "disposition": "Awaiting contributor review",
+        "owner": "contributor",
+        "nextAction": "Review the exact published collator commit and decide whether to open its PR.",
+        "sourceHead": "fc05ca2668181f45b42463ce84d0d6f498032908",
+        "reviewedAt": "2026-10-09T02:11:43.078126+00:00",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fc05ca2668181f45b42463ce84d0d6f498032908",
+          "https://app.buildbuddy.io/invocation/d3101dec-0514-4972-ac65-ad3ec6440377",
+          "https://github.com/google/gvisor/pull/15550"
         ]
       }
     }
