@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T07:14:11.265906+00:00",
+    "updatedAt": "2026-10-09T07:48:07.860197+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1194,15 +1194,17 @@
       "status": "draft",
       "reviewDecision": "",
       "updatedAt": "2026-08-30T18:33:58Z",
-      "summary": "The requested readiness audit confirms all seven original replacement PRs (#14354 and #14366\u2013#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
+      "summary": "A separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366\u2013#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
       "followup": {
         "disposition": "Revision in progress",
         "owner": "root",
         "nextAction": "Narrow and validate the remaining Unix ownership review unit while preserving the original broad scope; retain draft until ready.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14338#issuecomment-5390693410"
+          "https://github.com/google/gvisor/pull/14338#issuecomment-5390693410",
+          "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+          "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2"
         ],
-        "reviewedAt": "2026-10-09T07:13:05.173045+00:00",
+        "reviewedAt": "2026-10-09T07:48:07.860197+00:00",
         "sourceHead": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -4898,6 +4900,32 @@
           "https://app.buildbuddy.io/invocation/0107daf0-2895-496d-8c3a-2c381f509f88"
         ]
       }
+    },
+    {
+      "id": "branch:proposal-pr-14338",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/unix-transport-contracts-current",
+      "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+      "title": "Proposed Unix transport ownership contracts",
+      "url": "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+      "group": "analysis",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T07:48:07.860197+00:00",
+      "summary": "This proposed narrowing of #14338 preserves eight Unix transport and namespace bodies from b912f6375 on the current base. The original broad branch and nine residual TCP/UDP/fragmentation paths remain preserved. A seven-action unit, race and Nogo validation was accepted on source-equivalent qualification 268590121. Validation is pending; the live PR remains draft and unchanged, and no contributor-review decision has been requested.",
+      "followup": {
+        "disposition": "Validation in progress",
+        "owner": "root",
+        "sourceHead": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+        "reviewedAt": "2026-10-09T07:48:07.860197+00:00",
+        "nextAction": "Close the accepted unit/race/Nogo results before reviewing delivery of the narrowed PR; preserve unrelated residual scope.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+          "https://github.com/tamird/gvisor/tree/review/unix-transport-contracts-current",
+          "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2",
+          "https://github.com/google/gvisor/pull/14338"
+        ]
+      }
     }
   ],
   "edges": [
@@ -6239,6 +6267,17 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/15475",
         "https://github.com/tamird/gvisor/commit/d273b89ccb498c13a321649ffc0e682ba09fd611"
+      ]
+    },
+    {
+      "from": "branch:proposal-pr-14338",
+      "to": "pr:14338",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Proposed narrowing is separate from the live draft and does not create a merge dependency or contributor-review hold. Validation is in progress.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+        "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2"
       ]
     }
   ],
