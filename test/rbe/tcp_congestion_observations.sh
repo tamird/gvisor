@@ -22,7 +22,7 @@ set -euo pipefail
 declare -F bazel >/dev/null
 block=${QUALIFICATION_COMPARISON_BLOCK:?}
 [[ $block == 1 || $block == 2 || $block == 3 ]]
-out="$RUNNER_TEMP/qualification/tcp-congestion-fairness"
+out="$RUNNER_TEMP/qualification/tcp-congestion-matched-controls"
 mkdir -p "$out"
 export out
 finish() {
@@ -165,21 +165,15 @@ validate_shared() (
 )
 # Keep the declared trial order and actual orientation in each block.
 scenarios=(
-  'linux-rr linux reno linux reno 0'
-  'linux-cc linux cubic linux cubic 0'
-  'linux-cr linux cubic linux reno 0'
-  'linux-cr-late linux cubic linux reno 30'
-  'netstack-rr netstack reno netstack reno 0'
-  'netstack-cc netstack cubic netstack cubic 0'
-  'netstack-cr netstack cubic netstack reno 0'
-  'netstack-cr-late netstack cubic netstack reno 30'
-  'cross-cr netstack cubic linux reno 0'
-  'cross-cr-late netstack cubic linux reno 30'
+  'reno-netstack-first netstack reno linux reno 0'
+  'reno-linux-first linux reno netstack reno 0'
+  'cubic-netstack-first netstack cubic linux cubic 0'
+  'cubic-linux-first linux cubic netstack cubic 0'
 )
 case "$block" in
-  1) order=(0 1 2 3 4 5 6 7 8 9) ;;
-  2) order=(9 8 7 6 5 4 3 2 1 0) ;;
-  3) order=(4 5 6 7 8 9 0 1 2 3) ;;
+  1) order=(0 2 3 1) ;;
+  2) order=(3 1 0 2) ;;
+  3) order=(1 3 2 0) ;;
 esac
 printf 'block=%s order=%s\n' "$block" "${order[*]}" > "$out/block.txt"
 printf 'position\tcase\tprimary_stack\tprimary_cc\tsecondary_stack\tsecondary_cc\tdelay\n' > "$out/trials.tsv"
@@ -187,11 +181,6 @@ trial_status=0
 position=0
 for index in "${order[@]}"; do
   read -r name first_stack first_cc second_stack second_cc delay <<< "${scenarios[index]}"
-  if [[ $block == 2 ]]; then
-    temporary_stack=$first_stack; temporary_cc=$first_cc
-    first_stack=$second_stack; first_cc=$second_cc
-    second_stack=$temporary_stack; second_cc=$temporary_cc
-  fi
   position=$((position + 1))
   trial="$out/$name"
   mkdir -p "$trial"
