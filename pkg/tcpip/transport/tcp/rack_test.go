@@ -382,7 +382,7 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 	}
 
 	credited := s.writeList.Front().Next()
-	s.splitSeg(credited, 9)
+	s.splitSeg(credited, 8)
 	remainder := credited.Next()
 	if remainder == nil {
 		t.Fatal("split did not create a remainder")
@@ -399,7 +399,7 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 			t.Errorf("split PSH = %v, want %v", got, want)
 		}
 	}
-	if got, want := s.SackedOut, 10; got != want {
+	if got, want := s.SackedOut, 11; got != want {
 		t.Errorf("SackedOut after split = %d, want %d", got, want)
 	}
 }
