@@ -28,14 +28,16 @@ type Value struct {
 	Duration time.Duration
 }
 
-// These names collide if generated identities simply join type and field names
-// with an underscore. They must remain distinct actual Go declarations.
+// A_B collides with A if generated identities simply join type and field names
+// with an underscore. The generated declarations must remain distinct.
 //
 // +stateify savable
 type A_B struct {
 	C int
 }
 
+// A supplies the other half of the generated-identity collision.
+//
 // +stateify savable
 type A struct {
 	B_C int
