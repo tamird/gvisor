@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T09:38:26.988905+00:00",
+    "updatedAt": "2026-10-09T11:00:48.337683+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6354,8 +6354,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T09:28:47.419302+00:00",
-      "summary": "Investigate production CUBIC recovery behavior and build deterministic impaired-link scenarios using the real TCP stack, with Linux or reference comparisons. Measure where CUBIC benefits high-bandwidth, high-delay paths relative to Reno without claiming universal superiority.",
+      "updatedAt": "2026-10-09T10:48:13.874759+00:00",
+      "summary": "Targeted correctness checks of the combined congestion-control corrections passed. A throughput advantage remains unproven. Continue deterministic impaired-link testing with the real TCP stack and Linux comparisons.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6371,7 +6371,7 @@
           ]
         },
         {
-          "text": "A subsequent regression through the existing TCP sender packet path completes fast recovery, then observes a congestion window of 453 before and after a full window of ACKs. It uses the existing manual clock and Pause/Resume synchronization, without sleeps, a copied CUBIC formula or new production hooks. Broader impaired-link and Linux comparisons remain pending.",
+          "text": "A subsequent regression through the existing TCP sender packet path completes fast recovery, then observes a congestion window of 453 before and after a full window of ACKs. It uses the existing manual clock and Pause/Resume synchronization, without sleeps, a copied CUBIC formula or new production hooks. Broader impaired-link and performance conclusions require separate evidence.",
           "evidence": [
             {
               "label": "Packet-path regression run",
@@ -6397,7 +6397,7 @@
           ]
         },
         {
-          "text": "Existing infrastructure already provides paired Linux/netstack packetdrill targets and a TCP benchmark with network namespaces, netem and iperf. The next experiments can extend those routes and the existing manual-clock packet fixtures. Current packetdrill scripts cover basic connection/close behavior; the inspected SACK/RACK recovery cases use Reno by default.",
+          "text": "Existing infrastructure already provides paired Linux/netstack packetdrill targets and a TCP benchmark with network namespaces, netem and iperf. This work extends those routes and the existing manual-clock packet fixtures. The original packetdrill scripts cover basic connection/close behavior; the inspected SACK/RACK recovery cases use Reno by default.",
           "evidence": [
             {
               "label": "Paired packetdrill rules",
@@ -6431,7 +6431,7 @@
           ]
         },
         {
-          "text": "The existing TCP benchmark now completes a functional smoke for native Linux and Netstack, each using Reno and CUBIC: all four modes produced positive receiver goodput with successful runtime and cleanup exits. These are single samples using the pre-fix controllers, not a performance ranking. The first controlled comparison stopped during helper setup before any measured trials; its continuation uses the same source variants and trial plan.",
+          "text": "The existing TCP benchmark completes a functional smoke for native Linux and Netstack, each using Reno and CUBIC: all four modes produced positive receiver goodput with successful runtime and cleanup exits. These are single samples using the pre-fix controllers. The controlled comparison is now in saved-result review; its first attempt\u2019s setup failure before measurement remains recorded. No performance ranking is established.",
           "evidence": [
             {
               "label": "Verified four-mode functional smoke",
@@ -6444,11 +6444,37 @@
             {
               "label": "Original comparison setup failure",
               "url": "https://github.com/tamird/gvisor/actions/runs/37909503135"
+            },
+            {
+              "label": "Completed comparison (result review pending)",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37911741325"
+            }
+          ]
+        },
+        {
+          "text": "The combined CUBIC ACK-credit, idle and epoch corrections with the Reno repair passed 11 selected unit, analyzer and packet target results, including normal and race configurations. The saved evidence supports this explicit target selection; the empty case XML provides no per-case census. Correctness success does not establish a throughput advantage.",
+          "evidence": [
+            {
+              "label": "Combined targeted correctness run",
+              "url": "https://app.buildbuddy.io/invocation/deef6c53-a9a4-4d30-96c6-c3f550eca49b"
+            }
+          ]
+        },
+        {
+          "text": "Separate fast-recovery and retransmission-timeout smoke scripts passed on native Linux 6.1 and Netstack after selecting CUBIC directly on the accepted sending socket. The earlier Netstack scripts stopped before data transfer because accepted sockets reported Reno after the listener selected CUBIC. That inheritance defect remains separate from the four passing recovery targets.",
+          "evidence": [
+            {
+              "label": "Paired direct-socket recovery run",
+              "url": "https://app.buildbuddy.io/invocation/16714c17-3589-41cb-a70a-8e03b155de2d"
+            },
+            {
+              "label": "Original listener-inheritance failure",
+              "url": "https://app.buildbuddy.io/invocation/f5e1d2b0-b859-4150-9031-6db56627fbe2"
             }
           ]
         }
       ],
-      "nextStep": "Complete the controlled throughput comparison and paired Linux/netstack recovery validation. Continue the separate estimator, epoch and application-limited investigations before claiming broader CUBIC behavior or performance.",
+      "nextStep": "Assess the complete controlled throughput comparison and finish the separate listener-inheritance and controller reviews before making broader behavior or performance claims.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -6605,11 +6631,11 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T09:38:26.988905+00:00",
+      "updatedAt": "2026-10-09T11:00:48.337683+00:00",
       "summary": "Investigate gaps in automatic GitHub status collection and publication. Keep the snapshot timestamp authoritative while determining why expected schedule events are absent.",
       "findings": [
         {
-          "text": "The existing default-branch workflow is active and configured for minutes 18 and 48 of each UTC hour. One actual scheduled run was created on 9 October at 02:58 UTC and completed successfully at 03:00. The 09:24 UTC run-history check still showed no later scheduled event.",
+          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published the matching Pages assets. These two events do not establish regular 30-minute cadence; the intervening gap remains under investigation.",
           "evidence": [
             {
               "label": "Deployed schedule",
@@ -6618,6 +6644,10 @@
             {
               "label": "Successful scheduled run",
               "url": "https://github.com/tamird/gvisor/actions/runs/37877127994"
+            },
+            {
+              "label": "Second successful scheduled run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37918885799"
             },
             {
               "label": "Workflow run history",
