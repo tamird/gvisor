@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T08:12:07.352298+00:00",
+    "updatedAt": "2026-10-09T08:41:12.424513+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4931,6 +4931,68 @@
         "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
         "url": "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52"
       }
+    },
+    {
+      "id": "branch:tcp-cubic-ack-credit",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-cubic-ack-credit",
+      "head": "4742cda26c097ea47f47ac82c8848c30331e7beb",
+      "title": "Preserve CUBIC ACK growth credit",
+      "url": "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T08:41:12.424513+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "4742cda26c097ea47f47ac82c8848c30331e7beb",
+        "url": "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb"
+      },
+      "summary": "The user is reviewing this standalone repair before opening a PR. It preserves fractional ACK credit, bounds newly earned growth, resets credit after fast recovery, and carries excess ACKs across the slow-start threshold. Nine selected validation targets passed, including both architectures and an AMD64 race configuration. The packet phases are focused regressions; this is not a full e2e suite or performance result.",
+      "followup": {
+        "disposition": "Contributor review requested",
+        "owner": "root",
+        "sourceHead": "4742cda26c097ea47f47ac82c8848c30331e7beb",
+        "reviewedAt": "2026-10-09T08:41:12.424513+00:00",
+        "nextAction": "Await the actual user decision on this exact standalone change before opening its PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb",
+          "https://github.com/tamird/gvisor/tree/tcp-cubic-ack-credit",
+          "https://app.buildbuddy.io/invocation/3037d907-2d04-495b-903e-d4ce4e09a35c",
+          "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
+        ]
+      }
+    },
+    {
+      "id": "branch:tcp-reno-ack-credit",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-reno-ack-credit",
+      "head": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+      "title": "Consume Reno ACK credit before growing cwnd",
+      "url": "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T08:41:12.424513+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+        "url": "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0"
+      },
+      "summary": "The user is reviewing this independent Reno repair before opening a PR. It computes growth and remaining credit against the same original window, preventing spent credit from being reused or excess credit from being lost. Six selected validation targets passed, including both architectures and focused recovery cases.",
+      "followup": {
+        "disposition": "Contributor review requested",
+        "owner": "root",
+        "sourceHead": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+        "reviewedAt": "2026-10-09T08:41:12.424513+00:00",
+        "nextAction": "Await the actual user decision on this exact standalone change before opening its PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+          "https://github.com/tamird/gvisor/tree/tcp-reno-ack-credit",
+          "https://app.buildbuddy.io/invocation/989496b1-4af6-48ea-8fa5-0297fd9f9ab8",
+          "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
+        ]
+      }
     }
   ],
   "edges": [
@@ -6292,7 +6354,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T08:12:07.352298+00:00",
+      "updatedAt": "2026-10-09T08:41:12.424513+00:00",
       "summary": "Investigate production CUBIC recovery behavior and build deterministic impaired-link scenarios using the real TCP stack, with Linux or reference comparisons. Measure where CUBIC benefits high-bandwidth, high-delay paths relative to Reno without claiming universal superiority.",
       "findings": [
         {
@@ -6352,6 +6414,19 @@
             {
               "label": "RACK recovery tests",
               "url": "https://github.com/google/gvisor/blob/c5e9146e6/pkg/tcpip/transport/tcp/test/e2e/tcp_rack_test.go"
+            }
+          ]
+        },
+        {
+          "text": "Two standalone ACK-credit repairs have passed their targeted validations and are now awaiting contributor review: CUBIC preserves growth credit and slow-start leftovers, while Reno consumes credit using the original window. Estimator, epoch and application-limited behavior remain active research, and no throughput advantage is claimed.",
+          "evidence": [
+            {
+              "label": "CUBIC proposal",
+              "url": "https://github.com/tamird/gvisor/commit/4742cda26c"
+            },
+            {
+              "label": "Reno proposal",
+              "url": "https://github.com/tamird/gvisor/commit/25bfc8d20"
             }
           ]
         }
