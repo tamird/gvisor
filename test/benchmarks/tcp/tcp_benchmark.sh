@@ -51,6 +51,7 @@ rate_mbps=             # Empty leaves the link rate unlimited.
 queue_packets=1000     # The default netem queue limit, made explicit.
 seed=                  # Requires a tc/kernel combination that supports netem seed.
 output_dir=
+latency_probe=false
 helper_dir="$(dirname "$0")"
 netstack_opts=
 disable_linux_gso=
@@ -150,6 +151,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --moderate-recv-buf)
       netstack_opts="${netstack_opts} -moderate_recv_buf"
+      ;;
+    --latency-probe)
+      latency_probe=true
       ;;
     --duration)
       shift
@@ -264,6 +268,7 @@ while [[ $# -gt 0 ]]; do
       echo " --queue-packets       netem queue limit in each direction (default 1000)"
       echo " --seed                netem random seed (requires kernel and tc support)"
       echo " --output-dir          retain settings, versions, qdisc counters and raw iperf output"
+      echo " --latency-probe       retain native ICMP RTT before/during/after the client operation (requires --output-dir)"
       echo " --duration            set the test duration (s)"
       echo " --latency             set the latency (ms)"
       echo " --latency-variation   set the latency variation"
@@ -292,9 +297,17 @@ case "$congestion_control" in
   *) echo "unsupported congestion control: $congestion_control" >&2; exit 1 ;;
 esac
 if [[ -n $rate_mbps && ! $rate_mbps =~ ^[0-9]+([.][0-9]+)?$ ]] ||
-   [[ ! $queue_packets =~ ^[1-9][0-9]*$ || ! $duration =~ ^[1-9][0-9]*$ ]] ||
+   [[ ! $queue_packets =~ ^[1-9][0-9]*$ || ! $duration =~ ^[1-9][0-9]*$ || ! $num_client_threads =~ ^[1-9][0-9]*$ ]] ||
    [[ -n $seed && ! $seed =~ ^[0-9]+$ ]]; then
-  echo "rate must be numeric, duration/queue limit positive integers, and seed unsigned" >&2
+  echo "rate must be numeric, duration/queue limit/stream count positive integers, and seed unsigned" >&2
+  exit 1
+fi
+if $latency_probe && [[ -z $output_dir ]]; then
+  echo "--latency-probe requires --output-dir" >&2
+  exit 1
+fi
+if $latency_probe && $xdp; then
+  echo "--latency-probe requires AF_PACKET mode, without --xdp" >&2
   exit 1
 fi
 if [[ -n $output_dir ]]; then
@@ -335,6 +348,9 @@ record_settings() {
     "$client" "$server" "$congestion_control" "$mtu" "$duration" "$num_client_threads"
   printf 'rtt_ms=%s jitter_ms=%s loss_percent=%s duplicate_percent=%s rate_mbps=%s queue_packets=%s seed=%s\n' \
     "$latency" "$latency_variation" "$loss" "$duplicate" "${rate_mbps:-unlimited}" "$queue_packets" "${seed:-unspecified}"
+  printf 'latency_probe=%s receiver_json=%s\n' "$latency_probe" "$([[ -n $output_dir ]] && echo true || echo false)"
+  if [[ -n $output_dir ]]; then jq --version; fi
+  if $latency_probe; then ping -V; fi
   uname -a
   ip -Version
   tc -Version
@@ -420,11 +436,24 @@ ip link add wan.0 type veth peer name wan.1
 client_pid=
 server_pid=
 iperf_pid=
+probe_pid=
 results_file=
+stop_probe() {
+  local status=0 signal_status=0
+  if [[ -z \$probe_pid ]]; then return 0; fi
+  # The deadline is a backstop. A successful run must retain the probe until
+  # its requested drain period ends; an earlier exit is a capture failure.
+  kill -INT "\$probe_pid" || signal_status=\$?
+  wait "\$probe_pid" || status=\$?
+  probe_pid=
+  printf '%s\n' "\$status" > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-exit.txt" || return 1
+  if (( signal_status != 0 || status > 1 )); then return 1; fi
+}
 function cleanup {
   local status=\$? cleanup_status=0
   trap - EXIT
   set +e
+  if ! stop_probe; then cleanup_status=1; fi
   # Detach before deleting the bridge, including on a failed client run.
   # Older kernels can otherwise hang:
   # https://github.com/torvalds/linux/commit/1ce5cce89
@@ -442,9 +471,24 @@ function cleanup {
     fi
   done
   if [[ -n \$iperf_pid ]]; then
-    if ! kill -9 "\$iperf_pid"; then cleanup_status=1; fi
+    if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+      # timeout forwards termination to the one-off receiver and bounds
+      # shutdown even when its control connection is incomplete.
+      if kill -0 "\$iperf_pid" 2>/dev/null; then
+        if ! kill -TERM "\$iperf_pid"; then cleanup_status=1; fi
+      fi
+      receiver_status=0
+      wait "\$iperf_pid" || receiver_status=\$?
+      if ! printf '%s\n' "\$receiver_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-exit.txt"; then cleanup_status=1; fi
+    else
+      if ! kill -9 "\$iperf_pid"; then cleanup_status=1; fi
+      receiver_status=0
+      wait "\$iperf_pid" || receiver_status=\$?
+      if (( receiver_status != 137 )); then cleanup_status=1; fi
+    fi
+    iperf_pid=
   fi
-  if [[ -n \$results_file ]]; then
+  if [[ -n \$results_file && -z \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
     if ! rm -f "\$results_file"; then cleanup_status=1; fi
   fi
   if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
@@ -557,8 +601,17 @@ fi
 ${nsjoin_binary} /tmp/server.netns ${server_args} &
 server_pid=\$!
 
-# Start the iperf server.
-${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} -p ${iperf_port} -s >&2 &
+# A one-off receiver emits one complete JSON report, including receiver-side
+# intervals and per-stream results. Preserve the client's usual text output.
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  timeout --signal=TERM --kill-after=5s $((duration + 60))s \
+    ${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} \
+    -p ${iperf_port} -s -1 -J -i 1 \
+    > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver.json" \
+    2> "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-stderr.txt" &
+else
+  ${nsjoin_binary} /tmp/server.netns ${iperf_binary_name} ${iperf_version_arg} -p ${iperf_port} -s >&2 &
+fi
 iperf_pid=\$!
 
 # Give services time to start.
@@ -567,12 +620,37 @@ sleep 5
 ${nsjoin_binary} /tmp/client.netns ${client_args} &
 client_pid=\$!
 
-# Show traffic information.
-if ! ${client} && ! ${server}; then
+record_probe_phase() {
+  local uptime ignored
+  read -r uptime ignored < /proc/uptime
+  printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" \
+    >> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
+}
+if ${latency_probe}; then
+  # These are native addresses even when a proxy uses Netstack. This measures
+  # the shared ICMP path, not Netstack TCP RTT or pure queue delay.
+  timeout --signal=TERM --kill-after=2s 10s \
+    ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -c 1 -W 2 ${server_addr} \
+    > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-preflight.txt" 2>&1
+  printf 'phase\tboottime_seconds\tunix_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
+  record_probe_phase probe-launch
+  ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -D -O -i 0.1 -s 56 -w $((duration + 45)) ${server_addr} \
+    > "\$TCP_BENCHMARK_OUTPUT_DIR/ping.txt" \
+    2> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-stderr.txt" &
+  probe_pid=\$!
+  sleep 5
+fi
+
+# Show traffic information for the original uninstrumented native mode.
+if ! ${latency_probe} && ! ${client} && ! ${server}; then
   ${nsjoin_binary} /tmp/client.netns ping -c 100 -i 0.001 -W 1 ${server_addr} >&2 || true
 fi
 
-results_file=\$(mktemp)
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  results_file="\$TCP_BENCHMARK_OUTPUT_DIR/iperf.txt"
+else
+  results_file=\$(mktemp)
+fi
 record_qdiscs() {
   for device in wan.0 wan.1; do
     printf '%s\n' "\$device"
@@ -600,17 +678,49 @@ run_client() {
 export -f run_client
 export results_file
 result=0
+if ${latency_probe}; then record_probe_phase client-operation-begin; fi
 timeout --signal=TERM --kill-after=5s $((duration + 30))s \\
   /bin/bash -c 'run_client "\$@"' _ \\
   ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} \\
   ${iperf_version_arg} -p ${proxy_port} -c ${client_addr} -t ${duration} -f m -P ${num_client_threads} || result=\$?
 if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
-  cp "\$results_file" "\$TCP_BENCHMARK_OUTPUT_DIR/iperf.txt"
-  record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-after.txt"
   printf '%s\n' "\$result" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"
+fi
+if ${latency_probe}; then
+  record_probe_phase client-operation-end
+  if (( result == 0 )); then sleep 2; fi
+  record_probe_phase probe-stop
+  probe_status=0
+  stop_probe || probe_status=\$?
+  if (( result == 0 )); then result=\$probe_status; fi
+fi
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-after.txt"
 fi
 cat "\$results_file" >&2
 if (( result != 0 )); then exit "\$result"; fi
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  receiver_status=0
+  wait "\$iperf_pid" || receiver_status=\$?
+  printf '%s\n' "\$receiver_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/receiver-exit.txt"
+  iperf_pid=
+  if (( receiver_status != 0 )); then exit "\$receiver_status"; fi
+  # Reject an incomplete report, including valid JSON carrying an iperf error.
+  # Zero received bytes are a measurement, not a report-format error.
+  jq -e --argjson streams "${num_client_threads}" '
+    def receiver:
+      .sender == false and
+      (.bytes | type == "number") and .bytes >= 0 and
+      (.seconds | type == "number") and .seconds > 0 and
+      (.bits_per_second | type == "number") and .bits_per_second >= 0;
+    (has("error") | not) and
+    .start.test_start.num_streams == \$streams and
+    (.end.streams | length) == \$streams and
+    (.end.sum_received | receiver) and
+    all(.end.streams[]; .receiver | receiver) and
+    (.intervals | type == "array" and length > 0)
+  ' "\$TCP_BENCHMARK_OUTPUT_DIR/receiver.json" > /dev/null
+fi
 
 # Report delivered goodput. The final receiver row is the aggregate for -P.
 mbits=\$(awk '/Mbits\/sec/ && /receiver/ { for (i=2; i<=NF; i++) if (\$i == "Mbits/sec") value=\$(i-1) } END { print value }' "\$results_file")

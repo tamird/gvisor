@@ -341,7 +341,7 @@ func newNetstackImpl(mode, probeFileName string) (impl, func() error, error) {
 		}
 	}
 
-	log.Printf("netstack %s settings: congestion_control=%s sack=%t rack=%t moderate_recv_buf=%t buffer_bytes=%d gso=%d swgso=%t gro=%t xdp=%t", mode, *congestionControl, *sack, *rack, *moderateRecvBuf, bufSize, *gso, *swgso, *gro, *useXDP)
+	log.Printf("netstack %s settings: congestion_control=%s sack=%t rack=%t moderate_recv_buf=%t packet_buffer_bytes=%d gso=%d swgso=%t gro=%t xdp=%t", mode, *congestionControl, *sack, *rack, *moderateRecvBuf, bufSize, *gso, *swgso, *gro, *useXDP)
 
 	return netstackImpl{
 		s:    s,
