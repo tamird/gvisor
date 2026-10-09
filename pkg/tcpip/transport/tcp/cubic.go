@@ -304,7 +304,6 @@ func (c *cubicState) HandleRTOExpired() {
 	// See: https://tools.ietf.org/html/rfc8312#section-4.6
 	c.T = c.s.ep.stack.Clock().NowMonotonic()
 	c.numCongestionEvents = 0
-	c.s.SndCAAckCount = 0
 	c.WLastMax = c.WMax
 	c.WMax = float64(c.s.SndCwnd)
 

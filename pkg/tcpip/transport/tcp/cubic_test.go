@@ -59,11 +59,11 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 	c.s.leaveRecovery()
 	initial := c.s.SndCwnd
 	clock.Advance(time.Minute)
-	c.Update(1, rtt, clock.NowMonotonic())
+	c.Update(10, rtt, clock.NowMonotonic())
 	// Even when the time-based target is far ahead, congestion avoidance
 	// must grow slower than slow start (RFC 9438 section 4.2).
-	if got := c.s.SndCwnd; got > initial+1 {
-		t.Fatalf("one ACK grew the window from %d to %d, want <= %d", initial, got, initial+1)
+	if got := c.s.SndCwnd; got > initial+5 {
+		t.Fatalf("acknowledging 10 segments grew the window from %d to %d, want <= %d", initial, got, initial+5)
 	}
 }
 
@@ -75,11 +75,39 @@ func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	defer c.s.ep.mu.Unlock()
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
+	c.Update(3, rtt, clock.NowMonotonic())
 	initial := c.s.SndCwnd
+	credit := c.s.SndCAAckCount
+	if credit == 0 {
+		t.Fatal("ACKs did not accumulate growth credit")
+	}
 	clock.Advance(time.Second)
 	c.Update(0, rtt, clock.NowMonotonic())
 	if got := c.s.SndCwnd; got != initial {
 		t.Fatalf("without acknowledged segments, cwnd = %d, want %d", got, initial)
+	}
+	if got := c.s.SndCAAckCount; got != credit {
+		t.Fatalf("without acknowledged segments, ACK credit = %d, want %d", got, credit)
+	}
+}
+
+func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
+	c.Update(3, rtt, clock.NowMonotonic())
+
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
+	initial := c.s.SndCwnd
+	clock.Advance(time.Second)
+	c.Update(1, rtt, clock.NowMonotonic())
+	if got := c.s.SndCwnd; got != initial {
+		t.Fatalf("first ACK after recovery spent earlier credit: cwnd = %d, want %d", got, initial)
 	}
 }
 
