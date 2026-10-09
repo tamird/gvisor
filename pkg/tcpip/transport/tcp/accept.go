@@ -165,8 +165,6 @@ func (l *listenContext) cookieHash(id stack.TransportEndpointID, value uint32, n
 // +checklocksexclude:l.hasherMu
 func (l *listenContext) createCookie(id stack.TransportEndpointID, seq seqnum.Value, data uint32) seqnum.Value {
 	ts := timeStamp(l.stack.Clock())
-	// Hash the client sequence number: adding it outside the hash would let
-	// an ACK after both FINs remain valid as a new handshake.
 	v := l.cookieHash(id, uint32(seq), 0) + (ts << tsOffset)
 	v += (l.cookieHash(id, ts, 1) + data) & hashMask
 	return seqnum.Value(v)
