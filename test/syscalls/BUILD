@@ -599,6 +599,28 @@ syscall_test(
     test = "//test/syscalls/linux:ping_socket_test",
 )
 
+# Preserve the complete original owner while comparing execution hosts.
+[
+    arm64_tcg_test(
+        name = "ping_64k_%s_host_test" % architecture,
+        size = "medium",
+        archive = ":ping_socket_test_runsc_systrap_shared_64k_tcg_payload",
+        args = ["--host-nofile=131072"],
+        host_architecture = architecture,
+        payload = ":ping_socket_test_runsc_systrap_shared_64k_arm64",
+        tags = [
+            "block-network",
+            "nogotsan",
+            "requires-net:ipv4",
+            "requires-net:loopback",
+        ],
+    )
+    for architecture in [
+        "amd64",
+        "arm64",
+    ]
+]
+
 syscall_test(
     size = "large",
     add_overlay = True,

@@ -37,6 +37,13 @@ undeclared outputs. Host ISA similarity does not establish faster TCG
 execution; matched guest/payload bytes, original controls and actual results
 are needed before comparing the routes.
 
+The manual `//test/syscalls:ping_64k_{amd64,arm64}_host_test` pair reuses the
+complete shared-filesystem ping owner, including ICMP identifier exhaustion.
+Both targets share its guest, payload and runfiles archive, retain the
+original `--host-nofile=131072` argument and 300-second deadline, and run
+without a case filter. This comparison does not change the full profile's
+host selection or extend its timeout.
+
 Original test deadlines include guest boot and output transfer; small tests
 retain 60 seconds and medium tests retain 300 seconds. Each action requests
 two emulated CPUs and 3 GiB guest memory; the OCI action requests two CPUs,
