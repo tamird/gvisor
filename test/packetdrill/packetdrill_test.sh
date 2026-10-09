@@ -188,6 +188,10 @@ metadata_status=0
 docker exec "${DUT}" uname -a || metadata_status=1
 docker exec "${DUT}" git -C /packetdrill rev-parse HEAD || metadata_status=1
 docker exec "${DUT}" sha256sum "${PACKETDRILL}" || metadata_status=1
+docker exec "${DUT}" python3 --version || metadata_status=1
+docker exec "${DUT}" sha256sum /packetdrill/gtests/net/packetdrill/code.c /packetdrill/LICENSE /packetdrill/gtests/net/packetdrill/COPYING || metadata_status=1
+docker exec "${DUT}" dpkg-query -W '-f=${binary:Package}\t${Version}\t${source:Package}\t${source:Version}\n' 'python3*' 'libpython3*' || metadata_status=1
+docker exec "${DUT}" /bin/sh -ec 'for doc in /usr/share/doc/python3*/copyright /usr/share/doc/libpython3*/copyright; do test -s "$doc"; sha256sum "$doc"; done' || metadata_status=1
 
 DUT_IF=$(get_container_if_from_ip "${DUT}" "$DUT_TEST_NET_IP")
 if [[ -z "$DUT_IF" ]]; then

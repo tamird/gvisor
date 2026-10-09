@@ -1,0 +1,42 @@
+# Honor explicit socket-info selection without querying unrelated options,
+# and accept shorter TCP_INFO from older or different kernels. The full
+# allocated buffer is zero-filled; unavailable trailing fields remain zero.
+# Upstream: https://github.com/google/packetdrill/blob/43500f46d/gtests/net/packetdrill/code.c
+
+--- a/gtests/net/packetdrill/code.c
++++ b/gtests/net/packetdrill/code.c
+@@ -145,7 +145,7 @@
+ 				   const struct _tcp_info *info,
+ 				   int len)
+ {
+-	assert(len >= sizeof(struct _tcp_info));
++	/* get_data() zero-fills fields not returned by older kernels. */
+ 
+ 	write_symbols(code);
+ 
+@@ -765,6 +765,17 @@
+ 	void *data_ext = NULL;
+ 	void *data_meminfo = NULL;
+ 	int  data_len = 0;
++	/* Honor an explicit choice without querying unrelated socket options. */
++	if (state->config->code_sockopt[0] != '\0') {
++		data = get_data(state, event, fd, code->data_type, &data_len);
++		if (data == NULL) {
++			asprintf(&error, "can't get socket data for %s",
++				 state->config->code_sockopt);
++			goto error_out;
++		}
++		append_data(code, code->data_type, data, data_len);
++		goto append_code;
++	}
+ #if HAVE_TCP_INFO
+ 	code->data_type = DATA_TCP_INFO;
+ 	data = get_data(state, event, fd, code->data_type, &data_len);
+@@ -799,6 +810,7 @@
+ 	}
+ #endif
+ 
++append_code:
+ 	append_text(code, state->config->script_path, event->line_number,
+ 		    strdup(text));
+ 
