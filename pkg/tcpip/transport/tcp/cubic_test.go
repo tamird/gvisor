@@ -529,8 +529,8 @@ func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
 	c.SampleCount = nRTTSample - 1
 	clock.Advance(rtt)
 	c.Update(1, 2*rtt, clock.NowMonotonic())
-	if c.s.Ssthresh != c.s.SndCwnd {
-		t.Fatal("HyStart did not end slow start")
+	if got, want := c.s.Ssthresh, c.s.SndCwnd; got != want {
+		t.Fatalf("HyStart threshold = %d, want current window %d", got, want)
 	}
 	if got, want := c.WMax, float64(c.s.SndCwnd); got != want {
 		t.Errorf("initial congestion-avoidance maximum = %f, want %f", got, want)
@@ -553,12 +553,12 @@ func TestCubicFriendlyEstimateUsesACKs(t *testing.T) {
 		c.Update(packetsAcked, rtt, clock.NowMonotonic())
 		return c.WEst
 	}
-	first := estimate(0, 10)
-	if delayed := estimate(time.Second, 10); delayed != first {
-		t.Errorf("equal ACK counts give different Reno estimates: immediate=%f delayed=%f", first, delayed)
+	first := estimate(0, 1)
+	if got, want := estimate(time.Second, 1), first; got != want {
+		t.Errorf("delayed Reno estimate = %f, want immediate estimate %f", got, want)
 	}
-	if more := estimate(0, 20); more <= first {
-		t.Errorf("more ACKs did not increase the Reno estimate: first=%f more=%f", first, more)
+	if got, want := estimate(0, 2), first; got <= want {
+		t.Errorf("Reno estimate after two acknowledged segments = %f, want > estimate after one segment %f", got, want)
 	}
 }
 
@@ -576,9 +576,7 @@ func TestCubicFastConvergenceStartsAtCurrentWindow(t *testing.T) {
 	}
 	// Fast convergence changes the remembered maximum. The next epoch
 	// must still begin at the window the sender actually retained.
-	origin := c.cubicCwnd(-c.K)
-	want := float64(c.s.SndCwnd)
-	if origin < want-1 || origin > want+1 {
-		t.Fatalf("epoch curve starts at %f segments, want within one segment of %f", origin, want)
+	if got, want := c.cubicCwnd(-c.K), float64(c.s.SndCwnd); got < want-1 || got > want+1 {
+		t.Fatalf("epoch curve starts at %f segments, want within one segment of %f", got, want)
 	}
 }
