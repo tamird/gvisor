@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T20:26:16.392664+00:00",
+    "updatedAt": "2026-10-09T20:38:48.228303+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4940,14 +4940,14 @@
       "url": "https://github.com/google/gvisor/pull/15579",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T20:26:16.392664+00:00",
-      "summary": "The current source remains approved. Matching import #15589 advanced to 55f97af1e and its checks are pending; the older f057cd3fb generate failure no longer describes the current import head. Its original public job remains assigned for diagnosis, without claiming a source cause or that the new head passed.",
+      "updatedAt": "2026-10-09T20:38:48.228303+00:00",
+      "summary": "The current source remains approved. Matching import #15589 at 55f97af1e has passed generation and Go tests; Buildkite checks are pending. The older f057cd3fb job completed generation and its generated-branch commit/push, then failed while deleting the disposable clone before the Go build. The exact writer was not captured. A separate clone-lifecycle correction is being validated by root; the historical job remains retained.",
       "followup": {
-        "disposition": "Prior import failure assigned; current import pending",
-        "owner": "restore_integration_review",
+        "disposition": "Prior cleanup failure diagnosed; current import progressing",
+        "owner": "root",
         "sourceHead": "1a12268af0b1a89bc67bc1e5eb3541f678693f69",
-        "reviewedAt": "2026-10-09T20:23:59.159419+00:00",
-        "nextAction": "Finish the original public generate-job diagnosis while the sole event observer follows the new import head; retain the old failure separately.",
+        "reviewedAt": "2026-10-09T20:36:29.294680+00:00",
+        "nextAction": "Finish the separate workflow cleanup correction and its validation; the sole event observer follows the current import and Buildkite results.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/37981674651/job/113993478213",
           "https://github.com/google/gvisor/pull/15579",
