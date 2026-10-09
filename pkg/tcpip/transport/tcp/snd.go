@@ -1443,10 +1443,16 @@ func (s *sender) walkSACK(rcvdSeg *segment) bool {
 	// block. The following blocks can be in arbitrary order.
 	sackBlocks := make([]header.SACKBlock, 0, n)
 	for _, sb := range rcvdSeg.parsedOptions.SACKBlocks[idx:] {
-		// Bound every start to the current flight before modular sorting.
+		// Bound every incoming block to the current flight before lookup.
 		// Ignore ranges that the scoreboard did not retain.
-		if s.isValidSACKBlock(sb, rcvdSeg.ackNumber) && s.ep.scoreboard.IsSACKED(sb) {
-			sackBlocks = append(sackBlocks, sb)
+		if !s.isValidSACKBlock(sb, rcvdSeg.ackNumber) {
+			continue
+		}
+		if retained, ok := s.ep.scoreboard.sackedBlock(sb); ok {
+			// Overlapping partial blocks may cover an MSS only after merging.
+			// This ACK may also make a prefix cumulative; retirement below
+			// removes that prefix's credit from the retained range.
+			sackBlocks = append(sackBlocks, retained)
 		}
 	}
 	slices.SortFunc(sackBlocks, func(a, b header.SACKBlock) int {
