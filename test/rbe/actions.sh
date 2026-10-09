@@ -82,7 +82,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         ;;
     esac
     export qualification_root_bazel
-    if [[ ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
+    if [[ ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]] && [[ ${lanes[*]} != benchmarks || ${QUALIFICATION_BENCHMARK_TARGET:-} != //test/benchmarks/tcp:tcp_benchmark ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
       [[ -S /var/run/docker.sock ]]
@@ -229,6 +229,11 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
   temporary_files+=("$COS_IMAGES_JSON")
   printf '%s' "$QUALIFICATION_COS_GZIP_BASE64" | base64 --decode | gzip --decompress > "$COS_IMAGES_JSON"
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
+fi
+
+if [[ ${lanes[*]} == benchmarks && ${QUALIFICATION_BENCHMARK_TARGET:-} == //test/benchmarks/tcp:tcp_benchmark ]]; then
+  timeout --signal=INT --kill-after=30s 35m bash test/rbe/tcp_congestion_smoke.sh
+  exit 0
 fi
 
 test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
