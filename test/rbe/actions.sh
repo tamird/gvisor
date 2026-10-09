@@ -153,9 +153,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         break
       done
       if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
-        # Keep the maintained full-profile graph, then diagnose one original
-        # IPv4 reset case without syscall tracing at the same deadline.
-        local cohort_dir="$RUNNER_TEMP/qualification/tcg-reset-untraced"
+        # Keep the maintained full-profile graph, then run the two remaining
+        # slow IPv6 cases without syscall tracing at the same deadlines.
+        local cohort_dir="$RUNNER_TEMP/qualification/tcg-remaining-untraced"
         local pattern_file="" source_file
         local -a cohort_arguments=()
         mkdir -p "$cohort_dir"
@@ -208,7 +208,7 @@ assert not any(arg.startswith(('--test_filter=','--test_arg=','--test_timeout=',
 (out/'full-targets').write_text('\n'.join(selected)+'\n')
 (out/'targets').write_text('\n'.join(sorted(cohort))+'\n')
 (out/'selection.json').write_text(json.dumps(cohort,indent=2)+'\n')
-(out/'diagnostic.json').write_text(json.dumps({'label':next(iter(cohort)), 'case':'AllConnectedSockets/ConnectStressTest.Reset/4', 'executedShards':1, 'seconds':3600, 'strace':False, 'qualificationCredit':False},indent=2)+'\n')
+(out/'diagnostic.json').write_text(json.dumps({'label':next(iter(cohort)), 'cases':['AllConnectedSockets/ConnectStressTest.Reset/3', 'AllConnectedSockets/PersistentListenerConnectStressTest.ShutdownCloseSecond/3'], 'executedShards':2, 'seconds':3600, 'strace':False, 'qualificationCredit':False},indent=2)+'\n')
 (out/'routing.json').write_text(json.dumps(rows,indent=2)+'\n')
 query_labels=[]
 for outer in selected:
@@ -264,8 +264,8 @@ TCG_ATTRIBUTES
           fi
         done
         cohort_arguments+=(
-          --test_sharding_strategy=disabled
-          --test_filter=AllConnectedSockets/ConnectStressTest.Reset/4
+          --test_sharding_strategy=forced=2
+          --test_filter=AllConnectedSockets/ConnectStressTest.Reset/3:AllConnectedSockets/PersistentListenerConnectStressTest.ShutdownCloseSecond/3
           --test_arg=--strace=false
         )
         set -- "${cohort_arguments[@]}"
@@ -319,10 +319,10 @@ GUEST_EVENTS
         printf '%s\n' "$result" > "$events_output.bazel-exit"
         printf '%s\n' "$capture_status" > "$events_output.capture-exit"
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-reset-untraced/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-reset-untraced/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-reset-untraced/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-reset-untraced/source-after.txt" ]]; then result=1; fi
+        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-remaining-untraced/final-head.txt"
+        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-remaining-untraced/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
+        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-remaining-untraced/source-after.txt"
+        if [[ -s "$RUNNER_TEMP/qualification/tcg-remaining-untraced/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"
