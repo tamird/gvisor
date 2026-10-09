@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T11:00:48.337683+00:00",
+    "updatedAt": "2026-10-09T11:16:35.120711+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6354,8 +6354,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T10:48:13.874759+00:00",
-      "summary": "Targeted correctness checks of the combined congestion-control corrections passed. A throughput advantage remains unproven. Continue deterministic impaired-link testing with the real TCP stack and Linux comparisons.",
+      "updatedAt": "2026-10-09T11:16:35.120711+00:00",
+      "summary": "Targeted ACK-credit, idle and epoch corrections pass their correctness checks. A separate two-packet utilization regression remains under repair. The first controlled throughput comparison does not establish an improvement.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6431,7 +6431,7 @@
           ]
         },
         {
-          "text": "The existing TCP benchmark completes a functional smoke for native Linux and Netstack, each using Reno and CUBIC: all four modes produced positive receiver goodput with successful runtime and cleanup exits. These are single samples using the pre-fix controllers. The controlled comparison is now in saved-result review; its first attempt\u2019s setup failure before measurement remains recorded. No performance ranking is established.",
+          "text": "All 60 planned throughput trials were retained and independently checked against their source and helper binaries. At 100 Mbps, 100 ms RTT and configured 0.1% loss, original and first-ACK-repair CUBIC had receiver-goodput medians of 7.79 and 8.59 Mbps, but paired outcomes split three wins and three losses. This does not establish an improvement. Small-BDP controls reached 19.0\u201319.1 Mbps. These trials exclude the later idle, epoch and listener-inheritance changes; unseeded loss and queue drops limit interpretation.",
           "evidence": [
             {
               "label": "Verified four-mode functional smoke",
@@ -6446,7 +6446,7 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/37909503135"
             },
             {
-              "label": "Completed comparison (result review pending)",
+              "label": "Complete 60-trial comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/37911741325"
             }
           ]
@@ -6472,9 +6472,35 @@
               "url": "https://app.buildbuddy.io/invocation/f5e1d2b0-b859-4150-9031-6db56627fbe2"
             }
           ]
+        },
+        {
+          "text": "A separate comparison is running on the complete corrected CUBIC/Reno sender bundle. It plans five functional controls and 30 balanced 120-second flows at 100 Mbps, 100 ms RTT and configured 0.01% loss. This is a new prospective configuration; its results must remain separate from the earlier 60 trials. It does not include the partial-utilization correction now under development.",
+          "evidence": [
+            {
+              "label": "Running complete-controller comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37921217155"
+            },
+            {
+              "label": "Exact comparison method",
+              "url": "https://github.com/tamird/gvisor/commit/6e1e463fb"
+            }
+          ]
+        },
+        {
+          "text": "Two real-packet regressions keep only two packets in flight after recovery, limited separately by the application and advertised receive window. Both reproduce congestion-window growth from 7 to 18. The proposed fix now passes independent source review; runtime validation remains pending. This is a specific remaining utilization defect, not evidence that the historical outage has been reproduced.",
+          "evidence": [
+            {
+              "label": "Application- and receiver-limited reproductions",
+              "url": "https://app.buildbuddy.io/invocation/f12c1a83-7026-4461-876d-473a27438f77"
+            },
+            {
+              "label": "RFC 9438 application-limited behavior",
+              "url": "https://www.rfc-editor.org/rfc/rfc9438.html#section-5.8"
+            }
+          ]
         }
       ],
-      "nextStep": "Assess the complete controlled throughput comparison and finish the separate listener-inheritance and controller reviews before making broader behavior or performance claims.",
+      "nextStep": "Validate the partial-utilization and listener-inheritance corrections, then assess all retained outcomes from the separate complete-controller throughput comparison.",
       "evidence": [
         {
           "label": "Production CUBIC",
