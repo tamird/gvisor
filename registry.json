@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T23:26:01.027382+00:00",
+    "updatedAt": "2026-10-09T23:38:19.158465+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5222,25 +5222,24 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcp-cubic-epoch",
-      "head": "928a07c285d90bc5e485c939935a10134d80bbc7",
+      "head": "98d5af4a32ab97ff02115b815ceda526d108d5ce",
       "title": "Initialize CUBIC congestion-avoidance epochs",
       "url": "https://github.com/google/gvisor/pull/15604",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T23:26:01.027382+00:00",
-      "summary": "Root is validating a one-expression cubic-polynomial amendment in response to the review thread. Etienne reported microbenchmark results of 13.670 to 1.912 ns and 12.625 to 1.934 ns (20 samples); the comment did not include its benchmark source or environment. The amendment is public at 98d5af4a3 and validation is running. A reply remains pending. The live PR stays at the user-approved epoch head 928a07c28; contributor review of the amendment will be requested after validation.\n\nThe delivered epoch change initializes curves from the recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate. Its selected before/after unit and analyzer evidence is closed. The earlier ACK-credit prerequisite #15579 has merged.",
+      "updatedAt": "2026-10-09T23:38:19.158465+00:00",
+      "summary": "The user-authorized cubic-polynomial amendment is delivered at 98d5af4a3. Existing full TCP unit checks passed on AMD64 and ARM64, together with the owning analyzers. The reply was posted and the review thread is resolved. Current-head CI and maintainer review remain tracked from GitHub.\n\nEtienne reported microbenchmark results of 13.670 to 1.912 ns and 12.625 to 1.934 ns (20 samples); the comment did not include benchmark source or environment. The amendment replaces math.Pow(t, 3) with t*t*t while keeping multiplication by C outside the cube.\n\nThe epoch change initializes curves from the recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate. Its selected before/after unit and analyzer evidence is closed. The earlier ACK-credit prerequisite #15579 has merged.",
       "followup": {
-        "disposition": "Amendment validating; review-thread reply pending",
-        "owner": "root",
-        "sourceHead": "928a07c285d90bc5e485c939935a10134d80bbc7",
-        "reviewedAt": "2026-10-09T23:26:01.027382+00:00",
-        "nextAction": "Finish validation of 98d5af4a3, request contributor review, then update the PR and answer the existing thread after approval. Keep the current PR head and unresolved thread visible until that work is delivered.",
+        "disposition": "Amendment delivered; fresh maintainer review pending",
+        "owner": "external_sweeps",
+        "sourceHead": "98d5af4a32ab97ff02115b815ceda526d108d5ce",
+        "reviewedAt": "2026-10-09T23:38:19.158465+00:00",
+        "nextAction": "Observe current-head CI and maintainer review. The amendment and requested thread reply are complete; existing Manning and Milan review requests remain in place.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15604#discussion_r4235310519",
+          "https://github.com/google/gvisor/pull/15604#discussion_r4235389901",
           "https://github.com/tamird/gvisor/commit/98d5af4a32ab97ff02115b815ceda526d108d5ce",
           "https://app.buildbuddy.io/invocation/d1ed9946-bff4-41d1-93e5-5fdc83ba76b9",
-          "https://github.com/google/gvisor/pull/15604#discussion_r4235045411",
-          "https://github.com/google/gvisor/pull/15604#discussion_r4235255164"
+          "https://github.com/google/gvisor/pull/15604#discussion_r4235310519"
         ],
         "mergeable": "MERGEABLE",
         "reviewDecision": null
@@ -6616,7 +6615,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T23:26:01.027382+00:00",
+      "updatedAt": "2026-10-09T23:38:19.158465+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -6938,19 +6937,23 @@
           ]
         },
         {
-          "text": "In the epoch PR review, Etienne reported microbenchmark results for replacing math.Pow(t, 3) with multiplication: 13.670 to 1.912 ns and 12.625 to 1.934 ns, with 20 samples per version. The comment did not include benchmark source or environment. Root prepared the one-expression amendment at 98d5af4a3 and is validating it against the existing CUBIC tests. The live PR remains 928a07c28; a thread reply and subsequent contributor review are pending.",
+          "text": "In the epoch PR review, Etienne reported microbenchmark results for replacing math.Pow(t, 3) with multiplication: 13.670 to 1.912 ns and 12.625 to 1.934 ns, with 20 samples per version. The comment did not include benchmark source or environment. The user-authorized one-expression amendment is delivered at 98d5af4a3 after passing existing full TCP unit checks on AMD64 and ARM64 and the owning analyzers. The reply was posted and the thread is resolved.",
           "evidence": [
             {
               "label": "Maintainer-reported microbenchmarks",
               "url": "https://github.com/google/gvisor/pull/15604#discussion_r4235310519"
             },
             {
-              "label": "One-expression amendment under validation",
+              "label": "Delivered one-expression amendment",
               "url": "https://github.com/tamird/gvisor/commit/98d5af4a32ab97ff02115b815ceda526d108d5ce"
             },
             {
-              "label": "Existing CUBIC validation running",
+              "label": "Passing existing CUBIC validation",
               "url": "https://app.buildbuddy.io/invocation/d1ed9946-bff4-41d1-93e5-5fdc83ba76b9"
+            },
+            {
+              "label": "Reply and resolved review thread",
+              "url": "https://github.com/google/gvisor/pull/15604#discussion_r4235389901"
             }
           ]
         }
