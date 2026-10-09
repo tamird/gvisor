@@ -277,7 +277,8 @@ URL through the existing URL-state path, for example:
 `?view=investigations&investigation-status=concluded#investigation%3Astate-reflection-design`.
 Explicit URL state overrides saved preferences, unknown status values fall back
 to all investigations, and stale selections are ignored. Browser back/forward
-navigation and snapshot refresh preserve the investigation view and scroll.
+restores investigation filters and selection; snapshot refresh preserves the
+investigation panel scroll position.
 
 ## Maintenance checks
 
