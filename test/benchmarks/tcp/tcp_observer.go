@@ -180,7 +180,7 @@ func (r *tcpRecorder) record(state *tcp.TCPEndpointState, begin, end int64) {
 		BootBeginNS: begin,
 		BootEndNS:   end,
 		UnixNS:      time.Now().UnixNano(),
-		Netstack:    &tcpNetstackObservation{
+		Netstack: &tcpNetstackObservation{
 			StackTimeNS:          state.SegTime.String(),
 			Cwnd:                 s.SndCwnd,
 			Ssthresh:             s.Ssthresh,

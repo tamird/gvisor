@@ -85,10 +85,12 @@ for variant in normal race; do
     //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
     > "$out/build-$variant-stdout.txt" 2> "$out/build-$variant-stderr.txt"
 done
+# Original Nogo and buildifier passed; only canonical formatting failed.
+# The sole source correction is the exact formatter whitespace delta.
 bazel test "${options[@]}" --keep_going --build_tag_filters= --test_tag_filters= \
   --test_output=errors --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
   "--execution_log_compact_file=$out/checks.binpb" \
-  //test/benchmarks/tcp:tcp_proxy_nogo //tools/lint:gofmt //tools/lint:buildifier \
+  //tools/lint:gofmt \
   > "$out/checks-stdout.txt" 2> "$out/checks-stderr.txt"
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
 validate_receiver() {
