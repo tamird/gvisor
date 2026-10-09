@@ -48,6 +48,78 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
+	const payload = 32
+	const rtt = 100 * time.Millisecond
+	clock := faketime.NewManualClock()
+	c := context.NewWithOpts(t, context.Options{
+		EnableV4: true,
+		MTU:      header.TCPMinimumSize + header.IPv4MinimumSize + payload,
+		Clock:    clock,
+	})
+	defer c.Cleanup()
+	e2e.EnableCUBIC(t, c)
+	c.CreateConnected(789, 30000, -1)
+	// Pause drains queued TCP work before returning. With virtual time held
+	// still, the next step observes all effects of the ACK without sleeping.
+	ack := func(received int) {
+		c.SendAck(790, received)
+		c.Stack().Pause()
+		c.Stack().Resume()
+	}
+	window := func() int {
+		var info tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&info); err != nil {
+			t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+		}
+		return int(info.SndCwnd)
+	}
+	data := make([]byte, 128<<10)
+	if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+	}
+	received := 0
+	for round := 0; round < 6; round++ {
+		for range tcp.InitialCwnd << round {
+			c.ReceiveAndCheckPacket(data, received, payload)
+			received += payload
+		}
+		clock.Advance(rtt)
+		ack(received)
+	}
+	beforeLoss := window()
+	lostOffset := received
+	for range beforeLoss {
+		c.ReceiveAndCheckPacket(data, received, payload)
+		received += payload
+	}
+	clock.Advance(rtt)
+	// Retain the later packets at the peer, but report the gap left by the
+	// first packet. Three duplicate ACKs must trigger fast retransmission.
+	for range 3 {
+		ack(lostOffset)
+	}
+	c.ReceiveAndCheckPacket(data, lostOffset, payload)
+	ack(received)
+	afterLoss := window()
+	if afterLoss >= beforeLoss {
+		t.Fatalf("loss did not reduce cwnd: before=%d after=%d", beforeLoss, afterLoss)
+	}
+	for range afterLoss {
+		c.ReceiveAndCheckPacket(data, received, payload)
+		received += payload
+	}
+	acked := received - afterLoss*payload
+	for range afterLoss {
+		clock.Advance(rtt / time.Duration(afterLoss))
+		acked += payload
+		ack(acked)
+	}
+	if got := window(); got <= afterLoss {
+		t.Fatalf("cwnd did not recover after a window of ACKs: before=%d after=%d", afterLoss, got)
+	}
+}
+
 // endpointTester provides helper functions to test a tcpip.Endpoint.
 type endpointTester struct {
 	ep tcpip.Endpoint
