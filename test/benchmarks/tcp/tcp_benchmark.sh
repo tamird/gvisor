@@ -15,8 +15,10 @@
 # limitations under the License.
 
 # TCP benchmark; see README.md for documentation.
+set -euo pipefail
 
 # Fixed parameters.
+command_line=("$0" "$@")
 iperf_port=45201 # Not likely to be privileged.
 proxy_port=44000 # Ditto.
 mask=8
@@ -44,6 +46,11 @@ latency_variation=1     # +/- 1ms is a relatively low amount of jitter.
 loss=0.1                # 0.1% loss is non-zero, but not extremely high.
 duplicate=0.1           # 0.1% means duplicates are 1/10x as frequent as losses.
 duration=30             # 30s is enough time to consistent results (experimentally).
+congestion_control=reno # Select both stacks explicitly instead of inheriting Linux's default.
+rate_mbps=             # Empty leaves the link rate unlimited.
+queue_packets=1000     # The default netem queue limit, made explicit.
+seed=                  # Requires a tc/kernel combination that supports netem seed.
+output_dir=
 helper_dir="$(dirname "$0")"
 netstack_opts=
 disable_linux_gso=
@@ -55,15 +62,14 @@ xdp=false
 declare -a unshare_opts=( -U -r )
 
 # Check for netem support.
-lsmod_output=$(lsmod | grep sch_netem)
-if [[ "$?" != "0" ]]; then
+if ! lsmod | grep sch_netem >/dev/null; then
   echo "warning: sch_netem may not be installed." >&2
 fi
 
 function checktmp() {
-  if [[ "$1" =~ ^/tmp/ ]]; then
+  if [[ "$1" == /tmp || "$1" == /tmp/* ]]; then
     echo "Don't use /tmp for output files ('$1') -- tcp_benchmark mounts over /tmp and your file will never make it to the root /tmp."
-    exit 1
+    return 1
   fi
 }
 
@@ -115,7 +121,32 @@ while [[ $# -gt 0 ]]; do
       netstack_opts="${netstack_opts} -rack"
       ;;
     --cubic)
-      netstack_opts="${netstack_opts} -cubic"
+      congestion_control=cubic
+      ;;
+    --congestion-control)
+      shift
+      [[ "$#" -le 0 ]] && echo "no congestion control provided" && exit 1
+      congestion_control=$1
+      ;;
+    --rate)
+      shift
+      [[ "$#" -le 0 ]] && echo "no rate provided" && exit 1
+      rate_mbps=$1
+      ;;
+    --queue-packets)
+      shift
+      [[ "$#" -le 0 ]] && echo "no queue limit provided" && exit 1
+      queue_packets=$1
+      ;;
+    --seed)
+      shift
+      [[ "$#" -le 0 ]] && echo "no seed provided" && exit 1
+      seed=$1
+      ;;
+    --output-dir)
+      shift
+      [[ "$#" -le 0 ]] && echo "no output directory provided" && exit 1
+      output_dir=$1
       ;;
     --moderate-recv-buf)
       netstack_opts="${netstack_opts} -moderate_recv_buf"
@@ -227,7 +258,12 @@ while [[ $# -gt 0 ]]; do
       echo " --sack                enable SACK support"
       echo " --rack                enable RACK support"
       echo " --moderate-recv-buf   enable TCP receive buffer auto-tuning"
-      echo " --cubic               enable CUBIC congestion control for Netstack"
+      echo " --congestion-control  reno (default) or cubic for both native and Netstack"
+      echo " --cubic               alias for --congestion-control cubic"
+      echo " --rate                link rate in Mbit/s in each direction (default unlimited)"
+      echo " --queue-packets       netem queue limit in each direction (default 1000)"
+      echo " --seed                netem random seed (requires kernel and tc support)"
+      echo " --output-dir          retain settings, versions, qdisc counters and raw iperf output"
       echo " --duration            set the test duration (s)"
       echo " --latency             set the latency (ms)"
       echo " --latency-variation   set the latency variation"
@@ -245,11 +281,27 @@ while [[ $# -gt 0 ]]; do
       echo " --no-user-ns          don't run in a new user namespace. Useful for testing as root"
       echo ""
       echo "The output will of the script will be:"
-      echo "  <throughput> <client-cpu-usage> <server-cpu-usage>"
+      echo "  BenchmarkTCP/.../stack=.../cc=... 1 <receiver-Mb/s> Mb/s <proxy-CPU-seconds/duration> cpu-time"
       exit 1
   esac
   shift
 done
+
+case "$congestion_control" in
+  reno|cubic) ;;
+  *) echo "unsupported congestion control: $congestion_control" >&2; exit 1 ;;
+esac
+if [[ -n $rate_mbps && ! $rate_mbps =~ ^[0-9]+([.][0-9]+)?$ ]] ||
+   [[ ! $queue_packets =~ ^[1-9][0-9]*$ || ! $duration =~ ^[1-9][0-9]*$ ]] ||
+   [[ -n $seed && ! $seed =~ ^[0-9]+$ ]]; then
+  echo "rate must be numeric, duration/queue limit positive integers, and seed unsigned" >&2
+  exit 1
+fi
+if [[ -n $output_dir ]]; then
+  mkdir -p "$output_dir"
+  output_dir=$(cd "$output_dir" && pwd -P)
+  checktmp "$output_dir"
+fi
 
 if [[ ${verbose} == "true" ]]; then
   set -x
@@ -273,6 +325,30 @@ if [[ ! -e ${nsjoin_binary} ]]; then
   exit 1
 fi
 
+record_settings() {
+  printf 'command: '
+  printf '%q ' "${command_line[@]}"
+  printf '\n'
+  printf 'netstack_options=%s gso=%s swgso=%s gro=%s xdp=%s disable_linux_gso=%s disable_linux_gro=%s\n' \
+    "$netstack_opts" "$gso" "$swgso" "$gro" "$xdp" "${disable_linux_gso:-0}" "${disable_linux_gro:-0}"
+  printf 'client=%s server=%s congestion_control=%s mtu=%s duration=%s streams=%s\n' \
+    "$client" "$server" "$congestion_control" "$mtu" "$duration" "$num_client_threads"
+  printf 'rtt_ms=%s jitter_ms=%s loss_percent=%s duplicate_percent=%s rate_mbps=%s queue_packets=%s seed=%s\n' \
+    "$latency" "$latency_variation" "$loss" "$duplicate" "${rate_mbps:-unlimited}" "$queue_packets" "${seed:-unspecified}"
+  uname -a
+  ip -Version
+  tc -Version
+  "$iperf_binary_name" --version
+  sha256sum "$proxy_binary" "$nsjoin_binary"
+}
+if [[ -n $output_dir ]]; then
+  record_settings > "$output_dir/settings.txt" 2>&1
+  cat "$output_dir/settings.txt" >&2
+else
+  record_settings >&2
+fi
+export TCP_BENCHMARK_OUTPUT_DIR="$output_dir"
+
 if [[ "$(echo "${latency_variation}" | awk '{printf "%1.2f", $0}')" != "0.00" ]]; then
   # As long as there's some jitter, then we use the paretonormal distribution.
   # This will preserve the minimum RTT, but add a realistic amount of jitter to
@@ -285,11 +361,11 @@ fi
 
 # Client proxy that will listen on the client's iperf target forward traffic
 # using the host networking stack.
-client_args="${proxy_binary} -port ${proxy_port} -forward ${full_server_proxy_addr}"
+client_args="${proxy_binary} -congestion_control=${congestion_control} -port ${proxy_port} -forward ${full_server_proxy_addr}"
 if ${client}; then
   # Client proxy that will listen on the client's iperf target
   # and forward traffic using netstack.
-  client_args="${proxy_binary} ${netstack_opts} -port ${proxy_port} -client \\
+  client_args="${proxy_binary} -congestion_control=${congestion_control} ${netstack_opts} -port ${proxy_port} -client \\
       -mtu ${mtu} -iface client.0 -addr ${client_proxy_addr} -mask ${mask} \\
       -forward ${full_server_proxy_addr} -gso=${gso} -swgso=${swgso} --gro=${gro} \\
       --xdp=${xdp}"
@@ -297,11 +373,11 @@ fi
 
 # Server proxy that will listen on the proxy port and forward to the server's
 # iperf server using the host networking stack.
-server_args="${proxy_binary} -port ${proxy_port} -forward ${full_server_addr}"
+server_args="${proxy_binary} -congestion_control=${congestion_control} -port ${proxy_port} -forward ${full_server_addr}"
 if ${server}; then
   # Server proxy that will listen on the proxy port and forward to the servers'
   # iperf server using netstack.
-  server_args="${proxy_binary} ${netstack_opts} -port ${proxy_port} -server \\
+  server_args="${proxy_binary} -congestion_control=${congestion_control} ${netstack_opts} -port ${proxy_port} -server \\
       -mtu ${mtu} -iface server.0 -addr ${server_proxy_addr} -mask ${mask} \\
       -forward ${full_server_addr} -gso=${gso} -swgso=${swgso} --gro=${gro} \\
       --xdp=${xdp}"
@@ -316,9 +392,14 @@ duplicate_opt=""
 if [[ "$(echo "$half_duplicate" | bc -q)" != "0" ]]; then
   duplicate_opt="duplicate ${half_duplicate}%"
 fi
+rate_opt=""
+if [[ -n $rate_mbps ]]; then rate_opt="rate ${rate_mbps}mbit"; fi
+seed_opt=""
+if [[ -n $seed ]]; then seed_opt="seed ${seed}"; fi
 
 exec unshare "${unshare_opts[@]}" -m -n -f -p --mount-proc /bin/bash << EOF
-set -e -m
+set -euo pipefail
+set -m
 
 if [[ ${verbose} == "true" ]]; then
   set -x
@@ -336,6 +417,44 @@ ip link add server.0 type veth peer name server.1
 
 # Add network emulation devices.
 ip link add wan.0 type veth peer name wan.1
+client_pid=
+server_pid=
+iperf_pid=
+results_file=
+function cleanup {
+  local status=\$? cleanup_status=0
+  trap - EXIT
+  set +e
+  # Detach before deleting the bridge, including on a failed client run.
+  # Older kernels can otherwise hang:
+  # https://github.com/torvalds/linux/commit/1ce5cce89
+  for device in client.1 server.1 wan.0 wan.1; do
+    if ! ip link set "\$device" nomaster; then cleanup_status=1; fi
+  done
+  for pid in "\$client_pid" "\$server_pid"; do
+    if [[ -n \$pid ]]; then
+      if ! kill -TERM "\$pid"; then cleanup_status=1; fi
+    fi
+  done
+  for pid in "\$client_pid" "\$server_pid"; do
+    if [[ -n \$pid ]]; then
+      if ! wait "\$pid"; then cleanup_status=1; fi
+    fi
+  done
+  if [[ -n \$iperf_pid ]]; then
+    if ! kill -9 "\$iperf_pid"; then cleanup_status=1; fi
+  fi
+  if [[ -n \$results_file ]]; then
+    if ! rm -f "\$results_file"; then cleanup_status=1; fi
+  fi
+  if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+    if ! printf '%s\n' "\$cleanup_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/cleanup-exit.txt"; then cleanup_status=1; fi
+  fi
+  if (( status == 0 )); then status=\$cleanup_status; fi
+  exit "\$status"
+}
+trap cleanup EXIT
+
 ip link set wan.0 up
 ip link set wan.1 up
 
@@ -364,8 +483,9 @@ for device in wan.0 wan.1; do
   # "It is also possible to add a correlation, but this option is now deprecated
   # due to the noticed bad behavior." For more information see netem(8).
   tc qdisc add dev \$device root netem \\
+    limit ${queue_packets} \\
     delay ${half_latency}ms ${latency_variation}ms ${distribution} \\
-    ${loss_opt} ${duplicate_opt}
+    ${loss_opt} ${duplicate_opt} ${rate_opt} ${seed_opt}
 done
 
 # Start a client proxy.
@@ -416,6 +536,24 @@ ${nsjoin_binary} /tmp/server.netns ip link set lo up
 ip link set dev client.1 up
 ip link set dev server.1 up
 
+record_features() {
+  printf 'client.0\n'
+  ${nsjoin_binary} /tmp/client.netns ethtool -k client.0
+  printf 'server.0\n'
+  ${nsjoin_binary} /tmp/server.netns ethtool -k server.0
+  for endpoint in client server; do
+    printf 'native defaults in %s namespace\n' "\$endpoint"
+    ${nsjoin_binary} /tmp/\$endpoint.netns sysctl \\
+      net.ipv4.tcp_sack net.ipv4.tcp_recovery net.ipv4.tcp_moderate_rcvbuf \\
+      net.ipv4.tcp_rmem net.ipv4.tcp_wmem net.ipv4.tcp_congestion_control
+  done
+}
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  record_features > "\$TCP_BENCHMARK_OUTPUT_DIR/interface-features.txt"
+else
+  record_features >&2
+fi
+
 ${nsjoin_binary} /tmp/server.netns ${server_args} &
 server_pid=\$!
 
@@ -435,41 +573,51 @@ if ! ${client} && ! ${server}; then
 fi
 
 results_file=\$(mktemp)
-function cleanup {
-  rm -f \$results_file
-  kill -TERM \$client_pid
-  kill -TERM \$server_pid
-  wait \$client_pid
-  wait \$server_pid
-  kill -9 \$iperf_pid 2>/dev/null
+record_qdiscs() {
+  for device in wan.0 wan.1; do
+    printf '%s\n' "\$device"
+    tc -s -d qdisc show dev "\$device"
+  done
 }
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-before.txt"
+fi
 
-# Allow failure from this point.
-set +e
-trap cleanup EXIT
+# Bound the whole client operation, including a blocked connection/control
+# exchange, while leaving the requested measurement interval unchanged.
+run_client() {
+  local connect_deadline=\$((SECONDS + 30)) result
+  while true; do
+    result=0
+    "\$@" > "\$results_file" 2>&1 || result=\$?
+    if grep -Eq "connect failed|unable to connect" "\$results_file" && (( SECONDS < connect_deadline )); then
+      sleep 0.1
+      continue
+    fi
+    return "\$result"
+  done
+}
+export -f run_client
+export results_file
+result=0
+timeout --signal=TERM --kill-after=5s $((duration + 30))s \\
+  /bin/bash -c 'run_client "\$@"' _ \\
+  ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} \\
+  ${iperf_version_arg} -p ${proxy_port} -c ${client_addr} -t ${duration} -f m -P ${num_client_threads} || result=\$?
+if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
+  cp "\$results_file" "\$TCP_BENCHMARK_OUTPUT_DIR/iperf.txt"
+  record_qdiscs > "\$TCP_BENCHMARK_OUTPUT_DIR/qdisc-after.txt"
+  printf '%s\n' "\$result" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"
+fi
+cat "\$results_file" >&2
+if (( result != 0 )); then exit "\$result"; fi
 
-# Run the benchmark, recording the results file.
-while ${nsjoin_binary} /tmp/client.netns ${iperf_binary_name} \\
-    ${iperf_version_arg} -p ${proxy_port} -c ${client_addr} -t ${duration} -f m -P ${num_client_threads} 2>&1 \\
-    | tee \$results_file \\
-    | grep -E "connect failed|unable to connect" >/dev/null; do
-  sleep 0.1 # Wait for all services.
-done
-
-# Unlink all relevant devices from the bridge. This is because when the bridge
-# is deleted, the kernel may hang. It appears that this problem is fixed in
-# upstream commit 1ce5cce895309862d2c35d922816adebe094fe4a.
-ip link set client.1 nomaster
-ip link set server.1 nomaster
-ip link set wan.0 nomaster
-ip link set wan.1 nomaster
-
-# Emit raw results.
-cat \$results_file >&2
-
-# Emit a useful result (final throughput).
-mbits=\$(grep Mbits/sec \$results_file \\
-  | grep 'sender' | awk '{print \$7};')
+# Report delivered goodput. The final receiver row is the aggregate for -P.
+mbits=\$(awk '/Mbits\/sec/ && /receiver/ { for (i=2; i<=NF; i++) if (\$i == "Mbits/sec") value=\$(i-1) } END { print value }' "\$results_file")
+if [[ ! \$mbits =~ ^[0-9]+([.][0-9]+)?\$ ]]; then
+  echo "No receiver throughput in successful iperf output" >&2
+  exit 1
+fi
 client_cpu_ticks=\$(cat /proc/\$client_pid/stat \\
   | awk '{print (\$14+\$15);}')
 server_cpu_ticks=\$(cat /proc/\$server_pid/stat \\
@@ -488,11 +636,13 @@ if [[ "${disable_linux_gro}" ]]; then
 fi
 
 if ${client}; then
-  echo "BenchmarkTCP/role=client/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
+  echo "BenchmarkTCP/role=client/stack=netstack/cc=${congestion_control}/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
   exit 0
 elif ${linux_client}; then
-  echo "BenchmarkTCP/role=client/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
+  echo "BenchmarkTCP/role=client/stack=linux/cc=${congestion_control}/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$client_cpu_load cpu-time"
   exit 0
 fi
-echo "BenchmarkTCP/role=server/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$server_cpu_load cpu-time"
+stack=linux
+if ${server}; then stack=netstack; fi
+echo "BenchmarkTCP/role=server/stack=\$stack/cc=${congestion_control}/host-gso=\$hostgso/host-gro=\$hostgro 1 \$mbits Mb/s \$server_cpu_load cpu-time"
 EOF
