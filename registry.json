@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T13:55:00.749630+00:00",
+    "updatedAt": "2026-10-09T14:19:26.234171+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6378,7 +6378,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T13:51:02.166808+00:00",
+      "updatedAt": "2026-10-09T14:19:26.234171+00:00",
       "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The user is reviewing the clearer ACK tests and independent recovery proposals.",
       "findings": [
         {
@@ -6602,6 +6602,19 @@
               "url": "https://github.com/tamird/gvisor/commit/4da0a21a2"
             }
           ]
+        },
+        {
+          "text": "A separate shared-flow harness extension is under functional validation, covering compatibility, shared and late-start traffic modes and expected termination handling. The prior observation-harness checks remain separate. No comparative sharing or fairness result is established yet.",
+          "evidence": [
+            {
+              "label": "Shared-flow harness functional validation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37941724114"
+            },
+            {
+              "label": "Public shared-flow harness source",
+              "url": "https://github.com/tamird/gvisor/commit/c8214be16"
+            }
+          ]
         }
       ],
       "nextStep": "Complete contributor review and remaining qualification, and assess other scenarios without generalizing this measured high-BDP result.",
@@ -6761,11 +6774,11 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T13:39:06.596686+00:00",
+      "updatedAt": "2026-10-09T14:19:26.234171+00:00",
       "summary": "Investigate gaps in automatic GitHub status collection and publication. Keep the snapshot timestamp authoritative while determining why expected schedule events are absent.",
       "findings": [
         {
-          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published matching Pages assets. The 13:28 UTC history check found no later scheduled event. These observations do not establish regular 30-minute cadence; the gaps remain under investigation.",
+          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published matching Pages assets. The 13:56 UTC history check found no later scheduled event. These observations do not establish regular 30-minute cadence; the gaps remain under investigation.",
           "evidence": [
             {
               "label": "Deployed schedule",
