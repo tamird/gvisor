@@ -1279,6 +1279,65 @@ func TestUserSuppliedMSSOnListenAccept(t *testing.T) {
 		})
 	}
 }
+
+// TestAcceptedInheritsDelayOption tests that an accepted endpoint inherits the
+// delay option (the inverse of TCP_NODELAY) from the listening endpoint.
+func TestAcceptedInheritsDelayOption(t *testing.T) {
+	for _, cookieEnabled := range []tcpip.TCPAlwaysUseSynCookies{false, true} {
+		for _, delay := range []bool{false, true} {
+			t.Run(fmt.Sprintf("syn-cookies enabled: %t, delay: %t", cookieEnabled, delay), func(t *testing.T) {
+				c := context.New(t, e2e.DefaultMTU)
+				defer c.Cleanup()
+
+				if err := c.Stack().SetTransportProtocolOption(header.TCPProtocolNumber, &cookieEnabled); err != nil {
+					t.Fatalf("SetTransportProtocolOption(%d, %T) = %s", header.TCPProtocolNumber, cookieEnabled, err)
+				}
+				// Default new endpoints to the opposite of the listener so that
+				// the accepted endpoint's value can only come from the listener.
+				defaultDelay := tcpip.TCPDelayEnabled(!delay)
+				if err := c.Stack().SetTransportProtocolOption(header.TCPProtocolNumber, &defaultDelay); err != nil {
+					t.Fatalf("SetTransportProtocolOption(%d, %T) = %s", header.TCPProtocolNumber, defaultDelay, err)
+				}
+
+				c.Create(-1)
+				c.EP.SocketOptions().SetDelayOption(delay)
+
+				if err := c.EP.Bind(tcpip.FullAddress{Port: context.StackPort}); err != nil {
+					t.Fatal("Bind failed:", err)
+				}
+
+				if err := c.EP.Listen(10); err != nil {
+					t.Fatal("Listen failed:", err)
+				}
+
+				we, ch := waiter.NewChannelEntry(waiter.ReadableEvents)
+				c.WQ.EventRegister(&we)
+				defer c.WQ.EventUnregister(&we)
+
+				executeHandshake(t, c, context.TestPort, bool(cookieEnabled))
+
+				ep, _, err := c.EP.Accept(nil)
+				if cmp.Equal(&tcpip.ErrWouldBlock{}, err) {
+					select {
+					case <-ch:
+						ep, _, err = c.EP.Accept(nil)
+					case <-time.After(1 * time.Second):
+						t.Fatalf("Timed out waiting for accept")
+					}
+				}
+				if err != nil {
+					t.Fatalf("Accept failed: %s", err)
+				}
+				defer ep.Close()
+
+				if got := ep.SocketOptions().GetDelayOption(); got != delay {
+					t.Errorf("got accepted GetDelayOption() = %t, want = %t", got, delay)
+				}
+			})
+		}
+	}
+}
+
 func TestSendRstOnListenerRxSynAckV4(t *testing.T) {
 	c := context.New(t, e2e.DefaultMTU)
 	defer c.Cleanup()
@@ -9503,6 +9562,98 @@ func TestLateSynCookieAck(t *testing.T) {
 	}
 	if err := testutil.Poll(metricPollFn, 1*time.Second); err != nil {
 		t.Error(err)
+	}
+}
+
+func TestSynCookieACKAfterClose(t *testing.T) {
+	for _, delivery := range []string{"queued", "after_close"} {
+		t.Run(delivery, func(t *testing.T) {
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true,
+				MTU:      e2e.DefaultMTU,
+				Clock:    faketime.NewManualClock(),
+			})
+			defer c.Cleanup()
+			cookies := tcpip.TCPAlwaysUseSynCookies(true)
+			if err := c.Stack().SetTransportProtocolOption(tcp.ProtocolNumber, &cookies); err != nil {
+				t.Fatalf("SetTransportProtocolOption(TCPAlwaysUseSynCookies): %s", err)
+			}
+			c.Create(-1)
+			listener := c.EP
+			if err := listener.Bind(tcpip.FullAddress{Port: context.StackPort}); err != nil {
+				t.Fatalf("Bind: %s", err)
+			}
+			if err := listener.Listen(1); err != nil {
+				t.Fatalf("Listen: %s", err)
+			}
+			peer := c.PassiveConnectWithOptions(int(c.MSSWithoutOptions()), -1, header.TCPSynOptions{
+				MSS: c.MSSWithoutOptions(),
+				WS:  -1,
+			}, 0)
+			// Drain queued packet work with virtual time held still.
+			c.Stack().Pause()
+			c.Stack().Resume()
+			accepted, _, err := listener.Accept(nil)
+			if err != nil {
+				t.Fatalf("Accept: %s", err)
+			}
+			defer accepted.Close()
+
+			// Close the peer's write side, then the accepted socket's write
+			// side. Each FIN consumes one sequence number.
+			peer.Flags = header.TCPFlagFin | header.TCPFlagAck
+			peer.SendPacket(nil, nil)
+			peer.NextSeqNum++
+			peer.VerifyACKNoSACK()
+			if err := accepted.Shutdown(tcpip.ShutdownWrite); err != nil {
+				t.Fatalf("Shutdown: %s", err)
+			}
+			fin := c.GetPacket()
+			checker.IPv4(t, fin, checker.TCP(
+				checker.TCPFlags(header.TCPFlagFin|header.TCPFlagAck),
+				checker.TCPSeqNum(uint32(peer.AckNum)),
+				checker.TCPAckNum(uint32(peer.NextSeqNum)),
+			))
+			fin.Release()
+			peer.AckNum++
+			peer.Flags = header.TCPFlagAck
+
+			if delivery == "queued" {
+				// Queue both copies before processing the ACK that closes the
+				// endpoint; its remaining packets are rematched to the listener.
+				ep := accepted.(*tcp.Endpoint)
+				ep.LockUser()
+				peer.SendPacket(nil, nil)
+				peer.SendPacket(nil, nil)
+				ep.UnlockUser()
+			} else {
+				peer.SendPacket(nil, nil)
+				c.Stack().Pause()
+				c.Stack().Resume()
+				peer.SendPacket(nil, nil)
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			if got, want := tcp.EndpointState(accepted.State()), tcp.StateClose; got != want {
+				t.Fatalf("state after final ACK = %s, want %s", got, want)
+			}
+
+			// Both numbers in this ACK advanced since the handshake. It must
+			// not validate as a new cookie and create another accepted socket.
+			extra, _, err := listener.Accept(nil)
+			if extra != nil {
+				extra.Close()
+			}
+			if _, ok := err.(*tcpip.ErrWouldBlock); !ok {
+				t.Fatalf("Accept after duplicate close ACK = %v, want ErrWouldBlock", err)
+			}
+			reset := c.GetPacket()
+			checker.IPv4(t, reset, checker.TCP(
+				checker.TCPFlags(header.TCPFlagRst),
+				checker.TCPSeqNum(uint32(peer.AckNum)),
+			))
+			reset.Release()
+		})
 	}
 }
 
