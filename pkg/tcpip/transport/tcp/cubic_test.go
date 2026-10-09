@@ -71,6 +71,7 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 			// post-loss growth rate. At the later maximum rate, those credits
 			// could buy two segments, so they distinguish a stale-credit burst
 			// from the permitted one-segment increase.
+			clock.Advance(rtt)
 			c.Update(test.pendingSegments, rtt, clock.NowMonotonic())
 			// Make the time-based target much larger than the actual window.
 			// Two newly acknowledged segments may add at most one segment
@@ -93,19 +94,24 @@ func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	defer c.s.ep.mu.Unlock()
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
+	clock.Advance(rtt)
 	c.Update(3, rtt, clock.NowMonotonic())
 	windowBeforeZeroACK := c.s.SndCwnd
 	creditBeforeZeroACK := c.s.SndCAAckCount
+	estimateBeforeZeroACK := c.WEst
 
 	// Advancing time raises the target, but without new ACKs neither the
 	// actual window nor the saved credit may change.
-	clock.Advance(time.Second)
+	clock.Advance(time.Minute)
 	c.Update(0, rtt, clock.NowMonotonic())
 	if got, want := c.s.SndCwnd, windowBeforeZeroACK; got != want {
 		t.Errorf("no newly acknowledged segments: cwnd=%d, want unchanged %d", got, want)
 	}
 	if got, want := c.s.SndCAAckCount, creditBeforeZeroACK; got != want {
 		t.Errorf("no newly acknowledged segments: credit=%d, want unchanged %d", got, want)
+	}
+	if got, want := c.WEst, estimateBeforeZeroACK; got != want {
+		t.Errorf("no newly acknowledged segments: Reno estimate=%f, want unchanged %f", got, want)
 	}
 }
 
@@ -117,12 +123,16 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	defer c.s.ep.mu.Unlock()
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
+	clock.Advance(rtt)
 	c.Update(3, rtt, clock.NowMonotonic())
+	if c.s.SndCAAckCount == 0 {
+		t.Fatal("ACKs did not accumulate cubic growth credit")
+	}
 
 	c.HandleLossDetected()
 	c.s.leaveRecovery()
 	windowAfterSecondLoss := c.s.SndCwnd
-	clock.Advance(time.Second)
+	clock.Advance(time.Minute)
 	// One newly acknowledged segment cannot buy a segment even at the maximum growth rate.
 	// Retaining the three pre-recovery credits would incorrectly allow growth.
 	c.Update(1, rtt, clock.NowMonotonic())
@@ -131,23 +141,207 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	}
 }
 
-func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
+func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
 	clock := faketime.NewManualClock()
 	const rtt = 100 * time.Millisecond
 	c := newTestCubic(t, clock, rtt)
 	c.s.ep.mu.Lock()
 	defer c.s.ep.mu.Unlock()
-	c.s.Ssthresh = c.s.SndCwnd + 1
-
-	// Of two acknowledged segments, one reaches the slow-start threshold.
-	// The other must enter congestion avoidance, where one segment earns credit
-	// but cannot grow the window yet.
-	c.Update(2, rtt, clock.NowMonotonic())
-	if got, want := c.s.SndCwnd, c.s.Ssthresh; got != want {
-		t.Fatalf("crossing ssthresh: cwnd=%d, want %d", got, want)
+	// The next delayed RTT sample completes HyStart's sample window.
+	// Enter through Update so the test covers the transition into avoidance.
+	c.LastRTT = rtt
+	c.CurrRTT = 2 * rtt
+	c.SampleCount = nRTTSample - 1
+	clock.Advance(rtt)
+	c.Update(1, 2*rtt, clock.NowMonotonic())
+	if c.s.Ssthresh != c.s.SndCwnd {
+		t.Fatal("HyStart did not end slow start")
 	}
-	if got, want := c.s.SndCAAckCount, 1; got != want {
-		t.Fatalf("crossing ssthresh: credit=%d, want %d", got, want)
+	if got, want := c.WMax, float64(c.s.SndCwnd); got != want {
+		t.Errorf("initial congestion-avoidance maximum = %f, want %f", got, want)
+	}
+	if got, want := clock.NowMonotonic().Sub(c.T), time.Duration(0); got != want {
+		t.Errorf("initial congestion-avoidance epoch age = %s, want %s", got, want)
+	}
+}
+
+func TestCubicFriendlyEstimateUsesACKs(t *testing.T) {
+	estimate := func(elapsed time.Duration, packetsAcked int) float64 {
+		clock := faketime.NewManualClock()
+		const rtt = 100 * time.Millisecond
+		c := newTestCubic(t, clock, rtt)
+		c.s.ep.mu.Lock()
+		defer c.s.ep.mu.Unlock()
+		c.HandleLossDetected()
+		c.s.leaveRecovery()
+		clock.Advance(elapsed)
+		c.Update(packetsAcked, rtt, clock.NowMonotonic())
+		return c.WEst
+	}
+	first := estimate(0, 10)
+	if delayed := estimate(time.Second, 10); delayed != first {
+		t.Errorf("equal ACK counts give different Reno estimates: immediate=%f delayed=%f", first, delayed)
+	}
+	if more := estimate(0, 20); more <= first {
+		t.Errorf("more ACKs did not increase the Reno estimate: first=%f more=%f", first, more)
+	}
+}
+
+func TestCubicFriendlyEstimateAbovePriorWindow(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = 100 * time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.s.SndCwnd = 10
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
+	// Loss reduced the window from 10 to 7. Six acknowledged windows
+	// regain the three lost segments at the initial Reno-friendly rate.
+	for range 6 {
+		c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+	}
+	if c.WEst < c.WLastMax {
+		t.Fatal("estimate did not regain the pre-loss window")
+	}
+	previous := c.WEst
+	c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+	if got, want := c.WEst-previous, float64(1); got != want {
+		t.Fatalf("estimate increase above the prior window = %f, want %f", got, want)
+	}
+}
+
+func TestCubicFriendlyRegionConsumesOldCredit(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
+	// Raise the cubic curve above the estimate so these ACKs first earn
+	// cubic credit. A full window of ACKs then crosses into the friendly region.
+	clock.Advance(100 * time.Millisecond)
+	c.Update(3, rtt, clock.NowMonotonic())
+	if c.s.SndCAAckCount == 0 {
+		t.Fatal("ACKs did not accumulate cubic growth credit")
+	}
+	c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+	if c.WC >= c.WEst {
+		t.Fatal("ACKs did not reach the Reno-friendly region")
+	}
+	initial := c.s.SndCwnd
+	clock.Advance(time.Minute)
+	c.Update(1, rtt, clock.NowMonotonic())
+	if got, want := c.s.SndCwnd, initial; got != want {
+		t.Fatalf("returning to the cubic region reused ACK credit: window=%d, want %d", got, want)
+	}
+}
+
+func TestCubicFastConvergenceStartsAtCurrentWindow(t *testing.T) {
+	clock := faketime.NewManualClock()
+	c := newTestCubic(t, clock, 100*time.Millisecond)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	// Two losses reduce 100 segments to 70 and then 49. The old curve
+	// instead started at 41.65, beyond the one-segment rounding allowance.
+	c.s.SndCwnd = 100
+	for range 2 {
+		c.HandleLossDetected()
+		c.s.leaveRecovery()
+	}
+	// Fast convergence changes the remembered maximum. The next epoch
+	// must still begin at the window the sender actually retained.
+	origin := c.cubicCwnd(-c.K)
+	want := float64(c.s.SndCwnd)
+	if origin < want-1 || origin > want+1 {
+		t.Fatalf("epoch curve starts at %f segments, want within one segment of %f", origin, want)
+	}
+}
+
+func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
+	stateAfter := func(acks ...int) (int, float64) {
+		clock := faketime.NewManualClock()
+		const rtt = 100 * time.Millisecond
+		c := newTestCubic(t, clock, rtt)
+		c.s.ep.mu.Lock()
+		defer c.s.ep.mu.Unlock()
+		c.s.Ssthresh = c.s.SndCwnd + 1
+		for _, n := range acks {
+			c.Update(n, rtt, clock.NowMonotonic())
+		}
+		return c.s.SndCwnd, c.WEst
+	}
+	// Crossing ssthresh in one ACK must preserve the same credit as
+	// acknowledging the slow-start and congestion-avoidance data separately.
+	gotWindow, gotEstimate := stateAfter(2)
+	wantWindow, wantEstimate := stateAfter(1, 1)
+	if wantEstimate <= float64(wantWindow) {
+		t.Fatal("separate ACKs did not retain fractional growth credit")
+	}
+	if gotWindow != wantWindow || gotEstimate != wantEstimate {
+		t.Fatalf("crossing ssthresh gives (%d, %f), want (%d, %f)", gotWindow, gotEstimate, wantWindow, wantEstimate)
+	}
+}
+
+func TestCubicRTOPreservesPriorWindow(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = 100 * time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
+	prior := float64(c.s.SndCwnd)
+	c.HandleRTOExpired()
+	c.Update(c.s.Ssthresh-c.s.SndCwnd, rtt, clock.NowMonotonic())
+	if got, want := c.WLastMax, prior; got != want {
+		t.Fatalf("prior window after RTO slow start = %f, want %f", got, want)
+	}
+	if got, want := c.WEst, float64(c.s.SndCwnd); got != want {
+		t.Fatalf("Reno estimate at RTO slow-start exit = %f, want %f", got, want)
+	}
+}
+
+func TestCubicWindowRestartPreservesPeak(t *testing.T) {
+	for _, recovery := range []string{"fast", "timeout"} {
+		t.Run(recovery, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			const rtt = 100 * time.Millisecond
+			c := newTestCubic(t, clock, rtt)
+			c.s.ep.mu.Lock()
+			defer c.s.ep.mu.Unlock()
+			c.s.SndCwnd = 7
+			if recovery == "timeout" {
+				c.HandleRTOExpired()
+				c.Update(c.s.Ssthresh-c.s.SndCwnd, rtt, clock.NowMonotonic())
+			} else {
+				c.HandleLossDetected()
+				c.s.leaveRecovery()
+			}
+			peak := c.WMax
+			clock.Advance(time.Minute)
+			for range 3 {
+				c.Update(c.s.SndCwnd, rtt, clock.NowMonotonic())
+			}
+			if c.s.SndCwnd <= InitialCwnd {
+				t.Fatal("window did not grow beyond the restart window")
+			}
+			c.s.SndCwnd = InitialCwnd
+			c.HandleWindowRestart()
+			if got, want := c.WMax, peak; got != want {
+				t.Errorf("restart changed the remembered peak from %f to %f", want, got)
+			}
+			if got, want := c.cubicCwnd(-c.K), float64(InitialCwnd); got != want {
+				t.Errorf("restart curve origin = %f, want %f", got, want)
+			}
+			if got, want := c.WEst, float64(InitialCwnd); got != want {
+				t.Errorf("restart estimate = %f, want %f", got, want)
+			}
+			if got, want := c.s.SndCAAckCount, 0; got != want {
+				t.Errorf("restart ACK credit = %d, want %d", got, want)
+			}
+		})
 	}
 }
 
@@ -513,72 +707,5 @@ func TestHyStartAckTrainUsesIngressTime(t *testing.T) {
 				"(> ackDelta); it measured clustered processing time instead of ingress "+
 				"time (iteration %d)", i)
 		}
-	}
-}
-
-func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
-	clock := faketime.NewManualClock()
-	const rtt = 100 * time.Millisecond
-	c := newTestCubic(t, clock, rtt)
-	c.s.ep.mu.Lock()
-	defer c.s.ep.mu.Unlock()
-	// The next delayed RTT sample completes HyStart's sample window.
-	// Enter through Update so the test covers the transition into avoidance.
-	c.LastRTT = rtt
-	c.CurrRTT = 2 * rtt
-	c.SampleCount = nRTTSample - 1
-	clock.Advance(rtt)
-	c.Update(1, 2*rtt, clock.NowMonotonic())
-	if c.s.Ssthresh != c.s.SndCwnd {
-		t.Fatal("HyStart did not end slow start")
-	}
-	if got, want := c.WMax, float64(c.s.SndCwnd); got != want {
-		t.Errorf("initial congestion-avoidance maximum = %f, want %f", got, want)
-	}
-	if got, want := clock.NowMonotonic().Sub(c.T), time.Duration(0); got != want {
-		t.Errorf("initial congestion-avoidance epoch age = %s, want %s", got, want)
-	}
-}
-
-func TestCubicFriendlyEstimateUsesACKs(t *testing.T) {
-	estimate := func(elapsed time.Duration, packetsAcked int) float64 {
-		clock := faketime.NewManualClock()
-		const rtt = 100 * time.Millisecond
-		c := newTestCubic(t, clock, rtt)
-		c.s.ep.mu.Lock()
-		defer c.s.ep.mu.Unlock()
-		c.HandleLossDetected()
-		c.s.leaveRecovery()
-		clock.Advance(elapsed)
-		c.Update(packetsAcked, rtt, clock.NowMonotonic())
-		return c.WEst
-	}
-	first := estimate(0, 10)
-	if delayed := estimate(time.Second, 10); delayed != first {
-		t.Errorf("equal ACK counts give different Reno estimates: immediate=%f delayed=%f", first, delayed)
-	}
-	if more := estimate(0, 20); more <= first {
-		t.Errorf("more ACKs did not increase the Reno estimate: first=%f more=%f", first, more)
-	}
-}
-
-func TestCubicFastConvergenceStartsAtCurrentWindow(t *testing.T) {
-	clock := faketime.NewManualClock()
-	c := newTestCubic(t, clock, 100*time.Millisecond)
-	c.s.ep.mu.Lock()
-	defer c.s.ep.mu.Unlock()
-	// Two losses reduce 100 segments to 70 and then 49. The old curve
-	// instead started at 41.65, beyond the one-segment rounding allowance.
-	c.s.SndCwnd = 100
-	for range 2 {
-		c.HandleLossDetected()
-		c.s.leaveRecovery()
-	}
-	// Fast convergence changes the remembered maximum. The next epoch
-	// must still begin at the window the sender actually retained.
-	origin := c.cubicCwnd(-c.K)
-	want := float64(c.s.SndCwnd)
-	if origin < want-1 || origin > want+1 {
-		t.Fatalf("epoch curve starts at %f segments, want within one segment of %f", origin, want)
 	}
 }
