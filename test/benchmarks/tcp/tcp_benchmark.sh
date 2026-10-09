@@ -418,7 +418,6 @@ record_settings() {
   if [[ -n $output_dir ]]; then jq --version; fi
   if $latency_probe; then ping -V; fi
   printf 'tcp_observations=%s\n' "$tcp_observations"
-  if $tcp_observations; then ss -V; fi
   uname -a
   ip -Version
   tc -Version
@@ -712,7 +711,6 @@ run_flow() {
   server_pid=
   iperf_pid=
   operation_pid=
-  native_sampler_pid=
   results_file=
   flow_netns=/tmp/client.netns
   flow_client_addr=${client_addr}
@@ -743,8 +741,8 @@ run_flow() {
       client_command+=(${netstack_opts} -client -mtu ${mtu} -iface client2.0 -addr 10.0.0.6 -mask ${mask} -gso=${gso} -swgso=${swgso} --gro=${gro} --xdp=false)
     fi
   fi
-  if ${tcp_observations} && [[ \$flow_stack == netstack ]]; then
-    client_command+=("-client_tcp_snapshot_file=\$TCP_BENCHMARK_OUTPUT_DIR/tcp-netstack.json")
+  if ${tcp_observations}; then
+    client_command+=("-client_tcp_snapshot_file=\$TCP_BENCHMARK_OUTPUT_DIR/tcp-observations.json")
   fi
   record_flow_phase() {
     local uptime ignored
@@ -776,14 +774,6 @@ run_flow() {
       if [[ -n \$TCP_BENCHMARK_OUTPUT_DIR ]]; then
         if ! printf '%s\n' "\$operation_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/iperf-exit.txt"; then cleanup_status=1; fi
       fi
-    fi
-    if [[ -n \$native_sampler_pid ]]; then
-      sampler_status=0
-      if ! kill -TERM "\$native_sampler_pid"; then cleanup_status=1; fi
-      wait "\$native_sampler_pid" || sampler_status=\$?
-      if ! printf '%s\n' "\$sampler_status" > "\$TCP_BENCHMARK_OUTPUT_DIR/tcp-native-exit.txt"; then cleanup_status=1; fi
-      if (( sampler_status != 0 )); then cleanup_status=1; fi
-      native_sampler_pid=
     fi
     for pid in "\$client_pid" "\$server_pid"; do
       if [[ -n \$pid ]]; then
@@ -846,36 +836,6 @@ run_flow() {
 
   ${nsjoin_binary} "\$flow_netns" "\${client_command[@]}" &
   client_pid=\$!
-
-  sample_native_tcp() {
-    local stop_requested=false sample=0 begin end wall ignored result
-    # Bash runs this trap after its bounded foreground query completes, so the
-    # last query has an END record and no unreaped background child survives.
-    trap 'stop_requested=true' TERM INT
-    while ! \$stop_requested; do
-      if (( sample == 6000 )); then
-        echo 'SS_CAPTURE_LIMIT_REACHED'
-        return 1
-      fi
-      read -r begin ignored < /proc/uptime
-      wall=\$(date +%s.%N)
-      printf 'SS_SAMPLE_BEGIN\t%s\t%s\t%s\n' "\$sample" "\$begin" "\$wall"
-      result=0
-      timeout --signal=TERM --kill-after=1s 2s \
-        ${nsjoin_binary} "\$flow_netns" ss -tinmH dst "${server_proxy_addr}" dport = ":\$flow_proxy_port" || result=\$?
-      read -r end ignored < /proc/uptime
-      printf 'SS_SAMPLE_END\t%s\t%s\t%s\t%s\n' "\$sample" "\$end" "\$(date +%s.%N)" "\$result"
-      if (( result != 0 )); then return "\$result"; fi
-      sample=\$((sample + 1))
-      if ! \$stop_requested; then sleep 0.1; fi
-    done
-    echo 'SS_CAPTURE_STOPPED'
-  }
-  if ${tcp_observations} && [[ \$flow_stack == linux ]]; then
-    sample_native_tcp > "\$TCP_BENCHMARK_OUTPUT_DIR/tcp-native.txt" \
-      2> "\$TCP_BENCHMARK_OUTPUT_DIR/tcp-native-stderr.txt" &
-    native_sampler_pid=\$!
-  fi
 
   # Show traffic information for the original uninstrumented native mode.
   if [[ -z "${second_client}" ]] && ! ${latency_probe} && ! ${client} && ! ${server}; then

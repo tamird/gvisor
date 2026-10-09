@@ -10,12 +10,14 @@ go_binary(
     name = "tcp_proxy",
     srcs = [
         "tcp_observer.go",
+        "tcp_observer_unsafe.go",
         "tcp_proxy.go",
         "xdp.go",
     ],
     out = "tcp_proxy",
     visibility = ["//:sandbox"],
     deps = [
+        "//pkg/abi/linux",
         "//pkg/rand",
         "//pkg/sync",
         "//pkg/tcpip",

@@ -20,7 +20,9 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"slices"
 	"strconv"
+	"syscall"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -39,11 +41,16 @@ const (
 // Addresses and stack timestamps have private representations. Default gob
 // encoding rejects those structs, while JSON would omit their private fields.
 type tcpObservation struct {
-	Local                string
-	Remote               string
-	BootBeginNS          int64
-	BootEndNS            int64
-	UnixNS               int64
+	Local       string
+	Remote      string
+	BootBeginNS int64
+	BootEndNS   int64
+	UnixNS      int64
+	Netstack    *tcpNetstackObservation `json:",omitempty"`
+	Native      *tcpNativeObservation   `json:",omitempty"`
+}
+
+type tcpNetstackObservation struct {
 	StackTimeNS          string
 	Cwnd                 int
 	Ssthresh             int
@@ -70,6 +77,38 @@ type tcpObservation struct {
 	ReceivedSACKBlocks   int
 }
 
+// tcpNativeObservation records only fields returned by TCP_INFO. Durations
+// use nanoseconds, matching Netstack; unsupported tail fields remain nil.
+type tcpNativeObservation struct {
+	InfoBytes            uint32
+	CongestionControl    string
+	State                uint8
+	CongestionState      uint8
+	Cwnd                 uint32
+	Ssthresh             uint32
+	MSS                  uint32
+	RTT                  time.Duration
+	RTTVar               time.Duration
+	RTO                  time.Duration
+	Unacked              uint32
+	Sacked               uint32
+	Lost                 uint32
+	Retrans              uint32
+	TotalRetrans         uint32
+	NotSentBytes         *uint32
+	BytesAcked           *uint64
+	DeliveryRate         *uint64
+	BusyTime             *time.Duration
+	ReceiveWindowLimited *time.Duration
+	SendBufferLimited    *time.Duration
+}
+
+type nativeTCPConnection struct {
+	control syscall.RawConn
+	local   string
+	remote  string
+}
+
 // tcpRecorder owns capture memory and its output. Packet callbacks only append
 // bounded records; file I/O happens after the sampler is joined at shutdown.
 type tcpRecorder struct {
@@ -81,6 +120,8 @@ type tcpRecorder struct {
 	mu   sync.Mutex
 	// +checklocks:mu
 	records []tcpObservation
+	// +checklocks:mu
+	nativeConnections []nativeTCPConnection
 	// +checklocks:mu
 	unavailable int
 	// +checklocks:mu
@@ -118,7 +159,7 @@ func (r *tcpRecorder) fail(err error) {
 	}
 }
 
-func (r *tcpRecorder) record(state *tcp.TCPEndpointState, begin, end int64) {
+func (r *tcpRecorder) append(record tcpObservation) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.closed {
@@ -128,37 +169,43 @@ func (r *tcpRecorder) record(state *tcp.TCPEndpointState, begin, end int64) {
 		r.truncated = true
 		return
 	}
+	r.records = append(r.records, record)
+}
+
+func (r *tcpRecorder) record(state *tcp.TCPEndpointState, begin, end int64) {
 	s := state.Sender
-	r.records = append(r.records, tcpObservation{
-		Local:                net.JoinHostPort(state.ID.LocalAddress.String(), strconv.Itoa(int(state.ID.LocalPort))),
-		Remote:               net.JoinHostPort(state.ID.RemoteAddress.String(), strconv.Itoa(int(state.ID.RemotePort))),
-		BootBeginNS:          begin,
-		BootEndNS:            end,
-		UnixNS:               time.Now().UnixNano(),
-		StackTimeNS:          state.SegTime.String(),
-		Cwnd:                 s.SndCwnd,
-		Ssthresh:             s.Ssthresh,
-		Outstanding:          s.Outstanding,
-		SackedOut:            s.SackedOut,
-		SendWindowBytes:      uint32(s.SndWnd),
-		SndUna:               uint32(s.SndUna),
-		SndNxt:               uint32(s.SndNxt),
-		MSS:                  s.MaxPayloadSize,
-		SendBufferUsed:       state.SndBufState.SndBufUsed,
-		SendBufferSize:       state.SndBufState.SndBufSize,
-		ReceiveBufferUsed:    state.RcvBufState.RcvBufUsed,
-		RTT:                  s.RTTState,
-		RTO:                  s.RTO,
-		DupACKs:              s.DupAckCount,
-		Recovery:             s.FastRecovery,
-		RACKRTT:              s.RACKState.RTT,
-		RACKReorderingWindow: s.RACKState.ReoWnd,
-		SpuriousRecovery:     s.SpuriousRecovery,
-		CubicWMax:            s.Cubic.WMax,
-		CubicWEst:            s.Cubic.WEst,
-		CubicEpochAge:        s.Cubic.TimeSinceLastCongestion,
-		SACKBlocks:           len(state.SACK.Blocks),
-		ReceivedSACKBlocks:   len(state.SACK.ReceivedBlocks),
+	r.append(tcpObservation{
+		Local:       net.JoinHostPort(state.ID.LocalAddress.String(), strconv.Itoa(int(state.ID.LocalPort))),
+		Remote:      net.JoinHostPort(state.ID.RemoteAddress.String(), strconv.Itoa(int(state.ID.RemotePort))),
+		BootBeginNS: begin,
+		BootEndNS:   end,
+		UnixNS:      time.Now().UnixNano(),
+		Netstack:    &tcpNetstackObservation{
+			StackTimeNS:          state.SegTime.String(),
+			Cwnd:                 s.SndCwnd,
+			Ssthresh:             s.Ssthresh,
+			Outstanding:          s.Outstanding,
+			SackedOut:            s.SackedOut,
+			SendWindowBytes:      uint32(s.SndWnd),
+			SndUna:               uint32(s.SndUna),
+			SndNxt:               uint32(s.SndNxt),
+			MSS:                  s.MaxPayloadSize,
+			SendBufferUsed:       state.SndBufState.SndBufUsed,
+			SendBufferSize:       state.SndBufState.SndBufSize,
+			ReceiveBufferUsed:    state.RcvBufState.RcvBufUsed,
+			RTT:                  s.RTTState,
+			RTO:                  s.RTO,
+			DupACKs:              s.DupAckCount,
+			Recovery:             s.FastRecovery,
+			RACKRTT:              s.RACKState.RTT,
+			RACKReorderingWindow: s.RACKState.ReoWnd,
+			SpuriousRecovery:     s.SpuriousRecovery,
+			CubicWMax:            s.Cubic.WMax,
+			CubicWEst:            s.Cubic.WEst,
+			CubicEpochAge:        s.Cubic.TimeSinceLastCongestion,
+			SACKBlocks:           len(state.SACK.Blocks),
+			ReceivedSACKBlocks:   len(state.SACK.ReceivedBlocks),
+		},
 	})
 }
 
@@ -172,7 +219,7 @@ func (r *tcpRecorder) recordPacket(state *tcp.TCPEndpointState) {
 	r.record(state, now, now)
 }
 
-func (r *tcpRecorder) start(s *stack.Stack) {
+func (r *tcpRecorder) start(sample func() error) {
 	r.stop = make(chan struct{})
 	r.done = make(chan struct{})
 	go func() {
@@ -185,41 +232,116 @@ func (r *tcpRecorder) start(s *stack.Stack) {
 				return
 			case <-ticker.C:
 			}
-			seen := make(map[*tcp.Endpoint]struct{})
-			for _, registered := range s.RegisteredEndpoints() {
-				ep, ok := registered.(*tcp.Endpoint)
-				if !ok {
-					continue
-				}
-				if _, ok := seen[ep]; ok {
-					continue
-				}
-				seen[ep] = struct{}{}
-				begin, err := bootTimeNS()
-				if err != nil {
-					r.fail(err)
-					return
-				}
-				state, snapshotErr := ep.StateSnapshot()
-				end, err := bootTimeNS()
-				if err != nil {
-					r.fail(err)
-					return
-				}
-				if snapshotErr != nil {
-					if _, ok := snapshotErr.(*tcpip.ErrNotConnected); !ok {
-						r.fail(fmt.Errorf("TCP snapshot: %s", snapshotErr))
-						return
-					}
-					r.mu.Lock()
-					r.unavailable++
-					r.mu.Unlock()
-					continue
-				}
-				r.record(state, begin, end)
+			if err := sample(); err != nil {
+				r.fail(err)
+				return
 			}
 		}
 	}()
+}
+
+func (r *tcpRecorder) unavailableEndpoint() {
+	r.mu.Lock()
+	r.unavailable++
+	r.mu.Unlock()
+}
+
+func (r *tcpRecorder) sampleNetstack(s *stack.Stack) error {
+	seen := make(map[*tcp.Endpoint]struct{})
+	for _, registered := range s.RegisteredEndpoints() {
+		ep, ok := registered.(*tcp.Endpoint)
+		if !ok {
+			continue
+		}
+		if _, ok := seen[ep]; ok {
+			continue
+		}
+		seen[ep] = struct{}{}
+		begin, err := bootTimeNS()
+		if err != nil {
+			return err
+		}
+		state, snapshotErr := ep.StateSnapshot()
+		end, err := bootTimeNS()
+		if err != nil {
+			return err
+		}
+		if snapshotErr != nil {
+			if _, ok := snapshotErr.(*tcpip.ErrNotConnected); !ok {
+				return fmt.Errorf("TCP snapshot: %s", snapshotErr)
+			}
+			r.unavailableEndpoint()
+			continue
+		}
+		r.record(state, begin, end)
+	}
+	return nil
+}
+
+// trackNative runs once per connection, outside the packet path. RawConn keeps
+// the descriptor valid during Control even when the application calls Close.
+func (r *tcpRecorder) trackNative(conn net.Conn) {
+	if r == nil {
+		return
+	}
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		r.fail(fmt.Errorf("native TCP observation: unexpected connection %T", conn))
+		return
+	}
+	control, err := tcpConn.SyscallConn()
+	if err != nil {
+		r.fail(err)
+		return
+	}
+	entry := nativeTCPConnection{control: control, local: conn.LocalAddr().String(), remote: conn.RemoteAddr().String()}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.closed {
+		return
+	}
+	if len(r.nativeConnections) == tcpObservationLimit {
+		r.truncated = true
+		return
+	}
+	r.nativeConnections = append(r.nativeConnections, entry)
+}
+
+func (r *tcpRecorder) sampleNative() error {
+	r.mu.Lock()
+	connections := slices.Clone(r.nativeConnections)
+	r.mu.Unlock()
+	for _, conn := range connections {
+		begin, err := bootTimeNS()
+		if err != nil {
+			return err
+		}
+		var native tcpNativeObservation
+		var captureErr error
+		err = conn.control.Control(func(fd uintptr) {
+			native, captureErr = readNativeTCPInfo(fd)
+		})
+		end, clockErr := bootTimeNS()
+		if clockErr != nil {
+			return clockErr
+		}
+		if errors.Is(err, net.ErrClosed) {
+			r.unavailableEndpoint()
+			continue
+		}
+		if err != nil || captureErr != nil {
+			return errors.Join(err, captureErr)
+		}
+		r.append(tcpObservation{
+			Local:       conn.local,
+			Remote:      conn.remote,
+			BootBeginNS: begin,
+			BootEndNS:   end,
+			UnixNS:      time.Now().UnixNano(),
+			Native:      &native,
+		})
+	}
+	return nil
 }
 
 func (r *tcpRecorder) close() error {
