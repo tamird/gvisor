@@ -48,6 +48,113 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+func TestCubicLimitedFlowDoesNotIncreaseWindow(t *testing.T) {
+	for _, limitedBy := range []string{"application", "receiver"} {
+		t.Run(limitedBy, func(t *testing.T) {
+			const payload = 32
+			const rtt = 100 * time.Millisecond
+			clock := faketime.NewManualClock()
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true,
+				MTU:      header.TCPMinimumSize + header.IPv4MinimumSize + payload,
+				Clock:    clock,
+			})
+			defer c.Cleanup()
+			e2e.EnableCUBIC(t, c)
+			c.CreateConnected(789, 30000, -1)
+			rcvWnd := seqnum.Size(30000)
+			ack := func(received int) {
+				c.SendPacket(nil, &context.Headers{
+					SrcPort: context.TestPort,
+					DstPort: c.Port,
+					Flags:   header.TCPFlagAck,
+					SeqNum:  790,
+					AckNum:  c.IRS.Add(1 + seqnum.Size(received)),
+					RcvWnd:  rcvWnd,
+				})
+				c.Stack().Pause()
+				c.Stack().Resume()
+			}
+			info := func() tcpip.TCPInfoOption {
+				var info tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&info); err != nil {
+					t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+				}
+				return info
+			}
+			data := make([]byte, 256*payload)
+			write := func(data []byte) {
+				if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+					t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+				}
+			}
+
+			// Establish an ACK beyond the previous recovery boundary, then
+			// lose the first packet of a full flight to enter avoidance.
+			write(data[:payload])
+			c.ReceiveAndCheckPacket(data, 0, payload)
+			clock.Advance(rtt)
+			ack(payload)
+			received := payload
+			lostOffset := received
+			beforeLoss := int(info().SndCwnd)
+			write(data[received : received+beforeLoss*payload])
+			for range beforeLoss {
+				c.ReceiveAndCheckPacket(data, received, payload)
+				received += payload
+			}
+			clock.Advance(rtt)
+			for range 3 {
+				ack(lostOffset)
+			}
+			c.ReceiveAndCheckPacket(data, lostOffset, payload)
+			clock.Advance(rtt)
+			if limitedBy == "receiver" {
+				rcvWnd = 2 * payload
+			}
+			ack(received)
+			if got := info(); got.SndCwnd >= uint32(beforeLoss) || got.SndCwnd < got.SndSsthresh || got.SndCwnd <= 2 {
+				t.Fatalf("expected congestion avoidance above two packets after loss: %+v", got)
+			}
+
+			// Keep exactly two packets unacknowledged. In the receiver case,
+			// more data stays queued; in the application case, each ACK is
+			// followed by one new write. Neither flight fills cwnd.
+			acked := received
+			if limitedBy == "receiver" {
+				write(data[received:])
+			} else {
+				write(data[received : received+2*payload])
+			}
+			for range 2 {
+				c.ReceiveAndCheckPacket(data, received, payload)
+				received += payload
+			}
+			step := func() {
+				clock.Advance(rtt / 2)
+				acked += payload
+				ack(acked)
+				if limitedBy == "application" {
+					write(data[received : received+payload])
+				}
+				c.ReceiveAndCheckPacket(data, received, payload)
+				received += payload
+			}
+			// Retire the initial partial flight before measuring. This also
+			// lets a remembered full-flight signal from recovery expire.
+			step()
+			step()
+			before := info().SndCwnd
+			for range 100 {
+				step()
+			}
+			if got := info().SndCwnd; got != before {
+				t.Errorf("two-packet %s-limited flow grew cwnd: before=%d after=%d", limitedBy, before, got)
+			}
+		})
+	}
+}
+
 func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
 	windowAfterIdle := func(idle time.Duration, controlTraffic bool) int {
 		const payload = 32
