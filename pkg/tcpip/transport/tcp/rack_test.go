@@ -51,6 +51,7 @@ func newRACKTestContext(clock tcpip.Clock, resolution time.Duration) *rackTestCo
 		scoreboard: NewSACKScoreboard(1, 0),
 	}
 	ctx.snd.writeList.set = make(map[*segment]struct{})
+	ctx.snd.cc = newRenoCC(&ctx.snd)
 	ctx.snd.reorderTimer.init(clock, func() {})
 	ctx.snd.rc.init(&ctx.snd, 0)
 	return ctx
