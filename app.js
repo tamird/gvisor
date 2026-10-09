@@ -781,6 +781,7 @@ function stateRecords(snapshot, node) {
   return records;
 }
 function applyLive(snapshot, nextRegistry = registry) {
+  const focusedInvestigation = view === "investigations" ? document.activeElement?.closest(".investigation-card")?.id : null;
   liveSnapshot = snapshot;
   const scrollPositions = ["table-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
@@ -814,6 +815,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   render();
   for (const section of $("details").querySelectorAll(".check-details, .curated-notes")) section.open = openSections.has(section.dataset.pr);
   for (const { id, top, left } of scrollPositions) $(id).scrollTo(left, top);
+  if (focusedInvestigation) document.getElementById(focusedInvestigation)?.focus({ preventScroll: true });
   const stale = Date.now() - new Date(snapshot.checkedAt).getTime() > STALE_AGE;
   setFreshness(`GitHub snapshot · ${date(snapshot.checkedAt)}${stale ? " · older than 2 hours" : ""}`, stale);
   $("freshness-detail").textContent = "Review decisions, labels and visible checks are public GitHub API snapshots tied to each PR head. Import PR checks are separate. Checks are not test-case counts or inspected logs. Reload fetches the latest published snapshot. Scheduled collection publishes new snapshots when its workflow completes; the timestamp remains authoritative. Selected PR details can check conflicts directly on GitHub without a token. Investigations are curated research records with their own update dates.";
