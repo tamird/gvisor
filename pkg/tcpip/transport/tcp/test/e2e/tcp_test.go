@@ -6154,50 +6154,183 @@ func TestPathMTUDiscovery(t *testing.T) {
 }
 
 func TestTCPEndpointProbe(t *testing.T) {
-	invoked := make(chan struct{})
-	var port uint16
-	probe := func(state *tcp.TCPEndpointState) {
-		// Validate that the endpoint ID is what we expect.
-		//
-		// We don't do an extensive validation of every field but a
-		// basic sanity test.
-		if got, want := state.ID.LocalAddress, tcpip.Address(context.StackAddr); got != want {
-			t.Fatalf("got LocalAddress: %q, want: %q", got, want)
-		}
-		if got, want := state.ID.LocalPort, port; got != want {
-			t.Fatalf("got LocalPort: %d, want: %d", got, want)
-		}
-		if got, want := state.ID.RemoteAddress, tcpip.Address(context.TestAddr); got != want {
-			t.Fatalf("got RemoteAddress: %q, want: %q", got, want)
-		}
-		if got, want := state.ID.RemotePort, uint16(context.TestPort); got != want {
-			t.Fatalf("got RemotePort: %d, want: %d", got, want)
-		}
+	for _, mode := range []string{"callback", "snapshot"} {
+		t.Run(mode, func(t *testing.T) {
+			states := make(chan *tcp.TCPEndpointState, 1)
+			var probe tcp.TCPProbeFunc
+			if mode == "callback" {
+				probe = func(state *tcp.TCPEndpointState) {
+					select {
+					case states <- state:
+					default:
+					}
+				}
+			}
+			c := context.NewWithProbe(t, 1500, probe)
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			c.Create(-1 /* epRcvBuf */)
+			ep := c.EP.(*tcp.Endpoint)
+			if mode == "snapshot" {
+				state, err := ep.StateSnapshot()
+				if got, want := err, (&tcpip.ErrNotConnected{}); !cmp.Equal(got, want) {
+					t.Fatalf("unconnected StateSnapshot error = %v, want %v", got, want)
+				}
+				if got, want := state, (*tcp.TCPEndpointState)(nil); got != want {
+					t.Fatalf("unconnected StateSnapshot = %v, want nil", got)
+				}
+			}
+			options := make([]byte, 4)
+			header.EncodeSACKPermittedOption(options)
+			c.Connect(context.TestInitialSequenceNumber, 30000, options)
 
-		invoked <- struct{}{}
+			data := []byte{1, 2, 3}
+			iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			c.SendPacket(data, &context.Headers{
+				SrcPort: context.TestPort,
+				DstPort: c.Port,
+				Flags:   header.TCPFlagAck,
+				SeqNum:  iss,
+				AckNum:  c.IRS.Add(1),
+				RcvWnd:  30000,
+			})
+			// Drain packet processing before reading either observation path.
+			c.Stack().Pause()
+			c.Stack().Resume()
+			var state *tcp.TCPEndpointState
+			if mode == "callback" {
+				select {
+				case state = <-states:
+				default:
+					t.Fatal("TCP probe did not observe the processed packet")
+				}
+			} else {
+				var err tcpip.Error
+				state, err = ep.StateSnapshot()
+				if err != nil {
+					t.Fatalf("StateSnapshot: %s", err)
+				}
+			}
+			wantID := tcp.TCPEndpointID{
+				LocalAddress:  context.StackAddr,
+				LocalPort:     c.Port,
+				RemoteAddress: context.TestAddr,
+				RemotePort:    context.TestPort,
+			}
+			if got, want := state.ID, wantID; got != want {
+				t.Fatalf("endpoint ID = %+v, want %+v", got, want)
+			}
+			if got, want := state.Receiver.RcvNxt, iss.Add(seqnum.Size(len(data))); got != want {
+				t.Errorf("received sequence = %d, want %d", got, want)
+			}
+			if got, want := state.RcvBufState.RcvBufUsed, len(data); got != want {
+				t.Errorf("receive buffer usage = %d, want %d", got, want)
+			}
+			if mode == "callback" {
+				return
+			}
+
+			// Populate both SACK directions, then modify the returned slices.
+			// A subsequent snapshot must still report the original wire state.
+			c.SendPacket(data, &context.Headers{
+				SrcPort: context.TestPort,
+				DstPort: c.Port,
+				Flags:   header.TCPFlagAck,
+				SeqNum:  iss.Add(5),
+				AckNum:  c.IRS.Add(1),
+				RcvWnd:  30000,
+			})
+			if _, err := c.EP.Write(bytes.NewReader(make([]byte, 9)), tcpip.WriteOptions{}); err != nil {
+				t.Fatalf("Write: %s", err)
+			}
+			c.Stack().Pause()
+			c.Stack().Resume()
+			c.SendAckWithSACK(iss.Add(3), 0, []header.SACKBlock{{Start: c.IRS.Add(4), End: c.IRS.Add(7)}})
+			c.Stack().Pause()
+			c.Stack().Resume()
+			first, err := ep.StateSnapshot()
+			if err != nil {
+				t.Fatalf("StateSnapshot: %s", err)
+			}
+			wantBlocks := []header.SACKBlock{{Start: iss.Add(5), End: iss.Add(8)}}
+			wantReceived := []header.SACKBlock{{Start: c.IRS.Add(4), End: c.IRS.Add(7)}}
+			if diff := cmp.Diff(wantBlocks, first.SACK.Blocks); diff != "" {
+				t.Fatalf("SACK blocks mismatch (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(wantReceived, first.SACK.ReceivedBlocks); diff != "" {
+				t.Fatalf("received SACK blocks mismatch (-want +got):\n%s", diff)
+			}
+			first.SACK.Blocks[0] = header.SACKBlock{}
+			first.SACK.ReceivedBlocks[0] = header.SACKBlock{}
+			second, err := ep.StateSnapshot()
+			if err != nil {
+				t.Fatalf("StateSnapshot after editing copy: %s", err)
+			}
+			if diff := cmp.Diff(wantBlocks, second.SACK.Blocks); diff != "" {
+				t.Errorf("SACK blocks changed through snapshot (-want +got):\n%s", diff)
+			}
+			if diff := cmp.Diff(wantReceived, second.SACK.ReceivedBlocks); diff != "" {
+				t.Errorf("received SACK blocks changed through snapshot (-want +got):\n%s", diff)
+			}
+		})
 	}
+}
 
-	c := context.NewWithProbe(t, 1500, probe)
+func TestTCPEndpointSnapshotConcurrentClose(t *testing.T) {
+	c := context.New(t, 1500)
 	defer c.Cleanup()
-
 	c.CreateConnected(context.TestInitialSequenceNumber, 30000, -1 /* epRcvBuf */)
-	port = c.Port // c.Port is set during CreateConnected.
-
-	data := []byte{1, 2, 3}
-	iss := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	c.SendPacket(data, &context.Headers{
-		SrcPort: context.TestPort,
-		DstPort: c.Port,
-		Flags:   header.TCPFlagAck,
-		SeqNum:  iss,
-		AckNum:  c.IRS.Add(1),
-		RcvWnd:  30000,
-	})
-
-	select {
-	case <-invoked:
-	case <-time.After(100 * time.Millisecond):
-		t.Fatalf("TCP Probe function was not called")
+	// Use the same registry reference that a periodic diagnostic holds.
+	var ep *tcp.Endpoint
+	for _, registered := range c.Stack().RegisteredEndpoints() {
+		if candidate, ok := registered.(*tcp.Endpoint); ok && candidate == c.EP.(*tcp.Endpoint) {
+			ep = candidate
+		}
+	}
+	if ep == nil {
+		t.Fatal("connected endpoint missing from registry")
+	}
+	started := make(chan struct{})
+	closed := make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		first := true
+		for {
+			state, err := ep.StateSnapshot()
+			if first {
+				close(started)
+				first = false
+			}
+			if err == nil {
+				if state == nil || state.ID.LocalPort != c.Port {
+					done <- fmt.Errorf("StateSnapshot = %+v, want connected port %d", state, c.Port)
+					return
+				}
+			} else if !cmp.Equal(err, &tcpip.ErrNotConnected{}) || state != nil {
+				done <- fmt.Errorf("StateSnapshot = (%+v, %v), want a complete snapshot or (nil, ErrNotConnected)", state, err)
+				return
+			}
+			select {
+			case <-closed:
+				done <- nil
+				return
+			default:
+			}
+		}
+	}()
+	<-started
+	ep.Close()
+	c.EP = nil // The application has already closed this endpoint.
+	close(closed)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	state, err := ep.StateSnapshot()
+	if got, want := err, (&tcpip.ErrNotConnected{}); !cmp.Equal(got, want) {
+		t.Errorf("closed StateSnapshot error = %v, want %v", got, want)
+	}
+	if got, want := state, (*tcp.TCPEndpointState)(nil); got != want {
+		t.Errorf("closed StateSnapshot = %v, want nil", got)
 	}
 }
 
