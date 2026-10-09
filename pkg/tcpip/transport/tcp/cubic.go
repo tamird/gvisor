@@ -219,12 +219,11 @@ func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.M
 		if packetsAcked == 0 {
 			return
 		}
-	} else {
-		c.s.rtt.Lock()
-		srtt := c.s.rtt.TCPRTTState.SRTT
-		c.s.rtt.Unlock()
-		c.s.SndCwnd = c.getCwnd(packetsAcked, c.s.SndCwnd, srtt)
 	}
+	c.s.rtt.Lock()
+	srtt := c.s.rtt.TCPRTTState.SRTT
+	c.s.rtt.Unlock()
+	c.s.SndCwnd = c.getCwnd(packetsAcked, c.s.SndCwnd, srtt)
 }
 
 // cubicCwnd computes the CUBIC congestion window after t seconds from last
