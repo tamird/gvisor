@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T09:28:47.419302+00:00",
+    "updatedAt": "2026-10-09T09:38:26.988905+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6597,6 +6597,66 @@
         {
           "label": "Map-iterator follow-up",
           "url": "https://github.com/google/gvisor/pull/15542"
+        }
+      ]
+    },
+    {
+      "id": "investigation:work-map-refresh",
+      "title": "Scheduled tracker refresh reliability",
+      "status": "active",
+      "owner": "Codex",
+      "updatedAt": "2026-10-09T09:38:26.988905+00:00",
+      "summary": "Investigate gaps in automatic GitHub status collection and publication. Keep the snapshot timestamp authoritative while determining why expected schedule events are absent.",
+      "findings": [
+        {
+          "text": "The existing default-branch workflow is active and configured for minutes 18 and 48 of each UTC hour. One actual scheduled run was created on 9 October at 02:58 UTC and completed successfully at 03:00. The 09:24 UTC run-history check still showed no later scheduled event.",
+          "evidence": [
+            {
+              "label": "Deployed schedule",
+              "url": "https://github.com/tamird/gvisor/blob/b988804ed/.github/workflows/work-map.yml"
+            },
+            {
+              "label": "Successful scheduled run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37877127994"
+            },
+            {
+              "label": "Workflow run history",
+              "url": "https://github.com/tamird/gvisor/actions/workflows/work-map.yml"
+            }
+          ]
+        },
+        {
+          "text": "The configuration and run-history audit found no disabled workflow, wrong default branch, blocked job or queued run explaining the gap. The missing events occur before job execution, so there is no failed job log identifying their cause. No replacement scheduler or repeated re-registration has been introduced.",
+          "evidence": [
+            {
+              "label": "Existing workflow and guard",
+              "url": "https://github.com/tamird/gvisor/blob/b988804ed/.github/workflows/work-map.yml"
+            },
+            {
+              "label": "Run history",
+              "url": "https://github.com/tamird/gvisor/actions/workflows/work-map.yml"
+            }
+          ]
+        },
+        {
+          "text": "GitHub documents that scheduled jobs can be delayed or dropped. That is a service limitation, not proof of this gap\u2019s cause. Manual publication through the existing collector is keeping verified snapshots visible while regular automatic cadence remains unproven.",
+          "evidence": [
+            {
+              "label": "GitHub scheduling troubleshooting",
+              "url": "https://docs.github.com/en/actions/how-tos/troubleshoot-workflows#scheduled-workflows-running-at-unexpected-times"
+            },
+            {
+              "label": "Current dated GitHub snapshot",
+              "url": "https://tamird.github.io/gvisor/github-status.json"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Resolve the missing scheduled-event creation using the retained configuration and run evidence. Verify actual subsequent schedule events before claiming regular automatic refresh.",
+      "evidence": [
+        {
+          "label": "Refresh work map workflow",
+          "url": "https://github.com/tamird/gvisor/actions/workflows/work-map.yml"
         }
       ]
     }
