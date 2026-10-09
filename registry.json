@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T21:54:22.138206+00:00",
+    "updatedAt": "2026-10-09T21:58:14.103463+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4882,15 +4882,16 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
       "status": "Full 64K failed; three stress cases timed out",
-      "summary": "The original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later 33-action stress continuation at 3cd943971 is terminal: 30 cases passed and Reset/3, Reset/4 and ShutdownCloseSecond/3 timed out at their unchanged 3600-second deadlines. The owner verified the original case/action bindings; retained tails show continued syscall progress without establishing a cause. This uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest, not the native ARM64-host pilot. A separate trace-free IPv4 Reset/4 diagnostic is prepared but has not been accepted. The original full-profile and six-owner failures remain; no full-profile pass or canonical promotion is claimed. The cookie repair #15583 passed its separate complete loopback continuation.\n\nEarlier continuation observation:\n\nThe original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later six-owner timeout continuation at 19b passed five owners and 12 of 19 shards; all seven socket-stress shards timed out at 3600 seconds after earlier cases progressed. A source-reviewed follow-up at 3cd943971 is now running the same 33 stress cases as separate actions, keeping that continuation’s 3600-second deadlines and tracing. It uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the experimental native ARM64-host pilot is unchanged. This is fork qualification with no new pass credit or canonical promotion. The separate cookie repair #15583 passed both complete loopback owners (16 shards) on its own source; it does not turn the original full profile into a pass.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
-      "updatedAt": "2026-10-09T21:47:24.576344+00:00",
+      "summary": "The original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later 33-action stress continuation at 3cd943971 is terminal: 30 cases passed and Reset/3, Reset/4 and ShutdownCloseSecond/3 timed out at their unchanged 3600-second deadlines. The owner verified the original case/action bindings; retained tails show continued syscall progress without establishing a cause. This uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest, not the native ARM64-host pilot. A separate trace-free IPv4 Reset/4 diagnostic is running as Actions 37995590688 on the same source 3cd943971; it retains the 3600-second deadline and debug logging while disabling strace. Its outcome is pending. The original full-profile and six-owner failures remain; no full-profile pass or canonical promotion is claimed. The cookie repair #15583 passed its separate complete loopback continuation.\n\nEarlier continuation observation:\n\nThe original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later six-owner timeout continuation at 19b passed five owners and 12 of 19 shards; all seven socket-stress shards timed out at 3600 seconds after earlier cases progressed. A source-reviewed follow-up at 3cd943971 is now running the same 33 stress cases as separate actions, keeping that continuation’s 3600-second deadlines and tracing. It uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the experimental native ARM64-host pilot is unchanged. This is fork qualification with no new pass credit or canonical promotion. The separate cookie repair #15583 passed both complete loopback owners (16 shards) on its own source; it does not turn the original full profile into a pass.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
+      "updatedAt": "2026-10-09T21:58:14.103463+00:00",
       "followup": {
         "disposition": "Full 64K failed; three stress cases timed out",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-09T21:47:24.576344+00:00",
-        "nextAction": "Root and the syscall owner are preparing the single trace-free diagnostic for IPv4 Reset/4. Preserve the three original timeouts and earlier full-profile failures; canonical promotion remains with root.",
+        "reviewedAt": "2026-10-09T21:58:14.103463+00:00",
+        "nextAction": "The syscall owner observes the single trace-free IPv4 Reset/4 diagnostic. Preserve the three original timeouts and earlier full-profile failures; canonical promotion remains with root.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/37995590688",
           "https://github.com/tamird/gvisor/actions/runs/37985716856",
           "https://github.com/tamird/gvisor/actions/runs/37975093514",
           "https://github.com/tamird/gvisor/commit/3cd943971",
@@ -5186,6 +5187,65 @@
           "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410",
           "https://github.com/google/gvisor/pull/15542",
           "https://app.buildbuddy.io/invocation/69c48b39-e363-4862-a1ed-7e4375f3f178"
+        ]
+      }
+    },
+    {
+      "id": "branch:state-map-decode-slots",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "state-map-decode-slots",
+      "head": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+      "title": "Reuse temporary map decoding slots",
+      "url": "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T21:58:14.103463+00:00",
+      "summary": "The user is reviewing this independent decoder proposal. Map decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries keep fresh storage because delayed load callbacks can retain their addresses; interface values keep independent dynamic storage. Ordered nil transitions, typed nils and aggregate callback receivers are covered by the correctness checks. The separate fixed 1024-entry Map Load experiment showed 17.97% less time and 52.47% fewer allocations on one AMD64 worker; this is not a whole-checkpoint speedup. No open source prerequisite is assigned.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+        "url": "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10"
+      },
+      "followup": {
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+        "reviewedAt": "2026-10-09T21:56:28.695950+00:00",
+        "nextAction": "Await the user’s review and authorization to open the independent PR; root owns delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+          "https://app.buildbuddy.io/invocation/be8a0a8f-0058-443b-827f-00f073125bff"
+        ]
+      }
+    },
+    {
+      "id": "branch:tcp-cubic-epoch",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-cubic-epoch",
+      "head": "928a07c285d90bc5e485c939935a10134d80bbc7",
+      "title": "Initialize CUBIC congestion-avoidance epochs",
+      "url": "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T21:58:14.103463+00:00",
+      "summary": "The user is reviewing this prepared CUBIC follow-up. It initializes congestion-avoidance curves from the actual recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate with fractional growth. Idle window reduction resets the growth state. The selected before/after unit and analyzer evidence is closed; the original oversized-request observation remains unknown. The earlier ACK-credit prerequisite #15579 has merged, so it is no longer an active source blocker. This proposal carries no standalone performance or historical-outage claim.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "928a07c285d90bc5e485c939935a10134d80bbc7",
+        "url": "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7"
+      },
+      "followup": {
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "928a07c285d90bc5e485c939935a10134d80bbc7",
+        "reviewedAt": "2026-10-09T21:56:28.695950+00:00",
+        "nextAction": "Await the user’s review and authorization to open the independent PR; root owns delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7",
+          "https://app.buildbuddy.io/invocation/770421cf-2150-44f6-801f-d9e60420be83",
+          "https://github.com/google/gvisor/pull/15579"
         ]
       }
     }
@@ -6539,6 +6599,16 @@
       "evidence": [
         "https://github.com/google/gvisor/pull/15542",
         "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410"
+      ]
+    },
+    {
+      "from": "pr:15579",
+      "to": "branch:tcp-cubic-epoch",
+      "type": "depends_on",
+      "reason": "The earlier CUBIC ACK-credit prerequisite has merged. This historical source relationship is retained but no longer blocks delivery.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15579",
+        "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7"
       ]
     }
   ],
