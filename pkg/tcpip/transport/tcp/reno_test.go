@@ -20,14 +20,18 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
-func TestRenoCongestionAvoidanceConsumesACKCredit(t *testing.T) {
-	r := newRenoCC(&sender{
+func newTestReno() *renoState {
+	return newRenoCC(&sender{
 		ep: &Endpoint{},
 		TCPSenderState: TCPSenderState{
 			SndCwnd:  10,
 			Ssthresh: 10,
 		},
 	})
+}
+
+func TestRenoCongestionAvoidanceConsumesACKCredit(t *testing.T) {
+	r := newTestReno()
 	r.s.ep.mu.Lock()
 	defer r.s.ep.mu.Unlock()
 	r.Update(10, 0, tcpip.MonotonicTime{})
@@ -40,5 +44,28 @@ func TestRenoCongestionAvoidanceConsumesACKCredit(t *testing.T) {
 	}
 	if got := r.s.SndCwnd; got != 11 {
 		t.Fatalf("cwnd after acknowledging ten more segments = %d, want 11", got)
+	}
+	r.Update(1, 0, tcpip.MonotonicTime{})
+	if got := r.s.SndCwnd; got != 12 {
+		t.Fatalf("cwnd after acknowledging the second window = %d, want 12", got)
+	}
+}
+
+func TestRenoCongestionAvoidanceCarriesExcessACKCredit(t *testing.T) {
+	r := newTestReno()
+	r.s.ep.mu.Lock()
+	defer r.s.ep.mu.Unlock()
+	for _, step := range []struct {
+		acked int
+		want  int
+	}{
+		{acked: 9, want: 10},
+		{acked: 2, want: 11},
+		{acked: 10, want: 12},
+	} {
+		r.Update(step.acked, 0, tcpip.MonotonicTime{})
+		if got := r.s.SndCwnd; got != step.want {
+			t.Fatalf("cwnd after acknowledging %d segments = %d, want %d", step.acked, got, step.want)
+		}
 	}
 }
