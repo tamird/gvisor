@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T13:17:57.203091+00:00",
+    "updatedAt": "2026-10-09T13:22:33.349621+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4920,7 +4920,7 @@
         "reviewedAt": "2026-10-09T13:17:57.203091+00:00",
         "nextAction": "Await the user review of the revised tests and authorization to open the PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/4742cda26...7a7b450fd",
+          "https://github.com/tamird/gvisor/compare/4742cda26..7a7b450fd",
           "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f"
         ]
       },
@@ -4949,7 +4949,7 @@
         "reviewedAt": "2026-10-09T13:17:57.203091+00:00",
         "nextAction": "Await the user review of the revised tests and authorization to open the PR.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/25bfc8d20...6f7518d05",
+          "https://github.com/tamird/gvisor/compare/25bfc8d20..6f7518d05",
           "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b"
         ]
       },
@@ -6439,11 +6439,11 @@
           "evidence": [
             {
               "label": "Revised CUBIC test diff",
-              "url": "https://github.com/tamird/gvisor/compare/4742cda26...7a7b450fd"
+              "url": "https://github.com/tamird/gvisor/compare/4742cda26..7a7b450fd"
             },
             {
               "label": "Revised Reno test diff",
-              "url": "https://github.com/tamird/gvisor/compare/25bfc8d20...6f7518d05"
+              "url": "https://github.com/tamird/gvisor/compare/25bfc8d20..6f7518d05"
             },
             {
               "label": "Revised-test before/after validation",
