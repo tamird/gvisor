@@ -1,7 +1,7 @@
 # gVisor work map
 
 An interactive map of Tamir's open `google/gvisor` pull requests, selected
-working branches, and external capacity issues.
+working branches, external capacity issues, and branchless investigations.
 
 **Site:** https://tamird.github.io/gvisor/
 
@@ -41,7 +41,7 @@ python3 update-status.py
 ```
 
 The scheduled [Refresh work map workflow](https://github.com/tamird/gvisor/actions/workflows/work-map.yml)
-runs every 30 minutes (GitHub may delay scheduled jobs) and also supports manual
+is configured for every 30 minutes (GitHub may delay or omit scheduled jobs) and also supports manual
 dispatch. It uses the repository's `GITHUB_TOKEN` to read public metadata, then
 validates it with the unchanged client validator in `metadata-preflight.mjs`.
 Only a complete, valid `github-status.json` is committed. A normal push rejects
@@ -145,7 +145,7 @@ check status changes a dependency edge or establishes deployed capacity.
 
 ### Interface
 
-The dashboard has two views. **Dependency DAG** opens on all active tracked
+The dashboard has three views. **Dependency DAG** opens on all active tracked
 work, including independent PRs and branches. Connected chains retain their
 left-to-right prerequisite order; independent nodes pack around them across a
 canvas shaped for the viewport. Labels start at readable size. Drag to explore
@@ -244,6 +244,41 @@ Selection is stored in the URL fragment; optional local storage also retains
 view, filters, sort, focus and camera across a browser reload. A recorded cycle is reported instead
 of inventing a topological order. HTML references versioned JS and CSS URLs so
 a redesigned document does not reuse stale assets from an earlier layout.
+
+### Investigations without a branch
+
+**Investigations** is a separate research inventory. It does not add PRs,
+GitHub states, dependency edges, or blocker counts. Tasks can begin without
+any Git ref and retain their findings after they conclude. A diagnostic branch
+or later PR is an evidence link, not the identity of the investigation.
+
+The optional top-level `registry.investigations` array contains records with:
+
+- A unique `id` of the form `investigation:slug`, `title`, `owner`, `summary`,
+  `updatedAt`, and `status` (`active` or `concluded`). The date records curation,
+  not a GitHub observation or a fabricated completion date.
+- `findings`, an array of `{text, evidence}` records. Each evidence entry is
+  `{label, url}` with a real HTTPS source or validation URL.
+- `evidence`, an array of additional primary links, and an optional `nextStep`.
+  Concluded records display that last field as a recommendation. Concluded
+  research does not imply an implementation, a performance gain, or a merged PR.
+
+No commit, branch, repository, or upstream issue is required. Record observed
+results and their limits; do not invent refs to make a task visible. Keep private
+communications and unconfirmed incident details out of these public records.
+The exact client validator in `metadata-preflight.mjs` checks this collection
+with the rest of the registry. Older clients safely ignore the optional array;
+new clients also accept older registries without it.
+
+Findings and primary links are visible in each card. Search and the
+active/concluded selector affect only investigations; PR filters and the graph
+camera remain separate. Selecting a card's native title link creates a shareable
+URL through the existing URL-state path, for example:
+`?view=investigations&investigation-status=concluded#investigation%3Astate-reflection-design`.
+Explicit URL state overrides saved preferences, unknown status values fall back
+to all investigations, and stale selections are ignored. Browser back/forward
+restores investigation filters and selection; snapshot refresh preserves the
+investigation panel scroll position.
 
 ## Maintenance checks
 
