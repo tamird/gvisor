@@ -93,6 +93,20 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 	}
 }
 
+func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = time.Millisecond
+	c := cubicAfterRecovery(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	initial := c.s.SndCwnd
+	clock.Advance(time.Second)
+	c.Update(0, rtt, clock.NowMonotonic())
+	if got := c.s.SndCwnd; got != initial {
+		t.Fatalf("without acknowledged segments, cwnd = %d, want %d", got, initial)
+	}
+}
+
 // TestHyStartAckTrainOK tests that HyStart triggers early exit from slow start
 // if ACKs come in the same round for longer than RTT/2.
 func TestHyStartAckTrainOK(t *testing.T) {
