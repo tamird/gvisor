@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T07:48:07.860197+00:00",
+    "updatedAt": "2026-10-09T08:12:07.352298+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1194,17 +1194,17 @@
       "status": "draft",
       "reviewDecision": "",
       "updatedAt": "2026-08-30T18:33:58Z",
-      "summary": "A separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366\u2013#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
+      "summary": "The separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366\u2013#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
       "followup": {
         "disposition": "Revision in progress",
         "owner": "root",
-        "nextAction": "Narrow and validate the remaining Unix ownership review unit while preserving the original broad scope; retain draft until ready.",
+        "nextAction": "Keep the live broad draft unchanged while the user reviews the separate validated Unix-only proposal.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14338#issuecomment-5390693410",
           "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
           "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2"
         ],
-        "reviewedAt": "2026-10-09T07:48:07.860197+00:00",
+        "reviewedAt": "2026-10-09T08:12:07.352298+00:00",
         "sourceHead": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -4911,20 +4911,25 @@
       "url": "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
       "group": "analysis",
       "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T07:48:07.860197+00:00",
-      "summary": "This proposed narrowing of #14338 preserves eight Unix transport and namespace bodies from b912f6375 on the current base. The original broad branch and nine residual TCP/UDP/fragmentation paths remain preserved. A seven-action unit, race and Nogo validation was accepted on source-equivalent qualification 268590121. Validation is pending; the live PR remains draft and unchanged, and no contributor-review decision has been requested.",
+      "updatedAt": "2026-10-09T08:12:07.352298+00:00",
+      "summary": "The user is reviewing this exact Unix-only proposal, a76235cf8, before replacing the broad #14338 draft and marking it ready. Its seven fresh unit, race and Nogo actions passed: 36 unit cases without skips and eight both-CPU analyzer findings. Source and saved-result peers are closed. The original b912f6375 branch and nine residual TCP/UDP/fragmentation paths remain preserved; the live PR is still draft and unchanged.",
       "followup": {
-        "disposition": "Validation in progress",
+        "disposition": "Contributor review requested",
         "owner": "root",
         "sourceHead": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-        "reviewedAt": "2026-10-09T07:48:07.860197+00:00",
-        "nextAction": "Close the accepted unit/race/Nogo results before reviewing delivery of the narrowed PR; preserve unrelated residual scope.",
+        "reviewedAt": "2026-10-09T08:12:07.352298+00:00",
+        "nextAction": "Await the actual user decision on this exact proposal before replacing the broad draft and marking it ready.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
           "https://github.com/tamird/gvisor/tree/review/unix-transport-contracts-current",
           "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2",
           "https://github.com/google/gvisor/pull/14338"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+        "url": "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52"
       }
     }
   ],
@@ -6287,7 +6292,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T06:34:58.401191+00:00",
+      "updatedAt": "2026-10-09T08:12:07.352298+00:00",
       "summary": "Investigate production CUBIC recovery behavior and build deterministic impaired-link scenarios using the real TCP stack, with Linux or reference comparisons. Measure where CUBIC benefits high-bandwidth, high-delay paths relative to Reno without claiming universal superiority.",
       "findings": [
         {
@@ -6317,7 +6322,7 @@
           ]
         },
         {
-          "text": "A zero-new-ACK controller regression also observes growth from 700 to 1229. The first corrective revision passed its targeted tests and analyzers after a test-fixture correction; original result verification is still in progress. This does not complete the wider recovery and performance investigation.",
+          "text": "A zero-new-ACK controller regression also observes growth from 700 to 1229. The first corrective validation reported passing targeted tests and analyzers after a test-fixture correction. This does not complete the wider recovery and performance investigation.",
           "evidence": [
             {
               "label": "Zero-ACK regression",
@@ -6368,6 +6373,10 @@
         {
           "label": "Simulator under investigation",
           "url": "https://github.com/apoxy-dev/ccsim"
+        },
+        {
+          "label": "Benchmark implementation (validation pending)",
+          "url": "https://github.com/tamird/gvisor/commit/7c2c843f7"
         }
       ]
     },
