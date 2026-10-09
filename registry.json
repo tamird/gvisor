@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T12:32:47.367276+00:00",
+    "updatedAt": "2026-10-09T13:06:58.290647+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4912,7 +4912,7 @@
       "group": "runtime",
       "status": "Prepared proposal",
       "updatedAt": "2026-10-09T12:32:47.367276+00:00",
-      "summary": "The user accepted the CUBIC production change and requested test readability revisions. Simplify the CUBIC fixture comment and make each test\u2019s setup and behavioral purpose clear. The original reviewed head remains unchanged while a test-only revision is prepared and revalidated. No replacement review question has been sent.\n\nPrior validation:\n\nThe user is reviewing this standalone repair before opening a PR. It preserves fractional ACK credit, bounds newly earned growth, resets credit after fast recovery, and carries excess ACKs across the slow-start threshold. Nine selected validation targets passed, including both architectures and an AMD64 race configuration. The packet phases are focused regressions; this is not a full e2e suite or performance result.",
+      "summary": "The user accepted the CUBIC production change and requested test readability revisions. Simplify the CUBIC fixture comment and make each test\u2019s setup and behavioral purpose clear. The original reviewed head remains unchanged while an independently reviewed test-only revision runs its before/after validation. No replacement review question has been sent.\n\nPrior validation:\n\nIt preserves fractional ACK credit, bounds newly earned growth, resets credit after fast recovery, and carries excess ACKs across the slow-start threshold. Nine selected validation targets passed, including both architectures and an AMD64 race configuration. The packet phases are focused regressions; this is not a full e2e suite or performance result.",
       "followup": {
         "disposition": "Contributor changes requested",
         "owner": "syscall_validation",
@@ -4939,7 +4939,7 @@
       "group": "runtime",
       "status": "Prepared proposal",
       "updatedAt": "2026-10-09T12:32:47.367276+00:00",
-      "summary": "The user accepted the Reno production change and requested test readability revisions. Replace inscrutable setup and tables with short, explicit credit-consumption and credit-carry progressions. The original reviewed head remains unchanged while a test-only revision is prepared and revalidated. No replacement review question has been sent.\n\nPrior validation:\n\nThe user is reviewing this independent Reno repair before opening a PR. It computes growth and remaining credit against the same original window, preventing spent credit from being reused or excess credit from being lost. Six selected validation targets passed, including both architectures and focused recovery cases.",
+      "summary": "The user accepted the Reno production change and requested test readability revisions. Replace inscrutable setup and tables with short, explicit credit-consumption and credit-carry progressions. The original reviewed head remains unchanged while an independently reviewed test-only revision runs its before/after validation. No replacement review question has been sent.\n\nPrior validation:\n\nIt computes growth and remaining credit against the same original window, preventing spent credit from being reused or excess credit from being lost. Six selected validation targets passed, including both architectures and focused recovery cases.",
       "followup": {
         "disposition": "Contributor changes requested",
         "owner": "syscall_validation",
@@ -4980,6 +4980,42 @@
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
+      }
+    },
+    {
+      "id": "branch:tcp-retransmit-cursor",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-retransmit-cursor",
+      "head": "a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
+      "title": "Advance the send cursor after retransmission",
+      "url": "https://github.com/tamird/gvisor/commit/a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
+      "summary": "The user is reviewing this independent sender repair before opening a PR. A retransmission of the rewound write cursor now advances that cursor, avoiding an immediate duplicate send after recovery. Original failing recovery evidence and the passing 16-target validation are retained.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
+        "url": "https://github.com/tamird/gvisor/commit/a8c59953d75f93abeb2bc9e288cb151c3a411e6a"
+      }
+    },
+    {
+      "id": "branch:tcp-cubic-recovery-tests",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-cubic-recovery-tests",
+      "head": "3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6",
+      "title": "Exercise SACK recovery with Reno and CUBIC",
+      "url": "https://github.com/tamird/gvisor/commit/3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
+      "summary": "The user is reviewing this independent test change before opening a PR. Existing SACK recovery coverage runs with both Reno and CUBIC and verifies new data after recovery. It is separate from the retransmission-cursor repair and has no code dependency on it.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6",
+        "url": "https://github.com/tamird/gvisor/commit/3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6"
       }
     }
   ],
@@ -6331,8 +6367,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
-      "summary": "Targeted ACK-credit, idle, epoch and utilization corrections pass their selected correctness checks. Expanded recovery tests found a separate retransmission-cursor defect under validation. The first controlled throughput comparison remains inconclusive.",
+      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
+      "summary": "Targeted controller and recovery correctness checks pass. One controlled high-BDP comparison favors the repaired CUBIC bundle over repaired Reno; broader performance and outage conclusions remain open. The user requested clearer tests for the first ACK-credit proposals.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6395,7 +6431,7 @@
           ]
         },
         {
-          "text": "The user accepted the production portions of the standalone CUBIC and Reno ACK-credit repairs and requested clearer tests. Test-only revisions are being reviewed for explicit setup and behavioral coverage; the original proposal heads remain unchanged. This is a contributor changes request, not approval to publish the current tests or a new pending review question.",
+          "text": "The user accepted the production portions of the standalone CUBIC and Reno ACK-credit repairs and requested clearer tests. Independently reviewed test-only revisions now use explicit small credit-consumption and carry scenarios; their before/after remote validation is running. Original proposal heads remain unchanged. No replacement contributor-review question has been sent.",
           "evidence": [
             {
               "label": "CUBIC proposal",
@@ -6404,6 +6440,18 @@
             {
               "label": "Reno proposal",
               "url": "https://github.com/tamird/gvisor/commit/25bfc8d20"
+            },
+            {
+              "label": "Revised CUBIC tests",
+              "url": "https://github.com/tamird/gvisor/commit/5b30c85db"
+            },
+            {
+              "label": "Revised Reno tests",
+              "url": "https://github.com/tamird/gvisor/commit/6f7518d05"
+            },
+            {
+              "label": "Revised-test validation",
+              "url": "https://app.buildbuddy.io/invocation/d976e990-e31c-4ee5-950f-3fbb1d6f19dd"
             }
           ]
         },
@@ -6451,15 +6499,19 @@
           ]
         },
         {
-          "text": "A separate comparison is running on the complete corrected CUBIC/Reno sender bundle. It plans five functional controls and 30 balanced 120-second flows at 100 Mbps, 100 ms RTT and configured 0.01% loss. This is a new prospective configuration; its results must remain separate from the earlier 60 trials. It does not include the partial-utilization correction now under development.",
+          "text": "The complete 35-flow study retained five functional controls and 30 balanced 120-second comparison flows. On one worker at 100 Mbps, 100 ms RTT and configured 0.01% loss, repaired CUBIC had median receiver goodput of 36.4 Mbps versus repaired Reno at 18.8 Mbps, with CUBIC higher in all six matched blocks. Original CUBIC had median 23.15 Mbps; the repaired bundle was higher in five of six pairs. Exact source, generated inputs and runtime binaries were independently joined. This source predates utilization and retransmission-cursor repairs. Unseeded loss and queue drops limit generalization; this does not reproduce the historical outage.",
           "evidence": [
             {
-              "label": "Running complete-controller comparison",
+              "label": "Complete 35-flow comparison",
               "url": "https://github.com/tamird/gvisor/actions/runs/37921217155"
             },
             {
               "label": "Exact comparison method",
               "url": "https://github.com/tamird/gvisor/commit/6e1e463fb"
+            },
+            {
+              "label": "Measured corrected controller bundle",
+              "url": "https://github.com/tamird/gvisor/commit/20db25c17"
             }
           ]
         },
@@ -6502,7 +6554,7 @@
           ]
         },
         {
-          "text": "Expanded RACK recovery coverage found an immediate duplicate segment after an RTO in normal AMD64 and ARM64 runs with both the original and corrected controllers; the filtered race runs passed. A separate sender-cursor repair is under validation. The SACK coverage change is kept independent, and the original recovery failures remain visible.",
+          "text": "Expanded RACK coverage reproduced an immediate duplicate segment after RTO with both original and corrected controllers. The sender-cursor repair now passes 16 selected standalone-controller and integrated target results, including full SACK/RACK suites on both architectures, integrated TCP units, focused race tests, analyzers and formatting. Four existing RACK reorder-detection skips remain explicit. The original failures are retained; the user is now reviewing separate cursor-repair and SACK-coverage proposals.",
           "evidence": [
             {
               "label": "Expanded recovery results with original failures",
@@ -6511,11 +6563,15 @@
             {
               "label": "Proposed retransmission-cursor repair",
               "url": "https://github.com/tamird/gvisor/commit/a8c59953d"
+            },
+            {
+              "label": "Passing cursor and recovery validation",
+              "url": "https://app.buildbuddy.io/invocation/d3b4bb6f-6faa-4dbd-bc29-896c6eb737a9"
             }
           ]
         }
       ],
-      "nextStep": "Complete retransmission-cursor validation, assess every result from the separate throughput comparison, and resolve the pending contributor decisions.",
+      "nextStep": "Finish revised ACK-test validation and contributor review, assess final-controller performance separately, and continue the investigation without attributing the historical outage.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -6672,11 +6728,11 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T11:56:57.925364+00:00",
+      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
       "summary": "Investigate gaps in automatic GitHub status collection and publication. Keep the snapshot timestamp authoritative while determining why expected schedule events are absent.",
       "findings": [
         {
-          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published matching Pages assets. The 11:54 UTC history check found no later scheduled event. These observations do not establish regular 30-minute cadence; the gaps remain under investigation.",
+          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published matching Pages assets. The 12:58 UTC history check found no later scheduled event. These observations do not establish regular 30-minute cadence; the gaps remain under investigation.",
           "evidence": [
             {
               "label": "Deployed schedule",
