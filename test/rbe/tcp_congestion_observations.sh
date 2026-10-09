@@ -22,11 +22,14 @@ set -euo pipefail
 declare -F bazel >/dev/null
 block=${QUALIFICATION_COMPARISON_BLOCK:?}
 [[ $block == 1 || $block == 2 || $block == 3 ]]
-out="$RUNNER_TEMP/qualification/tcp-congestion-matched-controls"
+out="$RUNNER_TEMP/qualification/tcp-disabled-probe-comparison"
 mkdir -p "$out"
 export out
 finish() {
   local result=$?
+  if [[ -f $out/after-tcp_proxy.go ]]; then
+    cp "$out/after-tcp_proxy.go" test/benchmarks/tcp/tcp_proxy.go || result=1
+  fi
   git diff --exit-code > "$out/source-after.diff" || result=1
   if ! sudo -n chown -hR -- "$(id -u):$(id -g)" "$out" && (( result == 0 )); then
     result=1
@@ -79,10 +82,44 @@ grep -Fxq BASIC_NETEM_PASS "$out/host-netem.txt"
 seed_args=()
 if grep -Fxq seed_exit=0 "$out/host-netem.txt"; then seed_args=(--seed 1234); fi
 options=(--config=rbe --config=x86_64 --remote_download_outputs=toplevel)
-bazel build "${options[@]}" \
-  //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
-  > "$out/build-stdout.txt" 2> "$out/build-stderr.txt"
-# The harness and complete controller bundle have closed correctness gates.
+before=dceedf4f4c239dd97d1ecc261575e0d506b50c10
+if ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+  timeout --signal=TERM --kill-after=5s 60s git fetch --no-tags --depth=1 origin "$before" \
+    > "$out/before-fetch.txt" 2>&1
+fi
+git cat-file -p "$before" > "$out/before-commit.txt"
+git show "$before:test/benchmarks/tcp/tcp_proxy.go" > "$out/before-tcp_proxy.go"
+cp test/benchmarks/tcp/tcp_proxy.go "$out/after-tcp_proxy.go"
+printf '%s  %s\n' \
+  c1f12e92044cebc0a7741310a8a3be9e25c24c3b1e977d1507b5efeab9450e95 "$out/before-tcp_proxy.go" \
+  c006f0d222d6472ceb8fa4708d547b6a28bc86345a032a7192c33562ebd7fc68 "$out/after-tcp_proxy.go" | sha256sum --check --strict
+for variant in before after; do
+  cp "$out/$variant-tcp_proxy.go" test/benchmarks/tcp/tcp_proxy.go
+  directory="$out/prebuild-$variant"
+  mkdir -p "$directory/helpers"
+  cp test/benchmarks/tcp/tcp_proxy.go "$directory/tcp_proxy.go"
+  git diff -- test/benchmarks/tcp/tcp_proxy.go > "$directory/variant.patch"
+  bazel build "${options[@]}" \
+    "--execution_log_compact_file=$directory/build.binpb" \
+    //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
+    > "$directory/build-stdout.txt" 2> "$directory/build-stderr.txt"
+  for helper in tcp_proxy nsjoin; do
+    output=$(bazel cquery "${options[@]}" --output=files "//test/benchmarks/tcp:$helper" \
+      2> "$directory/$helper-query-stderr.txt")
+    printf '%s\n' "$output" > "$directory/$helper-output.txt"
+    [[ $output == bazel-out/*/bin/test/benchmarks/tcp/$helper ]]
+    sudo -n install -m 755 -o "$(id -u)" -g "$(id -g)" -- \
+      "$output" "$directory/helpers/$helper"
+  done
+  sha256sum "$directory"/helpers/* > "$directory/helper-hashes.txt"
+done
+cp "$out/after-tcp_proxy.go" test/benchmarks/tcp/tcp_proxy.go
+git diff --exit-code > "$out/source-restored.diff"
+# Reprime the restored source before traffic; every measured run retains its
+# compact trace so fresh measured compiler work remains a result failure.
+bazel build "${options[@]}" //test/benchmarks/tcp:tcp_benchmark \
+  > "$out/reprime-stdout.txt" 2> "$out/reprime-stderr.txt"
+# The harness and controller are unchanged. Neither variant enables capture.
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
 # Preserve complete reports, including zero-byte flows. Fairness is reduced
 # offline using conservative common-window interval bounds, not session means.
@@ -176,38 +213,44 @@ case "$block" in
   3) order=(1 3 2 0) ;;
 esac
 printf 'block=%s order=%s\n' "$block" "${order[*]}" > "$out/block.txt"
-printf 'position\tcase\tprimary_stack\tprimary_cc\tsecondary_stack\tsecondary_cc\tdelay\n' > "$out/trials.tsv"
+printf 'position\tcase\tvariant\tprimary_stack\tprimary_cc\tsecondary_stack\tsecondary_cc\tdelay\n' > "$out/trials.tsv"
 trial_status=0
 position=0
 for index in "${order[@]}"; do
   read -r name first_stack first_cc second_stack second_cc delay <<< "${scenarios[index]}"
   position=$((position + 1))
-  trial="$out/$name"
-  mkdir -p "$trial"
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$position" "$name" "$first_stack" "$first_cc" "$second_stack" "$second_cc" "$delay" >> "$out/trials.tsv"
-  printf 'block=%s position=%s scenario=%s primary=%s/%s secondary=%s/%s delay=%s\n' \
-    "$block" "$position" "$name" "$first_stack" "$first_cc" "$second_stack" "$second_cc" "$delay" > "$trial/identity.txt"
-  flags=(--linux-client)
-  if [[ $first_stack == netstack ]]; then flags=(--client); fi
-  result=0
-  timeout --signal=INT --kill-after=15s 180s bash -c 'bazel "$@"' _ run "${options[@]}" \
-    "--execution_log_compact_file=$trial/run-execution.binpb" \
-    //test/benchmarks/tcp:tcp_benchmark -- \
-    "${flags[@]}" --no-user-ns --congestion-control "$first_cc" \
-    --second-client "$second_stack" --second-congestion-control "$second_cc" \
-    --second-start-delay "$delay" --latency-probe --output-dir "$trial/results" \
-    --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 \
-    --duration 120 --num-client-threads 1 --sack \
-    --disable-linux-gso --disable-linux-gro "${seed_args[@]}" \
-    > "$trial/stdout.txt" 2> "$trial/stderr.txt" || result=$?
-  printf '%s\n' "$result" > "$trial/exit.txt"
-  if (( result != 0 )); then trial_status=1; continue; fi
-  set +e
-  validate_shared "$trial" "$delay" > "$trial/observation-check.txt" 2>&1
-  result=$?
-  set -e
-  printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
-  if (( result != 0 )); then trial_status=1; fi
+  variants=(before after)
+  if (( (position + block) % 2 != 0 )); then variants=(after before); fi
+  for variant in "${variants[@]}"; do
+    trial="$out/$name-$variant"
+    mkdir -p "$trial"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+      "$position" "$name" "$variant" "$first_stack" "$first_cc" "$second_stack" "$second_cc" "$delay" >> "$out/trials.tsv"
+    printf 'block=%s position=%s scenario=%s variant=%s primary=%s/%s secondary=%s/%s delay=%s\n' \
+      "$block" "$position" "$name" "$variant" "$first_stack" "$first_cc" "$second_stack" "$second_cc" "$delay" > "$trial/identity.txt"
+    flags=(--linux-client)
+    if [[ $first_stack == netstack ]]; then flags=(--client); fi
+    result=0
+    timeout --signal=INT --kill-after=15s 180s bash -c 'bazel "$@"' _ run "${options[@]}" \
+      "--execution_log_compact_file=$trial/run-execution.binpb" \
+      //test/benchmarks/tcp:tcp_benchmark -- \
+      "${flags[@]}" --no-user-ns --congestion-control "$first_cc" \
+      --second-client "$second_stack" --second-congestion-control "$second_cc" \
+      --second-start-delay "$delay" --latency-probe --output-dir "$trial/results" \
+      --helpers "$out/prebuild-$variant/helpers" \
+      --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 \
+      --duration 120 --num-client-threads 1 --sack \
+      --disable-linux-gso --disable-linux-gro "${seed_args[@]}" \
+      > "$trial/stdout.txt" 2> "$trial/stderr.txt" || result=$?
+    printf '%s\n' "$result" > "$trial/exit.txt"
+    if (( result != 0 )); then trial_status=1; continue; fi
+    set +e
+    validate_shared "$trial" "$delay" > "$trial/observation-check.txt" 2>&1
+    result=$?
+    set -e
+    printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
+    if (( result != 0 )); then trial_status=1; fi
+  done
 done
 git diff --exit-code > "$out/source-after.diff" || trial_status=1
 printf '%s\n' "$trial_status" > "$out/final-exit.txt"
