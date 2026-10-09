@@ -12,6 +12,7 @@ go_binary(
         "tcp_proxy.go",
         "xdp.go",
     ],
+    out = "tcp_proxy",
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/rand",

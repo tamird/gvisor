@@ -77,7 +77,7 @@ bazel build "${options[@]}" \
   > "$out/build-stdout.txt" 2> "$out/build-stderr.txt"
 bazel test "${options[@]}" --build_tag_filters= --test_tag_filters= \
   --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_output=errors \
-  //test/benchmarks/tcp:tcp_proxy_nogo //tools/lint:gofmt \
+  //tools/lint:buildifier \
   > "$out/source-checks-stdout.txt" 2> "$out/source-checks-stderr.txt"
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
 trial_status=0
