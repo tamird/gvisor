@@ -24,6 +24,7 @@ import (
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/faketime"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/seqnum"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
@@ -961,45 +962,76 @@ func TestRACKWithDuplicateACK(t *testing.T) {
 	}
 }
 
-// TestRACKUpdateSackedOut tests the sacked out field is updated when a SACK
-// is received.
+// TestRACKUpdateSackedOut checks selective ACK credit across cumulative ACKs
+// and the transition into recovery.
 func TestRACKUpdateSackedOut(t *testing.T) {
-	probeDone := make(chan struct{})
-	ackNum := 0
-	probe := func(state *tcp.TCPEndpointState) {
-		// Validate that the endpoint Sender.SackedOut is what we expect.
-		if state.Sender.SackedOut != 2 && ackNum == 0 {
-			t.Fatalf("SackedOut got updated to wrong value got: %v want: 2", state.Sender.SackedOut)
-		}
+	for _, sacked := range []int{2, 3} {
+		t.Run(fmt.Sprintf("sacked=%d", sacked), func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			states := make(chan *tcp.TCPEndpointState, 8)
+			c := context.NewWithOpts(t, context.Options{
+				EnableV4: true,
+				MTU:      uint32(mtu),
+				Clock:    clock,
+				Probe:    func(state *tcp.TCPEndpointState) { states <- state },
+			})
+			defer c.Cleanup()
+			e2e.SetStackSACKPermitted(t, c, true)
+			e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+			e2e.CreateConnectedWithSACKAndTS(c)
 
-		if !state.Sender.FastRecovery.Active && state.Sender.SackedOut != 0 && ackNum == 1 {
-			t.Fatalf("SackedOut got updated to wrong value got: %v want: 0", state.Sender.SackedOut)
-		}
+			const packets = 5
+			data := make([]byte, packets*maxPayload)
+			n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{})
+			if err != nil {
+				t.Fatalf("Write: %s", err)
+			}
+			if got, want := n, int64(len(data)); got != want {
+				t.Fatalf("Write = %d, want %d", got, want)
+			}
+			for offset := 0; offset < len(data); offset += maxPayload {
+				c.ReceiveAndCheckPacketWithOptions(data, offset, maxPayload, e2e.TSOptionSize)
+			}
+			drain := func() *tcp.TCPEndpointState {
+				c.Stack().Pause()
+				c.Stack().Resume()
+				return <-states
+			}
+			seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
+			// Acknowledge packet 1 before reporting the gap at packet 2.
+			// This also advances past the sender's initial recovery boundary.
+			clock.Advance(100 * time.Millisecond)
+			c.SendAck(seq, maxPayload)
+			if got, want := drain().Sender.SackedOut, 0; got != want {
+				t.Fatalf("SackedOut after first ACK = %d, want %d", got, want)
+			}
 
-		if ackNum > 0 {
-			close(probeDone)
-		}
-		ackNum++
+			start := c.IRS.Add(1 + 2*maxPayload)
+			var state *tcp.TCPEndpointState
+			for count := 1; count <= sacked; count++ {
+				end := start.Add(seqnum.Size(count * maxPayload))
+				c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: end}})
+				state = drain()
+				if got, want := state.Sender.SackedOut, count; got != want {
+					t.Errorf("SackedOut after %d selectively acknowledged packets = %d, want %d", count, got, want)
+				}
+			}
+			if got, want := state.Sender.FastRecovery.Active, sacked == 3; got != want {
+				t.Fatalf("FastRecovery.Active = %t, want %t", got, want)
+			}
+			if sacked == 3 {
+				c.ReceiveAndCheckPacketWithOptions(data, maxPayload, maxPayload, e2e.TSOptionSize)
+			}
+			c.SendAck(seq, len(data))
+			state = drain()
+			if got, want := state.Sender.SackedOut, 0; got != want {
+				t.Errorf("SackedOut after cumulative ACK = %d, want %d", got, want)
+			}
+			if got, want := state.Sender.FastRecovery.Active, false; got != want {
+				t.Errorf("FastRecovery.Active after cumulative ACK = %t, want %t", got, want)
+			}
+		})
 	}
-
-	c := context.NewWithProbe(t, uint32(mtu), probe)
-	defer c.Cleanup()
-
-	e2e.SendAndReceiveWithSACK(t, c, maxPayload, 8 /* numPackets */, true /* enableRACK */)
-
-	// ACK for [3-5] packets.
-	seq := seqnum.Value(context.TestInitialSequenceNumber).Add(1)
-	start := c.IRS.Add(seqnum.Size(1 + 3*maxPayload))
-	bytesRead := 2 * maxPayload
-	end := start.Add(seqnum.Size(bytesRead))
-	c.SendAckWithSACK(seq, bytesRead, []header.SACKBlock{{start, end}})
-
-	bytesRead += 3 * maxPayload
-	c.SendAck(seq, bytesRead)
-
-	// Wait for the probe function to finish processing the ACK before the
-	// test completes.
-	<-probeDone
 }
 
 // TestRACKWithWindowFull tests that RACK honors the receive window size.
