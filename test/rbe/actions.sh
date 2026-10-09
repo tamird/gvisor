@@ -66,7 +66,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     else
       # Hour-long guest tests need more runway than the hosted coordinator's
       # observed one-hour cap. Only the coordinator moves; all guest actions
-      # retain their remote execution requirements and original deadlines.
+      # retain their remote execution requirements and declared deadlines.
       if [[ $QUALIFICATION_ARCH != arm64 || ${lanes[*]} != syscalls-64k ]]; then
         printf 'Remote tests on the Actions coordinator require the ARM64 64K profile.\n' >&2
         exit 2
@@ -117,7 +117,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
-          'test:buildbuddy_remote_executor --cache_test_results=auto' \
+          'test:buildbuddy_remote_executor --nocache_test_results' \
           'test:buildbuddy_remote_executor --runs_per_test=1' \
           'test:buildbuddy_remote_executor --flaky_test_attempts=1' \
           'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
@@ -152,6 +152,114 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         fi
         break
       done
+      if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
+        # Keep the maintained full-profile graph, then execute only the six
+        # complete owners covered by this qualification continuation.
+        local cohort_dir="$RUNNER_TEMP/qualification/tcg-timeouts"
+        local pattern_file="" source_file
+        local -a cohort_arguments=()
+        mkdir -p "$cohort_dir"
+        printf '%s\n' "$@" > "$cohort_dir/original-arguments.txt"
+        for source_file in "$@"; do
+          if [[ $source_file == --target_pattern_file=* ]]; then
+            [[ -z $pattern_file ]]
+            pattern_file=${source_file#*=}
+          fi
+        done
+        [[ -n $pattern_file ]]
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
+        [[ ! -s "$cohort_dir/source-before.txt" ]]
+        git cat-file -p HEAD > "$cohort_dir/commit.txt"
+        for source_file in .bazelrc MODULE.bazel go.mod go.sum test/runner/defs.bzl test/runner/runner_test.bzl test/runner/main.go test/syscalls/BUILD test/syscalls/linux/BUILD test/syscalls/linux/processes.cc test/syscalls/linux/ping_socket.cc test/syscalls/linux/semaphore.cc test/syscalls/linux/socket_ipv4_udp_unbound_loopback_nogotsan.cc test/syscalls/linux/socket_generic_stress.cc test/syscalls/linux/ip_socket_test_util.cc test/util/test_util.cc test/util/test_main.cc test/rbe/tcg/defs.bzl test/rbe/tcg/BUILD test/rbe/tcg/run.sh test/rbe/tcg/init.sh test/rbe/qualify.sh test/rbe/unit_matrix.py tools/bazeldefs/go.bzl tools/bazeldefs/platforms.bzl; do
+          git show "HEAD:$source_file" > "$cohort_dir/${source_file//\//_}.source"
+        done
+        python3 - "$pattern_file" "$RUNNER_TEMP/qualification/syscalls-64k-selection/actions.json" "$cohort_dir" <<'TCG_SELECTION'
+import hashlib
+import json
+from pathlib import Path
+import sys
+pattern, actions_path, out = map(Path, sys.argv[1:])
+selected = pattern.read_text().splitlines()
+assert len(selected) == len(set(selected)) == 661
+assert hashlib.sha256(('\n'.join(sorted(selected))+'\n').encode()).hexdigest() == '60cfb4e88a92cb9c4953b449f2e92ab2fad9e5066dc36f431ab60360f2ce9f68'
+raw = json.loads(actions_path.read_text())
+labels = {str(row['id']):row['label'] for row in raw['targets']}
+rows = sorted([{'label':labels[str(row['targetId'])], 'args':row['arguments'], 'properties':{p['key']:p.get('value','') for p in row.get('executionInfo',[])}, 'executionPlatform':row.get('executionPlatform')} for row in raw['actions'] if row['mnemonic']=='TestRunner'], key=lambda row:json.dumps(row,sort_keys=True))
+assert len(rows)==1211 and {row['label'] for row in rows}==set(selected)
+assert hashlib.sha256(json.dumps(rows,sort_keys=True,separators=(',',':')).encode()).hexdigest()=='e694f292dd67497deaf2b5e5e5f12d03f573395ff7ed6e62321e1923f12a7bd4'
+cohort = {
+    '//test/syscalls:processes_test_runsc_systrap_directfs_64k_tcg': {'shards':1, 'seconds':3600},
+    '//test/syscalls:processes_test_runsc_systrap_shared_64k_tcg': {'shards':1, 'seconds':3600},
+    '//test/syscalls:ping_socket_test_runsc_systrap_hostnet_64k_tcg': {'shards':1, 'seconds':900},
+    '//test/syscalls:semaphore_test_runsc_systrap_directfs_64k_tcg': {'shards':4, 'seconds':900},
+    '//test/syscalls:socket_ipv4_udp_unbound_loopback_nogotsan_test_runsc_systrap_hostnet_64k_tcg': {'shards':4, 'seconds':900},
+    '//test/syscalls:socket_stress_test_runsc_systrap_hostnet_64k_tcg': {'shards':8, 'seconds':3600},
+}
+assert set(cohort)<=set(selected) and sum(row['shards'] for row in cohort.values())==19
+for label,expected in cohort.items():
+    assert sum(row['label']==label for row in rows)==expected['shards']
+args=(out/'original-arguments.txt').read_text().splitlines()
+assert '--strip=never' in args and '--keep_going' in args
+assert not any(arg.startswith(('--test_filter=','--test_arg=','--test_timeout=','--test_sharding_strategy=','--run_under=','--runs_per_test=','--flaky_test_attempts=')) for arg in args)
+(out/'full-targets').write_text('\n'.join(selected)+'\n')
+(out/'targets').write_text('\n'.join(sorted(cohort))+'\n')
+(out/'selection.json').write_text(json.dumps(cohort,indent=2)+'\n')
+(out/'routing.json').write_text(json.dumps(rows,indent=2)+'\n')
+query_labels=[]
+for outer in selected:
+    assert outer.endswith('_64k_tcg'),outer
+    owner=outer[:-len('_64k_tcg')]
+    query_labels.extend([owner,owner+'_64k_arm64',outer,owner+'_rc_tcg',owner+'_rc_kvm'])
+(out/'attributes.query').write_text('set('+' '.join('"'+label+'"' for label in query_labels)+')\n')
+TCG_SELECTION
+        remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
+        (( remaining > 0 ))
+        timeout --signal=INT --kill-after=30s "${remaining}s" \
+          "$(command -v bazelisk)" --bazelrc="$qualification_rc" query \
+          --noannounce_rc --output=xml --xml:default_values \
+          --query_file="$cohort_dir/attributes.query" > "$cohort_dir/attributes.xml"
+        python3 - "$cohort_dir" <<'TCG_ATTRIBUTES'
+import json
+from pathlib import Path
+import sys
+from xml.etree import ElementTree
+out=Path(sys.argv[1])
+rules={row.attrib['name']:row for row in ElementTree.parse(out/'attributes.xml').iter('rule')}
+def attribute(label,name):
+    value,=[child for child in rules[label] if child.attrib.get('name')==name]
+    if value.tag=='list':return [entry.attrib['value'] for entry in value]
+    assert value.tag in {'string','int','boolean','label'},(label,name,value.tag)
+    return value.attrib['value']
+overrides={'processes_test':'eternal','socket_stress_test':'eternal','ping_socket_test':'long','semaphore_test':'long','socket_ipv4_udp_unbound_loopback_nogotsan_test':'long'}
+seconds={'short':60,'moderate':300,'long':900,'eternal':3600}
+contracts={}
+for outer in (out/'full-targets').read_text().splitlines():
+    owner=outer[:-len('_64k_tcg')];payload=owner+'_64k_arm64'
+    family=owner.split(':')[1].split('_runsc_',1)[0]
+    assert attribute(outer,'payload')==payload and attribute(outer,'image')=='//test/rbe/tcg:guest'
+    attrs={name:attribute(owner,name) for name in ('size','timeout','shard_count','args','flaky')}
+    expected=overrides.get(family,attrs['timeout'])
+    for name,value in attrs.items():
+        assert attribute(payload,name)==value,(payload,name)
+        assert attribute(owner+'_rc_kvm',name)==value,(owner,name,'KVM')
+        for target in (outer,owner+'_rc_tcg'):
+            assert attribute(target,name)==(expected if name=='timeout' else value),(target,name)
+    contracts[outer]={'owner':owner,'payload':payload,'nativeAttributes':attrs,'tcgTimeout':expected,'seconds':seconds[expected],'shards':max(1,int(attrs['shard_count']))}
+assert len(contracts)==661 and sum(row['shards'] for row in contracts.values())==1211
+for label,expected in json.loads((out/'selection.json').read_text()).items():
+    assert contracts[label]['seconds']==expected['seconds'] and contracts[label]['shards']==expected['shards']
+(out/'contracts.json').write_text(json.dumps(contracts,indent=2)+'\n')
+TCG_ATTRIBUTES
+        for source_file in "$@"; do
+          if [[ $source_file == --target_pattern_file=* ]]; then
+            cohort_arguments+=("--target_pattern_file=$cohort_dir/targets")
+          else
+            cohort_arguments+=("$source_file")
+          fi
+        done
+        set -- "${cohort_arguments[@]}"
+        printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
+      fi
       if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
         remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
         if (( remaining > 0 )); then
@@ -200,6 +308,10 @@ GUEST_EVENTS
         printf '%s\n' "$result" > "$events_output.bazel-exit"
         printf '%s\n' "$capture_status" > "$events_output.capture-exit"
         if (( result == 0 )); then result=$capture_status; fi
+        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-timeouts/final-head.txt"
+        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-timeouts/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
+        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-timeouts/source-after.txt"
+        if [[ -s "$RUNNER_TEMP/qualification/tcg-timeouts/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"
