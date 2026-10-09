@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T14:26:47.673151+00:00",
+    "updatedAt": "2026-10-09T15:06:14.916316+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4918,53 +4918,49 @@
       "url": "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f",
       "group": "runtime",
       "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T13:17:57.203091+00:00",
-      "summary": "The user is reviewing the revised CUBIC ACK-credit proposal before opening a PR. Production code remains byte-identical to the earlier accepted production change; the tests now use explicit small scenarios and clearer behavioral assertions. Revised tests reached seven expected before failures, then 14 passing architecture-specific unit leaves and two passing analyzer targets. The CUBIC packet operations are unchanged from their prior validation. Original topic commits remain preserved. This new exact-head review supersedes the answered request to revise the previous tests.",
+      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+      "summary": "Approved with requested amendments. The user approved this CUBIC proposal subject to simpler arithmetic and got/want assertions. The revised arithmetic and assertion changes have passed independent source review; focused unit and analyzer validation is being prepared before delivery under the existing approval. There is no unanswered contributor question. The decision remains bound to the exact reviewed commit shown here; original topic commits and prior test evidence remain preserved.",
       "followup": {
-        "disposition": "Contributor review pending",
-        "owner": "root",
+        "disposition": "Approved with requested amendments",
+        "owner": "syscall_validation",
         "sourceHead": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
-        "reviewedAt": "2026-10-09T13:17:57.203091+00:00",
-        "nextAction": "Await the user review of the revised tests and authorization to open the PR.",
+        "reviewedAt": "2026-10-09T15:06:14.916316+00:00",
+        "nextAction": "Finish the requested arithmetic/assertion amendments and focused validation, then deliver under the existing user approval.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/4742cda26..7a7b450fd",
-          "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f"
+          "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f",
+          "https://app.buildbuddy.io/invocation/d976e990-e31c-4ee5-950f-3fbb1d6f19dd"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
         "url": "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f"
       }
     },
     {
-      "id": "branch:tcp-reno-ack-tests-revised",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "revise/tcp-reno-ack-tests",
-      "head": "6f7518d05a0389933609bae5f2081bce883b483b",
-      "title": "Consume Reno ACK credit before growing cwnd",
-      "url": "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b",
+      "id": "pr:15576",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tcp-reno-ack-credit",
+      "head": "2f1ecd8af76a4221027522fa73612f2bf34af45b",
+      "title": "tcp: consume Reno ACK credit before growing cwnd",
+      "url": "https://github.com/google/gvisor/pull/15576",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T13:17:57.203091+00:00",
-      "summary": "The user is reviewing the revised RENO ACK-credit proposal before opening a PR. Production code remains byte-identical to the earlier accepted production change; the tests now use explicit small scenarios and clearer behavioral assertions. Revised tests reached seven expected before failures, then 14 passing architecture-specific unit leaves and two passing analyzer targets. The CUBIC packet operations are unchanged from their prior validation. Original topic commits remain preserved. This new exact-head review supersedes the answered request to revise the previous tests.",
+      "status": "open",
+      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+      "summary": "The user-approved Reno ACK-credit repair is now PR #15576, including the requested got/want assertion cleanup. Production behavior and test inputs retain their independently reviewed validation. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
       "followup": {
-        "disposition": "Contributor review pending",
-        "owner": "root",
-        "sourceHead": "6f7518d05a0389933609bae5f2081bce883b483b",
-        "reviewedAt": "2026-10-09T13:17:57.203091+00:00",
-        "nextAction": "Await the user review of the revised tests and authorization to open the PR.",
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "sourceHead": "2f1ecd8af76a4221027522fa73612f2bf34af45b",
+        "reviewedAt": "2026-10-09T15:00:39.047132+00:00",
+        "nextAction": "Observe current-head checks, maintainer review and import status through the sole collector.",
         "evidence": [
-          "https://github.com/tamird/gvisor/compare/25bfc8d20..6f7518d05",
-          "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b"
-        ]
+          "https://github.com/google/gvisor/pull/15576"
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "6f7518d05a0389933609bae5f2081bce883b483b",
-        "url": "https://github.com/tamird/gvisor/commit/6f7518d05a0389933609bae5f2081bce883b483b"
-      }
+      "number": 15576
     },
     {
       "ref": "investigate/tcp-congestion-inheritance",
@@ -4994,39 +4990,55 @@
       }
     },
     {
-      "id": "branch:tcp-retransmit-cursor",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15575",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tcp-retransmit-cursor",
       "head": "a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
       "title": "Advance the send cursor after retransmission",
-      "url": "https://github.com/tamird/gvisor/commit/a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
+      "url": "https://github.com/google/gvisor/pull/15575",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
-      "summary": "The user is reviewing this independent sender repair before opening a PR. A retransmission of the rewound write cursor now advances that cursor, avoiding an immediate duplicate send after recovery. Original failing recovery evidence and the passing 16-target validation are retained.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
-        "url": "https://github.com/tamird/gvisor/commit/a8c59953d75f93abeb2bc9e288cb151c3a411e6a"
+      "status": "open",
+      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+      "summary": "The user-approved sender-cursor repair is now PR #15575. Original duplicate-send failures and passing standalone/integrated recovery checks remain retained. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
+      "number": 15575,
+      "followup": {
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "sourceHead": "a8c59953d75f93abeb2bc9e288cb151c3a411e6a",
+        "reviewedAt": "2026-10-09T15:00:39.047132+00:00",
+        "nextAction": "Observe current-head checks, maintainer review and import status through the sole collector.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15575"
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       }
     },
     {
-      "id": "branch:tcp-cubic-recovery-tests",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15577",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tcp-cubic-recovery-tests",
-      "head": "3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6",
-      "title": "Exercise SACK recovery with Reno and CUBIC",
-      "url": "https://github.com/tamird/gvisor/commit/3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6",
+      "head": "543fc51f7e983626d565931abb9deb4480d141d0",
+      "title": "Exercise CUBIC in SACK recovery tests",
+      "url": "https://github.com/google/gvisor/pull/15577",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T13:06:58.290647+00:00",
-      "summary": "The user is reviewing this independent test change before opening a PR. Existing SACK recovery coverage runs with both Reno and CUBIC and verifies new data after recovery. It is separate from the retransmission-cursor repair and has no code dependency on it.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6",
-        "url": "https://github.com/tamird/gvisor/commit/3f3bd16a9461184c1b6eb8b20c53ff880bafc1a6"
+      "status": "open",
+      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+      "summary": "The user-approved SACK recovery coverage is now PR #15577. The requested arithmetic cleanup reuses the existing bytesRead count, preserving the tested packet offsets. This test change is independent of the sender-cursor repair. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
+      "number": 15577,
+      "followup": {
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "sourceHead": "543fc51f7e983626d565931abb9deb4480d141d0",
+        "reviewedAt": "2026-10-09T15:00:39.047132+00:00",
+        "nextAction": "Observe current-head checks, maintainer review and import status through the sole collector.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15577"
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       }
     }
   ],
@@ -6378,8 +6390,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T14:26:47.673151+00:00",
-      "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The user is reviewing the clearer ACK tests and independent recovery proposals.",
+      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+      "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The Reno, sender-cursor and SACK changes are now upstream PRs; CUBIC is approved with requested amendments and focused validation pending.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6442,7 +6454,7 @@
           ]
         },
         {
-          "text": "After accepting the CUBIC and Reno production changes, the user requested clearer tests. The revised tests now use explicit small credit-consumption and carry scenarios. Seven expected before failures, 14 passing corrected architecture-specific unit leaves and two analyzer passes are independently verified; unchanged packet operations retain their prior evidence. The user is now reviewing the two revised exact-head proposals. Original topic commits remain preserved, and no upstream PR has been opened.",
+          "text": "The user approved the clearer Reno and CUBIC ACK tests with requested assertion and arithmetic amendments. Reno is now PR #15576 with the requested got/want assertions. CUBIC arithmetic and assertion cleanup has passed independent source review; focused validation remains pending before delivery under the existing approval. The earlier revised tests reached seven expected before failures, 14 passing architecture-specific unit leaves and two analyzer passes. Unchanged packet operations retain their prior evidence; the answered review question is no longer pending.",
           "evidence": [
             {
               "label": "Revised CUBIC test diff",
@@ -6455,6 +6467,10 @@
             {
               "label": "Revised-test before/after validation",
               "url": "https://app.buildbuddy.io/invocation/d976e990-e31c-4ee5-950f-3fbb1d6f19dd"
+            },
+            {
+              "label": "Delivered Reno repair #15576",
+              "url": "https://github.com/google/gvisor/pull/15576"
             }
           ]
         },
@@ -6557,7 +6573,7 @@
           ]
         },
         {
-          "text": "Expanded RACK coverage reproduced an immediate duplicate segment after RTO with both original and corrected controllers. The sender-cursor repair now passes 16 selected standalone-controller and integrated target results, including full SACK/RACK suites on both architectures, integrated TCP units, focused race tests, analyzers and formatting. Four existing RACK reorder-detection skips remain explicit. The original failures are retained; the user is now reviewing separate cursor-repair and SACK-coverage proposals.",
+          "text": "Expanded RACK coverage reproduced an immediate duplicate segment after RTO with both original and corrected controllers. The sender-cursor repair passed 16 selected standalone-controller and integrated target results, including full SACK/RACK suites on both architectures, integrated TCP units, focused race tests, analyzers and formatting. Four existing RACK reorder-detection skips remain explicit. The original failures are retained. The user-approved cursor repair and independent SACK coverage are now PRs #15575 and #15577; the requested SACK arithmetic cleanup preserves the tested offsets.",
           "evidence": [
             {
               "label": "Expanded recovery results with original failures",
@@ -6570,6 +6586,14 @@
             {
               "label": "Passing cursor and recovery validation",
               "url": "https://app.buildbuddy.io/invocation/d3b4bb6f-6faa-4dbd-bc29-896c6eb737a9"
+            },
+            {
+              "label": "Delivered sender-cursor repair #15575",
+              "url": "https://github.com/google/gvisor/pull/15575"
+            },
+            {
+              "label": "Delivered SACK coverage #15577",
+              "url": "https://github.com/google/gvisor/pull/15577"
             }
           ]
         },
@@ -6604,20 +6628,24 @@
           ]
         },
         {
-          "text": "The first shared-flow functional validation ended in failure. All 13 normal modes passed their runtime and output checks, but the expected-termination case did not retain the required inner cleanup/client/receiver exit records. Original outputs and the failed parent remain recorded. A two-delimiter supervisor correction is prepared for a two-case continuation; no new acceptance had been observed at this update. No comparative sharing or fairness result is established.",
+          "text": "Shared-flow functional validation is now closed. All 13 original normal modes passed, but the original expected-termination case omitted required inner cleanup records and its failed parent remains retained. A two-delimiter supervisor correction passed a normal mixed-flow control and the same termination case: both clients and flow supervisors were interrupted, both receivers were reaped, and both flow cleanups plus topology cleanup completed. Interrupted receivers do not count as completed traffic. This establishes functional capture and cleanup behavior, without a fairness, comparative-performance or precise-clock-alignment claim.",
           "evidence": [
             {
               "label": "Original shared-flow validation (termination proof incomplete)",
               "url": "https://github.com/tamird/gvisor/actions/runs/37941724114"
             },
             {
-              "label": "Public shared-flow harness source",
-              "url": "https://github.com/tamird/gvisor/commit/c8214be16"
+              "label": "Passing control and termination continuation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37944087958"
+            },
+            {
+              "label": "Verified shared-flow harness source",
+              "url": "https://github.com/tamird/gvisor/commit/3c41f7e67"
             }
           ]
         }
       ],
-      "nextStep": "Complete contributor review and remaining qualification, and assess other scenarios without generalizing this measured high-BDP result.",
+      "nextStep": "Finish the approved CUBIC amendments and focused validation, follow the delivered PRs, and assess other scenarios without generalizing the measured high-BDP result.",
       "evidence": [
         {
           "label": "Production CUBIC",
