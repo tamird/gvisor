@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T22:16:59.798024+00:00",
+    "updatedAt": "2026-10-09T22:31:50.803530+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -885,8 +885,8 @@
       "group": "bazel",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-09T22:16:59.798024+00:00",
-      "summary": "EtiennePerot submitted a fresh approval of current head e8c82dd30 at 2026-10-09T22:12:09Z. No matching import is present. The earlier unresolved review thread remains visible; this approval does not resolve it. The authorized re-review notice is fulfilled; no repeated reviewer ping is needed.\n\nEarlier publication evidence: The authorized October 2/3 rebase is published at 30aaadcbb0450d39dc5e60d76557bd9d61cc9b40 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14986#issuecomment-5963406126. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Rebased source fa6b2c474 is published and mergeable. Focused hosted GNU/Bazel 8.3.1 posix_server compilation passes; canonical Fetch/Verify covers 180 dependencies with the catalog and lockfile unchanged. This does not qualify Bazel 9, ARM runtime or the full matrix.",
+      "updatedAt": "2026-10-09T22:31:50.803530+00:00",
+      "summary": "EtiennePerot submitted a fresh approval of current head e8c82dd30 at 2026-10-09T22:12:09Z. Matching import #15605 now names the approved current source. The earlier unresolved “Ugly...” discussion remains visible and is not marked outdated; its text does not specify an amendment. The approval does not resolve that thread. The authorized re-review notice is fulfilled; no repeated reviewer ping is needed.\n\nEarlier publication evidence: The authorized October 2/3 rebase is published at 30aaadcbb0450d39dc5e60d76557bd9d61cc9b40 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14986#issuecomment-5963406126. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Rebased source fa6b2c474 is published and mergeable. Focused hosted GNU/Bazel 8.3.1 posix_server compilation passes; canonical Fetch/Verify covers 180 dependencies with the catalog and lockfile unchanged. This does not qualify Bazel 9, ARM runtime or the full matrix.",
       "followup": {
         "disposition": "Fresh current-head approval observed",
         "owner": "external_sweeps",
@@ -895,9 +895,10 @@
           "https://github.com/google/gvisor/pull/14986#issuecomment-6089125240",
           "https://github.com/google/gvisor/pull/14986#discussion_r4172168041",
           "https://github.com/google/gvisor/pull/14986#pullrequestreview-5399555219",
-          "https://github.com/google/gvisor/pull/14986#pullrequestreview-5475828031"
+          "https://github.com/google/gvisor/pull/14986#pullrequestreview-5475828031",
+          "https://github.com/google/gvisor/pull/15605"
         ],
-        "reviewedAt": "2026-10-09T22:16:14.472491+00:00",
+        "reviewedAt": "2026-10-09T22:30:56.744806+00:00",
         "sourceHead": "e8c82dd30d419cc7bba8047f3535a632cb47e70c",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -4976,20 +4977,19 @@
       "title": "tcp: consume Reno ACK credit before growing cwnd",
       "url": "https://github.com/google/gvisor/pull/15576",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
-      "summary": "The user-approved Reno ACK-credit repair is now PR #15576, including the requested got/want assertion cleanup. Production behavior and test inputs retain their independently reviewed validation. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
+      "status": "merged",
+      "updatedAt": "2026-10-09T22:29:05.194468+00:00",
+      "summary": "PR #15576 and matching import #15594 have merged. The contributor-approved Reno ACK-credit correction is delivered; no review or import action remains.\n\nEarlier source and delivery record:\n\nThe user-approved Reno ACK-credit repair is now PR #15576, including the requested got/want assertion cleanup. Production behavior and test inputs retain their independently reviewed validation. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
       "followup": {
-        "disposition": "Fresh current-head approval observed",
+        "disposition": "Merged",
         "owner": "external_sweeps",
         "sourceHead": "2f1ecd8af76a4221027522fa73612f2bf34af45b",
-        "reviewedAt": "2026-10-09T20:12:40.895923+00:00",
-        "nextAction": "Observe the matching import and current-head CI; no contributor decision remains.",
+        "reviewedAt": "2026-10-09T22:27:46.050528+00:00",
+        "nextAction": "No remaining delivery action.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15576"
-        ],
-        "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+          "https://github.com/google/gvisor/pull/15576",
+          "https://github.com/google/gvisor/pull/15594"
+        ]
       },
       "number": 15576
     },
@@ -5194,63 +5194,59 @@
       }
     },
     {
-      "id": "branch:state-map-decode-slots",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15603",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "state-map-decode-slots",
       "head": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
       "title": "Reuse temporary map decoding slots",
-      "url": "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+      "url": "https://github.com/google/gvisor/pull/15603",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T21:58:14.103463+00:00",
-      "summary": "The user is reviewing this independent decoder proposal. Map decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries keep fresh storage because delayed load callbacks can retain their addresses; interface values keep independent dynamic storage. Ordered nil transitions, typed nils and aggregate callback receivers are covered by the correctness checks. The separate fixed 1024-entry Map Load experiment showed 17.97% less time and 52.47% fewer allocations on one AMD64 worker; this is not a whole-checkpoint speedup. No open source prerequisite is assigned.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
-        "url": "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10"
-      },
+      "status": "open",
+      "updatedAt": "2026-10-09T22:29:05.194468+00:00",
+      "summary": "The user-approved change is delivered as PR #15603 at exact reviewed head 2751ca4d7. The contributor decision is complete; current maintainer review and CI are shown from GitHub. Root verified the published title, body, author, base and ready state.\n\nEarlier proposal and validation record:\n\nThe user is reviewing this independent decoder proposal. Map decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries keep fresh storage because delayed load callbacks can retain their addresses; interface values keep independent dynamic storage. Ordered nil transitions, typed nils and aggregate callback receivers are covered by the correctness checks. The separate fixed 1024-entry Map Load experiment showed 17.97% less time and 52.47% fewer allocations on one AMD64 worker; this is not a whole-checkpoint speedup. No open source prerequisite is assigned.",
       "followup": {
-        "disposition": "Contributor review pending",
-        "owner": "root",
+        "disposition": "Contributor-approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
         "sourceHead": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
-        "reviewedAt": "2026-10-09T21:56:28.695950+00:00",
-        "nextAction": "Await the user’s review and authorization to open the independent PR; root owns delivery.",
+        "reviewedAt": "2026-10-09T22:30:56.744806+00:00",
+        "nextAction": "Observe current-head CI, maintainer feedback and matching import progress; no contributor question remains.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
-          "https://app.buildbuddy.io/invocation/be8a0a8f-0058-443b-827f-00f073125bff"
-        ]
-      }
+          "https://github.com/google/gvisor/pull/15603",
+          "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10"
+        ],
+        "mergeable": "MERGEABLE",
+        "reviewDecision": null
+      },
+      "number": 15603
     },
     {
-      "id": "branch:tcp-cubic-epoch",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15604",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tcp-cubic-epoch",
       "head": "928a07c285d90bc5e485c939935a10134d80bbc7",
       "title": "Initialize CUBIC congestion-avoidance epochs",
-      "url": "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7",
+      "url": "https://github.com/google/gvisor/pull/15604",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T21:58:14.103463+00:00",
-      "summary": "The user is reviewing this prepared CUBIC follow-up. It initializes congestion-avoidance curves from the actual recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate with fractional growth. Idle window reduction resets the growth state. The selected before/after unit and analyzer evidence is closed; the original oversized-request observation remains unknown. The earlier ACK-credit prerequisite #15579 has merged, so it is no longer an active source blocker. This proposal carries no standalone performance or historical-outage claim.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "928a07c285d90bc5e485c939935a10134d80bbc7",
-        "url": "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7"
-      },
+      "status": "open",
+      "updatedAt": "2026-10-09T22:31:50.803530+00:00",
+      "summary": "The user-approved epoch change is delivered as PR #15604. Maintainer review is pending. A Gemini bot suggested replacing math.Pow with multiplication; root owns its assessment, and no performance claim or source amendment is accepted from that suggestion.\n\nThe user-approved change is delivered as PR #15604 at exact reviewed head 928a07c28. The contributor decision is complete; current maintainer review and CI are shown from GitHub. Root verified the published title, body, author, base and ready state.\n\nEarlier proposal and validation record:\n\nThe user is reviewing this prepared CUBIC follow-up. It initializes congestion-avoidance curves from the actual recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate with fractional growth. Idle window reduction resets the growth state. The selected before/after unit and analyzer evidence is closed; the original oversized-request observation remains unknown. The earlier ACK-credit prerequisite #15579 has merged, so it is no longer an active source blocker. This proposal carries no standalone performance or historical-outage claim.",
       "followup": {
-        "disposition": "Contributor review pending",
-        "owner": "root",
+        "disposition": "Maintainer review pending; bot suggestion routed",
+        "owner": "root / external_sweeps",
         "sourceHead": "928a07c285d90bc5e485c939935a10134d80bbc7",
-        "reviewedAt": "2026-10-09T21:56:28.695950+00:00",
-        "nextAction": "Await the user’s review and authorization to open the independent PR; root owns delivery.",
+        "reviewedAt": "2026-10-09T22:30:56.744806+00:00",
+        "nextAction": "Root assesses the bot arithmetic suggestion; the sole observer follows current-head human review and CI. No public reply or source change is inferred from the bot comment.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15604",
           "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7",
-          "https://app.buildbuddy.io/invocation/770421cf-2150-44f6-801f-d9e60420be83",
-          "https://github.com/google/gvisor/pull/15579"
-        ]
-      }
+          "https://github.com/google/gvisor/pull/15604#discussion_r4235045411"
+        ],
+        "mergeable": "MERGEABLE",
+        "reviewDecision": null
+      },
+      "number": 15604
     }
   ],
   "edges": [
@@ -6606,7 +6602,7 @@
     },
     {
       "from": "pr:15579",
-      "to": "branch:tcp-cubic-epoch",
+      "to": "pr:15604",
       "type": "depends_on",
       "reason": "The earlier CUBIC ACK-credit prerequisite has merged. This historical source relationship is retained but no longer blocks delivery.",
       "evidence": [
