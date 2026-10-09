@@ -1069,8 +1069,8 @@ func (e *Endpoint) Abort() {
 }
 
 // Close puts the endpoint in a closed state and frees all resources associated
-// with it. It must be called only once and with no other concurrent calls to
-// the endpoint.
+// with it. It must be called only once. Only StateSnapshot may run concurrently
+// with Close.
 //
 // +checklocksexclude:e.segmentQueue.mu
 // +checklocksexclude:e.pendingProcessingMu
@@ -3290,6 +3290,24 @@ func (e *Endpoint) maxOptionSize() (size int) {
 	putOptions(options)
 
 	return size
+}
+
+// StateSnapshot returns an owned copy of the connected endpoint's TCP state.
+// It may be called concurrently with Close. An endpoint that is not connected
+// or has been closed by the application returns ErrNotConnected instead of a
+// partial snapshot.
+//
+// +checklocksexclude:e.segmentQueue.mu
+// +checklocksexclude:e.pendingProcessingMu
+func (e *Endpoint) StateSnapshot() (*TCPEndpointState, tcpip.Error) {
+	e.LockUser()
+	defer e.UnlockUser()
+	if e.closed || !e.EndpointState().connected() || e.snd == nil || e.rcv == nil {
+		return nil, &tcpip.ErrNotConnected{}
+	}
+	state := new(TCPEndpointState)
+	e.completeStateLocked(state)
+	return state, nil
 }
 
 // completeStateLocked makes a full copy of the endpoint and returns it. This is
