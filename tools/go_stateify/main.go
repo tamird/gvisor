@@ -87,6 +87,7 @@ func extractStateTag(tag *ast.BasicLit) string {
 
 // scanFunctions is a set of functions passed to scanFields.
 type scanFunctions struct {
+	field     func(name string, typ ast.Expr)
 	zerovalue func(name string)
 	normal    func(name string)
 	wait      func(name string)
@@ -136,6 +137,10 @@ func scanField(name string, field *ast.Field, fn scanFunctions) {
 	if anon, ok := field.Type.(*ast.StructType); ok && tag == "" {
 		scanFields(anon, fn)
 		return
+	}
+
+	if fn.field != nil {
+		fn.field(name, field.Type)
 	}
 
 	switch tag {
@@ -355,6 +360,22 @@ func main() {
 						os.Exit(1)
 					}
 
+					pointerFields := make(map[string]bool)
+					scanFields(x, scanFunctions{field: func(name string, typ ast.Expr) {
+						_, pointerFields[name] = typ.(*ast.StarExpr)
+					}})
+					codecName := func(name string) string {
+						return fmt.Sprintf("stateCodec%s_%s", ts.Name.Name, name)
+					}
+					if generateSaverLoader {
+						emitCodec := func(name string) {
+							if !pointerFields[name] {
+								fmt.Fprintf(outputFile, "var %s = %sNewFieldCodec(&new(%s).%s)\n", codecName(name), statePrefix, ts.Name.Name, name)
+							}
+						}
+						scanFields(x, scanFunctions{normal: emitCodec, wait: emitCodec})
+					}
+
 					// Record the slot for each field.
 					fieldCount := 0
 					fields := make(map[string]int)
@@ -369,12 +390,20 @@ func main() {
 					emitLoadValue := func(name, typName string) {
 						fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
 					}
-					emitLoad := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
+					emitTypedLoad := func(name string, wait bool) {
+						if pointerFields[name] {
+							fmt.Fprintf(outputFile, "\t%sLoadPointer(stateSourceObject, %d, &%s.%s, %t)\n", statePrefix, fields[name], recv, name, wait)
+							return
+						}
+						method := "Load"
+						if wait {
+							method = "LoadWait"
+						}
+						fmt.Fprintf(outputFile, "\t%s.%s(stateSourceObject, %d, &%s.%s)\n", codecName(name), method, fields[name], recv, name)
 					}
-					emitLoadWait := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
-					}
+
+					emitLoad := func(name string) { emitTypedLoad(name, false) }
+					emitLoadWait := func(name string) { emitTypedLoad(name, true) }
 					emitSaveValue := func(name, typName string) {
 						// Keep an explicit typName ascription as a compile-time
 						// check against code generation bugs while avoiding S1021.
@@ -383,8 +412,13 @@ func main() {
 						fmt.Fprintf(outputFile, "	stateSinkObject.SaveValue(%d, %sValue)\n", fields[name], name)
 					}
 					emitSave := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
+						if pointerFields[name] {
+							fmt.Fprintf(outputFile, "\t%sSavePointer(stateSinkObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
+						} else {
+							fmt.Fprintf(outputFile, "\t%s.Save(stateSinkObject, %d, &%s.%s)\n", codecName(name), fields[name], recv, name)
+						}
 					}
+
 					emitZeroCheck := func(name string) {
 						fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, recv, name, statePrefix, name, recv, name)
 					}

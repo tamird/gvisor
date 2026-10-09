@@ -42,6 +42,8 @@ go_test(
     library = ":tests",
     deps = [
         "//pkg/state",
+        "//pkg/state/tests/shadow",
+        "//pkg/state/wire",
         "//pkg/tcpip",
     ],
 )

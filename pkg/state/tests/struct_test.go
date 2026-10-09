@@ -15,8 +15,17 @@
 package tests
 
 import (
+	"bytes"
+	"math"
 	"math/rand"
+	"slices"
+	"strings"
 	"testing"
+	"time"
+
+	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/tests/shadow"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 func TestEmptyStruct(t *testing.T) {
@@ -102,5 +111,101 @@ func TestEmbeddedPointers(t *testing.T) {
 func TestMultiNameFields(t *testing.T) {
 	runTestCases(t, false, "multi-name-field", []any{
 		multiName{b: "foo", c: "bar", x: 10, y: 20, z: -30},
+	})
+}
+
+// typedFieldsWire describes the existing wire contract independently of the
+// generated field access path. It can also supply a different field order.
+func typedFieldsWire(t *testing.T, fields []string, values []wire.Object) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	w := wire.Writer{Writer: &buf}
+	if err := state.WriteHeader(&w, 1, true); err != nil {
+		t.Fatalf("WriteHeader: %v", err)
+	}
+	wire.Save(&w, &wire.Type{Name: (*typedFields)(nil).StateTypeName(), Fields: fields})
+	wire.Save(&w, wire.Uint(1))
+	object := &wire.Struct{TypeID: 1}
+	object.Alloc(len(values))
+	for i, value := range values {
+		*object.Field(i) = value
+	}
+	wire.Save(&w, object)
+	return buf.Bytes()
+}
+
+func TestTypedFieldsWire(t *testing.T) {
+	fields := []string{"signed", "unsigned", "flag", "text", "f32", "f64", "c64", "c128", "zero", "self"}
+	text := wire.String("state")
+	c64 := wire.Complex64(2 - 3i)
+	c128 := wire.Complex128(4 - 5i)
+	values := []wire.Object{wire.Int(-7), wire.Uint(9), wire.Bool(true), &text,
+		wire.Float32(1.25), wire.Float64(2.5), &c64, &c128, wire.Nil{}, &wire.Ref{Root: 1}}
+	for _, test := range []struct {
+		name   string
+		cycle  bool
+		value  typedFields
+		values []wire.Object
+	}{
+		{"zero", false, typedFields{}, []wire.Object{wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}, wire.Nil{}}},
+		{"values-and-cycle", true, typedFields{signed: -7, unsigned: 9, flag: true, text: "state", f32: 1.25, f64: 2.5, c64: 2 - 3i, c128: 4 - 5i}, values},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			original := test.value
+			if test.cycle {
+				original.self = &original
+			}
+			var encoded bytes.Buffer
+			if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+				t.Fatalf("Save: %v", err)
+			}
+			if got, want := encoded.Bytes(), typedFieldsWire(t, fields, test.values); !bytes.Equal(got, want) {
+				t.Errorf("wire bytes = %x, want %x", got, want)
+			}
+
+			// A checkpoint's field order need not match the local declaration.
+			// Load must reconcile by name before taking the typed field path.
+			reorderedFields, reorderedValues := slices.Clone(fields), slices.Clone(test.values)
+			slices.Reverse(reorderedFields)
+			slices.Reverse(reorderedValues)
+			var loaded typedFields
+			if _, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWire(t, reorderedFields, reorderedValues)), &loaded); err != nil {
+				t.Fatalf("Load reordered fields: %v", err)
+			}
+			expected := original
+			if original.self != nil {
+				expected.self = &loaded
+			}
+			if got, want := loaded, expected; got != want {
+				t.Errorf("loaded fields = %+v, want %+v", got, want)
+			}
+		})
+	}
+
+	wideComplex := wire.Complex128(complex(math.Pi, -math.Pi))
+	for _, test := range []struct {
+		field string
+		value wire.Object
+	}{
+		{"signed", wire.Int(math.MaxInt16 + 1)},
+		{"unsigned", wire.Uint(math.MaxUint32 + 1)},
+		{"f32", wire.Float64(math.Pi)},
+		{"c64", &wideComplex},
+	} {
+		t.Run("truncated-"+test.field, func(t *testing.T) {
+			encodedValues := slices.Clone(values)
+			encodedValues[slices.Index(fields, test.field)] = test.value
+			var loaded typedFields
+			_, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWire(t, fields, encodedValues)), &loaded)
+			if err == nil || !strings.Contains(err.Error(), "truncated") {
+				t.Errorf("Load narrowing %s = %v, want a truncation error", test.field, err)
+			}
+		})
+	}
+}
+
+func TestGeneratedFieldTypes(t *testing.T) {
+	runTestCases(t, false, "shadowed-and-imported", []any{
+		shadow.Value{Number: "not an integer", Duration: 3 * time.Second},
 	})
 }

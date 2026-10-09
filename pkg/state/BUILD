@@ -76,6 +76,7 @@ go_library(
         "state_norace.go",
         "state_race.go",
         "stats.go",
+        "typed.go",
         "types.go",
     ],
     marshal = False,
