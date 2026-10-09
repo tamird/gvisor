@@ -49,6 +49,15 @@ import (
 )
 
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
+	for _, batch := range []int{1, 2, 10} {
+		t.Run(fmt.Sprintf("segments_per_ack=%d", batch), func(t *testing.T) {
+			testCubicWindowGrowthAfterPacketLoss(t, batch)
+		})
+	}
+}
+
+func testCubicWindowGrowthAfterPacketLoss(t *testing.T, batch int) {
+	t.Helper()
 	const payload = 32
 	const rtt = 100 * time.Millisecond
 	clock := faketime.NewManualClock()
@@ -110,10 +119,12 @@ func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
 		received += payload
 	}
 	acked := received - afterLoss*payload
-	for range afterLoss {
-		clock.Advance(rtt / time.Duration(afterLoss))
-		acked += payload
+	for remaining := afterLoss; remaining > 0; {
+		n := min(batch, remaining)
+		clock.Advance(rtt * time.Duration(n) / time.Duration(afterLoss))
+		acked += n * payload
 		ack(acked)
+		remaining -= n
 	}
 	if got := window(); got <= afterLoss {
 		t.Fatalf("cwnd did not recover after a window of ACKs: before=%d after=%d", afterLoss, got)

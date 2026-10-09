@@ -15,7 +15,6 @@
 package tcp
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -25,64 +24,39 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-// cubicAfterRecovery starts congestion avoidance after losing a packet from
-// a 1000-segment window.
-func cubicAfterRecovery(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) *cubicState {
+// newTestCubic initializes a sender with a 1000-segment window.
+func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) *cubicState {
 	t.Helper()
 	s := stack.New(stack.Options{Clock: clock})
 	t.Cleanup(func() {
 		s.Close()
 		s.Wait()
 	})
-	ep := &Endpoint{stack: s}
-	ep.mu.Lock()
-	defer ep.mu.Unlock()
 	snd := &sender{
-		ep: ep,
+		ep: &Endpoint{stack: s},
 		TCPSenderState: TCPSenderState{
 			SndCwnd:  1000,
 			Ssthresh: InitialSsthresh,
 		},
 	}
+	snd.ep.mu.Lock()
+	defer snd.ep.mu.Unlock()
 	snd.rtt.Lock()
 	snd.rtt.TCPRTTState.SRTT = rtt
 	snd.rtt.Unlock()
 	c := newCubicCC(snd)
-	c.HandleLossDetected()
-	snd.SndCwnd = snd.Ssthresh
-	c.PostRecovery()
+	snd.cc = c
 	return c
-}
-
-func TestCubicCongestionAvoidanceAccumulatesACKs(t *testing.T) {
-	for _, acked := range []int{1, 2, 10} {
-		t.Run(fmt.Sprintf("segments_per_ack=%d", acked), func(t *testing.T) {
-			clock := faketime.NewManualClock()
-			const rtt = 100 * time.Millisecond
-			c := cubicAfterRecovery(t, clock, rtt)
-			c.s.ep.mu.Lock()
-			defer c.s.ep.mu.Unlock()
-			initial := c.s.SndCwnd
-			// Deliver one window's ACKs over one RTT. At this window and
-			// RTT, CUBIC must recover some capacity after the loss, even
-			// when each individual increase is less than a segment.
-			for acknowledged := 0; acknowledged < initial; acknowledged += acked {
-				clock.Advance(rtt * time.Duration(acked) / time.Duration(initial))
-				c.Update(acked, rtt, clock.NowMonotonic())
-			}
-			if got := c.s.SndCwnd; got <= initial {
-				t.Fatalf("window after acknowledging %d segments = %d, want > %d", initial, got, initial)
-			}
-		})
-	}
 }
 
 func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 	clock := faketime.NewManualClock()
 	const rtt = 100 * time.Millisecond
-	c := cubicAfterRecovery(t, clock, rtt)
+	c := newTestCubic(t, clock, rtt)
 	c.s.ep.mu.Lock()
 	defer c.s.ep.mu.Unlock()
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
 	initial := c.s.SndCwnd
 	clock.Advance(time.Minute)
 	c.Update(1, rtt, clock.NowMonotonic())
@@ -96,9 +70,11 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	clock := faketime.NewManualClock()
 	const rtt = time.Millisecond
-	c := cubicAfterRecovery(t, clock, rtt)
+	c := newTestCubic(t, clock, rtt)
 	c.s.ep.mu.Lock()
 	defer c.s.ep.mu.Unlock()
+	c.HandleLossDetected()
+	c.s.leaveRecovery()
 	initial := c.s.SndCwnd
 	clock.Advance(time.Second)
 	c.Update(0, rtt, clock.NowMonotonic())
