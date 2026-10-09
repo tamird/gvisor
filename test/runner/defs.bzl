@@ -57,6 +57,7 @@ def _syscall_test(
         memory = None,
         requires_atime = False,
         tcg_timeout = None,
+        tcg_shard_count = None,
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -198,6 +199,8 @@ def _syscall_test(
     tcg_attributes = {key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
     if tcg_timeout != None:
         tcg_attributes["timeout"] = tcg_timeout
+    if tcg_shard_count != None:
+        tcg_attributes["shard_count"] = tcg_shard_count
     if arm64_64k:
         test_architecture_variants(
             name + "_64k",
@@ -295,7 +298,8 @@ def syscall_test_variants(
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
         and requires_atime enables host atime updates. tcg_timeout overrides
-        the Bazel timeout category only for the outer ARM64 TCG tests.
+        the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
+        overrides the shard count only for those tests.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -492,7 +496,8 @@ def syscall_test(
       network_tools: Supply iproute2 and OpenBSD netcat for remote execution.
       **kwargs: Additional test arguments; memory sets a remote memory budget
         and requires_atime enables host atime updates. tcg_timeout overrides
-        the Bazel timeout category only for the outer ARM64 TCG tests.
+        the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
+        overrides the shard count only for those tests.
     """
     if not tags:
         tags = []

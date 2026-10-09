@@ -1117,6 +1117,9 @@ syscall_test(
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
+    # Keep each stress case in its own emulator action so it gets the full
+    # deadline instead of sharing it with other long-running cases.
+    tcg_shard_count = 33,
     tcg_timeout = "eternal",
     test = "//test/syscalls/linux:socket_stress_test",
 )

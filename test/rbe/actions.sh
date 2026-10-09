@@ -153,9 +153,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         break
       done
       if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
-        # Keep the maintained full-profile graph, then execute only the six
-        # complete owners covered by this qualification continuation.
-        local cohort_dir="$RUNNER_TEMP/qualification/tcg-timeouts"
+        # Keep the maintained full-profile graph, then execute the complete
+        # socket-stress owner with one case per emulator action.
+        local cohort_dir="$RUNNER_TEMP/qualification/tcg-stress-shards"
         local pattern_file="" source_file
         local -a cohort_arguments=()
         mkdir -p "$cohort_dir"
@@ -185,17 +185,21 @@ assert hashlib.sha256(('\n'.join(sorted(selected))+'\n').encode()).hexdigest() =
 raw = json.loads(actions_path.read_text())
 labels = {str(row['id']):row['label'] for row in raw['targets']}
 rows = sorted([{'label':labels[str(row['targetId'])], 'args':row['arguments'], 'properties':{p['key']:p.get('value','') for p in row.get('executionInfo',[])}, 'executionPlatform':row.get('executionPlatform')} for row in raw['actions'] if row['mnemonic']=='TestRunner'], key=lambda row:json.dumps(row,sort_keys=True))
-assert len(rows)==1211 and {row['label'] for row in rows}==set(selected)
-assert hashlib.sha256(json.dumps(rows,sort_keys=True,separators=(',',':')).encode()).hexdigest()=='e694f292dd67497deaf2b5e5e5f12d03f573395ff7ed6e62321e1923f12a7bd4'
+assert len(rows)==1286 and {row['label'] for row in rows}==set(selected)
+stress_labels={label for label in selected if label.startswith('//test/syscalls:socket_stress_test_runsc_')}
+assert len(stress_labels)==3
+original_rows=[row for row in rows if row['label'] not in stress_labels]
+for label in sorted(stress_labels):
+    changed=[row for row in rows if row['label']==label]
+    assert len(changed)==33 and all(row==changed[0] for row in changed)
+    original_rows.extend(changed[:8])
+original_rows.sort(key=lambda row:json.dumps(row,sort_keys=True))
+assert len(original_rows)==1211
+assert hashlib.sha256(json.dumps(original_rows,sort_keys=True,separators=(',',':')).encode()).hexdigest()=='e694f292dd67497deaf2b5e5e5f12d03f573395ff7ed6e62321e1923f12a7bd4'
 cohort = {
-    '//test/syscalls:processes_test_runsc_systrap_directfs_64k_tcg': {'shards':1, 'seconds':3600},
-    '//test/syscalls:processes_test_runsc_systrap_shared_64k_tcg': {'shards':1, 'seconds':3600},
-    '//test/syscalls:ping_socket_test_runsc_systrap_hostnet_64k_tcg': {'shards':1, 'seconds':900},
-    '//test/syscalls:semaphore_test_runsc_systrap_directfs_64k_tcg': {'shards':4, 'seconds':900},
-    '//test/syscalls:socket_ipv4_udp_unbound_loopback_nogotsan_test_runsc_systrap_hostnet_64k_tcg': {'shards':4, 'seconds':900},
-    '//test/syscalls:socket_stress_test_runsc_systrap_hostnet_64k_tcg': {'shards':8, 'seconds':3600},
+    '//test/syscalls:socket_stress_test_runsc_systrap_hostnet_64k_tcg': {'shards':33, 'seconds':3600},
 }
-assert set(cohort)<=set(selected) and sum(row['shards'] for row in cohort.values())==19
+assert set(cohort)<=set(selected) and sum(row['shards'] for row in cohort.values())==33
 for label,expected in cohort.items():
     assert sum(row['label']==label for row in rows)==expected['shards']
 args=(out/'original-arguments.txt').read_text().splitlines()
@@ -243,9 +247,10 @@ for outer in (out/'full-targets').read_text().splitlines():
         assert attribute(payload,name)==value,(payload,name)
         assert attribute(owner+'_rc_kvm',name)==value,(owner,name,'KVM')
         for target in (outer,owner+'_rc_tcg'):
-            assert attribute(target,name)==(expected if name=='timeout' else value),(target,name)
-    contracts[outer]={'owner':owner,'payload':payload,'nativeAttributes':attrs,'tcgTimeout':expected,'seconds':seconds[expected],'shards':max(1,int(attrs['shard_count']))}
-assert len(contracts)==661 and sum(row['shards'] for row in contracts.values())==1211
+            expected_value=expected if name=='timeout' else '33' if name=='shard_count' and family=='socket_stress_test' else value
+            assert attribute(target,name)==expected_value,(target,name)
+    contracts[outer]={'owner':owner,'payload':payload,'nativeAttributes':attrs,'tcgTimeout':expected,'seconds':seconds[expected],'shards':33 if family=='socket_stress_test' else max(1,int(attrs['shard_count']))}
+assert len(contracts)==661 and sum(row['shards'] for row in contracts.values())==1286
 for label,expected in json.loads((out/'selection.json').read_text()).items():
     assert contracts[label]['seconds']==expected['seconds'] and contracts[label]['shards']==expected['shards']
 (out/'contracts.json').write_text(json.dumps(contracts,indent=2)+'\n')
@@ -308,10 +313,10 @@ GUEST_EVENTS
         printf '%s\n' "$result" > "$events_output.bazel-exit"
         printf '%s\n' "$capture_status" > "$events_output.capture-exit"
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-timeouts/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-timeouts/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-timeouts/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-timeouts/source-after.txt" ]]; then result=1; fi
+        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-stress-shards/final-head.txt"
+        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-stress-shards/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
+        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-stress-shards/source-after.txt"
+        if [[ -s "$RUNNER_TEMP/qualification/tcg-stress-shards/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"
