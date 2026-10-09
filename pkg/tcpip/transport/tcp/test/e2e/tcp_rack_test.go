@@ -1043,22 +1043,22 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 		start := c.IRS.Add(1 + 2*maxPayload)
 		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: start.Add(maxPayload)}})
 		one := snapshot()
-		// RFC 6675's byte threshold declares packet 2 lost after two full
-		// packets beyond the gap are SACKed, without a third duplicate ACK.
-		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: start.Add(2 * maxPayload)}})
-		two := snapshot()
+		// Three full packets beyond the gap exceed the RFC 6675 byte
+		// threshold, without needing a third duplicate ACK.
+		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: start.Add(3 * maxPayload)}})
+		recovered := snapshot()
 		c.ReceiveAndCheckPacketWithOptions(data, maxPayload, maxPayload, e2e.TSOptionSize)
 		c.SendAck(seq, len(data))
 		complete := snapshot()
 
 		checkCredit(t, "first SACK without RACK", one, 1)
-		checkCredit(t, "recovery without RACK", two, 2)
+		checkCredit(t, "recovery without RACK", recovered, 3)
 		checkCredit(t, "full cumulative ACK", complete, 0)
 		if got, want := one.Sender.FastRecovery.Active, false; got != want {
 			t.Errorf("FastRecovery.Active after first SACK = %t, want %t", got, want)
 		}
-		if got, want := two.Sender.FastRecovery.Active, true; got != want {
-			t.Errorf("FastRecovery.Active after two SACKs = %t, want %t", got, want)
+		if got, want := recovered.Sender.FastRecovery.Active, true; got != want {
+			t.Errorf("FastRecovery.Active after three packets are SACKed = %t, want %t", got, want)
 		}
 	})
 	t.Run("recovery", func(t *testing.T) {
