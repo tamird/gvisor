@@ -1,5 +1,5 @@
 load("//test/docker:defs.bzl", "docker_daemon_config")
-load("//test/packetdrill:defs.bzl", "packetdrill_test")
+load("//test/packetdrill:defs.bzl", "packetdrill_linux_test", "packetdrill_test")
 load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "bzl_library")
 
@@ -61,6 +61,11 @@ packetdrill_test(
 packetdrill_test(
     name = "cubic_rto_recovery_test",
     scripts = ["cubic_rto_recovery.pkt"],
+)
+
+packetdrill_linux_test(
+    name = "syncookie_duplicate_fin_ack_linux_test",
+    scripts = ["syncookie_duplicate_fin_ack.pkt"],
 )
 
 test_suite(

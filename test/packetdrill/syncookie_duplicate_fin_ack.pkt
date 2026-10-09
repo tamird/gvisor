@@ -1,0 +1,53 @@
+// Copyright 2026 The gVisor Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Diagnostic hypothesis: a duplicate final ACK can validate as a new cookie
+// handshake after passive close. Both inferred ISNs advance by one, cancelling
+// in the cookie check. This is a native comparator, not a desired-behavior test.
+// No timestamps are negotiated; timestamp-bearing traffic is a separate case.
+
+--code_sockopt=TCP_INFO
+
+// Init and command events execute in the DUT wire-client process namespace.
+// Fail if forced cookies are unsupported; never use the tolerant common init.
+`set -eu; printf 'PROBE_COOKIE_INIT netns='; readlink /proc/self/ns/net; sysctl -w net.ipv4.tcp_syncookies=2; test "$(sysctl -n net.ipv4.tcp_syncookies)" = 2; printf 'PROBE_COOKIE_CONFIG\n'; sysctl net.ipv4.tcp_syncookies net.ipv4.tcp_timestamps net.ipv4.tcp_sack; cat /proc/net/netstat`
+
+0 socket(..., SOCK_STREAM, IPPROTO_TCP) = 3
++0 setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0
++0 bind(3, ..., ...) = 0
++0 listen(3, 8) = 0
++0 fcntl(3, F_SETFL, O_RDWR|O_NONBLOCK) = 0
+
++0 < S 0:0(0) win 32768 <mss 1460>
++0 > S. 0:0(0) ack 1 <...>
++.1 < . 1:1(0) ack 1 win 32768
++.1 accept(3, ..., ...) = 4
+
+// The peer closes first, so the DUT reaches CLOSED rather than TIME_WAIT.
++0 < F. 1:1(0) ack 1 win 32768
++0 > . 1:1(0) ack 2
++0 read(4, ..., 1) = 0
++0 close(4) = 0
++0 > F. 1:1(0) ack 2
++.1 < . 2:2(0) ack 2 win 32768
++.1 poll([{fd=3, events=POLLIN}], 1, 0) = 0
++0 `printf 'PROBE_ORIGINAL_CLOSED\n'; cat /proc/net/netstat`
+
+// Replay precisely the final ACK; no new SYN or tuple change is introduced.
++0 < . 2:2(0) ack 2 win 32768
++.1 accept(3, ..., ...) = 5
++0 %{ assert tcpi_state == TCP_ESTABLISHED, tcpi_state }%
++0 fcntl(5, F_SETFL, O_RDWR|O_NONBLOCK) = 0
++0 read(5, ..., 1) = -1 EAGAIN (Resource temporarily unavailable)
++0 `printf 'PROBE_SECOND_ACCEPT_ESTABLISHED\n'; cat /proc/net/netstat`

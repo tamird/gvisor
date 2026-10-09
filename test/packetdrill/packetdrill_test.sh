@@ -185,6 +185,12 @@ docker start "${DUT}"
 # Fork-only provenance of the actual DUT interpreter; retain runtime even if
 # a metadata command fails, but do not report a complete evidence pass.
 metadata_status=0
+# This diagnostic changes a per-netns sysctl only inside the private DUT.
+launcher_netns=$(readlink /proc/self/ns/net)
+dut_netns=$(docker exec "${DUT}" readlink /proc/self/ns/net)
+[[ "$launcher_netns" != "$dut_netns" ]]
+printf 'PROBE_NAMESPACE launcher=%s dut=%s\n' "$launcher_netns" "$dut_netns"
+docker inspect --format 'PROBE_DUT runtime={{.HostConfig.Runtime}} network={{.HostConfig.NetworkMode}} image={{.Image}}' "${DUT}"
 docker exec "${DUT}" uname -a || metadata_status=1
 docker exec "${DUT}" git -C /packetdrill rev-parse HEAD || metadata_status=1
 docker exec "${DUT}" sha256sum "${PACKETDRILL}" || metadata_status=1
