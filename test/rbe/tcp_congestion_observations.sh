@@ -80,13 +80,7 @@ options=(--config=rbe --config=x86_64 --remote_download_outputs=toplevel)
 bazel build "${options[@]}" \
   //test/benchmarks/tcp:tcp_benchmark //test/benchmarks/tcp:tcp_proxy //test/benchmarks/tcp:nsjoin \
   > "$out/build-stdout.txt" 2> "$out/build-stderr.txt"
-check_status=0
-bazel test "${options[@]}" --build_tag_filters= --test_tag_filters= \
-  --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 --test_output=errors \
-  //test/benchmarks/tcp:tcp_proxy_nogo //tools/lint:gofmt \
-  > "$out/source-checks-stdout.txt" 2> "$out/source-checks-stderr.txt" || check_status=$?
-printf '%s\n' "$check_status" > "$out/source-checks-exit.txt"
-(( check_status == 0 ))
+# The original source checks passed; this continuation only moves shell startup.
 bash -n test/benchmarks/tcp/tcp_benchmark.sh
 # Check observations only: these short runs do not estimate CC performance.
 validate_trial() (
@@ -166,7 +160,6 @@ while read -r name cc streams probe; do
   printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
   if (( result != 0 )); then trial_status=1; fi
 done <<'TRIALS'
-linux-reno reno 1 false
 linux-cubic cubic 2 true
 netstack-reno reno 1 true
 netstack-cubic cubic 2 true

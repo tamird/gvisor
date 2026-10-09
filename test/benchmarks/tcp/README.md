@@ -77,9 +77,10 @@ include data buffered by the local proxy.
 
 Add `--latency-probe` with `--output-dir` to retain native ICMP replies across the
 same WAN queues, explicitly bound to the native client address. After a bounded
-reachability check, the probe runs at ten
-packets per second with a 56-byte payload, covering five seconds before the
-client operation and two seconds after it. `ping.txt` retains timestamps, reply
+reachability check, the probe runs at ten packets per second with a 56-byte
+payload. It starts with a five-second baseline before the proxies open their
+forwarding connections, and continues until two seconds after the client
+operation. `ping.txt` retains timestamps, reply
 RTTs and outstanding-reply notices; `ping-stderr.txt` and `ping-exit.txt` preserve
 diagnostics and status. Packet loss is an observation, while a probe that exits
 early or reports an execution error fails capture.

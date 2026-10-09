@@ -598,6 +598,30 @@ else
   record_features >&2
 fi
 
+# Collect the baseline before proxies open their forwarding connections.
+# Otherwise the added delay can expire the receiver's control-cookie wait.
+record_probe_phase() {
+  local uptime ignored
+  read -r uptime ignored < /proc/uptime
+  printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" \
+    >> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
+}
+if ${latency_probe}; then
+  # These are native addresses even when a proxy uses Netstack. This measures
+  # the shared ICMP path, not Netstack TCP RTT or pure queue delay.
+  timeout --signal=TERM --kill-after=2s 10s \
+    ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -c 1 -W 2 ${server_addr} \
+    > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-preflight.txt" 2>&1
+  printf 'phase\tboottime_seconds\tunix_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
+  record_probe_phase probe-launch
+  ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -D -O -i 0.1 -s 56 -w $((duration + 45)) ${server_addr} \
+    > "\$TCP_BENCHMARK_OUTPUT_DIR/ping.txt" \
+    2> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-stderr.txt" &
+  probe_pid=\$!
+  sleep 5
+fi
+
+
 ${nsjoin_binary} /tmp/server.netns ${server_args} &
 server_pid=\$!
 
@@ -620,26 +644,6 @@ sleep 5
 ${nsjoin_binary} /tmp/client.netns ${client_args} &
 client_pid=\$!
 
-record_probe_phase() {
-  local uptime ignored
-  read -r uptime ignored < /proc/uptime
-  printf '%s\t%s\t%s\n' "\$1" "\$uptime" "\$(date +%s.%N)" \
-    >> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
-}
-if ${latency_probe}; then
-  # These are native addresses even when a proxy uses Netstack. This measures
-  # the shared ICMP path, not Netstack TCP RTT or pure queue delay.
-  timeout --signal=TERM --kill-after=2s 10s \
-    ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -c 1 -W 2 ${server_addr} \
-    > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-preflight.txt" 2>&1
-  printf 'phase\tboottime_seconds\tunix_seconds\n' > "\$TCP_BENCHMARK_OUTPUT_DIR/ping-phases.tsv"
-  record_probe_phase probe-launch
-  ${nsjoin_binary} /tmp/client.netns ping -n -I ${client_addr} -D -O -i 0.1 -s 56 -w $((duration + 45)) ${server_addr} \
-    > "\$TCP_BENCHMARK_OUTPUT_DIR/ping.txt" \
-    2> "\$TCP_BENCHMARK_OUTPUT_DIR/ping-stderr.txt" &
-  probe_pid=\$!
-  sleep 5
-fi
 
 # Show traffic information for the original uninstrumented native mode.
 if ! ${latency_probe} && ! ${client} && ! ${server}; then
