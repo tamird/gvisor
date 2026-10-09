@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T16:07:59.835166+00:00",
+    "updatedAt": "2026-10-09T16:27:01.742792+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4694,18 +4694,19 @@
       "url": "https://github.com/google/gvisor/pull/15541",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
-      "summary": "Delivered as PR #15541 at the exact reviewed candidate fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548. The contributor decision is complete; current GitHub review, CI and import progress are shown above. Existing source and saved-result evidence remains attached to this revision.\n\nEarlier observations:\n\nThe final public candidate includes the generated license record. Independent source and saved-result reviews are closed: both-CPU grpc/gonet builds, 31 AMD gonet cases without skips, and canonical verification of 190 license records. Root has sent an actual contributor decision asking whether to open this PR using its commit message. It remains separate from Go 1.27.2; no upstream PR exists.\n\nEarlier observations:\n\nThe public x/net 0.60.0 candidate is 4d116a7fbd9471e0bd9f738bf5a3e2ee64a1c1fd on the existing Go 1.27.1 base, separate from the Go 1.27.2 upgrade. Remote parent 67767d42-0908-499e-bc06-11ac65b71b50 completed OK: the owner reports both-CPU grpc/gonet builds bound to SDK 1.27.1, 14 tagged HTTP2/nettest input joins, one original AMD gonet action with 31 passing cases and no skips, and canonical verification of 190 license records with only the net record changed. Independent saved-result review and publication of the generated catalog amendment remain pending. No contributor-review question or upstream PR has been opened.",
+      "updatedAt": "2026-10-09T16:27:01.742792+00:00",
+      "summary": "Fernando approved the current x/net upgrade head fcf5ea5e9 at 16:23 UTC on October 9. Current-head checks pass; import and merge progress remain separate GitHub observations. No contributor decision remains.\n\nEarlier observations:\n\nDelivered as PR #15541 at the exact reviewed candidate fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548. The contributor decision is complete; current GitHub review, CI and import progress are shown above. Existing source and saved-result evidence remains attached to this revision.\n\nEarlier observations:\n\nThe final public candidate includes the generated license record. Independent source and saved-result reviews are closed: both-CPU grpc/gonet builds, 31 AMD gonet cases without skips, and canonical verification of 190 license records. Root has sent an actual contributor decision asking whether to open this PR using its commit message. It remains separate from Go 1.27.2; no upstream PR exists.\n\nEarlier observations:\n\nThe public x/net 0.60.0 candidate is 4d116a7fbd9471e0bd9f738bf5a3e2ee64a1c1fd on the existing Go 1.27.1 base, separate from the Go 1.27.2 upgrade. Remote parent 67767d42-0908-499e-bc06-11ac65b71b50 completed OK: the owner reports both-CPU grpc/gonet builds bound to SDK 1.27.1, 14 tagged HTTP2/nettest input joins, one original AMD gonet action with 31 passing cases and no skips, and canonical verification of 190 license records with only the net record changed. Independent saved-result review and publication of the generated catalog amendment remain pending. No contributor-review question or upstream PR has been opened.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Current-head approved; follow import",
         "owner": "external_sweeps",
-        "nextAction": "Follow current-head checks, requested maintainers and import progress through the sole event observer.",
+        "nextAction": "Observe import and merge progress for the approved current head through the sole collector.",
         "sourceHead": "fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
-        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
-        "reviewDecision": null,
+        "reviewedAt": "2026-10-09T16:25:48.148610+00:00",
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15541"
+          "https://github.com/google/gvisor/pull/15541",
+          "https://github.com/google/gvisor/pull/15541#pullrequestreview-5472673139"
         ]
       },
       "number": 15541
@@ -5039,6 +5040,37 @@
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
+      }
+    },
+    {
+      "id": "branch:tcp-syn-cookie-sequence",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-syn-cookie-sequence",
+      "head": "34246fb949c7f929c22886fb5cf7569e1051e0d6",
+      "title": "Bind SYN cookies to the client sequence number",
+      "url": "https://github.com/tamird/gvisor/commit/34246fb949c7f929c22886fb5cf7569e1051e0d6",
+      "group": "runtime",
+      "status": "Prepared proposal",
+      "updatedAt": "2026-10-09T16:17:44.863651+00:00",
+      "summary": "The user is reviewing this standalone proposal before opening a PR. It hashes the client\u2019s initial sequence number to prevent a duplicate final ACK from recreating an accepted socket after closure, while preserving cookie MSS and expiration encoding. Both queued and post-close regression cases fail before the fix and pass afterward on AMD64, ARM64 and under the race detector; selected compatibility/unit/analyzer checks and both complete 64K loopback owners (16 original shards) pass. The independent native comparison found that Linux 6.1 also accepts the duplicate final ACK, so this is not presented as a defect unique to Netstack. Original failures remain recorded; exact original third-handshake ACK replay is outside the claimed repair.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "34246fb949c7f929c22886fb5cf7569e1051e0d6",
+        "url": "https://github.com/tamird/gvisor/commit/34246fb949c7f929c22886fb5cf7569e1051e0d6"
+      },
+      "followup": {
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "34246fb949c7f929c22886fb5cf7569e1051e0d6",
+        "reviewedAt": "2026-10-09T16:17:44.863651+00:00",
+        "nextAction": "Await the user\u2019s review and authorization to open the standalone PR. Root owns publication; no code dependencies are assigned.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/34246fb949c7f929c22886fb5cf7569e1051e0d6",
+          "https://app.buildbuddy.io/invocation/93774bc9-bf23-4099-8614-5ed50e15c390",
+          "https://app.buildbuddy.io/invocation/a53adf2f-b8c4-438b-b991-fb5901a63857",
+          "https://app.buildbuddy.io/invocation/ea4c4ade-15cc-4aeb-9d83-931a5f5df589"
+        ]
       }
     }
   ],
@@ -6390,7 +6422,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T15:37:24.609323+00:00",
+      "updatedAt": "2026-10-09T16:17:44.863651+00:00",
       "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The approved CUBIC, Reno, sender-cursor and SACK changes are now upstream PRs.",
       "findings": [
         {
@@ -6649,6 +6681,19 @@
             {
               "label": "Verified shared-flow harness source",
               "url": "https://github.com/tamird/gvisor/commit/3c41f7e67"
+            }
+          ]
+        },
+        {
+          "text": "The controlled shared-flow fairness comparison is now running: three Actions jobs with ten serial trials each, using the reviewed comparison method. Functional shared-flow capture and cleanup checks were completed earlier. No fairness or comparative result is credited until the original measurements are collected and reviewed.",
+          "evidence": [
+            {
+              "label": "Active 30-trial sharing comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37957202231"
+            },
+            {
+              "label": "Exact comparison method",
+              "url": "https://github.com/tamird/gvisor/commit/04a45b594"
             }
           ]
         }
