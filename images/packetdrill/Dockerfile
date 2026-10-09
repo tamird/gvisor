@@ -5,4 +5,6 @@ RUN git init packetdrill && \
     git -C packetdrill fetch --depth 1 https://github.com/google/packetdrill.git \
         43500f46de461c751670ce9d17f9f5a157e69f83 && \
     git -C packetdrill checkout --detach FETCH_HEAD
-RUN cd packetdrill/gtests/net/packetdrill && ./configure && make
+RUN --mount=type=bind,source=code-sockopt.patch,target=/tmp/code-sockopt.patch \
+    git -C packetdrill apply /tmp/code-sockopt.patch && \
+    cd packetdrill/gtests/net/packetdrill && ./configure && make
