@@ -308,3 +308,12 @@ missing-identity approvals supply no current credit. Review requests are retaine
 prior approvals remain available as history. Import readiness also requires
 current-head approval; a ready-to-pull label alone cannot supply it. Older cached snapshots without the
 new head-bound proof show Maintainer review until refreshed.
+
+Contributor decisions remain separate from GitHub maintainer reviews.
+An answered request for revisions is recorded as
+`contributorChangesRequested: {head, url}` on its proposal branch. It is
+mutually exclusive with a pending `contributorReview`, and applies only to
+the exact branch head. The existing Changes requested filter includes it
+with an explicit Contributor qualifier. Older clients accept the optional
+field and the unchanged state enum. Live PR approval continues to come
+only from a maintainer review of the current GitHub head.

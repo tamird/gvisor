@@ -162,6 +162,10 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
         decision = node.get("contributorReview")
         if decision and decision["status"] == "pending":
             states.setdefault(node["id"], {})["contributor-review"] = {"scope": decision["head"]}
+        changes = node.get("contributorChangesRequested")
+        if changes and node.get("head") == changes["head"]:
+            states.setdefault(node["id"], {})["changes-requested"] = {
+                "scope": changes["head"], "qualifier": "Contributor"}
     return states
 
 

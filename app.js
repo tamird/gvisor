@@ -295,7 +295,12 @@ function failureSources(node) {
     .filter(item => FAILURE_STATES.has(item.checks?.state) || item.checks?.contexts.some(check => FAILURE_STATES.has(check.state)))
     .map(item => ({ ...item, failureLabel: item === pr ? "Source checks failing" : `Import #${item.number} failing` }));
 }
+function contributorChanges(node) {
+  const decision = node.contributorChangesRequested;
+  return node.type === "branch" && decision?.head === node.head ? decision : null;
+}
 function stateLabel(node, state) {
+  if (state === "changes-requested" && contributorChanges(node)) return "Contributor changes requested";
   if (state === "failing") return failureSources(node).map(item => item.failureLabel).join("; ") || STATE_LABELS[state];
   return STATE_LABELS[state];
 }
@@ -308,7 +313,7 @@ function appendStates(parent, node, detail = false) {
     const qualifier = state === "failing" || (state === "importing" && !detail) ? "" : record.qualifier;
     const text = `${stateLabel(node, state)} ${age(record)}${qualifier ? " · " + qualifier : ""}`;
     const failures = state === "failing" ? failureSources(node) : [];
-    const decision = state === "contributor-review" ? node.contributorReview : null;
+    const decision = state === "contributor-review" ? node.contributorReview : state === "changes-requested" ? contributorChanges(node) : null;
     const url = failures[0]?.url || decision?.url;
     const item = url ? link(text, url, `work-state ${state}`) : element("span", `work-state ${state}`, text);
     item.title = stateTitle(state, record) + (record.qualifier ? " " + record.qualifier : "");
@@ -741,6 +746,11 @@ function stateRecords(snapshot, node) {
   const records = { ...(snapshot.workStates?.[node.id] || {}) };
   // Older snapshots attached unpublished amendment decisions to live PRs.
   if (node.type === "pr") delete records["contributor-review"];
+  if (node.type === "branch") {
+    if (!node.contributorReview) delete records["contributor-review"];
+    const changes = contributorChanges(node);
+    if (!changes || records["changes-requested"]?.scope !== changes.head) delete records["changes-requested"];
+  }
   // Keep the published state enum compatible with already-open older clients.
   if (node.type === "branch" && node.status === "Prepared proposal") records["proposed-update"] = {
     scope: node.head, since: null, basis: "unknown", qualifier: "Unpublished revision; observation age is not recorded" };
@@ -827,6 +837,10 @@ function validateRegistry(candidate) {
     const decision = node.contributorReview;
     if (decision !== undefined && (!decision || decision.status !== "pending" || !/^[a-f0-9]{40}$/.test(decision.head) ||
         decision.url !== `https://github.com/tamird/gvisor/commit/${decision.head}`)) throw new Error("Invalid contributor decision");
+    const changes = node.contributorChangesRequested;
+    if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
+        !/^[a-f0-9]{40}$/.test(changes.head) || changes.url !== `https://github.com/tamird/gvisor/commit/${changes.head}`))
+      throw new Error("Invalid contributor changes request");
   }
   const ids = new Set(candidate.nodes.map((node) => node.id));
   if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");

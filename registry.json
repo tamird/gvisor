@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T11:56:57.925364+00:00",
+    "updatedAt": "2026-10-09T12:32:47.367276+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1188,27 +1188,27 @@
       "number": 14338,
       "repo": "google/gvisor",
       "ref": "checklocks-tcp-state",
-      "title": "checklocks: enforce networking state ownership",
+      "title": "checklocks: describe Unix transport ownership",
       "url": "https://github.com/google/gvisor/pull/14338",
       "group": "analysis",
-      "status": "draft",
+      "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-08-30T18:33:58Z",
-      "summary": "The separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366\u2013#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
+      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
+      "summary": "The user-approved Unix-only change is delivered at a76235cf8 and PR #14338 is ready for maintainer review. Seven fresh unit, race and analyzer actions passed before delivery. The original b912f6375 source and nine residual TCP/UDP/fragmentation paths remain preserved; no contributor decision remains for this delivery. Current-head GitHub checks and review are tracked separately.\n\nEarlier observations:\n\nThe separate Unix-only proposal at a76235cf8 has passed its seven-action validation and independent reviews. The user has been asked to review that exact proposal and authorize replacing this broad draft. This live b912f6375 PR remains draft and unchanged; its proposed-update link carries the separate contributor decision.\n\nEarlier observations:\n\nA separate public proposal at a76235cf8 contains the narrowed Unix ownership scope. Its seven-action validation was accepted; the proposed-update link opens that exact source. The live b912f6375 PR remains draft and unchanged.\n\nEarlier observations:\n\nThe requested readiness audit confirms all seven original replacement PRs (#14354 and #14366\u2013#14371) have merged, and prerequisite #14237 landed through #15208. The remaining Unix ownership scope is being separated from the broad b912f6375 patch and revalidated; unrelated residual TCP/UDP/fragmentation edits are being preserved. The live PR remains draft until the narrowed review unit is ready. No new contributor decision has been requested.\n\nEarlier observations:\n\nThe authorized October 2/3 rebase is published at b912f6375382d99e0d2bea545e816857120ec8b5 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14338#issuecomment-5963583912. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The independently reviewed rebase preserves the broad unlanded topic scope and newer master contracts, removing already-landed overlap. The PR remains draft; no new runtime or import-readiness claim is made.",
       "followup": {
-        "disposition": "Revision in progress",
-        "owner": "root",
-        "nextAction": "Keep the live broad draft unchanged while the user reviews the separate validated Unix-only proposal.",
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "sourceHead": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
+        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
+        "nextAction": "Observe current-head checks, maintainer review and imports through the sole collector; the user has already requested review.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14338#issuecomment-5390693410",
-          "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-          "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2"
+          "https://github.com/google/gvisor/pull/14338",
+          "https://github.com/google/gvisor/pull/14338#issuecomment-6080694275"
         ],
-        "reviewedAt": "2026-10-09T08:12:07.352298+00:00",
-        "sourceHead": "b912f6375382d99e0d2bea545e816857120ec8b5",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
-      }
+      },
+      "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52"
     },
     {
       "id": "pr:14237",
@@ -4902,37 +4902,6 @@
       }
     },
     {
-      "id": "branch:proposal-pr-14338",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "review/unix-transport-contracts-current",
-      "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-      "title": "Proposed Unix transport ownership contracts",
-      "url": "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-      "group": "analysis",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T08:12:07.352298+00:00",
-      "summary": "The user is reviewing this exact Unix-only proposal, a76235cf8, before replacing the broad #14338 draft and marking it ready. Its seven fresh unit, race and Nogo actions passed: 36 unit cases without skips and eight both-CPU analyzer findings. Source and saved-result peers are closed. The original b912f6375 branch and nine residual TCP/UDP/fragmentation paths remain preserved; the live PR is still draft and unchanged.",
-      "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
-        "sourceHead": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-        "reviewedAt": "2026-10-09T08:12:07.352298+00:00",
-        "nextAction": "Await the actual user decision on this exact proposal before replacing the broad draft and marking it ready.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-          "https://github.com/tamird/gvisor/tree/review/unix-transport-contracts-current",
-          "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2",
-          "https://github.com/google/gvisor/pull/14338"
-        ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-        "url": "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52"
-      }
-    },
-    {
       "id": "branch:tcp-cubic-ack-credit",
       "type": "branch",
       "repo": "tamird/gvisor",
@@ -4942,25 +4911,21 @@
       "url": "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb",
       "group": "runtime",
       "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T08:41:12.424513+00:00",
-      "contributorReview": {
-        "status": "pending",
+      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
+      "summary": "The user accepted the CUBIC production change and requested test readability revisions. Simplify the CUBIC fixture comment and make each test\u2019s setup and behavioral purpose clear. The original reviewed head remains unchanged while a test-only revision is prepared and revalidated. No replacement review question has been sent.\n\nPrior validation:\n\nThe user is reviewing this standalone repair before opening a PR. It preserves fractional ACK credit, bounds newly earned growth, resets credit after fast recovery, and carries excess ACKs across the slow-start threshold. Nine selected validation targets passed, including both architectures and an AMD64 race configuration. The packet phases are focused regressions; this is not a full e2e suite or performance result.",
+      "followup": {
+        "disposition": "Contributor changes requested",
+        "owner": "syscall_validation",
+        "sourceHead": "4742cda26c097ea47f47ac82c8848c30331e7beb",
+        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
+        "nextAction": "Revise only the tests for legibility and behavioral coverage, obtain independent review, and revalidate before returning a new exact proposal to the user.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb"
+        ]
+      },
+      "contributorChangesRequested": {
         "head": "4742cda26c097ea47f47ac82c8848c30331e7beb",
         "url": "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb"
-      },
-      "summary": "The user is reviewing this standalone repair before opening a PR. It preserves fractional ACK credit, bounds newly earned growth, resets credit after fast recovery, and carries excess ACKs across the slow-start threshold. Nine selected validation targets passed, including both architectures and an AMD64 race configuration. The packet phases are focused regressions; this is not a full e2e suite or performance result.",
-      "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
-        "sourceHead": "4742cda26c097ea47f47ac82c8848c30331e7beb",
-        "reviewedAt": "2026-10-09T08:41:12.424513+00:00",
-        "nextAction": "Await the actual user decision on this exact standalone change before opening its PR.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/4742cda26c097ea47f47ac82c8848c30331e7beb",
-          "https://github.com/tamird/gvisor/tree/tcp-cubic-ack-credit",
-          "https://app.buildbuddy.io/invocation/3037d907-2d04-495b-903e-d4ce4e09a35c",
-          "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
-        ]
       }
     },
     {
@@ -4973,56 +4938,48 @@
       "url": "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
       "group": "runtime",
       "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T08:41:12.424513+00:00",
-      "contributorReview": {
-        "status": "pending",
+      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
+      "summary": "The user accepted the Reno production change and requested test readability revisions. Replace inscrutable setup and tables with short, explicit credit-consumption and credit-carry progressions. The original reviewed head remains unchanged while a test-only revision is prepared and revalidated. No replacement review question has been sent.\n\nPrior validation:\n\nThe user is reviewing this independent Reno repair before opening a PR. It computes growth and remaining credit against the same original window, preventing spent credit from being reused or excess credit from being lost. Six selected validation targets passed, including both architectures and focused recovery cases.",
+      "followup": {
+        "disposition": "Contributor changes requested",
+        "owner": "syscall_validation",
+        "sourceHead": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
+        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
+        "nextAction": "Revise only the tests for legibility and behavioral coverage, obtain independent review, and revalidate before returning a new exact proposal to the user.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0"
+        ]
+      },
+      "contributorChangesRequested": {
         "head": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
         "url": "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0"
-      },
-      "summary": "The user is reviewing this independent Reno repair before opening a PR. It computes growth and remaining credit against the same original window, preventing spent credit from being reused or excess credit from being lost. Six selected validation targets passed, including both architectures and focused recovery cases.",
-      "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
-        "sourceHead": "25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
-        "reviewedAt": "2026-10-09T08:41:12.424513+00:00",
-        "nextAction": "Await the actual user decision on this exact standalone change before opening its PR.",
-        "evidence": [
-          "https://github.com/tamird/gvisor/commit/25bfc8d20fc2e6eb493bbb303094a7ea348d4ff0",
-          "https://github.com/tamird/gvisor/tree/tcp-reno-ack-credit",
-          "https://app.buildbuddy.io/invocation/989496b1-4af6-48ea-8fa5-0297fd9f9ab8",
-          "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
-        ]
       }
     },
     {
-      "id": "branch:tcp-congestion-inheritance",
-      "type": "branch",
-      "repo": "tamird/gvisor",
       "ref": "investigate/tcp-congestion-inheritance",
       "head": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
       "title": "Inherit explicit TCP congestion control on accept",
-      "url": "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T11:23:20.429651+00:00",
-      "contributorReview": {
-        "status": "pending",
-        "head": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
-        "url": "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165"
-      },
-      "summary": "The user is reviewing this standalone accepted-socket inheritance repair before opening a PR. Targeted corrected Go, native Linux and systrap tests plus two both-CPU analyzer targets passed. The expected before failures and the parent output-oracle failure remain recorded; quiet Go XML does not provide a named passing-case census.",
+      "id": "pr:15574",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15574,
+      "url": "https://github.com/google/gvisor/pull/15574",
+      "status": "open",
+      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
+      "summary": "The user-approved accepted-socket inheritance repair is now open as PR #15574 at 8d7493b5f. Corrected unit, native Linux, systrap and analyzer targets passed; expected before failures and the parent metadata-oracle failure remain retained. No contributor decision remains. Current-head checks and maintainer review are tracked separately.",
       "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
         "sourceHead": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
-        "reviewedAt": "2026-10-09T11:23:20.429651+00:00",
-        "nextAction": "Await the actual user decision on this exact standalone change before opening its PR.",
+        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
+        "nextAction": "Observe current-head checks, maintainer review and imports through the sole collector; the user has already requested review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
-          "https://github.com/tamird/gvisor/tree/investigate/tcp-congestion-inheritance",
-          "https://app.buildbuddy.io/invocation/828780c6-4bc1-467b-b4cc-e3d6c081bdad",
-          "https://tamird.github.io/gvisor/?view=investigations#investigation%3Acubic-recovery"
-        ]
+          "https://github.com/google/gvisor/pull/15574",
+          "https://github.com/google/gvisor/pull/15574#issuecomment-6080696804"
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       }
     }
   ],
@@ -6366,17 +6323,6 @@
         "https://github.com/google/gvisor/pull/15475",
         "https://github.com/tamird/gvisor/commit/d273b89ccb498c13a321649ffc0e682ba09fd611"
       ]
-    },
-    {
-      "from": "branch:proposal-pr-14338",
-      "to": "pr:14338",
-      "type": "includes",
-      "role": "proposed_update",
-      "reason": "Proposed narrowing is separate from the live draft and does not create a merge dependency or contributor-review hold. Validation is in progress.",
-      "evidence": [
-        "https://github.com/tamird/gvisor/commit/a76235cf8de71a1c5577956ee3393e9eaecf2b52",
-        "https://app.buildbuddy.io/invocation/5fa5500b-9cf3-4f28-8dae-608942829dc2"
-      ]
     }
   ],
   "investigations": [
@@ -6385,7 +6331,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T11:56:57.925364+00:00",
+      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
       "summary": "Targeted ACK-credit, idle, epoch and utilization corrections pass their selected correctness checks. Expanded recovery tests found a separate retransmission-cursor defect under validation. The first controlled throughput comparison remains inconclusive.",
       "findings": [
         {
@@ -6449,7 +6395,7 @@
           ]
         },
         {
-          "text": "Two standalone ACK-credit repairs have passed their targeted validations and are now awaiting contributor review: CUBIC preserves growth credit and slow-start leftovers, while Reno consumes credit using the original window. Estimator, epoch and application-limited behavior remain active research, and no throughput advantage is claimed.",
+          "text": "The user accepted the production portions of the standalone CUBIC and Reno ACK-credit repairs and requested clearer tests. Test-only revisions are being reviewed for explicit setup and behavioral coverage; the original proposal heads remain unchanged. This is a contributor changes request, not approval to publish the current tests or a new pending review question.",
           "evidence": [
             {
               "label": "CUBIC proposal",
@@ -6539,10 +6485,14 @@
           ]
         },
         {
-          "text": "A separate accepted-socket inheritance repair has passed its source and saved-result reviews, with expected before failures and passing corrected unit, native, sandbox and analyzer targets. The parent\u2019s output-oracle failure remains recorded, and quiet Go XML does not support a passing-case count. The exact standalone proposal is now awaiting the user\u2019s decision before a PR is opened.",
+          "text": "The user-approved accepted-socket inheritance repair is now PR #15574. Expected before failures and passing corrected unit, native, sandbox and analyzer targets remain recorded; the parent output-oracle failure is preserved. The user has requested maintainer review, and current-head GitHub checks and review are tracked on the PR.",
           "evidence": [
             {
-              "label": "Inheritance proposal awaiting contributor review",
+              "label": "Delivered inheritance PR #15574",
+              "url": "https://github.com/google/gvisor/pull/15574"
+            },
+            {
+              "label": "Approved source delivered as PR #15574",
               "url": "https://github.com/tamird/gvisor/commit/8d7493b5fec86fbe056bb23f0b1e9be8a6df2165"
             },
             {

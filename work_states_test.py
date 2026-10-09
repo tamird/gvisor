@@ -120,6 +120,34 @@ class WorkStatesTest(unittest.TestCase):
         branch["ref"] = "topic"
         self.assertNotIn("branch:other", record_states([pr], registry, {}, "2026-10-02T00:00:00Z"))
 
+    def test_contributor_changes_are_current_head_branch_evidence(self):
+        branch = {"id": "branch:revision", "type": "branch", "ref": "revision",
+                  "head": "b" * 40,
+                  "contributorChangesRequested": {"head": "b" * 40}}
+        registry = {"nodes": [branch]}
+        states = record_states([original()], registry, {}, "2026-10-02T00:00:00Z")
+        self.assertEqual(set(states[branch["id"]]), {"changes-requested"})
+        self.assertEqual(states[branch["id"]]["changes-requested"]["qualifier"], "Contributor")
+        self.assertNotIn("changes-requested", states["pr:1"])
+        branch["head"] = "c" * 40
+        self.assertNotIn(branch["id"], record_states([], registry, {}, "2026-10-03T00:00:00Z"))
+        del branch["head"]
+        self.assertNotIn(branch["id"], record_states([], registry, {}, "2026-10-03T00:00:00Z"))
+
+    def test_answered_contributor_question_does_not_keep_pending_age(self):
+        branch = {"id": "branch:revision", "type": "branch", "ref": "revision",
+                  "head": "b" * 40,
+                  "contributorChangesRequested": {"head": "b" * 40}}
+        previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [], "workStates": {
+            branch["id"]: {"contributor-review": {
+                "scope": branch["head"], "since": "2026-09-01T00:00:00Z", "basis": "observed"}}}}
+        current = record_states([], {"nodes": [branch]}, previous, "2026-10-02T00:00:00Z")
+        self.assertEqual(set(current[branch["id"]]), {"changes-requested"})
+        self.assertEqual(current[branch["id"]]["changes-requested"]["since"], "2026-10-02T00:00:00Z")
+        branch["ref"] = "topic"
+        self.assertNotIn(branch["id"], record_states([original()], {"nodes": [branch]}, previous,
+                                                    "2026-10-03T00:00:00Z"))
+
     def test_waiting_merge_requires_verified_complete_green_heads(self):
         green = {"state": "SUCCESS", "total": 1, "contexts": [{"state": "SUCCESS"}], "complete": True}
         imported = original(number=2, head="b" * 40, matchesSourceHead=True,
