@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T11:23:20.429651+00:00",
+    "updatedAt": "2026-10-09T11:56:57.925364+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6385,8 +6385,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T11:23:20.429651+00:00",
-      "summary": "Targeted ACK-credit, idle and epoch corrections pass their correctness checks. A separate two-packet utilization regression remains under repair. The first controlled throughput comparison does not establish an improvement.",
+      "updatedAt": "2026-10-09T11:56:57.925364+00:00",
+      "summary": "Targeted ACK-credit, idle, epoch and utilization corrections pass their selected correctness checks. Expanded recovery tests found a separate retransmission-cursor defect under validation. The first controlled throughput comparison remains inconclusive.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6518,7 +6518,7 @@
           ]
         },
         {
-          "text": "Two real-packet regressions keep only two packets in flight after recovery, limited separately by the application and advertised receive window. Both reproduce congestion-window growth from 7 to 18. The proposed fix now passes independent source review; runtime validation remains pending. This is a specific remaining utilization defect, not evidence that the historical outage has been reproduced.",
+          "text": "Two real-packet regressions keep two packets in flight after recovery, limited separately by the application and advertised receive window. Both originally grew the congestion window from 7 to 18. The correction now passes its effective 12-target test/analyzer selection after fixing an incompletely initialized unit fixture. Both the original growth failures and the intermediate fixture failures remain recorded. This establishes the selected correctness result, without a throughput or historical-outage reproduction claim.",
           "evidence": [
             {
               "label": "Application- and receiver-limited reproductions",
@@ -6527,6 +6527,14 @@
             {
               "label": "RFC 9438 application-limited behavior",
               "url": "https://www.rfc-editor.org/rfc/rfc9438.html#section-5.8"
+            },
+            {
+              "label": "First corrected matrix (unit fixture failures retained)",
+              "url": "https://app.buildbuddy.io/invocation/dfc77622-64db-415c-85a5-ec4a748f2776"
+            },
+            {
+              "label": "Passing affected-unit continuation",
+              "url": "https://app.buildbuddy.io/invocation/4888578d-9588-4ebc-a3d2-0713bd91bd2c"
             }
           ]
         },
@@ -6542,9 +6550,22 @@
               "url": "https://app.buildbuddy.io/invocation/828780c6-4bc1-467b-b4cc-e3d6c081bdad"
             }
           ]
+        },
+        {
+          "text": "Expanded RACK recovery coverage found an immediate duplicate segment after an RTO in normal AMD64 and ARM64 runs with both the original and corrected controllers; the filtered race runs passed. A separate sender-cursor repair is under validation. The SACK coverage change is kept independent, and the original recovery failures remain visible.",
+          "evidence": [
+            {
+              "label": "Expanded recovery results with original failures",
+              "url": "https://app.buildbuddy.io/invocation/de936ae3-73de-4e4a-a8dd-c9f7e0294944"
+            },
+            {
+              "label": "Proposed retransmission-cursor repair",
+              "url": "https://github.com/tamird/gvisor/commit/a8c59953d"
+            }
+          ]
         }
       ],
-      "nextStep": "Validate partial-utilization behavior, assess all outcomes from the running complete-controller comparison, and resolve the pending contributor decisions.",
+      "nextStep": "Complete retransmission-cursor validation, assess every result from the separate throughput comparison, and resolve the pending contributor decisions.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -6701,11 +6722,11 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T11:00:48.337683+00:00",
+      "updatedAt": "2026-10-09T11:56:57.925364+00:00",
       "summary": "Investigate gaps in automatic GitHub status collection and publication. Keep the snapshot timestamp authoritative while determining why expected schedule events are absent.",
       "findings": [
         {
-          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published the matching Pages assets. These two events do not establish regular 30-minute cadence; the intervening gap remains under investigation.",
+          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published matching Pages assets. The 11:54 UTC history check found no later scheduled event. These observations do not establish regular 30-minute cadence; the gaps remain under investigation.",
           "evidence": [
             {
               "label": "Deployed schedule",
