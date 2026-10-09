@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T16:58:00.857342+00:00",
+    "updatedAt": "2026-10-09T17:19:54.939269+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4694,14 +4694,14 @@
       "url": "https://github.com/google/gvisor/pull/15541",
       "group": "bazel",
       "status": "open",
-      "updatedAt": "2026-10-09T16:58:00.857342+00:00",
-      "summary": "The author asked Fernando to mark the approved current head ready for import at 16:44 UTC on October 9. No later maintainer response or import PR is observed in this snapshot. Current-head approval and passing checks remain valid.\n\nEarlier observations:\n\nFernando approved the current x/net upgrade head fcf5ea5e9 at 16:23 UTC on October 9. Current-head checks pass; import and merge progress remain separate GitHub observations. No contributor decision remains.\n\nEarlier observations:\n\nDelivered as PR #15541 at the exact reviewed candidate fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548. The contributor decision is complete; current GitHub review, CI and import progress are shown above. Existing source and saved-result evidence remains attached to this revision.\n\nEarlier observations:\n\nThe final public candidate includes the generated license record. Independent source and saved-result reviews are closed: both-CPU grpc/gonet builds, 31 AMD gonet cases without skips, and canonical verification of 190 license records. Root has sent an actual contributor decision asking whether to open this PR using its commit message. It remains separate from Go 1.27.2; no upstream PR exists.\n\nEarlier observations:\n\nThe public x/net 0.60.0 candidate is 4d116a7fbd9471e0bd9f738bf5a3e2ee64a1c1fd on the existing Go 1.27.1 base, separate from the Go 1.27.2 upgrade. Remote parent 67767d42-0908-499e-bc06-11ac65b71b50 completed OK: the owner reports both-CPU grpc/gonet builds bound to SDK 1.27.1, 14 tagged HTTP2/nettest input joins, one original AMD gonet action with 31 passing cases and no skips, and canonical verification of 190 license records with only the net record changed. Independent saved-result review and publication of the generated catalog amendment remain pending. No contributor-review question or upstream PR has been opened.",
+      "updatedAt": "2026-10-09T17:19:54.939269+00:00",
+      "summary": "The current approved x/net head has the ready-to-pull label as of the 17:15 UTC snapshot on October 9. Checks pass and no import PR is yet observed. The author\u2019s readiness request has been reflected in the GitHub labels; no further contributor decision is pending.\n\nEarlier observations:\n\nThe author asked Fernando to mark the approved current head ready for import at 16:44 UTC on October 9. No later maintainer response or import PR is observed in this snapshot. Current-head approval and passing checks remain valid.\n\nEarlier observations:\n\nFernando approved the current x/net upgrade head fcf5ea5e9 at 16:23 UTC on October 9. Current-head checks pass; import and merge progress remain separate GitHub observations. No contributor decision remains.\n\nEarlier observations:\n\nDelivered as PR #15541 at the exact reviewed candidate fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548. The contributor decision is complete; current GitHub review, CI and import progress are shown above. Existing source and saved-result evidence remains attached to this revision.\n\nEarlier observations:\n\nThe final public candidate includes the generated license record. Independent source and saved-result reviews are closed: both-CPU grpc/gonet builds, 31 AMD gonet cases without skips, and canonical verification of 190 license records. Root has sent an actual contributor decision asking whether to open this PR using its commit message. It remains separate from Go 1.27.2; no upstream PR exists.\n\nEarlier observations:\n\nThe public x/net 0.60.0 candidate is 4d116a7fbd9471e0bd9f738bf5a3e2ee64a1c1fd on the existing Go 1.27.1 base, separate from the Go 1.27.2 upgrade. Remote parent 67767d42-0908-499e-bc06-11ac65b71b50 completed OK: the owner reports both-CPU grpc/gonet builds bound to SDK 1.27.1, 14 tagged HTTP2/nettest input joins, one original AMD gonet action with 31 passing cases and no skips, and canonical verification of 190 license records with only the net record changed. Independent saved-result review and publication of the generated catalog amendment remain pending. No contributor-review question or upstream PR has been opened.",
       "followup": {
-        "disposition": "Current-head approved; ready-for-import request sent",
+        "disposition": "Current-head approved and ready to pull; awaiting import",
         "owner": "external_sweeps",
-        "nextAction": "Await the maintainer\u2019s ready-for-import action and observe import progress. The author requested it on October 9; no duplicate request is needed.",
+        "nextAction": "Observe import and merge progress for the approved, ready-to-pull current head through the sole collector.",
         "sourceHead": "fcf5ea5e9b55cbecf6ca90a5e7b5d8334fc2d548",
-        "reviewedAt": "2026-10-09T16:56:11.413278+00:00",
+        "reviewedAt": "2026-10-09T17:15:52.389031+00:00",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE",
         "evidence": [
@@ -6423,8 +6423,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T16:38:06.099159+00:00",
-      "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The approved CUBIC, Reno, sender-cursor and SACK changes are now upstream PRs.",
+      "updatedAt": "2026-10-09T17:19:54.939269+00:00",
+      "summary": "Targeted controller and recovery correctness checks pass. In the prior single-flow high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs. In the separate shared-bottleneck sample, Netstack CUBIC received less than half the goodput against Linux Reno in all three simultaneous blocks. The tables keep conditions, block variation and measurement bounds explicit; neither result establishes a universal advantage or a cause.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6686,20 +6686,28 @@
           ]
         },
         {
-          "text": "The controlled shared-flow fairness workflow completed successfully in all three Actions jobs, each containing ten serial trials. Original artifacts, source bindings and measurements are being collected and independently checked. Functional shared-flow capture and cleanup checks were completed earlier. No fairness, sharing-ratio or comparative-performance result is credited until that review closes.",
+          "text": "Independent review closes all 30 sharing trials and 60 raw receiver reports across three VM blocks. The original reader retained 27 observations and three analysis errors; the corrected saved-only reader preserves those 27 exactly and recovers the remaining three by bounding unlocated bytes and interval coverage. No workload was rerun. Native shared-path ICMP reports baseline median/p95 of 100 ms and loaded medians of 101\u2013103 ms, with p95 of 105\u2013109 ms. These are ICMP reply RTTs, not TCP RTT or pure queue delay.",
           "evidence": [
             {
-              "label": "Completed 30-trial workflow; measurements under review",
+              "label": "Reviewed sharing run",
               "url": "https://github.com/tamird/gvisor/actions/runs/37957202231"
             },
             {
-              "label": "Exact comparison method",
-              "url": "https://github.com/tamird/gvisor/commit/04a45b594"
+              "label": "Exact sharing method 04a45b594",
+              "url": "https://github.com/tamird/gvisor/commit/04a45b594cf83ae7a4d41ad30edb679e39065508"
+            },
+            {
+              "label": "Controller bundle 4da0a21a2",
+              "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
+            },
+            {
+              "label": "Sharing harness 3c41f7e67",
+              "url": "https://github.com/tamird/gvisor/commit/3c41f7e67dbccee36631ce37b3083f04ab735afa"
             }
           ]
         }
       ],
-      "nextStep": "Follow current-head checks and maintainer review on the delivered PRs, complete remaining qualification, and assess other scenarios without generalizing the measured high-BDP result.",
+      "nextStep": "The matched-algorithm cross-stack follow-up is running as 12 trials across three VM jobs, with both sender roles for Reno/Reno and CUBIC/CUBIC; its results are pending. Follow the delivered correctness PRs and remaining qualification work. These measurements do not imply a default-CUBIC rollout or a new production change.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -6720,6 +6728,214 @@
         {
           "label": "Benchmark implementation (functional smoke passed)",
           "url": "https://github.com/tamird/gvisor/commit/7bb78f7b8"
+        },
+        {
+          "label": "Active matched-algorithm controls",
+          "url": "https://github.com/tamird/gvisor/actions/runs/37964654144"
+        },
+        {
+          "label": "Matched-control method dceedf4f4",
+          "url": "https://github.com/tamird/gvisor/commit/dceedf4f4c239dd97d1ecc261575e0d506b50c10"
+        }
+      ],
+      "comparisons": [
+        {
+          "title": "Single-flow throughput \u00b7 prior high-BDP study",
+          "description": "100 Mbps, 100 ms RTT, configured 0.01% random loss, queue setting 1,000 packets, 120-second flows; six job blocks. The ratio compares receiver goodput within each block.",
+          "columns": [
+            "Comparison",
+            "Median ratio",
+            "Block range",
+            "Direction"
+          ],
+          "rows": [
+            [
+              "Repaired Netstack CUBIC / repaired Netstack Reno",
+              "2.14\u00d7",
+              "1.62\u20132.36\u00d7",
+              "6/6 higher"
+            ],
+            [
+              "Repaired Netstack CUBIC / original Netstack CUBIC",
+              "1.75\u00d7",
+              "1.38\u20132.84\u00d7",
+              "6/6 higher"
+            ],
+            [
+              "Repaired Netstack CUBIC / Linux CUBIC",
+              "0.93\u00d7",
+              "0.77\u20130.95\u00d7",
+              "6/6 lower"
+            ]
+          ],
+          "note": "The range is the observed minimum\u2013maximum of six paired ratios, not a confidence interval. This study measures one flow at a time and is separate from the sharing experiments below. The entire corrected controller/sender bundle is measured; no individual-fix attribution or historical-outage reproduction is claimed. Controller bundle 4da0a21a2 includes the later idle, epoch, utilization and cursor corrections, beyond the delivered ACK-credit PRs.",
+          "evidence": [
+            {
+              "label": "Reviewed single-flow run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37934352885"
+            },
+            {
+              "label": "Exact single-flow method 7e6c53169",
+              "url": "https://github.com/tamird/gvisor/commit/7e6c531694818e463b4311e78540572d4dc51132"
+            },
+            {
+              "label": "Controller bundle 4da0a21a2",
+              "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
+            }
+          ]
+        },
+        {
+          "title": "Shared bottleneck \u00b7 simultaneous starts \u00b7 CUBIC share",
+          "description": "20 Mbps, 100 ms RTT, queue 100 packets per direction, zero configured random loss; 120 seconds, one stream per sender, three VM job blocks. Share is measured in the common receive window.",
+          "columns": [
+            "Competing senders",
+            "Block 1",
+            "Block 2",
+            "Block 3"
+          ],
+          "rows": [
+            [
+              "Netstack CUBIC / Linux Reno",
+              "32.1\u201336.3%",
+              "34.5\u201339.2%",
+              "32.6\u201335.8%"
+            ],
+            [
+              "Netstack CUBIC / Netstack Reno",
+              "42.4\u201345.7%",
+              "54.7\u201359.0%",
+              "53.8\u201358.1%"
+            ],
+            [
+              "Linux CUBIC / Linux Reno",
+              "67.9\u201372.4%",
+              "64.1\u201368.0%",
+              "64.6\u201368.7%"
+            ]
+          ],
+          "note": "Block 2 reverses the sender roles. Netstack CUBIC receives under half the shared goodput against Linux Reno in each observed block. The cross-stack comparison changes both stack and algorithm, so it does not isolate a controller cause. Ranges are conservative measurement bounds from timing alignment, whole receiver intervals and unlocated-byte remainders; they are not statistical confidence intervals. Displayed percentages are rounded to 0.1 percentage point. Three blocks do not establish a universal result.",
+          "evidence": [
+            {
+              "label": "Reviewed sharing run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37957202231"
+            },
+            {
+              "label": "Exact sharing method 04a45b594",
+              "url": "https://github.com/tamird/gvisor/commit/04a45b594cf83ae7a4d41ad30edb679e39065508"
+            },
+            {
+              "label": "Controller bundle 4da0a21a2",
+              "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
+            },
+            {
+              "label": "Sharing harness 3c41f7e67",
+              "url": "https://github.com/tamird/gvisor/commit/3c41f7e67dbccee36631ce37b3083f04ab735afa"
+            }
+          ]
+        },
+        {
+          "title": "Shared bottleneck \u00b7 late start \u00b7 CUBIC share",
+          "description": "20 Mbps, 100 ms RTT, queue 100 packets per direction, zero configured random loss; 120 seconds, one stream per sender, three VM job blocks. Share is measured in the common receive window.",
+          "columns": [
+            "Competing senders",
+            "Block 1",
+            "Block 2",
+            "Block 3"
+          ],
+          "rows": [
+            [
+              "Netstack CUBIC / Linux Reno",
+              "38.2\u201344.6%",
+              "30.2\u201336.5%",
+              "31.0\u201336.8%"
+            ],
+            [
+              "Netstack CUBIC / Netstack Reno",
+              "56.4\u201362.0%",
+              "57.5\u201363.4%",
+              "54.7\u201360.2%"
+            ],
+            [
+              "Linux CUBIC / Linux Reno",
+              "66.8\u201372.2%",
+              "64.3\u201370.1%",
+              "67.3\u201372.5%"
+            ]
+          ],
+          "note": "CUBIC is the incumbent in blocks 1 and 3. Block 2 reverses the roles: Reno is incumbent and CUBIC joins 30 seconds later. Keep these role-specific observations separate; no pooled late-join average is shown. Ranges are conservative measurement bounds from timing alignment, whole receiver intervals and unlocated-byte remainders; they are not statistical confidence intervals. Displayed percentages are rounded to 0.1 percentage point. Three blocks do not establish a universal result.",
+          "evidence": [
+            {
+              "label": "Reviewed sharing run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37957202231"
+            },
+            {
+              "label": "Exact sharing method 04a45b594",
+              "url": "https://github.com/tamird/gvisor/commit/04a45b594cf83ae7a4d41ad30edb679e39065508"
+            },
+            {
+              "label": "Controller bundle 4da0a21a2",
+              "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
+            },
+            {
+              "label": "Sharing harness 3c41f7e67",
+              "url": "https://github.com/tamird/gvisor/commit/3c41f7e67dbccee36631ce37b3083f04ab735afa"
+            }
+          ]
+        },
+        {
+          "title": "Shared bottleneck \u00b7 same-algorithm controls",
+          "description": "Same 20 Mbps / 100 ms / zero configured random-loss profile, simultaneous starts. Jain\u2019s index summarizes equality of the two received rates; 1 means equal rates.",
+          "columns": [
+            "Competing senders",
+            "Block 1",
+            "Block 2",
+            "Block 3"
+          ],
+          "rows": [
+            [
+              "Linux Reno / Linux Reno",
+              "0.997\u20131.000",
+              "0.998\u20131.000",
+              "0.994\u20131.000"
+            ],
+            [
+              "Linux CUBIC / Linux CUBIC",
+              "0.993\u20131.000",
+              "0.980\u20130.997",
+              "0.997\u20131.000"
+            ],
+            [
+              "Netstack Reno / Netstack Reno",
+              "0.964\u20130.992",
+              "0.998\u20131.000",
+              "0.996\u20131.000"
+            ],
+            [
+              "Netstack CUBIC / Netstack CUBIC",
+              "0.997\u20131.000",
+              "0.989\u20130.998",
+              "0.953\u20130.981"
+            ]
+          ],
+          "note": "These are rounded measurement bounds, not confidence intervals. Native pairs are close to 1; the Netstack pairs vary more between these blocks. Matched-algorithm cross-stack controls are a separate follow-up. Buffer settings alone do not establish actual occupancy or whether a sender was application-limited.",
+          "evidence": [
+            {
+              "label": "Reviewed sharing run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37957202231"
+            },
+            {
+              "label": "Exact sharing method 04a45b594",
+              "url": "https://github.com/tamird/gvisor/commit/04a45b594cf83ae7a4d41ad30edb679e39065508"
+            },
+            {
+              "label": "Controller bundle 4da0a21a2",
+              "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
+            },
+            {
+              "label": "Sharing harness 3c41f7e67",
+              "url": "https://github.com/tamird/gvisor/commit/3c41f7e67dbccee36631ce37b3083f04ab735afa"
+            }
+          ]
         }
       ]
     },

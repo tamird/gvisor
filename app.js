@@ -439,8 +439,14 @@ function navigateFromURL() {
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
 function investigationMatches(item) {
   const query = $("investigation-search").value.trim().toLowerCase(), state = $("investigation-filter").value;
-  const text = [item.title, item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text)].join(" ").toLowerCase();
+  const text = [item.title, item.owner, item.summary, item.nextStep || "", ...item.findings.map(finding => finding.text),
+    ...(item.comparisons || []).flatMap(comparison => [comparison.title, comparison.description, comparison.note, ...comparison.columns, ...comparison.rows.flat()])].join(" ").toLowerCase();
   return (!state || item.status === state) && (!query || text.includes(query));
+}
+function investigationEvidence(sources) {
+  const evidence = element("div", "investigation-evidence");
+  for (const source of sources) evidence.append(link(source.label + " ↗", source.url));
+  return evidence;
 }
 function drawInvestigations() {
   const list = $("investigation-list"); list.replaceChildren();
@@ -453,18 +459,32 @@ function drawInvestigations() {
     control.dataset.investigation = item.id; control.setAttribute("aria-current", selected === item.id ? "true" : "false"); heading.append(control);
     card.append(heading, badge({ text: item.status === "active" ? "Active" : "Concluded", tone: item.status === "active" ? "pending" : "good" }),
       element("span", "investigation-meta", `Owner: ${item.owner} · updated ${date(item.updatedAt)}`), element("p", "investigation-summary", item.summary));
+    if (item.comparisons?.length) card.append(element("h3", "", "Verified comparisons"));
+    for (const comparison of item.comparisons || []) {
+      const section = element("section", "investigation-comparison"), table = element("table", "comparison-table");
+      const caption = element("caption");
+      caption.append(element("strong", "", comparison.title), element("span", "", comparison.description));
+      const header = element("thead"), headings = element("tr");
+      for (const column of comparison.columns) { const cell = element("th", "", column); cell.scope = "col"; headings.append(cell); }
+      header.append(headings);
+      const body = element("tbody");
+      for (const values of comparison.rows) {
+        const row = element("tr");
+        values.forEach((value, index) => { const cell = element(index ? "td" : "th", "", value); if (!index) cell.scope = "row"; row.append(cell); });
+        body.append(row);
+      }
+      table.append(caption, header, body);
+      section.append(table, element("p", "comparison-note", comparison.note), investigationEvidence(comparison.evidence));
+      card.append(section);
+    }
     if (item.findings.length) card.append(element("h3", "", "Findings"));
     for (const finding of item.findings) {
       const section = element("section", "investigation-finding"); section.append(element("p", "", finding.text));
-      const evidence = element("div", "investigation-evidence");
-      for (const source of finding.evidence) evidence.append(link(source.label + " ↗", source.url));
-      section.append(evidence); card.append(section);
+      section.append(investigationEvidence(finding.evidence)); card.append(section);
     }
     if (item.nextStep) card.append(element("h3", "", item.status === "active" ? "Next step" : "Recommendation"), element("p", "", item.nextStep));
     if (item.evidence.length) {
-      const evidence = element("div", "investigation-evidence");
-      for (const source of item.evidence) evidence.append(link(source.label + " ↗", source.url));
-      card.append(evidence);
+      card.append(investigationEvidence(item.evidence));
     }
     list.append(card);
   }
@@ -849,12 +869,18 @@ function validateRegistry(candidate) {
   if (candidate.investigations !== undefined) {
     if (!Array.isArray(candidate.investigations)) throw new Error("Invalid investigations");
     const evidenceValid = entries => Array.isArray(entries) && entries.every(entry => entry && typeof entry.label === "string" && entry.label.trim() && typeof entry.url === "string" && safeURL(entry.url));
+    const nonemptyText = value => typeof value === "string" && value.trim();
     for (const item of candidate.investigations) {
       if (!item || typeof item.id !== "string" || !/^investigation:[a-z0-9][a-z0-9-]{0,79}$/.test(item.id) || ids.has(item.id) ||
           !["active", "concluded"].includes(item.status) || ![item.title, item.owner, item.summary].every(value => typeof value === "string" && value.trim()) ||
           !Number.isFinite(Date.parse(item.updatedAt)) || (item.nextStep !== undefined && typeof item.nextStep !== "string") || !evidenceValid(item.evidence) ||
           !Array.isArray(item.findings) || !item.findings.every(finding => finding && typeof finding.text === "string" && finding.text.trim() && evidenceValid(finding.evidence)))
         throw new Error("Invalid investigation record");
+      if (item.comparisons !== undefined && (!Array.isArray(item.comparisons) || !item.comparisons.every(comparison => comparison &&
+          [comparison.title, comparison.description, comparison.note].every(nonemptyText) &&
+          Array.isArray(comparison.columns) && comparison.columns.length >= 2 && comparison.columns.every(nonemptyText) &&
+          Array.isArray(comparison.rows) && comparison.rows.length > 0 && comparison.rows.every(row => Array.isArray(row) && row.length === comparison.columns.length && row.every(nonemptyText)) &&
+          evidenceValid(comparison.evidence) && comparison.evidence.length > 0))) throw new Error("Invalid investigation comparison");
       ids.add(item.id);
     }
   }

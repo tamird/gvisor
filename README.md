@@ -262,6 +262,11 @@ The optional top-level `registry.investigations` array contains records with:
 - `evidence`, an array of additional primary links, and an optional `nextStep`.
   Concluded records display that last field as a recommendation. Concluded
   research does not imply an implementation, a performance gain, or a merged PR.
+- Optional `comparisons` render before the detailed findings. Each table has
+  `title`, `description`, `columns`, `rows`, `note`, and `evidence`. Columns and
+  cells are nonempty text; every row matches the column count. State the actual
+  source and conditions, distinguish measurement bounds from statistical
+  intervals, and keep incompatible profiles or sender roles separate.
 
 No commit, branch, repository, or upstream issue is required. Record observed
 results and their limits; do not invent refs to make a task visible. Keep private
@@ -269,6 +274,10 @@ communications and unconfirmed incident details out of these public records.
 The exact client validator in `metadata-preflight.mjs` checks this collection
 with the rest of the registry. Older clients safely ignore the optional array;
 new clients also accept older registries without it.
+The same compatibility rule applies to optional comparison tables: older
+clients retain the prose findings and links; newer clients accept records
+without tables. Table text participates in investigation search. Native
+captions and row/column headers retain the table relationships on small screens.
 
 Findings and primary links are visible in each card. Search and the
 active/concluded selector affect only investigations; PR filters and the graph
