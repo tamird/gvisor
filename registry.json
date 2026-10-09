@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T08:41:12.424513+00:00",
+    "updatedAt": "2026-10-09T09:28:47.419302+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6354,7 +6354,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T08:41:12.424513+00:00",
+      "updatedAt": "2026-10-09T09:28:47.419302+00:00",
       "summary": "Investigate production CUBIC recovery behavior and build deterministic impaired-link scenarios using the real TCP stack, with Linux or reference comparisons. Measure where CUBIC benefits high-bandwidth, high-delay paths relative to Reno without claiming universal superiority.",
       "findings": [
         {
@@ -6422,16 +6422,33 @@
           "evidence": [
             {
               "label": "CUBIC proposal",
-              "url": "https://github.com/tamird/gvisor/commit/4742cda26c"
+              "url": "https://github.com/tamird/gvisor/commit/4742cda26"
             },
             {
               "label": "Reno proposal",
               "url": "https://github.com/tamird/gvisor/commit/25bfc8d20"
             }
           ]
+        },
+        {
+          "text": "The existing TCP benchmark now completes a functional smoke for native Linux and Netstack, each using Reno and CUBIC: all four modes produced positive receiver goodput with successful runtime and cleanup exits. These are single samples using the pre-fix controllers, not a performance ranking. The first controlled comparison stopped during helper setup before any measured trials; its continuation uses the same source variants and trial plan.",
+          "evidence": [
+            {
+              "label": "Verified four-mode functional smoke",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37908627702"
+            },
+            {
+              "label": "Benchmark implementation",
+              "url": "https://github.com/tamird/gvisor/commit/7bb78f7b8"
+            },
+            {
+              "label": "Original comparison setup failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37909503135"
+            }
+          ]
         }
       ],
-      "nextStep": "Develop and verify the recovery correction, expand deterministic real-stack loss/ACK scenarios, and compare against Linux or a suitable reference before making throughput claims.",
+      "nextStep": "Complete the controlled throughput comparison and paired Linux/netstack recovery validation. Continue the separate estimator, epoch and application-limited investigations before claiming broader CUBIC behavior or performance.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -6450,8 +6467,8 @@
           "url": "https://github.com/apoxy-dev/ccsim"
         },
         {
-          "label": "Benchmark implementation (validation pending)",
-          "url": "https://github.com/tamird/gvisor/commit/7c2c843f7"
+          "label": "Benchmark implementation (functional smoke passed)",
+          "url": "https://github.com/tamird/gvisor/commit/7bb78f7b8"
         }
       ]
     },
