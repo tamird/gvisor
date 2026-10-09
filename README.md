@@ -77,6 +77,13 @@ entries; incomplete thread counts, label lists, check details and import lookups
 are explicitly marked. A null review decision is **not reported**, not approval.
 A `ready to pull` label is displayed as a label, not a merge-readiness decision.
 
+Approval requires a still-effective review of the exact head, submitted no earlier
+than its commit time and any observed force-push introducing that head, with a
+retrieved latest force-push metadata. GitHub can
+reassociate old reviews during a rebase; changing the review commit or `updatedAt`
+does not constitute a new review. Missing time evidence in an older cached
+snapshot remains readable but supplies no approval credit.
+
 The snapshot also retains public top-level comments, review bodies and inline
 replies by their GitHub IDs, with authors, timestamps, reviewed commits and
 thread resolution state. The updater prints new or changed feedback from other

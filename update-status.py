@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from work_states import check_purpose, record_states, remember_mergeability, review_decision
+from work_states import check_purpose, effective_approval, record_states, remember_mergeability, review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -22,7 +22,7 @@ query_cost = 0
 rate_remaining = None
 
 CHECKS = """
-commits(last:1) { nodes { commit { oid statusCheckRollup {
+commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
   state contexts(first:100) { totalCount pageInfo { hasNextPage }
     nodes { __typename
       ... on CheckRun { name status conclusion detailsUrl checkSuite { app { name slug } workflowRun { workflow { name } } } }
@@ -58,6 +58,9 @@ timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
   nodes { ... on CrossReferencedEvent { source {
     ... on PullRequest { number url body author { login } repository { nameWithOwner } }
   } } }
+}
+headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
+  nodes { ... on HeadRefForcePushedEvent { createdAt afterCommit { oid } } }
 }
 """
 
@@ -157,6 +160,10 @@ def normalize(pr: dict) -> dict:
         "number": pr["number"], "title": pr["title"], "url": pr["url"],
         "status": "draft" if pr["isDraft"] and pr["state"] == "OPEN" else pr["state"].lower(),
         "ref": pr["headRefName"], "head": pr["headRefOid"], "base": pr["baseRefOid"],
+        "headCommittedAt": commits[0]["commit"]["committedDate"],
+        "headHistoryComplete": "headHistory" in pr,
+        "headIntroducedAt": max((event["createdAt"] for event in pr.get("headHistory", {}).get("nodes", [])
+                                 if (event.get("afterCommit") or {}).get("oid") == pr["headRefOid"]), default=None),
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
         "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
         "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
@@ -177,6 +184,8 @@ def normalize(pr: dict) -> dict:
 
     normalized["reviewDecision"] = review_decision(normalized)
     normalized["approvedHead"] = normalized["head"] if normalized["reviewDecision"] == "APPROVED" else None
+    approval = effective_approval(normalized)
+    normalized["approvedAt"] = approval["submittedAt"] if approval else None
     return normalized
 
 

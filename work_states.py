@@ -1,5 +1,6 @@
 """Derive overlapping work states and retain revision-bound observations."""
 
+from datetime import datetime
 from typing import Literal, TypedDict
 
 
@@ -81,13 +82,24 @@ def check_qualifier(pr: dict) -> str:
             else "Checks unknown")
 
 
-def review_decision(pr: dict) -> str | None:
-    """Only current-head, still-effective reviews can supply approval credit."""
+def effective_approval(pr: dict) -> dict | None:
+    """Return a current-head approval submitted after the head's time evidence."""
     decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
     if decision != "APPROVED":
-        return decision
-    if not pr.get("reviewsComplete") or not pr.get("reviewRequestsComplete"):
-        return "REVIEW_REQUIRED"
+        return None
+    if not pr.get("reviewsComplete") or not pr.get("reviewRequestsComplete") or not pr.get("headHistoryComplete"):
+        return None
+    cutoff_values = [pr.get("headCommittedAt"), pr.get("headIntroducedAt")]
+    cutoff_values = [value for value in cutoff_values if value is not None]
+    if not cutoff_values:
+        return None
+    try:
+        cutoffs = [datetime.fromisoformat(value.replace("Z", "+00:00")) for value in cutoff_values]
+    except (AttributeError, ValueError):
+        return None
+    if any(value.tzinfo is None for value in cutoffs):
+        return None
+    cutoff = max(cutoffs)
     requested = {item.get("login") for item in pr.get("reviewRequests", []) if item.get("login")}
     latest = {}
     for item in pr.get("feedback", {}).get("items", []):
@@ -97,11 +109,25 @@ def review_decision(pr: dict) -> str | None:
             continue
         if author not in latest or item["submittedAt"] > latest[author]["submittedAt"]:
             latest[author] = item
-    if any(author not in requested and item["state"] == "APPROVED"
-           and (item.get("commit") or {}).get("oid") == pr["head"]
-           for author, item in latest.items()):
-        return "APPROVED"
-    return "REVIEW_REQUIRED"
+    approvals = []
+    for author, item in latest.items():
+        if (author in requested or item["state"] != "APPROVED"
+                or (item.get("commit") or {}).get("oid") != pr["head"]):
+            continue
+        try:
+            submitted = datetime.fromisoformat(item["submittedAt"].replace("Z", "+00:00"))
+        except (AttributeError, ValueError):
+            continue
+        if submitted.tzinfo is not None and submitted >= cutoff:
+            approvals.append(item)
+    return max(approvals, key=lambda item: item["submittedAt"], default=None)
+
+
+def review_decision(pr: dict) -> str | None:
+    decision = pr.get("githubReviewDecision", pr.get("reviewDecision"))
+    if decision != "APPROVED":
+        return decision
+    return "APPROVED" if effective_approval(pr) else "REVIEW_REQUIRED"
 
 
 class MergeabilityObservation(TypedDict):
@@ -204,9 +230,10 @@ def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: s
     current = derive_states(prs, registry)
     prior_prs = {f"pr:{pr['number']}": pr_states(pr) for pr in previous.get("prs", [])}
     # The old collector's aggregate approval cannot backdate the first
-    # observation under the exact-head rule.
+    # observation under the exact-head and submission-time rules.
     for pr in previous.get("prs", []):
-        if pr.get("reviewDecision") == "APPROVED" and "approvedHead" not in pr:
+        if pr.get("reviewDecision") == "APPROVED" and (
+                "approvedHead" not in pr or "approvedAt" not in pr):
             prior_prs[f"pr:{pr['number']}"].pop("maintainer-review", None)
     history = previous.get("workStates", {})
     result: ObservationMap = {}

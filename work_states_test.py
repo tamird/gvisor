@@ -8,7 +8,8 @@ from work_states import check_purpose, checks_passed, pr_states, record_states, 
 
 def original(**changes: object) -> dict:
     pr = {"number": 1, "status": "open", "head": "a" * 40, "ref": "topic",
-          "reviewDecision": None, "imports": [], "importsComplete": True,
+          "reviewDecision": None, "headHistoryComplete": True, "headCommittedAt": "2026-08-31T00:00:00Z",
+          "imports": [], "importsComplete": True,
           "labels": [], "labelsComplete": True, "checks": None}
     if changes.get("reviewDecision") == "APPROVED":
         pr.update(reviewsComplete=True, reviewRequestsComplete=True, reviewRequests=[],
@@ -19,6 +20,34 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_reassociated_old_approval_is_not_a_fresh_submission(self):
+        pr = original(reviewDecision="APPROVED", headCommittedAt="2026-10-09T19:31:21Z",
+                      headIntroducedAt="2026-10-09T19:32:12Z")
+        approval = pr["feedback"]["items"][0]
+        approval.update(submittedAt="2026-10-06T20:18:13Z", updatedAt="2026-10-09T19:32:12Z")
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        self.assertNotIn("awaiting-import", pr_states(pr))
+        approval["submittedAt"] = "2026-10-09T19:32:00Z"
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        approval["submittedAt"] = "2026-10-09T19:33:00Z"
+        self.assertEqual(review_decision(pr), "APPROVED")
+        del pr["headIntroducedAt"]
+        approval["submittedAt"] = "2026-10-06T20:18:13Z"
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+
+    def test_incomplete_head_history_cannot_grant_approval(self):
+        pr = original(reviewDecision="APPROVED", headHistoryComplete=False)
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        del pr["headHistoryComplete"]
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+
+    def test_missing_head_time_is_unknown_not_approval(self):
+        pr = original(reviewDecision="APPROVED")
+        del pr["headCommittedAt"]
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+        pr["headCommittedAt"] = "not-a-date"
+        self.assertEqual(review_decision(pr), "REVIEW_REQUIRED")
+
     def test_assignment_error_is_not_a_source_failure(self):
         assignment = {"kind": "check-run", "appSlug": "github-actions", "workflow": "Auto Assign",
                       "name": "assign", "state": "FAILURE", "purpose": "reviewer-assignment"}

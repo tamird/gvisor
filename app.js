@@ -68,8 +68,14 @@ function status(node) {
   return ({ branch: "Working branch", "deployment-pending": "Deployment pending", unavailable: "Unavailable" })[node.status] || node.status;
 }
 function effectiveReviewDecision(pr) {
-  // Older cached snapshots have no current-head approval proof.
-  return pr?.reviewDecision === "APPROVED" && pr.approvedHead !== pr.head ? "REVIEW_REQUIRED" : pr?.reviewDecision;
+  if (pr?.reviewDecision !== "APPROVED") return pr?.reviewDecision;
+  // Reassociation or editing a review does not make its submission fresh.
+  // Older cached snapshots without this proof stay readable, but not ready.
+  const timestamp = value => typeof value === "string" && /(?:Z|[+-]\d{2}:\d{2})$/.test(value) ? Date.parse(value) : NaN;
+  const cutoffs = [pr.headCommittedAt, pr.headIntroducedAt].filter(value => value != null).map(timestamp);
+  const submitted = timestamp(pr.approvedAt);
+  return pr.headHistoryComplete === true && pr.approvedHead === pr.head && cutoffs.length && cutoffs.every(Number.isFinite)
+    && Number.isFinite(submitted) && submitted >= Math.max(...cutoffs) ? "APPROVED" : "REVIEW_REQUIRED";
 }
 function reviewInfo(pr) {
   return ({ APPROVED: { text: "Approved", tone: "good", glyph: "✓" },
