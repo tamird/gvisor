@@ -122,3 +122,10 @@ func (r *renoState) PostRecovery() {
 
 // HandleTxStart implements congestionControl.HandleTxStart.
 func (r *renoState) HandleTxStart() {}
+
+// HandleWindowRestart implements congestionControl.HandleWindowRestart.
+//
+// +checklocks:r.s.ep.mu
+func (r *renoState) HandleWindowRestart() {
+	r.s.SndCAAckCount = 0
+}
