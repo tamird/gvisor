@@ -132,3 +132,57 @@ algorithm. These commands demonstrate the interface; use repeated, interleaved
 trials with distinct output directories for a performance comparison. Inspect
 receiver goodput together with queue drops, latency and recovery behavior rather
 than treating one throughput number as a complete congestion-control result.
+
+## Shared-WAN flows
+
+Add `--second-client linux` or `--second-client netstack` to run two independent
+client sessions through the same WAN device pair. The first sender still uses
+`--client` or the native default. `--second-congestion-control reno|cubic`
+selects the second sender; omitting it uses the first sender's algorithm. Each
+session uses the requested `--num-client-threads`, so use one stream per session
+for an initial two-flow comparison.
+
+The second client has its own namespace and veth attached to the existing
+client-side bridge. Its native and proxy addresses are `10.0.0.5` and
+`10.0.0.6`. The two sessions have separate native server proxy and iperf ports
+in the existing server namespace. Both traverse the same `wan.0`/`wan.1`
+queues; there is no second independent bottleneck.
+
+`--second-start-delay SECONDS` delays the second flow's startup from the first
+flow's launch. It defaults to zero and must be less than `--duration`. The
+second measurement duration is the first duration minus that delay. Both proxy
+sides and the second receiver start only when that flow is launched, avoiding
+an idle preconnected control channel. Actual setup and connection times can
+differ: the requested delay is not a promise that first data arrives at an
+exact offset.
+
+Shared-WAN mode requires `--output-dir`, IPv4, AF_PACKET and a native receiver;
+`--server`, `--xdp` and per-proxy profile files are not supported in this mode.
+Each `primary/` and `secondary/` directory retains its own proxy arguments,
+client text, receiver JSON, process/cleanup statuses, benchmark row and
+`flow-phases.tsv`. Flow phases record proxy launch and client-operation
+boundaries with adjacent boot-time and Unix timestamps. The root directory
+retains common settings, interface features, WAN qdisc snapshots and optional
+ICMP observations. `topology-cleanup-exit.txt` records the shared namespace's
+cleanup separately from each flow's cleanup.
+
+For example, on the established Linux benchmark worker:
+
+```sh
+bazel run //test/benchmarks/tcp:tcp_benchmark -- \
+  --client --congestion-control cubic \
+  --second-client linux --second-congestion-control reno \
+  --second-start-delay 30 --duration 120 \
+  --ideal --latency 100 --rate 100 --queue-packets 1000 \
+  --sack --disable-linux-gso --disable-linux-gro --latency-probe \
+  --output-dir "$OUTPUT_DIR/cubic-reno-late-join"
+```
+
+Use receiver intervals and the recorded launch/operation bounds to identify
+common overlap before comparing shares. Whole-session totals do not measure
+late-join fairness. Independent receiver timestamps still have one-second
+precision and precede measurement start; do not compute a precisely aligned
+Jain index or convergence time without establishing the alignment bound. The
+shared probe labels the entire interval as `flows-begin`/`flows-end`, including
+both flows' setup margins. It remains native ICMP path RTT, not either TCP
+stack's RTT or pure queue delay.
