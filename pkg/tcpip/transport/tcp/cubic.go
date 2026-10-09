@@ -233,7 +233,7 @@ func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.M
 // cubicCwnd computes the CUBIC congestion window after t seconds from last
 // congestion event.
 func (c *cubicState) cubicCwnd(t float64) float64 {
-	return c.C*math.Pow(t, 3.0) + max(c.WMax, c.cwndEpoch)
+	return c.C*(t*t*t) + max(c.WMax, c.cwndEpoch)
 }
 
 // getCwnd returns the current congestion window as computed by CUBIC.
