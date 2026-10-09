@@ -231,4 +231,9 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
 fi
 
+if [[ ${lanes[*]} == benchmarks && ${QUALIFICATION_BENCHMARK_TARGET:-} == //test/benchmarks/tcp:tcp_benchmark ]]; then
+  timeout --signal=INT --kill-after=30s 35m bash test/rbe/tcp_congestion_observations.sh
+  exit 0
+fi
+
 test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
