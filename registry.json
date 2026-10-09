@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T18:39:05.122512+00:00",
+    "updatedAt": "2026-10-09T18:48:48.302131+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5057,22 +5057,25 @@
       "url": "https://github.com/google/gvisor/pull/15583",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T16:58:00.857342+00:00",
-      "summary": "The user-approved change is now open as PR #15583 at the exact reviewed commit. No contributor decision remains; current-head checks and maintainer review are tracked separately. It hashes the client\u2019s initial sequence number to prevent a duplicate final ACK from recreating an accepted socket after closure, while preserving cookie MSS and expiration encoding. Both queued and post-close regression cases fail before the fix and pass afterward on AMD64, ARM64 and under the race detector; selected compatibility/unit/analyzer checks and both complete 64K loopback owners (16 original shards) pass. The independent native comparison found that Linux 6.1 also accepts the duplicate final ACK, so this is not presented as a defect unique to Netstack. Original failures remain recorded; exact original third-handshake ACK replay is outside the claimed repair.",
+      "updatedAt": "2026-10-09T18:48:48.302131+00:00",
+      "summary": "manninglucas approved the current head on October 9 and left two unresolved comments: remove the explanation of the previous cookie logic, and add another Pause/Resume after unlocking the accepted endpoint so the listener processes the rematched packet before the test calls Accept. The source owner has been notified. Approval and the ready-to-pull label are actual GitHub observations; they do not mean these comments have been addressed.\n\nEarlier validation and delivery:\n\nThe user-approved change is now open as PR #15583 at the exact reviewed commit. No contributor decision remains; current-head checks and maintainer review are tracked separately. It hashes the client\u2019s initial sequence number to prevent a duplicate final ACK from recreating an accepted socket after closure, while preserving cookie MSS and expiration encoding. Both queued and post-close regression cases fail before the fix and pass afterward on AMD64, ARM64 and under the race detector; selected compatibility/unit/analyzer checks and both complete 64K loopback owners (16 original shards) pass. The independent native comparison found that Linux 6.1 also accepts the duplicate final ACK, so this is not presented as a defect unique to Netstack. Original failures remain recorded; exact original third-handshake ACK replay is outside the claimed repair.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Current-head approved; two review comments need source-owner assessment",
         "owner": "external_sweeps",
         "sourceHead": "34246fb949c7f929c22886fb5cf7569e1051e0d6",
-        "reviewedAt": "2026-10-09T16:56:11.413278+00:00",
-        "nextAction": "Observe current-head checks, maintainer review and import progress through the sole collector. The user approval is fulfilled.",
+        "reviewedAt": "2026-10-09T18:45:44.774951+00:00",
+        "nextAction": "Source owner to assess the comment removal and deterministic listener-drain synchronization; continue observing the current head and import state without duplicate outreach.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15583",
           "https://github.com/tamird/gvisor/commit/34246fb949c7f929c22886fb5cf7569e1051e0d6",
           "https://app.buildbuddy.io/invocation/93774bc9-bf23-4099-8614-5ed50e15c390",
           "https://app.buildbuddy.io/invocation/a53adf2f-b8c4-438b-b991-fb5901a63857",
-          "https://app.buildbuddy.io/invocation/ea4c4ade-15cc-4aeb-9d83-931a5f5df589"
+          "https://app.buildbuddy.io/invocation/ea4c4ade-15cc-4aeb-9d83-931a5f5df589",
+          "https://github.com/google/gvisor/pull/15583#pullrequestreview-5474054958",
+          "https://github.com/google/gvisor/pull/15583#discussion_r4233457230",
+          "https://github.com/google/gvisor/pull/15583#discussion_r4233457236"
         ],
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
       "number": 15583
@@ -6426,7 +6429,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T18:39:05.122512+00:00",
+      "updatedAt": "2026-10-09T18:48:48.302131+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -6727,7 +6730,7 @@
           ]
         },
         {
-          "text": "The separate epoch qualification was accepted, but its outcome remains unknown after the bounded observation deadline: the hosting service did not expose an invocation or execution record. No startup or test result is established. The original acceptance is retained while the owner investigates the method and its disposition; no replacement run has been accepted. The disabled-probe overhead correction is source reviewed, with runtime measurement pending. These investigations do not alter the source or results of the sharing studies above.",
+          "text": "The original epoch qualification remains outcome unknown after its bounded observation deadline: the hosting service exposed no invocation or execution record, and cancellation is unconfirmed. A corrected request on the same qualification source has now been accepted; its runtime results are pending. The correction fetches exact public Git inputs instead of embedding the large bodies. Neither acceptance establishes test success. The disabled-probe overhead correction remains source reviewed with runtime measurement pending; the verified sharing-study results are unchanged.",
           "evidence": [
             {
               "label": "Epoch before/after qualification",
@@ -6740,6 +6743,10 @@
             {
               "label": "Disabled-probe overhead correction b3de2dbfa",
               "url": "https://github.com/tamird/gvisor/commit/b3de2dbfa"
+            },
+            {
+              "label": "Corrected epoch qualification (results pending)",
+              "url": "https://app.buildbuddy.io/invocation/770421cf-2150-44f6-801f-d9e60420be83"
             }
           ]
         }
