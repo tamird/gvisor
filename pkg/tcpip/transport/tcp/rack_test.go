@@ -334,6 +334,7 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 	s := &ctx.snd
 	s.ep.mu.Lock()
 	defer s.ep.mu.Unlock()
+	defer s.updateWriteNext(nil)
 	s.MaxPayloadSize = 10
 	s.SndWnd = 100
 	s.SndNxt = 40
