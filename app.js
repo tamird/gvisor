@@ -224,9 +224,9 @@ function appendAttributes(container, node) {
     const history = element("details", "review-history"); history.append(element("summary", "", "Approval history"));
     for (const item of approvals) {
       const head = item.commit?.oid;
-      history.append(link(`${item.author?.login || "Unknown reviewer"} · ${head === pr.head ? "current" : "older or unknown"} commit ${head?.slice(0, 9) || "not recorded"}`, item.url), element("br"));
+      history.append(link(`${item.author?.login || "Unknown reviewer"} · submitted ${item.submittedAt ? date(item.submittedAt) : "time not recorded"} · GitHub-recorded commit ${head?.slice(0, 9) || "not recorded"}`, item.url), element("br"));
     }
-    history.append(element("p", "detail-meta", "Historical approvals alone do not imply current approval; later reviews, dismissals and new review requests still apply."));
+    history.append(element("p", "detail-meta", "GitHub can reassociate an older review with a rebased commit. Current approval requires a fresh submission after this head was introduced; later reviews, dismissals and review requests still apply."));
     section.append(history);
   }
   const threads = pr.threads;
