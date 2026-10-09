@@ -121,8 +121,8 @@ func (r *renoState) PostRecovery() {
 	// noop.
 }
 
-// HandleTxStart implements congestionControl.HandleTxStart.
-func (r *renoState) HandleTxStart() {}
+// HandleCwndUsage implements congestionControl.HandleCwndUsage.
+func (r *renoState) HandleCwndUsage(bool) {}
 
 // HandleWindowRestart implements congestionControl.HandleWindowRestart.
 //

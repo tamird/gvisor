@@ -33,7 +33,8 @@ func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) 
 		s.Wait()
 	})
 	snd := &sender{
-		ep: &Endpoint{stack: s},
+		ep:          &Endpoint{stack: s},
+		cwndLimited: true,
 		TCPSenderState: TCPSenderState{
 			SndCwnd:  1000,
 			Ssthresh: InitialSsthresh,
@@ -126,15 +127,82 @@ func TestCubicIdleExcludesOnlyCurrentEpoch(t *testing.T) {
 	c := newTestCubic(t, clock, rtt)
 	c.s.ep.mu.Lock()
 	defer c.s.ep.mu.Unlock()
-	c.Update(1, rtt, clock.NowMonotonic())
+	c.HandleCwndUsage(false)
 	clock.Advance(time.Second)
 	// Zero-window probing may start a new epoch before application data
 	// can resume. Time before that epoch must not shift its origin.
 	c.HandleRTOExpired()
 	clock.Advance(rtt)
-	c.HandleTxStart()
+	c.HandleCwndUsage(true)
 	if elapsed := clock.NowMonotonic().Sub(c.T); elapsed != 0 {
 		t.Fatalf("epoch age after idle restart = %s, want 0", elapsed)
+	}
+}
+
+func TestCubicFlightUtilization(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		start seqnum.Value
+	}{
+		{"normal", 1},
+		{"wrap", ^seqnum.Value(0) - 5},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			const rtt = 100 * time.Millisecond
+			c := newTestCubic(t, clock, rtt)
+			c.s.ep.mu.Lock()
+			defer c.s.ep.mu.Unlock()
+			c.s.SndCwnd = 10
+			c.s.Ssthresh = 10
+			c.enterCongestionAvoidance()
+			c.s.cwndLimited = false
+			c.s.SndUna = test.start
+			c.s.SndNxt = test.start.Add(2)
+			c.s.Outstanding = 2
+			c.s.updateCwndUsage()
+			// A later send can fill a previously partial flight, including
+			// sends from SACK/RACK recovery through postXmit.
+			c.s.SndNxt = test.start.Add(10)
+			c.s.Outstanding = 10
+			c.s.updateCwndUsage()
+
+			// Removing packets on ACK must not erase evidence that the
+			// window was full, including at sequence-number wrap.
+			c.s.SndUna = c.s.SndNxt - 1
+			c.s.Outstanding = 1
+			c.Update(9, rtt, clock.NowMonotonic())
+			c.s.updateCwndUsage()
+			c.s.SndUna = c.s.SndNxt
+			c.s.Outstanding = 0
+			c.Update(1, rtt, clock.NowMonotonic())
+			if got := c.s.SndCwnd; got != 11 {
+				t.Fatalf("last ACK of full flight: cwnd = %d, want 11", got)
+			}
+			c.s.updateCwndUsage()
+			if c.s.isCwndLimited() || !c.paused {
+				t.Fatal("retired full flight still permits growth")
+			}
+
+			// Repeated no-send calls, including a closed receive window,
+			// must neither retain the old flight nor restart the pause.
+			c.s.SndWnd = 0
+			clock.Advance(time.Second)
+			c.s.updateCwndUsage()
+			clock.Advance(time.Second)
+			c.s.SndWnd = 30000
+			c.s.Outstanding = 2
+			c.s.SndNxt.UpdateForward(2)
+			c.s.updateCwndUsage()
+			clock.Advance(time.Second)
+			c.s.Outstanding = c.s.SndCwnd
+			c.s.SndNxt.UpdateForward(seqnum.Size(c.s.SndCwnd - 2))
+			c.s.updateCwndUsage()
+			clock.Advance(rtt)
+			if age := clock.NowMonotonic().Sub(c.T); age != rtt {
+				t.Fatalf("epoch age after resumed full flight = %s, want %s", age, rtt)
+			}
+		})
 	}
 }
 
@@ -147,6 +215,7 @@ func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
 	c.LastRTT = rtt
 	c.CurrRTT = 2 * rtt
 	c.SampleCount = nRTTSample - 1
+	c.s.cwndLimited = false
 	clock.Advance(rtt)
 	c.Update(1, 2*rtt, clock.NowMonotonic())
 	if c.s.Ssthresh != c.s.SndCwnd {
@@ -157,6 +226,36 @@ func TestCubicHyStartInitializesCongestionAvoidance(t *testing.T) {
 	}
 	if age := clock.NowMonotonic().Sub(c.T); age != 0 {
 		t.Errorf("initial congestion-avoidance epoch age = %s, want 0", age)
+	}
+}
+
+func TestCubicSlowStartUsesFlightSize(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		outstanding int
+		wantGrowth  bool
+	}{
+		{"half-window", 5, false},
+		{"above-half-window", 6, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			const rtt = 100 * time.Millisecond
+			c := newTestCubic(t, clock, rtt)
+			c.s.ep.mu.Lock()
+			defer c.s.ep.mu.Unlock()
+			c.s.SndCwnd = 10
+			c.s.cwndLimited = false
+			c.s.SndNxt = seqnum.Value(test.outstanding)
+			c.s.Outstanding = test.outstanding
+			c.s.updateCwndUsage()
+			c.s.SndUna = c.s.SndNxt
+			c.s.Outstanding = 0
+			c.Update(test.outstanding, rtt, clock.NowMonotonic())
+			if grew := c.s.SndCwnd > 10; grew != test.wantGrowth {
+				t.Errorf("ACKed %d packets: cwnd = %d, want growth=%t", test.outstanding, c.s.SndCwnd, test.wantGrowth)
+			}
+		})
 	}
 }
 

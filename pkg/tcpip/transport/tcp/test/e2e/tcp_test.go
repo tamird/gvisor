@@ -48,6 +48,64 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+// sendAckAndDrain waits for all TCP work queued by the ACK with virtual time
+// held still, so the next test step observes its effects without sleeping.
+func sendAckAndDrain(c *context.Context, seq seqnum.Value, received int, window seqnum.Size) {
+	c.SendPacket(nil, &context.Headers{
+		SrcPort: context.TestPort,
+		DstPort: c.Port,
+		Flags:   header.TCPFlagAck,
+		SeqNum:  seq,
+		AckNum:  c.IRS.Add(1 + seqnum.Size(received)),
+		RcvWnd:  window,
+	})
+	c.Stack().Pause()
+	c.Stack().Resume()
+}
+
+// enterCubicCongestionAvoidance loses the first packet of a full flight after
+// establishing an ACK beyond NewReno's previous recovery boundary. The final
+// ACK advertises window for the traffic that follows recovery.
+func enterCubicCongestionAvoidance(t *testing.T, c *context.Context, clock *faketime.ManualClock, payload int, rtt time.Duration, window seqnum.Size) int {
+	t.Helper()
+	data := make([]byte, 64*payload)
+	write := func(data []byte) {
+		if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+			t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+		}
+	}
+	info := func() tcpip.TCPInfoOption {
+		var info tcpip.TCPInfoOption
+		if err := c.EP.GetSockOpt(&info); err != nil {
+			t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+		}
+		return info
+	}
+	write(data[:payload])
+	c.ReceiveAndCheckPacket(data, 0, payload)
+	clock.Advance(rtt)
+	sendAckAndDrain(c, 790, payload, 30000)
+	received := payload
+	lostOffset := received
+	beforeLoss := int(info().SndCwnd)
+	write(data[received : received+beforeLoss*payload])
+	for range beforeLoss {
+		c.ReceiveAndCheckPacket(data, received, payload)
+		received += payload
+	}
+	clock.Advance(rtt)
+	for range 3 {
+		sendAckAndDrain(c, 790, lostOffset, 30000)
+	}
+	c.ReceiveAndCheckPacket(data, lostOffset, payload)
+	clock.Advance(rtt)
+	sendAckAndDrain(c, 790, received, window)
+	if got := info(); got.SndCwnd >= uint32(beforeLoss) || got.SndCwnd < got.SndSsthresh || got.SndCwnd <= 2 {
+		t.Fatalf("expected congestion avoidance above two packets after loss: %+v", got)
+	}
+	return received
+}
+
 func TestCubicLimitedFlowDoesNotIncreaseWindow(t *testing.T) {
 	for _, limitedBy := range []string{"application", "receiver"} {
 		t.Run(limitedBy, func(t *testing.T) {
@@ -64,16 +122,7 @@ func TestCubicLimitedFlowDoesNotIncreaseWindow(t *testing.T) {
 			c.CreateConnected(789, 30000, -1)
 			rcvWnd := seqnum.Size(30000)
 			ack := func(received int) {
-				c.SendPacket(nil, &context.Headers{
-					SrcPort: context.TestPort,
-					DstPort: c.Port,
-					Flags:   header.TCPFlagAck,
-					SeqNum:  790,
-					AckNum:  c.IRS.Add(1 + seqnum.Size(received)),
-					RcvWnd:  rcvWnd,
-				})
-				c.Stack().Pause()
-				c.Stack().Resume()
+				sendAckAndDrain(c, 790, received, rcvWnd)
 			}
 			info := func() tcpip.TCPInfoOption {
 				var info tcpip.TCPInfoOption
@@ -89,33 +138,10 @@ func TestCubicLimitedFlowDoesNotIncreaseWindow(t *testing.T) {
 				}
 			}
 
-			// Establish an ACK beyond the previous recovery boundary, then
-			// lose the first packet of a full flight to enter avoidance.
-			write(data[:payload])
-			c.ReceiveAndCheckPacket(data, 0, payload)
-			clock.Advance(rtt)
-			ack(payload)
-			received := payload
-			lostOffset := received
-			beforeLoss := int(info().SndCwnd)
-			write(data[received : received+beforeLoss*payload])
-			for range beforeLoss {
-				c.ReceiveAndCheckPacket(data, received, payload)
-				received += payload
-			}
-			clock.Advance(rtt)
-			for range 3 {
-				ack(lostOffset)
-			}
-			c.ReceiveAndCheckPacket(data, lostOffset, payload)
-			clock.Advance(rtt)
 			if limitedBy == "receiver" {
 				rcvWnd = 2 * payload
 			}
-			ack(received)
-			if got := info(); got.SndCwnd >= uint32(beforeLoss) || got.SndCwnd < got.SndSsthresh || got.SndCwnd <= 2 {
-				t.Fatalf("expected congestion avoidance above two packets after loss: %+v", got)
-			}
+			received := enterCubicCongestionAvoidance(t, c, clock, payload, rtt, rcvWnd)
 
 			// Keep exactly two packets unacknowledged. In the receiver case,
 			// more data stays queued; in the application case, each ACK is
@@ -169,9 +195,7 @@ func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
 		e2e.EnableCUBIC(t, c)
 		c.CreateConnected(789, 30000, -1)
 		ack := func(received int) {
-			c.SendAck(790, received)
-			c.Stack().Pause()
-			c.Stack().Resume()
+			sendAckAndDrain(c, 790, received, 30000)
 		}
 		window := func() int {
 			var info tcpip.TCPInfoOption
@@ -186,30 +210,7 @@ func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
 				t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
 			}
 		}
-		// NewReno permits fast recovery only after data beyond the previous
-		// recovery boundary has been acknowledged.
-		write(data[:payload])
-		c.ReceiveAndCheckPacket(data, 0, payload)
-		clock.Advance(rtt)
-		ack(payload)
-		received := payload
-		lostOffset := received
-		beforeLoss := window()
-		write(data[received : received+beforeLoss*payload])
-		for range beforeLoss {
-			c.ReceiveAndCheckPacket(data, received, payload)
-			received += payload
-		}
-		clock.Advance(rtt)
-		for range 3 {
-			ack(lostOffset)
-		}
-		c.ReceiveAndCheckPacket(data, lostOffset, payload)
-		clock.Advance(rtt)
-		ack(received)
-		if got := window(); got >= tcp.InitialCwnd {
-			t.Fatalf("loss did not reduce cwnd: got %d, want < %d", got, tcp.InitialCwnd)
-		}
+		received := enterCubicCongestionAvoidance(t, c, clock, payload, rtt, 30000)
 
 		// All data is acknowledged and no application data remains queued.
 		// Compare identical resumed flights with and without an idle gap.
@@ -273,12 +274,8 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, batch i
 	defer c.Cleanup()
 	e2e.EnableCUBIC(t, c)
 	c.CreateConnected(789, 30000, -1)
-	// Pause drains queued TCP work before returning. With virtual time held
-	// still, the next step observes all effects of the ACK without sleeping.
 	ack := func(received int) {
-		c.SendAck(790, received)
-		c.Stack().Pause()
-		c.Stack().Resume()
+		sendAckAndDrain(c, 790, received, 30000)
 	}
 	info := func() tcpip.TCPInfoOption {
 		var info tcpip.TCPInfoOption
