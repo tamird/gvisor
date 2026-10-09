@@ -316,13 +316,6 @@ func (ds *decodeState) addObject(id objectID, obj reflect.Value) *objectDecodeSt
 // registered previously. This depends on the type provided if none is
 // available in the object itself.
 func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
-	return ds.registerWithAllocator(r, typ, nil)
-}
-
-// registerWithAllocator shares registration and deferred decoding with generated
-// fields. The optional allocator applies only to the known pointee type; an
-// interior reference may require a different containing type from the stream.
-func (ds *decodeState) registerWithAllocator(r *wire.Ref, typ reflect.Type, allocate func() reflect.Value) reflect.Value {
 	// Grow the objectsByID slice.
 	id := objectID(r.Root)
 
@@ -334,16 +327,11 @@ func (ds *decodeState) registerWithAllocator(r *wire.Ref, typ reflect.Type, allo
 	}
 
 	// Create the object.
-	var obj reflect.Value
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
-		obj = reflect.New(typ).Elem()
-	} else if allocate != nil {
-		obj = allocate()
-	} else {
-		obj = reflect.New(typ).Elem()
 	}
-	ods = ds.addObject(id, obj)
+	v := reflect.New(typ)
+	ods = ds.addObject(id, v.Elem())
 
 	// Process any deferred objects & callbacks.
 	if encoded, ok := ds.deferred[id]; ok {
@@ -523,30 +511,6 @@ func isComplexEq(x complex128, y complex128) bool {
 	return isFloatEq(real(x), real(y)) && isFloatEq(imag(x), imag(y))
 }
 
-func checkInt(encoded, decoded int64) {
-	if decoded != encoded {
-		Failf("signed integer truncated from %v to %v", encoded, decoded)
-	}
-}
-
-func checkUint(encoded, decoded uint64) {
-	if decoded != encoded {
-		Failf("unsigned integer truncated from %v to %v", encoded, decoded)
-	}
-}
-
-func checkFloat(encoded, decoded float64) {
-	if !isFloatEq(decoded, encoded) {
-		Failf("floating point number truncated from %v to %v", encoded, decoded)
-	}
-}
-
-func checkComplex(encoded, decoded complex128) {
-	if !isComplexEq(decoded, encoded) {
-		Failf("complex number truncated from %v to %v", encoded, decoded)
-	}
-}
-
 // decodeObject decodes a object value.
 func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) {
 	switch x := encoded.(type) {
@@ -584,20 +548,28 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		obj.SetBool(bool(x))
 	case wire.Int:
 		obj.SetInt(int64(x))
-		checkInt(int64(x), obj.Int())
+		if obj.Int() != int64(x) {
+			Failf("signed integer truncated from %v to %v", int64(x), obj.Int())
+		}
 	case wire.Uint:
 		obj.SetUint(uint64(x))
-		checkUint(uint64(x), obj.Uint())
+		if obj.Uint() != uint64(x) {
+			Failf("unsigned integer truncated from %v to %v", uint64(x), obj.Uint())
+		}
 	case wire.Float32:
 		obj.SetFloat(float64(x))
 	case wire.Float64:
 		obj.SetFloat(float64(x))
-		checkFloat(float64(x), obj.Float())
+		if !isFloatEq(obj.Float(), float64(x)) {
+			Failf("floating point number truncated from %v to %v", float64(x), obj.Float())
+		}
 	case *wire.Complex64:
 		obj.SetComplex(complex128(*x))
 	case *wire.Complex128:
 		obj.SetComplex(complex128(*x))
-		checkComplex(complex128(*x), obj.Complex())
+		if !isComplexEq(obj.Complex(), complex128(*x)) {
+			Failf("complex number truncated from %v to %v", complex128(*x), obj.Complex())
+		}
 	case *wire.String:
 		obj.SetString(string(*x))
 	case *wire.Slice:

@@ -74,13 +74,3 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 	runtime.KeepAlive(arr)
 	return slobj
 }
-
-// typedValueRWAddr is the typed counterpart of reflectValueRWAddr. Keep the
-// address conversion in one expression: the object remains owned by the shared
-// decode graph, and the returned typed pointer keeps that storage live.
-func typedValueRWAddr[T any](obj reflect.Value) *T {
-	if got, want := obj.Type(), reflect.TypeFor[T](); got != want {
-		Failf("pointer target has type %v, want %v", got, want)
-	}
-	return (*T)(unsafe.Pointer(obj.UnsafeAddr()))
-}
