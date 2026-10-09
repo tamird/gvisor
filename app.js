@@ -419,14 +419,17 @@ function restoreView() {
   camera = saved.camera; return true;
 }
 function navigateFromURL() {
-  if (location.href === lastNavigationURL) return;
-  const url = readViewURL(); applyView(url.explicit ? url : { ...url, focus: url.selected });
-  const ids = nodeMap();
-  if (!selectionMap().has(selected)) selected = null;
-  if (!ids.has(focus)) focus = null;
-  searchEditing = false; render(true);
+  if (location.href !== lastNavigationURL) {
+    const url = readViewURL(); applyView(url.explicit ? url : { ...url, focus: url.selected });
+    const ids = nodeMap();
+    if (!selectionMap().has(selected)) selected = null;
+    if (!ids.has(focus)) focus = null;
+    searchEditing = false; render(true);
+  }
+  // Native fragment navigation can emit both popstate and hashchange. Keep
+  // focus on its current card even when the first event already rendered it.
   if (view === "investigations" && selected)
-    document.querySelector(`[data-investigation="${CSS.escape(selected)}"]`)?.focus({ preventScroll: true });
+    document.getElementById(selected)?.focus({ preventScroll: true });
 }
 function tableNodes() { return model.nodes.filter((node) => matches(node) && (!resolved(node) || $("show-resolved").checked)); }
 function investigationMatches(item) {
@@ -439,7 +442,7 @@ function drawInvestigations() {
   const items = [...investigationMap().values()].filter(investigationMatches)
     .sort((a, b) => (a.status === "active" ? 0 : 1) - (b.status === "active" ? 0 : 1) || Date.parse(b.updatedAt) - Date.parse(a.updatedAt));
   for (const item of items) {
-    const card = element("article", `investigation-card${selected === item.id ? " selected" : ""}`); card.id = item.id;
+    const card = element("article", `investigation-card${selected === item.id ? " selected" : ""}`); card.id = item.id; card.tabIndex = -1;
     const heading = element("h2"), control = element("a", "investigation-title", item.title);
     control.href = currentViewURL(item.id); control.title = "Link to this investigation";
     control.dataset.investigation = item.id; control.setAttribute("aria-current", selected === item.id ? "true" : "false"); heading.append(control);
