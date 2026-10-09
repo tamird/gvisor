@@ -263,10 +263,12 @@ func (c *cubicState) getCwnd(packetsAcked, sndCwnd int, srtt time.Duration) int 
 	// every sub-segment increase when ACKs arrive individually.
 	cwnd := float64(sndCwnd)
 	acksPerSegment := math.MaxInt
-	if wtRtt > cwnd {
+	if delta := wtRtt - cwnd; delta > 0 {
 		// RFC 9438 section 4.2 bounds new growth credit to half a segment
 		// per acknowledged segment, even when the target is far ahead.
-		if count := cwnd / (wtRtt - cwnd); count < float64(math.MaxInt) {
+		// The positive float64 difference bounds the ratio by 2^53, so it
+		// fits in int64 even when int is 32 bits.
+		if count := int64(cwnd / delta); count < math.MaxInt {
 			acksPerSegment = max(int(count), 2)
 		}
 	}
@@ -343,5 +345,5 @@ func (c *cubicState) PostRecovery() {
 //
 // +checklocks:c.s.ep.mu
 func (c *cubicState) reduceSlowStartThreshold() {
-	c.s.Ssthresh = int(math.Max(float64(c.s.SndCwnd)*c.Beta, 2.0))
+	c.s.Ssthresh = max(int(float64(c.s.SndCwnd)*c.Beta), 2)
 }

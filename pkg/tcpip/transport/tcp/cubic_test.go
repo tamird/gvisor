@@ -78,8 +78,8 @@ func TestCubicCongestionAvoidanceLimitsGrowth(t *testing.T) {
 			// but must not all become immediately spendable at the new rate.
 			clock.Advance(time.Minute)
 			c.Update(2, rtt, clock.NowMonotonic())
-			if got := c.s.SndCwnd; got > windowAfterLoss+test.maxGrowth {
-				t.Fatalf("2 newly acknowledged segments with %d pending credits grew cwnd from %d to %d, want growth <= %d", test.pendingSegments, windowAfterLoss, got, test.maxGrowth)
+			if got, want := c.s.SndCwnd, windowAfterLoss+test.maxGrowth; got > want {
+				t.Fatalf("2 newly acknowledged segments with %d pending credits grew cwnd from %d to %d, want <= %d", test.pendingSegments, windowAfterLoss, got, want)
 			}
 		})
 	}
@@ -101,11 +101,11 @@ func TestCubicCongestionAvoidanceNeedsAcknowledgments(t *testing.T) {
 	// actual window nor the saved credit may change.
 	clock.Advance(time.Second)
 	c.Update(0, rtt, clock.NowMonotonic())
-	if got := c.s.SndCwnd; got != windowBeforeZeroACK {
-		t.Errorf("no newly acknowledged segments: cwnd=%d, want unchanged %d", got, windowBeforeZeroACK)
+	if got, want := c.s.SndCwnd, windowBeforeZeroACK; got != want {
+		t.Errorf("no newly acknowledged segments: cwnd=%d, want unchanged %d", got, want)
 	}
-	if got := c.s.SndCAAckCount; got != creditBeforeZeroACK {
-		t.Errorf("no newly acknowledged segments: credit=%d, want unchanged %d", got, creditBeforeZeroACK)
+	if got, want := c.s.SndCAAckCount, creditBeforeZeroACK; got != want {
+		t.Errorf("no newly acknowledged segments: credit=%d, want unchanged %d", got, want)
 	}
 }
 
@@ -126,8 +126,8 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	// One newly acknowledged segment cannot buy a segment even at the maximum growth rate.
 	// Retaining the three pre-recovery credits would incorrectly allow growth.
 	c.Update(1, rtt, clock.NowMonotonic())
-	if got := c.s.SndCwnd; got != windowAfterSecondLoss {
-		t.Fatalf("first acknowledged segment after recovery grew cwnd from %d to %d using old credit", windowAfterSecondLoss, got)
+	if got, want := c.s.SndCwnd, windowAfterSecondLoss; got != want {
+		t.Fatalf("first acknowledged segment after recovery grew cwnd from %d to %d", want, got)
 	}
 }
 
@@ -143,8 +143,11 @@ func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
 	// The other must enter congestion avoidance, where one segment earns credit
 	// but cannot grow the window yet.
 	c.Update(2, rtt, clock.NowMonotonic())
-	if c.s.SndCwnd != c.s.Ssthresh || c.s.SndCAAckCount != 1 {
-		t.Fatalf("crossing ssthresh: cwnd=%d credit=%d, want %d and 1", c.s.SndCwnd, c.s.SndCAAckCount, c.s.Ssthresh)
+	if got, want := c.s.SndCwnd, c.s.Ssthresh; got != want {
+		t.Fatalf("crossing ssthresh: cwnd=%d, want %d", got, want)
+	}
+	if got, want := c.s.SndCAAckCount, 1; got != want {
+		t.Fatalf("crossing ssthresh: credit=%d, want %d", got, want)
 	}
 }
 

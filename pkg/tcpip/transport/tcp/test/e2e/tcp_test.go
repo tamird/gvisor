@@ -91,8 +91,12 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	// Keep data queued throughout warmup and every post-loss window, so an
 	// application-limited sender cannot explain a window that stops growing.
 	queuedData := make([]byte, 256<<10)
-	if n, err := c.EP.Write(bytes.NewReader(queuedData), tcpip.WriteOptions{}); err != nil || n != int64(len(queuedData)) {
-		t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(queuedData))
+	n, err := c.EP.Write(bytes.NewReader(queuedData), tcpip.WriteOptions{})
+	if err != nil {
+		t.Fatalf("Write: %s", err)
+	}
+	if got, want := n, int64(len(queuedData)); got != want {
+		t.Fatalf("Write = %d, want %d", got, want)
 	}
 	// Grow a large window before loss: in congestion avoidance the increase
 	// earned by one ACK is then less than a segment. The old implementation
@@ -117,8 +121,8 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 		// These packets were sent at the current virtual time. Withhold
 		// their ACKs until the actual retransmission timer expires.
 		clock.Advance(tcpInfo().RTO)
-		if got := tcpInfo().SndCwnd; got != 1 {
-			t.Fatalf("cwnd after retransmission timeout = %d, want 1", got)
+		if got, want := tcpInfo().SndCwnd, uint32(1); got != want {
+			t.Fatalf("cwnd after retransmission timeout = %d, want %d", got, want)
 		}
 		// After RTO the cubic epoch starts with K=0, so its initial
 		// growth is slower than after fast recovery.
@@ -134,8 +138,8 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 	c.ReceiveAndCheckPacket(queuedData, firstLostByte, segmentBytes)
 	ackAndWait(receivedBytes)
 	afterLoss := int(tcpInfo().SndCwnd)
-	if afterLoss >= beforeLoss {
-		t.Fatalf("loss did not reduce cwnd: before=%d after=%d", beforeLoss, afterLoss)
+	if got, want := afterLoss, beforeLoss; got >= want {
+		t.Fatalf("loss did not reduce cwnd: before=%d after=%d", want, got)
 	}
 	// ACK a full window over one RTT, changing only ACK grouping. We check
 	// eventual growth, not an implementation-specific CUBIC window formula.
@@ -154,8 +158,8 @@ func testCubicWindowGrowthAfterPacketLoss(t *testing.T, recovery string, segment
 			remaining -= n
 		}
 	}
-	if got := int(tcpInfo().SndCwnd); got <= afterLoss {
-		t.Fatalf("cwnd did not recover after %d windows of ACKs: before=%d after=%d", recoveryWindows, afterLoss, got)
+	if got, want := int(tcpInfo().SndCwnd), afterLoss; got <= want {
+		t.Fatalf("cwnd did not recover after %d windows of ACKs: before=%d after=%d", recoveryWindows, want, got)
 	}
 }
 
