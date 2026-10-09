@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -472,6 +473,8 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	} else {
 		args = append(args, "-overlay2=none")
 	}
+	// Fork-only diagnostic: enable the existing timed profiling RPC.
+	args = append(args, "-profile")
 	if *debug {
 		args = append(args, "-debug", "-log-packets=true")
 	}
@@ -755,7 +758,47 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 			return fmt.Errorf("save resume error: %v", err)
 		}
 	} else {
-		err = cmd.Run()
+		// The existing ping owner remains unchanged. Sample the live Sentry
+		// after startup, and flush well before its original 300-second limit.
+		err = cmd.Start()
+		if err == nil {
+			profileCtx, cancelProfile := context.WithTimeout(context.Background(), 150*time.Second)
+			profileDone := make(chan struct{})
+			go func() {
+				defer close(profileDone)
+				timer := time.NewTimer(30 * time.Second)
+				defer timer.Stop()
+				select {
+				case <-profileCtx.Done():
+					log.Infof("CPU profile was not started: %v", profileCtx.Err())
+					return
+				case <-timer.C:
+				}
+				profilePath := filepath.Join(testLogDir, "sentry-cpu.pprof")
+				profileArgs := append([]string{}, args...)
+				profileArgs = append(profileArgs, "debug", "-profile-cpu="+profilePath, "-duration=90s", id)
+				log.Infof("Starting timed CPU profile for sandbox %q: %v", id, profileArgs)
+				profileCmd := exec.CommandContext(profileCtx, specutils.ExePath, profileArgs...)
+				profileCmd.Stdout = os.Stdout
+				profileCmd.Stderr = os.Stderr
+				profileErr := profileCmd.Run()
+				if profileErr == nil {
+					f, openErr := os.OpenFile(profilePath, os.O_RDWR, 0)
+					profileErr = openErr
+					if openErr == nil {
+						profileErr = errors.Join(f.Sync(), f.Close())
+					}
+				}
+				if profileErr != nil {
+					log.Infof("CPU profile failed for sandbox %q: %v", id, profileErr)
+					return
+				}
+				log.Infof("CPU profile flushed for sandbox %q: %s", id, profilePath)
+			}()
+			err = cmd.Wait()
+			cancelProfile()
+			<-profileDone
+		}
 		if *waitForPid != 0 {
 			if err != nil {
 				return fmt.Errorf("could not start container: %v", err)
