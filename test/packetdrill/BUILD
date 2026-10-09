@@ -41,6 +41,16 @@ packetdrill_test(
     scripts = ["tcp_defer_accept_timeout.pkt"],
 )
 
+packetdrill_test(
+    name = "cubic_fast_recovery_test",
+    scripts = ["cubic_fast_recovery.pkt"],
+)
+
+packetdrill_test(
+    name = "cubic_rto_recovery_test",
+    scripts = ["cubic_rto_recovery.pkt"],
+)
+
 test_suite(
     name = "all_tests",
     tags = [
