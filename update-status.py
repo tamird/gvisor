@@ -8,7 +8,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from work_states import record_states, remember_mergeability, review_decision
+from work_states import check_purpose, record_states, remember_mergeability, review_decision
 
 
 ROOT = Path(__file__).resolve().parent
@@ -25,7 +25,7 @@ CHECKS = """
 commits(last:1) { nodes { commit { oid statusCheckRollup {
   state contexts(first:100) { totalCount pageInfo { hasNextPage }
     nodes { __typename
-      ... on CheckRun { name status conclusion detailsUrl checkSuite { app { name } } }
+      ... on CheckRun { name status conclusion detailsUrl checkSuite { app { name slug } workflowRun { workflow { name } } } }
       ... on StatusContext { context state targetUrl }
     }
   }
@@ -135,12 +135,21 @@ def normalize(pr: dict) -> dict:
         for item in connection["nodes"]:
             if item["__typename"] == "CheckRun":
                 state = item["conclusion"] if item["status"] == "COMPLETED" else item["status"]
-                contexts.append({"name": item["name"], "state": state or "UNKNOWN",
-                                 "url": public_url(item["detailsUrl"]),
-                                 "app": (item["checkSuite"].get("app") or {}).get("name")})
+                suite = item["checkSuite"]
+                app = suite.get("app") or {}
+                workflow = ((suite.get("workflowRun") or {}).get("workflow") or {}).get("name")
+                # This repository-owned workflow requests reviewers; it does not
+                # validate contributor source. Keep its raw outcome observable.
+                context = {"name": item["name"], "state": state or "UNKNOWN",
+                                 "url": public_url(item["detailsUrl"]), "kind": "check-run",
+                                 "app": app.get("name"), "appSlug": app.get("slug"),
+                                 "workflow": workflow}
+                context["purpose"] = check_purpose(context)
+                contexts.append(context)
             else:
                 contexts.append({"name": item["context"], "state": item["state"],
-                                 "url": public_url(item["targetUrl"]), "app": None})
+                                 "url": public_url(item["targetUrl"]), "app": None, "kind": "status",
+                                 "purpose": "validation"})
         checks = {"state": rollup["state"], "total": connection["totalCount"],
                   "complete": not connection["pageInfo"]["hasNextPage"], "contexts": contexts}
     threads = pr["reviewThreads"]

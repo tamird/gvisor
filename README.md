@@ -100,6 +100,12 @@ an import relationship or graph edge.
 Original PR checks and import PR checks are separate. The API's check/status
 rollup is **not a test-case result**. Details distinguish success, skipped,
 neutral, pending and failure results and retain available HTTPS check links.
+The collector identifies the repository's Auto Assign/assign CheckRun by its
+GitHub Actions app slug and workflow. Its reviewer-assignment result remains
+visible, but an explained administrative failure does not classify contributor
+source as failing. Unknown checks and incomplete inventories stay conservative;
+merge readiness still requires the raw complete green rollup.
+
 The site does not claim to have read logs or passed tests from a green rollup.
 No rollup means unavailable. Both original and import rollups must match their
 own returned head SHA before publication.
@@ -197,7 +203,8 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   inventories and a complete import lookup, without changes requested. This observed public state grants no
   merge authority and does not claim internal import progress.
 - **Failing checks** and **Checks pending:** current source or active exact-source
-  import checks, including CI/infrastructure checks. Each failure label names
+  import validation checks, including CI/infrastructure failures but excluding
+  identified reviewer-assignment errors. Each failure label names
   the source or import PR; details link the failed checks. An old import failure
   stays in details without making the current head fail.
 

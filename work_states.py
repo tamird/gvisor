@@ -30,24 +30,55 @@ PENDING = {"PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"}
 PASSED = {"SUCCESS", "SKIPPED", "NEUTRAL"}
 
 
+def check_purpose(check: dict) -> Literal["validation", "reviewer-assignment"]:
+    """Classify the repository's reviewer workflow from its service identity."""
+    return ("reviewer-assignment"
+            if check.get("kind") == "check-run" and check.get("appSlug") == "github-actions"
+            and check.get("workflow") == "Auto Assign" and check.get("name") == "assign"
+            else "validation")
+
+
+def complete_checks(pr: dict) -> bool:
+    checks = pr.get("checks") or {}
+    return bool(checks.get("complete") and checks.get("total", 0) > 0
+                and len(checks.get("contexts", [])) == checks["total"])
+
+
+def validation_checks(pr: dict) -> list[dict]:
+    return [item for item in (pr.get("checks") or {}).get("contexts", [])
+            if item.get("purpose") != "reviewer-assignment"]
+
+
 def check_states(pr: dict) -> set[str]:
     checks = pr.get("checks") or {}
-    return {state for state in [checks.get("state"), *(item["state"] for item in checks.get("contexts", []))]
-            if isinstance(state, str)}
+    states = {item["state"] for item in validation_checks(pr)}
+    aggregate = checks.get("state")
+    administrative = {item["state"] for item in checks.get("contexts", [])
+                      if item.get("purpose") == "reviewer-assignment"}
+    explained = complete_checks(pr) and (
+        aggregate in FAILURES and bool(administrative & FAILURES)
+        or aggregate in PENDING and bool(administrative & PENDING))
+    # Preserve aggregate problems unless the complete inventory explains them
+    # with a known administrative result of the same class.
+    if isinstance(aggregate, str) and not explained:
+        states.add(aggregate)
+    return states
 
 
 def checks_passed(pr: dict) -> bool:
+    # Keep merge-readiness conservative: separating an administrative failure
+    # from source validation does not establish that all service gates passed.
     checks = pr.get("checks") or {}
-    return bool(checks.get("complete") and checks.get("total", 0) > 0
-                and len(checks.get("contexts", [])) == checks["total"]
+    return bool(complete_checks(pr) and validation_checks(pr)
                 and checks.get("state") == "SUCCESS"
-                and check_states(pr) <= PASSED)
+                and all(item["state"] in PASSED for item in checks["contexts"]))
 
 
 def check_qualifier(pr: dict) -> str:
     states = check_states(pr)
     return ("Checks failing" if states & FAILURES else "Checks pending" if states & PENDING
-            else "Checks passed" if checks_passed(pr) else "Checks unknown")
+            else "Validation checks passed" if complete_checks(pr) and validation_checks(pr) and states <= PASSED
+            else "Checks unknown")
 
 
 def review_decision(pr: dict) -> str | None:

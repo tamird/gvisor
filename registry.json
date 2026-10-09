@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T18:48:48.302131+00:00",
+    "updatedAt": "2026-10-09T19:20:02.218246+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2197,17 +2197,17 @@
       "group": "runtime",
       "status": "open",
       "summary": "The reviewer-assignment workflow failed after selecting reviewers: GitHub POST requested_reviewers returned HTTP 500 at 16:55:30 UTC. The log contains no source diagnosis; no rerun, manual reviewer request or public reply has been made.\n\nThe contributor approved exact 46ad8cc5b22b84e9116e68567532cab9e8b664c7, and ready PR #15449 is now open against master. Root verified the single commit, head, reviewed body and thread metadata. The standing sweep owns CI, import and review follow-up.\n\nThe contributor-requested Read/cursor amendment is public and tracked at 46ad8cc5b22b84e9116e68567532cab9e8b664c7. Its complete owning obligations now have passing composed evidence. The original https://app.buildbuddy.io/invocation/c574883b-21c5-47d9-bb6f-e475aa2faa80 remains FAILED before runtime because the mapped-write qualification context left an unused io import; its actual tun_nogo passed both CPU analyses. The one-line qualified-only correction dfe4d9af5a95de70c3532d639ba93fc4a0441b1d passes https://app.buildbuddy.io/invocation/1b2c3b0a-6185-40f4-99a0-42a8b4bab724 in 211.698 seconds. Both complete shared/directfs TUN suites execute 44 named entries: 42 passes and the two existing WriteToDownDevice skips. Tundev Nogo passes both CPU analyses; the already-passed tun_nogo is reused.\n\nIndependent cumulative peer 40a95d085143 verifies both saved archives, 398 indexed files, four raw compact traces and all original uncached 300-second Action/Command/stdout/XML joins, with no local spawns. Source composition preserves the separate mapped writer/MTU context while applying the exact reviewed Read/Device.Write functions; this is not an exact standalone whole-file run. Existing suites do not directly exercise truncated-read or partial-EFAULT contracts. That renewed review request is resolved by the approved publication above.\n\nPrior proposal and source-specific evidence:\n\nThe independent TUN proposal is refreshed, public and tracked at fb54693011eb96d5d75e1af74a0944e86ab95061 on upstream e1bc. Both production blobs exactly match the reviewed original 900d proposal. It keeps segmented Buffer ownership through Device and file-description I/O, copying only fixed-size input headers and preserving the existing write-size guard and Go heap allocation. The future sentry-managed storage consumer remains separate. Complete source/lifetime and historical evidence peer 770a7bccd844 is closed. The contributor answered with questions and requested changes to the segmented TUN proposal. Root owns the source/design response; that earlier revision was superseded by the approved 46ad publication above. Prior evidence below remains source-specific historical proof.\n\nPrimary metadata recovered from parent cd518896 confirms COMPLETE/OK in 232.963 seconds at tested composition d59821c91, with both full shared/DirectFS syscall owners and both production Nogo owners PASSED. All five changed I/O functions and the complete tundev source match that tested composition; its Device also contains separate errno/MTU setup changes, so this is source-specific composed evidence.\n\nThe prior closed record reports 22 XML cases per syscall owner (21 passes plus the existing WriteToDownDevice skip), and AMD64/ARM64 analysis for both Nogo owners. Five requested old CAS output/summary objects are unavailable; those detailed case and architecture observations remain historical, not freshly replayed. No new standalone run, ARM runtime, mapped-storage/restore or performance claim is made.",
-      "updatedAt": "2026-10-07T17:18:00.568068+00:00",
+      "updatedAt": "2026-10-09T19:20:02.218246+00:00",
       "followup": {
-        "disposition": "open; assignment API failure",
+        "disposition": "Awaiting maintainer review; reviewer-assignment workflow error",
         "owner": "external_sweeps",
-        "nextAction": "Follow CI and review in the standing sweep; retain the assignment HTTP 500 diagnosis without changing source or issuing an unauthorized reviewer request.",
+        "nextAction": "Follow maintainer review. The administrative assignment HTTP500 remains visible; it is not a source or lint failure.",
         "sourceHead": "46ad8cc5b22b84e9116e68567532cab9e8b664c7",
         "evidence": [
           "https://github.com/google/gvisor/pull/15449",
           "https://github.com/google/gvisor/actions/runs/37655169313/job/112908325933"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-09T19:16:38.099061+00:00",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
       },
@@ -4552,21 +4552,21 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/landlock-unprivileged-restriction",
-      "head": "72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a",
+      "head": "23ec3b582aa10aef02cd0f2e4cc7e83796ebe4d2",
       "title": "Drop privilege in the Landlock rejection test",
       "url": "https://github.com/google/gvisor/pull/15508",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-08T11:41:04.884295+00:00",
-      "summary": "Contributor-approved PR #15508 is open at 72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a. The delivery owner verified its exact head and approved wrapped description. The contributor decision is fulfilled; current CI, maintainer review and import status are tracked below. The earlier scoped native evidence remains valid within its recorded limits.\n\nEarlier observations:\n\nA contributor review question is now pending for this exact public standalone commit. Independent source review and the combined native-correction saved-result review are closed. The existing RestrictSelfWithoutNoNewPrivsFails case executed and passed in the complete native Landlock owner. The combined Actions run 37758739367 retained all 82 original 300-second actions and remains failed because of separate exec/key-limit findings; the two native cgroup-transfer EBUSY skips remain unresolved. No upstream PR is open.",
+      "updatedAt": "2026-10-09T19:20:02.218246+00:00",
+      "summary": "The missing Landlock capability providers were fixed at23ec3b582 after the import pipeline reported clang-tidy failures. Focused remote lint passed on the source-equivalent qualification. The current source head now needs its own checks and approval; the old72f2 approval and failing import15529 remain historical evidence.\n\nEarlier delivery:\n\nContributor-approved PR #15508 is open at 72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a. The delivery owner verified its exact head and approved wrapped description. The contributor decision is fulfilled; current CI, maintainer review and import status are tracked below. The earlier scoped native evidence remains valid within its recorded limits.\n\nEarlier observations:\n\nA contributor review question is now pending for this exact public standalone commit. Independent source review and the combined native-correction saved-result review are closed. The existing RestrictSelfWithoutNoNewPrivsFails case executed and passed in the complete native Landlock owner. The combined Actions run 37758739367 retained all 82 original 300-second actions and remains failed because of separate exec/key-limit findings; the two native cgroup-transfer EBUSY skips remain unresolved. No upstream PR is open.",
       "followup": {
-        "disposition": "Current-head approval; import pipeline failing",
+        "disposition": "Lint correction delivered; current-head checks and review pending",
         "owner": "external_sweeps",
-        "nextAction": "Keep pipeline50176 failure distinct from passing internal31875 and Go tests; cause not yet diagnosed.",
-        "sourceHead": "72f2f2f132cba26bcdfcfa2606bc3b50ca25bf5a",
-        "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE",
-        "reviewedAt": "2026-10-08T21:05:14.556649+00:00",
+        "nextAction": "Observe checks and fresh approval for23ec3b582. Import15529 refers to the older72f2 source and cannot make this current head fail.",
+        "sourceHead": "23ec3b582aa10aef02cd0f2e4cc7e83796ebe4d2",
+        "reviewDecision": "REVIEW_REQUIRED",
+        "mergeable": "UNKNOWN",
+        "reviewedAt": "2026-10-09T19:16:38.099061+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15508"
         ]

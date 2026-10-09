@@ -77,21 +77,35 @@ function reviewInfo(pr) {
     REVIEW_REQUIRED: { text: "Maintainer review", tone: "pending", glyph: "○" } })[effectiveReviewDecision(pr)]
     || { text: "Not reported", tone: "unknown", glyph: "?" };
 }
+function completeChecks(pr) {
+  const checks = pr?.checks;
+  return Boolean(checks?.complete && checks.total > 0 && checks.contexts.length === checks.total);
+}
+function validationChecks(pr) { return (pr?.checks?.contexts || []).filter(check => check.purpose !== "reviewer-assignment"); }
+function codeCheckStates(pr) {
+  const result = new Set(validationChecks(pr).map(check => check.state));
+  const aggregate = pr?.checks?.state;
+  const administrative = (pr?.checks?.contexts || []).filter(check => check.purpose === "reviewer-assignment");
+  const pending = new Set(["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"]);
+  const explained = completeChecks(pr) && (FAILURE_STATES.has(aggregate) && administrative.some(check => FAILURE_STATES.has(check.state))
+    || pending.has(aggregate) && administrative.some(check => pending.has(check.state)));
+  if (aggregate && !explained) result.add(aggregate);
+  return result;
+}
 function checkInfo(pr) {
   const checks = pr?.checks;
   if (!checks || !checks.total) return { text: "Unavailable", tone: "unknown", glyph: "?", detail: "No visible check rollup for this head; no test result is implied." };
-  const groups = { succeeded: 0, skipped: 0, neutral: 0, failed: 0, pending: 0, unknown: 0 };
-  for (const check of checks.contexts) {
-    const key = check.state === "SUCCESS" ? "succeeded" : check.state === "SKIPPED" ? "skipped" : check.state === "NEUTRAL" ? "neutral"
-      : FAILURE_STATES.has(check.state) ? "failed"
-        : ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(check.state) ? "pending" : "unknown";
-    groups[key]++;
-  }
-  const result = ({ SUCCESS: { text: "Success", tone: "good", glyph: "✓" }, FAILURE: { text: "Failure", tone: "bad", glyph: "!" },
-    ERROR: { text: "Error", tone: "bad", glyph: "!" }, PENDING: { text: "Pending", tone: "pending", glyph: "○" } })[checks.state]
-    || { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, detail: `${checks.total} check/status contexts: ${Object.entries(groups).filter(([, count]) => count).map(([key, count]) => `${count} ${key}`).join(", ")}${checks.complete ? "" : "; context list incomplete"}. GitHub checks/statuses, not a test-case result.` };
+  const states = codeCheckStates(pr), substantive = validationChecks(pr);
+  const failed = [...states].some(state => FAILURE_STATES.has(state));
+  const pending = [...states].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state));
+  const passed = completeChecks(pr) && substantive.length > 0 && [...states].every(state => ["SUCCESS", "SKIPPED", "NEUTRAL"].includes(state));
+  const assignmentFailures = checks.contexts.filter(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state));
+  const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
+    : passed ? { text: assignmentFailures.length ? "Passed · assignment issue" : "Success", tone: assignmentFailures.length ? "pending" : "good", glyph: assignmentFailures.length ? "!" : "✓" }
+      : { text: "Unknown", tone: "unknown", glyph: "?" };
+  return { ...result, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
+
 function badge(info, title) {
   const node = element("span", `attribute-badge ${info.tone}`, info.text);
   if (title) node.title = title;
@@ -123,7 +137,7 @@ function appendChecks(container, pr, heading) {
   section.append(element("p", "detail-meta", info.detail));
   for (const check of pr.checks?.contexts || []) {
     const row = element("div", "check-row");
-    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", check.state.toLowerCase().replaceAll("_", " ")));
+    row.append(check.url ? link(check.name, check.url) : element("span", "", check.name), element("span", "check-state", `${check.state.toLowerCase().replaceAll("_", " ")}${check.purpose === "reviewer-assignment" ? " · reviewer assignment" : ""}`));
     if (!check.url) row.title = "No public log URL reported. The status is reported by GitHub; logs were not inspected.";
     section.append(row);
   }
@@ -292,7 +306,7 @@ function failureSources(node) {
   const pr = node.github;
   if (!pr) return [];
   return [pr, ...pr.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))]
-    .filter(item => FAILURE_STATES.has(item.checks?.state) || item.checks?.contexts.some(check => FAILURE_STATES.has(check.state)))
+    .filter(item => [...codeCheckStates(item)].some(state => FAILURE_STATES.has(state)))
     .map(item => ({ ...item, failureLabel: item === pr ? "Source checks failing" : `Import #${item.number} failing` }));
 }
 function contributorChanges(node) {
@@ -322,7 +336,7 @@ function appendStates(parent, node, detail = false) {
     if (detail) for (const source of failures) {
       const row = element("div", "state-failure-links");
       row.append(link(source.failureLabel, source.url), document.createTextNode(": "));
-      for (const check of source.checks?.contexts || []) if (FAILURE_STATES.has(check.state)) {
+      for (const check of validationChecks(source)) if (FAILURE_STATES.has(check.state)) {
         row.append(check.url ? link(check.name, check.url) : element("span", "", `${check.name} (no public log URL)`), document.createTextNode("; "));
       }
       parent.append(row);
@@ -798,6 +812,18 @@ function stateRecords(snapshot, node) {
         ? { scope: null, since: null, basis: "unknown", qualifier: "New head; approval has not been collected" }
         : { scope: pr.head, since: pr.conflictCheckedAt, basis: "observed", qualifier: null };
     }
+    // Reconcile legacy aggregate-failure records only from complete inventories.
+    // Administrative assignment errors remain visible in the raw check details.
+    const visible = [node.github, ...node.github.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))];
+    if (node.github.importsComplete && visible.every(completeChecks)) {
+      const failures = failureSources(node);
+      if (!failures.length) delete records.failing;
+      else if (records.failing) {
+        const scope = failures.map(item => `${item.number}:${item.head}`).join(",");
+        if (records.failing.scope !== scope) records.failing = { scope, since: snapshot.checkedAt, basis: "observed", qualifier: failures.map(item => item.failureLabel).join("; ") };
+      }
+      if (!visible.some(item => [...codeCheckStates(item)].some(state => ["PENDING", "QUEUED", "IN_PROGRESS", "WAITING", "REQUESTED"].includes(state)))) delete records["checks-pending"];
+    }
     const conflict = conflictRecord(node.github);
     if (conflict && ["open", "draft"].includes(node.github.status)) records.conflicts = { ...conflict,
       since: records.conflicts?.scope === conflict.scope ? records.conflicts.since : conflict.since };
@@ -923,6 +949,10 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
           !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation");
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
+      for (const check of item.checks?.contexts || []) {
+        if (check.purpose !== undefined && !["validation", "reviewer-assignment"].includes(check.purpose)) throw new Error("Invalid check purpose");
+        if (check.purpose === "reviewer-assignment" && (check.kind !== "check-run" || check.appSlug !== "github-actions" || check.workflow !== "Auto Assign" || check.name !== "assign")) throw new Error("Unverified administrative check identity");
+      }
     }
   }
 }

@@ -3,7 +3,7 @@
 import copy
 import unittest
 
-from work_states import pr_states, record_states, remember_mergeability, review_decision
+from work_states import check_purpose, checks_passed, pr_states, record_states, remember_mergeability, review_decision
 
 
 def original(**changes: object) -> dict:
@@ -19,6 +19,63 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_assignment_error_is_not_a_source_failure(self):
+        assignment = {"kind": "check-run", "appSlug": "github-actions", "workflow": "Auto Assign",
+                      "name": "assign", "state": "FAILURE", "purpose": "reviewer-assignment"}
+        lint = {"name": "lint", "state": "SUCCESS", "purpose": "validation"}
+        pr = original(checks={"state": "FAILURE", "total": 2, "complete": True,
+                              "contexts": [assignment, lint]})
+        self.assertEqual(set(pr_states(pr)), {"maintainer-review"})
+        self.assertEqual(pr["checks"]["state"], "FAILURE")
+        self.assertFalse(checks_passed(pr))
+        previous = {"checkedAt": "2026-10-01T00:00:00Z", "prs": [copy.deepcopy(pr)],
+                    "workStates": {"pr:1": {"failing": {"scope": "1:" + pr["head"],
+                        "since": "2026-10-01T00:00:00Z", "basis": "observed", "qualifier": "Source checks failing"}}}}
+        self.assertNotIn("failing", record_states([pr], {"nodes": []}, previous, "2026-10-02T00:00:00Z")["pr:1"])
+        pr["checks"]["contexts"][1]["state"] = "FAILURE"
+        self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Source checks failing")
+
+    def test_administrative_identity_requires_provider_and_workflow(self):
+        check = {"kind": "check-run", "appSlug": "github-actions", "workflow": "Auto Assign", "name": "assign"}
+        self.assertEqual(check_purpose(check), "reviewer-assignment")
+        for change in ({"kind": "status"}, {"appSlug": "other"}, {"workflow": None},
+                       {"workflow": "Build"}, {"name": "lint"}):
+            with self.subTest(change=change):
+                self.assertEqual(check_purpose({**check, **change}), "validation")
+
+    def test_admin_only_and_incomplete_checks_do_not_grant_readiness(self):
+        assignment = {"state": "FAILURE", "purpose": "reviewer-assignment"}
+        for complete, total, contexts in [(True, 1, [assignment]),
+                                         (False, 2, [assignment, {"state": "SUCCESS"}])]:
+            with self.subTest(complete=complete):
+                pr = original(reviewDecision="APPROVED", mergeable="MERGEABLE",
+                              checks={"state": "FAILURE", "complete": complete, "total": total, "contexts": contexts})
+                self.assertFalse(checks_passed(pr))
+                self.assertEqual("failing" in pr_states(pr), not complete)
+        unknown = original(checks={"state": "FAILURE", "complete": True, "total": 1,
+                                   "contexts": [{"name": "assign", "state": "FAILURE"}]})
+        self.assertIn("failing", pr_states(unknown))
+
+    def test_unexplained_aggregate_failure_and_pending_are_retained(self):
+        for aggregate in ("FAILURE", "PENDING"):
+            for assignment in ([], [{"state": "SUCCESS", "purpose": "reviewer-assignment"}]):
+                with self.subTest(aggregate=aggregate, assignment=assignment):
+                    contexts = [{"name": "lint", "state": "SUCCESS"}, *assignment]
+                    pr = original(checks={"state": aggregate, "complete": True,
+                                          "total": len(contexts), "contexts": contexts})
+                    self.assertIn("failing" if aggregate == "FAILURE" else "checks-pending", pr_states(pr))
+                    self.assertFalse(checks_passed(pr))
+
+    def test_import_validation_failure_survives_source_assignment_error(self):
+        imported = original(number=2, head="b" * 40, matchesSourceHead=True,
+                            checks={"state": "FAILURE", "complete": True, "total": 1,
+                                    "contexts": [{"name": "buildkite/pipeline", "state": "FAILURE"}]})
+        pr = original(reviewDecision="APPROVED", imports=[imported],
+                      checks={"state": "FAILURE", "complete": True, "total": 2,
+                              "contexts": [{"state": "FAILURE", "purpose": "reviewer-assignment"},
+                                           {"state": "SUCCESS", "purpose": "validation"}]})
+        self.assertEqual(pr_states(pr)["failing"]["qualifier"], "Import #2 failing")
+
     def test_unknown_retains_concrete_conflict_without_approval_credit(self):
         old = original(mergeable="CONFLICTING", base="b" * 40, checkedAt="2026-10-01T00:00:00Z")
         pr = {**old, "mergeable": "UNKNOWN", "base": "c" * 40}
