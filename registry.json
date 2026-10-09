@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T13:39:06.596686+00:00",
+    "updatedAt": "2026-10-09T13:51:02.166808+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -101,20 +101,22 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-06T14:33:47.732085+00:00",
-      "summary": "Etienne requested changes on exact c5e943bc48 at 07:17:45 UTC on October 3: \u201cHold on this for a week, it will fail internal checks until some exception goes through.\u201d https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571. The explicit review hold keeps its dependent upstream deliveries blocked; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at c5e943bc48ce63b12fc67b826919b872ebd01a55 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15146#issuecomment-5963410153. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "updatedAt": "2026-10-09T13:51:02.166808+00:00",
+      "summary": "The source-preserving rebase is published at 44d3ce3bc on upstream c5e9146e6. Actual GitHub observation at 2026-10-09T13:46:03.171165+00:00 reports MERGEABLE and CHANGES_REQUESTED. The original October 3 one-week maintainer hold and its owner remain unchanged; no comment or reviewer request was added. Independent source review found only current-base BUILD/module context adaptations, with the approved behavior retained. No fresh standalone runtime pass is claimed.\n\nEarlier source and hold history:\n\nEtienne requested changes on exact c5e943bc48 at 07:17:45 UTC on October 3: \u201cHold on this for a week, it will fail internal checks until some exception goes through.\u201d https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571. The explicit review hold keeps its dependent upstream deliveries blocked; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at c5e943bc48ce63b12fc67b826919b872ebd01a55 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15146#issuecomment-5963410153. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
       "followup": {
-        "disposition": "explicit maintainer time hold",
+        "disposition": "Maintainer time hold; source-preserving rebase complete",
         "owner": "root / upstream maintainer",
-        "nextAction": "Hold for a week from October 3 07:17 UTC for internal exceptions; approximately October 10, subject to maintainer confirmation. This blocks dependent upstream deliveries; authorized fork integration and validation continue.",
+        "nextAction": "Preserve the one-week hold from October 3 for internal exceptions, approximately October 10 subject to maintainer confirmation. A conflict-free new head is not approval and does not bypass the existing changes request.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571"
+          "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
+          "https://github.com/tamird/gvisor/commit/44d3ce3bc"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
-        "sourceHead": "c5e943bc48ce63b12fc67b826919b872ebd01a55",
+        "reviewedAt": "2026-10-09T13:51:02.166808+00:00",
+        "sourceHead": "44d3ce3bcc2b30a60748a64a3ab014591dc6272e",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "CONFLICTING"
-      }
+        "mergeable": "MERGEABLE"
+      },
+      "head": "44d3ce3bcc2b30a60748a64a3ab014591dc6272e"
     },
     {
       "id": "pr:15145",
@@ -418,20 +420,22 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-08T11:01:37.762362+00:00",
-      "summary": "The complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 6163d92a567f0983df38f57ec2596adc917ae78a. Preserve the one-week hold from October 3 07:24:40 UTC, approximately October 10 subject to maintainer confirmation. The new conflict does not override CHANGES_REQUESTED or justify bypassing the hold.\n\nEarlier source and review history:\n\nEtienne requested changes at 07:24:40 UTC on October 3: \u201cHold for a week for internal exceptions to propagate before this can be merged.\u201d https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222. The source remains open; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at 6163d92a567f0983df38f57ec2596adc917ae78a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15114#issuecomment-5963409102. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "updatedAt": "2026-10-09T13:51:02.166808+00:00",
+      "summary": "The source-preserving rebase is published at 41b6cb93d on upstream c5e9146e6. Actual GitHub observation at 2026-10-09T13:46:03.171165+00:00 reports MERGEABLE and CHANGES_REQUESTED. The original October 3 one-week maintainer hold and its owner remain unchanged; no comment or reviewer request was added. Independent source review found only current-base BUILD/module context adaptations, with the approved behavior retained. No fresh standalone runtime pass is claimed.\n\nEarlier source and hold history:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 6163d92a567f0983df38f57ec2596adc917ae78a. Preserve the one-week hold from October 3 07:24:40 UTC, approximately October 10 subject to maintainer confirmation. The new conflict does not override CHANGES_REQUESTED or justify bypassing the hold.\n\nEarlier source and review history:\n\nEtienne requested changes at 07:24:40 UTC on October 3: \u201cHold for a week for internal exceptions to propagate before this can be merged.\u201d https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222. The source remains open; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at 6163d92a567f0983df38f57ec2596adc917ae78a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15114#issuecomment-5963409102. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
       "followup": {
-        "disposition": "Maintainer time hold; current-base conflict",
+        "disposition": "Maintainer time hold; source-preserving rebase complete",
         "owner": "root",
-        "nextAction": "Preserve the one-week hold from October 3 07:24:40 UTC, approximately October 10 subject to maintainer confirmation. The new conflict does not override CHANGES_REQUESTED or justify bypassing the hold.",
+        "nextAction": "Preserve the one-week hold from October 3 for internal exceptions, approximately October 10 subject to maintainer confirmation. A conflict-free new head is not approval and does not bypass the existing changes request.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222"
+          "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222",
+          "https://github.com/tamird/gvisor/commit/41b6cb93d"
         ],
-        "reviewedAt": "2026-10-08T11:01:37.762362+00:00",
-        "sourceHead": "6163d92a567f0983df38f57ec2596adc917ae78a",
+        "reviewedAt": "2026-10-09T13:51:02.166808+00:00",
+        "sourceHead": "41b6cb93dec58b766b709223135196462439f280",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "CONFLICTING"
-      }
+        "mergeable": "MERGEABLE"
+      },
+      "head": "41b6cb93dec58b766b709223135196462439f280"
     },
     {
       "id": "pr:15111",
@@ -6374,8 +6378,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T13:39:06.596686+00:00",
-      "summary": "Targeted controller and recovery correctness checks pass. One controlled high-BDP comparison favors the repaired CUBIC bundle over repaired Reno; broader performance and outage conclusions remain open. The user is reviewing clearer tests for the first ACK-credit proposals.",
+      "updatedAt": "2026-10-09T13:51:02.166808+00:00",
+      "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The user is reviewing the clearer ACK tests and independent recovery proposals.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6583,16 +6587,24 @@
           ]
         },
         {
-          "text": "A separate six-block final-controller comparison workflow has completed successfully. Its original artifacts are being collected and checked before any measurement conclusion; the earlier 35-flow result remains separate.",
+          "text": "The final-controller matrix retained all 60 trials and independently joined their source, generated state, archives and actual helper binaries. At 100 Mbps, 100 ms RTT and configured 0.01% unseeded loss, repaired Netstack CUBIC exceeded repaired Netstack Reno in all six within-job pairs: median paired ratio 2.14\u00d7, range 1.62\u20132.36\u00d7. Repaired CUBIC also exceeded original CUBIC in all six pairs (median 1.75\u00d7), but remained below native Linux CUBIC in every pair (median 0.93\u00d7). The separate small-BDP controls are not pooled. Distinct job IDs do not establish physical-worker independence; these sequential single-flow measurements do not establish fairness, loaded latency, universal superiority or the historical outage cause.",
           "evidence": [
             {
-              "label": "Final-controller comparison awaiting saved-result audit",
+              "label": "Complete final-controller 60-trial matrix",
               "url": "https://github.com/tamird/gvisor/actions/runs/37934352885"
+            },
+            {
+              "label": "Exact matrix method",
+              "url": "https://github.com/tamird/gvisor/commit/7e6c53169"
+            },
+            {
+              "label": "Measured corrected controller source",
+              "url": "https://github.com/tamird/gvisor/commit/4da0a21a2"
             }
           ]
         }
       ],
-      "nextStep": "Finish revised ACK-test validation and contributor review, assess final-controller performance separately, and continue the investigation without attributing the historical outage.",
+      "nextStep": "Complete contributor review and remaining qualification, and assess other scenarios without generalizing this measured high-BDP result.",
       "evidence": [
         {
           "label": "Production CUBIC",
