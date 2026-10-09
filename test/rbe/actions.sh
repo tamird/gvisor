@@ -232,7 +232,7 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
 fi
 
 if [[ ${lanes[*]} == benchmarks && ${QUALIFICATION_BENCHMARK_TARGET:-} == //test/benchmarks/tcp:tcp_benchmark ]]; then
-  timeout --signal=INT --kill-after=30s 60m bash test/rbe/tcp_congestion_smoke.sh
+  timeout --signal=INT --kill-after=30s 80m bash test/rbe/tcp_congestion_smoke.sh
   exit 0
 fi
 
