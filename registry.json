@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T20:17:55.863852+00:00",
+    "updatedAt": "2026-10-09T20:26:16.392664+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2833,16 +2833,16 @@
       "url": "https://github.com/google/gvisor/pull/15217",
       "group": "tests",
       "status": "open",
-      "summary": "The patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval.",
+      "summary": "Etienne submitted a fresh approval of the rebased head after notification. Current source CI now reports feedback/copybara failure with no public diagnostic URL; the matching import #15398 remains pending. No source cause is established.",
       "number": 15217,
-      "updatedAt": "2026-10-09T20:02:43.526698+00:00",
+      "updatedAt": "2026-10-09T20:26:16.392664+00:00",
       "reviewDecision": "APPROVED",
       "followup": {
-        "disposition": "Fresh current-head review received after rebase",
-        "owner": "external_sweeps",
+        "disposition": "Freshly approved; Copybara failure has no public diagnostic",
+        "owner": "root",
         "sourceHead": "d4132a0c9956c7fb107695d2844b0e7415aaa62f",
-        "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "Observe current-head CI and matching import progress.",
+        "reviewedAt": "2026-10-09T20:23:59.159419+00:00",
+        "nextAction": "Observe the matching import and any accessible maintainer diagnostic. The Copybara status has no public log URL; no internal access or speculative source fix is attempted.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15217#pullrequestreview-5474700691",
           "https://github.com/google/gvisor/pull/15217#issuecomment-6088132542",
@@ -2852,7 +2852,7 @@
           "https://github.com/google/gvisor/commit/e1c958717"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "head": "d4132a0c9956c7fb107695d2844b0e7415aaa62f"
     },
@@ -4940,14 +4940,14 @@
       "url": "https://github.com/google/gvisor/pull/15579",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T20:02:43.526698+00:00",
-      "summary": "The current source is approved, but matching import #15589 now fails the public Go generate job and go-tests status. The restore_integration_review owner is diagnosing the actual job; no source cause is claimed yet.",
+      "updatedAt": "2026-10-09T20:26:16.392664+00:00",
+      "summary": "The current source remains approved. Matching import #15589 advanced to 55f97af1e and its checks are pending; the older f057cd3fb generate failure no longer describes the current import head. Its original public job remains assigned for diagnosis, without claiming a source cause or that the new head passed.",
       "followup": {
-        "disposition": "Current import failure assigned for diagnosis",
+        "disposition": "Prior import failure assigned; current import pending",
         "owner": "restore_integration_review",
         "sourceHead": "1a12268af0b1a89bc67bc1e5eb3541f678693f69",
-        "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "Diagnose the public import generate failure and hand any concrete source repair to root.",
+        "reviewedAt": "2026-10-09T20:23:59.159419+00:00",
+        "nextAction": "Finish the original public generate-job diagnosis while the sole event observer follows the new import head; retain the old failure separately.",
         "evidence": [
           "https://github.com/google/gvisor/actions/runs/37981674651/job/113993478213",
           "https://github.com/google/gvisor/pull/15579",
@@ -4955,7 +4955,7 @@
           "https://github.com/google/gvisor/pull/15579#pullrequestreview-5474427177"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15579
     },
