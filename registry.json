@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T14:19:26.234171+00:00",
+    "updatedAt": "2026-10-09T14:26:47.673151+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6378,7 +6378,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T14:19:26.234171+00:00",
+      "updatedAt": "2026-10-09T14:26:47.673151+00:00",
       "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The user is reviewing the clearer ACK tests and independent recovery proposals.",
       "findings": [
         {
@@ -6604,10 +6604,10 @@
           ]
         },
         {
-          "text": "A separate shared-flow harness extension is under functional validation, covering compatibility, shared and late-start traffic modes and expected termination handling. The prior observation-harness checks remain separate. No comparative sharing or fairness result is established yet.",
+          "text": "The first shared-flow functional validation ended in failure. All 13 normal modes passed their runtime and output checks, but the expected-termination case did not retain the required inner cleanup/client/receiver exit records. Original outputs and the failed parent remain recorded. A two-delimiter supervisor correction is prepared for a two-case continuation; no new acceptance had been observed at this update. No comparative sharing or fairness result is established.",
           "evidence": [
             {
-              "label": "Shared-flow harness functional validation",
+              "label": "Original shared-flow validation (termination proof incomplete)",
               "url": "https://github.com/tamird/gvisor/actions/runs/37941724114"
             },
             {
