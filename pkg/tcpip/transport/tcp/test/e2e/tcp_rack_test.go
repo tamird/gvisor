@@ -1137,6 +1137,52 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 			t.Errorf("Outstanding after partial cumulative ACK = %d, want %d", got, want)
 		}
 	})
+	t.Run("overlapping_sacks_across_acks", func(t *testing.T) {
+		c, _, snapshot := newContext(t, tcpip.TCPRACKLossDetection, stack.GVisorGSOSupported)
+		start := c.IRS.Add(1 + 2*maxPayload)
+		// Each ACK reports only part of packet 3. Together they cover the
+		// whole packet, so the retained merged range earns one credit.
+		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: start.Add(6)}})
+		first := snapshot()
+		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start.Add(4), End: start.Add(maxPayload)}})
+		merged := snapshot()
+		c.SendAck(seq, len(data))
+		complete := snapshot()
+
+		checkCredit(t, "partial packet SACK", first, 0)
+		checkCredit(t, "merged partial SACKs", merged, 1)
+		checkCredit(t, "full cumulative ACK", complete, 0)
+	})
+	t.Run("overlapping_sacks_one_ack", func(t *testing.T) {
+		c, _, snapshot := newContext(t, tcpip.TCPRACKLossDetection, stack.GVisorGSOSupported)
+		start := c.IRS.Add(1 + 2*maxPayload)
+		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{
+			{Start: start, End: start.Add(6)},
+			{Start: start.Add(4), End: start.Add(maxPayload)},
+		})
+		merged := snapshot()
+		c.SendAck(seq, len(data))
+		complete := snapshot()
+
+		checkCredit(t, "merged SACKs in one ACK", merged, 1)
+		checkCredit(t, "full cumulative ACK", complete, 0)
+	})
+	t.Run("overlapping_sacks_with_cumulative_ack", func(t *testing.T) {
+		c, _, snapshot := newContext(t, tcpip.TCPRACKLossDetection, stack.GVisorGSOSupported)
+		start := c.IRS.Add(1 + 2*maxPayload)
+		c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: start.Add(6)}})
+		first := snapshot()
+		// Merge the rest of packet 3 while cumulatively acknowledging its
+		// first half. The remaining half keeps one current-MSS credit.
+		c.SendAckWithSACK(seq, 2*maxPayload+5, []header.SACKBlock{{Start: start.Add(6), End: start.Add(maxPayload)}})
+		trimmed := snapshot()
+		c.SendAck(seq, len(data))
+		complete := snapshot()
+
+		checkCredit(t, "partial packet SACK", first, 0)
+		checkCredit(t, "merged range after simultaneous cumulative ACK", trimmed, 1)
+		checkCredit(t, "full cumulative ACK", complete, 0)
+	})
 	t.Run("gso_partial_ack", func(t *testing.T) {
 		c, _, snapshot := newContext(t, tcpip.TCPRACKLossDetection, stack.GVisorGSOSupported)
 		start := c.IRS.Add(1 + 2*maxPayload)
