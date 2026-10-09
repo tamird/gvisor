@@ -68,11 +68,11 @@ type cubicState struct {
 	// RTO.
 	numCongestionEvents int
 
-	// idleSince excludes periods with no queued or outstanding data from
-	// the cubic epoch. LastSendTime cannot serve this purpose: ACK-only
-	// transmissions also update it.
-	idleSince tcpip.MonotonicTime
-	idle      bool
+	// pausedSince excludes application- and receiver-limited periods from
+	// the cubic epoch. A partial flight can remain outstanding throughout
+	// such a period, so an empty send queue is not a sufficient signal.
+	pausedSince tcpip.MonotonicTime
+	paused      bool
 
 	s *sender
 }
@@ -220,19 +220,23 @@ func (c *cubicState) updateSlowStart(packetsAcked int) int {
 // +checklocks:c.s.ep.mu
 // +checklocksexclude:c.s.rtt.rttMutex
 func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime) {
-	if !c.idle && c.s.writeList.Front() == nil {
-		c.idleSince = c.s.ep.stack.Clock().NowMonotonic()
-		c.idle = true
-	}
 	slowStart := c.s.SndCwnd < c.s.Ssthresh
 	if c.s.Ssthresh == InitialSsthresh && slowStart {
 		c.updateHyStart(rtt, ackTime)
 	}
 	if slowStart {
+		if !c.s.isCwndLimited() {
+			// HyStart may just have ended slow start. Still initialize
+			// the new epoch, but do not add credit from a partial flight.
+			packetsAcked = 0
+		}
 		packetsAcked = c.updateSlowStart(packetsAcked)
 		if packetsAcked == 0 {
 			return
 		}
+	}
+	if !c.s.isCwndLimited() {
+		return
 	}
 	c.s.rtt.Lock()
 	srtt := c.s.rtt.TCPRTTState.SRTT
@@ -240,18 +244,26 @@ func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.M
 	c.s.SndCwnd = c.getCwnd(packetsAcked, c.s.SndCwnd, srtt)
 }
 
-// HandleTxStart implements congestionControl.HandleTxStart.
+// HandleCwndUsage implements congestionControl.HandleCwndUsage.
 //
 // +checklocks:c.s.ep.mu
-func (c *cubicState) HandleTxStart() {
-	if c.idle {
-		// Idle time provides no evidence that the path can carry a larger
-		// flight. RFC 9438 section 5.8 excludes it from the cubic epoch.
+func (c *cubicState) HandleCwndUsage(limited bool) {
+	if !limited {
+		if !c.paused {
+			c.pausedSince = c.s.ep.stack.Clock().NowMonotonic()
+			c.paused = true
+		}
+		return
+	}
+	if c.paused {
+		// RFC 9438 section 5.8 excludes underutilized periods from the
+		// epoch, including periods with data still in flight.
+		// https://www.rfc-editor.org/rfc/rfc9438.html#section-5.8
 		// An RTO while probing a closed receive window can start a newer
 		// epoch, so exclude only the overlap with the current epoch.
 		now := c.s.ep.stack.Clock().NowMonotonic()
-		c.T = c.T.Add(min(now.Sub(c.idleSince), now.Sub(c.T)))
-		c.idle = false
+		c.T = c.T.Add(min(now.Sub(c.pausedSince), now.Sub(c.T)))
+		c.paused = false
 	}
 }
 

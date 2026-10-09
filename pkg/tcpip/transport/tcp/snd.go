@@ -71,9 +71,11 @@ type congestionControl interface {
 	// HandleRTOExpired is invoked when the retransmit timer expires.
 	HandleRTOExpired()
 
-	// HandleTxStart is invoked when new data begins a flight. Like the
-	// outstanding-data count, it includes failed transmission attempts.
-	HandleTxStart()
+	// HandleCwndUsage reports whether the current flight has used the
+	// congestion window. It is called after sending, so controllers can
+	// resume their clocks before the first ACK of a full flight arrives.
+	// Like Outstanding, it accounts for failed transmission attempts.
+	HandleCwndUsage(limited bool)
 
 	// HandleWindowRestart is invoked after the sender reduces its window
 	// before restarting transmission after an idle period.
@@ -114,6 +116,13 @@ type sender struct {
 	TCPSenderState
 
 	ep *Endpoint
+
+	// Remember the strongest utilization signal until its flight has been
+	// acknowledged. Testing Outstanding after removing acknowledged packets
+	// would discard the signal on the last ACK of a full window.
+	cwndUsageEnd  seqnum.Value
+	maxPacketsOut int
+	cwndLimited   bool
 
 	// finSent is set when the FIN segment is actually transmitted.
 	// The endpoint may be in FIN_WAIT1/LAST_ACK while the FIN is still
@@ -1063,6 +1072,7 @@ func (s *sender) disableZeroWindowProbing() {
 // +checklocks:s.ep.mu
 // +checklocksexclude:s.rtt.rttMutex
 func (s *sender) postXmit(dataSent bool, shouldScheduleProbe bool) {
+	s.updateCwndUsage()
 	if dataSent {
 		// We sent data, so we should stop the keepalive timer to ensure
 		// that no keepalives are sent while there is pending data.
@@ -1133,15 +1143,37 @@ func (s *sender) sendData() {
 		if sent := s.maybeSendSegment(seg, limit, end); !sent {
 			break
 		}
-		if s.Outstanding == 0 && seg.payloadSize() > 0 {
-			s.cc.HandleTxStart()
-		}
 		dataSent = true
 		s.Outstanding += s.pCount(seg, s.MaxPayloadSize)
 		s.updateWriteNext(seg.Next())
 	}
 
 	s.postXmit(dataSent, true /* shouldScheduleProbe */)
+}
+
+// updateCwndUsage runs after ACK processing has used the previous flight's
+// signal, even if no new data could be sent. A receive-window update or an empty
+// send queue must not leave an acknowledged full-flight marker behind.
+// See Linux tcp_cwnd_validate:
+// https://github.com/torvalds/linux/blob/e5f0a698b/net/ipv4/tcp_output.c#L1920-L1938
+//
+// +checklocks:s.ep.mu
+func (s *sender) updateCwndUsage() {
+	limited := s.Outstanding >= s.SndCwnd
+	if !s.SndUna.LessThan(s.cwndUsageEnd) || limited || (!s.cwndLimited && s.Outstanding > s.maxPacketsOut) {
+		s.cwndLimited = limited
+		s.maxPacketsOut = s.Outstanding
+		s.cwndUsageEnd = s.SndNxt
+	}
+	s.cc.HandleCwndUsage(s.isCwndLimited())
+}
+
+// +checklocks:s.ep.mu
+func (s *sender) isCwndLimited() bool {
+	// Like Linux tcp_is_cwnd_limited, allow slow start to probe while cwnd
+	// is below twice its remembered flight size.
+	// https://github.com/torvalds/linux/blob/e5f0a698b/include/net/tcp.h#L1458-L1470
+	return s.cwndLimited || (s.SndCwnd < s.Ssthresh && s.maxPacketsOut > s.SndCwnd/2)
 }
 
 // +checklocks:s.ep.mu
