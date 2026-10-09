@@ -1,7 +1,10 @@
-// Basic sanity test. One system call.
+// Basic sanity test: create a socket and read its TCP_INFO state.
 //
 // All of the plumbing has to be working however, and the packetdrill wire
 // client needs to be able to connect to the wire server and send the script,
 // probe local interfaces, run through the test w/ timings, etc.
 
+--code_sockopt=TCP_INFO
+
 0.000 socket(..., SOCK_STREAM, IPPROTO_TCP) = 3
++0 %{ assert tcpi_state == TCP_CLOSE, tcpi_state }%
