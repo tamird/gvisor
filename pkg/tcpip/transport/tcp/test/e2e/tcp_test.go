@@ -48,6 +48,78 @@ import (
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
+func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
+	windowAfterIdle := func(idle time.Duration) int {
+		const payload = 32
+		const rtt = 100 * time.Millisecond
+		clock := faketime.NewManualClock()
+		c := context.NewWithOpts(t, context.Options{
+			EnableV4: true,
+			MTU:      header.TCPMinimumSize + header.IPv4MinimumSize + payload,
+			Clock:    clock,
+		})
+		defer c.Cleanup()
+		e2e.EnableCUBIC(t, c)
+		c.CreateConnected(789, 30000, -1)
+		ack := func(received int) {
+			c.SendAck(790, received)
+			c.Stack().Pause()
+			c.Stack().Resume()
+		}
+		window := func() int {
+			var info tcpip.TCPInfoOption
+			if err := c.EP.GetSockOpt(&info); err != nil {
+				t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+			}
+			return int(info.SndCwnd)
+		}
+		data := make([]byte, 64*payload)
+		write := func(data []byte) {
+			if n, err := c.EP.Write(bytes.NewReader(data), tcpip.WriteOptions{}); err != nil || n != int64(len(data)) {
+				t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
+			}
+		}
+		write(data[:tcp.InitialCwnd*payload])
+		received := 0
+		for range tcp.InitialCwnd {
+			c.ReceiveAndCheckPacket(data, received, payload)
+			received += payload
+		}
+		clock.Advance(rtt)
+		for range 3 {
+			ack(0)
+		}
+		c.ReceiveAndCheckPacket(data, 0, payload)
+		clock.Advance(rtt)
+		ack(received)
+		if got := window(); got >= tcp.InitialCwnd {
+			t.Fatalf("loss did not reduce cwnd: got %d, want < %d", got, tcp.InitialCwnd)
+		}
+
+		// All data is acknowledged and no application data remains queued.
+		// Compare identical resumed flights with and without an idle gap.
+		clock.Advance(idle)
+		flight := window()
+		write(data[received : received+2*flight*payload])
+		acked := received
+		for range flight {
+			c.ReceiveAndCheckPacket(data, received, payload)
+			received += payload
+		}
+		for range flight {
+			clock.Advance(rtt / time.Duration(flight))
+			acked += payload
+			ack(acked)
+		}
+		return window()
+	}
+	continuous := windowAfterIdle(0)
+	resumed := windowAfterIdle(5 * time.Second)
+	if resumed > continuous {
+		t.Fatalf("idle time increased cwnd growth: continuous=%d resumed=%d", continuous, resumed)
+	}
+}
+
 func TestCubicWindowGrowthAfterPacketLoss(t *testing.T) {
 	for _, recovery := range []string{"fast", "timeout"} {
 		for _, batch := range []int{1, 2, 10} {
