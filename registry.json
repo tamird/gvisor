@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T15:06:14.916316+00:00",
+    "updatedAt": "2026-10-09T15:37:24.609323+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4909,32 +4909,31 @@
       }
     },
     {
-      "id": "branch:tcp-cubic-ack-tests-revised",
-      "type": "branch",
-      "repo": "tamird/gvisor",
-      "ref": "revise/tcp-cubic-ack-tests",
-      "head": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
-      "title": "Preserve CUBIC ACK growth credit",
-      "url": "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f",
+      "id": "pr:15579",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tcp-cubic-ack-credit",
+      "head": "1a12268af0b1a89bc67bc1e5eb3541f678693f69",
+      "title": "tcp: preserve CUBIC ACK growth credit",
+      "url": "https://github.com/google/gvisor/pull/15579",
       "group": "runtime",
-      "status": "Prepared proposal",
-      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
-      "summary": "Approved with requested amendments. The user approved this CUBIC proposal subject to simpler arithmetic and got/want assertions. The revised arithmetic and assertion changes have passed independent source review; focused unit and analyzer validation is being prepared before delivery under the existing approval. There is no unanswered contributor question. The decision remains bound to the exact reviewed commit shown here; original topic commits and prior test evidence remain preserved.",
+      "status": "open",
+      "updatedAt": "2026-10-09T15:37:24.609323+00:00",
+      "summary": "The user-approved CUBIC ACK-credit repair is now PR #15579. Requested arithmetic simplification and got/want assertion changes are delivered. Ten selected CUBIC/HyStart cases passed on each of AMD64 and ARM64, and both owning analyzer targets passed. The portable integer-bound proof remains a source argument, without a new 32-bit runtime claim. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
       "followup": {
-        "disposition": "Approved with requested amendments",
-        "owner": "syscall_validation",
-        "sourceHead": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
-        "reviewedAt": "2026-10-09T15:06:14.916316+00:00",
-        "nextAction": "Finish the requested arithmetic/assertion amendments and focused validation, then deliver under the existing user approval.",
+        "disposition": "Maintainer review and CI",
+        "owner": "external_sweeps",
+        "sourceHead": "1a12268af0b1a89bc67bc1e5eb3541f678693f69",
+        "reviewedAt": "2026-10-09T15:36:28.020948+00:00",
+        "nextAction": "Observe current-head checks, maintainer review and imports through the sole collector. The user-approved amendments and focused validation are complete.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f",
-          "https://app.buildbuddy.io/invocation/d976e990-e31c-4ee5-950f-3fbb1d6f19dd"
-        ]
+          "https://github.com/google/gvisor/pull/15579",
+          "https://app.buildbuddy.io/invocation/9564c385-a2f4-446d-80d5-2d0bd099f41a"
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       },
-      "contributorChangesRequested": {
-        "head": "7a7b450fd79fb3a12f5d761123aa0b888568706f",
-        "url": "https://github.com/tamird/gvisor/commit/7a7b450fd79fb3a12f5d761123aa0b888568706f"
-      }
+      "number": 15579
     },
     {
       "id": "pr:15576",
@@ -6390,8 +6389,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T15:06:14.916316+00:00",
-      "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The Reno, sender-cursor and SACK changes are now upstream PRs; CUBIC is approved with requested amendments and focused validation pending.",
+      "updatedAt": "2026-10-09T15:37:24.609323+00:00",
+      "summary": "Targeted controller and recovery correctness checks pass. In the final six-block high-BDP study, repaired CUBIC exceeded repaired Reno in all six pairs; native Linux CUBIC remained faster. Results are limited to the measured profile. The approved CUBIC, Reno, sender-cursor and SACK changes are now upstream PRs.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -6454,7 +6453,7 @@
           ]
         },
         {
-          "text": "The user approved the clearer Reno and CUBIC ACK tests with requested assertion and arithmetic amendments. Reno is now PR #15576 with the requested got/want assertions. CUBIC arithmetic and assertion cleanup has passed independent source review; focused validation remains pending before delivery under the existing approval. The earlier revised tests reached seven expected before failures, 14 passing architecture-specific unit leaves and two analyzer passes. Unchanged packet operations retain their prior evidence; the answered review question is no longer pending.",
+          "text": "The user-approved ACK-credit repairs are now Reno PR #15576 and CUBIC PR #15579. Both include the requested got/want assertion cleanup; CUBIC also includes the reviewed arithmetic simplification. The final CUBIC check passed ten named cases on each runtime architecture and both owning analyzer targets. The 32-bit saturation argument remains a source proof, not a new 32-bit runtime result. Earlier before failures and packet evidence remain retained; no contributor question is pending for either delivered change.",
           "evidence": [
             {
               "label": "Revised CUBIC test diff",
@@ -6471,6 +6470,14 @@
             {
               "label": "Delivered Reno repair #15576",
               "url": "https://github.com/google/gvisor/pull/15576"
+            },
+            {
+              "label": "Delivered CUBIC repair #15579",
+              "url": "https://github.com/google/gvisor/pull/15579"
+            },
+            {
+              "label": "Focused CUBIC cleanup validation",
+              "url": "https://app.buildbuddy.io/invocation/9564c385-a2f4-446d-80d5-2d0bd099f41a"
             }
           ]
         },
@@ -6645,7 +6652,7 @@
           ]
         }
       ],
-      "nextStep": "Finish the approved CUBIC amendments and focused validation, follow the delivered PRs, and assess other scenarios without generalizing the measured high-BDP result.",
+      "nextStep": "Follow current-head checks and maintainer review on the delivered PRs, complete remaining qualification, and assess other scenarios without generalizing the measured high-BDP result.",
       "evidence": [
         {
           "label": "Production CUBIC",
