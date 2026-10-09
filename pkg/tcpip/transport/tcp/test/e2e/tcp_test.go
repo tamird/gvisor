@@ -79,17 +79,25 @@ func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
 				t.Fatalf("Write = (%d, %v), want (%d, nil)", n, err, len(data))
 			}
 		}
-		write(data[:tcp.InitialCwnd*payload])
-		received := 0
-		for range tcp.InitialCwnd {
+		// NewReno permits fast recovery only after data beyond the previous
+		// recovery boundary has been acknowledged.
+		write(data[:payload])
+		c.ReceiveAndCheckPacket(data, 0, payload)
+		clock.Advance(rtt)
+		ack(payload)
+		received := payload
+		lostOffset := received
+		beforeLoss := window()
+		write(data[received : received+beforeLoss*payload])
+		for range beforeLoss {
 			c.ReceiveAndCheckPacket(data, received, payload)
 			received += payload
 		}
 		clock.Advance(rtt)
 		for range 3 {
-			ack(0)
+			ack(lostOffset)
 		}
-		c.ReceiveAndCheckPacket(data, 0, payload)
+		c.ReceiveAndCheckPacket(data, lostOffset, payload)
 		clock.Advance(rtt)
 		ack(received)
 		if got := window(); got >= tcp.InitialCwnd {
