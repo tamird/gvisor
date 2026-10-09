@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T20:38:48.228303+00:00",
+    "updatedAt": "2026-10-09T21:18:07.200813+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -521,21 +521,23 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-08T11:27:44.312373+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "summary": "Current-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved change was refreshed onto master 254aeb360ee148130c24b62f0655bc832a647fe0 and published at 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Independent review verified exact ordered additions/removals in every changed path and the unchanged commit message, while retaining current upstream Gazelle/importpath/embed context. The delivery owner verified the exact live head and matching tracking ref; lint passed at publication. Current checks and mergeability are shown from the latest snapshot. Earlier runtime evidence remains tied to its original source; this rebase adds no new execution claim.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 8d55f931860145475cae7e872db3784499faf855. Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.\n\nEarlier source and review history:\n\nThe authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
       "followup": {
-        "disposition": "Awaiting maintainer review of current head",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review; older-head approvals remain history. Preserve separate import and check evidence.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "sourceHead": "0827e3e26b7f35218ebd0b6caa5bfdb8e3063557",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE",
-        "reviewedAt": "2026-10-08T16:25:29.764183+00:00",
+        "mergeable": "UNKNOWN",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15106#issuecomment-6089127435",
           "https://github.com/google/gvisor/pull/15106",
           "https://github.com/tamird/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557"
         ]
-      }
+      },
+      "head": "0827e3e26b7f35218ebd0b6caa5bfdb8e3063557"
     },
     {
       "id": "pr:15084",
@@ -802,13 +804,14 @@
       "url": "https://github.com/google/gvisor/pull/15030",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-08T21:01:32.314028+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "summary": "The user-approved amendment is now delivered at a807153cf320a6c79b68b8243257f26d0da30f8a. Root verified the live PR head, title/body, matching tracking and exact patch preservation on the refreshed base. This is no longer an unpublished proposal or contributor hold. Prior approvals and import results below belong to older heads; current-head maintainer review and CI are shown from GitHub.\n\nEarlier source-specific observations:\n\nThe matching current import #15255 at dac9a67c3663c69dceff9b165fc564d684f9666d now reports failure in Buildkite pipeline 50155. The exact cause has not been established from the status snapshot. This is distinct from the retained earlier import failure and from the separate prepared checklocks proposal. The live PR has no contributor-review hold; source approval, source checks, and current-import checks remain independently displayed.\n\nEarlier observations:\n\nThe live source PR is approved and its exact-source import #15255 has refreshed to dac9a67c3663c69dceff9b165fc564d684f9666d. New-head import checks are pending; Buildkite 50077 failed on the earlier import head and is retained as history. The source zizmor-output failure remains visible. The prepared aggregate-copy proposal is separate and requires reconciliation against the refreshed import; no contributor decision is outstanding.\n\nEarlier observations (superseded proposal status):\n\nThe concrete import failure is traced to struct-value copies exposed by upstream SSA change 59ef37217: composite literals no longer initialize in place. The checker stored individual field facts but lost them when copying an aggregate. The independently reviewed correction snapshots nested struct contents, preserves copied pointer identities and gives copied mutexes independent storage. The live PR remains 61027644e pending validation and contributor review. No live amendment or public reply has been made.\n\nTwo focused comparisons are accepted on the same canonical toolchain: before c83ed823-3660-41e7-950f-279135796b40 at c303164fe, and after 0fe1af23-7339-4fd6-b43e-3c9fc7f1f2a8 at 1f91f5af. Each selects the complete checklocks fixture and TCP Nogo owners with original 300-second deadlines and both target CPUs. The before run reproduced both original diagnostic locations on both CPUs. The first after run passed TCP but exposed an initial array-index alias gap and a fixture expecting one rather than two matching branch diagnostics; its saved snapshot positive passed. The independently reviewed correction gives equal integer indices equal array keys and makes the negative fixture require both diagnostics. Focused continuation 440ed56e-3388-4fca-93ca-50132c69f405 at 195336bc3 is independently verified OK: both complete owners pass on both target CPUs. Saved review verified all three archives, 63 actual Git bodies and six uncached remote Action/Command/output joins at their original 300-second deadlines. Maintained full-Nogo follow-up bebfb516-e211-4808-813d-a6a55d38953b is independently verified OK in 760.788 seconds at the same source. All 834 configured owners have exactly one passing uncached remote test result, both architecture PASS reports and their original 300-second deadlines; 30,748 compact spawns include no local execution. Review rehashed all 1,722 archive files and 21 actual Git source bodies. Final single-commit amendment 31f3ecac9 is published on a separate review branch on master 7e906, with all eleven source blobs equal to the reviewed correction and a source-grounded message. The contributor review request is now actually pending for final 31f3ecac9 and its delta, including approval to publish the single amendment and post the prepared validation comment. The live PR remains unchanged until that decision. The prior exact-source import failure at Buildkite 50077 remains retained: 824 owners, 723 passed and 101 failed, with two unique alias-diagnostic locations.\n\nHistorical approval and import observations:\n\nAt the 20:40 scan, the maintainer import state changed: #15255 at c769986c66db15fc8b5804b5e5ec5352c9bc5840 (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe current head 61027644e received a new feedback/copybara failure at 10:13:20 UTC on October 7: Google internal checks failed for the run created 08:32:34 UTC. Its linked diagnostic is internal; the public status supplies no code-level cause. This is a maintainer-side investigation, with no source change, retry or external comment warranted by the available evidence.\n\nEtienne approved current head 61027644e at 08:27:36 UTC on October 7 and the PR is labeled ready to pull. The review has no additional requested change. The closure-state correction is published and the maintainer reply explains the private-flag handling and removed TCP workaround. Earlier focused validation passed all four owning Nogo checks on the reviewed compiler base; no fresh runtime was run for the unchanged rebase. Current published head 61027644ef3258c2fe16a236861980d5ec7707ae. https://github.com/google/gvisor/pull/15030#issuecomment-6004566380 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
       "followup": {
-        "disposition": "Approved amendment delivered",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review, source checks and exact-source import progression.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15030#issuecomment-6089126339",
           "https://github.com/google/gvisor/pull/15030#issuecomment-6004566380",
           "https://github.com/google/gvisor/pull/15030#pullrequestreview-5439620358",
           "https://github.com/google/gvisor/pull/15255",
@@ -821,10 +824,10 @@
           "https://buildkite.com/gvisor/pipeline/builds/50155",
           "https://github.com/tamird/gvisor/commit/a807153cf320a6c79b68b8243257f26d0da30f8a"
         ],
-        "reviewedAt": "2026-10-08T21:05:14.556649+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "a807153cf320a6c79b68b8243257f26d0da30f8a",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "a807153cf320a6c79b68b8243257f26d0da30f8a"
     },
@@ -880,21 +883,23 @@
       "group": "bazel",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-05T16:34:20.898227+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "summary": "Current-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches e8c82dd30d419cc7bba8047f3535a632cb47e70c. Maintainer review is still required; existing import labels and checks are separate.\n\nThe conflict is resolved on published head e8c82dd30d419cc7bba8047f3535a632cb47e70c. The fresh rebase preserves upstream’s explicit Benchmark 1.9.5 selection and the approved gRPC/Envoy design. GitHub reports MERGEABLE and APPROVED; all substantive checks, including generate, pass in the October 5 16:30 UTC snapshot. No linked Copybara import is recorded. Only the obsolete Benchmark 1.9.4 refresh clause was removed from the description; no public comment or new review request was sent. Prior compilation and audit results remain historical exact-source evidence, not a fresh validation run. Etienne’s earlier “Ugly...” observation was followed by approval of the same head and did not request a revision.\n\nEarlier publication evidence: The authorized October 2/3 rebase is published at 30aaadcbb0450d39dc5e60d76557bd9d61cc9b40 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14986#issuecomment-5963406126. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Rebased source fa6b2c474 is published and mergeable. Focused hosted GNU/Bazel 8.3.1 posix_server compilation passes; canonical Fetch/Verify covers 180 dependencies with the catalog and lockfile unchanged. This does not qualify Bazel 9, ARM runtime or the full matrix.",
       "followup": {
-        "disposition": "Awaiting maintainer review of current head",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review; older-head approvals remain history. Preserve separate import and check evidence.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/14986#issuecomment-6089125240",
           "https://github.com/google/gvisor/pull/14986#discussion_r4172168041",
           "https://github.com/google/gvisor/pull/14986#pullrequestreview-5399555219"
         ],
-        "reviewedAt": "2026-10-08T16:25:29.764183+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "e8c82dd30d419cc7bba8047f3535a632cb47e70c",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE"
-      }
+        "mergeable": "UNKNOWN"
+      },
+      "head": "e8c82dd30d419cc7bba8047f3535a632cb47e70c"
     },
     {
       "id": "pr:14985",
@@ -1398,23 +1403,24 @@
       "title": "Keep syscall XML outside overlays",
       "url": "https://github.com/google/gvisor/pull/15307",
       "group": "tests",
-      "status": "open",
+      "status": "merged",
       "summary": "PR #15307 is open for review at b04fae38936fc090e1dcd624121c4bd0a832cbf1, one commit on master d3f4faffa. The approved XML reporting change is preserved by the mechanical rebase after its passed-descriptor prerequisite #15141 landed. Independent source peer a72f513fa30a confirms the complete runner change and unchanged message. Existing runtime and XML evidence is reused without a fresh run. The current snapshot reports MERGEABLE and visible checks successful; no linked import is recorded.",
-      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "number": 15307,
       "followup": {
-        "disposition": "Import PR open; checks pending",
+        "disposition": "Merged upstream",
         "owner": "external_sweeps",
-        "nextAction": "Observe the linked exact-head import checks and landing; preserve current requested reviewers without duplicate outreach.",
+        "nextAction": "No source action remains; retain the delivered change and validation evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15307",
           "https://github.com/google/gvisor/pull/15543"
         ],
-        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "b04fae38936fc090e1dcd624121c4bd0a832cbf1",
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
-      }
+        "mergeable": "UNKNOWN"
+      },
+      "head": "b04fae38936fc090e1dcd624121c4bd0a832cbf1"
     },
     {
       "id": "pr:15154",
@@ -2029,16 +2035,17 @@
       "title": "Bound TUN and TAP interface MTUs",
       "url": "https://github.com/google/gvisor/pull/15180",
       "group": "runtime",
-      "status": "Source conflict; maintainer review required",
+      "status": "open",
       "summary": "The October 8, 18:46 UTC snapshot reports a source conflict at 21f7fd7b924a28562b4549258ef8a886019d9ef6. Current-head maintainer approval is absent. Root has the exact source identity for reconciliation; no rebase or new validation has been performed at this boundary.\n\nEarlier observations:\n\nCurrent-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 21f7fd7b924a28562b4549258ef8a886019d9ef6. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved MTU change is published at 21f7fd7b924a28562b4549258ef8a886019d9ef6, rebased onto current master dd185 with the complete prior patch and message unchanged. The only new source changes are direct linux/if_link.h and linux/rtnetlink.h includes. These fix all four actual include-cleaner diagnostics from matching import #15382 pipeline 49799. The complete public JSON log was recovered after its separate stream endpoint denied access. Independent source review passed; normal signing and exact-lease SSH publication succeeded. GitHub reports MERGEABLE, fresh lint/fileheader pass and generation remains pending. No new runtime pass or public reply is claimed.\n\nThe earlier approved maxMTU reply https://github.com/google/gvisor/pull/15180#discussion_r4198261362 remains verified and its thread resolved. The arithmetic and prior runtime evidence are unchanged. The earlier opaque Copybara failure and old import C++ lint failure remain historical results, not evidence against the new head.",
       "number": 15180,
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-08T21:48:54.958312+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "followup": {
-        "disposition": "Source-preserving refresh delivered; maintainer review required",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review and import checks; source conflict resolution is delivered and adds no new runtime claim.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15180#issuecomment-6089128483",
           "https://github.com/google/gvisor/pull/15180#discussion_r4197784155",
           "https://github.com/tamird/gvisor/commit/328e282108ea9b52c5de6d8131dd18c98f42ec67",
           "https://github.com/google/gvisor/pull/15180#discussion_r4198261362",
@@ -2050,12 +2057,12 @@
           "https://github.com/tamird/gvisor/commit/21f7fd7b924a28562b4549258ef8a886019d9ef6",
           "https://github.com/tamird/gvisor/commit/a5143ead3031d808450e8351d028794e87a5a2d9"
         ],
-        "reviewedAt": "2026-10-08T21:43:51.851665+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "a5143ead3031d808450e8351d028794e87a5a2d9",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
-      "head": "21f7fd7b924a28562b4549258ef8a886019d9ef6"
+      "head": "a5143ead3031d808450e8351d028794e87a5a2d9"
     },
     {
       "id": "pr:15181",
@@ -2636,14 +2643,15 @@
       "url": "https://github.com/google/gvisor/pull/15414",
       "group": "bazel",
       "status": "open",
-      "summary": "The user-approved amendment is now delivered at c8e00a8c4906320368e33f7de1e88e9aacb65fc8. Root verified the live PR head, title/body, matching tracking and exact patch preservation on the refreshed base. This is no longer an unpublished proposal or contributor hold. Prior approvals and import results below belong to older heads; current-head maintainer review and CI are shown from GitHub.\n\nEarlier source-specific observations:\n\nThe live source PR is approved and has an open exact-head import, #15483. Source feedback/copybara and the import Buildkite internal 31805 and pipeline 50096 checks fail. This is import/check follow-up, not contributor review. The unpublished mutex-caller proposal is tracked separately; no new contributor decision is outstanding.\n\nEarlier observations (superseded proposal status):\n\nThe 02:56 UTC snapshot additionally reports internal 31805 FAILURE on import #15483 at a74edee7d. Its cause is unavailable; the separately diagnosed public 50096 mutex compile failure is not used to explain the internal failure.\n\nThe exact-source import refreshed to #15483 at a74edee7d. In the 02:46 UTC snapshot, public Buildkite 50096 reports FAILURE and internal 31805 remains pending. A bounded read of one failed AMD syscall job directly confirms the same three fatal deprecated Abseil mutex calls at base_poll_test.h:42/47/53; the imported header still equals the approved source. This attributes that job, not every failed build job. The compile-validated single-commit amendment 9179bfeaa remains pending contributor review, and live PR source 39c96507e is unchanged.\n\nEarlier source-specific evidence:\n\nThe single-commit amendment is published at 9179bfeaa on current master 934705c75, and the contributor review question is pending for that exact revision. It preserves the approved release upgrade and adds the three compile-validated mutex API substitutions. The live PR remains 39c96507e until approval. In the 02:15 UTC snapshot, exact-source import #15483 at d2b8d0305 has public Buildkite 50089 FAILURE and internal 31798 FAILURE (cause unavailable). Its header byte-equals the approved source; one complete public AMD syscall job again reports all three fatal deprecated mutex calls at base_poll_test.h:42/47/53. Prior 50048/50069 failures remain retained. The internal check and other current jobs are not diagnosed.\n\nIndependent compile-only validation is closed for the three-call correction at fork review commit f31322768. Parent 68c3339d at composition 9c7048a17 completed OK in 95.756 seconds. Five fresh remote C++ compile actions bind the corrected fixture and released Abseil mutex header with fatal deprecation warnings; the shared library and all four original poll payloads link. Independent peer f47410d2d74a verifies the complete saved producer/output packet. This validates the supported LLVM path; no GNU compiler or runtime result is claimed. The live PR remains 39c96507e unchanged. The final single-commit amendment is awaiting the contributor response.\n\nEarlier source-specific evidence:\n\nThe refreshed import #15483 at 1977b1663 is pending in the 01:17 UTC snapshot. Its base_poll_test.h is byte-identical to the failed import, so the three-call supported-API correction remains necessary and is under compile-only qualification preparation.\n\nExact import #15483 at 12a8eb838 has a public compile failure in Buildkite 50048: base_poll_test.h still calls deprecated Abseil Mutex::Lock, Unlock, and the pointer MutexLock constructor. Three complete job logs agree; the header bytes match the approved source, import, current master and canonical qualification. The actual compiler treats these deprecations as errors. A minimal consumer correction is assigned; the rest of the active pipeline and internal check are not diagnosed by this evidence.\n\nHistorical source-specific evidence:\n\nApproved source #15414 now has exact-head maintainer import #15483 at 12a8eb83859987fa22457084db18146d484af4b4, with checks pending in the 00:33:19 UTC snapshot.\n\nMechanically refreshed and published at 39c96507e65884a7c307be128ba7f23dedc376a2 on current upstream e1bc74024. Independent combined source review verifies identical complete source edit sequences and preserved author, date and message; existing validation remains tied to its original source. Publication receipt d5d609287507 verifies exact old-head leases, unchanged PR body and matching local/public/tracking heads. At publication GitHub reported MERGEABLE; current CI and reviews appear in the synchronized snapshot. No new runtime workload was launched for this unchanged rebase.\n\nEarlier delivery and source-specific evidence:\n\nOpened as approved PR #15414 after prerequisite #15375 merged through import #15405. The one-commit candidate was mechanically rebased onto current master bc1d178bb; its complete source patch remains identical to approved 6316d7e3a. The published head and exact reviewed description are verified. The 02:49 UTC snapshot reports all visible CI successful and mergeability MERGEABLE. No human review has arrived yet.\n\nParent 76c6f7fa at integration d73674684 passes in 486.766 seconds under Bazel 8.8.1: the actual posix_server consumer builds, integrated Fetch/Verify accepts 1,349 generated entries, and standalone acb7c6bfc Fetch/Verify accepts 191 generated entries. Outcome 3a5a283b932b and independent peer aa1a410a389a bind all sixty source captures and saved results. The graph selects Abseil 20260817.0, gRPC 1.84.0, protobuf 35.1, Googletest 1.18.0 and the minimum released Envoy correction 0.0.0-20260130-84e8436.\n\nThe integrated catalog adds Envoy, removes unused colorama and updates four pin/date records; the standalone catalog adds Envoy and updates six pin/date records. Exact generated bytes were adopted at bc3b3a391 and 1105052f8, then record-only amendments produced historical heads 6316d7e3a and 33457c908 with unchanged trees and parents. Independent adoption peer bcaa65fb1a9c and publication receipt f2af484f8ccd close that binding. Existing license values and policy remain unchanged. The standalone GNU C++ consumer remains unexecuted because no supported remote image with its absolute GCC toolchain was established. Gloop remains outside the current depth-one license enumeration; no complete transitive audit, runtime or warning-free build is claimed.\n\nEarlier gRPC/protobuf and Envoy analysis failures are retained. The lifetime-annotation backport at 17d324f223 and its historical compiler-stack relationship are preserved as predecessor evidence. They are not an additional active upstream proposal or an independent dependency on the release candidate.",
+      "summary": "The current revision received a new maintainer approval after the fresh-review notice. Earlier approvals remain historical; current source and import checks are tracked separately.",
       "head": "c8e00a8c4906320368e33f7de1e88e9aacb65fc8",
-      "updatedAt": "2026-10-08T21:01:32.314028+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "followup": {
-        "disposition": "Approved amendment delivered",
+        "disposition": "Fresh current-head approval observed",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review, source checks and exact-source import progression.",
+        "nextAction": "Observe current-head CI and matching import progress.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15414#issuecomment-6089132260",
           "https://github.com/tamird/gvisor/commit/6316d7e3ad5d6b37a63dfc521f5405b2c43b3d88",
           "https://github.com/google/gvisor/pull/15375",
           "https://app.buildbuddy.io/invocation/76c6f7fa-e90e-4f63-9e74-37cf17843ee7",
@@ -2658,9 +2666,9 @@
           "https://buildkite.com/gvisor/pipeline/builds/50089#01a11935-27d6-4dc2-ab0c-66b076cb612e",
           "https://github.com/tamird/gvisor/commit/c8e00a8c4906320368e33f7de1e88e9aacb65fc8"
         ],
-        "reviewedAt": "2026-10-08T21:05:14.556649+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "c8e00a8c4906320368e33f7de1e88e9aacb65fc8",
-        "reviewDecision": "REVIEW_REQUIRED",
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
       "number": 15414
@@ -2742,21 +2750,22 @@
       "number": 15337,
       "head": "e899dca1fbf56133d8973c20261f4983ef8e4212",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-08T01:05:56.650222+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "followup": {
-        "disposition": "Awaiting maintainer review of current head",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review; older-head approvals remain history. Preserve separate import and check evidence.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15337#issuecomment-6089130397",
           "https://github.com/google/gvisor/pull/15337#pullrequestreview-5422561286",
           "https://github.com/tamird/gvisor/commit/0d35a2a12a00d0504ecf8ab63e4105ca2b3006a0",
           "https://github.com/google/gvisor/actions/runs/37564117954/job/112607818943",
           "https://github.com/tamird/gvisor/commit/e899dca1fbf56133d8973c20261f4983ef8e4212"
         ],
-        "reviewedAt": "2026-10-08T16:25:29.764183+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "e899dca1fbf56133d8973c20261f4983ef8e4212",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -2833,16 +2842,16 @@
       "url": "https://github.com/google/gvisor/pull/15217",
       "group": "tests",
       "status": "open",
-      "summary": "Etienne submitted a fresh approval of the rebased head after notification. Current source CI now reports feedback/copybara failure with no public diagnostic URL; the matching import #15398 remains pending. No source cause is established.",
+      "summary": "The rebased head has a fresh maintainer approval. Its source checks, including feedback/copybara, are now successful. The earlier Copybara failure cleared without a public diagnostic; no source cause is inferred.",
       "number": 15217,
-      "updatedAt": "2026-10-09T20:26:16.392664+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "reviewDecision": "APPROVED",
       "followup": {
-        "disposition": "Freshly approved; Copybara failure has no public diagnostic",
-        "owner": "root",
+        "disposition": "Freshly approved; source checks green",
+        "owner": "external_sweeps",
         "sourceHead": "d4132a0c9956c7fb107695d2844b0e7415aaa62f",
-        "reviewedAt": "2026-10-09T20:23:59.159419+00:00",
-        "nextAction": "Observe the matching import and any accessible maintainer diagnostic. The Copybara status has no public log URL; no internal access or speculative source fix is attempted.",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
+        "nextAction": "Observe the matching import and maintainer/CI events.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15217#pullrequestreview-5474700691",
           "https://github.com/google/gvisor/pull/15217#issuecomment-6088132542",
@@ -2852,7 +2861,7 @@
           "https://github.com/google/gvisor/commit/e1c958717"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "head": "d4132a0c9956c7fb107695d2844b0e7415aaa62f"
     },
@@ -3113,21 +3122,22 @@
       "group": "release",
       "status": "open",
       "summary": "Current-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 0710ca870724323ba9abc5c5bcbc57cc674206e6. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved change was refreshed onto master 254aeb360ee148130c24b62f0655bc832a647fe0 and published at 0710ca870724323ba9abc5c5bcbc57cc674206e6. Independent review verified exact ordered additions/removals in every changed path and the unchanged commit message, while retaining current upstream Gazelle/importpath/embed context. The delivery owner verified the exact live head and matching tracking ref; lint passed at publication. Current checks and mergeability are shown from the latest snapshot. Earlier runtime evidence remains tied to its original source; this rebase adds no new execution claim.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 5559ccedfe420fc9eb7bd19104527ee393a16bcf. Root will assess a source-preserving refresh while retaining maintainer approval and ready-to-pull status. No exact active import or upstream landing is claimed.\n\nEarlier source and review history:\n\nThe current complete snapshot records ready-to-pull status. No upstream landing is inferred, and no merge action is authorized.\n\nmanninglucas approved exact head 5559ccedfe420fc9eb7bd19104527ee393a16bcf at 20:10:15 UTC on October 7. The review requests no changes and has no inline threads. The PR remains OPEN/MERGEABLE; the complete 20:10 scan has no matching public import or ready-to-pull label. Maintainer import and landing remain pending.\n\nReady PR #15444 is open at 5559ccedfe420fc9eb7bd19104527ee393a16bcf against master after the contributor’s requested simplification. The revision removes redundant notice filename sorting and uses fs.ReadFile on the ZIP filesystem; final license sort/dedup and fail-closed notice behavior remain. Source peer 706e95a5cf2d and method peer 979b30125b17 are closed. Actual standalone validation https://app.buildbuddy.io/invocation/aeedb23e-6d1a-47c4-b7c5-cc27e74df53e completes OK in 78.273 seconds: the full unit owner includes all eight module-notice cases, and the owning Nogo passes both CPU analyses. Both uncached AMD64 OCI actions retain their original 60/300-second limits. Root verified the primary log/XML/Action evidence and exact published PR body/head; no canonical audit is claimed for this source-only revision.\n\nHistorical proposal and evidence:\n\nThe independent refresh is public and tracked at ab530acc88806b98731ccf9b01a221360452d86d on upstream e1bc. All six source blobs equal the previously reviewed 4389 proposal; its message now states the narrow archive-notice behavior. It discovers conventional root notices and complete README grants, excludes .go implementation files and still rejects unrecognized notices. Independent source/evidence review binds the owning functions, all three notice fixtures and the eight-case TestModuleLicenses suite to actual tested ddd00243c. That contributor feedback is resolved by the current delivered revision above.\n\nThe retained ddd002 composition passes the complete unit suite (70 XML entries, including eight module-notice cases) and both target CPU Nogo analyses on two uncached AMD64 OCI workers. Canonical Fetch retrieves all 459 CodeQL-profile records; that historical parent remains Failed solely for ten unchanged-policy mismatches, not missing notices or failed source tests. Existing outcome 13ab648f879d and independent peer 85ca40de8a7d preserve this distinction. This refresh adopts no catalog or policy change and remains separate from commit-metadata PR #15416 and the explicit holds on #15114, #15145 and #15146. Earlier 88ed evidence remains historical and is superseded by the corrected notice selection.",
-      "updatedAt": "2026-10-08T11:27:44.312373+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "followup": {
-        "disposition": "Awaiting maintainer review of current head",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review; older-head approvals remain history. Preserve separate import and check evidence.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "sourceHead": "0710ca870724323ba9abc5c5bcbc57cc674206e6",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE",
-        "reviewedAt": "2026-10-08T16:25:29.764183+00:00",
+        "mergeable": "UNKNOWN",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15444#issuecomment-6089133209",
           "https://github.com/google/gvisor/pull/15444",
           "https://github.com/tamird/gvisor/commit/0710ca870724323ba9abc5c5bcbc57cc674206e6"
         ]
       },
-      "head": "5559ccedfe420fc9eb7bd19104527ee393a16bcf",
+      "head": "0710ca870724323ba9abc5c5bcbc57cc674206e6",
       "number": 15444,
       "reviewDecision": "REVIEW_REQUIRED"
     },
@@ -3254,20 +3264,21 @@
       "group": "tests",
       "status": "open",
       "summary": "Current-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved source is rebased and published at 2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5. Independent source peers verified that the approved netip patch and record are preserved while retaining the landed listener cancellation behavior: buffered result channels and connection Close before publication after a successful accept. No new public comment or runtime rerun was added. The old matching import #15369 still binds the previous 45a source; a refreshed import is pending.\n\nnybidari approved exact45a2169c18c3662cb3127f0bd4bb4c2579c65555 on October6 at14:56:55UTC; the source is labeled ready to pull. https://github.com/google/gvisor/pull/15321#pullrequestreview-5430317148. This is approval, not a completed landing; dependent source remains held until its prerequisite lands.\n\nOpened as ready-for-review PR #15321 after explicit user approval, at exact revised source 45a2169c18c3662cb3127f0bd4bb4c2579c65555. Root verified its public head, master base, body and MERGEABLE state. The revision addresses the ignored AddrFromSlice result. Prior runtime evidence below remains tied to the original source; no fresh full-batch runtime pass is claimed.\n\nPrior source candidate 3d0a853c055d16227dc756aa3c25826931459c26 was based on master 8bf3dc484b3d86e7a677994aad43a2a271fdbe13. The listener helpers return netip.AddrPort, normalize IPv4-mapped addresses while retaining IPv6 zones, and compare NAT addresses and ports directly. Two already registered SNAT port-rewriting cases are exposed through the IPv4/IPv6 harness. This is the first published part of the user-requested netip migration, not completion of that broader work.\n\nBoth independent source topics were validated together at public rbe-netip-netfilter@21271fb8126d7469a7b6ff7df3c121b61b16eb15 on MAIN 2cc814772. Parent https://app.buildbuddy.io/invocation/856c7d68-01fb-4f20-aece-6f4ca8be8639 is FAILED after 201.642 seconds: 35 of 36 leaves pass with no skips. All 28 NAT address/port leaves pass, including eight newly exposed SNAT port cases. The sole failure is legacy TestFilterInputDropUDP/IPv4 during Docker log retrieval under the shared ten-second context; cleanup shows the container finished. The separate independent action-deadline correction 98cd2bc95 now passes sixteen focused leaves on its validation composition (outcome 5dbfbdf56c74); it does not erase this original 35-of-36 result or constitute a complete repeat of the original batch. Outcome d2755d030649 and independent peer 8671cd5b3e9f bind the saved result; root verified 327 evidence entries and actual executable/worker inputs. This is not a complete validation pass or PR-readiness claim. The source has no code dependency on the separate listener-cancellation topic, landed as PR #15316. The revised source is now open as PR #15321.",
-      "updatedAt": "2026-10-06T21:23:11.306363+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "number": 15321,
       "followup": {
-        "disposition": "Awaiting maintainer review of current head",
+        "disposition": "Fresh review requested for current head",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head maintainer review; older-head approvals remain history. Preserve separate import and check evidence.",
+        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15321#issuecomment-6089129446",
           "https://github.com/google/gvisor/pull/15321#pullrequestreview-5430317148",
           "https://github.com/google/gvisor/pull/15369"
         ],
-        "reviewedAt": "2026-10-08T16:25:29.764183+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
       "reviewDecision": "REVIEW_REQUIRED",
       "head": "2cbfeb5eecc8ccbe6f5ea9b875213fa8282dcab5"
@@ -3481,20 +3492,21 @@
       "group": "bazel",
       "status": "open",
       "head": "2f5afbc58fc2672cd454f2862d22687f619af31c",
-      "updatedAt": "2026-10-09T19:43:41.973695+00:00",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "summary": "The author reported that the internal checks need help. Public status confirms import to the internal review system, followed by failed internal checks; it provides no public failed-step diagnostics or source cause.\n\nEarlier observations:\n\nAt the refreshed 2f5afbc58 head, applicable public checks pass. The 01:17 UTC snapshot reports a new opaque feedback/copybara failure without a public diagnostic URL. No cause, source regression or retry is inferred.\n\nThe October 8 mechanical refresh is published at 2f5afbc58fc2672cd454f2862d22687f619af31c on master 50131cdaedd547bb53de856483b42b0776eb50b6. All five edit sets and the message are unchanged after normalizing only the upstream-removed emulator load names. The page-size setting and CI selection are preserved; the new upstream Moby job remains present. Independent root review passed. PR, fork, local head and tracking match; title/body are unchanged. Normal SSH failed, then the authorized exact-lease HTTPS publication succeeded. New-head CI and review/import state are tracked in the current snapshot; no runtime was repeated.\n\nHistorical source-specific observations:\n\nThe 04:50 UTC snapshot reports successful applicable checks at this refreshed head, including generate; explicitly skipped checks remain skipped. GitHub reports MERGEABLE again. The transient 04:40 UNKNOWN observation is retained in the saved snapshot.\n\nThe page-size change is mechanically refreshed on current master 265226683 at b4046e82c6a6f96836921c0f9a17f8326fcf50d2. Two load conflicts retain the approved string_flag export alongside upstream target_emulator and target_emulators. The original settings, pipeline selection and message are unchanged. Independent peer 638e8e73bc7a passed. Normal signing and exact-lease SSH publication succeeded; PR, fork and tracking identities match (receipt 53fc86288954). GitHub reports MERGEABLE; new-head CI remains under observation. The earlier opaque internal-check failure is retained separately. No new 64K runtime, public comment or retry is claimed.\n\nHistorical source-specific evidence:\n\nThe 04:00 snapshot reports CONFLICTING at the current head after upstream target-emulator change265226683. Mechanical conflict diagnosis is assigned; previous CI failures remain separate.\n\nOpened ready for review after explicit user approval at a7607b075285371fccfde2a179f20ac81cd46a21. Exact title, description, master base and head were read back from GitHub.\n\nIndependent page-size build setting and public CI configuration. Existing graph proof preserves the original public selections, and the corrected qualification composition built all 659 ARM64 64K roots. No 64K runtime or worker-capacity claim.\n\naaltinaydev approved this exact source at 2026-10-06T20:08:16Z; the review contains no additional source request.\n\nThe October 6 21:00 snapshot reports feedback/copybara failure. The primary status says Google internal checks failed; its diagnostic destination is not public. No public source-cause diagnostic or new code request is available.",
       "followup": {
         "disposition": "External blocker: Copybara diagnostic is not publicly available",
         "owner": "root",
-        "nextAction": "The current Copybara failure supplies no public diagnostic log. Preserve the actual failed status and wait for an accessible maintainer diagnostic or service-state change; do not guess a source fix, attempt internal access or duplicate outreach.",
+        "nextAction": "Observe the fresh-review request and any accessible Copybara diagnostic or status change. The existing Copybara failure has no public log URL; no internal access is attempted.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15371#issuecomment-6089131279",
           "https://github.com/google/gvisor/pull/15371",
           "https://github.com/google/gvisor/pull/15371#pullrequestreview-5434000645",
           "https://github.com/tamird/gvisor/commit/2f5afbc58fc2672cd454f2862d22687f619af31c"
         ],
-        "reviewedAt": "2026-10-09T19:39:41.051523+00:00",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
         "sourceHead": "2f5afbc58fc2672cd454f2862d22687f619af31c",
-        "reviewDecision": "APPROVED",
+        "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN"
       },
       "number": 15371,
@@ -4940,15 +4952,16 @@
       "url": "https://github.com/google/gvisor/pull/15579",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T20:38:48.228303+00:00",
-      "summary": "The current source remains approved. Matching import #15589 at 55f97af1e has passed generation and Go tests; Buildkite checks are pending. The older f057cd3fb job completed generation and its generated-branch commit/push, then failed while deleting the disposable clone before the Go build. The exact writer was not captured. A separate clone-lifecycle correction is being validated by root; the historical job remains retained.",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
+      "summary": "The current source remains approved. Matching import #15589 at 55f97af1e has passed generation and Go tests; Buildkite checks are pending. The older f057cd3fb job completed generation and its generated-branch commit/push, then failed while deleting the disposable clone before the Go build. The exact writer was not captured. The separate clone-lifecycle correction is now PR #15598, with its export and cleanup validation complete; it is not a blocker for this CUBIC import.",
       "followup": {
-        "disposition": "Prior cleanup failure diagnosed; current import progressing",
-        "owner": "root",
+        "disposition": "Historical cleanup failure diagnosed; import progressing",
+        "owner": "external_sweeps",
         "sourceHead": "1a12268af0b1a89bc67bc1e5eb3541f678693f69",
-        "reviewedAt": "2026-10-09T20:36:29.294680+00:00",
-        "nextAction": "Finish the separate workflow cleanup correction and its validation; the sole event observer follows the current import and Buildkite results.",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
+        "nextAction": "Observe current CUBIC import CI and maintainer events; the independent workflow cleanup fix is tracked as PR #15598.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15598",
           "https://github.com/google/gvisor/actions/runs/37981674651/job/113993478213",
           "https://github.com/google/gvisor/pull/15579",
           "https://app.buildbuddy.io/invocation/9564c385-a2f4-446d-80d5-2d0bd099f41a",
@@ -5047,22 +5060,22 @@
       "title": "Exercise CUBIC in SACK recovery tests",
       "url": "https://github.com/google/gvisor/pull/15577",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-09T19:43:41.973695+00:00",
+      "status": "merged",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
       "summary": "The user-approved SACK recovery coverage is now PR #15577. The requested arithmetic cleanup reuses the existing bytesRead count, preserving the tested packet offsets. This test change is independent of the sender-cursor repair. No contributor decision remains; current-head checks and maintainer review come from GitHub.",
       "number": 15577,
       "followup": {
-        "disposition": "Current-head approved; follow import and landing",
+        "disposition": "Merged upstream",
         "owner": "external_sweeps",
         "sourceHead": "543fc51f7e983626d565931abb9deb4480d141d0",
-        "reviewedAt": "2026-10-09T19:39:41.051523+00:00",
-        "nextAction": "Follow the actual current-source import and merge state; the contributor decision is fulfilled.",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
+        "nextAction": "No source action remains; retain the delivered change and validation evidence.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15577",
           "https://github.com/google/gvisor/pull/15577#pullrequestreview-5474469687"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -5123,6 +5136,34 @@
         ],
         "reviewDecision": null,
         "mergeable": "UNKNOWN"
+      }
+    },
+    {
+      "id": "pr:15598",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15598,
+      "ref": "go-branch-clone-maintenance",
+      "head": "49328c2b8c6721966311d65791ff1255d3bc15ea",
+      "title": "Disable maintenance in disposable Go clones",
+      "url": "https://github.com/google/gvisor/pull/15598",
+      "group": "release",
+      "status": "open",
+      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
+      "summary": "The user-approved change is open as PR #15598. It disables automatic Git maintenance in the disposable Go export clone. The actual export, local branch push and cleanup passed. The earlier failed CI job did not identify its writer, so this is a separately verified clone-lifetime correction; it is not a dependency of the currently progressing CUBIC import.",
+      "followup": {
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
+        "sourceHead": "49328c2b8c6721966311d65791ff1255d3bc15ea",
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE",
+        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
+        "nextAction": "Observe current-head CI and maintainer review; no contributor decision remains.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15598",
+          "https://github.com/tamird/gvisor/commit/49328c2b8c6721966311d65791ff1255d3bc15ea",
+          "https://app.buildbuddy.io/invocation/9ae5069f-4d80-473c-b8d1-2e283591d7c9"
+        ]
       }
     }
   ],
