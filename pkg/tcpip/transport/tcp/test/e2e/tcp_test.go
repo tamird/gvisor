@@ -49,7 +49,7 @@ import (
 )
 
 func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
-	windowAfterIdle := func(idle time.Duration) int {
+	windowAfterIdle := func(idle time.Duration, controlTraffic bool) int {
 		const payload = 32
 		const rtt = 100 * time.Millisecond
 		clock := faketime.NewManualClock()
@@ -106,7 +106,20 @@ func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
 
 		// All data is acknowledged and no application data remains queued.
 		// Compare identical resumed flights with and without an idle gap.
-		clock.Advance(idle)
+		clock.Advance(idle / 2)
+		if controlTraffic {
+			// An out-of-window ACK elicits an ACK-only response. It must
+			// not end the application idle interval or reset its start.
+			c.SendAck(790+(1<<30), received)
+			packet := c.GetPacket()
+			defer packet.Release()
+			checker.IPv4(t, packet,
+				checker.PayloadLen(header.TCPMinimumSize),
+				checker.TCP(checker.TCPFlags(header.TCPFlagAck)))
+			c.Stack().Pause()
+			c.Stack().Resume()
+		}
+		clock.Advance(idle - idle/2)
 		flight := window()
 		write(data[received : received+2*flight*payload])
 		acked := received
@@ -121,10 +134,12 @@ func TestCubicIdleDoesNotIncreaseWindow(t *testing.T) {
 		}
 		return window()
 	}
-	continuous := windowAfterIdle(0)
-	resumed := windowAfterIdle(5 * time.Second)
-	if resumed > continuous {
-		t.Fatalf("idle time increased cwnd growth: continuous=%d resumed=%d", continuous, resumed)
+	continuous := windowAfterIdle(0, false)
+	for _, controlTraffic := range []bool{false, true} {
+		resumed := windowAfterIdle(5*time.Second, controlTraffic)
+		if resumed > continuous {
+			t.Errorf("idle time increased cwnd growth (control traffic=%t): continuous=%d resumed=%d", controlTraffic, continuous, resumed)
+		}
 	}
 }
 

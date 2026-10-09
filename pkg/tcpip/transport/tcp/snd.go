@@ -71,6 +71,10 @@ type congestionControl interface {
 	// HandleRTOExpired is invoked when the retransmit timer expires.
 	HandleRTOExpired()
 
+	// HandleTxStart is invoked when new data begins a flight. Like the
+	// outstanding-data count, it includes failed transmission attempts.
+	HandleTxStart()
+
 	// Update is invoked when processing inbound acks. It's passed the
 	// number of packet's that were acked by the most recent cumulative
 	// acknowledgement.  rtt is the round-trip time, or is set to unknownRTT
@@ -1123,6 +1127,9 @@ func (s *sender) sendData() {
 		}
 		if sent := s.maybeSendSegment(seg, limit, end); !sent {
 			break
+		}
+		if s.Outstanding == 0 && seg.payloadSize() > 0 {
+			s.cc.HandleTxStart()
 		}
 		dataSent = true
 		s.Outstanding += s.pCount(seg, s.MaxPayloadSize)

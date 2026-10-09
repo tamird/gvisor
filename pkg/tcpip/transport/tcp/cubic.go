@@ -63,6 +63,12 @@ type cubicState struct {
 	// RTO.
 	numCongestionEvents int
 
+	// idleSince excludes periods with no queued or outstanding data from
+	// the cubic epoch. LastSendTime cannot serve this purpose: ACK-only
+	// transmissions also update it.
+	idleSince tcpip.MonotonicTime
+	idle      bool
+
 	s *sender
 }
 
@@ -211,6 +217,10 @@ func (c *cubicState) updateSlowStart(packetsAcked int) int {
 // +checklocks:c.s.ep.mu
 // +checklocksexclude:c.s.rtt.rttMutex
 func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.MonotonicTime) {
+	if !c.idle && c.s.writeList.Front() == nil {
+		c.idleSince = c.s.ep.stack.Clock().NowMonotonic()
+		c.idle = true
+	}
 	if c.s.Ssthresh == InitialSsthresh && c.s.SndCwnd < c.s.Ssthresh {
 		c.updateHyStart(rtt, ackTime)
 	}
@@ -224,6 +234,21 @@ func (c *cubicState) Update(packetsAcked int, rtt time.Duration, ackTime tcpip.M
 	srtt := c.s.rtt.TCPRTTState.SRTT
 	c.s.rtt.Unlock()
 	c.s.SndCwnd = c.getCwnd(packetsAcked, c.s.SndCwnd, srtt)
+}
+
+// HandleTxStart implements congestionControl.HandleTxStart.
+//
+// +checklocks:c.s.ep.mu
+func (c *cubicState) HandleTxStart() {
+	if c.idle {
+		// Idle time provides no evidence that the path can carry a larger
+		// flight. RFC 9438 section 5.8 excludes it from the cubic epoch.
+		// An RTO while probing a closed receive window can start a newer
+		// epoch, so exclude only the overlap with the current epoch.
+		now := c.s.ep.stack.Clock().NowMonotonic()
+		c.T = c.T.Add(min(now.Sub(c.idleSince), now.Sub(c.T)))
+		c.idle = false
+	}
 }
 
 // cubicCwnd computes the CUBIC congestion window after t seconds from last

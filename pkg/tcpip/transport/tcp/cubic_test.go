@@ -111,6 +111,24 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	}
 }
 
+func TestCubicIdleExcludesOnlyCurrentEpoch(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = 100 * time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.Update(1, rtt, clock.NowMonotonic())
+	clock.Advance(time.Second)
+	// Zero-window probing may start a new epoch before application data
+	// can resume. Time before that epoch must not shift its origin.
+	c.HandleRTOExpired()
+	clock.Advance(rtt)
+	c.HandleTxStart()
+	if elapsed := clock.NowMonotonic().Sub(c.T); elapsed != 0 {
+		t.Fatalf("epoch age after idle restart = %s, want 0", elapsed)
+	}
+}
+
 func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
 	clock := faketime.NewManualClock()
 	const rtt = 100 * time.Millisecond

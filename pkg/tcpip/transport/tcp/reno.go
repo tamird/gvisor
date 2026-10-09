@@ -119,3 +119,6 @@ func (r *renoState) HandleRTOExpired() {
 func (r *renoState) PostRecovery() {
 	// noop.
 }
+
+// HandleTxStart implements congestionControl.HandleTxStart.
+func (r *renoState) HandleTxStart() {}
