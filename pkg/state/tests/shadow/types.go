@@ -27,3 +27,16 @@ type Value struct {
 	Number   int
 	Duration time.Duration
 }
+
+// These names collide if generated identities simply join type and field names
+// with an underscore. They must remain distinct actual Go declarations.
+//
+// +stateify savable
+type A_B struct {
+	C int
+}
+
+// +stateify savable
+type A struct {
+	B_C int
+}

@@ -119,6 +119,7 @@ type multiName struct {
 
 // These defined types check that generated scalar operations preserve the
 // underlying representation without requiring an exact builtin type assertion.
+// +stateify type
 type typedSigned int16
 type typedUnsigned uint32
 type typedBool bool
