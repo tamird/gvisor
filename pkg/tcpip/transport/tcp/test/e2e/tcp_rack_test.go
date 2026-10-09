@@ -971,6 +971,8 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 	newContext := func(t *testing.T, recovery tcpip.TCPRecovery, gso stack.SupportedGSO) (*context.Context, *faketime.ManualClock, func() *tcp.TCPEndpointState) {
 		t.Helper()
 		clock := faketime.NewManualClock()
+		// Keep transmission times distinct from unset RACK timestamps.
+		clock.Advance(time.Second)
 		states := make(chan *tcp.TCPEndpointState, 16)
 		c := context.NewWithOpts(t, context.Options{
 			EnableV4: true,
@@ -1108,8 +1110,10 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 		checkCredit(t, "RTO", timedOut, 0)
 		checkCredit(t, "SACK after RTO", resacked, 3)
 		checkCredit(t, "full cumulative ACK", complete, 0)
-		if got, want := timedOut.Sender.SndCwnd, 1; got != want {
-			t.Errorf("cwnd after RTO = %d, want %d", got, want)
+		// The duplicate ACK used to observe the reset can start another
+		// recovery. The timeout event and retransmission establish the RTO.
+		if got, want := c.Stack().Stats().TCP.Timeouts.Value(), uint64(1); got != want {
+			t.Errorf("RTO events = %d, want %d", got, want)
 		}
 	})
 	t.Run("disjoint_sacks", func(t *testing.T) {
