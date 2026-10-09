@@ -86,7 +86,33 @@ type impl interface {
 	printStats()
 }
 
-type netImpl struct{}
+type netImpl struct {
+	recorder *tcpRecorder
+}
+
+func newNetImpl(mode, snapshotFile string) (impl, func() error, error) {
+	r, err := newTCPRecorder(snapshotFile, "periodic", mode)
+	if err != nil {
+		return nil, r.close, err
+	}
+	if r != nil {
+		r.start(r.sampleNative)
+	}
+	return netImpl{recorder: r}, r.close, nil
+}
+
+type observedTCPListener struct {
+	net.Listener
+	recorder *tcpRecorder
+}
+
+func (l observedTCPListener) Accept() (net.Conn, error) {
+	conn, err := l.Listener.Accept()
+	if err == nil {
+		l.recorder.trackNative(conn)
+	}
+	return conn, err
+}
 
 func setCongestionControl(_, _ string, conn syscall.RawConn) error {
 	var sockErr error
@@ -98,14 +124,22 @@ func setCongestionControl(_, _ string, conn syscall.RawConn) error {
 	return sockErr
 }
 
-func (netImpl) dial(address string) (net.Conn, error) {
+func (n netImpl) dial(address string) (net.Conn, error) {
 	dialer := net.Dialer{Control: setCongestionControl}
-	return dialer.Dial("tcp", address)
+	conn, err := dialer.Dial("tcp", address)
+	if err == nil {
+		n.recorder.trackNative(conn)
+	}
+	return conn, err
 }
 
-func (netImpl) listen(port int) (net.Listener, error) {
+func (n netImpl) listen(port int) (net.Listener, error) {
 	config := net.ListenConfig{Control: setCongestionControl}
-	return config.Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
+	listener, err := config.Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
+	if err != nil || n.recorder == nil {
+		return listener, err
+	}
+	return observedTCPListener{Listener: listener, recorder: n.recorder}, nil
 }
 
 func (netImpl) printStats() {
@@ -346,7 +380,7 @@ func newNetstackImpl(mode, probeFileName, snapshotFileName string) (impl, func()
 	log.Printf("netstack %s settings: congestion_control=%s sack=%t rack=%t moderate_recv_buf=%t packet_buffer_bytes=%d gso=%d swgso=%t gro=%t xdp=%t", mode, *congestionControl, *sack, *rack, *moderateRecvBuf, bufSize, *gso, *swgso, *gro, *useXDP)
 
 	if snapshotFileName != "" {
-		recorder.start(s)
+		recorder.start(func() error { return recorder.sampleNetstack(s) })
 	}
 
 	return netstackImpl{
@@ -487,22 +521,21 @@ func main() {
 	)
 	if *server {
 		in, cleanup, err = newNetstackImpl("server", *serverTCPProbeFile, *serverTCPSnapshotFile)
-		defer closeCapture(cleanup)
-
 	} else {
-		in = netImpl{}
+		in, cleanup, err = newNetImpl("server", *serverTCPSnapshotFile)
 	}
+	defer closeCapture(cleanup)
 	if err != nil {
-		log.Fatalf("netstack error: %v", err)
+		log.Fatalf("TCP proxy setup: %v", err)
 	}
 	if *client {
 		out, cleanup, err = newNetstackImpl("client", *clientTCPProbeFile, *clientTCPSnapshotFile)
-		defer closeCapture(cleanup)
 	} else {
-		out = netImpl{}
+		out, cleanup, err = newNetImpl("client", *clientTCPSnapshotFile)
 	}
+	defer closeCapture(cleanup)
 	if err != nil {
-		log.Fatalf("netstack error: %v", err)
+		log.Fatalf("TCP proxy setup: %v", err)
 	}
 
 	// Dial forward before binding.
