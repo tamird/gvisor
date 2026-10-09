@@ -127,8 +127,8 @@ bzl_library(
     name = "defs_bzl",
     srcs = ["defs.bzl"],
     deps = [
+        "//tools:arch_bzl",
         "//tools:defs_bzl",
-        "//tools/bazeldefs:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
     ],

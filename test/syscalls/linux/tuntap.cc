@@ -947,8 +947,8 @@ TEST_F(TuntapTest, SaveRestoreAfterNetnsMove) {
 
   // Restore must bind teardown to the destination stack and its new NIC ID.
   tun.reset();
-  EXPECT_THAT(DumpLinkNames(),
-              IsPosixErrorOkAndHolds(::testing::Not(::testing::Contains(kName))));
+  EXPECT_THAT(DumpLinkNames(), IsPosixErrorOkAndHolds(
+                                   ::testing::Not(::testing::Contains(kName))));
 }
 
 TEST_F(TuntapTest, SaveRestorePreservesAddressesAndPendingPackets) {

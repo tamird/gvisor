@@ -274,9 +274,9 @@ TEST(TimerTest, RlimitCpuInheritedAcrossFork) {
       for (;;) {
         x++;
         benchmark::DoNotOptimize(x);  // Don't optimize this loop away.
-        // gVisor needs periodic blocking so child_pid can run and reach waitid().
-        // Native Linux does not need this workaround; sleeping instead of
-        // burning CPU can greatly delay reaching the CPU limit.
+        // gVisor needs periodic blocking so child_pid can run and reach
+        // waitid(). Native Linux does not need this workaround; sleeping
+        // instead of burning CPU can greatly delay reaching the CPU limit.
         // TODO: b/315388929 - remove this
         if (x % 16384 == 0 && IsRunningOnGvisor()) {
           TEST_PCHECK(RetryEINTR(ppoll)(&pfd, 1, &timeout, nullptr) == 0);

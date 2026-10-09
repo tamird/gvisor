@@ -15,8 +15,8 @@
 """Full-system tests with declared QEMU and guest inputs."""
 
 load("@bazel_skylib//lib:shell.bzl", "shell")
+load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools:defs.bzl", "pkg_tar")
-load("//tools/bazeldefs:defs.bzl", "amd64_config", "arch_config", "arm64_config", "transition_allowlist")
 load("//tools/bazeldefs:platforms.bzl", "RBE_DOCKER_TOOLS_IMAGE")
 
 def _guest_config(settings, attr):
