@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T21:18:07.200813+00:00",
+    "updatedAt": "2026-10-09T21:35:04.478932+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5009,19 +5009,21 @@
       "number": 15574,
       "url": "https://github.com/google/gvisor/pull/15574",
       "status": "open",
-      "updatedAt": "2026-10-09T12:32:47.367276+00:00",
-      "summary": "The user-approved accepted-socket inheritance repair is now open as PR #15574 at 8d7493b5f. Corrected unit, native Linux, systrap and analyzer targets passed; expected before failures and the parent metadata-oracle failure remain retained. No contributor decision remains. Current-head checks and maintainer review are tracked separately.",
+      "updatedAt": "2026-10-09T21:35:04.478932+00:00",
+      "summary": "Lucas approved the exact current congestion-control inheritance head. Matching import #15599 is open with checks pending. The independently reviewed before/after validation remains linked below; current-head source and import status come from GitHub.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Current-head approved; matching import open",
         "owner": "external_sweeps",
         "sourceHead": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
-        "reviewedAt": "2026-10-09T12:32:47.367276+00:00",
-        "nextAction": "Observe current-head checks, maintainer review and imports through the sole collector; the user has already requested review.",
+        "reviewedAt": "2026-10-09T21:28:50.106112+00:00",
+        "nextAction": "Observe matching import #15599 and current-head CI; no contributor decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15574#pullrequestreview-5475398951",
+          "https://github.com/google/gvisor/pull/15599",
           "https://github.com/google/gvisor/pull/15574",
           "https://github.com/google/gvisor/pull/15574#issuecomment-6080696804"
         ],
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       }
     },
