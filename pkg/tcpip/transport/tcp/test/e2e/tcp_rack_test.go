@@ -962,13 +962,27 @@ func TestRACKWithDuplicateACK(t *testing.T) {
 	}
 }
 
-// TestRACKUpdateSackedOut checks selective ACK credit across cumulative ACKs
-// and the transition into recovery.
+// TestRACKUpdateSackedOut checks selective ACK credit across cumulative ACKs,
+// recovery, retransmission timeout, and GSO queue fragmentation.
 func TestRACKUpdateSackedOut(t *testing.T) {
-	for _, sacked := range []int{2, 3} {
-		t.Run(fmt.Sprintf("sacked=%d", sacked), func(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		recovery tcpip.TCPRecovery
+		sacked   int
+		disjoint bool
+		gso      bool
+		timeout  bool
+	}{
+		{name: "two_sacks", recovery: tcpip.TCPRACKLossDetection, sacked: 2},
+		{name: "recovery", recovery: tcpip.TCPRACKLossDetection, sacked: 3},
+		{name: "timeout", recovery: tcpip.TCPRACKLossDetection, sacked: 3, timeout: true},
+		{name: "without_rack", sacked: 2},
+		{name: "disjoint_sacks", recovery: tcpip.TCPRACKLossDetection, sacked: 2, disjoint: true},
+		{name: "gso_partial_ack", recovery: tcpip.TCPRACKLossDetection, sacked: 2, gso: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
 			clock := faketime.NewManualClock()
-			states := make(chan *tcp.TCPEndpointState, 8)
+			states := make(chan *tcp.TCPEndpointState, 16)
 			c := context.NewWithOpts(t, context.Options{
 				EnableV4: true,
 				MTU:      uint32(mtu),
@@ -976,8 +990,9 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 				Probe:    func(state *tcp.TCPEndpointState) { states <- state },
 			})
 			defer c.Cleanup()
+			c.SetGSOEnabled(test.gso)
 			e2e.SetStackSACKPermitted(t, c, true)
-			e2e.SetStackTCPRecovery(t, c, int(tcpip.TCPRACKLossDetection))
+			e2e.SetStackTCPRecovery(t, c, int(test.recovery))
 			e2e.CreateConnectedWithSACKAndTS(c)
 
 			const packets = 5
@@ -989,8 +1004,12 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 			if got, want := n, int64(len(data)); got != want {
 				t.Fatalf("Write = %d, want %d", got, want)
 			}
-			for offset := 0; offset < len(data); offset += maxPayload {
-				c.ReceiveAndCheckPacketWithOptions(data, offset, maxPayload, e2e.TSOptionSize)
+			packetSize := maxPayload
+			if test.gso {
+				packetSize = len(data)
+			}
+			for offset := 0; offset < len(data); offset += packetSize {
+				c.ReceiveAndCheckPacketWithOptions(data, offset, packetSize, e2e.TSOptionSize)
 			}
 			drain := func() *tcp.TCPEndpointState {
 				c.Stack().Pause()
@@ -1006,26 +1025,72 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 				t.Fatalf("SackedOut after first ACK = %d, want %d", got, want)
 			}
 
+			type observation struct {
+				phase string
+				state *tcp.TCPEndpointState
+				want  int
+			}
+			var observations []observation
 			start := c.IRS.Add(1 + 2*maxPayload)
-			var state *tcp.TCPEndpointState
-			for count := 1; count <= sacked; count++ {
+			firstCount := 1
+			if test.gso || test.disjoint {
+				// Report both packets in one ACK. The GSO case retains a
+				// two-packet entry for the later partial cumulative ACK.
+				firstCount = test.sacked
+			}
+			for count := firstCount; count <= test.sacked; count++ {
 				end := start.Add(seqnum.Size(count * maxPayload))
-				c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: end}})
-				state = drain()
-				if got, want := state.Sender.SackedOut, count; got != want {
-					t.Errorf("SackedOut after %d selectively acknowledged packets = %d, want %d", count, got, want)
+				blocks := []header.SACKBlock{{Start: start, End: end}}
+				if test.disjoint {
+					last := c.IRS.Add(1 + 4*maxPayload)
+					blocks = []header.SACKBlock{{Start: last, End: last.Add(maxPayload)}}
+					if count == 2 {
+						// The newest/highest block precedes a lower block.
+						blocks = append(blocks, header.SACKBlock{Start: start, End: start.Add(maxPayload)})
+					}
 				}
+				c.SendAckWithSACK(seq, maxPayload, blocks)
+				observations = append(observations, observation{phase: fmt.Sprintf("SACK %d", count), state: drain(), want: count})
 			}
-			if got, want := state.Sender.FastRecovery.Active, sacked == 3; got != want {
-				t.Fatalf("FastRecovery.Active = %t, want %t", got, want)
-			}
-			if sacked == 3 {
+			recoveryState := observations[len(observations)-1].state
+			if test.sacked == 3 {
 				c.ReceiveAndCheckPacketWithOptions(data, maxPayload, maxPayload, e2e.TSOptionSize)
 			}
+			if test.timeout {
+				var info tcpip.TCPInfoOption
+				if err := c.EP.GetSockOpt(&info); err != nil {
+					t.Fatalf("GetSockOpt(TCPInfoOption): %s", err)
+				}
+				clock.Advance(info.RTO)
+				c.ReceiveAndCheckPacketWithOptions(data, maxPayload, maxPayload, e2e.TSOptionSize)
+				c.SendAck(seq, maxPayload)
+				observations = append(observations, observation{phase: "RTO", state: drain(), want: 0})
+				c.SendAckWithSACK(seq, maxPayload, []header.SACKBlock{{Start: start, End: start.Add(3 * maxPayload)}})
+				observations = append(observations, observation{phase: "SACK after RTO", state: drain(), want: 3})
+			}
+			var partialState *tcp.TCPEndpointState
+			if test.sacked == 2 {
+				c.SendAck(seq, 3*maxPayload)
+				partialState = drain()
+				observations = append(observations, observation{phase: "partial cumulative ACK", state: partialState, want: 1})
+			}
 			c.SendAck(seq, len(data))
-			state = drain()
-			if got, want := state.Sender.SackedOut, 0; got != want {
-				t.Errorf("SackedOut after cumulative ACK = %d, want %d", got, want)
+			state := drain()
+			observations = append(observations, observation{phase: "full cumulative ACK", state: state, want: 0})
+			// Packet checkers stop on any prior test failure. Compare saved
+			// states after all packets have been consumed.
+			for _, observation := range observations {
+				if got, want := observation.state.Sender.SackedOut, observation.want; got != want {
+					t.Errorf("SackedOut after %s = %d, want %d", observation.phase, got, want)
+				}
+			}
+			if partialState != nil {
+				if got, want := partialState.Sender.Outstanding, 2; got != want {
+					t.Errorf("Outstanding after partial cumulative ACK = %d, want %d", got, want)
+				}
+			}
+			if got, want := recoveryState.Sender.FastRecovery.Active, test.sacked == 3; got != want {
+				t.Errorf("FastRecovery.Active after SACK = %t, want %t", got, want)
 			}
 			if got, want := state.Sender.FastRecovery.Active, false; got != want {
 				t.Errorf("FastRecovery.Active after cumulative ACK = %t, want %t", got, want)
