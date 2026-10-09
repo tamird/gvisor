@@ -774,7 +774,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 					return
 				case <-timer.C:
 				}
-				profilePath := filepath.Join(testLogDir, "sentry-cpu.pprof")
+				profilePath := filepath.Join(undeclaredOutputsDir, "sentry-cpu.pprof")
 				profileArgs := append([]string{}, args...)
 				profileArgs = append(profileArgs, "debug", "-profile-cpu="+profilePath, "-duration=90s", id)
 				log.Infof("Starting timed CPU profile for sandbox %q: %v", id, profileArgs)
