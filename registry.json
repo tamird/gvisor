@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T17:52:54.269792+00:00",
+    "updatedAt": "2026-10-09T18:07:09.455446+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6426,7 +6426,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T17:52:54.269792+00:00",
+      "updatedAt": "2026-10-09T18:07:09.455446+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -6725,6 +6725,23 @@
               "url": "https://github.com/tamird/gvisor/commit/4da0a21a2289c9973b2d43968ddd173b7d340ee5"
             }
           ]
+        },
+        {
+          "text": "A separate standalone epoch proposal now has an accepted before/after unit and analyzer qualification. Its results remain pending verification; deliberate before failures are part of the method. The disabled-probe overhead correction is also prepared and source reviewed, with runtime measurement still pending. Neither preparation changes the source or results of the sharing studies above.",
+          "evidence": [
+            {
+              "label": "Epoch before/after qualification",
+              "url": "https://app.buildbuddy.io/invocation/ec0c8d03-2163-4371-b083-688a08bd9ef0"
+            },
+            {
+              "label": "Standalone epoch proposal 37b627315",
+              "url": "https://github.com/tamird/gvisor/commit/37b627315d1898ee85aba7cc5d387cb9b7a13d29"
+            },
+            {
+              "label": "Disabled-probe overhead correction b3de2dbfa",
+              "url": "https://github.com/tamird/gvisor/commit/b3de2dbfa"
+            }
+          ]
         }
       ],
       "nextStep": "Use the verified sharing studies to guide justified Netstack design and performance experiments. Investigate the remaining implementation/path gap, including an isolated measurement of the observed disabled-probe overhead; its cost is not yet quantified. Continue qualification and maintainer review alongside this work.",
@@ -7015,7 +7032,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T17:52:54.269792+00:00",
+      "updatedAt": "2026-10-09T18:07:09.455446+00:00",
       "summary": "Optimization research has resumed. The existing source assessment identifies generated typed-field operations that can share the serializer\u2019s graph and wire mechanism. Prior findings remain below; no new prototype or speedup is claimed.",
       "findings": [
         {
@@ -7066,7 +7083,7 @@
           ]
         }
       ],
-      "nextStep": "Use the active MapRange comparison and follow-up profiles to select the next generated or generic typed-field experiment. Preserve graph identity, wire format and handwritten hooks while testing justified reflection reductions with the existing Save/Load fixtures.",
+      "nextStep": "Use the completed MapRange comparison, once its saved measurements are verified, and follow-up profiles to select the next generated or generic typed-field experiment. Preserve graph identity, wire format and handwritten hooks while testing justified reflection reductions with existing Save/Load fixtures.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7079,8 +7096,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T17:52:54.269792+00:00",
-      "summary": "Optimization experiments are active. The current source preparation isolates the delivered MapRange algorithm on the prior profiled codec cohort. The retained five profiles remain the measured baseline; the resumed comparison has not run yet and its speedup is unknown.",
+      "updatedAt": "2026-10-09T18:07:09.455446+00:00",
+      "summary": "Optimization experiments are active. The first resumed comparison of the delivered MapRange algorithm completed successfully on the prior profiled codec cohort. Its measurements are awaiting saved-evidence verification; speedup remains unknown. The five original profiles remain the measured baseline.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7124,9 +7141,26 @@
               "url": "https://app.buildbuddy.io/invocation/d9bcb53c-71b1-4c40-8e84-d5fd1a9c6db8"
             }
           ]
+        },
+        {
+          "text": "The first resumed MapRange comparison completed successfully using eight existing benchmark leaves, 12 balanced AB/BA pairs, one-second measurements, GOMAXPROCS=1 and a fixed CPU on one remote worker. The only production difference is the delivered map-iterator loop. Completion alone does not establish a speedup: the saved measurements and source/runtime bindings are still being verified.",
+          "evidence": [
+            {
+              "label": "Completed MapRange comparison",
+              "url": "https://app.buildbuddy.io/invocation/0c042125-ad99-43ab-bf03-81ae81c39540"
+            },
+            {
+              "label": "MapRange-only experiment source 57ece9dbf",
+              "url": "https://github.com/tamird/gvisor/commit/57ece9dbf77006b7139d20e8bdf3f4d2191fc78d"
+            },
+            {
+              "label": "Unchanged profiling baseline 1df3ad131",
+              "url": "https://github.com/tamird/gvisor/commit/1df3ad131e0fae5f6d0e6db3f49b33694bcb35e5"
+            }
+          ]
         }
       ],
-      "nextStep": "Measure eight existing Save/Load benchmark leaves before and after MapRange using 12 balanced AB/BA pairs on the same worker, one-second measurements, GOMAXPROCS=1 and a fixed CPU. Then profile remaining costs, including Stats and wire allocations. Source is prepared; method review precedes execution and no new workload result is claimed.",
+      "nextStep": "Verify the completed eight-leaf, 12-pair MapRange comparison, including actual source trees, binaries, CPU affinity and benchmark calibration. Then use measured changes to select the next experiment and profile remaining costs, including Stats and wire allocations.",
       "evidence": [
         {
           "label": "Studied production revision",
