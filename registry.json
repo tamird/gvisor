@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T21:35:04.478932+00:00",
+    "updatedAt": "2026-10-09T21:54:22.138206+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4191,24 +4191,19 @@
       "url": "https://github.com/google/gvisor/pull/15502",
       "group": "tests",
       "head": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
-      "status": "open",
-      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
-      "summary": "The current a4fdb9d9 source received maintainer approval from konstantin-s-bogom at 18:04:59 UTC. The reviewer asked parth-opensrc to pull it in; no new review request is needed. No import is present in this complete snapshot. GitHub currently reports mergeability UNKNOWN, so conflict-free merge readiness is not established.\n\nEarlier preparation and validation:\n\nContributor approved 30dbbc37f; root owns publication of the source-equivalent refresh. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nPublic standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface’s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor’s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
+      "status": "merged",
+      "updatedAt": "2026-10-09T21:46:06.555169+00:00",
+      "summary": "PR #15502 and its matching import #15595 have merged. The router veth IPv6 setup is delivered; no review or import action remains. Earlier source and runtime evidence is retained below.\n\nEarlier source and validation record:\n\nContributor approved 30dbbc37f; root owns publication of the source-equivalent refresh. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nPublic standalone 3e05d4b8a239b70503b795d8435c6a1a18e99ac0 preserves the reviewed one-file correction from 30dbbc37f on current master. After creating the router veth, IPv6 setup clears that interface’s disable_ipv6 value before assigning addresses. Only ENOENT is tolerated for gVisor’s existing procfs interface; other errors remain failures. A concrete contributor review question is pending for this exact head; no upstream PR exists.\n\nThe unchanged full three-owner nftables lane passes in Actions 37623291651 at composition 7a285b058 after the original native tcpMasq_IPv6 setup failure at 801088645. Both traffic suites execute all 18 IPv4/IPv6 leaves without skips; native C++ stdout reports 246 passes and five existing skips. Source/method peer e26ce20285f8, exact composition peer d52ea3132fa9 and saved result peer 6aaa2abe9c96 are closed. All three uncached Docker owners retain 900-second limits and complete normal cleanup. This is source-specific lane validation, not a full standalone-master test run or other-kernel claim.",
       "followup": {
-        "disposition": "Fresh current-head approval observed",
+        "disposition": "Merged",
         "owner": "external_sweeps",
-        "nextAction": "Observe the matching import and current-head CI; no contributor decision remains.",
         "sourceHead": "a4fdb9d9f2cc79e3883f94cc3d1392d90a41412e",
-        "reviewedAt": "2026-10-09T20:12:40.895923+00:00",
+        "reviewedAt": "2026-10-09T21:40:14.410349+00:00",
+        "nextAction": "No remaining delivery action.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3e05d4b8a239b70503b795d8435c6a1a18e99ac0",
-          "https://github.com/tamird/gvisor/actions/runs/37623291651",
           "https://github.com/google/gvisor/pull/15502",
-          "https://github.com/google/gvisor/pull/15502#pullrequestreview-5460906569",
-          "https://github.com/google/gvisor/pull/15502#issuecomment-6066053276"
-        ],
-        "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+          "https://github.com/google/gvisor/pull/15595"
+        ]
       },
       "number": 15502
     },
@@ -4886,15 +4881,15 @@
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
-      "status": "Full 64K failed; stress continuation running",
-      "summary": "The original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later six-owner timeout continuation at 19b passed five owners and 12 of 19 shards; all seven socket-stress shards timed out at 3600 seconds after earlier cases progressed. A source-reviewed follow-up at 3cd943971 is now running the same 33 stress cases as separate actions, keeping that continuation’s 3600-second deadlines and tracing. It uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the experimental native ARM64-host pilot is unchanged. This is fork qualification with no new pass credit or canonical promotion. The separate cookie repair #15583 passed both complete loopback owners (16 shards) on its own source; it does not turn the original full profile into a pass.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
-      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
+      "status": "Full 64K failed; three stress cases timed out",
+      "summary": "The original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later 33-action stress continuation at 3cd943971 is terminal: 30 cases passed and Reset/3, Reset/4 and ShutdownCloseSecond/3 timed out at their unchanged 3600-second deadlines. The owner verified the original case/action bindings; retained tails show continued syscall progress without establishing a cause. This uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest, not the native ARM64-host pilot. A separate trace-free IPv4 Reset/4 diagnostic is prepared but has not been accepted. The original full-profile and six-owner failures remain; no full-profile pass or canonical promotion is claimed. The cookie repair #15583 passed its separate complete loopback continuation.\n\nEarlier continuation observation:\n\nThe original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later six-owner timeout continuation at 19b passed five owners and 12 of 19 shards; all seven socket-stress shards timed out at 3600 seconds after earlier cases progressed. A source-reviewed follow-up at 3cd943971 is now running the same 33 stress cases as separate actions, keeping that continuation’s 3600-second deadlines and tracing. It uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the experimental native ARM64-host pilot is unchanged. This is fork qualification with no new pass credit or canonical promotion. The separate cookie repair #15583 passed both complete loopback owners (16 shards) on its own source; it does not turn the original full profile into a pass.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
+      "updatedAt": "2026-10-09T21:47:24.576344+00:00",
       "followup": {
-        "disposition": "Full 64K failed; stress continuation running",
+        "disposition": "Full 64K failed; three stress cases timed out",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-09T20:17:55.863852+00:00",
-        "nextAction": "Observe the owner-run stress-shard continuation and retain the original full-profile and six-owner failures; canonical promotion remains with root.",
+        "reviewedAt": "2026-10-09T21:47:24.576344+00:00",
+        "nextAction": "Root and the syscall owner are preparing the single trace-free diagnostic for IPv4 Reset/4. Preserve the three original timeouts and earlier full-profile failures; canonical promotion remains with root.",
         "evidence": [
           "https://github.com/tamird/gvisor/actions/runs/37985716856",
           "https://github.com/tamird/gvisor/actions/runs/37975093514",
@@ -4951,24 +4946,20 @@
       "title": "tcp: preserve CUBIC ACK growth credit",
       "url": "https://github.com/google/gvisor/pull/15579",
       "group": "runtime",
-      "status": "open",
-      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
-      "summary": "The current source remains approved. Matching import #15589 at 55f97af1e has passed generation and Go tests; Buildkite checks are pending. The older f057cd3fb job completed generation and its generated-branch commit/push, then failed while deleting the disposable clone before the Go build. The exact writer was not captured. The separate clone-lifecycle correction is now PR #15598, with its export and cleanup validation complete; it is not a blocker for this CUBIC import.",
+      "status": "merged",
+      "updatedAt": "2026-10-09T21:52:16.054937+00:00",
+      "summary": "PR #15579 and its matching import #15589 have merged. The contributor-approved CUBIC ACK-credit repair is delivered; no review or import action remains. The original import cleanup failure remains historical and the independent clone-maintenance correction is tracked in #15598.\n\nEarlier source and delivery record:\n\nThe current source remains approved. Matching import #15589 at 55f97af1e has passed generation and Go tests; Buildkite checks are pending. The older f057cd3fb job completed generation and its generated-branch commit/push, then failed while deleting the disposable clone before the Go build. The exact writer was not captured. The separate clone-lifecycle correction is now PR #15598, with its export and cleanup validation complete; it is not a blocker for this CUBIC import.",
       "followup": {
-        "disposition": "Historical cleanup failure diagnosed; import progressing",
+        "disposition": "Merged",
         "owner": "external_sweeps",
         "sourceHead": "1a12268af0b1a89bc67bc1e5eb3541f678693f69",
-        "reviewedAt": "2026-10-09T21:12:10.843847+00:00",
-        "nextAction": "Observe current CUBIC import CI and maintainer events; the independent workflow cleanup fix is tracked as PR #15598.",
+        "reviewedAt": "2026-10-09T21:51:56.897628+00:00",
+        "nextAction": "No remaining delivery action. Root owns independent follow-up controller work.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15598",
-          "https://github.com/google/gvisor/actions/runs/37981674651/job/113993478213",
           "https://github.com/google/gvisor/pull/15579",
-          "https://app.buildbuddy.io/invocation/9564c385-a2f4-446d-80d5-2d0bd099f41a",
-          "https://github.com/google/gvisor/pull/15579#pullrequestreview-5474427177"
-        ],
-        "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+          "https://github.com/google/gvisor/pull/15589",
+          "https://github.com/google/gvisor/pull/15598"
+        ]
       },
       "number": 15579
     },
@@ -5165,6 +5156,36 @@
           "https://github.com/google/gvisor/pull/15598",
           "https://github.com/tamird/gvisor/commit/49328c2b8c6721966311d65791ff1255d3bc15ea",
           "https://app.buildbuddy.io/invocation/9ae5069f-4d80-473c-b8d1-2e283591d7c9"
+        ]
+      }
+    },
+    {
+      "id": "branch:state-map-iterator-storage",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "state-map-iterator-storage",
+      "head": "856685d3e33134daa25b3a1444feb83a6be40410",
+      "title": "Reuse scalar map iterator storage",
+      "url": "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410",
+      "group": "runtime",
+      "status": "Prepared proposal; depends on #15542",
+      "updatedAt": "2026-10-09T21:46:06.555169+00:00",
+      "summary": "The user is reviewing this prepared proposal. It reuses iterator storage only for scalar keys and values in maps with more than one entry; aggregate and deferred references retain their existing storage. Source and correctness checks, the mixed-component and NaN regressions, and the benchmark review are complete. The separately measured Map Save fixture took 5.43% less time and used 35.82% fewer allocations. These results do not establish an end-to-end checkpoint speedup. Publication depends on the MapRange prerequisite #15542 landing, independently of the pending contributor decision.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "856685d3e33134daa25b3a1444feb83a6be40410",
+        "url": "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410"
+      },
+      "followup": {
+        "disposition": "Contributor review pending; source dependency open",
+        "owner": "root",
+        "sourceHead": "856685d3e33134daa25b3a1444feb83a6be40410",
+        "reviewedAt": "2026-10-09T21:46:06.555169+00:00",
+        "nextAction": "Await the user’s review and the merge of #15542 before opening the dependent PR; root owns delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410",
+          "https://github.com/google/gvisor/pull/15542",
+          "https://app.buildbuddy.io/invocation/69c48b39-e363-4862-a1ed-7e4375f3f178"
         ]
       }
     }
@@ -6509,6 +6530,16 @@
         "https://github.com/google/gvisor/pull/15475",
         "https://github.com/tamird/gvisor/commit/d273b89ccb498c13a321649ffc0e682ba09fd611"
       ]
+    },
+    {
+      "from": "pr:15542",
+      "to": "branch:state-map-iterator-storage",
+      "type": "depends_on",
+      "reason": "Scalar iterator storage uses the MapRange encoder introduced by #15542. The source prerequisite remains open; contributor review is a separate state.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15542",
+        "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410"
+      ]
     }
   ],
   "investigations": [
@@ -7127,8 +7158,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
-      "summary": "Optimization research is active. MapRange and a separate struct/header coallocation experiment now have verified measurements; the latter reduces selected Save allocation counts without a statistically significant timing change. Generated or generic typed-field operations remain a design avenue whose performance benefit is unmeasured.",
+      "updatedAt": "2026-10-09T21:46:06.555169+00:00",
+      "summary": "Optimization research is active. Separate MapRange, decoder-slot and scalar iterator-storage experiments have verified source-specific timing and allocation improvements; struct/header coallocation reduced allocation counts without a statistically significant timing change. Generated or generic typed-field operations remain a design avenue whose benefit is unmeasured.",
       "findings": [
         {
           "text": "go_stateify already emits typed field addresses, but Sink/Source erase them through any and reflection. Typed scalar-slot operations could preserve that information while sharing the existing object graph, wire values, registry, field reconciliation and hooks. The syntax-only generator cannot safely guess imported or shadowed scalar types; wider migration would need declared type information.",
@@ -7191,8 +7222,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T20:17:55.863852+00:00",
-      "summary": "Two experiments now have independently verified findings. The delivered MapRange loop improved the studied Map Save microbenchmark. A separate struct/header coallocation prototype reduced allocation counts in control-message and UDP receive-queue Save, but none of its eleven timing comparisons was statistically significant. No whole-checkpoint speedup is established.",
+      "updatedAt": "2026-10-09T21:46:06.555169+00:00",
+      "summary": "Four experiments now have verified findings: MapRange improved the studied Map Save microbenchmark; struct/header coallocation reduced selected Save allocation counts without a significant timing change; decoder map slots reduced Map Load time and allocations; and scalar iterator storage reduced Map Save time and allocations. The experiments use different source pairs and must be read separately. No whole-checkpoint speedup is established.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7287,9 +7318,51 @@
               "url": "https://github.com/tamird/gvisor/commit/5ffc5b27692f50fb685bff456b0552bc1f806c6b"
             }
           ]
+        },
+        {
+          "text": "Reusing decoder temporary key/value slots outside Struct and Array kinds reduced the fixed 1024-entry Map Load median from 449,457 to 368,672 ns (-17.97%, benchstat p<.001, n=12). Allocated bytes fell 6.71% and allocations fell 52.47%. Root verified the original 192 measured rows and 12 pairs. Only decode.go differs between the measured inputs; the seven other timing comparisons were nonsignificant.",
+          "evidence": [
+            {
+              "label": "Verified decoder map-slot comparison",
+              "url": "https://app.buildbuddy.io/invocation/be8a0a8f-0058-443b-827f-00f073125bff"
+            },
+            {
+              "label": "Measured candidate 3db61fe04",
+              "url": "https://github.com/tamird/gvisor/commit/3db61fe04a4b6859c84e6d6fc560210804508e5b"
+            },
+            {
+              "label": "Matched-fixture baseline 99823290c",
+              "url": "https://github.com/tamird/gvisor/commit/99823290c871c9273b34ee7994a6fe40720d60f5"
+            }
+          ]
+        },
+        {
+          "text": "Reusing scalar iterator storage reduced the separate fixed 1024-entry Map Save median from 195,068 to 184,478.5 ns (-5.43%, benchstat p=.010, n=12). Allocated bytes fell 6.17% and allocations fell 35.82%; seven other timing comparisons were nonsignificant. The original measured rows and numeric interpretation are independently reviewed. The standalone proposal is awaiting contributor review and depends on the still-open MapRange PR #15542.",
+          "evidence": [
+            {
+              "label": "Verified scalar iterator-storage comparison",
+              "url": "https://app.buildbuddy.io/invocation/69c48b39-e363-4862-a1ed-7e4375f3f178"
+            },
+            {
+              "label": "Measured candidate 01c1ad7d7",
+              "url": "https://github.com/tamird/gvisor/commit/01c1ad7d761a3057074706fda03e014fc3d69692"
+            },
+            {
+              "label": "Matched-fixture baseline 81c637ac9",
+              "url": "https://github.com/tamird/gvisor/commit/81c637ac94b05d5607377a42165af094b3228c97"
+            },
+            {
+              "label": "Prepared proposal under contributor review",
+              "url": "https://github.com/tamird/gvisor/commit/856685d3e33134daa25b3a1444feb83a6be40410"
+            },
+            {
+              "label": "MapRange source prerequisite #15542",
+              "url": "https://github.com/google/gvisor/pull/15542"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate remaining reflection, map-load allocation ownership and generated or generic typed-field costs using the now-delivered fixed-work benchmarks. Measure each justified change and preserve graph identity, wire compatibility and handwritten hooks.",
+      "nextStep": "Continue investigating remaining reflection, map-load allocation ownership and generated or generic typed-field costs. The scalar encoder proposal is under contributor review and waits for #15542; decoder proposal preparation and broader experiments continue without a contributor-authorization hold.",
       "evidence": [
         {
           "label": "Studied production revision",
@@ -7408,6 +7481,96 @@
               "url": "https://github.com/tamird/gvisor/commit/5ffc5b27692f50fb685bff456b0552bc1f806c6b"
             }
           ]
+        },
+        {
+          "title": "Decoder map slots: Map Load",
+          "description": "Fixed 1024-entry map fixture; 12 balanced before/after pairs on one Linux AMD64 worker with fixed CPU affinity. One complete operation per benchmark iteration. Baseline 99823290c; candidate 3db61fe04.",
+          "columns": [
+            "Measure",
+            "Before",
+            "After",
+            "Observed change"
+          ],
+          "rows": [
+            [
+              "Median time per operation",
+              "449,457 ns",
+              "368,672 ns",
+              "-17.97%; p<.001, n=12 per side"
+            ],
+            [
+              "Allocated bytes per operation",
+              "243,944 B",
+              "227,576 B",
+              "-6.71%"
+            ],
+            [
+              "Allocations per operation",
+              "3,899",
+              "1,853",
+              "-52.47%"
+            ]
+          ],
+          "note": "The seven other timing comparisons were nonsignificant; this does not establish equivalence. Repeated samples on one worker are not independent workers. These separate source-specific experiments do not establish a whole-checkpoint speedup, and their percentage changes must not be added.",
+          "evidence": [
+            {
+              "label": "Verified decoder map slots: map load comparison",
+              "url": "https://app.buildbuddy.io/invocation/be8a0a8f-0058-443b-827f-00f073125bff"
+            },
+            {
+              "label": "Measured candidate 3db61fe04",
+              "url": "https://github.com/tamird/gvisor/commit/3db61fe04a4b6859c84e6d6fc560210804508e5b"
+            },
+            {
+              "label": "Matched-fixture baseline 99823290c",
+              "url": "https://github.com/tamird/gvisor/commit/99823290c871c9273b34ee7994a6fe40720d60f5"
+            }
+          ]
+        },
+        {
+          "title": "Scalar iterator storage: Map Save",
+          "description": "Fixed 1024-entry map fixture; 12 balanced before/after pairs on one Linux AMD64 worker with fixed CPU affinity. One complete operation per benchmark iteration. Baseline 81c637ac9; candidate 01c1ad7d7.",
+          "columns": [
+            "Measure",
+            "Before",
+            "After",
+            "Observed change"
+          ],
+          "rows": [
+            [
+              "Median time per operation",
+              "195,068 ns",
+              "184,478.5 ns",
+              "-5.43%; p=.010, n=12 per side"
+            ],
+            [
+              "Allocated bytes per operation",
+              "132,664 B",
+              "124,480 B",
+              "-6.17%"
+            ],
+            [
+              "Allocations per operation",
+              "2,856",
+              "1,833",
+              "-35.82%"
+            ]
+          ],
+          "note": "The seven other timing comparisons were nonsignificant; this does not establish equivalence. Repeated samples on one worker are not independent workers. These separate source-specific experiments do not establish a whole-checkpoint speedup, and their percentage changes must not be added.",
+          "evidence": [
+            {
+              "label": "Verified scalar iterator storage: map save comparison",
+              "url": "https://app.buildbuddy.io/invocation/69c48b39-e363-4862-a1ed-7e4375f3f178"
+            },
+            {
+              "label": "Measured candidate 01c1ad7d7",
+              "url": "https://github.com/tamird/gvisor/commit/01c1ad7d761a3057074706fda03e014fc3d69692"
+            },
+            {
+              "label": "Matched-fixture baseline 81c637ac9",
+              "url": "https://github.com/tamird/gvisor/commit/81c637ac94b05d5607377a42165af094b3228c97"
+            }
+          ]
         }
       ]
     },
@@ -7416,11 +7579,11 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T14:19:26.234171+00:00",
+      "updatedAt": "2026-10-09T21:54:22.138206+00:00",
       "summary": "Investigate gaps in automatic GitHub status collection and publication. Keep the snapshot timestamp authoritative while determining why expected schedule events are absent.",
       "findings": [
         {
-          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Actual scheduled runs succeeded after creation at 02:58 and 10:38 UTC on 9 October. The second collected GitHub status at 10:40 and published matching Pages assets. The 13:56 UTC history check found no later scheduled event. These observations do not establish regular 30-minute cadence; the gaps remain under investigation.",
+          "text": "The active default-branch workflow is configured for minutes 18 and 48 of each UTC hour. Four actual scheduled runs succeeded on 9 October, created at 02:58, 10:38, 17:12 and 21:42 UTC. The latest collected GitHub status at 21:44 and published status-only commit ab450d14d, which was preserved before this later curated update. These observations establish successful scheduled execution, but not regular 30-minute cadence; the gaps remain unexplained.",
           "evidence": [
             {
               "label": "Deployed schedule",
@@ -7433,6 +7596,18 @@
             {
               "label": "Second successful scheduled run",
               "url": "https://github.com/tamird/gvisor/actions/runs/37918885799"
+            },
+            {
+              "label": "Third successful scheduled run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37964590201"
+            },
+            {
+              "label": "Fourth successful scheduled run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/37995083301"
+            },
+            {
+              "label": "Preserved automated status commit",
+              "url": "https://github.com/tamird/gvisor/commit/ab450d14d545d30e444dca0c3ff029004f7c6908"
             },
             {
               "label": "Workflow run history",
