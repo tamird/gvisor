@@ -63,7 +63,6 @@ benchmark_test(
             "filter": "BenchmarkFioRandRead",
         },
     ],
-    data = ["//test/runner/fuse"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [

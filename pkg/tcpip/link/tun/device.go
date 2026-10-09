@@ -70,19 +70,6 @@ type Flags struct {
 	Exclusive    bool
 }
 
-// beforeSave is invoked by stateify.
-//
-// +checklocksexclude:d.mu
-func (d *Device) beforeSave() {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	// TODO(b/110961832): Restore the device to stack. At this moment, the stack
-	// is not savable.
-	if d.endpoint != nil {
-		panic("/dev/net/tun does not support save/restore when a device is associated with it.")
-	}
-}
-
 // SetPersistent sets whether the attached interface persists without open files.
 //
 // +checklocksexclude:d.mu
@@ -137,7 +124,7 @@ func (d *Device) SetIff(ctx context.Context, s *stack.Stack, name string, flags 
 		prefix = "tap"
 	}
 
-	linkCaps := stack.CapabilityNone
+	linkCaps := stack.CapabilitySaveRestore
 	if flags.TAP {
 		linkCaps |= stack.CapabilityResolutionRequired
 	}
@@ -180,8 +167,6 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 		id := s.NextNICID()
 		endpoint := &tunEndpoint{
 			Endpoint: channel.New(defaultDevOutQueueLen, defaultDevMtu, ""),
-			stack:    s,
-			nicID:    id,
 			name:     name,
 			isTap:    prefix == "tap",
 		}
@@ -190,8 +175,9 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 		if endpoint.name == "" {
 			endpoint.name = fmt.Sprintf("%s%d", prefix, id)
 		}
-		err := s.CreateNICWithOptions(endpoint.nicID, packetsocket.New(endpoint), stack.NICOptions{
+		err := s.CreateNICWithOptions(id, packetsocket.New(endpoint), stack.NICOptions{
 			Name:   endpoint.name,
+			Kind:   "tun",
 			MinMTU: header.IPv4MinimumMTU,
 			// Linux drivers/net/tun.c:tun_net_initialize sets max_mtu to
 			// MAX_MTU minus hard_header_len, excluding packet-info bytes.
@@ -397,8 +383,6 @@ type tunEndpoint struct {
 	tunEndpointRefs
 	*channel.Endpoint
 
-	stack *stack.Stack
-	nicID tcpip.NICID
 	name  string
 	isTap bool
 

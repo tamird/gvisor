@@ -1291,8 +1291,6 @@ syscall_test(
 )
 
 syscall_test(
-    # TODO(b/110961832): /dev/net/tun does not support S/R.
-    save = False,
     test = "//test/syscalls/linux:tuntap_test",
 )
 
