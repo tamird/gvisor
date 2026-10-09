@@ -9626,6 +9626,9 @@ func TestSynCookieACKAfterClose(t *testing.T) {
 				peer.SendPacket(nil, nil)
 				peer.SendPacket(nil, nil)
 				ep.UnlockUser()
+				// Drain the accepted endpoint before the listener barrier below.
+				c.Stack().Pause()
+				c.Stack().Resume()
 			} else {
 				peer.SendPacket(nil, nil)
 				c.Stack().Pause()
