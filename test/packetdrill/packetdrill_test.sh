@@ -120,6 +120,7 @@ declare -r IMAGE_TAG="gvisor.dev/images/packetdrill"
 
 # Make sure that docker is installed and usable.
 docker version
+uname -a
 
 function finish {
   local cleanup_success=1
@@ -180,6 +181,13 @@ docker network connect "${TEST_NET}" \
   --ip "${DUT_TEST_NET_IP}" "${DUT}" \
   || (docker kill "${DUT}"; docker rm "${DUT}"; false)
 docker start "${DUT}"
+
+# Fork-only provenance of the actual DUT interpreter; retain runtime even if
+# a metadata command fails, but do not report a complete evidence pass.
+metadata_status=0
+docker exec "${DUT}" uname -a || metadata_status=1
+docker exec "${DUT}" git -C /packetdrill rev-parse HEAD || metadata_status=1
+docker exec "${DUT}" sha256sum "${PACKETDRILL}" || metadata_status=1
 
 DUT_IF=$(get_container_if_from_ip "${DUT}" "$DUT_TEST_NET_IP")
 if [[ -z "$DUT_IF" ]]; then
@@ -257,4 +265,5 @@ docker exec -t "${DUT}" \
   --init_scripts=/packetdrill_setup.sh \
   --tolerance_usecs="${tolerance_usecs}" "${dut_scripts[@]}"
 
+(( metadata_status == 0 ))
 echo PASS: No errors.

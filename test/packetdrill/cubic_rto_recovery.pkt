@@ -1,0 +1,51 @@
+// Copyright 2026 The gVisor Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// CUBIC must recover from an RTO and send new data after the retransmission
+// is acknowledged. The RTO/slow-start scenario is also covered upstream:
+// https://github.com/google/packetdrill/blob/43500f46d/gtests/net/tcp/cubic/cubic-rto-ss-ca-cwnd-bump.pkt
+// This wire-mode case does not use the upstream Linux-only TCP_INFO code
+// snippets or require identical TLP/segmentation behavior.
+
+0 socket(..., SOCK_STREAM, IPPROTO_TCP) = 3
++0 setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0
++0 setsockopt(3, SOL_TCP, TCP_CONGESTION, "cubic", 5) = 0
++0 bind(3, ..., ...) = 0
++0 listen(3, 1) = 0
+
+// Do not negotiate SACK or timestamps. This tests duplicate-ACK/RTO recovery
+// without depending on either stack's RACK/TLP configuration.
++0 < S 0:0(0) win 50000 <mss 1000>
++0 > S. 0:0(0) ack 1 <...>
++.1 < . 1:1(0) ack 1 win 50000
++0 accept(3, ..., ...) = 4
++0 getsockopt(4, SOL_TCP, TCP_CONGESTION, "cubic", [5]) = 0
++0 setsockopt(4, SOL_TCP, TCP_NODELAY, [1], 4) = 0
+
+// Establish a 100ms data RTT sample before dropping the next ACK.
++0 write(4, ..., 1000) = 1000
++0 > P. 1:1001(1000) ack 1
++.1 < . 1:1(0) ack 1001 win 50000
++0 write(4, ..., 1000) = 1000
++0 > P. 1001:2001(1000) ack 1
+
+// Both stacks calculate an RTO from the measured RTT; allow timer granularity
+// without accepting an immediate duplicate-ACK retransmission.
++.2~+.5 > P. 1001:2001(1000) ack 1
++.1 < . 1:1(0) ack 2001 win 50000
+
+// New data must be sent after RTO recovery.
++0 write(4, ..., 1000) = 1000
++0 > P. 2001:3001(1000) ack 1
++.1 < . 1:1(0) ack 3001 win 50000

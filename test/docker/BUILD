@@ -15,6 +15,7 @@ docker_image_archives(
     source_archives = {
         "containerd/harness": {"amd64": ":containerd_harness_source_amd64"},
         "moby": {"amd64": ":moby_source_amd64"},
+        "packetdrill": {"amd64": ":packetdrill_source_amd64"},
     },
 )
 
@@ -52,6 +53,24 @@ source_image_archive(
         memory = "8GB",
     ),
     image = "moby",
+    tags = ["manual"],
+)
+
+# Build the reviewed interpreter input for the paired protocol tests.
+source_image_archive(
+    name = "packetdrill_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    image = "packetdrill",
     tags = ["manual"],
 )
 
