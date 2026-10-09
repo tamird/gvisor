@@ -44,44 +44,59 @@ Different configurations can be run using different arguments. For example:
 
 Use `tcp_benchmark --help` for full arguments.
 
-This tool may be used to easily generate data for graphing. For example, to
-generate a CSV for various latencies, you might do:
+Select congestion control explicitly with `--congestion-control reno` or
+`--congestion-control cubic`. Both native and netstack proxy sockets use the
+selected algorithm; the default is Reno, including native sockets that previously
+inherited the host default. `--cubic` remains an alias for selecting CUBIC.
 
-```
-rm -f /tmp/netstack_latency.csv /tmp/native_latency.csv
-latencies=$(seq 0 5 50;
-            seq 60 10 100;
-            seq 125 25 250;
-            seq 300 50 500)
-for latency in $latencies; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --client --ideal --latency $latency)
-  echo $latency,$throughput,$client_cpu >> /tmp/netstack_latency.csv
-done
-for latency in $latencies; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --ideal --latency $latency)
-  echo $latency,$throughput,$client_cpu >> /tmp/native_latency.csv
+For a controlled comparison, use the same rate, RTT, loss, queue, seed and offload
+settings for each algorithm. For example, add `--ideal --latency 100 --rate 20
+--loss 0.1 --queue-packets 100 --seed 1234` to each run. Latency is the total
+round-trip delay, split across the two WAN devices; rate and queue limits apply
+independently in each direction. A supplied seed requires support from both
+`tc` and the host kernel. It reproduces the random generator input, not identical
+packet histories from senders that transmit differently.
+
+`--output-dir DIR` retains the exact invocation, requested settings, kernel/tool
+versions, helper hashes, actual interface offload features, native namespace TCP
+defaults, qdisc counters and the complete iperf output. Use a directory outside
+`/tmp`, which the benchmark replaces inside its mount namespace. The reported
+throughput is receiver goodput. An iperf failure or missing receiver summary
+fails the run. The entire iperf operation is bounded to the requested
+measurement duration plus 30 seconds for setup; connection-error retries have a
+30-second window.
+
+The benchmark requires Linux network and mount namespaces, veth, bridges and
+`sch_netem`, plus `ip`, `tc`, `iperf3`, `ethtool`, `bc` and the existing helper
+binaries. Build the helpers with Bazel; a successful build alone does not verify
+these host capabilities. Preserve the actual environment and repeat trials
+before making a performance comparison. The existing TCP probes are optional
+diagnostics; recording every endpoint update can affect measured throughput. The
+proxy logs resolved netstack options; native SACK/recovery/autotuning defaults
+are recorded separately and are not assumed equivalent. The recorded native
+default congestion-control sysctl does not override the selected per-socket
+algorithm. The `cpu-time` metric is proxy user/system CPU seconds divided by the
+requested measurement duration, including startup work, not total host-kernel
+CPU cost.
+
+For example, build and run the same scenario with each sender. Set `OUTPUT_DIR`
+to a directory outside `/tmp` before running these commands on Linux:
+
+```sh
+for cc in reno cubic; do
+  bazel run //test/benchmarks/tcp:tcp_benchmark -- \
+    --linux-client --congestion-control "$cc" \
+    --ideal --latency 100 --rate 20 --queue-packets 100 --duration 30 \
+    --output-dir "$OUTPUT_DIR/linux-$cc"
+  bazel run //test/benchmarks/tcp:tcp_benchmark -- \
+    --client --congestion-control "$cc" \
+    --ideal --latency 100 --rate 20 --queue-packets 100 --duration 30 \
+    --output-dir "$OUTPUT_DIR/netstack-$cc"
 done
 ```
 
-Similarly, to generate a CSV for various levels of packet loss, the following
-would be appropriate:
-
-```
-rm -f /tmp/netstack_loss.csv /tmp/native_loss.csv
-losses=$(seq 0 0.1 1.0;
-         seq 1.2 0.2 2.0;
-         seq 2.5 0.5 5.0;
-         seq 6.0 1.0 10.0)
-for loss in $losses; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --client --ideal --latency 10 --loss $loss)
-  echo $loss,$throughput,$client_cpu >> /tmp/netstack_loss.csv
-done
-for loss in $losses; do
-  read throughput client_cpu server_cpu <<< \
-    $(./tcp_benchmark --duration 30 --ideal --latency 10 --loss $loss)
-  echo $loss,$throughput,$client_cpu >> /tmp/native_loss.csv
-done
-```
+The benchmark output identifies the sender stack and congestion-control
+algorithm. These commands demonstrate the interface; use repeated, interleaved
+trials with distinct output directories for a performance comparison. Inspect
+receiver goodput together with queue drops, latency and recovery behavior rather
+than treating one throughput number as a complete congestion-control result.
