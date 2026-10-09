@@ -111,6 +111,21 @@ func TestCubicRecoveryDiscardsACKCredit(t *testing.T) {
 	}
 }
 
+func TestCubicSlowStartPreservesExcessACKs(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const rtt = 100 * time.Millisecond
+	c := newTestCubic(t, clock, rtt)
+	c.s.ep.mu.Lock()
+	defer c.s.ep.mu.Unlock()
+	c.s.Ssthresh = c.s.SndCwnd + 5
+	c.Update(8, rtt, clock.NowMonotonic())
+	// Five acknowledged segments reach ssthresh; the other three must
+	// contribute to congestion avoidance instead of being discarded.
+	if got := c.s.SndCAAckCount; got != 3 {
+		t.Fatalf("congestion-avoidance ACK credit = %d, want 3", got)
+	}
+}
+
 // TestHyStartAckTrainOK tests that HyStart triggers early exit from slow start
 // if ACKs come in the same round for longer than RTT/2.
 func TestHyStartAckTrainOK(t *testing.T) {
