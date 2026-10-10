@@ -20,8 +20,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <array>
 #include <map>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <utility>
 
@@ -58,7 +60,7 @@ class MonotonicVDSOClockTest : public ::testing::TestWithParam<clockid_t> {};
 
 // This diagnostic reads gVisor's shared parameter page only on AMD64. Keep the
 // ordinary clock calls and assertions below; collect records without I/O and
-// format them only when an existing ordering assertion fails.
+// format failed clock pairs only when an existing ordering assertion fails.
 struct CycleSample {
   uint64_t ticks = 0;
   uint32_t aux = 0;
@@ -80,6 +82,7 @@ CycleSample ReadCycles() {
 }
 
 struct ParameterSample {
+  bool available = false;
   uint64_t sequence_before = 0;
   uint64_t ready = 0;
   int64_t base_cycles = 0;
@@ -90,6 +93,7 @@ struct ParameterSample {
 
 ParameterSample ReadParameters(const params* page) {
   ParameterSample result;
+  result.available = true;
   result.sequence_before = __atomic_load_n(&page->seq_count, __ATOMIC_ACQUIRE);
   result.ready = __atomic_load_n(&page->monotonic_ready, __ATOMIC_RELAXED);
   result.base_cycles =
@@ -106,6 +110,77 @@ ParameterSample ReadParameters(const params* page) {
   return result;
 }
 
+// Counter anomalies are diagnostic data, independent of the clock assertions.
+// Keep only the first examples of each kind and format them after the loop.
+struct CycleEvent {
+  CycleSample previous;
+  CycleSample current;
+  const char* previous_point = nullptr;
+  const char* current_point = nullptr;
+};
+
+class CycleObserver {
+ public:
+  CycleSample Read(const char* point) {
+    const CycleSample sample = ReadCycles();
+    if (samples != 0) {
+      if (sample.ticks < previous_.ticks) {
+        Capture(regression_examples_, regressions, sample, point);
+      }
+      if (sample.aux != previous_.aux) {
+        Capture(aux_examples_, aux_changes, sample, point);
+      }
+    }
+    previous_ = sample;
+    previous_point_ = point;
+    ++samples;
+    return sample;
+  }
+
+  std::string RegressionExamples() const {
+    return Format(regression_examples_, regressions);
+  }
+  std::string AuxExamples() const { return Format(aux_examples_, aux_changes); }
+
+  uint64_t samples = 0;
+  uint64_t regressions = 0;
+  uint64_t aux_changes = 0;
+
+ private:
+  static constexpr size_t kExampleLimit = 8;
+  using Examples = std::array<CycleEvent, kExampleLimit>;
+
+  void Capture(Examples& examples, uint64_t& count, CycleSample current,
+               const char* point) {
+    if (count < examples.size()) {
+      auto& event = examples[count];
+      event.previous = previous_;
+      event.current = current;
+      event.previous_point = previous_point_;
+      event.current_point = point;
+    }
+    ++count;
+  }
+
+  static std::string Format(const Examples& examples, uint64_t count) {
+    std::ostringstream out;
+    for (size_t i = 0; i < examples.size() && i < count; ++i) {
+      const auto& event = examples[i];
+      out << "previous=" << event.previous_point
+          << " ticks=" << event.previous.ticks << " aux=" << event.previous.aux
+          << " current=" << event.current_point
+          << " ticks=" << event.current.ticks << " aux=" << event.current.aux
+          << '\n';
+    }
+    return out.str();
+  }
+
+  CycleSample previous_;
+  const char* previous_point_ = nullptr;
+  Examples regression_examples_{};
+  Examples aux_examples_{};
+};
+
 struct ReadSample {
   bool active = false;
   ParameterSample params_before;
@@ -113,22 +188,29 @@ struct ReadSample {
   CycleSample cycles_after;
   ParameterSample params_after;
 
-  void Before(const params* page) {
-    if (page != nullptr) {
+  void Before(const params* page, CycleObserver* observer, const char* point) {
+    if (observer != nullptr) {
       active = true;
-      params_before = ReadParameters(page);
-      cycles_before = ReadCycles();
+      if (page != nullptr) {
+        params_before = ReadParameters(page);
+      }
+      cycles_before = observer->Read(point);
     }
   }
-  void After(const params* page) {
-    if (page != nullptr) {
-      cycles_after = ReadCycles();
-      params_after = ReadParameters(page);
+  void After(const params* page, CycleObserver* observer, const char* point) {
+    if (observer != nullptr) {
+      cycles_after = observer->Read(point);
+      if (page != nullptr) {
+        params_after = ReadParameters(page);
+      }
     }
   }
 };
 
 std::ostream& operator<<(std::ostream& out, const ParameterSample& sample) {
+  if (!sample.available) {
+    return out << "{unavailable}";
+  }
   return out << "{seq_before=" << sample.sequence_before
              << ",ready=" << sample.ready
              << ",base_cycles=" << sample.base_cycles
@@ -159,11 +241,15 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
   // the VDSO's implementation, we observe the combined sequence as being
   // monotonic.
   const params* page = nullptr;
+  CycleObserver cycle_observer;
+  CycleObserver* observer = nullptr;
 #if defined(__x86_64__)
+  unsigned eax, ebx, ecx, edx;
+  ASSERT_TRUE(__get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx));
+  ASSERT_NE(edx & (1u << 27), 0u) << "Diagnostic requires RDTSCP";
+  observer = &cycle_observer;
+  RecordProperty("caller_cycle_observer", "amd64_rdtscp");
   if (IsRunningOnGvisor()) {
-    unsigned eax, ebx, ecx, edx;
-    ASSERT_TRUE(__get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx));
-    ASSERT_NE(edx & (1u << 27), 0u) << "Diagnostic requires RDTSCP";
     const uintptr_t base = getauxval(AT_SYSINFO_EHDR);
     ASSERT_NE(base, 0u);
     // vdso_amd64.lds places _params one 4 KiB page before the ELF header.
@@ -175,28 +261,38 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
   ReadSample syscall_sample, vdso_sample;
   struct timespec tvdso, tsys;
   absl::Time vdso_time, sys_time;
-  syscall_sample.Before(page);
+  syscall_sample.Before(page, observer, "syscall.before");
   ASSERT_THAT(syscall(__NR_clock_gettime, GetParam(), &tsys),
               SyscallSucceeds());
-  syscall_sample.After(page);
+  syscall_sample.After(page, observer, "syscall.after");
   sys_time = absl::TimeFromTimespec(tsys);
   auto end = absl::Now() + absl::Seconds(10);
   while (absl::Now() < end) {
-    vdso_sample.Before(page);
+    vdso_sample.Before(page, observer, "vdso.before");
     ASSERT_THAT(clock_gettime(GetParam(), &tvdso), SyscallSucceeds());
-    vdso_sample.After(page);
+    vdso_sample.After(page, observer, "vdso.after");
     vdso_time = absl::TimeFromTimespec(tvdso);
     EXPECT_LE(sys_time, vdso_time)
         << "clock_pair syscall_to_vdso syscall=" << syscall_sample
         << " vdso=" << vdso_sample;
-    syscall_sample.Before(page);
+    syscall_sample.Before(page, observer, "syscall.before");
     ASSERT_THAT(syscall(__NR_clock_gettime, GetParam(), &tsys),
                 SyscallSucceeds());
-    syscall_sample.After(page);
+    syscall_sample.After(page, observer, "syscall.after");
     sys_time = absl::TimeFromTimespec(tsys);
     EXPECT_LE(vdso_time, sys_time)
         << "clock_pair vdso_to_syscall vdso=" << vdso_sample
         << " syscall=" << syscall_sample;
+  }
+  if (observer != nullptr) {
+    RecordProperty("caller_cycle_samples", std::to_string(observer->samples));
+    RecordProperty("caller_cycle_regressions",
+                   std::to_string(observer->regressions));
+    RecordProperty("caller_cycle_aux_changes",
+                   std::to_string(observer->aux_changes));
+    RecordProperty("caller_cycle_regression_examples",
+                   observer->RegressionExamples());
+    RecordProperty("caller_cycle_aux_examples", observer->AuxExamples());
   }
 }
 
