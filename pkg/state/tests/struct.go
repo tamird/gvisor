@@ -17,6 +17,8 @@ package tests
 import (
 	"context"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 // +stateify savable
@@ -141,3 +143,76 @@ type typedFields struct {
 	zero     typedSigned
 	self     typedPointer
 }
+
+// +stateify savable
+type framedGraph struct {
+	value int64
+	name  string
+	next  *framedGraph
+	wait  *framedGraph `state:"wait"`
+	loads int          `state:"nosave"`
+}
+
+func (g *framedGraph) afterLoad(context.Context) {
+	if g.wait != nil && g.wait.loads != 1 {
+		panic("dependency hook has not completed")
+	}
+	g.loads++
+}
+
+// +stateify savable
+type framedMutator struct {
+	target *framedGraph
+}
+
+func (m *framedMutator) beforeSave() {
+	m.target.value = 99
+}
+
+// +stateify savable
+type framedHookValue struct {
+	value int64 `state:".(int64)"`
+	calls int   `state:"nosave"`
+}
+
+func (v *framedHookValue) saveValue() int64 {
+	v.calls++
+	return v.value
+}
+
+func (v *framedHookValue) loadValue(_ context.Context, x int64) {
+	v.value = x
+}
+
+// +stateify savable
+type framedHookParent struct {
+	child framedHookValue
+}
+
+// +stateify savable
+type framedPair struct {
+	first  int16
+	second int16
+}
+
+// framedCustom deliberately saves a wider representation than its Go field.
+// The generic helper must fall back before treating that pointer as an int16.
+type framedCustom struct {
+	value    int16
+	observed int64
+}
+
+func (*framedCustom) StateTypeName() string { return "gvisor.dev/gvisor/pkg/state/tests.framedCustom" }
+func (*framedCustom) StateFields() []string { return []string{"value"} }
+func (c *framedCustom) StateSave(s state.Sink) {
+	// Preserve a high bit that cannot be represented by the declared int16.
+	wide := int64(c.value) + 65536
+	state.SaveField(s, 0, &wide)
+}
+func (c *framedCustom) StateLoad(_ context.Context, s state.Source) {
+	var wide int64
+	state.LoadField(s, 0, &wide, false)
+	c.observed = wide
+	c.value = int16(wide)
+}
+func init() { state.Register((*framedCustom)(nil)) }

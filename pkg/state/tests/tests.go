@@ -68,6 +68,11 @@ func checkEqual(root, loadedValue any) bool {
 // runTestCases runs a test for each object in objects.
 func runTestCases(t *testing.T, shouldFail bool, prefix string, objects []any) {
 	t.Helper()
+	runTestCasesWithSaver(t, shouldFail, prefix, objects, state.Save)
+}
+
+func runTestCasesWithSaver(t *testing.T, shouldFail bool, prefix string, objects []any, save func(context.Context, io.Writer, any) (state.Stats, error)) {
+	t.Helper()
 	for i, root := range objects {
 		t.Run(fmt.Sprintf("%s%d", prefix, i), func(t *testing.T) {
 			t.Logf("Original object:\n%#v", root)
@@ -76,7 +81,7 @@ func runTestCases(t *testing.T, shouldFail bool, prefix string, objects []any) {
 			saveBuffer := &bytes.Buffer{}
 			saveObjectPtr := reflect.New(reflect.TypeOf(root))
 			saveObjectPtr.Elem().Set(reflect.ValueOf(root))
-			saveStats, err := state.Save(context.Background(), saveBuffer, saveObjectPtr.Interface())
+			saveStats, err := save(context.Background(), saveBuffer, saveObjectPtr.Interface())
 			if err != nil {
 				if shouldFail {
 					return

@@ -384,11 +384,7 @@ func main() {
 							fmt.Fprintf(outputFile, "\t%sLoadPointer(stateSourceObject, %d, &%s.%s, %t)\n", statePrefix, fields[name], recv, name, wait)
 							return
 						}
-						method := "Load"
-						if wait {
-							method = "LoadWait"
-						}
-						fmt.Fprintf(outputFile, "\tstateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], recv, name)
+						fmt.Fprintf(outputFile, "\t%sLoadField(stateSourceObject, %d, &%s.%s, %t)\n", statePrefix, fields[name], recv, name, wait)
 					}
 
 					emitLoad := func(name string) { emitTypedLoad(name, false) }
@@ -404,7 +400,7 @@ func main() {
 						if pointerFields[name] {
 							fmt.Fprintf(outputFile, "\t%sSavePointer(stateSinkObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
 						} else {
-							fmt.Fprintf(outputFile, "\tstateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
+							fmt.Fprintf(outputFile, "\t%sSaveField(stateSinkObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
 						}
 					}
 

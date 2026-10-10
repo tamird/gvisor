@@ -27,13 +27,15 @@ import (
 type typeEntry struct {
 	ID typeID
 	wire.Type
+	fieldDescriptors []directField
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
 type reconciledTypeEntry struct {
 	wire.Type
-	LocalType  reflect.Type
-	FieldOrder []int
+	LocalType        reflect.Type
+	FieldOrder       []int
+	fieldDescriptors []directField
 }
 
 // typeEncodeDatabase is an internal TypeInfo database for encoding.
@@ -412,4 +414,25 @@ func register(typ reflect.Type, info wire.Type) {
 
 func init() {
 	registerBinary((*time.Time)(nil))
+}
+
+type directField struct {
+	typ  reflect.Type
+	kind reflect.Kind
+}
+
+// directFieldDescriptors resolves actual field representations once per registered
+// type in a stream. Handwritten/custom-value fields may have no Go field;
+// those slots retain the ordinary dynamic path.
+func directFieldDescriptors(typ reflect.Type, names []string) []directField {
+	fields := make([]directField, len(names))
+	if typ.Kind() != reflect.Struct {
+		return fields
+	}
+	for i, name := range names {
+		if field, ok := typ.FieldByName(name); ok {
+			fields[i] = directField{typ: field.Type, kind: field.Type.Kind()}
+		}
+	}
+	return fields
 }
