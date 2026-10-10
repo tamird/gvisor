@@ -448,7 +448,18 @@ func TestDeliverySenderReplay(t *testing.T) {
 				c.Stack().Resume()
 				observations = append(observations, observation{event: event, model: model.view(), actual: <-states})
 			}
+			select {
+			case state := <-states:
+				t.Fatalf("unexpected probe snapshot after replay: UNA=%d NXT=%d", state.Sender.SndUna, state.Sender.SndNxt)
+			default:
+			}
 			for index, observation := range observations {
+				if got, want := observation.actual.Sender.SndUna, c.IRS.Add(1+seqnum.Size(observation.event.cumulative)); got != want {
+					t.Errorf("event %d snapshot SndUna = %d, want %d", index, got, want)
+				}
+				if got, want := observation.actual.Sender.SndNxt, c.IRS.Add(1+seqnum.Size(len(data))); got != want {
+					t.Errorf("event %d snapshot SndNxt = %d, want %d", index, got, want)
+				}
 				t.Logf("event %d ACK=%d SACK=%v model=%+v actual credit=%d outstanding=%d fastRecovery=%t", index, observation.event.cumulative, observation.event.sacks, observation.model, observation.actual.Sender.SackedOut, observation.actual.Sender.Outstanding, observation.actual.Sender.FastRecovery.Active)
 				if got, want := observation.actual.Sender.SackedOut, int(observation.model.sackedPackets); got != want {
 					t.Errorf("event %d SackedOut = %d, want model %d", index, got, want)
