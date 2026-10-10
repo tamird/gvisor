@@ -34,7 +34,10 @@ passes under emulation.
 
 Test deadlines include guest boot and output transfer. Tests without an
 explicit emulation override retain their usual deadlines: 60 seconds for
-small tests and 300 seconds for medium tests. Each action requests
+small tests and 300 seconds for medium tests. The proc suite uses a
+900-second emulation deadline: its unchanged 2,048-child regression took
+168–366 seconds across three isolated RC-kernel runs. Native deadlines and the
+workload are unchanged. Each action requests
 two emulated CPUs and 3 GiB guest memory; the OCI action requests two CPUs,
 6 GB memory and 8 GB scratch space. This is the resource allocation used by
 the pilot, including QEMU and kernel overhead; it is not evidence that every

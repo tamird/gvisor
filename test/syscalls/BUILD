@@ -630,6 +630,8 @@ syscall_test(
 syscall_test(
     size = "medium",
     shard_count = most_shards,
+    # The fixed fork/children workload can take over five minutes under TCG.
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:proc_test",
 )
 
