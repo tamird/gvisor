@@ -303,6 +303,58 @@ func TestRACKInitialDeliverySequence(t *testing.T) {
 	}
 }
 
+func TestRACKInitialDSACKWindow(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		iss  seqnum.Value
+	}{
+		{name: "low_isn", iss: 1234},
+		{name: "high_isn", iss: 1 << 31},
+		{name: "sequence_wrap", iss: ^seqnum.Value(0) - 2},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := newRACKTestContext(faketime.NewManualClock(), 0)
+			defer ctx.cleanup()
+			ctx.snd.ep.mu.Lock()
+			defer ctx.snd.ep.mu.Unlock()
+			ctx.snd.rc.init(&ctx.snd, test.iss)
+			ctx.snd.SndUna = test.iss.Add(1)
+			ctx.snd.SndNxt = test.iss.Add(4)
+			ctx.snd.rc.minRTT = 100 * time.Millisecond
+			ctx.snd.rtt.Lock()
+			ctx.snd.rtt.TCPRTTState.SRTT = 100 * time.Millisecond
+			ctx.snd.rtt.Unlock()
+
+			// The first DSACK must expand the reordering window regardless
+			// of where the connection starts in sequence space.
+			ctx.snd.rc.DSACKSeen = true
+			ctx.snd.rc.updateRACKReorderWindow()
+			if got, want := ctx.snd.rc.ReoWnd, 50*time.Millisecond; got != want {
+				t.Errorf("first DSACK window = %s, want %s", got, want)
+			}
+			if got, want := ctx.snd.rc.RTTSeq, ctx.snd.SndNxt; got != want {
+				t.Errorf("DSACK round boundary = %d, want %d", got, want)
+			}
+
+			// Another DSACK in the same round cannot expand it again.
+			ctx.snd.rc.DSACKSeen = true
+			ctx.snd.rc.updateRACKReorderWindow()
+			if got, want := ctx.snd.rc.ReoWnd, 50*time.Millisecond; got != want {
+				t.Errorf("same-round DSACK window = %s, want %s", got, want)
+			}
+
+			// Acknowledging the round boundary allows a new expansion,
+			// including when that boundary wraps through zero.
+			ctx.snd.SndUna = ctx.snd.SndNxt
+			ctx.snd.rc.DSACKSeen = true
+			ctx.snd.rc.updateRACKReorderWindow()
+			if got, want := ctx.snd.rc.ReoWnd, 75*time.Millisecond; got != want {
+				t.Errorf("next-round DSACK window = %s, want %s", got, want)
+			}
+		})
+	}
+}
+
 func TestRACKEqualTransmitTimeOrdersByEndSequence(t *testing.T) {
 	clock := faketime.NewManualClock()
 	ctx := newRACKTestContext(clock, 0)
