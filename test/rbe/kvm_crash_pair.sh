@@ -25,11 +25,16 @@ mkdir -p "$out"
 coordinator_uid=$(id -u)
 coordinator_gid=$(id -g)
 raw_events=""
+# Root and unprivileged Bazel share these files. A private parent avoids
+# root writes to another user's regular file in the shared sticky /tmp.
+raw_directory=$(mktemp -d "$RUNNER_TEMP/kvm-crash-bep.XXXXXX")
 # shellcheck disable=SC2329
 finish() {
   local status=$?
   trap - EXIT
-  if [[ -n $raw_events ]]; then rm -f "$raw_events" || { if (( status == 0 )); then status=1; fi; }; fi
+  if ! rm -rf -- "$raw_directory"; then
+    if (( status == 0 )); then status=1; fi
+  fi
   if ! git diff --exit-code > "$out/final-source.diff"; then
     if (( status == 0 )); then status=1; fi
   fi
@@ -112,7 +117,7 @@ for repetition in 1 2 3; do
       --test_sharding_strategy=disabled --test_output=errors
       --zip_undeclared_test_outputs "--test_env=GTEST_FILTER=$filter")
     printf '%s\n' "${arguments[@]}" "${targets[@]}" > "$out/$phase.arguments.txt"
-    raw_events=$(mktemp)
+    raw_events=$(mktemp "$raw_directory/events.XXXXXX")
     status=0
     seconds=$(remaining)
     if (( seconds > 0 )); then
