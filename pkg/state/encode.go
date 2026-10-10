@@ -545,10 +545,6 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 
 // encodeArray encodes an array.
 func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
-	if snapshot, ok := capturePrimitiveArray(obj); ok {
-		*dest = snapshot
-		return
-	}
 	l := obj.Len()
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),

@@ -7,10 +7,7 @@ package(
 
 go_library(
     name = "wire",
-    srcs = [
-        "array.go",
-        "wire.go",
-    ],
+    srcs = ["wire.go"],
     marshal = False,
     stateify = False,
     visibility = ["//:sandbox"],
