@@ -140,6 +140,13 @@ TEST_F(Cgroup2Test, V1MountSucceedsAndV2OwnershipReturnsOnUnmount) {
 // order cycle that gVisor builds with lock dependency checking (the "lockdep"
 // go build tag) detect and panic on.
 TEST_F(Cgroup2Test, KillWithV1MemoryMounted) {
+  if (!IsRunningOnGvisor()) {
+    // v2 can advertise memory with CONFIG_MEMCG_V1 disabled. Check the
+    // legacy controller inventory before attempting the v1 mount.
+    const auto controllers = ASSERT_NO_ERRNO_AND_VALUE(ProcCgroupsEntries());
+    SKIP_IF(!controllers.contains("memory"));
+  }
+
   auto v2_mount = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
   Mounter v2_mounter(std::move(v2_mount));
   auto v2_cg = ASSERT_NO_ERRNO_AND_VALUE(v2_mounter.MountCgroup2fs());

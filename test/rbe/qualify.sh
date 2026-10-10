@@ -1090,12 +1090,14 @@ run_lane() (
       targets=(//website:image)
       ;;
     syscalls-rc-pilot)
-      # Continue the native guest checks after the link and proc owners passed.
+      # Check the remaining native requirements and retain gVisor coverage of
+      # the memory-controller transfer regression.
       targets=(
         //test/syscalls:iptables_test_native_rc_kvm
         //test/syscalls:ip6tables_test_native_rc_kvm
-        //test/syscalls:fuse_test_native_rc_kvm
         //test/syscalls:cgroup2_transfer_test_native_rc_kvm
+        //test/syscalls:cgroup2_transfer_test_runsc_systrap_directfs_rc_kvm
+        //test/syscalls:cgroup2_transfer_test_runsc_systrap_shared_rc_kvm
       )
       options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
       ;;
