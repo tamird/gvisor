@@ -13,18 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Fork-only diagnostic in an isolated test worker. Probe the documented n_tty
-# callback arguments, not offsets into an unverified deployed kernel structure.
-# https://github.com/torvalds/linux/blob/830b3c68c/Documentation/trace/kprobetrace.rst
+# Fork-only diagnostic in an isolated test worker. Function entries identify
+# callbacks; syscall events record counts/results without private struct offsets.
+# The function tracer supports private instances:
+# https://github.com/torvalds/linux/blob/830b3c68c/kernel/trace/trace_functions.c#L436
 set -euo pipefail
 out="${TEST_UNDECLARED_OUTPUTS_DIR:?}/pty-kernel"
 mkdir -p "$out"
 tracefs=$(mktemp -d "${TEST_TMPDIR:?}/pty-tracefs.XXXXXX")
-group="gvisor_pty_$$"
+instance_name="gvisor_pty_$$"
 instance=
 instance_created=false
 mounted=false
-events=()
 
 finish() {
   local result=$? cleanup_status=0
@@ -32,9 +32,7 @@ finish() {
   set +e
   if [[ $instance_created == true ]]; then
     printf '0\n' > "$instance/tracing_on" || cleanup_status=1
-    if [[ -e $instance/events/$group/enable ]]; then
-      printf '0\n' > "$instance/events/$group/enable" || cleanup_status=1
-    fi
+    printf '0\n' > "$instance/events/enable" || cleanup_status=1
     cat "$instance/trace" > "$out/trace.txt" || cleanup_status=1
     for stats in "$instance"/per_cpu/cpu*/stats; do
       [[ -f $stats ]] || continue
@@ -44,13 +42,6 @@ finish() {
     rmdir "$instance" || cleanup_status=1
   fi
   if [[ $mounted == true ]]; then
-    if (( ${#events[@]} > 0 )); then
-      awk -v group="$group" 'index($1, group "_") == 1 {print}' "$tracefs/kprobe_profile" > "$out/probe-profile.txt" || cleanup_status=1
-      [[ $(wc -l < "$out/probe-profile.txt") -eq ${#events[@]} ]] || cleanup_status=1
-    fi
-    for event in "${events[@]}"; do
-      printf -- '-:%s/%s\n' "$group" "$event" >> "$tracefs/kprobe_events" || cleanup_status=1
-    done
     umount "$tracefs" || cleanup_status=1
   fi
   rmdir "$tracefs" || cleanup_status=1
@@ -76,12 +67,7 @@ fi
 if [[ -r /proc/config.gz ]]; then
   gzip -dc /proc/config.gz > "$out/kernel.config"
 fi
-if [[ ! -e $tracefs/kprobe_events ]]; then
-  printf '%s\n' 'The worker does not expose tracefs kprobe_events.' >&2
-  exit 1
-fi
-[[ ! -e $tracefs/events/$group ]]
-instance="$tracefs/instances/$group"
+instance="$tracefs/instances/$instance_name"
 mkdir "$instance"
 instance_created=true
 printf '0\n' > "$instance/tracing_on"
@@ -90,24 +76,30 @@ printf 'nop\n' > "$instance/current_tracer"
 printf '256\n' > "$instance/buffer_size_kb"
 printf 'mono\n' > "$instance/trace_clock"
 
-add_probe() {
-  local name="${group}_$1" kind=$2 symbol=$3 fields=$4 definition
-  printf -v definition '%s:%s/%s %s %s' "$kind" "$group" "$name" "$symbol" "$fields"
-  printf '%s\n' "$definition" >> "$tracefs/kprobe_events"
-  events+=("$name")
-  printf '%s\n' "$definition" >> "$out/probes.txt"
-  cat "$tracefs/events/$group/$name/format" >> "$out/event-formats.txt"
-}
-
-add_probe receive p n_tty_receive_buf 'tty=$arg1:x64 first=+0($arg2):x8 count=$arg4:s32'
-add_probe receive2 p n_tty_receive_buf2 'tty=$arg1:x64 first=+0($arg2):x8 count=$arg4:s32'
-add_probe receive2_return r128 n_tty_receive_buf2 'result=$retval:s32'
-add_probe read p n_tty_read 'tty=$arg1:x64 count=$arg4:u64'
-add_probe read_return r128 n_tty_read 'result=$retval:s64'
-add_probe poll p n_tty_poll 'tty=$arg1:x64'
-add_probe poll_return r128 n_tty_poll 'mask=$retval:x32'
-add_probe termios p n_tty_set_termios 'tty=$arg1:x64'
-printf '1\n' > "$instance/events/$group/enable"
+functions=(
+  n_tty_receive_buf n_tty_receive_buf2 n_tty_receive_buf_common
+  n_tty_read n_tty_poll n_tty_set_termios n_tty_kick_worker
+  flush_to_ldisc tty_flip_buffer_push
+)
+printf '%s\n' "${functions[@]}" > "$out/requested-functions.txt"
+cat "$out/requested-functions.txt" > "$instance/set_ftrace_filter"
+cat "$instance/set_ftrace_filter" > "$out/function-filter.txt"
+awk 'NR == FNR {want[$1] = 1; remaining++; next}
+     {if (!want[$1]) bad = 1; else {delete want[$1]; remaining--}}
+     END {exit (bad || remaining != 0)}' \
+  "$out/requested-functions.txt" "$out/function-filter.txt"
+for syscall in read write ioctl poll ppoll; do
+  for phase in enter exit; do
+    name="sys_${phase}_${syscall}"
+    event="$instance/events/syscalls/$name"
+    cat "$event/format" >> "$out/event-formats.txt"
+    printf '1\n' > "$event/enable"
+    [[ $(cat "$event/enable") == 1 ]]
+    printf '%s\n' "$name" >> "$out/enabled-events.txt"
+  done
+done
+printf 'function\n' > "$instance/current_tracer"
+[[ $(cat "$instance/current_tracer") == function ]]
 printf '1\n' > "$instance/tracing_on"
 
 result=0
