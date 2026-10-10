@@ -448,11 +448,11 @@ func directFieldDescriptors(typ reflect.Type, names []string) []directField {
 
 // captureLayout supplies storage for known field families without populating the
 // reconciled-type cache. The actual destination still passes through Lookup.
-func (tdb *typeDecodeDatabase) captureLayout(id wire.TypeID) *wire.CaptureLayout {
-	if id == 0 || uint64(id) > uint64(len(tdb.pending)) {
+func (tbd *typeDecodeDatabase) captureLayout(id wire.TypeID) *wire.CaptureLayout {
+	if id == 0 || uint64(id) > uint64(len(tbd.pending)) {
 		return nil
 	}
-	entry := &tdb.pending[id-1]
+	entry := &tbd.pending[id-1]
 	if entry.layoutKnown {
 		return entry.layout
 	}
