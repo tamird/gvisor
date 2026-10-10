@@ -383,7 +383,7 @@ func main() {
 						fmt.Fprintf(outputFile, "	stateSinkObject.SaveValue(%d, %sValue)\n", fields[name], name)
 					}
 					emitSave := func(name string) {
-						fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
+						fmt.Fprintf(outputFile, "	%sSaveField(stateSinkObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
 					}
 					emitZeroCheck := func(name string) {
 						fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, recv, name, statePrefix, name, recv, name)
@@ -427,6 +427,11 @@ func main() {
 						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
 						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
 						scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
+						hasValue := false
+						scanFields(x, scanFunctions{value: func(string, string) { hasValue = true }})
+						if !hasValue {
+							fmt.Fprint(outputFile, "\tstateSinkObject.BeginOrdered()\n")
+						}
 						scanFields(x, scanFunctions{value: emitSaveValue})
 						scanFields(x, scanFunctions{normal: emitSave, wait: emitSave})
 						fmt.Fprintf(outputFile, "}\n\n")

@@ -103,6 +103,9 @@ type encodeState struct {
 	// Sink.SaveValue() for a given field, resulting in object duplication.
 	encodedStructs map[reflect.Value]*wire.Struct
 
+	// capture owns experimental ordered struct snapshots, when enabled.
+	capture *wire.Capture
+
 	// stats tracks time data.
 	stats Stats
 }
@@ -470,10 +473,22 @@ type objectEncoder struct {
 
 	// encoded is the encoded struct.
 	encoded *wire.Struct
+
+	// fields is the declared number of slots, including lazy custom storage.
+	fields int
 }
 
 // save is called by the public methods on Sink.
 func (oe *objectEncoder) save(slot int, obj reflect.Value) {
+	if oe.encoded.IsCapture() {
+		var child wire.Object
+		oe.es.encodeObject(obj, encodeDefault, &child)
+		oe.encoded.CaptureObject(slot, child)
+		return
+	}
+	if oe.fields > 0 && oe.encoded.Fields() == 0 {
+		oe.encoded.Alloc(oe.fields)
+	}
 	fieldValue := oe.encoded.Field(slot)
 	oe.es.encodeObject(obj, encodeDefault, fieldValue)
 }
@@ -524,10 +539,18 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 
 	// Invoke the provided saver.
 	s.TypeID = wire.TypeID(te.ID)
-	s.Alloc(len(te.Fields))
+	if es.capture == nil {
+		s.Alloc(len(te.Fields))
+	} else if len(te.Fields) != 1 {
+		// Generated savers may select capture storage. Custom savers allocate
+		// their original mutable slots lazily on the first save. A fresh Struct
+		// already has the valid single-slot representation; preserve that.
+		s.Alloc(0)
+	}
 	oe := objectEncoder{
 		es:      es,
 		encoded: s,
+		fields:  len(te.Fields),
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()
@@ -535,6 +558,10 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		// Note: may be a registered empty struct which does not
 		// implement the saver/loader interfaces.
 		sl.StateSave(Sink{internal: oe})
+	}
+	if len(te.Fields) > 0 && s.Fields() == 0 {
+		// Preserve the old missing-field error if a custom saver omitted all slots.
+		s.Alloc(len(te.Fields))
 	}
 }
 

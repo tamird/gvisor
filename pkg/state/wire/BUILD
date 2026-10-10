@@ -9,6 +9,7 @@ go_library(
     name = "wire",
     srcs = [
         "array.go",
+        "capture.go",
         "wire.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state/wire",

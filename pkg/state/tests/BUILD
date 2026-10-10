@@ -10,6 +10,7 @@ go_library(
     srcs = [
         "array.go",
         "bench.go",
+        "capture.go",
         "integer.go",
         "load.go",
         "map.go",
@@ -30,6 +31,7 @@ go_test(
         "array_test.go",
         "bench_test.go",
         "bool_test.go",
+        "capture_test.go",
         "float_test.go",
         "integer_test.go",
         "load_test.go",
