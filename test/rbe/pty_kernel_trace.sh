@@ -44,8 +44,10 @@ finish() {
     rmdir "$instance" || cleanup_status=1
   fi
   if [[ $mounted == true ]]; then
-    awk -v group="$group" 'index($1, group "_") == 1 {print}' "$tracefs/kprobe_profile" > "$out/probe-profile.txt" || cleanup_status=1
-    [[ $(wc -l < "$out/probe-profile.txt") -eq ${#events[@]} ]] || cleanup_status=1
+    if (( ${#events[@]} > 0 )); then
+      awk -v group="$group" 'index($1, group "_") == 1 {print}' "$tracefs/kprobe_profile" > "$out/probe-profile.txt" || cleanup_status=1
+      [[ $(wc -l < "$out/probe-profile.txt") -eq ${#events[@]} ]] || cleanup_status=1
+    fi
     for event in "${events[@]}"; do
       printf -- '-:%s/%s\n' "$group" "$event" >> "$tracefs/kprobe_events" || cleanup_status=1
     done
@@ -61,8 +63,23 @@ trap finish EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
 
+identity="${TEST_SRCDIR:?}/${TEST_WORKSPACE:?}/test/rbe/worker_identity"
+[[ -x $identity ]]
+"$identity" /bin/true
 mount -t tracefs tracefs "$tracefs"
 mounted=true
+ls -l "$tracefs" > "$out/tracefs-files.txt"
+cat "$tracefs/available_tracers" > "$out/available-tracers.txt"
+if [[ -r $tracefs/available_filter_functions ]]; then
+  awk '/n_tty_|flush_to_ldisc|tty_flip_buffer_push/ {print}' "$tracefs/available_filter_functions" > "$out/tty-filter-functions.txt"
+fi
+if [[ -r /proc/config.gz ]]; then
+  gzip -dc /proc/config.gz > "$out/kernel.config"
+fi
+if [[ ! -e $tracefs/kprobe_events ]]; then
+  printf '%s\n' 'The worker does not expose tracefs kprobe_events.' >&2
+  exit 1
+fi
 [[ ! -e $tracefs/events/$group ]]
 instance="$tracefs/instances/$group"
 mkdir "$instance"
@@ -93,8 +110,6 @@ add_probe termios p n_tty_set_termios 'tty=$arg1:x64'
 printf '1\n' > "$instance/events/$group/enable"
 printf '1\n' > "$instance/tracing_on"
 
-identity="${TEST_SRCDIR:?}/${TEST_WORKSPACE:?}/test/rbe/worker_identity"
-[[ -x $identity ]]
 result=0
-"$identity" "$@" || result=$?
+"$@" || result=$?
 exit "$result"
