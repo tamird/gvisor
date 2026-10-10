@@ -20,13 +20,14 @@ set -euo pipefail
 # Exported by the existing Actions coordinator.
 # shellcheck disable=SC2154
 [[ $qualification_root_bazel == true && $GITHUB_ACTIONS == true && $RUNNER_ENVIRONMENT == github-hosted ]]
+# Both established root fixtures run below the same unprivileged coordinator.
+export qualification_root_bazel=false
 out="$RUNNER_TEMP/qualification/kvm-crash-pair"
 mkdir -p "$out"
 coordinator_uid=$(id -u)
 coordinator_gid=$(id -g)
 raw_events=""
-# Root and unprivileged Bazel share these files. A private parent avoids
-# root writes to another user's regular file in the shared sticky /tmp.
+# Keep complete raw options in a private directory outside uploaded artifacts.
 raw_directory=$(mktemp -d "$RUNNER_TEMP/kvm-crash-bep.XXXXXX")
 # shellcheck disable=SC2329
 finish() {
@@ -90,47 +91,23 @@ for label in (out/'owners.txt').read_text().splitlines():
         assert value('payload') == label[:-len('_rc_kvm')] + '_amd64', label
         assert value('image') == '//test/rbe/tcg:amd64_rc_guest', label
 ATTRIBUTES
-result=0
-for repetition in 1 2 3; do
-  arms=(host rc)
-  if (( repetition == 2 )); then arms=(rc host); fi
-  for arm in "${arms[@]}"; do
-    phase="$arm-$repetition"
-    targets=()
-    local_architecture=
-    root_bazel=true
-    if [[ $arm == host ]]; then
-      # Reuse the ordinary frontend's sudo/private-mount fixture. The RC
-      # frontend instead runs QEMU as root and sets up its own guest mounts.
-      local_architecture=amd64
-      root_bazel=false
-    fi
-    for owner in "${base_owners[@]}"; do
-      if [[ $arm == host ]]; then targets+=("${owner}_amd64"); else targets+=("${owner}_rc_kvm"); fi
-    done
-    arguments=(test --config=rbe --config=x86_64 --strategy=TestRunner=local
-      "--//tools/bazeldefs:local_test_architecture=$local_architecture"
-      --//tools/bazeldefs:local_test_backend=local --//tools/bazeldefs:page_size=4k
-      --build_tag_filters= --test_tag_filters= --strip=never --keep_going
-      --incompatible_sandbox_hermetic_tmp=false --local_test_jobs=1
-      --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1
-      --test_sharding_strategy=disabled --test_output=errors
-      --zip_undeclared_test_outputs "--test_env=GTEST_FILTER=$filter")
-    printf '%s\n' "${arguments[@]}" "${targets[@]}" > "$out/$phase.arguments.txt"
-    raw_events=$(mktemp "$raw_directory/events.XXXXXX")
-    status=0
-    seconds=$(remaining)
-    if (( seconds > 0 )); then
-      qualification_root_bazel="$root_bazel" timeout --signal=INT --kill-after=30s "${seconds}s" \
-        bash -c 'bazel "$@"' _ "${arguments[@]}" \
-        "--build_event_json_file=$raw_events" "${targets[@]}" \
-        > "$out/$phase.stdout.txt" 2> "$out/$phase.stderr.txt" || status=$?
-    else
-      status=124
-    fi
-    printf '%s\n' "$status" > "$out/$phase.exit.txt"
-    capture_status=0
-    python3 - "$raw_events" "$out/$phase.events.jsonl" <<'BEP' || capture_status=$?
+run_phase() {
+  local phase=$1 status=0 capture_status=0 seconds
+  shift
+  printf 'Starting diagnostic phase %s\n' "$phase"
+  printf '%s\n' "$@" > "$out/$phase.arguments.txt"
+  raw_events=$(mktemp "$raw_directory/events.XXXXXX")
+  seconds=$(remaining)
+  if (( seconds > 0 )); then
+    timeout --signal=INT --kill-after=30s "${seconds}s" \
+      bash -c 'bazel "$@"' _ "$@" \
+      "--build_event_json_file=$raw_events" \
+      > "$out/$phase.stdout.txt" 2> "$out/$phase.stderr.txt" || status=$?
+  else
+    status=124
+  fi
+  printf '%s\n' "$status" > "$out/$phase.exit.txt"
+  python3 - "$raw_events" "$out/$phase.events.jsonl" <<'BEP' || capture_status=$?
 import json
 from pathlib import Path
 import sys
@@ -149,10 +126,46 @@ with source.open() as stream, target.open('w') as output:
         count += 1
 assert count, 'No complete build events'
 BEP
-    rm -f "$raw_events"
-    raw_events=""
-    printf '%s\n' "$capture_status" > "$out/$phase.capture-exit.txt"
-    if (( status == 0 )); then status=$capture_status; fi
+  rm -f "$raw_events"
+  raw_events=""
+  printf '%s\n' "$capture_status" > "$out/$phase.capture-exit.txt"
+  printf 'Finished diagnostic phase %s: bazel=%s capture=%s\n' "$phase" "$status" "$capture_status"
+  if (( status == 0 )); then status=$capture_status; fi
+  return "$status"
+}
+
+# Resolve/build the declared guest before running either arm. A missing index
+# is an incomplete preparation, not a reason to spend more host-only samples.
+prebuild_status=0
+run_phase guest-image build --config=rbe --config=x86_64 --strip=never \
+  //test/rbe/tcg:amd64_rc_guest || prebuild_status=$?
+if (( prebuild_status != 0 )); then exit "$prebuild_status"; fi
+result=0
+for repetition in 1 2 3; do
+  arms=(host rc)
+  if (( repetition == 2 )); then arms=(rc host); fi
+  for arm in "${arms[@]}"; do
+    phase="$arm-$repetition"
+    targets=()
+    local_architecture=
+    if [[ $arm == host ]]; then
+      # The host frontend already selects the existing local_root fixture.
+      local_architecture=amd64
+    fi
+    for owner in "${base_owners[@]}"; do
+      if [[ $arm == host ]]; then targets+=("${owner}_amd64"); else targets+=("${owner}_rc_kvm"); fi
+    done
+    arguments=(test --config=rbe --config=x86_64 --strategy=TestRunner=local
+      "--//tools/bazeldefs:local_test_architecture=$local_architecture"
+      --//tools/bazeldefs:local_test_backend=local --//tools/bazeldefs:page_size=4k
+      --build_tag_filters= --test_tag_filters= --strip=never --keep_going
+      --incompatible_sandbox_hermetic_tmp=false --local_test_jobs=1
+      --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1
+      --test_sharding_strategy=disabled --test_output=errors
+      --zip_undeclared_test_outputs "--test_env=GTEST_FILTER=$filter")
+    if [[ $arm == rc ]]; then arguments+=(--run_under=//test/rbe:local_root); fi
+    status=0
+    run_phase "$phase" "${arguments[@]}" "${targets[@]}" || status=$?
     if (( result == 0 && status != 0 )); then result=$status; fi
   done
 done

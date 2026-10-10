@@ -40,6 +40,7 @@ output_uid=$SUDO_UID
 output_gid=$SUDO_GID
 out=${TEST_UNDECLARED_OUTPUTS_DIR:?}
 [[ -d $out && ! -L $out ]]
+id > "$out/local-root-identity.txt"
 test_tmp=${TEST_TMPDIR:?}
 [[ -d $test_tmp && ! -L $test_tmp ]]
 if [[ $initial_cgroup == true ]]; then
