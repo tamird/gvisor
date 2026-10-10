@@ -136,7 +136,10 @@ go_test(
 go_test(
     name = "tcp_rack_test",
     size = "small",
-    srcs = ["tcp_rack_test.go"],
+    srcs = [
+        "tcp_delivery_model_test.go",
+        "tcp_rack_test.go",
+    ],
     deps = [
         ":e2e",
         "//pkg/buffer",
