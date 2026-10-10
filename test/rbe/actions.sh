@@ -17,6 +17,14 @@
 set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
+if [[ ${QUALIFICATION_UNIT_GRAPH_ONLY:-false} == true ]]; then
+  [[ $(uname -m) == aarch64 && $QUALIFICATION_ARCH == all ]]
+  [[ $QUALIFICATION_EXECUTION == local && $QUALIFICATION_LANES == unit ]]
+  [[ -z ${QUALIFICATION_SYSCALL_BUCKET:-} && -z ${QUALIFICATION_BENCHMARK_TARGET:-} ]]
+  [[ -z ${QUALIFICATION_HEADER_BASE:-} && -z ${QUALIFICATION_COS_GZIP_BASE64:-} ]]
+  QUALIFICATION_GRAPH_DEADLINE=$(python3 -c 'import time; print(time.monotonic()+1200)')
+  export QUALIFICATION_GRAPH_DEADLINE
+fi
 
 # read consumes one line. Reject extra lines rather than losing selected lanes.
 if [[ $QUALIFICATION_LANES == *$'\n'* ]]; then
@@ -46,6 +54,20 @@ temporary_files=()
 GVISOR_DOCKER_NETWORK=
 cleanup() {
   local status=$?
+  if [[ ${QUALIFICATION_UNIT_GRAPH_ONLY:-false} == true ]]; then
+    trap - EXIT
+    set +e
+    local cleanup_status=0 graph_dir="$RUNNER_TEMP/qualification/arm64-unit-graph"
+    mkdir -p "$graph_dir" || cleanup_status=1
+    git rev-parse HEAD > "$graph_dir/source-after-head.txt" || cleanup_status=1
+    git status --porcelain --untracked-files=no > "$graph_dir/source-after.txt" || cleanup_status=1
+    [[ $(cat "$graph_dir/source-after-head.txt") == "$QUALIFICATION_COMMIT" && ! -s "$graph_dir/source-after.txt" ]] || cleanup_status=1
+    rm -f -- "${temporary_files[@]}" || cleanup_status=1
+    printf '%s\n' "$status" > "$graph_dir/primary-exit.txt" || cleanup_status=1
+    printf '%s\n' "$cleanup_status" > "$graph_dir/cleanup-exit.txt" || cleanup_status=1
+    if (( status == 0 )); then status=$cleanup_status; fi
+    exit "$status"
+  fi
   rm -f -- "${temporary_files[@]}"
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
@@ -143,6 +165,35 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       for argument in "$@"; do
         if [[ $argument == --* ]]; then
           continue
+        fi
+        if [[ ${QUALIFICATION_UNIT_GRAPH_ONLY:-false} == true ]]; then
+          local graph_dir="$RUNNER_TEMP/qualification/arm64-unit-graph"
+          printf '%s %s\n' "$QUALIFICATION_GRAPH_PHASE" "$argument" >> "$graph_dir/calls.txt"
+          case "$argument" in
+            query|aquery)
+              remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_GRAPH_DEADLINE"])-time.monotonic())))')
+              (( remaining > 0 )) || return 124
+              timeout --signal=INT --kill-after=30s "${remaining}s" \
+                "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" || result=$?
+              return "$result"
+              ;;
+            test)
+              [[ ! -e "$graph_dir/$QUALIFICATION_GRAPH_PHASE-final-test-arguments.txt" ]] || return 1
+              printf '%s\n' "$@" > "$graph_dir/$QUALIFICATION_GRAPH_PHASE-final-test-arguments.txt"
+              local item pattern_file=""
+              for item in "$@"; do
+                if [[ $item == --target_pattern_file=* ]]; then
+                  [[ -z $pattern_file ]] || return 1
+                  pattern_file=${item#*=}
+                fi
+              done
+              [[ -n $pattern_file ]] || return 1
+              cp "$pattern_file" "$graph_dir/$QUALIFICATION_GRAPH_PHASE-final-targets.txt" || return 1
+              printf 'Intercepted final %s test command; no TestRunner executed.\n' "$QUALIFICATION_GRAPH_PHASE"
+              return 0
+              ;;
+            *) printf 'Graph-only job rejected Bazel command: %s\n' "$argument" >&2; return 2 ;;
+          esac
         fi
         if [[ $argument == build || $argument == test ]]; then
           evidence=(
@@ -348,7 +399,7 @@ GUEST_EVENTS
       systemctl --version
       docker version || true
     } | tee "$RUNNER_TEMP/qualification/host.txt"
-    if [[ $QUALIFICATION_EXECUTION == local ]]; then
+    if [[ $QUALIFICATION_EXECUTION == local && ${QUALIFICATION_UNIT_GRAPH_ONLY:-false} != true ]]; then
       # The unchanged release smoke deliberately exercises unprivileged setup.
       [[ $(id -u) != 0 ]]
       [[ $(getconf PAGESIZE) == 4096 ]]
@@ -421,4 +472,106 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
 fi
 
-test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+if [[ ${QUALIFICATION_UNIT_GRAPH_ONLY:-false} == true ]]; then
+  graph_dir="$RUNNER_TEMP/qualification/arm64-unit-graph"
+  mkdir -p "$graph_dir"
+  uname -a > "$graph_dir/coordinator-uname.txt"
+  uname -m > "$graph_dir/coordinator-machine.txt"
+  python3 --version > "$graph_dir/coordinator-python.txt"
+  git status --porcelain --untracked-files=no > "$graph_dir/source-before.txt"
+  [[ ! -s "$graph_dir/source-before.txt" ]]
+  remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_GRAPH_DEADLINE"])-time.monotonic())))')
+  (( remaining > 0 ))
+  if ! git cat-file -e '60cce080737ffcec430b5606a6bfe81efef3c593^{commit}' 2>/dev/null; then
+    timeout --signal=INT --kill-after=30s "${remaining}s" git fetch --no-tags --depth=1 origin 60cce080737ffcec430b5606a6bfe81efef3c593
+  fi
+  git cat-file -p HEAD > "$graph_dir/method-commit.txt"
+  git cat-file -p 60cce080737ffcec430b5606a6bfe81efef3c593 > "$graph_dir/payload-commit.txt"
+  git diff --name-only 60cce080737ffcec430b5606a6bfe81efef3c593 HEAD > "$graph_dir/method-paths.txt"
+  for source_file in test/rbe/unit_matrix.py test/rbe/qualify.sh tools/bazeldefs/test_architectures.bzl tools/bazeldefs/BUILD test/unit.targets; do
+    cp "$source_file" "$graph_dir/${source_file//\//_}.source"
+  done
+  for policy in namespace empty; do
+    QUALIFICATION_GRAPH_PHASE=$policy
+    export QUALIFICATION_GRAPH_PHASE
+    missing=$policy
+    if [[ $policy == empty ]]; then missing=""; fi
+    remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_GRAPH_DEADLINE"])-time.monotonic())))')
+    (( remaining > 0 ))
+    result=0
+    timeout --signal=INT --kill-after=30s "${remaining}s" \
+      bash test/rbe/qualify.sh --arch=all --test-execution=local \
+      "--local-test-requirements=$missing" unit || result=$?
+    capture_status=0
+    printf '%s\n' "$result" > "$graph_dir/$policy-exit.txt" || capture_status=1
+    if [[ -d $RUNNER_TEMP/qualification/unit-selection ]]; then
+      mv "$RUNNER_TEMP/qualification/unit-selection" "$graph_dir/$policy-selection" || capture_status=1
+    fi
+    printf '%s\n' "$capture_status" > "$graph_dir/$policy-capture-exit.txt" || capture_status=1
+    if (( result == 0 )); then result=$capture_status; fi
+    (( result == 0 )) || exit "$result"
+  done
+  python3 - "$graph_dir" <<'UNIT_GRAPH'
+from collections import Counter
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0, 'test/rbe')
+import unit_matrix
+root = Path(sys.argv[1])
+assert (root / 'coordinator-machine.txt').read_text().strip() == 'aarch64'
+assert set((root / 'method-paths.txt').read_text().splitlines()) == {'.github/workflows/build.yml', 'test/rbe/actions.sh'}
+phases = {}
+for mode, policy in [('namespace', ['namespace']), ('empty', [])]:
+    directory = root / (mode + '-selection')
+    report = json.loads((directory / 'selection.json').read_text())
+    assert report['local_test_requirements'] == policy
+    original = set(unit_matrix.configured_tests(str(directory / 'profile.json')))
+    amd64 = set(unit_matrix.configured_tests(str(directory / 'amd64-profile.json')))
+    owners = set((directory / 'owners').read_text().splitlines())
+    expected = ({label + '_arm64' for label in original & owners} | (original - owners) | amd64)
+    assert expected and set(report['selected_owners']) == expected
+    graph = json.loads((directory / 'combined-actions.json').read_text())
+    labels = {str(t['id']): t['label'] for t in graph['targets']}
+    rows, counts = {}, Counter()
+    for action in graph['actions']:
+        assert action['mnemonic'] == 'TestRunner'
+        label = labels[str(action['targetId'])]
+        props = {p['key']: p.get('value', '') for p in action['executionInfo']}
+        assert props['OSFamily'] == 'linux' and props['Arch'] in ('amd64', 'arm64')
+        row = {'arguments': action['arguments'], 'properties': props}
+        assert label not in rows or rows[label] == row
+        rows[label] = row
+        counts[label] += 1
+    assert set(rows) == expected
+    local = {label for label,row in rows.items() if {'no-remote','no-remote-exec'} & row['properties'].keys()}
+    assert local == {label for group in report['local_owners'].values() for label in group}
+    assert set(report['local_routing_reasons']) == local
+    args = (root / (mode + '-final-test-arguments.txt')).read_text().splitlines()
+    assert '--//tools/bazeldefs:local_test_architecture=arm64' in args
+    assert '--//tools/bazeldefs:local_test_requirements=' + ','.join(policy) in args
+    assert not any(a.startswith(('--test_filter','--test_timeout','--test_sharding_strategy')) or 'TESTBRIDGE_TEST_ONLY' in a or 'GTEST_FILTER' in a for a in args)
+    phases[mode] = {'rows':rows,'counts':counts,'local':local,'expected':expected}
+assert phases['namespace']['expected'] == phases['empty']['expected']
+assert phases['namespace']['counts'] == phases['empty']['counts']
+assert (root/'namespace-final-targets.txt').read_bytes() == (root/'empty-final-targets.txt').read_bytes()
+for label,row in phases['empty']['rows'].items():
+    old = phases['namespace']['rows'][label]
+    clean = lambda p: {k:v for k,v in p.items() if k not in ('no-remote','no-remote-exec','no-sandbox')}
+    assert clean(row['properties']) == clean(old['properties'])
+    if label in phases['namespace']['local'] - phases['empty']['local']:
+        target = label.split(':',1)[1]
+        assert row['arguments'][1] == label[2:].replace(':','/') + '/' + target
+        assert row['arguments'][0] == old['arguments'][0] and row['arguments'][2:] == old['arguments'][2:]
+    else:
+        assert row['arguments'] == old['arguments']
+calls = (root/'calls.txt').read_text().splitlines()
+assert all(c.split()[1] in ('query','aquery','test') for c in calls)
+assert Counter(c.split()[0] for c in calls if c.endswith(' test')) == {'namespace':1,'empty':1}
+result = {'status':'PASS_GRAPH_ONLY','coordinator':'actual ARM64 Actions VM','phases':{name:{'owners':len(value['rows']),'declaredShards':sum(value['counts'].values()),'localOwners':len(value['local']),'localShards':sum(value['counts'][x] for x in value['local'])} for name,value in phases.items()},'testExecutions':0,'limits':['Only loading/analysis and final-command interception; no test-body or build execution credit.','Canonical configured unit profiles define the complete selected universe; no historical count is substituted for current source.']}
+(root/'result.json').write_text(json.dumps(result,indent=2)+'\n')
+print(json.dumps(result))
+UNIT_GRAPH
+else
+  test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+fi
