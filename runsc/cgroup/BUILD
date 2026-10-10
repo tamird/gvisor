@@ -13,6 +13,7 @@ go_library(
         "cgroup_v2_unsafe.go",
         "systemd.go",
     ],
+    importpath = "gvisor.dev/gvisor/runsc/cgroup",
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/abi/linux",
@@ -35,7 +36,7 @@ go_test(
         "cgroup_v2_test.go",
         "systemd_test.go",
     ],
-    library = ":cgroup",
+    embed = [":cgroup"],
     deps = [
         "//pkg/test/testutil",
         "@com_github_coreos_go_systemd_v22//dbus:go_default_library",

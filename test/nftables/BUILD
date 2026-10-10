@@ -20,6 +20,7 @@ go_library(
         "nftables_util.go",
         "nftables_validation.go",
     ],
+    importpath = "gvisor.dev/gvisor/test/nftables",
     visibility = ["//test/nftables:__subpackages__"],
     deps = [
         "//pkg/log",
@@ -35,7 +36,7 @@ docker_test(
     cohort = "nftables",
     data = ["//test/nftables/runner"],
     ipv6 = True,
-    library = ":nftables",
+    embed = [":nftables"],
     owned_args = ["--test-net-raw=true"],
     runtime_variants = NFTABLES_VARIANTS,
     tags = [

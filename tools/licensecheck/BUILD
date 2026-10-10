@@ -14,6 +14,7 @@ go_library(
         "modules.go",
         "wheels.go",
     ],
+    importpath = "gvisor.dev/gvisor/tools/licensecheck",
     marshal = False,
     stateify = False,
     visibility = ["//tools/licensecheck:__subpackages__"],
@@ -40,5 +41,5 @@ go_test(
         "//governance:licensing.yaml",
     ],
     embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),
-    library = ":licensecheck",
+    embed = [":licensecheck"],
 )

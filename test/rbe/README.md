@@ -467,6 +467,11 @@ aspect and report outputs; each configured compile retains its actual arguments
 and declared inputs. It can accompany `--arch=all` lanes but remains a separate
 AMD64 build invocation, so those recursive roots do not run unrelated tests.
 
+The `gazelle` lane runs the public `//:gazelle_check` target once, including
+when `--arch=all` is selected. It compares the allowlisted BUILD files with
+Gazelle's output. The tool builds on RBE and checks the immutable checkout
+on the hosted coordinator, matching the [public workflow](../../.github/workflows/gazelle.yml).
+
 The `governance` lane runs `//:governance-check`. Its remote generator consumes
 the governance YAML files and a watched list of repository directory names.
 The comparison tests check CODEOWNERS and MAINTAINERS.md against those outputs
