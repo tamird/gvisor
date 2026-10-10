@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-10T18:41:09.345191+00:00",
-  "registryDate": "2026-10-10T15:07:42.875103+00:00",
+  "registryDate": "2026-10-10T18:49:37.835863+00:00",
   "prs": [
     {
       "number": 12470,
@@ -72286,14 +72286,6 @@
         "since": "2026-10-10T18:41:09.345191+00:00",
         "basis": "observed",
         "qualifier": null
-      }
-    },
-    "branch:tcp-test-packet-view-cleanup": {
-      "changes-requested": {
-        "scope": "0e57ec2f3ea770157fc11a0eb03e7712a0085233",
-        "since": "2026-10-10T15:06:19.907866+00:00",
-        "basis": "observed",
-        "qualifier": "Contributor"
       }
     }
   },

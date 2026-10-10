@@ -72,15 +72,22 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
         requests += 1
         if requests > REQUEST_LIMIT:
             raise RuntimeError("Snapshot request limit reached; previous file is unchanged")
-        result = subprocess.run(
-            ["gh", "api", "graphql", "--input", "-"],
-            input=json.dumps({"query": query, "variables": variables or {}}),
-            text=True, capture_output=True, check=False, timeout=60,
-        )
+        try:
+            result = subprocess.run(
+                ["gh", "api", "graphql", "--input", "-"],
+                input=json.dumps({"query": query, "variables": variables or {}}),
+                text=True, capture_output=True, check=False, timeout=60,
+            )
+        except subprocess.TimeoutExpired:
+            if attempt == 0 and requests < REQUEST_LIMIT:
+                print("GitHub query timed out; retrying once within the request cap", file=sys.stderr)
+                continue
+            raise RuntimeError("GitHub query timed out; previous file is unchanged") from None
         if result.returncode:
             # Retry this read-only query once for an interrupted transport.
             interrupted = any(error in result.stderr for error in (
                 "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
+                "i/o timeout",
             ))
             if attempt == 0 and requests < REQUEST_LIMIT and interrupted:
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
