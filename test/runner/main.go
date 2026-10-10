@@ -799,9 +799,8 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 		if len(warningsFound) > 0 {
 			return fmt.Errorf("warnings found: %s", warningsFound)
 		}
-		// If the test passed, then we erase the log directory. This speeds up
-		// uploading logs in continuous integration & saves on disk space.
-		os.RemoveAll(testLogDir)
+		// Retain original clock diagnostic logs for successful tests as well.
+		// This qualification-only fixture is common to both source arms.
 	}
 
 	return err
