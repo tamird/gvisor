@@ -33,3 +33,31 @@ type sliceContainer struct {
 type slicePtrContainer struct {
 	v *[]any
 }
+
+// +stateify type
+type arraySigned int16
+
+// +stateify type
+type arrayUnsigned uint32
+
+// +stateify type
+type arrayString string
+
+// +stateify savable
+type arraySnapshotSource struct {
+	values [2]uint64
+}
+
+// +stateify savable
+type arraySnapshotMutator struct {
+	target *arraySnapshotSource
+}
+
+func (m *arraySnapshotMutator) beforeSave() {
+	m.target.values[0] = 99
+}
+
+// +stateify savable
+type arrayTailDiscovery struct {
+	values [][2]uint64
+}

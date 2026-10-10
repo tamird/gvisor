@@ -887,6 +887,9 @@ func Save(w *Writer, obj Object) {
 	case *Slice:
 		typeSlice.save(w)
 		x.save(w)
+	case primitiveArraySnapshot:
+		typeArray.save(w)
+		x.save(w)
 	case *Array:
 		typeArray.save(w)
 		x.save(w)
