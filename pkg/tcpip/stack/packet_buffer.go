@@ -312,9 +312,10 @@ func (pk *PacketBuffer) AsViewList() (buffer.ViewList, int) {
 // or retain it beyond the packet's lifetime or a subsequent packet mutation.
 // Like Data's PullUp, this may coalesce the packet's backing buffers.
 func (pk *PacketBuffer) AsView() buffer.View {
-	// The range is exactly the packet's stored bytes, excluding unused
-	// reserved header space, so it is always within the backing buffer.
-	view, _ := pk.buf.PullUp(pk.headerOffset(), pk.Size())
+	view, ok := pk.buf.PullUp(pk.headerOffset(), pk.Size())
+	if !ok {
+		panic("packet buffer range is out of bounds")
+	}
 	return view
 }
 
