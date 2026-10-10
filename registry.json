@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T22:43:21.600127+00:00",
+    "updatedAt": "2026-10-10T22:51:31.381592+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5550,6 +5550,36 @@
           "https://app.buildbuddy.io/invocation/ed1dd938-2ee2-4e57-b1e5-a385e39674f9"
         ]
       }
+    },
+    {
+      "id": "branch:mmap-eternal-without-strace",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "mmap-eternal-without-strace",
+      "head": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
+      "title": "Disable tracing in the page-table leak test",
+      "group": "rbe",
+      "url": "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-10T22:51:31.381592+00:00",
+      "summary": "This independent three-line test policy disables per-syscall tracing for the fixed page-table leak workload while retaining debug logs, its existing deadline and every test assertion. The original one-hour timeout produced an advertised 1.3 GiB boot log. An untraced control with identical kernel/payload inputs completed in 1450.760 seconds; its different-worker result is not an isolated tracing-cost measurement. The unchanged test body, current-master argument forwarding and standalone graph propagation are independently checked. Root has sent the actual contributor question for this exact public head; no upstream PR exists.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
+        "url": "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending for exact standalone proposal",
+        "owner": "root",
+        "sourceHead": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
+        "reviewedAt": "2026-10-10T22:51:31.381592+00:00",
+        "nextAction": "Handle the contributor decision to open the standalone PR using its reviewed commit message. Keep the diagnostic result distinct from full-profile qualification.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
+          "https://github.com/tamird/gvisor/actions/runs/38083534945",
+          "https://github.com/tamird/gvisor/actions/runs/38088752551"
+        ]
+      }
     }
   ],
   "edges": [
@@ -7637,8 +7667,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T22:43:21.600127+00:00",
-      "summary": "The active serialization investigation is testing generated capture and retained representation costs while preserving graph identity, hooks and wire behavior. Legacy-byte capture passed correctness but regressed UDP Save time, bytes and allocation count. It is rejected as a performance design; focused profiles are running. The positive current-package array proposal remains separately awaiting contributor review.",
+      "updatedAt": "2026-10-10T22:45:04.529867+00:00",
+      "summary": "The active serialization investigation is testing generated capture and retained representation costs while preserving graph identity, hooks and wire behavior. Legacy-byte capture passed correctness but regressed UDP Save time, bytes and allocation count. It is rejected as a performance design; focused profiles have completed and original analysis is being collected. The positive current-package array proposal remains separately awaiting contributor review.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -7789,7 +7819,7 @@
           ]
         },
         {
-          "text": "The save-side legacy-byte capture experiment passed correctness but is rejected on its measured performance. In 12 paired comparisons (216 measured rows), UDP Save time rose 18.51%, allocated bytes rose 42.10% and allocation count rose 21.56%; wire size stayed 12,873 bytes. This compares modes in the same source containing the new plumbing, not the genuine unmodified parent. The separate checkpoint compatibility pilot passed six restore operations, but three samples on differing workers do not establish a timing effect. FIFTH is profiling the retained representation costs; no upstream proposal or speedup claim follows from this result.",
+          "text": "The save-side legacy-byte capture experiment passed correctness but is rejected on its measured performance. In 12 paired comparisons (216 measured rows), UDP Save time rose 18.51%, allocated bytes rose 42.10% and allocation count rose 21.56%; wire size stayed 12,873 bytes. This compares modes in the same source containing the new plumbing, not the genuine unmodified parent. The separate checkpoint compatibility pilot passed six restore operations, but three operations per arm with the same reported executor-worker ID do not establish a timing effect or identical VM/CPU placement. FIFTH is profiling the retained representation costs; no upstream proposal or speedup claim follows from this result.",
           "evidence": [
             {
               "label": "Rejected paired capture experiment",
@@ -7810,7 +7840,7 @@
           ]
         }
       ],
-      "nextStep": "Handle contributor review of exact standalone 3b13f133c while FIFTH profiles the rejected capture design in ccb178a9. Use the measured allocation and CPU costs to choose the next architectural change; no performance gain or upstream readiness is claimed.",
+      "nextStep": "Handle contributor review of exact standalone 3b13f133c while FIFTH collects the completed capture profiles from b7b0de1e. The first profiling attempt stopped before Bazel on a stale source assertion; it is preserved separately. Use the measured allocation and CPU costs to choose the next architectural change.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7825,8 +7855,8 @@
           "url": "https://app.buildbuddy.io/invocation/9196932a-7c55-429b-afb4-a0d523f59930"
         },
         {
-          "label": "Capture hotspot profiling in progress",
-          "url": "https://app.buildbuddy.io/invocation/ccb178a9-d866-4caf-9907-974e08217054"
+          "label": "Completed capture profiling; original analysis pending",
+          "url": "https://app.buildbuddy.io/invocation/b7b0de1e-3087-4b2e-9eba-13807e071ca7"
         }
       ]
     },
@@ -7835,8 +7865,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T22:43:21.600127+00:00",
-      "summary": "The active serialization investigation is testing generated capture and retained representation costs while preserving graph identity, hooks and wire behavior. Legacy-byte capture passed correctness but regressed UDP Save time, bytes and allocation count. It is rejected as a performance design; focused profiles are running. The positive current-package array proposal remains separately awaiting contributor review.",
+      "updatedAt": "2026-10-10T22:45:04.529867+00:00",
+      "summary": "The active serialization investigation is testing generated capture and retained representation costs while preserving graph identity, hooks and wire behavior. Legacy-byte capture passed correctness but regressed UDP Save time, bytes and allocation count. It is rejected as a performance design; focused profiles have completed and original analysis is being collected. The positive current-package array proposal remains separately awaiting contributor review.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -8080,7 +8110,7 @@
           ]
         },
         {
-          "text": "The save-side legacy-byte capture experiment passed correctness but is rejected on its measured performance. In 12 paired comparisons (216 measured rows), UDP Save time rose 18.51%, allocated bytes rose 42.10% and allocation count rose 21.56%; wire size stayed 12,873 bytes. This compares modes in the same source containing the new plumbing, not the genuine unmodified parent. The separate checkpoint compatibility pilot passed six restore operations, but three samples on differing workers do not establish a timing effect. FIFTH is profiling the retained representation costs; no upstream proposal or speedup claim follows from this result.",
+          "text": "The save-side legacy-byte capture experiment passed correctness but is rejected on its measured performance. In 12 paired comparisons (216 measured rows), UDP Save time rose 18.51%, allocated bytes rose 42.10% and allocation count rose 21.56%; wire size stayed 12,873 bytes. This compares modes in the same source containing the new plumbing, not the genuine unmodified parent. The separate checkpoint compatibility pilot passed six restore operations, but three operations per arm with the same reported executor-worker ID do not establish a timing effect or identical VM/CPU placement. FIFTH is profiling the retained representation costs; no upstream proposal or speedup claim follows from this result.",
           "evidence": [
             {
               "label": "Rejected paired capture experiment",
@@ -8101,7 +8131,7 @@
           ]
         }
       ],
-      "nextStep": "Handle contributor review of exact standalone 3b13f133c while FIFTH profiles the rejected capture design in ccb178a9. Use the measured allocation and CPU costs to choose the next architectural change; no performance gain or upstream readiness is claimed.",
+      "nextStep": "Handle contributor review of exact standalone 3b13f133c while FIFTH collects the completed capture profiles from b7b0de1e. The first profiling attempt stopped before Bazel on a stale source assertion; it is preserved separately. Use the measured allocation and CPU costs to choose the next architectural change.",
       "evidence": [
         {
           "label": "Studied production revision",
@@ -8128,8 +8158,8 @@
           "url": "https://app.buildbuddy.io/invocation/9196932a-7c55-429b-afb4-a0d523f59930"
         },
         {
-          "label": "Capture hotspot profiling in progress",
-          "url": "https://app.buildbuddy.io/invocation/ccb178a9-d866-4caf-9907-974e08217054"
+          "label": "Completed capture profiling; original analysis pending",
+          "url": "https://app.buildbuddy.io/invocation/b7b0de1e-3087-4b2e-9eba-13807e071ca7"
         }
       ],
       "comparisons": [
