@@ -416,4 +416,9 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
 fi
 
-test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+if [[ ${GITHUB_REF_NAME:-} == diagnostics/rc-tcp-timestamp-readiness ]]; then
+  [[ $QUALIFICATION_EXECUTION == local && $QUALIFICATION_ARCH == amd64 && ${lanes[*]} == syscalls-rc ]]
+  bash test/rbe/tcp_timestamp_readiness.sh
+else
+  test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+fi
