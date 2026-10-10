@@ -1108,6 +1108,12 @@ func TestRACKUpdateSackedOut(t *testing.T) {
 
 		checkCredit(t, "recovery entry", recovered, 3)
 		checkCredit(t, "RTO", timedOut, 0)
+		if got, want := timedOut.Sender.SACKedBytes, seqnum.Size(0); got != want {
+			t.Errorf("SACKed bytes after RTO = %d, want %d", got, want)
+		}
+		if got, want := timedOut.Sender.UnacknowledgedSequenceBytes, seqnum.Size(4*maxPayload); got != want {
+			t.Errorf("unacknowledged bytes after RTO = %d, want %d", got, want)
+		}
 		checkCredit(t, "SACK after RTO", resacked, 3)
 		checkCredit(t, "full cumulative ACK", complete, 0)
 		// The duplicate ACK used to observe the reset can start another

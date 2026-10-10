@@ -90,7 +90,7 @@ func newCubicCC(s *sender) *cubicState {
 			C:    0.4,
 			// By this point, the sender has initialized it's initial sequence
 			// number.
-			EndSeq:  s.SndNxt,
+			EndSeq:  s.delivery.next,
 			LastRTT: effectivelyInfinity,
 			CurrRTT: effectivelyInfinity,
 			// LastAck/RoundStart are seeded here from processing time, but the
@@ -147,7 +147,7 @@ func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTim
 	// processing clock would make distinct ACKs appear to arrive together,
 	// distorting both comparisons and potentially exiting slow start early.
 	now := ackTime
-	if c.EndSeq.LessThan(c.s.SndUna) {
+	if c.EndSeq.LessThan(c.s.delivery.una) {
 		c.beginHyStartRound(now)
 	}
 	// ACK train
@@ -178,7 +178,7 @@ func (c *cubicState) updateHyStart(rtt time.Duration, ackTime tcpip.MonotonicTim
 
 // +checklocks:c.s.ep.mu
 func (c *cubicState) beginHyStartRound(now tcpip.MonotonicTime) {
-	c.EndSeq = c.s.SndNxt
+	c.EndSeq = c.s.delivery.next
 	c.SampleCount = 0
 	c.LastRTT = c.CurrRTT
 	c.CurrRTT = effectivelyInfinity

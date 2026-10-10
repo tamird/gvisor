@@ -229,11 +229,10 @@ type TCPRTTState struct {
 	SRTTInited bool
 }
 
-// TCPSenderState holds a copy of the internal state of the sender for a given
-// TCP Endpoint.
+// senderState holds sender control state outside the delivery owner.
 //
 // +stateify savable
-type TCPSenderState struct {
+type senderState struct {
 	// LastSendTime is the timestamp at which we sent the last segment.
 	LastSendTime tcpip.MonotonicTime
 
@@ -253,22 +252,8 @@ type TCPSenderState struct {
 	// cwnd packets), the congestion window is incremented by one.
 	SndCAAckCount int
 
-	// Outstanding is the number of packets that have been sent but not yet
-	// acknowledged.
-	Outstanding int
-
-	// SackedOut is the number of packets which have been selectively
-	// acked.
-	SackedOut int
-
 	// SndWnd is the send window size in bytes.
 	SndWnd seqnum.Size
-
-	// SndUna is the next unacknowledged sequence number.
-	SndUna seqnum.Value
-
-	// SndNxt is the sequence number of the next segment to be sent.
-	SndNxt seqnum.Value
 
 	// RTTMeasureSeqNum is the sequence number being used for the latest
 	// RTT measurement.
@@ -287,10 +272,6 @@ type TCPSenderState struct {
 
 	// RTTState holds information about the endpoint's round trip time.
 	RTTState TCPRTTState
-
-	// MaxPayloadSize is the maximum size of the payload of a given
-	// segment.  It is initialized on demand.
-	MaxPayloadSize int
 
 	// SndWndScale is the number of bits to shift left when reading the
 	// send window size from a segment.
@@ -313,6 +294,104 @@ type TCPSenderState struct {
 
 	// SpuriousRecovery indicates if the sender entered recovery spuriously.
 	SpuriousRecovery bool
+}
+
+// TCPSenderState is an owned snapshot of sender control and delivery state.
+//
+// +stateify savable
+type TCPSenderState struct {
+	// LastSendTime is the timestamp at which we sent the last segment.
+	LastSendTime tcpip.MonotonicTime
+
+	// DupAckCount is the number of Duplicate ACKs received. It is used for
+	// fast retransmit.
+	DupAckCount int
+
+	// SndCwnd is the size of the sending congestion window in packets.
+	SndCwnd int
+
+	// Ssthresh is the threshold between slow start and congestion
+	// avoidance.
+	Ssthresh int
+
+	// SndCAAckCount is the number of packets acknowledged during
+	// congestion avoidance. When enough packets have been ack'd (typically
+	// cwnd packets), the congestion window is incremented by one.
+	SndCAAckCount int
+
+	// SndWnd is the send window size in bytes.
+	SndWnd seqnum.Size
+
+	// RTTMeasureSeqNum is the sequence number being used for the latest
+	// RTT measurement.
+	RTTMeasureSeqNum seqnum.Value
+
+	// RTTMeasureTime is the time when the RTTMeasureSeqNum was sent.
+	RTTMeasureTime tcpip.MonotonicTime
+
+	// Closed indicates that the caller has closed the endpoint for
+	// sending.
+	Closed bool
+
+	// RTO is the retransmit timeout as defined in section of 2 of RFC
+	// 6298.
+	RTO time.Duration
+
+	// RTTState holds information about the endpoint's round trip time.
+	RTTState TCPRTTState
+
+	// SndWndScale is the number of bits to shift left when reading the
+	// send window size from a segment.
+	SndWndScale uint8
+
+	// MaxSentAck is the highest acknowledgement number sent till now.
+	MaxSentAck seqnum.Value
+
+	// FastRecovery holds the fast recovery state for the endpoint.
+	FastRecovery TCPFastRecoveryState
+
+	// Cubic holds the state related to CUBIC congestion control.
+	Cubic TCPCubicState
+
+	// RACKState holds the state related to RACK loss detection algorithm.
+	RACKState TCPRACKState
+
+	// RetransmitTS records the timestamp used to detect spurious recovery.
+	RetransmitTS uint32
+
+	// SpuriousRecovery indicates if the sender entered recovery spuriously.
+	SpuriousRecovery bool
+
+	// Outstanding is the sender's current transmission budget in packets.
+	// Normal transmission, RFC6675 recovery pipe and RTO restart use
+	// different accounting rules; it is not a count of unique wire packets.
+	Outstanding int
+
+	// SackedOut is the number of packets which have been selectively
+	// acked.
+	SackedOut int
+
+	// SndUna is the next unacknowledged sequence number.
+	SndUna seqnum.Value
+
+	// SndNxt is the sequence number of the next segment to be sent.
+	SndNxt seqnum.Value
+
+	// MaxPayloadSize is the maximum size of the payload of a given
+	// segment.  It is initialized on demand.
+	MaxPayloadSize int
+
+	// UnacknowledgedSequenceBytes includes the FIN's sequence-space byte,
+	// when present, as well as sent data beyond the cumulative ACK.
+	UnacknowledgedSequenceBytes seqnum.Size
+
+	// SACKedBytes is retained selective-ACK byte coverage, including partial
+	// packets that do not earn current-MSS packet credit.
+	SACKedBytes seqnum.Size
+
+	// CongestionState reports the sender's explicit recovery state. In
+	// particular, RTO recovery need not have FastRecovery.Active set.
+	CongestionState tcpip.CongestionControlState
 }
 
 // TCPSACKInfo holds TCP SACK related information for a given TCP endpoint.

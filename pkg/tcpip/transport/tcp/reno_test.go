@@ -23,7 +23,7 @@ import (
 func newTestReno() *renoState {
 	return newRenoCC(&sender{
 		ep: &Endpoint{},
-		TCPSenderState: TCPSenderState{
+		senderState: senderState{
 			SndCwnd:  10,
 			Ssthresh: 10,
 		},

@@ -464,6 +464,12 @@ func TestDeliverySenderReplay(t *testing.T) {
 				if got, want := observation.actual.Sender.SackedOut, int(observation.model.sackedPackets); got != want {
 					t.Errorf("event %d SackedOut = %d, want model %d", index, got, want)
 				}
+				if got, want := uint64(observation.actual.Sender.SACKedBytes), observation.model.sackedBytes; got != want {
+					t.Errorf("event %d SACKedBytes = %d, want model %d", index, got, want)
+				}
+				if got, want := uint64(observation.actual.Sender.UnacknowledgedSequenceBytes), observation.model.unackedBytes; got != want {
+					t.Errorf("event %d unacknowledged byte view = %d, want model %d", index, got, want)
+				}
 				if got, want := uint64(uint32(observation.actual.Sender.SndNxt-observation.actual.Sender.SndUna)), observation.model.unackedBytes; got != want {
 					t.Errorf("event %d unacknowledged bytes = %d, want model %d", index, got, want)
 				}

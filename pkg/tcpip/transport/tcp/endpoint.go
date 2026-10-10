@@ -474,9 +474,6 @@ type Endpoint struct {
 	// delay is a boolean (0 is false) and must be accessed atomically.
 	delay uint32
 
-	// scoreboard holds TCP SACK Scoreboard information for this endpoint.
-	scoreboard *SACKScoreboard
-
 	// segmentQueue is used to hand received segments to the protocol
 	// goroutine. Segments are queued as long as the queue is not full,
 	// and dropped when it is.
@@ -1038,14 +1035,9 @@ func (e *Endpoint) purgeWriteQueue() {
 	if e.snd != nil {
 		e.sndQueueInfo.sndQueueMu.Lock()
 		defer e.sndQueueInfo.sndQueueMu.Unlock()
-		e.snd.updateWriteNext(nil)
-		for s := e.snd.writeList.Front(); s != nil; s = e.snd.writeList.Front() {
-			e.snd.writeList.Remove(s)
-			s.DecRef()
-		}
+		e.snd.delivery.purge()
 		e.sndQueueInfo.SndBufUsed = 0
 		e.sndQueueInfo.SndClosed = true
-		e.snd.SndNxt = e.snd.SndUna
 	}
 }
 
@@ -1683,7 +1675,7 @@ func (e *Endpoint) queueSegment(p tcpip.Payloader, opts tcpip.WriteOptions) (*se
 	size := int(buf.Size())
 	s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buf, e.ops.GetMark())
 	e.sndQueueInfo.SndBufUsed += size
-	e.snd.writeList.PushBack(s)
+	e.snd.delivery.enqueue(s)
 
 	return s, size, nil
 }
@@ -2587,7 +2579,7 @@ func (e *Endpoint) connect(addr tcpip.FullAddress, handshake bool) tcpip.Error {
 	// connection setting here.
 	if !handshake {
 		e.segmentQueue.mu.Lock()
-		for _, l := range []segmentList{e.segmentQueue.list, e.snd.writeList.writeList} {
+		for _, l := range []segmentList{e.segmentQueue.list, e.snd.delivery.queue.writeList} {
 			for s := l.Front(); s != nil; s = s.Next() {
 				s.id = e.TransportEndpointInfo.ID
 			}
@@ -2683,7 +2675,7 @@ func (e *Endpoint) shutdownLocked(flags tcpip.ShutdownFlags) tcpip.Error {
 			// matching Linux tcp_close_state(): the FIN may be queued but
 			// not yet transmitted when the write queue is blocked.
 			s := newOutgoingSegment(e.TransportEndpointInfo.ID, e.stack.Clock(), buffer.Buffer{}, e.ops.GetMark())
-			e.snd.writeList.PushBack(s)
+			e.snd.delivery.enqueue(s)
 			e.updateConnDirectionState(connDirectionStateSndClosed)
 			switch e.EndpointState() {
 			case StateCloseWait:
@@ -3320,7 +3312,7 @@ func (e *Endpoint) completeStateLocked(s *TCPEndpointState) {
 	s.ID = TCPEndpointID(e.TransportEndpointInfo.ID)
 	s.SegTime = e.stack.Clock().NowMonotonic()
 	s.Receiver = e.rcv.TCPReceiverState
-	s.Sender = e.snd.TCPSenderState
+	s.Sender = e.snd.snapshot()
 
 	sndBufSize := e.getSendBufferSize()
 	// Copy the send buffer atomically.
@@ -3337,7 +3329,7 @@ func (e *Endpoint) completeStateLocked(s *TCPEndpointState) {
 	// Copy the endpoint TCP Option state.
 	s.SACK.Blocks = make([]header.SACKBlock, e.sack.NumBlocks)
 	copy(s.SACK.Blocks, e.sack.Blocks[:e.sack.NumBlocks])
-	s.SACK.ReceivedBlocks, s.SACK.MaxSACKED = e.scoreboard.Copy()
+	s.SACK.ReceivedBlocks, s.SACK.MaxSACKED = e.snd.delivery.scoreboard.Copy()
 
 	e.snd.rtt.Lock()
 	s.Sender.RTTState = e.snd.rtt.TCPRTTState
@@ -3474,7 +3466,7 @@ func (e *Endpoint) computeTCPSendBufferSize() int64 {
 	}
 
 	const packetOverheadFactor = 2
-	curMSS := e.snd.MaxPayloadSize
+	curMSS := e.snd.delivery.mss
 	numSeg := InitialCwnd
 	if numSeg < e.snd.SndCwnd {
 		numSeg = e.snd.SndCwnd

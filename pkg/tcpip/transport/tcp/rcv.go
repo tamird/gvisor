@@ -262,7 +262,7 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 		case StateEstablished:
 			r.ep.setEndpointState(StateCloseWait)
 		case StateFinWait1:
-			if s.flags.Contains(header.TCPFlagAck) && r.ep.snd.finSent && s.ackNumber == r.ep.snd.SndNxt {
+			if s.flags.Contains(header.TCPFlagAck) && r.ep.snd.finSent && s.ackNumber == r.ep.snd.delivery.next {
 				// FIN-ACK, transition to TIME-WAIT.
 				r.ep.setEndpointState(StateTimeWait)
 			} else {
@@ -298,7 +298,7 @@ func (r *receiver) consumeSegment(s *segment, segSeq seqnum.Value, segLen seqnum
 	// Handle ACK (not FIN-ACK, which we handled above) during one of the
 	// shutdown states. These completions require that our FIN was sent;
 	// without finSent a data ACK would be mistaken for a FIN ACK.
-	if s.flags.Contains(header.TCPFlagAck) && r.ep.snd.finSent && s.ackNumber == r.ep.snd.SndNxt {
+	if s.flags.Contains(header.TCPFlagAck) && r.ep.snd.finSent && s.ackNumber == r.ep.snd.delivery.next {
 		switch r.ep.EndpointState() {
 		case StateFinWait1:
 			r.ep.setEndpointState(StateFinWait2)
@@ -392,7 +392,7 @@ func (r *receiver) handleRcvdSegmentClosing(s *segment, state EndpointState, clo
 		// The ESTABLISHED state processing is here where if the ACK check
 		// fails, we ignore the packet:
 		// https://github.com/torvalds/linux/blob/v5.8/net/ipv4/tcp_input.c#L5591
-		if r.ep.snd.SndNxt.LessThan(s.ackNumber) {
+		if r.ep.snd.delivery.next.LessThan(s.ackNumber) {
 			r.ep.snd.maybeSendOutOfWindowAck(s)
 			return true, nil
 		}

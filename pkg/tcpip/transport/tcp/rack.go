@@ -81,7 +81,7 @@ func (rc *rackControl) init(snd *sender, iss seqnum.Value) {
 // See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-09#section-6.2
 //
 // +checklocks:rc.snd.ep.mu
-func (rc *rackControl) update(seg *segment, ackSeg *segment) {
+func (rc *rackControl) update(sample deliverySample, ackSeg *segment) {
 	// Compute the RTT sample against the time the ACK was received at ingress
 	// (ackSeg.rcvdTime), not the current clock. The two differ when the ACK was
 	// delayed inside the stack before being processed (e.g. it sat in the
@@ -90,7 +90,7 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// time would inflate the RTT by that internal delay, corrupting RACK.RTT,
 	// RACK.minRTT and the reorder window, and causing spurious loss detection.
 	// detectLoss already uses ackSeg.rcvdTime; this keeps update consistent.
-	rtt := ackSeg.rcvdTime.Sub(seg.xmitTime)
+	rtt := ackSeg.rcvdTime.Sub(sample.xmitTime)
 
 	// If the ACK is for a retransmitted packet, do not update if it is a
 	// spurious inference which is determined by below checks:
@@ -100,9 +100,9 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// for the connection.
 	// See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-08#section-7.2
 	// step 2
-	if seg.xmitCount > 1 {
+	if sample.xmitCount > 1 {
 		if ackSeg.parsedOptions.TS && ackSeg.parsedOptions.TSEcr != 0 {
-			if ackSeg.parsedOptions.TSEcr < rc.snd.ep.tsVal(seg.xmitTime) {
+			if ackSeg.parsedOptions.TSEcr < rc.snd.ep.tsVal(sample.xmitTime) {
 				return
 			}
 		}
@@ -124,9 +124,9 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 	// Update rc.xmitTime and rc.endSequence to the transmit time and
 	// ending sequence number of the packet which has been acknowledged
 	// most recently.
-	endSeq := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
-	if rc.XmitTime.Before(seg.xmitTime) || (seg.xmitTime == rc.XmitTime && rc.EndSequence.LessThan(endSeq)) {
-		rc.XmitTime = seg.xmitTime
+	endSeq := sample.end
+	if rc.XmitTime.Before(sample.xmitTime) || (sample.xmitTime == rc.XmitTime && rc.EndSequence.LessThan(endSeq)) {
+		rc.XmitTime = sample.xmitTime
 		rc.EndSequence = endSeq
 	}
 }
@@ -142,14 +142,14 @@ func (rc *rackControl) update(seg *segment, ackSeg *segment) {
 //     RACK.fack is (selectively or cumulatively) acknowledged, it has been
 //     delivered out of order. The sender sets RACK.reord to TRUE if such segment
 //     is identified.
-func (rc *rackControl) detectReorder(seg *segment) {
-	endSeq := seg.sequenceNumber.Add(seqnum.Size(seg.payloadSize()))
+func (rc *rackControl) detectReorder(sample deliverySample) {
+	endSeq := sample.end
 	if rc.FACK.LessThan(endSeq) {
 		rc.FACK = endSeq
 		return
 	}
 
-	if endSeq.LessThan(rc.FACK) && seg.xmitCount == 1 {
+	if endSeq.LessThan(rc.FACK) && sample.xmitCount == 1 {
 		rc.Reord = true
 	}
 }
@@ -170,7 +170,7 @@ func (s *sender) shouldSchedulePTO() bool {
 		// The connection is not in loss recovery.
 		(s.state != tcpip.RTORecovery && s.state != tcpip.SACKRecovery) &&
 		// The connection has no SACKed sequences in the SACK scoreboard.
-		s.ep.scoreboard.Sacked() == 0
+		s.delivery.scoreboard.Sacked() == 0
 }
 
 // schedulePTO schedules the probe timeout as defined in
@@ -183,7 +183,7 @@ func (s *sender) schedulePTO() {
 	s.rtt.Lock()
 	if s.rtt.TCPRTTState.SRTTInited && s.rtt.TCPRTTState.SRTT > 0 {
 		pto = s.rtt.TCPRTTState.SRTT * 2
-		if s.Outstanding == 1 {
+		if s.delivery.flightPackets == 1 {
 			pto += wcDelayedACKTimeout
 		}
 	}
@@ -211,17 +211,16 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 	}
 
 	var dataSent bool
-	if s.writeNext != nil && s.writeNext.xmitCount == 0 && s.Outstanding < s.SndCwnd {
-		dataSent = s.maybeSendSegment(s.writeNext, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
+	if s.delivery.writeNext != nil && s.delivery.writeNext.xmitCount == 0 && s.delivery.flightPackets < s.SndCwnd {
+		dataSent = s.maybeSendSegment(s.delivery.writeNext, int(s.delivery.scoreboard.SMSS()), s.delivery.una.Add(s.SndWnd), transmissionInWindow)
 		if dataSent {
-			s.Outstanding += s.pCount(s.writeNext, s.MaxPayloadSize)
-			s.updateWriteNext(s.writeNext.Next())
+			s.delivery.setNext(s.delivery.writeNext.Next())
 		}
 	}
 
 	if !dataSent && !s.rc.tlpRxtOut {
 		var highestSeqXmit *segment
-		for highestSeqXmit = s.writeList.Front(); highestSeqXmit != nil; highestSeqXmit = highestSeqXmit.Next() {
+		for highestSeqXmit = s.delivery.queue.Front(); highestSeqXmit != nil; highestSeqXmit = highestSeqXmit.Next() {
 			if highestSeqXmit.xmitCount == 0 {
 				// Nothing in writeList is transmitted, no need to send a probe.
 				highestSeqXmit = nil
@@ -236,10 +235,10 @@ func (s *sender) probeTimerExpired() tcpip.Error {
 		}
 
 		if highestSeqXmit != nil {
-			dataSent = s.maybeSendSegment(highestSeqXmit, int(s.ep.scoreboard.SMSS()), s.SndUna.Add(s.SndWnd))
+			dataSent = s.maybeSendSegment(highestSeqXmit, int(s.delivery.scoreboard.SMSS()), s.delivery.una.Add(s.SndWnd), transmissionTailProbe)
 			if dataSent {
 				s.rc.tlpRxtOut = true
-				s.rc.tlpHighRxt = s.SndNxt
+				s.rc.tlpHighRxt = s.delivery.next
 			}
 		}
 	}
@@ -309,7 +308,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 	// React to DSACK once per round trip.
 	// If SND.UNA < RACK.rtt_seq:
 	//   RACK.dsack = false
-	if snd.SndUna.LessThan(rc.RTTSeq) {
+	if snd.delivery.una.LessThan(rc.RTTSeq) {
 		dsackSeen = false
 	}
 
@@ -321,7 +320,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 	if dsackSeen {
 		rc.ReoWndIncr++
 		dsackSeen = false
-		rc.RTTSeq = snd.SndNxt
+		rc.RTTSeq = snd.delivery.next
 		rc.ReoWndPersist = tcpRACKRecoveryThreshold
 	} else if rc.exitedRecovery {
 		// Else if exiting loss recovery:
@@ -350,7 +349,7 @@ func (rc *rackControl) updateRACKReorderWindow() {
 			return
 		}
 
-		if snd.SackedOut >= nDupAckThreshold {
+		if snd.delivery.sackedPackets >= nDupAckThreshold {
 			rc.ReoWnd = 0
 			return
 		}
@@ -381,8 +380,8 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 	var timeout time.Duration
 	numLost := 0
 	clockResolution := rc.snd.ep.stack.ClockResolution()
-	for seg := rc.snd.writeList.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
-		if rc.snd.ep.scoreboard.IsSACKED(seg.sackBlock()) {
+	for seg := rc.snd.delivery.queue.Front(); seg != nil && seg.xmitCount != 0; seg = seg.Next() {
+		if rc.snd.delivery.scoreboard.IsSACKED(seg.sackBlock()) {
 			continue
 		}
 
@@ -399,7 +398,7 @@ func (rc *rackControl) detectLoss(rcvTime tcpip.MonotonicTime) int {
 			// zero during recovery.
 			timeRemaining := seg.xmitTime.Sub(rcvTime) + rc.RTT + rc.ReoWnd + clockResolution
 			if timeRemaining < 0 || (timeRemaining == 0 && clockResolution == 0) {
-				seg.lost = true
+				rc.snd.delivery.markLost(seg)
 				numLost++
 			} else {
 				// Arm the timer through the uncertainty boundary, so that a timer
@@ -472,8 +471,8 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 	var dataSent bool
 	// Iterate the writeList and retransmit the segments which are marked
 	// as lost by RACK.
-	for seg := snd.writeList.Front(); seg != nil && seg.xmitCount > 0; seg = seg.Next() {
-		if seg == snd.writeNext {
+	for seg := snd.delivery.queue.Front(); seg != nil && seg.xmitCount > 0; seg = seg.Next() {
+		if seg == snd.delivery.writeNext {
 			break
 		}
 
@@ -482,21 +481,20 @@ func (rc *rackControl) DoRecovery(_ *segment, fastRetransmit bool) {
 		}
 
 		// Reset seg.lost as it is already SACKed.
-		if snd.ep.scoreboard.IsSACKED(seg.sackBlock()) {
-			seg.lost = false
+		if snd.delivery.scoreboard.IsSACKED(seg.sackBlock()) {
+			snd.delivery.clearLost(seg)
 			continue
 		}
 
 		// Check the congestion window after entering recovery.
-		if snd.Outstanding >= snd.SndCwnd {
+		if snd.delivery.flightPackets >= snd.SndCwnd {
 			break
 		}
 
-		if sent := snd.maybeSendSegment(seg, int(snd.ep.scoreboard.SMSS()), snd.SndUna.Add(snd.SndWnd)); !sent {
+		if sent := snd.maybeSendSegment(seg, int(snd.delivery.scoreboard.SMSS()), snd.delivery.una.Add(snd.SndWnd), transmissionInWindow); !sent {
 			break
 		}
 		dataSent = true
-		snd.Outstanding += snd.pCount(seg, snd.MaxPayloadSize)
 	}
 
 	snd.postXmit(dataSent, true /* shouldScheduleProbe */)

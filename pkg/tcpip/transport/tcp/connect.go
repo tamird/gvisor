@@ -1080,11 +1080,11 @@ func (e *Endpoint) sendRaw(pkt *stack.PacketBuffer, flags header.TCPFlags, seq, 
 // +checklocksexclude:e.snd.rtt.rttMutex
 func (e *Endpoint) sendData(next *segment) {
 	// Initialize the next segment to write if it's currently nil.
-	if e.snd.writeNext == nil {
+	if e.snd.delivery.writeNext == nil {
 		if next == nil {
 			return
 		}
-		e.snd.updateWriteNext(next)
+		e.snd.delivery.setNext(next)
 	}
 
 	// Push out any new packets.
@@ -1119,10 +1119,10 @@ func (e *Endpoint) resetConnectionLocked(err tcpip.Error) {
 		var resetSeqNum seqnum.Value
 		var ackNum seqnum.Value
 		if e.snd != nil {
-			sndWndEnd := e.snd.SndUna.Add(e.snd.SndWnd)
+			sndWndEnd := e.snd.delivery.una.Add(e.snd.SndWnd)
 			resetSeqNum = sndWndEnd
-			if !sndWndEnd.LessThan(e.snd.SndNxt) || e.snd.SndNxt.Size(sndWndEnd) < (1<<e.snd.SndWndScale) {
-				resetSeqNum = e.snd.SndNxt
+			if !sndWndEnd.LessThan(e.snd.delivery.next) || e.snd.delivery.next.Size(sndWndEnd) < (1<<e.snd.SndWndScale) {
+				resetSeqNum = e.snd.delivery.next
 			}
 		}
 		if e.rcv != nil {
@@ -1270,7 +1270,7 @@ func (e *Endpoint) handleReset(s *segment) (ok bool, err tcpip.Error) {
 // +checklocksexclude:e.segmentQueue.mu
 // +checklocksexclude:e.snd.rtt.rttMutex
 func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
-	sndUna := e.snd.SndUna
+	sndUna := e.snd.delivery.una
 	for i := 0; i < maxSegmentsPerWake; i++ {
 		if state := e.EndpointState(); state.closed() || state == StateTimeWait || state == StateError {
 			return nil
@@ -1296,7 +1296,7 @@ func (e *Endpoint) handleSegmentsLocked() tcpip.Error {
 	// As of writing, Linux seems to only confirm a route as reachable when
 	// forward progress is made which is indicated by an ACK that removes data
 	// from the retransmit queue, i.e. sender makes forward progress.
-	if sndUna.LessThan(e.snd.SndUna) {
+	if sndUna.LessThan(e.snd.delivery.una) {
 		e.route.ConfirmReachable()
 	}
 
@@ -1430,7 +1430,7 @@ func (e *Endpoint) keepaliveTimerExpired() tcpip.Error {
 	// seg.seq = snd.nxt-1.
 	e.keepalive.unacked++
 	e.keepalive.Unlock()
-	e.snd.sendEmptySegment(header.TCPFlagAck, e.snd.SndNxt-1)
+	e.snd.sendEmptySegment(header.TCPFlagAck, e.snd.delivery.next-1)
 	e.resetKeepaliveTimer(false)
 	return nil
 }
@@ -1453,7 +1453,7 @@ func (e *Endpoint) resetKeepaliveTimer(receivedData bool) {
 	}
 	// Start the keepalive timer IFF it's enabled and there is no pending
 	// data to send.
-	if !e.SocketOptions().GetKeepAlive() || e.snd == nil || e.snd.SndUna != e.snd.SndNxt {
+	if !e.SocketOptions().GetKeepAlive() || e.snd == nil || e.snd.delivery.una != e.snd.delivery.next {
 		e.keepalive.timer.disable()
 		return
 	}

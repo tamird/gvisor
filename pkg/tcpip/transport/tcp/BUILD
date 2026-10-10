@@ -148,6 +148,7 @@ go_library(
         "connect.go",
         "connect_unsafe.go",
         "cubic.go",
+        "delivery.go",
         "dispatcher.go",
         "dispatcher_mutex.go",
         "endpoint.go",

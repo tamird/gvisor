@@ -32,7 +32,7 @@ func (rr *renoRecovery) DoRecovery(rcvdSeg *segment, fastRetransmit bool) {
 	snd := rr.s
 
 	// We are in fast recovery mode. Ignore the ack if it's out of range.
-	if !ack.InRange(snd.SndUna, snd.SndNxt+1) {
+	if !ack.InRange(snd.delivery.una, snd.delivery.next+1) {
 		return
 	}
 

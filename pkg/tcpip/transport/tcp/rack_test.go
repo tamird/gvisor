@@ -48,10 +48,10 @@ func newRACKTestContext(clock tcpip.Clock, resolution time.Duration) *rackTestCo
 	ctx := &rackTestContext{clock: clock}
 	st := stack.New(stack.Options{Clock: clock, ClockResolution: resolution})
 	ctx.snd.ep = &Endpoint{
-		stack:      st,
-		scoreboard: NewSACKScoreboard(1, 0),
+		stack: st,
 	}
-	ctx.snd.writeList.set = make(map[*segment]struct{})
+	ctx.snd.delivery.scoreboard = NewSACKScoreboard(1, 0)
+	ctx.snd.delivery.queue.set = make(map[*segment]struct{})
 	ctx.snd.cc = newRenoCC(&ctx.snd)
 	ctx.snd.reorderTimer.init(clock, func() {})
 	ctx.snd.rc.init(&ctx.snd, 0)
@@ -69,7 +69,7 @@ func (ctx *rackTestContext) addSegment(seq seqnum.Value, xmitTime tcpip.Monotoni
 	seg.sequenceNumber = seq
 	seg.xmitCount = 1
 	seg.xmitTime = xmitTime
-	ctx.snd.writeList.PushBack(seg)
+	ctx.snd.delivery.queue.PushBack(seg)
 	ctx.segs = append(ctx.segs, seg)
 	return seg
 }
@@ -103,7 +103,7 @@ func TestRACKQuantizedClockPreventsPrematureLossAndSchedulesRecheck(t *testing.T
 	ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
 	defer ack.DecRef()
 
-	ctx.snd.rc.update(newer, ack)
+	ctx.snd.rc.update(deliveryOf(newer), ack)
 	if got := ctx.snd.rc.RTT; got != 0 {
 		t.Fatalf("RACK RTT = %v, want 0", got)
 	}
@@ -146,7 +146,7 @@ func TestRACKQuantizedClockPreventsPrematureLossAndSchedulesRecheck(t *testing.T
 	// uncertainty boundary, rather than adding callback delay to its age.
 	clock.Advance(testClockResolution)
 	ctx.snd.FastRecovery.Active = true
-	ctx.snd.SndNxt = 1
+	ctx.snd.delivery.next = 1
 	ctx.snd.SndCwnd = 0
 	if err := ctx.snd.rc.reorderTimerExpired(); err != nil {
 		t.Fatalf("reorderTimerExpired failed: %v", err)
@@ -254,7 +254,7 @@ func TestRACKReorderTimerDeclaresLossOnFirstExpiry(t *testing.T) {
 		t.Fatal("reorder timer did not fire at its target")
 	}
 	ctx.snd.FastRecovery.Active = true
-	ctx.snd.SndNxt = 1
+	ctx.snd.delivery.next = 1
 	ctx.snd.SndCwnd = 0
 	if err := ctx.snd.rc.reorderTimerExpired(); err != nil {
 		t.Fatalf("reorderTimerExpired failed: %v", err)
@@ -295,7 +295,7 @@ func TestRACKInitialDeliverySequence(t *testing.T) {
 			// It must advance the marker, including when its end wraps to zero.
 			ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
 			defer ack.DecRef()
-			ctx.snd.rc.update(later, ack)
+			ctx.snd.rc.update(deliveryOf(later), ack)
 			if got, want := ctx.snd.rc.EndSequence, test.iss.Add(3); got != want {
 				t.Errorf("first delivery end = %d, want %d", got, want)
 			}
@@ -318,8 +318,8 @@ func TestRACKInitialDSACKWindow(t *testing.T) {
 			ctx.snd.ep.mu.Lock()
 			defer ctx.snd.ep.mu.Unlock()
 			ctx.snd.rc.init(&ctx.snd, test.iss)
-			ctx.snd.SndUna = test.iss.Add(1)
-			ctx.snd.SndNxt = test.iss.Add(4)
+			ctx.snd.delivery.una = test.iss.Add(1)
+			ctx.snd.delivery.next = test.iss.Add(4)
 			ctx.snd.rc.minRTT = 100 * time.Millisecond
 			ctx.snd.rtt.Lock()
 			ctx.snd.rtt.TCPRTTState.SRTT = 100 * time.Millisecond
@@ -332,7 +332,7 @@ func TestRACKInitialDSACKWindow(t *testing.T) {
 			if got, want := ctx.snd.rc.ReoWnd, 50*time.Millisecond; got != want {
 				t.Errorf("first DSACK window = %s, want %s", got, want)
 			}
-			if got, want := ctx.snd.rc.RTTSeq, ctx.snd.SndNxt; got != want {
+			if got, want := ctx.snd.rc.RTTSeq, ctx.snd.delivery.next; got != want {
 				t.Errorf("DSACK round boundary = %d, want %d", got, want)
 			}
 
@@ -345,7 +345,7 @@ func TestRACKInitialDSACKWindow(t *testing.T) {
 
 			// Acknowledging the round boundary allows a new expansion,
 			// including when that boundary wraps through zero.
-			ctx.snd.SndUna = ctx.snd.SndNxt
+			ctx.snd.delivery.una = ctx.snd.delivery.next
 			ctx.snd.rc.DSACKSeen = true
 			ctx.snd.rc.updateRACKReorderWindow()
 			if got, want := ctx.snd.rc.ReoWnd, 75*time.Millisecond; got != want {
@@ -369,7 +369,7 @@ func TestRACKEqualTransmitTimeOrdersByEndSequence(t *testing.T) {
 	if got := ctx.snd.rc.detectLoss(tcpip.MonotonicTime{}); got != 1 {
 		t.Fatalf("detectLoss got %d losses, want 1", got)
 	}
-	for seg := ctx.snd.writeList.Front(); seg != nil; seg = seg.Next() {
+	for seg := ctx.snd.delivery.queue.Front(); seg != nil; seg = seg.Next() {
 		wantLost := seg.sequenceNumber == 0
 		if seg.lost != wantLost {
 			t.Errorf("segment ending at %d lost=%t, want %t", seg.sequenceNumber.Add(1), seg.lost, wantLost)
@@ -425,16 +425,16 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 	s := &ctx.snd
 	s.ep.mu.Lock()
 	defer s.ep.mu.Unlock()
-	defer s.updateWriteNext(nil)
-	s.MaxPayloadSize = 10
+	defer s.delivery.setNext(nil)
+	s.delivery.mss = 10
 	s.SndWnd = 100
-	s.SndNxt = 40
-	s.Outstanding = 1
-	s.SackedOut = 3
+	s.delivery.next = 40
+	s.delivery.flightPackets = 1
+	s.delivery.sackedPackets = 3
 	s.FastRecovery.Active = true
 	s.state = tcpip.SACKRecovery
 	s.ep.SACKPermitted = true
-	s.ep.scoreboard.smss = 10
+	s.delivery.scoreboard.smss = 10
 	// Keep retransmission disabled; this test exercises the rare MSS update
 	// and split owners, while the packet fixture covers recovery traffic.
 	s.SndCwnd = 0
@@ -452,11 +452,11 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 		seg.xmitCount = 1
 		seg.acked = entry.acked
 		seg.lost = entry.acked
-		s.writeList.PushBack(seg)
+		s.delivery.queue.PushBack(seg)
 		ctx.segs = append(ctx.segs, seg)
 	}
-	s.ep.scoreboard.Insert(header.SACKBlock{Start: 10, End: 40})
-	s.updateWriteNext(s.writeList.Front())
+	s.delivery.scoreboard.Insert(header.SACKBlock{Start: 10, End: 40})
+	s.delivery.setNext(s.delivery.queue.Front())
 
 	for _, test := range []struct {
 		mss   int
@@ -467,13 +467,13 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 		{mss: 3, count: 1, want: 10},
 	} {
 		s.updateMaxPayloadSize(header.TCPMinimumSize+s.ep.maxOptionSize()+test.mss, test.count)
-		if got, want := s.SackedOut, test.want; got != want {
+		if got, want := s.delivery.sackedPackets, test.want; got != want {
 			t.Errorf("SackedOut at MSS %d = %d, want %d", test.mss, got, want)
 		}
 	}
 
-	credited := s.writeList.Front().Next()
-	s.splitSeg(credited, 8)
+	credited := s.delivery.queue.Front().Next()
+	s.delivery.split(credited, 8)
 	remainder := credited.Next()
 	if remainder == nil {
 		t.Fatal("split did not create a remainder")
@@ -490,7 +490,51 @@ func TestSACKCreditMSSAndSplit(t *testing.T) {
 			t.Errorf("split PSH = %v, want %v", got, want)
 		}
 	}
-	if got, want := s.SackedOut, 11; got != want {
+	if got, want := s.delivery.sackedPackets, 11; got != want {
 		t.Errorf("SackedOut after split = %d, want %d", got, want)
+	}
+}
+
+// A budget reset must not erase the controller credit of cumulatively retired
+// data. This flight wraps through zero and ends with a payload-free FIN.
+func TestDeliveryRetirementAfterTimeout(t *testing.T) {
+	clock := faketime.NewManualClock()
+	const iss = seqnum.Value(0xfffffff7)
+	d := newSenderDelivery(iss, 5)
+	d.initializeScoreboard(iss)
+	defer d.purge()
+	data := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.MakeWithView(buffer.NewViewSize(15)), 0)
+	d.enqueue(data)
+	d.assignSequence(data)
+	d.transmit(data, clock.NowMonotonic(), transmissionInWindow)
+	d.advanceSent(data.sequenceNumber.Add(15))
+	fin := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+	d.enqueue(fin)
+	d.assignSequence(fin)
+	end := d.prepareFIN(fin)
+	d.transmit(fin, clock.NowMonotonic(), transmissionInWindow)
+	d.advanceSent(end)
+	if got, want := end, seqnum.Value(8); got != want {
+		t.Fatalf("wrapped FIN end = %d, want %d", got, want)
+	}
+	if got, want := d.unacknowledgedBytes(), seqnum.Size(16); got != want {
+		t.Fatalf("unacknowledged sequence bytes = %d, want %d", got, want)
+	}
+	d.timeout()
+	progress := d.retire(end, false, nil)
+	if got, want := progress, (deliveryACK{bytes: 16, packets: 4}); got != want {
+		t.Errorf("ACK after budget reset = %+v, want %+v", got, want)
+	}
+	if got, want := d.flightPackets, 0; got != want {
+		t.Errorf("retired flight budget = %d, want %d", got, want)
+	}
+	if got, want := d.unacknowledgedBytes(), seqnum.Size(0); got != want {
+		t.Errorf("retired sequence bytes = %d, want %d", got, want)
+	}
+	if got, want := d.queue.Front(), (*segment)(nil); got != want {
+		t.Errorf("retired queue = %p, want %p", got, want)
+	}
+	if got, want := d.writeNext, (*segment)(nil); got != want {
+		t.Errorf("retired cursor = %p, want %p", got, want)
 	}
 }

@@ -35,7 +35,7 @@ func newTestCubic(t *testing.T, clock *faketime.ManualClock, rtt time.Duration) 
 	snd := &sender{
 		ep:          &Endpoint{stack: s},
 		cwndLimited: true,
-		TCPSenderState: TCPSenderState{
+		senderState: senderState{
 			SndCwnd:  1000,
 			Ssthresh: InitialSsthresh,
 		},
@@ -157,24 +157,24 @@ func TestCubicFlightUtilization(t *testing.T) {
 			c.s.Ssthresh = 10
 			c.enterCongestionAvoidance()
 			c.s.cwndLimited = false
-			c.s.SndUna = test.start
-			c.s.SndNxt = test.start.Add(2)
-			c.s.Outstanding = 2
+			c.s.delivery.una = test.start
+			c.s.delivery.next = test.start.Add(2)
+			c.s.delivery.flightPackets = 2
 			c.s.updateCwndUsage()
 			// A later send can fill a previously partial flight, including
 			// sends from SACK/RACK recovery through postXmit.
-			c.s.SndNxt = test.start.Add(10)
-			c.s.Outstanding = 10
+			c.s.delivery.next = test.start.Add(10)
+			c.s.delivery.flightPackets = 10
 			c.s.updateCwndUsage()
 
 			// Removing packets on ACK must not erase evidence that the
 			// window was full, including at sequence-number wrap.
-			c.s.SndUna = c.s.SndNxt - 1
-			c.s.Outstanding = 1
+			c.s.delivery.una = c.s.delivery.next - 1
+			c.s.delivery.flightPackets = 1
 			c.Update(9, rtt, clock.NowMonotonic())
 			c.s.updateCwndUsage()
-			c.s.SndUna = c.s.SndNxt
-			c.s.Outstanding = 0
+			c.s.delivery.una = c.s.delivery.next
+			c.s.delivery.flightPackets = 0
 			c.Update(1, rtt, clock.NowMonotonic())
 			if got := c.s.SndCwnd; got != 11 {
 				t.Fatalf("last ACK of full flight: cwnd = %d, want 11", got)
@@ -191,12 +191,12 @@ func TestCubicFlightUtilization(t *testing.T) {
 			c.s.updateCwndUsage()
 			clock.Advance(time.Second)
 			c.s.SndWnd = 30000
-			c.s.Outstanding = 2
-			c.s.SndNxt.UpdateForward(2)
+			c.s.delivery.flightPackets = 2
+			c.s.delivery.next.UpdateForward(2)
 			c.s.updateCwndUsage()
 			clock.Advance(time.Second)
-			c.s.Outstanding = c.s.SndCwnd
-			c.s.SndNxt.UpdateForward(seqnum.Size(c.s.SndCwnd - 2))
+			c.s.delivery.flightPackets = c.s.SndCwnd
+			c.s.delivery.next.UpdateForward(seqnum.Size(c.s.SndCwnd - 2))
 			c.s.updateCwndUsage()
 			clock.Advance(rtt)
 			if age := clock.NowMonotonic().Sub(c.T); age != rtt {
@@ -246,11 +246,11 @@ func TestCubicSlowStartUsesFlightSize(t *testing.T) {
 			defer c.s.ep.mu.Unlock()
 			c.s.SndCwnd = 10
 			c.s.cwndLimited = false
-			c.s.SndNxt = seqnum.Value(test.outstanding)
-			c.s.Outstanding = test.outstanding
+			c.s.delivery.next = seqnum.Value(test.outstanding)
+			c.s.delivery.flightPackets = test.outstanding
 			c.s.updateCwndUsage()
-			c.s.SndUna = c.s.SndNxt
-			c.s.Outstanding = 0
+			c.s.delivery.una = c.s.delivery.next
+			c.s.delivery.flightPackets = 0
 			c.Update(test.outstanding, rtt, clock.NowMonotonic())
 			if grew := c.s.SndCwnd > 10; grew != test.wantGrowth {
 				t.Errorf("ACKed %d packets: cwnd = %d, want growth=%t", test.outstanding, c.s.SndCwnd, test.wantGrowth)
@@ -445,10 +445,12 @@ func TestHyStartAckTrainOK(t *testing.T) {
 	iss := seqnum.Value(0)
 	snd := &sender{
 		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
+		senderState: senderState{
 			Ssthresh: InitialSsthresh,
+		},
+		delivery: senderDelivery{
+			una:  iss + 1,
+			next: iss + 1,
 		},
 	}
 	snd.ep.mu.Lock()
@@ -475,8 +477,8 @@ func TestHyStartAckTrainOK(t *testing.T) {
 	}
 
 	// Move SndNext and SndUna to advance to a new round.
-	snd.SndNxt = snd.SndNxt.Add(2000)
-	snd.SndUna = snd.SndUna.Add(1000)
+	snd.delivery.next = snd.delivery.next.Add(2000)
+	snd.delivery.una = snd.delivery.una.Add(1000)
 	fClock.Advance(d0)
 	r1ExpectedStart := fClock.NowMonotonic()
 
@@ -530,10 +532,12 @@ func TestHyStartAckTrainTooSpread(t *testing.T) {
 	iss := seqnum.Value(0)
 	snd := &sender{
 		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
+		senderState: senderState{
 			Ssthresh: InitialSsthresh,
+		},
+		delivery: senderDelivery{
+			una:  iss + 1,
+			next: iss + 1,
 		},
 	}
 	snd.ep.mu.Lock()
@@ -559,8 +563,8 @@ func TestHyStartAckTrainTooSpread(t *testing.T) {
 	}
 
 	// Move SndNext and SndUna to advance to a new round.
-	snd.SndNxt = snd.SndNxt.Add(2000)
-	snd.SndUna = snd.SndUna.Add(1000)
+	snd.delivery.next = snd.delivery.next.Add(2000)
+	snd.delivery.una = snd.delivery.una.Add(1000)
 	fClock.Advance(d0)
 	r1ExpectedStart := fClock.NowMonotonic()
 
@@ -603,10 +607,12 @@ func TestHyStartDelayOK(t *testing.T) {
 	iss := seqnum.Value(0)
 	snd := &sender{
 		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
+		senderState: senderState{
 			Ssthresh: InitialSsthresh,
+		},
+		delivery: senderDelivery{
+			una:  iss + 1,
+			next: iss + 1,
 		},
 	}
 	snd.ep.mu.Lock()
@@ -620,8 +626,8 @@ func TestHyStartDelayOK(t *testing.T) {
 	uut.updateHyStart(d0, fClock.NowMonotonic())
 
 	// Move SndNext and SndUna to advance to a new round.
-	snd.SndNxt = snd.SndNxt.Add(2000)
-	snd.SndUna = snd.SndUna.Add(1000)
+	snd.delivery.next = snd.delivery.next.Add(2000)
+	snd.delivery.una = snd.delivery.una.Add(1000)
 	fClock.Advance(d0)
 
 	d1 := d0 + minRTTThresh
@@ -658,10 +664,12 @@ func TestHyStartDelay_BelowThresh(t *testing.T) {
 	iss := seqnum.Value(0)
 	snd := &sender{
 		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
+		senderState: senderState{
 			Ssthresh: InitialSsthresh,
+		},
+		delivery: senderDelivery{
+			una:  iss + 1,
+			next: iss + 1,
 		},
 	}
 	snd.ep.mu.Lock()
@@ -675,8 +683,8 @@ func TestHyStartDelay_BelowThresh(t *testing.T) {
 	uut.updateHyStart(d0, fClock.NowMonotonic())
 
 	// Move SndNext and SndUna to advance to a new round.
-	snd.SndNxt = snd.SndNxt.Add(2000)
-	snd.SndUna = snd.SndUna.Add(1000)
+	snd.delivery.next = snd.delivery.next.Add(2000)
+	snd.delivery.una = snd.delivery.una.Add(1000)
 	fClock.Advance(d0)
 
 	d1 := d0 + minRTTThresh
@@ -725,10 +733,12 @@ func TestHyStartAckTrainUsesIngressTime(t *testing.T) {
 	iss := seqnum.Value(0)
 	snd := &sender{
 		ep: ep,
-		TCPSenderState: TCPSenderState{
-			SndUna:   iss + 1,
-			SndNxt:   iss + 1,
+		senderState: senderState{
 			Ssthresh: InitialSsthresh,
+		},
+		delivery: senderDelivery{
+			una:  iss + 1,
+			next: iss + 1,
 		},
 	}
 	snd.ep.mu.Lock()
@@ -754,8 +764,8 @@ func TestHyStartAckTrainUsesIngressTime(t *testing.T) {
 	uut.updateHyStart(d0, fClock.NowMonotonic())
 
 	// Begin the round under test (LastRTT = d0 = 4ms; RoundStart = 4ms).
-	snd.SndNxt = snd.SndNxt.Add(2000)
-	snd.SndUna = snd.SndUna.Add(1000)
+	snd.delivery.next = snd.delivery.next.Add(2000)
+	snd.delivery.una = snd.delivery.una.Add(1000)
 	fClock.Advance(d0)
 	roundStart := fClock.NowMonotonic() // t = 4ms
 	uut.updateHyStart(5*time.Millisecond, roundStart)

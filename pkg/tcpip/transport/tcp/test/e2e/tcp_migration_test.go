@@ -710,6 +710,12 @@ func TestSACKCreditsAfterRestore(t *testing.T) {
 	if got, want := before.Sender.SackedOut, 2; got != want {
 		t.Fatalf("SackedOut before Save = %d, want %d", got, want)
 	}
+	if got, want := before.Sender.SACKedBytes, seqnum.Size(2*payload); got != want {
+		t.Fatalf("SACKed bytes before Save = %d, want %d", got, want)
+	}
+	if got, want := before.Sender.UnacknowledgedSequenceBytes, seqnum.Size(4*payload); got != want {
+		t.Fatalf("unacknowledged bytes before Save = %d, want %d", got, want)
+	}
 	if got, want := before.SndBufState.SndBufUsed, 4*payload; got != want {
 		t.Fatalf("queued bytes before Save = %d, want %d", got, want)
 	}
@@ -766,6 +772,12 @@ func TestSACKCreditsAfterRestore(t *testing.T) {
 	}
 	if got, want := len(after.SACK.ReceivedBlocks), 0; got != want {
 		t.Errorf("restored scoreboard ranges = %d, want %d", got, want)
+	}
+	if got, want := after.Sender.SACKedBytes, seqnum.Size(0); got != want {
+		t.Errorf("restored SACKed bytes = %d, want %d", got, want)
+	}
+	if got, want := after.Sender.UnacknowledgedSequenceBytes, before.Sender.UnacknowledgedSequenceBytes; got != want {
+		t.Errorf("restored unacknowledged bytes = %d, want %d", got, want)
 	}
 	if got, want := after.Sender.SackedOut, 0; got != want {
 		t.Errorf("restored SackedOut = %d, want %d", got, want)
