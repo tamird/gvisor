@@ -26,8 +26,7 @@ initramfs_out="$(realpath -m "$7")"
 page_size="$8"
 zstd="$(realpath "$9")"
 architecture="${10}"
-read -r -a kernel_modules <<< "${11}"
-shift 11
+shift 10
 staging="$(mktemp -d)"
 trap 'rm -rf "$staging"' EXIT
 mkdir "$staging/host" "$staging/root"
@@ -80,22 +79,10 @@ if [[ -d "$root/usr/lib/modules/$release" && ! -e "$root/lib/modules/$release" ]
   mkdir -p "$root/lib/modules"
   mv "$root/usr/lib/modules/$release" "$root/lib/modules/"
 fi
-# Retain the selected board, output transport and virtualization module closure.
+# Native syscall tests exercise drivers beyond those needed to boot the guest.
+# Keep the package's complete module tree so kernel module autoloading works.
 kmod_tool depmod -b "$root" "$release"
-mkdir "$staging/modules"
-for module in "${kernel_modules[@]}"; do
-  kmod_tool modprobe -C /dev/null -d "$root" -S "$release" --show-depends "$module"
-done > "$staging/modules.txt"
-while read -r operation path remainder; do
-  [[ "$operation" == builtin ]] && continue
-  [[ "$operation" == insmod && "$path" == "$root/lib/modules/$release/"* && -z "$remainder" ]]
-  relative="${path#"$root/lib/modules/$release/"}"
-  mkdir -p "$staging/modules/$(dirname "$relative")"
-  cp "$path" "$staging/modules/$relative"
-done < "$staging/modules.txt"
-rm -rf "$root/lib/modules/$release/kernel"
-cp -a "$staging/modules/." "$root/lib/modules/$release/"
-kmod_tool depmod -b "$root" "$release"
+cp "$root/boot/config-$release" "$root/etc/gvisor-test-kernel.config"
 rm -rf "${root:?}/boot"
 printf 'readonly expected_kernel_release=%q\nreadonly expected_page_size=%q\n' "$release" "$page_size" > "$root/etc/gvisor-test-kernel"
 printf 'readonly expected_architecture=%q\n' "$architecture" >> "$root/etc/gvisor-test-kernel"

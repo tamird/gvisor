@@ -56,6 +56,8 @@ Compilation remains remote. Hybrid profiles run in one invocation; each
 test uses the execution requirements recorded in its selection report.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
+For local AMD64 RC bucket 11, --rc-bucket11-part=mmap|remaining resumes the
+recorded unfinished owners in two groups with their original shards/deadlines.
 A benchmark target selects one member of the continuous suite, retaining its
 original workload and timeout. Other suite members remain unexecuted.
 USAGE
@@ -83,6 +85,7 @@ fi
 arch=amd64
 test_execution=remote
 syscall_bucket=
+rc_bucket11_part=none
 benchmark_target=
 header_options=()
 header_base=
@@ -91,6 +94,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --arch=*) arch=${1#--arch=} ;;
     --test-execution=*) test_execution=${1#--test-execution=} ;;
     --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
+    --rc-bucket11-part=*) rc_bucket11_part=${1#--rc-bucket11-part=} ;;
     --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
@@ -143,6 +147,16 @@ if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $#
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
   exit 2
 fi
+case "$rc_bucket11_part" in
+  none) ;;
+  mmap|remaining)
+    if [[ $test_execution:$arch:${1:-}:$syscall_bucket != local:amd64:syscalls-rc:11 ]]; then
+      printf 'The RC bucket 11 continuation requires local AMD64 syscalls-rc and bucket 11.\n' >&2
+      exit 2
+    fi
+    ;;
+  *) printf 'Unknown RC bucket 11 part: %s\n' "$rc_bucket11_part" >&2; exit 2 ;;
+esac
 if [[ $# == 1 && $1 == amd64 ]]; then
   if [[ $arch != amd64 ]]; then
     printf 'The amd64 profile requires --arch=amd64.\n' >&2
@@ -422,6 +436,34 @@ PY
   fi
   if [[ -n ${RUNNER_TEMP:-} ]]; then
     save_profile_selection "$selection_dir" "$lane"
+  fi
+  if [[ $rc_bucket11_part != none ]]; then
+    # Keep the canonical profile proof, then resume only owners with no result
+    # in the original run. The eternal owner gets its own complete job budget.
+    python3 - "$selection_dir" "$rc_bucket11_part" <<'RC_BUCKET11'
+import json
+from pathlib import Path
+import sys
+
+root = Path(sys.argv[1])
+part = sys.argv[2]
+original = (root / "targets").read_text().splitlines()
+unfinished = [line for line in Path("test/rbe/rc_bucket11_unfinished.targets").read_text().splitlines() if line and not line.startswith("#")]
+assert len(unfinished) == len(set(unfinished)) == 55
+assert set(unfinished) <= set(original), "Unfinished owners left the canonical RC profile"
+assert all(label.endswith("_rc_kvm") for label in unfinished)
+mmap = "//test/syscalls:mmap_eternal_test_runsc_kvm_rc_kvm"
+assert mmap in unfinished
+selected = [mmap] if part == "mmap" else [label for label in unfinished if label != mmap]
+assert len(selected) == (1 if part == "mmap" else 54)
+(root / "targets").write_text("\n".join(selected) + "\n")
+(root / "continuation.json").write_text(json.dumps({"part": part, "originalOwners": original, "unfinishedOwners": unfinished, "selectedOwners": selected, "testcaseFilterOverride": None}, indent=2) + "\n")
+print(f"RC bucket 11 {part}: {len(selected)} complete owners; original shards and deadlines retained")
+RC_BUCKET11
+    if [[ -n ${RUNNER_TEMP:-} ]]; then
+      cp "$selection_dir/targets" "$RUNNER_TEMP/qualification/rc-bucket11-$rc_bucket11_part-targets.txt"
+      cp "$selection_dir/continuation.json" "$RUNNER_TEMP/qualification/rc-bucket11-$rc_bucket11_part-selection.json"
+    fi
   fi
   if [[ $test_execution == local ]]; then
     options=(--config=rbe-hybrid-tests --local_test_jobs=1)

@@ -39,6 +39,9 @@ options=("--arch=$QUALIFICATION_ARCH")
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi
+if [[ ${QUALIFICATION_RC_BUCKET11_PART:-none} != none ]]; then
+  options+=("--rc-bucket11-part=$QUALIFICATION_RC_BUCKET11_PART")
+fi
 if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
   options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
 fi
@@ -131,7 +134,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
     bazel() {
-      local argument result=0 capture_status=0 raw_events="" events_output="" remaining
+      local argument result=0 capture_status=0 raw_events="" raw_events_dir="" events_output="" cohort_dir="" remaining
       local -a evidence=()
       # Startup options may precede the command. Queries perform no spawns and
       # do not accept execution-log options; each build/test keeps its own log.
@@ -144,9 +147,10 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
             "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
           )
         fi
-        if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
+        if [[ $argument == test && ( $QUALIFICATION_EXECUTION == remote-actions || ${QUALIFICATION_RC_BUCKET11_PART:-none} != none ) ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
-          raw_events=$(mktemp)
+          raw_events_dir=$(mktemp -d)
+          raw_events="$raw_events_dir/events.jsonl"
           events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
           evidence+=("--build_event_json_file=$raw_events")
         fi
@@ -155,7 +159,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
         # Execute the complete maintained profile with its declared emulator
         # settings; retain the graph and native contracts for comparison.
-        local cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
+        cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
         local pattern_file="" source_file
         mkdir -p "$cohort_dir"
         printf '%s\n' "$@" > "$cohort_dir/original-arguments.txt"
@@ -257,6 +261,17 @@ selection = {label: {'shards': row['shards'], 'seconds': row['seconds']} for lab
 (out/'contracts.json').write_text(json.dumps(contracts,indent=2)+'\n')
 TCG_ATTRIBUTES
         printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
+      elif [[ $argument == test && ${QUALIFICATION_RC_BUCKET11_PART:-none} != none ]]; then
+        cohort_dir="$RUNNER_TEMP/qualification/rc-bucket11"
+        mkdir -p "$cohort_dir"
+        printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
+        [[ ! -s "$cohort_dir/source-before.txt" ]]
+        git cat-file -p HEAD > "$cohort_dir/commit.txt"
+        local source_file
+        for source_file in .bazelrc test/rbe/actions.sh test/rbe/qualify.sh test/rbe/rc_bucket11_unfinished.targets test/rbe/tcg/BUILD test/rbe/tcg/defs.bzl test/rbe/tcg/build_image.sh test/rbe/tcg/init.sh test/rbe/tcg/run.sh test/syscalls/BUILD test/syscalls/linux/mmap_eternal.cc test/runner/defs.bzl test/runner/runner_test.bzl; do
+          git show "HEAD:$source_file" > "$cohort_dir/source-${source_file//\//_}.source"
+        done
       fi
       if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
         remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
@@ -303,13 +318,14 @@ target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
 raise SystemExit(bool(errors))
 GUEST_EVENTS
         rm -f "$raw_events"
+        rmdir "$raw_events_dir"
         printf '%s\n' "$result" > "$events_output.bazel-exit"
         printf '%s\n' "$capture_status" > "$events_output.capture-exit"
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt" ]]; then result=1; fi
+        git rev-parse HEAD > "$cohort_dir/final-head.txt"
+        if [[ $(cat "$cohort_dir/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt"
+        if [[ -s "$cohort_dir/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"

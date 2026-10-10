@@ -1,4 +1,5 @@
 name: CI
+run-name: ${{ inputs.rc_bucket11_part != 'none' && inputs.rc_bucket11_part != '' && format('RC bucket 11 {0}', inputs.rc_bucket11_part) || 'CI' }}
 
 "on":
   push:
@@ -24,6 +25,11 @@ name: CI
       syscall_bucket:
         description: Optional hash15 bucket (0..14) for local syscall lanes
         type: string
+      rc_bucket11_part:
+        description: Resume the isolated mmap owner or the other unfinished RC bucket 11 owners
+        type: choice
+        options: [none, mmap, remaining]
+        default: none
       benchmark_target:
         description: Optional individual target from the continuous benchmark suite
         type: string
@@ -38,12 +44,12 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}-${{ inputs.rc_bucket11_part }}
   cancel-in-progress: true
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid' && github.ref != 'refs/heads/qualification/guest-lanes-current' && github.ref != 'refs/heads/qualification/rc-current-profile' && github.ref != 'refs/heads/qualification/arm64-64k-final-profile' && github.ref != 'refs/heads/qualification/arm64-tcg-trace-policy' && github.ref != 'refs/heads/qualification/arm64-tcg-stress-shards'))
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid' && github.ref != 'refs/heads/qualification/guest-lanes-current' && github.ref != 'refs/heads/qualification/rc-current-profile' && github.ref != 'refs/heads/qualification/rc-bucket11-continuation' && github.ref != 'refs/heads/qualification/arm64-64k-final-profile' && github.ref != 'refs/heads/qualification/arm64-tcg-trace-policy' && github.ref != 'refs/heads/qualification/arm64-tcg-stress-shards'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -68,7 +74,7 @@ jobs:
           path: bin/runsc
 
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current' || github.ref == 'refs/heads/qualification/rc-current-profile' || github.ref == 'refs/heads/qualification/arm64-64k-final-profile' || github.ref == 'refs/heads/qualification/arm64-tcg-trace-policy' || github.ref == 'refs/heads/qualification/arm64-tcg-stress-shards') && github.event_name == 'workflow_dispatch'))
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current' || github.ref == 'refs/heads/qualification/rc-current-profile' || github.ref == 'refs/heads/qualification/rc-bucket11-continuation' || github.ref == 'refs/heads/qualification/arm64-64k-final-profile' || github.ref == 'refs/heads/qualification/arm64-tcg-trace-policy' || github.ref == 'refs/heads/qualification/arm64-tcg-stress-shards') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: ${{ inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
     permissions:
@@ -79,6 +85,7 @@ jobs:
       QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
       QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
+      QUALIFICATION_RC_BUCKET11_PART: ${{ inputs.rc_bucket11_part }}
       QUALIFICATION_BENCHMARK_TARGET: ${{ inputs.benchmark_target }}
       QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
       QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
@@ -126,6 +133,7 @@ jobs:
           --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
           --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
           --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
+          --env="QUALIFICATION_RC_BUCKET11_PART=$QUALIFICATION_RC_BUCKET11_PART" \
           --env="QUALIFICATION_BENCHMARK_TARGET=$QUALIFICATION_BENCHMARK_TARGET" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
           --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
