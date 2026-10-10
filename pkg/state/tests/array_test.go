@@ -151,10 +151,14 @@ func TestSliceContainers(t *testing.T) {
 }
 
 func TestArraySnapshotTiming(t *testing.T) {
+	runSaveModes(t, testArraySnapshotTiming)
+}
+
+func testArraySnapshotTiming(t *testing.T, save saveFunc) {
 	first := &arraySnapshotSource{values: [2]uint64{7, 11}}
 	original := system{v1: first, v2: &arraySnapshotMutator{target: first}}
 	var encoded bytes.Buffer
-	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+	if _, err := save(t.Context(), &encoded, &original); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := first.values[0], uint64(99); got != want {
@@ -174,13 +178,17 @@ func TestArraySnapshotTiming(t *testing.T) {
 }
 
 func TestArrayLateParent(t *testing.T) {
+	runSaveModes(t, testArrayLateParent)
+}
+
+func testArrayLateParent(t *testing.T, save saveFunc) {
 	backing := [2][2]uint64{{7, 11}, {13, 17}}
 	// Encode the interior array first. Later slice discovery clears the unused
 	// capacity and reparents that object under the complete backing array.
 	// The containing array must be captured anew after the clearing.
 	original := system{v1: &backing[1], v2: &arrayTailDiscovery{values: backing[:1]}}
 	var encoded bytes.Buffer
-	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+	if _, err := save(t.Context(), &encoded, &original); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := backing[1], ([2]uint64{}); got != want {
@@ -204,6 +212,10 @@ func TestArrayLateParent(t *testing.T) {
 }
 
 func TestPrimitiveArrayFloatEncoding(t *testing.T) {
+	runSaveModes(t, testPrimitiveArrayFloatEncoding)
+}
+
+func testPrimitiveArrayFloatEncoding(t *testing.T, save saveFunc) {
 	positiveSignal := math.Float32frombits(0x7f800001)
 	negativeSignal := math.Float32frombits(0xff800001)
 	quiet := math.Float32frombits(0x7fc00042)
@@ -217,11 +229,11 @@ func TestPrimitiveArrayFloatEncoding(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var captured, reflected bytes.Buffer
-			if _, err := state.Save(t.Context(), &captured, &test.value); err != nil {
+			if _, err := save(t.Context(), &captured, &test.value); err != nil {
 				t.Fatal(err)
 			}
 			test.value.byValue = true
-			if _, err := state.Save(t.Context(), &reflected, &test.value); err != nil {
+			if _, err := save(t.Context(), &reflected, &test.value); err != nil {
 				t.Fatal(err)
 			}
 			if got, want := captured.Bytes(), reflected.Bytes(); !bytes.Equal(got, want) {

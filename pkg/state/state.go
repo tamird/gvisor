@@ -89,8 +89,19 @@ func (e *ErrState) Unwrap() error {
 
 // Save saves the given object state.
 func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+	return save(ctx, w, rootPtr, false)
+}
+
+// SaveSnapshots uses experimental typed snapshots where a type supplies them.
+// Other types use the ordinary SaverLoader path and the same graph resolver.
+func SaveSnapshots(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+	return save(ctx, w, rootPtr, true)
+}
+
+func save(ctx context.Context, w io.Writer, rootPtr any, snapshots bool) (Stats, error) {
 	// Create the encoding state.
 	es := encodeState{
+		snapshots:      snapshots,
 		ctx:            ctx,
 		w:              wire.Writer{Writer: w},
 		types:          makeTypeEncodeDatabase(),

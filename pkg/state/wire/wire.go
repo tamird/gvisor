@@ -770,6 +770,9 @@ func (s *Struct) Field(i int) *Object {
 		// Alloc may be optionally called; can't call twice.
 		panic("Field called inappropriately, wrong Alloc?")
 	}
+	if _, ok := s.fields.(typedFieldSnapshot); ok {
+		panic("Field is unavailable on an immutable typed snapshot")
+	}
 	return &s.fields
 }
 
@@ -800,6 +803,8 @@ func (s *Struct) Fields() int {
 		return len(*x)
 	case noObjects:
 		return 0
+	case typedFieldSnapshot:
+		return x.fieldCount()
 	default:
 		return 1
 	}
@@ -915,19 +920,22 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
-		saveArraySnapshot(w, obj)
+		saveSnapshot(w, obj)
 	}
 }
 
-// saveArraySnapshot keeps the interface assertion and unknown-object error path
+// saveSnapshot keeps the interface assertions and unknown-object error path
 // outside Save's concrete dispatch.
-func saveArraySnapshot(w *Writer, obj Object) {
-	x, ok := obj.(primitiveArraySnapshot)
-	if !ok {
+func saveSnapshot(w *Writer, obj Object) {
+	switch x := obj.(type) {
+	case primitiveArraySnapshot:
+		typeArray.save(w)
+		x.save(w)
+	case typedFieldSnapshot:
+		x.save(w)
+	default:
 		panic(fmt.Errorf("unknown type: %#v", obj))
 	}
-	typeArray.save(w)
-	x.save(w)
 }
 
 // Load loads a new object.
