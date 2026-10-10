@@ -153,11 +153,10 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         break
       done
       if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
-        # Keep the maintained full-profile graph, then execute the complete
-        # socket-stress owner with one case per emulator action.
-        local cohort_dir="$RUNNER_TEMP/qualification/tcg-stress-shards"
+        # Execute the complete maintained profile with its declared emulator
+        # settings; retain the graph and native contracts for comparison.
+        local cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
         local pattern_file="" source_file
-        local -a cohort_arguments=()
         mkdir -p "$cohort_dir"
         printf '%s\n' "$@" > "$cohort_dir/original-arguments.txt"
         for source_file in "$@"; do
@@ -200,18 +199,10 @@ original_rows = [dict(row, args=row['args'][:2] + row['args'][3:]) for row in or
 original_rows.sort(key=lambda row:json.dumps(row,sort_keys=True))
 assert len(original_rows)==1211
 assert hashlib.sha256(json.dumps(original_rows,sort_keys=True,separators=(',',':')).encode()).hexdigest()=='e694f292dd67497deaf2b5e5e5f12d03f573395ff7ed6e62321e1923f12a7bd4'
-cohort = {
-    '//test/syscalls:socket_stress_test_runsc_systrap_hostnet_64k_tcg': {'shards':33, 'seconds':3600},
-}
-assert set(cohort)<=set(selected) and sum(row['shards'] for row in cohort.values())==33
-for label,expected in cohort.items():
-    assert sum(row['label']==label for row in rows)==expected['shards']
 args=(out/'original-arguments.txt').read_text().splitlines()
 assert '--strip=never' in args and '--keep_going' in args
 assert not any(arg.startswith(('--test_filter=','--test_arg=','--test_timeout=','--test_sharding_strategy=','--run_under=','--runs_per_test=','--flaky_test_attempts=')) for arg in args)
 (out/'full-targets').write_text('\n'.join(selected)+'\n')
-(out/'targets').write_text('\n'.join(sorted(cohort))+'\n')
-(out/'selection.json').write_text(json.dumps(cohort,indent=2)+'\n')
 (out/'routing.json').write_text(json.dumps(rows,indent=2)+'\n')
 query_labels=[]
 for outer in selected:
@@ -261,18 +252,10 @@ for outer in (out/'full-targets').read_text().splitlines():
             assert attribute(target,name)==expected_value,(target,name)
     contracts[outer]={'owner':owner,'payload':payload,'nativeAttributes':attrs,'tcgTimeout':expected,'seconds':seconds[expected],'shards':33 if family=='socket_stress_test' else max(1,int(attrs['shard_count']))}
 assert len(contracts)==661 and sum(row['shards'] for row in contracts.values())==1286
-for label,expected in json.loads((out/'selection.json').read_text()).items():
-    assert contracts[label]['seconds']==expected['seconds'] and contracts[label]['shards']==expected['shards']
+selection = {label: {'shards': row['shards'], 'seconds': row['seconds']} for label, row in contracts.items()}
+(out/'selection.json').write_text(json.dumps(selection, indent=2)+'\n')
 (out/'contracts.json').write_text(json.dumps(contracts,indent=2)+'\n')
 TCG_ATTRIBUTES
-        for source_file in "$@"; do
-          if [[ $source_file == --target_pattern_file=* ]]; then
-            cohort_arguments+=("--target_pattern_file=$cohort_dir/targets")
-          else
-            cohort_arguments+=("$source_file")
-          fi
-        done
-        set -- "${cohort_arguments[@]}"
         printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
       fi
       if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
@@ -323,10 +306,10 @@ GUEST_EVENTS
         printf '%s\n' "$result" > "$events_output.bazel-exit"
         printf '%s\n' "$capture_status" > "$events_output.capture-exit"
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-stress-shards/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-stress-shards/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-stress-shards/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-stress-shards/source-after.txt" ]]; then result=1; fi
+        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt"
+        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
+        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt"
+        if [[ -s "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"
