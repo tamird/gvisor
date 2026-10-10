@@ -884,7 +884,7 @@ func (k *Kernel) saveToLocked(ctx context.Context, stateFile, pagesMetadata io.W
 
 	// Save the kernel state.
 	kernelStart := time.Now()
-	stats, err := state.Save(ctx, stateFile, k)
+	stats, err := state.SaveCaptured(ctx, stateFile, k)
 	if err != nil {
 		return err
 	}
