@@ -825,6 +825,13 @@ func loadStruct(r *Reader) Struct {
 // Precondition: Alloc must have been called, and the fields all filled in
 // appropriately. See Alloc and Add for more details.
 func (s *Struct) save(w *Writer) {
+	// Homogeneous arrays/maps invoke save directly after the first element.
+	// Prepare here so every entry observes retained mutable Field pointers.
+	if fields, ok := s.fields.(*frameFields); ok {
+		if _, sizing := w.Writer.(*frameSizer); !sizing {
+			fields.finish()
+		}
+	}
 	Uint(s.TypeID).save(w)
 	if fields, ok := s.fields.(*frameFields); ok {
 		fields.save(w)

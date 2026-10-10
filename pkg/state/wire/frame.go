@@ -45,13 +45,15 @@ type frameSpan struct {
 }
 
 type frameFields struct {
-	arena  *FrameArena
-	first  int
-	count  int
-	frozen bool
-	size   int
+	arena   *FrameArena
+	first   int
+	count   int
+	frozen  bool
+	mutable bool
+	size    int
 }
 
+// Write implements io.Writer for arena-owned primitive snapshots.
 func (a *FrameArena) Write(p []byte) (int, error) {
 	if uint64(len(a.data))+uint64(len(p)) > math.MaxInt {
 		panic("framed state arena exceeds addressable memory")
@@ -87,7 +89,7 @@ func (s *Struct) AllocFrame(arena *FrameArena, count int) {
 		arena.frames = append(arena.frames, new([64]frameFields))
 	}
 	f := &arena.frames[arena.frameCount/64][arena.frameCount%64]
-	*f = frameFields{arena: arena, first: len(arena.spans), count: count}
+	*f = frameFields{arena: arena, first: len(arena.spans), count: count, mutable: true}
 	arena.frameCount++
 	arena.spans = append(arena.spans, make([]frameSpan, count)...)
 	arena.writer.Writer = arena
@@ -105,7 +107,7 @@ func (s *Struct) IsFramed() bool {
 // References and composite values use Field until graph discovery finishes.
 func (s *Struct) SnapshotScalar(slot int, value Scalar) {
 	f := s.fields.(*frameFields)
-	if f.frozen || slot < 0 || slot >= f.count {
+	if (!f.mutable && f.frozen) || slot < 0 || slot >= f.count {
 		panic("invalid framed field capture")
 	}
 	a := f.arena
@@ -135,6 +137,7 @@ func (s *Struct) SnapshotScalar(slot int, value Scalar) {
 		panic("not a framed scalar")
 	}
 	a.spans[f.first+slot] = frameSpan{start: start, end: len(a.data)}
+	f.frozen = false
 }
 
 // frameReader reads a bounded subspan owned by the same arena. Nested frames
@@ -155,6 +158,9 @@ func (r *frameReader) Read(p []byte) (int, error) {
 }
 
 func (f *frameFields) field(slot int) *Object {
+	if !f.mutable && f.frozen {
+		panic("Field called on a sealed frame")
+	}
 	if slot < 0 || slot >= f.count {
 		panic("framed field index out of range")
 	}
@@ -196,18 +202,35 @@ func (s *Struct) FrameBytes(slot int) ([]byte, bool) {
 	return f.arena.data[span.start:span.end], true
 }
 
-// Finish freezes remaining owned values after graph discovery has resolved all
-// references. It never calls user hooks or reads the original application.
+// Finish prepares encoded sizes without revoking Field mutability. It never
+// calls user hooks or reads the original application.
 func (a *FrameArena) Finish() {
 	for i := 0; i < a.frameCount; i++ {
 		a.frames[i/64][i%64].finish()
 	}
 }
 
+// Seal prepares state-owned snapshots and makes their cached sizes immutable.
+// The caller must own every reachable Object and must not mutate it or any
+// previously returned Field pointer afterwards, or call Field on a sealed
+// struct. Decoded/public wire objects
+// need no Seal: Save prepares them again so retained pointers remain mutable.
+func (a *FrameArena) Seal() {
+	// A retained Field pointer may have changed since an earlier Finish.
+	// Invalidate once, then allow child sizes to be reused during this pass.
+	for i := 0; i < a.frameCount; i++ {
+		f := &a.frames[i/64][i%64]
+		f.frozen = false
+		f.mutable = false
+	}
+	a.Finish()
+}
+
 // frameSizer counts the existing wire encoding without retaining a second
 // encoded copy. Completed child frames contribute their cached sizes.
 type frameSizer struct{ size int }
 
+// Write implements io.Writer while retaining only the encoded size.
 func (s *frameSizer) Write(p []byte) (int, error) {
 	s.add(len(p))
 	return len(p), nil
@@ -230,7 +253,7 @@ func uintSize(x uint64) int {
 }
 
 func (f *frameFields) finish() {
-	if f.frozen {
+	if f.frozen && !f.mutable {
 		return
 	}
 	a := f.arena
@@ -368,8 +391,8 @@ type Scalar struct {
 	Text string
 }
 
-// Primitive tags are exported for direct generated stores. Their values are
-// the original wire tags, not a second scalar encoding.
+// ScalarBool and the related constants identify existing primitive wire tags.
+// They do not define a second scalar encoding.
 const (
 	ScalarBool       = uint64(typeBool)
 	ScalarInt        = uint64(typeInt)
