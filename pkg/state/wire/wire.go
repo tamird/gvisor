@@ -914,10 +914,12 @@ func Save(w *Writer, obj Object) {
 	case *Complex128:
 		typeComplex128.save(w)
 		x.save(w)
-	case primitiveArraySnapshot:
-		typeArray.save(w)
-		x.save(w)
 	default:
+		if x, ok := obj.(primitiveArraySnapshot); ok {
+			typeArray.save(w)
+			x.save(w)
+			return
+		}
 		panic(fmt.Errorf("unknown type: %#v", obj))
 	}
 }
