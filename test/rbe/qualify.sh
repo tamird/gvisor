@@ -1090,13 +1090,17 @@ run_lane() (
       targets=(//website:image)
       ;;
     syscalls-rc-pilot)
-      # Preserve original mincore arguments, shards and deadlines. The guest
-      # must exercise runsc's KVM platform, not merely expose /dev/kvm.
+      # Focused guest-input validation; retain the original test bodies,
+      # arguments, shards and deadlines.
       targets=(
-        //test/syscalls:mincore_test_native_rc_kvm
-        //test/syscalls:mincore_test_runsc_ptrace_rc_kvm
-        //test/syscalls:mincore_test_runsc_systrap_shared_rc_kvm
-        //test/syscalls:mincore_test_runsc_kvm_rc_kvm
+        //test/rtnetlink:bridge_test_native_rc_kvm
+        //test/rtnetlink:route_test_native_rc_kvm
+        //test/rtnetlink:setlink_test_native_rc_kvm
+        //test/rtnetlink:veth_test_native_rc_kvm
+        //test/syscalls:socket_netlink_route_test_native_rc_kvm
+        //test/syscalls:iptables_test_native_rc_kvm
+        //test/syscalls:ip6tables_test_native_rc_kvm
+        //test/syscalls:proc_test_native_rc_kvm
       )
       options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
       ;;

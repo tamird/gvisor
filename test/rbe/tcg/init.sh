@@ -73,5 +73,9 @@ chmod 1777 /work/tmp
 # Gofer's read-only root remount needs its own mount, not the scratch disk root.
 mount --bind /work/tmp /work/tmp
 ip link set lo up
+# Native descriptor tests duplicate descriptors above 1023; PID 1 starts with
+# Linux's 1024 soft limit, unlike the ordinary syscall test workers.
+ulimit -Sn 65536
+cat /proc/self/limits > /result/limits.txt
 /bin/busybox tar -xf /input/payload.tar -C /work/payload
 /bin/bash /input/launch.sh
