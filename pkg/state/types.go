@@ -47,6 +47,7 @@ func assertValidType(name string, fields []string) {
 type typeEntry struct {
 	ID typeID
 	wire.Type
+	snapshot func(any, SnapshotSink)
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -61,14 +62,18 @@ type typeEncodeDatabase struct {
 	// byType maps by type to the typeEntry.
 	byType map[reflect.Type]*typeEntry
 
+	// snapshots selects explicitly registered snapshot encoders.
+	snapshots bool
+
 	// lastID is the last used ID.
 	lastID typeID
 }
 
 // makeTypeEncodeDatabase makes a typeDatabase.
-func makeTypeEncodeDatabase() typeEncodeDatabase {
+func makeTypeEncodeDatabase(snapshots bool) typeEncodeDatabase {
 	return typeEncodeDatabase{
-		byType: make(map[reflect.Type]*typeEntry),
+		byType:    make(map[reflect.Type]*typeEntry),
+		snapshots: snapshots,
 	}
 }
 
@@ -149,6 +154,12 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 			},
 		}
 
+		if tdb.snapshots {
+			if registered := reverseTypeDatabase[typ]; registered != nil {
+				te.snapshot = registered.snapshot
+			}
+		}
+
 		// All done.
 		tdb.byType[typ] = te
 		return te, false
@@ -174,10 +185,10 @@ func (tbd *typeDecodeDatabase) LookupName(id typeID) string {
 // LookupType looks up the type by ID.
 func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 	name := tbd.LookupName(id)
-	typ, ok := globalTypeDatabase[name]
+	registered, ok := globalTypeDatabase[name]
 	if !ok {
 		// If not available, see if it's primitive.
-		typ, ok = primitiveTypeDatabase[name]
+		typ, ok := primitiveTypeDatabase[name]
 		if !ok && name == interfaceType {
 			// Matches the built-in interface type.
 			var i any
@@ -189,7 +200,7 @@ func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 		}
 		return typ // Primitive type.
 	}
-	return typ // Registered type.
+	return registered.typ // Registered type.
 }
 
 // singleFieldOrder defines the field order for a single field.
@@ -318,11 +329,18 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 	return r
 }()
 
-// globalTypeDatabase is used for dispatching interfaces on decode.
-var globalTypeDatabase = map[string]reflect.Type{}
+// registeredType owns the native type and its optional snapshot encoder.
+// Both registration indexes refer to the same record.
+type registeredType struct {
+	typ      reflect.Type
+	snapshot func(any, SnapshotSink)
+}
 
-// reverseTypeDatabase is a reverse mapping.
-var reverseTypeDatabase = map[reflect.Type]string{}
+// globalTypeDatabase is used for dispatching interfaces on decode.
+var globalTypeDatabase = map[string]*registeredType{}
+
+// reverseTypeDatabase selects metadata for an exact native type.
+var reverseTypeDatabase = map[reflect.Type]*registeredType{}
 
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
@@ -336,6 +354,10 @@ func Release() {
 //
 // This must be called on init and only done once.
 func Register(t Type) {
+	register(t, nil)
+}
+
+func register(t Type, snapshot func(any, SnapshotSink)) {
 	name := t.StateTypeName()
 	typ := reflect.TypeOf(t)
 	if raceEnabled {
@@ -378,7 +400,8 @@ func Register(t Type) {
 		if name == interfaceType {
 			Failf("conflicting name for %T: matches interfaceType", t)
 		}
-		reverseTypeDatabase[typ] = name
 	}
-	globalTypeDatabase[name] = typ
+	registered := &registeredType{typ: typ, snapshot: snapshot}
+	reverseTypeDatabase[typ] = registered
+	globalTypeDatabase[name] = registered
 }

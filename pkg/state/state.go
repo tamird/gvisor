@@ -101,10 +101,9 @@ func SaveSnapshots(ctx context.Context, w io.Writer, rootPtr any) (Stats, error)
 func save(ctx context.Context, w io.Writer, rootPtr any, snapshots bool) (Stats, error) {
 	// Create the encoding state.
 	es := encodeState{
-		snapshots:      snapshots,
 		ctx:            ctx,
 		w:              wire.Writer{Writer: w},
-		types:          makeTypeEncodeDatabase(),
+		types:          makeTypeEncodeDatabase(snapshots),
 		zeroValues:     make(map[reflect.Type]*objectEncodeState),
 		pending:        make(map[objectID]*objectEncodeState),
 		encodedStructs: make(map[reflect.Value]*wire.Struct),

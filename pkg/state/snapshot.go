@@ -20,11 +20,19 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// SnapshotSaver supplies a fixed typed snapshot instead of per-field objects.
-// It must preserve StateSave's hook order and capture each saved value at the
-// same point. The snapshot owns its values and all retained child handles.
-type SnapshotSaver interface {
-	StateSaveSnapshot(SnapshotSink)
+// RegisterSnapshot registers a type with an explicit snapshot encoder. Like
+// Register, it must be called once at init. save must describe T's own saved
+// fields, preserve StateSave's hook order, and own all captured values and child
+// handles. In particular, a promoted method does not describe its parent type.
+func RegisterSnapshot[T Type](t T, save func(T, SnapshotSink)) {
+	if save == nil {
+		Failf("snapshot encoder for %T is nil", t)
+	}
+	typ := reflect.TypeOf(t)
+	if typ.Kind() != reflect.Pointer || typ.Elem().Kind() != reflect.Struct {
+		Failf("snapshot type %T must be a pointer to a struct", t)
+	}
+	register(t, func(value any, sink SnapshotSink) { save(value.(T), sink) })
 }
 
 // SnapshotSink captures children through the ordinary graph resolver. Primitive

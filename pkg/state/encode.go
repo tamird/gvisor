@@ -63,9 +63,6 @@ type encodeState struct {
 	// w is the output stream.
 	w wire.Writer
 
-	// snapshots enables explicitly supplied typed field snapshots.
-	snapshots bool
-
 	// types is the type database.
 	types typeEncodeDatabase
 
@@ -531,13 +528,11 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		es:      es,
 		encoded: s,
 	}
-	if es.snapshots {
-		if saver, ok := obj.Addr().Interface().(SnapshotSaver); ok {
-			es.stats.start(te.ID)
-			defer es.stats.done()
-			saver.StateSaveSnapshot(SnapshotSink{internal: oe, fields: len(te.Fields)})
-			return
-		}
+	if te.snapshot != nil {
+		es.stats.start(te.ID)
+		defer es.stats.done()
+		te.snapshot(obj.Addr().Interface(), SnapshotSink{internal: oe, fields: len(te.Fields)})
+		return
 	}
 	s.Alloc(len(te.Fields))
 	es.stats.start(te.ID)
