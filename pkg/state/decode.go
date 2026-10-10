@@ -407,6 +407,9 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	// Lookup the object type.
 	rte := ds.types.Lookup(typeID(encoded.TypeID), obj.Type())
 	ods.typ = typeID(encoded.TypeID)
+	if encoded.IsFramed() && rte.fieldDescriptors == nil {
+		rte.fieldDescriptors = directFieldDescriptors(obj.Type(), rte.Fields)
+	}
 
 	// Invoke the loader.
 	od := objectDecoder{

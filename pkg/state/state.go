@@ -89,6 +89,16 @@ func (e *ErrState) Unwrap() error {
 
 // Save saves the given object state.
 func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+	return save(ctx, w, rootPtr, false)
+}
+
+// SaveFramed is an experimental direct-field encoding. Load accepts this
+// format, but older readers do not; it is not the default checkpoint format.
+func SaveFramed(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+	return save(ctx, w, rootPtr, true)
+}
+
+func save(ctx context.Context, w io.Writer, rootPtr any, framed bool) (Stats, error) {
 	// Create the encoding state.
 	es := encodeState{
 		ctx:            ctx,
@@ -97,6 +107,10 @@ func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 		zeroValues:     make(map[reflect.Type]*objectEncodeState),
 		pending:        make(map[objectID]*objectEncodeState),
 		encodedStructs: make(map[reflect.Value]*wire.Struct),
+	}
+
+	if framed {
+		es.frames = new(wire.FrameArena)
 	}
 
 	// Perform the encoding.

@@ -41,6 +41,8 @@ type Reader struct {
 	io.Reader
 
 	buf [1]byte
+
+	frames *FrameArena
 }
 
 // readByte reads a single byte from r.Reader without allocation. It panics on
@@ -763,6 +765,9 @@ type Struct struct {
 //
 // This must be called after Alloc.
 func (s *Struct) Field(i int) *Object {
+	if fields, ok := s.fields.(*frameFields); ok {
+		return fields.field(i)
+	}
 	if fields, ok := s.fields.(*multipleObjects); ok {
 		return &((*fields)[i])
 	}
@@ -796,6 +801,8 @@ func (s *Struct) Alloc(slots int) {
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
 	switch x := s.fields.(type) {
+	case *frameFields:
+		return x.count
 	case *multipleObjects:
 		return len(*x)
 	case noObjects:
@@ -819,13 +826,21 @@ func loadStruct(r *Reader) Struct {
 // appropriately. See Alloc and Add for more details.
 func (s *Struct) save(w *Writer) {
 	Uint(s.TypeID).save(w)
-	Save(w, s.fields)
+	if fields, ok := s.fields.(*frameFields); ok {
+		fields.save(w)
+	} else {
+		Save(w, s.fields)
+	}
 }
 
 // load implements Object.load.
-func (*Struct) load(r *Reader) Object {
-	s := loadStruct(r)
-	return &s
+func (s *Struct) load(r *Reader) Object {
+	if s != nil && s.IsFramed() {
+		value := loadFramedStruct(r)
+		return &value
+	}
+	value := loadStruct(r)
+	return &value
 }
 
 // Object types.
@@ -851,6 +866,7 @@ const (
 	typeComplex64
 	typeComplex128
 	typeType
+	typeFramedStruct // Experimental length-delimited struct fields.
 )
 
 // Save saves the given object.
@@ -894,7 +910,11 @@ func Save(w *Writer, obj Object) {
 		typeMap.save(w)
 		x.save(w)
 	case *Struct:
-		typeStruct.save(w)
+		if x.IsFramed() {
+			typeFramedStruct.save(w)
+		} else {
+			typeStruct.save(w)
+		}
 		x.save(w)
 	case noObjects:
 		typeNoObjects.save(w)
@@ -948,6 +968,9 @@ func Load(r *Reader) Object {
 		return ((*Array)(nil)).load(r) // Escapes.
 	case typeMap:
 		return ((*Map)(nil)).load(r) // Escapes.
+	case typeFramedStruct:
+		s := loadFramedStruct(r)
+		return &s
 	case typeStruct:
 		return ((*Struct)(nil)).load(r) // Escapes.
 	case typeNoObjects: // Special for struct.

@@ -118,6 +118,11 @@ func TestMultiNameFields(t *testing.T) {
 // generated field access path. It can also supply a different field order.
 func typedFieldsWire(t *testing.T, fields []string, values []wire.Object, extraTypes ...*wire.Type) []byte {
 	t.Helper()
+	return typedFieldsWireFormat(t, false, fields, values, extraTypes...)
+}
+
+func typedFieldsWireFormat(t *testing.T, framed bool, fields []string, values []wire.Object, extraTypes ...*wire.Type) []byte {
+	t.Helper()
 	var buf bytes.Buffer
 	w := wire.Writer{Writer: &buf}
 	if err := state.WriteHeader(&w, 1, true); err != nil {
@@ -129,15 +134,36 @@ func typedFieldsWire(t *testing.T, fields []string, values []wire.Object, extraT
 	}
 	wire.Save(&w, wire.Uint(1))
 	object := &wire.Struct{TypeID: 1}
-	object.Alloc(len(values))
+	var arena wire.FrameArena
+	if framed {
+		object.AllocFrame(&arena, len(values))
+	} else {
+		object.Alloc(len(values))
+	}
 	for i, value := range values {
 		*object.Field(i) = value
+	}
+	if framed {
+		arena.Finish()
 	}
 	wire.Save(&w, object)
 	return buf.Bytes()
 }
 
 func TestTypedFieldsWire(t *testing.T) {
+	testTypedFieldsWire(t, false)
+}
+
+func TestFramedFieldsWire(t *testing.T) {
+	testTypedFieldsWire(t, true)
+}
+
+func testTypedFieldsWire(t *testing.T, framed bool) {
+	t.Helper()
+	save := state.Save
+	if framed {
+		save = state.SaveFramed
+	}
 	fields := []string{"signed", "unsigned", "flag", "text", "f32", "f64", "c64", "c128", "zero", "self"}
 	text := wire.String("state")
 	c64 := wire.Complex64(2 - 3i)
@@ -159,10 +185,10 @@ func TestTypedFieldsWire(t *testing.T) {
 				original.self = &original
 			}
 			var encoded bytes.Buffer
-			if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+			if _, err := save(t.Context(), &encoded, &original); err != nil {
 				t.Fatalf("Save: %v", err)
 			}
-			if got, want := encoded.Bytes(), typedFieldsWire(t, fields, test.values); !bytes.Equal(got, want) {
+			if got, want := encoded.Bytes(), typedFieldsWireFormat(t, framed, fields, test.values); !bytes.Equal(got, want) {
 				t.Errorf("wire bytes = %x, want %x", got, want)
 			}
 
@@ -172,7 +198,7 @@ func TestTypedFieldsWire(t *testing.T) {
 			slices.Reverse(reorderedFields)
 			slices.Reverse(reorderedValues)
 			var loaded typedFields
-			if _, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWire(t, reorderedFields, reorderedValues)), &loaded); err != nil {
+			if _, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWireFormat(t, framed, reorderedFields, reorderedValues)), &loaded); err != nil {
 				t.Fatalf("Load reordered fields: %v", err)
 			}
 			expected := original
@@ -199,7 +225,7 @@ func TestTypedFieldsWire(t *testing.T) {
 			encodedValues := slices.Clone(values)
 			encodedValues[slices.Index(fields, test.field)] = test.value
 			var loaded typedFields
-			_, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWire(t, fields, encodedValues)), &loaded)
+			_, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWireFormat(t, framed, fields, encodedValues)), &loaded)
 			if err == nil || !strings.Contains(err.Error(), "truncated") {
 				t.Errorf("Load narrowing %s = %v, want a truncation error", test.field, err)
 			}
@@ -220,7 +246,7 @@ func TestTypedFieldsWire(t *testing.T) {
 			encodedValues := slices.Clone(values)
 			encodedValues[0] = &wire.Interface{Type: wire.TypeID(2), Value: wire.Int(-7)}
 			var loaded typedFields
-			_, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWire(t, fields, encodedValues, &wire.Type{Name: test.typeName})), &loaded)
+			_, err := state.Load(t.Context(), bytes.NewReader(typedFieldsWireFormat(t, framed, fields, encodedValues, &wire.Type{Name: test.typeName})), &loaded)
 			if got, want := err != nil, test.wantError; got != want {
 				t.Fatalf("Load error = %v, want error %t", err, want)
 			}
@@ -240,4 +266,126 @@ func TestGeneratedFieldTypes(t *testing.T) {
 		shadow.A_B{C: "first field"},
 		shadow.A{B_C: "second field"},
 	})
+}
+
+func TestFramedGraphs(t *testing.T) {
+	cycle := &framedGraph{value: 7, name: "cycle", loads: 1}
+	cycle.next = cycle
+	dependency := &framedGraph{value: 11, name: "dependency", loads: 1}
+	root := &framedGraph{value: 13, name: "root", next: cycle, wait: dependency, loads: 1}
+	runTestCasesWithSaver(t, false, "graph", []any{
+		root,
+		typedFields{signed: -7, unsigned: 9, flag: true, text: "bytes", f32: 1.25, f64: 2.5, c64: 2 - 3i, c128: 4 - 5i},
+		outerArray{inner: [2]inner{{v: 17}, {v: 19}}},
+		mapContainer{v: map[int]any{0: &inner{v: 23}, 1: &valueLoadStruct{v: 29}}},
+	}, state.SaveFramed)
+}
+
+func TestFramedSnapshotBoundary(t *testing.T) {
+	first := &framedGraph{value: 7}
+	original := system{v1: first, v2: &framedMutator{target: first}}
+	var encoded bytes.Buffer
+	if _, err := state.SaveFramed(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := first.value, int64(99); got != want {
+		t.Fatalf("later hook mutation = %d, want %d", got, want)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), bytes.NewReader(encoded.Bytes()), &loaded); err != nil {
+		t.Fatal(err)
+	}
+	child := loaded.v1.(*framedGraph)
+	if got, want := child.value, int64(7); got != want {
+		t.Errorf("captured value = %d, want %d", got, want)
+	}
+	if got, want := loaded.v2.(*framedMutator).target, child; got != want {
+		t.Errorf("shared target = %p, want %p", got, want)
+	}
+}
+
+func TestFramedLateParent(t *testing.T) {
+	parent := &framedHookParent{child: framedHookValue{value: 31}}
+	// Discover the equal-size child first. Resolving its parent reuses the
+	// child's ID and schedules the parent for encoding; SaveValue runs once.
+	original := system{v1: &parent.child, v2: parent}
+	var encoded bytes.Buffer
+	if _, err := state.SaveFramed(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := parent.child.calls, 1; got != want {
+		t.Fatalf("SaveValue calls = %d, want %d", got, want)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), bytes.NewReader(encoded.Bytes()), &loaded); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := loaded.v1.(*framedHookValue), &loaded.v2.(*framedHookParent).child; got != want {
+		t.Errorf("interior pointer = %p, want %p", got, want)
+	}
+	if got, want := loaded.v1.(*framedHookValue).value, int64(31); got != want {
+		t.Errorf("loaded value = %d, want %d", got, want)
+	}
+}
+
+func TestFramedWireBoundaries(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		fields    []string
+		body      []byte
+		want      framedPair
+		wantError string
+	}{
+		// Tag 18 is the experimental framed struct. The body is type ID 1,
+		// two fields, then length 2 + signed-int tag 1 + zigzag value.
+		{name: "two_fields", fields: []string{"first", "second"}, body: []byte{18, 1, 2, 2, 1, 14, 2, 1, 22}, want: framedPair{7, 11}},
+		{name: "reordered", fields: []string{"second", "first"}, body: []byte{18, 1, 2, 2, 1, 14, 2, 1, 22}, want: framedPair{11, 7}},
+		{name: "zero_length", fields: []string{"first", "second"}, body: []byte{18, 1, 2, 0, 2, 1, 22}, wantError: "invalid framed field length"},
+		{name: "cannot_borrow_next_field", fields: []string{"first", "second"}, body: []byte{18, 1, 2, 1, 1, 2, 1, 22}, wantError: "unexpected EOF"},
+		{name: "truncated", fields: []string{"first", "second"}, body: []byte{18, 1, 2, 2, 1, 14, 2, 1}, wantError: "EOF"},
+		{name: "trailing_scalar_byte", fields: []string{"first", "second"}, body: []byte{18, 1, 2, 3, 1, 14, 5, 2, 1, 22}, wantError: "trailing bytes"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var encoded bytes.Buffer
+			w := wire.Writer{Writer: &encoded}
+			if err := state.WriteHeader(&w, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&w, &wire.Type{Name: (*framedPair)(nil).StateTypeName(), Fields: test.fields})
+			wire.Save(&w, wire.Uint(1))
+			encoded.Write(test.body)
+			var loaded framedPair
+			_, err := state.Load(t.Context(), &encoded, &loaded)
+			if test.wantError != "" {
+				if err == nil || !strings.Contains(err.Error(), test.wantError) {
+					t.Fatalf("Load error = %v, want %q", err, test.wantError)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := loaded, test.want; got != want {
+				t.Errorf("Load = %+v, want %+v", got, want)
+			}
+		})
+	}
+}
+
+func TestFramedCustomFieldType(t *testing.T) {
+	original := framedCustom{value: 7}
+	var encoded bytes.Buffer
+	if _, err := state.SaveFramed(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	var loaded framedCustom
+	if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := loaded.value, int16(7); got != want {
+		t.Errorf("value = %d, want %d", got, want)
+	}
+	if got, want := loaded.observed, int64(65543); got != want {
+		t.Errorf("custom representation = %d, want %d", got, want)
+	}
 }

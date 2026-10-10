@@ -102,6 +102,10 @@ var allAlgos = map[string]struct {
 		Save: state.Save,
 		Load: state.Load,
 	},
+	"framed": {
+		Save: state.SaveFramed,
+		Load: state.Load,
+	},
 	"gob": {
 		Save: gobSave,
 		Load: gobLoad,
