@@ -19,6 +19,12 @@ _ARCHITECTURES = {
     ),
 }
 
+_HOST_REQUIREMENT_PREFIX = "rbe-requires-host:"
+
+def host_test_requirement_tags(requirements):
+    """Declares host requirements independently of a worker routing policy."""
+    return [_HOST_REQUIREMENT_PREFIX + requirement for requirement in requirements]
+
 def _native_frontend_impl(ctx):
     providers = ctx.super()
     local_architecture = ctx.attr._local_test_architecture[BuildSettingInfo].value
@@ -32,13 +38,23 @@ def _native_frontend_impl(ctx):
     if not local_kvm and ctx.attr.exec_properties.get("test.workload-isolation-type") != "firecracker":
         return providers
 
+    initial_cgroup = "native" in ctx.attr.tags and "requires-initial-cgroup-namespace" in ctx.attr.tags
+    if not local_kvm and not initial_cgroup:
+        missing = ctx.attr._local_test_requirements[BuildSettingInfo].value
+        required = ["namespace"] + [
+            tag[len(_HOST_REQUIREMENT_PREFIX):]
+            for tag in ctx.attr.tags
+            if tag.startswith(_HOST_REQUIREMENT_PREFIX)
+        ]
+        if not any([requirement in missing for requirement in required]):
+            return providers
+
     user = "root" if local_kvm else ctx.attr.exec_properties.get("test.dockerUser")
     if user not in ["root", "nobody"]:
         fail("unsupported local namespace test identity: %s" % user)
     docker = ctx.attr._local_test_backend[BuildSettingInfo].value == "docker"
     if docker and user != "root":
         fail("the Docker namespace fixture requires a root test identity")
-    initial_cgroup = "native" in ctx.attr.tags and "requires-initial-cgroup-namespace" in ctx.attr.tags
     if initial_cgroup:
         if user != "root":
             fail("the initial cgroup namespace fixture requires a root test identity")
@@ -100,6 +116,7 @@ _native_frontend_test = rule(
         "_local_root": attr.label(default = Label("//test/rbe:local_root"), executable = True, cfg = "target"),
         "_local_test_architecture": attr.label(default = Label("//tools/bazeldefs:local_test_architecture")),
         "_local_test_backend": attr.label(default = Label("//tools/bazeldefs:local_test_backend")),
+        "_local_test_requirements": attr.label(default = Label("//tools/bazeldefs:local_test_requirements")),
     },
 )
 

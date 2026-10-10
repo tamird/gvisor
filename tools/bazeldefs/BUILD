@@ -1,6 +1,6 @@
 load("@llvm//platforms:common.bzl", "SUPPORTED_EXECS")
 load("@llvm//toolchain:selects.bzl", "platform_resource_dir")
-load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag")
+load("//tools:defs.bzl", "bool_flag", "bzl_library", "string_flag", "string_list_flag")
 load(":platforms.bzl", "docker_exec_properties")
 
 package(
@@ -66,6 +66,14 @@ string_flag(
         "local",
         "docker",
     ],
+)
+
+# Requirements the caller's remote workers cannot provide. The default retains
+# the existing architecture-wide namespace fallback; callers with capable
+# workers can name only their demonstrated gaps, without changing test owners.
+string_list_flag(
+    name = "local_test_requirements",
+    build_setting_default = ["namespace"],
 )
 
 # Individual tests must be able to select the cgroup-v1 fixture. Bazel forbids

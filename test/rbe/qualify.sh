@@ -56,6 +56,10 @@ Compilation remains remote. Hybrid profiles run in one invocation; each
 test uses the execution requirements recorded in its selection report.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
+For hybrid unit/syscall lanes, --local-test-requirements=NAME[,NAME...] names
+requirements missing from remote workers. The default namespace requirement
+retains architecture-wide Firecracker fallback. An empty list keeps only the
+existing KVM and initial-cgroup local routes. Test selection remains complete.
 A benchmark target selects one member of the continuous suite, retaining its
 original workload and timeout. Other suite members remain unexecuted.
 USAGE
@@ -82,6 +86,8 @@ if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
 fi
 arch=amd64
 test_execution=remote
+local_test_requirements=namespace
+local_requirements_set=false
 syscall_bucket=
 benchmark_target=
 header_options=()
@@ -90,6 +96,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
   case "$1" in
     --arch=*) arch=${1#--arch=} ;;
     --test-execution=*) test_execution=${1#--test-execution=} ;;
+    --local-test-requirements=*) local_test_requirements=${1#--local-test-requirements=}; local_requirements_set=true ;;
     --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
     --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
@@ -133,6 +140,10 @@ case "$test_execution" in
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
+if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 || ( ${1:-} != unit && ${1:-} != syscalls && ${1:-} != syscalls-resume && ${1:-} != syscalls-kvm ) ) ]]; then
+  printf 'Local test requirements apply only to hybrid unit/syscall lanes.\n' >&2
+  exit 2
+fi
 if [[ -n $syscall_bucket ]]; then
   if [[ ! $syscall_bucket =~ ^([0-9]|1[0-4])$ || $# != 1 || ( $test_execution:$arch:${1:-} != local:arm64:syscalls && $test_execution:$arch:${1:-} != local:arm64:syscalls-resume && $test_execution:$arch:${1:-} != local:amd64:syscalls && $test_execution:$arch:${1:-} != local:amd64:syscalls-kvm && $test_execution:$arch:${1:-} != remote:arm64:syscalls-64k && $test_execution:$arch:${1:-} != remote:arm64:syscalls-rc && $test_execution:$arch:${1:-} != local:amd64:syscalls-rc && $test_execution:$arch:${1:-} != local:all:syscalls-rc ) ]]; then
     printf 'A syscall bucket must be 0..14 and requires a supported local or guest syscall profile.\n' >&2
@@ -337,7 +348,8 @@ select_test_profile() {
     fi
   fi
   if [[ $test_execution == local && $lane != syscalls-rc ]]; then
-    routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch")
+    routing_options=("--//tools/bazeldefs:local_test_architecture=$target_arch"
+      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
     variant_options=(--hybrid)
     selection_options+=(--hybrid)
     if [[ $lane == syscalls-kvm ]]; then
@@ -361,7 +373,8 @@ select_test_profile() {
     "--query_file=$prefix.query" > "$prefix-actions.json"
   python3 test/rbe/unit_matrix.py select-profile \
     "$prefix-profile.json" "$target_arch" "$prefix-routing.json" \
-    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}" "${page_size_options[@]}"
+    "$prefix-actions.json" "$prefix-targets" "${selection_options[@]}" "${page_size_options[@]}" \
+    "--local-test-requirements=$local_test_requirements"
 }
 
 select_syscall_profile() {
@@ -492,7 +505,9 @@ run_hybrid_profile() (
     bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
     python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
     bazel aquery --config=rbe-matrix --config=x86_64 \
-      --//tools/bazeldefs:local_test_architecture=arm64 --output=jsonproto --include_artifacts=false \
+      --//tools/bazeldefs:local_test_architecture=arm64 \
+      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
+      --output=jsonproto --include_artifacts=false \
       --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
     analyze_profile test/unit.targets "$selection_dir/profile.json" \
       --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
@@ -504,6 +519,7 @@ run_hybrid_profile() (
     fi
     python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
       "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid "${selection_options[@]}" \
+      "--local-test-requirements=$local_test_requirements" \
       | tee "$selection_dir/selection.json"
   else
     lane_options=(--cxxopt=-Werror)
@@ -526,6 +542,7 @@ PYOWNERS
       > "$selection_dir/combined-actions.query"
     bazel aquery --config=rbe --config=x86_64 --config=rbe-hybrid-tests --config=unit --strip=never \
       --//tools/bazeldefs:local_test_architecture=arm64 \
+      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
       --incompatible_sandbox_hermetic_tmp=false --test_env=GO_TEST_WRAP_TESTV=1 \
       --output=jsonproto --include_artifacts=false \
       --query_file="$selection_dir/combined-actions.query" > "$selection_dir/combined-actions.json"
@@ -584,6 +601,7 @@ PY
   fi
   bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     "--//tools/bazeldefs:local_test_architecture=$local_arch" \
+    "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
 )

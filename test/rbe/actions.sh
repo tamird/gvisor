@@ -63,6 +63,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
   local|remote-actions)
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       options+=(--test-execution=local)
+      case "${lanes[*]}" in
+        unit|syscalls|syscalls-resume|syscalls-kvm)
+          options+=("--local-test-requirements=${QUALIFICATION_LOCAL_TEST_REQUIREMENTS-namespace}")
+          ;;
+      esac
     else
       # Hour-long guest tests need more runway than the hosted coordinator's
       # observed one-hour cap. Only the coordinator moves; all guest actions

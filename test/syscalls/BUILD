@@ -78,6 +78,9 @@ syscall_test(
 syscall_test(
     size = "large",
     in_sandbox_cgroup = "v2",
+    # PidsEnforcement reads pids.events.local, added by Linux 3f26a885a.
+    # https://github.com/torvalds/linux/commit/3f26a885a
+    native_kernel_requirements = ["pids-events-local"],
     shard_count = more_shards,
     # Native execution must reach the v1 hierarchy-creation check after the
     # initial-cgroup-namespace permission check.
@@ -206,6 +209,8 @@ syscall_test(
 
 syscall_test(
     in_sandbox_cgroup = "v2",
+    # QueryRevisionStartsAtOne needs the Linux 6.17 BPF query revision.
+    native_kernel_requirements = ["cgroup-bpf-query-revision"],
     test = "//test/syscalls/linux:cgroup2_ebpf_test",
 )
 
@@ -214,6 +219,8 @@ syscall_test(
 )
 
 syscall_test(
+    # BigWriteFails requires oversized-write rejection from Linux 6.9.
+    native_kernel_requirements = ["eventfd-oversized-write-rejection"],
     test = "//test/syscalls/linux:eventfd_test",
 )
 
@@ -352,6 +359,8 @@ syscall_test(
 )
 
 syscall_test(
+    # Native revision queries require the mark rev1 and CT rev0 extensions.
+    native_kernel_requirements = ["xtables-mark-ct"],
     test = "//test/syscalls/linux:iptables_test",
 )
 
@@ -379,37 +388,52 @@ syscall_test(
 
 syscall_test(
     add_overlay = True,
+    # These cases require Landlock ABI 1; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-1"],
     test = "//test/syscalls/linux:landlock_v1_test",
 )
 
 syscall_test(
     add_overlay = True,
+    # These cases require Landlock ABI 2; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-2"],
     test = "//test/syscalls/linux:landlock_v2_test",
 )
 
 syscall_test(
     add_overlay = True,
+    # These cases require Landlock ABI 3; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-3"],
     test = "//test/syscalls/linux:landlock_v3_test",
 )
 
 syscall_test(
     add_overlay = True,
+    # These cases require Landlock ABI 4; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-4"],
     test = "//test/syscalls/linux:landlock_v4_test",
 )
 
 syscall_test(
     add_overlay = True,
+    # These cases require Landlock ABI 5; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-5"],
     test = "//test/syscalls/linux:landlock_v5_test",
 )
 
 syscall_test(
     add_overlay = True,
+    # These cases require Landlock ABI 6; missing support skips their bodies.
+    native_kernel_requirements = ["landlock-abi-6"],
     test = "//test/syscalls/linux:landlock_v6_test",
 )
 
 syscall_test(
     add_fusefs = True,
     add_overlay = True,
+    # AT_EMPTY_PATH with matching credentials requires Linux 42bd2af59.
+    # https://github.com/torvalds/linux/commit/42bd2af59
+    native_kernel_requirements = ["linkat-empty-path-same-credentials"],
     test = "//test/syscalls/linux:link_test",
 )
 
@@ -483,6 +507,13 @@ syscall_test(
 
 syscall_test(
     add_overlay = True,
+    # The suite attaches detached mounts to detached mounts and clones fsmount FDs.
+    # https://github.com/torvalds/linux/commit/211077238
+    # https://github.com/torvalds/linux/commit/f8b6cd66e
+    native_kernel_requirements = [
+        "detached-mount-attachment",
+        "fsmount-cloning",
+    ],
     save = False,
     test = "//test/syscalls/linux:mount_fd_test",
 )
@@ -497,6 +528,8 @@ syscall_test(
 )
 
 syscall_test(
+    # MSG_COPY requires CONFIG_CHECKPOINT_RESTORE.
+    native_kernel_requirements = ["sysv-msg-copy"],
     test = "//test/syscalls/linux:msgqueue_test",
 )
 
@@ -529,6 +562,9 @@ syscall_test(
 
 syscall_test(
     add_overlay = True,
+    # O_DIRECTORY | O_CREAT must be rejected with EINVAL.
+    # https://github.com/torvalds/linux/commit/43b450632
+    native_kernel_requirements = ["directory-create-einval"],
     test = "//test/syscalls/linux:openat2_test",
 )
 
@@ -561,6 +597,8 @@ syscall_test(
 )
 
 syscall_test(
+    # PIDFD_THREAD notification cases require Linux 6.15 semantics.
+    native_kernel_requirements = ["pidfd-thread-notifications"],
     test = "//test/syscalls/linux:pidfd_test",
 )
 
@@ -629,6 +667,8 @@ syscall_test(
 
 syscall_test(
     size = "medium",
+    # The anonymous mapping name cases require CONFIG_ANON_VMA_NAME.
+    native_kernel_requirements = ["anonymous-vma-names"],
     shard_count = most_shards,
     test = "//test/syscalls/linux:proc_test",
 )
@@ -673,6 +713,8 @@ syscall_test(
 )
 
 syscall_test(
+    # The relational ptrace cases require Yama ptrace_scope=1.
+    native_kernel_requirements = ["yama-relational-ptrace"],
     test = "//test/syscalls/linux:ptrace_test",
 )
 
@@ -888,6 +930,10 @@ syscall_test(
 syscall_test(
     size = "large",
     add_hostinet = True,
+    # Both variants rely on the host's dual-stack wildcard conflict rules.
+    # https://github.com/torvalds/linux/commit/d9ba99342
+    hostnet_kernel_requirements = ["dual-stack-wildcard-bind"],
+    native_kernel_requirements = ["dual-stack-wildcard-bind"],
     # Takes too long to run with S/R.
     save = False,
     shard_count = most_shards,
@@ -898,6 +944,10 @@ syscall_test(
     size = "large",
     add_hostinet = True,
     container = True,
+    # TIME_WAIT sockets must participate in the correct bind-address index.
+    # https://github.com/torvalds/linux/commit/936a192f9
+    hostnet_kernel_requirements = ["time-wait-bind-indexing"],
+    native_kernel_requirements = ["time-wait-bind-indexing"],
     one_sandbox = False,
     shard_count = most_shards,
     test = "//test/syscalls/linux:socket_inet_loopback_isolated_test",
@@ -1053,6 +1103,17 @@ syscall_test(
         "//tools/bazeldefs:rbe": {},
         "//conditions:default": {"local": ""},
     }),
+    # The native cases require inet-family FIB and the newer attribute checks.
+    # https://github.com/torvalds/linux/commit/8509f62b0
+    # https://github.com/torvalds/linux/commit/b9703ed44
+    # https://github.com/torvalds/linux/commit/a412dbf40
+    # https://github.com/torvalds/linux/commit/068d82e75
+    # https://github.com/torvalds/linux/commit/ec2c5917e
+    # https://github.com/torvalds/linux/commit/62e1e94b2
+    native_kernel_requirements = [
+        "nftables-inet-fib",
+        "nftables-validation",
+    ],
     nftables = True,
     save = False,
     tags = ["notap"],
@@ -1298,6 +1359,9 @@ syscall_test(
 )
 
 syscall_test(
+    # Connect-error poll must observe the completed state before error wakeup.
+    # https://github.com/torvalds/linux/commit/fde6f897f
+    native_kernel_requirements = ["tcp-error-poll-ordering"],
     test = "//test/syscalls/linux:tuntap_test",
 )
 
@@ -1431,6 +1495,8 @@ syscall_test(
 
 syscall_test(
     size = "large",
+    # SetACLEmpty requires empty ACL clearing from Linux 6.2.
+    native_kernel_requirements = ["empty-posix-acl-clearing"],
     # TODO(b/546149934): These tests timeout with s/r, fix them and then enable.
     save = False,
     test = "//test/syscalls/linux:posix_acl_test",
