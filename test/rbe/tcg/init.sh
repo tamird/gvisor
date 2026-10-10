@@ -47,6 +47,7 @@ trap finish EXIT
 # shellcheck disable=SC1091
 source /etc/gvisor-test-kernel
 uname -a | tee /result/kernel.txt
+cat /proc/cpuinfo > /result/cpuinfo.txt
 [[ "$(uname -r)" == "${expected_kernel_release:?}" ]]
 page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt

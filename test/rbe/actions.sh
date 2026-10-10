@@ -416,4 +416,9 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
   printf '%s  %s\n' "$QUALIFICATION_COS_SHA256" "$COS_IMAGES_JSON" | sha256sum --check --strict
 fi
 
-test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+if [[ ${GITHUB_REF_NAME:-} == diagnostics/rc-kvm-crash-pair ]]; then
+  [[ $QUALIFICATION_EXECUTION == local && $QUALIFICATION_ARCH == amd64 && ${lanes[*]} == syscalls-rc-pilot ]]
+  bash test/rbe/kvm_crash_pair.sh
+else
+  test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+fi
