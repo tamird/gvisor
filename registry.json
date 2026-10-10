@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-09T23:49:32.283379+00:00",
+    "updatedAt": "2026-10-10T00:13:37.572402+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4579,17 +4579,19 @@
       "url": "https://github.com/google/gvisor/pull/15508",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-09T20:02:43.526698+00:00",
-      "summary": "The missing SetCapability and CAP_SYS_ADMIN provider headers are fixed on the rebased head. Focused remote lint passed; source CI is green in this snapshot. Milan was asked to review the amended head before importing. The prior import refers to the older source.",
+      "updatedAt": "2026-10-10T00:13:37.572402+00:00",
+      "summary": "The current head contains the direct SetCapability and CAP_SYS_ADMIN provider headers. Focused remote lint and current source CI pass. New pipeline 50316 on stale import #15529 repeats exactly those two include-cleaner findings; its Landlock file differs from current source only in the published header repair. No new source fix or test rerun is needed. Import #15529 has since advanced to 998b3f3fc with new checks pending, but still declares the old source 72f2f2f13. Fresh current-head maintainer review and a matching import remain pending.",
       "followup": {
-        "disposition": "Lint repair delivered; fresh review requested",
+        "disposition": "Current source passes; stale import failure covered",
         "owner": "external_sweeps",
         "sourceHead": "23ec3b582aa10aef02cd0f2e4cc7e83796ebe4d2",
-        "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "Observe fresh current-head approval and any updated import.",
+        "reviewedAt": "2026-10-10T00:13:37.572402+00:00",
+        "nextAction": "Observe fresh approval for 23ec3b582 and a matching current-head import. The new import head 998b3f3fc still declares old source 72f2f2f13; its pipeline 50342 is pending. Retain diagnosed 50316 as a historical stale-import failure covered by current source.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15508#issuecomment-6088133203",
-          "https://github.com/google/gvisor/pull/15508"
+          "https://github.com/google/gvisor/pull/15508",
+          "https://buildkite.com/gvisor/pipeline/builds/50316#01a122ff-8c61-4cec-bcbc-b41f1db5cedc",
+          "https://buildkite.com/gvisor/pipeline/builds/50342"
         ],
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "UNKNOWN"
@@ -4662,21 +4664,19 @@
       "url": "https://github.com/google/gvisor/pull/15565",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T05:33:39.676019+00:00",
-      "summary": "The user-approved version-specific FUSE clone follow-up is now open as #15565 at f986152df. Its complete FUSE source equals the approved and previously validated version; only the landed either-errno allowance is replaced. The original #15472 remains merged and unchanged. Existing Linux 6.1, Linux 7.3-rc3 and gVisor case results are reused; the stable-release thresholds remain source-verified rather than all runtime-executed. No contributor decision remains.\n\nEarlier observations:\n\nThe separately prepared kernel-version proposal is refreshed publicly at 293761e83932bb3847263e5027cb7c0ecb574f5d. Root reports unchanged source semantics and corrected citation spelling. Source PR #15472 and import #15505 have since merged, with final import head 17f40f7d567666c8c76ea03021e5a5ab4b1cafbc. The proposal remains visible for comparison; its necessity against the merged code has not yet been decided. It is not a pending contributor decision and does not block the merged PR.\n\nEarlier observations:\n\nThe previously inspected import #15505 at 62ee87b3c49afb890dc9f845f6c7e6528e67b0ec permitted both EINVAL and EPERM on native Linux. That import has now refreshed to a3f26423b49e5689324dac4e7600a3f9e97f1081 and its checks are pending. This prepared revision selects one errno by reviewed Linux release and stable-backport boundaries; root will reconcile it against the new import before any fresh contributor decision. The proposal is separate from and does not block the live PR. Live PR: https://github.com/google/gvisor/pull/15472 .",
+      "updatedAt": "2026-10-10T00:13:37.572402+00:00",
+      "summary": "Etienne approved the current FUSE follow-up at f986152df on October 10 at 00:05 UTC. Current checks and Copybara status pass; no matching import is present in this snapshot. The previously approved version-gated errno expectations and three-path validation remain unchanged.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Freshly approved; awaiting import",
         "owner": "external_sweeps",
-        "nextAction": "Observe exact-head reviews, checks and import progress.",
         "sourceHead": "f986152df181f00f6cd312fe71ed09bc2ca7e7fd",
-        "reviewedAt": "2026-10-09T05:26:17.128216+00:00",
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE",
+        "reviewedAt": "2026-10-10T00:13:37.572402+00:00",
+        "nextAction": "Observe the matching import and maintainer merge progress; no additional reviewer notification is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15565",
-          "https://github.com/google/gvisor/pull/15472",
-          "https://github.com/tamird/gvisor/commit/f986152df181f00f6cd312fe71ed09bc2ca7e7fd"
-        ]
+          "https://github.com/google/gvisor/pull/15565#pullrequestreview-5476502305"
+        ],
+        "reviewDecision": "APPROVED",
+        "mergeable": "MERGEABLE"
       },
       "number": 15565
     },
@@ -4886,16 +4886,18 @@
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
-      "status": "Full 64K failed; two IPv6 diagnostics running",
-      "summary": "The original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later 33-action stress continuation at 3cd943971 is terminal: 30 cases passed and Reset/3, Reset/4 and ShutdownCloseSecond/3 timed out at their unchanged 3600-second deadlines. The owner verified the original case/action bindings; retained tails show continued syscall progress without establishing a cause. This uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest, not the native ARM64-host pilot. The separate untraced IPv4 Reset/4 diagnostic, Actions 37995590688, passed its one original case at the same source/deadline with debug retained and original kernel/initramfs/payload digests. It gives no traced qualification, full-owner credit or pure tracing-cost estimate. The two remaining IPv6 cases are now running as Actions 38002166683 at method 7bf9066fa and unchanged source 3cd943971, with one case per shard and 3600 seconds each; no result is claimed. The original full-profile and six-owner failures remain; no full-profile pass or canonical promotion is claimed. The cookie repair #15583 passed its separate complete loopback continuation.\n\nEarlier continuation observation:\n\nThe original current full ARM64 64K profile remains failed with 652 passing owners, seven timeouts and two failures; its independent saved review is complete. The later six-owner timeout continuation at 19b passed five owners and 12 of 19 shards; all seven socket-stress shards timed out at 3600 seconds after earlier cases progressed. A source-reviewed follow-up at 3cd943971 is now running the same 33 stress cases as separate actions, keeping that continuation’s 3600-second deadlines and tracing. It uses the established AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the experimental native ARM64-host pilot is unchanged. This is fork qualification with no new pass credit or canonical promotion. The separate cookie repair #15583 passed both complete loopback owners (16 shards) on its own source; it does not turn the original full profile into a pass.\n\nEarlier candidate observations:\n\nThe owner has sealed the complete current ARM64 64K evidence: all 661 owners and 1,211 fresh shards are accounted for, with 652 owners passing, seven timing out and two failing (1,194 passing, fifteen timed-out and two failed shards). The corrected mmap/cgroup scope passes ten actions and 348 actual cases, including all 56 identities in each cgroup report. Independent review of this full packet remains pending. The failed full profile is retained, follow-up cookie work is separate, and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe full current ARM64 64K workflow is terminal FAILURE at dispatch c9bc07392 on this integration source. Its original console reports all 661 targets executed remotely: 652 pass and 9 fail, comprising seven timeout owners and two loopback failures. Original shard/source/output collection is pending, so these are console-level observations, not final qualification credit. Earlier unit/Nogo results remain separate and canonical qualification is not promoted.\n\nEarlier candidate observations:\n\nThe complete current ARM64 64K profile is running on dispatch-only child c9bc07392 of this exact integration source. It retains the full selector, original action deadlines and established coordinator/resource controls. This is a new qualification attempt, with no result credit yet and no canonical promotion.\n\nClosed unit and analyzer evidence:\n\nIndependent saved-result review closes the full mixed-unit continuation on dispatch e44f46dc9: all 673 selected owners and 693 original shards passed. Of these, 675 shard results were cached remotely, fourteen ran freshly on remote workers and four ran freshly in the declared local ARM64 fixtures. The recovered fresh outputs contain 528 passing XML entries and four explicit skips (two missing KVM, two requiring non-root). Cached leaf outputs were intentionally not materialized. The complete 838-target Nogo result remains separately bound to 7f774023a. These results do not promote canonical qualification or close other full-profile failures.\n\nEarlier observations:\n\nThe integration source is now 5d2987427, with dispatch-only child e44f46dc9. The five-path formatter/visibility correction passed both targeted Starlark builds and the original 900-second clang-format target. The full mixed-unit continuation is accepted as Actions 37893040742; its result remains pending. The earlier 838-target Nogo result remains bound to its recorded source.\n\nEarlier observations:\n\nThe full canonical Nogo selection passed all 838 tests on dispatch source 7f774023a, with exact canonical/combined/executed label equality and no cached test results. Independent review verified all retained records and 220 original both-CPU logs; 618 logs were intentionally not materialized. This standard frontend packet does not claim per-action worker input trees or fresh compiler proof. The full mixed-unit result is not yet reconciled, and canonical qualification has not been promoted.\n\nEarlier observations:\n\nFull unit and Nogo qualification resumed once at the existing dispatch head 7f774023a: Actions 37885505229 and 37885519075. Results are pending. The prior snapshot-index failures remain retained; renewed input availability is not a qualification result.\n\nEarlier observations:\n\nThe published combined candidate a55d70786 adds the exact validated XML collation and packet-logging bodies to the earlier integration source. Its dispatch-only child is qualification/current-integration-actions@7f774023a. Neither head has a combined runtime pass, and canonical qualification is unchanged. The preceding full unit and Nogo runs at 6498afd0e failed during repository analysis with zero build or test actions when immutable Ubuntu snapshot package-index requests returned HTTP 502/503. Their original failures are retained; no identical retries were submitted. The bounded check of the exact pinned index at 02:21 UTC on October 9 timed out, which is a separate observation. These are fork qualification branches, not contributor-review requests.",
-      "updatedAt": "2026-10-09T23:05:58.863504+00:00",
+      "status": "full stress policy run failed; originals under review",
+      "summary": "The complete 33-case socket-stress qualification attempt at b0dfb7bd5 in Actions 38007298459 ended in failure before a long test duration. The original routing preflight still hashed the old argument list, so the intentional strace prefix stopped the attempt before any build or test action. The corrected comparison requires and removes only that prefix from copied hash rows; runtime arguments are preserved. No corrected-run acceptance or full-owner pass is claimed yet. The proposed ARM64 TCG policy keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.",
+      "updatedAt": "2026-10-10T00:13:37.572402+00:00",
       "followup": {
-        "disposition": "Full 64K failed; two IPv6 diagnostics running",
+        "disposition": "Stress policy preflight failed; comparison correction prepared",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-09T23:05:58.863504+00:00",
-        "nextAction": "Root observes the accepted two-case IPv6 diagnostic. Preserve the original full-profile/33-case failures and the separate single-case untraced pass; no canonical promotion or tracing-cost claim.",
+        "reviewedAt": "2026-10-10T00:13:37.572402+00:00",
+        "nextAction": "Root completes the corrected routing preflight and resumes the complete stress qualification under its existing validation scope. Keep the zero-action failure and earlier traced/untraced results separate.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/38007298459",
+          "https://github.com/tamird/gvisor/commit/b0dfb7bd5965ad1bcc9d85c82ef4fe29007e64db",
           "https://github.com/tamird/gvisor/actions/runs/38002166683",
           "https://github.com/tamird/gvisor/actions/runs/37995590688",
           "https://github.com/tamird/gvisor/actions/runs/37985716856",
@@ -5005,23 +5007,21 @@
       "repo": "google/gvisor",
       "number": 15574,
       "url": "https://github.com/google/gvisor/pull/15574",
-      "status": "open",
-      "updatedAt": "2026-10-09T21:35:04.478932+00:00",
-      "summary": "Lucas approved the exact current congestion-control inheritance head. Matching import #15599 is open with checks pending. The independently reviewed before/after validation remains linked below; current-head source and import status come from GitHub.",
+      "status": "merged",
+      "updatedAt": "2026-10-10T00:13:37.572402+00:00",
+      "summary": "The accepted-socket congestion-control inheritance repair merged on October 10 at 00:04 UTC, with matching import #15599. The expected before failures and corrected unit/native/sandbox/analyzer evidence remain retained.",
       "followup": {
-        "disposition": "Current-head approved; matching import open",
+        "disposition": "Merged",
         "owner": "external_sweeps",
         "sourceHead": "8d7493b5fec86fbe056bb23f0b1e9be8a6df2165",
-        "reviewedAt": "2026-10-09T21:28:50.106112+00:00",
-        "nextAction": "Observe matching import #15599 and current-head CI; no contributor decision remains.",
+        "reviewedAt": "2026-10-10T00:13:37.572402+00:00",
+        "nextAction": "No pending source or contributor action. Preserve the merged result and its validation evidence.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15574#pullrequestreview-5475398951",
-          "https://github.com/google/gvisor/pull/15599",
           "https://github.com/google/gvisor/pull/15574",
-          "https://github.com/google/gvisor/pull/15574#issuecomment-6080696804"
+          "https://github.com/google/gvisor/pull/15599"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       }
     },
     {
@@ -5245,6 +5245,94 @@
         "reviewDecision": null
       },
       "number": 15604
+    },
+    {
+      "id": "branch:tcp-sack-loss-threshold",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-sack-loss-threshold",
+      "head": "3fbae1327833ec33424c017f3359f2384fcd46c6",
+      "title": "Respect the strict SACK loss threshold",
+      "url": "https://github.com/tamird/gvisor/commit/3fbae1327833ec33424c017f3359f2384fcd46c6",
+      "group": "runtime",
+      "status": "contributor review pending",
+      "updatedAt": "2026-10-09T23:58:01.246164+00:00",
+      "summary": "The byte threshold must be exceeded before SACK declares a range lost. This change also widens the 16-bit MSS before multiplying the threshold. The retained before run fails the ordinary equality and two large-MSS boundary cases; all three full after suites and four analyzer owners pass. Root requested contributor review of this exact public commit. No upstream PR exists yet.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "3fbae1327833ec33424c017f3359f2384fcd46c6",
+        "url": "https://github.com/tamird/gvisor/commit/3fbae1327833ec33424c017f3359f2384fcd46c6"
+      },
+      "followup": {
+        "disposition": "Awaiting contributor review",
+        "owner": "root",
+        "sourceHead": "3fbae1327833ec33424c017f3359f2384fcd46c6",
+        "reviewedAt": "2026-10-09T23:58:01.246164+00:00",
+        "nextAction": "Await the response to the actual contributor request, then deliver the reviewed change if approved.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3fbae1327833ec33424c017f3359f2384fcd46c6",
+          "https://app.buildbuddy.io/invocation/589c544f-c5af-47fe-af41-8c79ad1e3a83",
+          "https://www.rfc-editor.org/rfc/rfc6675.html#section-4"
+        ]
+      }
+    },
+    {
+      "id": "branch:tcp-test-packet-view-cleanup",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-test-packet-view-cleanup",
+      "head": "0e57ec2f3ea770157fc11a0eb03e7712a0085233",
+      "title": "Release packet views when test checks abort",
+      "url": "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233",
+      "group": "tests",
+      "status": "contributor review pending",
+      "updatedAt": "2026-10-10T00:09:38.226625+00:00",
+      "summary": "Three packet readers keep ownership until their checks return, so an abort releases the view while a normal return transfers it to the caller. Source and saved-result review are closed. The original SACK assertion still fails without a leaked-view panic; six existing IPv4/IPv6 reader cases and both-CPU analysis pass. Root has requested contributor review of this exact public commit. No upstream PR exists yet.",
+      "followup": {
+        "disposition": "Awaiting contributor review",
+        "owner": "root",
+        "sourceHead": "0e57ec2f3ea770157fc11a0eb03e7712a0085233",
+        "reviewedAt": "2026-10-10T00:09:38.226625+00:00",
+        "nextAction": "Await the response to the actual contributor request, then deliver the reviewed helper if approved.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233",
+          "https://app.buildbuddy.io/invocation/ead17af7-1214-4ca0-9831-a50736cb753f"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "0e57ec2f3ea770157fc11a0eb03e7712a0085233",
+        "url": "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233"
+      }
+    },
+    {
+      "id": "branch:tcp-sack-credit-accounting",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-sack-credit-accounting",
+      "head": "99fcfa22311091be911ffae919ea216f24873f70",
+      "title": "Preserve selective ACK credit through recovery",
+      "url": "https://github.com/tamird/gvisor/commit/99fcfa22311091be911ffae919ea216f24873f70",
+      "group": "runtime",
+      "status": "contributor review pending",
+      "updatedAt": "2026-10-10T00:09:38.226625+00:00",
+      "summary": "The reviewed SACK accounting correction preserves the original failing regressions and passes its 12 corrected target results, including recovery and restored-state checks. Existing RACK reorder-detection skips remain explicit. Root requested contributor review of this exact public commit. This result does not establish a throughput improvement or explain the sharing gap.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "99fcfa22311091be911ffae919ea216f24873f70",
+        "url": "https://github.com/tamird/gvisor/commit/99fcfa22311091be911ffae919ea216f24873f70"
+      },
+      "followup": {
+        "disposition": "Awaiting contributor review",
+        "owner": "root",
+        "sourceHead": "99fcfa22311091be911ffae919ea216f24873f70",
+        "reviewedAt": "2026-10-10T00:09:38.226625+00:00",
+        "nextAction": "Await the response to the actual contributor request, then deliver the reviewed accounting correction if approved.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/99fcfa22311091be911ffae919ea216f24873f70",
+          "https://app.buildbuddy.io/invocation/f1664f30-184a-47bf-8033-afe5c0ca4669"
+        ]
+      }
     }
   ],
   "edges": [
