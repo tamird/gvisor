@@ -48,7 +48,7 @@ func LoadField[T any](s Source, slot int, value *T, wait bool) {
 }
 
 func saveFrameScalar(s Sink, slot int, p unsafe.Pointer) bool {
-	encoded := wire.Scalar{Kind: wire.ScalarNil}
+	var encoded wire.Scalar
 	switch s.internal.fields[slot].kind {
 	case reflect.Bool:
 		if !*(*bool)(p) {
