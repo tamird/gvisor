@@ -13,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Compare the two observed crash cases on one Actions VM. Production, compiler
-# and payload are common; the RC arm adds a guest kernel and virtualization layer.
+# Run the two original complete RC KVM owners after the named crash cases did
+# not reproduce. Preserve every declared case, shard and per-action timeout.
 set -euo pipefail
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
 # Exported by the existing Actions coordinator.
@@ -22,13 +22,13 @@ set -euo pipefail
 [[ $qualification_root_bazel == true && $GITHUB_ACTIONS == true && $RUNNER_ENVIRONMENT == github-hosted ]]
 # Both established root fixtures run below the same unprivileged coordinator.
 export qualification_root_bazel=false
-out="$RUNNER_TEMP/qualification/kvm-crash-pair"
+out="$RUNNER_TEMP/qualification/kvm-full-owners"
 mkdir -p "$out"
 coordinator_uid=$(id -u)
 coordinator_gid=$(id -g)
 raw_events=""
 # Keep complete raw options in a private directory outside uploaded artifacts.
-raw_directory=$(mktemp -d "$RUNNER_TEMP/kvm-crash-bep.XXXXXX")
+raw_directory=$(mktemp -d "$RUNNER_TEMP/kvm-full-bep.XXXXXX")
 # shellcheck disable=SC2329
 finish() {
   local status=$?
@@ -54,19 +54,14 @@ git cat-file -p HEAD > "$out/commit.txt"
 for path in go.mod MODULE.bazel images/default/bazelversion test/runner/defs.bzl test/runner/runner_test.bzl test/runner/main.go test/runner/gtest/gtest.go test/syscalls/BUILD test/syscalls/linux/cgroup2.cc test/syscalls/linux/socket_inet_loopback_isolated.cc test/rbe/tcg/BUILD test/rbe/tcg/defs.bzl test/rbe/tcg/build_image.sh test/rbe/tcg/run.sh test/rbe/tcg/init.sh pkg/sentry/platform/kvm/bluepill_amd64.go pkg/sentry/platform/kvm/bluepill_amd64_unsafe.go pkg/sentry/platform/kvm/bluepill_unsafe.go pkg/sentry/platform/kvm/machine_amd64.go pkg/sigframe/sigframe_amd64.s pkg/sigframe/sigframe_amd64_unsafe.go pkg/ring0/entry_amd64.s tools/bazeldefs/test_architectures.bzl test/rbe/local_root.sh; do
   git show "HEAD:$path" > "$out/${path//\//_}.source"
 done
-# GTest applies this during --gtest_list_tests as well as execution. This keeps
-# the original one-sandbox choices; Go's outer test filter cannot select a C++
-# case inside the cgroup owner's shared sandbox.
-filter='Cgroup2Test.CloneIntoFrozenCgroupRepeatedStartsAllFrozen:All/SocketInetLoopbackIsolatedTest.TCPConnectionReuseAddrConflicts/ListenV6Loopback_ConnectV6Loopback'
-printf '%s\n' "$filter" > "$out/gtest-filter.txt"
 base_owners=(
   //test/syscalls:cgroup2_test_runsc_kvm
   //test/syscalls:socket_inet_loopback_isolated_test_runsc_kvm
 )
 labels=()
-for owner in "${base_owners[@]}"; do labels+=("${owner}_amd64" "${owner}_rc_kvm"); done
+for owner in "${base_owners[@]}"; do labels+=("${owner}_rc_kvm"); done
 printf '%s\n' "${labels[@]}" > "$out/owners.txt"
-work_deadline=$(python3 -c 'import time; print(time.monotonic()+2400)')
+work_deadline=$(python3 -c 'import time; print(time.monotonic()+5100)')
 remaining() { python3 -c 'import sys,time; print(max(0,int(float(sys.argv[1])-time.monotonic())))' "$work_deadline"; }
 # Query owning declarations, including original deadlines and the RC payload
 # alias. Actual compact TestRunner placement and ELF inputs remain result proof.
@@ -87,6 +82,7 @@ for label in (out/'owners.txt').read_text().splitlines():
         field, = [node for node in rule if node.attrib.get('name') == name]
         return field.attrib.get('value')
     assert value('timeout') == 'long', (label, value('timeout'))
+    assert int(value('shard_count')) == (4 if 'cgroup2_test' in label else 8)
     if label.endswith('_rc_kvm'):
         assert value('payload') == label[:-len('_rc_kvm')] + '_amd64', label
         assert value('image') == '//test/rbe/tcg:amd64_rc_guest', label
@@ -140,33 +136,14 @@ prebuild_status=0
 run_phase guest-image build --config=rbe --config=x86_64 --strip=never \
   //test/rbe/tcg:amd64_rc_guest || prebuild_status=$?
 if (( prebuild_status != 0 )); then exit "$prebuild_status"; fi
-result=0
-for repetition in 1 2 3; do
-  arms=(host rc)
-  if (( repetition == 2 )); then arms=(rc host); fi
-  for arm in "${arms[@]}"; do
-    phase="$arm-$repetition"
-    targets=()
-    local_architecture=
-    if [[ $arm == host ]]; then
-      # The host frontend already selects the existing local_root fixture.
-      local_architecture=amd64
-    fi
-    for owner in "${base_owners[@]}"; do
-      if [[ $arm == host ]]; then targets+=("${owner}_amd64"); else targets+=("${owner}_rc_kvm"); fi
-    done
-    arguments=(test --config=rbe --config=x86_64 --strategy=TestRunner=local
-      "--//tools/bazeldefs:local_test_architecture=$local_architecture"
-      --//tools/bazeldefs:local_test_backend=local --//tools/bazeldefs:page_size=4k
-      --build_tag_filters= --test_tag_filters= --strip=never --keep_going
-      --incompatible_sandbox_hermetic_tmp=false --local_test_jobs=1
-      --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1
-      --test_sharding_strategy=disabled --test_output=errors
-      --zip_undeclared_test_outputs "--test_env=GTEST_FILTER=$filter")
-    if [[ $arm == rc ]]; then arguments+=(--run_under=//test/rbe:local_root); fi
-    status=0
-    run_phase "$phase" "${arguments[@]}" "${targets[@]}" || status=$?
-    if (( result == 0 && status != 0 )); then result=$status; fi
-  done
-done
-exit "$result"
+# Preserve the canonical RC profile's single local slot. Each action boots its
+# own guest; no test filter, sharding override or timeout override is supplied.
+run_phase full-owners test --config=rbe --config=x86_64 \
+  --strategy=TestRunner=local --run_under=//test/rbe:local_root \
+  --//tools/bazeldefs:local_test_architecture= \
+  --//tools/bazeldefs:local_test_backend=local --//tools/bazeldefs:page_size=4k \
+  --build_tag_filters= --test_tag_filters= --strip=never --keep_going \
+  --incompatible_sandbox_hermetic_tmp=false --local_test_jobs=1 \
+  --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
+  --test_output=errors --zip_undeclared_test_outputs --test_env=GTEST_FILTER= \
+  "${labels[@]}"
