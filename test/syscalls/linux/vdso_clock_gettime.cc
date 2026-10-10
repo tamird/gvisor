@@ -130,9 +130,14 @@ class CycleObserver {
     return sample;
   }
 
-  void Record(CycleSample sample, const char* point) {
+  uint64_t Record(CycleSample sample, const char* point) {
+    uint64_t reverse_ticks = 0;
     if (samples != 0) {
       if (sample.ticks < previous_.ticks) {
+        reverse_ticks = previous_.ticks - sample.ticks;
+        if (reverse_ticks > max_reverse_ticks) {
+          max_reverse_ticks = reverse_ticks;
+        }
         Capture(regression_examples_, regressions, sample, point);
       }
       if (sample.aux != previous_.aux) {
@@ -142,6 +147,7 @@ class CycleObserver {
     previous_ = sample;
     previous_point_ = point;
     ++samples;
+    return reverse_ticks;
   }
 
   std::string RegressionExamples() const {
@@ -151,6 +157,7 @@ class CycleObserver {
 
   uint64_t samples = 0;
   uint64_t regressions = 0;
+  uint64_t max_reverse_ticks = 0;
   uint64_t aux_changes = 0;
 
  private:
@@ -213,6 +220,9 @@ TEST(NativeCycleHandoffTest, SerializedCounters) {
   std::atomic<unsigned> turn{0};
   std::atomic<bool> stop{false};
   CycleObserver path;
+  // Index by the destination side of the token handoff.
+  std::array<uint64_t, 2> direction_regressions{};
+  std::array<uint64_t, 2> direction_max_reverse_ticks{};
   auto sample = [&](unsigned side) {
     cpu_set_t pinned;
     CPU_ZERO(&pinned);
@@ -229,7 +239,14 @@ TEST(NativeCycleHandoffTest, SerializedCounters) {
         asm volatile("pause");
         continue;
       }
-      path.Record(ReadCycles(), side == 0 ? "first_cpu" : "second_cpu");
+      const uint64_t reverse_ticks =
+          path.Record(ReadCycles(), side == 0 ? "first_cpu" : "second_cpu");
+      if (reverse_ticks != 0) {
+        ++direction_regressions[side];
+        if (reverse_ticks > direction_max_reverse_ticks[side]) {
+          direction_max_reverse_ticks[side] = reverse_ticks;
+        }
+      }
       turn.store(1 - side, std::memory_order_release);
     }
   };
@@ -246,6 +263,16 @@ TEST(NativeCycleHandoffTest, SerializedCounters) {
   RecordProperty("native_handoff_cycle_samples", std::to_string(path.samples));
   RecordProperty("native_handoff_cycle_regressions",
                  std::to_string(path.regressions));
+  RecordProperty("native_handoff_max_reverse_ticks",
+                 std::to_string(path.max_reverse_ticks));
+  for (unsigned side = 0; side < cpus.size(); ++side) {
+    const std::string prefix = side == 0 ? "native_handoff_second_to_first_"
+                                         : "native_handoff_first_to_second_";
+    RecordProperty(prefix + "regressions",
+                   std::to_string(direction_regressions[side]));
+    RecordProperty(prefix + "max_reverse_ticks",
+                   std::to_string(direction_max_reverse_ticks[side]));
+  }
   RecordProperty("native_handoff_aux_changes",
                  std::to_string(path.aux_changes));
   RecordProperty("native_handoff_regression_examples",
