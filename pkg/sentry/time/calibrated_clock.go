@@ -208,6 +208,8 @@ func (c *CalibratedClock) Update(parked bool) (Parameters, bool) {
 		BaseCycles: newest.after,
 	}, parked)
 
+	c.Debugf("diagnostic update: parked=%t sample=[%d,%d] reference=%d params=%+v ready=%t error_ns=%d", parked, newest.before, newest.after, newest.ref, c.params, c.ready, c.errorNS)
+
 	return c.params, true
 }
 

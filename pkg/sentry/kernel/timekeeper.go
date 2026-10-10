@@ -271,6 +271,7 @@ func (t *Timekeeper) SetClocks(c sentrytime.Clocks, params *VDSOParamPage) {
 //
 // Preconditions: updateMu must be held
 func (t *Timekeeper) update(parked bool) {
+	log.Debugf("diagnostic clock update: parked=%t clamp_count=%d", parked, monotonicClampCount.Load())
 	// Call Update within a Write block to prevent the VDSO from using the old
 	// params between Update and Write.
 	if err := t.params.Write(func() vdsoParams {
@@ -473,6 +474,10 @@ func (t *Timekeeper) Resume(params *VDSOParamPage) {
 	t.startAfterFuncSchedulerLocked()
 }
 
+// Bound detailed diagnostic output to the first 32 clamps in this process.
+// The updater records the total count so suppressed details remain visible.
+var monotonicClampCount atomicbitops.Uint64
+
 // GetTime returns the current time in nanoseconds.
 func (t *Timekeeper) GetTime(c sentrytime.ClockID) (int64, error) {
 	if t.clocks == nil {
@@ -501,6 +506,9 @@ func (t *Timekeeper) GetTime(c sentrytime.ClockID) (int64, error) {
 			// always bounded by the last time read.
 			oldLowerBound := t.monotonicLowerBound.Load()
 			if now < oldLowerBound {
+				if n := monotonicClampCount.Add(1); n <= 32 {
+					log.Debugf("diagnostic monotonic clamp: count=%d projected=%d lower_bound=%d delta_ns=%d", n, now, oldLowerBound, oldLowerBound-now)
+				}
 				now = oldLowerBound
 				break
 			}
