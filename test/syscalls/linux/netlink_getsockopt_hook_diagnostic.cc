@@ -54,60 +54,63 @@ TEST(NetlinkGetSockoptHookTest, CopyBeforeLengthRejection) {
   const bool bpf = ASSERT_NO_ERRNO_AND_VALUE(HaveCapability(CAP_BPF));
   std::cout << "kernel=" << uts.release << " arch=" << uts.machine
             << " CAP_SYS_ADMIN=" << admin << " CAP_BPF=" << bpf << std::endl;
-  ASSERT_TRUE(admin) << "Controlled hook probe requires initial-namespace access";
+  ASSERT_TRUE(admin)
+      << "Controlled hook probe requires initial-namespace access";
 
   Mounter mounter(ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir()));
   Cgroup root = ASSERT_NO_ERRNO_AND_VALUE(mounter.MountCgroup2fs());
   Cgroup child = ASSERT_NO_ERRNO_AND_VALUE(root.CreateChild("netlink-hook"));
   Cleanup remove([&] { EXPECT_NO_ERRNO(child.Delete()); });
-  FileDescriptor procs = ASSERT_NO_ERRNO_AND_VALUE(
-      Open(child.Relpath("cgroup.procs"), O_WRONLY));
-  FileDescriptor directory = ASSERT_NO_ERRNO_AND_VALUE(
-      Open(child.Path(), O_RDONLY | O_DIRECTORY));
+  FileDescriptor procs =
+      ASSERT_NO_ERRNO_AND_VALUE(Open(child.Relpath("cgroup.procs"), O_WRONLY));
+  FileDescriptor directory =
+      ASSERT_NO_ERRNO_AND_VALUE(Open(child.Path(), O_RDONLY | O_DIRECTORY));
   const int procs_fd = procs.get();
   const auto check = [procs_fd](bool hooked) {
-    ASSERT_THAT(InForkedProcess([procs_fd, hooked] {
-                  TEST_CHECK(write(procs_fd, "0", 1) == 1);
-                  const int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-                  TEST_PCHECK(fd >= 0);
-                  const int group = RTNLGRP_LINK;
-                  TEST_CHECK_SUCCESS(setsockopt(fd, SOL_NETLINK,
-                      NETLINK_ADD_MEMBERSHIP, &group, sizeof(group)));
-                  char full[256] = {};
-                  socklen_t full_len = sizeof(full);
-                  TEST_CHECK_SUCCESS(getsockopt(fd, SOL_NETLINK,
-                      NETLINK_LIST_MEMBERSHIPS, full, &full_len));
-                  TEST_CHECK(full_len >= sizeof(uint32_t));
-                  TEST_CHECK(full_len <= sizeof(full));
-                  TEST_CHECK(full_len % sizeof(uint32_t) == 0);
-                  socklen_t size = 0;
-                  const int query = getsockopt(fd, SOL_NETLINK,
-                      NETLINK_LIST_MEMBERSHIPS, nullptr, &size);
-                  TEST_CHECK(query == 0 ||
-                             (hooked && query == -1 && errno == EFAULT));
-                  TEST_CHECK(size == full_len);
-                  for (socklen_t available = 0; available < full_len; ++available) {
-                    char buffer[sizeof(full)];
-                    memset(buffer, 'x', sizeof(buffer));
-                    socklen_t length = available;
-                    const int ret = getsockopt(fd, SOL_NETLINK,
-                        NETLINK_LIST_MEMBERSHIPS, buffer, &length);
-                    TEST_CHECK(ret == (hooked ? -1 : 0));
-                    if (hooked) {
-                      TEST_CHECK(errno == EFAULT);
-                    }
-                    TEST_CHECK(length == full_len);
-                    const size_t copied = available / sizeof(uint32_t) * sizeof(uint32_t);
-                    TEST_CHECK(memcmp(buffer, full, copied) == 0);
-                    for (size_t i = copied; i < sizeof(buffer); ++i) {
-                      TEST_CHECK(buffer[i] == 'x');
-                    }
-                  }
-                  TEST_CHECK_SUCCESS(close(fd));
-                  _exit(0);
-                }),
-                IsPosixErrorOkAndHolds(0));
-    std::cout << "hooked=" << hooked << " all_short_lengths_checked" << std::endl;
+    ASSERT_THAT(
+        InForkedProcess([procs_fd, hooked] {
+          TEST_CHECK(write(procs_fd, "0", 1) == 1);
+          const int fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+          TEST_PCHECK(fd >= 0);
+          const int group = RTNLGRP_LINK;
+          TEST_CHECK_SUCCESS(setsockopt(fd, SOL_NETLINK, NETLINK_ADD_MEMBERSHIP,
+                                        &group, sizeof(group)));
+          char full[256] = {};
+          socklen_t full_len = sizeof(full);
+          TEST_CHECK_SUCCESS(getsockopt(
+              fd, SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS, full, &full_len));
+          TEST_CHECK(full_len >= sizeof(uint32_t));
+          TEST_CHECK(full_len <= sizeof(full));
+          TEST_CHECK(full_len % sizeof(uint32_t) == 0);
+          socklen_t size = 0;
+          const int query = getsockopt(
+              fd, SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS, nullptr, &size);
+          TEST_CHECK(query == 0 || (hooked && query == -1 && errno == EFAULT));
+          TEST_CHECK(size == full_len);
+          for (socklen_t available = 0; available < full_len; ++available) {
+            char buffer[sizeof(full)];
+            memset(buffer, 'x', sizeof(buffer));
+            socklen_t length = available;
+            const int ret = getsockopt(
+                fd, SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS, buffer, &length);
+            TEST_CHECK(ret == (hooked ? -1 : 0));
+            if (hooked) {
+              TEST_CHECK(errno == EFAULT);
+            }
+            TEST_CHECK(length == full_len);
+            const size_t copied =
+                available / sizeof(uint32_t) * sizeof(uint32_t);
+            TEST_CHECK(memcmp(buffer, full, copied) == 0);
+            for (size_t i = copied; i < sizeof(buffer); ++i) {
+              TEST_CHECK(buffer[i] == 'x');
+            }
+          }
+          TEST_CHECK_SUCCESS(close(fd));
+          _exit(0);
+        }),
+        IsPosixErrorOkAndHolds(0));
+    std::cout << "hooked=" << hooked << " all_short_lengths_checked"
+              << std::endl;
   };
   check(false);
   ASSERT_FALSE(HasFatalFailure());

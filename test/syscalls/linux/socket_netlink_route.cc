@@ -145,8 +145,8 @@ PosixErrorOr<FileDescriptor> netlinkRouteSocketInLinkGroup() {
 PosixErrorOr<socklen_t> NetlinkMembershipsSize(int fd) {
   const bool on_gvisor = IsRunningOnGvisor();
   socklen_t len = 0;
-  const int ret = getsockopt(fd, SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS,
-                             nullptr, &len);
+  const int ret =
+      getsockopt(fd, SOL_NETLINK, NETLINK_LIST_MEMBERSHIPS, nullptr, &len);
   if (ret < 0 && (on_gvisor || errno != EFAULT)) {
     return PosixError(errno, "getsockopt(NETLINK_LIST_MEMBERSHIPS) size");
   }
@@ -227,9 +227,10 @@ TEST(NetlinkRouteTest, ListMembershipsTruncated) {
       ASSERT_THAT(ret, SyscallSucceeds());
     } else {
       // A cgroup getsockopt hook may reject the expanded length after netlink
-      // copied the bitmap. Check all output bytes even when this returns EFAULT.
+      // copied the bitmap. Check all output bytes even when this returns
+      // EFAULT.
       ASSERT_THAT(ret, ::testing::AnyOf(SyscallSucceeds(),
-                                       SyscallFailsWithErrno(EFAULT)));
+                                        SyscallFailsWithErrno(EFAULT)));
     }
     EXPECT_EQ(result_len, len);
     const size_t copied = available / sizeof(uint32_t) * sizeof(uint32_t);
@@ -2940,10 +2941,10 @@ TEST(NetlinkRouteTest, LinkMulticastGroupBasic) {
   ASSERT_EQ(res_groups_len % sizeof(uint32_t), 0);
   std::vector<uint32_t> res_groups(res_groups_len / sizeof(uint32_t));
   const socklen_t capacity = res_groups_len;
-  ASSERT_THAT(getsockopt(nlsk_sockopt_group.get(), SOL_NETLINK,
-                         NETLINK_LIST_MEMBERSHIPS, res_groups.data(),
-                         &res_groups_len),
-              SyscallSucceeds());
+  ASSERT_THAT(
+      getsockopt(nlsk_sockopt_group.get(), SOL_NETLINK,
+                 NETLINK_LIST_MEMBERSHIPS, res_groups.data(), &res_groups_len),
+      SyscallSucceeds());
   EXPECT_EQ(res_groups_len, capacity);
   EXPECT_EQ(res_groups[0], RTMGRP_LINK);
 
