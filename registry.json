@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T02:21:39.648045+00:00",
+    "updatedAt": "2026-10-10T02:51:31.702638+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -804,13 +804,15 @@
       "url": "https://github.com/google/gvisor/pull/15030",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-10T01:52:47.238370+00:00",
-      "summary": "Etienne requested changes on current head a807153cf at 01:21:30 UTC. The public diagnostic identifies an intentional oneGuardStruct copy in tools/checklocks/test/closures.go:411 that triggers copylocks because the structure contains sync.Mutex. The fixture needs an appropriate Nogo suppression. Root owns the correction and pending reply. This new public evidence supersedes the earlier internal-log limitation; the published head is unchanged.\n\nMatching import #15255 has refreshed again to 4fcdb0f35 with checks pending. Earlier approved-head and import results remain historical, including the aggregate-copy validation linked below. The current changes-requested decision requires a source response; an earlier approval does not close it.",
+      "updatedAt": "2026-10-10T02:26:13.278484+00:00",
+      "summary": "The user-approved precise suppression is published at 950a6bc5d. The intentional oneGuardStruct copy now has an intent comment and //nolint:copylocks, using syntax supported by the selected rules_go parser. Root posted the reply to Etienne; internal verification remains open and the thread is intentionally unresolved. This is not yet proof that the internal check passed.\n\nBlanket NOLINT was rejected. Etienne’s reported diagnostic at tools/checklocks/test/closures.go:411 and the original import failures remain retained; the approved aggregate-copy behavior is unchanged.",
       "followup": {
-        "disposition": "Maintainer changes requested; fixture suppression assigned",
-        "owner": "root",
-        "nextAction": "Root prepares the intentional-copy Nogo suppression and validates the owning fixture/analyzer before the source amendment and reply. Preserve the exact reported diagnostic and original failures; no correction is yet published.",
+        "disposition": "Suppression delivered; internal verification pending",
+        "owner": "external_sweeps",
+        "nextAction": "Observe fresh-head CI, matching imports and Etienne’s response. The precise suppression and reply are delivered, but the internal check must confirm it; do not resolve the thread, claim the internal failure fixed, or repeat outreach.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/950a6bc5d30c27e6f2a13096228895dcab13aedc",
+          "https://github.com/google/gvisor/pull/15030#discussion_r4236022935",
           "https://github.com/google/gvisor/pull/15030#discussion_r4235809666",
           "https://github.com/google/gvisor/pull/15030#pullrequestreview-5476846293",
           "https://buildkite.com/gvisor/pipeline/builds/50348",
@@ -828,12 +830,12 @@
           "https://github.com/tamird/gvisor/commit/a807153cf320a6c79b68b8243257f26d0da30f8a",
           "https://github.com/google/gvisor/pull/15030#pullrequestreview-5475824191"
         ],
-        "reviewedAt": "2026-10-10T01:52:47.238370+00:00",
-        "sourceHead": "a807153cf320a6c79b68b8243257f26d0da30f8a",
+        "reviewedAt": "2026-10-10T02:26:13.278484+00:00",
+        "sourceHead": "950a6bc5d30c27e6f2a13096228895dcab13aedc",
         "reviewDecision": "CHANGES_REQUESTED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "UNKNOWN"
       },
-      "head": "a807153cf320a6c79b68b8243257f26d0da30f8a",
+      "head": "950a6bc5d30c27e6f2a13096228895dcab13aedc",
       "reviewDecision": "CHANGES_REQUESTED"
     },
     {
@@ -1182,12 +1184,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-10T02:21:39.648045+00:00",
-      "summary": "Etienne requested changes on current head 6c70cb26b at 01:42:05 UTC. Four unresolved comments ask to preserve the earlier semantics in TMPFS regular-file and epoll documentation, remove temporal phrasing from the TMPFS comment, and justify the added initialization locking in vfs.go. MAIN prepared public proposal e846cc6bb for all four requests and has passed six existing focused checks. The published narrowed change remains unchanged; replies and the actual contributor handoff remain pending.\n\nEarlier source peers and remote VFS/TMPFS plus owning Nogo checks remain retained. Their passing results do not resolve the new maintainability and semantic requests.",
+      "updatedAt": "2026-10-10T02:51:31.702638+00:00",
+      "summary": "The maintainer’s four threads remain open. Revised proposal a306517c6 changes only the three comments and retains all live Init guards. The previous e846 proposal is superseded after the user rejected assuming exclusive access from the Init name. The new scope is prepared for contributor review, with no unanswered question yet confirmed. The live PR remains 6c70cb26b; the Init discussion is unresolved.",
       "followup": {
-        "disposition": "Maintainer amendment validated; contributor handoff preparing",
-        "owner": "root",
-        "nextAction": "Root prepares the actual contributor handoff for proposal e846cc6bb after MAIN closed all six focused checks. The live PR remains 6c70cb26b and replies are not posted. Do not infer an unanswered contributor decision until the question is sent.",
+        "disposition": "Revised comment proposal prepared; Init unresolved",
+        "owner": "restore_integration_review",
+        "nextAction": "MAIN’s revised a306517c6 changes only three comments and retains all live Init guards. Root owns the new contributor handoff; the old e846 answer was changes requested. Leave the live PR, public replies and Init thread unchanged until authorization is clear.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/ab7b9fc2-1588-409f-bd78-622ee50131aa",
           "https://github.com/tamird/gvisor/commit/e846cc6bbdc4211bd21795cf14b1d39cac1397f2",
@@ -1198,7 +1200,7 @@
           "https://github.com/google/gvisor/pull/14343#issuecomment-5390710435",
           "https://github.com/tamird/gvisor/commit/6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
         ],
-        "reviewedAt": "2026-10-10T02:21:39.648045+00:00",
+        "reviewedAt": "2026-10-10T02:51:31.702638+00:00",
         "sourceHead": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -2586,19 +2588,19 @@
       "title": "Wait for writable TCP benchmark sockets",
       "url": "https://github.com/google/gvisor/pull/15436",
       "group": "tests",
-      "status": "open",
-      "summary": "The independent one-commit fork refresh at 587dd659205a6081de5224c543b1f4a514cac818 is public and tracked on verified upstream e1bc74024. Its complete readiness patch and message are unchanged from ed989cc203, preserving the separately landed argument-range cleanup. Independent source peer 21aefece98dc and publication 4bdf8584b0ca bind the refresh. BM_SendmsgTCP now retries only EAGAIN and waits for POLLOUT rather than the SIGPOLL code and 10ms timeout. The contributor approved this exact commit. Ready PR #15436 is now open against master with the reviewed message and thread attribution verified. Initial mergeability was unresolved; current CI, reviews and mergeability are shown in the synchronized snapshot. No new workload was run for delivery.\n\nThe complete current benchmark source is byte-identical to tested eb1aeec729. Corrected parent d453f10c-ab76-456a-b56f-27e4e90ceca2 passed four bounded native/systrap before-and-after 256 MiB, iteration-one rows with a separate 2 GB worker allocation. This proves execution, not throughput or forced EAGAIN-path coverage. Original parent dbdf442f remains failed from insufficient 300/500 MB worker memory, and its evidence is retained.",
-      "updatedAt": "2026-10-08T22:30:49.440163+00:00",
+      "status": "merged",
+      "summary": "PR #15436 merged at 02:37:49 UTC together with matching import #15539. The writable TCP benchmark socket change is delivered. Original source and validation records remain linked below.",
+      "updatedAt": "2026-10-10T02:51:31.702638+00:00",
       "followup": {
-        "disposition": "Import PR open; checks pending",
+        "disposition": "Merged; source work complete",
         "owner": "external_sweeps",
-        "nextAction": "Observe the linked exact-head import checks and landing; preserve current requested reviewers without duplicate outreach.",
+        "nextAction": "No remaining source amendment or review outreach is assigned for this merged change. Treat any later import-head check separately from the landed source result.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15436",
           "https://github.com/google/gvisor/pull/15436#pullrequestreview-5463363909",
           "https://github.com/google/gvisor/pull/15539"
         ],
-        "reviewedAt": "2026-10-08T22:30:49.440163+00:00",
+        "reviewedAt": "2026-10-10T02:51:31.702638+00:00",
         "sourceHead": "587dd659205a6081de5224c543b1f4a514cac818",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -5191,22 +5193,22 @@
       "url": "https://github.com/google/gvisor/pull/15621",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-10T02:21:39.648045+00:00",
-      "summary": "The contributor-approved scalar map iterator storage change is delivered as PR #15621 at 3564cfff0, rebased on the merged MapRange prerequisite. Both changed source bodies equal the approved proposal; only message wrapping changed. Current-head CI and maintainer review are tracked from GitHub. Its initial bot review contains no requested change.\n\nThe source reuses iterator storage only for scalar keys and values in maps with more than one entry. Aggregate and deferred references retain their existing storage. Correctness checks include mixed scalar/aggregate entries and NaN keys. The separate fixed Map Save experiment measured 5.43% less time and 35.82% fewer allocations.",
+      "updatedAt": "2026-10-10T02:51:31.702638+00:00",
+      "summary": "Etienne approved current head 3564cfff0 at 02:23:50 UTC. Matching import #15624 at c22736115 is pending. The user-approved scalar iterator storage proposal is delivered; its prerequisite and contributor decision are complete. Source-preservation and existing scalar/aggregate and NaN regression evidence remain retained.",
       "followup": {
-        "disposition": "Approved proposal delivered; maintainer review and CI pending",
+        "disposition": "Fresh approval; matching import pending",
         "owner": "external_sweeps",
         "sourceHead": "3564cfff0c318a5bfcda6f22482441a07c0591be",
-        "reviewedAt": "2026-10-10T02:21:39.648045+00:00",
-        "nextAction": "Observe current-head checks and maintainer feedback on #15621. The source prerequisite and contributor approval are complete; no proposal question remains.",
+        "reviewedAt": "2026-10-10T02:51:31.702638+00:00",
+        "nextAction": "Observe matching import #15624 at c22736115 and the approved current head through landing. Etienne approved 3564cfff0 at 02:23:50; no repeat review notice is needed.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15621",
           "https://github.com/tamird/gvisor/commit/904b64cbc5d7a63ecc44c9ac84abc1e2837f5cdd",
           "https://github.com/google/gvisor/pull/15542",
           "https://app.buildbuddy.io/invocation/69c48b39-e363-4862-a1ed-7e4375f3f178"
         ],
-        "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "reviewDecision": "APPROVED",
+        "mergeable": "UNKNOWN"
       },
       "number": 15621
     },
@@ -5215,24 +5217,25 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "state-map-decode-slots",
-      "head": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+      "head": "912173d856d9dab41c698afad3f3499602dce009",
       "title": "Reuse temporary map decoding slots",
       "url": "https://github.com/google/gvisor/pull/15603",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-10T02:21:39.648045+00:00",
-      "summary": "GitHub now reports a source conflict for current head 2751ca4d7. Root owns rebase assignment and preservation of the approved decoder patch. No rebase is published yet. Contributor approval remains fulfilled; this is source-maintenance work, not an unanswered review question.\n\nMap decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries retain fresh storage for delayed callbacks, while interfaces keep independent dynamic storage. Existing nil-transition, typed-nil and retained-receiver tests and the separate Map Load measurements remain valid for their recorded source.",
+      "updatedAt": "2026-10-10T02:46:30.966405+00:00",
+      "summary": "The mechanical rebase is delivered at 912173d85 on current master. Its only conflict combined imports with the upstream NaN map test; independent review confirmed the approved production patch is unchanged. The published PR is mergeable, with ordinary review gates pending. No prior human approval needed re-requesting.\n\nMap decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries retain fresh storage for delayed callbacks, while interfaces keep independent dynamic storage. Existing nil-transition, typed-nil and retained-receiver tests and the separate Map Load measurements remain bound to their recorded source.",
       "followup": {
-        "disposition": "Source conflict; rebase assigned",
-        "owner": "root",
-        "sourceHead": "2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
-        "reviewedAt": "2026-10-10T02:21:39.648045+00:00",
-        "nextAction": "Root assigns and completes a current-master rebase while preserving the approved decoder patch and existing review history. Verify the actual conflict before editing; no duplicate writer or new contributor hold.",
+        "disposition": "Rebase delivered; maintainer review pending",
+        "owner": "external_sweeps",
+        "sourceHead": "912173d856d9dab41c698afad3f3499602dce009",
+        "reviewedAt": "2026-10-10T02:46:30.966405+00:00",
+        "nextAction": "Observe fresh-head checks and maintainer feedback at 912173d85. Source-preservation review is complete, the conflict is resolved, and no contributor hold or repeated review notification applies.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/912173d856d9dab41c698afad3f3499602dce009",
           "https://github.com/google/gvisor/pull/15603",
           "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10"
         ],
-        "mergeable": "CONFLICTING",
+        "mergeable": "UNKNOWN",
         "reviewDecision": null
       },
       "number": 15603
@@ -5383,6 +5386,32 @@
         ],
         "mergeable": "MERGEABLE",
         "reviewDecision": null
+      }
+    },
+    {
+      "id": "branch:review/checklocks-vfs-feedback",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/checklocks-vfs-feedback",
+      "head": "a306517c61094f024f927a94fbf44d9e5d410f90",
+      "title": "Reconcile TMPFS and VFS review feedback",
+      "url": "https://github.com/tamird/gvisor/commit/a306517c61094f024f927a94fbf44d9e5d410f90",
+      "group": "analysis",
+      "status": "Revised comments-only proposal prepared; Init unresolved",
+      "updatedAt": "2026-10-10T02:51:31.702638+00:00",
+      "summary": "The revised proposal a306517c6 changes only three comments and retains every live Init guard. It is prepared for a new contributor handoff; no new question has been confirmed and publication is not authorized by the earlier answer. The Init discussion remains unresolved.\n\nThe user answered the previous e846cc6bb request with changes requested, rejecting an assumption of exclusive access from the Init name. That decision applies to the earlier proposal and has not been reassigned to this revision. The current live PR remains 6c70cb26b.",
+      "followup": {
+        "disposition": "Revised comments-only proposal prepared",
+        "owner": "restore_integration_review",
+        "sourceHead": "a306517c61094f024f927a94fbf44d9e5d410f90",
+        "reviewedAt": "2026-10-10T02:51:31.702638+00:00",
+        "nextAction": "Root prepares the contributor handoff for the revised a306517c6 scope. Preserve the user’s answered e846 objection and keep the Init discussion open; do not publish, reply or resolve from the old decision.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/a306517c61094f024f927a94fbf44d9e5d410f90",
+          "https://github.com/tamird/gvisor/commit/e846cc6bbdc4211bd21795cf14b1d39cac1397f2",
+          "https://github.com/google/gvisor/pull/14343#discussion_r4235876011",
+          "https://app.buildbuddy.io/invocation/ab7b9fc2-1588-409f-bd78-622ee50131aa"
+        ]
       }
     }
   ],
@@ -6746,6 +6775,17 @@
         "https://github.com/google/gvisor/pull/15579",
         "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7"
       ]
+    },
+    {
+      "from": "branch:review/checklocks-vfs-feedback",
+      "to": "pr:14343",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Revised unpublished comments-only amendment; Init guards remain live and its discussion remains open. The prior contributor answer does not authorize this revision.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/a306517c61094f024f927a94fbf44d9e5d410f90",
+        "https://github.com/tamird/gvisor/commit/e846cc6bbdc4211bd21795cf14b1d39cac1397f2"
+      ]
     }
   ],
   "investigations": [
@@ -7427,8 +7467,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T02:16:20.487662+00:00",
-      "summary": "The direct generated save/load architecture is now a concrete experimental prototype at b83596347. It uses framed primitive byte spans and owned reference handles within the existing identity, alias and hook graph; the default Save format is unchanged. Correctness validation 2b48aa70 ended with five passing runtime actions and three passing analyzers; two analyzers failed on an unused initial Scalar value. The failed parent remains retained and the prototype is not ready for a source-readiness claim. Earlier pointer-only controls and profiling are complete; their evidence remains separate from this architectural prototype. These are separate experiments; architecture remains the primary work.",
+      "updatedAt": "2026-10-10T02:48:41.413290+00:00",
+      "summary": "The direct generated save/load architecture is now a concrete experimental prototype at b83596347. It uses framed primitive byte spans and owned reference handles within the existing identity, alias and hook graph; the default Save format is unchanged. Correctness validation 2b48aa70 ended with five passing runtime actions and three passing analyzers; two analyzers failed on an unused initial Scalar value. An initializer-only continuation has completed successfully and its original-result collection is pending. The first failed parent remains retained; framed performance has not been measured yet. Earlier pointer-only controls and profiling are complete; their evidence remains separate from this architectural prototype. These are separate experiments; architecture remains the primary work.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -7516,7 +7556,7 @@
           ]
         },
         {
-          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. No performance or source-readiness claim is established.",
+          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. An initializer-only continuation f34a56f9 completed successfully; original-result collection remains pending. Framed measurements are preparing, with no performance result yet.",
           "evidence": [
             {
               "label": "Direct framed prototype",
@@ -7542,8 +7582,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T02:16:20.487662+00:00",
-      "summary": "The direct generated save/load architecture is now a concrete experimental prototype at b83596347. It uses framed primitive byte spans and owned reference handles within the existing identity, alias and hook graph; the default Save format is unchanged. Correctness validation 2b48aa70 ended with five passing runtime actions and three passing analyzers; two analyzers failed on an unused initial Scalar value. The failed parent remains retained and the prototype is not ready for a source-readiness claim. Earlier pointer-only controls and profiling are complete; their evidence remains separate from this architectural prototype. These are separate experiments; architecture remains the primary work.",
+      "updatedAt": "2026-10-10T02:48:41.413290+00:00",
+      "summary": "The direct generated save/load architecture is now a concrete experimental prototype at b83596347. It uses framed primitive byte spans and owned reference handles within the existing identity, alias and hook graph; the default Save format is unchanged. Correctness validation 2b48aa70 ended with five passing runtime actions and three passing analyzers; two analyzers failed on an unused initial Scalar value. An initializer-only continuation has completed successfully and its original-result collection is pending. The first failed parent remains retained; framed performance has not been measured yet. Earlier pointer-only controls and profiling are complete; their evidence remains separate from this architectural prototype. These are separate experiments; architecture remains the primary work.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7703,7 +7743,7 @@
           ]
         },
         {
-          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. No performance or source-readiness claim is established.",
+          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. An initializer-only continuation f34a56f9 completed successfully; original-result collection remains pending. Framed measurements are preparing, with no performance result yet.",
           "evidence": [
             {
               "label": "Direct framed prototype",
