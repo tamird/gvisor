@@ -60,6 +60,7 @@ var (
 	oneSandbox         = flag.Bool("one-sandbox", false, "run all test cases in one sandbox")
 	strace             = flag.Bool("strace", false, "enable strace logs")
 	platform           = flag.String("platform", "ptrace", "platform to run on")
+	disableFastPath    = flag.Bool("systrap-disable-fast-path", false, "disable the systrap fast path for diagnostics")
 	platformSupport    = flag.String("platform-support", "", "String passed to the test as GVISOR_PLATFORM_SUPPORT environment variable. Used to determine which syscall tests are expected to work with the current platform.")
 	network            = flag.String("network", "none", "network stack to run on (sandbox, host, none)")
 	useTmpfs           = flag.Bool("use-tmpfs", false, "mounts tmpfs for /tmp")
@@ -451,6 +452,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 		fmt.Sprintf("-iouring=%t", *ioUring),
 		"-watchdog-action=panic",
 		"-platform", *platform,
+		fmt.Sprintf("-systrap-disable-fast-path=%t", *disableFastPath),
 		"-file-access", *fileAccess,
 		"-gvisor-gro",
 		"-host-settings=check_mandatory",
