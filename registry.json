@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T14:31:51.129671+00:00",
+    "updatedAt": "2026-10-10T15:07:42.875103+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -101,17 +101,17 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-09T13:51:02.166808+00:00",
-      "summary": "The source-preserving rebase is published at 44d3ce3bc on upstream c5e9146e6. Actual GitHub observation at 2026-10-09T13:46:03.171165+00:00 reports MERGEABLE and CHANGES_REQUESTED. The original October 3 one-week maintainer hold and its owner remain unchanged; no comment or reviewer request was added. Independent source review found only current-base BUILD/module context adaptations, with the approved behavior retained. No fresh standalone runtime pass is claimed.\n\nEarlier source and hold history:\n\nEtienne requested changes on exact c5e943bc48 at 07:17:45 UTC on October 3: “Hold on this for a week, it will fail internal checks until some exception goes through.” https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571. The explicit review hold keeps its dependent upstream deliveries blocked; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at c5e943bc48ce63b12fc67b826919b872ebd01a55 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15146#issuecomment-5963410153. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "Etienne’s requested one-week hold elapsed on October 10 at 07:17:45 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
       "followup": {
-        "disposition": "Maintainer time hold; source-preserving rebase complete",
-        "owner": "root / upstream maintainer",
-        "nextAction": "Preserve the one-week hold from October 3 for internal exceptions, approximately October 10 subject to maintainer confirmation. A conflict-free new head is not approval and does not bypass the existing changes request.",
+        "disposition": "Requested week elapsed; review status unchanged",
+        "owner": "root",
+        "nextAction": "Reconcile the existing changes-requested review with the elapsed interval. The follow-up is drafted but not posted; no new source work or release-confirmation prerequisite is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15146#pullrequestreview-5399508571",
           "https://github.com/tamird/gvisor/commit/44d3ce3bc"
         ],
-        "reviewedAt": "2026-10-09T13:51:02.166808+00:00",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "44d3ce3bcc2b30a60748a64a3ab014591dc6272e",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -129,16 +129,16 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-03T07:54:01.123952+00:00",
-      "summary": "Etienne requested changes at 07:23:09 UTC on October 3: “Hold for a week for internal exceptions to propagate before this can be merged.” https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825. The source remains open; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at a9429cd833940fd776a4c44e792e322069b7bc6f on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15145#issuecomment-5963409909. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "Etienne’s requested one-week hold elapsed on October 10 at 07:23:09 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
       "followup": {
-        "disposition": "explicit maintainer time hold",
-        "owner": "root / upstream maintainer",
-        "nextAction": "Hold for a week from October 3 07:23 UTC for internal exceptions; approximately October 10, subject to maintainer confirmation. No source revision or bypass is justified.",
+        "disposition": "Requested week elapsed; review status unchanged",
+        "owner": "root",
+        "nextAction": "Reconcile the existing changes-requested review with the elapsed interval. The follow-up is drafted but not posted; no new source work or release-confirmation prerequisite is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15145#pullrequestreview-5399521825"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "a9429cd833940fd776a4c44e792e322069b7bc6f",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -418,17 +418,17 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-09T13:51:02.166808+00:00",
-      "summary": "The source-preserving rebase is published at 41b6cb93d on upstream c5e9146e6. Actual GitHub observation at 2026-10-09T13:46:03.171165+00:00 reports MERGEABLE and CHANGES_REQUESTED. The original October 3 one-week maintainer hold and its owner remain unchanged; no comment or reviewer request was added. Independent source review found only current-base BUILD/module context adaptations, with the approved behavior retained. No fresh standalone runtime pass is claimed.\n\nEarlier source and hold history:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 6163d92a567f0983df38f57ec2596adc917ae78a. Preserve the one-week hold from October 3 07:24:40 UTC, approximately October 10 subject to maintainer confirmation. The new conflict does not override CHANGES_REQUESTED or justify bypassing the hold.\n\nEarlier source and review history:\n\nEtienne requested changes at 07:24:40 UTC on October 3: “Hold for a week for internal exceptions to propagate before this can be merged.” https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222. The source remains open; no retry or bypass is authorized.\n\nThe authorized October 2/3 rebase is published at 6163d92a567f0983df38f57ec2596adc917ae78a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15114#issuecomment-5963409102. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "Etienne’s requested one-week hold elapsed on October 10 at 07:24:40 UTC. GitHub still records CHANGES_REQUESTED, but the timed hold is no longer active. The complete current discussion contains no newer source-change request. A concise follow-up draft is prepared; it has not been posted.",
       "followup": {
-        "disposition": "Maintainer time hold; source-preserving rebase complete",
+        "disposition": "Requested week elapsed; review status unchanged",
         "owner": "root",
-        "nextAction": "Preserve the one-week hold from October 3 for internal exceptions, approximately October 10 subject to maintainer confirmation. A conflict-free new head is not approval and does not bypass the existing changes request.",
+        "nextAction": "Reconcile the existing changes-requested review with the elapsed interval. The follow-up is drafted but not posted; no new source work or release-confirmation prerequisite is inferred.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15114#pullrequestreview-5399527222",
           "https://github.com/tamird/gvisor/commit/41b6cb93d"
         ],
-        "reviewedAt": "2026-10-09T13:51:02.166808+00:00",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "sourceHead": "41b6cb93dec58b766b709223135196462439f280",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -1180,14 +1180,14 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-10T14:31:51.129671+00:00",
-      "summary": "The approved three comment clarifications are published at a306517c6. Their replies and resolved threads are verified. Every live Init guard remains intact, and the Init discussion, including Tamir’s reply questioning assumptions of exclusivity, remains unresolved. The superseded e846 proposal was answered with changes requested; it is not a pending contributor decision.",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "Three comment clarifications are delivered at a306517c6 and their threads are resolved. The remaining Init discussion is open. Root has asked the user to approve an evidence-backed reply retaining the current locks; that reply decision is pending. It is not a source-change proposal or permission to resolve the thread.",
       "followup": {
-        "disposition": "Three clarifications delivered; Init discussion remains open",
+        "disposition": "Contributor reply decision pending; current locks retained",
         "owner": "root",
-        "nextAction": "Follow the live Init discussion. The three comment changes and their contributor approval are complete; do not remove Init guards or duplicate the existing replies.",
+        "nextAction": "Await the actual contributor decision on the evidence-backed reply. The proposal retains current Init locks and makes no source amendment; the Init thread stays unresolved.",
         "sourceHead": "a306517c61094f024f927a94fbf44d9e5d410f90",
-        "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
         "evidence": [
@@ -1699,19 +1699,20 @@
       "url": "https://github.com/google/gvisor/pull/15161",
       "group": "runtime",
       "status": "open",
-      "summary": "Etienne supplied an actionable native failure: ListMembershipsTruncated returns EFAULT from getsockopt. The source remains 6e908d714. The assigned owner is investigating Linux’s short-buffer and socket-option hook behavior, then will prepare a narrow correction and remote validation. The reviewer’s kernel and attached-hook configuration were not supplied. Earlier native and gVisor passes remain tied to their recorded environment; they do not dismiss this report.",
+      "summary": "The native EFAULT report now has a validated correction on linked proposal 27c59aad4. The controlled Linux 6.1.0 cgroup-hook probe reproduces EFAULT after successful output copying. The correction keeps all byte/length checks and strict gVisor success; three complete owners and both canonical formatters pass. Live source 6e908d714 and the maintainer’s changes request remain unchanged pending a contributor decision.",
       "number": 15161,
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-10T14:31:51.129671+00:00",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
       "followup": {
-        "disposition": "Native EFAULT report under active source investigation",
-        "owner": "external_sweeps",
-        "nextAction": "Reproduce or source-bound the native behavior, preserve complete-word and untouched-tail coverage, validate the correction remotely and request contributor review for a substantive revision.",
+        "disposition": "Validated correction prepared for contributor decision",
+        "owner": "root",
+        "nextAction": "Present the exact linked candidate and reply to the user; do not publish or reply before the actual decision.",
         "sourceHead": "6e908d714da848893f8c40798ca9fe632c31e8c1",
-        "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/27c59aad4a40770fd7710d719937b98d14038ca3",
           "https://github.com/google/gvisor/pull/15161#pullrequestreview-5478326132",
           "https://github.com/google/gvisor/pull/15161",
           "https://github.com/google/gvisor/pull/15265"
@@ -5259,34 +5260,29 @@
       "number": 15604
     },
     {
-      "id": "branch:tcp-sack-loss-threshold",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15633",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tcp-sack-loss-threshold",
-      "head": "3fbae1327833ec33424c017f3359f2384fcd46c6",
+      "head": "52fc849e5ca1a51d542d053eb0da2d9aadaa8a43",
       "title": "Respect the strict SACK loss threshold",
-      "url": "https://github.com/tamird/gvisor/commit/3fbae1327833ec33424c017f3359f2384fcd46c6",
+      "url": "https://github.com/google/gvisor/pull/15633",
       "group": "runtime",
-      "status": "contributor review pending",
-      "updatedAt": "2026-10-09T23:58:01.246164+00:00",
-      "summary": "The byte threshold must be exceeded before SACK declares a range lost. This change also widens the 16-bit MSS before multiplying the threshold. The retained before run fails the ordinary equality and two large-MSS boundary cases; all three full after suites and four analyzer owners pass. Root requested contributor review of this exact public commit. No upstream PR exists yet.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "3fbae1327833ec33424c017f3359f2384fcd46c6",
-        "url": "https://github.com/tamird/gvisor/commit/3fbae1327833ec33424c017f3359f2384fcd46c6"
-      },
+      "status": "open",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "The user-approved independent change is published as PR #15633 at 52fc849e5 after a source-preserving rebase. Contributor approval is fulfilled. Current CI, maintainer review and mergeability are tracked from GitHub; the previously retained source and before/after evidence remain applicable to their recorded scope.",
       "followup": {
-        "disposition": "Awaiting contributor review",
-        "owner": "root",
-        "sourceHead": "3fbae1327833ec33424c017f3359f2384fcd46c6",
-        "reviewedAt": "2026-10-09T23:58:01.246164+00:00",
-        "nextAction": "Await the response to the actual contributor request, then deliver the reviewed change if approved.",
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Follow exact-head CI, human feedback and import status. No contributor decision remains pending.",
+        "sourceHead": "52fc849e5ca1a51d542d053eb0da2d9aadaa8a43",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/3fbae1327833ec33424c017f3359f2384fcd46c6",
-          "https://app.buildbuddy.io/invocation/589c544f-c5af-47fe-af41-8c79ad1e3a83",
-          "https://www.rfc-editor.org/rfc/rfc6675.html#section-4"
+          "https://github.com/google/gvisor/pull/15633"
         ]
-      }
+      },
+      "number": 15633,
+      "reviewDecision": null
     },
     {
       "id": "branch:tcp-test-packet-view-cleanup",
@@ -5297,54 +5293,50 @@
       "title": "Release packet views when test checks abort",
       "url": "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233",
       "group": "tests",
-      "status": "contributor review pending",
-      "updatedAt": "2026-10-10T00:09:38.226625+00:00",
-      "summary": "Three packet readers keep ownership until their checks return, so an abort releases the view while a normal return transfers it to the caller. Source and saved-result review are closed. The original SACK assertion still fails without a leaked-view panic; six existing IPv4/IPv6 reader cases and both-CPU analysis pass. Root has requested contributor review of this exact public commit. No upstream PR exists yet.",
+      "status": "Changes requested; borrowed-view replacement prepared",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "The user rejected the 0e57ec2f3 ownership-transfer pattern. It is superseded by the separate borrowed-view proposal 4162759df: validate the PacketBuffer view before creating the caller-owned copy. Root and independent source review are complete; remote validation is complete, with the original assertion/no-leak witness, full stack checks on both CPUs, 12 reader leaves and three analyzers passing. The replacement has not yet been sent for contributor approval.",
       "followup": {
-        "disposition": "Awaiting contributor review",
-        "owner": "root",
+        "disposition": "Rejected pattern superseded; replacement prepared",
+        "owner": "restore_integration_review",
         "sourceHead": "0e57ec2f3ea770157fc11a0eb03e7712a0085233",
-        "reviewedAt": "2026-10-10T00:09:38.226625+00:00",
-        "nextAction": "Await the response to the actual contributor request, then deliver the reviewed helper if approved.",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
+        "nextAction": "Present the validated borrowed-view replacement for a concrete decision. Do not publish the rejected old proposal or infer approval of the replacement.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233",
-          "https://app.buildbuddy.io/invocation/ead17af7-1214-4ca0-9831-a50736cb753f"
+          "https://github.com/tamird/gvisor/commit/4162759df3",
+          "https://app.buildbuddy.io/invocation/a6127a30-01fb-4506-aca7-2a934236eed3",
+          "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "0e57ec2f3ea770157fc11a0eb03e7712a0085233",
         "url": "https://github.com/tamird/gvisor/commit/0e57ec2f3ea770157fc11a0eb03e7712a0085233"
       }
     },
     {
-      "id": "branch:tcp-sack-credit-accounting",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15634",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "tcp-sack-credit-accounting",
-      "head": "99fcfa22311091be911ffae919ea216f24873f70",
+      "head": "89ff1b319b60be84a6b6d2b4f8cdc12f14ad5555",
       "title": "Preserve selective ACK credit through recovery",
-      "url": "https://github.com/tamird/gvisor/commit/99fcfa22311091be911ffae919ea216f24873f70",
+      "url": "https://github.com/google/gvisor/pull/15634",
       "group": "runtime",
-      "status": "contributor review pending",
-      "updatedAt": "2026-10-10T00:09:38.226625+00:00",
-      "summary": "The reviewed SACK accounting correction preserves the original failing regressions and passes its 12 corrected target results, including recovery and restored-state checks. Existing RACK reorder-detection skips remain explicit. Root requested contributor review of this exact public commit. This result does not establish a throughput improvement or explain the sharing gap.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "99fcfa22311091be911ffae919ea216f24873f70",
-        "url": "https://github.com/tamird/gvisor/commit/99fcfa22311091be911ffae919ea216f24873f70"
-      },
+      "status": "open",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "The user-approved independent change is published as PR #15634 at 89ff1b319 after a source-preserving rebase. Contributor approval is fulfilled. Current CI, maintainer review and mergeability are tracked from GitHub; the previously retained source and before/after evidence remain applicable to their recorded scope.",
       "followup": {
-        "disposition": "Awaiting contributor review",
-        "owner": "root",
-        "sourceHead": "99fcfa22311091be911ffae919ea216f24873f70",
-        "reviewedAt": "2026-10-10T00:09:38.226625+00:00",
-        "nextAction": "Await the response to the actual contributor request, then deliver the reviewed accounting correction if approved.",
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
+        "nextAction": "Follow exact-head CI, human feedback and import status. No contributor decision remains pending.",
+        "sourceHead": "89ff1b319b60be84a6b6d2b4f8cdc12f14ad5555",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/99fcfa22311091be911ffae919ea216f24873f70",
-          "https://app.buildbuddy.io/invocation/f1664f30-184a-47bf-8033-afe5c0ca4669"
+          "https://github.com/google/gvisor/pull/15634"
         ]
-      }
+      },
+      "number": 15634,
+      "reviewDecision": null
     },
     {
       "id": "pr:15618",
@@ -5375,6 +5367,31 @@
         ],
         "mergeable": "MERGEABLE",
         "reviewDecision": null
+      }
+    },
+    {
+      "id": "branch:review/netlink-membership-native-efault",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/netlink-membership-native-efault",
+      "head": "27c59aad4a40770fd7710d719937b98d14038ca3",
+      "title": "Retain netlink output checks on native EFAULT",
+      "url": "https://github.com/tamird/gvisor/commit/27c59aad4a40770fd7710d719937b98d14038ca3",
+      "group": "runtime",
+      "status": "Validated; prepared for contributor decision",
+      "updatedAt": "2026-10-10T15:07:42.875103+00:00",
+      "summary": "The correction accepts native EFAULT while still checking the full reported size, every complete-word prefix byte and every untouched tail byte. gVisor must succeed. A controlled pass-through cgroup hook reproduces the behavior on Linux 6.1.0; the reviewer’s actual hook is unverified. The complete native owner passes 65 cases with 11 existing skips; directfs and shared each pass 70 with six skips, including all four required membership cases. Both canonical formatters pass after formatting-only continuation. The original formatter failure is retained. Live PR #15161 remains unchanged.",
+      "followup": {
+        "disposition": "Validation and independent saved review complete",
+        "owner": "root",
+        "sourceHead": "27c59aad4a40770fd7710d719937b98d14038ca3",
+        "reviewedAt": "2026-10-10T15:07:42.875103+00:00",
+        "nextAction": "Present the final source and reply for an actual contributor decision before updating the live PR.",
+        "evidence": [
+          "https://app.buildbuddy.io/invocation/6a89af56-ab28-4182-bfbf-297823bd006d",
+          "https://app.buildbuddy.io/invocation/c2cbdb9b-3d3a-49db-bbff-058c36ce0cdc",
+          "https://github.com/tamird/gvisor/commit/27c59aad4a40770fd7710d719937b98d14038ca3"
+        ]
       }
     }
   ],
@@ -6738,6 +6755,16 @@
         "https://github.com/google/gvisor/pull/15579",
         "https://github.com/tamird/gvisor/commit/928a07c285d90bc5e485c939935a10134d80bbc7"
       ]
+    },
+    {
+      "from": "branch:review/netlink-membership-native-efault",
+      "to": "pr:15161",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Validated proposed response to the native EFAULT review; the live PR remains unchanged.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/27c59aad4a40770fd7710d719937b98d14038ca3"
+      ]
     }
   ],
   "investigations": [
@@ -7110,8 +7137,16 @@
           ]
         },
         {
-          "text": "The sender-owner prototype now centralizes queue, ACK coverage and packetization updates. Controllers receive explicit ACK progress and RACK receives immutable transmission samples. Its remote correctness matrix is running; the earlier four real-sender replays passed. No performance result is claimed for the replacement.",
+          "text": "The sender-owner prototype centralizes queued delivery and packetization mutations while preserving packet policy. All 11 selected runtime targets and formatter passed; a callback lock-annotation correction then passed the five affected analyzers. Two existing RACK skips and the original failed parent remain recorded. A separate eight-trial paired sanity comparison is running on one worker; no performance result is available yet.",
           "evidence": [
+            {
+              "label": "Validated sender owner",
+              "url": "https://github.com/tamird/gvisor/commit/de6897b7d1"
+            },
+            {
+              "label": "Paired sanity comparison, results pending",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38060801681"
+            },
             {
               "label": "Sender-owner prototype source",
               "url": "https://github.com/tamird/gvisor/commit/7425c7dd27fb6ca09285b14eb4cee13d8fc1ca12"
@@ -7147,7 +7182,7 @@
           ]
         }
       ],
-      "nextStep": "Verify the original unit/recovery/migration/race results, then compare transition and memory costs with fixed controller policy before considering a byte-budget or transmit-time index change.",
+      "nextStep": "Evaluate the paired sanity results and continue the unified recovery-state design. Preserve separate byte coverage, packetization and transmission views; change policy only with source and measured evidence.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -7550,7 +7585,7 @@
           ]
         }
       ],
-      "nextStep": "The existing-wire direct-storage prototype passed all five runtime owners. A receiver-name-only correction is undergoing focused analyzer checks, while the paired 52-action comparison runs with equal wire sizes required. No performance result is available yet. Preserve exact type guards, GC-owned reference slots and the existing graph.",
+      "nextStep": "Investigate primitive-array capture at the aggregate boundary after the existing-wire layout experiments showed no speedup. Preserve the graph, hooks, type checks and mutable-field semantics, and measure time, allocated bytes, allocation count and startup cost separately. The next mechanism is proposed, not yet implemented.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7748,9 +7783,30 @@
               "url": "https://github.com/tamird/gvisor/commit/7fab0177c33c938cdef2ab44a5c1276d77177437"
             }
           ]
+        },
+        {
+          "text": "The first existing-wire direct-storage experiment preserves wire size but regresses UDP Save time by 6.69% and allocated bytes by 8.80%, despite 35.69% fewer allocations. Control-message Save/Load regress 63.85%/104.48%. The follow-up layout experiment also shows no speedup: UDP time is not significant (p=.068), allocations fall 37.21% while bytes rise 7.31%, and control Save/Load regress 14.10%/24.74%. These are separate matched 12-pair experiments; their timings are not comparisons across workers. Neither design is ready for upstream.",
+          "evidence": [
+            {
+              "label": "Existing-wire paired experiment",
+              "url": "https://app.buildbuddy.io/invocation/55ecc665-4410-49b8-9d30-50d2b69c3199"
+            },
+            {
+              "label": "Existing-wire source",
+              "url": "https://github.com/tamird/gvisor/commit/84cf6e1c49b7bf485b5feeec7e90a058093dc27c"
+            },
+            {
+              "label": "Layout paired experiment",
+              "url": "https://app.buildbuddy.io/invocation/2c062796-f9e3-4ff1-a042-8452bc404b46"
+            },
+            {
+              "label": "Layout source",
+              "url": "https://github.com/tamird/gvisor/commit/2f8843668327935984451132c5e3f47ece137b5b"
+            }
+          ]
         }
       ],
-      "nextStep": "The existing-wire direct-storage prototype passed all five runtime owners. A receiver-name-only correction is undergoing focused analyzer checks, while the paired 52-action comparison runs with equal wire sizes required. No performance result is available yet. Preserve exact type guards, GC-owned reference slots and the existing graph.",
+      "nextStep": "Investigate primitive-array capture at the aggregate boundary after the existing-wire layout experiments showed no speedup. Preserve the graph, hooks, type checks and mutable-field semantics, and measure time, allocated bytes, allocation count and startup cost separately. The next mechanism is proposed, not yet implemented.",
       "evidence": [
         {
           "label": "Studied production revision",
