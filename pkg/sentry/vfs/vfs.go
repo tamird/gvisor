@@ -81,7 +81,7 @@ type VirtualFilesystem struct {
 	mounts mountTable `state:".([]*Mount)"`
 
 	// mountpoints maps mount points to mounts at those points in all
-	// namespaces. mountpoints is protected by mountMu.
+	// namespaces.
 	//
 	// mountpoints is used to find mounts that must be umounted due to
 	// removal of a mount point Dentry from another mount namespace. ("A file
@@ -91,19 +91,30 @@ type VirtualFilesystem struct {
 	// (subject to the usual permission checks)." - mount_namespaces(7))
 	//
 	// mountpoints is analogous to Linux's mountpoint_hashtable.
+	//
+	// +checklocks:mountMu
 	mountpoints map[*Dentry]map[*Mount]struct{}
 
-	// lastMountID is the last allocated mount ID. lastMountID is accessed
-	// using atomic memory operations.
+	// lastMountID is the last allocated mount ID.
+	//
+	// +checkatomic
 	lastMountID atomicbitops.Uint64
 
 	// lastMountNamespaceID is the last allocated mount namespace ID.
-	// lastMountNamespaceID is accessed using atomic memory operations.
+	//
+	// +checkatomic
 	lastMountNamespaceID atomicbitops.Uint64
 
 	// MountMax is the maximum number of mounts allowed in a mount namespace.
 	// Configurable by userspace via /proc/sys/fs/mount-max.
 	MountMax atomicbitops.Int32
+
+	// numFiles is the number of live file descriptions: those for which
+	// FileDescription.Init has succeeded and whose last reference has not been
+	// dropped. numFiles is accessed using atomic memory operations.
+	//
+	// numFiles is analogous to Linux's nr_files (fs/file_table.c).
+	numFiles atomicbitops.Int64
 
 	// anonMount is a Mount, not included in mounts or mountpoints,
 	// representing an anonFilesystem. anonMount is used to back
@@ -113,40 +124,59 @@ type VirtualFilesystem struct {
 	// anonMount is analogous to Linux's anon_inode_mnt.
 	anonMount *Mount
 
-	// devices contains all registered Devices. devices is protected by
-	// devicesMu.
 	devicesMu sync.RWMutex `state:"nosave"`
-	devices   map[devTuple]*registeredDevice
+
+	// devices contains all registered Devices.
+	//
+	// +checklocks:devicesMu
+	devices map[devTuple]*registeredDevice
+
+	dynCharDevMajorMu sync.Mutex `state:"nosave"`
 
 	// dynCharDevMajorUsed contains all allocated dynamic character device
-	// major numbers. dynCharDevMajor is protected by dynCharDevMajorMu.
+	// major numbers.
 	//
+	// +checklocks:dynCharDevMajorMu
+	dynCharDevMajorUsed map[uint32]struct{}
+
 	// dynCharDevMajorShared maps keys passed to
 	// GetSharedDynamicCharDevMajor() to the major number allocated for that
-	// key. dynCharDevMajorShared is protected by dynCharDevMajorMu.
-	dynCharDevMajorMu     sync.Mutex `state:"nosave"`
-	dynCharDevMajorUsed   map[uint32]struct{}
+	// key.
+	//
+	// +checklocks:dynCharDevMajorMu
 	dynCharDevMajorShared map[SharedDynamicCharDevMajorKey]uint32
 
-	// anonBlockDevMinor contains all allocated anonymous block device minor
-	// numbers. anonBlockDevMinorNext is a lower bound for the smallest
-	// unallocated anonymous block device number. anonBlockDevMinorNext and
-	// anonBlockDevMinor are protected by anonBlockDevMinorMu.
-	anonBlockDevMinorMu   sync.Mutex `state:"nosave"`
+	anonBlockDevMinorMu sync.Mutex `state:"nosave"`
+
+	// anonBlockDevMinorNext is a lower bound for the smallest unallocated
+	// anonymous block device number.
+	//
+	// +checklocks:anonBlockDevMinorMu
 	anonBlockDevMinorNext uint32
-	anonBlockDevMinor     map[uint32]struct{}
 
-	// fsTypes contains all registered FilesystemTypes. fsTypes is protected by
-	// fsTypesMu.
+	// anonBlockDevMinor contains all allocated anonymous block device minor
+	// numbers.
+	//
+	// +checklocks:anonBlockDevMinorMu
+	anonBlockDevMinor map[uint32]struct{}
+
 	fsTypesMu sync.RWMutex `state:"nosave"`
-	fsTypes   map[string]*registeredFilesystemType
 
-	// filesystems contains all Filesystems. filesystems is protected by
-	// filesystemsMu.
+	// fsTypes contains all registered FilesystemTypes.
+	//
+	// +checklocks:fsTypesMu
+	fsTypes map[string]*registeredFilesystemType
+
 	filesystemsMu sync.Mutex `state:"nosave"`
-	filesystems   map[*Filesystem]struct{}
+
+	// filesystems contains all Filesystems.
+	//
+	// +checklocks:filesystemsMu
+	filesystems map[*Filesystem]struct{}
 
 	// groupIDBitmap tracks which mount group IDs are available for allocation.
+	//
+	// +checklocks:mountMu
 	groupIDBitmap bitmap.Bitmap
 
 	// mountPromises contains all unresolved mount promises.
@@ -181,6 +211,11 @@ func unpackRenameState(state uint64) (seq, inProgress uint32) {
 }
 
 // Init initializes a new VirtualFilesystem with no mounts or FilesystemTypes.
+//
+// Preconditions: vfs has not been initialized and is not in use.
+// The caller has exclusive access; checklocks cannot express this requirement.
+//
+// +checklocksignore
 func (vfs *VirtualFilesystem) Init(ctx context.Context) error {
 	if vfs.mountpoints != nil {
 		panic("VFS already initialized")
@@ -220,10 +255,17 @@ func (vfs *VirtualFilesystem) Init(ctx context.Context) error {
 
 // Release drops references on filesystem objects held by vfs.
 //
-// Precondition: This must be called after VFS.Init() has succeeded.
+// Preconditions: Init has succeeded. No filesystem registration or creation
+// is in progress, and none may begin after Release.
 func (vfs *VirtualFilesystem) Release(ctx context.Context) {
 	vfs.anonMount.DecRef(ctx)
-	for _, fst := range vfs.fsTypes {
+	vfs.fsTypesMu.Lock()
+	fsTypes := vfs.fsTypes
+	vfs.fsTypes = nil
+	vfs.fsTypesMu.Unlock()
+	// Release the detached registry outside fsTypesMu; filesystem callbacks
+	// may release other VFS references.
+	for _, fst := range fsTypes {
 		fst.fsType.Release(ctx)
 	}
 }
