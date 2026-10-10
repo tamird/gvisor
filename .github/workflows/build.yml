@@ -49,7 +49,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid' && github.ref != 'refs/heads/qualification/guest-lanes-current' && github.ref != 'refs/heads/qualification/rc-current-profile' && github.ref != 'refs/heads/qualification/rc-bucket11-continuation' && github.ref != 'refs/heads/qualification/arm64-64k-final-profile' && github.ref != 'refs/heads/qualification/arm64-tcg-trace-policy' && github.ref != 'refs/heads/qualification/arm64-tcg-stress-shards'))
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid' && github.ref != 'refs/heads/qualification/guest-lanes-current' && github.ref != 'refs/heads/qualification/rc-current-profile' && github.ref != 'refs/heads/qualification/rc-bucket11-continuation' && github.ref != 'refs/heads/diagnostics/rc-mmap-untraced' && github.ref != 'refs/heads/qualification/arm64-64k-final-profile' && github.ref != 'refs/heads/qualification/arm64-tcg-trace-policy' && github.ref != 'refs/heads/qualification/arm64-tcg-stress-shards'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,7 +74,7 @@ jobs:
           path: bin/runsc
 
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current' || github.ref == 'refs/heads/qualification/rc-current-profile' || github.ref == 'refs/heads/qualification/rc-bucket11-continuation' || github.ref == 'refs/heads/qualification/arm64-64k-final-profile' || github.ref == 'refs/heads/qualification/arm64-tcg-trace-policy' || github.ref == 'refs/heads/qualification/arm64-tcg-stress-shards') && github.event_name == 'workflow_dispatch'))
+    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation' || github.ref == 'refs/heads/qualification/moby-public-lane' || github.ref == 'refs/heads/qualification/kvm-public-lane' || github.ref == 'refs/heads/qualification/php-8-5-full-actions' || github.ref == 'refs/heads/qualification/go-1-27-1-canonical' || github.ref == 'refs/heads/qualification/guest-lanes-current' || github.ref == 'refs/heads/qualification/rc-current-profile' || github.ref == 'refs/heads/qualification/rc-bucket11-continuation' || github.ref == 'refs/heads/diagnostics/rc-mmap-untraced' || github.ref == 'refs/heads/qualification/arm64-64k-final-profile' || github.ref == 'refs/heads/qualification/arm64-tcg-trace-policy' || github.ref == 'refs/heads/qualification/arm64-tcg-stress-shards') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: ${{ inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
     permissions:
@@ -147,7 +147,22 @@ jobs:
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: bash test/rbe/actions.sh
+      run: |
+        # Retain the adapter, then run against the exact timed-out source.
+        method_dir="$RUNNER_TEMP/qualification/mmap-untraced-method"
+        mkdir -p "$method_dir"
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test -z "$(git status --porcelain --untracked-files=no)"
+        git cat-file -p HEAD > "$method_dir/commit.txt"
+        cp test/rbe/actions.sh "$method_dir/actions.sh"
+        cp .github/workflows/build.yml "$method_dir/build.yml"
+        export QUALIFICATION_COMMIT=9783ac286aeb40f4673e9b6e183cc7befc462d09
+        if ! git cat-file -e "$QUALIFICATION_COMMIT^{commit}"; then
+          timeout --signal=TERM --kill-after=5s 60s git fetch --depth=1 origin "$QUALIFICATION_COMMIT"
+        fi
+        git checkout --detach "$QUALIFICATION_COMMIT"
+        test -z "$(git status --porcelain --untracked-files=no)"
+        bash "$method_dir/actions.sh"
 
     - name: Retain qualification placement and host facts
       if: always() && (inputs.execution == 'local' || inputs.lanes == 'syscalls-64k')

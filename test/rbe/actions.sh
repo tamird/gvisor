@@ -17,6 +17,10 @@
 set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
+[[ $QUALIFICATION_COMMIT == 9783ac286aeb40f4673e9b6e183cc7befc462d09 ]]
+[[ $QUALIFICATION_EXECUTION:$QUALIFICATION_ARCH:$QUALIFICATION_LANES:$QUALIFICATION_SYSCALL_BUCKET:$QUALIFICATION_RC_BUCKET11_PART == local:amd64:syscalls-rc:11:mmap ]]
+QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import time; print(time.monotonic() + 85 * 60)')
+export QUALIFICATION_WORK_DEADLINE
 
 # read consumes one line. Reject extra lines rather than losing selected lanes.
 if [[ $QUALIFICATION_LANES == *$'\n'* ]]; then
@@ -264,6 +268,11 @@ TCG_ATTRIBUTES
       elif [[ $argument == test && ${QUALIFICATION_RC_BUCKET11_PART:-none} != none ]]; then
         cohort_dir="$RUNNER_TEMP/qualification/rc-bucket11"
         mkdir -p "$cohort_dir"
+        printf '%s\n' "$@" > "$cohort_dir/original-arguments.txt"
+        remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
+        # Reserve the original hour plus ten minutes for cached build/setup.
+        (( remaining >= 4200 ))
+        set -- "$@" --test_arg=--strace=false
         printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
         git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
         [[ ! -s "$cohort_dir/source-before.txt" ]]
@@ -282,11 +291,17 @@ TCG_ATTRIBUTES
           printf 'Qualification work deadline exhausted.\n' >&2
           result=124
         fi
-      elif [[ $qualification_root_bazel == true ]]; then
-        sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" \
-          "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       else
-        command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
+        (( remaining > 0 ))
+        if [[ $qualification_root_bazel == true ]]; then
+          timeout --signal=INT --kill-after=30s "${remaining}s" \
+            sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" \
+            "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        else
+          timeout --signal=INT --kill-after=30s "${remaining}s" \
+            "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        fi
       fi
       if [[ -n $raw_events ]]; then
         timeout --signal=TERM --kill-after=5s 600s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
