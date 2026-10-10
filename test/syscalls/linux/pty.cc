@@ -32,10 +32,12 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <chrono>
 #include <csignal>
 #include <cstdint>
 #include <ctime>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -1419,12 +1421,78 @@ TEST_F(PtyTest, SwitchNoncanonToCanonNewlineBig) {
 
   EnableCanonical();
 
-  // We can read the line.
   char buf[kMaxLineSize] = {};
-  ExpectReadable(replica_, kMaxLineSize - 1, buf);
+  const auto read_stage = [&](const char* stage, size_t expected) {
+    SCOPED_TRACE(stage);
+    const auto start = std::chrono::steady_clock::now();
+    const auto result = PollAndReadFd(replica_.get(), buf, expected, kTimeout);
+    const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+        std::chrono::steady_clock::now() - start);
+    int queued = -1;
+    EXPECT_THAT(ioctl(replica_.get(), FIONREAD, &queued), SyscallSucceeds());
+    std::cerr << "PTY stage=" << stage << " expected=" << expected << " bytes="
+              << (result.ok() ? static_cast<int>(result.ValueOrDie()) : -1)
+              << " error=" << result.error().errno_value()
+              << " queued=" << queued << " elapsed_us=" << elapsed.count()
+              << std::endl;
+    EXPECT_NO_ERRNO(result);
+    if (!result.ok()) {
+      return false;
+    }
+    EXPECT_EQ(result.ValueOrDie(), expected);
+    return result.ValueOrDie() == expected;
+  };
 
-  // We can also read the remaining characters.
-  ExpectReadable(replica_, 6, buf);
+  if (!read_stage("initial", kMaxLineSize - 1)) {
+    return;
+  }
+  if (!read_stage("tail", 6)) {
+    // Probe a stalled input worker only after preserving the original failure.
+    constexpr char kick = 'K';
+    EXPECT_THAT(WriteFd(master_.get(), &kick, 1), SyscallSucceedsWithValue(1));
+    const auto result = PollAndReadFd(replica_.get(), buf, 6, kTimeoutShort);
+    std::cerr << "PTY after-kick bytes="
+              << (result.ok() ? static_cast<int>(result.ValueOrDie()) : -1)
+              << " error=" << result.error().errno_value() << std::endl;
+    // Removing canonical framing can expose retained, unreadable input; this
+    // intervention may also restart delivery and is not a prior-state snapshot.
+    DisableCanonical();
+    const auto drained =
+        PollAndReadFd(replica_.get(), buf, sizeof(buf), kTimeoutShort);
+    std::cerr << "PTY noncanonical bytes="
+              << (drained.ok() ? static_cast<int>(drained.ValueOrDie()) : -1)
+              << " error=" << drained.error().errno_value() << " hex=";
+    if (drained.ok()) {
+      for (size_t i = 0; i < drained.ValueOrDie(); ++i) {
+        std::cerr << absl::StrFormat("%02x",
+                                     static_cast<unsigned char>(buf[i]));
+      }
+    }
+    std::cerr << std::endl;
+    // TIOCSTI feeds the ldisc directly and releases its exclusive buffer lock,
+    // which schedules pending flip-buffer input. Preserve the original failure.
+    char sentinel = 'S';
+    const int injected = ioctl(replica_.get(), TIOCSTI, &sentinel);
+    const int injection_error = injected < 0 ? errno : 0;
+    std::cerr << "PTY inject result=" << injected
+              << " error=" << injection_error << std::endl;
+    if (injected == 0) {
+      const auto recovered =
+          PollAndReadFd(replica_.get(), buf, sizeof(buf), kTimeoutShort);
+      std::cerr << "PTY after-injection bytes="
+                << (recovered.ok() ? static_cast<int>(recovered.ValueOrDie())
+                                   : -1)
+                << " error=" << recovered.error().errno_value() << " hex=";
+      if (recovered.ok()) {
+        for (size_t i = 0; i < recovered.ValueOrDie(); ++i) {
+          std::cerr << absl::StrFormat("%02x",
+                                       static_cast<unsigned char>(buf[i]));
+        }
+      }
+      std::cerr << std::endl;
+    }
+    return;
+  }
 
   ExpectFinished(replica_);
 }
