@@ -1043,6 +1043,11 @@ syscall_test(
 )
 
 syscall_test(
+    tags = ["manual"],
+    test = "//test/syscalls/linux:netlink_getsockopt_hook_diagnostic_test",
+)
+
+syscall_test(
     add_hostinet = True,
     test = "//test/syscalls/linux:socket_netlink_route_test",
 )
