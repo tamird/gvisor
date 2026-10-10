@@ -848,7 +848,7 @@ func loadStruct(r *Reader) Struct {
 	for i, field := range layout.slots {
 		hdr := loadUint(r)
 		if uint64(hdr) == ScalarNil || uint64(hdr) == field.kind {
-			s.StoreScalar(i, loadScalar(r, uint64(hdr)))
+			loadCapturedField(r, &s, i, uint64(hdr))
 		} else {
 			*s.Field(i) = loadAfterHeader(r, hdr)
 		}

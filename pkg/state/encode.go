@@ -534,8 +534,7 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	s.TypeID = wire.TypeID(te.ID)
 	if es.captures != nil {
 		if te.fieldDescriptors == nil {
-			te.fieldDescriptors = directFieldDescriptors(obj.Type(), te.Fields)
-			te.captureLayout = captureFieldLayout(te.fieldDescriptors)
+			te.fieldDescriptors, te.captureLayout = registeredFields(obj.Type(), te.Fields)
 		}
 		s.AllocCapture(es.captures, te.captureLayout)
 	} else {

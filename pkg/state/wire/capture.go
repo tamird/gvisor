@@ -16,17 +16,6 @@ package wire
 
 import "math"
 
-// Scalar holds a primitive while it crosses the generated-code boundary.
-// Numeric values retain their full wire width until assignment is checked.
-type Scalar struct {
-	Kind uint64
-	Int  int64
-	Uint uint64
-	Real float64
-	Imag float64
-	Text string
-}
-
 // ScalarBool and the related constants are existing wire tags. ScalarObject
 // denotes a field whose captured value keeps the ordinary Object interface.
 const (
@@ -48,7 +37,8 @@ type captureSlot struct {
 }
 
 // CaptureLayout describes wire-order fields. The state type-info owner derives
-// it once per stream; wire does not register or reconcile native Go types.
+// it at registration or for reordered wire fields; wire does not register or
+// reconcile native Go types.
 type CaptureLayout struct {
 	slots                         []captureSlot
 	words, objects, strings, mask int
@@ -149,68 +139,39 @@ func (f *captureFields) setFlag(slot, mask int, value bool) {
 	}
 }
 
-func (f *captureFields) scalar(slot int) (Scalar, bool) {
+// scalarKind reports the exact wire kind; nil remains distinct from zero.
+func (f *captureFields) scalarKind(slot int) (uint64, bool) {
 	if obj := f.overrides[slot]; obj != nil {
-		return objectScalar(*obj)
+		return objectScalarKind(*obj)
 	}
-	s := f.layout.slots[slot]
-	if s.kind == ScalarObject {
-		return Scalar{}, false
+	kind := f.layout.slots[slot].kind
+	if kind == ScalarObject {
+		return 0, false
 	}
 	if !f.flag(slot, 0) {
 		panic("unfilled captured field")
 	}
 	if !f.flag(slot, f.layout.mask) {
-		return Scalar{Kind: ScalarNil}, true
+		return ScalarNil, true
 	}
-	v := Scalar{Kind: s.kind}
-	switch s.kind {
-	case ScalarString:
-		v.Text = *f.arena.text(f.strings + s.offset)
-	case ScalarBool, ScalarUint:
-		v.Uint = *f.arena.word(f.words + s.offset)
-	case ScalarInt:
-		v.Int = int64(*f.arena.word(f.words + s.offset))
-	case ScalarFloat32, ScalarFloat64:
-		v.Real = math.Float64frombits(*f.arena.word(f.words + s.offset))
-	case ScalarComplex64, ScalarComplex128:
-		v.Real = math.Float64frombits(*f.arena.word(f.words + s.offset))
-		v.Imag = math.Float64frombits(*f.arena.word(f.words + s.offset + 1))
-	}
-	return v, true
+	return kind, true
 }
 
-func (f *captureFields) put(slot int, v Scalar) {
+// store returns an overriding Object slot when ordinary storage is required.
+func (f *captureFields) store(slot int, kind uint64) *Object {
 	if obj := f.overrides[slot]; obj != nil {
-		*obj = v.object()
-		return
+		return obj
 	}
 	s := f.layout.slots[slot]
-	if s.kind == ScalarObject || (v.Kind != ScalarNil && v.Kind != s.kind) {
-		*f.field(slot) = v.object()
-		return
+	if s.kind == ScalarObject || (kind != ScalarNil && kind != s.kind) {
+		return f.field(slot)
 	}
 	f.setFlag(slot, 0, true)
-	f.setFlag(slot, f.layout.mask, v.Kind != ScalarNil)
-	if v.Kind == ScalarNil {
-		if s.kind == ScalarString {
-			*f.arena.text(f.strings + s.offset) = ""
-		}
-		return
+	f.setFlag(slot, f.layout.mask, kind != ScalarNil)
+	if kind == ScalarNil && s.kind == ScalarString {
+		*f.arena.text(f.strings + s.offset) = ""
 	}
-	switch v.Kind {
-	case ScalarString:
-		*f.arena.text(f.strings + s.offset) = v.Text
-	case ScalarBool, ScalarUint:
-		*f.arena.word(f.words + s.offset) = v.Uint
-	case ScalarInt:
-		*f.arena.word(f.words + s.offset) = uint64(v.Int)
-	case ScalarFloat32, ScalarFloat64:
-		*f.arena.word(f.words + s.offset) = math.Float64bits(v.Real)
-	case ScalarComplex64, ScalarComplex128:
-		*f.arena.word(f.words + s.offset) = math.Float64bits(v.Real)
-		*f.arena.word(f.words + s.offset + 1) = math.Float64bits(v.Imag)
-	}
+	return nil
 }
 
 func (f *captureFields) field(slot int) *Object {
@@ -223,8 +184,25 @@ func (f *captureFields) field(slot int) *Object {
 	}
 	obj := new(Object)
 	if f.flag(slot, 0) {
-		v, _ := f.scalar(slot)
-		*obj = v.object()
+		kind, _ := f.scalarKind(slot)
+		switch kind {
+		case ScalarNil:
+			*obj = Nil{}
+		case ScalarString:
+			x := String(*f.arena.text(f.strings + s.offset))
+			*obj = &x
+		case ScalarComplex64, ScalarComplex128:
+			x := complex(math.Float64frombits(*f.arena.word(f.words + s.offset)), math.Float64frombits(*f.arena.word(f.words + s.offset + 1)))
+			if kind == ScalarComplex64 {
+				v := Complex64(x)
+				*obj = &v
+			} else {
+				v := Complex128(x)
+				*obj = &v
+			}
+		default:
+			*obj = wordObject(kind, *f.arena.word(f.words + s.offset))
+		}
 	}
 	if f.overrides == nil {
 		f.overrides = make(map[int]*Object)
@@ -238,11 +216,36 @@ func (f *captureFields) save(w *Writer) {
 	for i, slot := range f.layout.slots {
 		if obj := f.overrides[i]; obj != nil {
 			Save(w, *obj)
-		} else if slot.kind == ScalarObject {
+			continue
+		}
+		if slot.kind == ScalarObject {
 			Save(w, *f.arena.object(f.objects + slot.offset))
-		} else {
-			v, _ := f.scalar(i)
-			v.save(w)
+			continue
+		}
+		kind, _ := f.scalarKind(i)
+		Uint(kind).save(w)
+		switch kind {
+		case ScalarNil:
+		case ScalarString:
+			x := String(*f.arena.text(f.strings + slot.offset))
+			x.save(w)
+		case ScalarBool, ScalarUint:
+			Uint(*f.arena.word(f.words + slot.offset)).save(w)
+		case ScalarInt:
+			Int(*f.arena.word(f.words + slot.offset)).save(w)
+		case ScalarFloat32:
+			Float32(math.Float64frombits(*f.arena.word(f.words + slot.offset))).save(w)
+		case ScalarFloat64:
+			Float64(math.Float64frombits(*f.arena.word(f.words + slot.offset))).save(w)
+		case ScalarComplex64, ScalarComplex128:
+			x := complex(math.Float64frombits(*f.arena.word(f.words + slot.offset)), math.Float64frombits(*f.arena.word(f.words + slot.offset + 1)))
+			if kind == ScalarComplex64 {
+				v := Complex64(x)
+				v.save(w)
+			} else {
+				v := Complex128(x)
+				v.save(w)
+			}
 		}
 	}
 }
@@ -252,133 +255,184 @@ func (*captureFields) load(r *Reader) Object {
 	return &v
 }
 
-// StoreScalar captures a value without retaining a boxed primitive when typed
-// storage is selected. Inline legacy storage keeps its ordinary representation.
-func (s *Struct) StoreScalar(slot int, v Scalar) {
-	if f, ok := s.fields.(*captureFields); ok {
-		f.put(slot, v)
+// StoreNil records the ordinary nil wire value without boxing it.
+func (s *Struct) StoreNil(slot int) {
+	if f, ok := s.fields.(*captureFields); ok && f.store(slot, ScalarNil) == nil {
 		return
 	}
-	*s.Field(slot) = v.object()
+	*s.Field(slot) = Nil{}
 }
 
-// Scalar reads either representation without reflective assignment.
-func (s *Struct) Scalar(slot int) (Scalar, bool) {
+// StoreWord captures a numeric wire value. Floating-point words hold the bits
+// of the widened float64 representation used by the existing wire decoder.
+func (s *Struct) StoreWord(slot int, kind, bits uint64) {
+	switch kind {
+	case ScalarBool, ScalarInt, ScalarUint, ScalarFloat32, ScalarFloat64:
+	default:
+		panic("not a numeric scalar word")
+	}
+	if f, ok := s.fields.(*captureFields); ok && f.store(slot, kind) == nil {
+		*f.arena.word(f.words + f.layout.slots[slot].offset) = bits
+		return
+	}
+	*s.Field(slot) = wordObject(kind, bits)
+}
+
+// StoreString keeps strings in GC-visible storage.
+func (s *Struct) StoreString(slot int, value string) {
+	if f, ok := s.fields.(*captureFields); ok && f.store(slot, ScalarString) == nil {
+		*f.arena.text(f.strings + f.layout.slots[slot].offset) = value
+		return
+	}
+	v := String(value)
+	*s.Field(slot) = &v
+}
+
+// StoreComplex preserves both full-width components until assignment checks.
+func (s *Struct) StoreComplex(slot int, kind uint64, value complex128) {
+	if kind != ScalarComplex64 && kind != ScalarComplex128 {
+		panic("not a complex scalar")
+	}
+	if f, ok := s.fields.(*captureFields); ok && f.store(slot, kind) == nil {
+		offset := f.words + f.layout.slots[slot].offset
+		*f.arena.word(offset) = math.Float64bits(real(value))
+		*f.arena.word(offset + 1) = math.Float64bits(imag(value))
+		return
+	}
+	if kind == ScalarComplex64 {
+		v := Complex64(value)
+		*s.Field(slot) = &v
+	} else {
+		v := Complex128(value)
+		*s.Field(slot) = &v
+	}
+}
+
+// ScalarKind returns the actual primitive wire kind. Callers must use it before
+// selecting ScalarWord, ScalarString or ScalarComplex; unexpected kinds retain
+// the original Object assignment path.
+func (s *Struct) ScalarKind(slot int) (uint64, bool) {
 	if f, ok := s.fields.(*captureFields); ok {
-		return f.scalar(slot)
+		return f.scalarKind(slot)
 	}
-	return objectScalar(*s.Field(slot))
+	return objectScalarKind(*s.Field(slot))
 }
 
-func (v Scalar) save(w *Writer) {
-	Uint(v.Kind).save(w)
-	switch v.Kind {
-	case ScalarNil:
-	case ScalarBool, ScalarUint:
-		Uint(v.Uint).save(w)
-	case ScalarInt:
-		Int(v.Int).save(w)
-	case ScalarFloat32:
-		Float32(v.Real).save(w)
-	case ScalarFloat64:
-		Float64(v.Real).save(w)
-	case ScalarString:
-		s := String(v.Text)
-		s.save(w)
-	case ScalarComplex64:
-		c := Complex64(complex(v.Real, v.Imag))
-		c.save(w)
-	case ScalarComplex128:
-		c := Complex128(complex(v.Real, v.Imag))
-		c.save(w)
-	default:
-		panic("not a scalar")
+// ScalarWord reads a numeric value after ScalarKind validated its wire family.
+func (s *Struct) ScalarWord(slot int) uint64 {
+	if f, ok := s.fields.(*captureFields); ok && f.overrides[slot] == nil {
+		return *f.arena.word(f.words + f.layout.slots[slot].offset)
 	}
-}
-
-func (v Scalar) object() Object {
-	switch v.Kind {
-	case ScalarNil:
-		return Nil{}
-	case ScalarBool:
-		return Bool(v.Uint == 1)
-	case ScalarUint:
-		return Uint(v.Uint)
-	case ScalarInt:
-		return Int(v.Int)
-	case ScalarFloat32:
-		return Float32(v.Real)
-	case ScalarFloat64:
-		return Float64(v.Real)
-	case ScalarString:
-		s := String(v.Text)
-		return &s
-	case ScalarComplex64:
-		c := Complex64(complex(v.Real, v.Imag))
-		return &c
-	case ScalarComplex128:
-		c := Complex128(complex(v.Real, v.Imag))
-		return &c
-	default:
-		panic("not a scalar")
-	}
-}
-
-func objectScalar(obj Object) (Scalar, bool) {
-	switch v := obj.(type) {
-	case Nil:
-		return Scalar{Kind: ScalarNil}, true
+	switch v := (*s.Field(slot)).(type) {
 	case Bool:
-		var x uint64
 		if v {
-			x = 1
+			return 1
 		}
-		return Scalar{Kind: ScalarBool, Uint: x}, true
-	case Uint:
-		return Scalar{Kind: ScalarUint, Uint: uint64(v)}, true
+		return 0
 	case Int:
-		return Scalar{Kind: ScalarInt, Int: int64(v)}, true
+		return uint64(v)
+	case Uint:
+		return uint64(v)
 	case Float32:
-		return Scalar{Kind: ScalarFloat32, Real: float64(v)}, true
+		return math.Float64bits(float64(v))
 	case Float64:
-		return Scalar{Kind: ScalarFloat64, Real: float64(v)}, true
-	case *String:
-		return Scalar{Kind: ScalarString, Text: string(*v)}, true
-	case *Complex64:
-		return Scalar{Kind: ScalarComplex64, Real: real(*v), Imag: imag(*v)}, true
-	case *Complex128:
-		return Scalar{Kind: ScalarComplex128, Real: real(*v), Imag: imag(*v)}, true
+		return math.Float64bits(float64(v))
 	default:
-		return Scalar{}, false
+		panic("not a numeric scalar")
 	}
 }
 
-func loadScalar(r *Reader, kind uint64) Scalar {
-	v := Scalar{Kind: kind}
+// ScalarString reads a value whose actual wire kind is ScalarString.
+func (s *Struct) ScalarString(slot int) string {
+	if f, ok := s.fields.(*captureFields); ok && f.overrides[slot] == nil {
+		return *f.arena.text(f.strings + f.layout.slots[slot].offset)
+	}
+	return string(*(*s.Field(slot)).(*String))
+}
+
+// ScalarComplex reads a value whose actual wire kind is complex.
+func (s *Struct) ScalarComplex(slot int) complex128 {
+	if f, ok := s.fields.(*captureFields); ok && f.overrides[slot] == nil {
+		offset := f.words + f.layout.slots[slot].offset
+		return complex(math.Float64frombits(*f.arena.word(offset)), math.Float64frombits(*f.arena.word(offset + 1)))
+	}
+	switch v := (*s.Field(slot)).(type) {
+	case *Complex64:
+		return complex128(*v)
+	case *Complex128:
+		return complex128(*v)
+	default:
+		panic("not a complex scalar")
+	}
+}
+
+func wordObject(kind, bits uint64) Object {
+	switch kind {
+	case ScalarBool:
+		return Bool(bits == 1)
+	case ScalarInt:
+		return Int(bits)
+	case ScalarUint:
+		return Uint(bits)
+	case ScalarFloat32:
+		return Float32(math.Float64frombits(bits))
+	case ScalarFloat64:
+		return Float64(math.Float64frombits(bits))
+	default:
+		panic("not a numeric scalar")
+	}
+}
+
+func objectScalarKind(obj Object) (uint64, bool) {
+	switch obj.(type) {
+	case Nil:
+		return ScalarNil, true
+	case Bool:
+		return ScalarBool, true
+	case Int:
+		return ScalarInt, true
+	case Uint:
+		return ScalarUint, true
+	case Float32:
+		return ScalarFloat32, true
+	case Float64:
+		return ScalarFloat64, true
+	case *String:
+		return ScalarString, true
+	case *Complex64:
+		return ScalarComplex64, true
+	case *Complex128:
+		return ScalarComplex128, true
+	default:
+		return 0, false
+	}
+}
+
+func loadCapturedField(r *Reader, s *Struct, slot int, kind uint64) {
 	switch kind {
 	case ScalarNil:
+		s.StoreNil(slot)
 	case ScalarBool:
+		var value uint64
 		if loadBool(r) {
-			v.Uint = 1
+			value = 1
 		}
-	case ScalarUint:
-		v.Uint = uint64(loadUint(r))
+		s.StoreWord(slot, kind, value)
 	case ScalarInt:
-		v.Int = int64(loadInt(r))
+		s.StoreWord(slot, kind, uint64(loadInt(r)))
+	case ScalarUint:
+		s.StoreWord(slot, kind, uint64(loadUint(r)))
 	case ScalarFloat32:
-		v.Real = float64(loadFloat32(r))
+		s.StoreWord(slot, kind, math.Float64bits(float64(loadFloat32(r))))
 	case ScalarFloat64:
-		v.Real = float64(loadFloat64(r))
+		s.StoreWord(slot, kind, math.Float64bits(float64(loadFloat64(r))))
 	case ScalarString:
-		v.Text = string(loadString(r))
+		s.StoreString(slot, string(loadString(r)))
 	case ScalarComplex64:
-		c := loadComplex64(r)
-		v.Real, v.Imag = real(c), imag(c)
+		s.StoreComplex(slot, kind, complex128(loadComplex64(r)))
 	case ScalarComplex128:
-		c := loadComplex128(r)
-		v.Real, v.Imag = real(c), imag(c)
+		s.StoreComplex(slot, kind, complex128(loadComplex128(r)))
 	default:
-		panic("not a scalar")
+		panic("not a scalar wire kind")
 	}
-	return v
 }

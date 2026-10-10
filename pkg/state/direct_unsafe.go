@@ -15,6 +15,7 @@
 package state
 
 import (
+	"math"
 	"reflect"
 	"unsafe"
 
@@ -35,7 +36,7 @@ func SaveField[T any](s Sink, slot int, value *T) {
 // a primitive. Dynamic forms return to the original T for assignment checking.
 func LoadField[T any](s Source, slot int, value *T, wait bool) {
 	if s.internal.ds.direct && s.internal.rte.fieldDescriptors[slot].typ == reflect.TypeFor[T]() {
-		if encoded, ok := s.internal.encoded.Scalar(s.internal.rte.FieldOrder[slot]); ok && loadCaptureScalar(s.internal.rte.fieldDescriptors[slot].kind, unsafe.Pointer(value), encoded) {
+		if loadCaptureScalar(s.internal.rte.fieldDescriptors[slot].kind, unsafe.Pointer(value), s.internal.encoded, s.internal.rte.FieldOrder[slot]) {
 			// Primitive values contain no references and add no hook dependency.
 			return
 		}
@@ -48,13 +49,13 @@ func LoadField[T any](s Source, slot int, value *T, wait bool) {
 }
 
 func saveCaptureScalar(s Sink, slot int, p unsafe.Pointer) bool {
-	var encoded wire.Scalar
+	encoded := s.internal.encoded
 	switch s.internal.fields[slot].kind {
 	case reflect.Bool:
 		if !*(*bool)(p) {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarBool, Uint: 1}
+			encoded.StoreWord(slot, wire.ScalarBool, 1)
 		}
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var x int64
@@ -71,9 +72,9 @@ func saveCaptureScalar(s Sink, slot int, p unsafe.Pointer) bool {
 			x = *(*int64)(p)
 		}
 		if x == 0 {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarInt, Int: x}
+			encoded.StoreWord(slot, wire.ScalarInt, uint64(x))
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
 		var x uint64
@@ -92,134 +93,140 @@ func saveCaptureScalar(s Sink, slot int, p unsafe.Pointer) bool {
 			x = uint64(*(*uintptr)(p))
 		}
 		if x == 0 {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarUint, Uint: x}
+			encoded.StoreWord(slot, wire.ScalarUint, x)
 		}
 	case reflect.String:
 		x := *(*string)(p)
 		if x == "" {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarString, Text: x}
+			encoded.StoreString(slot, x)
 		}
 	case reflect.Float32:
 		x := *(*float32)(p)
 		if x == 0 {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarFloat32, Real: float64(x)}
+			encoded.StoreWord(slot, wire.ScalarFloat32, math.Float64bits(float64(x)))
 		}
 	case reflect.Float64:
 		x := *(*float64)(p)
 		if x == 0 {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarFloat64, Real: x}
+			encoded.StoreWord(slot, wire.ScalarFloat64, math.Float64bits(x))
 		}
 	case reflect.Complex64:
 		x := *(*complex64)(p)
 		if x == 0 {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarComplex64, Real: float64(real(x)), Imag: float64(imag(x))}
+			encoded.StoreComplex(slot, wire.ScalarComplex64, complex128(x))
 		}
 	case reflect.Complex128:
 		x := *(*complex128)(p)
 		if x == 0 {
-			encoded = wire.Scalar{Kind: wire.ScalarNil}
+			encoded.StoreNil(slot)
 		} else {
-			encoded = wire.Scalar{Kind: wire.ScalarComplex128, Real: real(x), Imag: imag(x)}
+			encoded.StoreComplex(slot, wire.ScalarComplex128, x)
 		}
 	default:
 		return false
 	}
-	s.internal.encoded.StoreScalar(slot, encoded)
 	return true
 }
 
-func loadCaptureScalar(kind reflect.Kind, p unsafe.Pointer, value wire.Scalar) bool {
-	switch value.Kind {
+func loadCaptureScalar(kind reflect.Kind, p unsafe.Pointer, encoded *wire.Struct, slot int) bool {
+	wireKind, ok := encoded.ScalarKind(slot)
+	if !ok {
+		return false
+	}
+	switch wireKind {
 	case wire.ScalarNil:
 		return true
 	case wire.ScalarBool:
 		if kind != reflect.Bool {
 			return false
 		}
-		*(*bool)(p) = value.Uint == 1
+		*(*bool)(p) = encoded.ScalarWord(slot) == 1
 	case wire.ScalarInt:
+		x := int64(encoded.ScalarWord(slot))
 		var decoded int64
 		switch kind {
 		case reflect.Int:
-			*(*int)(p) = int(value.Int)
+			*(*int)(p) = int(x)
 			decoded = int64(*(*int)(p))
 		case reflect.Int8:
-			*(*int8)(p) = int8(value.Int)
+			*(*int8)(p) = int8(x)
 			decoded = int64(*(*int8)(p))
 		case reflect.Int16:
-			*(*int16)(p) = int16(value.Int)
+			*(*int16)(p) = int16(x)
 			decoded = int64(*(*int16)(p))
 		case reflect.Int32:
-			*(*int32)(p) = int32(value.Int)
+			*(*int32)(p) = int32(x)
 			decoded = int64(*(*int32)(p))
 		case reflect.Int64:
-			*(*int64)(p) = value.Int
-			decoded = value.Int
+			*(*int64)(p) = x
+			decoded = x
 		default:
 			return false
 		}
-		if decoded != value.Int {
-			Failf("signed integer truncated from %v to %v", value.Int, decoded)
+		if decoded != x {
+			Failf("signed integer truncated from %v to %v", x, decoded)
 		}
 	case wire.ScalarUint:
+		x := encoded.ScalarWord(slot)
 		var decoded uint64
 		switch kind {
 		case reflect.Uint:
-			*(*uint)(p) = uint(value.Uint)
+			*(*uint)(p) = uint(x)
 			decoded = uint64(*(*uint)(p))
 		case reflect.Uint8:
-			*(*uint8)(p) = uint8(value.Uint)
+			*(*uint8)(p) = uint8(x)
 			decoded = uint64(*(*uint8)(p))
 		case reflect.Uint16:
-			*(*uint16)(p) = uint16(value.Uint)
+			*(*uint16)(p) = uint16(x)
 			decoded = uint64(*(*uint16)(p))
 		case reflect.Uint32:
-			*(*uint32)(p) = uint32(value.Uint)
+			*(*uint32)(p) = uint32(x)
 			decoded = uint64(*(*uint32)(p))
 		case reflect.Uint64:
-			*(*uint64)(p) = value.Uint
-			decoded = value.Uint
+			*(*uint64)(p) = x
+			decoded = x
 		case reflect.Uintptr:
-			*(*uintptr)(p) = uintptr(value.Uint)
+			*(*uintptr)(p) = uintptr(x)
 			decoded = uint64(*(*uintptr)(p))
 		default:
 			return false
 		}
-		if decoded != value.Uint {
-			Failf("unsigned integer truncated from %v to %v", value.Uint, decoded)
+		if decoded != x {
+			Failf("unsigned integer truncated from %v to %v", x, decoded)
 		}
 	case wire.ScalarString:
 		if kind != reflect.String {
 			return false
 		}
-		*(*string)(p) = value.Text
+		*(*string)(p) = encoded.ScalarString(slot)
 	case wire.ScalarFloat32, wire.ScalarFloat64:
+		x := math.Float64frombits(encoded.ScalarWord(slot))
 		var decoded float64
 		switch kind {
 		case reflect.Float32:
-			*(*float32)(p) = float32(value.Real)
+			*(*float32)(p) = float32(x)
 			decoded = float64(*(*float32)(p))
 		case reflect.Float64:
-			*(*float64)(p) = value.Real
-			decoded = value.Real
+			*(*float64)(p) = x
+			decoded = x
 		default:
 			return false
 		}
-		if value.Kind == wire.ScalarFloat64 && !isFloatEq(decoded, value.Real) {
-			Failf("floating point number truncated from %v to %v", value.Real, decoded)
+		if wireKind == wire.ScalarFloat64 && !isFloatEq(decoded, x) {
+			Failf("floating point number truncated from %v to %v", x, decoded)
 		}
 	case wire.ScalarComplex64, wire.ScalarComplex128:
-		x := complex(value.Real, value.Imag)
+		x := encoded.ScalarComplex(slot)
 		var decoded complex128
 		switch kind {
 		case reflect.Complex64:
@@ -231,7 +238,7 @@ func loadCaptureScalar(kind reflect.Kind, p unsafe.Pointer, value wire.Scalar) b
 		default:
 			return false
 		}
-		if value.Kind == wire.ScalarComplex128 && !isComplexEq(decoded, x) {
+		if wireKind == wire.ScalarComplex128 && !isComplexEq(decoded, x) {
 			Failf("complex number truncated from %v to %v", x, decoded)
 		}
 	default:

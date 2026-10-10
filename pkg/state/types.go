@@ -83,7 +83,7 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 // lookupTypeInfo extracts the metadata for a type.
 func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 	if info, ok := reverseTypeDatabase[typ]; ok {
-		return info, true
+		return info.Type, true
 	}
 	v := reflect.Zero(reflect.PointerTo(typ)).Interface()
 	t, ok := v.(Type)
@@ -302,8 +302,15 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 // globalTypeDatabase is used for dispatching interfaces on decode.
 var globalTypeDatabase = map[string]reflect.Type{}
 
-// reverseTypeDatabase holds immutable metadata indexed by the original type.
-var reverseTypeDatabase = map[reflect.Type]wire.Type{}
+// registeredType owns immutable wire and native field metadata.
+type registeredType struct {
+	wire.Type
+	fields []directField
+	layout *wire.CaptureLayout
+}
+
+// reverseTypeDatabase indexes the existing registration records by Go type.
+var reverseTypeDatabase = map[reflect.Type]*registeredType{}
 
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
@@ -418,7 +425,8 @@ func register(typ reflect.Type, info wire.Type) {
 		}
 	}
 	globalTypeDatabase[info.Name] = typ
-	reverseTypeDatabase[typ] = info
+	fields := directFieldDescriptors(typ, info.Fields)
+	reverseTypeDatabase[typ] = &registeredType{Type: info, fields: fields, layout: captureFieldLayout(fields)}
 }
 
 func init() {
@@ -430,9 +438,9 @@ type directField struct {
 	kind reflect.Kind
 }
 
-// directFieldDescriptors resolves actual field representations once per registered
-// type in a stream. Handwritten/custom-value fields may have no Go field;
-// those slots retain the ordinary dynamic path.
+// directFieldDescriptors resolves actual field representations at registration.
+// Handwritten/custom-value fields may have no Go field; those slots retain the
+// ordinary dynamic path.
 func directFieldDescriptors(typ reflect.Type, names []string) []directField {
 	fields := make([]directField, len(names))
 	if typ.Kind() != reflect.Struct {
@@ -461,12 +469,34 @@ func (tbd *typeDecodeDatabase) captureLayout(id wire.TypeID) *wire.CaptureLayout
 	if !ok || typ.Kind() != reflect.Struct {
 		return nil
 	}
-	info, ok := lookupTypeInfo(typ)
-	if !ok || len(info.Fields) != len(entry.Fields) {
+	info := reverseTypeDatabase[typ]
+	if info == nil || len(info.Fields) != len(entry.Fields) {
 		return nil
 	}
-	entry.layout = captureFieldLayout(directFieldDescriptors(typ, entry.Fields))
+	if slices.Equal(info.Fields, entry.Fields) {
+		entry.layout = info.layout
+		return entry.layout
+	}
+	// Reordered wire metadata needs only a permutation of immutable field
+	// descriptors. Destination type validation remains in Lookup.
+	fields := make([]directField, len(entry.Fields))
+	for i, name := range entry.Fields {
+		if slot := slices.Index(info.Fields, name); slot >= 0 {
+			fields[i] = info.fields[slot]
+		}
+	}
+	entry.layout = captureFieldLayout(fields)
 	return entry.layout
+}
+
+// registeredFields uses the existing registration owner. Unregistered embedded
+// types retain their per-stream metadata path.
+func registeredFields(typ reflect.Type, names []string) ([]directField, *wire.CaptureLayout) {
+	if info := reverseTypeDatabase[typ]; info != nil {
+		return info.fields, info.layout
+	}
+	fields := directFieldDescriptors(typ, names)
+	return fields, captureFieldLayout(fields)
 }
 
 func captureFieldLayout(fields []directField) *wire.CaptureLayout {

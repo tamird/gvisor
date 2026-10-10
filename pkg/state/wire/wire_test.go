@@ -46,12 +46,12 @@ func TestCapturedFieldResave(t *testing.T) {
 	var arena CaptureArena
 	child := &Struct{TypeID: 2}
 	child.AllocCapture(&arena, childLayout)
-	child.StoreScalar(0, Scalar{Kind: ScalarInt, Int: 1})
-	child.StoreScalar(1, Scalar{Kind: ScalarString, Text: "owned"})
+	child.StoreWord(0, ScalarInt, 1)
+	child.StoreString(1, "owned")
 	parent := &Struct{TypeID: 1}
 	parent.AllocCapture(&arena, parentLayout)
 	*parent.Field(0) = child
-	parent.StoreScalar(1, Scalar{Kind: ScalarUint, Uint: 7})
+	parent.StoreWord(1, ScalarUint, 7)
 	roundTrip := func(obj Object, direct bool) Object {
 		t.Helper()
 		var encoded bytes.Buffer
@@ -85,7 +85,7 @@ func TestCapturedFieldResave(t *testing.T) {
 				}
 			}
 			// Typed writes must update the same stable Field override.
-			nested.StoreScalar(0, Scalar{Kind: ScalarInt, Int: 42})
+			nested.StoreWord(0, ScalarInt, 42)
 			if got, want := *retained, Object(Int(42)); got != want {
 				t.Errorf("retained value = %v, want %v", got, want)
 			}
@@ -102,8 +102,8 @@ func TestCapturedHomogeneousResave(t *testing.T) {
 			for i := range values {
 				value := &Struct{TypeID: 1}
 				value.AllocCapture(&arena, layout)
-				value.StoreScalar(0, Scalar{Kind: ScalarInt, Int: int64(i)})
-				value.StoreScalar(1, Scalar{Kind: ScalarBool, Uint: 1})
+				value.StoreWord(0, ScalarInt, uint64(i))
+				value.StoreWord(1, ScalarBool, 1)
 				values[i] = value
 			}
 			var original Object = &Array{Contents: values}
