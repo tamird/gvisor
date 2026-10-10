@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <elf.h>
+#include <sched.h>
 #include <stdint.h>
 #include <sys/auxv.h>
 #include <sys/time.h>
@@ -21,6 +22,7 @@
 #include <unistd.h>
 
 #include <array>
+#include <atomic>
 #include <map>
 #include <ostream>
 #include <sstream>
@@ -34,6 +36,7 @@
 #include "absl/time/clock.h"
 #include "absl/time/time.h"
 #include "test/util/test_util.h"
+#include "test/util/thread_util.h"
 #include "vdso/params.h"
 
 #if defined(__x86_64__)
@@ -184,6 +187,78 @@ class CycleObserver {
   Examples regression_examples_{};
   Examples aux_examples_{};
 };
+
+TEST(NativeCycleHandoffTest, SerializedCounters) {
+  SKIP_IF(IsRunningOnGvisor());
+#if defined(__x86_64__)
+  unsigned eax, ebx, ecx, edx;
+  ASSERT_TRUE(__get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx));
+  ASSERT_NE(edx & (1u << 27), 0u) << "Diagnostic requires RDTSCP";
+  cpu_set_t allowed;
+  ASSERT_THAT(sched_getaffinity(0, sizeof(allowed), &allowed),
+              SyscallSucceeds());
+  ASSERT_GE(CPU_COUNT(&allowed), 2);
+  std::array<int, 2> cpus;
+  size_t selected = 0;
+  for (int cpu = 0; cpu < CPU_SETSIZE && selected < cpus.size(); ++cpu) {
+    if (CPU_ISSET(cpu, &allowed)) {
+      cpus[selected++] = cpu;
+    }
+  }
+  ASSERT_EQ(selected, cpus.size());
+
+  // The token serializes both the samples and observer updates. Publishing a
+  // sample happens before the peer acquires the token and reads its counter.
+  // Only these two temporary threads change affinity; the test thread does not.
+  std::atomic<unsigned> turn{0};
+  std::atomic<bool> stop{false};
+  CycleObserver path;
+  auto sample = [&](unsigned side) {
+    cpu_set_t pinned;
+    CPU_ZERO(&pinned);
+    CPU_SET(cpus[side], &pinned);
+    ASSERT_THAT(sched_setaffinity(0, sizeof(pinned), &pinned),
+                SyscallSucceeds());
+    cpu_set_t effective;
+    ASSERT_THAT(sched_getaffinity(0, sizeof(effective), &effective),
+                SyscallSucceeds());
+    ASSERT_TRUE(CPU_EQUAL(&pinned, &effective));
+    ASSERT_EQ(sched_getcpu(), cpus[side]);
+    while (!stop.load(std::memory_order_relaxed)) {
+      if (turn.load(std::memory_order_acquire) != side) {
+        asm volatile("pause");
+        continue;
+      }
+      path.Record(ReadCycles(), side == 0 ? "first_cpu" : "second_cpu");
+      turn.store(1 - side, std::memory_order_release);
+    }
+  };
+  ScopedThread first([&] { sample(0); });
+  ScopedThread second([&] { sample(1); });
+  absl::SleepFor(absl::Seconds(2));
+  stop.store(true, std::memory_order_relaxed);
+  first.Join();
+  second.Join();
+
+  RecordProperty("native_handoff_first_cpu", std::to_string(cpus[0]));
+  RecordProperty("native_handoff_second_cpu", std::to_string(cpus[1]));
+  RecordProperty("native_handoff_allowed_cpus", CPU_COUNT(&allowed));
+  RecordProperty("native_handoff_cycle_samples", std::to_string(path.samples));
+  RecordProperty("native_handoff_cycle_regressions",
+                 std::to_string(path.regressions));
+  RecordProperty("native_handoff_aux_changes",
+                 std::to_string(path.aux_changes));
+  RecordProperty("native_handoff_regression_examples",
+                 path.RegressionExamples());
+  RecordProperty("native_handoff_aux_examples", path.AuxExamples());
+  ASSERT_GT(path.samples, 1u);
+  // Counter reversals are diagnostic data. The original clock assertions below
+  // remain independent; a passing handoff only covers this pair and its
+  // latency.
+#else
+  GTEST_SKIP() << "Serialized cycle diagnostic requires AMD64";
+#endif
+}
 
 // Fork-only output from the explicitly marked clock_gettime request. The
 // kernel fills every scalar; native calls never request this extension.
