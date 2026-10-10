@@ -202,3 +202,31 @@ func TestArrayLateParent(t *testing.T) {
 		t.Errorf("recaptured tail = %v, want %v", got, want)
 	}
 }
+
+func TestPrimitiveArrayFloatEncoding(t *testing.T) {
+	positiveSignal := math.Float32frombits(0x7f800001)
+	negativeSignal := math.Float32frombits(0xff800001)
+	quiet := math.Float32frombits(0x7fc00042)
+	negativeZero := math.Float32frombits(0x80000000)
+	for _, test := range []struct {
+		name  string
+		value arrayFloatEncoding
+	}{
+		{"float32", arrayFloatEncoding{floats: [4]float32{positiveSignal, negativeSignal, quiet, negativeZero}}},
+		{"complex64", arrayFloatEncoding{complexes: [2]complex64{complex(positiveSignal, negativeSignal), complex(negativeZero, quiet)}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var captured, reflected bytes.Buffer
+			if _, err := state.Save(t.Context(), &captured, &test.value); err != nil {
+				t.Fatal(err)
+			}
+			test.value.byValue = true
+			if _, err := state.Save(t.Context(), &reflected, &test.value); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := captured.Bytes(), reflected.Bytes(); !bytes.Equal(got, want) {
+				t.Errorf("addressable array encoding = %x, want existing value encoding %x", got, want)
+			}
+		})
+	}
+}

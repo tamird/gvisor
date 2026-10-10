@@ -14,6 +14,12 @@
 
 package tests
 
+import (
+	"context"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
+
 // +stateify savable
 type arrayContainer struct {
 	v [1]any
@@ -60,4 +66,28 @@ func (m *arraySnapshotMutator) beforeSave() {
 // +stateify savable
 type arrayTailDiscovery struct {
 	values [][2]uint64
+}
+
+// arrayFloatEncoding compares the two existing public save boundaries without
+// copying their element conversion logic into a test oracle.
+// +stateify type
+type arrayFloatEncoding struct {
+	floats    [4]float32
+	complexes [2]complex64
+	byValue   bool `state:"nosave"`
+}
+
+func (a *arrayFloatEncoding) StateSave(s state.Sink) {
+	if a.byValue {
+		s.SaveValue(0, a.floats)
+		s.SaveValue(1, a.complexes)
+	} else {
+		s.Save(0, &a.floats)
+		s.Save(1, &a.complexes)
+	}
+}
+
+func (a *arrayFloatEncoding) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &a.floats)
+	s.Load(1, &a.complexes)
 }
