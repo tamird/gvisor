@@ -16,14 +16,7 @@ package tests
 
 import (
 	"context"
-	"time"
 )
-
-// +stateify savable
-type timeContainer struct {
-	timestamp time.Time
-	pointer   *time.Time
-}
 
 type unregisteredEmptyStruct struct{}
 

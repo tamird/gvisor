@@ -103,10 +103,6 @@ type encodeState struct {
 	// Sink.SaveValue() for a given field, resulting in object duplication.
 	encodedStructs map[reflect.Value]*wire.Struct
 
-	// binaryBuf holds temporary BinaryAppender output. Each saved value is
-	// copied into an immutable string before this buffer is reused.
-	binaryBuf []byte
-
 	// stats tracks time data.
 	stats Stats
 }
@@ -535,16 +531,19 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()
-	switch value := obj.Addr().Interface().(type) {
-	case SaverLoader:
-		value.StateSave(Sink{internal: oe})
-	case binaryObject:
-		es.saveBinary(value, te.Name, Sink{internal: oe})
+	if sl, ok := obj.Addr().Interface().(SaverLoader); ok {
+		// Note: may be a registered empty struct which does not
+		// implement the saver/loader interfaces.
+		sl.StateSave(Sink{internal: oe})
 	}
 }
 
 // encodeArray encodes an array.
 func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
+	if snapshot, ok := capturePrimitiveArray(obj); ok {
+		*dest = snapshot
+		return
+	}
 	l := obj.Len()
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),

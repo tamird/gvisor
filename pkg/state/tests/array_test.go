@@ -15,11 +15,25 @@
 package tests
 
 import (
+	"bytes"
+	"math"
 	"reflect"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 var allArrayPrimitives = []any{
+	[0]uint64{},
+	[2]int64{-1 << 63, 1<<63 - 1},
+	[2]uint64{0, ^uint64(0)},
+	[2]arraySigned{-7, 11},
+	[2]arrayUnsigned{0, ^arrayUnsigned(0)},
+	[2]arrayString{"", "owned"},
+	[2]float32{0, -1.5},
+	[2]float64{math.Copysign(0, -1), math.Inf(1)},
+	[2]complex64{0, 1.25 - 3i},
+	[2]complex128{complex(math.Copysign(0, -1), 0), 2 - 5i},
 	[1]bool{},
 	[1]bool{true},
 	[2]bool{false, true},
@@ -134,4 +148,85 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
 	})
+}
+
+func TestArraySnapshotTiming(t *testing.T) {
+	first := &arraySnapshotSource{values: [2]uint64{7, 11}}
+	original := system{v1: first, v2: &arraySnapshotMutator{target: first}}
+	var encoded bytes.Buffer
+	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := first.values[0], uint64(99); got != want {
+		t.Fatalf("later hook mutation = %d, want %d", got, want)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+		t.Fatal(err)
+	}
+	child := loaded.v1.(*arraySnapshotSource)
+	if got, want := child.values, ([2]uint64{7, 11}); got != want {
+		t.Errorf("captured array = %v, want %v", got, want)
+	}
+	if got, want := loaded.v2.(*arraySnapshotMutator).target, child; got != want {
+		t.Errorf("shared target = %p, want %p", got, want)
+	}
+}
+
+func TestArrayLateParent(t *testing.T) {
+	backing := [2][2]uint64{{7, 11}, {13, 17}}
+	// Encode the interior array first. Later slice discovery clears the unused
+	// capacity and reparents that object under the complete backing array.
+	// The containing array must be captured anew after the clearing.
+	original := system{v1: &backing[1], v2: &arrayTailDiscovery{values: backing[:1]}}
+	var encoded bytes.Buffer
+	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := backing[1], ([2]uint64{}); got != want {
+		t.Fatalf("cleared backing tail = %v, want %v", got, want)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+		t.Fatal(err)
+	}
+	child := loaded.v1.(*[2]uint64)
+	parent := loaded.v2.(*arrayTailDiscovery).values
+	if got, want := cap(parent), 2; got != want {
+		t.Fatalf("backing capacity = %d, want %d", got, want)
+	}
+	if got, want := child, &parent[:2][1]; got != want {
+		t.Errorf("interior array = %p, want %p", got, want)
+	}
+	if got, want := *child, ([2]uint64{}); got != want {
+		t.Errorf("recaptured tail = %v, want %v", got, want)
+	}
+}
+
+func TestPrimitiveArrayFloatEncoding(t *testing.T) {
+	positiveSignal := math.Float32frombits(0x7f800001)
+	negativeSignal := math.Float32frombits(0xff800001)
+	quiet := math.Float32frombits(0x7fc00042)
+	negativeZero := math.Float32frombits(0x80000000)
+	for _, test := range []struct {
+		name  string
+		value arrayFloatEncoding
+	}{
+		{"float32", arrayFloatEncoding{floats: [4]float32{positiveSignal, negativeSignal, quiet, negativeZero}}},
+		{"complex64", arrayFloatEncoding{complexes: [2]complex64{complex(positiveSignal, negativeSignal), complex(negativeZero, quiet)}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var captured, reflected bytes.Buffer
+			if _, err := state.Save(t.Context(), &captured, &test.value); err != nil {
+				t.Fatal(err)
+			}
+			test.value.byValue = true
+			if _, err := state.Save(t.Context(), &reflected, &test.value); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := captured.Bytes(), reflected.Bytes(); !bytes.Equal(got, want) {
+				t.Errorf("addressable array encoding = %x, want existing value encoding %x", got, want)
+			}
+		})
+	}
 }
