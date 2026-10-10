@@ -651,7 +651,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 				return
 			}
 			s = received
-		case <-time.After(2 * time.Minute):
+		case <-time.After(5 * time.Minute):
 			// Fork-only diagnosis: use the existing stack dump before the
 			// emulator's outer timeout makes the guest inaccessible.
 			log.Warningf("Diagnostic deadline reached; collecting sandbox stacks")
