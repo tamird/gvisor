@@ -32,74 +32,89 @@ func BenchmarkUintSave(b *testing.B) {
 	}
 }
 
-// TestFramedFieldResave preserves the mutable Field contract for public frames
-// and decoded frames, including a pointer retained across multiple writes.
-func TestFramedFieldResave(t *testing.T) {
-	var arena FrameArena
+// TestCapturedFieldResave exercises mutable public fields, including a pointer
+// retained while another save completes and a nested child's value changes.
+func TestCapturedFieldResave(t *testing.T) {
+	childLayout := NewCaptureLayout([]uint64{ScalarInt, ScalarString})
+	parentLayout := NewCaptureLayout([]uint64{ScalarObject, ScalarUint})
+	layout := func(id TypeID) *CaptureLayout {
+		if id == 1 {
+			return parentLayout
+		}
+		return childLayout
+	}
+	var arena CaptureArena
 	child := &Struct{TypeID: 2}
-	child.AllocFrame(&arena, 1)
-	*child.Field(0) = Int(1)
+	child.AllocCapture(&arena, childLayout)
+	child.StoreScalar(0, Scalar{Kind: ScalarInt, Int: 1})
+	child.StoreScalar(1, Scalar{Kind: ScalarString, Text: "owned"})
 	parent := &Struct{TypeID: 1}
-	parent.AllocFrame(&arena, 1)
+	parent.AllocCapture(&arena, parentLayout)
 	*parent.Field(0) = child
-	arena.Finish()
-
-	roundTrip := func(value Object) Object {
+	parent.StoreScalar(1, Scalar{Kind: ScalarUint, Uint: 7})
+	roundTrip := func(obj Object, direct bool) Object {
 		t.Helper()
 		var encoded bytes.Buffer
-		Save(&Writer{Writer: &encoded}, value)
-		loaded := Load(&Reader{Reader: &encoded})
+		Save(&Writer{Writer: &encoded}, obj)
+		r := Reader{Reader: &encoded}
+		if direct {
+			r.CaptureLayout = layout
+		}
+		loaded := Load(&r)
 		if got, want := encoded.Len(), 0; got != want {
-			t.Fatalf("unread encoded bytes = %d, want %d", got, want)
+			t.Fatalf("unread bytes = %d, want %d", got, want)
 		}
 		return loaded
 	}
-	decoded := roundTrip(parent).(*Struct)
+	decoded := roundTrip(parent, true).(*Struct)
 	for _, test := range []struct {
 		name   string
 		parent *Struct
 	}{
-		{name: "public", parent: parent},
-		{name: "decoded", parent: decoded},
+		{"public", parent}, {"decoded", decoded},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			nested := (*test.parent.Field(0)).(*Struct)
 			retained := nested.Field(0)
 			for _, value := range []Int{128, 1 << 28, 1} {
-				// Change the varint width without calling Field again. Both
-				// the child span and containing field length must be fresh.
 				*retained = value
-				loaded := roundTrip(test.parent).(*Struct)
+				loaded := roundTrip(test.parent, false).(*Struct)
 				loadedChild := (*loaded.Field(0)).(*Struct)
 				if got, want := *loadedChild.Field(0), Object(value); got != want {
 					t.Errorf("nested value = %v, want %v", got, want)
 				}
 			}
+			// Typed writes must update the same stable Field override.
+			nested.StoreScalar(0, Scalar{Kind: ScalarInt, Int: 42})
+			if got, want := *retained, Object(Int(42)); got != want {
+				t.Errorf("retained value = %v, want %v", got, want)
+			}
 		})
 	}
 }
 
-func TestFramedHomogeneousResave(t *testing.T) {
+func TestCapturedHomogeneousResave(t *testing.T) {
+	layout := NewCaptureLayout([]uint64{ScalarInt, ScalarBool})
 	for _, name := range []string{"array", "map"} {
 		t.Run(name, func(t *testing.T) {
-			var arena FrameArena
+			var arena CaptureArena
 			values := make([]Object, 2)
 			for i := range values {
 				value := &Struct{TypeID: 1}
-				value.AllocFrame(&arena, 1)
-				*value.Field(0) = Int(i)
+				value.AllocCapture(&arena, layout)
+				value.StoreScalar(0, Scalar{Kind: ScalarInt, Int: int64(i)})
+				value.StoreScalar(1, Scalar{Kind: ScalarBool, Uint: 1})
 				values[i] = value
 			}
 			var original Object = &Array{Contents: values}
 			if name == "map" {
 				original = &Map{Keys: []Object{Uint(0), Uint(1)}, Values: values}
 			}
-			arena.Finish()
 			roundTrip := func(value Object) Object {
 				t.Helper()
 				var encoded bytes.Buffer
 				Save(&Writer{Writer: &encoded}, value)
-				return Load(&Reader{Reader: &encoded})
+				return Load(&Reader{Reader: &encoded, CaptureLayout: func(TypeID) *CaptureLayout { return layout }})
 			}
 			second := func(value Object) *Struct {
 				switch x := value.(type) {
@@ -122,27 +137,5 @@ func TestFramedHomogeneousResave(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestFrameSealRefreshesSizes(t *testing.T) {
-	var arena FrameArena
-	child := &Struct{TypeID: 2}
-	child.AllocFrame(&arena, 1)
-	retained := child.Field(0)
-	*retained = Int(1)
-	parent := &Struct{TypeID: 1}
-	parent.AllocFrame(&arena, 1)
-	*parent.Field(0) = child
-	arena.Finish()
-	// No Field call invalidates the cached sizes after this mutation.
-	*retained = Int(1 << 28)
-	arena.Seal()
-	var encoded bytes.Buffer
-	Save(&Writer{Writer: &encoded}, parent)
-	loaded := Load(&Reader{Reader: &encoded}).(*Struct)
-	loadedChild := (*loaded.Field(0)).(*Struct)
-	if got, want := *loadedChild.Field(0), Object(Int(1<<28)); got != want {
-		t.Errorf("sealed nested value = %v, want %v", got, want)
 	}
 }

@@ -149,6 +149,7 @@ func (ods *objectDecodeState) callbackRun(ds *decodeState) {
 // to ensure that all callbacks are executed, otherwise the callback graph was
 // not acyclic.
 type decodeState struct {
+	direct bool
 	// ctx is the decode context.
 	ctx context.Context
 
@@ -407,7 +408,7 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	// Lookup the object type.
 	rte := ds.types.Lookup(typeID(encoded.TypeID), obj.Type())
 	ods.typ = typeID(encoded.TypeID)
-	if encoded.IsFramed() && rte.fieldDescriptors == nil {
+	if ds.direct && rte.fieldDescriptors == nil {
 		rte.fieldDescriptors = directFieldDescriptors(obj.Type(), rte.Fields)
 	}
 

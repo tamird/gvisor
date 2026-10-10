@@ -93,9 +93,9 @@ var allAlgos = map[string]struct {
 		Save: state.Save,
 		Load: state.Load,
 	},
-	"framed": {
-		Save: state.SaveFramed,
-		Load: state.Load,
+	"direct": {
+		Save: state.SaveDirect,
+		Load: state.LoadDirect,
 	},
 	"gob": {
 		Save: gobSave,
@@ -167,8 +167,8 @@ func BenchmarkControlMessageEncoding(b *testing.B) {
 	benchmarkControlMessageEncoding(b, state.Save)
 }
 
-func BenchmarkControlMessageFramedEncoding(b *testing.B) {
-	benchmarkControlMessageEncoding(b, state.SaveFramed)
+func BenchmarkControlMessageDirectEncoding(b *testing.B) {
+	benchmarkControlMessageEncoding(b, state.SaveDirect)
 }
 
 func benchmarkControlMessageEncoding(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
@@ -184,14 +184,14 @@ func benchmarkControlMessageEncoding(b *testing.B, save func(context.Context, io
 }
 
 func BenchmarkControlMessageDecoding(b *testing.B) {
-	benchmarkControlMessageDecoding(b, state.Save)
+	benchmarkControlMessageDecoding(b, state.Save, state.Load)
 }
 
-func BenchmarkControlMessageFramedDecoding(b *testing.B) {
-	benchmarkControlMessageDecoding(b, state.SaveFramed)
+func BenchmarkControlMessageDirectDecoding(b *testing.B) {
+	benchmarkControlMessageDecoding(b, state.SaveDirect, state.LoadDirect)
 }
 
-func benchmarkControlMessageDecoding(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
+func benchmarkControlMessageDecoding(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error), load func(context.Context, io.Reader, any) (state.Stats, error)) {
 	b.Helper()
 	_, encoded := controlMessageBenchmark(b, save)
 	var restored tcpip.ReceivableControlMessages
@@ -199,7 +199,7 @@ func benchmarkControlMessageDecoding(b *testing.B, save func(context.Context, io
 	b.ReportAllocs()
 	for b.Loop() {
 		reader.Reset(encoded)
-		if _, err := state.Load(b.Context(), &reader, &restored); err != nil {
+		if _, err := load(b.Context(), &reader, &restored); err != nil {
 			b.Fatal(err)
 		}
 	}

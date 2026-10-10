@@ -40,9 +40,12 @@ import (
 type Reader struct {
 	io.Reader
 
-	buf [1]byte
+	// CaptureLayout is supplied by the state type-info owner for direct reads.
+	// A nil callback preserves the ordinary public wire representation.
+	CaptureLayout func(TypeID) *CaptureLayout
+	captures      *CaptureArena
 
-	frames *FrameArena
+	buf [1]byte
 }
 
 // readByte reads a single byte from r.Reader without allocation. It panics on
@@ -765,8 +768,8 @@ type Struct struct {
 //
 // This must be called after Alloc.
 func (s *Struct) Field(i int) *Object {
-	if fields, ok := s.fields.(*frameFields); ok {
-		return fields.field(i)
+	if f, ok := s.fields.(*captureFields); ok {
+		return f.field(i)
 	}
 	if fields, ok := s.fields.(*multipleObjects); ok {
 		return &((*fields)[i])
@@ -801,8 +804,8 @@ func (s *Struct) Alloc(slots int) {
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
 	switch x := s.fields.(type) {
-	case *frameFields:
-		return x.count
+	case *captureFields:
+		return len(x.layout.slots)
 	case *multipleObjects:
 		return len(*x)
 	case noObjects:
@@ -814,10 +817,43 @@ func (s *Struct) Fields() int {
 
 // loadStruct loads an object of type Struct.
 func loadStruct(r *Reader) Struct {
-	return Struct{
-		TypeID: TypeID(loadUint(r)),
-		fields: Load(r),
+	s := Struct{TypeID: TypeID(loadUint(r))}
+	if r.CaptureLayout == nil {
+		s.fields = Load(r)
+		return s
 	}
+	layout := r.CaptureLayout(s.TypeID)
+	if layout == nil || len(layout.slots) <= 1 || layout.scalars == 0 {
+		s.fields = Load(r)
+		return s
+	}
+	hdr := loadUint(r)
+	if hdr != typeMultipleObjects {
+		s.fields = loadAfterHeader(r, hdr)
+		return s
+	}
+	count := loadUint(r)
+	if uint64(count) != uint64(len(layout.slots)) {
+		fields := make(multipleObjects, count)
+		for i := range fields {
+			fields[i] = Load(r)
+		}
+		s.fields = &fields
+		return s
+	}
+	if r.captures == nil {
+		r.captures = new(CaptureArena)
+	}
+	s.AllocCapture(r.captures, layout)
+	for i, field := range layout.slots {
+		hdr := loadUint(r)
+		if uint64(hdr) == ScalarNil || uint64(hdr) == field.kind {
+			s.StoreScalar(i, loadScalar(r, uint64(hdr)))
+		} else {
+			*s.Field(i) = loadAfterHeader(r, hdr)
+		}
+	}
+	return s
 }
 
 // save implements Object.save.
@@ -825,29 +861,14 @@ func loadStruct(r *Reader) Struct {
 // Precondition: Alloc must have been called, and the fields all filled in
 // appropriately. See Alloc and Add for more details.
 func (s *Struct) save(w *Writer) {
-	// Homogeneous arrays/maps invoke save directly after the first element.
-	// Prepare here so every entry observes retained mutable Field pointers.
-	if fields, ok := s.fields.(*frameFields); ok {
-		if _, sizing := w.Writer.(*frameSizer); !sizing {
-			fields.finish()
-		}
-	}
 	Uint(s.TypeID).save(w)
-	if fields, ok := s.fields.(*frameFields); ok {
-		fields.save(w)
-	} else {
-		Save(w, s.fields)
-	}
+	Save(w, s.fields)
 }
 
 // load implements Object.load.
-func (s *Struct) load(r *Reader) Object {
-	if s != nil && s.IsFramed() {
-		value := loadFramedStruct(r)
-		return &value
-	}
-	value := loadStruct(r)
-	return &value
+func (*Struct) load(r *Reader) Object {
+	s := loadStruct(r)
+	return &s
 }
 
 // Object types.
@@ -873,7 +894,6 @@ const (
 	typeComplex64
 	typeComplex128
 	typeType
-	typeFramedStruct // Experimental length-delimited struct fields.
 )
 
 // Save saves the given object.
@@ -917,14 +937,13 @@ func Save(w *Writer, obj Object) {
 		typeMap.save(w)
 		x.save(w)
 	case *Struct:
-		if x.IsFramed() {
-			typeFramedStruct.save(w)
-		} else {
-			typeStruct.save(w)
-		}
+		typeStruct.save(w)
 		x.save(w)
 	case noObjects:
 		typeNoObjects.save(w)
+		x.save(w)
+	case *captureFields:
+		typeMultipleObjects.save(w)
 		x.save(w)
 	case *multipleObjects:
 		typeMultipleObjects.save(w)
@@ -952,7 +971,11 @@ func Save(w *Writer, obj Object) {
 //
 // N.B. This function will panic on error.
 func Load(r *Reader) Object {
-	switch hdr := loadUint(r); hdr {
+	return loadAfterHeader(r, loadUint(r))
+}
+
+func loadAfterHeader(r *Reader, hdr Uint) Object {
+	switch hdr {
 	case typeBool:
 		return loadBool(r)
 	case typeInt:
@@ -975,9 +998,6 @@ func Load(r *Reader) Object {
 		return ((*Array)(nil)).load(r) // Escapes.
 	case typeMap:
 		return ((*Map)(nil)).load(r) // Escapes.
-	case typeFramedStruct:
-		s := loadFramedStruct(r)
-		return &s
 	case typeStruct:
 		return ((*Struct)(nil)).load(r) // Escapes.
 	case typeNoObjects: // Special for struct.

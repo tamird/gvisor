@@ -28,6 +28,7 @@ type typeEntry struct {
 	ID typeID
 	wire.Type
 	fieldDescriptors []directField
+	captureLayout    *wire.CaptureLayout
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -63,7 +64,15 @@ type typeDecodeDatabase struct {
 	// will be reconciled with actual objects. Note that these will also be
 	// used to lookup types by name, since they may not be reconciled and
 	// there's little value to deleting from this map.
-	pending []*wire.Type
+	pending []decodeTypeEntry
+}
+
+// decodeTypeEntry keeps optional read storage beside the existing wire metadata.
+// It does not reconcile an actual destination type; Lookup remains that owner.
+type decodeTypeEntry struct {
+	*wire.Type
+	layout      *wire.CaptureLayout
+	layoutKnown bool
 }
 
 // makeTypeDecodeDatabase makes a typeDatabase.
@@ -134,7 +143,7 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 
 // Register adds a typeID entry.
 func (tbd *typeDecodeDatabase) Register(typ *wire.Type) {
-	tbd.pending = append(tbd.pending, typ)
+	tbd.pending = append(tbd.pending, decodeTypeEntry{Type: typ})
 }
 
 // LookupName looks up the type name by ID.
@@ -435,4 +444,54 @@ func directFieldDescriptors(typ reflect.Type, names []string) []directField {
 		}
 	}
 	return fields
+}
+
+// captureLayout supplies storage for known field families without populating the
+// reconciled-type cache. The actual destination still passes through Lookup.
+func (tdb *typeDecodeDatabase) captureLayout(id wire.TypeID) *wire.CaptureLayout {
+	if id == 0 || uint64(id) > uint64(len(tdb.pending)) {
+		return nil
+	}
+	entry := &tdb.pending[id-1]
+	if entry.layoutKnown {
+		return entry.layout
+	}
+	entry.layoutKnown = true
+	typ, ok := globalTypeDatabase[entry.Name]
+	if !ok || typ.Kind() != reflect.Struct {
+		return nil
+	}
+	info, ok := lookupTypeInfo(typ)
+	if !ok || len(info.Fields) != len(entry.Fields) {
+		return nil
+	}
+	entry.layout = captureFieldLayout(directFieldDescriptors(typ, entry.Fields))
+	return entry.layout
+}
+
+func captureFieldLayout(fields []directField) *wire.CaptureLayout {
+	kinds := make([]uint64, len(fields))
+	for i, field := range fields {
+		kind := uint64(wire.ScalarObject)
+		switch field.kind {
+		case reflect.Bool:
+			kind = wire.ScalarBool
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			kind = wire.ScalarInt
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+			kind = wire.ScalarUint
+		case reflect.Float32:
+			kind = wire.ScalarFloat32
+		case reflect.Float64:
+			kind = wire.ScalarFloat64
+		case reflect.Complex64:
+			kind = wire.ScalarComplex64
+		case reflect.Complex128:
+			kind = wire.ScalarComplex128
+		case reflect.String:
+			kind = wire.ScalarString
+		}
+		kinds[i] = kind
+	}
+	return wire.NewCaptureLayout(kinds)
 }

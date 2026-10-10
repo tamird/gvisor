@@ -92,13 +92,13 @@ func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 	return save(ctx, w, rootPtr, false)
 }
 
-// SaveFramed is an experimental direct-field encoding. Load accepts this
-// format, but older readers do not; it is not the default checkpoint format.
-func SaveFramed(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+// SaveDirect is an experimental typed-capture implementation of the existing
+// wire format. Its output remains readable by Load and earlier readers.
+func SaveDirect(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 	return save(ctx, w, rootPtr, true)
 }
 
-func save(ctx context.Context, w io.Writer, rootPtr any, framed bool) (Stats, error) {
+func save(ctx context.Context, w io.Writer, rootPtr any, direct bool) (Stats, error) {
 	// Create the encoding state.
 	es := encodeState{
 		ctx:            ctx,
@@ -109,8 +109,8 @@ func save(ctx context.Context, w io.Writer, rootPtr any, framed bool) (Stats, er
 		encodedStructs: make(map[reflect.Value]*wire.Struct),
 	}
 
-	if framed {
-		es.frames = new(wire.FrameArena)
+	if direct {
+		es.captures = new(wire.CaptureArena)
 	}
 
 	// Perform the encoding.
@@ -122,12 +122,27 @@ func save(ctx context.Context, w io.Writer, rootPtr any, framed bool) (Stats, er
 
 // Load loads a checkpoint.
 func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
+	return load(ctx, r, rootPtr, false)
+}
+
+// LoadDirect reads the existing wire format into typed field storage while
+// retaining the ordinary object graph and hook scheduler.
+func LoadDirect(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
+	return load(ctx, r, rootPtr, true)
+}
+
+func load(ctx context.Context, r io.Reader, rootPtr any, direct bool) (Stats, error) {
 	// Create the decoding state.
 	ds := decodeState{
 		ctx:      ctx,
 		r:        wire.Reader{Reader: r},
 		types:    makeTypeDecodeDatabase(),
 		deferred: make(map[objectID]wire.Object),
+	}
+
+	ds.direct = direct
+	if direct {
+		ds.r.CaptureLayout = ds.types.captureLayout
 	}
 
 	// Attempt our decode.

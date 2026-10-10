@@ -8,7 +8,7 @@ package(
 go_library(
     name = "wire",
     srcs = [
-        "frame.go",
+        "capture.go",
         "wire.go",
     ],
     marshal = False,

@@ -145,15 +145,15 @@ type typedFields struct {
 }
 
 // +stateify savable
-type framedGraph struct {
+type directGraph struct {
 	value int64
 	name  string
-	next  *framedGraph
-	wait  *framedGraph `state:"wait"`
+	next  *directGraph
+	wait  *directGraph `state:"wait"`
 	loads int          `state:"nosave"`
 }
 
-func (g *framedGraph) afterLoad(context.Context) {
+func (g *directGraph) afterLoad(context.Context) {
 	if g.wait != nil && g.wait.loads != 1 {
 		panic("dependency hook has not completed")
 	}
@@ -161,58 +161,61 @@ func (g *framedGraph) afterLoad(context.Context) {
 }
 
 // +stateify savable
-type framedMutator struct {
-	target *framedGraph
+type directMutator struct {
+	target *directGraph
 }
 
-func (m *framedMutator) beforeSave() {
+func (m *directMutator) beforeSave() {
 	m.target.value = 99
 }
 
 // +stateify savable
-type framedHookValue struct {
+type directHookValue struct {
 	value int64 `state:".(int64)"`
 	calls int   `state:"nosave"`
 }
 
-func (v *framedHookValue) saveValue() int64 {
+func (v *directHookValue) saveValue() int64 {
 	v.calls++
 	return v.value
 }
 
-func (v *framedHookValue) loadValue(_ context.Context, x int64) {
+func (v *directHookValue) loadValue(_ context.Context, x int64) {
 	v.value = x
 }
 
 // +stateify savable
-type framedHookParent struct {
-	child framedHookValue
+type directHookParent struct {
+	child directHookValue
 }
 
 // +stateify savable
-type framedPair struct {
+type directPair struct {
 	first  int16
 	second int16
 }
 
-// framedCustom deliberately saves a wider representation than its Go field.
+// directCustom deliberately saves a wider representation than its Go field.
 // The generic helper must fall back before treating that pointer as an int16.
-type framedCustom struct {
+type directCustom struct {
+	guard    uint8
 	value    int16
 	observed int64
 }
 
-func (*framedCustom) StateTypeName() string { return "gvisor.dev/gvisor/pkg/state/tests.framedCustom" }
-func (*framedCustom) StateFields() []string { return []string{"value"} }
-func (c *framedCustom) StateSave(s state.Sink) {
+func (*directCustom) StateTypeName() string { return "gvisor.dev/gvisor/pkg/state/tests.directCustom" }
+func (*directCustom) StateFields() []string { return []string{"value", "guard"} }
+func (c *directCustom) StateSave(s state.Sink) {
 	// Preserve a high bit that cannot be represented by the declared int16.
 	wide := int64(c.value) + 65536
 	state.SaveField(s, 0, &wide)
+	state.SaveField(s, 1, &c.guard)
 }
-func (c *framedCustom) StateLoad(_ context.Context, s state.Source) {
+func (c *directCustom) StateLoad(_ context.Context, s state.Source) {
 	var wide int64
 	state.LoadField(s, 0, &wide, false)
+	state.LoadField(s, 1, &c.guard, false)
 	c.observed = wide
 	c.value = int16(wide)
 }
-func init() { state.Register((*framedCustom)(nil)) }
+func init() { state.Register((*directCustom)(nil)) }

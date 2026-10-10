@@ -44,10 +44,10 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 	benchmarkUDPReceiveQueueSave(b, state.Save)
 }
 
-// BenchmarkUDPReceiveQueueSaveFramed uses the same queue and validation with
-// the experimental field representation.
-func BenchmarkUDPReceiveQueueSaveFramed(b *testing.B) {
-	benchmarkUDPReceiveQueueSave(b, state.SaveFramed)
+// BenchmarkUDPReceiveQueueSaveDirect uses the same queue and validation with
+// the experimental typed field capture.
+func BenchmarkUDPReceiveQueueSaveDirect(b *testing.B) {
+	benchmarkUDPReceiveQueueSave(b, state.SaveDirect)
 }
 
 func benchmarkUDPReceiveQueueSave(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {

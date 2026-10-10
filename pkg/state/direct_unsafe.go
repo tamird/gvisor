@@ -25,17 +25,17 @@ import (
 // T keeps the call type-checked; the shared implementation does not instantiate
 // a scalar adapter for every field type. The pointer is not retained.
 func SaveField[T any](s Sink, slot int, value *T) {
-	if s.internal.encoded.IsFramed() && s.internal.fields[slot].typ == reflect.TypeFor[T]() && saveFrameScalar(s, slot, unsafe.Pointer(value)) {
+	if s.internal.es.captures != nil && s.internal.fields[slot].typ == reflect.TypeFor[T]() && saveCaptureScalar(s, slot, unsafe.Pointer(value)) {
 		return
 	}
 	s.Save(slot, value)
 }
 
-// LoadField loads a generated field directly from its encoded span when it is
+// LoadField loads a generated field directly from captured storage when it is
 // a primitive. Dynamic forms return to the original T for assignment checking.
 func LoadField[T any](s Source, slot int, value *T, wait bool) {
-	if s.internal.encoded.IsFramed() && s.internal.rte.fieldDescriptors[slot].typ == reflect.TypeFor[T]() {
-		if encoded, ok := s.internal.encoded.Scalar(s.internal.rte.FieldOrder[slot]); ok && loadFrameScalar(s.internal.rte.fieldDescriptors[slot].kind, unsafe.Pointer(value), encoded) {
+	if s.internal.ds.direct && s.internal.rte.fieldDescriptors[slot].typ == reflect.TypeFor[T]() {
+		if encoded, ok := s.internal.encoded.Scalar(s.internal.rte.FieldOrder[slot]); ok && loadCaptureScalar(s.internal.rte.fieldDescriptors[slot].kind, unsafe.Pointer(value), encoded) {
 			// Primitive values contain no references and add no hook dependency.
 			return
 		}
@@ -47,7 +47,7 @@ func LoadField[T any](s Source, slot int, value *T, wait bool) {
 	}
 }
 
-func saveFrameScalar(s Sink, slot int, p unsafe.Pointer) bool {
+func saveCaptureScalar(s Sink, slot int, p unsafe.Pointer) bool {
 	var encoded wire.Scalar
 	switch s.internal.fields[slot].kind {
 	case reflect.Bool:
@@ -134,11 +134,11 @@ func saveFrameScalar(s Sink, slot int, p unsafe.Pointer) bool {
 	default:
 		return false
 	}
-	s.internal.encoded.SnapshotScalar(slot, encoded)
+	s.internal.encoded.StoreScalar(slot, encoded)
 	return true
 }
 
-func loadFrameScalar(kind reflect.Kind, p unsafe.Pointer, value wire.Scalar) bool {
+func loadCaptureScalar(kind reflect.Kind, p unsafe.Pointer, value wire.Scalar) bool {
 	switch value.Kind {
 	case wire.ScalarNil:
 		return true

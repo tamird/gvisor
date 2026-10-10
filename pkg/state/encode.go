@@ -63,8 +63,8 @@ type encodeState struct {
 	// w is the output stream.
 	w wire.Writer
 
-	// frames owns the experimental captured representation of this graph.
-	frames *wire.FrameArena
+	// captures owns the experimental typed field snapshots of this graph.
+	captures *wire.CaptureArena
 
 	// types is the type database.
 	types typeEncodeDatabase
@@ -532,11 +532,12 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 
 	// Invoke the provided saver.
 	s.TypeID = wire.TypeID(te.ID)
-	if es.frames != nil {
-		s.AllocFrame(es.frames, len(te.Fields))
+	if es.captures != nil {
 		if te.fieldDescriptors == nil {
 			te.fieldDescriptors = directFieldDescriptors(obj.Type(), te.Fields)
+			te.captureLayout = captureFieldLayout(te.fieldDescriptors)
 		}
+		s.AllocCapture(es.captures, te.captureLayout)
 	} else {
 		s.Alloc(len(te.Fields))
 	}
@@ -798,10 +799,6 @@ func (es *encodeState) Save(obj reflect.Value) {
 	// Check that we have objects to serialize.
 	if len(es.pending) == 0 {
 		Failf("pending is empty?")
-	}
-
-	if es.frames != nil {
-		es.frames.Seal()
 	}
 
 	// Write the header with the number of objects.
