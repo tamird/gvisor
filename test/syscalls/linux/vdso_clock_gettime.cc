@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <elf.h>
 #include <stdint.h>
 #include <sys/auxv.h>
 #include <sys/time.h>
