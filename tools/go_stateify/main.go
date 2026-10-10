@@ -364,17 +364,6 @@ func main() {
 					scanFields(x, scanFunctions{field: func(name string, typ ast.Expr) {
 						_, pointerFields[name] = typ.(*ast.StarExpr)
 					}})
-					codecName := func(name string) string {
-						return fmt.Sprintf("stateCodec%d_%s_%s", len(ts.Name.Name), ts.Name.Name, name)
-					}
-					if generateSaverLoader {
-						emitCodec := func(name string) {
-							if !pointerFields[name] {
-								fmt.Fprintf(outputFile, "var %s = %sNewFieldCodec(&new(%s).%s)\n", codecName(name), statePrefix, ts.Name.Name, name)
-							}
-						}
-						scanFields(x, scanFunctions{normal: emitCodec, wait: emitCodec})
-					}
 
 					// Record the slot for each field.
 					fieldCount := 0
@@ -399,7 +388,7 @@ func main() {
 						if wait {
 							method = "LoadWait"
 						}
-						fmt.Fprintf(outputFile, "\t%s.%s(stateSourceObject, %d, &%s.%s)\n", codecName(name), method, fields[name], recv, name)
+						fmt.Fprintf(outputFile, "\tstateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], recv, name)
 					}
 
 					emitLoad := func(name string) { emitTypedLoad(name, false) }
@@ -415,7 +404,7 @@ func main() {
 						if pointerFields[name] {
 							fmt.Fprintf(outputFile, "\t%sSavePointer(stateSinkObject, %d, &%s.%s)\n", statePrefix, fields[name], recv, name)
 						} else {
-							fmt.Fprintf(outputFile, "\t%s.Save(stateSinkObject, %d, &%s.%s)\n", codecName(name), fields[name], recv, name)
+							fmt.Fprintf(outputFile, "\tstateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
 						}
 					}
 
