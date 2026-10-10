@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T02:51:31.702638+00:00",
+    "updatedAt": "2026-10-10T03:03:03.856030+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1184,12 +1184,12 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-10T02:51:31.702638+00:00",
-      "summary": "The maintainer’s four threads remain open. Revised proposal a306517c6 changes only the three comments and retains all live Init guards. The previous e846 proposal is superseded after the user rejected assuming exclusive access from the Init name. The new scope is prepared for contributor review, with no unanswered question yet confirmed. The live PR remains 6c70cb26b; the Init discussion is unresolved.",
+      "updatedAt": "2026-10-10T02:54:02.824224+00:00",
+      "summary": "The maintainer’s four threads remain open. Revised proposal a306517c6 changes only the three comments and retains all live Init guards. The previous e846 proposal is superseded after the user rejected assuming exclusive access from the Init name. The exact revised scope is now awaiting an actual contributor answer. The live PR remains 6c70cb26b; the Init discussion is unresolved.",
       "followup": {
-        "disposition": "Revised comment proposal prepared; Init unresolved",
-        "owner": "restore_integration_review",
-        "nextAction": "MAIN’s revised a306517c6 changes only three comments and retains all live Init guards. Root owns the new contributor handoff; the old e846 answer was changes requested. Leave the live PR, public replies and Init thread unchanged until authorization is clear.",
+        "disposition": "Revised comment proposal awaiting contributor review",
+        "owner": "root",
+        "nextAction": "Await the actual answer on linked proposal a306517c6. The live PR remains unchanged; keep Init guards and the unresolved Init discussion separate from the three comment clarifications.",
         "evidence": [
           "https://app.buildbuddy.io/invocation/ab7b9fc2-1588-409f-bd78-622ee50131aa",
           "https://github.com/tamird/gvisor/commit/e846cc6bbdc4211bd21795cf14b1d39cac1397f2",
@@ -1200,7 +1200,7 @@
           "https://github.com/google/gvisor/pull/14343#issuecomment-5390710435",
           "https://github.com/tamird/gvisor/commit/6c70cb26bc6e6d806dbf03a67b83bf00930b91d0"
         ],
-        "reviewedAt": "2026-10-10T02:51:31.702638+00:00",
+        "reviewedAt": "2026-10-10T02:54:02.824224+00:00",
         "sourceHead": "6c70cb26bc6e6d806dbf03a67b83bf00930b91d0",
         "reviewDecision": "CHANGES_REQUESTED",
         "mergeable": "MERGEABLE"
@@ -4564,17 +4564,17 @@
       "title": "Respect send limits in oversized receive tests",
       "url": "https://github.com/google/gvisor/pull/15507",
       "group": "tests",
-      "status": "open",
-      "updatedAt": "2026-10-08T11:41:04.884295+00:00",
-      "summary": "Contributor-approved PR #15507 is open at 8f032f4e1532d6c977610936d8d237440fbaf947. The delivery owner verified its exact head and approved wrapped description. The contributor decision is fulfilled; current CI, maintainer review and import status are tracked below. The earlier scoped native evidence remains valid within its recorded limits.\n\nEarlier observations:\n\nA contributor review question is now pending for this exact public standalone commit. Independent source review and the combined native-correction saved-result review are closed. All 36 native comparison cases failed before this change and passed afterward in the same Actions job. Across the eight complete native/gVisor datagram and seqpacket owners, 144 targeted cases passed. The original ENOBUFS early-return contract remains; successful output does not establish additional branch tracing or performance. The combined Actions run 37758739367 retained all 82 original 300-second actions and remains failed because of separate exec/key-limit findings; the two native cgroup-transfer EBUSY skips remain unresolved. No upstream PR is open.",
+      "status": "merged",
+      "updatedAt": "2026-10-10T03:03:03.856030+00:00",
+      "summary": "PR #15507 merged at 02:54:07 UTC with matching import #15533. The oversized-receive test correction is delivered. Original source and validation evidence remain retained.",
       "followup": {
-        "disposition": "Current-head approval; import open",
+        "disposition": "Merged; source work complete",
         "owner": "external_sweeps",
-        "nextAction": "Observe the current-source import checks and merge state.",
+        "nextAction": "No source amendment or review outreach remains for this merged change. Keep any later import-head CI separate from the landed source outcome.",
         "sourceHead": "8f032f4e1532d6c977610936d8d237440fbaf947",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE",
-        "reviewedAt": "2026-10-08T21:05:14.556649+00:00",
+        "reviewedAt": "2026-10-10T03:03:03.856030+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15507"
         ]
@@ -4900,16 +4900,17 @@
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
-      "status": "full 661-owner final-policy qualification running",
-      "summary": "The full 661-owner ARM64 64K final-policy qualification is running as Actions 38014645202 at 1903b6b4a, with root owning the sole observer. It restores the complete selection with 1,286 declared shards and existing per-owner deadlines and resources. No full-profile result is claimed yet.\n\nThe complete 33-case socket-stress owner passed in Actions 38008045670 at b1b7f2549. All 33 original cases passed in uncached remote actions, with source, debug/no-strace settings and declared contracts reconciled. It keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. This closes the complete stress owner under the corrected policy. It does not establish a pass for the full 661-owner ARM64 profile. The first attempt, Actions 38007298459, stopped before any build or test action because its routing hash still included the old argument list. The correction requires the new prefix and removes only that prefix from copied comparison rows; actual runtime arguments remain intact. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.",
-      "updatedAt": "2026-10-10T02:18:39.395266+00:00",
+      "status": "full ARM profile failed; original reconciliation pending",
+      "summary": "The full final-policy ARM64 run, Actions 38014645202 at 1903b6b4a, ended failed. Its console reports all 661 owners executed: 658 passed and three failed. The pipe directfs owner and loopback shared owner timed out; loopback directfs reports two failing shards. Original case and contract reconciliation is still pending, so these are console-level counts, not a completed full-profile audit.\n\nThe separate mixed release-candidate bucket 7 is running as Actions 38018426239 at f311db0eb under root’s sole observer. This is a partial bucket, with no full-RC claim.\n\nThe complete 33-case socket-stress owner passed in Actions 38008045670 at b1b7f2549. All 33 original cases passed in uncached remote actions, with source, debug/no-strace settings and declared contracts reconciled. It keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. This closes the complete stress owner under the corrected policy. It does not establish a pass for the full 661-owner ARM64 profile. The first attempt, Actions 38007298459, stopped before any build or test action because its routing hash still included the old argument list. The correction requires the new prefix and removes only that prefix from copied comparison rows; actual runtime arguments remain intact. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.",
+      "updatedAt": "2026-10-10T02:54:02.824224+00:00",
       "followup": {
-        "disposition": "Full final-policy qualification running",
+        "disposition": "Full ARM profile failed; RC bucket running",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-10T02:18:39.395266+00:00",
-        "nextAction": "Root observes the single complete 661-owner run, Actions 38014645202 at 1903b6b4a. Retain the independently reconciled 33-case stress success and all original failures; qualify the whole profile only from this run’s actual results.",
+        "reviewedAt": "2026-10-10T02:54:02.824224+00:00",
+        "nextAction": "Root collects the full ARM originals and reconciles the reported three failed owners. Retain the closed 33-case stress pass separately. Root also owns the single mixed RC bucket-7 observer; no whole-RC result is established.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/38018426239",
           "https://github.com/tamird/gvisor/commit/1903b6b4a",
           "https://github.com/tamird/gvisor/actions/runs/38014645202",
           "https://github.com/tamird/gvisor/actions/runs/38008045670",
@@ -5397,21 +5398,26 @@
       "title": "Reconcile TMPFS and VFS review feedback",
       "url": "https://github.com/tamird/gvisor/commit/a306517c61094f024f927a94fbf44d9e5d410f90",
       "group": "analysis",
-      "status": "Revised comments-only proposal prepared; Init unresolved",
-      "updatedAt": "2026-10-10T02:51:31.702638+00:00",
-      "summary": "The revised proposal a306517c6 changes only three comments and retains every live Init guard. It is prepared for a new contributor handoff; no new question has been confirmed and publication is not authorized by the earlier answer. The Init discussion remains unresolved.\n\nThe user answered the previous e846cc6bb request with changes requested, rejecting an assumption of exclusive access from the Init name. That decision applies to the earlier proposal and has not been reassigned to this revision. The current live PR remains 6c70cb26b.",
+      "status": "Contributor review pending; Init untouched",
+      "updatedAt": "2026-10-10T02:54:02.824224+00:00",
+      "summary": "The revised proposal a306517c6 changes only three comments and retains every live Init guard. Root has now asked the contributor to approve this exact revised scope. That question is unanswered; publication is not authorized by the earlier answer. The Init discussion remains unresolved.\n\nThe user answered the previous e846cc6bb request with changes requested, rejecting an assumption of exclusive access from the Init name. That decision applies to the earlier proposal and has not been reassigned to this revision. The current live PR remains 6c70cb26b.",
       "followup": {
-        "disposition": "Revised comments-only proposal prepared",
-        "owner": "restore_integration_review",
+        "disposition": "Contributor review pending for revised comments",
+        "owner": "root",
         "sourceHead": "a306517c61094f024f927a94fbf44d9e5d410f90",
-        "reviewedAt": "2026-10-10T02:51:31.702638+00:00",
-        "nextAction": "Root prepares the contributor handoff for the revised a306517c6 scope. Preserve the user’s answered e846 objection and keep the Init discussion open; do not publish, reply or resolve from the old decision.",
+        "reviewedAt": "2026-10-10T02:54:02.824224+00:00",
+        "nextAction": "Await the actual contributor answer for a306517c6’s three comment clarifications. Init guards and its unresolved discussion stay untouched; the earlier e846 answer is not approval of this revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a306517c61094f024f927a94fbf44d9e5d410f90",
           "https://github.com/tamird/gvisor/commit/e846cc6bbdc4211bd21795cf14b1d39cac1397f2",
           "https://github.com/google/gvisor/pull/14343#discussion_r4235876011",
           "https://app.buildbuddy.io/invocation/ab7b9fc2-1588-409f-bd78-622ee50131aa"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "a306517c61094f024f927a94fbf44d9e5d410f90",
+        "url": "https://github.com/tamird/gvisor/commit/a306517c61094f024f927a94fbf44d9e5d410f90"
       }
     }
   ],
@@ -6794,7 +6800,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-10T01:02:31.060697+00:00",
+      "updatedAt": "2026-10-10T02:54:02.824224+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -7158,8 +7164,16 @@
           ]
         },
         {
-          "text": "A sender-wide recovery redesign is under investigation. The proposed delivery map would own byte-range acknowledgement and transmission facts; flight estimates and controller packet credits would become explicit views. Linux confirms that current-MSS packet credits are projected accounting, not actual transmission counts. No replacement or performance gain is claimed yet.",
+          "text": "A reference byte-range model now matches four real TCP ACK replays for SACK credit and unacknowledged bytes. The replay confirms that partial ACK order can change current-MSS packet credit without changing byte coverage. This is a selected behavior check, not a new TCP implementation or performance result.",
           "evidence": [
+            {
+              "label": "Reference model and real-sender replay source",
+              "url": "https://github.com/tamird/gvisor/blob/d4bf42718b/pkg/tcpip/transport/tcp/test/e2e/tcp_delivery_model_test.go"
+            },
+            {
+              "label": "Selected model/replay validation",
+              "url": "https://app.buildbuddy.io/invocation/7c7f6335-a699-4e3d-8159-273940588c84"
+            },
             {
               "label": "Linux packetization accounting",
               "url": "https://github.com/torvalds/linux/blob/e5f0a698b/net/ipv4/tcp_output.c#L1519-L1696"
@@ -7179,7 +7193,7 @@
           ]
         }
       ],
-      "nextStep": "Prototype recovery, RTO, split, MSS and restore transitions with named byte and packet units, preserve existing regressions, and measure high-BDP ACK cost before choosing the representation. Complete independent review of the isolated SACK-accounting study and follow the delivered RACK amendment through maintainer review. These remain separate from the architectural experiment.",
+      "nextStep": "Move delivery coverage and packetization updates into one sender-owned component with private cached views and explicit ACK results, preserving current packet policy. Validate lifecycle boundaries and measure cost before changing controller policy.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -7467,8 +7481,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T02:48:41.413290+00:00",
-      "summary": "The direct generated save/load architecture is now a concrete experimental prototype at b83596347. It uses framed primitive byte spans and owned reference handles within the existing identity, alias and hook graph; the default Save format is unchanged. Correctness validation 2b48aa70 ended with five passing runtime actions and three passing analyzers; two analyzers failed on an unused initial Scalar value. An initializer-only continuation has completed successfully and its original-result collection is pending. The first failed parent remains retained; framed performance has not been measured yet. Earlier pointer-only controls and profiling are complete; their evidence remains separate from this architectural prototype. These are separate experiments; architecture remains the primary work.",
+      "updatedAt": "2026-10-10T03:00:58.459275+00:00",
+      "summary": "The direct generated save/load investigation remains active, but its first framed format is slower: all nine timings regressed in the paired experiment. UDP Save used fewer allocations while taking more time, allocating more bytes and emitting a larger wire representation. The next work is full-kernel compatibility and profiling of the measured costs, with no upstream proposal for this design.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -7556,7 +7570,7 @@
           ]
         },
         {
-          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. An initializer-only continuation f34a56f9 completed successfully; original-result collection remains pending. Framed measurements are preparing, with no performance result yet.",
+          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. An initializer-only continuation f34a56f9 completed successfully; original-result collection remains pending. The subsequent paired framed measurements are complete and reported separately below.",
           "evidence": [
             {
               "label": "Direct framed prototype",
@@ -7567,9 +7581,22 @@
               "url": "https://app.buildbuddy.io/invocation/2b48aa70-f39f-4106-9adb-fd3c7eda9317"
             }
           ]
+        },
+        {
+          "text": "The direct framed experiment regressed all nine timing comparisons (p<.001). At 32 queued UDP packets, Save time increased 24.98%, allocated bytes increased 69.05%, and wire bytes increased 16.76%, even though allocation count fell 41.48%. Pointer Load took 40.86% more time. Root verified these values against the original benchstat output. The process-level RSS observations do not establish an improvement. This slower prototype is not an upstream proposal; full-kernel compatibility and hotspot profiling are the next experiments.",
+          "evidence": [
+            {
+              "label": "Paired legacy/framed experiment",
+              "url": "https://app.buildbuddy.io/invocation/eb0f3536-474e-4377-882d-5a5bba182808"
+            },
+            {
+              "label": "Exact measured source",
+              "url": "https://github.com/tamird/gvisor/commit/7fab0177c33c938cdef2ab44a5c1276d77177437"
+            }
+          ]
         }
       ],
-      "nextStep": "Complete source-bound correctness checks for the direct framed prototype, then measure its allocation, CPU and code-size tradeoffs using the existing representative workloads. Preserve hook and SaveValue snapshot order, graph identity, late parent discovery and unsupported-field fallback. No contributor authorization hold applies.",
+      "nextStep": "Run the prepared full-kernel compatibility pilot, then profile the measured serialization hotspots. Use those results to revise direct generated emission and storage ownership while preserving graph identity, hook ordering and late alias resolution.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7582,8 +7609,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T02:48:41.413290+00:00",
-      "summary": "The direct generated save/load architecture is now a concrete experimental prototype at b83596347. It uses framed primitive byte spans and owned reference handles within the existing identity, alias and hook graph; the default Save format is unchanged. Correctness validation 2b48aa70 ended with five passing runtime actions and three passing analyzers; two analyzers failed on an unused initial Scalar value. An initializer-only continuation has completed successfully and its original-result collection is pending. The first failed parent remains retained; framed performance has not been measured yet. Earlier pointer-only controls and profiling are complete; their evidence remains separate from this architectural prototype. These are separate experiments; architecture remains the primary work.",
+      "updatedAt": "2026-10-10T03:00:58.459275+00:00",
+      "summary": "The direct generated save/load investigation remains active, but its first framed format is slower: all nine timings regressed in the paired experiment. UDP Save used fewer allocations while taking more time, allocating more bytes and emitting a larger wire representation. The next work is full-kernel compatibility and profiling of the measured costs, with no upstream proposal for this design.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7743,7 +7770,7 @@
           ]
         },
         {
-          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. An initializer-only continuation f34a56f9 completed successfully; original-result collection remains pending. Framed measurements are preparing, with no performance result yet.",
+          "text": "The first direct framed prototype is public at b83596347, with qualification e0292b990. It captures generated primitive fields directly and retains the existing graph, hooks and deferred reference ownership. The appended experimental format is opt-in; older readers do not support it. Correctness run 2b48aa70 passed all five runtime actions and three analyzers. Two analyzers failed on an unused initial Scalar value at framed_unsafe.go:51; the failed parent is retained. An initializer-only continuation f34a56f9 completed successfully; original-result collection remains pending. The subsequent paired framed measurements are complete and reported separately below.",
           "evidence": [
             {
               "label": "Direct framed prototype",
@@ -7754,9 +7781,22 @@
               "url": "https://app.buildbuddy.io/invocation/2b48aa70-f39f-4106-9adb-fd3c7eda9317"
             }
           ]
+        },
+        {
+          "text": "The direct framed experiment regressed all nine timing comparisons (p<.001). At 32 queued UDP packets, Save time increased 24.98%, allocated bytes increased 69.05%, and wire bytes increased 16.76%, even though allocation count fell 41.48%. Pointer Load took 40.86% more time. Root verified these values against the original benchstat output. The process-level RSS observations do not establish an improvement. This slower prototype is not an upstream proposal; full-kernel compatibility and hotspot profiling are the next experiments.",
+          "evidence": [
+            {
+              "label": "Paired legacy/framed experiment",
+              "url": "https://app.buildbuddy.io/invocation/eb0f3536-474e-4377-882d-5a5bba182808"
+            },
+            {
+              "label": "Exact measured source",
+              "url": "https://github.com/tamird/gvisor/commit/7fab0177c33c938cdef2ab44a5c1276d77177437"
+            }
+          ]
         }
       ],
-      "nextStep": "Complete source-bound correctness checks for the direct framed prototype, then measure its allocation, CPU and code-size tradeoffs using the existing representative workloads. Preserve hook and SaveValue snapshot order, graph identity, late parent discovery and unsupported-field fallback. No contributor authorization hold applies.",
+      "nextStep": "Run the prepared full-kernel compatibility pilot, then profile the measured serialization hotspots. Use those results to revise direct generated emission and storage ownership while preserving graph identity, hook ordering and late alias resolution.",
       "evidence": [
         {
           "label": "Studied production revision",
@@ -7963,6 +8003,59 @@
             {
               "label": "Matched-fixture baseline 81c637ac9",
               "url": "https://github.com/tamird/gvisor/commit/81c637ac94b05d5607377a42165af094b3228c97"
+            }
+          ]
+        },
+        {
+          "title": "Direct framed prototype: regressions",
+          "description": "Legacy versus experimental framed encoding in the same source and binary, across 12 paired measurements per format and 216 measured rows. The UDP fixture retains 32 queued packets. Source 7fab0177c.",
+          "columns": [
+            "Measure",
+            "Legacy",
+            "Framed",
+            "Change"
+          ],
+          "rows": [
+            [
+              "UDP Save time",
+              "608,410 ns",
+              "760,395 ns",
+              "+24.98%"
+            ],
+            [
+              "UDP allocated bytes",
+              "288,432 B",
+              "487,586 B",
+              "+69.05%"
+            ],
+            [
+              "UDP allocations",
+              "3,628",
+              "2,123",
+              "-41.48%"
+            ],
+            [
+              "UDP wire bytes",
+              "13,179 B",
+              "15,388 B",
+              "+16.76%"
+            ],
+            [
+              "Pointer Load time",
+              "632,945 ns",
+              "891,543.5 ns",
+              "+40.86%"
+            ]
+          ],
+          "note": "All nine timing comparisons regressed with p<.001, including the two timings shown here. Fewer allocation objects did not reduce allocated bytes. Process peak RSS includes setup and all leaves, so it does not establish a per-operation memory gain; this same-binary experiment also does not isolate code-size cost.",
+          "evidence": [
+            {
+              "label": "Paired legacy/framed experiment",
+              "url": "https://app.buildbuddy.io/invocation/eb0f3536-474e-4377-882d-5a5bba182808"
+            },
+            {
+              "label": "Exact measured source",
+              "url": "https://github.com/tamird/gvisor/commit/7fab0177c33c938cdef2ab44a5c1276d77177437"
             }
           ]
         }
