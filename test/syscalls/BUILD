@@ -210,6 +210,8 @@ syscall_test(
 )
 
 syscall_test(
+    # Leave room for the rest of the suite after the 16K-round-trip race.
+    tcg_timeout = "long",
     test = "//test/syscalls/linux:epoll_test",
 )
 
@@ -1148,6 +1150,8 @@ syscall_test(
     size = "large",
     add_overlay = True,
     shard_count = most_shards,
+    # The 5,000-child race can exceed 15 minutes under software translation.
+    tcg_timeout = "eternal",
     test = "//test/syscalls/linux:socket_unix_pair_test",
 )
 

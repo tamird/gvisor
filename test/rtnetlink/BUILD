@@ -11,6 +11,8 @@ syscall_test(
     network_tools = True,
     overlay = True,
     save = False,
+    # Emulated boot and the ip subprocesses can exhaust the small-test budget.
+    tcg_timeout = "moderate",
     test = "//test/rtnetlink/linux:veth_test",
     use_tmpfs = True,
 )
@@ -41,6 +43,8 @@ syscall_test(
     network_tools = True,
     overlay = True,
     save = False,
+    # Emulated boot and the ip subprocesses can exhaust the small-test budget.
+    tcg_timeout = "moderate",
     test = "//test/rtnetlink/linux:route_test",
     use_tmpfs = True,
 )
