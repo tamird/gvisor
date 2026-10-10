@@ -123,6 +123,11 @@ class CycleObserver {
  public:
   CycleSample Read(const char* point) {
     const CycleSample sample = ReadCycles();
+    Record(sample, point);
+    return sample;
+  }
+
+  void Record(CycleSample sample, const char* point) {
     if (samples != 0) {
       if (sample.ticks < previous_.ticks) {
         Capture(regression_examples_, regressions, sample, point);
@@ -134,7 +139,6 @@ class CycleObserver {
     previous_ = sample;
     previous_point_ = point;
     ++samples;
-    return sample;
   }
 
   std::string RegressionExamples() const {
@@ -230,6 +234,19 @@ struct ReadSample {
     return syscall(__NR_clock_gettime, clock, ts);
   }
 
+  // Record the causal syscall path using samples that have already returned.
+  // This adds no counter reads or Sentry work. Raw AUX remains an opaque value.
+  void RecordInternalPath(CycleObserver* observer) const {
+    observer->Record(cycles_before, "caller.before");
+    observer->Record(
+        {internal.before_cycles, static_cast<uint32_t>(internal.before_aux)},
+        "sentry.before");
+    observer->Record(
+        {internal.after_cycles, static_cast<uint32_t>(internal.after_aux)},
+        "sentry.after");
+    observer->Record(cycles_after, "caller.after");
+  }
+
   void Before(const params* page, CycleObserver* observer, const char* point) {
     if (observer != nullptr) {
       active = true;
@@ -306,13 +323,17 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
   absl::Time vdso_time, sys_time;
   uint64_t internal_samples = 0;
   uint64_t internal_matches = 0;
+  CycleObserver internal_path;
   syscall_sample.Before(page, observer, "syscall.before");
   ASSERT_THAT(syscall_sample.ClockSyscall(GetParam(), &tsys, page != nullptr),
               SyscallSucceeds());
   syscall_sample.After(page, observer, "syscall.after");
   if (page != nullptr) {
     ++internal_samples;
-    internal_matches += syscall_sample.internal.Matches(tsys);
+    if (syscall_sample.internal.Matches(tsys)) {
+      ++internal_matches;
+      syscall_sample.RecordInternalPath(&internal_path);
+    }
   }
   sys_time = absl::TimeFromTimespec(tsys);
   auto end = absl::Now() + absl::Seconds(10);
@@ -330,7 +351,10 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
     syscall_sample.After(page, observer, "syscall.after");
     if (page != nullptr) {
       ++internal_samples;
-      internal_matches += syscall_sample.internal.Matches(tsys);
+      if (syscall_sample.internal.Matches(tsys)) {
+        ++internal_matches;
+        syscall_sample.RecordInternalPath(&internal_path);
+      }
     }
     sys_time = absl::TimeFromTimespec(tsys);
     EXPECT_LE(vdso_time, sys_time)
@@ -340,6 +364,15 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
   if (page != nullptr) {
     RecordProperty("internal_clock_samples", std::to_string(internal_samples));
     RecordProperty("internal_clock_matches", std::to_string(internal_matches));
+    RecordProperty("internal_path_cycle_samples",
+                   std::to_string(internal_path.samples));
+    RecordProperty("internal_path_cycle_regressions",
+                   std::to_string(internal_path.regressions));
+    RecordProperty("internal_path_aux_changes",
+                   std::to_string(internal_path.aux_changes));
+    RecordProperty("internal_path_regression_examples",
+                   internal_path.RegressionExamples());
+    RecordProperty("internal_path_aux_examples", internal_path.AuxExamples());
     EXPECT_EQ(internal_matches, internal_samples)
         << "Internal diagnostic must match each returned timespec";
   }
