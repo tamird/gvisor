@@ -9,6 +9,7 @@ go_library(
     name = "wire",
     srcs = [
         "array.go",
+        "capture.go",
         "wire.go",
     ],
     marshal = False,

@@ -89,9 +89,21 @@ func (e *ErrState) Unwrap() error {
 
 // Save saves the given object state.
 func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+	return save(ctx, w, rootPtr, nil)
+}
+
+// SaveCaptured is an experimental save-side implementation with the same wire
+// format and ordinary Load reader. It captures generated ordered primitives
+// directly as bytes; custom savers retain their original slot behavior.
+func SaveCaptured(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
+	return save(ctx, w, rootPtr, wire.NewCapture())
+}
+
+func save(ctx context.Context, w io.Writer, rootPtr any, capture *wire.Capture) (Stats, error) {
 	// Create the encoding state.
 	es := encodeState{
 		ctx:            ctx,
+		capture:        capture,
 		w:              wire.Writer{Writer: w},
 		types:          makeTypeEncodeDatabase(),
 		zeroValues:     make(map[reflect.Type]*objectEncodeState),
@@ -126,6 +138,15 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 // Sink is used for Type.StateSave.
 type Sink struct {
 	internal objectEncoder
+}
+
+// BeginOrdered selects ordered capture for a generated saver. It must be called
+// before saving any fields, and each declared slot must then be saved exactly
+// once in increasing order. It does not change the ordinary Save path.
+func (s Sink) BeginOrdered() {
+	if s.internal.es.capture != nil {
+		s.internal.encoded.AllocCapture(s.internal.es.capture, s.internal.fields)
+	}
 }
 
 // Save adds the given object to the map.

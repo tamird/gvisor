@@ -770,6 +770,9 @@ func (s *Struct) Field(i int) *Object {
 		// Alloc may be optionally called; can't call twice.
 		panic("Field called inappropriately, wrong Alloc?")
 	}
+	if s.IsCapture() {
+		panic("Field called on an ordered state capture")
+	}
 	return &s.fields
 }
 
@@ -796,6 +799,8 @@ func (s *Struct) Alloc(slots int) {
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
 	switch x := s.fields.(type) {
+	case *captureFields:
+		return x.count
 	case *multipleObjects:
 		return len(*x)
 	case noObjects:
@@ -915,13 +920,17 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
-		saveArraySnapshot(w, obj)
+		saveSnapshot(w, obj)
 	}
 }
 
-// saveArraySnapshot keeps the interface assertion and unknown-object error path
+// saveSnapshot keeps the interface assertions and unknown-object error path
 // outside Save's concrete dispatch.
-func saveArraySnapshot(w *Writer, obj Object) {
+func saveSnapshot(w *Writer, obj Object) {
+	if fields, ok := obj.(*captureFields); ok {
+		fields.save(w)
+		return
+	}
 	x, ok := obj.(primitiveArraySnapshot)
 	if !ok {
 		panic(fmt.Errorf("unknown type: %#v", obj))
