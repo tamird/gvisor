@@ -35,8 +35,8 @@ docker_test(
     srcs = ["nftables_test.go"],
     cohort = "nftables",
     data = ["//test/nftables/runner"],
-    ipv6 = True,
     embed = [":nftables"],
+    ipv6 = True,
     owned_args = ["--test-net-raw=true"],
     runtime_variants = NFTABLES_VARIANTS,
     tags = [
