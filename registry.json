@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T00:27:36.746363+00:00",
+    "updatedAt": "2026-10-10T00:48:33.473726+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -804,13 +804,14 @@
       "url": "https://github.com/google/gvisor/pull/15030",
       "group": "analysis",
       "status": "open",
-      "updatedAt": "2026-10-09T22:51:37.574532+00:00",
-      "summary": "EtiennePerot submitted a fresh approval of current head a807153cf at 2026-10-09T22:11:34Z. Import #15255 now names the approved current source. Current import checks are shown above. The authorized re-review notice is fulfilled; no repeated reviewer ping is needed.\n\nEarlier source-specific observations:\n\nThe matching current import #15255 at dac9a67c3663c69dceff9b165fc564d684f9666d now reports failure in Buildkite pipeline 50155. The exact cause has not been established from the status snapshot. This is distinct from the retained earlier import failure and from the separate prepared checklocks proposal. The live PR has no contributor-review hold; source approval, source checks, and current-import checks remain independently displayed.\n\nEarlier observations:\n\nThe live source PR is approved and its exact-source import #15255 has refreshed to dac9a67c3663c69dceff9b165fc564d684f9666d. New-head import checks are pending; Buildkite 50077 failed on the earlier import head and is retained as history. The source zizmor-output failure remains visible. The prepared aggregate-copy proposal is separate and requires reconciliation against the refreshed import; no contributor decision is outstanding.\n\nEarlier observations (superseded proposal status):\n\nThe concrete import failure is traced to struct-value copies exposed by upstream SSA change 59ef37217: composite literals no longer initialize in place. The checker stored individual field facts but lost them when copying an aggregate. The independently reviewed correction snapshots nested struct contents, preserves copied pointer identities and gives copied mutexes independent storage. The live PR remains 61027644e pending validation and contributor review. No live amendment or public reply has been made.\n\nTwo focused comparisons are accepted on the same canonical toolchain: before c83ed823-3660-41e7-950f-279135796b40 at c303164fe, and after 0fe1af23-7339-4fd6-b43e-3c9fc7f1f2a8 at 1f91f5af. Each selects the complete checklocks fixture and TCP Nogo owners with original 300-second deadlines and both target CPUs. The before run reproduced both original diagnostic locations on both CPUs. The first after run passed TCP but exposed an initial array-index alias gap and a fixture expecting one rather than two matching branch diagnostics; its saved snapshot positive passed. The independently reviewed correction gives equal integer indices equal array keys and makes the negative fixture require both diagnostics. Focused continuation 440ed56e-3388-4fca-93ca-50132c69f405 at 195336bc3 is independently verified OK: both complete owners pass on both target CPUs. Saved review verified all three archives, 63 actual Git bodies and six uncached remote Action/Command/output joins at their original 300-second deadlines. Maintained full-Nogo follow-up bebfb516-e211-4808-813d-a6a55d38953b is independently verified OK in 760.788 seconds at the same source. All 834 configured owners have exactly one passing uncached remote test result, both architecture PASS reports and their original 300-second deadlines; 30,748 compact spawns include no local execution. Review rehashed all 1,722 archive files and 21 actual Git source bodies. Final single-commit amendment 31f3ecac9 is published on a separate review branch on master 7e906, with all eleven source blobs equal to the reviewed correction and a source-grounded message. The contributor review request is now actually pending for final 31f3ecac9 and its delta, including approval to publish the single amendment and post the prepared validation comment. The live PR remains unchanged until that decision. The prior exact-source import failure at Buildkite 50077 remains retained: 824 owners, 723 passed and 101 failed, with two unique alias-diagnostic locations.\n\nHistorical approval and import observations:\n\nAt the 20:40 scan, the maintainer import state changed: #15255 at c769986c66db15fc8b5804b5e5ec5352c9bc5840 (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe current head 61027644e received a new feedback/copybara failure at 10:13:20 UTC on October 7: Google internal checks failed for the run created 08:32:34 UTC. Its linked diagnostic is internal; the public status supplies no code-level cause. This is a maintainer-side investigation, with no source change, retry or external comment warranted by the available evidence.\n\nEtienne approved current head 61027644e at 08:27:36 UTC on October 7 and the PR is labeled ready to pull. The review has no additional requested change. The closure-state correction is published and the maintainer reply explains the private-flag handling and removed TCP workaround. Earlier focused validation passed all four owning Nogo checks on the reviewed compiler base; no fresh runtime was run for the unchanged rebase. Current published head 61027644ef3258c2fe16a236861980d5ec7707ae. https://github.com/google/gvisor/pull/15030#issuecomment-6004566380 Source checks and import lineage are shown from the current snapshot; old import failures do not establish a failure of the amended head.",
+      "updatedAt": "2026-10-10T00:48:33.473726+00:00",
+      "summary": "Current head a807153cf retains Etienne’s fresh approval. A new feedback/copybara failure was posted at 00:35:10 UTC for Google internal checks started at 22:16:25. The status exposes only an internal CL, so no public code-level cause is available. Root owns this external diagnostic blocker; no source change or repeated review ping is justified by the available evidence.\n\nMatching import #15255 has advanced to 435ff985e and is running new checks, including public pipeline 50348. The preceding import 8a28c9e55 passed its checks. These results remain tied to their exact import heads. The earlier aggregate-copy correction and its focused and full-Nogo validation are retained in the linked evidence; they do not diagnose the new internal failure.",
       "followup": {
-        "disposition": "Fresh current-head approval observed",
-        "owner": "external_sweeps",
-        "nextAction": "Observe matching current-head import and CI progress; retain unresolved service threads and do not repeat the fulfilled review notice.",
+        "disposition": "Internal check failure: public diagnostic unavailable",
+        "owner": "root",
+        "nextAction": "Retain the explicit internal-log blocker for the 00:35:10 Copybara feedback status, while observing the newly refreshed exact-source import #15255 at 435ff985e. Escalate any public failure log or new maintainer evidence immediately; do not infer a source defect or retry without a cause.",
         "evidence": [
+          "https://buildkite.com/gvisor/pipeline/builds/50348",
           "https://github.com/google/gvisor/pull/15030#issuecomment-6089126339",
           "https://github.com/google/gvisor/pull/15030#issuecomment-6004566380",
           "https://github.com/google/gvisor/pull/15030#pullrequestreview-5439620358",
@@ -825,7 +826,7 @@
           "https://github.com/tamird/gvisor/commit/a807153cf320a6c79b68b8243257f26d0da30f8a",
           "https://github.com/google/gvisor/pull/15030#pullrequestreview-5475824191"
         ],
-        "reviewedAt": "2026-10-09T22:50:50.077106+00:00",
+        "reviewedAt": "2026-10-10T00:48:33.473726+00:00",
         "sourceHead": "a807153cf320a6c79b68b8243257f26d0da30f8a",
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -5337,6 +5338,35 @@
           "https://app.buildbuddy.io/invocation/f1664f30-184a-47bf-8033-afe5c0ca4669"
         ]
       }
+    },
+    {
+      "id": "pr:15618",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15618,
+      "ref": "tcp-rack-initial-delivery",
+      "head": "bacce7413cd60606e91ab2e126d0b420929b6e93",
+      "title": "Initialize RACK's delivery sequence from the ISN",
+      "url": "https://github.com/google/gvisor/pull/15618",
+      "group": "runtime",
+      "status": "open",
+      "updatedAt": "2026-10-10T00:46:15.907683+00:00",
+      "summary": "The user-approved RACK initialization change is delivered as PR #15618. At manual-clock time zero, the before fixtures failed for high and wrapped initial sequence numbers while the low-ISN control passed. The correction passed eight selected targets, including full TCP/RACK checks on both architectures, focused race and owning analyzers. The expected before-parent failure remains retained. Current maintainer review and CI are tracked from GitHub.",
+      "followup": {
+        "disposition": "Source-confirmed DSACK amendment validating; reply pending",
+        "owner": "restore_integration_review",
+        "sourceHead": "bacce7413cd60606e91ab2e126d0b420929b6e93",
+        "reviewedAt": "2026-10-10T00:46:15.907683+00:00",
+        "nextAction": "MAIN owns the source-confirmed RTTSeq finding from the new bot thread. A focused correction and regression are validating in 9c93fb1e at 39599c6e; the published PR remains bacce7413. Await the original results and root disposition before updating the PR or replying. No amendment contributor question has been sent.",
+        "evidence": [
+          "https://github.com/google/gvisor/pull/15618#discussion_r4235628313",
+          "https://github.com/google/gvisor/pull/15618",
+          "https://github.com/tamird/gvisor/commit/bacce7413cd60606e91ab2e126d0b420929b6e93",
+          "https://app.buildbuddy.io/invocation/8a54e794-a0ab-40ab-a4c4-ada6b5640602"
+        ],
+        "mergeable": "MERGEABLE",
+        "reviewDecision": null
+      }
     }
   ],
   "edges": [
@@ -6707,7 +6737,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-10T00:21:05.554539+00:00",
+      "updatedAt": "2026-10-10T00:46:15.907683+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -7008,7 +7038,7 @@
           ]
         },
         {
-          "text": "The original epoch qualification remains outcome unknown after its bounded observation deadline: the hosting service exposed no invocation or execution record, and cancellation is unconfirmed. A corrected request on the same qualification source has now been accepted; its runtime results are pending. The correction fetches exact public Git inputs instead of embedding the large bodies. Neither acceptance establishes test success. The disabled-probe overhead correction remains source reviewed with runtime measurement pending; the verified sharing-study results are unchanged.",
+          "text": "The original epoch qualification remains outcome unknown after its observation deadline: the service exposed no invocation or execution record and cancellation is unconfirmed. The corrected request, using exact public Git inputs instead of oversized embedded bodies, closed three expected before failures and passing full TCP unit and analyzer checks on both architectures. The epoch change is delivered as PR #15604. The separate disabled-probe comparison has completed; its source-bound interpretation remains separate from the earlier sharing studies.",
           "evidence": [
             {
               "label": "Epoch before/after qualification",
@@ -7050,7 +7080,7 @@
           ]
         },
         {
-          "text": "A source-isolated SACK accounting study is running 24 instrumented shared-WAN trials on three workers, with controllers and workload held fixed and four accounting production files changed. Separately, RACK initialization checks reproduced high/wrapped-ISN failures at manual-clock time zero, with a passing low-ISN control; the correction passed eight selected targets. The original expected-before failure is retained. The paired study has no result yet.",
+          "text": "The source-isolated SACK accounting study completed all 24 instrumented shared-WAN trials on three workers, with controllers and workload held fixed and four accounting production files changed. Original outputs and source joins are collected; independent result review is pending. Separately, RACK initialization checks reproduced high/wrapped-ISN failures at manual-clock time zero, with a passing low-ISN control. The correction passed eight selected targets and is delivered as PR #15618. Its newly reported RTTSeq issue is source-confirmed and an amendment is validating; the live PR remains unchanged.",
           "evidence": [
             {
               "label": "Isolated SACK accounting paired study",
@@ -7063,11 +7093,36 @@
             {
               "label": "RACK clock-origin validation",
               "url": "https://app.buildbuddy.io/invocation/8a54e794-a0ab-40ab-a4c4-ada6b5640602"
+            },
+            {
+              "label": "Delivered RACK initialization PR",
+              "url": "https://github.com/google/gvisor/pull/15618"
+            }
+          ]
+        },
+        {
+          "text": "A sender-wide recovery redesign is under investigation. The proposed delivery map would own byte-range acknowledgement and transmission facts; flight estimates and controller packet credits would become explicit views. Linux confirms that current-MSS packet credits are projected accounting, not actual transmission counts. No replacement or performance gain is claimed yet.",
+          "evidence": [
+            {
+              "label": "Linux packetization accounting",
+              "url": "https://github.com/torvalds/linux/blob/e5f0a698b/net/ipv4/tcp_output.c#L1519-L1696"
+            },
+            {
+              "label": "Linux SACK delivery accounting",
+              "url": "https://github.com/torvalds/linux/blob/e5f0a698b/net/ipv4/tcp_input.c#L1342-L1476"
+            },
+            {
+              "label": "RFC 6675 recovery accounting",
+              "url": "https://www.rfc-editor.org/rfc/rfc6675.html#section-5.1"
+            },
+            {
+              "label": "RFC 8985 RACK delivery records",
+              "url": "https://www.rfc-editor.org/rfc/rfc8985.html#section-5.2"
             }
           ]
         }
       ],
-      "nextStep": "Continue the isolated SACK accounting comparison and interpret completed observer-cost studies. The RACK initialization before/after checks are closed. Keep each experiment tied to its actual source, workload and original evidence while pursuing further justified Netstack improvements.",
+      "nextStep": "Prototype recovery, RTO, split, MSS and restore transitions with named byte and packet units, preserve existing regressions, and measure high-BDP ACK cost before choosing the representation. Complete independent review of the isolated SACK-accounting study and the pending RACK amendment validation. These remain separate from the architectural experiment.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -7355,8 +7410,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T00:27:36.746363+00:00",
-      "summary": "The generated typed-codec investigation remains active. The shared-primitive follow-up passed five compatibility owners. Its paired study reduced pointer Load time by 7.72% (p=.002), while the other eight timing changes were not significant and allocations were unchanged. The UDP executable remains 15% larger and the state executable 7.1% larger. FIFTH is profiling CPU and heap costs and preparing a pointer-only ablation to isolate the measured gain. The prototype is experimental; earlier map and struct results remain separate findings.",
+      "updatedAt": "2026-10-10T00:32:14.230918+00:00",
+      "summary": "Primary work is a direct generated save/load design that preserves the existing identity and aliasing model. FIFTH is evaluating compact snapshots with deferred reference fixups and a versioned object/alias-table stream; root reviews compatibility and reparenting. Pointer-only controls run in the background. The completed shared-primitive study improved pointer Load by 7.72% (p=.002), with eight other timing changes not significant and unchanged allocations, but executable sizes remained 15% larger for UDP and 7.1% larger for state.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -7444,7 +7499,7 @@
           ]
         }
       ],
-      "nextStep": "Use the live five-leaf CPU/heap profiles and the pointer-only ablation to explain the measured gain and code-size cost, then pursue the next justified reflection-reduction design. Runtime identity and alias metadata remain required; reflective field traversal and a boxed wire-object tree are not assumed unavoidable. No contributor-authorization hold blocks experiments.",
+      "nextStep": "Develop the direct generated emission path while preserving hook and SaveValue snapshot order, graph identity, aliasing and compatibility. Use the live CPU/heap profile and pointer-only controls to explain the measured costs and guide the implementation. The investigation remains active without a contributor-authorization hold.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7457,8 +7512,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T00:27:36.746363+00:00",
-      "summary": "The generated typed-codec investigation remains active. The shared-primitive follow-up passed five compatibility owners. Its paired study reduced pointer Load time by 7.72% (p=.002), while the other eight timing changes were not significant and allocations were unchanged. The UDP executable remains 15% larger and the state executable 7.1% larger. FIFTH is profiling CPU and heap costs and preparing a pointer-only ablation to isolate the measured gain. The prototype is experimental; earlier map and struct results remain separate findings.",
+      "updatedAt": "2026-10-10T00:32:14.230918+00:00",
+      "summary": "Primary work is a direct generated save/load design that preserves the existing identity and aliasing model. FIFTH is evaluating compact snapshots with deferred reference fixups and a versioned object/alias-table stream; root reviews compatibility and reparenting. Pointer-only controls run in the background. The completed shared-primitive study improved pointer Load by 7.72% (p=.002), with eight other timing changes not significant and unchanged allocations, but executable sizes remained 15% larger for UDP and 7.1% larger for state.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7618,7 +7673,7 @@
           ]
         }
       ],
-      "nextStep": "Use the live five-leaf CPU/heap profiles and the pointer-only ablation to explain the measured gain and code-size cost, then pursue the next justified reflection-reduction design. Runtime identity and alias metadata remain required; reflective field traversal and a boxed wire-object tree are not assumed unavoidable. No contributor-authorization hold blocks experiments.",
+      "nextStep": "Develop the direct generated emission path while preserving hook and SaveValue snapshot order, graph identity, aliasing and compatibility. Use the live CPU/heap profile and pointer-only controls to explain the measured costs and guide the implementation. The investigation remains active without a contributor-authorization hold.",
       "evidence": [
         {
           "label": "Studied production revision",
