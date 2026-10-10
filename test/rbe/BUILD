@@ -22,6 +22,16 @@ package(
     licenses = ["notice"],
 )
 
+# Fork-only observation of the guest used by each qualification test.
+sh_binary(
+    name = "worker_identity",
+    testonly = True,
+    srcs = ["worker_identity.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)
+
 # Infrastructure smoke coverage, not the complete unit or syscall test lanes.
 test_suite(
     name = "smoke",
