@@ -132,6 +132,27 @@ BEP
   return "$status"
 }
 
+check_cases() {
+  local phase=$1
+  shift
+  python3 - "$out/$phase-case-selection.json" "$@" <<'CASES'
+from pathlib import Path
+import json
+import re
+import sys
+output = Path(sys.argv[1])
+records = []
+for label in sys.argv[2:]:
+    directory = Path('bazel-testlogs') / label[2:].replace(':', '/')
+    logs = sorted(directory.glob('**/test.log'))
+    names = sorted({name for path in logs for name in re.findall(r'\[ RUN      \] (\S+)', path.read_text(errors='replace'))})
+    records.append({'label': label, 'logs': [str(path) for path in logs], 'actualCppCases': names})
+output.write_text(json.dumps(records, indent=2) + '\n')
+for record in records:
+    assert record['actualCppCases'], ('No actual C++ cases across owner shards', record)
+CASES
+}
+
 # Resolve/build the declared guest before running either arm. A missing index
 # is an incomplete preparation, not a reason to spend more host-only samples.
 prebuild_status=0
@@ -170,8 +191,11 @@ for phase in before after; do
     --build_tag_filters= --test_tag_filters= --strip=never --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --local_test_jobs=1 \
     --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1 \
-    --test_output=errors --zip_undeclared_test_outputs --test_env=GTEST_FILTER= \
+    --test_output=errors --zip_undeclared_test_outputs \
     "${labels[@]}" || status=$?
+  selection_status=0
+  check_cases "$phase" "${labels[@]}" || selection_status=$?
+  if (( status == 0 )); then status=$selection_status; fi
   if (( result == 0 && status != 0 )); then result=$status; fi
 done
 exit "$result"
