@@ -77,6 +77,15 @@ func (rc *rackControl) init(snd *sender, iss seqnum.Value) {
 	rc.snd = snd
 }
 
+// observeDelivery consumes a copied transmission sample while the sender's
+// endpoint lock is held. Both selective and cumulative ACKs use this ordering.
+//
+// +checklocks:rc.snd.ep.mu
+func (rc *rackControl) observeDelivery(sample deliverySample, ack *segment) {
+	rc.update(sample, ack)
+	rc.detectReorder(sample)
+}
+
 // update will update the RACK related fields when an ACK has been received.
 // See: https://tools.ietf.org/html/draft-ietf-tcpm-rack-09#section-6.2
 //

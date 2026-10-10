@@ -521,7 +521,7 @@ func TestDeliveryRetirementAfterTimeout(t *testing.T) {
 		t.Fatalf("unacknowledged sequence bytes = %d, want %d", got, want)
 	}
 	d.timeout()
-	progress := d.retire(end, false, nil)
+	progress := d.retire(end, false, nil, nil, nil)
 	if got, want := progress, (deliveryACK{bytes: 16, packets: 4}); got != want {
 		t.Errorf("ACK after budget reset = %+v, want %+v", got, want)
 	}

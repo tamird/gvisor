@@ -219,8 +219,10 @@ func (d *senderDelivery) validSACKBlock(sb header.SACKBlock, ack seqnum.Value) b
 
 // applySACK updates retained byte coverage and its packet projection together.
 // delivered observes newly credited extents before later retirement can release
-// them. skip excludes a detected DSACK from delivery callbacks, not insertion.
-func (d *senderDelivery) applySACK(ack seqnum.Value, blocks []header.SACKBlock, skip int, delivered func(deliverySample)) bool {
+// them. The callback and its ACK argument are used synchronously under the
+// endpoint lock and are not retained. skip excludes a detected DSACK from
+// delivery callbacks, not insertion.
+func (d *senderDelivery) applySACK(ack seqnum.Value, blocks []header.SACKBlock, skip int, delivered func(*rackControl, deliverySample, *segment), rc *rackControl, ackSegment *segment) bool {
 	newInfo := false
 	for _, block := range blocks {
 		if d.validSACKBlock(block, ack) && !d.scoreboard.IsSACKED(block) {
@@ -290,7 +292,7 @@ func (d *senderDelivery) applySACK(ack seqnum.Value, blocks []header.SACKBlock, 
 				d.split(seg, prefix)
 			}
 			if delivered != nil {
-				delivered(deliveryOf(seg))
+				delivered(rc, deliveryOf(seg), ackSegment)
 			}
 			seg.acked = true
 			d.sackedPackets += packetCount(seg, d.mss)
@@ -311,7 +313,7 @@ type deliveryACK struct {
 // retire advances the cumulative frontier and releases the corresponding
 // queue ownership. pipeExcludedSACK records the accounting basis before an ACK
 // changes recovery mode; it must not be inferred from the resulting mode.
-func (d *senderDelivery) retire(ack seqnum.Value, pipeExcludedSACK bool, delivered func(deliverySample)) deliveryACK {
+func (d *senderDelivery) retire(ack seqnum.Value, pipeExcludedSACK bool, delivered func(*rackControl, deliverySample, *segment), rc *rackControl, ackSegment *segment) deliveryACK {
 	progress := deliveryACK{bytes: d.una.Size(ack)}
 	d.una = ack
 	left := progress.bytes
@@ -339,7 +341,7 @@ func (d *senderDelivery) retire(ack seqnum.Value, pipeExcludedSACK bool, deliver
 			d.setNext(seg.Next())
 		}
 		if !seg.acked && delivered != nil {
-			delivered(deliveryOf(seg))
+			delivered(rc, deliveryOf(seg), ackSegment)
 		}
 		d.queue.Remove(seg)
 		if seg.acked {

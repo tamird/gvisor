@@ -1206,14 +1206,11 @@ func (s *sender) walkSACK(rcvdSeg *segment) bool {
 		hasDSACK = true
 	}
 
-	var delivered func(deliverySample)
+	var delivered func(*rackControl, deliverySample, *segment)
 	if s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
-		delivered = func(sample deliverySample) {
-			s.rc.update(sample, rcvdSeg)
-			s.rc.detectReorder(sample)
-		}
+		delivered = (*rackControl).observeDelivery
 	}
-	rcvdSeg.hasNewSACKInfo = s.delivery.applySACK(rcvdSeg.ackNumber, rcvdSeg.parsedOptions.SACKBlocks, idx, delivered)
+	rcvdSeg.hasNewSACKInfo = s.delivery.applySACK(rcvdSeg.ackNumber, rcvdSeg.parsedOptions.SACKBlocks, idx, delivered, &s.rc, rcvdSeg)
 	return hasDSACK
 }
 
@@ -1471,14 +1468,11 @@ func (s *sender) handleRcvdSegment(rcvdSeg *segment) {
 			s.resendTimer.enable(s.RTO)
 		}
 
-		var delivered func(deliverySample)
+		var delivered func(*rackControl, deliverySample, *segment)
 		if s.ep.SACKPermitted && s.ep.tcpRecovery&tcpip.TCPRACKLossDetection != 0 {
-			delivered = func(sample deliverySample) {
-				s.rc.update(sample, rcvdSeg)
-				s.rc.detectReorder(sample)
-			}
+			delivered = (*rackControl).observeDelivery
 		}
-		progress := s.delivery.retire(ack, sackedExcluded, delivered)
+		progress := s.delivery.retire(ack, sackedExcluded, delivered, &s.rc, rcvdSeg)
 		// Detect if the sender entered recovery spuriously.
 		if s.inRecovery() {
 			s.detectSpuriousRecovery(hasDSACK, rcvdSeg.parsedOptions.TSEcr)
