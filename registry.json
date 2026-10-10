@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T00:13:37.572402+00:00",
+    "updatedAt": "2026-10-10T00:27:36.746363+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4141,19 +4141,20 @@
       "url": "https://github.com/google/gvisor/pull/15501",
       "group": "rbe",
       "status": "open",
-      "summary": "The author reported the existing import error. Copybara exposes only a generic migration error without a log URL; no concrete source cause is established from that public status.\n\nEarlier observations:\n\nContributor-approved PR #15501 is published at 7752e88ad on master a926. The delivery owner verified exact source-equivalent edits, changed blobs, description, head and author; the live PR is mergeable and its current checks are pending. The slash-prefixed review ref preserves the original preparation ref and avoids unrelated legacy push CI. No contributor hold remains.\n\nEarlier preparation and validation:\n\nContributor approved e49c868bb; root owns PR publication. No new PR publication is claimed yet.\n\nPrior source and validation record:\n\nThe independent one-file proposal e49c868bb2e3b2a2a97d78afde5b5d72e24561ef preserves the test process’s original unified cgroup membership and restores it during all seven scope cleanups and fixture teardown, reporting restoration errors. It contains no qualification adapter or delegated-root expectation changes. Complete source/record peer c424e9023b37 is closed. An actual contributor question now requests approval to open the PR; no upstream PR exists.\n\nThe exact current 86-case C++ source now has closed native/shared observations (cumulative outcome 3e99c8b7149b; independent peer 46a50858d4c8). Shared source 9dd86268d passes 85 cases and retains one source-defined Goferfs credential skip. Native recovery 50d292e8 passes 82 cases and retains four explicit skips; both credential cases execute and pass. The two newly added V1-controller cases skip because their current drain guards return EBUSY, so no native coverage is credited for them. The earlier 84-case result remains historical and is not relabeled.\n\nThe initial native setup failure at 9dd remains preserved: it omitted the qualified runner behavior that preserves the user namespace for privileged non-container tests. The exact existing prerequisite is restored in 50d292e8 without changing netstack_sr behavior (source peer 07d310d22b4e). All four controller/options/membership restorations and scratch-alias removals pass in the saved continuation. This proves the composed source with its required runner/fixture prerequisites, not the standalone branch on arbitrary hosts.\n\nThe separate canonical correction f22d74942 restores the three original initial-namespace assertions, keeping membership cleanup. It is now public canonical, and its automatic release smoke passes in 4.467 seconds (receipt 5717f2c0dba6); no cgroup workload was repeated solely for promotion.",
-      "updatedAt": "2026-10-09T19:43:41.973695+00:00",
+      "summary": "Current source checks and Copybara status pass. Matching import #15616 is open with checks pending. The earlier Copybara failure without public diagnostics has cleared.\n\nThe separate canonical correction f22d74942 restores the three original initial-namespace assertions, keeping membership cleanup. It is now public canonical, and its automatic release smoke passes in 4.467 seconds (receipt 5717f2c0dba6); no cgroup workload was repeated solely for promotion.",
+      "updatedAt": "2026-10-10T00:27:36.746363+00:00",
       "followup": {
-        "disposition": "External blocker: Copybara diagnostic is not publicly available",
-        "owner": "root",
-        "nextAction": "The current Copybara failure supplies no public diagnostic log. Preserve the actual failed status and wait for an accessible maintainer diagnostic or service-state change; do not guess a source fix, attempt internal access or duplicate outreach.",
-        "reviewedAt": "2026-10-09T19:39:41.051523+00:00",
+        "disposition": "Copybara recovered; matching import pending CI",
+        "owner": "external_sweeps",
         "sourceHead": "7752e88ad95063877063f3c533fec732bbdf861e",
+        "reviewedAt": "2026-10-10T00:27:36.746363+00:00",
+        "nextAction": "Observe matching import #15616 and its pending checks. The earlier no-public-log Copybara failure has cleared; no current source failure is recorded.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15501"
+          "https://github.com/google/gvisor/pull/15501",
+          "https://github.com/google/gvisor/pull/15616"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "UNKNOWN"
+        "mergeable": "MERGEABLE"
       },
       "number": 15501
     },
@@ -4664,16 +4665,17 @@
       "url": "https://github.com/google/gvisor/pull/15565",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-10T00:13:37.572402+00:00",
-      "summary": "Etienne approved the current FUSE follow-up at f986152df on October 10 at 00:05 UTC. Current checks and Copybara status pass; no matching import is present in this snapshot. The previously approved version-gated errno expectations and three-path validation remain unchanged.",
+      "updatedAt": "2026-10-10T00:27:36.746363+00:00",
+      "summary": "Etienne approved current head f986152df on October 10 at 00:05 UTC. Matching import #15617 is now open with checks pending; source checks and Copybara status pass. The reviewed version-gated errno expectations and three-path validation remain unchanged.",
       "followup": {
-        "disposition": "Freshly approved; awaiting import",
+        "disposition": "Freshly approved; matching import pending CI",
         "owner": "external_sweeps",
         "sourceHead": "f986152df181f00f6cd312fe71ed09bc2ca7e7fd",
-        "reviewedAt": "2026-10-10T00:13:37.572402+00:00",
-        "nextAction": "Observe the matching import and maintainer merge progress; no additional reviewer notification is needed.",
+        "reviewedAt": "2026-10-10T00:27:36.746363+00:00",
+        "nextAction": "Observe matching import #15617 through CI and maintainer merge progress; no additional reviewer notification is needed.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/15565#pullrequestreview-5476502305"
+          "https://github.com/google/gvisor/pull/15565#pullrequestreview-5476502305",
+          "https://github.com/google/gvisor/pull/15617"
         ],
         "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
@@ -4886,16 +4888,18 @@
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
-      "status": "full stress policy run failed; originals under review",
-      "summary": "The complete 33-case socket-stress qualification attempt at b0dfb7bd5 in Actions 38007298459 ended in failure before a long test duration. The original routing preflight still hashed the old argument list, so the intentional strace prefix stopped the attempt before any build or test action. The corrected comparison requires and removes only that prefix from copied hash rows; runtime arguments are preserved. No corrected-run acceptance or full-owner pass is claimed yet. The proposed ARM64 TCG policy keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.",
-      "updatedAt": "2026-10-10T00:13:37.572402+00:00",
+      "status": "corrected stress policy qualification running",
+      "summary": "The corrected complete 33-case socket-stress qualification is running as Actions 38008045670 at b1b7f2549. It keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. No full-owner result is claimed yet. The first attempt, Actions 38007298459, stopped before any build or test action because its routing hash still included the old argument list. The correction requires the new prefix and removes only that prefix from copied comparison rows; actual runtime arguments remain intact. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.",
+      "updatedAt": "2026-10-10T00:21:05.554539+00:00",
       "followup": {
-        "disposition": "Stress policy preflight failed; comparison correction prepared",
+        "disposition": "Corrected complete stress qualification running",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-10T00:13:37.572402+00:00",
-        "nextAction": "Root completes the corrected routing preflight and resumes the complete stress qualification under its existing validation scope. Keep the zero-action failure and earlier traced/untraced results separate.",
+        "reviewedAt": "2026-10-10T00:21:05.554539+00:00",
+        "nextAction": "Root observes Actions 38008045670 at exact b1b7f2549. Retain the zero-action preflight failure, earlier traced timeouts and isolated untraced passes; wait for the complete owner’s original results.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/38008045670",
+          "https://github.com/tamird/gvisor/commit/b1b7f254963fc911bb056372f063c7898954ac19",
           "https://github.com/tamird/gvisor/actions/runs/38007298459",
           "https://github.com/tamird/gvisor/commit/b0dfb7bd5965ad1bcc9d85c82ef4fe29007e64db",
           "https://github.com/tamird/gvisor/actions/runs/38002166683",
@@ -6703,7 +6707,7 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-09T23:38:19.158465+00:00",
+      "updatedAt": "2026-10-10T00:21:05.554539+00:00",
       "summary": "The prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
@@ -7044,9 +7048,26 @@
               "url": "https://github.com/google/gvisor/pull/15604#discussion_r4235389901"
             }
           ]
+        },
+        {
+          "text": "A source-isolated SACK accounting study is running 24 instrumented shared-WAN trials on three workers, with controllers and workload held fixed and four accounting production files changed. Separately, RACK initialization checks reproduced high/wrapped-ISN failures at manual-clock time zero, with a passing low-ISN control; the correction passed eight selected targets. The original expected-before failure is retained. The paired study has no result yet.",
+          "evidence": [
+            {
+              "label": "Isolated SACK accounting paired study",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38008361509"
+            },
+            {
+              "label": "Exact paired-study source",
+              "url": "https://github.com/tamird/gvisor/commit/c494c3a37c"
+            },
+            {
+              "label": "RACK clock-origin validation",
+              "url": "https://app.buildbuddy.io/invocation/8a54e794-a0ab-40ab-a4c4-ada6b5640602"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the verified sharing studies to guide justified Netstack design and performance experiments. Investigate the remaining implementation/path gap, including an isolated measurement of the observed disabled-probe overhead; its cost is not yet quantified. Continue qualification and maintainer review alongside this work.",
+      "nextStep": "Continue the isolated SACK accounting comparison and interpret completed observer-cost studies. The RACK initialization before/after checks are closed. Keep each experiment tied to its actual source, workload and original evidence while pursuing further justified Netstack improvements.",
       "evidence": [
         {
           "label": "Production CUBIC",
@@ -7334,8 +7355,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-09T23:01:05.796444+00:00",
-      "summary": "Active work: FIFTH has initial generated typed field operations and typed allocation/assignment in the prototype. Pointer-graph metadata still uses reflection and is accounted separately. Today stateify erases known field information through any and reflect.ValueOf; neither reflective field traversal nor a boxed wire.Object tree is inherently required by dynamic identity and aliasing. Source review, remote compatibility and performance measurements are next.",
+      "updatedAt": "2026-10-10T00:27:36.746363+00:00",
+      "summary": "The generated typed-codec investigation remains active. The shared-primitive follow-up passed five compatibility owners. Its paired study reduced pointer Load time by 7.72% (p=.002), while the other eight timing changes were not significant and allocations were unchanged. The UDP executable remains 15% larger and the state executable 7.1% larger. FIFTH is profiling CPU and heap costs and preparing a pointer-only ablation to isolate the measured gain. The prototype is experimental; earlier map and struct results remain separate findings.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -7400,9 +7421,30 @@
               "url": "https://github.com/google/gvisor/blob/c93624a02/pkg/state/state.go#L159-L160"
             }
           ]
+        },
+        {
+          "text": "The shared-primitive prototype at 74c23e08a passed the selected five-owner compatibility scope. In the paired study, pointer Load improved by 7.72% (p=.002); the other eight timing changes were not significant, and allocation counts did not change. Executable size still increased: UDP by 15% and state by 7.1%. These tradeoffs motivate live CPU/heap profiling and a pointer-only ablation; no upstream-ready proposal is claimed.",
+          "evidence": [
+            {
+              "label": "Shared-primitive prototype",
+              "url": "https://github.com/tamird/gvisor/commit/74c23e08a18e218119f1dd6d63a59763487a312a"
+            },
+            {
+              "label": "Passing compatibility selection",
+              "url": "https://app.buildbuddy.io/invocation/c80edfba-f883-40de-84b8-9df8035002b3"
+            },
+            {
+              "label": "Paired performance study",
+              "url": "https://app.buildbuddy.io/invocation/6f0d0a4a-7577-4426-8e42-463cad0faa03"
+            },
+            {
+              "label": "CPU and heap profiling in progress",
+              "url": "https://app.buildbuddy.io/invocation/49925940-6f5d-41db-8b9c-d4638bf78218"
+            }
+          ]
         }
       ],
-      "nextStep": "FIFTH is implementing the generated typed serialization prototype, including typed aggregate paths where they can share the existing graph safely. Validate it against existing identity, aliasing, hook and wire behavior, then measure pointer/map/slice and queued-object workloads. No contributor-authorization hold blocks this experimentation.",
+      "nextStep": "Use the live five-leaf CPU/heap profiles and the pointer-only ablation to explain the measured gain and code-size cost, then pursue the next justified reflection-reduction design. Runtime identity and alias metadata remain required; reflective field traversal and a boxed wire-object tree are not assumed unavoidable. No contributor-authorization hold blocks experiments.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7415,8 +7457,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-09T22:49:01.362432+00:00",
-      "summary": "The investigation remains active: FIFTH is developing a generated typed codec prototype that targets reflective field traversal. Earlier MapRange, struct/header coallocation and map-slot measurements are findings that guide this work, not its endpoint. The tables keep each measured source pair and workload separate; no prototype speedup is claimed.",
+      "updatedAt": "2026-10-10T00:27:36.746363+00:00",
+      "summary": "The generated typed-codec investigation remains active. The shared-primitive follow-up passed five compatibility owners. Its paired study reduced pointer Load time by 7.72% (p=.002), while the other eight timing changes were not significant and allocations were unchanged. The UDP executable remains 15% larger and the state executable 7.1% larger. FIFTH is profiling CPU and heap costs and preparing a pointer-only ablation to isolate the measured gain. The prototype is experimental; earlier map and struct results remain separate findings.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7553,9 +7595,30 @@
               "url": "https://github.com/google/gvisor/pull/15542"
             }
           ]
+        },
+        {
+          "text": "The shared-primitive prototype at 74c23e08a passed the selected five-owner compatibility scope. In the paired study, pointer Load improved by 7.72% (p=.002); the other eight timing changes were not significant, and allocation counts did not change. Executable size still increased: UDP by 15% and state by 7.1%. These tradeoffs motivate live CPU/heap profiling and a pointer-only ablation; no upstream-ready proposal is claimed.",
+          "evidence": [
+            {
+              "label": "Shared-primitive prototype",
+              "url": "https://github.com/tamird/gvisor/commit/74c23e08a18e218119f1dd6d63a59763487a312a"
+            },
+            {
+              "label": "Passing compatibility selection",
+              "url": "https://app.buildbuddy.io/invocation/c80edfba-f883-40de-84b8-9df8035002b3"
+            },
+            {
+              "label": "Paired performance study",
+              "url": "https://app.buildbuddy.io/invocation/6f0d0a4a-7577-4426-8e42-463cad0faa03"
+            },
+            {
+              "label": "CPU and heap profiling in progress",
+              "url": "https://app.buildbuddy.io/invocation/49925940-6f5d-41db-8b9c-d4638bf78218"
+            }
+          ]
         }
       ],
-      "nextStep": "Measure the generated typed codec prototype on the existing pointer/map/slice and queued-object workloads after correctness validation. The scalar encoder proposal is contributor-approved and waits for #15542; decoder slot reuse is delivered as #15603. Continue profiling remaining reflection and allocation costs without a contributor-authorization hold on experiments.",
+      "nextStep": "Use the live five-leaf CPU/heap profiles and the pointer-only ablation to explain the measured gain and code-size cost, then pursue the next justified reflection-reduction design. Runtime identity and alias metadata remain required; reflective field traversal and a boxed wire-object tree are not assumed unavoidable. No contributor-authorization hold blocks experiments.",
       "evidence": [
         {
           "label": "Studied production revision",
