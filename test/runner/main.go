@@ -56,6 +56,7 @@ import (
 
 var (
 	debug              = flag.Bool("debug", false, "enable debug logs")
+	disableFastPath    = flag.Bool("diagnostic-disable-fast-path", false, "disable the systrap fast path for paired stall diagnosis")
 	hostNofile         = flag.Uint64("host-nofile", 0, "minimum host descriptor limit required by the test (zero preserves the inherited limit)")
 	oneSandbox         = flag.Bool("one-sandbox", false, "run all test cases in one sandbox")
 	strace             = flag.Bool("strace", false, "enable strace logs")
@@ -451,6 +452,7 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 		fmt.Sprintf("-iouring=%t", *ioUring),
 		"-watchdog-action=panic",
 		"-platform", *platform,
+		fmt.Sprintf("-systrap-disable-fast-path=%t", *disableFastPath),
 		"-file-access", *fileAccess,
 		"-gvisor-gro",
 		"-host-settings=check_mandatory",
