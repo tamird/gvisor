@@ -17,6 +17,7 @@ genrule(
         "barrier.h",
         "compiler.h",
         "cycle_clock.h",
+        "params.h",
         "seqlock.h",
         "syscalls.h",
         "vdso.cc",
@@ -58,6 +59,13 @@ genrule(
     toolchains = [":no_pie_cc_flags"],
     tools = [cc_linker],
     visibility = ["//:sandbox"],
+)
+
+# Shared with the fork-only failing-read diagnostic; the wire layout is unchanged.
+cc_library(
+    name = "params",
+    hdrs = ["params.h"],
+    visibility = ["//test/syscalls/linux:__pkg__"],
 )
 
 cc_flags_supplier(

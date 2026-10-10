@@ -19,35 +19,9 @@
 #include <time.h>
 
 #include "vdso/cycle_clock.h"
+#include "vdso/params.h"
 #include "vdso/seqlock.h"
 #include "vdso/syscalls.h"
-
-// struct params defines the layout of the parameter page maintained by the
-// kernel (i.e., sentry).
-//
-// This is similar to the VVAR page maintained by the normal Linux kernel for
-// its VDSO, but it has a different layout.
-//
-// It must be kept in sync with VDSOParamPage in pkg/sentry/kernel/vdso.go.
-struct params {
-  uint64_t seq_count;
-
-  uint64_t monotonic_ready;
-  int64_t monotonic_base_cycles;
-  int64_t monotonic_base_ref;
-  uint64_t monotonic_frequency;
-
-  uint64_t realtime_ready;
-  int64_t realtime_base_cycles;
-  int64_t realtime_base_ref;
-  uint64_t realtime_frequency;
-
-  uint64_t monotonic_raw_alias;
-  uint64_t monotonic_raw_ready;
-  int64_t monotonic_raw_base_cycles;
-  int64_t monotonic_raw_base_ref;
-  uint64_t monotonic_raw_frequency;
-};
 
 // Returns a pointer to the global parameter page.
 //
