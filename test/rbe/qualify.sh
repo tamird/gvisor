@@ -1090,17 +1090,12 @@ run_lane() (
       targets=(//website:image)
       ;;
     syscalls-rc-pilot)
-      # Focused guest-input validation; retain the original test bodies,
-      # arguments, shards and deadlines.
+      # Continue the native guest checks after the link and proc owners passed.
       targets=(
-        //test/rtnetlink:bridge_test_native_rc_kvm
-        //test/rtnetlink:route_test_native_rc_kvm
-        //test/rtnetlink:setlink_test_native_rc_kvm
-        //test/rtnetlink:veth_test_native_rc_kvm
-        //test/syscalls:socket_netlink_route_test_native_rc_kvm
         //test/syscalls:iptables_test_native_rc_kvm
         //test/syscalls:ip6tables_test_native_rc_kvm
-        //test/syscalls:proc_test_native_rc_kvm
+        //test/syscalls:fuse_test_native_rc_kvm
+        //test/syscalls:cgroup2_transfer_test_native_rc_kvm
       )
       options=(--//tools/bazeldefs:page_size=4k --//tools/bazeldefs:local_test_architecture=)
       ;;

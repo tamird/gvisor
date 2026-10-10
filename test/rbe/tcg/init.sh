@@ -47,6 +47,8 @@ trap finish EXIT
 # shellcheck disable=SC1091
 source /etc/gvisor-test-kernel
 uname -a | tee /result/kernel.txt
+# Kernel options determine which native syscall features the guest can test.
+cp /etc/gvisor-test-kernel.config /result/kernel.config
 [[ "$(uname -r)" == "${expected_kernel_release:?}" ]]
 page_size="$(getconf PAGESIZE)"
 printf 'Guest page size: %s\n' "$page_size" | tee /result/page-size.txt
@@ -73,6 +75,10 @@ chmod 1777 /work/tmp
 # Gofer's read-only root remount needs its own mount, not the scratch disk root.
 mount --bind /work/tmp /work/tmp
 ip link set lo up
+# Raw netfilter sockopts do not autoload their legacy handlers.
+# https://github.com/torvalds/linux/blob/fd73f4a66/net/netfilter/nf_sockopt.c#L61-L85
+modprobe ip_tables
+modprobe ip6_tables
 # Native descriptor tests duplicate descriptors above 1023; PID 1 starts with
 # Linux's 1024 soft and 4096 hard limits, below the ordinary test workers.
 cat /proc/self/limits > /result/limits-before.txt

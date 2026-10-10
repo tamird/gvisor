@@ -82,6 +82,7 @@ fi
 # Native syscall tests exercise drivers beyond those needed to boot the guest.
 # Keep the package's complete module tree so kernel module autoloading works.
 kmod_tool depmod -b "$root" "$release"
+cp "$root/boot/config-$release" "$root/etc/gvisor-test-kernel.config"
 rm -rf "${root:?}/boot"
 printf 'readonly expected_kernel_release=%q\nreadonly expected_page_size=%q\n' "$release" "$page_size" > "$root/etc/gvisor-test-kernel"
 printf 'readonly expected_architecture=%q\n' "$architecture" >> "$root/etc/gvisor-test-kernel"
