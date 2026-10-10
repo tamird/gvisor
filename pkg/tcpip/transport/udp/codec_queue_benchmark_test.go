@@ -41,12 +41,6 @@ func releaseCodecQueue(queue *udpPacketList) {
 // The chosen occupancies are scenarios, not measured production frequencies.
 // Packet delivery, endpoint freezing and the rest of the kernel are not timed.
 func BenchmarkUDPReceiveQueueSave(b *testing.B) {
-	benchmarkUDPReceiveQueueSave(b, state.Save)
-}
-
-// BenchmarkUDPReceiveQueueSaveSnapshots uses the same queue and validation with
-// explicit typed field records.
-func BenchmarkUDPReceiveQueueSaveSnapshots(b *testing.B) {
 	benchmarkUDPReceiveQueueSave(b, state.SaveSnapshots)
 }
 
