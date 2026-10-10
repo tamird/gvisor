@@ -66,7 +66,7 @@ Previously discovered PR identities stay in the snapshot after closure, so a
 promoted branch does not reappear. One measured update fetched
 81 original PRs and ten verified import PRs in 21 requests. PR detail
 queries use batches of eight to limit the combined check, review and timeline
-payload. There is a 40-request ceiling and a 200-open-PR bound.
+payload. There is a 48-attempt ceiling, including retries, and a 200-open-PR bound.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 
