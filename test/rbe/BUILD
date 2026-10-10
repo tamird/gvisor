@@ -32,6 +32,16 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 
+# Fork-only check of the native controller-transfer fixture's postconditions.
+sh_binary(
+    name = "controller_restore_check",
+    testonly = True,
+    srcs = ["controller_restore_check.sh"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)
+
 # Infrastructure smoke coverage, not the complete unit or syscall test lanes.
 test_suite(
     name = "smoke",
