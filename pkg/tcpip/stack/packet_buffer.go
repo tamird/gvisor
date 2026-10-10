@@ -307,6 +307,17 @@ func (pk *PacketBuffer) AsViewList() (buffer.ViewList, int) {
 	return pk.buf.AsViewList(), pk.headerOffset()
 }
 
+// AsView makes the whole packet contiguous and returns a borrowed view of it.
+// The packet owns the storage. Callers must not Release or Clone the view,
+// or retain it beyond the packet's lifetime or a subsequent packet mutation.
+// Like Data's PullUp, this may coalesce the packet's backing buffers.
+func (pk *PacketBuffer) AsView() buffer.View {
+	// The range is exactly the packet's stored bytes, excluding unused
+	// reserved header space, so it is always within the backing buffer.
+	view, _ := pk.buf.PullUp(pk.headerOffset(), pk.Size())
+	return view
+}
+
 // ToBuffer returns a caller-owned copy of the underlying storage of the whole
 // packet.
 func (pk *PacketBuffer) ToBuffer() buffer.Buffer {
