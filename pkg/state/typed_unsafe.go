@@ -25,83 +25,72 @@ import (
 // compiler supplies the field's actual type, including imported and defined
 // types; stateify does not need to resolve source-level type names.
 type FieldCodec[T any] struct {
-	save func(Sink, int, *T)
-	load func(Source, int, *T)
+	primitive primitiveCodec
+}
+
+// primitiveCodec erases the field type only for the exact primitive wire path.
+// Each representation has one shared implementation. Unexpected wire values
+// return to the typed facade before dynamic assignment checks are performed.
+type primitiveCodec struct {
+	save func(Sink, int, unsafe.Pointer)
+	load func(unsafe.Pointer, wire.Object) bool
+}
+
+// These operations are instantiated once per primitive representation, not for
+// every (field type, representation) pair. Selecting the kind before erasing
+// the pointer establishes the layout needed by each typed load/store.
+var primitiveCodecs = [...]primitiveCodec{
+	reflect.Bool:       {save: saveBool[bool], load: loadBool[bool]},
+	reflect.Int:        {save: saveSigned[int], load: loadSigned[int]},
+	reflect.Int8:       {save: saveSigned[int8], load: loadSigned[int8]},
+	reflect.Int16:      {save: saveSigned[int16], load: loadSigned[int16]},
+	reflect.Int32:      {save: saveSigned[int32], load: loadSigned[int32]},
+	reflect.Int64:      {save: saveSigned[int64], load: loadSigned[int64]},
+	reflect.Uint:       {save: saveUnsigned[uint], load: loadUnsigned[uint]},
+	reflect.Uint8:      {save: saveUnsigned[uint8], load: loadUnsigned[uint8]},
+	reflect.Uint16:     {save: saveUnsigned[uint16], load: loadUnsigned[uint16]},
+	reflect.Uint32:     {save: saveUnsigned[uint32], load: loadUnsigned[uint32]},
+	reflect.Uint64:     {save: saveUnsigned[uint64], load: loadUnsigned[uint64]},
+	reflect.Uintptr:    {save: saveUnsigned[uintptr], load: loadUnsigned[uintptr]},
+	reflect.String:     {save: saveString[string], load: loadString[string]},
+	reflect.Float32:    {save: saveFloat[float32], load: loadFloat[float32]},
+	reflect.Float64:    {save: saveFloat[float64], load: loadFloat[float64]},
+	reflect.Complex64:  {save: saveComplex[complex64], load: loadComplex[complex64]},
+	reflect.Complex128: {save: saveComplex[complex128], load: loadComplex[complex128]},
 }
 
 // NewFieldCodec selects operations once, when the generated package initializes.
 // The pointer is used only to infer T and is not retained or dereferenced.
 func NewFieldCodec[T any](_ *T) FieldCodec[T] {
-	switch reflect.TypeFor[T]().Kind() {
-	case reflect.Bool:
-		return scalarFieldCodec[T](saveBool[bool], loadBool[bool])
-	case reflect.Int:
-		return scalarFieldCodec[T](saveSigned[int], loadSigned[int])
-	case reflect.Int8:
-		return scalarFieldCodec[T](saveSigned[int8], loadSigned[int8])
-	case reflect.Int16:
-		return scalarFieldCodec[T](saveSigned[int16], loadSigned[int16])
-	case reflect.Int32:
-		return scalarFieldCodec[T](saveSigned[int32], loadSigned[int32])
-	case reflect.Int64:
-		return scalarFieldCodec[T](saveSigned[int64], loadSigned[int64])
-	case reflect.Uint:
-		return scalarFieldCodec[T](saveUnsigned[uint], loadUnsigned[uint])
-	case reflect.Uint8:
-		return scalarFieldCodec[T](saveUnsigned[uint8], loadUnsigned[uint8])
-	case reflect.Uint16:
-		return scalarFieldCodec[T](saveUnsigned[uint16], loadUnsigned[uint16])
-	case reflect.Uint32:
-		return scalarFieldCodec[T](saveUnsigned[uint32], loadUnsigned[uint32])
-	case reflect.Uint64:
-		return scalarFieldCodec[T](saveUnsigned[uint64], loadUnsigned[uint64])
-	case reflect.Uintptr:
-		return scalarFieldCodec[T](saveUnsigned[uintptr], loadUnsigned[uintptr])
-	case reflect.String:
-		return scalarFieldCodec[T](saveString[string], loadString[string])
-	case reflect.Float32:
-		return scalarFieldCodec[T](saveFloat[float32], loadFloat[float32])
-	case reflect.Float64:
-		return scalarFieldCodec[T](saveFloat[float64], loadFloat[float64])
-	case reflect.Complex64:
-		return scalarFieldCodec[T](saveComplex[complex64], loadComplex[complex64])
-	case reflect.Complex128:
-		return scalarFieldCodec[T](saveComplex[complex128], loadComplex[complex128])
-	default:
-		return FieldCodec[T]{
-			save: func(s Sink, slot int, value *T) { s.Save(slot, value) },
-			load: func(s Source, slot int, value *T) { s.Load(slot, value) },
-		}
+	kind := reflect.TypeFor[T]().Kind()
+	if int(kind) >= len(primitiveCodecs) {
+		return FieldCodec[T]{}
 	}
-}
-
-// scalarFieldCodec is called only after NewFieldCodec establishes that T and U
-// have the same underlying scalar representation. This includes defined types,
-// which would be missed by a type switch over the value. Pointer conversion is
-// confined here; graph objects continue to use the shared resolver.
-func scalarFieldCodec[T, U any](save func(Sink, int, *U), load func(*U, wire.Object) bool) FieldCodec[T] {
-	return FieldCodec[T]{
-		save: func(s Sink, slot int, value *T) { save(s, slot, (*U)(unsafe.Pointer(value))) },
-		load: func(s Source, slot int, value *T) {
-			encoded := s.field(slot)
-			if !load((*U)(unsafe.Pointer(value)), encoded) {
-				// The dynamic path must retain T: interface assignment checks
-				// depend on the field's actual type, not just its representation.
-				loadTypedFallback(s, value, encoded)
-			}
-		},
-	}
+	return FieldCodec[T]{primitive: primitiveCodecs[kind]}
 }
 
 // Save saves the field with the operations selected for its declared type.
-func (c FieldCodec[T]) Save(s Sink, slot int, value *T) { c.save(s, slot, value) }
+func (c FieldCodec[T]) Save(s Sink, slot int, value *T) {
+	if c.primitive.save == nil {
+		s.Save(slot, value)
+		return
+	}
+	c.primitive.save(s, slot, unsafe.Pointer(value))
+}
 
 // Load loads a field after reconciling checkpoint field names with local slots.
-func (c FieldCodec[T]) Load(s Source, slot int, value *T) { c.load(s, slot, value) }
+func (c FieldCodec[T]) Load(s Source, slot int, value *T) {
+	encoded := s.field(slot)
+	if c.primitive.load == nil || !c.primitive.load(unsafe.Pointer(value), encoded) {
+		// Preserve T here: interface assignment depends on the field's
+		// actual type, not just its primitive representation.
+		loadTypedFallback(s, value, encoded)
+	}
+}
 
 // LoadWait also preserves the field's dependency on referred objects' hooks.
 func (c FieldCodec[T]) LoadWait(s Source, slot int, value *T) {
-	c.load(s, slot, value)
+	c.Load(s, slot, value)
 	s.internal.ds.waitObject(s.internal.ods, s.field(slot), nil)
 }
 
@@ -134,7 +123,8 @@ func loadTypedFallback[T any](s Source, value *T, encoded wire.Object) {
 }
 
 // saveSigned saves a generated signed integer field, including defined types.
-func saveSigned[T signed](s Sink, slot int, value *T) {
+func saveSigned[T signed](s Sink, slot int, ptr unsafe.Pointer) {
+	value := (*T)(ptr)
 	if *value == 0 {
 		*s.field(slot) = wire.Nil{}
 		return
@@ -143,7 +133,8 @@ func saveSigned[T signed](s Sink, slot int, value *T) {
 }
 
 // loadSigned loads a generated signed integer field with truncation checking.
-func loadSigned[T signed](value *T, encoded wire.Object) bool {
+func loadSigned[T signed](ptr unsafe.Pointer, encoded wire.Object) bool {
+	value := (*T)(ptr)
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Int:
@@ -156,7 +147,8 @@ func loadSigned[T signed](value *T, encoded wire.Object) bool {
 }
 
 // saveUnsigned saves a generated unsigned integer field, including defined types.
-func saveUnsigned[T unsigned](s Sink, slot int, value *T) {
+func saveUnsigned[T unsigned](s Sink, slot int, ptr unsafe.Pointer) {
+	value := (*T)(ptr)
 	if *value == 0 {
 		*s.field(slot) = wire.Nil{}
 		return
@@ -165,7 +157,8 @@ func saveUnsigned[T unsigned](s Sink, slot int, value *T) {
 }
 
 // loadUnsigned loads a generated unsigned integer field with truncation checking.
-func loadUnsigned[T unsigned](value *T, encoded wire.Object) bool {
+func loadUnsigned[T unsigned](ptr unsafe.Pointer, encoded wire.Object) bool {
+	value := (*T)(ptr)
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Uint:
@@ -178,7 +171,8 @@ func loadUnsigned[T unsigned](value *T, encoded wire.Object) bool {
 }
 
 // saveBool saves a generated boolean field, including defined types.
-func saveBool[T ~bool](s Sink, slot int, value *T) {
+func saveBool[T ~bool](s Sink, slot int, ptr unsafe.Pointer) {
+	value := (*T)(ptr)
 	if !*value {
 		*s.field(slot) = wire.Nil{}
 		return
@@ -187,7 +181,8 @@ func saveBool[T ~bool](s Sink, slot int, value *T) {
 }
 
 // loadBool loads a generated boolean field.
-func loadBool[T ~bool](value *T, encoded wire.Object) bool {
+func loadBool[T ~bool](ptr unsafe.Pointer, encoded wire.Object) bool {
+	value := (*T)(ptr)
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Bool:
@@ -199,7 +194,8 @@ func loadBool[T ~bool](value *T, encoded wire.Object) bool {
 }
 
 // saveString saves a generated string field, including defined types.
-func saveString[T ~string](s Sink, slot int, value *T) {
+func saveString[T ~string](s Sink, slot int, ptr unsafe.Pointer) {
+	value := (*T)(ptr)
 	if *value == "" {
 		*s.field(slot) = wire.Nil{}
 		return
@@ -209,7 +205,8 @@ func saveString[T ~string](s Sink, slot int, value *T) {
 }
 
 // loadString loads a generated string field.
-func loadString[T ~string](value *T, encoded wire.Object) bool {
+func loadString[T ~string](ptr unsafe.Pointer, encoded wire.Object) bool {
+	value := (*T)(ptr)
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case *wire.String:
@@ -221,7 +218,8 @@ func loadString[T ~string](value *T, encoded wire.Object) bool {
 }
 
 // saveFloat saves a generated floating-point field at its declared width.
-func saveFloat[T floating](s Sink, slot int, value *T) {
+func saveFloat[T floating](s Sink, slot int, ptr unsafe.Pointer) {
+	value := (*T)(ptr)
 	if *value == 0 {
 		*s.field(slot) = wire.Nil{}
 		return
@@ -234,7 +232,8 @@ func saveFloat[T floating](s Sink, slot int, value *T) {
 }
 
 // loadFloat loads a generated floating-point field with truncation checking.
-func loadFloat[T floating](value *T, encoded wire.Object) bool {
+func loadFloat[T floating](ptr unsafe.Pointer, encoded wire.Object) bool {
+	value := (*T)(ptr)
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case wire.Float32:
@@ -249,7 +248,8 @@ func loadFloat[T floating](value *T, encoded wire.Object) bool {
 }
 
 // saveComplex saves a generated complex field at its declared width.
-func saveComplex[T complexNumber](s Sink, slot int, value *T) {
+func saveComplex[T complexNumber](s Sink, slot int, ptr unsafe.Pointer) {
+	value := (*T)(ptr)
 	if *value == 0 {
 		*s.field(slot) = wire.Nil{}
 		return
@@ -264,7 +264,8 @@ func saveComplex[T complexNumber](s Sink, slot int, value *T) {
 }
 
 // loadComplex loads a generated complex field with truncation checking.
-func loadComplex[T complexNumber](value *T, encoded wire.Object) bool {
+func loadComplex[T complexNumber](ptr unsafe.Pointer, encoded wire.Object) bool {
+	value := (*T)(ptr)
 	switch x := encoded.(type) {
 	case wire.Nil:
 	case *wire.Complex64:
