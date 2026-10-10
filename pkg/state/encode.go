@@ -795,7 +795,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 	}
 
 	if es.frames != nil {
-		es.frames.Finish()
+		es.frames.Seal()
 	}
 
 	// Write the header with the number of objects.
