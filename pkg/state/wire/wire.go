@@ -887,9 +887,6 @@ func Save(w *Writer, obj Object) {
 	case *Slice:
 		typeSlice.save(w)
 		x.save(w)
-	case primitiveArraySnapshot:
-		typeArray.save(w)
-		x.save(w)
 	case *Array:
 		typeArray.save(w)
 		x.save(w)
@@ -916,6 +913,9 @@ func Save(w *Writer, obj Object) {
 		x.save(w)
 	case *Complex128:
 		typeComplex128.save(w)
+		x.save(w)
+	case primitiveArraySnapshot:
+		typeArray.save(w)
 		x.save(w)
 	default:
 		panic(fmt.Errorf("unknown type: %#v", obj))

@@ -109,12 +109,19 @@ func (a *uintArraySnapshot[T]) save(w *Writer) {
 
 // CaptureFloat32Array copies values now and emits the existing Array wire form.
 func CaptureFloat32Array(values []float32) Object {
-	return &float32ArraySnapshot{values: snapshotValues(values)}
+	// The existing encoder promotes through reflect.Value.Float before
+	// narrowing to wire.Float32. Preserve that conversion at capture time:
+	// a signaling NaN can become quiet during the promotion.
+	captured := make([]float64, len(values))
+	for i, value := range values {
+		captured[i] = float64(value)
+	}
+	return &float32ArraySnapshot{values: captured}
 }
 
 type float32ArraySnapshot struct {
 	arraySnapshot
-	values []float32
+	values []float64
 }
 
 func (a *float32ArraySnapshot) save(w *Writer) {
