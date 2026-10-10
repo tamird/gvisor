@@ -72,6 +72,7 @@ type rackControl struct {
 func (rc *rackControl) init(snd *sender, iss seqnum.Value) {
 	rc.FACK = iss
 	rc.EndSequence = iss
+	rc.RTTSeq = iss
 	rc.ReoWndIncr = 1
 	rc.snd = snd
 }
