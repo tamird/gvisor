@@ -915,8 +915,19 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
+		saveArraySnapshot(w, obj)
+	}
+}
+
+// saveArraySnapshot keeps the interface assertion and unknown-object error path
+// outside Save's concrete dispatch.
+func saveArraySnapshot(w *Writer, obj Object) {
+	x, ok := obj.(primitiveArraySnapshot)
+	if !ok {
 		panic(fmt.Errorf("unknown type: %#v", obj))
 	}
+	typeArray.save(w)
+	x.save(w)
 }
 
 // Load loads a new object.
