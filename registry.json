@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-10T19:19:51.735531+00:00",
+    "updatedAt": "2026-10-10T19:40:15.807522+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4890,16 +4890,20 @@
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/tree/qualification/current-integration",
-      "status": "AMD64 jobs succeeded; mixed RC failures under diagnosis",
-      "summary": "Current owner update: all 15 ordinary AMD64 profile jobs at 1146d4e23 report success; original XML and source/shard binding are still being collected. The mixed Linux 7.3.0-rc3 profile at 910bc18b8 has five successful Actions, nine completed test-failure jobs and one coordinator timeout. Bucket 11 stopped at 90 minutes with 134 of 189 owners complete and a truncated original compact log. These are separate execution outcomes, not a broad completion claim.\n\nThe eight-owner native pilot in Actions 38076724915 at 24b454090 passed proc and all five link/netlink suites. The two iptables suites still returned ENOPROTOOPT. Root has prepared explicit legacy netfilter module loading and kernel-config retention, with a narrowed four-owner continuation planned for both iptables suites, FUSE and cgroup transfer. No continuation result is claimed. A separate KVM diagnostic, Actions 38077939537 at 4556f495f, repeats the two actual RC cgroup/loopback crash cases on the ordinary host and RC-nested KVM in three same-VM pairs. That attempt failed during harness setup: all six named ordinary-host cases passed, but zero RC TestRunner actions ran because root Bazel could not write user-owned temporary BEP files (exit 36). The private-directory continuation, Actions 38078789503 at 759bbd9727, is also terminal failed. Its original output is being collected; the failing phase and cause are not yet known. It repeated both arms together on a new worker. The original KVM crashes remain unresolved; this attempt did not reproduce corruption. Root continues the remaining TCG-time investigation. The isolated native FUSE clone failure is a confirmed qualification omission: 910bc18b8 lacks the already-merged #15472 errno correction. Root is restoring that correction together with the approved version-gated #15565 follow-up; this is not a newly discovered Linux ABI change.\n\nThe full final-policy ARM64 run, Actions 38014645202 at 1903b6b4a, is reconciled and failed. All 1,286 uncached remote actions, outputs and contracts are bound. Owners: 658 passed, one failed and two timed out. Shards: 1,282 passed, two failed and two timed out. The failed shards contain one C++ assertion failure and a separate runner port-in-use warning; they are not two failing C++ assertions. Wrapper-only passes and timeouts are excluded from test-body credit.\n\nThe separate diagnostic d46fa9d9 completed all six isolated pipe/UDP cases successfully; its parent failed only while deleting read-only copied reports. A subsequent 60-action diagnostic c4661232 has 53 passes and seven failures: five deliberate stack-capture stops, one real TCP 120-second assertion and one warning-only runner failure. These are diagnostic results, not full-profile qualification.\n\nThe separate mixed release-candidate bucket 7, Actions 38018426239 at f311db0eb, ended in failure at 03:54 UTC. Its sole failing owner is proc/directfs on ARM64 RC, shard 2: VerifyTaskChildrenNeverReportsZeroTID continued child creation until the 300-second deadline. The root cause is unproven; no retry is claimed. This is a partial bucket, with no full-RC claim.\n\nThe complete 33-case socket-stress owner passed in Actions 38008045670 at b1b7f2549. All 33 original cases passed in uncached remote actions, with source, debug/no-strace settings and declared contracts reconciled. It keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. This closes the complete stress owner under the corrected policy. It does not establish a pass for the full 661-owner ARM64 profile. The first attempt, Actions 38007298459, stopped before any build or test action because its routing hash still included the old argument list. The correction requires the new prefix and removes only that prefix from copied comparison rows; actual runtime arguments remain intact. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.\n\nThe separate paired pipe fast-path diagnostic b871aefd at f770348a8 uses the same complete pipe owner three times per runtime setting, without test-body changes. Its five-minute capture limit provides diagnostic evidence, not qualification credit.\n\nThe retained RC kernel config confirms that legacy memory-controller support is disabled while v2 memory remains enabled. The native KillWithV1MemoryMounted fixture must check that prerequisite. Root is validating a native-only absence guard using the existing /proc/cgroups parser; gVisor and unexpected mount failures remain strict. The owning cgroup-controller-transfers component is now tracked separately for refresh.",
-      "updatedAt": "2026-10-10T19:19:51.735531+00:00",
+      "status": "Ordinary AMD64 passed via Actions; guest profiles incomplete",
+      "summary": "The complete ordinary AMD64 profile at 1146d4e23 passed through the Actions Docker bridge, with compilation remote. Independent saved review binds all 15 jobs, 1,176 owners, 2,138 fresh test actions and 4,299 original outputs. Actual test placement is 2,133 Docker actions plus five declared initial-cgroup host actions on disposable Actions VMs; these are not 2,138 BuildBuddy test executions. XML has 62,385 executed passing cases, 2,403 skipped or unexecuted entries and 24 wrapper-only passes, with no failures or empty XML. Original selection, deadlines, shard counts and unfiltered arguments are preserved. This is valid ordinary-profile behavioral evidence; it does not close optimal RBE placement, skipped-feature coverage, KVM, RC or 64K qualification. The mixed Linux 7.3.0-rc3 profile at 910bc18b8 has five successful Actions, nine completed test-failure jobs and one coordinator timeout. Bucket 11 stopped at 90 minutes with 134 of 189 owners complete and a truncated original compact log. These are separate execution outcomes, not a broad completion claim.\n\nThe eight-owner native pilot in Actions 38076724915 at 24b454090 passed proc and all five link/netlink suites. The two iptables suites still returned ENOPROTOOPT. Explicit legacy netfilter and conntrack module loading, kernel-config retention, the existing FUSE corrections and native cgroup eligibility are being checked in the narrowed four-owner continuation, Actions 38079823455 at 3920181d8. It covers both iptables suites, FUSE and cgroup transfer; no continuation result is claimed. A separate KVM diagnostic, Actions 38077939537 at 4556f495f, repeats the two actual RC cgroup/loopback crash cases on the ordinary host and RC-nested KVM in three same-VM pairs. That attempt failed during harness setup: all six named ordinary-host cases passed, but zero RC TestRunner actions ran because root Bazel could not write user-owned temporary BEP files (exit 36). The private-directory continuation, Actions 38078789503 at 759bbd9727, failed fetching the declared Ubuntu snapshot metadata (HTTP 503). Its six named ordinary-host cases passed and zero RC actions ran. The simpler one-coordinator continuation, Actions 38079875835 at 20b7800a5c, completed successfully. Original outputs, named cases, placement and source bindings are now being collected and checked; no crash-cause conclusion follows yet. The original KVM crashes remain unresolved; this attempt did not reproduce corruption. Root continues the remaining TCG-time investigation. The isolated native FUSE clone failure is a confirmed qualification omission: 910bc18b8 lacks the already-merged #15472 errno correction. Root is restoring that correction together with the approved version-gated #15565 follow-up; this is not a newly discovered Linux ABI change.\n\nThe full final-policy ARM64 run, Actions 38014645202 at 1903b6b4a, is reconciled and failed. All 1,286 uncached remote actions, outputs and contracts are bound. Owners: 658 passed, one failed and two timed out. Shards: 1,282 passed, two failed and two timed out. The failed shards contain one C++ assertion failure and a separate runner port-in-use warning; they are not two failing C++ assertions. Wrapper-only passes and timeouts are excluded from test-body credit.\n\nThe separate diagnostic d46fa9d9 completed all six isolated pipe/UDP cases successfully; its parent failed only while deleting read-only copied reports. A subsequent 60-action diagnostic c4661232 has 53 passes and seven failures: five deliberate stack-capture stops, one real TCP 120-second assertion and one warning-only runner failure. These are diagnostic results, not full-profile qualification.\n\nThe separate mixed release-candidate bucket 7, Actions 38018426239 at f311db0eb, ended in failure at 03:54 UTC. Its sole failing owner is proc/directfs on ARM64 RC, shard 2: VerifyTaskChildrenNeverReportsZeroTID continued child creation until the 300-second deadline. The root cause is unproven; no retry is claimed. This is a partial bucket, with no full-RC claim.\n\nThe complete 33-case socket-stress owner passed in Actions 38008045670 at b1b7f2549. All 33 original cases passed in uncached remote actions, with source, debug/no-strace settings and declared contracts reconciled. It keeps each case’s 3600-second deadline and debug logging, with syscall tracing disabled by default and explicitly overridable. This closes the complete stress owner under the corrected policy. It does not establish a pass for the full 661-owner ARM64 profile. The first attempt, Actions 38007298459, stopped before any build or test action because its routing hash still included the old argument list. The correction requires the new prefix and removes only that prefix from copied comparison rows; actual runtime arguments remain intact. This is fork validation infrastructure, not an upstream proposal or canonical promotion.\n\nThe three prior timeout cases passed separate untraced diagnostics on source 3cd943971. IPv4 Reset/4 passed in its one-case run. The two IPv6 cases then passed: Reset/3 in 2950.422 seconds and ShutdownCloseSecond/3 in 2245.510 seconds. Their kernel, initramfs and payload match the earlier inputs. These isolated results do not confer full-owner qualification or isolate tracing cost. The earlier 33-case run remains 30 passes and three timeouts; the preceding six-owner continuation remains five passing owners and 12 of 19 passing shards.\n\nThe original full ARM64 64K profile remains failed: 652 passing owners, seven timeouts and two failures, across 1,194 passing, fifteen timed-out and two failed shards. Independent saved review is complete. The cookie repair passed a separate complete 16-shard loopback continuation. This route uses an AMD64 OCI host and ARM64 64K Linux 6.8.0-138 guest; the native ARM64-host pilot is separate.\n\nClosed mixed-unit evidence remains bound to e44f46dc9: all 673 selected owners and 693 original shards passed, with 675 cached remote results, fourteen fresh remote actions and four declared local ARM64 actions. Fresh outputs contain 528 passing XML entries and four explicit skips. The separate 838-target Nogo result remains bound to 7f774023a. Earlier snapshot-index loading failures and their original records remain retained.\n\nThe separate paired pipe fast-path diagnostic b871aefd at f770348a8 uses the same complete pipe owner three times per runtime setting, without test-body changes. Its five-minute capture limit provides diagnostic evidence, not qualification credit.\n\nThe retained RC kernel config confirms that legacy memory-controller support is disabled while v2 memory remains enabled. The native KillWithV1MemoryMounted fixture must check that prerequisite. Root is validating a native-only absence guard using the existing /proc/cgroups parser; gVisor and unexpected mount failures remain strict. The owning cgroup-controller-transfers component is now tracked separately for refresh.",
+      "updatedAt": "2026-10-10T19:40:15.807522+00:00",
       "followup": {
-        "disposition": "AMD64 result binding and focused RC diagnosis active",
+        "disposition": "Ordinary AMD64 evidence closed; placement and guest qualification active",
         "owner": "root",
         "sourceHead": "5d2987427c72e632950ba7b07726aa76b52e4745",
-        "reviewedAt": "2026-10-10T18:45:15.316989+00:00",
-        "nextAction": "Finish original AMD64 XML/source reconciliation and run the narrowed guest-input continuation. Preserve mixed-RC failures, the incomplete bucket and prior full-ARM outcomes; do not promote a broad pass from partial or stitched evidence.",
+        "reviewedAt": "2026-10-10T19:36:17.057356+00:00",
+        "nextAction": "Assess which ordinary test owners can execute directly on RBE rather than the Actions Docker bridge, and collect the narrowed guest-input continuation. Preserve mixed-RC failures, the incomplete bucket and prior full-ARM outcomes; do not infer unsupported profile or skipped-feature completion.",
         "evidence": [
+          "https://github.com/tamird/gvisor/actions/runs/38079823455",
+          "https://github.com/tamird/gvisor/actions/runs/38060570233",
+          "https://github.com/tamird/gvisor/commit/1146d4e23175b6f64dce37b4042a147b36b41ba6",
+          "https://github.com/tamird/gvisor/actions/runs/38079875835",
           "https://github.com/tamird/gvisor/actions/runs/38078789503",
           "https://github.com/tamird/gvisor/actions/runs/38077939537",
           "https://github.com/google/gvisor/pull/15565",
@@ -5385,21 +5389,22 @@
       "id": "branch:cgroup-controller-transfers",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "cgroup-controller-transfers",
-      "head": "1b974cbed1657bac112cb8528cdd194a1db884f6",
+      "ref": "review/cgroup-controller-transfers-current",
+      "head": "ab69615a33e0dd897e44eac8e7e4b07785c6d66a",
       "title": "Isolate cgroup controller transfer tests",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/1b974cbed1657bac112cb8528cdd194a1db884f6",
-      "status": "Fork component; independent refresh in preparation",
-      "updatedAt": "2026-10-10T19:19:51.735531+00:00",
-      "summary": "The existing public component is one commit atop upstream 6485c3fbdfe. Its four test/BUILD files move two controller-transfer cases into a separate binary and add bounded monotonic handoff/cleanup waits; it requires no broader fork runtime code. The old 1b974 source has no upstream PR or contributor question. A refreshed standalone test-only proposal is sensible after incorporating current fixture corrections and validation.\n\nThe current RC guest has CONFIG_MEMCG_V1 disabled, so v2 memory availability alone does not make the v1-memory case eligible. Root is correcting the qualification fixture with a native-only /proc/cgroups absence guard and will propagate the validated correction to this component. The refresh is active; the existing old branch and its evidence are preserved.",
+      "url": "https://github.com/tamird/gvisor/commit/ab69615a33e0dd897e44eac8e7e4b07785c6d66a",
+      "status": "Prepared fork proposal; runtime validation pending",
+      "updatedAt": "2026-10-10T19:26:11.498799+00:00",
+      "summary": "The independent refresh is public at ab69615a33, one commit directly on upstream 309599c1ec. Its four test/BUILD files move two controller-transfer cases into a separate binary and add bounded monotonic handoff/cleanup waits; it requires no broader fork runtime code. The complete old component applies without conflicts, and its test body changes only by the native controller-availability guard. The original cgroup-controller-transfers branch remains at 1b974 and is preserved.\n\nThe current RC guest has CONFIG_MEMCG_V1 disabled, so v2 memory availability alone does not make the v1-memory case eligible. The refresh uses the same native-only /proc/cgroups absence guard as root’s qualification correction. gVisor assertions and unexpected mount failures remain strict. Source preparation is complete; root owns remote integration and exact-case validation. No upstream PR or contributor question exists.",
       "followup": {
-        "disposition": "Independent component refresh and native eligibility correction active",
-        "owner": "external_sweeps",
-        "sourceHead": "1b974cbed1657bac112cb8528cdd194a1db884f6",
-        "reviewedAt": "2026-10-10T19:19:51.735531+00:00",
-        "nextAction": "Prepare a separate single-commit proposal on current upstream with the same narrow absence guard, preserving the old component ref. Root owns remote integration and exact-case validation. No upstream PR is authorized before contributor review.",
+        "disposition": "Independent proposal prepared; remote validation pending",
+        "owner": "root",
+        "sourceHead": "ab69615a33e0dd897e44eac8e7e4b07785c6d66a",
+        "reviewedAt": "2026-10-10T19:26:11.498799+00:00",
+        "nextAction": "Validate the refreshed component and its native eligibility behavior, then prepare contributor review if the standalone proposal remains appropriate. The original branch is preserved; no publication approval or completed runtime result is inferred.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/ab69615a33e0dd897e44eac8e7e4b07785c6d66a",
           "https://github.com/tamird/gvisor/commit/1b974cbed1657bac112cb8528cdd194a1db884f6",
           "https://github.com/google/gvisor/commit/309599c1ec020ad52c82b7b6657acba73888e367"
         ]
@@ -6771,9 +6776,10 @@
       "from": "branch:rbe-current-integration",
       "to": "branch:cgroup-controller-transfers",
       "type": "includes",
-      "reason": "The qualification carries this component’s split controller-transfer suite with later fixture corrections. The old standalone branch is being refreshed separately; no contributor approval is inferred.",
+      "reason": "The qualification carries the original split controller-transfer suite with later fixture corrections. The independently refreshed proposal is prepared for new validation; no contributor approval is inferred.",
       "evidence": [
-        "https://github.com/tamird/gvisor/commit/1b974cbed1657bac112cb8528cdd194a1db884f6"
+        "https://github.com/tamird/gvisor/commit/1b974cbed1657bac112cb8528cdd194a1db884f6",
+        "https://github.com/tamird/gvisor/commit/ab69615a33e0dd897e44eac8e7e4b07785c6d66a"
       ]
     }
   ],
@@ -7488,8 +7494,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T19:11:54.322172+00:00",
-      "summary": "Generated save/load and representation experiments remain active. The framed, existing-wire and direct-layout experiments did not establish an overall speedup. The independent primitive-array snapshot experiment now improves UDP Save by 11.88% and reduces allocated bytes by 21.34%, with unchanged allocation count and wire size. Pointer Save and Load regress by 2.75% and 2.20%; six other timings are not significant. A narrower dispatch refinement is being validated before another comparison.",
+      "updatedAt": "2026-10-10T19:36:17.057356+00:00",
+      "summary": "Generated save/load and representation experiments remain active. The framed, existing-wire and direct-layout experiments did not establish an overall speedup. The independent primitive-array snapshot experiment now improves UDP Save by 11.88% and reduces allocated bytes by 21.34%, with unchanged allocation count and wire size. Pointer Save and Load regress by 2.75% and 2.20%; six other timings are not significant. A subsequent dispatch refinement improved UDP time by 15.86% with no significant regression in eight timing controls, but that comparison used an integration baseline. The owner is repeating it with the exact current state package before considering a standalone proposal.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -7603,7 +7609,7 @@
           ]
         },
         {
-          "text": "The independent primitive-array prototype keeps the Array wire grammar and copies captured values into owned storage. The actual addressable-versus-value fixture failed for signaling float32 NaNs before correction; complex64 matched. Corrected source cd66d9b1dd stores the float32 promotion in owned float64 values. All 11 selected targets passed, including baseline state, corrected state/wire on both CPUs, state race and five analyzers. Original outputs and source captures are bound. The paired result is complete: UDP Save time fell 11.88% (p<.001), allocated bytes fell 21.34%, and allocation count/wire size were unchanged. Pointer Save/Load rose 2.75%/2.20% (p=.033/.017); six other timings were not significant. Executables grew less than 1%, and no process-RSS benefit is established. The observed wire.Save dispatch shape changed, but that is not a proven cause of the timing regressions. A narrow default-arm refinement at d837b98735 is now under separate correctness validation.",
+          "text": "The independent primitive-array prototype keeps the Array wire grammar and copies captured values into owned storage. The actual addressable-versus-value fixture failed for signaling float32 NaNs before correction; complex64 matched. Corrected source cd66d9b1dd stores the float32 promotion in owned float64 values. All 11 selected targets passed, including baseline state, corrected state/wire on both CPUs, state race and five analyzers. Original outputs and source captures are bound. The paired result is complete: UDP Save time fell 11.88% (p<.001), allocated bytes fell 21.34%, and allocation count/wire size were unchanged. Pointer Save/Load rose 2.75%/2.20% (p=.033/.017); six other timings were not significant. Executables grew less than 1%, and no process-RSS benefit is established. The observed wire.Save dispatch shape changed, but that is not a proven cause of the timing regressions. A narrow default-arm refinement at d837b98735 is now under separate correctness validation. The subsequent helper-dispatch paired experiment completed with UDP time down 15.86% and allocated bytes down 21.34%, unchanged allocation count/wire output, and no significant timing regression in eight controls. Its integration state.go/types.go differ from current master; the owner is composing exact current sources and repeating the fixtures before any standalone review question.",
           "evidence": [
             {
               "label": "Corrected primitive-array source",
@@ -7616,11 +7622,19 @@
             {
               "label": "Dispatch refinement under validation",
               "url": "https://github.com/tamird/gvisor/commit/d837b98735684fc53a0fdd4bb8c318f4658d3e7d"
+            },
+            {
+              "label": "Subsequent integration-baseline dispatch comparison",
+              "url": "https://app.buildbuddy.io/invocation/4bc0c209-70d6-4dbb-88c9-cf639d89967e"
+            },
+            {
+              "label": "Exact measured dispatch source",
+              "url": "https://github.com/tamird/gvisor/commit/f1cd521bc831ff19cc56458016c119b8cb8d73f1"
             }
           ]
         }
       ],
-      "nextStep": "Finish the separate dispatch refinement’s correctness checks, inspect the actual generated code, then repeat the same paired measurement. Preserve both the UDP gain and pointer regressions from the original array experiment; determine whether the refinement changes those measured effects.",
+      "nextStep": "Complete the same-fixture comparison against exact current upstream state-package sources. Keep the original array and dispatch-refinement results tied to their actual integration sources; no contributor review or upstream-readiness state exists yet.",
       "evidence": [
         {
           "label": "Subsequent map-iterator follow-up",
@@ -7633,8 +7647,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-10T19:11:54.322172+00:00",
-      "summary": "Generated save/load and representation experiments remain active. The framed, existing-wire and direct-layout experiments did not establish an overall speedup. The independent primitive-array snapshot experiment now improves UDP Save by 11.88% and reduces allocated bytes by 21.34%, with unchanged allocation count and wire size. Pointer Save and Load regress by 2.75% and 2.20%; six other timings are not significant. A narrower dispatch refinement is being validated before another comparison.",
+      "updatedAt": "2026-10-10T19:36:17.057356+00:00",
+      "summary": "Generated save/load and representation experiments remain active. The framed, existing-wire and direct-layout experiments did not establish an overall speedup. The independent primitive-array snapshot experiment now improves UDP Save by 11.88% and reduces allocated bytes by 21.34%, with unchanged allocation count and wire size. Pointer Save and Load regress by 2.75% and 2.20%; six other timings are not significant. A subsequent dispatch refinement improved UDP time by 15.86% with no significant regression in eight timing controls, but that comparison used an integration baseline. The owner is repeating it with the exact current state package before considering a standalone proposal.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -7841,7 +7855,7 @@
           ]
         },
         {
-          "text": "The independent primitive-array prototype keeps the Array wire grammar and copies captured values into owned storage. The actual addressable-versus-value fixture failed for signaling float32 NaNs before correction; complex64 matched. Corrected source cd66d9b1dd stores the float32 promotion in owned float64 values. All 11 selected targets passed, including baseline state, corrected state/wire on both CPUs, state race and five analyzers. Original outputs and source captures are bound. The paired result is complete: UDP Save time fell 11.88% (p<.001), allocated bytes fell 21.34%, and allocation count/wire size were unchanged. Pointer Save/Load rose 2.75%/2.20% (p=.033/.017); six other timings were not significant. Executables grew less than 1%, and no process-RSS benefit is established. The observed wire.Save dispatch shape changed, but that is not a proven cause of the timing regressions. A narrow default-arm refinement at d837b98735 is now under separate correctness validation.",
+          "text": "The independent primitive-array prototype keeps the Array wire grammar and copies captured values into owned storage. The actual addressable-versus-value fixture failed for signaling float32 NaNs before correction; complex64 matched. Corrected source cd66d9b1dd stores the float32 promotion in owned float64 values. All 11 selected targets passed, including baseline state, corrected state/wire on both CPUs, state race and five analyzers. Original outputs and source captures are bound. The paired result is complete: UDP Save time fell 11.88% (p<.001), allocated bytes fell 21.34%, and allocation count/wire size were unchanged. Pointer Save/Load rose 2.75%/2.20% (p=.033/.017); six other timings were not significant. Executables grew less than 1%, and no process-RSS benefit is established. The observed wire.Save dispatch shape changed, but that is not a proven cause of the timing regressions. A narrow default-arm refinement at d837b98735 is now under separate correctness validation. The subsequent helper-dispatch paired experiment completed with UDP time down 15.86% and allocated bytes down 21.34%, unchanged allocation count/wire output, and no significant timing regression in eight controls. Its integration state.go/types.go differ from current master; the owner is composing exact current sources and repeating the fixtures before any standalone review question.",
           "evidence": [
             {
               "label": "Corrected primitive-array source",
@@ -7854,11 +7868,19 @@
             {
               "label": "Dispatch refinement under validation",
               "url": "https://github.com/tamird/gvisor/commit/d837b98735684fc53a0fdd4bb8c318f4658d3e7d"
+            },
+            {
+              "label": "Subsequent integration-baseline dispatch comparison",
+              "url": "https://app.buildbuddy.io/invocation/4bc0c209-70d6-4dbb-88c9-cf639d89967e"
+            },
+            {
+              "label": "Exact measured dispatch source",
+              "url": "https://github.com/tamird/gvisor/commit/f1cd521bc831ff19cc56458016c119b8cb8d73f1"
             }
           ]
         }
       ],
-      "nextStep": "Finish the separate dispatch refinement’s correctness checks, inspect the actual generated code, then repeat the same paired measurement. Preserve both the UDP gain and pointer regressions from the original array experiment; determine whether the refinement changes those measured effects.",
+      "nextStep": "Complete the same-fixture comparison against exact current upstream state-package sources. Keep the original array and dispatch-refinement results tied to their actual integration sources; no contributor review or upstream-readiness state exists yet.",
       "evidence": [
         {
           "label": "Studied production revision",
@@ -8168,7 +8190,7 @@
               "+2.20%; p=.017"
             ]
           ],
-          "note": "Six other timing comparisons were not significant; this does not establish equivalence. All eight allocation/byte controls were unchanged. State and UDP executable files grew 0.93% and 0.85%. Overlapping process-wide peak-RSS ranges do not establish a retained-memory gain. These repeated pairs represent one worker. A separate dispatch refinement is under validation; its performance is not measured here.",
+          "note": "Six other timing comparisons were not significant; this does not establish equivalence. All eight allocation/byte controls were unchanged. State and UDP executable files grew 0.93% and 0.85%. Overlapping process-wide peak-RSS ranges do not establish a retained-memory gain. These repeated pairs represent one worker. The subsequent dispatch refinement has a separate result in the findings; a repeat against exact current package sources is being prepared.",
           "evidence": [
             {
               "label": "Verified paired primitive-array experiment",
