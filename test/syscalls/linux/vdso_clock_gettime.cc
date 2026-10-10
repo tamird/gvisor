@@ -181,12 +181,54 @@ class CycleObserver {
   Examples aux_examples_{};
 };
 
+// Fork-only output from the explicitly marked clock_gettime request. The
+// kernel fills every scalar; native calls never request this extension.
+constexpr uint64_t kInternalClockMagic = 0x475653434c4f434b;
+struct InternalClockSample {
+  uint64_t magic = 0;
+  uint64_t before_cycles = 0;
+  uint64_t before_aux = 0;
+  uint64_t after_cycles = 0;
+  uint64_t after_aux = 0;
+  uint64_t seconds = 0;
+  uint64_t nanoseconds = 0;
+
+  bool Matches(const timespec& ts) const {
+    return magic == kInternalClockMagic &&
+           seconds == static_cast<uint64_t>(ts.tv_sec) &&
+           nanoseconds == static_cast<uint64_t>(ts.tv_nsec);
+  }
+};
+static_assert(sizeof(InternalClockSample) == 7 * sizeof(uint64_t));
+
+std::ostream& operator<<(std::ostream& out, const InternalClockSample& sample) {
+  if (sample.magic != kInternalClockMagic) {
+    return out << "{unavailable}";
+  }
+  return out << "{cycles_before=" << sample.before_cycles
+             << ",aux_before=" << sample.before_aux
+             << ",cycles_after=" << sample.after_cycles
+             << ",aux_after=" << sample.after_aux
+             << ",seconds=" << sample.seconds
+             << ",nanoseconds=" << sample.nanoseconds << "}";
+}
+
 struct ReadSample {
   bool active = false;
   ParameterSample params_before;
   CycleSample cycles_before;
   CycleSample cycles_after;
   ParameterSample params_after;
+  InternalClockSample internal;
+
+  long ClockSyscall(clockid_t clock, timespec* ts, bool capture_internal) {
+    internal = {};
+    if (capture_internal) {
+      return syscall(__NR_clock_gettime, clock, ts, &internal,
+                     kInternalClockMagic);
+    }
+    return syscall(__NR_clock_gettime, clock, ts);
+  }
 
   void Before(const params* page, CycleObserver* observer, const char* point) {
     if (observer != nullptr) {
@@ -228,7 +270,8 @@ std::ostream& operator<<(std::ostream& out, const ReadSample& sample) {
              << ",aux_before=" << sample.cycles_before.aux
              << ",cycles_after=" << sample.cycles_after.ticks
              << ",aux_after=" << sample.cycles_after.aux
-             << ",params_after=" << sample.params_after << "}";
+             << ",params_after=" << sample.params_after
+             << ",internal=" << sample.internal << "}";
 }
 
 TEST_P(MonotonicVDSOClockTest, IsCorrect) {
@@ -261,10 +304,16 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
   ReadSample syscall_sample, vdso_sample;
   struct timespec tvdso, tsys;
   absl::Time vdso_time, sys_time;
+  uint64_t internal_samples = 0;
+  uint64_t internal_matches = 0;
   syscall_sample.Before(page, observer, "syscall.before");
-  ASSERT_THAT(syscall(__NR_clock_gettime, GetParam(), &tsys),
+  ASSERT_THAT(syscall_sample.ClockSyscall(GetParam(), &tsys, page != nullptr),
               SyscallSucceeds());
   syscall_sample.After(page, observer, "syscall.after");
+  if (page != nullptr) {
+    ++internal_samples;
+    internal_matches += syscall_sample.internal.Matches(tsys);
+  }
   sys_time = absl::TimeFromTimespec(tsys);
   auto end = absl::Now() + absl::Seconds(10);
   while (absl::Now() < end) {
@@ -276,13 +325,23 @@ TEST_P(MonotonicVDSOClockTest, IsCorrect) {
         << "clock_pair syscall_to_vdso syscall=" << syscall_sample
         << " vdso=" << vdso_sample;
     syscall_sample.Before(page, observer, "syscall.before");
-    ASSERT_THAT(syscall(__NR_clock_gettime, GetParam(), &tsys),
+    ASSERT_THAT(syscall_sample.ClockSyscall(GetParam(), &tsys, page != nullptr),
                 SyscallSucceeds());
     syscall_sample.After(page, observer, "syscall.after");
+    if (page != nullptr) {
+      ++internal_samples;
+      internal_matches += syscall_sample.internal.Matches(tsys);
+    }
     sys_time = absl::TimeFromTimespec(tsys);
     EXPECT_LE(vdso_time, sys_time)
         << "clock_pair vdso_to_syscall vdso=" << vdso_sample
         << " syscall=" << syscall_sample;
+  }
+  if (page != nullptr) {
+    RecordProperty("internal_clock_samples", std::to_string(internal_samples));
+    RecordProperty("internal_clock_matches", std::to_string(internal_matches));
+    EXPECT_EQ(internal_matches, internal_samples)
+        << "Internal diagnostic must match each returned timespec";
   }
   if (observer != nullptr) {
     RecordProperty("caller_cycle_samples", std::to_string(observer->samples));

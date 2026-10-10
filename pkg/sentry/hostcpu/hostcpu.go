@@ -29,6 +29,11 @@ import (
 // is relatively slow).
 func GetCPU() uint32
 
+// ClockSample returns serialized cycle ticks and raw TSC_AUX for the fork-only
+// AMD64 clock diagnostic. available is false on other architectures. Like
+// GetCPU on AMD64, this requires RDTSCP support.
+func ClockSample() (cycles uint64, aux uint64, available bool)
+
 // MaxPossibleCPU returns the highest possible CPU number, which is guaranteed
 // not to change for the lifetime of the host kernel.
 func MaxPossibleCPU() (uint32, error) {

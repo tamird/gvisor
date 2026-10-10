@@ -22,3 +22,14 @@ TEXT ·GetCPU(SB),NOSPLIT|NOFRAME,$0-4
 	ANDL	$0xfff, CX
 	MOVL	CX, ret+0(FP)
 	RET
+
+// func ClockSample() (cycles uint64, aux uint64, available bool)
+TEXT ·ClockSample(SB),NOSPLIT|NOFRAME,$0-17
+	BYTE $0x0f; BYTE $0x01; BYTE $0xf9; // RDTSCP
+	LFENCE
+	SHLQ	$32, DX
+	ORQ	DX, AX
+	MOVQ	AX, cycles+0(FP)
+	MOVQ	CX, aux+8(FP)
+	MOVB	$1, available+16(FP)
+	RET

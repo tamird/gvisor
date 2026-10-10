@@ -26,3 +26,11 @@ TEXT ·GetCPU(SB), NOSPLIT, $0-4
 	MOVD $0xA8, R8 // SYS_GETCPU
 	SVC
 	RET
+
+// The fork-only clock diagnostic requires AMD64 RDTSCP and raw TSC_AUX.
+// func ClockSample() (cycles uint64, aux uint64, available bool)
+TEXT ·ClockSample(SB),NOSPLIT|NOFRAME,$0-17
+	MOVD	ZR, cycles+0(FP)
+	MOVD	ZR, aux+8(FP)
+	MOVB	ZR, available+16(FP)
+	RET

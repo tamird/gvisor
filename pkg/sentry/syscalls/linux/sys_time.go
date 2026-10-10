@@ -23,6 +23,7 @@ import (
 	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/marshal/primitive"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
+	"gvisor.dev/gvisor/pkg/sentry/hostcpu"
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sentry/ktime"
 )
@@ -143,6 +144,20 @@ func getClock(t *kernel.Task, clockID int32) (ktime.Clock, error) {
 	}
 }
 
+// clockDiagnostic is the scalar-only output for the fork-only clock fixture.
+// Keep its layout in sync with InternalClockSample in vdso_clock_gettime.cc.
+//
+// +marshal
+type clockDiagnostic struct {
+	Magic        uint64
+	BeforeCycles uint64
+	BeforeAux    uint64
+	AfterCycles  uint64
+	AfterAux     uint64
+	Seconds      uint64
+	Nanoseconds  uint64
+}
+
 // ClockGettime implements linux syscall clock_gettime(2).
 func ClockGettime(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (uintptr, *kernel.SyscallControl, error) {
 	clockID := int32(args[0].Int())
@@ -152,8 +167,37 @@ func ClockGettime(t *kernel.Task, sysno uintptr, args arch.SyscallArguments) (ui
 	if err != nil {
 		return 0, nil, err
 	}
+	// Fork-only diagnostic selected explicitly by the owning clock fixture.
+	// Ordinary callers retain the same clock read and timespec copy path.
+	const diagnosticMagic = uint64(0x475653434c4f434b)
+	diagnostic := args[3].Uint64() == diagnosticMagic && (clockID == linux.CLOCK_MONOTONIC || clockID == linux.CLOCK_BOOTTIME)
+	var sample clockDiagnostic
+	if diagnostic {
+		cycles, aux, available := hostcpu.ClockSample()
+		if !available {
+			return 0, nil, linuxerr.EOPNOTSUPP
+		}
+		sample.BeforeCycles, sample.BeforeAux = cycles, aux
+	}
 	ts := c.Now().Timespec()
-	return 0, nil, copyTimespecOut(t, addr, &ts)
+	if diagnostic {
+		cycles, aux, available := hostcpu.ClockSample()
+		if !available {
+			return 0, nil, linuxerr.EOPNOTSUPP
+		}
+		// These bracket c.Now(); neither is its exact internal cycle read.
+		sample.Magic = diagnosticMagic
+		sample.AfterCycles, sample.AfterAux = cycles, aux
+		sample.Seconds, sample.Nanoseconds = uint64(ts.Sec), uint64(ts.Nsec)
+	}
+	if err := copyTimespecOut(t, addr, &ts); err != nil {
+		return 0, nil, err
+	}
+	if diagnostic {
+		_, err := sample.CopyOut(t, args[2].Pointer())
+		return 0, nil, err
+	}
+	return 0, nil, nil
 }
 
 // ClockSettime implements linux syscall clock_settime(2).

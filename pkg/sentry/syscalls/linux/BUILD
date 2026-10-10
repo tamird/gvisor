@@ -102,6 +102,7 @@ go_library(
         "//pkg/sentry/fsimpl/signalfd",
         "//pkg/sentry/fsimpl/timerfd",
         "//pkg/sentry/fsimpl/tmpfs",
+        "//pkg/sentry/hostcpu",
         "//pkg/sentry/kernel",
         "//pkg/sentry/kernel/auth",
         "//pkg/sentry/kernel/fasync",
