@@ -16,6 +16,7 @@ package udp
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"testing"
@@ -40,6 +41,17 @@ func releaseCodecQueue(queue *udpPacketList) {
 // The chosen occupancies are scenarios, not measured production frequencies.
 // Packet delivery, endpoint freezing and the rest of the kernel are not timed.
 func BenchmarkUDPReceiveQueueSave(b *testing.B) {
+	benchmarkUDPReceiveQueueSave(b, state.Save)
+}
+
+// BenchmarkUDPReceiveQueueSaveFramed uses the same queue and validation with
+// the experimental field representation.
+func BenchmarkUDPReceiveQueueSaveFramed(b *testing.B) {
+	benchmarkUDPReceiveQueueSave(b, state.SaveFramed)
+}
+
+func benchmarkUDPReceiveQueueSave(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
+	b.Helper()
 	for _, count := range []int{1, 8, 32} {
 		b.Run(fmt.Sprint(count), func(b *testing.B) {
 			var queue udpPacketList
@@ -93,7 +105,7 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 			}
 
 			var encoded bytes.Buffer
-			if _, err := state.Save(b.Context(), &encoded, &queue); err != nil {
+			if _, err := save(b.Context(), &encoded, &queue); err != nil {
 				b.Fatal(err)
 			}
 			wireSize := encoded.Len()
@@ -126,7 +138,7 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 			releaseCodecQueue(&restored)
 			b.ReportAllocs()
 			for b.Loop() {
-				if _, err := state.Save(b.Context(), io.Discard, &queue); err != nil {
+				if _, err := save(b.Context(), io.Discard, &queue); err != nil {
 					b.Fatal(err)
 				}
 			}

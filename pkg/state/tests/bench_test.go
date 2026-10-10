@@ -143,14 +143,14 @@ func BenchmarkDecoding(b *testing.B) {
 
 // controlMessageBenchmark uses a real timestamp-bearing state type. Its
 // timestamp used a UnixNano hook before the binary-codec change.
-func controlMessageBenchmark(b *testing.B) (tcpip.ReceivableControlMessages, []byte) {
+func controlMessageBenchmark(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) (tcpip.ReceivableControlMessages, []byte) {
 	b.Helper()
 	message := tcpip.ReceivableControlMessages{
 		HasTimestamp: true,
 		Timestamp:    time.Date(2026, time.October, 7, 12, 0, 0, 123456789, time.UTC),
 	}
 	var buf bytes.Buffer
-	if _, err := state.Save(b.Context(), &buf, &message); err != nil {
+	if _, err := save(b.Context(), &buf, &message); err != nil {
 		b.Fatal(err)
 	}
 	var restored tcpip.ReceivableControlMessages
@@ -164,10 +164,19 @@ func controlMessageBenchmark(b *testing.B) (tcpip.ReceivableControlMessages, []b
 }
 
 func BenchmarkControlMessageEncoding(b *testing.B) {
-	message, encoded := controlMessageBenchmark(b)
+	benchmarkControlMessageEncoding(b, state.Save)
+}
+
+func BenchmarkControlMessageFramedEncoding(b *testing.B) {
+	benchmarkControlMessageEncoding(b, state.SaveFramed)
+}
+
+func benchmarkControlMessageEncoding(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
+	b.Helper()
+	message, encoded := controlMessageBenchmark(b, save)
 	b.ReportAllocs()
 	for b.Loop() {
-		if _, err := state.Save(b.Context(), io.Discard, &message); err != nil {
+		if _, err := save(b.Context(), io.Discard, &message); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -175,7 +184,16 @@ func BenchmarkControlMessageEncoding(b *testing.B) {
 }
 
 func BenchmarkControlMessageDecoding(b *testing.B) {
-	_, encoded := controlMessageBenchmark(b)
+	benchmarkControlMessageDecoding(b, state.Save)
+}
+
+func BenchmarkControlMessageFramedDecoding(b *testing.B) {
+	benchmarkControlMessageDecoding(b, state.SaveFramed)
+}
+
+func benchmarkControlMessageDecoding(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
+	b.Helper()
+	_, encoded := controlMessageBenchmark(b, save)
 	var restored tcpip.ReceivableControlMessages
 	var reader bytes.Reader
 	b.ReportAllocs()
