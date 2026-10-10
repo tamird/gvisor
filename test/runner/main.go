@@ -644,9 +644,18 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 	signal.Notify(sig, unix.SIGTERM)
 	defer signal.Stop(sig)
 	go func() {
-		s, ok := <-sig
-		if !ok {
-			return
+		var s os.Signal
+		select {
+		case received, ok := <-sig:
+			if !ok {
+				return
+			}
+			s = received
+		case <-time.After(2 * time.Minute):
+			// Fork-only diagnosis: use the existing stack dump before the
+			// emulator's outer timeout makes the guest inaccessible.
+			log.Warningf("Diagnostic deadline reached; collecting sandbox stacks")
+			s = unix.SIGTERM
 		}
 		signalled.Store(true)
 		log.Warningf("%s: Got signal: %v", name, s)
@@ -777,6 +786,9 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 				return fmt.Errorf("test failed with status: %d", wres.ExitStatus)
 			}
 		}
+	}
+	if signalled.Load() {
+		return fmt.Errorf("test stopped for diagnostic stack capture")
 	}
 	if err == nil && len(testLogDir) > 0 {
 		var warningsFound []string
