@@ -14,12 +14,14 @@ go_library(
         "load.go",
         "map.go",
         "register.go",
+        "snapshot.go",
         "struct.go",
         "tests.go",
     ],
     deps = [
         "//pkg/state",
         "//pkg/state/pretty",
+        "//pkg/state/wire",
     ],
 )
 
@@ -35,6 +37,7 @@ go_test(
         "load_test.go",
         "map_test.go",
         "register_test.go",
+        "snapshot_test.go",
         "string_test.go",
         "struct_test.go",
     ],
