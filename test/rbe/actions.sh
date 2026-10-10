@@ -17,6 +17,10 @@
 set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
+if [[ ${QUALIFICATION_ROUTED_ONLY:-false} == true ]]; then
+  [[ $QUALIFICATION_EXECUTION == local && $QUALIFICATION_ARCH == amd64 ]]
+  [[ $QUALIFICATION_LANES == syscalls && -z ${QUALIFICATION_SYSCALL_BUCKET:-} ]]
+fi
 
 # read consumes one line. Reject extra lines rather than losing selected lanes.
 if [[ $QUALIFICATION_LANES == *$'\n'* ]]; then
@@ -157,6 +161,128 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         fi
         break
       done
+      if [[ ${QUALIFICATION_ROUTED_ONLY:-false} == true && $argument == test ]]; then
+        [[ $QUALIFICATION_EXECUTION == local && $QUALIFICATION_ARCH == amd64 ]]
+        [[ $QUALIFICATION_LANES == syscalls && -z ${QUALIFICATION_SYSCALL_BUCKET:-} ]]
+        local cohort_dir="$RUNNER_TEMP/qualification/amd64-selective-actions"
+        local pattern_file="" source_file raw_directory
+        mkdir -p "$cohort_dir"
+        printf '%s\n' "$@" > "$cohort_dir/original-arguments.txt"
+        for source_file in "$@"; do
+          if [[ $source_file == --target_pattern_file=* ]]; then
+            [[ -z $pattern_file ]]
+            pattern_file=${source_file#*=}
+          fi
+        done
+        [[ -n $pattern_file ]]
+        if ! git cat-file -e "c94060421c769ad55606bd2b57c7e74eff0de661^{commit}" 2>/dev/null; then
+          timeout --signal=INT --kill-after=30s 120s git fetch --no-tags --depth=1 origin c94060421c769ad55606bd2b57c7e74eff0de661
+        fi
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
+        [[ ! -s "$cohort_dir/source-before.txt" ]]
+        git diff --name-only c94060421c769ad55606bd2b57c7e74eff0de661 HEAD > "$cohort_dir/method-paths.txt"
+        git cat-file -p HEAD > "$cohort_dir/method-commit.txt"
+        git cat-file -p c94060421c769ad55606bd2b57c7e74eff0de661 > "$cohort_dir/payload-commit.txt"
+        cp "$pattern_file" "$cohort_dir/canonical-targets.txt"
+        python3 - "$pattern_file" "$RUNNER_TEMP/qualification/syscalls-selection" "$cohort_dir" <<'ROUTED_OWNERS'
+from collections import Counter
+import hashlib
+import json
+from pathlib import Path
+import sys
+pattern, selection_dir, out = map(Path, sys.argv[1:])
+expected = {
+    '//test/syscalls:cgroup2_ebpf_test_native_amd64',
+    '//test/syscalls:cgroup2_test_native_amd64',
+    '//test/syscalls:cgroup2_transfer_test_native_amd64',
+    '//test/syscalls:eventfd_test_native_amd64',
+    '//test/syscalls:iptables_test_native_amd64',
+    '//test/syscalls:landlock_v1_test_native_amd64',
+    '//test/syscalls:landlock_v2_test_native_amd64',
+    '//test/syscalls:landlock_v3_test_native_amd64',
+    '//test/syscalls:landlock_v4_test_native_amd64',
+    '//test/syscalls:landlock_v5_test_native_amd64',
+    '//test/syscalls:landlock_v6_test_native_amd64',
+    '//test/syscalls:link_test_native_amd64',
+    '//test/syscalls:mount_fd_test_native_amd64',
+    '//test/syscalls:msgqueue_test_native_amd64',
+    '//test/syscalls:openat2_test_native_amd64',
+    '//test/syscalls:pidfd_test_native_amd64',
+    '//test/syscalls:posix_acl_test_native_amd64',
+    '//test/syscalls:proc_test_native_amd64',
+    '//test/syscalls:ptrace_test_native_amd64',
+    '//test/syscalls:socket_inet_loopback_isolated_test_native_amd64',
+    '//test/syscalls:socket_inet_loopback_isolated_test_runsc_systrap_hostnet_amd64',
+    '//test/syscalls:socket_inet_loopback_test_native_amd64',
+    '//test/syscalls:socket_inet_loopback_test_runsc_systrap_hostnet_amd64',
+    '//test/syscalls:socket_netlink_netfilter_test_native_amd64',
+    '//test/syscalls:tuntap_test_native_amd64',
+}
+features = {
+    'pids-events-local',
+    'detached-mount-attachment',
+    'fsmount-cloning',
+    'directory-create-einval',
+    'tcp-error-poll-ordering',
+    'xtables-mark-ct',
+    'dual-stack-wildcard-bind',
+    'time-wait-bind-indexing',
+    'nftables-inet-fib',
+    'nftables-validation',
+    'cgroup-bpf-query-revision',
+    'eventfd-oversized-write-rejection',
+    'landlock-abi-1',
+    'landlock-abi-2',
+    'landlock-abi-3',
+    'landlock-abi-4',
+    'landlock-abi-5',
+    'landlock-abi-6',
+    'linkat-empty-path-same-credentials',
+    'sysv-msg-copy',
+    'pidfd-thread-notifications',
+    'anonymous-vma-names',
+    'yama-relational-ptrace',
+    'empty-posix-acl-clearing',
+}
+assert set((out / 'method-paths.txt').read_text().splitlines()) == {'.github/workflows/build.yml', 'test/rbe/actions.sh'}
+selection = json.loads((selection_dir / 'selection.json').read_text())
+assert set(selection['local_test_requirements']) == features
+all_owners = pattern.read_text().splitlines()
+assert set(all_owners) == set(selection['selected_owners']) and len(all_owners) == 1176
+assert hashlib.sha256(''.join(label+'\n' for label in sorted(all_owners)).encode()).hexdigest() == '34cd148e472a97ace77d75c747e195c3bebee52310e0e5766a3953fd3f969222'
+local = {label for group in selection['local_owners'].values() for label in group}
+assert local == expected and set(selection['local_routing_reasons']) == expected
+assert set(selection['remote_owners']) == set(all_owners) - expected
+value = json.loads((selection_dir / 'actions.json').read_text())
+labels = {str(t['id']): t['label'] for t in value['targets']}
+counts = Counter()
+for action in value['actions']:
+    assert action['mnemonic'] == 'TestRunner'
+    label = labels[str(action['targetId'])]
+    counts[label] += 1
+    properties = {p['key']: p.get('value', '') for p in action['executionInfo']}
+    assert properties['Arch'] == 'amd64' and properties['OSFamily'] == 'linux'
+    assert bool({'no-remote-exec', 'no-remote'} & properties.keys()) == (label in expected)
+assert len(counts) == 1176 and sum(counts.values()) == 2138
+assert sum(counts[label] for label in expected) == 63
+initial = set(selection['initial_cgroup_owners'])
+assert initial == {'//test/syscalls:cgroup2_test_native_amd64', '//test/syscalls:cgroup2_transfer_test_native_amd64'}
+assert sum(counts[label] for label in initial) == 5
+arguments = (out / 'original-arguments.txt').read_text().splitlines()
+assert '--local_test_jobs=1' in arguments
+assert '--strategy=TestRunner=remote,docker,local' in arguments
+assert not any(arg.startswith(('--test_filter', '--test_timeout', '--test_sharding_strategy')) or 'TESTBRIDGE_TEST_ONLY' in arg or 'GTEST_FILTER' in arg for arg in arguments)
+pattern.write_text(''.join(label+'\n' for label in sorted(expected)))
+(out / 'executed-targets.txt').write_text(pattern.read_text())
+(out / 'scope.json').write_text(json.dumps({'payloadSource':'c94060421c769ad55606bd2b57c7e74eff0de661','canonicalOwners':1176,'canonicalActions':2138,'executedOwners':sorted(expected),'executedActions':63,'unexecutedRemoteOwners':selection['remote_owners'],'expectedStrategies':{'docker':58,'local':5},'scope':'Only complete routed owners; no qualification credit for the 1151 unexecuted remote owners.'},indent=2)+'\n')
+ROUTED_OWNERS
+        raw_directory=$(mktemp -d "$RUNNER_TEMP/amd64-selective-raw.XXXXXX")
+        raw_events=$(mktemp "$raw_directory/events.XXXXXX")
+        events_output="$cohort_dir/events.jsonl"
+        evidence+=("--build_event_json_file=$raw_events" --nocache_test_results --runs_per_test=1 --flaky_test_attempts=1)
+        printf '%s\n' "$@" "${evidence[@]}" > "$cohort_dir/effective-arguments.txt"
+        printf 'Executing 25 routed owners / 63 original shards; 1151 remote owners remain unexecuted.\n'
+      fi
       if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
         # Execute the complete maintained profile with its declared emulator
         # settings; retain the graph and native contracts for comparison.
@@ -307,14 +433,15 @@ if count == 0:
 target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
 raise SystemExit(bool(errors))
 GUEST_EVENTS
-        rm -f "$raw_events"
-        printf '%s\n' "$result" > "$events_output.bazel-exit"
-        printf '%s\n' "$capture_status" > "$events_output.capture-exit"
+        rm -f "$raw_events" || capture_status=1
+        if [[ ${QUALIFICATION_ROUTED_ONLY:-false} == true ]]; then rmdir "$raw_directory" || capture_status=1; fi
+        git rev-parse HEAD > "$cohort_dir/final-head.txt" || capture_status=1
+        if [[ $(cat "$cohort_dir/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then capture_status=1; fi
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt" || capture_status=1
+        if [[ -s "$cohort_dir/source-after.txt" ]]; then capture_status=1; fi
+        printf '%s\n' "$result" > "$events_output.bazel-exit" || capture_status=1
+        printf '%s\n' "$capture_status" > "$events_output.capture-exit" || capture_status=1
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"
