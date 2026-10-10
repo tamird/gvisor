@@ -78,6 +78,7 @@ printf 'mono\n' > "$instance/trace_clock"
 
 functions=(
   n_tty_receive_buf n_tty_receive_buf2 n_tty_receive_buf_common
+  n_tty_receive_buf_standard n_tty_receive_char_special
   n_tty_read n_tty_poll n_tty_set_termios n_tty_kick_worker
   flush_to_ldisc tty_flip_buffer_push
 )
