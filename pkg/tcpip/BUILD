@@ -44,6 +44,7 @@ go_library(
         "tcpip.go",
         "tcpip_state.go",
         "timer.go",
+        "typed_snapshot.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -51,6 +52,7 @@ go_library(
         "//pkg/buffer",
         "//pkg/log",
         "//pkg/rand",
+        "//pkg/state/wire",
         "//pkg/sync",
         "//pkg/waiter",
         "@org_golang_x_sys//unix:go_default_library",

@@ -77,3 +77,23 @@ func SaveStringField(w *Writer, value string) {
 		text.save(w)
 	}
 }
+
+// SaveUintField writes a saved unsigned field without constructing an Object.
+func SaveUintField(w *Writer, value uint64) {
+	if value == 0 {
+		typeNil.save(w)
+	} else {
+		typeUint.save(w)
+		Uint(value).save(w)
+	}
+}
+
+// SaveBoolField writes a saved boolean field without constructing an Object.
+func SaveBoolField(w *Writer, value bool) {
+	if !value {
+		typeNil.save(w)
+	} else {
+		typeBool.save(w)
+		Bool(value).save(w)
+	}
+}

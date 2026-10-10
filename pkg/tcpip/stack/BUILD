@@ -257,6 +257,7 @@ go_library(
         "transport_demuxer.go",
         "transport_endpoints_mutex.go",
         "tuple_list.go",
+        "typed_snapshot.go",
     ],
     visibility = ["//visibility:public"],
     deps = [
@@ -267,6 +268,7 @@ go_library(
         "//pkg/rand",
         "//pkg/refs",
         "//pkg/sleep",
+        "//pkg/state/wire",
         "//pkg/sync",
         "//pkg/sync/locking",
         "//pkg/tcpip",
