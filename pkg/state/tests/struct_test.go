@@ -277,6 +277,7 @@ func TestDirectGraphs(t *testing.T) {
 				typedFields{signed: -7, unsigned: 9, flag: true, text: "bytes", f32: 1.25, f64: 2.5, c64: 2 - 3i, c128: 4 - 5i},
 				outerArray{inner: [2]inner{{v: 17}, {v: 19}}},
 				mapContainer{v: map[int]any{0: &inner{v: 23}, 1: &valueLoadStruct{v: 29}}},
+				shadow.Value{Number: "not an integer", Duration: 3 * time.Second},
 			}, mode.save, mode.load)
 		})
 	}
