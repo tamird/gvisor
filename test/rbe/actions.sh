@@ -193,6 +193,10 @@ for label in sorted(stress_labels):
     changed=[row for row in rows if row['label']==label]
     assert len(changed)==33 and all(row==changed[0] for row in changed)
     original_rows.extend(changed[:8])
+# Compare the unchanged route after accounting for the new emulation default.
+for row in original_rows:
+    assert row['args'][2:3] == ['--strace=false'], row
+original_rows = [dict(row, args=row['args'][:2] + row['args'][3:]) for row in original_rows]
 original_rows.sort(key=lambda row:json.dumps(row,sort_keys=True))
 assert len(original_rows)==1211
 assert hashlib.sha256(json.dumps(original_rows,sort_keys=True,separators=(',',':')).encode()).hexdigest()=='e694f292dd67497deaf2b5e5e5f12d03f573395ff7ed6e62321e1923f12a7bd4'
