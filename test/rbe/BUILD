@@ -32,6 +32,16 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 
+sh_binary(
+    name = "pty_kernel_trace",
+    testonly = True,
+    srcs = ["pty_kernel_trace.sh"],
+    data = [":worker_identity"],
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    visibility = ["//visibility:public"],
+)
+
 # Infrastructure smoke coverage, not the complete unit or syscall test lanes.
 test_suite(
     name = "smoke",
