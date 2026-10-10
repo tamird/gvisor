@@ -277,12 +277,15 @@ def hybrid_local_owners(
     groups: dict[str, list[str]] = {"root": [], "unprivileged": []}
     for label in sorted(selected):
         properties = requirements[label]
-        if not kvm and properties["workload-isolation-type"] != "firecracker":
-            if "no-remote-exec" in properties or "no-remote" in properties:
-                raise ValueError(f"Ordinary native frontend forbids remote execution: {label}")
+        local = bool({"no-remote-exec", "no-remote"}.intersection(properties))
+        if not local:
+            if kvm:
+                raise ValueError(f"KVM frontend is not local: {label}")
             continue
-        if "no-remote-exec" not in properties:
-            raise ValueError(f"Native namespace frontend is not local: {label}")
+        if "no-local" in properties:
+            raise ValueError(f"Local frontend forbids local execution: {label}")
+        if not kvm and properties["workload-isolation-type"] != "firecracker":
+            raise ValueError(f"Unexpected local namespace fixture: {label}")
         user = "root" if kvm else properties.get("dockerUser")
         if user == "root":
             groups["root"].append(label)
@@ -291,6 +294,30 @@ def hybrid_local_owners(
         else:
             raise ValueError(f"Unsupported local test identity for {label}: {properties}")
     return groups
+
+
+def local_routing_reasons(
+    groups: dict[str, list[str]], requirements: dict[str, dict[str, str]],
+    configured: dict[str, ConfiguredTarget], missing: str,
+) -> dict[str, list[str]]:
+    """Explain actual local actions from the caller policy and owning tags."""
+    unavailable = set(missing.split(",")) if missing else set()
+    reasons: dict[str, list[str]] = {}
+    for labels in groups.values():
+        for label in labels:
+            tags = set(configured[label].tags)
+            if "runsc_kvm" in tags:
+                reasons[label] = ["kvm"]
+            elif {"native", "requires-initial-cgroup-namespace"} <= tags:
+                reasons[label] = ["initial-cgroup-namespace"]
+            else:
+                needed = {tag[len("rbe-requires-host:"):] for tag in tags if tag.startswith("rbe-requires-host:")}
+                if requirements[label]["workload-isolation-type"] == "firecracker":
+                    needed.add("namespace")
+                reasons[label] = sorted(needed & unavailable)
+                if not reasons[label]:
+                    raise ValueError(f"Local frontend has no matching missing requirement: {label}: {missing}")
+    return reasons
 
 
 def select_profile(
@@ -306,6 +333,7 @@ def select_profile(
     kvm_only: bool = False,
     rc_kernel: bool = False,
     syscall_bucket: int | None = None,
+    local_test_requirements: str = "namespace",
 ) -> None:
     if hybrid and (not syscall_policy or page_size != "4k"):
         raise ValueError("Hybrid syscall execution requires a native 4K syscall profile")
@@ -401,6 +429,8 @@ def select_profile(
         "local_owners": groups,
         "initial_cgroup_owners": initial_cgroup,
         "local_requirements": {label: requirements[label] for label in sorted(local)},
+        "local_test_requirements": local_test_requirements.split(",") if hybrid and local_test_requirements else [],
+        "local_routing_reasons": local_routing_reasons(groups, requirements, configured, local_test_requirements) if hybrid else {},
         "remote_owners": sorted(set(selected) - local),
         "syscall_bucket": syscall_bucket,
         "syscall_buckets": buckets,
@@ -424,6 +454,7 @@ def select_variants(
     *,
     hybrid: bool = False,
     amd64_profile: str | None = None,
+    local_test_requirements: str = "namespace",
 ) -> None:
     if amd64_profile is not None and not hybrid:
         raise ValueError("An additional AMD64 profile requires hybrid execution")
@@ -437,10 +468,8 @@ def select_variants(
             raise ValueError("Hybrid units require the canonical native unit profile")
         original = configured_tests(profile_path)
         eligible = expected & {label + "_arm64" for label in original}
-        selected = sorted(label for label in eligible if requirements[label]["workload-isolation-type"] == "firecracker")
-        if not selected:
-            raise ValueError("No native unit owners require the local namespace host")
         groups = hybrid_local_owners(eligible, requirements)
+        selected = sorted(label for group in groups.values() for label in group)
         remote = sorted(eligible - set(selected))
         shared = sorted(set(original) - set(owners))
         amd64 = set(configured_tests(amd64_profile)) if amd64_profile is not None else set()
@@ -455,6 +484,12 @@ def select_variants(
             "selected_owners": targets,
             "local_owners": groups,
             "local_requirements": {label: requirements[label] for label in selected},
+            "local_test_requirements": local_test_requirements.split(",") if local_test_requirements else [],
+            "local_routing_reasons": local_routing_reasons(
+                groups, requirements,
+                {label: original[label[:-len("_arm64")]] for label in eligible},
+                local_test_requirements,
+            ),
             "remote_arm64_owners": remote,
             "remote_amd64_owners": sorted(amd64),
             "shared_owners": shared,
@@ -493,6 +528,7 @@ def main() -> None:
     select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
     select.add_argument("--hybrid", action="store_true", help="Select the canonical ARM profile with namespace owners local and ordinary/shared owners remote")
     select.add_argument("--amd64-profile", help="Also retain the canonical AMD64 unit profile and build-only roots during hybrid execution")
+    select.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
     container = commands.add_parser("container-targets")
@@ -527,6 +563,7 @@ def main() -> None:
     profile.add_argument("--hybrid", action="store_true", help="Run graph-declared native namespace owners locally")
     profile.add_argument("--kvm-only", action="store_true", help="Select only KVM syscall owners")
     profile.add_argument("--syscall-bucket", type=int, choices=range(15), help="Select one existing hash15 bucket and report the full partition")
+    profile.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
     verify = commands.add_parser("verify")
     verify.add_argument("targets")
     verify.add_argument("events")
@@ -538,7 +575,7 @@ def main() -> None:
         suffix = "" if args.exact else "_arm64"
         print('mnemonic("^TestRunner$", ' + target_set([owner + suffix for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, amd64_profile=args.amd64_profile)
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, amd64_profile=args.amd64_profile, local_test_requirements=args.local_test_requirements)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events)))
     elif args.command == "container-platform-targets":
@@ -575,7 +612,7 @@ def main() -> None:
     elif args.command == "profile-targets":
         print("\n".join(profile_targets(args.events, args.architecture, args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel)))
     elif args.command == "select-profile":
-        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, syscall_bucket=args.syscall_bucket)
+        select_profile(args.profile, args.architecture, args.events, args.actions, args.output, syscall_policy=args.syscall_policy, page_size=args.page_size, hybrid=args.hybrid, kvm_only=args.kvm_only, rc_kernel=args.rc_kernel, syscall_bucket=args.syscall_bucket, local_test_requirements=args.local_test_requirements)
     else:
         expected = set(owner_labels(args.targets, allow_empty=args.profile is not None))
         for profile in args.profile or []:

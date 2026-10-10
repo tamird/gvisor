@@ -3,7 +3,7 @@
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "default_platform", "platform_capabilities", "platforms", "save_restore_platforms", "syscall_test_exec_properties")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
+load("//tools/bazeldefs:test_architectures.bzl", "host_test_requirement_tags", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":runner_test.bzl", _runner_test_rule = "runner_test")
 
 # Maps platform names to a GVISOR_PLATFORM_SUPPORT environment variable consumed by platform_util.cc
@@ -58,6 +58,8 @@ def _syscall_test(
         requires_atime = False,
         tcg_timeout = None,
         tcg_shard_count = None,
+        native_kernel_requirements = [],
+        hostnet_kernel_requirements = [],
         **kwargs):
     # Prepend "runsc" to non-native platform names.
     full_platform = platform if platform == "native" else "runsc_" + platform
@@ -89,6 +91,10 @@ def _syscall_test(
     # all the tests on a specific flavor. Use --test_tag_filters=runsc_systrap,file_shared.
     tags = list(tags)
     tags += [full_platform, "file_" + file_access]
+    if platform == "native":
+        tags += host_test_requirement_tags(native_kernel_requirements)
+    elif network == "host":
+        tags += host_test_requirement_tags(hostnet_kernel_requirements)
 
     if save or save_resume:
         tags.append("allsave")
@@ -299,7 +305,9 @@ def syscall_test_variants(
       **kwargs: Additional test arguments; memory sets a remote memory budget
         and requires_atime enables host atime updates. tcg_timeout overrides
         the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
-        overrides the shard count only for those tests.
+        overrides the shard count only for those tests. native_kernel_requirements
+        and hostnet_kernel_requirements declare host features needed only by the
+        corresponding variants; the caller's worker policy chooses their placement.
     """
     for platform, platform_tags in all_platforms():
         # Add directfs to the default platform variant.
@@ -497,7 +505,9 @@ def syscall_test(
       **kwargs: Additional test arguments; memory sets a remote memory budget
         and requires_atime enables host atime updates. tcg_timeout overrides
         the Bazel timeout category only for the outer ARM64 TCG tests. tcg_shard_count
-        overrides the shard count only for those tests.
+        overrides the shard count only for those tests. native_kernel_requirements
+        and hostnet_kernel_requirements declare host features needed only by the
+        corresponding variants; the caller's worker policy chooses their placement.
     """
     if not tags:
         tags = []

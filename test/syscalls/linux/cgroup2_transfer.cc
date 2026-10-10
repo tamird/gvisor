@@ -29,6 +29,7 @@
 #include "absl/strings/string_view.h"
 #include "absl/time/time.h"
 #include "test/util/cgroup_util.h"
+#include "test/util/cleanup.h"
 #include "test/util/file_descriptor.h"
 #include "test/util/fs_util.h"
 #include "test/util/linux_capability_util.h"
@@ -92,6 +93,24 @@ PosixError WaitForV2Controller(const Cgroup& cg, absl::string_view controller) {
   }
 }
 
+// Controller membership survives unmounting cgroupfs. Restore it after the
+// temporary v1 mounts are destroyed, including when a test assertion aborts.
+PosixErrorOr<Cleanup> DisableV2Controller(const Cgroup& cg,
+                                          const std::string& controller) {
+  ASSIGN_OR_RETURN_ERRNO(const std::string enabled,
+                         cg.ReadControlFile("cgroup.subtree_control"));
+  RETURN_IF_ERRNO(cg.WriteControlFile("cgroup.subtree_control",
+                                      absl::StrCat("-", controller)));
+  if (!absl::StrContains(enabled, controller)) {
+    return Cleanup();
+  }
+  return Cleanup([&cg, controller] {
+    ASSERT_NO_ERRNO(WaitForV2Controller(cg, controller));
+    EXPECT_NO_ERRNO(cg.WriteControlFile("cgroup.subtree_control",
+                                        absl::StrCat("+", controller)));
+  });
+}
+
 TEST_F(Cgroup2Test, V1MountSucceedsAndV2OwnershipReturnsOnUnmount) {
   auto v2_mount = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
   Mounter v2_mounter(std::move(v2_mount));
@@ -102,9 +121,9 @@ TEST_F(Cgroup2Test, V1MountSucceedsAndV2OwnershipReturnsOnUnmount) {
       ASSERT_NO_ERRNO_AND_VALUE(v2_cg.ReadControlFile("cgroup.controllers"));
   SKIP_IF(!absl::StrContains(available, "pids"));
   // Skip if we can't drain pids from below v2 root.
-  PosixError drain = v2_cg.WriteControlFile("cgroup.subtree_control", "-pids");
-  SKIP_IF(drain.errno_value() == EBUSY);
-  ASSERT_NO_ERRNO(drain);
+  auto drain = DisableV2Controller(v2_cg, "pids");
+  SKIP_IF(!drain.ok() && drain.error().errno_value() == EBUSY);
+  auto restore = ASSERT_NO_ERRNO_AND_VALUE(std::move(drain));
 
   // Steal the pids controller away from v2 by mounting it in v1.
   auto v1_mount1 = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
@@ -140,6 +159,13 @@ TEST_F(Cgroup2Test, V1MountSucceedsAndV2OwnershipReturnsOnUnmount) {
 // order cycle that gVisor builds with lock dependency checking (the "lockdep"
 // go build tag) detect and panic on.
 TEST_F(Cgroup2Test, KillWithV1MemoryMounted) {
+  if (!IsRunningOnGvisor()) {
+    // v2 can advertise memory with CONFIG_MEMCG_V1 disabled. Check the
+    // legacy controller inventory before attempting the v1 mount.
+    const auto controllers = ASSERT_NO_ERRNO_AND_VALUE(ProcCgroupsEntries());
+    SKIP_IF(!controllers.contains("memory"));
+  }
+
   auto v2_mount = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
   Mounter v2_mounter(std::move(v2_mount));
   auto v2_cg = ASSERT_NO_ERRNO_AND_VALUE(v2_mounter.MountCgroup2fs());
@@ -149,10 +175,9 @@ TEST_F(Cgroup2Test, KillWithV1MemoryMounted) {
       ASSERT_NO_ERRNO_AND_VALUE(v2_cg.ReadControlFile("cgroup.controllers"));
   SKIP_IF(!absl::StrContains(available, "memory"));
   // Skip if we can't drain memory from below v2 root.
-  PosixError drain =
-      v2_cg.WriteControlFile("cgroup.subtree_control", "-memory");
-  SKIP_IF(drain.errno_value() == EBUSY);
-  ASSERT_NO_ERRNO(drain);
+  auto drain = DisableV2Controller(v2_cg, "memory");
+  SKIP_IF(!drain.ok() && drain.error().errno_value() == EBUSY);
+  auto restore = ASSERT_NO_ERRNO_AND_VALUE(std::move(drain));
 
   // Steal the memory controller away from v2 by mounting it in v1.
   auto v1_mount = ASSERT_NO_ERRNO_AND_VALUE(TempPath::CreateDir());
@@ -209,7 +234,6 @@ TEST_F(Cgroup2Test, KillWithV1MemoryMounted) {
   // Return the memory controller to v2.
   ASSERT_NO_ERRNO(v1_mounter.Unmount(v1_cg));
   ASSERT_NO_ERRNO(WaitForV2Controller(v2_cg, "memory"));
-  ASSERT_NO_ERRNO(v2_cg.WriteControlFile("cgroup.subtree_control", "+memory"));
 }
 
 }  // namespace

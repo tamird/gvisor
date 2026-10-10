@@ -111,13 +111,6 @@ tcg_image(
         "@kvm_amd64_rc_image//:data.tar",
         "@kvm_amd64_rc_modules//:data.tar",
     ],
-    kernel_modules = [
-        "9p",
-        "9pnet_virtio",
-        "overlay",
-        "kvm_intel",
-        "kvm_amd",
-    ],
     kernel_release = "7.3.0-070300rc3-generic",
     page_size = 4096,
     tags = ["manual"],

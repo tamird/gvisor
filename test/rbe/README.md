@@ -143,9 +143,11 @@ unprivileged Actions user. The lane retains the existing test cases and skips.
 
 The `unit`, `syscalls`, `syscalls-resume` and `syscalls-kvm` phases intersect
 graph-declared architecture variants with their canonical profiles and run one
-test invocation. Tests requiring namespaces or KVM on the selected local
-architecture run on Actions; other configurations retain remote execution.
-The report records every selected test and its execution requirements.
+test invocation. The caller's missing-requirements policy decides which tests
+on the selected local architecture need Actions. Other owners retain remote
+execution, including Firecracker tests whose requirements the workers satisfy.
+The report records every selected test, its execution requirements and the
+reason for each local route.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
 On ARM64 and in the AMD64 KVM lane, root test frontends invoke the existing
@@ -163,9 +165,30 @@ The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
 leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends
 normally invoke the Docker fixture for private PID, cgroup, mount and network
 namespaces. The Actions coordinator runs Bazel as root for Docker's UID mapping.
-Compilation uses RBE; the selected syscall TestRunners use the Actions host.
+Compilation uses RBE; only TestRunners selected by the missing-requirements
+policy use the Actions host.
 Docker tests retain their declared images. The fixture rejects non-root namespace identities rather than
 changing them and uses the private network without the outbound bridge.
+
+`--local-test-requirements=NAME[,NAME...]` supplies requirements unavailable on
+the caller's remote workers. It maps to the Bazel string-list setting
+`//tools/bazeldefs:local_test_requirements`. The default `namespace` preserves
+the existing fallback for every Firecracker owner, including ARM64. A caller
+with capable workers can replace it with concrete missing features, or an empty
+list; KVM and native initial-cgroup fixtures retain their existing local routes.
+Clearing `local_test_architecture` still requests the all-remote diagnostic path.
+
+Syscall declarations use `native_kernel_requirements` and
+`hostnet_kernel_requirements` to tag only the variants that exercise the relevant
+host feature. Requirements describe the test contract, independently of Actions
+or a particular provider; worker upgrades change the caller policy. Each new
+requirement must cite a demonstrated feature/configuration gap or kernel fix.
+Missing features can also skip test bodies while their owner passes. The native
+Landlock ABI, Yama, anonymous VMA naming, MSG_COPY and versioned ABI declarations
+cover such observed gaps; they preserve the assertions and existing skip checks.
+A test failure alone is not a capability declaration. The selector uses actual
+`no-remote-exec` requirements and preserves the complete canonical owner/shard
+selection, rather than excluding unsupported owners or retrying failures locally.
 
 On either architecture, a native owner tagged
 `requires-initial-cgroup-namespace` uses the local-root fixture on the disposable
