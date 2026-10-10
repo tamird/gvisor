@@ -247,7 +247,13 @@ for outer in (out/'full-targets').read_text().splitlines():
         assert attribute(payload,name)==value,(payload,name)
         assert attribute(owner+'_rc_kvm',name)==value,(owner,name,'KVM')
         for target in (outer,owner+'_rc_tcg'):
-            expected_value=expected if name=='timeout' else '33' if name=='shard_count' and family=='socket_stress_test' else value
+            expected_value = value
+            if name == 'timeout':
+                expected_value = expected
+            elif name == 'shard_count' and family == 'socket_stress_test':
+                expected_value = '33'
+            elif name == 'args':
+                expected_value = ['--strace=false'] + value
             assert attribute(target,name)==expected_value,(target,name)
     contracts[outer]={'owner':owner,'payload':payload,'nativeAttributes':attrs,'tcgTimeout':expected,'seconds':seconds[expected],'shards':33 if family=='socket_stress_test' else max(1,int(attrs['shard_count']))}
 assert len(contracts)==661 and sum(row['shards'] for row in contracts.values())==1286

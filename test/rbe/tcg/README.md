@@ -9,12 +9,22 @@ routes boot a complete guest kernel.
 The owning syscall macro declares a manual `<owner>_64k_tcg` frontend for
 each systrap owner without checkpoint modes. Its payload is the existing
 `<owner>_64k_arm64` frontend, which configures the runner, runtime and test
-together. Arguments, size, timeout, shards and the original hash15 bucket
-come from that owner. Select the public profile or one existing partition:
+together. Arguments, size and the original hash15 bucket come from that
+owner. Timeout and shard count also come from the owner unless its
+[definition](../../syscalls/BUILD) supplies `tcg_timeout` or
+`tcg_shard_count` for emulated execution. Select the public profile or one
+existing partition:
 
 ```sh
 test/rbe/qualify.sh --arch=arm64 --syscall-bucket=0 syscalls-64k
 ```
+
+ARM64 emulation disables syscall tracing by default because formatting every
+syscall competes with the test workload under software translation. Debug
+logging is unchanged. To collect syscall traces for diagnosis, pass
+`--test_arg=--strace=true` to Bazel; explicit test arguments override the
+emulation default. Native ARM64 and AMD64 KVM frontends keep their existing
+trace settings.
 
 The selector first analyzes the unchanged public `syscalls-arm64-64k` profile,
 then checks each declared TCG TestRunner's AMD64 OCI routing. Native, ptrace,
@@ -22,13 +32,14 @@ KVM and checkpoint owners remain outside this profile. A partition report
 retains all unexecuted owners. Selecting an owner does not establish that it
 passes under emulation.
 
-Original test deadlines include guest boot and output transfer; small tests
-retain 60 seconds and medium tests retain 300 seconds. Each action requests
+Test deadlines include guest boot and output transfer. Tests without an
+explicit emulation override retain their usual deadlines: 60 seconds for
+small tests and 300 seconds for medium tests. Each action requests
 two emulated CPUs and 3 GiB guest memory; the OCI action requests two CPUs,
 6 GB memory and 8 GB scratch space. This is the resource allocation used by
 the pilot, including QEMU and kernel overhead; it is not evidence that every
 owner fits. Qualification compares configured payload and outer requirements
-and retains failures without extending deadlines for software emulation.
+against the declared emulation policy and retains failures at those limits.
 
 QEMU 6.2 and the Ubuntu 6.8.0-138 generic-64k kernel come from the existing
 20260928 APT snapshot. Package dependency resolution owns their transitive
@@ -77,9 +88,9 @@ The selector requires each canonical owner to declare its RC frontend. The
 existing `<owner>_arm64` frontend owns payload architecture; the outer
 TestRunner remains AMD64 OCI. The qualifier clears the native local-execution
 setting and selects 4K pages. Native, KVM and checkpoint owners remain outside
-this public profile. Arguments, shards and original deadlines also include
-RC guest boot and output return. The resource allocation described above
-applies to both guest routes.
+this public profile. The same emulation policy governs arguments, shards and
+deadlines, including RC guest boot and output return. The resource allocation
+described above applies to both guest routes.
 
 This guest uses the Ubuntu mainline image and modules for
 `7.3.0-070300rc3-generic`, pinned by their published archive hashes in
