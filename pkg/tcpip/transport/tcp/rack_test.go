@@ -264,6 +264,45 @@ func TestRACKReorderTimerDeclaresLossOnFirstExpiry(t *testing.T) {
 	}
 }
 
+// TestRACKInitialDeliverySequence starts transmissions at the clock origin.
+// An unset delivery timestamp must not compare their sequence numbers with zero.
+func TestRACKInitialDeliverySequence(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		iss  seqnum.Value
+	}{
+		{name: "low_isn", iss: 1234},
+		{name: "high_isn", iss: 1 << 31},
+		{name: "sequence_wrap", iss: ^seqnum.Value(0) - 2},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			ctx := newRACKTestContext(clock, 0)
+			defer ctx.cleanup()
+			ctx.snd.ep.mu.Lock()
+			defer ctx.snd.ep.mu.Unlock()
+			// Initialize the same connection-relative state as initSender.
+			ctx.snd.rc.init(&ctx.snd, test.iss)
+			ctx.addSegment(test.iss.Add(1), clock.NowMonotonic())
+			later := ctx.addSegment(test.iss.Add(2), clock.NowMonotonic())
+
+			clock.Advance(time.Millisecond)
+			if got, want := ctx.snd.rc.detectLoss(clock.NowMonotonic()), 0; got != want {
+				t.Errorf("losses before any delivery = %d, want %d", got, want)
+			}
+
+			// The first delivered segment also has transmission timestamp zero.
+			// It must advance the marker, including when its end wraps to zero.
+			ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+			defer ack.DecRef()
+			ctx.snd.rc.update(later, ack)
+			if got, want := ctx.snd.rc.EndSequence, test.iss.Add(3); got != want {
+				t.Errorf("first delivery end = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
 func TestRACKEqualTransmitTimeOrdersByEndSequence(t *testing.T) {
 	clock := faketime.NewManualClock()
 	ctx := newRACKTestContext(clock, 0)
