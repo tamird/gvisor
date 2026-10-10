@@ -80,6 +80,12 @@ ip link set lo up
 modprobe ip_tables
 modprobe ip6_tables
 modprobe nf_conntrack
+# Diagnose the INET compatibility matcher with its existing module loaded.
+# https://github.com/torvalds/linux/blob/fd73f4a6659897191fa0d40695fe370925dd3780/net/netfilter/x_tables.c#L230-L247
+cat /proc/modules > /result/modules-before-conntrack.txt
+modprobe xt_conntrack
+[[ -d /sys/module/xt_conntrack ]]
+cat /proc/modules > /result/modules-after-conntrack.txt
 # Native descriptor tests duplicate descriptors above 1023; PID 1 starts with
 # Linux's 1024 soft and 4096 hard limits, below the ordinary test workers.
 cat /proc/self/limits > /result/limits-before.txt

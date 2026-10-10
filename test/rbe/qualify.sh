@@ -56,8 +56,9 @@ Compilation remains remote. Hybrid profiles run in one invocation; each
 test uses the execution requirements recorded in its selection report.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
-For local AMD64 RC bucket 11, --rc-bucket11-part=mmap|remaining resumes the
-recorded unfinished owners in two groups with their original shards/deadlines.
+For local AMD64 RC bucket 11, --rc-bucket11-part=mmap|remaining|netfilter resumes the
+recorded unfinished owners with their original shards/deadlines; netfilter
+selects the complete failed native owner for the module-preload control.
 A benchmark target selects one member of the continuous suite, retaining its
 original workload and timeout. Other suite members remain unexecuted.
 USAGE
@@ -149,7 +150,7 @@ if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $#
 fi
 case "$rc_bucket11_part" in
   none) ;;
-  mmap|remaining)
+  mmap|remaining|netfilter)
     if [[ $test_execution:$arch:${1:-}:$syscall_bucket != local:amd64:syscalls-rc:11 ]]; then
       printf 'The RC bucket 11 continuation requires local AMD64 syscalls-rc and bucket 11.\n' >&2
       exit 2
@@ -454,8 +455,12 @@ assert set(unfinished) <= set(original), "Unfinished owners left the canonical R
 assert all(label.endswith("_rc_kvm") for label in unfinished)
 mmap = "//test/syscalls:mmap_eternal_test_runsc_kvm_rc_kvm"
 assert mmap in unfinished
-selected = [mmap] if part == "mmap" else [label for label in unfinished if label != mmap]
-assert len(selected) == (1 if part == "mmap" else 54)
+if part == "netfilter":
+    selected = ["//test/syscalls:socket_netlink_netfilter_test_native_rc_kvm"]
+else:
+    selected = [mmap] if part == "mmap" else [label for label in unfinished if label != mmap]
+assert set(selected) <= set(unfinished)
+assert len(selected) == (54 if part == "remaining" else 1)
 (root / "targets").write_text("\n".join(selected) + "\n")
 (root / "continuation.json").write_text(json.dumps({"part": part, "originalOwners": original, "unfinishedOwners": unfinished, "selectedOwners": selected, "testcaseFilterOverride": None}, indent=2) + "\n")
 print(f"RC bucket 11 {part}: {len(selected)} complete owners; original shards and deadlines retained")
