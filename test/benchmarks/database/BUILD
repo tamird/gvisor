@@ -23,7 +23,7 @@ benchmark_test(
             "filter": "BenchmarkRedis/operation",
         },
     ],
-    library = ":database",
+    embed = [":database"],
     use_for_pgo = True,
     visibility = ["//:sandbox"],
     deps = [

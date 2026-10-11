@@ -20,7 +20,7 @@ docker_test(
         # Needed to invalidate the bazel cache in case of any code changes.
         "//:release",
     ],
-    library = ":image",
+    embed = [":image"],
     runtime_variants = INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT],
     tags = ["manual"],
     visibility = ["//:sandbox"],

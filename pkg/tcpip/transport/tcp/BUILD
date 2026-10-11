@@ -220,11 +220,12 @@ go_test(
         "endpoint_test.go",
         "main_test.go",
         "rack_test.go",
+        "reno_test.go",
         "sack_scoreboard_test.go",
         "segment_test.go",
         "timer_test.go",
     ],
-    library = ":tcp",
+    embed = [":tcp"],
     deps = [
         "//pkg/buffer",
         "//pkg/refs",

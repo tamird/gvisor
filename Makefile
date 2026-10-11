@@ -348,6 +348,15 @@ endif
 	$(call test_runtime_cached,$(RUNTIME),--test_timeout=360 --test_env=RUNTIME_TESTS_FILTER=$(RUNTIME_TESTS_FILTER) --test_env=IMAGE_TAG=$${IMAGE_TAG} -- //test/moby:moby)
 .PHONY: moby-tests
 
+# Moby(dockerd) in gvisor/runc tests.
+moby-tests: load-moby $(if $(filter-out runc,$(RUNTIME)),$(RUNTIME_BIN))
+ifneq ($(RUNTIME),runc)
+	@$(call install_runtime,$(RUNTIME),--net-raw --allow-packet-socket-write --TESTONLY-nftables)
+endif
+	@IMAGE_TAG=$(call tag,moby) && \
+	$(call test_runtime_cached,$(RUNTIME),--test_timeout=360 --test_env=RUNTIME_TESTS_FILTER=$(RUNTIME_TESTS_FILTER) --test_env=IMAGE_TAG=$${IMAGE_TAG} -- //test/moby:moby)
+.PHONY: moby-tests
+
 do-tests: $(RUNTIME_BIN)
 	@$(RUNTIME_BIN) --rootless do true
 	@$(RUNTIME_BIN) --rootless -network=none do true

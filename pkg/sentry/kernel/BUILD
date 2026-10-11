@@ -435,6 +435,7 @@ go_test(
     size = "small",
     srcs = [
         "fd_table_test.go",
+        "kernel_restore_test.go",
         "pending_signals_test.go",
         "table_test.go",
         "task_signals_test.go",
@@ -442,7 +443,7 @@ go_test(
         "task_test.go",
         "timekeeper_test.go",
     ],
-    library = ":kernel",
+    embed = [":kernel"],
     deps = [
         "//pkg/abi",
         "//pkg/abi/linux",
@@ -459,6 +460,7 @@ go_test(
         "//pkg/sentry/pgalloc",
         "//pkg/sentry/seccheck",
         "//pkg/sentry/seccheck/points:points_go_proto",
+        "//pkg/sentry/state/stateio",
         "//pkg/sentry/time",
         "//pkg/sentry/usage",
         "//pkg/sentry/vfs",

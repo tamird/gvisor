@@ -30,7 +30,7 @@ go_library(
 go_test(
     name = "bwrap_test",
     srcs = ["bwrap_test.go"],
-    library = ":bwrap",
+    embed = [":bwrap"],
     deps = [
         "//runsc/config",
         "//sandboxexec/sandbox",
@@ -48,7 +48,7 @@ go_test(
     ],
     # The runtime creates nested namespaces and configures cgroups.
     exec_properties = namespace_test_exec_properties(),
-    library = ":bwrap",
+    embed = [":bwrap"],
     tags = [
         "manual",
     ],

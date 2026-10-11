@@ -27,7 +27,7 @@ go_library(
         "//pkg/sentry/control",
         "//pkg/sentry/fsimpl/erofs",
         "//pkg/sentry/fsimpl/tmpfs",
-        "//pkg/sentry/pgalloc",
+        "//pkg/sentry/hostmm",
         "//pkg/sentry/state/checkpointfiles",
         "//pkg/sighandling",
         "//pkg/sync",
@@ -95,7 +95,7 @@ go_test(
         "//test/cmd/test_app",
     ],
     exec_properties = _CONTAINER_EXEC_PROPERTIES,
-    library = ":container",
+    embed = [":container"],
     shard_count = most_shards,
     tags = ["requires-kvm"] + ["rbe-has-container-%s-variant" % p for p in _CONTAINER_PLATFORMS],
     deps = [
@@ -192,7 +192,7 @@ go_test(
     srcs = ["lifecycle_bench_test.go"],
     args = _LIFECYCLE_BENCHMARK_ARGS + ["--test_platforms=kvm,systrap"],
     data = _LIFECYCLE_BENCHMARK_DATA,
-    library = ":container",
+    embed = [":container"],
     tags = [
         "manual",
         "notap",

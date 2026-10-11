@@ -67,7 +67,7 @@ docker_test(
     srcs = _ROOT_TEST_SRCS,
     cohort = "root",
     data = ["//:release"],
-    library = ":root",
+    embed = [":root"],
     pure = True,
     tags = ["manual"],
     visibility = ["//:sandbox"],
@@ -102,7 +102,7 @@ containerd_test(
     data = [
         "//:release",
     ],
-    library = ":root",
+    embed = [":root"],
     pure = True,
     tags = [
         "manual",

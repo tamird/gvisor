@@ -832,7 +832,14 @@ var _ dynamicInode = (*taskStatData)(nil)
 //
 // +checklocksexclude:s.task.mu
 func (s *taskStatData) Generate(ctx context.Context, buf *bytes.Buffer) error {
-	fmt.Fprintf(buf, "%d ", s.pidns.IDOfTask(s.task))
+	pid := s.pidns.IDOfTask(s.task)
+	if pid == 0 {
+		// Linux returns ESRCH for /proc/[pid]/stat once the task is gone.
+		// IDOfTask is 0 after the TID mapping is removed; use that return so
+		// the check shares IDOfTask's owner.mu read lock.
+		return linuxerr.ESRCH
+	}
+	fmt.Fprintf(buf, "%d ", pid)
 	fmt.Fprintf(buf, "(%s) ", s.task.Name())
 	fmt.Fprintf(buf, "%c ", s.task.StateStatus()[0])
 	ppid := kernel.ThreadID(0)
@@ -843,7 +850,11 @@ func (s *taskStatData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 	fmt.Fprintf(buf, "%d ", s.pidns.IDOfProcessGroup(s.task.ThreadGroup().ProcessGroup()))
 	fmt.Fprintf(buf, "%d ", s.pidns.IDOfSession(s.task.ThreadGroup().Session()))
 	fmt.Fprintf(buf, "0 0 " /* tty_nr tpgid */)
-	fmt.Fprintf(buf, "0 " /* flags */)
+	flags := 0
+	if s.task.ExitState() >= kernel.TaskExitInitiated {
+		flags |= linux.PF_EXITING
+	}
+	fmt.Fprintf(buf, "%d ", flags)
 	fmt.Fprintf(buf, "0 0 0 0 " /* minflt cminflt majflt cmajflt */)
 	var cputime usage.CPUStats
 	if s.tgstats {

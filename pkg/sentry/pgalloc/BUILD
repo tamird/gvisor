@@ -213,7 +213,7 @@ go_test(
         "pgalloc_64k_test.go",
         "pgalloc_test.go",
     ],
-    library = ":pgalloc",
+    embed = [":pgalloc"],
     deps = [
         "//pkg/buffer",
         "//pkg/errors/linuxerr",

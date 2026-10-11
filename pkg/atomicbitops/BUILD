@@ -32,7 +32,7 @@ go_test(
     name = "atomicbitops_benchmark_test",
     size = "small",
     srcs = ["atomicbitops_benchmark_test.go"],
-    library = ":atomicbitops",
+    embed = [":atomicbitops"],
 )
 
 go_test(
@@ -46,7 +46,7 @@ go_test(
         "amd64",
         "arm64",
     ],
-    library = ":atomicbitops",
+    embed = [":atomicbitops"],
     visibility = ["//test/rbe:__pkg__"],
     deps = ["//pkg/sync"],
 )

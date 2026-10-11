@@ -23,7 +23,7 @@ benchmark_test(
             "filter": "BenchmarkTensorflowDashboard",
         },
     ],
-    library = ":ml",
+    embed = [":ml"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [

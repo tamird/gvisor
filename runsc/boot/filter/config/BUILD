@@ -48,11 +48,12 @@ go_library(
 
 go_test(
     name = "config_test",
+    size = "large",
     srcs = [
         "clone_test.go",
         "config_test.go",
     ],
-    library = ":config",
+    embed = [":config"],
     deps = [
         "//pkg/abi/linux",
         "//pkg/bpf",

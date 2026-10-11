@@ -19,6 +19,7 @@ go_library(
         "iptables.go",
         "iptables_unsafe.go",
         "iptables_util.go",
+        "mangle.go",
         "nat.go",
         "reject.go",
     ],
@@ -42,7 +43,7 @@ docker_test(
     cohort = "iptables",
     data = ["//test/iptables/runner"],
     ipv6 = True,
-    library = ":iptables",
+    embed = [":iptables"],
     owned_args = ["--test-net-raw=true"],
     runtime_variants = [NETFILTER_VARIANTS["iptables"]],
     tags = [
@@ -65,7 +66,7 @@ docker_test(
     cohort = "iptables",
     data = ["//test/iptables/runner"],
     ipv6 = True,
-    library = ":iptables",
+    embed = [":iptables"],
     # The legacy target owns analysis of these same test sources.
     nogo = False,
     owned_args = ["--test-net-raw=true"],

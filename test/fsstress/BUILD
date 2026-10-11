@@ -13,7 +13,7 @@ docker_test(
         "fsstress_test.go",
     ],
     cohort = "fsstress",
-    library = ":fsstress",
+    embed = [":fsstress"],
     tags = ["manual"],
     deps = [
         "//pkg/test/dockerutil",

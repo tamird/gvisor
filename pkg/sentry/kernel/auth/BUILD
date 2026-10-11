@@ -93,8 +93,6 @@ go_library(
         "//pkg/log",
         "//pkg/rand",
         "//pkg/refs",
-        "//pkg/sentry/seccheck",
-        "//pkg/sentry/seccheck/points:points_go_proto",
         "//pkg/sync",
         "//pkg/sync/locking",
     ],
@@ -103,7 +101,7 @@ go_library(
 go_test(
     name = "auth_test",
     srcs = ["capability_set_test.go"],
-    library = ":auth",
+    embed = [":auth"],
     deps = [
         "//pkg/abi/linux",
         "//pkg/errors/linuxerr",

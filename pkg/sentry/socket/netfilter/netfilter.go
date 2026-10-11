@@ -205,6 +205,8 @@ func SetEntries(mapper IDMapper, stk *stack.Stack, optVal []byte, ipv6 bool) *sy
 		table = stack.EmptyFilterTable()
 	case natTable:
 		table = stack.EmptyNATTable()
+	case mangleTable:
+		table = stack.EmptyMangleTable()
 	case rawTable:
 		table = stack.EmptyRawTable()
 	default:

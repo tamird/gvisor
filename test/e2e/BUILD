@@ -20,7 +20,7 @@ docker_test(
 
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
-    library = ":integration",
+    embed = [":integration"],
     runtime_variants = INTEGRATION_VARIANTS + [PLUGIN_NETWORK_VARIANT],
     tags = ["manual"],
     visibility = ["//:sandbox"],
@@ -44,7 +44,7 @@ docker_test(
     cohort = "uds_proxy",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
-    library = ":integration",
+    embed = [":integration"],
     tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
@@ -72,7 +72,7 @@ docker_test(
     cohort = "runtime",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
-    library = ":integration",
+    embed = [":integration"],
     tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
@@ -95,7 +95,7 @@ docker_test(
     cohort = "nested_runtime",
     # Needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
-    library = ":integration",
+    embed = [":integration"],
     tags = ["manual"],
     visibility = ["//:sandbox"],
     deps = [
@@ -113,7 +113,7 @@ go_test(
     ],
     # runsc is needed to invalidate the bazel cache in case of any code changes.
     data = ["//:release"],
-    library = ":integration",
+    embed = [":integration"],
     # Requires docker and runsc to be configured before the test runs.
     local = True,
     tags = ["manual"],

@@ -23,7 +23,7 @@ benchmark_test(
             "filter": ".",
         },
     ],
-    library = ":media",
+    embed = [":media"],
     visibility = ["//:sandbox"],
     deps = [
         "//pkg/test/dockerutil",

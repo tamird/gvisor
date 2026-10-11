@@ -52,7 +52,6 @@ import (
 	"gvisor.dev/gvisor/pkg/eventchannel"
 	"gvisor.dev/gvisor/pkg/fdnotifier"
 	"gvisor.dev/gvisor/pkg/fspath"
-	"gvisor.dev/gvisor/pkg/hostarch"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/refs"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
@@ -147,6 +146,7 @@ type SaveRestoreExecConfig struct {
 // Init() or LoadFrom().
 //
 // +stateify savable
+// +checklocksalias:CheckpointWait.k.checkpointMu=checkpointMu
 type Kernel struct {
 	// extMu serializes external changes to the Kernel with calls to
 	// Kernel.SaveTo. (Kernel.SaveTo requires that the state of the Kernel
@@ -191,6 +191,10 @@ type Kernel struct {
 	// signalUnkillable controls protection of PID namespace init processes from
 	// signals under Linux SIGNAL_UNKILLABLE semantics (see SignalUnkillablePolicy).
 	signalUnkillable SignalUnkillablePolicy
+
+	// dumpGoroutinesSignal is the signal that triggers a non-fatal goroutine
+	// stack dump. If 0, goroutine dumping on signal is disabled.
+	dumpGoroutinesSignal linux.Signal
 
 	// futexes is the "root" futex.Manager, from which all others are forked.
 	// This is necessary to ensure that shared futexes are coherent across all
@@ -428,23 +432,28 @@ type Kernel struct {
 	// It's protected by extMu.
 	containerNames map[string]string
 
-	// checkpointMu is used to protect the checkpointing related fields below.
+	// Lock order: checkpointMu precedes CheckpointWait.mu.
 	checkpointMu sync.Mutex `state:"nosave"`
 
 	// additionalCheckpointState stores additional state that needs
-	// to be checkpointed. It's protected by checkpointMu.
+	// to be checkpointed.
+	//
+	// +checklocks:checkpointMu
 	additionalCheckpointState map[any]any
 
 	// saver implements the Saver interface, which (as of writing) supports
-	// asynchronous checkpointing. It's protected by checkpointMu.
+	// asynchronous checkpointing.
+	//
+	// +checklocks:checkpointMu
 	saver Saver `state:"nosave"`
 
 	// CheckpointWait is used to wait for a checkpoint to complete.
 	CheckpointWait CheckpointWaitable
 
-	// checkpointGen aims to track the number of times the kernel has been
-	// successfully checkpointed. Callers of checkpoint must notify the kernel
-	// when checkpoint/restore are done. It's protected by checkpointMu.
+	// checkpointGen describes the latest checkpoint attempt or restore.
+	// Callers must notify the kernel when checkpoint/restore are done.
+	//
+	// +checklocks:checkpointMu
 	checkpointGen CheckpointGeneration
 
 	// SaveRestoreExecConfig stores configuration options for the save/restore
@@ -464,9 +473,11 @@ type Kernel struct {
 	// MaxKeySetSize is the maximum number of keys in a key set.
 	MaxKeySetSize atomicbitops.Int32
 
-	// fsSaveWaiters holds waiters for Kernel.WaitForFSSave. fsSaveWaiters is
-	// protected by fsSaveMu.
-	fsSaveMu      fsSaveMutex  `state:"nosave"`
+	fsSaveMu fsSaveMutex `state:"nosave"`
+
+	// fsSaveWaiters holds waiters for Kernel.WaitForFSSave.
+	//
+	// +checklocks:fsSaveMu
 	fsSaveWaiters []chan error `state:"nosave"`
 
 	// HostNamePoller is notified when the system hostname changes in *any*
@@ -552,6 +563,10 @@ type InitKernelArgs struct {
 	// SignalUnkillable controls protection of PID namespace init processes from
 	// signals under Linux SIGNAL_UNKILLABLE semantics.
 	SignalUnkillable SignalUnkillablePolicy
+
+	// DumpGoroutinesSignal is the signal that triggers a non-fatal goroutine
+	// stack dump. If 0, goroutine dumping on signal is disabled.
+	DumpGoroutinesSignal linux.Signal
 }
 
 // Init initializes the Kernel with no tasks.
@@ -576,6 +591,7 @@ func (k *Kernel) Init(args InitKernelArgs) error {
 
 	k.featureSet = args.FeatureSet
 	k.signalUnkillable = args.SignalUnkillable
+	k.dumpGoroutinesSignal = args.DumpGoroutinesSignal
 	k.timekeeper = args.Timekeeper
 	k.tasks = newTaskSet(args.RootPIDNamespace)
 	k.rootUserNamespace = args.RootUserNamespace
@@ -797,10 +813,6 @@ func (k *Kernel) SaveTo(ctx context.Context, stateFile, pagesMetadata io.WriteCl
 		})
 	}
 	defer fsCleanup.Clean()
-
-	if hostarch.PageSize != 4096 {
-		return fmt.Errorf("save is not supported with %dK page size", hostarch.PageSize/1024)
-	}
 
 	return k.quiescePausedAnd(ctx, func() error {
 		return k.saveToLocked(ctx, stateFile, pagesMetadata, pagesFile, appMFExcludeCommittedZeroPages, resume, fsOpts, &stateFileCleanup, &pagesCleanup, &fsCleanup)
@@ -1035,9 +1047,6 @@ func (k *Kernel) invalidateUnsavableMappings(ctx context.Context) error {
 // Preconditions: k is not in use.
 func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *AsyncMFLoader, timeReady chan struct{}, networkArgs inet.NetworkArgs, clocks sentrytime.Clocks, vfsOpts *vfs.CompleteRestoreOptions, timeline *timing.Timeline) error {
 	defer timeline.End()
-	if hostarch.PageSize != 4096 {
-		return fmt.Errorf("restore is not supported with %dK page size", hostarch.PageSize/1024)
-	}
 	loadStart := time.Now()
 
 	k.runningTasksCond.L = &k.runningTasksMu
@@ -1151,9 +1160,6 @@ func (k *Kernel) LoadFrom(ctx context.Context, r io.Reader, asyncMFLoader *Async
 //
 // Preconditions: k is not in use.
 func (k *Kernel) ExtractRootfsUpperLayer(ctx context.Context, r io.Reader, asyncMFLoader *AsyncMFLoader, timeReady chan struct{}, clocks sentrytime.Clocks, outFD *os.File) error {
-	if hostarch.PageSize != 4096 {
-		return fmt.Errorf("restore is not supported with %dK page size", hostarch.PageSize/1024)
-	}
 	loadStart := time.Now()
 
 	k.runningTasksCond.L = &k.runningTasksMu
@@ -1200,7 +1206,11 @@ func (k *Kernel) ExtractRootfsUpperLayer(ctx context.Context, r io.Reader, async
 	log.Infof("Overall load took [%s] after async work", time.Since(loadStart))
 
 	// Now call TarRootfsUpperLayer on the root filesystem
-	root := k.GlobalInit().Leader().MountNamespace().Root(ctx)
+	mntns := k.GlobalInitMountNamespace()
+	if mntns == nil {
+		return fmt.Errorf("cannot serialize rootfs upper layer: sandbox has no root mount namespace")
+	}
+	root := mntns.Root(ctx)
 	defer root.DecRef(ctx)
 	ts, ok := root.Mount().Filesystem().Impl().(vfs.TarSerializer)
 	if !ok {
@@ -1355,12 +1365,11 @@ func (ctx *createProcessContext) Value(key any) any {
 		root := ctx.args.MountNamespace.Root(ctx)
 		return root
 	case vfs.CtxMountNamespace:
-		if ctx.kernel.globalInit == nil {
+		if ctx.args.MountNamespace == nil {
 			return nil
 		}
-		mntns := ctx.kernel.GlobalInit().Leader().MountNamespace()
-		mntns.IncRef()
-		return mntns
+		ctx.args.MountNamespace.IncRef()
+		return ctx.args.MountNamespace
 	case devutil.CtxDevGoferClient:
 		return ctx.kernel.GetDevGoferClient(ctx.kernel.ContainerName(ctx.args.ContainerID))
 	case inet.CtxStack:
@@ -1426,11 +1435,10 @@ func (k *Kernel) CreateProcess(args CreateProcessArgs) (*ThreadGroup, ThreadID, 
 	ctx := args.NewContext(k)
 	mntns := args.MountNamespace
 	if mntns == nil {
-		if k.globalInit == nil {
+		if mntns = k.globalInitMountNamespaceLocked(); mntns == nil {
 			return nil, 0, fmt.Errorf("mount namespace is nil")
 		}
 		// Add a reference to the namespace, which is transferred to the new process.
-		mntns = k.globalInit.Leader().MountNamespace()
 		mntns.IncRef()
 	}
 	// Get the root directory from the MountNamespace.
@@ -1570,7 +1578,8 @@ func (k *Kernel) CreateProcess(args CreateProcessArgs) (*ThreadGroup, ThreadID, 
 	// Success.
 	cu.Release()
 	tgid := k.tasks.Root.IDOfThreadGroup(tg)
-	if k.globalInit == nil {
+	// A namespace with a reserved init TID never gets a global init.
+	if k.globalInit == nil && !k.tasks.Root.noInit {
 		k.globalInit = tg
 	}
 	return tg, tgid, nil
@@ -1660,7 +1669,7 @@ func (k *Kernel) pauseTimeLocked(ctx context.Context) {
 		// This means we'll iterate FDTables shared by multiple tasks repeatedly,
 		// but ktime.Timer.Pause is idempotent so this is harmless.
 		if t.fdTable != nil {
-			t.fdTable.ForEach(ctx, func(_ int32, fd *vfs.FileDescription, _ FDFlags) bool {
+			t.fdTable.forEach(ctx, func(_ int32, fd *vfs.FileDescription, _ FDFlags) bool { // +checklocksignore
 				if tfd, ok := fd.Impl().(*timerfd.TimerFileDescription); ok {
 					tfd.PauseTimer()
 				}
@@ -1691,7 +1700,7 @@ func (k *Kernel) resumeTimeLocked(ctx context.Context) {
 			}
 		}
 		if t.fdTable != nil {
-			t.fdTable.ForEach(ctx, func(_ int32, fd *vfs.FileDescription, _ FDFlags) bool {
+			t.fdTable.forEach(ctx, func(_ int32, fd *vfs.FileDescription, _ FDFlags) bool { // +checklocksignore
 				if tfd, ok := fd.Impl().(*timerfd.TimerFileDescription); ok {
 					tfd.ResumeTimer()
 				}
@@ -1909,8 +1918,6 @@ func (k *Kernel) Unpause() {
 //
 // context is used only for debugging to describe how the signal was received.
 //
-// Preconditions: Kernel must have an init process.
-//
 // +checklocksexclude:k.extMu
 // +checklocksexclude:k.tasks.mu
 // +checklocksexclude:k.globalInit.signalHandlers.mu
@@ -2080,6 +2087,30 @@ func (k *Kernel) GlobalInit() *ThreadGroup {
 // configuration before the kernel is started.
 func (k *Kernel) SetSignalUnkillablePolicy(p SignalUnkillablePolicy) {
 	k.signalUnkillable = p
+}
+
+// GlobalInitMountNamespace returns the mount namespace of the global init task
+// without taking a reference, or nil if there is none.
+func (k *Kernel) GlobalInitMountNamespace() *vfs.MountNamespace {
+	k.extMu.Lock()
+	defer k.extMu.Unlock()
+	return k.globalInitMountNamespaceLocked()
+}
+
+// globalInitMountNamespaceLocked returns the mount namespace of the global
+// init task, or nil if there is no global init or it has already exited.
+//
+// +checklocks:k.extMu
+func (k *Kernel) globalInitMountNamespaceLocked() *vfs.MountNamespace {
+	tg := k.globalInit
+	if tg == nil {
+		return nil
+	}
+	leader := tg.Leader()
+	if leader == nil {
+		return nil
+	}
+	return leader.MountNamespace()
 }
 
 // TestOnlySetGlobalInit sets the thread group with ID 1 in the root PID namespace.
@@ -2317,16 +2348,17 @@ func (ctx *supervisorContext) Value(key any) any {
 		// The supervisor context is global root.
 		return auth.NewRootCredentials(ctx.Kernel.rootUserNamespace)
 	case vfs.CtxRoot:
-		if ctx.Kernel.globalInit == nil || ctx.Kernel.globalInit.Leader() == nil {
+		mntns := ctx.Kernel.GlobalInitMountNamespace()
+		if mntns == nil {
 			return vfs.VirtualDentry{}
 		}
-		root := ctx.Kernel.GlobalInit().Leader().MountNamespace().Root(ctx)
+		root := mntns.Root(ctx)
 		return root
 	case vfs.CtxMountNamespace:
-		if ctx.Kernel.globalInit == nil || ctx.Kernel.globalInit.Leader() == nil {
+		mntns := ctx.Kernel.GlobalInitMountNamespace()
+		if mntns == nil {
 			return nil
 		}
-		mntns := ctx.Kernel.GlobalInit().Leader().MountNamespace()
 		mntns.IncRef()
 		return mntns
 	case inet.CtxStack:

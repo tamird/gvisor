@@ -33,7 +33,7 @@ benchmark_test(
             "filter": "BenchmarkIperfOneConnection",
         },
     ],
-    library = ":network",
+    embed = [":network"],
     use_for_pgo = True,
     visibility = ["//:sandbox"],
     deps = [
@@ -58,7 +58,7 @@ benchmark_test(
             "filter": ".",
         },
     ],
-    library = ":network",
+    embed = [":network"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
@@ -82,7 +82,7 @@ benchmark_test(
             "filter": ".",
         },
     ],
-    library = ":network",
+    embed = [":network"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [
@@ -106,7 +106,7 @@ benchmark_test(
             "filter": "Continuous",
         },
     ],
-    library = ":network",
+    embed = [":network"],
     use_for_pgo = True,
     visibility = ["//:sandbox"],
     deps = [
@@ -129,7 +129,7 @@ benchmark_test(
             "filter": "Continuous",
         },
     ],
-    library = ":network",
+    embed = [":network"],
     use_for_pgo = False,
     visibility = ["//:sandbox"],
     deps = [

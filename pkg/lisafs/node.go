@@ -84,6 +84,17 @@ type Node struct {
 	// It is nil for a root and shares name's rename-mutex ownership.
 	parent *Node
 
+	// linked indicates whether this Node is currently registered in
+	// parent's set of children.
+	//
+	// A Node becomes unlinked when it is detached from the tree (e.g. it was
+	// unlinked, or replaced by a rename) while still referenced by open
+	// ControlFDs. In this case, the Node still holds a ref on parent, but
+	// is no longer owned by parent.
+	//
+	// linked is protected by parent.childrenMu.
+	linked bool
+
 	controlFDsMu sync.Mutex
 
 	// controlFDs is a linked list of all the ControlFDs opened on this node.
@@ -131,9 +142,8 @@ func (n *Node) DecRef(context.Context) {
 	n.nodeRefs.DecRef(func() {
 		deleted = true
 	})
-	// An unlinked node may have been replaced under the same name.
-	if deleted && n.parent.LookupChildLocked(n.name) == n {
-		_ = n.parent.removeChildLocked(n.name)
+	if deleted && n.linked {
+		n.parent.removeChildLocked(n.name)
 	}
 	n.parent.childrenMu.Unlock()
 	if deleted {
@@ -245,6 +255,9 @@ func (n *Node) removeChildLocked(name string) *Node {
 	if n.dynamicChildren != nil {
 		toRemove := n.dynamicChildren[name]
 		delete(n.dynamicChildren, name)
+		if toRemove != nil {
+			toRemove.linked = false
+		}
 		return toRemove
 	}
 
@@ -253,6 +266,9 @@ func (n *Node) removeChildLocked(name string) *Node {
 			toRemove := n.staticChildren[i].node
 			n.staticChildren[i].name = ""
 			n.staticChildren[i].node = nil
+			if toRemove != nil {
+				toRemove.linked = false
+			}
 			return toRemove
 		}
 	}
@@ -263,6 +279,7 @@ func (n *Node) removeChildLocked(name string) *Node {
 //
 // +checklocks:n.childrenMu
 func (n *Node) insertChildLocked(name string, child *Node) {
+	child.linked = true
 	// Try to insert statically first if staticChildren is still being used.
 	if n.dynamicChildren == nil {
 		for i := 0; i < numStaticChildren; i++ {

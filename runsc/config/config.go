@@ -203,10 +203,6 @@ type Config struct {
 	// must match `runsc`'s build label.
 	SidecarReleaseEnforcementPolicy SidecarReleasePolicy `flag:"sidecar-release-enforcement-policy"`
 
-	// SidecarUsagePolicy controls when to use sidecar binaries vs embedded
-	// fallbacks.
-	SidecarUsagePolicy SidecarUsagePolicy `flag:"sidecar-usage-policy"`
-
 	// FinalMetricsLog is the file to which all metric data should be written
 	// upon sandbox termination.
 	FinalMetricsLog string `flag:"final-metrics-log"`
@@ -258,6 +254,10 @@ type Config struct {
 	// PanicSignal registers signal handling that panics. Usually set to
 	// SIGUSR2(12) to troubleshoot hangs. -1 disables it.
 	PanicSignal int `flag:"panic-signal"`
+
+	// DumpGoroutinesSignal registers signal handling that dumps all goroutine
+	// stacks without exiting. -1 disables it.
+	DumpGoroutinesSignal int `flag:"dump-goroutines-signal"`
 
 	// ProfileEnable is set to prepare the sandbox to be profiled.
 	ProfileEnable bool `flag:"profile"`
@@ -1476,56 +1476,6 @@ func (p SidecarReleasePolicy) String() string {
 // Applies returns whether the policy is in effect for this runsc build.
 func (p SidecarReleasePolicy) Applies() bool {
 	return p == SidecarReleaseAlways || (p == SidecarReleaseIfReleaseBuild && IsReleaseVersion(version.Version()))
-}
-
-// SidecarUsagePolicy controls when to use sidecar binaries vs embedded fallbacks.
-type SidecarUsagePolicy string
-
-// SidecarUsagePolicy values.
-const (
-	SidecarUsageDefault        SidecarUsagePolicy = "DEFAULT"
-	SidecarUsageStrict         SidecarUsagePolicy = "STRICT"
-	SidecarUsageLegacyEmbedded SidecarUsagePolicy = "LEGACY_DEPRECATED_SLOW_EMBEDDED_FALLBACK"
-)
-
-// Set implements flag.Value. Set(String()) should be idempotent.
-func (p *SidecarUsagePolicy) Set(v string) error {
-	sp := SidecarUsagePolicy(strings.ToUpper(v))
-	switch sp {
-	case SidecarUsageDefault, SidecarUsageStrict, SidecarUsageLegacyEmbedded:
-		*p = sp
-		return nil
-	}
-	return fmt.Errorf("invalid value %q; must be %s, %s, or %s", v, SidecarUsageDefault, SidecarUsageStrict, SidecarUsageLegacyEmbedded)
-}
-
-// Ptr returns a pointer to `p`.
-// Useful in flag declaration line.
-func (p SidecarUsagePolicy) Ptr() *SidecarUsagePolicy {
-	return &p
-}
-
-// Get implements flag.Get.
-func (p *SidecarUsagePolicy) Get() any {
-	return *p
-}
-
-// String implements flag.String.
-func (p SidecarUsagePolicy) String() string {
-	return string(p)
-}
-
-// AllowEmbeddedFallback returns whether embedded fallback binaries can be used
-// if the on-disk sidecar binaries are not found.
-func (p SidecarUsagePolicy) AllowEmbeddedFallback() bool {
-	switch p {
-	case SidecarUsageDefault, SidecarUsageStrict:
-		return false
-	case SidecarUsageLegacyEmbedded:
-		return true
-	default:
-		panic(fmt.Sprintf("invalid sidecar usage policy: %q", p))
-	}
 }
 
 // releaseVersionRE matches the version strings of production release builds:

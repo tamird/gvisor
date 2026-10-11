@@ -1756,6 +1756,45 @@ TEST_P(ProcPidStatTest, HasBasicFields) {
 INSTANTIATE_TEST_SUITE_P(SelfAndNumericPid, ProcPidStatTest,
                          ::testing::Values("self", absl::StrCat(getpid())));
 
+// PF_EXITING from include/linux/sched.h.
+constexpr uint64_t kPFExiting = 0x4;
+
+TEST(ProcPidStatTest, SelfIsNotExiting) {
+  std::string proc_pid_stat =
+      ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/self/stat"));
+  std::vector<std::string> fields =
+      ASSERT_NO_ERRNO_AND_VALUE(ParseProcPidStat(proc_pid_stat));
+  ASSERT_GE(fields.size(), 9);
+  uint64_t flags;
+  ASSERT_TRUE(absl::SimpleAtoi(fields[8], &flags));
+  EXPECT_EQ(flags & kPFExiting, 0);
+}
+
+TEST(ProcPidStatTest, ZombieIsExiting) {
+  pid_t child = fork();
+  if (child == 0) {
+    _exit(0);
+  }
+  ASSERT_THAT(child, SyscallSucceeds());
+  auto reap = Cleanup([child] {
+    EXPECT_THAT(RetryEINTR(waitpid)(child, nullptr, 0),
+                SyscallSucceedsWithValue(child));
+  });
+  siginfo_t info = {};
+  ASSERT_THAT(RetryEINTR(waitid)(P_PID, child, &info, WEXITED | WNOWAIT),
+              SyscallSucceeds());
+
+  std::string proc_pid_stat = ASSERT_NO_ERRNO_AND_VALUE(
+      GetContents(absl::StrCat("/proc/", child, "/stat")));
+  std::vector<std::string> fields =
+      ASSERT_NO_ERRNO_AND_VALUE(ParseProcPidStat(proc_pid_stat));
+  ASSERT_GE(fields.size(), 9);
+  EXPECT_EQ("Z", fields[2]);
+  uint64_t flags;
+  ASSERT_TRUE(absl::SimpleAtoi(fields[8], &flags));
+  EXPECT_NE(flags & kPFExiting, 0);
+}
+
 using ProcPidStatmTest = ::testing::TestWithParam<std::string>;
 
 TEST_P(ProcPidStatmTest, HasBasicFields) {
@@ -2214,6 +2253,84 @@ TEST(ProcPidStatTest, VmStats) {
   EXPECT_TRUE(IsDigits(data_str.substr(0, data_str.length() - 3))) << data_str;
   // ... which is not 0.
   EXPECT_NE('0', data_str[0]);
+}
+
+// Hold /proc/[pid]/stat open across reap; a successful read must not start
+// with pid 0.
+TEST(ProcPidStatTest, ReapedTaskNeverReportsPIDZero) {
+  const DisableSave ds;  // Too many syscalls.
+
+  std::atomic<bool> stop = false;
+  std::atomic<bool> reported_zero = false;
+  std::atomic<pid_t> current = 0;
+  auto scan = [&] {
+    while (!stop.load(std::memory_order_relaxed)) {
+      pid_t pid = current.load(std::memory_order_relaxed);
+      if (pid <= 0) {
+        continue;
+      }
+      auto contents = GetContents(absl::StrCat("/proc/", pid, "/stat"));
+      if (!contents.ok()) {
+        continue;
+      }
+      if (absl::StartsWith(contents.ValueOrDie(), "0 ")) {
+        reported_zero.store(true, std::memory_order_relaxed);
+      }
+    }
+  };
+  ScopedThread reader1(scan);
+  ScopedThread reader2(scan);
+  ScopedThread reader3(scan);
+  ScopedThread reader4(scan);
+  // Stop the readers before they are joined, including on a failed assertion.
+  auto stop_readers =
+      Cleanup([&] { stop.store(true, std::memory_order_relaxed); });
+
+  constexpr int kChildrenPerBatch = 64;
+  for (int batch = 0; batch < 32; ++batch) {
+    std::vector<pid_t> children;
+    std::vector<FileDescriptor> fds;
+    children.reserve(kChildrenPerBatch);
+    for (int i = 0; i < kChildrenPerBatch; ++i) {
+      pid_t child = fork();
+      if (child == 0) {
+        _exit(0);
+      }
+      ASSERT_THAT(child, SyscallSucceeds());
+      children.push_back(child);
+      current.store(child, std::memory_order_relaxed);
+      auto fd = Open(absl::StrCat("/proc/", child, "/stat"), O_RDONLY);
+      if (fd.ok()) {
+        fds.push_back(std::move(fd).ValueOrDie());
+      }
+    }
+    for (pid_t child : children) {
+      siginfo_t info = {};
+      ASSERT_THAT(RetryEINTR(waitid)(P_PID, child, &info, WEXITED | WNOWAIT),
+                  SyscallSucceeds());
+    }
+    for (pid_t child : children) {
+      ASSERT_THAT(RetryEINTR(waitpid)(child, nullptr, 0),
+                  SyscallSucceedsWithValue(child));
+    }
+    char buf[256];
+    for (auto& live : fds) {
+      const ssize_t n = pread(live.get(), buf, sizeof(buf) - 1, 0);
+      if (n < 0) {
+        EXPECT_TRUE(errno == ESRCH || errno == ENOENT) << errno;
+        continue;
+      }
+      buf[n] = '\0';
+      EXPECT_FALSE(absl::StartsWith(buf, "0 ")) << buf;
+    }
+  }
+
+  stop_readers.Release()();
+  reader1.Join();
+  reader2.Join();
+  reader3.Join();
+  reader4.Join();
+  EXPECT_FALSE(reported_zero.load(std::memory_order_relaxed));
 }
 
 // Parse an array of NUL-terminated char* arrays, returning a vector of
@@ -2828,6 +2945,64 @@ TEST(ProcTask, VerifyTaskChildrenNeverReportsZeroTID) {
   reader3.Join();
   reader4.Join();
   EXPECT_FALSE(reported_zero.load(std::memory_order_relaxed));
+}
+
+// Concurrent readdir(/proc) while reaping must never list a "0" dirent.
+TEST(ProcTask, ProcRootNeverListsZeroTID) {
+  const DisableSave ds;  // Too many syscalls.
+
+  std::atomic<bool> stop = false;
+  std::atomic<bool> listed_zero = false;
+  auto scan = [&] {
+    while (!stop.load(std::memory_order_relaxed)) {
+      auto contents = ListDir("/proc", false);
+      if (!contents.ok()) {
+        continue;
+      }
+      for (const auto& name : contents.ValueOrDie()) {
+        if (name == "0") {
+          listed_zero.store(true, std::memory_order_relaxed);
+        }
+      }
+    }
+  };
+  ScopedThread reader1(scan);
+  ScopedThread reader2(scan);
+  ScopedThread reader3(scan);
+  ScopedThread reader4(scan);
+  // Stop the readers before they are joined, including on a failed assertion.
+  auto stop_readers =
+      Cleanup([&] { stop.store(true, std::memory_order_relaxed); });
+
+  constexpr int kChildrenPerBatch = 64;
+  for (int batch = 0; batch < 32; ++batch) {
+    std::vector<pid_t> children;
+    children.reserve(kChildrenPerBatch);
+    for (int i = 0; i < kChildrenPerBatch; ++i) {
+      pid_t child = fork();
+      if (child == 0) {
+        _exit(0);
+      }
+      ASSERT_THAT(child, SyscallSucceeds());
+      children.push_back(child);
+    }
+    for (pid_t child : children) {
+      siginfo_t info = {};
+      ASSERT_THAT(RetryEINTR(waitid)(P_PID, child, &info, WEXITED | WNOWAIT),
+                  SyscallSucceeds());
+    }
+    for (pid_t child : children) {
+      ASSERT_THAT(RetryEINTR(waitpid)(child, nullptr, 0),
+                  SyscallSucceedsWithValue(child));
+    }
+  }
+
+  stop_readers.Release()();
+  reader1.Join();
+  reader2.Join();
+  reader3.Join();
+  reader4.Join();
+  EXPECT_FALSE(listed_zero.load(std::memory_order_relaxed));
 }
 
 TEST(ProcTask, TaskDirCannotBeDeleted) {
@@ -3866,6 +4041,59 @@ TEST(ProcSysKernel, RandomizeVaSpace) {
     // gVisor always uses full ASLR, so expect 2.
     EXPECT_EQ(randomize_va, 2);
   }
+}
+
+// Parses /proc/sys/fs/file-nr into its three fields.
+PosixErrorOr<std::vector<int64_t>> ReadFileNr() {
+  ASSIGN_OR_RETURN_ERRNO(std::string contents,
+                         GetContents("/proc/sys/fs/file-nr"));
+  std::vector<int64_t> fields;
+  for (absl::string_view f :
+       absl::StrSplit(absl::StripAsciiWhitespace(contents),
+                      absl::ByAnyChar(" \t"), absl::SkipEmpty())) {
+    int64_t v;
+    if (!absl::SimpleAtoi(f, &v)) {
+      return PosixError(EINVAL, absl::StrCat("bad file-nr field: ", f));
+    }
+    fields.push_back(v);
+  }
+  return fields;
+}
+
+TEST(ProcSysFsFileNr, TracksOpenFiles) {
+  constexpr int kNumFiles = 200;
+
+  std::vector<int64_t> before = ASSERT_NO_ERRNO_AND_VALUE(ReadFileNr());
+  ASSERT_EQ(before.size(), 3);
+  EXPECT_GT(before[0], 0);
+  EXPECT_EQ(before[1], 0);
+
+  std::vector<FileDescriptor> fds;
+  for (int i = 0; i < kNumFiles; i++) {
+    fds.push_back(ASSERT_NO_ERRNO_AND_VALUE(Open("/dev/null", O_RDONLY)));
+  }
+  std::vector<int64_t> during = ASSERT_NO_ERRNO_AND_VALUE(ReadFileNr());
+  ASSERT_EQ(during.size(), 3);
+  // Other processes on a shared host may open and close files concurrently,
+  // so only require that most of the new files are visible.
+  EXPECT_GE(during[0], before[0] + kNumFiles / 2);
+  EXPECT_EQ(during[1], 0);
+
+  fds.clear();
+  std::vector<int64_t> after = ASSERT_NO_ERRNO_AND_VALUE(ReadFileNr());
+  ASSERT_EQ(after.size(), 3);
+  EXPECT_LE(after[0], during[0] - kNumFiles / 2);
+  EXPECT_EQ(after[1], 0);
+}
+
+TEST(ProcSysFsFileNr, MaxMatchesFileMax) {
+  std::vector<int64_t> fields = ASSERT_NO_ERRNO_AND_VALUE(ReadFileNr());
+  ASSERT_EQ(fields.size(), 3);
+  std::string file_max =
+      ASSERT_NO_ERRNO_AND_VALUE(GetContents("/proc/sys/fs/file-max"));
+  int64_t max;
+  ASSERT_TRUE(absl::SimpleAtoi(absl::StripAsciiWhitespace(file_max), &max));
+  EXPECT_EQ(fields[2], max);
 }
 
 }  // namespace

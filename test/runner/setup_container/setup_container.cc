@@ -23,6 +23,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -71,7 +72,7 @@ PosixError EnableAtime() {
 
   // Bind-remount changes only this mount, not the underlying superblock. Keep
   // its security flags, and preserve strictatime if only nodiratime was set.
-  unsigned long flags = MS_BIND | MS_REMOUNT;
+  uint64_t flags = MS_BIND | MS_REMOUNT;
   if (fs.f_flag & ST_RDONLY) flags |= MS_RDONLY;
   if (fs.f_flag & ST_NOSUID) flags |= MS_NOSUID;
   if (fs.f_flag & ST_NODEV) flags |= MS_NODEV;
@@ -81,8 +82,8 @@ PosixError EnableAtime() {
   // https://github.com/torvalds/linux/blob/830b3c68c/include/linux/statfs.h#L44
   // https://github.com/torvalds/linux/blob/830b3c68c/include/uapi/linux/mount.h#L21
   // https://github.com/bminor/glibc/blob/3c03baca3/sysdeps/unix/sysv/linux/internal_statvfs.c#L86
-  constexpr unsigned long kSTNosymfollow = 0x2000;
-  constexpr unsigned long kMSNosymfollow = 0x100;
+  constexpr uint64_t kSTNosymfollow = 0x2000;
+  constexpr uint64_t kMSNosymfollow = 0x100;
   if (fs.f_flag & kSTNosymfollow) flags |= kMSNosymfollow;
   flags |=
       (fs.f_flag & (ST_NOATIME | ST_RELATIME)) ? MS_RELATIME : MS_STRICTATIME;

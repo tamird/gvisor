@@ -12,10 +12,10 @@ description: >
 # Update the gVisor maintainer roster
 
 `governance/maintainers.yaml` (the roster) and `governance/areas.yaml`
-(specialization areas) are the sources of truth. Reviewer assignment and the
-Go generator read the same area data. The generator produces `MAINTAINERS.md`
-and `CODEOWNERS`. Edit the source data,
-regenerate, and run the comparison tests. Do not hand-edit generated files.
+(specialization areas) are the sources of truth. Reviewer assignment and the Go
+generator read the same area data. The generator produces `MAINTAINERS.md` and
+`CODEOWNERS`. Edit the source data, regenerate, and run the comparison tests. Do
+not hand-edit generated files.
 
 ## Schema
 
@@ -56,9 +56,9 @@ Status                      | Reviews | Merge permissions | `MAINTAINERS.md`
 `HIATUS_SINCE:YYYY-MM-DD`   | no      | yes               | main table
 `EMERITUS_SINCE:YYYY-MM-DD` | no      | no                | emeritus table
 
-The review-assignment workflow reads the roster directly and selects only
-active maintainers. Hiatus affects review assignment, not merge permissions
-or membership in the main maintainer table.
+The review-assignment workflow reads the roster directly and selects only active
+maintainers. Hiatus affects review assignment, not merge permissions or
+membership in the main maintainer table.
 
 ## Common changes
 
@@ -98,14 +98,14 @@ Then:
 bazel test //:governance-check
 ```
 
-This fails if the source data changed and you forgot to regenerate, or if someone
-edited a generated file by hand.
+This fails if the source data changed and you forgot to regenerate, or if
+someone edited a generated file by hand.
 
 ## Before handing back
 
 Show the user the diff across all changed files (`governance/maintainers.yaml`,
-`governance/areas.yaml`, `MAINTAINERS.md`,
-`CODEOWNERS`) and let them confirm the roster reads the way they meant it to.
+`governance/areas.yaml`, `MAINTAINERS.md`, `CODEOWNERS`) and let them confirm
+the roster reads the way they meant it to.
 
 If a generated file contains something the generator does not emit, that content
 is drift, and regenerating is what removes it. Do not teach the generator to
