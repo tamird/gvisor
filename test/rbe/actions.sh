@@ -17,6 +17,11 @@
 set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
+[[ $QUALIFICATION_COMMIT == 5b79393b43ab6faee3333e08afac09f2d95ca9d7 ]]
+[[ $QUALIFICATION_EXECUTION:$QUALIFICATION_ARCH:$QUALIFICATION_LANES:$QUALIFICATION_CLOCK_SOURCE == local:arm64:smoke:reference ]]
+[[ $(uname -m) == aarch64 ]]
+command -v ip iptables
+: "${QUALIFICATION_WORK_DEADLINE:?Workflow must set the shared monotonic deadline}"
 
 # read consumes one line. Reject extra lines rather than losing selected lanes.
 if [[ $QUALIFICATION_LANES == *$'\n'* ]]; then
@@ -45,8 +50,10 @@ fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
 cleanup() {
-  local status=$?
-  rm -f -- "${temporary_files[@]}"
+  local status=$? cleanup_status=0
+  trap - EXIT
+  set +e
+  rm -f -- "${temporary_files[@]}" || cleanup_status=1
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
     # left behind is a cleanup failure, not a reason to force-disconnect it.
@@ -54,6 +61,7 @@ cleanup() {
       if (( status == 0 )); then status=1; fi
     fi
   fi
+  if (( status == 0 )); then status=$cleanup_status; fi
   exit "$status"
 }
 trap cleanup EXIT
@@ -136,7 +144,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
     bazel() {
-      local argument result=0 capture_status=0 raw_events="" events_output="" remaining
+      local argument result=0 capture_status=0 raw_events="" raw_directory="" events_output="" remaining
       local -a evidence=()
       # Startup options may precede the command. Queries perform no spawns and
       # do not accept execution-log options; each build/test keeps its own log.
@@ -149,14 +157,46 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
             "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
           )
         fi
-        if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
+        if [[ $argument == test ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
-          raw_events=$(mktemp)
-          events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
+          raw_directory=$(mktemp -d)
+          raw_events=$raw_directory/events.jsonl
+          events_output=$RUNNER_TEMP/qualification/native-layout-events.jsonl
           evidence+=("--build_event_json_file=$raw_events")
         fi
         break
       done
+      if [[ $argument == test ]]; then
+        local cohort_dir=$RUNNER_TEMP/qualification/native-layout
+        mkdir -p "$cohort_dir"
+        printf '%s\n' "$@" > "$cohort_dir/original-arguments.txt"
+        # Retain the completed unprivileged owners; run only the root variant
+        # whose process passed but whose changed log ownership blocked Bazel.
+        local -a owners=()
+        local value
+        for value in "$@"; do
+          if [[ $value == //* ]]; then owners+=("$value"); fi
+        done
+        [[ ${#owners[@]} == 1 && ${owners[0]} == //:release_smoke_test_arm64 ]]
+        local -a selected=()
+        for value in "$@"; do
+          if [[ $value == //:release_smoke_test_arm64 ]]; then
+            selected+=(//:do_root_test_arm64)
+          else
+            selected+=("$value")
+          fi
+        done
+        set -- "${selected[@]}" --//tools/bazeldefs:local_test_architecture=arm64 \
+          --//tools/bazeldefs:local_test_requirements=namespace --runs_per_test=1
+        printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
+        git cat-file -p HEAD > "$cohort_dir/commit.txt"
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
+        [[ ! -s $cohort_dir/source-before.txt ]]
+        local path
+        for path in runsc/sandbox/sandbox.go runsc/gvisorbinaries/gvisorbinaries.go .bazelrc MODULE.bazel go.mod images/default/bazelversion BUILD tools/defs.bzl tools/release.bzl tools/with_cfg-test-frontend.patch tools/bazeldefs/BUILD tools/bazeldefs/defs.bzl tools/bazeldefs/test_architectures.bzl tools/bazeldefs/cgroup_test.bzl tools/bazeldefs/platforms.bzl test/rbe/actions.sh test/rbe/qualify.sh test/rbe/local_root.sh runsc/config/config.go runsc/config/flags.go runsc/config/flags_graveyard.go runsc/boot/loader.go pkg/sentry/time/reference_clock.go; do
+          git show "HEAD:$path" > "$cohort_dir/source-${path//\//_}.source"
+        done
+      fi
       if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
         # Execute the complete maintained profile with its declared emulator
         # settings; retain the graph and native contracts for comparison.
@@ -276,10 +316,16 @@ TCG_ATTRIBUTES
         sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" \
           "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       else
-        command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
+        (( remaining > 0 ))
+        timeout --signal=INT --kill-after=30s "${remaining}s" \
+          "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+      fi
+      if [[ $argument == test ]]; then
+        printf '%s\n' "$result" > "$cohort_dir/primary-exit.txt" || capture_status=1
       fi
       if [[ -n $raw_events ]]; then
-        timeout --signal=TERM --kill-after=5s 600s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
+        timeout --signal=TERM --kill-after=5s 240s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
 import json
 from pathlib import Path
 import sys
@@ -307,15 +353,15 @@ if count == 0:
 target.with_suffix(".errors.json").write_text(json.dumps(errors) + "\n")
 raise SystemExit(bool(errors))
 GUEST_EVENTS
-        rm -f "$raw_events"
-        printf '%s\n' "$result" > "$events_output.bazel-exit"
-        printf '%s\n' "$capture_status" > "$events_output.capture-exit"
+        rm -f "$raw_events" || capture_status=1
+        rmdir "$raw_directory" || capture_status=1
+      fi
+      if [[ $argument == test ]]; then
+        git rev-parse HEAD > "$cohort_dir/final-head.txt" || capture_status=1
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt" || capture_status=1
+        if [[ $(cat "$cohort_dir/final-head.txt") != "$QUALIFICATION_COMMIT" || -s $cohort_dir/source-after.txt ]]; then capture_status=1; fi
+        printf '%s\n' "$capture_status" > "$cohort_dir/capture-exit.txt" || capture_status=1
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt" ]]; then result=1; fi
-        return "$result"
       fi
       return "$result"
     }
