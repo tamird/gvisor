@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import shlex
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,7 +47,7 @@ def owner_labels(path: str, *, allow_empty: bool = False) -> list[str]:
     return sorted(set(labels))
 
 
-def owner_query(patterns_path: str) -> str:
+def owner_query(patterns_path: str, unit_rc: str | None = None) -> str:
     patterns = [
         line.split("#", 1)[0].strip()
         for line in Path(patterns_path).read_text().splitlines()
@@ -60,10 +62,43 @@ def owner_query(patterns_path: str) -> str:
     # Generated variants and implementation targets are manual. Select only
     # original owners; final Bazel unit filters still govern their variants.
     manual = query_word(r"(^|\[|, )manual(,|\]|$)")
-    return (
+    result = (
         'attr(tags, "rbe-has-arm64-variant", ' + selection + ") except "
         + "attr(tags, " + manual + ", " + selection + ")"
     )
+    if unit_rc is not None:
+        # These are the same loading-time exclusions used by --config=unit.
+        # Keep their declaration in .bazelrc, not in a second qualification list.
+        filters: list[str] = []
+        for line in Path(unit_rc).read_text().splitlines():
+            words = shlex.split(line, comments=True)
+            if words and words[0] in ("build:unit", "test:unit"):
+                for option in words[1:]:
+                    if option.startswith("--test_tag_filters="):
+                        filters.append(option[len("--test_tag_filters="):])
+        try:
+            (value,) = filters
+        except ValueError as error:
+            raise ValueError(f"Expected one explicit unit test-tag filter in {unit_rc}: {filters}") from error
+        if not value or not all(tag.startswith("-") and len(tag) > 1 for tag in value.split(",")):
+            raise ValueError(f"Expected negative unit test-tag filters in {unit_rc}: {value}")
+        excluded = "|".join(re.escape(tag[1:]) for tag in value.split(","))
+        tags = query_word(r"(^|\[|, )(" + excluded + r")(,|\]|$)")
+        result = "(" + result + ") except attr(tags, " + tags + ", " + selection + ")"
+    return result
+
+
+def hybrid_unit_patterns(patterns_path: str, owners_path: str, output_path: str) -> None:
+    """Add declared ARM variants while retaining canonical AMD64 build roots."""
+    variants = [owner + "_arm64" for owner in owner_labels(owners_path)]
+    patterns = Path(patterns_path).read_text().rstrip() + "\n"
+    Path(output_path).write_text(patterns + "".join(label + "\n" for label in variants))
+    print(json.dumps({
+        "canonical_patterns": patterns_path,
+        "additional_arm64_variants": variants,
+        "placement": "The declared test frontends apply local_test_requirements during the test invocation.",
+        "limitation": "Loading selection only; configured owners, shards and placement come from the actual test results.",
+    }, indent=2))
 
 
 def test_requirements(
@@ -453,11 +488,8 @@ def select_variants(
     profile_path: str | None,
     *,
     hybrid: bool = False,
-    amd64_profile: str | None = None,
     local_test_requirements: str = "namespace",
 ) -> None:
-    if amd64_profile is not None and not hybrid:
-        raise ValueError("An additional AMD64 profile requires hybrid execution")
     owners = owner_labels(owners_path)
     expected = {owner + "_arm64" for owner in owners}
     requirements = test_requirements(actions_path)
@@ -472,15 +504,10 @@ def select_variants(
         selected = sorted(label for group in groups.values() for label in group)
         remote = sorted(eligible - set(selected))
         shared = sorted(set(original) - set(owners))
-        amd64 = set(configured_tests(amd64_profile)) if amd64_profile is not None else set()
-        targets = sorted(eligible | set(shared) | amd64)
-        # Keep recursive AMD64 roots and their build-only work. The explicit
-        # ARM64 variants retain the independently selected ARM64 profile.
-        patterns = Path(patterns_path).read_text().rstrip() + "\n" if amd64_profile is not None else ""
-        Path(output_path).write_text(patterns + "".join(label + "\n" for label in targets))
+        targets = sorted(eligible | set(shared))
+        Path(output_path).write_text("".join(label + "\n" for label in targets))
         print(json.dumps({
             "canonical_selection": profile_path,
-            "amd64_selection": amd64_profile,
             "selected_owners": targets,
             "local_owners": groups,
             "local_requirements": {label: requirements[label] for label in selected},
@@ -491,7 +518,6 @@ def select_variants(
                 local_test_requirements,
             ),
             "remote_arm64_owners": remote,
-            "remote_amd64_owners": sorted(amd64),
             "shared_owners": shared,
             "profile_excluded_variants": sorted(expected - eligible),
         }, indent=2))
@@ -519,6 +545,10 @@ def main() -> None:
     commands = parser.add_subparsers(dest="command", required=True)
     query = commands.add_parser("query")
     query.add_argument("patterns")
+    query.add_argument("--unit-rc", help="Apply the canonical unit test-tag exclusions before adding ARM variants")
+    hybrid_unit = commands.add_parser("hybrid-unit-patterns")
+    for name in ("patterns", "owners", "output"):
+        hybrid_unit.add_argument(name)
     actions = commands.add_parser("actions")
     actions.add_argument("owners")
     actions.add_argument("--exact", action="store_true", help="Query these configured labels without adding ARM64 variants")
@@ -527,7 +557,6 @@ def main() -> None:
         select.add_argument(name)
     select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
     select.add_argument("--hybrid", action="store_true", help="Select the canonical ARM profile with namespace owners local and ordinary/shared owners remote")
-    select.add_argument("--amd64-profile", help="Also retain the canonical AMD64 unit profile and build-only roots during hybrid execution")
     select.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
@@ -570,12 +599,14 @@ def main() -> None:
     verify.add_argument("--profile", action="append", help="Successful analysis of additional suite roots")
     args = parser.parse_args()
     if args.command == "query":
-        print(owner_query(args.patterns))
+        print(owner_query(args.patterns, args.unit_rc))
+    elif args.command == "hybrid-unit-patterns":
+        hybrid_unit_patterns(args.patterns, args.owners, args.output)
     elif args.command == "actions":
         suffix = "" if args.exact else "_arm64"
         print('mnemonic("^TestRunner$", ' + target_set([owner + suffix for owner in owner_labels(args.owners)]) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, amd64_profile=args.amd64_profile, local_test_requirements=args.local_test_requirements)
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, local_test_requirements=args.local_test_requirements)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events)))
     elif args.command == "container-platform-targets":
