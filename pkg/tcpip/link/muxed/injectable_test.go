@@ -16,6 +16,7 @@ package muxed
 
 import (
 	"bytes"
+	"net"
 	"os"
 	"testing"
 
@@ -113,7 +114,7 @@ func TestInjectableEndpointDispatchHdrOnly(t *testing.T) {
 }
 
 func makeTestInjectableEndpoint(t *testing.T) (*InjectableEndpoint, *os.File, tcpip.Address) {
-	dstIP := tcpip.AddrFrom4([4]byte{1, 2, 3, 4})
+	dstIP := tcpip.AddrFromSlice(net.ParseIP("1.2.3.4").To4())
 	pair, err := unix.Socketpair(unix.AF_UNIX,
 		unix.SOCK_SEQPACKET|unix.SOCK_CLOEXEC|unix.SOCK_NONBLOCK, 0)
 	if err != nil {

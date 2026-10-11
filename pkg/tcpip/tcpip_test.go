@@ -18,7 +18,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"net/netip"
+	"net"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -217,7 +217,7 @@ func TestAddressString(t *testing.T) {
 		// the end.
 		"1:0:1::1:0:1",
 	} {
-		addr := AddrFrom16(netip.MustParseAddr(want).As16())
+		addr := AddrFromSlice(net.ParseIP(want))
 		if got := addr.String(); got != want {
 			t.Errorf("Address(%x).String() = '%s', want = '%s'", addr, got, want)
 		}

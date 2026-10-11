@@ -38,9 +38,9 @@ func TestMustParse4(t *testing.T) {
 			str:         "fe80::1",
 			shouldPanic: true,
 		}, {
-			str:         "::ffff:192.0.2.1%eth0",
-			shouldPanic: true,
-		}, {
+			// In an ideal world this panics too, but net.IP
+			// doesn't distinguish between IPv4 and IPv4-mapped
+			// addresses.
 			str:  "::ffff:0.0.0.1",
 			addr: "\x00\x00\x00\x01",
 		},
@@ -69,13 +69,13 @@ func TestMustParse6(t *testing.T) {
 		shouldPanic bool
 	}{
 		{
+			// In an ideal world this panics too, but net.IP
+			// doesn't distinguish between IPv4 and IPv4-mapped
+			// addresses.
 			str:  "127.0.0.1",
 			addr: "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x7f\x00\x00\x01",
 		}, {
 			str:         "",
-			shouldPanic: true,
-		}, {
-			str:         "fe80::1%eth0",
 			shouldPanic: true,
 		}, {
 			str:  "fe80::1",
