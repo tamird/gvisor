@@ -160,7 +160,7 @@ type countedSave struct {
 	calls *int `state:"nosave"`
 }
 
-func (c *countedSave) beforeSave(context.Context) {
+func (c *countedSave) beforeSave() {
 	*c.calls++
 }
 
