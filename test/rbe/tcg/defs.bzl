@@ -166,6 +166,8 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
         payload = payload,
         image = image,
         tags = tags + ["no-local"],
+        emulator_tools = "@tcg_emulator//:flat",
+        emulator_loader = "usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
         exec_properties = {
             "test.EstimatedCPU": "2",
             "test.EstimatedMemory": "6GB",
