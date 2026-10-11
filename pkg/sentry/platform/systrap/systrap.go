@@ -247,14 +247,14 @@ func (c *platformContext) DebugState() string {
 	if sc == nil {
 		return "no shared context"
 	}
-	pending := sc.sync.Pending()
+	waiter := sc.sync.DebugState()
 	dispatcher.mu.Lock()
 	nr := dispatcher.nr
 	entrantsEmpty := dispatcher.entrants.Empty()
 	dispatcher.mu.Unlock()
 	stable := c.sharedContext.Load() == sc
-	return fmt.Sprintf("context=%d pending=%#x dispatcher_nr=%d entrants_empty=%t stable=%t",
-		sc.contextID, uint64(pending), nr, entrantsEmpty, stable)
+	return fmt.Sprintf("context=%d %s dispatcher_nr=%d entrants_empty=%t stable=%t",
+		sc.contextID, waiter, nr, entrantsEmpty, stable)
 }
 
 // PrepareSleep implements platform.Context.PrepareSleep.

@@ -15,6 +15,7 @@
 package syncevent
 
 import (
+	"fmt"
 	"sync/atomic"
 	"unsafe"
 
@@ -57,6 +58,20 @@ func (w *Waiter) Receiver() *Receiver {
 // Pending returns the set of pending events.
 func (w *Waiter) Pending() Set {
 	return w.r.Pending()
+}
+
+// DebugState samples the notification and park handshake without dereferencing
+// the runtime G. The separate reads do not form a coherent snapshot.
+func (w *Waiter) DebugState() string {
+	pending := w.r.Pending()
+	park := "committed"
+	switch atomic.LoadUintptr(&w.g) {
+	case 0:
+		park = "zero"
+	case preparingG:
+		park = "preparing"
+	}
+	return fmt.Sprintf("waiter=%p pending=%#x park=%s callback_self=%t", w, uint64(pending), park, w.r.cb == w)
 }
 
 // Wait blocks until at least one event is pending, then returns the set of
