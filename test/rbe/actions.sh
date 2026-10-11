@@ -44,9 +44,13 @@ if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
 fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
+qualification_private=
 cleanup() {
   local status=$?
   rm -f -- "${temporary_files[@]}"
+  if [[ -n $qualification_private ]] && ! rm -rf -- "$qualification_private"; then
+    if (( status == 0 )); then status=1; fi
+  fi
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
     # left behind is a cleanup failure, not a reason to force-disconnect it.
@@ -149,8 +153,15 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
+    if [[ $qualification_retain_reports == true ]]; then
+      # Root cannot replace runner-owned files in sticky /tmp with Linux
+      # protected_regular enabled. Keep raw events in a private parent owned
+      # by this invocation, outside the uploaded artifact directory.
+      qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
+      export qualification_private
+    fi
     bazel() {
-      local argument result=0 capture_status=0 raw_events="" events_output="" remaining cohort_dir=""
+      local argument result=0 capture_status=0 raw_events="" events_output="" remaining cohort_dir="" capture_seconds=600
       local -a evidence=() command_prefix=() capture_prefix=()
       if [[ $qualification_root_bazel == true ]]; then
         command_prefix=(sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION")
@@ -171,7 +182,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         fi
         if [[ $qualification_retain_reports == true && $argument == test ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
-          raw_events=$(mktemp)
+          raw_events=$(mktemp "${qualification_private:?}/events-XXXXXX.json")
           events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
           evidence+=("--build_event_json_file=$raw_events" "--build_event_json_file_path_conversion=false")
         fi
@@ -183,6 +194,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
         if [[ $QUALIFICATION_LANES == container ]]; then
           cohort_dir="$RUNNER_TEMP/qualification/container-full-profile"
+          # Leave room for the work command and capture termination grace.
+          capture_seconds=540
         fi
         mkdir -p "$cohort_dir"
         printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
@@ -203,7 +216,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         "${command_prefix[@]}" "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       fi
       if [[ -n $raw_events ]]; then
-        "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s 600s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
+        "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s "${capture_seconds}s" python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
 import json
 from pathlib import Path
 import shutil

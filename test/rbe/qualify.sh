@@ -676,11 +676,12 @@ run_platform_matrix() (
   : > "$selection_dir/filtered-targets"
   if [[ $test_execution == local ]]; then
     # The local matrix is the complete public AMD64 container profile.
-    docker_test_options
     options+=(--config=rbe-hybrid-tests "--strategy=TestRunner=remote,docker,local"
       --//tools/bazeldefs:local_test_architecture=amd64
       --//tools/bazeldefs:local_test_backend=docker
       "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
+    # Keep the intended two local slots after nested config expansion.
+    docker_test_options
   fi
   for lane in "$@"; do
     case "$lane" in
