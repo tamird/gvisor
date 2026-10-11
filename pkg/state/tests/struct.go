@@ -210,3 +210,27 @@ type countedZeroSaveParent struct {
 	child countedZeroSave
 	value int64
 }
+
+// +stateify savable
+type zeroSizedOther struct{}
+
+// +stateify savable
+type zeroSizedNestedLeaf struct{}
+
+// +stateify savable
+type zeroSizedNested struct {
+	child zeroSizedNestedLeaf
+}
+
+// +stateify savable
+type zeroSizedArrayElement struct{}
+
+// +stateify savable
+type zeroSizedFields struct {
+	leading   savableEmptyStruct
+	duplicate savableEmptyStruct
+	other     zeroSizedOther
+	nested    zeroSizedNested
+	array     [2]zeroSizedArrayElement
+	value     int64
+}
