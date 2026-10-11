@@ -15,8 +15,11 @@
 package tests
 
 import (
+	"bytes"
 	"math/rand"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 func TestEmptyStruct(t *testing.T) {
@@ -112,4 +115,73 @@ func TestSnapshotEmbedding(t *testing.T) {
 		snapshotEmbedded{inner: inner{v: 7}, parent: 11},
 		snapshotNilEmbedded{snapshotPointerEmbedded: nil, parent: 19},
 	})
+}
+
+func TestStructSaveIdentity(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		makeGraph func(*int) *system
+		want      int
+	}{
+		{
+			name: "late_parent",
+			makeGraph: func(calls *int) *system {
+				parent := &countedSaveParent{child: countedSave{value: 17, calls: calls}, value: 23}
+				// The intermediary is deferred after the child. Its save then
+				// discovers a parent containing that already captured child.
+				return &system{v1: &parent.child, v2: &system{v1: parent}}
+			},
+			want: 1,
+		},
+		{
+			name: "shared_value",
+			makeGraph: func(calls *int) *system {
+				var value any = countedSave{value: 17, calls: calls}
+				return &system{v1: value, v2: value}
+			},
+			want: 1,
+		},
+		{
+			name: "equal_values",
+			makeGraph: func(calls *int) *system {
+				value := countedSave{value: 17, calls: calls}
+				return &system{v1: value, v2: value}
+			},
+			want: 2,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var calls int
+			graph := test.makeGraph(&calls)
+			var encoded bytes.Buffer
+			if _, err := state.Save(t.Context(), &encoded, &graph); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := calls, test.want; got != want {
+				t.Fatalf("save calls = %d, want %d", got, want)
+			}
+			var loaded *system
+			if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+				t.Fatal(err)
+			}
+			if test.name == "late_parent" {
+				parent := loaded.v2.(*system).v1.(*countedSaveParent)
+				if got, want := loaded.v1.(*countedSave), &parent.child; got != want {
+					t.Fatalf("interior alias = %p, want %p", got, want)
+				}
+				if got, want := parent.child.value, int64(17); got != want {
+					t.Errorf("child value = %d, want %d", got, want)
+				}
+				if got, want := parent.value, int64(23); got != want {
+					t.Errorf("parent value = %d, want %d", got, want)
+				}
+			} else {
+				for _, value := range []any{loaded.v1, loaded.v2} {
+					if got, want := value.(countedSave).value, int64(17); got != want {
+						t.Errorf("value = %d, want %d", got, want)
+					}
+				}
+			}
+		})
+	}
 }
