@@ -10,8 +10,8 @@ load("@com_google_protobuf//bazel:proto_library.bzl", _proto_library = "proto_li
 load("@rules_cc//cc/common:cc_info.bzl", "CcInfo")
 load("@rules_python//python:py_test.bzl", _py_test = "py_test")
 load("@rules_shell//shell:sh_test.bzl", _sh_test = "sh_test")
-load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_variant", "cgroup_v2_variant", "with_cgroup_v1")
-load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
+load("//tools/bazeldefs:cgroup_test.bzl", "cgroup_v1_tags", "cgroup_v1_transition", "cgroup_v1_variant", "cgroup_v2_variant", "with_cgroup_v1")
+load("//tools/bazeldefs:test_architectures.bzl", "routed_native_test", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 
 bzl_library = _bzl_library
 bool_flag = _bool_flag
@@ -42,9 +42,37 @@ def build_test(name, architectures = ["amd64", "arm64"], **kwargs):
         kwargs,
     )
 
-native_amd64_test, _native_amd64_transition = with_test_architecture(_native_test, "amd64").build()
-native_arm64_test, _native_arm64_transition = with_test_architecture(_native_test, "arm64").build()
-native_test_cgroup_v1_test, _native_test_cgroup_v1_transition = with_cgroup_v1(_native_test)
+def _native_architecture(architecture):
+    test_rule, _ = with_test_architecture(routed_native_test, architecture, test_frontend = None).build()
+    return test_rule
+
+_native_amd64_test = _native_architecture("amd64")
+_native_arm64_test = _native_architecture("arm64")
+_native_cgroup_v1_test = rule(
+    implementation = lambda ctx: ctx.super(),
+    parent = routed_native_test,
+    cfg = cgroup_v1_transition,
+)
+
+def _native_variant(name, test_rule, **kwargs):
+    # Keep sibling resources in the declared output directory, but distinguish
+    # owners even when the caller already selected the variant's configuration.
+    if kwargs.get("out"):
+        owner = name.replace("_", "__").replace("/", "_s").replace(".", "_d")
+
+        # Concatenation also preserves configurable out values without parsing
+        # select expressions. Keep .exe for native_test's executable convention.
+        kwargs["out"] = kwargs["out"] + "." + owner + ".exe"
+    test_rule(name = name, **kwargs)
+
+def native_amd64_test(name, **kwargs):
+    _native_variant(name, _native_amd64_test, **kwargs)
+
+def native_arm64_test(name, **kwargs):
+    _native_variant(name, _native_arm64_test, **kwargs)
+
+def native_test_cgroup_v1_test(name, **kwargs):
+    _native_variant(name, _native_cgroup_v1_test, **kwargs)
 
 def native_test(name, architectures = ["amd64", "arm64"], cgroup_v2 = False, **kwargs):
     """Declares the original test and manual architecture/cgroup variants.

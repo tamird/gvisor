@@ -22,7 +22,7 @@ def _cgroup_v1_config(settings, _attr):
         ] + ["CGROUPV2=false"],
     }
 
-_cgroup_v1_transition = transition(
+cgroup_v1_transition = transition(
     implementation = _cgroup_v1_config,
     inputs = ["//command_line_option:test_env"],
     outputs = [
@@ -38,7 +38,7 @@ _cgroup_v1_transition = transition(
 _cgroup_v1_frontend_test = rule(
     implementation = lambda ctx: ctx.super(),
     parent = frontend_test,
-    cfg = _cgroup_v1_transition,
+    cfg = cgroup_v1_transition,
 )
 
 def with_cgroup_v1(test_rule, extra_providers = [], implicit_targets = None):
