@@ -72,10 +72,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       # Hour-long guest tests need more runway than the hosted coordinator's
       # observed one-hour cap. Only the coordinator moves; all guest actions
       # retain their remote execution requirements and declared deadlines.
-      if [[ $QUALIFICATION_ARCH != arm64 || ${lanes[*]} != syscalls-64k ]]; then
-        printf 'Remote tests on the Actions coordinator require the ARM64 64K profile.\n' >&2
-        exit 2
-      fi
+      case "$QUALIFICATION_ARCH:${lanes[*]}" in
+        arm64:syscalls-64k|arm64:syscalls-rc) ;;
+        *)
+          printf 'Remote tests on the Actions coordinator require an ARM64 guest profile.\n' >&2
+          exit 2
+          ;;
+      esac
     fi
     # Keep the compiler and toolchain actions on the existing RBE platforms.
     # The repository version, not the runner image's default, selects Bazel.
