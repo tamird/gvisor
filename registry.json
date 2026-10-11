@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-11T16:46:25.768053+00:00",
+    "updatedAt": "2026-10-11T16:59:24.456826+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6254,8 +6254,8 @@
       "url": "https://github.com/tamird/gvisor/commit/71240ef192b41da7de311582ef37e5d3d55b4cbb",
       "group": "runtime",
       "status": "Contributor review pending",
-      "updatedAt": "2026-10-11T14:07:24.614029+00:00",
-      "summary": "The concrete contributor question is pending for this independent proposal. It redispatches queued listener segments to an already connecting or connected child, preventing a duplicate queued SYN from starting a second handshake. The deterministic existing SYN retransmit test fails before with four spurious failed connection attempts and passes after. Four complete TCP-related owners pass on AMD64 and ARM64, together with both owning Nogo checks on both architectures. The initial ARM method ran cross-built binaries on AMD64 and failed before cases; the corrected graph-owned ARM continuation is retained separately. The original RC warning owner has not been rerun with this correction, and its packet-log interleaving remains corroborating evidence rather than the deterministic proof. No upstream PR is open or authorized yet.",
+      "updatedAt": "2026-10-11T16:59:24.456826+00:00",
+      "summary": "The concrete contributor question is pending for this independent proposal. It redispatches queued listener segments to an already connecting or connected child, preventing a duplicate queued SYN from starting a second handshake. The deterministic existing SYN retransmit test fails before with four spurious failed connection attempts and passes after. Four complete TCP-related owners pass on AMD64 and ARM64, together with both owning Nogo checks on both architectures. The initial ARM method ran cross-built binaries on AMD64 and failed before cases; the corrected graph-owned ARM continuation is retained separately. The corrected complete RC warning owner is verified separately at qualified source 2ea576af6: 551 C++ passes and twelve skips, matching the original 563-case universe. The original full profile remains failed at its older source; the original packet-log interleaving remains corroborating evidence rather than the deterministic proof. No upstream PR is open or authorized yet.",
       "contributorReview": {
         "status": "pending",
         "head": "71240ef192b41da7de311582ef37e5d3d55b4cbb",
@@ -6302,6 +6302,65 @@
       },
       "number": 15648,
       "reviewDecision": null
+    },
+    {
+      "id": "branch:checkpoint-test-completion",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "checkpoint-test-completion",
+      "head": "e72fba9ca20fe33b47ed8ae822f31824e657304e",
+      "title": "Avoid late checkpoint waits in tests",
+      "group": "tests",
+      "summary": "The contributor question is pending for this independent test correction. The observed annotation test started its workload before a next-generation WaitCheckpoint call, allowing checkpoint completion to precede registration. It now waits on the already-registered proc-fd response; two other test paths use their synchronous Checkpoint result. Production CLI/API semantics remain unchanged and a deterministic kernel test covers the next-generation/error contract. Both native kernel owners and owning analyzers pass, and the complete cgroup-v2 continuation passes all seventeen actions with 972 original files verified. The final got/want naming amendment changes no behavior. The separate cgroup-v1 chained-restore failure remains unresolved; no upstream PR or approval is inferred.",
+      "url": "https://github.com/tamird/gvisor/commit/e72fba9ca20fe33b47ed8ae822f31824e657304e",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-11T16:59:24.456826+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "e72fba9ca20fe33b47ed8ae822f31824e657304e",
+        "url": "https://github.com/tamird/gvisor/commit/e72fba9ca20fe33b47ed8ae822f31824e657304e"
+      },
+      "followup": {
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "e72fba9ca20fe33b47ed8ae822f31824e657304e",
+        "reviewedAt": "2026-10-11T16:59:24.456826+00:00",
+        "nextAction": "Await the already-sent contributor decision for this exact independent proposal; do not open an upstream PR before review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e72fba9ca20fe33b47ed8ae822f31824e657304e",
+          "https://app.buildbuddy.io/invocation/59bd5b38-fb03-4638-9ea3-08d945fbc6dd",
+          "https://github.com/tamird/gvisor/actions/runs/38154250852"
+        ]
+      }
+    },
+    {
+      "id": "branch:tcp-paws",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-paws",
+      "head": "c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
+      "title": "Reject stale TCP timestamps with PAWS",
+      "group": "runtime",
+      "summary": "The contributor question is pending for this independent PAWS correction. Negotiated timestamps are checked against TS.Recent before handshake, receive and TIME_WAIT state changes, with serial-number comparison and 24-day expiry on the stack clock. The reset exception and existing policy against TIME_WAIT assassination are retained. Three before assertions fail; the Linux reference, corrected packet tests, full owning TCP checks on both architectures, analyzers and lints pass. Existing RACK skips remain explicit. Validation and source composition are independently verified; no upstream PR or contributor approval is inferred.",
+      "url": "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-11T16:59:24.456826+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
+        "url": "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c"
+      },
+      "followup": {
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
+        "reviewedAt": "2026-10-11T16:59:24.456826+00:00",
+        "nextAction": "Await the already-sent contributor decision for this exact independent proposal; do not open an upstream PR before review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/c82a47083b7e7c3ce7f9296dc4c0beaf71d6095c",
+          "https://app.buildbuddy.io/invocation/405cb942-5956-4500-b69d-93e03c1fb198"
+        ]
+      }
     }
   ],
   "edges": [
