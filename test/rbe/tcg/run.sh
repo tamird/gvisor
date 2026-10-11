@@ -24,7 +24,9 @@ tar_tool="$(realpath "$6")"
 payload_label="$7"
 machine="$8"
 test_setup="$(realpath "$9")"
-shift 9
+emulator_archive="$(realpath "${10}")"
+emulator_loader="${11}"
+shift 11
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -47,6 +49,14 @@ result="${TEST_UNDECLARED_OUTPUTS_DIR}/guest"
 mkdir -p "$scratch/host" "$scratch/input" "$result"
 "$tar_tool" -xf "$host_archive" -C "$scratch/host" --no-same-owner
 host="$scratch/host"
+emulator_host="$host"
+if [[ "$emulator_archive" != "$host_archive" ]]; then
+  emulator_host="$scratch/emulator"
+  mkdir "$emulator_host"
+  "$tar_tool" -xf "$emulator_archive" -C "$emulator_host" --no-same-owner
+fi
+emulator_loader="$emulator_host/$emulator_loader"
+emulator_libraries="$emulator_host/lib/x86_64-linux-gnu:$emulator_host/usr/lib/x86_64-linux-gnu"
 if [[ "$machine" == amd64_kvm ]]; then
   # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
   # Select the declared BIOS instead of the host's /usr/share/seabios.
@@ -136,11 +146,13 @@ trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
 # Networking and privileged host mounts are not needed by the guest transport.
-QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
-  "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
+"$emulator_loader" --inhibit-cache --library-path "$emulator_libraries" \
+  "$emulator_host/usr/bin/$emulator" --version > "${TEST_UNDECLARED_OUTPUTS_DIR}/qemu-version.txt"
+QEMU_MODULE_DIR="$emulator_host/usr/lib/x86_64-linux-gnu/qemu" \
+  "$emulator_loader" --inhibit-cache --library-path "$emulator_libraries" "$emulator_host/usr/bin/$emulator" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
-  -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
+  -smp 2 -m 3072 -nic none -L "$emulator_host/usr/share/qemu" \
   -kernel "$kernel" -initrd "$initramfs" \
   -append "console=$console rdinit=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \

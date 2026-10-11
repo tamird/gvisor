@@ -90,7 +90,8 @@ def _tcg_test_impl(ctx):
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
-    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
+    emulator_tools = ctx.file.emulator_tools or ctx.file.host_tools
+    inputs = [ctx.file.archive, ctx.file.host_tools, emulator_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
@@ -101,6 +102,8 @@ def _tcg_test_impl(ctx):
         str(ctx.attr.payload.label),
         ctx.attr.machine,
         ctx.file._test_setup.short_path,
+        emulator_tools.short_path,
+        ctx.attr.emulator_loader,
     ]
     ctx.actions.write(
         executable,
@@ -122,6 +125,8 @@ _tcg_test = rule(
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
         "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "emulator_tools": attr.label(allow_single_file = True),
+        "emulator_loader": attr.string(default = "lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
