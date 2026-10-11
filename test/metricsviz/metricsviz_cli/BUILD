@@ -8,6 +8,8 @@ package(
 go_binary(
     name = "metricsviz_cli",
     srcs = ["metricsviz_cli.go"],
+    importpath = "gvisor.dev/gvisor/test/metricsviz/metricsviz_cli/metricsviz_cli",
+    visibility = ["//tools/codeql:__pkg__"],
     deps = ["//test/metricsviz"],
 )
 

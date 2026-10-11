@@ -26,6 +26,7 @@ go_library(
         "containerd_harness.go",
         "root.go",
     ],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/test/criutil",
         "//pkg/test/dockerutil",

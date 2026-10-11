@@ -49,6 +49,7 @@ go_binary(
         ":ioctl_hook",  # keep
     ],
     features = ["fully_static_link"],
+    importpath = "gvisor.dev/gvisor/tools/ioctl_sniffer/run_sniffer",
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
     visibility = [

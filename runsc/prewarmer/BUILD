@@ -60,7 +60,9 @@ go_test(
 go_binary(
     name = "fdtable_expander",
     srcs = ["fdtable_expander.go"],
+    importpath = "gvisor.dev/gvisor/runsc/prewarmer/fdtable_expander",
     pure = True,
+    visibility = ["//tools/codeql:__pkg__"],
     deps = ["@org_golang_x_sys//unix:go_default_library"],
 )
 
