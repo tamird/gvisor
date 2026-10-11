@@ -14,8 +14,9 @@
 
 load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
-load("//tools:defs.bzl", "bzl_library")
-load(":defs.bzl", "tcg_image")
+load("//test/runner:defs.bzl", "runner_arm64_test")
+load("//tools:defs.bzl", "bzl_library", "cc_binary", "select_gtest")
+load(":defs.bzl", "arm64_tcg_test", "tcg_image")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -125,4 +126,61 @@ bzl_library(
         "//tools/bazeldefs:platforms_bzl",
         "@bazel_skylib//lib:shell",
     ],
+)
+
+# Fork-only native test of the emulated architecture's atomic ordering.
+cc_binary(
+    name = "atomic_ordering_test",
+    testonly = True,
+    srcs = ["atomic_ordering.cc"],
+    # Inline the standard atomic wrappers inside the retained probe symbols.
+    copts = ["-O2"],
+    linkstatic = True,
+    tags = ["manual"],
+    deps = select_gtest() + [
+        "//test/util:test_main",
+        "//test/util:thread_util",
+        "@com_google_absl//absl/base:core_headers",
+    ],
+)
+
+genrule(
+    name = "atomic_ordering_disassembly",
+    testonly = True,
+    srcs = [":atomic_ordering_test"],
+    outs = ["atomic_ordering.disasm"],
+    cmd = "$(location @llvm//tools:llvm-objdump) --disassemble-symbols=AtomicStoreLoad,AtomicStoreFenceLoad $(location :atomic_ordering_test) > $@",
+    tags = ["manual"],
+    tools = ["@llvm//tools:llvm-objdump"],
+)
+
+runner_arm64_test(
+    name = "atomic_ordering_native_arm64",
+    size = "medium",
+    compile_exec_compatible_with = [],
+    data = [":atomic_ordering_disassembly"],
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+    exec_properties = {
+        "test.EstimatedCPU": "2",
+        "test.EstimatedMemory": "2GB",
+    },
+    runner_args = [
+        "--platform=native",
+        "--one-sandbox=true",
+    ],
+    tags = [
+        "manual",
+        "no-local",
+    ],
+    test = ":atomic_ordering_test",
+)
+
+arm64_tcg_test(
+    name = "atomic_ordering_native_64k_tcg",
+    size = "medium",
+    payload = ":atomic_ordering_native_arm64",
+    tags = [],
 )
