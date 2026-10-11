@@ -24,7 +24,8 @@ tar_tool="$(realpath "$6")"
 payload_label="$7"
 machine="$8"
 test_setup="$(realpath "$9")"
-shift 9
+vcpus="${10}"
+shift 10
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -140,7 +141,7 @@ QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
-  -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
+  -smp "$vcpus" -m 3072 -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" -initrd "$initramfs" \
   -append "console=$console rdinit=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \

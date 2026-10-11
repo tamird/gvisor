@@ -38,10 +38,10 @@ small tests and 300 seconds for medium tests. The proc suite uses a
 900-second emulation deadline: its unchanged 2,048-child regression took
 168–366 seconds across three isolated RC-kernel runs. Native deadlines and the
 workload are unchanged. Each action requests
-two emulated CPUs and 3 GiB guest memory; the OCI action requests two CPUs,
-6 GB memory and 8 GB scratch space. This is the resource allocation used by
-the pilot, including QEMU and kernel overhead; it is not evidence that every
-owner fits. Qualification compares configured payload and outer requirements
+four emulated CPUs and 3 GiB guest memory; the OCI action requests four CPUs,
+6 GB memory and 8 GB scratch space. This diagnostic changes CPU resources
+only; memory and deadlines retain the original two-CPU values.
+Qualification compares configured payload and outer requirements
 against the declared emulation policy and retains failures at those limits.
 
 QEMU 6.2 and the Ubuntu 6.8.0-138 generic-64k kernel come from the existing

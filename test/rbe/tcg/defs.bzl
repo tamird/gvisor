@@ -101,6 +101,7 @@ def _tcg_test_impl(ctx):
         str(ctx.attr.payload.label),
         ctx.attr.machine,
         ctx.file._test_setup.short_path,
+        str(ctx.attr.vcpus),
     ]
     ctx.actions.write(
         executable,
@@ -123,6 +124,7 @@ _tcg_test = rule(
         "archive": attr.label(allow_single_file = True, mandatory = True),
         "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
+        "vcpus": attr.int(default = 2),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
         "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
@@ -153,6 +155,8 @@ def _guest_test(name, payload, tags, image, **kwargs):
 def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
     """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
 
+    vcpus = 4
+
     # Avoid per-syscall trace formatting under software emulation. Keep debug
     # logging; later arguments can opt back into tracing for diagnosis.
     kwargs["args"] = ["--strace=false"] + kwargs.get("args", [])
@@ -161,8 +165,9 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
         payload = payload,
         image = image,
         tags = tags + ["no-local"],
+        vcpus = vcpus,
         exec_properties = {
-            "test.EstimatedCPU": "2",
+            "test.EstimatedCPU": str(vcpus),
             "test.EstimatedMemory": "6GB",
             "test.EstimatedFreeDiskBytes": "8GB",
             # Bazel's undeclared-output collection requires file and zip.
