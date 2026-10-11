@@ -162,3 +162,12 @@ retain skipped partitions, and completed-owner evidence remains necessary
 before claiming runtime coverage.
 
 [published build metadata]: https://kernel.ubuntu.com/mainline/v7.3-rc3/
+
+The cgroup-v1 container route reuses this transport with an AMD64 Ubuntu
+6.8 image. Its declared guest configuration carries the payload's fixed and
+inherited environment, the existing cgroup fixture as an in-guest command,
+and explicit memory/scratch sizes. The fixture executable and runfiles are
+packaged alongside the payload. It never becomes a host `run_under`.
+Existing guests retain their default 3-GiB memory and 4-GiB scratch sizes.
+The separate KVM package probe must pass in this guest before the full
+container profile runs; all existing guest KVM capability checks remain.

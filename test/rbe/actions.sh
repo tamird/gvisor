@@ -44,9 +44,13 @@ if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
 fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
+qualification_private=
 cleanup() {
   local status=$?
   rm -f -- "${temporary_files[@]}"
+  if [[ -n $qualification_private ]] && ! rm -rf -- "$qualification_private"; then
+    if (( status == 0 )); then status=1; fi
+  fi
   if [[ -n $GVISOR_DOCKER_NETWORK ]]; then
     # Bazel has removed its --rm test containers before returning. An endpoint
     # left behind is a cleanup failure, not a reason to force-disconnect it.
@@ -64,7 +68,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       options+=(--test-execution=local)
       case "${lanes[*]}" in
-        unit|syscalls|syscalls-resume|syscalls-kvm)
+        unit|container|syscalls|syscalls-resume|syscalls-kvm)
           options+=("--local-test-requirements=${QUALIFICATION_LOCAL_TEST_REQUIREMENTS-namespace}")
           ;;
       esac
@@ -95,11 +99,21 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
     export qualification_root_bazel
+    qualification_container=false
+    case "${lanes[*]}" in
+      container|container-v1|container-v1-pilot) qualification_container=true ;;
+    esac
+    export qualification_container
+    qualification_retain_reports=false
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || ( $QUALIFICATION_EXECUTION == local && $qualification_container == true ) ]]; then
+      qualification_retain_reports=true
+    fi
+    export qualification_retain_reports
     if [[ ${lanes[*]} == language-goferfs || ${lanes[*]} == moby || ${lanes[*]} == kvm || ${lanes[*]} == benchmarks || ${lanes[*]} == docker || ${lanes[*]} == cpu-images || ${lanes[*]} == gpu-images ]]; then
       # Docker owns routing, NAT and endpoint teardown. A user-defined bridge
       # keeps each nested daemon's firewall in its own network namespace.
@@ -122,26 +136,57 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-      if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+      if [[ $qualification_retain_reports == true ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
           'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
           'test:buildbuddy_remote_executor --nocache_test_results' \
           'test:buildbuddy_remote_executor --runs_per_test=1' \
-          'test:buildbuddy_remote_executor --flaky_test_attempts=1' \
-          'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
+          'test:buildbuddy_remote_executor --flaky_test_attempts=1'
+        if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+          printf '%s\n' 'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
+        else
+          # Bazel retains each undeclared file and its manifest directly. The
+          # container worker has no zip; collection format is not test scope.
+          printf '%s\n' 'test:buildbuddy_remote_executor --nozip_undeclared_test_outputs'
+        fi
       fi
     } > "$qualification_rc"
+    qualification_seconds=0
     if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
-      QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import time; print(time.monotonic()+7200)')
+      qualification_seconds=7200
+    else
+      case "${lanes[*]}" in
+        container) qualification_seconds=4800 ;;
+        # One six-GiB KVM guest at a time preserves the test memory budget.
+        # Eight original 900-second shards need two hours before setup/capture.
+        container-v1) qualification_seconds=8400 ;;
+        container-v1-pilot) qualification_seconds=1200 ;;
+      esac
+    fi
+    if (( qualification_seconds > 0 )); then
+      QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import sys,time; print(time.monotonic()+int(sys.argv[1]))' "$qualification_seconds")
       export QUALIFICATION_WORK_DEADLINE
     fi
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
+    if [[ $qualification_retain_reports == true ]]; then
+      # Root cannot replace runner-owned files in sticky /tmp with Linux
+      # protected_regular enabled. Keep raw events in a private parent owned
+      # by this invocation, outside the uploaded artifact directory.
+      qualification_private=$(mktemp -d "$RUNNER_TEMP/qualification-private.XXXXXX")
+      export qualification_private
+    fi
     bazel() {
-      local argument result=0 capture_status=0 raw_events="" events_output="" remaining
-      local -a evidence=()
+      local argument result=0 capture_status=0 raw_events="" events_output="" remaining cohort_dir="" capture_seconds=600
+      local -a evidence=() command_prefix=() capture_prefix=()
+      if [[ $qualification_root_bazel == true ]]; then
+        command_prefix=(sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION")
+        # Reports from root Bazel may be under /root. Use the same identity
+        # for bounded retention, without changing cache permissions.
+        capture_prefix=(sudo -n -H)
+      fi
       # Startup options may precede the command. Queries perform no spawns and
       # do not accept execution-log options; each build/test keeps its own log.
       for argument in "$@"; do
@@ -153,41 +198,43 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
             "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
           )
         fi
-        if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
+        if [[ $qualification_retain_reports == true && $argument == test ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
-          raw_events=$(mktemp)
+          raw_events=$(mktemp "${qualification_private:?}/events-XXXXXX.json")
           events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
           evidence+=("--build_event_json_file=$raw_events" "--build_event_json_file_path_conversion=false")
         fi
         break
       done
-      if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
+      if [[ $qualification_retain_reports == true && $argument == test ]]; then
         # qualify.sh records the selected profile and configured test graph.
         # Keep the actual command and checkout state alongside those records.
-        local cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
+        cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
+        if [[ $qualification_container == true ]]; then
+          cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
+          # Leave room for the work command and capture termination grace.
+          capture_seconds=540
+        fi
         mkdir -p "$cohort_dir"
         printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
         git status --porcelain --untracked-files=no > "$cohort_dir/source-before.txt"
         [[ ! -s "$cohort_dir/source-before.txt" ]]
         git cat-file -p HEAD > "$cohort_dir/commit.txt"
       fi
-      if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+      if [[ -n ${QUALIFICATION_WORK_DEADLINE:-} ]]; then
         remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
         if (( remaining > 0 )); then
-          timeout --signal=INT --kill-after=30s "${remaining}s" \
+          "${command_prefix[@]}" timeout --signal=INT --kill-after=30s "${remaining}s" \
             "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
         else
           printf 'Qualification work deadline exhausted.\n' >&2
           result=124
         fi
-      elif [[ $qualification_root_bazel == true ]]; then
-        sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION" \
-          "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       else
-        command bazelisk --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        "${command_prefix[@]}" "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
       fi
       if [[ -n $raw_events ]]; then
-        timeout --signal=TERM --kill-after=5s 600s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
+        "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s "${capture_seconds}s" python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
 import json
 from pathlib import Path
 import shutil
@@ -236,10 +283,10 @@ GUEST_EVENTS
         printf '%s\n' "$result" > "$events_output.bazel-exit"
         printf '%s\n' "$capture_status" > "$events_output.capture-exit"
         if (( result == 0 )); then result=$capture_status; fi
-        git rev-parse HEAD > "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt"
-        if [[ $(cat "$RUNNER_TEMP/qualification/tcg-full-profile/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
-        git status --porcelain --untracked-files=no > "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt"
-        if [[ -s "$RUNNER_TEMP/qualification/tcg-full-profile/source-after.txt" ]]; then result=1; fi
+        git rev-parse HEAD > "$cohort_dir/final-head.txt"
+        if [[ $(cat "$cohort_dir/final-head.txt") != "$QUALIFICATION_COMMIT" ]]; then result=1; fi
+        git status --porcelain --untracked-files=no > "$cohort_dir/source-after.txt"
+        if [[ -s "$cohort_dir/source-after.txt" ]]; then result=1; fi
         return "$result"
       fi
       return "$result"
@@ -309,7 +356,7 @@ GUEST_EVENTS
           sudo -n test -w "$device"
         done
       fi
-      if [[ ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
+      if [[ $qualification_container == true || ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
         [[ -c /dev/kvm ]]
         sudo -n test -r /dev/kvm
         sudo -n test -w /dev/kvm

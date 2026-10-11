@@ -1,3 +1,4 @@
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
@@ -179,4 +180,18 @@ go_test(
         "//pkg/sentry/time",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+# Qualify the same guest/fixture's nested KVM capability with the complete
+# existing KVM package owner before selecting all container shards.
+amd64_kvm_test(
+    name = "cgroup_v1_guest_probe",
+    size = "medium",
+    guest_env = {"CGROUPV2": "false"},
+    image = "//test/rbe/tcg:amd64_cgroup_v1_guest",
+    memory_mib = 6144,
+    payload = ":kvm_test",
+    run_under = "//test/rbe:cgroup_v1",
+    scratch_gib = 8,
+    tags = [],
 )

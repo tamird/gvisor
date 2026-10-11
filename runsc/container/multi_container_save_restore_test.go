@@ -18,12 +18,15 @@
 package container
 
 import (
+	"context"
 	"fmt"
 	"math/rand/v2"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -160,27 +163,13 @@ func testMultiContainerCheckpointRestore(t *testing.T, conf *config.Config, comp
 		t.Fatalf("Failed to wait for output file: %v", err)
 	}
 
-	checkpointWaiter := make(chan error, 1)
-	go func() {
-		// WaitCheckpoint on the second container.
-		checkpointWaiter <- conts[1].WaitCheckpoint()
-	}()
-
 	// Checkpoint root container; save state into new file.
 	if err := conts[0].Checkpoint(conf, dir, sandbox.CheckpointOpts{Compression: compression}); err != nil {
 		t.Fatalf("error checkpointing container to empty file: %v", err)
 	}
 
-	// Wait for the checkpoint to complete. The initial sandbox not destroyed yet
-	// to check that no conflict with it occurs during restore.
-	select {
-	case waitErr := <-checkpointWaiter:
-		if waitErr != nil {
-			t.Errorf("error waiting for checkpoint to complete: %v", waitErr)
-		}
-	case <-time.After(10 * time.Second):
-		t.Fatalf("timed out waiting for checkpoint to complete")
-	}
+	// Checkpoint returns after saving. Keep the initial sandbox alive to check
+	// that it does not conflict with the restored containers.
 
 	lastNum, err := readOutputNum(outputPath, -1)
 	if err != nil {
@@ -439,10 +428,6 @@ func TestFSCheckpointCommand(t *testing.T) {
 			}
 
 			// Save a filesystem checkpoint and kill the sandbox.
-			waitFSCheckpointErrC := make(chan error, 1)
-			go func() {
-				waitFSCheckpointErrC <- conts[0].WaitFSCheckpoint()
-			}()
 			imagePath, err := os.MkdirTemp(testutil.TmpDir(), "fscheckpoint-image")
 			if err != nil {
 				t.Fatalf("Error creating temp dir: %v", err)
@@ -468,21 +453,14 @@ func TestFSCheckpointCommand(t *testing.T) {
 			}); err != nil {
 				t.Fatalf("Error saving filesystem checkpoint: %v", err)
 			}
-			select {
-			case err := <-waitFSCheckpointErrC:
-				if err != nil {
-					// Container.WaitFSCheckpoint, like Container.WaitCheckpoint, is
-					// inherently racy. Both wait for the "next" checkpoint to be
-					// saved. If FSSave completes before WaitFSCheckpoint starts
-					// waiting, then WaitFSCheckpoint will miss the FSSave and return
-					// an error when the sandbox exits. There is no way to know when
-					// WaitFSCheckpoint has started waiting, so there is no way to be
-					// completely safe from this race. To avoid causing test flakes,
-					// log the error but don't fail the test.
-					t.Logf("Error waiting for FS checkpoint: %v", err)
-				}
-			case <-time.After(5 * time.Second):
-				t.Fatalf("Timed out waiting for WaitFSCheckpoint")
+			// ExitAfterSaving stops the whole sandbox. Only the root container can
+			// report its exit status after the control server has shut down.
+			ws, err := conts[0].Wait()
+			if err != nil {
+				t.Fatalf("Error waiting for checkpointed sandbox: %v", err)
+			}
+			if got, want := ws, unix.WaitStatus(0); got != want {
+				t.Fatalf("Wait() = %v, want %v", got, want)
 			}
 
 			if tc.modifyManifest != nil {
@@ -677,11 +655,9 @@ func TestCheckpointRestoreAnnotation(t *testing.T) {
 	}
 	defer cleanup()
 
-	if err := conts[0].WaitCheckpoint(); err != nil {
-		t.Fatalf("error waiting for checkpoint: %v", err)
-	}
-
-	// Wait until the checkpoint read unblocks and writes to `out`.
+	// The proc fd was opened before the trigger, so its read waits for that
+	// checkpoint even if it has already completed. A new WaitCheckpoint RPC
+	// would instead wait for the next generation.
 	if err := waitForContent(out, "resume\n"); err != nil {
 		t.Fatal(err)
 	}
@@ -927,11 +903,10 @@ func TestFSCheckpointAnnotation(t *testing.T) {
 				t.Fatalf("Error saving filesystem checkpoint from container 1, ws: %v, err: %v", ws, err)
 			}
 
-			// Kill containers.
-			for i, c := range conts {
-				if err := c.SignalContainer(unix.SIGKILL, false); err != nil {
-					t.Fatalf("Error killing container %d: %v", i, err)
-				}
+			// The annotation resumes execution after saving. Destroy the whole
+			// sandbox instead of signaling sub-containers after the root exits.
+			if err := conts[0].Destroy(); err != nil {
+				t.Fatalf("Error destroying checkpointed sandbox: %v", err)
 			}
 
 			// Start containers which sleep, restoring from the filesystem checkpoint.
@@ -1125,10 +1100,14 @@ func TestFSCheckpointSharedVolume(t *testing.T) {
 		t.Fatalf("Error saving filesystem checkpoint: %v", err)
 	}
 
-	for i, c := range conts {
-		if err := c.SignalContainer(unix.SIGKILL, false); err != nil && !strings.Contains(err.Error(), "no such process") {
-			t.Fatalf("Error killing container %d: %v", i, err)
-		}
+	// ExitAfterSaving stops the whole sandbox. Only the root container can
+	// report its exit status after the control server has shut down.
+	ws, err := conts[0].Wait()
+	if err != nil {
+		t.Fatalf("Error waiting for checkpointed sandbox: %v", err)
+	}
+	if got, want := ws, unix.WaitStatus(0); got != want {
+		t.Fatalf("Wait() = %v, want %v", got, want)
 	}
 
 	restoreSpecs, restoreIDs := createSpecs(testAppSleepArgv, testAppSleepArgv)
@@ -1474,11 +1453,6 @@ func testMultiContainerChainedCheckpointRestore(t *testing.T, conf *config.Confi
 			t.Fatalf("iter %d: os.MkdirAll failed: %v", iter, err)
 		}
 
-		checkpointWaiter := make(chan error, 1)
-		go func() {
-			checkpointWaiter <- conts[1].WaitCheckpoint()
-		}()
-
 		// Checkpoint root container with SplitFSCheckpointPaths targeting both
 		// sub-containers' tmpfs mounts.
 		checkpointOpts := sandbox.CheckpointOpts{
@@ -1490,15 +1464,6 @@ func testMultiContainerChainedCheckpointRestore(t *testing.T, conf *config.Confi
 		}
 		if err := conts[0].Checkpoint(conf, checkpointDir, checkpointOpts); err != nil {
 			t.Fatalf("iter %d: error checkpointing container: %v", iter, err)
-		}
-
-		select {
-		case waitErr := <-checkpointWaiter:
-			if waitErr != nil {
-				t.Errorf("iter %d: error waiting for checkpoint to complete: %v", iter, waitErr)
-			}
-		case <-time.After(10 * time.Second):
-			t.Fatalf("iter %d: timed out waiting for checkpoint to complete", iter)
 		}
 
 		checkFSCheckpointFiles(t, checkpointDir)
@@ -1539,9 +1504,11 @@ func testMultiContainerChainedCheckpointRestore(t *testing.T, conf *config.Confi
 
 		// Wait until both applications have run after restore.
 		if err := waitForFileNotEmpty(outputFile1); err != nil {
+			logChainedRestoreStall(t, conf, conts[0])
 			t.Fatalf("iter %d: failed to wait for outputFile1 after restore: %v", iter, err)
 		}
 		if err := waitForFileNotEmpty(outputFile2); err != nil {
+			logChainedRestoreStall(t, conf, conts[0])
 			t.Fatalf("iter %d: failed to wait for outputFile2 after restore: %v", iter, err)
 		}
 		checkHostFilesAbsent(t, hostCounter1, hostCounter2)
@@ -1569,6 +1536,38 @@ func testMultiContainerChainedCheckpointRestore(t *testing.T, conf *config.Confi
 			}
 		}
 	}
+}
+
+// logChainedRestoreStall captures the original stall before cleanup can block
+// interrupting the sandbox and obscure it with a watchdog failure. This is a
+// fork-only diagnostic; it leaves the workload and its failure unchanged.
+func logChainedRestoreStall(t *testing.T, conf *config.Config, cont *Container) {
+	t.Helper()
+	run := func(name string, args ...string) {
+		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, name, args...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+		cmd.Cancel = func() error { return unix.Kill(-cmd.Process.Pid, unix.SIGKILL) }
+		cmd.WaitDelay = time.Second
+		out, err := cmd.CombinedOutput()
+		t.Logf("restore diagnostic %q %q: %v\n%s", name, args, err, out)
+	}
+	// Two samples distinguish a blocked host thread from one consuming CPU.
+	// These commands run in the isolated Linux guest, outside the sentry.
+	run("/bin/sh", "-c", `
+for sample in 1 2; do
+  printf '\nSAMPLE %s\n' "$sample"
+  for task in /proc/"$1"/task/*; do
+    for file in stat status wchan syscall stack; do
+      printf '\n%s/%s\n' "$task" "$file"
+      cat "$task/$file"
+    done
+  done
+  if [ "$sample" = 1 ]; then sleep 1; fi
+done
+`, "restore-threads", fmt.Sprint(cont.SandboxPid()))
+	run(specutils.ExePath, "--root="+conf.RootDir, "debug", "--stacks", cont.ID)
 }
 
 // resetOutputFile removes path, if it exists, and creates an empty file that

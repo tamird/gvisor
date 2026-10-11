@@ -77,6 +77,9 @@ def cgroup_v2_variant(name, test_rule, kwargs):
         name: Original test target name.
         test_rule: Configured test rule for the variant.
         kwargs: Complete attributes of the original test declaration.
+
+    Returns:
+        Attributes shared with the variant's native architecture frontends.
     """
 
     # Preserve the ordinary target's environment for Make's CGROUPV2 override.
@@ -84,3 +87,4 @@ def cgroup_v2_variant(name, test_rule, kwargs):
     attributes["tags"] = attributes.get("tags", []) + ["manual"]
     attributes["env"] = dict(attributes.get("env", {}), CGROUPV2 = "true")
     test_rule(name = name + "_cgroup_v2", **attributes)
+    return attributes

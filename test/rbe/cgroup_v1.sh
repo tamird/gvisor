@@ -27,9 +27,21 @@ if [[ ${1:-} != --mounts ]]; then
   test "$(cat /proc/1/cgroup)" = '0::/'
   awk '$4 == "/" && $5 == "/sys/fs/cgroup" && / - cgroup2 / { found = 1 } END { exit !found }' /proc/self/mountinfo
   test -z "$(cat /sys/fs/cgroup/cgroup.subtree_control)"
-  test "$(cat /sys/fs/cgroup/cgroup.controllers)" = 'cpuset cpu io memory hugetlb pids'
-  test "$(awk 'NR > 1 { printf "%s%s", sep, $1; sep = " " }' /proc/cgroups)" = "${controllers[*]}"
-  awk 'NR > 1 && ($2 != 0 || $3 != 1 || $4 != 1) { exit 1 }' /proc/cgroups
+  available=" $(cat /sys/fs/cgroup/cgroup.controllers) "
+  for controller in cpuset cpu io memory hugetlb pids; do
+    [[ $available == *" $controller "* ]]
+  done
+  # Newer kernels may expose additional controllers. Require every controller
+  # this fixture mounts, and keep the unused/enabled guard on every row,
+  # including additional controllers that the fixture leaves untouched.
+  awk -v required="${controllers[*]}" '
+    BEGIN { split(required, names); for (i in names) missing[names[i]] = 1 }
+    NR > 1 {
+      if ($2 != 0 || $3 != 1 || $4 != 1) exit 1
+      delete missing[$1]
+    }
+    END { for (name in missing) exit 1 }
+  ' /proc/cgroups
   cat /proc/cgroups > "${out}/cgroups-before.txt"
   cat /sys/fs/cgroup/cgroup.controllers > "${out}/controllers-before.txt"
   cat /sys/fs/cgroup/cgroup.subtree_control > "${out}/subtree-before.txt"

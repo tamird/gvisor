@@ -81,16 +81,40 @@ tcg_image = rule(
 def _tcg_test_impl(ctx):
     # rules_pkg 1.0.1 packages runfiles.files, not custom runfiles aliases.
     # The syscall runner uses file-based runfiles, including release sidecars.
-    payload_runfiles = ctx.attr.payload[DefaultInfo].default_runfiles
-    if payload_runfiles.symlinks.to_list() or payload_runfiles.root_symlinks.to_list():
-        fail("TCG payload requires runfiles aliases unsupported by pkg_tar")
+    executables = [ctx.attr.payload] + ([ctx.attr.run_under] if ctx.attr.run_under else [])
+    for dependency in executables:
+        runfiles = dependency[DefaultInfo].default_runfiles
+        if runfiles.symlinks.to_list() or runfiles.root_symlinks.to_list():
+            fail("Guest executable %s requires runfiles aliases unsupported by pkg_tar" % dependency.label)
     image = ctx.attr.image[TcgImageInfo]
     architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
     if image.architecture != architecture:
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
-    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
+    configuration = ctx.actions.declare_file(ctx.label.name + ".guest.sh")
+    if ctx.attr.memory_mib <= 0 or ctx.attr.scratch_gib <= 0:
+        fail("Guest memory and scratch capacity must be positive")
+    environment = {}
+    inherited_environment = []
+    if RunEnvironmentInfo in ctx.attr.payload:
+        payload_environment = ctx.attr.payload[RunEnvironmentInfo]
+        environment.update(payload_environment.environment)
+        inherited_environment = payload_environment.inherited_environment
+    environment.update(ctx.attr.guest_env)
+    ctx.actions.write(
+        configuration,
+        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\n" % (
+            ctx.attr.memory_mib,
+            ctx.attr.scratch_gib,
+            shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
+        ) +
+        "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
+            " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
+            " ".join([shell.quote(key) for key in inherited_environment]),
+        ),
+    )
+    inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, configuration, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
@@ -106,13 +130,14 @@ def _tcg_test_impl(ctx):
         executable,
         "#!/bin/bash\nset -euo pipefail\n" +
         "cd \"${TEST_SRCDIR}/${TEST_WORKSPACE}\"\n" +
+        "export GVISOR_TEST_GUEST_CONFIG=%s\n" % shell.quote(configuration.short_path) +
         "exec %s %s \"$@\"\n" % (shell.quote(ctx.executable._launcher.short_path), " ".join([shell.quote(arg) for arg in arguments])),
         is_executable = True,
     )
     runfiles = ctx.runfiles(files = inputs, transitive_files = tar.default.files).merge(ctx.attr._launcher[DefaultInfo].default_runfiles)
     return [
         DefaultInfo(executable = executable, runfiles = runfiles),
-        testing.TestEnvironment(tar.tarinfo.default_env),
+        RunEnvironmentInfo(environment = tar.tarinfo.default_env, inherited_environment = inherited_environment),
     ]
 
 _tcg_test = rule(
@@ -124,17 +149,21 @@ _tcg_test = rule(
         "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
+        "run_under": attr.label(executable = True, cfg = "target"),
+        "guest_env": attr.string_dict(),
+        "memory_mib": attr.int(default = 3072),
+        "scratch_gib": attr.int(default = 4),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
         "_test_setup": attr.label(default = Label("@bazel_tools//tools/test:test_setup"), allow_single_file = True),
     },
     toolchains = ["@tar.bzl//tar/toolchain:target_type"],
 )
 
-def _guest_test(name, payload, tags, image, **kwargs):
+def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
     pkg_tar(
         name = name + "_payload",
         testonly = True,
-        srcs = [payload],
+        srcs = [payload] + ([run_under] if run_under else []),
         include_runfiles = True,
         strip_prefix = "/",
         allow_duplicates_with_different_content = False,
@@ -144,6 +173,7 @@ def _guest_test(name, payload, tags, image, **kwargs):
         name = name,
         payload = payload,
         image = image,
+        run_under = run_under,
         archive = ":" + name + "_payload",
         exec_compatible_with = ["@platforms//os:linux", "@platforms//cpu:x86_64"],
         tags = tags + ["manual"],

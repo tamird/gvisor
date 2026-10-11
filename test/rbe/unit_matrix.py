@@ -237,12 +237,20 @@ def configured_tests(events_path: str) -> dict[str, ConfiguredTarget]:
     return configured_targets(events_path, tests=True)
 
 
-def cgroup_targets(events_path: str) -> list[str]:
+def cgroup_targets(events_path: str, *, guest_kvm: bool = False) -> list[str]:
     targets = configured_tests(events_path)
     missing = sorted(label for label, target in targets.items() if "rbe-has-cgroup-v1-variant" not in target.tags)
     if missing:
         raise ValueError(f"Canonical owners without cgroup-v1 variants: {missing}")
-    return sorted(label + "_cgroup_v1" for label in targets)
+    selected = []
+    for label, target in targets.items():
+        if guest_kvm and "requires-kvm" in target.tags:
+            if "rbe-has-cgroup-v1-guest-variant" not in target.tags:
+                raise ValueError(f"KVM owner without a declared cgroup-v1 guest: {label}")
+            selected.append(label + "_cgroup_v1_guest")
+        else:
+            selected.append(label + "_cgroup_v1")
+    return sorted(selected)
 
 
 def container_platform_targets(events_path: str) -> list[str]:
@@ -560,8 +568,10 @@ def main() -> None:
     select.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
+    cgroup.add_argument("--guest-kvm", action="store_true")
     container = commands.add_parser("container-targets")
     container.add_argument("events")
+    container.add_argument("--architecture", choices=("amd64", "arm64"))
     container_platforms = commands.add_parser("container-platform-targets")
     container_platforms.add_argument("events")
     roots = commands.add_parser("build-roots")
@@ -608,13 +618,21 @@ def main() -> None:
     elif args.command == "select":
         select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, local_test_requirements=args.local_test_requirements)
     elif args.command == "cgroup-targets":
-        print("\n".join(cgroup_targets(args.events)))
+        print("\n".join(cgroup_targets(args.events, guest_kvm=args.guest_kvm)))
     elif args.command == "container-platform-targets":
         print("\n".join(container_platform_targets(args.events)))
     elif args.command == "container-targets":
         targets = configured_tests(args.events)
+        if args.architecture:
+            missing = sorted(
+                label for label, target in targets.items()
+                if f"rbe-has-{args.architecture}-variant" not in target.tags
+            )
+            if missing:
+                raise ValueError(f"Container owners without {args.architecture} variants: {missing}")
         print("\n".join(sorted(
-            label + "_cgroup_v2" if "rbe-has-cgroup-v2-variant" in target.tags else label
+            (label + "_cgroup_v2" if "rbe-has-cgroup-v2-variant" in target.tags else label)
+            + ("_" + args.architecture if args.architecture else "")
             for label, target in targets.items()
         )))
     elif args.command == "build-roots":

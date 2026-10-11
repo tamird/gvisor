@@ -25,6 +25,11 @@ payload_label="$7"
 machine="$8"
 test_setup="$(realpath "$9")"
 shift 9
+# The owning rule writes this declared configuration beside the launcher.
+declare guest_memory_mib guest_scratch_gib guest_run_under
+declare -a guest_env guest_inherited_env
+# shellcheck disable=SC1090
+source "${GVISOR_TEST_GUEST_CONFIG:?}"
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -61,10 +66,16 @@ host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "
 # itself is read-only as well; the writable export contains only test outputs.
 cp "$payload_archive" "$scratch/input/payload.tar"
 cp "$test_setup" "$scratch/input/test-setup.sh"
-host_tool usr/bin/truncate -s 4G "$scratch/scratch.ext4"
+host_tool usr/bin/truncate -s "${guest_scratch_gib}G" "$scratch/scratch.ext4"
 MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "$scratch/scratch.ext4"
 {
   printf '#!/bin/bash\nset -uo pipefail\n'
+  for assignment in "${guest_env[@]}"; do
+    printf 'export %q\n' "$assignment"
+  done
+  for variable in "${guest_inherited_env[@]}"; do
+    if [[ -v "$variable" ]]; then printf 'export %s=%q\n' "$variable" "${!variable}"; fi
+  done
   printf 'export TEST_SRCDIR=%q\n' "/work/payload/$payload.runfiles"
   printf 'export TEST_WORKSPACE=%q\n' "$TEST_WORKSPACE"
   printf 'export TEST_TARGET=%q\n' "$payload_label"
@@ -74,7 +85,7 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
   for variable in TEST_PREMATURE_EXIT_FILE TEST_WARNINGS_OUTPUT_FILE TEST_LOGSPLITTER_OUTPUT_FILE TEST_INFRASTRUCTURE_FAILURE_FILE TEST_UNUSED_RUNFILES_LOG_FILE TEST_UNDECLARED_OUTPUTS_MANIFEST TEST_UNDECLARED_OUTPUTS_ANNOTATIONS TEST_UNDECLARED_OUTPUTS_ANNOTATIONS_DIR; do
     printf 'export %s=/work/harness/%s\n' "$variable" "$variable"
   done
-  for variable in TEST_SHARD_INDEX TEST_TOTAL_SHARDS TEST_FILTER TEST_TIMEOUT TEST_SIZE TEST_RANDOM_SEED TESTBRIDGE_TEST_ONLY GVISOR_TEST_CLOCK_SOURCE; do
+  for variable in TEST_SHARD_INDEX TEST_TOTAL_SHARDS TEST_FILTER TEST_TIMEOUT TEST_SIZE TEST_RANDOM_SEED TESTBRIDGE_TEST_ONLY GVISOR_TEST_CLOCK_SOURCE GO_TEST_WRAP_TESTV; do
     if [[ -v "$variable" ]]; then printf 'export %s=%q\n' "$variable" "${!variable}"; fi
   done
   if [[ -n "${TEST_SHARD_STATUS_FILE:-}" ]]; then
@@ -83,7 +94,14 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
   # The guest harness owns aliases, runfiles lookup and fallback XML. The outer
   # harness packages returned outputs, so the guest does not request a ZIP.
   printf 'export RUNFILES_DIR="$TEST_SRCDIR"\nexport EXPERIMENTAL_SPLIT_XML_GENERATION=0\ncd /work/payload\n'
-  printf 'exec /bin/bash /input/test-setup.sh %q' "$payload"
+  printf 'exec /bin/bash /input/test-setup.sh'
+  if [[ -n $guest_run_under ]]; then
+    # Both executables and their runfiles are in the declared payload archive.
+    # Absolute paths remain valid after the harness enters payload runfiles.
+    printf ' %q' "/work/payload/$guest_run_under" "/work/payload/$payload"
+  else
+    printf ' %q' "$payload"
+  fi
   if (( $# )); then printf ' %q' "$@"; fi
   printf '\n'
 } > "$scratch/input/launch.sh"
@@ -140,7 +158,7 @@ QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
-  -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
+  -smp 2 -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" -initrd "$initramfs" \
   -append "console=$console rdinit=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \
