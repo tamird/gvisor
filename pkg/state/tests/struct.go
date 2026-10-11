@@ -153,3 +153,19 @@ type snapshotNilEmbedded struct {
 	*snapshotPointerEmbedded
 	parent int64
 }
+
+// +stateify savable
+type countedSave struct {
+	value int64
+	calls *int `state:"nosave"`
+}
+
+func (c *countedSave) beforeSave(context.Context) {
+	*c.calls++
+}
+
+// +stateify savable
+type countedSaveParent struct {
+	child countedSave
+	value int64
+}
