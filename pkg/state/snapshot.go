@@ -26,7 +26,7 @@ import (
 // save hooks. Ordinary Sink.Save and Sink.SaveValue must not be mixed with a
 // typed record; Capture and CaptureValue populate its stable child slots.
 func BeginSnapshot[T any](s Sink, emit func(*wire.Writer, *T)) *T {
-	return wire.AllocSnapshot(s.internal.encoded, s.internal.fields, emit)
+	return wire.AllocSnapshot(s.internal.encoded, len(s.internal.typ.Fields), emit)
 }
 
 // Capture saves an addressable child into a stable slot owned by the record.

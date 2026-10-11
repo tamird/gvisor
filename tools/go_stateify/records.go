@@ -63,8 +63,9 @@ type sourceGroup struct {
 }
 
 type recordSet struct {
-	wireAlias string
-	types     map[string]*recordType
+	wireAlias     string
+	types         map[string]*recordType
+	pointerFields map[string]map[int]struct{}
 }
 
 type recordType struct {
@@ -311,7 +312,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 			}
 		}
 	}
-	records := &recordSet{wireAlias: unusedName("statewire", names), types: make(map[string]*recordType)}
+	records := &recordSet{wireAlias: unusedName("statewire", names), types: make(map[string]*recordType), pointerFields: make(map[string]map[int]struct{})}
 	for _, declaration := range file.Decls {
 		fn, ok := declaration.(*ast.FuncDecl)
 		if !ok || fn.Recv == nil || fn.Name.Name != "StateSave" {
@@ -327,6 +328,9 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 		}
 		// Identtype forwarding has no Save calls and keeps its existing path.
 		slots := make(map[int]primitive)
+		pointers := make(map[int]struct{})
+		sinkType := info.TypeOf(fn.Type.Params.List[0].Type).(*types.Named)
+		saver := sinkType.Obj().Pkg().Scope().Lookup("SaverLoader").Type().Underlying().(*types.Interface)
 		hasPrimitive := false
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			call, ok := node.(*ast.CallExpr)
@@ -351,16 +355,23 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 			}
 			field := primitiveFor(typ)
 			slots[int(index)] = field
+			if pointer, ok := types.Unalias(typ).(*types.Pointer); ok {
+				if _, ok := pointer.Elem().Underlying().(*types.Struct); ok && types.Implements(pointer, saver) {
+					pointers[int(index)] = struct{}{}
+				}
+			}
 			hasPrimitive = hasPrimitive || field.storage != "Object"
 			return true
 		})
-		// A record with only graph-bearing children retains every reflective
-		// capture and adds storage to the ordinary single-field fast path.
-		// Keep canonical Save calls when no primitive operation is removed.
+		name := owner.Obj().Name()
+		if len(pointers) != 0 {
+			records.pointerFields[name] = pointers
+		}
+		// Pointer-only savers use typed operations into ordinary slots. They
+		// do not need the additional record used to hold primitive snapshots.
 		if !hasPrimitive {
 			continue
 		}
-		name := owner.Obj().Name()
 		record := &recordType{name: unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names), emitter: unusedName(fmt.Sprintf("emitStateRecord%d_%s", len(name), name), names), fields: make([]primitive, len(slots))}
 		for slot := range record.fields {
 			field, ok := slots[slot]
