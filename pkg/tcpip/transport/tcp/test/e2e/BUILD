@@ -65,6 +65,7 @@ go_library(
     name = "e2e",
     testonly = 1,
     srcs = ["e2e.go"],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/tcpip",
         "//pkg/tcpip/checker",

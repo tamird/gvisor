@@ -40,11 +40,11 @@ def precompiled_seccomp_rules(
 
     # This genrule copies precompiled_lib.tmpl.go to the directory of wherever
     # `precompiled_seccomp_rules` is called.
-    # This allows the go:embed directive inside the `.gen.go` file below to
-    # work without rewriting the full path.
+    # The generated data file has a non-Go suffix so Go package discovery does
+    # not interpret its contents as another source package beside the command.
     native.genrule(
         name = name + "_gen_lib",
-        outs = [out + ".gen.lib.tmpl.go"],
+        outs = [out + ".gen.lib.tmpl"],
         cmd = "cat < $(SRCS) > $@",
         srcs = [
             "//pkg/seccomp/precompiledseccomp:precompiled_lib.tmpl.go",
@@ -60,7 +60,7 @@ def precompiled_seccomp_rules(
         "    elif echo \"$$line\" | grep -q 'PROGRAMS_FUNC_THIS_IS_A_LOAD_BEARING_COMMENT'; then" +
         "        {load_programs_fn_echo}" +
         "    elif echo \"$$line\" | grep -q 'go:embed precompiled_lib.tmpl.go'; then" +
-        "        echo -e \"//go:embed " + out + ".gen.lib.tmpl.go\";" +
+        "        echo -e \"//go:embed " + out + ".gen.lib.tmpl\";" +
         "    else" +
         "      echo \"$$line\";" +
         "    fi;" +
@@ -110,18 +110,22 @@ def precompiled_seccomp_rules(
     go_binary(
         name = name + "_gen_bin",
         srcs = [out + ".gen.go"],
+        importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_bin",
+        visibility = ["//tools/codeql:__pkg__"],
         deps = gen_bin_deps,
         embedsrcs = [
-            ":" + out + ".gen.lib.tmpl.go",
+            ":" + out + ".gen.lib.tmpl",
         ],
     )
     if exclude_in_fastbuild:
         go_binary(
             name = name + "_gen_stubbed_bin",
             srcs = [out + ".gen_stubbed.go"],
+            importpath = "gvisor.dev/gvisor/" + native.package_name() + "/" + name + "_gen_stubbed_bin",
+            visibility = ["//tools/codeql:__pkg__"],
             deps = base_gen_bin_deps,
             embedsrcs = [
-                ":" + out + ".gen.lib.tmpl.go",
+                ":" + out + ".gen.lib.tmpl",
             ],
         )
 

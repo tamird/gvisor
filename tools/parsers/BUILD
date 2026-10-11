@@ -38,7 +38,9 @@ go_binary(
         "parser_main.go",
         "version.go",
     ],
+    importpath = "gvisor.dev/gvisor/tools/parsers/parser",
     nogo = False,
+    visibility = ["//tools/codeql:__pkg__"],
     x_defs = {"main.version": "{STABLE_VERSION}"},
     deps = [
         ":parsers",

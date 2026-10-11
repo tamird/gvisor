@@ -8,6 +8,7 @@ go_library(
     name = "escape",
     testonly = 1,
     srcs = ["escape.go"],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/hostarch",
         "//pkg/marshal",

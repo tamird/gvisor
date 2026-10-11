@@ -30,6 +30,8 @@ go_binary(
     name = "runner",
     testonly = 1,
     srcs = ["runner.go"],
+    importpath = "gvisor.dev/gvisor/test/secbench/runner",
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/abi/linux",
         "//pkg/bpf",

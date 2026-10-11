@@ -15,6 +15,11 @@ go_binary(
         "//:release",
         "//test/packetimpact/dut:posix_server",
     ],
+    importpath = "gvisor.dev/gvisor/test/packetimpact/dut/runsc/runsc",
+    visibility = [
+        "//test/packetimpact:__subpackages__",
+        "//tools/codeql:__pkg__",
+    ],
     deps = [
         "//pkg/test/testutil",
         "//test/packetimpact/dut",
@@ -30,4 +35,9 @@ go_binary(
     name = "devid",
     testonly = True,
     srcs = ["devid.go"],
+    importpath = "gvisor.dev/gvisor/test/packetimpact/dut/runsc/devid",
+    visibility = [
+        "//test/packetimpact:__subpackages__",
+        "//tools/codeql:__pkg__",
+    ],
 )

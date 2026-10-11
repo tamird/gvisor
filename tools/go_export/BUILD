@@ -11,7 +11,10 @@ package(
 go_binary(
     name = "assemble",
     srcs = ["main.go"],
-    visibility = ["//:__pkg__"],
+    visibility = [
+        "//:__pkg__",
+        "//tools/codeql:__pkg__",
+    ],
     deps = ["@org_golang_x_mod//modfile:go_default_library"],
 )
 
