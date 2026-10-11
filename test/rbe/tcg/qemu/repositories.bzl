@@ -26,7 +26,7 @@ def _qemu_source_impl(ctx):
     )
     patches = []
     for line in ctx.read("debian/patches/series").splitlines():
-        fields = line.split("#", 1)[0].split()
+        fields = [part for part in line.split("#", 1)[0].replace("\t", " ").split(" ") if part]
         if not fields:
             continue
         if len(fields) != 1:
