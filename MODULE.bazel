@@ -335,7 +335,8 @@ release_apt.install(
 release_apt.install(
     dependency_set = "kvm_amd64_cgroup_v1_guest",
     packages = _KVM_GUEST_PACKAGES + [
-        # The existing fixture needs an actual util-linux unshare and awk.
+        # The existing fixture needs cmp, util-linux unshare and awk.
+        "diffutils:amd64",
         "util-linux:amd64",
         "mawk:amd64",
         "linux-image-6.8.0-138-generic:amd64 (= 6.8.0-138.138~22.04.1)",
