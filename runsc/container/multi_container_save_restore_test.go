@@ -18,12 +18,15 @@
 package container
 
 import (
+	"context"
 	"fmt"
 	"math/rand/v2"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -1509,9 +1512,11 @@ func testMultiContainerChainedCheckpointRestore(t *testing.T, conf *config.Confi
 
 		// Wait until both applications have run after restore.
 		if err := waitForFileNotEmpty(outputFile1); err != nil {
+			logChainedRestoreStall(t, conf, conts[0])
 			t.Fatalf("iter %d: failed to wait for outputFile1 after restore: %v", iter, err)
 		}
 		if err := waitForFileNotEmpty(outputFile2); err != nil {
+			logChainedRestoreStall(t, conf, conts[0])
 			t.Fatalf("iter %d: failed to wait for outputFile2 after restore: %v", iter, err)
 		}
 		checkHostFilesAbsent(t, hostCounter1, hostCounter2)
@@ -1539,6 +1544,38 @@ func testMultiContainerChainedCheckpointRestore(t *testing.T, conf *config.Confi
 			}
 		}
 	}
+}
+
+// logChainedRestoreStall captures the original stall before cleanup can block
+// interrupting the sandbox and obscure it with a watchdog failure. This is a
+// fork-only diagnostic; it leaves the workload and its failure unchanged.
+func logChainedRestoreStall(t *testing.T, conf *config.Config, cont *Container) {
+	t.Helper()
+	run := func(name string, args ...string) {
+		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, name, args...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+		cmd.Cancel = func() error { return unix.Kill(-cmd.Process.Pid, unix.SIGKILL) }
+		cmd.WaitDelay = time.Second
+		out, err := cmd.CombinedOutput()
+		t.Logf("restore diagnostic %q %q: %v\n%s", name, args, err, out)
+	}
+	// Two samples distinguish a blocked host thread from one consuming CPU.
+	// These commands run in the isolated Linux guest, outside the sentry.
+	run("/bin/sh", "-c", `
+for sample in 1 2; do
+  printf '\nSAMPLE %s\n' "$sample"
+  for task in /proc/"$1"/task/*; do
+    for file in stat status wchan syscall stack; do
+      printf '\n%s/%s\n' "$task" "$file"
+      cat "$task/$file"
+    done
+  done
+  if [ "$sample" = 1 ]; then sleep 1; fi
+done
+`, "restore-threads", fmt.Sprint(cont.SandboxPid()))
+	run(specutils.ExePath, "--root="+conf.RootDir, "debug", "--stacks", cont.ID)
 }
 
 // resetOutputFile removes path, if it exists, and creates an empty file that
