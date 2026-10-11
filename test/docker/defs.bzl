@@ -3,7 +3,7 @@
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_foreign_cc//toolchains/native_tools:tool_access.bzl", "access_tool")
 load("@rules_oci//oci:defs.bzl", "oci_load")
-load("//tools:arch.bzl", "select_arch")
+load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "select_arch", "transition_allowlist")
 load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
@@ -296,6 +296,17 @@ def docker_command_test(name, architectures = [], **kwargs):
         kwargs,
     )
 
+def _image_context_architecture_impl(settings, attr):
+    if attr.architecture == "x86_64":
+        return amd64_config(settings, attr)
+    return arm64_config(settings, attr)
+
+_image_context_architecture = transition(
+    implementation = _image_context_architecture_impl,
+    inputs = [],
+    outputs = arch_config,
+)
+
 def _image_source_command_impl(ctx):
     make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)
     if make.target == None or make.env != {"MAKE": make.path}:
@@ -341,7 +352,8 @@ image_source_command = rule(
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image_class": attr.string(default = "cpu", values = ["cpu", "gpu"], doc = "Selects Make's CPU or GPU/ML test-image cohort."),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
-        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
+        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
     },
     toolchains = [
@@ -396,7 +408,8 @@ source_image_archive = rule(
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
         "_config": attr.label(default = "//test/docker:image_source_config", allow_single_file = True),
-        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True),
+        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
         "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "exec"),

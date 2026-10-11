@@ -55,6 +55,31 @@ source_image_archive(
     tags = ["manual"],
 )
 
+# Build the CUDA contexts with their declared Go runners without requiring GPU
+# execution. Runtime suites retain their independently pinned image archives.
+[
+    source_image_archive(
+        name = name,
+        testonly = True,
+        architecture = "x86_64",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+        ),
+        image = image,
+        tags = ["manual"],
+    )
+    for name, image in [
+        ("cuda_samples_source_amd64", "gpu/cuda-tests"),
+        ("cuda_samples_12_8_source_amd64", "gpu/cuda-tests-12-8"),
+    ]
+]
+
 bzl_library(
     name = "config_bzl",
     srcs = ["config.bzl"],
