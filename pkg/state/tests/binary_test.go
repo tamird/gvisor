@@ -55,6 +55,9 @@ func TestBinaryTime(t *testing.T) {
 			if _, err := state.Save(t.Context(), &buf, &original); err != nil {
 				t.Fatalf("Save: %v", err)
 			}
+			if name != "monotonic" {
+				t.Logf("binary-time-wire[%s]: %x", name, buf.Bytes())
+			}
 			var restored timeContainer
 			if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
 				t.Fatalf("Load: %v", err)

@@ -39,6 +39,7 @@ func TestReferenceArrayWire(t *testing.T) {
 		t.Fatalf("addressable encoding = %x, want value encoding %x", got, want)
 	}
 	t.Logf("reference-array-wire: %x", captured.Bytes())
+	t.Logf("reference-array-wire: %x", captured.Bytes())
 	var loaded referenceArrayEncoding
 	if _, err := state.Load(t.Context(), &captured, &loaded); err != nil {
 		t.Fatal(err)

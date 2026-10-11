@@ -228,6 +228,7 @@ func TestPrimitiveArrayFloatEncoding(t *testing.T) {
 			if got, want := captured.Bytes(), reflected.Bytes(); !bytes.Equal(got, want) {
 				t.Errorf("addressable array encoding = %x, want existing value encoding %x", got, want)
 			}
+			t.Logf("primitive-array-wire[%s]: %x", test.name, captured.Bytes())
 		})
 	}
 }
