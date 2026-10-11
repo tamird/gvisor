@@ -32,6 +32,7 @@ qemu_pair(
     exec_properties = {
         "EstimatedCPU": "8",
         "EstimatedMemory": "16GB",
+        "default-timeout": "30m",
     },
     patch = "arm-rcsc.patch",
     tags = ["manual"],
