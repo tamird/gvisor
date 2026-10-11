@@ -48,6 +48,12 @@ type objectEncodeState struct {
 	// references may be updated directly and automatically.
 	refs []*wire.Ref
 
+	// captured retains struct snapshots from objects this object replaced.
+	// These nodes no longer belong to values, pending or deferred; their
+	// deferredEntry instead links this list. Keeping the original snapshot
+	// avoids repeating save hooks when a containing object is found later.
+	captured deferredList
+
 	deferredEntry
 }
 
@@ -88,6 +94,10 @@ type encodeState struct {
 	// deferred is the list of objects to be encoded.
 	deferred deferredList
 
+	// encoding is the node currently being captured. It remains valid even
+	// if a save hook discovers a containing object and adopts this node.
+	encoding *objectEncodeState
+
 	// pendingTypes is the list of types to be serialized. Serialization
 	// will occur when all objects have been encoded, but before pending is
 	// serialized.
@@ -97,11 +107,11 @@ type encodeState struct {
 	// not actually occur until the full object graph is computed.
 	pending map[objectID]*objectEncodeState
 
-	// encodedStructs maps reflect.Values representing structs to previous
-	// encodings of those structs. This is necessary to avoid duplicate calls
-	// to SaverLoader.StateSave() that may result in multiple calls to
-	// Sink.SaveValue() for a given field, resulting in object duplication.
-	encodedStructs map[reflect.Value]*wire.Record
+	// inlineStructs owns snapshots without an exact resolver node, including
+	// inline fields and unaddressable custom/map values. Once an exact node
+	// captures one of these values, ownership moves to that node. Reusing a
+	// snapshot avoids repeated StateSave/SaveValue calls and duplicated objects.
+	inlineStructs map[reflect.Value]*wire.Record
 
 	// binaryBuf holds temporary BinaryAppender output. Each saved value is
 	// copied into an immutable string before this buffer is reused.
@@ -334,8 +344,16 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 				typ:  existing.obj.Type(),
 				refs: existing.refs,
 			})
+			existing.refs = nil // The containing node takes ownership below.
 			delete(es.pending, existing.id)
 			es.deferred.Remove(existing)
+			oes.captured.PushBackList(&existing.captured)
+			if _, ok := existing.encoded.(*wire.Record); ok {
+				// Arrays must be captured again, but a struct's save hooks and
+				// custom values must retain their original snapshot. The node
+				// may still be filling that snapshot on the current call stack.
+				oes.captured.PushBack(existing)
+			}
 			gap = es.values.Remove(seg)
 			seg = gap.NextSegment()
 			if !seg.Ok() || seg.Start() >= end {
@@ -485,9 +503,60 @@ func (oe *objectEncoder) save(slot int, obj reflect.Value) {
 // emptyStructRecord is immutable and has no generated saver or references.
 var emptyStructRecord = wire.NewSlotRecord(0, 0)
 
+// structOwner finds an exact struct snapshot in the shared resolver graph.
+// Inline fields that have never had a node keep their reflect.Value identity
+// in inlineStructs; a containing node is not itself their snapshot owner.
+func (es *encodeState) structOwner(obj reflect.Value) *objectEncodeState {
+	if es.encoding != nil && es.encoding.obj == obj {
+		return es.encoding
+	}
+	if !obj.CanAddr() {
+		return nil
+	}
+	addr := obj.Addr().Pointer()
+	if obj.Type().Size() == 0 && addr == dummyAddr {
+		if owner := es.zeroValues[obj.Type()]; owner != nil && owner.obj == obj {
+			return owner
+		}
+		return nil
+	}
+	seg, _ := es.values.Find(addr)
+	if !seg.Ok() {
+		return nil
+	}
+	owner := seg.Value()
+	if owner.obj == obj {
+		return owner
+	}
+	for child := owner.captured.Front(); child != nil; child = child.Next() {
+		if child.obj == obj {
+			return child
+		}
+	}
+	return nil
+}
+
+// captureStruct publishes a snapshot before invoking its save hook.
+func (es *encodeState) captureStruct(obj reflect.Value, owner *objectEncodeState, record *wire.Record) {
+	if owner != nil {
+		owner.encoded = record
+	} else {
+		es.inlineStructs[obj] = record
+	}
+}
+
 // encodeStruct encodes a composite object.
 func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
-	if s, ok := es.encodedStructs[obj]; ok {
+	owner := es.structOwner(obj)
+	if owner != nil && owner.encoded != nil {
+		*dest = owner.encoded
+		return
+	}
+	if s, ok := es.inlineStructs[obj]; ok {
+		if owner != nil {
+			owner.encoded = s
+			delete(es.inlineStructs, obj)
+		}
 		*dest = s
 		return
 	}
@@ -516,7 +585,7 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 			// non-registered empty structs via interfaces because
 			// then they can't be restored.
 			*dest = emptyStructRecord
-			es.encodedStructs[key] = emptyStructRecord
+			es.captureStruct(key, owner, emptyStructRecord)
 			return
 		}
 		// We need a SaverLoader for struct types.
@@ -530,7 +599,7 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	// Invoke the provided saver.
 	s := te.newRecord(wire.TypeID(te.ID), len(te.Fields))
 	*dest = s
-	es.encodedStructs[key] = s
+	es.captureStruct(key, owner, s)
 	oe := objectEncoder{
 		es:      es,
 		encoded: s,
@@ -779,8 +848,10 @@ func (es *encodeState) Save(obj reflect.Value) {
 			// deferred list yet again. That's expected, and why it
 			// is removed first.
 			es.deferred.Remove(oes)
+			es.encoding = oes
 			es.encodeObject(oes.obj, oes.how, &oes.encoded)
 		}
+		es.encoding = nil
 	}); err != nil {
 		// Include the object in the error message, if available.
 		if oes != nil && oes.obj.IsValid() {
