@@ -14,7 +14,7 @@ load("//tools/bazeldefs:platforms.bzl", _default_platform = "default_platform", 
 load("//tools/bazeldefs:tags.bzl", _go_suffixes = "go_suffixes", _local_test_tags = "local_test_tags")
 load("//tools/go_hostlayout:defs.bzl", "go_host_layout_struct_test")
 load("//tools/go_marshal:defs.bzl", "go_marshal", "marshal_deps", "marshal_test_deps")
-load("//tools/go_stateify:defs.bzl", "go_stateify")
+load("//tools/go_stateify:defs.bzl", "go_stateify", "go_stateify_records")
 load("//tools/nogo:defs.bzl", "nogo_facts_render", "nogo_test")
 
 # Core rules.
@@ -129,7 +129,7 @@ def calculate_sets(srcs):
             result[target].append(file)
     return result
 
-def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_state_pkg = False, marshal = False, marshal_debug = False, nogo = True, hostlayout = False, **kwargs):
+def go_library(name, srcs, deps = [], imports = [], stateify = True, stateify_records = False, force_add_state_pkg = False, marshal = False, marshal_debug = False, nogo = True, hostlayout = False, **kwargs):
     """Wraps the standard go_library and does stateification and marshalling.
 
     The recommended way is to use this rule with mostly identical configuration as the native
@@ -155,6 +155,7 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
       deps: the library dependencies.
       imports: imports required for stateify.
       stateify: whether statify is enabled (default: true).
+      stateify_records: generate typed saved-field records using checked package types.
       force_add_state_pkg: whether to skip checking whether the state package
         is included in `deps`, and to just instead include it outright.
         This allows `go_library` to be used in conjunction with `select`
@@ -171,28 +172,29 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
     all_deps = deps
     dirname, _, _ = native.package_name().rpartition("/")
     full_pkg = dirname + "/" + name
+    state_sets = calculate_sets(srcs) if stateify else {}
     if stateify:
         # Only do stateification for non-state packages without manual autogen.
         # First, we need to segregate the input files via the special suffixes,
         # and calculate the final output set.
-        state_sets = calculate_sets(srcs)
-        for (suffix, src_subset) in state_sets.items():
-            go_stateify(
-                name = name + suffix + "_state_autogen_with_imports",
-                srcs = src_subset,
-                imports = imports,
-                package = full_pkg,
-                out = name + suffix + "_state_autogen_with_imports.go",
-            )
-            go_imports(
-                name = name + suffix + "_state_autogen",
-                src = name + suffix + "_state_autogen_with_imports.go",
-                out = name + suffix + "_state_autogen.go",
-            )
-        all_srcs = all_srcs + [
-            name + suffix + "_state_autogen.go"
-            for suffix in state_sets.keys()
-        ]
+        if not stateify_records:
+            for (suffix, src_subset) in state_sets.items():
+                go_stateify(
+                    name = name + suffix + "_state_autogen_with_imports",
+                    srcs = src_subset,
+                    imports = imports,
+                    package = full_pkg,
+                    out = name + suffix + "_state_autogen_with_imports.go",
+                )
+                go_imports(
+                    name = name + suffix + "_state_autogen",
+                    src = name + suffix + "_state_autogen_with_imports.go",
+                    out = name + suffix + "_state_autogen.go",
+                )
+            all_srcs = all_srcs + [
+                name + suffix + "_state_autogen.go"
+                for suffix in state_sets.keys()
+            ]
 
         if force_add_state_pkg or "//pkg/state" not in all_deps:
             all_deps = all_deps + ["//pkg/state"]
@@ -221,6 +223,36 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
             name + suffix + "_abi_autogen_unsafe.go"
             for suffix in marshal_sets.keys()
         ]
+
+    if stateify_records:
+        if not stateify or kwargs.get("bazel_cgo", False):
+            fail("typed stateify requires stateify and pure Go inputs")
+        if any([".tmpl." in src for src in all_srcs]):
+            # nogo_facts_render consumes stateify output to render these inputs.
+            fail("typed stateify cannot consume dependent .tmpl outputs")
+
+        # Generated emitters import wire directly, in addition to state.
+        if force_add_state_pkg or "//pkg/state/wire" not in all_deps:
+            all_deps = all_deps + ["//pkg/state/wire"]
+        go_stateify_records(
+            name = name + "_state_records",
+            srcs = all_srcs,
+            deps = all_deps,
+            groups = state_sets,
+            group_names = state_sets.keys(),
+            outs = [name + suffix + "_state_autogen_with_imports.go" for suffix in state_sets.keys()],
+            imports = imports,
+            package = full_pkg,
+            importpath = "gvisor.dev/gvisor/" + native.package_name(),
+            gotags = kwargs.get("gotags", []),
+        )
+        for suffix in state_sets.keys():
+            go_imports(
+                name = name + suffix + "_state_autogen",
+                src = name + suffix + "_state_autogen_with_imports.go",
+                out = name + suffix + "_state_autogen.go",
+            )
+        all_srcs = all_srcs + [name + suffix + "_state_autogen.go" for suffix in state_sets.keys()]
 
     # For template rendering, split all the sources into groups of related
     # files. This will prevent us from generating non-sensical combinations,
