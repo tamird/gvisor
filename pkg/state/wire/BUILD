@@ -7,7 +7,10 @@ package(
 
 go_library(
     name = "wire",
-    srcs = ["wire.go"],
+    srcs = [
+        "refs.go",
+        "wire.go",
+    ],
     importpath = "gvisor.dev/gvisor/pkg/state/wire",
     marshal = False,
     stateify = False,
@@ -19,6 +22,9 @@ go_library(
 
 go_test(
     name = "wire_test",
-    srcs = ["wire_test.go"],
+    srcs = [
+        "refs_test.go",
+        "wire_test.go",
+    ],
     embed = [":wire"],
 )
