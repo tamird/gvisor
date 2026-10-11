@@ -186,10 +186,11 @@ func AddrFrom4(addr [4]byte) netip.Addr {
 //
 // Deprecated: Use netip.AddrFromSlice.
 func AddrFrom4Slice(addr []byte) netip.Addr {
-	if len(addr) != 4 {
+	address, ok := netip.AddrFromSlice(addr)
+	if !ok || !address.Is4() {
 		panic(fmt.Sprintf("bad address length for address %v", addr))
 	}
-	return netip.AddrFrom4([4]byte(addr))
+	return address
 }
 
 // AddrFrom16 converts addr to a netip.Addr.
@@ -203,10 +204,11 @@ func AddrFrom16(addr [16]byte) netip.Addr {
 //
 // Deprecated: Use netip.AddrFromSlice.
 func AddrFrom16Slice(addr []byte) netip.Addr {
-	if len(addr) != 16 {
+	address, ok := netip.AddrFromSlice(addr)
+	if !ok || !address.Is6() {
 		panic(fmt.Sprintf("bad address length for address %v", addr))
 	}
-	return netip.AddrFrom16([16]byte(addr))
+	return address
 }
 
 // AddrFromSlice converts addr to a netip.Addr. It returns the netip.Addr zero value
@@ -214,13 +216,11 @@ func AddrFrom16Slice(addr []byte) netip.Addr {
 //
 // Deprecated: Use netip.AddrFromSlice.
 func AddrFromSlice(addr []byte) netip.Addr {
-	switch len(addr) {
-	case ipv4AddressSize:
-		return netip.AddrFrom4([4]byte(addr))
-	case ipv6AddressSize:
-		return netip.AddrFrom16([16]byte(addr))
+	address, ok := netip.AddrFromSlice(addr)
+	if !ok {
+		return netip.Addr{}
 	}
-	return netip.Addr{}
+	return address
 }
 
 // FullPrefix returns the address with a prefix that represents a point subnet.

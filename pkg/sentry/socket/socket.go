@@ -18,7 +18,6 @@
 package socket
 
 import (
-	"bytes"
 	"fmt"
 	"net/netip"
 	"time"
@@ -513,17 +512,11 @@ func ConvertAddress(family int, addr tcpip.FullAddress) (linux.SockAddr, uint32)
 // BytesToIPAddress converts an IPv4 or IPv6 address from the user to the
 // netstack representation taking any addresses into account.
 func BytesToIPAddress(addr []byte) netip.Addr {
-	if bytes.Equal(addr, make([]byte, 4)) || bytes.Equal(addr, make([]byte, 16)) {
+	address, ok := netip.AddrFromSlice(addr)
+	if !ok || address.IsUnspecified() {
 		return netip.Addr{}
 	}
-	switch len(addr) {
-	case header.IPv4AddressSize:
-		return netip.AddrFrom4([4]byte(addr))
-	case header.IPv6AddressSize:
-		return netip.AddrFrom16([16]byte(addr))
-	default:
-		return netip.Addr{}
-	}
+	return address
 }
 
 // AddressAndFamily reads an sockaddr struct from the given address and

@@ -641,38 +641,27 @@ func (s *Stack) InterfaceAddrs() map[int32][]inet.InterfaceAddr {
 // convertAddr converts an InterfaceAddr to a ProtocolAddress.
 func convertAddr(addr inet.InterfaceAddr) (tcpip.ProtocolAddress, error) {
 	var (
-		protocol        tcpip.NetworkProtocolNumber
-		address         netip.Addr
-		protocolAddress tcpip.ProtocolAddress
+		protocol tcpip.NetworkProtocolNumber
+		bits     int
 	)
 	switch addr.Family {
 	case linux.AF_INET:
-		if len(addr.Addr) != header.IPv4AddressSize {
-			return protocolAddress, linuxerr.EINVAL
-		}
-		if addr.PrefixLen > header.IPv4AddressSize*8 {
-			return protocolAddress, linuxerr.EINVAL
-		}
 		protocol = ipv4.ProtocolNumber
-		address = netip.AddrFrom4([4]byte(addr.Addr))
+		bits = header.IPv4AddressSize * 8
 	case linux.AF_INET6:
-		if len(addr.Addr) != header.IPv6AddressSize {
-			return protocolAddress, linuxerr.EINVAL
-		}
-		if addr.PrefixLen > header.IPv6AddressSize*8 {
-			return protocolAddress, linuxerr.EINVAL
-		}
 		protocol = ipv6.ProtocolNumber
-		address = netip.AddrFrom16([16]byte(addr.Addr))
+		bits = header.IPv6AddressSize * 8
 	default:
-		return protocolAddress, linuxerr.ENOTSUP
+		return tcpip.ProtocolAddress{}, linuxerr.ENOTSUP
 	}
-
-	protocolAddress = tcpip.ProtocolAddress{
+	address, ok := netip.AddrFromSlice(addr.Addr)
+	if !ok || address.BitLen() != bits || int(addr.PrefixLen) > bits {
+		return tcpip.ProtocolAddress{}, linuxerr.EINVAL
+	}
+	return tcpip.ProtocolAddress{
 		Protocol:          protocol,
 		AddressWithPrefix: netip.PrefixFrom(address, int(addr.PrefixLen)),
-	}
-	return protocolAddress, nil
+	}, nil
 }
 
 // AddInterfaceAddr implements inet.Stack.AddInterfaceAddr.

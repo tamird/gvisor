@@ -285,12 +285,9 @@ func doNetlinkInterfaceRequest(typ, flags uint16, idx uint32, addr inet.Interfac
 		Flags:     addr.Flags,
 	}
 	// Local address.
-	var localAddr netip.Addr
-	switch len(addr.Addr) {
-	case 4:
-		localAddr = netip.AddrFrom4([4]byte(addr.Addr))
-	case 16:
-		localAddr = netip.AddrFrom16([16]byte(addr.Addr))
+	localAddr, ok := netip.AddrFromSlice(addr.Addr)
+	if !ok {
+		return fmt.Errorf("invalid interface address length %d", len(addr.Addr))
 	}
 	if addr.Family == linux.AF_INET {
 		localAddr = localAddr.Unmap()
