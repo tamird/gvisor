@@ -13,6 +13,7 @@ go_library(
         "integer.go",
         "load.go",
         "map.go",
+        "record.go",
         "register.go",
         "struct.go",
         "tests.go",
