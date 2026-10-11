@@ -94,8 +94,8 @@ go_test(
         "//:release",
         "//test/cmd/test_app",
     ],
-    exec_properties = _CONTAINER_EXEC_PROPERTIES,
     embed = [":container"],
+    exec_properties = _CONTAINER_EXEC_PROPERTIES,
     shard_count = most_shards,
     tags = ["requires-kvm"] + ["rbe-has-container-%s-variant" % p for p in _CONTAINER_PLATFORMS],
     deps = [

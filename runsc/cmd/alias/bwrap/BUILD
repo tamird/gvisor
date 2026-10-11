@@ -46,9 +46,9 @@ go_test(
     data = [
         "//:release",
     ],
+    embed = [":bwrap"],
     # The runtime creates nested namespaces and configures cgroups.
     exec_properties = namespace_test_exec_properties(),
-    embed = [":bwrap"],
     tags = [
         "manual",
     ],

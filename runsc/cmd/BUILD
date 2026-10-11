@@ -122,8 +122,8 @@ go_test(
         "//:release",  # keep
         "//runsc",  # keep
     ],
-    exec_properties = namespace_test_exec_properties(memory = "1GB"),
     embed = [":cmd"],
+    exec_properties = namespace_test_exec_properties(memory = "1GB"),
     deps = [
         "//pkg/abi/linux",
         "//pkg/log",

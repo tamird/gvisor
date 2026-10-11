@@ -41,5 +41,5 @@ go_test(
         "//governance:licensing.yaml",
     ],
     embed = [":licensecheck"],
-    embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),
+    embedsrcs = ["testdata/apt-lock.json"] + glob(["testdata/*.txt"]),  # keep
 )

@@ -152,6 +152,7 @@ def _guest_test(name, payload, tags, image, **kwargs):
 
 def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
     """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
+
     # Avoid per-syscall trace formatting under software emulation. Keep debug
     # logging; later arguments can opt back into tracing for diagnosis.
     kwargs["args"] = ["--strace=false"] + kwargs.get("args", [])

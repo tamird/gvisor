@@ -75,14 +75,6 @@ bzl_library(
 )
 
 bzl_library(
-    name = "gazelle_bzl",
-    srcs = ["gazelle.bzl"],
-    visibility = [
-        "//:sandbox",
-    ],
-)
-
-bzl_library(
     name = "release_bzl",
     srcs = ["release.bzl"],
     visibility = [

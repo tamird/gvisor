@@ -42,8 +42,8 @@ docker_test(
     ],
     cohort = "iptables",
     data = ["//test/iptables/runner"],
-    ipv6 = True,
     embed = [":iptables"],
+    ipv6 = True,
     owned_args = ["--test-net-raw=true"],
     runtime_variants = [NETFILTER_VARIANTS["iptables"]],
     tags = [
@@ -65,8 +65,8 @@ docker_test(
     args = ["-iptables-nft=true"],
     cohort = "iptables",
     data = ["//test/iptables/runner"],
-    ipv6 = True,
     embed = [":iptables"],
+    ipv6 = True,
     # The legacy target owns analysis of these same test sources.
     nogo = False,
     owned_args = ["--test-net-raw=true"],

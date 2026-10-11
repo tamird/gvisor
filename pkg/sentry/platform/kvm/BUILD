@@ -116,8 +116,8 @@ go_test(
         "kvm_test.go",
         "virtual_map_test.go",
     ],
-    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
     embed = [":kvm"],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
     # FIXME(gvisor.dev/issue/3374): Not working with all build systems.
     nogo = False,
     pure = True,
