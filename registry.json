@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-11T09:45:51.044433+00:00",
+    "updatedAt": "2026-10-11T10:55:24.917343+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -3963,13 +3963,13 @@
       "title": "Migrate core network addresses and endpoints to netip",
       "url": "https://github.com/tamird/gvisor/commit/a3a7b99c4a36f0fd0e5e379597c3698047af0722",
       "group": "runtime",
-      "status": "Contributor review pending; codec publication dependency",
-      "updatedAt": "2026-10-11T05:27:18.898550+00:00",
-      "summary": "Root has sent the contributor question for exact a3a7b99c4: approve the independent netip PR after #15476 lands and the migration is preserved through rebasing. This is an actual pending decision, with no approval or upstream PR yet. The question retains required external field/method migration, address-copy/map costs, and the inconclusive same-host TCP comparison. Codec merge is a publication dependency; review is already requested.\n\nThe refreshed netip candidate a3a7b99c4 has completed scoped qualification on final fork composition 9b2869214. Across three recorded runs, 254 distinct test owners passed and three packetimpact payloads built; the runtime restore regression passed. The two original failed parents remain recorded, including missing upstream integration inputs/guard and fixture/import corrections. PR #15476 remains the publication prerequisite; the actual current contributor question is recorded above.\n\nEarlier candidate and source evidence:\n\nThe current netip candidate is technically reviewed and waits for its code prerequisite, PR #15476, to merge. Contributor review of this exact candidate has not been requested or granted. Root will prepare a source-preserving rebase after that merge and then request review once. No upstream stacked PR is open.\n\nEarlier observations:\n\nThe public review candidate is now ea3b6f25727706bf5cb7e2cf60d19d5273e5428c, reconciled with the delivered direct-BinaryAppender codec. Independent saved review closed the focused compatibility result on qualified 9ee3ea1cfdf8e74d864f7a4abb4ca85686b37cb1: parent 8e520f74-76ad-4840-b0a8-0995da22c4b0 passed seven original 60/300-second actions, with 31,939 passing XML entries, no skips, and all nineteen focused netip/codec identities. Normal AMD64 and ARM64 state suites, AMD64 race, four both-CPU Nogo owners, actual source and producer joins are verified. This is focused compatibility evidence; the earlier six-pair iperf result found no significant timing difference and does not establish equivalence or whole-checkpoint performance. No upstream PR or new contributor decision has been opened.\n\nEarlier observations:\n\nThe refreshed codec-registration correctness result is closed and independently reviewed: BuildBuddy b89e1f35-1e93-48cb-ba7c-c51dfd594bf0 passed all seven original 60/300-second actions on qualification/netip-codec-switch@687ff5791fe6074ff4579746d7961a7281b85d8e. The complete external state suites on AMD64 and ARM64, AMD64 race, and four both-CPU Nogo owners passed. TestNetipValues executed in all three runtime owners; 31,934 reported root/subtest XML entries had no skips or failures. All raw actions, race/native binaries, source captures and analyzer inputs were verified; no local spawns occurred. This focused result adds no repeated broad core, whole-checkpoint or performance claim. Standalone review/tcpip-netip-core-switch@85cda5aac62d50f0a2ca4b75cf8c348af0f9aa9f remains dependent on the proposed ac2 codec amendment. No new contributor question or upstream PR has been issued.\n\nEarlier observations:\n\nThe current review candidate is published at review/tcpip-netip-core-switch@85cda5aac62d50f0a2ca4b75cf8c348af0f9aa9f on the proposed ac2 type-switch codec. Independent reconciliation preserves all 164 migration edit maps except three private binary-registration calls; five base-context paths retain upstream changes. The old 67af source remains preserved. One focused seven-action correctness run is active as b89e1f35-1e93-48cb-ba7c-c51dfd594bf0 on qualification/netip-codec-switch@687ff5791fe6074ff4579746d7961a7281b85d8e: complete external state tests on AMD64/ARM64, AMD64 race and four both-CPU Nogo owners, with original 60/300-second limits. No new result or contributor question is claimed; upstream submission still depends on the codec. The earlier six-pair netip comparison used the older codec on both sides and does not measure the new combined source.\n\nEarlier observations:\n\nIndependent saved review e22b6fbaabfb closes the six balanced same-host netip pairs in Actions 37731872171: 24 measured upload/download leaves, 14 original 3,600-second actions including warmups, exact source/native inputs and no fresh measured compilation. Upload median throughput changed −1.19% (p=.394) and download −7.08% (p=.310). Neither difference was statistically significant in this sample; this is not equivalence or proof of no regression, and the lower download estimate remains visible. The evidence covers this one host and these two benchmark leaves, with no whole-application performance claim. The contributor packet is being prepared; no renewed review request or upstream PR has been reported.\n\nEarlier observations:\n\nSame-host comparison Actions 37731872171 finished SUCCESS. The retained artifact has 24 measurements and 17 compact logs; the owner is binding actual source/native producer inputs and interpreting paired measurements. No performance conclusion is claimed from the parent status.\n\nEarlier observations:\n\nOne same-host netip comparison is running as Actions 37731872171, accepted at 05:20:23 UTC. The exact public source pair is before 3907c386f426c1d9e2f3cb17eade8d710057b426 and after 2b459fd900b058e05f64ae7c2ed40e9d227e09aa. Source and method review cover the 163-path migration delta, six balanced pairs using the two original 30-second benchmark leaves, strict remote compilation and one local TestRunner. Both sides include the same separately reviewed client-metrics and byte-accounting corrections. The sole owner is observing this run; there is no performance result or renewed contributor review question yet.\n\nClosed source-specific correctness qualifications:\n\nCombined netip + SA1019 qualification is now cumulatively closed: unchanged 827 complete Nogo owners from the first run plus seven corrected owners from e9195e03 all pass (834 total). Only the exact gcexportdata.NewReader compatibility exception changed; both CPUs and findings outputs are bound, with no local execution. Saved peer1d2b6680 retains the original seven-owner failure. No new contributor question is implied by evidence closure.\n\nCombined netip and SA1019 validation ed482c08 at source 4207190904ea80bfdb74e4a179dafe750a06f983 is closed FAILED: 827 of 834 complete Nogo owners passed; seven failed with the same gcexportdata.NewReader deprecation at check.go:421 on both CPUs. Independent saved peer 77b83bcfc3f9 verifies all 1,946 archived files, 223 Git bodies, 834 uncached remote results and 26 raw Actions, with no missing owners or local execution. The combined source pins x/tools 0.51.0. A reviewed method-specific compatibility exception is public at 9f758f2540d59b97490411e7abd7edc680a48721, and only the seven failed owners are running in https://app.buildbuddy.io/invocation/e9195e03-b5e4-45df-b730-312afacc0729. Component runtime qualifications remain separate and no full combined pass is claimed.\n\nThe combined netip and SA1019 qualification is running as https://app.buildbuddy.io/invocation/ed482c08-38b3-4df0-a43d-547b4d54793a at public4207190904ea80bfdb74e4a179dafe750a06f983. Source peer400a and method peer84eb verify the35-path composition and223 actual Git captures. This runs only the complete maintained Nogo inventory with original300s deadlines, strict remote400 and one uncached attempt; the actual configured count is pending and the prior834 count is not assumed. Component runtime evidence remains separate, with no repeated unit/runtime or audit phase.\n\nThe requested standalone revision is public at 67af0b3580309568a6149222ecb1b8440a8bca28, based on the revised 4dac checkpoint codec. It completes internal netip constructors, moves netip registration/tests into the core change and preserves the requested helpers and deprecation documentation. Final independent source/composition peer 5b67d91a17e5 closes the gateway and NIC API corrections, including the original invalid-or-unspecified gateway contract. The earlier a175 source receipt 67a2 is superseded by that concrete finding and correction.\n\nThe exact qualified composition f3516c6c4538d1fdb2ffdf9b712cebfe2c36accb preserves four explicit upstream route/IPv4 prerequisites, existing NIC teardown/synctest, OriginalDst ENOENT and prior typed boundary inputs. Both refs have direct publication/tracking readback. Method peer 537f939e54dd verifies all 188 source captures and the complete scoped commands. One validation was accepted as https://app.buildbuddy.io/invocation/b2ff2d61-a9a9-42d5-b7ed-c75f88a9c8de: full recursive core/state and changed consumer owners, explicit ARM64 state/header runtime and three build-only packetimpact payloads, with original deadlines and strict remote compilation. Independent original-result peer54fd verifies250 passing owners/260 results and three successful build-only payloads, retaining the original Failed parent and two compile-blocked stack roots. Their qualification-only OriginalDst fixture correction is public in bf76a8d172b1bdd24228ecf4ac22a20ec2230158. Continuation https://app.buildbuddy.io/invocation/eb982ef6-748e-4515-9faa-21157963a473 passes both complete previously unbuilt owners with original60/300s deadlines,788 reported XML entries and actual TestNATedConnectionReap. Saved continuation/cumulative peer17ed verifies466 files,188 Git bodies, raw Action/Command/native and both-CPU Nogo joins. The cumulative scoped result is252 passing owners/262 results; XML totals include roots/subtests/skips and are not distinct leaf counts. Original sparse reports and two non-required missing-producer joins remain explicit. No whole-unit, packetimpact runtime, cross-version checkpoint or performance claim is made. The earlier contributor request was answered with changes; no new contributor question or upstream PR is claimed.\n\nEarlier source-specific review and evidence:\n\nThe concrete contributor review request is now pending for tcpip-netip-core-refresh@96d023665b8e7df92d2cb033581ad2c2da273e10, with submission planned after the checkpoint codec lands. The refreshed route validation passes the focused native and gVisor route owners: twenty executed cases and six existing source-defined skips across twenty-six XML entries, two uncached 300-second AMD64 Firecracker workers with IPv6. Parent d66a500e and independent peer ec738a90a99e bind the exact source and both raw action/output joins; all 107 netip/state blobs match the standalone source. The original compiler-prerequisite failure remains recorded, and its separate both-CPU netstack Nogo pass is reused. Overall netstack performance remains unknown; isolated copy/map measurements describe diagnostic tradeoffs rather than end-to-end impact.\n\nEarlier source and validation history:\n\nPublished revision c67df166ac0e7b07ff45bc899bb8c8ec1b30ac67 removes the newly added isolated microbenchmark and its BUILD entry, retains the adverse measurements only as limited diagnostic evidence, and deprecates Address alongside the other aliases. It addresses the latest benchmark feedback; contributor review remains in correction state and no netip PR is authorized.\n\nThe user-requested revision is public at c55394724: static prefixes use PrefixFrom where appropriate, deprecated Subnet and AddressWithPrefix aliases retain the type names, and the proposed description includes all nine measured benchmark rows and their limits. The complete narrow source/record peer passes. The fresh-base union retains upstream first-match route deletion behavior. That prior review request led to the further revision described above; no upstream PR is approved or open.\n\nThe published core-first prototype uses actual netip address, prefix and address-port values across the stack, with the shared checkpoint-state codec as a real prerequisite. Independent source reviews cover production boundaries, route fixtures and comparison contracts. This is implementation work; no upstream submission is requested yet.\n\nThe initial full build at validation 4a3d5857a fails in parent 74811 after 722.705 seconds: 7,646 configured roots, 3,294 successful and 4,352 unsuccessful, no skipped roots or TestResult events. Compiler diagnostics identify a remaining next-hop Len call in nat.go and old endpoint tuple fields in a qualification-only iptables test. Those two call sites are subsequently corrected; no successful full graph or runtime result is claimed. Earlier prototypes and failure evidence remain preserved.\n\nThe second build at f13 retains failure: 3,601 of 7,646 configured roots succeeded, with the remaining diagnostic in duplicate TCP probe-ID conversion. After its source correction, the third build at 179a reaches 7,642 successful roots and four failed roots caused by two test-source omissions. Both are corrected at ca297/27f2. The full package run then passes 222 of 226 runtime owners and all 149 Nogo owners; the four failures are go-cmp private-field panics in DAD, NAT deep copy, neighbor-cache and NUD tests. No production failure is established by these panics.\n\nReviewed source 321eb47673d6bfd6ab2a09dead1e75c540d43db5 corrects those owning comparison contracts and direct BUILD dependencies; validation composition 062f3cd15c15e1e8ddd1689420b714bfdf185da9 preserves the implementation. Focused parent 5d3653c1 at062f passes all eight requested owners in15 actual uncached remote shards, preserving original60/300-second timeouts. All four corrected Go owners and their four Nogo owners pass. Independent saved peer f51999746960 verifies986 evidence files,265 source bindings, eight actual Action/Command joins and every result log/XML digest. Original1744 remains failed with222of226 owners passing and149Nogo passing; the focused correction is separate evidence, not a full package rerun. Go XML is nonverbose, so no complete internal-case or skip-count claim is made. Earlier failed parents remain failed; no full graph or runtime qualification is claimed.",
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The user requested a shorter change record and an examination of checked AddrFromSlice at slice boundaries. Root owns the revision. The existing codec merge dependency remains real; no zero-copy benefit or approval is inferred.\n\nThe revision must retain required external field/method migration, address-copy/map costs, and the inconclusive same-host TCP comparison. The earlier contributor question is answered with changes; codec merge remains a publication dependency.\n\nThe refreshed netip candidate a3a7b99c4 has completed scoped qualification on final fork composition 9b2869214. Across three recorded runs, 254 distinct test owners passed and three packetimpact payloads built; the runtime restore regression passed. The two original failed parents remain recorded, including missing upstream integration inputs/guard and fixture/import corrections. PR #15476 remains the publication prerequisite; the current contributor revision request is recorded above.\n\nEarlier candidate and source evidence:\n\nThe current netip candidate is technically reviewed and waits for its code prerequisite, PR #15476, to merge. Contributor review of this exact candidate has not been requested or granted. Root will prepare a source-preserving rebase after that merge and then request review once. No upstream stacked PR is open.\n\nEarlier observations:\n\nThe public review candidate is now ea3b6f25727706bf5cb7e2cf60d19d5273e5428c, reconciled with the delivered direct-BinaryAppender codec. Independent saved review closed the focused compatibility result on qualified 9ee3ea1cfdf8e74d864f7a4abb4ca85686b37cb1: parent 8e520f74-76ad-4840-b0a8-0995da22c4b0 passed seven original 60/300-second actions, with 31,939 passing XML entries, no skips, and all nineteen focused netip/codec identities. Normal AMD64 and ARM64 state suites, AMD64 race, four both-CPU Nogo owners, actual source and producer joins are verified. This is focused compatibility evidence; the earlier six-pair iperf result found no significant timing difference and does not establish equivalence or whole-checkpoint performance. No upstream PR or new contributor decision has been opened.\n\nEarlier observations:\n\nThe refreshed codec-registration correctness result is closed and independently reviewed: BuildBuddy b89e1f35-1e93-48cb-ba7c-c51dfd594bf0 passed all seven original 60/300-second actions on qualification/netip-codec-switch@687ff5791fe6074ff4579746d7961a7281b85d8e. The complete external state suites on AMD64 and ARM64, AMD64 race, and four both-CPU Nogo owners passed. TestNetipValues executed in all three runtime owners; 31,934 reported root/subtest XML entries had no skips or failures. All raw actions, race/native binaries, source captures and analyzer inputs were verified; no local spawns occurred. This focused result adds no repeated broad core, whole-checkpoint or performance claim. Standalone review/tcpip-netip-core-switch@85cda5aac62d50f0a2ca4b75cf8c348af0f9aa9f remains dependent on the proposed ac2 codec amendment. No new contributor question or upstream PR has been issued.\n\nEarlier observations:\n\nThe current review candidate is published at review/tcpip-netip-core-switch@85cda5aac62d50f0a2ca4b75cf8c348af0f9aa9f on the proposed ac2 type-switch codec. Independent reconciliation preserves all 164 migration edit maps except three private binary-registration calls; five base-context paths retain upstream changes. The old 67af source remains preserved. One focused seven-action correctness run is active as b89e1f35-1e93-48cb-ba7c-c51dfd594bf0 on qualification/netip-codec-switch@687ff5791fe6074ff4579746d7961a7281b85d8e: complete external state tests on AMD64/ARM64, AMD64 race and four both-CPU Nogo owners, with original 60/300-second limits. No new result or contributor question is claimed; upstream submission still depends on the codec. The earlier six-pair netip comparison used the older codec on both sides and does not measure the new combined source.\n\nEarlier observations:\n\nIndependent saved review e22b6fbaabfb closes the six balanced same-host netip pairs in Actions 37731872171: 24 measured upload/download leaves, 14 original 3,600-second actions including warmups, exact source/native inputs and no fresh measured compilation. Upload median throughput changed −1.19% (p=.394) and download −7.08% (p=.310). Neither difference was statistically significant in this sample; this is not equivalence or proof of no regression, and the lower download estimate remains visible. The evidence covers this one host and these two benchmark leaves, with no whole-application performance claim. The contributor packet is being prepared; no renewed review request or upstream PR has been reported.\n\nEarlier observations:\n\nSame-host comparison Actions 37731872171 finished SUCCESS. The retained artifact has 24 measurements and 17 compact logs; the owner is binding actual source/native producer inputs and interpreting paired measurements. No performance conclusion is claimed from the parent status.\n\nEarlier observations:\n\nOne same-host netip comparison is running as Actions 37731872171, accepted at 05:20:23 UTC. The exact public source pair is before 3907c386f426c1d9e2f3cb17eade8d710057b426 and after 2b459fd900b058e05f64ae7c2ed40e9d227e09aa. Source and method review cover the 163-path migration delta, six balanced pairs using the two original 30-second benchmark leaves, strict remote compilation and one local TestRunner. Both sides include the same separately reviewed client-metrics and byte-accounting corrections. The sole owner is observing this run; there is no performance result or renewed contributor review question yet.\n\nClosed source-specific correctness qualifications:\n\nCombined netip + SA1019 qualification is now cumulatively closed: unchanged 827 complete Nogo owners from the first run plus seven corrected owners from e9195e03 all pass (834 total). Only the exact gcexportdata.NewReader compatibility exception changed; both CPUs and findings outputs are bound, with no local execution. Saved peer1d2b6680 retains the original seven-owner failure. No new contributor question is implied by evidence closure.\n\nCombined netip and SA1019 validation ed482c08 at source 4207190904ea80bfdb74e4a179dafe750a06f983 is closed FAILED: 827 of 834 complete Nogo owners passed; seven failed with the same gcexportdata.NewReader deprecation at check.go:421 on both CPUs. Independent saved peer 77b83bcfc3f9 verifies all 1,946 archived files, 223 Git bodies, 834 uncached remote results and 26 raw Actions, with no missing owners or local execution. The combined source pins x/tools 0.51.0. A reviewed method-specific compatibility exception is public at 9f758f2540d59b97490411e7abd7edc680a48721, and only the seven failed owners are running in https://app.buildbuddy.io/invocation/e9195e03-b5e4-45df-b730-312afacc0729. Component runtime qualifications remain separate and no full combined pass is claimed.\n\nThe combined netip and SA1019 qualification is running as https://app.buildbuddy.io/invocation/ed482c08-38b3-4df0-a43d-547b4d54793a at public4207190904ea80bfdb74e4a179dafe750a06f983. Source peer400a and method peer84eb verify the35-path composition and223 actual Git captures. This runs only the complete maintained Nogo inventory with original300s deadlines, strict remote400 and one uncached attempt; the actual configured count is pending and the prior834 count is not assumed. Component runtime evidence remains separate, with no repeated unit/runtime or audit phase.\n\nThe requested standalone revision is public at 67af0b3580309568a6149222ecb1b8440a8bca28, based on the revised 4dac checkpoint codec. It completes internal netip constructors, moves netip registration/tests into the core change and preserves the requested helpers and deprecation documentation. Final independent source/composition peer 5b67d91a17e5 closes the gateway and NIC API corrections, including the original invalid-or-unspecified gateway contract. The earlier a175 source receipt 67a2 is superseded by that concrete finding and correction.\n\nThe exact qualified composition f3516c6c4538d1fdb2ffdf9b712cebfe2c36accb preserves four explicit upstream route/IPv4 prerequisites, existing NIC teardown/synctest, OriginalDst ENOENT and prior typed boundary inputs. Both refs have direct publication/tracking readback. Method peer 537f939e54dd verifies all 188 source captures and the complete scoped commands. One validation was accepted as https://app.buildbuddy.io/invocation/b2ff2d61-a9a9-42d5-b7ed-c75f88a9c8de: full recursive core/state and changed consumer owners, explicit ARM64 state/header runtime and three build-only packetimpact payloads, with original deadlines and strict remote compilation. Independent original-result peer54fd verifies250 passing owners/260 results and three successful build-only payloads, retaining the original Failed parent and two compile-blocked stack roots. Their qualification-only OriginalDst fixture correction is public in bf76a8d172b1bdd24228ecf4ac22a20ec2230158. Continuation https://app.buildbuddy.io/invocation/eb982ef6-748e-4515-9faa-21157963a473 passes both complete previously unbuilt owners with original60/300s deadlines,788 reported XML entries and actual TestNATedConnectionReap. Saved continuation/cumulative peer17ed verifies466 files,188 Git bodies, raw Action/Command/native and both-CPU Nogo joins. The cumulative scoped result is252 passing owners/262 results; XML totals include roots/subtests/skips and are not distinct leaf counts. Original sparse reports and two non-required missing-producer joins remain explicit. No whole-unit, packetimpact runtime, cross-version checkpoint or performance claim is made. The earlier contributor request was answered with changes; no new contributor question or upstream PR is claimed.\n\nEarlier source-specific review and evidence:\n\nThe concrete contributor review request is now pending for tcpip-netip-core-refresh@96d023665b8e7df92d2cb033581ad2c2da273e10, with submission planned after the checkpoint codec lands. The refreshed route validation passes the focused native and gVisor route owners: twenty executed cases and six existing source-defined skips across twenty-six XML entries, two uncached 300-second AMD64 Firecracker workers with IPv6. Parent d66a500e and independent peer ec738a90a99e bind the exact source and both raw action/output joins; all 107 netip/state blobs match the standalone source. The original compiler-prerequisite failure remains recorded, and its separate both-CPU netstack Nogo pass is reused. Overall netstack performance remains unknown; isolated copy/map measurements describe diagnostic tradeoffs rather than end-to-end impact.\n\nEarlier source and validation history:\n\nPublished revision c67df166ac0e7b07ff45bc899bb8c8ec1b30ac67 removes the newly added isolated microbenchmark and its BUILD entry, retains the adverse measurements only as limited diagnostic evidence, and deprecates Address alongside the other aliases. It addresses the latest benchmark feedback; contributor review remains in correction state and no netip PR is authorized.\n\nThe user-requested revision is public at c55394724: static prefixes use PrefixFrom where appropriate, deprecated Subnet and AddressWithPrefix aliases retain the type names, and the proposed description includes all nine measured benchmark rows and their limits. The complete narrow source/record peer passes. The fresh-base union retains upstream first-match route deletion behavior. That prior review request led to the further revision described above; no upstream PR is approved or open.\n\nThe published core-first prototype uses actual netip address, prefix and address-port values across the stack, with the shared checkpoint-state codec as a real prerequisite. Independent source reviews cover production boundaries, route fixtures and comparison contracts. This is implementation work; no upstream submission is requested yet.\n\nThe initial full build at validation 4a3d5857a fails in parent 74811 after 722.705 seconds: 7,646 configured roots, 3,294 successful and 4,352 unsuccessful, no skipped roots or TestResult events. Compiler diagnostics identify a remaining next-hop Len call in nat.go and old endpoint tuple fields in a qualification-only iptables test. Those two call sites are subsequently corrected; no successful full graph or runtime result is claimed. Earlier prototypes and failure evidence remain preserved.\n\nThe second build at f13 retains failure: 3,601 of 7,646 configured roots succeeded, with the remaining diagnostic in duplicate TCP probe-ID conversion. After its source correction, the third build at 179a reaches 7,642 successful roots and four failed roots caused by two test-source omissions. Both are corrected at ca297/27f2. The full package run then passes 222 of 226 runtime owners and all 149 Nogo owners; the four failures are go-cmp private-field panics in DAD, NAT deep copy, neighbor-cache and NUD tests. No production failure is established by these panics.\n\nReviewed source 321eb47673d6bfd6ab2a09dead1e75c540d43db5 corrects those owning comparison contracts and direct BUILD dependencies; validation composition 062f3cd15c15e1e8ddd1689420b714bfdf185da9 preserves the implementation. Focused parent 5d3653c1 at062f passes all eight requested owners in15 actual uncached remote shards, preserving original60/300-second timeouts. All four corrected Go owners and their four Nogo owners pass. Independent saved peer f51999746960 verifies986 evidence files,265 source bindings, eight actual Action/Command joins and every result log/XML digest. Original1744 remains failed with222of226 owners passing and149Nogo passing; the focused correction is separate evidence, not a full package rerun. Go XML is nonverbose, so no complete internal-case or skip-count claim is made. Earlier failed parents remain failed; no full graph or runtime qualification is claimed.",
       "followup": {
-        "disposition": "Contributor review pending; publication depends on codec merge",
+        "disposition": "Contributor revision requested",
         "owner": "root",
-        "nextAction": "Await the actual contributor response for a3a7 and continue observing #15476. If approved and the codec lands, preserve the reviewed migration through rebasing and prepare the independent PR. Do not defer the already-requested review until merge.",
+        "nextAction": "The user requested a shorter change record and an examination of checked AddrFromSlice at slice boundaries. Root owns the revision. The existing codec merge dependency remains real; no zero-copy benefit or approval is inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/96d023665b8e7df92d2cb033581ad2c2da273e10",
           "https://app.buildbuddy.io/invocation/d66a500e-2223-4f0d-931d-ddf7c5496c21",
@@ -3988,11 +3988,10 @@
           "https://app.buildbuddy.io/invocation/ee865823-9bba-40bb-ad72-7042fa5a4f16",
           "https://app.buildbuddy.io/invocation/e854fb54-4d71-4865-ac62-6ad3662de15d"
         ],
-        "reviewedAt": "2026-10-11T05:27:18.898550+00:00",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
         "sourceHead": "a3a7b99c4a36f0fd0e5e379597c3698047af0722"
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "a3a7b99c4a36f0fd0e5e379597c3698047af0722",
         "url": "https://github.com/tamird/gvisor/commit/a3a7b99c4a36f0fd0e5e379597c3698047af0722"
       }
@@ -4893,26 +4892,37 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "8655f78425457c26f6dca5c4c4316acd9d9e5d2a",
+      "head": "85b83522860c6a75f65ef2eb5c5b723b6c81b500",
       "title": "Current combined remote-CI candidate",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/8655f78425457c26f6dca5c4c4316acd9d9e5d2a",
+      "url": "https://github.com/tamird/gvisor/commit/85b83522860c6a75f65ef2eb5c5b723b6c81b500",
       "status": "Ordinary ARM64 passed; complete 64K and RC censuses retain two and five timeouts",
-      "summary": "Current public-CI qualification is incomplete. Canonical source is 8655f7842. The complete ordinary ARM64 profile and mixed-unit lane passed on their recorded sources; the complete ARM64 64 KiB and release-candidate profiles retain two and five timeouts. Both guest case censuses are closed. Epoll reproduced its original timeout, the QEMU/proc comparison did not establish an improvement, and both CUDA archives now materialize through the isolated temporary-save path; general promotion remains under review. Ten contributor decisions are pending in the linked proposal nodes.\n\nThe full 64 KiB run, Actions 38116364153 on 7df857fa9, passed 659 of 661 owners. Its 1,286 main actions include two original 900-second timeouts: epoll directfs and proc shared shard 5 of 8. All 2,572 core outputs authenticate. Completed XML reports 35,190 C++ passes, 1,486 skipped or unexecuted cases, eighteen passing wrappers and two failed wrappers. The full RC run, Actions 38118672486 on f1ed6869e, passed 914 of 919 owners across 1,775 main actions. Its five timeouts are proc ptrace, rename and chmod through FUSE, socket_unix_dgram_local through ptrace, and sigstop through directfs. All 3,550 core outputs authenticate; XML reports 48,768 C++ passes, 1,758 skipped or unexecuted cases, 29 passing wrappers and five failed wrappers. Both censuses verify configured identities, original limits and unique C++ cases. Partial timeout output receives no completed-case credit; whole-profile nested guest-binary provenance is a separate obligation.\n\nDispatch-state epoll follow-up 5ec8e408 on 32d7ac8b3 closed with nine passing repetitions and repetition 2 timing out after 900.432 seconds; all three owning analyzers passed. Both authenticated captures report task 7 with dispatch pending (0x8) while blocked in WaitAndAckAll, dispatcher nr=2 and queued entrants, with no dispatcher-loop goroutine. These observations guide the wakeup-path review; no mechanism or fix is established. Earlier repeated epoll diagnostic ebbcea3c ran the complete owner ten times at the original limits. Repetition 4 timed out after 900.839 seconds in DoubleEpollOneShot; the other nine passed in 119.656–224.614 seconds. Both five/ten-minute captures succeeded. The server is blocked in read and two clients await systrap dispatch, with no waitEpoll frame or dispatcher.loop goroutine in either complete dump. This is a mechanism-investigation lead; cause remains unknown. The separate four-owner RC dispatch-state repetition 89610a40 remains active. Earlier complete proc/epoll diagnostic 8c786d69 passed all 170 C++ cases, with proc shard 5 taking 841.256 seconds. Its captures show different live workload stages, not the original final-reader state. The four-owner RC diagnostic 5cdf2692 passed seven actions and 685 C++ cases with thirty skips; exact native test binaries and guest images match the originals, while runner/runtime binaries differ. The original failures remain unresolved.\n\nThe four-vCPU proc control df011eb2 passed fifteen of sixteen shards, with RC ptrace shard 5 still timing out. A general four-vCPU setting was not adopted. QEMU comparison 3043d93c on 260184daa closed with fifteen of sixteen passing shards on QEMU 6.2.0 and fourteen on 10.2.1. All 32 actions retained two vCPUs and the original 900-second limits; actual versions and equal within-run native binaries, payloads and guest images are verified. Both RC timeouts remained in the first 2,048-child stress case; the newer shared run timed out during the second stress case, rather than reproducing the original final-reader stall. No emulator improvement or promotion is established. Input review also corrected the preservation claim: adding Resolute caused the shared package resolver to omit Jammy mawk from the host archive; its other 134 inputs were byte-identical. Both initramfs digests also differ from the original profile. The precise content change in those images is not yet established. The narrow PR #281 backport now reproduces the original missing-provider assertion, passes the corrected resolver tests, and restores all five original package/image producer input and output sets through remote-cache results, including both original initramfs. An inherited undeclared-xz fixture failure is retained; its separate declared-bsdtar continuation passes, completing the original thirty test selections across the two runs. Upstream PR #281 remains unmerged. Independent proc redistribution 1177e3e6 at bbb9122b9 is active on the original QEMU 6.2/two-CPU inputs: nine shards separate the fixed stress cases while retaining all 149 names and 900-second deadlines. It is not yet a runtime pass or an explanation of the original final-reader stall.\n\nThe complete ordinary ARM64 4 KiB profile passed all fifteen disjoint buckets on payload 35fb84324: 919 owners, 1,675 fresh Actions-local main actions and 3,350 authenticated core outputs. XML records 49,011 C++ passes, 1,763 skipped or unexecuted cases and 29 wrappers. All 271 native producer input paths retain one digest across buckets; compilers ran remotely or from remote cache. The profile uses calibrated production clocks and excludes save/resume, KVM, RC and 64 KiB variants. Mixed-unit Actions 38106697677 passed all 673 owners and 693 main actions on bffba536e: 676 remote-cache results, thirteen fresh remote tests and four native ARM64 local tests. Source-artifact, focused clang, broad compilation, Nogo, Python-platform and 1,745-entry license checks have separately closed source-bound evidence in the links.\n\nMaintained runtime transport validation retains ninety passing wrappers from f47c93525 plus the corrected Syzkaller smoke on 35fb84324. Eight expected Netstack failures inside three packetimpact wrappers remain recorded as limitations. Reference-clock propagation, native sidecar layout, retired-flag removal and inherited-descriptor ownership have separate completed checks. Production clock defaults remain calibrated. Earlier native PTY and calibrated-clock anomalies retain their original evidence; the explicit reference-clock proposal does not establish their cause. The graph-declared AMD64 routing policy preserves the full selection and routes only declared missing host requirements; its 25-owner cohort and seventy-four formerly skipped bodies have closed evidence. These component results stay tied to their exact inputs.\n\nFinal CodeQL language-source scope is reviewed through e9b6c819a. Latest Go analysis reports 2,611 of 3,007 expected files, 79 visible diagnostics and 59 findings. The diagnostics comprise 47 raw runtime-template notifications represented by 37 extracted concrete instances, nineteen golden rewrite fixtures, two raw generated-test templates and eleven test-only discovery notifications. Actual configuration and archive-input joins preserve earlier code; the private archive adds the two CUDA programs and shared packetimpact helper without changing old members. Fresh Python analysis closes nineteen Python and fifteen Actions files without findings or extraction errors. Ruby and JavaScript reuse verified source-equivalent bodies. Scope remains default Linux/AMD64 Go without test extraction, with all-platform/all-tag, C/DPDK and GPU coverage limits explicit.\n\nIsolated CUDA control 04c928d3 on 4993072f2 successfully constructs and materializes both archives: 9,207,652,352 and 11,505,470,976 bytes, with identical temporary-file, declared-output and CAS hashes. Actual Docker CLI 24.0.9 saves under /tmp on the root ext4 filesystem, then copies to the declared bbvfs output. Both fresh remote actions complete within the unchanged 1,500-second limits. Earlier diagnostic 227b8657 remains a timeout in the combined save/hash interval. Different workers and mutable Docker build inputs prevent a causal or statistical speedup claim; no specific VFS defect is diagnosed. The VFS capacity report is synthetic. General promotion must account for the additional archive-sized temporary allocation and other callers’ smaller root budgets. A separate direct-stdout control f7b322d8 at 371801ed0 is active with the same two archive owners and bounds; it avoids the additional temporary archive but has no result yet. No GPU execution, ARM64 image construction, image push or runtime-pin change is credited.\n\nCanonical 8655f7842 adds current-report retention verified by e0b60515: exactly six current log/XML files match independently joined CAS bytes. The earlier broad scan collected 4,322 cached reports and is retained as rejected scope evidence. Original failures, earlier complete-profile counts, pre-execution method errors and corrected continuations remain in the detailed prior record and evidence links. The README records SlimVM as optional/manual outside the required public syscall and benchmark selections, with its runtime qualification still absent. No full public-CI completion or upstream delivery is claimed.",
-      "updatedAt": "2026-10-11T09:45:51.044433+00:00",
+      "summary": "Current public-CI qualification is incomplete. Canonical source 85b835228 includes both validated proc and datagram TCG redistributions. Complete ordinary ARM64 and mixed-unit profiles passed on their recorded sources; the original complete 64 KiB and RC profiles retain two and five timeouts. Epoll wakeup diagnosis continues. All three smaller image-archive consumers pass with the minimal temporary-save path; general integration remains separate. Four user-approved proposals are now PRs #15642–#15645; the six other proposals require revisions.\n\nThe full 64 KiB run, Actions 38116364153 on 7df857fa9, passed 659 of 661 owners. Its 1,286 main actions include two original 900-second timeouts: epoll directfs and proc shared shard 5 of 8. All 2,572 core outputs authenticate. Completed XML reports 35,190 C++ passes, 1,486 skipped or unexecuted cases, eighteen passing wrappers and two failed wrappers. The full RC run, Actions 38118672486 on f1ed6869e, passed 914 of 919 owners across 1,775 main actions. Its five timeouts are proc ptrace, rename and chmod through FUSE, socket_unix_dgram_local through ptrace, and sigstop through directfs. All 3,550 core outputs authenticate; XML reports 48,768 C++ passes, 1,758 skipped or unexecuted cases, 29 passing wrappers and five failed wrappers. Both censuses verify configured identities, original limits and unique C++ cases. Partial timeout output receives no completed-case credit; whole-profile nested guest-binary provenance is a separate obligation.\n\nEpoll waiter diagnostics on 49e4938b6 passed thirty complete repetitions in 111.5–381.2 seconds plus four analyzers; the captured successful run showed a normal active dispatcher. The unchanged-source 100-repeat continuation 08f9cda1 is terminal failed. Fourteen retained captures each show a task with a nonzero pending event, a committed park and a callback pointing to that same waiter. These source-linked observations are not an atomic snapshot; attribution to QEMU, Go or a gVisor wakeup defect remains unproved. The complete result census is still being closed. This does not fix or explain the earlier reproduced stalls. Dispatch-state run 5ec8e408 retained nine passes and one DoubleEpollOneShot timeout after 900.432 seconds. Both captures showed task 7 waiting in WaitAndAckAll with dispatch pending (0x8), dispatcher nr=2 and queued entrants, without a dispatcher-loop goroutine. Stack and field reads are sequential, so this is a wakeup-path lead, not an atomic proof of cause. Earlier run ebbcea3c also reproduced the same case at 900.839 seconds. The four-owner RC repetition 89610a40 closed with 68 of 70 actions passing: all rename/FUSE, chmod/FUSE and sigstop repetitions passed; two ptrace datagram actions timed out in FragmentedRecvMsg, a different case from the original WriteShutdown timeout. XML records 6,538 C++ passes, 288 skips and two failed wrappers. Original payload/image bytes and limits match. The earlier proc/epoll and four-owner RC diagnostic passes remain separate bounded non-reproductions.\n\nProc redistribution 1177e3e6 passed both complete original owners: eighteen actions and 298 cases, exactly 149 names per owner, at two CPUs, QEMU 6.2 and the original 900-second limits. The slowest action took 859.771691 seconds, leaving 40.228309 seconds of observed margin. The exact two-line TCG-only declaration is integrated at a43077394. This single cohort does not explain the original post-reap reader stall. Independent datagram redistribution 097b2607 passed eighty actions across ten complete 648-case repetitions, with 6,240 C++ passes and the same 24 skipped names per repetition. The maximum action took 246.136543 of 300 seconds; its declaration is integrated at 85b835228. The rejected four-CPU and QEMU comparisons remain evidence: four CPUs did not fix all proc shards, and QEMU 6.2.0 versus 10.2.1 passed fifteen versus fourteen of sixteen shards. The latter comparison matched within-run binaries and images but adding Resolute omitted Jammy mawk from the common host archive. ARM guest package archives were unchanged; the changed host input regenerated different initramfs bytes. The narrow upstream PR #281 backport restores all five original producer input/output sets through remote cache, including both original initramfs; twenty-nine resolver tests plus the separate corrected xz fixture cover the original thirty selections. PR #281 remains unmerged. A posted QEMU RCsc ordering series is a source-investigation lead, not an accepted/released fix or an established cause of the stalls. The native ARM/QEMU litmus 27b5b7f6 on e126e6d9a completed both 100,000-round cases on each platform with zero forbidden or invalid outcomes. Actual AArch64 disassembly verifies STLR then LDAR for the plain case and an intervening DMB ISH for the control, with identical test ELF inputs. This single negative sample is inconclusive for defect occurrence and the stall cause; no host TCG instruction trace was collected.\n\nThe complete ordinary ARM64 4 KiB profile passed all fifteen disjoint buckets on payload 35fb84324: 919 owners, 1,675 fresh Actions-local main actions and 3,350 authenticated core outputs. XML records 49,011 C++ passes, 1,763 skipped or unexecuted cases and 29 wrappers. All 271 native producer input paths retain one digest across buckets; compilers ran remotely or from remote cache. The profile uses calibrated production clocks and excludes save/resume, KVM, RC and 64 KiB variants. Mixed-unit Actions 38106697677 passed all 673 owners and 693 main actions on bffba536e: 676 remote-cache results, thirteen fresh remote tests and four native ARM64 local tests. Source-artifact, focused clang, broad compilation, Nogo, Python-platform and 1,745-entry license checks have separately closed source-bound evidence in the links.\n\nMaintained runtime transport validation retains ninety passing wrappers from f47c93525 plus the corrected Syzkaller smoke on 35fb84324. Eight expected Netstack failures inside three packetimpact wrappers remain recorded as limitations. Reference-clock propagation, native sidecar layout, retired-flag removal and inherited-descriptor ownership have separate completed checks. Production clock defaults remain calibrated. Earlier native PTY and calibrated-clock anomalies retain their original evidence; the explicit reference-clock proposal does not establish their cause. The graph-declared AMD64 routing policy preserves the full selection and routes only declared missing host requirements; its 25-owner cohort and seventy-four formerly skipped bodies have closed evidence. These component results stay tied to their exact inputs.\n\nFinal CodeQL language-source scope is reviewed through e9b6c819a. Latest Go analysis reports 2,611 of 3,007 expected files, 79 visible diagnostics and 59 findings. The diagnostics comprise 47 raw runtime-template notifications represented by 37 extracted concrete instances, nineteen golden rewrite fixtures, two raw generated-test templates and eleven test-only discovery notifications. Actual configuration and archive-input joins preserve earlier code; the private archive adds the two CUDA programs and shared packetimpact helper without changing old members. Fresh Python analysis closes nineteen Python and fifteen Actions files without findings or extraction errors. Ruby and JavaScript reuse verified source-equivalent bodies. Scope remains default Linux/AMD64 Go without test extraction, with all-platform/all-tag, C/DPDK and GPU coverage limits explicit.\n\nThe minimal owned-temporary save/copy path at 2c207d884 passed all three current containerd, Moby and PHP archive producers. Archive sizes are 854,632,448, 1,445,694,464 and 1,062,632,448 bytes; worker hashes match compact and CAS outputs. Sampled root peaks were 3.595, 5.423 and 4.290 GB of 43.600 GB. Moby and containerd reused existing registry images; PHP rebuilt after a cache miss. Thus the first two results cover fresh archive actions, not fresh Dockerfile-build peaks. The earlier isolated CUDA control 04c928d3 materialized both 9,207,652,352- and 11,505,470,976-byte archives through the same save/copy statements with additional diagnostic reads. In contrast, direct stdout control f7b322d8 reached both native 1,500-second limits and returned incomplete 3,932,160- and 2,752,512-byte tars without final hashes. The direct-export cause remains unknown. Temporary spooling adds one archive-sized root allocation; usage is sampled and does not guarantee future mutable-image headroom. No GPU workload, ARM image, image push or runtime-pin change is credited.\n\nAncestor 8655f7842 adds current-report retention verified by e0b60515: exactly six current log/XML files match independently joined CAS bytes. The earlier broad scan collected 4,322 cached reports and is retained as rejected scope evidence. Original failures, earlier complete-profile counts, pre-execution method errors and corrected continuations remain in the detailed prior record and evidence links. The README records SlimVM as optional/manual outside the required public syscall and benchmark selections, with its runtime qualification still absent. No full public-CI completion or upstream delivery is claimed.",
+      "updatedAt": "2026-10-11T10:55:24.917343+00:00",
       "followup": {
         "disposition": "Failed guest profiles remain unqualified; original cases and diagnostic limits retained",
         "owner": "root",
-        "sourceHead": "8655f78425457c26f6dca5c4c4316acd9d9e5d2a",
-        "reviewedAt": "2026-10-11T09:45:51.044433+00:00",
-        "nextAction": "Original full-profile timeouts remain unresolved. Epoll dispatch-state evidence is closed with another timeout and a wakeup-path lead; RC repetitions remain active; independent nine-shard proc redistribution preserves complete cases and deadlines. The package resolver and inherited compression fixture are corrected and original package/image bytes restored. Both CUDA archives materialized through temporary save; the smaller direct-stdout control is active before general promotion. Ten contributor decisions remain pending.",
+        "sourceHead": "85b83522860c6a75f65ef2eb5c5b723b6c81b500",
+        "reviewedAt": "2026-10-11T10:55:24.917343+00:00",
+        "nextAction": "Continue the original epoll and RC failure investigation without converting diagnostic passes into full-profile qualification. Proc and datagram redistributions are integrated. Close the full 100-repeat waiter census and investigate the observed pending/committed waiter state without causal attribution; minimal image-spool promotion remains separate. Track the four newly published PRs and complete the six contributor-requested revisions.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/49e4938b6d9c85262e6576b7338c454cc456e233",
+          "https://github.com/tamird/gvisor/commit/e126e6d9ae064539c78ff735d2db03377cc95fd0",
+          "https://app.buildbuddy.io/invocation/27b5b7f6-cd8d-4efe-aa2c-87749bfce530",
+          "https://app.buildbuddy.io/invocation/08f9cda1-d685-4b52-8be7-9852db1eb743",
+          "https://github.com/tamird/gvisor/commit/85b83522860c6a75f65ef2eb5c5b723b6c81b500",
+          "https://github.com/tamird/gvisor/commit/a43077394a79ba562b9cdafd71b51e842fdda141",
+          "https://app.buildbuddy.io/invocation/1177e3e6-6290-484d-ad2a-cdfbdbe13ad7",
+          "https://app.buildbuddy.io/invocation/097b2607-4416-42ea-b4a2-822128994f0f",
+          "https://app.buildbuddy.io/invocation/2d824402-6977-44a9-b77d-e7e0eb8d24fc",
+          "https://app.buildbuddy.io/invocation/e1c83d78-cf79-4af0-ada4-1e26483d0475",
+          "https://github.com/tamird/gvisor/commit/2c207d8845f4111513f9d89cf722e1a00a637b33",
+          "https://www.mail-archive.com/qemu-devel@nongnu.org/msg1218204.html",
           "https://app.buildbuddy.io/invocation/5ec8e408-17cd-4b95-b54a-3ef6fa4f0595",
           "https://app.buildbuddy.io/invocation/89610a40-3757-4c45-aa5d-3c0f53c3547c",
           "https://app.buildbuddy.io/invocation/3b0b3ccd-4d8f-4fc5-9fa2-255d14388906",
           "https://app.buildbuddy.io/invocation/652d5f4e-7d22-4426-9c4d-a47d0b2d9fb5",
           "https://github.com/tamird/gvisor/commit/5012950820e8823b1c7b9a8958d8c2eee277694e",
-          "https://app.buildbuddy.io/invocation/1177e3e6-6290-484d-ad2a-cdfbdbe13ad7",
           "https://github.com/tamird/gvisor/commit/bbb9122b909b1695483742899e410f0f55f2044c",
           "https://app.buildbuddy.io/invocation/f7b322d8-d6d3-4a58-afd5-c50aa4824286",
           "https://github.com/tamird/gvisor/commit/371801ed02ce6fd8ccbaf2e8a30f571a0efc8656",
@@ -5077,11 +5087,55 @@
       },
       "evidence": [
         {
+          "label": "Read-only waiter-state diagnostic source",
+          "url": "https://github.com/tamird/gvisor/commit/49e4938b6d9c85262e6576b7338c454cc456e233"
+        },
+        {
+          "label": "Actual atomic litmus source",
+          "url": "https://github.com/tamird/gvisor/commit/e126e6d9ae064539c78ff735d2db03377cc95fd0"
+        },
+        {
+          "label": "Closed ARM atomic litmus:zero observed violations,inconclusive",
+          "url": "https://app.buildbuddy.io/invocation/27b5b7f6-cd8d-4efe-aa2c-87749bfce530"
+        },
+        {
+          "label": "Failed 100-repeat diagnostic:14 pending/committed waiter captures; cause unproved",
+          "url": "https://app.buildbuddy.io/invocation/08f9cda1-d685-4b52-8be7-9852db1eb743"
+        },
+        {
+          "label": "Canonical proc and datagram TCG declarations",
+          "url": "https://github.com/tamird/gvisor/commit/85b83522860c6a75f65ef2eb5c5b723b6c81b500"
+        },
+        {
+          "label": "Canonical proc redistribution source",
+          "url": "https://github.com/tamird/gvisor/commit/a43077394a79ba562b9cdafd71b51e842fdda141"
+        },
+        {
+          "label": "Ten complete datagram repetitions passed with unchanged skips",
+          "url": "https://app.buildbuddy.io/invocation/097b2607-4416-42ea-b4a2-822128994f0f"
+        },
+        {
+          "label": "Thirty waiter-diagnostic epoll repetitions passed; no fix claim",
+          "url": "https://app.buildbuddy.io/invocation/2d824402-6977-44a9-b77d-e7e0eb8d24fc"
+        },
+        {
+          "label": "Three smaller archive consumers passed with minimal spooling",
+          "url": "https://app.buildbuddy.io/invocation/e1c83d78-cf79-4af0-ada4-1e26483d0475"
+        },
+        {
+          "label": "Minimal image-spool source",
+          "url": "https://github.com/tamird/gvisor/commit/2c207d8845f4111513f9d89cf722e1a00a637b33"
+        },
+        {
+          "label": "Posted QEMU RCsc ordering series; not a released fix",
+          "url": "https://www.mail-archive.com/qemu-devel@nongnu.org/msg1218204.html"
+        },
+        {
           "label": "Closed epoll dispatch-state repetition: nine passes and one timeout; wakeup lead unproved",
           "url": "https://app.buildbuddy.io/invocation/5ec8e408-17cd-4b95-b54a-3ef6fa4f0595"
         },
         {
-          "label": "Active four-owner RC dispatch-state repetition",
+          "label": "Closed RC repetitions: 68 passes and two different-case datagram timeouts",
           "url": "https://app.buildbuddy.io/invocation/89610a40-3757-4c45-aa5d-3c0f53c3547c"
         },
         {
@@ -5097,7 +5151,7 @@
           "url": "https://github.com/tamird/gvisor/commit/5012950820e8823b1c7b9a8958d8c2eee277694e"
         },
         {
-          "label": "Active complete proc redistribution; original CPUs and deadlines",
+          "label": "Complete proc redistribution passed; original stall remains unresolved",
           "url": "https://app.buildbuddy.io/invocation/1177e3e6-6290-484d-ad2a-cdfbdbe13ad7"
         },
         {
@@ -5105,7 +5159,7 @@
           "url": "https://github.com/tamird/gvisor/commit/bbb9122b909b1695483742899e410f0f55f2044c"
         },
         {
-          "label": "Active direct-stdout CUDA archive control",
+          "label": "Closed direct-stdout control: two timeouts and incomplete archives",
           "url": "https://app.buildbuddy.io/invocation/f7b322d8-d6d3-4a58-afd5-c50aa4824286"
         },
         {
@@ -5113,7 +5167,7 @@
           "url": "https://github.com/tamird/gvisor/commit/371801ed02ce6fd8ccbaf2e8a30f571a0efc8656"
         },
         {
-          "label": "Reviewed minimal dispatch-state source; repetitions active",
+          "label": "Reviewed dispatch-state diagnostic source",
           "url": "https://github.com/tamird/gvisor/commit/32d7ac8b38abcad30a1c5e675101302ebf125afa"
         },
         {
@@ -5764,15 +5818,15 @@
       "title": "Isolate cgroup controller transfer tests",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/791d920ba7f740f2d81db95bbf1904eb62dd17dd",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-10T21:06:58.780577+00:00",
-      "summary": "The independent cgroup transfer proposal includes exact prior-controller restoration and the native-only /proc/cgroups absence guard. Root has sent an actual contributor question for final 791d920ba7 after saved runtime review bab81e408c00. The final clang-format pass made no changes. Original component 1b974 and refresh ab696 remain preserved; no upstream PR exists.",
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The user conditionally approved the change after revising borrowed string parameters: preserve NUL-terminated strings at the mount boundary, use string_view for byte-counted writes, and keep the cleanup name owned. The owning amendment is in progress; the old head is not published as a PR.\n\nThe independent cgroup transfer proposal includes exact prior-controller restoration and the native-only /proc/cgroups absence guard. The final clang-format pass made no changes. Original component 1b974 and refresh ab696 remain preserved; no upstream PR exists.",
       "followup": {
-        "disposition": "Contributor decision pending for exact validated proposal",
+        "disposition": "Contributor revision requested",
         "owner": "root",
         "sourceHead": "791d920ba7f740f2d81db95bbf1904eb62dd17dd",
-        "reviewedAt": "2026-10-10T21:06:58.780577+00:00",
-        "nextAction": "Handle the contributor decision for the exact final proposal, then create an upstream PR if approved.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "The user conditionally approved the change after revising borrowed string parameters: preserve NUL-terminated strings at the mount boundary, use string_view for byte-counted writes, and keep the cleanup name owned. The owning amendment is in progress; the old head is not published as a PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/4a91176643e763316f2d4a222f92beb9a7eab891",
           "https://github.com/tamird/gvisor/commit/ab69615a33e0dd897e44eac8e7e4b07785c6d66a",
@@ -5782,8 +5836,7 @@
           "https://github.com/tamird/gvisor/commit/791d920ba7f740f2d81db95bbf1904eb62dd17dd"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "791d920ba7f740f2d81db95bbf1904eb62dd17dd",
         "url": "https://github.com/tamird/gvisor/commit/791d920ba7f740f2d81db95bbf1904eb62dd17dd"
       }
@@ -5797,83 +5850,82 @@
       "title": "Capture primitive arrays without per-element boxing",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-10T20:01:01.698301+00:00",
-      "summary": "The exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. Root has sent an actual contributor question for this exact commit; no upstream PR exists.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "3b13f133c033512ce901163cfe33eebd80a49965",
-        "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965"
-      },
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
       "followup": {
-        "disposition": "Contributor decision pending for exact standalone proposal",
-        "owner": "root",
+        "disposition": "Contributor revision requested",
+        "owner": "restore_integration_review",
         "sourceHead": "3b13f133c033512ce901163cfe33eebd80a49965",
-        "reviewedAt": "2026-10-10T20:01:01.698301+00:00",
-        "nextAction": "Handle the contributor decision for this exact proposal, then create the upstream PR if approved. Broader state experiments continue independently.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
           "https://app.buildbuddy.io/invocation/463669e5-4701-4d87-b24e-ec1d8813428a"
         ]
+      },
+      "contributorChangesRequested": {
+        "head": "3b13f133c033512ce901163cfe33eebd80a49965",
+        "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965"
       }
     },
     {
-      "id": "branch:tcp-timestamp-readiness",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15643",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/tcp-timestamp-readiness",
       "head": "c3d62b50f49ad1001c2e828c271b756e9e659837",
       "title": "Wait for TCP receive timestamp readiness",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/c3d62b50f49ad1001c2e828c271b756e9e659837",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-10T20:34:34.019560+00:00",
-      "summary": "The native RC comparison retains 189 baseline passes and one missing-SO_TIMESTAMP failure. The same 190 cases pass after the readiness change, and clang-tidy passes. IPv6 required 126 missing-timestamp probes before readiness; IPv4 required none. Source and native execution evidence are closed. Root has sent an actual contributor question for this exact fork proposal. No upstream PR exists.",
+      "url": "https://github.com/google/gvisor/pull/15643",
+      "status": "open",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The approved native TCP timestamp-readiness correction is published as PR #15643 at the exact reviewed head. The native RC comparison retains 189 baseline passes and one missing-SO_TIMESTAMP failure; all 190 cases and clang-tidy pass after the correction. IPv6 needed 126 untimestamped probes before readiness; IPv4 needed none. The original ancillary-message assertions remain the test behavior.",
       "followup": {
-        "disposition": "Contributor decision pending for exact validated proposal",
-        "owner": "root",
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
         "sourceHead": "c3d62b50f49ad1001c2e828c271b756e9e659837",
-        "reviewedAt": "2026-10-10T20:34:34.019560+00:00",
-        "nextAction": "Handle the contributor decision for this exact proposal and create an upstream PR if approved.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "Observe exact-head CI, maintainer feedback and import status through the existing finite sweep. Contributor approval is fulfilled; no merge is authorized.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15643",
           "https://github.com/tamird/gvisor/commit/c3d62b50f49ad1001c2e828c271b756e9e659837",
           "https://github.com/tamird/gvisor/actions/runs/38082288514"
-        ]
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "c3d62b50f49ad1001c2e828c271b756e9e659837",
-        "url": "https://github.com/tamird/gvisor/commit/c3d62b50f49ad1001c2e828c271b756e9e659837"
-      }
+      "number": 15643,
+      "reviewDecision": null
     },
     {
-      "id": "branch:calibrated-clock-readiness",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15642",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "review/calibrated-clock-readiness",
       "head": "529ae96bda1a8fe0c128dfa362c3a9ea8a46ce18",
       "title": "Report readiness after rejected clock calibration",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/529ae96bda1a8fe0c128dfa362c3a9ea8a46ce18",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-10T21:41:03.634379+00:00",
-      "summary": "Update reported success after a rejected calibration had cleared the clock ready state. This independent proposal returns the actual readiness state. The regression triggers the reset and fails before the correction; full time suites pass on AMD64 and ARM64, with 34 leaves each, and both owning Nogos pass. Root has sent an actual contributor question for this exact standalone head. It does not explain the separately observed no-reset VDSO ordering violations. No upstream PR exists.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "529ae96bda1a8fe0c128dfa362c3a9ea8a46ce18",
-        "url": "https://github.com/tamird/gvisor/commit/529ae96bda1a8fe0c128dfa362c3a9ea8a46ce18"
-      },
+      "url": "https://github.com/google/gvisor/pull/15642",
+      "status": "open",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "Update reported success after a rejected calibration had cleared the clock ready state. The approved standalone correction returns the actual readiness state. Its regression fails before the correction; complete time suites pass on both CPUs, with 34 leaves each, and both owning analyzers pass. The exact approved head is now PR #15642. This does not explain the separately observed no-reset VDSO ordering violations.",
       "followup": {
-        "disposition": "Contributor decision pending for exact validated proposal",
-        "owner": "root",
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
         "sourceHead": "529ae96bda1a8fe0c128dfa362c3a9ea8a46ce18",
-        "reviewedAt": "2026-10-10T21:41:03.634379+00:00",
-        "nextAction": "Handle the contributor decision for this standalone readiness correction. Continue the separate VDSO diagnosis without treating this as its fix.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "Observe exact-head CI, maintainer feedback and import status through the existing finite sweep. Contributor approval is fulfilled; no merge is authorized.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15642",
           "https://github.com/tamird/gvisor/commit/529ae96bda1a8fe0c128dfa362c3a9ea8a46ce18",
           "https://app.buildbuddy.io/invocation/81fc9cac-961d-4180-95b9-1d23b86e199a"
-        ]
-      }
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15642,
+      "reviewDecision": null
     },
     {
       "id": "branch:rbe-selective-routing",
@@ -5905,34 +5957,34 @@
       }
     },
     {
-      "id": "branch:mmap-eternal-without-strace",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15644",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "mmap-eternal-without-strace",
       "head": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
       "title": "Disable tracing in the page-table leak test",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-10T22:51:31.381592+00:00",
-      "summary": "This independent three-line test policy disables per-syscall tracing for the fixed page-table leak workload while retaining debug logs, its existing deadline and every test assertion. The original one-hour timeout produced an advertised 1.3 GiB boot log. An untraced control with identical kernel/payload inputs completed in 1450.760 seconds; its different-worker result is not an isolated tracing-cost measurement. The unchanged test body, current-master argument forwarding and standalone graph propagation are independently checked. Root has sent the actual contributor question for this exact public head; no upstream PR exists.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
-        "url": "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765"
-      },
+      "url": "https://github.com/google/gvisor/pull/15644",
+      "status": "open",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The approved three-line policy is published as PR #15644 at the exact reviewed head. It disables per-syscall tracing for the fixed page-table leak workload while retaining debug logs, the original deadline and every assertion. The original one-hour timeout advertised a 1.3 GiB boot log; an untraced control with identical kernel/payload inputs completed in 1450.760 seconds. Different workers prevent an isolated tracing-cost claim.",
       "followup": {
-        "disposition": "Contributor decision pending for exact standalone proposal",
-        "owner": "root",
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
         "sourceHead": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
-        "reviewedAt": "2026-10-10T22:51:31.381592+00:00",
-        "nextAction": "Handle the contributor decision to open the standalone PR using its reviewed commit message. Keep the diagnostic result distinct from full-profile qualification.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "Observe exact-head CI, maintainer feedback and import status through the existing finite sweep. Contributor approval is fulfilled; no merge is authorized.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15644",
           "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
           "https://github.com/tamird/gvisor/actions/runs/38083534945",
           "https://github.com/tamird/gvisor/actions/runs/38088752551"
-        ]
-      }
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15644,
+      "reviewDecision": null
     },
     {
       "id": "branch:time-reference-clock",
@@ -5943,26 +5995,25 @@
       "title": "Add an explicit host-reference clock source",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/684b060d464de2fc74bf5fce4e750a769061aea4",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-11T02:14:13.480699+00:00",
-      "summary": "Add --clock-source=reference while retaining calibrated clocks as the production default. The Sentry reads host clocks and application VDSO clock reads use the existing syscall fallback. Boot and restore use the destination runtime selection. Original clock, time/boot/config and analyzer checks passed after a fixture-count correction; the existing shared-save owner passed both clock cases through 196 awaited reference-mode restores. The 12-pair cost study ran all 52 actions: the complete clock_gettime action had a paired geometric mean duration ratio of 1.373 (95% interval 1.214–1.559), including fixed warmup and sandbox startup. Guest self-timed per-read values are not independent verification of calibrated time. Root has sent the contributor question for this exact message-only amendment of validated 978e24600. No upstream PR exists; the deployed cause of the original clock reversals remains unproved.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "684b060d464de2fc74bf5fce4e750a769061aea4",
-        "url": "https://github.com/tamird/gvisor/commit/684b060d464de2fc74bf5fce4e750a769061aea4"
-      },
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The user requested a clearer record of the motivation, discovery and existing syscall evidence. MAIN is revising the proposal record; source behavior is unchanged and no upstream PR is authorized yet.\n\nAdd --clock-source=reference while retaining calibrated clocks as the production default. The Sentry reads host clocks and application VDSO clock reads use the existing syscall fallback. Boot and restore use the destination runtime selection. Original clock, time/boot/config and analyzer checks passed after a fixture-count correction; the existing shared-save owner passed both clock cases through 196 awaited reference-mode restores. The 12-pair cost study ran all 52 actions: the complete clock_gettime action had a paired geometric mean duration ratio of 1.373 (95% interval 1.214–1.559), including fixed warmup and sandbox startup. Guest self-timed per-read values are not independent verification of calibrated time. No upstream PR exists; the deployed cause of the original clock reversals remains unproved.",
       "followup": {
-        "disposition": "Contributor decision pending for exact validated reference-clock proposal",
-        "owner": "root",
+        "disposition": "Contributor revision requested",
+        "owner": "restore_integration_review",
         "sourceHead": "684b060d464de2fc74bf5fce4e750a769061aea4",
-        "reviewedAt": "2026-10-11T02:14:13.480699+00:00",
-        "nextAction": "Handle the contributor decision to open the independent PR. Keep the fork qualification profile and the original calibrated-clock investigation separate.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "The user requested a clearer record of the motivation, discovery and existing syscall evidence. MAIN is revising the proposal record; source behavior is unchanged and no upstream PR is authorized yet.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/684b060d464de2fc74bf5fce4e750a769061aea4",
           "https://app.buildbuddy.io/invocation/9a0120e3-4bbe-4039-82e6-17c29b31e497",
           "https://app.buildbuddy.io/invocation/c1a72ebb-0f27-4272-9f6d-29c0fd3ecbc8",
           "https://app.buildbuddy.io/invocation/cf509169-d2db-48b5-9642-a212a582b5a4"
         ]
+      },
+      "contributorChangesRequested": {
+        "head": "684b060d464de2fc74bf5fce4e750a769061aea4",
+        "url": "https://github.com/tamird/gvisor/commit/684b060d464de2fc74bf5fce4e750a769061aea4"
       }
     },
     {
@@ -5993,36 +6044,36 @@
       }
     },
     {
-      "id": "branch:qualification/native-fixtures-current",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15645",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "proc-key-quota-fixture",
       "head": "c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
       "title": "Isolate and restore proc key-quota tests",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-11T04:17:08.478957+00:00",
-      "summary": "The current master-based proposal moves all three existing key-limit cases into one unsharded target with exclusive-if-local. Mutating cases restore and verify the captured host quota even after ordinary assertion failures; native reads respect the configured positive limit while gVisor retains its default assertion. The exact C++ body matches qualified f47c93525, including the direct capability-header correction. Source/migration and message reviews are closed. Root has sent the actual contributor question for c27d4b7d8; no approval or upstream PR exists. This supersedes the historical pending review/proc-key-limit-isolation proposal at 76c9cc22a, rebased to 6eefb3624. Earlier native before/after validation and the retained qualification/native-fixtures-current branch remain evidence; no deletion cause or prior approval was established.",
+      "url": "https://github.com/google/gvisor/pull/15645",
+      "status": "open",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The approved current master-based proposal is published as PR #15645 at c27d4b7d8. All three key-limit cases move to one unsharded exclusive-if-local target. Mutating cases restore and verify the captured host quota after ordinary assertion failures; native reads respect the configured positive limit and gVisor retains its default assertion. The C++ body matches qualified f47c93525 with its direct capability header. Earlier native before/after evidence and the historical 76c9cc22a/6eefb3624 lineage are retained; this current approval supersedes the earlier pending proposal.",
       "followup": {
-        "disposition": "Contributor decision pending for current standalone proposal; old question superseded",
-        "owner": "root",
+        "disposition": "Approved change delivered; maintainer review pending",
+        "owner": "external_sweeps",
         "sourceHead": "c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
-        "reviewedAt": "2026-10-11T04:17:08.478957+00:00",
-        "nextAction": "Handle the actual contributor decision for c27d4b7d8 before opening the independent PR. Preserve the recovered 76c/6eef lineage and original before/after evidence.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "Observe exact-head CI, maintainer feedback and import status through the existing finite sweep. Contributor approval is fulfilled; no merge is authorized.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15645",
           "https://github.com/tamird/gvisor/commit/c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
           "https://github.com/tamird/gvisor/commit/6eefb362409eed980ff3149036feb85cf56d9a6a",
           "https://github.com/tamird/gvisor/commit/76c9cc22a7c8417c3e7d8fd74f744504548c58f9",
           "https://github.com/tamird/gvisor/actions/runs/37770125989",
           "https://github.com/tamird/gvisor/commit/f47c93525a7229e32d4325fef15a8ba051641217"
-        ]
+        ],
+        "reviewDecision": null,
+        "mergeable": "MERGEABLE"
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
-        "url": "https://github.com/tamird/gvisor/commit/c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f"
-      }
+      "number": 15645,
+      "reviewDecision": null
     },
     {
       "id": "branch:review/state-generated-records",
@@ -6033,15 +6084,15 @@
       "title": "Generate typed state snapshot records",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-11T04:29:52.395920+00:00",
-      "summary": "The independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. Root has sent a replacement contributor question for corrected 0a75760e8. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No approval or upstream PR exists.",
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
       "followup": {
-        "disposition": "Replacement contributor question pending; former held question superseded",
-        "owner": "root",
+        "disposition": "Contributor revision requested",
+        "owner": "restore_integration_review",
         "sourceHead": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
-        "reviewedAt": "2026-10-11T04:29:52.395920+00:00",
-        "nextAction": "Handle the actual contributor decision for corrected 0a75760e8. Keep the original compile failure, corrected five-owner proof and earlier measured costs visible before upstream delivery.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
           "https://app.buildbuddy.io/invocation/f66a74d9-0e0e-489b-a515-c0e8d690bfd0",
@@ -6050,8 +6101,7 @@
           "https://app.buildbuddy.io/invocation/47fa61fb-2004-459d-9db1-0a2b845fa510"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
         "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0"
       }
@@ -6065,25 +6115,24 @@
       "title": "Capture pointer arrays as stable state references",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-11T07:07:18.795446+00:00",
-      "summary": "The independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Root has sent the actual contributor question for this exact commit. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No approval or upstream PR exists.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-        "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52"
-      },
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
+      "summary": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
-        "disposition": "Actual contributor question pending for independent reference-array proposal",
-        "owner": "root",
+        "disposition": "Contributor revision requested",
+        "owner": "restore_integration_review",
         "sourceHead": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
-        "reviewedAt": "2026-10-11T07:07:18.795446+00:00",
-        "nextAction": "Handle the contributor decision for this exact proposal before opening an upstream PR. Preserve separate cohorts, binary costs and kernel-pilot limits.",
+        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
+        "nextAction": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
           "https://app.buildbuddy.io/invocation/5b1e64cd-0b69-414c-9f46-85f618ed6d95",
           "https://app.buildbuddy.io/invocation/ff0d8ec2-b87d-4494-a52c-08eef59288c7"
         ]
+      },
+      "contributorChangesRequested": {
+        "head": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
+        "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52"
       }
     }
   ],
