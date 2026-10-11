@@ -743,6 +743,12 @@ run_platform_matrix() (
       unit-v1|container|container-v1|docker-v1)
         select_cgroup_profile "$selection_dir" "$lane"
         options+=(--strip=never)
+        if [[ $lane == container || $lane == container-v1 ]]; then
+          options+=(
+            '--test_filter=^(TestFSCheckpointCommand|TestFSCheckpointAnnotation|TestFSCheckpointSharedVolume)$'
+            --test_env=GO_TEST_WRAP_TESTV=1
+          )
+        fi
         ;;
       release-repository)
         printf '%s\n' '//test/release:repository_test' >> "$selection_dir/explicit-targets"
@@ -1021,21 +1027,7 @@ run_lane() (
       targets=(//pkg/sentry/platform/kvm:cgroup_v1_guest_probe)
       options=(--config=rbe-hybrid-tests --local_test_jobs=1 --test_env=GO_TEST_WRAP_TESTV=1)
       ;;
-    container-v1)
-      if [[ $arch != amd64 || $test_execution != local ]]; then
-        printf 'The chained restore diagnostic requires local AMD64 execution.\n' >&2
-        return 2
-      fi
-      # The cgroup fixture belongs inside this guest, never on the Actions host.
-      execution_config=rbe-matrix
-      targets=(//runsc/container:container_test_kvm_cgroup_v1_guest)
-      options=(
-        --config=rbe-hybrid-tests
-        --local_test_jobs=1
-        --test_env=GO_TEST_WRAP_TESTV=1
-      )
-      ;;
-    container)
+    container|container-v1)
       if [[ $arch != amd64 ]]; then
         printf 'The public container lanes are declared for AMD64.\n' >&2
         return 2
