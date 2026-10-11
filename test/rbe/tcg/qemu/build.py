@@ -111,6 +111,22 @@ def main() -> None:
             "SOURCE_DATE_EPOCH": "1638835200",
             "LC_ALL": "C",
         }
+        # Apply the complete, unchanged distro series with the declared GNU
+        # tool, before either build. Reject fuzz and unsupported series options.
+        ubuntu_patches = []
+        for line in (source / "debian/patches/series").read_text().splitlines():
+            match line.split("#", 1)[0].split():
+                case []:
+                    continue
+                case [name]:
+                    patch = source / "debian/patches" / name
+                case _:
+                    raise ValueError(f"Unsupported quilt series options: {line}")
+            log = evidence / "ubuntu-patches" / (name + ".log")
+            log.parent.mkdir(parents=True, exist_ok=True)
+            run_logged([str(tools / "patch"), "--batch", "--forward", "--fuzz=0", "--no-backup-if-mismatch", "-p1", "-i", str(patch)], source, env, log)
+            ubuntu_patches.append({"path": name, "sha256": sha256(patch)})
+        (evidence / "ubuntu-patches.json").write_text(json.dumps(ubuntu_patches, indent=2) + "\n")
         options = [
             "/bin/sh", str(source / "configure"),
             "--without-default-features", "--target-list=aarch64-softmmu",
@@ -132,7 +148,7 @@ def main() -> None:
         build = work / "build"
         for arm in ("before", "after"):
             if arm == "after":
-                subprocess.run([str(tools / "patch"), "--batch", "--forward", "--fuzz=0", "-p1", "-i", str(root / config["patch"])], cwd=source, env=env, check=True)
+                subprocess.run([str(tools / "patch"), "--batch", "--forward", "--fuzz=0", "--no-backup-if-mismatch", "-p1", "-i", str(root / config["patch"])], cwd=source, env=env, check=True)
                 shutil.rmtree(build)
             build.mkdir()
             arm_evidence = evidence / arm
