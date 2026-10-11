@@ -36,6 +36,9 @@ def run_logged(command: list[str], cwd: Path, env: dict[str, str], log: Path) ->
         # Failed actions need their actual configure/compiler error in Bazel's
         # stderr too; failed output trees are not guaranteed to be downloaded.
         sys.stderr.write(log.read_text(errors="replace"))
+        config_log = cwd / "config.log"
+        if config_log.is_file():
+            sys.stderr.write(config_log.read_text(errors="replace"))
         raise subprocess.CalledProcessError(result.returncode, command)
 
 
@@ -103,6 +106,14 @@ def main() -> None:
             "PYTHONPATH": str(sysroot / "usr/lib/python3/dist-packages"),
             "PYTHONNOUSERSITE": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
+            # QEMU6.2 selects these tools from the environment, then writes
+            # them into config-host.mak and Meson's native configuration.
+            "AR": str(root / config["ar"]),
+            "NM": str(root / config["nm"]),
+            "RANLIB": str(root / config["ranlib"]),
+            "OBJCOPY": str(root / config["objcopy"]),
+            "STRIP": str(root / config["strip"]),
+            "LD": str(root / config["linker"]),
             "PKG_CONFIG": str(tools / "pkg-config"),
             "PKG_CONFIG_SYSROOT_DIR": str(sysroot),
             "PKG_CONFIG_LIBDIR": str(sysroot / "usr/lib/x86_64-linux-gnu/pkgconfig") + ":" + str(sysroot / "usr/share/pkgconfig"),
@@ -137,7 +148,6 @@ def main() -> None:
             "--disable-install-blobs", "--disable-strip",
             "--with-git-submodules=ignore", "--with-pkgversion=RCsc-pair",
             "--cc=" + str(cc), "--cxx=" + str(cxx),
-            "--ar=" + str(root / config["ar"]),
             "--python=" + sys.executable, "--meson=internal",
             "--ninja=" + str(tools / "ninja"),
             "--make=" + str(root / config["make"]),
