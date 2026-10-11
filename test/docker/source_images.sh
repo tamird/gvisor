@@ -66,6 +66,8 @@ else
   test "${id}" = "$(docker image inspect --format '{{.Id}}' "${latest}")"
   printf 'Source image %s (%s); consumer tag %s\n' "${image}" "${id}" "${latest}"
   # Consumers use the canonical latest name in their fresh private daemons.
-  docker save --output "${archive}" "${image}" "${latest}"
+  saved="${work}/image.tar"
+  docker save --output "${saved}" "${image}" "${latest}"
+  cp "${saved}" "${archive}"
   sha256sum "${archive}"
 fi
