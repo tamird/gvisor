@@ -32,25 +32,17 @@ type Record struct {
 	fields RecordFields
 }
 
-type typedRecord[T any] struct {
-	Record
-	value T
-}
-
-// NewRecord allocates the header and its captured fields together. The caller
-// must use the field count from the same schema as T.SaveFields.
-func NewRecord[T any, P interface {
-	*T
-	RecordFields
-}](id TypeID, count int) *Record {
+// InitRecord initializes a fresh header owned by fields. Capture objects keep
+// the header and their fields in one allocation, without promoting Record's
+// methods onto each capture type. count must match fields.SaveFields's schema.
+func InitRecord(r *Record, id TypeID, count int, fields RecordFields) *Record {
 	if count < 0 {
 		panic(fmt.Sprintf("negative record field count: %d", count))
 	}
-	r := &typedRecord[T]{}
 	r.TypeID = id
 	r.count = count
-	r.fields = P(&r.value)
-	return &r.Record
+	r.fields = fields
+	return r
 }
 
 // RecordValue returns the capture storage selected by the registered factory.
@@ -68,13 +60,9 @@ func CaptureRecordValue[T any, P interface {
 	RecordFields
 }](r *Record, count int) *T {
 	if slots, ok := r.fields.(*recordSlots); ok {
-		if count < 0 || count > len(slots.values) {
-			panic(fmt.Sprintf("forwarded field count %d exceeds record's %d slots", count, len(slots.values)))
-		}
+		prefix := slots.prefix(count)
 		value := new(T)
-		for i := range count {
-			slots.values[i] = recordSlot{fields: P(value), index: i}
-		}
+		captureRecordSlots(prefix, P(value))
 		return value
 	}
 	return RecordValue[T](r)
@@ -89,7 +77,21 @@ type recordSlot struct {
 }
 
 type recordSlots struct {
+	record Record
 	values []recordSlot
+}
+
+func (s *recordSlots) prefix(count int) []recordSlot {
+	if count < 0 || count > len(s.values) {
+		panic(fmt.Sprintf("forwarded field count %d exceeds record's %d slots", count, len(s.values)))
+	}
+	return s.values[:count]
+}
+
+func captureRecordSlots(slots []recordSlot, fields RecordFields) {
+	for i := range slots {
+		slots[i] = recordSlot{fields: fields, index: i}
+	}
 }
 
 func (s *recordSlots) SaveFields(w *Writer, first, last int) {
@@ -105,9 +107,10 @@ func (s *recordSlots) SaveFields(w *Writer, first, last int) {
 // NewSlotRecord adapts manually implemented StateSave methods to the same
 // capture graph and emitter used by generated savers.
 func NewSlotRecord(id TypeID, count int) *Record {
-	r := NewRecord[recordSlots](id, count)
-	RecordValue[recordSlots](r).values = make([]recordSlot, count)
-	return r
+	s := &recordSlots{}
+	InitRecord(&s.record, id, count, s)
+	s.values = make([]recordSlot, count)
+	return &s.record
 }
 
 // Field returns a compatibility slot, replacing any earlier forwarded field.
