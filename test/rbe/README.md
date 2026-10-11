@@ -146,10 +146,22 @@ graph-declared architecture variants with their canonical profiles and run one
 test invocation. The caller's missing-requirements policy decides which tests
 on the selected local architecture need Actions. Other owners retain remote
 execution, including Firecracker tests whose requirements the workers satisfy.
-The report records every selected test, its execution requirements and the
-reason for each local route.
+The test invocation's build events and execution log record configured tests,
+shards and actual placement. Syscall selection reports also retain the reason
+for each local route.
 Coverage applies to the chosen architecture and profile; it excludes other
 profiles and filtered build-only targets.
+
+The hybrid `--arch=all unit` lane performs one loading-only query to discover
+declared ARM64 variants under `test/unit.targets`. It reads the canonical unit
+test-tag exclusions from `.bazelrc` before adding those variants, since tests
+excluded from execution can otherwise still be built. The original target
+patterns remain intact, including AMD64 build-only work and exclusions. One
+`bazel test` invocation then analyzes and executes the mixed graph; it does not
+switch configurations through separate profile analyses first. The existing
+test frontends apply the caller's local requirements. The loading report records
+candidate variants; actual configured owners, shards and placement come from
+that test invocation's build events and execution log.
 On ARM64 and in the AMD64 KVM lane, root test frontends invoke the existing
 local-root fixture, which permits
 traversal to `runsc` for tests that re-exec it as `nobody` and returns output

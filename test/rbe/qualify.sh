@@ -466,8 +466,11 @@ save_profile_selection() {
   local selection_dir=$1 lane=$2
   # Preserve the selection, but never upload Bazel's parsed credential options.
   mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
-  cp "$selection_dir/selection.json" "$selection_dir/actions.json" \
-    "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
+  cp "$selection_dir/selection.json" "$selection_dir/targets" \
+    "$RUNNER_TEMP/qualification/$lane-selection/"
+  if [[ -f $selection_dir/actions.json ]]; then
+    cp "$selection_dir/actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
+  fi
   if [[ -f $selection_dir/combined-actions.json ]]; then
     cp "$selection_dir/combined-actions.json" "$RUNNER_TEMP/qualification/$lane-selection/"
     # Read the heap limit from the same server that analyzed the mixed graph.
@@ -496,58 +499,44 @@ PY
 run_hybrid_profile() (
   set -e
   local lane=$1 selection_dir local_arch=$arch
-  local -a lane_options=() options=() selection_options=()
+  local -a lane_options=() options=()
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   if [[ $lane == unit ]]; then
     local_arch=arm64
-    python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
-    bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
-    python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
-    bazel aquery --config=rbe-matrix --config=x86_64 \
-      --//tools/bazeldefs:local_test_architecture=arm64 \
-      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
-      --output=jsonproto --include_artifacts=false \
-      --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
-    analyze_profile test/unit.targets "$selection_dir/profile.json" \
-      --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
+    local -a query_options=()
     if [[ $arch == all ]]; then
-      analyze_profile test/unit.targets "$selection_dir/amd64-profile.json" \
-        --config=rbe-matrix --config=x86_64 --config=unit --strip=never --build_tests_only
-      selection_options+=(--amd64-profile "$selection_dir/amd64-profile.json")
-      lane_options+=(--config=unit)
+      query_options=(--unit-rc .bazelrc)
     fi
-    python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
-      "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid "${selection_options[@]}" \
-      "--local-test-requirements=$local_test_requirements" \
-      | tee "$selection_dir/selection.json"
+    python3 test/rbe/unit_matrix.py query test/unit.targets "${query_options[@]}" > "$selection_dir/owners.query"
+    bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+    if [[ $arch == all ]]; then
+      # Loading discovers the declared variants; the one test invocation owns
+      # compatibility, canonical filters and per-target execution requirements.
+      python3 test/rbe/unit_matrix.py hybrid-unit-patterns test/unit.targets \
+        "$selection_dir/owners" "$selection_dir/targets" | tee "$selection_dir/selection.json"
+      lane_options+=(--config=unit)
+      options+=(--cache_test_results=auto)
+    else
+      python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+      bazel aquery --config=rbe-matrix --config=x86_64 \
+        --//tools/bazeldefs:local_test_architecture=arm64 \
+        "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
+        --output=jsonproto --include_artifacts=false \
+        --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
+      analyze_profile test/unit.targets "$selection_dir/profile.json" \
+        --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
+      python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
+        "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
+        "--local-test-requirements=$local_test_requirements" \
+        | tee "$selection_dir/selection.json"
+    fi
   else
     lane_options=(--cxxopt=-Werror)
     select_syscall_profile "$selection_dir" "$lane" "$arch" | tee "$selection_dir/selection.json"
     cp "$selection_dir/$lane-$arch-targets" "$selection_dir/targets"
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
-  fi
-  if [[ $lane == unit && $arch == all ]]; then
-    # Capture both configured architectures, including each original shard.
-    python3 - "$selection_dir/selection.json" "$selection_dir/combined-owners" <<'PYOWNERS'
-import json
-from pathlib import Path
-import sys
-
-selected = json.loads(Path(sys.argv[1]).read_text())["selected_owners"]
-Path(sys.argv[2]).write_text("".join(label + "\n" for label in selected))
-PYOWNERS
-    python3 test/rbe/unit_matrix.py actions "$selection_dir/combined-owners" --exact \
-      > "$selection_dir/combined-actions.query"
-    bazel aquery --config=rbe --config=x86_64 --config=rbe-hybrid-tests --config=unit --strip=never \
-      --//tools/bazeldefs:local_test_architecture=arm64 \
-      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
-      --incompatible_sandbox_hermetic_tmp=false --test_env=GO_TEST_WRAP_TESTV=1 \
-      --output=jsonproto --include_artifacts=false \
-      --query_file="$selection_dir/combined-actions.query" > "$selection_dir/combined-actions.json"
-    # Reuse valid test results from the interrupted complete-lane attempt.
-    options+=(--cache_test_results=auto)
   fi
   save_profile_selection "$selection_dir" "$lane"
   printf '%s %s profile: test placement follows the recorded per-target requirements; compilation stays remote.\n' "$arch" "$lane"
