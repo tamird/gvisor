@@ -96,7 +96,7 @@ func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 		types:          makeTypeEncodeDatabase(),
 		zeroValues:     make(map[reflect.Type]*objectEncodeState),
 		pending:        make(map[objectID]*objectEncodeState),
-		encodedStructs: make(map[reflect.Value]*wire.Struct),
+		encodedStructs: make(map[reflect.Value]*wire.Record),
 	}
 
 	// Perform the encoding.

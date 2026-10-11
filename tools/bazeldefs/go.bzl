@@ -3,7 +3,7 @@
 load("@bazel_gazelle//:def.bzl", _gazelle = "gazelle")
 load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "GoArchive", "GoInfo", "GoLibrary", _go_binary = "go_binary", _go_context = "go_context", _go_library = "go_library", _go_path = "go_path", _go_reset_target = "go_reset_target", _go_rule = "go_rule", _go_test = "go_test")
 load("@io_bazel_rules_go//proto:def.bzl", _go_grpc_library = "go_grpc_library", _go_proto_library = "go_proto_library")
 load("//tools/bazeldefs:defs.bzl", "select_arch", "select_system")
 
@@ -92,6 +92,10 @@ def go_binary(name, static = False, pure = False, x_defs = None, **kwargs):
 def go_importpath(target):
     """Returns the importpath for the target."""
     return target[GoLibrary].importpath
+
+def go_source_files(target):
+    """Returns the canonical source membership, including source-only embeds."""
+    return target[GoInfo].srcs
 
 def go_binary_archive(target):
     """Returns compiled Go archive metadata for a binary target."""
@@ -252,8 +256,16 @@ def select_goos():
 gotsan_values = None
 gotsan_flag_values = {"@io_bazel_rules_go//go/config:race": "true"}
 
-def _go_imports_impl(ctx):
-    """Hermetic wrapper around goimports.
+def go_imports_action(ctx, src, out):
+    """Declares the shared hermetic goimports action.
+
+    Args:
+      ctx: the owning rule context, including its declared _goimports tool.
+      src: the generated input file.
+      out: the final formatted file.
+
+    This helper keeps configured generated sources in their owning rule.
+
 
     `goimports` shells out to the `go` command (via golang.org/x/tools internal
     helpers) and therefore requires a usable `go` binary during the action.
@@ -265,12 +277,9 @@ def _go_imports_impl(ctx):
     """
     go_ctx = go_context(ctx)
 
-    src = ctx.file.src
-    out = ctx.outputs.out
-
     goimports_tool = ctx.attr._goimports[DefaultInfo].files_to_run
 
-    tools_path = paths.join(ctx.label.name + "_tools")
+    tools_path = paths.join(ctx.label.name + "_tools", out.basename)
 
     # Use a symlink to the `go` binary to avoid exposing undeclared dependencies
     # on other binaries in the same directory in the toolchain.
@@ -310,7 +319,9 @@ def _go_imports_impl(ctx):
         progress_message = "GoImports {}".format(src.short_path),
     )
 
-    return DefaultInfo(files = depset([out]))
+def _go_imports_impl(ctx):
+    go_imports_action(ctx, ctx.file.src, ctx.outputs.out)
+    return DefaultInfo(files = depset([ctx.outputs.out]))
 
 _go_imports = go_rule(
     rule,
