@@ -40,6 +40,8 @@ func TestTypedSnapshotWireAndAliases(t *testing.T) {
 	if _, err := state.Save(t.Context(), &snapshots, &graph); err != nil {
 		t.Fatal(err)
 	}
+	// Retain the original stream for the cross-binary compatibility check.
+	t.Logf("mixed-graph-wire: %x", snapshots.Bytes())
 	var loaded *system3
 	if _, err := state.Load(t.Context(), &snapshots, &loaded); err != nil {
 		t.Fatal(err)
@@ -151,6 +153,7 @@ func TestGeneratedPrimitiveRecord(t *testing.T) {
 			if _, err := state.Save(t.Context(), &encoded, &test.value); err != nil {
 				t.Fatal(err)
 			}
+			t.Logf("primitive-record-wire[%s]: %x", test.name, encoded.Bytes())
 			var loaded primitiveRecord
 			if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
 				t.Fatal(err)
