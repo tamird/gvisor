@@ -4,6 +4,18 @@ Upstream head: 50e0c1b4372c4e24f3087f4bdd199b0755620c77
 
 The regression is relocated to the matching test macro in v0.9.4.
 
+diff --git a/apt/private/apt_deb_repository.bzl b/apt/private/apt_deb_repository.bzl
+--- a/apt/private/apt_deb_repository.bzl
++++ b/apt/private/apt_deb_repository.bzl
+@@ -68,7 +68,7 @@
+             # we should only keep a single reference for the one with greater
+             # version.
+             for (i, (provider, provided_version)) in enumerate(providers):
+-                if package["Package"] == provider["Package"] and (
++                if package["Package"] == provider["Package"] and package["Dist"] == provider["Dist"] and (
+                     virtual["version"] == provided_version
+                 ):
+                     if version_constraint.relop(
 diff --git a/apt/tests/resolution_test.bzl b/apt/tests/resolution_test.bzl
 --- a/apt/tests/resolution_test.bzl
 +++ b/apt/tests/resolution_test.bzl
