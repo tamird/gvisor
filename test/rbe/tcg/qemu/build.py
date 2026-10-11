@@ -36,6 +36,10 @@ def run_logged(command: list[str], cwd: Path, env: dict[str, str], log: Path) ->
         # Failed actions need their actual configure/compiler error in Bazel's
         # stderr too; failed output trees are not guaranteed to be downloaded.
         sys.stderr.write(log.read_text(errors="replace"))
+        for name in ("config.log", "meson-logs/meson-log.txt"):
+            diagnostic = cwd / name
+            if diagnostic.is_file():
+                sys.stderr.write(diagnostic.read_text(errors="replace"))
         raise subprocess.CalledProcessError(result.returncode, command)
 
 
@@ -48,7 +52,7 @@ def main() -> None:
     config = json.loads(Path(config_name).read_text())
     root = Path.cwd()
     evidence = (root / config["evidence"]).resolve()
-    evidence.mkdir(parents=True)
+    evidence.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="qemu-rcsc-") as temporary:
         work = Path(temporary)
         source = work / "source"
@@ -77,8 +81,11 @@ def main() -> None:
             path.chmod(0o755)
             return path
 
-        for name in ("ninja", "pkg-config", "patch"):
+        for name in ("ninja", "pkg-config", "patch", "strings"):
             wrapper(name, [str(loader), "--inhibit-cache", "--library-path", libraries, str(sysroot / "usr/bin" / name)])
+        # Some QEMU helpers are invoked directly through env python3 instead
+        # of configure's explicit --python interpreter.
+        wrapper("python3", [sys.executable])
         # Preserve the repository's selected LLVM binaries and resource headers,
         # with the same complete GNU sysroot boundary used by Syzkaller.
         # No cd: Meson's relative input/output arguments belong to its own CWD.
@@ -87,11 +94,18 @@ def main() -> None:
             "--sysroot=" + str(sysroot),
             "--gcc-install-dir=" + str(sysroot / "usr/lib/gcc/x86_64-linux-gnu/11"),
             "-resource-dir=" + str(root / config["resource_dir"]),
-            "--ld-path=" + str(root / config["linker"]),
-            "--rtlib=libgcc", "--unwindlib=libgcc", "--stdlib=libstdc++",
         ]
-        cc = wrapper("cc", [str(root / config["cc"]), *flags])
-        cxx = wrapper("cxx", [str(root / config["cxx"]), *flags])
+        link_flags = [
+            "--ld-path=" + str(root / config["linker"]),
+            "--rtlib=libgcc", "--unwindlib=libgcc",
+        ]
+        cxx_flags = ["--stdlib=libstdc++"]
+        # These wrappers serve both compile-only probes and links. Scope Clang's
+        # unused handling to our link-only choices; caller flags follow the
+        # closing marker and retain all of their ordinary warning checks.
+        link_selection = ["--start-no-unused-arguments", *link_flags, "--end-no-unused-arguments"]
+        cc = wrapper("cc", [str(root / config["cc"]), *flags, *link_selection])
+        cxx = wrapper("cxx", [str(root / config["cxx"]), *flags, *cxx_flags, *link_selection])
         # QEMU6.2 requires --meson=internal when an explicit Python is selected.
         # Keep the declared Meson package intact; only its entry point is placed
         # in that expected source layout, using Bazel's existing Python runtime.
@@ -100,9 +114,20 @@ def main() -> None:
         env = {
             **os.environ,
             "PATH": str(tools) + ":/usr/bin:/bin",
-            "PYTHONPATH": str(sysroot / "usr/lib/python3/dist-packages"),
+            # Bazel's Python launcher enables safe-path mode. Declare QEMU's
+            # sibling generator packages explicitly instead of relying on the
+            # interpreter to prepend each script directory implicitly.
+            "PYTHONPATH": str(source / "scripts") + ":" + str(sysroot / "usr/lib/python3/dist-packages"),
             "PYTHONNOUSERSITE": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
+            # QEMU6.2 selects these tools from the environment, then writes
+            # them into config-host.mak and Meson's native configuration.
+            "AR": str(root / config["ar"]),
+            "NM": str(root / config["nm"]),
+            "RANLIB": str(root / config["ranlib"]),
+            "OBJCOPY": str(root / config["objcopy"]),
+            "STRIP": str(root / config["strip"]),
+            "LD": str(root / config["linker"]),
             "PKG_CONFIG": str(tools / "pkg-config"),
             "PKG_CONFIG_SYSROOT_DIR": str(sysroot),
             "PKG_CONFIG_LIBDIR": str(sysroot / "usr/lib/x86_64-linux-gnu/pkgconfig") + ":" + str(sysroot / "usr/share/pkgconfig"),
@@ -137,7 +162,6 @@ def main() -> None:
             "--disable-install-blobs", "--disable-strip",
             "--with-git-submodules=ignore", "--with-pkgversion=RCsc-pair",
             "--cc=" + str(cc), "--cxx=" + str(cxx),
-            "--ar=" + str(root / config["ar"]),
             "--python=" + sys.executable, "--meson=internal",
             "--ninja=" + str(tools / "ninja"),
             "--make=" + str(root / config["make"]),
@@ -185,6 +209,9 @@ def main() -> None:
             "changedSources": sorted(changed),
             "outputs": {arm: sha256(root / config[arm]) for arm in ("before", "after")},
             "compilerFlags": flags,
+            "cxxOnlyFlags": cxx_flags,
+            "linkerFlags": link_flags,
+            "injectedLinkSelection": link_selection,
         }, indent=2) + "\n")
 
 
