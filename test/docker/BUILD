@@ -70,6 +70,7 @@ source_image_archive(
             exec_group = "",
             free_disk = "80GB",
             memory = "12GB",
+            vfs = True,
         ),
         image = image,
         tags = ["manual"],
