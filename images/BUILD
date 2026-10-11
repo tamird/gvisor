@@ -1,5 +1,5 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
-load("//tools:defs.bzl", "go_binary", "pkg_tar")
+load("//tools:defs.bzl", "go_binary", "go_test", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -34,6 +34,16 @@ go_binary(
     pure = True,
     static = True,
     visibility = ["//tools/codeql:__pkg__"],
+)
+
+go_test(
+    name = "cuda_run_sample_test",
+    size = "small",
+    srcs = [
+        "gpu/cuda-tests/run_sample.go",
+        "gpu/cuda-tests/run_sample_test.go",
+    ],
+    pure = True,
 )
 
 pkg_files(
