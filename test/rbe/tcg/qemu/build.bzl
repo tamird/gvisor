@@ -66,7 +66,6 @@ def _build_impl(ctx):
         outputs = [before, after, evidence],
         mnemonic = "QemuRcscPairBuild",
         progress_message = "Building QEMU before and after the ARM RCsc barrier",
-        timeout = 1800,
     )
     return [
         DefaultInfo(files = depset([before, after, evidence])),

@@ -24,19 +24,13 @@ def _qemu_source_impl(ctx):
         url = "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/main/q/qemu/qemu_6.2+dfsg-2ubuntu6.31.debian.tar.xz",
         sha256 = "97dd9f9b065452e02b00f87e70e94d9f6369716de7d739ae605240d2522183a2",
     )
-    patches = []
-    for line in ctx.read("debian/patches/series").splitlines():
-        fields = [part for part in line.split("#", 1)[0].replace("\t", " ").split(" ") if part]
-        if not fields:
-            continue
-        if len(fields) != 1:
-            fail("Unsupported quilt series options: " + line)
-        patch = "debian/patches/" + fields[0]
-        ctx.patch(ctx.path(patch), strip = 1)
-        patches.append(patch)
+
+    # GNU patch applies the original quilt series inside the declared build
+    # action. Bazel's native patcher does not accept every distro patch form.
     ctx.file("qemu-source.json", json.encode({
         "version": "1:6.2+dfsg-2ubuntu6.31",
-        "patches": patches,
+        "origSHA256": "470d4202ab6302f184bf934008d2306c144d3221aa3b8ceb8a710414755af61b",
+        "debianSHA256": "97dd9f9b065452e02b00f87e70e94d9f6369716de7d739ae605240d2522183a2",
     }) + "\n")
     ctx.symlink(ctx.attr.build_file, "BUILD.bazel")
 
