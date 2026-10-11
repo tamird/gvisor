@@ -25,8 +25,8 @@ environment limits, or pass lane names to run a smaller selection, for example
 `test/rbe/qualify.sh unit portforward`. It runs every selected lane and returns
 failure if any lane fails, including fixture cleanup after the test cases pass.
 This remote profile does not replace the full public CI matrix. It omits the KVM
-variants of posture, startup, continuous benchmarks and syscall tests, as well
-as slimvm. Public CI uses AMD64 save/restore and ARM64 save/resume;
+variants of posture, startup, continuous benchmarks and syscall tests.
+Public CI uses AMD64 save/restore and ARM64 save/resume;
 `--arch=all` follows that mapping. Standalone checkpoint lanes use the requested
 `--arch`, defaulting to AMD64. Remote ARM64 checkpoints require Firecracker
 capacity; ARM64 save/resume can instead use the native Actions executor.
@@ -38,6 +38,11 @@ Container tests use their own runtime variants; their systemd case checks
 serialized mock state and does not require a host systemd manager. Remote KVM
 worker capacity remains unavailable; the Actions frontend below supplies local
 KVM execution. All variants remain available through their owning Bazel targets.
+
+SlimVM remains an optional, unqualified platform: the public syscall profiles
+exclude it in [.bazelrc](../../.bazelrc), and the [benchmark adapters](../../Makefile)
+explicitly skip it. Its manual test targets are outside this public CI selection;
+the AMD64 runtime build still includes its implementation.
 
 This document describes lane selection and environment requirements. Execution
 results apply to the recorded source, selected tests and actual workers.
