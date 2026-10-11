@@ -1604,3 +1604,26 @@ Each shard uses the existing private Docker network, cgroup-v2 namespace and
 disk-backed scratch setup; compilation remains remote. ARM64 is not selected,
 matching the public lane's outstanding ARM64 TODO. A discovery-only check is
 not evidence that the nested Docker daemon or Moby test cases passed.
+
+
+## Runtime clock selection
+
+`test/rbe/qualify.sh --clock-source=reference LANE` explicitly selects host
+reference clocks for runtime qualification. The default is `calibrated` and can
+also be selected explicitly. The Actions `clock_source` input uses the same
+setting. This does not change the production runtime default, alter profile
+owners or deadlines, or turn reference-mode results into calibrated-mode credit.
+
+The setting is carried as the declared test environment value
+`GVISOR_TEST_CLOCK_SOURCE`. Shared syscall, Docker and Go runtime configuration
+owners apply it before explicit fixture flags. Guest wrappers and maintained
+nested-runtime frontends forward it to their existing runtime arguments or TOML
+configuration. The same profile setting supplies a Bazel define for the direct
+`runsc do` smoke owners' declared arguments. Native controls and ordinary
+configuration-default unit tests retain their normal behavior. Selection artifacts record the chosen mode.
+
+Reference mode is useful when raw hardware counters are not synchronized across
+host CPUs. It uses the host clock for Sentry reads and the existing VDSO syscall
+fallback; its additional cost must be measured on the deployment in question.
+Calibrated-clock implementation tests remain separately exercised even when
+runtime fixtures select reference mode.

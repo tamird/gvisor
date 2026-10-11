@@ -35,7 +35,7 @@ for lane in "${lanes[@]}"; do
     exit 2
   fi
 done
-options=("--arch=$QUALIFICATION_ARCH")
+options=("--arch=$QUALIFICATION_ARCH" "--clock-source=${QUALIFICATION_CLOCK_SOURCE:-calibrated}")
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi

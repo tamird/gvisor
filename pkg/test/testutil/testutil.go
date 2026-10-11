@@ -75,6 +75,30 @@ func StringFromEnv(name, def string) string {
 	return str
 }
 
+// RuntimeTestClockSource returns the explicitly selected qualification clock,
+// if any. Production configuration defaults do not read this setting.
+func RuntimeTestClockSource() (config.ClockSource, bool) {
+	value := os.Getenv("GVISOR_TEST_CLOCK_SOURCE")
+	if value == "" {
+		return config.ClockSourceCalibrated, false
+	}
+	var source config.ClockSource
+	if err := source.Set(value); err != nil {
+		panic(fmt.Errorf("invalid GVISOR_TEST_CLOCK_SOURCE: %w", err))
+	}
+	return source, true
+}
+
+// RuntimeTestFlags returns explicit qualification settings for runtimes under
+// test. Callers prepend them to their own flags so explicit fixture settings
+// retain precedence.
+func RuntimeTestFlags() []string {
+	if source, ok := RuntimeTestClockSource(); ok {
+		return []string{"--clock-source=" + source.String()}
+	}
+	return nil
+}
+
 // IntFromEnv returns the integer value of the named environment variable, or `def` if unset/empty.
 // It is useful for defining flags where the default value can be specified through the environment.
 func IntFromEnv(name string, def int) int {
@@ -274,6 +298,9 @@ func TestConfig(t *testing.T) *config.Config {
 
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
+	if err := testFlags.Parse(RuntimeTestFlags()); err != nil {
+		t.Fatalf("error parsing runtime test flags: %v", err)
+	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		t.Fatalf("error loading configuration from flags: %v", err)
@@ -303,6 +330,9 @@ func isCgroupV2() bool {
 func ConfigForBenchmark(b *testing.B) *config.Config {
 	testFlags := flag.NewFlagSet("bench", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
+	if err := testFlags.Parse(RuntimeTestFlags()); err != nil {
+		b.Fatalf("error parsing runtime test flags: %v", err)
+	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		b.Fatalf("error loading configuration from flags: %v", err)

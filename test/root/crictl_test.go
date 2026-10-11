@@ -442,6 +442,9 @@ grouping = ` + strconv.FormatBool(enableGrouping) + `
     strace = "true"
     file-access = "shared"
 `
+	if source, ok := testutil.RuntimeTestClockSource(); ok {
+		runscConfig += fmt.Sprintf("    clock-source = %q\n", source.String())
+	}
 	if err := os.WriteFile(runscConfigPath, []byte(runscConfig), 0644); err != nil {
 		return nil, nil, fmt.Errorf("failed to write runsc config file %q: %v", runscConfigPath, err)
 	}

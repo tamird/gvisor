@@ -193,6 +193,7 @@ go_test(
         "//pkg/sentry/seccheck",
         "//pkg/sentry/vfs",
         "//pkg/sync",
+        "//pkg/test/testutil",
         "//pkg/unet",
         "//runsc/config",
         "//runsc/flag",

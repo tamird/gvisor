@@ -21,6 +21,11 @@ name: CI
         type: choice
         options: [remote, local]
         default: remote
+      clock_source:
+        description: Explicit runtime clock source for qualification
+        type: choice
+        options: [calibrated, reference]
+        default: calibrated
       local_test_requirements:
         description: Comma-separated requirements missing from remote workers for hybrid lanes
         type: string
@@ -42,7 +47,7 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}-${{ inputs.clock_source }}
   cancel-in-progress: true
 
 jobs:
@@ -80,6 +85,7 @@ jobs:
     env:
       QUALIFICATION_COMMIT: ${{ github.sha }}
       QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 'remote-actions' || inputs.execution }}
+      QUALIFICATION_CLOCK_SOURCE: ${{ github.event_name == 'push' && 'calibrated' || inputs.clock_source }}
       QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
       QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
@@ -130,6 +136,7 @@ jobs:
           --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
           --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
           --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
+          --env="QUALIFICATION_CLOCK_SOURCE=$QUALIFICATION_CLOCK_SOURCE" \
           --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
           --env="QUALIFICATION_BENCHMARK_TARGET=$QUALIFICATION_BENCHMARK_TARGET" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \

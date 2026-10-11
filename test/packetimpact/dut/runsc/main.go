@@ -120,9 +120,7 @@ func (r *runsc) Bootstrap(ctx context.Context) (testbench.DUTInfo, func() error,
 	}
 
 	// Start posix_server inside a runsc container.
-	cmd := exec.CommandContext(
-		ctx,
-		r.runscPath,
+	args := append(testutil.RuntimeTestFlags(),
 		"-root", r.rootDir,
 		"-network=sandbox",
 		"-debug",
@@ -136,6 +134,7 @@ func (r *runsc) Bootstrap(ctx context.Context) (testbench.DUTInfo, func() error,
 		"-bundle", r.bundleDir,
 		r.containerID,
 	)
+	cmd := exec.CommandContext(ctx, r.runscPath, args...)
 	errPipe, err := cmd.StderrPipe()
 	if err != nil {
 		return testbench.DUTInfo{}, nil, fmt.Errorf("failed to create stderr pipe to the posix server process: %w", err)

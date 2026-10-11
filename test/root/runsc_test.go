@@ -77,6 +77,9 @@ func TestCreateFailureRemovesCgroup(t *testing.T) {
 
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
+	if err := testFlags.Parse(testutil.RuntimeTestFlags()); err != nil {
+		t.Fatal(err)
+	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		t.Fatal(err)
@@ -135,6 +138,9 @@ func TestCreateContainerHooksRootFS(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 			config.RegisterFlags(testFlags)
+			if err := testFlags.Parse(testutil.RuntimeTestFlags()); err != nil {
+				t.Fatal(err)
+			}
 			conf, err := config.NewFromFlags(testFlags)
 			if err != nil {
 				t.Fatal(err)
@@ -210,7 +216,8 @@ func TestDoKill(t *testing.T) {
 		t.Fatalf("prctl(PR_SET_CHILD_SUBREAPER): %v", err)
 	}
 
-	cmd := exec.Command(specutils.ExePath, "do", "sleep", "10000")
+	args := append(testutil.RuntimeTestFlags(), "do", "sleep", "10000")
+	cmd := exec.Command(specutils.ExePath, args...)
 	buf := &bytes.Buffer{}
 	cmd.Stdout = buf
 	cmd.Stderr = buf

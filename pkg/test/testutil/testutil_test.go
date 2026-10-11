@@ -19,7 +19,56 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gvisor.dev/gvisor/runsc/config"
+	"gvisor.dev/gvisor/runsc/flag"
 )
+
+func TestRuntimeClockSource(t *testing.T) {
+	for _, tc := range []struct {
+		name, value, want string
+	}{
+		{name: "default", want: "calibrated"},
+		{name: "calibrated", value: "calibrated", want: "calibrated"},
+		{name: "reference", value: "reference", want: "reference"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("GVISOR_TEST_CLOCK_SOURCE", tc.value)
+			if got, want := TestConfig(t).ClockSource.String(), tc.want; got != want {
+				t.Errorf("test clock source: got %q, want %q", got, want)
+			}
+			flags := flag.NewFlagSet("production", flag.ContinueOnError)
+			config.RegisterFlags(flags)
+			conf, err := config.NewFromFlags(flags)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := conf.ClockSource.String(), "calibrated"; got != want {
+				t.Errorf("production default: got %q, want %q", got, want)
+			}
+			if err := flags.Parse(append(RuntimeTestFlags(), "--clock-source=calibrated")); err != nil {
+				t.Fatal(err)
+			}
+			conf, err = config.NewFromFlags(flags)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got, want := conf.ClockSource.String(), "calibrated"; got != want {
+				t.Errorf("explicit caller setting: got %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestRuntimeClockSourceInvalid(t *testing.T) {
+	t.Setenv("GVISOR_TEST_CLOCK_SOURCE", "invalid")
+	defer func() {
+		if got := recover(); got == nil {
+			t.Error("invalid clock source: got no panic, want rejection")
+		}
+	}()
+	RuntimeTestFlags()
+}
 
 func TestWaitUntilRead(t *testing.T) {
 	for _, tc := range []struct {

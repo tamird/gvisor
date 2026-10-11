@@ -117,7 +117,7 @@ func TestEnvVars(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 			cmd.Env = append(baseEnv, hostEnvVar+"="+hostEnvVal)
 
 			var stdout, stderr bytes.Buffer
@@ -155,10 +155,11 @@ func TestBind(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(workDir, "input"), []byte(contents), 0600); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command(specutils.ExePath,
+	args := append(testutil.RuntimeTestFlags(),
 		"--root", newRunRootDir(t), "bwrap",
 		"--ro-bind", "/", "/", "--bind", workDir, "/mnt",
 		"--", "/bin/sh", "-ec", "cat /mnt/input; cp /mnt/input /mnt/output")
+	cmd := exec.Command(specutils.ExePath, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
@@ -246,7 +247,7 @@ func TestUserAndGroup(t *testing.T) {
 			args = append(args, "--", "/bin/sh", "-ec",
 				"id -u; id -g; cp /mnt/input /mnt/output; stat -c '%u:%g' /mnt/output")
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -315,7 +316,7 @@ func TestHostname(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -367,7 +368,7 @@ func TestProc(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -433,7 +434,7 @@ func TestCapabilities(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -485,7 +486,7 @@ func TestArgv0(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
@@ -590,7 +591,7 @@ func TestPerms(t *testing.T) {
 				"bwrap",
 			}, tc.bwrapArgs...)
 
-			cmd := exec.Command(specutils.ExePath, args...)
+			cmd := exec.Command(specutils.ExePath, append(testutil.RuntimeTestFlags(), args...)...)
 
 			var stdout, stderr bytes.Buffer
 			cmd.Stdout = &stdout
