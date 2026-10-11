@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -29,6 +30,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -78,6 +80,7 @@ var (
 	ioUring          = flag.Bool("iouring", false, "Enables IO_URING API for asynchronous I/O")
 	leakCheck        = flag.Bool("leak-check", false, "check for reference leaks")
 	waitForPid       = flag.Duration("delay-for-debugger", 0, "Print out the sandbox PID and wait for the specified duration to start the test. This is useful for attaching a debugger to the runsc-sandbox process.")
+	diagnosticStacks = flag.Duration("diagnostic-stacks-after", 0, "capture stacks from a still-running sandbox after this interval and once more after twice the interval (zero disables)")
 	save             = flag.Bool("save", false, "enables save restore")
 	saveResume       = flag.Bool("save-resume", false, "enables save resume")
 	nftables         = flag.Bool("nftables", false, "enables nftables")
@@ -110,6 +113,64 @@ func getSetupContainerPath() string {
 		fatalf("cannot find setup_container: %v", err)
 	}
 	return setupContainer
+}
+
+// runWithStackCaptures observes a long-running command without changing its
+// status or deadline. Captures use the existing debug command, which verifies
+// that the sandbox is running before requesting its stacks.
+func runWithStackCaptures(cmd *exec.Cmd, args []string, id, outputDir string) error {
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	stackArgs := slices.Clone(args)
+	started := time.Now()
+	go func() {
+		defer close(done)
+		timer := time.NewTicker(*diagnosticStacks)
+		defer timer.Stop()
+		for capture := 1; capture <= 2; capture++ {
+			select {
+			case <-ctx.Done():
+				return
+			case <-timer.C:
+			}
+			path := filepath.Join(outputDir, fmt.Sprintf("diagnostic-stacks-%s-%d.txt", id, capture))
+			output, err := os.Create(path)
+			if err != nil {
+				log.Infof("Diagnostic stack capture %d: creating output: %v", capture, err)
+				continue
+			}
+			if _, err := fmt.Fprintf(output, "sandbox=%s capture=%d elapsed=%s\n", id, capture, time.Since(started)); err != nil {
+				log.Infof("Diagnostic stack capture %d: writing metadata: %v", capture, err)
+			}
+			dumpCtx, dumpCancel := context.WithTimeout(ctx, 30*time.Second)
+			// Keep diagnostic warnings out of the original sandbox's logs,
+			// which the runner checks when deciding whether the test passed.
+			dumpArgs := append(slices.Clone(stackArgs), "--debug-log="+path+".debug.log", "debug", "--stacks", id)
+			debug := exec.CommandContext(dumpCtx, specutils.ExePath, dumpArgs...)
+			debug.Stdout = output
+			debug.Stderr = output
+			err = debug.Run()
+			contextErr := dumpCtx.Err()
+			dumpCancel()
+			if _, writeErr := fmt.Fprintf(output, "capture_error=%v context_error=%v\n", err, contextErr); writeErr != nil {
+				log.Infof("Diagnostic stack capture %d: writing result: %v", capture, writeErr)
+			}
+			if syncErr := output.Sync(); syncErr != nil {
+				log.Infof("Diagnostic stack capture %d: syncing output: %v", capture, syncErr)
+			}
+			if closeErr := output.Close(); closeErr != nil {
+				log.Infof("Diagnostic stack capture %d: closing output: %v", capture, closeErr)
+			}
+			log.Infof("Diagnostic stack capture %d: %s, result: %v", capture, path, err)
+		}
+	}()
+	err := cmd.Wait()
+	cancel()
+	<-done
+	return err
 }
 
 func removeShardAndXMLEnvVars(env []string, tc *gtest.TestCase) []string {
@@ -752,7 +813,11 @@ func runRunsc(tc *gtest.TestCase, spec *specs.Spec) (retErr error) {
 			return fmt.Errorf("save resume error: %v", err)
 		}
 	} else {
-		err = cmd.Run()
+		if *diagnosticStacks > 0 {
+			err = runWithStackCaptures(cmd, args, id, undeclaredOutputsDir)
+		} else {
+			err = cmd.Run()
+		}
 		if *waitForPid != 0 {
 			if err != nil {
 				return fmt.Errorf("could not start container: %v", err)
