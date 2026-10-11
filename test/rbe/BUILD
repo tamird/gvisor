@@ -32,6 +32,23 @@ sh_binary(
     visibility = ["//visibility:public"],
 )
 
+# Fork-only native counter controls bracket the original clock owner.
+sh_binary(
+    name = "clock_handoff",
+    testonly = True,
+    srcs = ["clock_handoff.sh"],
+    data = [
+        ":worker_identity",
+        "//test/syscalls/linux:vdso_clock_gettime_test",
+    ],
+    tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    visibility = ["//visibility:public"],
+)
+
 # Infrastructure smoke coverage, not the complete unit or syscall test lanes.
 test_suite(
     name = "smoke",
