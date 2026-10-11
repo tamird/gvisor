@@ -92,6 +92,12 @@ type encodeState struct {
 	// if a save hook discovers a containing object and replaces this node.
 	encoding *objectEncodeState
 
+	// encodingRange is the active node's nonzero memory range. Its proper
+	// subranges cannot contain another resolver node, even if a save hook
+	// replaces the active node with a containing parent. Maps and zero-sized
+	// objects do not supply an inline containment boundary.
+	encodingRange addrRange
+
 	// pendingTypes is the list of types to be serialized. Serialization
 	// will occur when all objects have been encoded, but before pending is
 	// serialized.
@@ -485,10 +491,18 @@ func (es *encodeState) structOwner(obj reflect.Value) *objectEncodeState {
 		return nil
 	}
 	addr := obj.Addr().Pointer()
-	if obj.Type().Size() == 0 && addr == dummyAddr {
+	size := obj.Type().Size()
+	if size == 0 && addr == dummyAddr {
 		if owner := es.zeroValues[obj.Type()]; owner != nil && owner.obj == obj {
 			return owner
 		}
+		return nil
+	}
+	// resolve already made descendants of the active region inline, moving
+	// any captured snapshots to inlineStructs. A same-sized ancestor may have
+	// replaced the active node, so equal ranges still require discovery.
+	r := es.encodingRange
+	if size != 0 && r.Contains(addr) && size <= r.End-addr && (addr != r.Start || size != r.Length()) {
 		return nil
 	}
 	seg, _ := es.values.Find(addr)
@@ -815,9 +829,17 @@ func (es *encodeState) Save(obj reflect.Value) {
 			// is removed first.
 			es.deferred.Remove(oes)
 			es.encoding = oes
+			es.encodingRange = addrRange{}
+			if oes.obj.Kind() != reflect.Map {
+				if size := oes.obj.Type().Size(); size != 0 {
+					addr := oes.obj.Addr().Pointer()
+					es.encodingRange = addrRange{addr, addr + size}
+				}
+			}
 			es.encodeObject(oes.obj, oes.how, &oes.encoded)
 		}
 		es.encoding = nil
+		es.encodingRange = addrRange{}
 	}); err != nil {
 		// Include the object in the error message, if available.
 		if oes != nil && oes.obj.IsValid() {
