@@ -42,6 +42,7 @@ def _analysis_impl(ctx):
         args.add("--proxy", ctx.file._proxy_root.dirname)
         args.add("--go-mod", ctx.file._go_mod)
         args.add("--go-sum", ctx.file._go_sum)
+        args.add("--go-sources", ctx.file._go_sources)
         args.add("--cc", cc.c_compiler_path)
         args.add("--cxx", cc_common.get_tool_for_action(
             feature_configuration = cc.feature_configuration,
@@ -50,7 +51,7 @@ def _analysis_impl(ctx):
         args.add_all(cc.c_compile_options, format_each = "--cflag=%s")
         args.add_all(cc.cxx_compile_options, format_each = "--cxxflag=%s")
         args.add_all(cc.ld_executable_options, format_each = "--ldflag=%s")
-        direct.extend([go.sdk.go, ctx.file._proxy_root, ctx.file._go_mod, ctx.file._go_sum])
+        direct.extend([go.sdk.go, ctx.file._proxy_root, ctx.file._go_mod, ctx.file._go_sum, ctx.file._go_sources])
         inputs.extend([go.sdk.srcs, go.sdk.headers, go.sdk.tools, go.cc_toolchain_files, ctx.attr._proxy[DefaultInfo].files])
         env.update(go.env)
     ctx.actions.run(
@@ -94,6 +95,7 @@ _go_analysis = go_rule(
     attrs = dict(_ATTRS, **{
         "_go_mod": attr.label(default = "@codeql_go_modules//:module/go.mod", allow_single_file = True),
         "_go_sum": attr.label(default = "@codeql_go_modules//:module/go.sum", allow_single_file = True),
+        "_go_sources": attr.label(default = "//:go_export", allow_single_file = True),
         "_proxy": attr.label(default = "@codeql_go_modules//:files"),
         "_proxy_root": attr.label(default = "@codeql_go_modules//:modules/cache/download/ROOT", allow_single_file = True),
     }),
