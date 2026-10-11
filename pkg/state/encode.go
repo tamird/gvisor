@@ -97,11 +97,12 @@ type encodeState struct {
 	// not actually occur until the full object graph is computed.
 	pending map[objectID]*objectEncodeState
 
-	// encodedStructs maps reflect.Values representing structs to previous
-	// encodings of those structs. This is necessary to avoid duplicate calls
-	// to SaverLoader.StateSave() that may result in multiple calls to
-	// Sink.SaveValue() for a given field, resulting in object duplication.
-	encodedStructs map[reflect.Value]*wire.Record
+	// encodedStructs maps struct identities to their previous encodings.
+	// Addressable structs use typed pointers, retaining both type and GC
+	// ownership in the key. Other values keep their reflect.Value identity.
+	// This avoids duplicate calls to SaverLoader.StateSave() that may result
+	// in multiple calls to Sink.SaveValue() and object duplication.
+	encodedStructs map[any]*wire.Record
 
 	// binaryBuf holds temporary BinaryAppender output. Each saved value is
 	// copied into an immutable string before this buffer is reused.
@@ -487,11 +488,18 @@ var emptyStructRecord = wire.NewSlotRecord(0, 0)
 
 // encodeStruct encodes a composite object.
 func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
-	if s, ok := es.encodedStructs[obj]; ok {
+	var key any
+	if obj.CanAddr() && obj.CanInterface() {
+		key = obj.Addr().Interface()
+	} else {
+		// Preserve the identity of an unaddressable value before making
+		// an addressable copy below; equal values need not be one object.
+		key = obj
+	}
+	if s, ok := es.encodedStructs[key]; ok {
 		*dest = s
 		return
 	}
-	key := obj
 
 	// Ensure that the obj is addressable. There are two cases when it is
 	// not. First, is when this is dispatched via SaveValue. Second, when
