@@ -37,6 +37,7 @@ import (
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sighandling"
+	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
 
@@ -54,6 +55,16 @@ const (
 	// NetworkModeSandbox enables a dedicated network namespace using gVisor netstack.
 	// This mode requires host root privileges (UID 0).
 	NetworkModeSandbox NetworkMode = "sandbox"
+)
+
+// ClockSource selects calibrated hardware counters or host reference clocks.
+type ClockSource = config.ClockSource
+
+const (
+	// ClockSourceCalibrated requires synchronized counters across host CPUs.
+	ClockSourceCalibrated = config.ClockSourceCalibrated
+	// ClockSourceReference reads the host clocks without counter calibration.
+	ClockSourceReference = config.ClockSourceReference
 )
 
 // Options holds the configuration for a Sandbox.
@@ -89,8 +100,9 @@ type Options struct {
 	skipBaseEnv           bool
 
 	// Runtime behavior.
-	debug    bool
-	debugLog string
+	debug       bool
+	debugLog    string
+	clockSource *ClockSource
 }
 
 // Option configures the Options struct.
@@ -165,6 +177,20 @@ func WithNetwork(mode NetworkMode) Option {
 			o.network = mode
 		default:
 			o.err = fmt.Errorf("invalid network mode %q: must be one of none, host, sandbox", mode)
+		}
+	}
+}
+
+// WithClockSource selects the runtime clock source. The default is calibrated.
+// Reference clocks avoid the requirement for synchronized hardware counters
+// across host CPUs, at the cost of additional clock-read overhead.
+func WithClockSource(source ClockSource) Option {
+	return func(o *Options) {
+		switch source {
+		case ClockSourceCalibrated, ClockSourceReference:
+			o.clockSource = &source
+		default:
+			o.err = fmt.Errorf("invalid clock source %d", source)
 		}
 	}
 }
@@ -417,6 +443,9 @@ func (o *Options) runscGlobalArgs() []string {
 		args = append(args, "--network=none")
 	case NetworkModeSandbox:
 		args = append(args, "--network=sandbox")
+	}
+	if o.clockSource != nil {
+		args = append(args, "--clock-source="+o.clockSource.String())
 	}
 	if o.debug {
 		args = append(args, "--debug")

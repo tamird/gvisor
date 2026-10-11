@@ -176,6 +176,10 @@ func launch(ctx context.Context, logger testutil.Logger) (code int, retErr error
 		},
 	}
 
+	if source, ok := testutil.RuntimeTestClockSource(); ok {
+		opts.Env = append(opts.Env, "GVISOR_TEST_CLOCK_SOURCE="+source.String())
+	}
+
 	// Forward effective flags, replacing paths and runtime selection that the
 	// outer invocation may have supplied separately or through its environment.
 	binName := filepath.Base(self)

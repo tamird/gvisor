@@ -268,6 +268,7 @@ func (c *bwrapConfig) sandboxOptions() ([]sandbox.Option, error) {
 	}
 	opts = append(opts,
 		sandbox.WithStateDir(c.runscConfig.RootDir),
+		sandbox.WithClockSource(c.runscConfig.ClockSource),
 	)
 	if c.runscConfig.Debug {
 		opts = append(opts, sandbox.WithDebug(c.runscConfig.DebugLog))
