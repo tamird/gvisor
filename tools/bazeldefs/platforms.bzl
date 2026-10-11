@@ -27,23 +27,26 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
-def docker_test_exec_properties(free_disk, memory = None, exec_group = "test"):
+def docker_test_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False):
     """Selects Docker VM properties when remote execution is enabled."""
     return select({
-        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group),
+        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group, vfs),
         "//conditions:default": {},
     })
 
-def docker_exec_properties(free_disk, memory = None, exec_group = "test"):
+def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False):
     """Returns a remote VM with Docker tools for an owned daemon.
 
     Args:
       free_disk: Root filesystem space for expanded images and container copies.
       memory: VM memory budget; defaults to 4GB.
       exec_group: Group owning the daemon; empty uses the rule's default group.
+      vfs: Use the host-backed workspace for outputs larger than the VM's
+        separate workspace disk; free_disk only sizes the root filesystem.
+        https://github.com/buildbuddy-io/buildbuddy/blob/5608c55ae/enterprise/server/remote_execution/containers/firecracker/firecracker.go#L1593
     """
     prefix = exec_group + "." if exec_group else ""
-    return {
+    properties = {
         prefix + "EstimatedCPU": "4",
         prefix + "EstimatedMemory": memory if memory != None else "4GB",
         prefix + "EstimatedFreeDiskBytes": free_disk,
@@ -55,6 +58,9 @@ def docker_exec_properties(free_disk, memory = None, exec_group = "test"):
         # Owned daemons change guest-wide kernel state. Discard their VM.
         prefix + "recycle-runner": "false",
     }
+    if vfs:
+        properties[prefix + "enable-vfs"] = "true"
+    return properties
 
 def namespace_test_exec_properties(user = "root", image = None, memory = None):
     """Defaults for remote tests that create nested Linux namespaces.
