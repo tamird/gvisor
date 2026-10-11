@@ -22,7 +22,7 @@ set -euo pipefail
 declare -F bazel >/dev/null
 block=${QUALIFICATION_COMPARISON_BLOCK:?}
 [[ $block == 1 ]]
-out="$RUNNER_TEMP/qualification/tcp-delivery-owner-comparison"
+out="$RUNNER_TEMP/qualification/tcp-delivery-owner-profile"
 mkdir -p "$out"
 export out
 owned=(pkg/tcpip/transport/tcp/BUILD pkg/tcpip/transport/tcp/connect.go pkg/tcpip/transport/tcp/cubic.go pkg/tcpip/transport/tcp/delivery.go pkg/tcpip/transport/tcp/endpoint.go pkg/tcpip/transport/tcp/endpoint_state.go pkg/tcpip/transport/tcp/rack.go pkg/tcpip/transport/tcp/rcv.go pkg/tcpip/transport/tcp/reno.go pkg/tcpip/transport/tcp/reno_recovery.go pkg/tcpip/transport/tcp/sack_recovery.go pkg/tcpip/transport/tcp/snd.go pkg/tcpip/transport/tcp/state.go)
@@ -296,12 +296,10 @@ validate_shared() (
 )
 # Keep the declared trial order and actual orientation in each block.
 scenarios=(
-  'reno-netstack-first netstack reno linux reno 0'
-  'reno-linux-first linux reno netstack reno 0'
   'cubic-netstack-first netstack cubic linux cubic 0'
   'cubic-linux-first linux cubic netstack cubic 0'
 )
-order=(0 2 3 1)
+order=(0 1)
 printf 'block=%s order=%s\n' "$block" "${order[*]}" > "$out/block.txt"
 printf 'position\tcase\tvariant\tprimary_stack\tprimary_cc\tsecondary_stack\tsecondary_cc\tdelay\n' > "$out/trials.tsv"
 trial_status=0
@@ -326,7 +324,7 @@ for index in "${order[@]}"; do
       //test/benchmarks/tcp:tcp_benchmark -- \
       "${flags[@]}" --no-user-ns --congestion-control "$first_cc" \
       --second-client "$second_stack" --second-congestion-control "$second_cc" \
-      --second-start-delay "$delay" --tcp-observations --latency-probe --output-dir "$trial/results" \
+      --second-start-delay "$delay" --tcp-observations --cpu-profiles --latency-probe --output-dir "$trial/results" \
       --helpers "$out/prebuild-$variant/helpers" \
       --ideal --mtu 1500 --latency 100 --rate 20 --queue-packets 100 \
       --duration 120 --num-client-threads 1 --sack \
@@ -340,6 +338,12 @@ for index in "${order[@]}"; do
     set -e
     printf '%s\n' "$result" > "$trial/observation-check-exit.txt"
     if (( result != 0 )); then trial_status=1; fi
+    profile_flow=primary
+    if [[ $second_stack == netstack ]]; then profile_flow=secondary; fi
+    if [[ ! -s $trial/results/$profile_flow/client-cpu.pprof ]]; then
+      printf 'Missing Netstack client CPU profile: %s\n' "$trial" >&2
+      trial_status=1
+    fi
   done
 done
 git diff --exit-code > "$out/source-after.diff" || trial_status=1

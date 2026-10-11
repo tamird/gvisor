@@ -53,6 +53,7 @@ seed=                  # Requires a tc/kernel combination that supports netem se
 output_dir=
 latency_probe=false
 tcp_observations=false
+cpu_profiles=false
 second_client=
 second_congestion_control=
 second_start_delay=0
@@ -204,6 +205,9 @@ while [[ $# -gt 0 ]]; do
       netstack_opts="${netstack_opts} -cpuprofile=$1"
       checktmp "$1"
       ;;
+    --cpu-profiles)
+      cpu_profiles=true
+      ;;
     --memprofile)
       shift
       netstack_opts="${netstack_opts} -memprofile=$1"
@@ -291,6 +295,7 @@ while [[ $# -gt 0 ]]; do
       echo " --seed                netem random seed (requires kernel and tc support)"
       echo " --output-dir          retain settings, versions, qdisc counters and raw iperf output"
       echo " --tcp-observations    retain periodic Netstack/native WAN sender state (requires --output-dir and native server)"
+      echo " --cpu-profiles        retain a CPU profile for each Netstack client under --output-dir"
       echo " --latency-probe       retain native ICMP RTT before/during/after the client operation (requires --output-dir)"
       echo " --duration            set the test duration (s)"
       echo " --latency             set the latency (ms)"
@@ -356,6 +361,16 @@ elif [[ -n $second_congestion_control || $second_start_delay != 0 ]]; then
   echo "second-flow options require --second-client" >&2
   exit 1
 fi
+if $cpu_profiles; then
+  if [[ -z $output_dir || $netstack_opts == *-cpuprofile=* ]]; then
+    echo "--cpu-profiles requires --output-dir and cannot be combined with --cpuprofile" >&2
+    exit 1
+  fi
+  if ! $client && [[ $second_client != netstack ]]; then
+    echo "--cpu-profiles requires a Netstack client" >&2
+    exit 1
+  fi
+fi
 if $tcp_observations; then
   if [[ -z $output_dir ]] || $server; then
     echo "--tcp-observations requires --output-dir and a native server" >&2
@@ -418,6 +433,7 @@ record_settings() {
   if [[ -n $output_dir ]]; then jq --version; fi
   if $latency_probe; then ping -V; fi
   printf 'tcp_observations=%s\n' "$tcp_observations"
+  printf 'cpu_profiles=%s\n' "$cpu_profiles"
   uname -a
   ip -Version
   tc -Version
@@ -740,6 +756,10 @@ run_flow() {
     if [[ \$flow_stack == netstack ]]; then
       client_command+=(${netstack_opts} -client -mtu ${mtu} -iface client2.0 -addr 10.0.0.6 -mask ${mask} -gso=${gso} -swgso=${swgso} --gro=${gro} --xdp=false)
     fi
+  fi
+  # Shared flows need distinct files: both proxies may be Netstack processes.
+  if ${cpu_profiles} && [[ \$flow_stack == netstack ]]; then
+    client_command+=("-cpuprofile=\$TCP_BENCHMARK_OUTPUT_DIR/client-cpu.pprof")
   fi
   if ${tcp_observations}; then
     client_command+=("-client_tcp_snapshot_file=\$TCP_BENCHMARK_OUTPUT_DIR/tcp-observations.json")
