@@ -116,12 +116,16 @@ tcg_image(
     tags = ["manual"],
 )
 
-# Package extraction does not run update-alternatives. Only this guest needs
-# awk for the controller fixture; leave existing guest archives unchanged.
+# APT archive extraction does not create the normal mount directory or run
+# alternatives/usrmerge. Supply the paths used by the fixture and container tests.
 pkg_tar(
-    name = "cgroup_v1_alternatives",
+    name = "cgroup_v1_layout",
     testonly = True,
-    symlinks = {"usr/bin/awk": "mawk"},
+    empty_dirs = ["mnt"],
+    symlinks = {
+        "usr/bin/awk": "mawk",
+        "usr/bin/touch": "../../bin/touch",
+    },
     tags = ["manual"],
 )
 
@@ -132,7 +136,7 @@ flatten(
     tags = ["manual"],
     tars = [
         "@kvm_amd64_cgroup_v1_guest//:flat",
-        ":cgroup_v1_alternatives",
+        ":cgroup_v1_layout",
     ],
 )
 
