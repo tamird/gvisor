@@ -96,7 +96,7 @@ PosixError WaitForV2Controller(const Cgroup& cg, absl::string_view controller) {
 // Controller membership survives unmounting cgroupfs. Restore it after the
 // temporary v1 mounts are destroyed, including when a test assertion aborts.
 PosixErrorOr<Cleanup> DisableV2Controller(const Cgroup& cg,
-                                          const std::string& controller) {
+                                          std::string controller) {
   ASSIGN_OR_RETURN_ERRNO(const std::string enabled,
                          cg.ReadControlFile("cgroup.subtree_control"));
   RETURN_IF_ERRNO(cg.WriteControlFile("cgroup.subtree_control",
@@ -104,7 +104,7 @@ PosixErrorOr<Cleanup> DisableV2Controller(const Cgroup& cg,
   if (!absl::StrContains(enabled, controller)) {
     return Cleanup();
   }
-  return Cleanup([&cg, controller] {
+  return Cleanup([&cg, controller = std::move(controller)] {
     ASSERT_NO_ERRNO(WaitForV2Controller(cg, controller));
     EXPECT_NO_ERRNO(cg.WriteControlFile("cgroup.subtree_control",
                                         absl::StrCat("+", controller)));
