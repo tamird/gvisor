@@ -127,6 +127,15 @@ http_archive(
 ### Python
 PYTHON_VERSION = "3.11"
 
+# pip defaults to the Bazel host. Keep native tools available alongside both
+# Linux platforms used by remote actions.
+# https://github.com/bazel-contrib/rules_python/blob/6aad8828e/python/private/pypi/hub_builder.bzl#L189
+PYTHON_WHEEL_PLATFORMS = [
+    "{os}_{arch}",
+    "linux_aarch64",
+    "linux_x86_64",
+]
+
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.defaults(python_version = PYTHON_VERSION)
 python.toolchain(python_version = PYTHON_VERSION)
@@ -144,6 +153,7 @@ pip.parse(
     hub_name = "python_distribution_deps",
     python_version = PYTHON_VERSION,
     requirements_lock = "//tools/python_distribution:requirements.txt",
+    target_platforms = PYTHON_WHEEL_PLATFORMS,
 )
 pip.parse(
     download_only = True,
@@ -151,6 +161,7 @@ pip.parse(
     hub_name = "lint_deps",
     python_version = PYTHON_VERSION,
     requirements_lock = "//tools/lint:requirements.txt",
+    target_platforms = PYTHON_WHEEL_PLATFORMS,
 )
 use_repo(pip, "lint_deps", "python_distribution_deps")
 
