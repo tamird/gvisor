@@ -64,6 +64,7 @@ type sourceGroup struct {
 
 type recordSet struct {
 	wireAlias     string
+	saveReceiver  string
 	types         map[string]*recordType
 	pointerFields map[string]map[int]struct{}
 }
@@ -312,7 +313,12 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 			}
 		}
 	}
-	records := &recordSet{wireAlias: unusedName("statewire", names), types: make(map[string]*recordType), pointerFields: make(map[string]map[int]struct{})}
+	records := &recordSet{
+		wireAlias:     unusedName("statewire", names),
+		saveReceiver:  unusedName("stateObject", names),
+		types:         make(map[string]*recordType),
+		pointerFields: make(map[string]map[int]struct{}),
+	}
 	for _, declaration := range file.Decls {
 		fn, ok := declaration.(*ast.FuncDecl)
 		if !ok || fn.Recv == nil || fn.Name.Name != "StateSave" {
@@ -385,8 +391,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 	return records, nil
 }
 
-// unusedName reserves only new implementation identifiers. Existing receiver,
-// method, field and import spellings are kept unchanged.
+// unusedName reserves a new generated identifier against existing scope names.
 func unusedName(base string, used map[string]struct{}) string {
 	name := base
 	for suffix := 1; ; suffix++ {
