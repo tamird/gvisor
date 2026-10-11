@@ -22,6 +22,7 @@ import (
 
 	"github.com/google/subcommands"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/sentry/checkpoint"
 	"gvisor.dev/gvisor/pkg/sentry/control"
 	"gvisor.dev/gvisor/pkg/state/statefile"
@@ -145,6 +146,20 @@ func (c *Checkpoint) Execute(_ context.Context, f *flag.FlagSet, args ...any) su
 
 	if err := cont.Checkpoint(conf, c.imagePath, opts); err != nil {
 		util.Fatalf("checkpoint failed: %v", err)
+	}
+	// Retain output sizes for this fork-only checkpoint representation experiment.
+	entries, err := os.ReadDir(c.imagePath)
+	if err != nil {
+		util.Fatalf("reading checkpoint outputs: %v", err)
+	}
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			util.Fatalf("stating checkpoint output %q: %v", entry.Name(), err)
+		}
+		if info.Mode().IsRegular() {
+			log.Infof("Checkpoint output: name=%q bytes=%d", entry.Name(), info.Size())
+		}
 	}
 
 	return subcommands.ExitSuccess
