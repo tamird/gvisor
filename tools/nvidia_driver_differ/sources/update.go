@@ -179,6 +179,8 @@ func update(ctx context.Context, workspace string) error {
 		return err
 	}
 	cmd := exec.CommandContext(ctx, "git", "ls-remote", "--tags", parser.GitRepoURL)
+	// Avoid Git discovering the synthetic .git file in Bazel's output tree.
+	cmd.Dir = workspace
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	output, err := cmd.Output()
