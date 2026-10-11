@@ -72,7 +72,7 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 }
 
 // lookupTypeInfo extracts the metadata for a type.
-func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
+func lookupTypeInfo(typ reflect.Type) (registeredType, bool) {
 	if info, ok := reverseTypeDatabase[typ]; ok {
 		return info, true
 	}
@@ -81,24 +81,24 @@ func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 	if !ok {
 		// Is this a primitive?
 		if typ.Kind() == reflect.Interface {
-			return wire.Type{Name: interfaceType}, true
+			return registeredType{Type: wire.Type{Name: interfaceType}}, true
 		}
 		name := typ.Name()
 		if _, ok := primitiveTypeDatabase[name]; !ok {
 			// This is not a known type, and not a primitive. The
 			// encoder may proceed for anonymous empty structs, or
 			// it may deference the type pointer and try again.
-			return wire.Type{}, false
+			return registeredType{}, false
 		}
-		return wire.Type{Name: name}, true
+		return registeredType{Type: wire.Type{Name: name}}, true
 	}
 	// Sanity check the type.
 	if raceEnabled {
 		// Registered types were found above. Preserve the handling of
 		// unregistered embedded types and anonymous empty structs.
-		return wire.Type{}, false
+		return registeredType{}, false
 	}
-	return wire.Type{Name: t.StateTypeName(), Fields: t.StateFields()}, true
+	return registeredType{Type: wire.Type{Name: t.StateTypeName(), Fields: t.StateFields()}}, true
 }
 
 // Lookup looks up or registers the given object.
@@ -122,13 +122,13 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 		tdb.lastID++
 		te = &typeEntry{
 			ID:        tdb.lastID,
-			Type:      info,
+			Type:      info.Type,
 			newRecord: wire.NewSlotRecord,
 		}
 		// Registration owns the concrete type. A promoted StateTypeName must
 		// not select the embedded type's captured-field layout.
-		if registered, ok := globalTypeDatabase[info.Name]; ok && registered.typ == typ && registered.newRecord != nil {
-			te.newRecord = registered.newRecord
+		if info.newRecord != nil {
+			te.newRecord = info.newRecord
 		}
 
 		// All done.
@@ -170,7 +170,7 @@ func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 		}
 		return typ // Primitive type.
 	}
-	return registered.typ // Registered type.
+	return registered // Registered type.
 }
 
 // singleFieldOrder defines the field order for a single field.
@@ -216,7 +216,7 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 			id, name, fields, pending.Name, pending.Fields)
 	}
 	rte := &reconciledTypeEntry{
-		Type:      info,
+		Type:      info.Type,
 		LocalType: typ,
 	}
 	// If there are zero or one fields, then we skip allocating the field
@@ -296,18 +296,20 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 	return r
 }()
 
-// registeredType owns the concrete Go type and its capture layout.
+// registeredType owns immutable wire metadata and the capture constructor. Its
+// reverse-index key is the exact concrete Go type.
 // Wire IDs remain local to each serialization.
 type registeredType struct {
-	typ       reflect.Type
+	wire.Type
 	newRecord func(wire.TypeID, int) *wire.Record
 }
 
-// globalTypeDatabase is the single registration database for saving and loading.
-var globalTypeDatabase = map[string]registeredType{}
+// globalTypeDatabase resolves wire names to concrete Go types for loading and
+// validating forwarded record registrations.
+var globalTypeDatabase = map[string]reflect.Type{}
 
 // reverseTypeDatabase holds immutable metadata indexed by the original type.
-var reverseTypeDatabase = map[reflect.Type]wire.Type{}
+var reverseTypeDatabase = map[reflect.Type]registeredType{}
 
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
@@ -454,8 +456,8 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord}
-	reverseTypeDatabase[typ] = info
+	globalTypeDatabase[info.Name] = typ
+	reverseTypeDatabase[typ] = registeredType{Type: info, newRecord: newRecord}
 }
 
 func init() {
