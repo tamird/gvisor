@@ -17,7 +17,38 @@ package state
 import (
 	"reflect"
 	"unsafe"
+
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
+
+// referenceArray owns a reusable pointer slot alongside the wire container.
+// Keeping the slot here avoids allocating one scratch cell per element. The
+// retained pointer to RefArray keeps this entire allocation reachable.
+type referenceArray struct {
+	wire.RefArray
+	current unsafe.Pointer
+}
+
+// encodeReferenceArray captures an addressable array of pointers. The element
+// kind is checked by encodeArray before borrowing its pointer-sized cells.
+func (es *encodeState) encodeReferenceArray(obj reflect.Value, dest *wire.Object) {
+	a := &referenceArray{RefArray: wire.RefArray{Contents: make([]wire.Ref, obj.Len())}}
+	*dest = &a.RefArray
+	// A pointer of the array's exact element type reads the reusable GC-visible
+	// slot. resolve retains its pointee value, never this changing slot.
+	value := reflect.NewAt(obj.Type().Elem(), unsafe.Pointer(&a.current)).Elem()
+	pointers := unsafe.Slice((*unsafe.Pointer)(obj.Addr().UnsafePointer()), obj.Len())
+	for i, pointer := range pointers {
+		if pointer == nil {
+			// The full pointer value is a zero Ref, including in a homogeneous
+			// array whose first element is nil.
+			continue
+		}
+		a.current = pointer
+		es.resolve(value, &a.Contents[i])
+	}
+	a.current = nil
+}
 
 // arrayFromSlice constructs a new pointer to the slice data.
 //

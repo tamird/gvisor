@@ -8,6 +8,7 @@ package(
 go_library(
     name = "wire",
     srcs = [
+        "refs.go",
         "snapshot.go",
         "wire.go",
     ],
@@ -22,6 +23,9 @@ go_library(
 
 go_test(
     name = "wire_test",
-    srcs = ["wire_test.go"],
+    srcs = [
+        "refs_test.go",
+        "wire_test.go",
+    ],
     embed = [":wire"],
 )

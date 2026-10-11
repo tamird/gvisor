@@ -20,6 +20,7 @@ import (
 )
 
 var allArrayPrimitives = []any{
+	[0]*int{},
 	[1]bool{},
 	[1]bool{true},
 	[2]bool{false, true},
