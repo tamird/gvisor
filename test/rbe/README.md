@@ -849,10 +849,26 @@ remain remote. The coordinator allows 80 minutes of work plus report capture
 inside the 90-minute step and 95-minute job. Only current-invocation test logs
 and XML reports are retained, alongside the selected owners and spawn trace.
 
-The complete `container-v1` lane still lacks a qualified KVM route. Its fixture
-binds controllers VM-wide and must run inside a disposable guest with all
-required v1 controllers; the Actions host is not a substitute. Existing
-non-KVM cgroup-v1 owners retain their disposable remote worker route.
+The `container-v1` KVM owner uses a declared AMD64 Ubuntu 6.8 guest with the
+existing controller fixture inside the VM. The guest includes the required
+v1 controllers, util-linux and awk. Additional kernel controllers remain
+untouched; the fixture still requires every mounted controller and checks
+that all controllers are initially unused and enabled. Existing non-KVM
+cgroup-v1 owners retain their disposable remote worker route.
+
+First dispatch `container-v1-pilot` with architecture `amd64` and execution
+`local`. It runs the complete existing KVM package test through the same
+guest and fixture, with its original 300-second limit, establishing actual
+nested virtualization before the full lane. Then dispatch `container-v1`
+with those same architecture/execution inputs for the complete public
+selection. The KVM guest has 6 GiB of RAM and 8 GiB of scratch; only one
+runs locally at a time, accounting for the four-GB container workload plus
+guest overhead on the observed 16-GB Actions host. Eight original 900-second
+shards have a 140-minute work budget inside a 150-minute step/155-minute
+job. The probe has a separate 20-minute work bound inside its 45-minute
+step. Neither a passing probe nor host `/dev/kvm` access qualifies the full
+container lane. The original payload environment, arguments, shards and
+individual timeouts remain part of result verification.
 
 ARM64 unit qualification retains the full canonical selection. These owners
 require Firecracker workers and remain unqualified without ARM64 capacity:
@@ -1017,8 +1033,8 @@ Docker daemon. It preserves the command vector, test selection, runtime table
 and sharding. It does not infer the hierarchy from
 `CGROUPV2` or replace a runtime check with that environment variable.
 
-The wrapper requires RBE and the lane forbids local test execution. Existing
-owned Docker actions select root Firecracker VMs with runner recycling disabled;
+The remote wrapper route requires RBE and forbids local test execution.
+Existing owned Docker actions select root Firecracker VMs with recycling disabled;
 compilation keeps its ordinary execution platform. A private mount namespace
 and child PID namespace contain the command. Cleanup removes only empty owned
 groups, uses ordinary unmounts and checks the original mount view. Kernel
@@ -1028,9 +1044,11 @@ The focused `//test/rbe:cgroup_v1_fixture_test` retains the existing
 `TestCgroupV1` assertions separately from the generic wrapper.
 
 The `unit-v1` lane uses the same wrapper and preserves `--config=unit`'s roots,
-filters and exclusions. All three v1 lanes select `--config=rbe-cgroup-v1`, which
-gives test actions the privileged setup environment while compilation inherits
-the ordinary OCI platform. Tests retain their own memory settings. The live
+filters and exclusions. Remote v1 variants select the privileged setup
+environment while compilation inherits the ordinary OCI platform. The local
+container lane instead wraps only its KVM owner in the disposable guest
+described above; its other owners retain their remote variants. Tests retain
+their own memory settings. The live
 NVIDIA checksum test also uses this environment, including its CA trust and
 external networking, so setup can mount controllers before HTTPS requests.
 

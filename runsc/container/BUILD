@@ -1,3 +1,4 @@
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
 load("//tools:defs.bzl", "default_platform", "go_library", "go_test", "most_shards", "native_test", "platforms")
 load("//tools/bazeldefs:platforms.bzl", "RBE_NETWORK_TOOLS_IMAGE", "namespace_test_exec_properties")
 load(":test_tools.bzl", "erofs_tools")
@@ -51,6 +52,8 @@ go_library(
 # configs() in container_test.go already excludes ptrace. Keep the remaining
 # public platforms selectable without rebuilding or narrowing the test binary.
 _CONTAINER_PLATFORMS = [p for (p, tags) in platforms.items() if "manual" not in tags and p != "ptrace"]
+
+_CONTAINER_PLATFORM_ARGS = {platform: ["--test_platforms=" + platform] for platform in _CONTAINER_PLATFORMS}
 
 # The tests execute ip from the container root and create memory-backed files
 # in up to 25 concurrent containers, each writing 100 MiB.
@@ -144,16 +147,36 @@ go_test(
         name = "container_test_" + platform,
         size = "large",
         src = ":container_test",
-        args = ["--test_platforms=" + platform],
+        args = _CONTAINER_PLATFORM_ARGS[platform],
         cgroup_v2 = True,
         # Preserve rules_go's runfiles initialization in the shared executable.
         env = {"GO_TEST_RUN_FROM_BAZEL": "1"},
         exec_properties = _CONTAINER_EXEC_PROPERTIES,
         shard_count = most_shards,
-        tags = ["manual"] + (["requires-kvm"] if platform == "kvm" else []),
+        tags = ["manual"] + ([
+            "requires-kvm",
+            "rbe-has-cgroup-v1-guest-variant",
+        ] if platform == "kvm" else []),
     )
     for platform in _CONTAINER_PLATFORMS
 ]
+
+# The cgroup-v1 fixture owns VM-wide controller bindings. Run it inside the
+# disposable guest, never around QEMU on the Actions host. Six GiB includes
+# the existing four-GB test budget plus guest kernel/initramfs overhead.
+amd64_kvm_test(
+    name = "container_test_kvm_cgroup_v1_guest",
+    size = "large",
+    args = _CONTAINER_PLATFORM_ARGS["kvm"],
+    guest_env = {"CGROUPV2": "false"},
+    image = "//test/rbe/tcg:amd64_cgroup_v1_guest",
+    memory_mib = 6144,
+    payload = ":container_test_kvm",
+    run_under = "//test/rbe:cgroup_v1",
+    scratch_gib = 8,
+    shard_count = most_shards,
+    tags = [],
+)
 
 go_test(
     name = "serialization_test",

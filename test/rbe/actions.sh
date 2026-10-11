@@ -99,13 +99,18 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     # https://github.com/bazelbuild/bazel/blob/f8278f94e/src/main/java/com/google/devtools/build/lib/sandbox/DockerSandboxedSpawnRunner.java#L267-L274
     qualification_root_bazel=false
     case "$QUALIFICATION_ARCH:${lanes[*]}" in
-      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
+      amd64:syscalls-rc-pilot|amd64:syscalls-rc|all:syscalls-rc|amd64:container|amd64:container-v1|amd64:container-v1-pilot|amd64:plugin-network|amd64:nftables|amd64:moby|amd64:kvm|amd64:language-goferfs|amd64:syscalls|amd64:startup|amd64:posture|amd64:portforward|amd64:root|amd64:benchmarks|arm64:docker|arm64:cpu-images|arm64:gpu-images)
         qualification_root_bazel=true
         ;;
     esac
     export qualification_root_bazel
+    qualification_container=false
+    case "${lanes[*]}" in
+      container|container-v1|container-v1-pilot) qualification_container=true ;;
+    esac
+    export qualification_container
     qualification_retain_reports=false
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || ( $QUALIFICATION_EXECUTION == local && ${lanes[*]} == container ) ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || ( $QUALIFICATION_EXECUTION == local && $qualification_container == true ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
@@ -147,13 +152,20 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         fi
       fi
     } > "$qualification_rc"
+    qualification_seconds=0
     if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
-      QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import time; print(time.monotonic()+7200)')
-      export QUALIFICATION_WORK_DEADLINE
-    elif [[ ${lanes[*]} == container ]]; then
-      # Eight original 900-second KVM shards share two local slots. Reserve
-      # ten minutes after this bound for reports within the 90-minute step.
-      QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import time; print(time.monotonic()+4800)')
+      qualification_seconds=7200
+    else
+      case "${lanes[*]}" in
+        container) qualification_seconds=4800 ;;
+        # One six-GiB KVM guest at a time preserves the test memory budget.
+        # Eight original 900-second shards need two hours before setup/capture.
+        container-v1) qualification_seconds=8400 ;;
+        container-v1-pilot) qualification_seconds=1200 ;;
+      esac
+    fi
+    if (( qualification_seconds > 0 )); then
+      QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import sys,time; print(time.monotonic()+int(sys.argv[1]))' "$qualification_seconds")
       export QUALIFICATION_WORK_DEADLINE
     fi
     unset BUILDBUDDY_API_KEY
@@ -198,8 +210,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # qualify.sh records the selected profile and configured test graph.
         # Keep the actual command and checkout state alongside those records.
         cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
-        if [[ $QUALIFICATION_LANES == container ]]; then
-          cohort_dir="$RUNNER_TEMP/qualification/container-full-profile"
+        if [[ $qualification_container == true ]]; then
+          cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
           # Leave room for the work command and capture termination grace.
           capture_seconds=540
         fi
@@ -344,7 +356,7 @@ GUEST_EVENTS
           sudo -n test -w "$device"
         done
       fi
-      if [[ ${lanes[*]} == container || ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
+      if [[ $qualification_container == true || ${lanes[*]} == kvm || ${lanes[*]} == syscalls-kvm || ${lanes[*]} == syscalls-rc-pilot || ${lanes[*]} == syscalls-rc ]]; then
         [[ -c /dev/kvm ]]
         sudo -n test -r /dev/kvm
         sudo -n test -w /dev/kvm

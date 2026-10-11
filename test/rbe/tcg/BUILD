@@ -14,7 +14,7 @@
 
 load("@rules_distroless//distroless:defs.bzl", "flatten")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
-load("//tools:defs.bzl", "bzl_library")
+load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load(":defs.bzl", "tcg_image")
 
 package(
@@ -112,6 +112,42 @@ tcg_image(
         "@kvm_amd64_rc_modules//:data.tar",
     ],
     kernel_release = "7.3.0-070300rc3-generic",
+    page_size = 4096,
+    tags = ["manual"],
+)
+
+# Package extraction does not run update-alternatives. Only this guest needs
+# awk for the controller fixture; leave existing guest archives unchanged.
+pkg_tar(
+    name = "cgroup_v1_alternatives",
+    testonly = True,
+    symlinks = {"usr/bin/awk": "mawk"},
+    tags = ["manual"],
+)
+
+flatten(
+    name = "cgroup_v1_userspace",
+    testonly = True,
+    deduplicate = True,
+    tags = ["manual"],
+    tars = [
+        "@kvm_amd64_cgroup_v1_guest//:flat",
+        ":cgroup_v1_alternatives",
+    ],
+)
+
+tcg_image(
+    name = "amd64_cgroup_v1_guest",
+    testonly = True,
+    architecture = "amd64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    guest = ":cgroup_v1_userspace",
+    host_tools = "@kvm_host_tools//:flat",
+    init = "init.sh",
+    kernel_release = "6.8.0-138-generic",
     page_size = 4096,
     tags = ["manual"],
 )

@@ -18,7 +18,7 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
+lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
@@ -48,7 +48,7 @@ Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
-and AMD64 container tests, KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
+and AMD64 container/cgroup-v1 tests, KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
 plugin-network and startup/posture/portforward/root/benchmarks.
 With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
 ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
@@ -147,7 +147,7 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
       *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
@@ -207,7 +207,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
+    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -648,15 +648,17 @@ select_cgroup_profile() {
         > "$selection_dir/$lane-kvm-targets"
       python3 test/rbe/unit_matrix.py select-filtered "$profile" \
         "$selection_dir/$lane-kvm-targets" "$selection_dir/$lane-platform-targets"
-    else
+    elif [[ $lane == container ]]; then
       container_options=(--architecture=amd64)
+    else
+      container_options=(--guest-kvm)
     fi
   fi
   if [[ $lane == container ]]; then
     python3 test/rbe/unit_matrix.py container-targets "$profile" "${container_options[@]}" \
       >> "$selection_dir/explicit-targets"
   else
-    python3 test/rbe/unit_matrix.py cgroup-targets "$profile" \
+    python3 test/rbe/unit_matrix.py cgroup-targets "$profile" "${container_options[@]}" \
       >> "$selection_dir/explicit-targets"
   fi
 }
@@ -675,13 +677,18 @@ run_platform_matrix() (
   : > "$selection_dir/shared-targets"
   : > "$selection_dir/filtered-targets"
   if [[ $test_execution == local ]]; then
-    # The local matrix is the complete public AMD64 container profile.
-    options+=(--config=rbe-hybrid-tests "--strategy=TestRunner=remote,docker,local"
-      --//tools/bazeldefs:local_test_architecture=amd64
-      --//tools/bazeldefs:local_test_backend=docker
-      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
-    # Keep the intended two local slots after nested config expansion.
-    docker_test_options
+    if [[ $1 == container-v1 ]]; then
+      # Only the declared KVM guest is local. Other cgroup-v1 owners retain
+      # their disposable remote VM and its rule-owned run_under fixture.
+      options+=(--config=rbe-hybrid-tests --local_test_jobs=1 --test_env=GO_TEST_WRAP_TESTV=1)
+    else
+      options+=(--config=rbe-hybrid-tests "--strategy=TestRunner=remote,docker,local"
+        --//tools/bazeldefs:local_test_architecture=amd64
+        --//tools/bazeldefs:local_test_backend=docker
+        "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
+      # Keep the intended two local slots after nested config expansion.
+      docker_test_options
+    fi
   fi
   for lane in "$@"; do
     case "$lane" in
@@ -1005,6 +1012,14 @@ run_lane() (
       # test/unit.targets also retains non-test build targets and the existing
       # exclusions. Keep its selection separate from Nogo's positive tag filter.
       options=(--config=unit)
+      ;;
+    container-v1-pilot)
+      if [[ $arch != amd64 || $test_execution != local ]]; then
+        printf 'The disposable cgroup-v1 KVM probe requires local AMD64 execution.\n' >&2
+        return 2
+      fi
+      targets=(//pkg/sentry/platform/kvm:cgroup_v1_guest_probe)
+      options=(--config=rbe-hybrid-tests --local_test_jobs=1 --test_env=GO_TEST_WRAP_TESTV=1)
       ;;
     container|container-v1)
       if [[ $arch != amd64 ]]; then
