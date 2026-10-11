@@ -770,6 +770,9 @@ func (s *Struct) Field(i int) *Object {
 		// Alloc may be optionally called; can't call twice.
 		panic("Field called inappropriately, wrong Alloc?")
 	}
+	if _, ok := s.fields.(typedFieldSnapshot); ok {
+		panic("Field is unavailable on an immutable typed snapshot")
+	}
 	return &s.fields
 }
 
@@ -793,6 +796,15 @@ func (s *Struct) Alloc(slots int) {
 	}
 }
 
+// AllocIfNeeded allocates ordinary field slots if no representation is installed.
+// It supports lazy allocation by a state saver that may instead install a typed
+// snapshot. Existing field values and typed snapshots are left unchanged.
+func (s *Struct) AllocIfNeeded(slots int) {
+	if s.fields == nil {
+		s.Alloc(slots)
+	}
+}
+
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
 	switch x := s.fields.(type) {
@@ -800,6 +812,8 @@ func (s *Struct) Fields() int {
 		return len(*x)
 	case noObjects:
 		return 0
+	case typedFieldSnapshot:
+		return x.fieldCount()
 	default:
 		return 1
 	}
@@ -915,8 +929,18 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
+		saveSnapshot(w, obj)
+	}
+}
+
+// saveSnapshot keeps the interface assertion and unknown-object error path
+// outside Save's concrete dispatch.
+func saveSnapshot(w *Writer, obj Object) {
+	x, ok := obj.(typedFieldSnapshot)
+	if !ok {
 		panic(fmt.Errorf("unknown type: %#v", obj))
 	}
+	x.save(w)
 }
 
 // Load loads a new object.
