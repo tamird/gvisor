@@ -929,18 +929,23 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
-		saveSnapshot(w, obj)
+		saveExtra(w, obj)
 	}
 }
 
-// saveSnapshot keeps the interface assertion and unknown-object error path
-// outside Save's concrete dispatch.
-func saveSnapshot(w *Writer, obj Object) {
-	x, ok := obj.(typedFieldSnapshot)
-	if !ok {
-		panic(fmt.Errorf("unknown type: %#v", obj))
+// saveExtra keeps state-owned representations and the unknown-object error
+// path outside Save's concrete dispatch.
+func saveExtra(w *Writer, obj Object) {
+	if x, ok := obj.(typedFieldSnapshot); ok {
+		x.save(w)
+		return
 	}
-	x.save(w)
+	if x, ok := obj.(*RefArray); ok {
+		typeArray.save(w)
+		x.save(w)
+		return
+	}
+	panic(fmt.Errorf("unknown type: %#v", obj))
 }
 
 // Load loads a new object.
