@@ -1189,6 +1189,16 @@ run_lane() (
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi
   fi
+  if [[ $lane == benchmarks && $test_execution == local && $benchmark_target == //test/benchmarks/network:iperf_test_continuous_systrap_owned ]]; then
+    local driver
+    driver=$(mktemp "$RUNNER_TEMP/netip-iperf-driver.XXXXXX") || return
+    cp test/rbe/netip_iperf_same_host.sh "$driver" || return
+    bash "$driver" "${runtime_options[@]}" "--config=$execution_config" "--config=$architecture_config" \
+      --keep_going "${options[@]}" "${header_options[@]}" "${targets[@]}"
+    local result=$?
+    rm -f "$driver"
+    return "$result"
+  fi
   bazel "$command" "${runtime_options[@]}" "--config=$execution_config" "--config=$architecture_config" \
     --keep_going "${options[@]}" "${header_options[@]}" "${targets[@]}"
 )

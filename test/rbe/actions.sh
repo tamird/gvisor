@@ -149,9 +149,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           continue
         fi
         if [[ $argument == build || $argument == test ]]; then
-          evidence=(
-            "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
-          )
+          if [[ -n ${QUALIFICATION_PHASE:-} ]]; then
+            [[ $QUALIFICATION_PHASE =~ ^[a-z0-9-]+$ ]] || return 2
+            evidence=("--execution_log_compact_file=$RUNNER_TEMP/qualification/iperf/$QUALIFICATION_PHASE.binpb")
+          else
+            evidence=(
+              "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
+            )
+          fi
         fi
         if [[ $QUALIFICATION_EXECUTION == remote-actions && $argument == test ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
