@@ -15,8 +15,11 @@
 package tests
 
 import (
+	"bytes"
 	"math/rand"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 func TestEmptyStruct(t *testing.T) {
@@ -112,4 +115,186 @@ func TestSnapshotEmbedding(t *testing.T) {
 		snapshotEmbedded{inner: inner{v: 7}, parent: 11},
 		snapshotNilEmbedded{snapshotPointerEmbedded: nil, parent: 19},
 	})
+}
+
+func TestStructSaveIdentity(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		makeGraph func(*int) *system
+		want      int
+	}{
+		{
+			name: "late_parent",
+			makeGraph: func(calls *int) *system {
+				parent := &countedSaveParent{child: countedSave{value: 17, calls: calls}, value: 23}
+				// The intermediary is deferred after the child. Its save then
+				// discovers a parent containing that already captured child.
+				return &system{v1: &parent.child, v2: &system{v1: parent}}
+			},
+			want: 1,
+		},
+		{
+			name: "shared_value",
+			makeGraph: func(calls *int) *system {
+				var value any = countedSave{value: 17, calls: calls}
+				return &system{v1: value, v2: value}
+			},
+			want: 1,
+		},
+		{
+			name: "equal_values",
+			makeGraph: func(calls *int) *system {
+				value := countedSave{value: 17, calls: calls}
+				return &system{v1: value, v2: value}
+			},
+			want: 2,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var calls int
+			graph := test.makeGraph(&calls)
+			var encoded bytes.Buffer
+			if _, err := state.Save(t.Context(), &encoded, &graph); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := calls, test.want; got != want {
+				t.Fatalf("save calls = %d, want %d", got, want)
+			}
+			var loaded *system
+			if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+				t.Fatal(err)
+			}
+			if test.name == "late_parent" {
+				parent := loaded.v2.(*system).v1.(*countedSaveParent)
+				if got, want := loaded.v1.(*countedSave), &parent.child; got != want {
+					t.Fatalf("interior alias = %p, want %p", got, want)
+				}
+				if got, want := parent.child.value, int64(17); got != want {
+					t.Errorf("child value = %d, want %d", got, want)
+				}
+				if got, want := parent.value, int64(23); got != want {
+					t.Errorf("parent value = %d, want %d", got, want)
+				}
+			} else {
+				for _, value := range []any{loaded.v1, loaded.v2} {
+					if got, want := value.(countedSave).value, int64(17); got != want {
+						t.Errorf("value = %d, want %d", got, want)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestStructSnapshotOwnership(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		makeGraph func(*int) *system
+		check     func(*testing.T, *system)
+	}{
+		{
+			name: "active_child",
+			makeGraph: func(calls *int) *system {
+				parent := &countedSaveParent{child: countedSave{value: 17, calls: calls}, value: 23}
+				// The child's saver discovers its parent while its own snapshot
+				// is still being filled, before the child leaves the call stack.
+				parent.child.parent = parent
+				return &system{v1: &parent.child}
+			},
+			check: func(t *testing.T, graph *system) {
+				child := graph.v1.(*countedSave)
+				if got, want := child.value, int64(17); got != want {
+					t.Errorf("child value = %d, want %d", got, want)
+				}
+				if got, want := &child.parent.child, child; got != want {
+					t.Errorf("parent's child = %p, want %p", got, want)
+				}
+				if got, want := child.parent.value, int64(23); got != want {
+					t.Errorf("parent value = %d, want %d", got, want)
+				}
+			},
+		},
+		{
+			name: "successive_parents",
+			makeGraph: func(calls *int) *system {
+				grandparent := &countedSaveGrandparent{parent: countedSaveParent{
+					child: countedSave{value: 17, calls: calls}, value: 23,
+				}}
+				// The intermediary discovers both containing objects after the
+				// child is captured, replacing the uncaptured parent immediately.
+				// Parent and grandparent occupy the same address range.
+				return &system{v1: &grandparent.parent.child, v2: &system{
+					v1: &grandparent.parent, v2: grandparent,
+				}}
+			},
+			check: func(t *testing.T, graph *system) {
+				parents := graph.v2.(*system)
+				parent := parents.v1.(*countedSaveParent)
+				grandparent := parents.v2.(*countedSaveGrandparent)
+				if got, want := parent, &grandparent.parent; got != want {
+					t.Errorf("parent = %p, want %p", got, want)
+				}
+				if got, want := graph.v1.(*countedSave), &parent.child; got != want {
+					t.Errorf("child = %p, want %p", got, want)
+				}
+				if got, want := parent.child.value, int64(17); got != want {
+					t.Errorf("child value = %d, want %d", got, want)
+				}
+				if got, want := parent.value, int64(23); got != want {
+					t.Errorf("parent value = %d, want %d", got, want)
+				}
+			},
+		},
+		{
+			name: "inline_before_pointer",
+			makeGraph: func(calls *int) *system {
+				child := &countedSave{value: 17, calls: calls}
+				return &system{v1: &manualInlineSave{value: child}, v2: &system{v1: child}}
+			},
+			check: func(t *testing.T, graph *system) {
+				inline := graph.v1.(*manualInlineSave).value
+				pointed := graph.v2.(*system).v1.(*countedSave)
+				if got, want := pointed.value, int64(17); got != want {
+					t.Errorf("pointed value = %d, want %d", got, want)
+				}
+				if got, want := inline.value, pointed.value; got != want {
+					t.Errorf("inline value = %d, want %d", got, want)
+				}
+			},
+		},
+		{
+			name: "pointer_before_inline",
+			makeGraph: func(calls *int) *system {
+				child := &countedSave{value: 17, calls: calls}
+				return &system{v1: child, v2: &manualInlineSave{value: child}}
+			},
+			check: func(t *testing.T, graph *system) {
+				inline := graph.v2.(*manualInlineSave).value
+				pointed := graph.v1.(*countedSave)
+				if got, want := pointed.value, int64(17); got != want {
+					t.Errorf("pointed value = %d, want %d", got, want)
+				}
+				if got, want := inline.value, pointed.value; got != want {
+					t.Errorf("inline value = %d, want %d", got, want)
+				}
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var calls int
+			graph := test.makeGraph(&calls)
+			var encoded bytes.Buffer
+			if _, err := state.Save(t.Context(), &encoded, &graph); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := calls, 1; got != want {
+				t.Fatalf("save calls = %d, want %d", got, want)
+			}
+			var loaded *system
+			if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+				t.Fatal(err)
+			}
+			test.check(t, loaded)
+		})
+	}
 }

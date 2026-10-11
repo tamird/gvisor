@@ -18,6 +18,8 @@ import (
 	"context"
 	"net/netip"
 	"time"
+
+	"gvisor.dev/gvisor/pkg/state"
 )
 
 // +stateify savable
@@ -152,4 +154,42 @@ type snapshotPointerEmbedded struct {
 type snapshotNilEmbedded struct {
 	*snapshotPointerEmbedded
 	parent int64
+}
+
+// +stateify savable
+type countedSave struct {
+	value  int64
+	parent *countedSaveParent
+	calls  *int `state:"nosave"`
+}
+
+func (c *countedSave) beforeSave() {
+	*c.calls++
+}
+
+// +stateify savable
+type countedSaveParent struct {
+	child countedSave
+	value int64
+}
+
+// +stateify savable
+type countedSaveGrandparent struct {
+	parent countedSaveParent
+}
+
+// manualInlineSave saves an external object inline, before or after another
+// saver reaches that same object through a pointer.
+// +stateify type
+type manualInlineSave struct {
+	value *countedSave
+}
+
+func (m *manualInlineSave) StateSave(s state.Sink) {
+	s.Save(0, m.value)
+}
+
+func (m *manualInlineSave) StateLoad(_ context.Context, s state.Source) {
+	m.value = new(countedSave)
+	s.Load(0, m.value)
 }
