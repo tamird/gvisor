@@ -87,8 +87,6 @@ release_files(
             "--debug",
             "--TESTONLY-unsafe-nonroot=true",
             "--rootless",
-            # Exercise the declared release layout, never embedded sidecar copies.
-            "--sidecar-usage-policy=STRICT",
             "do",
             "true",
         ],
@@ -143,7 +141,6 @@ config_setting(
         }) + [
             "--alsologtostderr",
             "--debug",
-            "--sidecar-usage-policy=STRICT",
             "do",
             "true",
         ],

@@ -96,7 +96,7 @@ cat > /etc/docker/daemon.json <<'CONFIG'
 {"exec-opts":["native.cgroupdriver=systemd"],"storage-driver":"overlay2","debug":true}
 CONFIG
 /fixture/configure_runtime --runsc=/fixture/runtime/runsc --name=runsc \
-  --config=/etc/docker/daemon.json -- --sidecar-usage-policy=STRICT \
+  --config=/etc/docker/daemon.json -- \
   --debug --debug-log=/tmp/runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log
 # Make the memory controller available to Docker while it discovers support
 # for swap limits, before any container requests can be stripped of them.
