@@ -32,9 +32,12 @@ def _route_test(ctx, providers, original_executable):
     if not local_architecture or _ARCHITECTURES[local_architecture].constraint not in constraints:
         return providers
 
-    # The syscall macro declares KVM through its public platform tag. Its
+    # Public syscall and container owners declare KVM with these tags. Their
     # remote properties deliberately make no claim of a KVM-capable worker.
-    local_kvm = local_architecture == "amd64" and "runsc_kvm" in ctx.attr.tags
+    local_kvm = local_architecture == "amd64" and any([
+        tag in ctx.attr.tags
+        for tag in ["runsc_kvm", "requires-kvm"]
+    ])
     if not local_kvm and ctx.attr.exec_properties.get("test.workload-isolation-type") != "firecracker":
         return providers
 

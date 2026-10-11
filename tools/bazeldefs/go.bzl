@@ -202,7 +202,15 @@ def go_test(name, static = False, pure = False, library = None, architectures = 
         **kwargs
     )
     if cgroup_v2:
-        cgroup_v2_variant(name, base_rule, kwargs)
+        cgroup_attributes = cgroup_v2_variant(name, base_rule, kwargs)
+        if test_rule != None:
+            cgroup_attributes["test_rule"] = test_rule
+        test_architecture_variants(
+            name + "_cgroup_v2",
+            architectures,
+            {"amd64": static_go_amd64_test, "arm64": static_go_arm64_test} if static else {"amd64": go_amd64_test, "arm64": go_arm64_test},
+            dict(cgroup_attributes, compile_exec_compatible_with = kwargs.get("exec_compatible_with", [])),
+        )
     cgroup_v1_variant(name, go_cgroup_v1_test, dict(kwargs, test_rule = base_rule))
     if test_rule != None:
         # The architecture frontend must configure the same raw rule as the

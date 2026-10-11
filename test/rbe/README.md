@@ -839,10 +839,20 @@ The `container` and `container-v1` lanes retain the public AMD64
 `make container-tests` selection: `//runsc/container/...` with only Nogo tests
 filtered out. Unlike the unit lanes, they include the KVM cases. `container`
 sets `CGROUPV2=true`; `container-v1` uses the same disposable cgroup-v1 setup
-as `unit-v1`. The container test requests a root Firecracker worker for its
-nested namespaces, but that does not provide the required KVM device. Both
-full container lanes remain unqualified without hosted KVM capacity; missing
-capabilities remain failures.
+as `unit-v1`. Remote-only selection reports and excludes KVM owners because
+Firecracker workers do not supply nested KVM. For the complete cgroup-v2
+selection, dispatch `container` with architecture `amd64`, execution `local`
+and `local_test_requirements=kvm`. Its declared architecture variants retain
+all public owners, shard counts and deadlines. KVM tests use the existing
+Actions Docker fixture and `/dev/kvm`; eligible non-KVM tests and compilation
+remain remote. The coordinator allows 80 minutes of work plus report capture
+inside the 90-minute step and 95-minute job. Only current-invocation test logs
+and XML reports are retained, alongside the selected owners and spawn trace.
+
+The complete `container-v1` lane still lacks a qualified KVM route. Its fixture
+binds controllers VM-wide and must run inside a disposable guest with all
+required v1 controllers; the Actions host is not a substitute. Existing
+non-KVM cgroup-v1 owners retain their disposable remote worker route.
 
 ARM64 unit qualification retains the full canonical selection. These owners
 require Firecracker workers and remain unqualified without ARM64 capacity:

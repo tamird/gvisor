@@ -48,7 +48,7 @@ Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
 Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
-and AMD64 KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
+and AMD64 container tests, KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
 plugin-network and startup/posture/portforward/root/benchmarks.
 With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
 ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
@@ -56,7 +56,7 @@ Compilation remains remote. Hybrid profiles run in one invocation; each
 test uses the execution requirements recorded in its selection report.
 An optional syscall bucket selects one existing hash15 partition, not the full
 profile. Its report retains every unexecuted bucket owner.
-For hybrid unit/syscall lanes, --local-test-requirements=NAME[,NAME...] names
+For hybrid unit/container/syscall lanes, --local-test-requirements=NAME[,NAME...] names
 requirements missing from remote workers. The default namespace requirement
 retains architecture-wide Firecracker fallback. An empty list keeps only the
 existing KVM and initial-cgroup local routes. Test selection remains complete.
@@ -147,14 +147,14 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
 esac
-if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 || ( ${1:-} != unit && ${1:-} != syscalls && ${1:-} != syscalls-resume && ${1:-} != syscalls-kvm ) ) ]]; then
-  printf 'Local test requirements apply only to hybrid unit/syscall lanes.\n' >&2
+if [[ $local_requirements_set == true && ( $test_execution != local || $# != 1 || ( ${1:-} != unit && ${1:-} != container && ${1:-} != syscalls && ${1:-} != syscalls-resume && ${1:-} != syscalls-kvm ) ) ]]; then
+  printf 'Local test requirements apply only to hybrid unit/container/syscall lanes.\n' >&2
   exit 2
 fi
 if [[ -n $syscall_bucket ]]; then
@@ -611,7 +611,7 @@ PY
 
 select_cgroup_profile() {
   local selection_dir=$1 lane=$2 profile
-  local -a profile_options=() targets=()
+  local -a profile_options=() targets=() container_options=()
   if [[ $lane == unit-v1 ]]; then
     select_unit_profile "$selection_dir"
     python3 test/rbe/unit_matrix.py cgroup-targets "$selection_dir/unit-profile.json" \
@@ -635,18 +635,25 @@ select_cgroup_profile() {
     python3 test/rbe/unit_matrix.py container-platform-targets "$profile" \
       > "$selection_dir/$lane-platform-roots"
     profile=$selection_dir/$lane-platform-profile.json
+    if [[ $test_execution == remote ]]; then
+      profile_options=("--test_tag_filters=-nogo,-requires-kvm")
+    fi
     analyze_profile "$selection_dir/$lane-platform-roots" "$profile" \
       --config=rbe-matrix --config=x86_64 --strip=never --build_tests_only \
-      --test_tag_filters=-nogo,-requires-kvm
-    python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/$lane-platform-roots" \
-      > "$selection_dir/$lane-kvm.query"
-    bazel query --output=label --query_file="$selection_dir/$lane-kvm.query" \
-      > "$selection_dir/$lane-kvm-targets"
-    python3 test/rbe/unit_matrix.py select-filtered "$profile" \
-      "$selection_dir/$lane-kvm-targets" "$selection_dir/$lane-platform-targets"
+      "${profile_options[@]}"
+    if [[ $test_execution == remote ]]; then
+      python3 test/rbe/unit_matrix.py kvm-query "$selection_dir/$lane-platform-roots" \
+        > "$selection_dir/$lane-kvm.query"
+      bazel query --output=label --query_file="$selection_dir/$lane-kvm.query" \
+        > "$selection_dir/$lane-kvm-targets"
+      python3 test/rbe/unit_matrix.py select-filtered "$profile" \
+        "$selection_dir/$lane-kvm-targets" "$selection_dir/$lane-platform-targets"
+    else
+      container_options=(--architecture=amd64)
+    fi
   fi
   if [[ $lane == container ]]; then
-    python3 test/rbe/unit_matrix.py container-targets "$profile" \
+    python3 test/rbe/unit_matrix.py container-targets "$profile" "${container_options[@]}" \
       >> "$selection_dir/explicit-targets"
   else
     python3 test/rbe/unit_matrix.py cgroup-targets "$profile" \
@@ -667,6 +674,14 @@ run_platform_matrix() (
   : > "$selection_dir/explicit-targets"
   : > "$selection_dir/shared-targets"
   : > "$selection_dir/filtered-targets"
+  if [[ $test_execution == local ]]; then
+    # The local matrix is the complete public AMD64 container profile.
+    docker_test_options
+    options+=(--config=rbe-hybrid-tests "--strategy=TestRunner=remote,docker,local"
+      --//tools/bazeldefs:local_test_architecture=amd64
+      --//tools/bazeldefs:local_test_backend=docker
+      "--//tools/bazeldefs:local_test_requirements=$local_test_requirements")
+  fi
   for lane in "$@"; do
     case "$lane" in
       plugin-build|release-artifacts|python-distributions|website|codeql) ;;
@@ -862,6 +877,23 @@ run_platform_matrix() (
   if [[ ! -s $selection_dir/targets ]]; then
     printf 'No requested tests have available remote workers; see the profile exclusions above.\n' >&2
     return 2
+  fi
+  if [[ $test_execution == local ]]; then
+    # The public container profile keeps every owner. Its architecture
+    # frontends route only declared unavailable host requirements to Actions.
+    python3 - "$selection_dir" "$lane" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+directory = Path(sys.argv[1])
+(directory / "selection.json").write_text(json.dumps({
+    "profile_architecture": "amd64",
+    "lane": sys.argv[2],
+    "selected_owners": directory.joinpath("targets").read_text().splitlines(),
+}, indent=2) + "\n")
+PY
+    save_profile_selection "$selection_dir" "$lane"
   fi
   bazel "$command" "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" "${header_options[@]}" \

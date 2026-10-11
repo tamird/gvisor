@@ -88,7 +88,13 @@ def native_test(name, architectures = ["amd64", "arm64"], cgroup_v2 = False, **k
         kwargs["tags"] += ["rbe-has-cgroup-v2-variant"]
     _native_test(name = name, **kwargs)
     if cgroup_v2:
-        cgroup_v2_variant(name, _native_test, kwargs)
+        cgroup_attributes = cgroup_v2_variant(name, _native_test, kwargs)
+        test_architecture_variants(
+            name + "_cgroup_v2",
+            architectures,
+            {"amd64": native_amd64_test, "arm64": native_arm64_test},
+            cgroup_attributes,
+        )
     cgroup_v1_variant(name, native_test_cgroup_v1_test, kwargs)
     test_architecture_variants(
         name,

@@ -562,6 +562,7 @@ def main() -> None:
     cgroup.add_argument("events")
     container = commands.add_parser("container-targets")
     container.add_argument("events")
+    container.add_argument("--architecture", choices=("amd64", "arm64"))
     container_platforms = commands.add_parser("container-platform-targets")
     container_platforms.add_argument("events")
     roots = commands.add_parser("build-roots")
@@ -613,8 +614,16 @@ def main() -> None:
         print("\n".join(container_platform_targets(args.events)))
     elif args.command == "container-targets":
         targets = configured_tests(args.events)
+        if args.architecture:
+            missing = sorted(
+                label for label, target in targets.items()
+                if f"rbe-has-{args.architecture}-variant" not in target.tags
+            )
+            if missing:
+                raise ValueError(f"Container owners without {args.architecture} variants: {missing}")
         print("\n".join(sorted(
-            label + "_cgroup_v2" if "rbe-has-cgroup-v2-variant" in target.tags else label
+            (label + "_cgroup_v2" if "rbe-has-cgroup-v2-variant" in target.tags else label)
+            + ("_" + args.architecture if args.architecture else "")
             for label, target in targets.items()
         )))
     elif args.command == "build-roots":
