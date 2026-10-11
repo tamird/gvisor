@@ -45,7 +45,10 @@ def _runtime_test_impl(ctx):
     ctx.actions.write(runner, runner_content, is_executable = True)
 
     # Return the runner.
-    runfiles = ctx.runfiles(files = files, collect_default = True, collect_data = True)
+    runfiles = ctx.runfiles(files = files, collect_default = True, collect_data = True).merge_all([
+        ctx.attr._runner[DefaultInfo].default_runfiles,
+        ctx.attr._proctor[DefaultInfo].default_runfiles,
+    ])
     if ctx.attr.docker_config:
         runfiles = runfiles.merge(ctx.attr.docker_config[DefaultInfo].default_runfiles)
     return [DefaultInfo(executable = runner, runfiles = runfiles)]

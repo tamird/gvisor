@@ -159,11 +159,33 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 		})
 	}
 	containerProctor := "/proctor/" + filepath.Base(proctorSettings.Runner)
-	if err := d.CopyFiles(&opts, "/proctor", proctorSettings.Runner); err != nil {
+	files := []string{proctorSettings.Runner}
+	if lang == "java" {
+		files = append(files, "test/runtimes/runner/lib/TimeoutDiagnostic.java")
+	}
+	if err := d.CopyFiles(&opts, "/proctor", files...); err != nil {
 		return nil, fmt.Errorf("copy proctor: %w", err)
 	}
 	if err := d.Spawn(ctx, opts, containerProctor, "--pause"); err != nil {
 		return nil, fmt.Errorf("docker run failed: %v", err)
+	}
+
+	if lang == "java" {
+		// Fork-only diagnostic: use the declared image's JDK and jtreg API,
+		// and verify the capture path before running the unchanged test.
+		setupCtx, cancel := context.WithTimeout(ctx, time.Minute)
+		defer cancel()
+		for _, argv := range [][]string{
+			{"sha256sum", "/root/jtreg/build/images/jtreg/lib/jtreg.jar", "/root/jdk/test/jdk/java/net/HttpURLConnection/SetAuthenticator/HTTPTest.java", "/root/jdk/test/jdk/java/net/HttpURLConnection/SetAuthenticator/HTTPTestServer.java"},
+			{"javac", "-cp", "/root/jtreg/build/images/jtreg/lib/*", "-d", "/proctor", "/proctor/TimeoutDiagnostic.java"},
+			{"java", "-cp", "/proctor:/root/jtreg/build/images/jtreg/lib/*", "TimeoutDiagnostic"},
+		} {
+			output, err := d.Exec(setupCtx, dockerutil.ExecOpts{Privileged: true, User: "0"}, argv...)
+			fmt.Print(output)
+			if err != nil {
+				return nil, fmt.Errorf("Java timeout diagnostic setup %q failed: %w", argv[0], err)
+			}
+		}
 	}
 
 	done := make(chan struct{})
@@ -256,17 +278,26 @@ func getTests(ctx context.Context, d *dockerutil.Container, lang, image string, 
 
 				select {
 				case <-done:
-					if err == nil {
-						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
-						return
+					if lang == "java" {
+						fmt.Print(output)
+						// All-skipped batches need not create a timeout handler, but
+						// jtreg must not silently fall back after failing to load it.
+						if strings.Contains(output, "Reverting to the default timeout handler.") {
+							t.Error("jtreg did not load the diagnostic timeout handler")
+						}
 					}
-					// Keep the complete batch output even if the test log is truncated.
-					if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" {
+					// Retain Java's per-action results and all failed batch output
+					// even if the test log is truncated.
+					if dir := os.Getenv("TEST_UNDECLARED_OUTPUTS_DIR"); dir != "" && (lang == "java" || err != nil) {
 						name := filepath.Join(dir, fmt.Sprintf("batch-%d.log", i))
 						contents := fmt.Sprintf("Batch:\n%s\nOutput:\n%s\n", strings.Join(tcs, "\n"), output)
 						if err := os.WriteFile(name, []byte(contents), 0644); err != nil {
 							t.Errorf("Could not save batch output: %v", err)
 						}
+					}
+					if err == nil && !t.Failed() {
+						fmt.Printf("PASS: (%v) %d tests passed\n", time.Since(now), len(tcs))
+						return
 					}
 					t.Fatalf("FAIL: (%v):\nBatch:\n%s\nOutput:\n%s\n", time.Since(now), strings.Join(tcs, "\n"), output)
 				// Add one minute to let proctor handle timeout.

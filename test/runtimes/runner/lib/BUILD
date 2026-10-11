@@ -13,6 +13,7 @@ go_library(
         "go_test_dependency_not_go118.go",
         "lib.go",
     ],
+    data = ["TimeoutDiagnostic.java"],
     importpath = "gvisor.dev/gvisor/test/runtimes/runner/lib",
     visibility = ["//test:__subpackages__"],
     deps = [
