@@ -78,7 +78,10 @@ release_files(
         # Remote execution may materialize the native_test executable as a file.
         # Keep it beside the declared sidecars without relying on symlink identity.
         out = "release/" + name + "_test.exe",
-        args = [
+        args = select({
+            ":reference_test_clock": ["--clock-source=reference"],
+            "//conditions:default": [],
+        }) + [
             "--alsologtostderr",
             "--network=none",
             "--debug",

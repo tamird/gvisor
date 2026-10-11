@@ -137,12 +137,13 @@ var remapLogRegexp = regexp.MustCompile(`Remapped stdio FDs to \[\d+, \d+\] in (
 // logs (and the whole logs too).
 func runscDo(t *testing.T, runsc, sidecarDir, rootDir string) (time.Duration, string, error) {
 	t.Helper()
-	cmd := exec.Command(runsc,
+	args := append(testutil.RuntimeTestFlags(),
 		"--rootless",
 		"--network=none",
 		"--root="+rootDir,
 		"--debug-log=/dev/stderr",
 		"do", "/bin/true")
+	cmd := exec.Command(runsc, args...)
 	cmd.Env = append(os.Environ(), "GVISOR_SIDECAR_BINARIES_DIR="+sidecarDir)
 	var output bytes.Buffer
 	cmd.Stdout = &output

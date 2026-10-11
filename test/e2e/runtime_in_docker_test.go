@@ -114,6 +114,7 @@ func (test testVariant) run(ctx context.Context, logger testutil.Logger) (string
 		"--debug=true",
 		"--debug-log=/dev/stderr",
 	}
+	args = append(args, testutil.RuntimeTestFlags()...)
 	args = append(args, test.Args...)
 	args = append(args, "do")
 	// Split the message into separate substrings to avoid matching on the message

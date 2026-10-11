@@ -68,6 +68,13 @@ class NetworkMode(str, enum.Enum):
   SANDBOX = "sandbox"
 
 
+class ClockSource(str, enum.Enum):
+  """Source of application clock readings inside the sandbox."""
+
+  CALIBRATED = "calibrated"
+  REFERENCE = "reference"
+
+
 @dataclasses.dataclass(frozen=True)
 class Mount:
   """Represents a mount configuration inside the sandbox.
@@ -312,6 +319,7 @@ class Sandbox:
       env: Optional[Union[List[str], Dict[str, str]]] = None,
       mounts: Optional[Sequence[Union[Mount, Dict[str, Any]]]] = None,
       working_dir: str = "/",
+      clock_source: Optional[Union[ClockSource, str]] = None,
   ):
     """Initializes and starts a new sandbox.
 
@@ -326,13 +334,24 @@ class Sandbox:
       mounts: Optional sequence of Mount objects or dicts defining mounts.
       working_dir: The initial working directory inside the sandbox. Relative
         paths are normalized relative to container root ('/'). Defaults to "/".
+      clock_source: Runtime clock source. The default is calibrated. Reference
+        clocks avoid a requirement for synchronized host CPU counters, with
+        additional clock-read overhead.
 
     Raises:
       Error: If sandbox creation fails.
-      ValueError: If an invalid network mode, working_dir, mount, or environment
-        variable format is provided.
-      TypeError: If env, mounts, or network has an invalid type.
+      ValueError: If an invalid clock source, network mode, working_dir, mount,
+        or environment variable format is provided.
+      TypeError: If env, mounts, network, or clock_source has an invalid type.
     """
+    if clock_source is None:
+      self._clock_source = None
+    elif isinstance(clock_source, str):
+      self._clock_source = ClockSource(clock_source)
+    else:
+      raise TypeError(
+          f"clock_source must be a ClockSource or str, got {type(clock_source)}"
+      )
     if isinstance(network, NetworkMode):
       self._network = network.value
     elif isinstance(network, str):
@@ -397,6 +416,9 @@ class Sandbox:
         args.append("--ignore-cgroups")
 
       args.append(f"--network={self._network}")
+
+      if self._clock_source is not None:
+        args.append(f"--clock-source={self._clock_source.value}")
 
       args.extend(["run", "--bundle", self._bundle_dir, "--detach", self._id])
 

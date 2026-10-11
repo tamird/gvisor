@@ -19,6 +19,7 @@ go_library(
         "//pkg/abi/linux",
         "//pkg/log",
         "//pkg/sighandling",
+        "//runsc/config",
         "//runsc/specutils",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
     ],
