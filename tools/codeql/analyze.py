@@ -24,14 +24,24 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import TypedDict
 import zipfile
 
 from tools.go_export.compile import go_environment
 
 
-def add_generated_go_sources(source: Path, archive_path: Path) -> dict[str, str]:
-    """Add canonical generated files without replacing tracked source content."""
+class GoSourceView(TypedDict):
+    added: dict[str, str]
+    omitted: dict[str, str]
+    packages: dict[str, list[str]]
+
+
+def prepare_go_packages(source: Path, archive_path: Path) -> GoSourceView:
+    """Use canonical file membership only for packages defined by the export."""
     added: dict[str, str] = {}
+    omitted: dict[str, str] = {}
+    packages: dict[str, list[str]] = {}
+    files: dict[PurePosixPath, bytes] = {}
     with zipfile.ZipFile(archive_path) as archive:
         for entry in archive.infolist():
             # The exported README describes its synthetic Go branch. Keep the
@@ -43,14 +53,29 @@ def add_generated_go_sources(source: Path, archive_path: Path) -> dict[str, str]
                 raise ValueError(f"Invalid Go source archive path: {entry.filename}")
             content = archive.read(entry)
             target = source / name
-            if target.exists():
-                if target.read_bytes() != content:
-                    raise ValueError(f"Exported Go source differs from tracked source: {name}")
-                continue
+            if target.exists() and target.read_bytes() != content:
+                raise ValueError(f"Exported Go source differs from tracked source: {name}")
+            files[name] = content
+            if name.suffix == ".go":
+                packages.setdefault(str(name.parent), []).append(name.name)
+
+    # A template and its generated instance can declare the same identifiers.
+    # Keep the producer's package membership instead of combining both. Other
+    # checkout packages remain intact; omissions are recorded, not guessed to
+    # be templates (they can also be tests or platform-specific source files).
+    for package in packages:
+        for target in (source / package).glob("*.go"):
+            name = PurePosixPath(target.relative_to(source).as_posix())
+            if name not in files:
+                omitted[str(name)] = hashlib.sha256(target.read_bytes()).hexdigest()
+                target.unlink()
+    for name, content in files.items():
+        target = source / name
+        if not target.exists():
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
             added[str(name)] = hashlib.sha256(content).hexdigest()
-    return added
+    return {"added": added, "omitted": omitted, "packages": packages}
 
 
 def main() -> None:
@@ -90,10 +115,10 @@ def main() -> None:
         path = [str(binaries)] + [str(Path(entry).absolute()) for entry in os.environ.get("PATH", "/usr/bin:/bin").split(os.pathsep)]
         env = dict(os.environ)
         if args.language == "go":
-            # Bazel owns generation and package placement. Supplement the
-            # checkout; analyzing only the export would omit other packages.
-            generated = add_generated_go_sources(source, args.go_sources)
-            (output / "go-generated-sources.json").write_text(json.dumps(generated, indent=2) + "\n")
+            # Bazel owns generation and package membership. Analyzing only
+            # the export would omit other packages from the checkout.
+            view = prepare_go_packages(source, args.go_sources)
+            (output / "go-source-view.json").write_text(json.dumps(view, indent=2) + "\n")
             # Use the declared full-checkout dependency profile without
             # changing the checked-in module that belongs to Go source export.
             # https://go.dev/ref/mod#build-commands (the -modfile option)
