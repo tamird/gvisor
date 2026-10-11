@@ -38,10 +38,10 @@ func ForwardRecord(owner Type) func(wire.TypeID, int) *wire.Record {
 	name := owner.StateTypeName()
 	typ := reflect.TypeOf(owner).Elem()
 	return func(id wire.TypeID, count int) *wire.Record {
-		registered, ok := globalTypeDatabase[name]
-		if !ok || registered.typ != typ {
+		if globalTypeDatabase[name] != typ {
 			Failf("forwarded record type %s is not registered as %v", name, typ)
 		}
+		registered := reverseTypeDatabase[typ]
 		if registered.newRecord == nil {
 			return wire.NewSlotRecord(id, count)
 		}
