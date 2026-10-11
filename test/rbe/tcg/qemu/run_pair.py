@@ -20,6 +20,7 @@ import os
 from pathlib import Path
 import resource
 import signal
+import socket
 import subprocess
 import sys
 import time
@@ -28,6 +29,60 @@ import xml.etree.ElementTree as ET
 
 OWNER_SECONDS = 900
 TERMINATION_GRACE_SECONDS = 30
+QMP_SNAPSHOT_SECONDS = (30, 300, 600, 840)
+
+
+def qmp_snapshot(address: str, guest_deadline: float) -> dict[str, object]:
+    """Read TCG counters without stopping the VM or changing its settings."""
+    deadline = min(time.monotonic() + 3, guest_deadline)
+    pending = bytearray()
+
+    def remaining() -> float:
+        value = deadline - time.monotonic()
+        if value <= 0:
+            raise TimeoutError("QMP snapshot exhausted its remaining client or guest budget")
+        return value
+
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
+        connection.settimeout(remaining())
+        connection.connect("\0" + address)
+
+        def receive() -> dict[str, object]:
+            while b"\n" not in pending:
+                if len(pending) >= 65536:
+                    raise ValueError("QMP reply exceeds 64 KiB")
+                connection.settimeout(remaining())
+                data = connection.recv(min(4096, 65536 - len(pending)))
+                if not data:
+                    raise ValueError("QMP disconnected before completing a reply")
+                pending.extend(data)
+            line, _, rest = pending.partition(b"\n")
+            pending[:] = rest
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise ValueError("QMP reply is not a JSON object")
+            return value
+
+        greeting = receive()
+        if "QMP" not in greeting:
+            raise ValueError("QMP greeting is missing")
+        replies = []
+        events = []
+        for command in ("qmp_capabilities", "x-query-jit"):
+            connection.settimeout(remaining())
+            connection.sendall(json.dumps({"execute": command, "id": command}).encode() + b"\n")
+            for _ in range(16):
+                reply = receive()
+                if "event" in reply:
+                    events.append(reply)
+                    continue
+                if reply.get("id") != command or "return" not in reply:
+                    raise ValueError(f"QMP command {command} failed: {reply}")
+                replies.append(reply)
+                break
+            else:
+                raise ValueError("QMP command did not return within sixteen messages")
+        return {"greeting": greeting, "replies": replies, "events": events}
 
 
 def terminate(process: subprocess.Popen) -> None:
@@ -123,6 +178,13 @@ def main() -> int:
                 "TEST_SHARD_INDEX": str(config["shard_index"]),
                 "TEST_SHARD_STATUS_FILE": str(arm_output / "shard_status"),
             }
+            qmp_address = ""
+            if os.environ.get("GVISOR_TCG_QMP_STATS") == "1":
+                # Linux abstract sockets avoid sockaddr_un's path-length limit
+                # under Bazel's long private action directories. No guest export
+                # or additional filesystem cleanup is needed.
+                qmp_address = f"gvisor-qmp-{os.getpid()}-{arm}-{os.urandom(8).hex()}"
+                env["GVISOR_TCG_QMP_SOCKET"] = qmp_address
             affinity_before = sorted(os.sched_getaffinity(0))
             allocation_before = host_cpu_allocation()
             capacity = {
@@ -146,6 +208,7 @@ def main() -> int:
             started = time.monotonic()
             timed_out = False
             cancelled = False
+            snapshots = []
             with (arm_output / "test.log").open("wb") as log:
                 process = None
                 try:
@@ -158,6 +221,21 @@ def main() -> int:
                         if remaining <= 0:
                             timed_out = True
                             break
+                        if qmp_address and len(snapshots) < len(QMP_SNAPSHOT_SECONDS):
+                            scheduled = QMP_SNAPSHOT_SECONDS[len(snapshots)]
+                            if time.monotonic() >= started + scheduled:
+                                snapshot = {"scheduledSeconds": scheduled, "elapsedBeforeSeconds": time.monotonic() - started}
+                                try:
+                                    snapshot.update(qmp_snapshot(qmp_address, started + OWNER_SECONDS))
+                                except (OSError, ValueError) as error:
+                                    snapshot["error"] = str(error)
+                                snapshot["elapsedAfterSeconds"] = time.monotonic() - started
+                                snapshots.append(snapshot)
+                                with (arm_output / "qmp-snapshots.jsonl").open("a") as capture:
+                                    capture.write(json.dumps(snapshot) + "\n")
+                                # Recheck cancellation and the original deadline
+                                # after the bounded query, before waiting again.
+                                continue
                         try:
                             process.wait(timeout=min(1.0, remaining))
                         except subprocess.TimeoutExpired:
@@ -190,6 +268,11 @@ def main() -> int:
                 "hostCpuAllocationBefore": allocation_before,
                 "guestCpuCount": guest_cpus,
             }
+            if qmp_address:
+                record["qmpSnapshots"] = snapshots
+                if not snapshots or any("error" in snapshot for snapshot in snapshots):
+                    record["qmpError"] = "One or more scheduled QMP observations failed or no observation was obtained"
+                    primary = primary or 1
             records.append(record)
             print(json.dumps(record), flush=True)
             with (arm_output / "test.log").open() as log:
@@ -220,7 +303,7 @@ def main() -> int:
                     primary = 1
             # An explicit owner-status row preserves timeouts even when no complete
             # C++ report exists. It is separate from the unchanged original cases.
-            failed = status != 0 or "xmlError" in record
+            failed = status != 0 or "xmlError" in record or "qmpError" in record
             suite = ET.SubElement(suites, "testsuite", name="QemuPair/" + arm, tests="1", failures=str(int(failed)), errors="0", skipped="0", time="0")
             case = ET.SubElement(suite, "testcase", classname="QemuPair", name=arm + "_owner_status", status="run", result="completed", time="0")
             properties = ET.SubElement(case, "properties")
