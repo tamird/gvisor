@@ -1,0 +1,39 @@
+Backport the three store-release changes from LIU Zhiwei's posted ARM patch.
+https://www.mail-archive.com/qemu-devel%40nongnu.org/msg1218202.html
+Message-ID: 20260821064032.49556-3-zhiwei_liu@linux.alibaba.com
+
+Only older translator names/context and comment wording differ. No load-side
+change or other patch from the series is included. This is an experimental
+backport, not a claim of upstream acceptance.
+
+--- a/target/arm/translate-a64.c
++++ b/target/arm/translate-a64.c
+@@ -2697,6 +2697,8 @@
+         /* TODO: ARMv8.4-LSE SCTLR.nAA */
+         do_gpr_st(s, cpu_reg(s, rt), clean_addr, size | MO_ALIGN, true, rt,
+                   disas_ldst_compute_iss_sf(size, false, 0), is_lasr);
++        /* Order this RCsc release before a subsequent RCsc acquire. */
++        tcg_gen_mb(TCG_MO_ALL | TCG_BAR_SC);
+         return;
+ 
+     case 0xc: /* LDLAR */
+@@ -3560,6 +3562,8 @@
+         /* Store-Release semantics */
+         tcg_gen_mb(TCG_MO_ALL | TCG_BAR_STRL);
+         do_gpr_st(s, cpu_reg(s, rt), clean_addr, mop, true, rt, iss_sf, true);
++        /* Order this RCsc release before a subsequent RCsc acquire. */
++        tcg_gen_mb(TCG_MO_ALL | TCG_BAR_SC);
+     } else {
+         /*
+          * Load-AcquirePC semantics; we implement as the slightly more
+--- a/target/arm/translate.c
++++ b/target/arm/translate.c
+@@ -7181,6 +7181,8 @@
+     tmp = load_reg(s, a->rt);
+     tcg_gen_mb(TCG_MO_ALL | TCG_BAR_STRL);
+     gen_aa32_st_i32(s, tmp, addr, get_mem_index(s), mop | MO_ALIGN);
++    /* Order this RCsc release before a subsequent RCsc acquire. */
++    tcg_gen_mb(TCG_MO_ALL | TCG_BAR_SC);
+     disas_set_da_iss(s, mop, a->rt | ISSIsAcqRel | ISSIsWrite);
+ 
+     tcg_temp_free_i32(tmp);
