@@ -1,60 +1,133 @@
 """Stateify is a tool for generating state wrappers for Go types."""
 
-def _go_stateify_impl(ctx):
-    """Implementation for the stateify tool."""
-    output = ctx.outputs.out
+load("@io_bazel_rules_go//go:def.bzl", "GoInfo", "go_context", "new_go_info")
+load("//tools/bazeldefs:go.bzl", "go_imports_action", "go_rule")
 
-    # Run the stateify command.
-    args = ["-output=%s" % output.path]
-    args.append("-fullpkg=%s" % ctx.attr.package)
-    if ctx.attr._statepkg:
-        args.append("-statepkg=%s" % ctx.attr._statepkg)
-    if ctx.attr.imports:
-        args.append("-imports=%s" % ",".join(ctx.attr.imports))
-    args.append("--")
-    for src in ctx.attr.srcs:
-        args += [f.path for f in src.files.to_list()]
-    ctx.actions.run(
-        inputs = ctx.files.srcs,
-        outputs = [output],
-        mnemonic = "GoStateify",
-        progress_message = "Generating state library %s" % ctx.label,
-        arguments = args,
-        executable = ctx.executable._tool,
+def _go_stateify_impl(ctx):
+    """Type-checks and renders a selected package in one stateify action."""
+    go = go_context(
+        ctx,
+        importpath = ctx.attr.importpath,
+        importmap = ctx.attr.importmap,
+        importpath_aliases = ctx.attr.importpath_aliases,
+        embed = [],
     )
 
-go_stateify = rule(
+    # Reuse rules_go's package-source and dependency precedence. This private
+    # view is checker input only; returning it would duplicate original files.
+    checker = new_go_info(
+        go,
+        struct(
+            srcs = ctx.attr.srcs,
+            deps = ctx.attr.deps,
+            embed = ctx.attr.checker_embed,
+            cgo = ctx.attr.cgo,
+            importpath_aliases = ctx.attr.importpath_aliases,
+        ),
+        include_package_metadata = False,
+    )
+    archives = {}
+    archive_files = []
+    canonical_archives = {}
+
+    # Direct dependencies have the same precedence as the real compiler.
+    # Transitives supply types referenced by those export records.
+    direct = [archive.data for archive in checker.deps]
+    transitive = depset(transitive = [archive.transitive for archive in checker.deps]).to_list()
+    for records, is_direct in [(direct, True), (transitive, False)]:
+        for data in records:
+            export = data.export_file if data.export_file else data.file
+            if data.importmap in canonical_archives and canonical_archives[data.importmap] != export.path:
+                if is_direct:
+                    fail("conflicting direct exports for compiler package %s" % data.importmap)
+                continue
+            canonical_archives[data.importmap] = export.path
+            archive_files.append(export)
+            entry = {"File": export.path, "ImportMap": data.importmap}
+            for path in [data.importpath, data.importmap] + list(data.importpath_aliases):
+                if path in archives and archives[path] != entry:
+                    if is_direct:
+                        fail("conflicting direct exports for import %s" % path)
+                    continue
+                archives[path] = entry
+    group_inputs = {name: [] for name in ctx.attr.group_names}
+    for target in ctx.attr.srcs:
+        if target in ctx.attr.group_sources:
+            group_inputs[ctx.attr.group_sources[target]].extend([f.path for f in target[DefaultInfo].files.to_list()])
+    groups = []
+    raw_outputs = []
+    for name, output in zip(ctx.attr.group_names, ctx.outputs.outs):
+        raw = ctx.actions.declare_file(ctx.label.name + "/raw/" + output.basename)
+        raw_outputs.append(raw)
+        groups.append({"Sources": group_inputs[name], "Output": raw.path})
+    tags = list(go.mode.tags) + ctx.attr.gotags
+    if go.mode.race:
+        tags.append("race")
+    if go.mode.msan:
+        tags.append("msan")
+    config = ctx.actions.declare_file(ctx.label.name + ".json")
+    ctx.actions.write(config, json.encode({
+        "Package": ctx.attr.package,
+        "ImportPath": ctx.attr.importpath,
+        "StatePackage": "gvisor.dev/gvisor/pkg/state",
+        "Imports": ctx.attr.imports,
+        "Sources": [f.path for f in checker.srcs],
+        "Groups": groups,
+        "Archives": archives,
+        "Stdlib": [f.path for f in go.stdlib.libs.to_list()],
+        "GOOS": go.env["GOOS"],
+        "GOARCH": go.env["GOARCH"],
+        "Tags": tags,
+        "GoVersion": "go" + go.sdk.version,
+        "CgoEnabled": go.env["CGO_ENABLED"] == "1",
+    }))
+    ctx.actions.run(
+        inputs = depset([config] + list(checker.srcs) + archive_files, transitive = [go.stdlib.libs]),
+        outputs = raw_outputs,
+        mnemonic = "GoStateify",
+        progress_message = "Generating state methods %s" % ctx.label,
+        arguments = ["-config=" + config.path],
+        executable = ctx.executable._tool,
+        env = go.env,
+    )
+    for raw, formatted in zip(raw_outputs, ctx.outputs.outs):
+        go_imports_action(ctx, raw, formatted)
+    generated = new_go_info(
+        go,
+        struct(importpath_aliases = ctx.attr.importpath_aliases),
+        generated_srcs = ctx.outputs.outs,
+        deps = [],
+    )
+    return [generated, DefaultInfo(files = depset(ctx.outputs.outs))]
+
+# The action uses the selected target's source tags, word size and compiler
+# exports. The generator itself runs in the execution configuration.
+go_stateify = go_rule(
+    rule,
     implementation = _go_stateify_impl,
-    doc = "Generates save and restore logic from a set of Go files.",
     attrs = {
-        "srcs": attr.label_list(
-            doc = """
-The input source files. These files should include all structs in the package
-that need to be saved.
-""",
-            mandatory = True,
-            allow_files = True,
-        ),
-        "imports": attr.string_list(
-            doc = """
-An optional list of extra non-aliased, Go-style absolute import paths required
-for statified types.
-""",
-            mandatory = False,
-        ),
-        "package": attr.string(
-            doc = "The fully qualified package name for the input sources.",
-            mandatory = True,
-        ),
-        "out": attr.output(
-            doc = "Name of the generator output file.",
-            mandatory = True,
+        "srcs": attr.label_list(allow_files = True, mandatory = True),
+        "deps": attr.label_list(),
+        "gotags": attr.string_list(),
+        "group_sources": attr.label_keyed_string_dict(allow_files = True, mandatory = True),
+        "checker_embed": attr.label_list(providers = [GoInfo]),
+        "cgo": attr.bool(),
+        "group_names": attr.string_list(mandatory = True),
+        "outs": attr.output_list(mandatory = True),
+        "imports": attr.string_list(),
+        "package": attr.string(mandatory = True),
+        "importpath": attr.string(mandatory = True),
+        "importmap": attr.string(),
+        "importpath_aliases": attr.string_list(),
+        "_goimports": attr.label(
+            default = "@org_golang_x_tools//cmd/goimports:goimports",
+            executable = True,
+            cfg = "exec",
         ),
         "_tool": attr.label(
             executable = True,
             cfg = "exec",
             default = Label("//tools/go_stateify:stateify"),
         ),
-        "_statepkg": attr.string(default = "gvisor.dev/gvisor/pkg/state"),
     },
 )

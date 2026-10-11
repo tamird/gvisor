@@ -896,6 +896,12 @@ func Save(w *Writer, obj Object) {
 	case *Struct:
 		typeStruct.save(w)
 		x.save(w)
+	case *Record:
+		typeStruct.save(w)
+		x.save(w)
+	case capturedArray:
+		typeArray.save(w)
+		x.save(w)
 	case noObjects:
 		typeNoObjects.save(w)
 		x.save(w)
