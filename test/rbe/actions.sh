@@ -125,6 +125,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
+          'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
           'test:buildbuddy_remote_executor --nocache_test_results' \
           'test:buildbuddy_remote_executor --runs_per_test=1' \
           'test:buildbuddy_remote_executor --flaky_test_attempts=1' \
@@ -156,7 +157,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           # Keep raw parsed options out of the uploaded artifact directory.
           raw_events=$(mktemp)
           events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
-          evidence+=("--build_event_json_file=$raw_events")
+          evidence+=("--build_event_json_file=$raw_events" "--build_event_json_file_path_conversion=false")
         fi
         break
       done
@@ -189,9 +190,12 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         timeout --signal=TERM --kill-after=5s 600s python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
 import json
 from pathlib import Path
+import shutil
 import sys
+from urllib.parse import unquote, urlsplit
 
 source, target = map(Path, sys.argv[1:])
+output_root = Path("bazel-out").resolve()
 keys = {"id", "children", "started", "finished", "configured", "completed", "testResult", "testSummary", "aborted", "namedSetOfFiles"}
 errors = []
 count = 0
@@ -202,6 +206,20 @@ with source.open() as stream, target.open("w") as output:
         except json.JSONDecodeError as error:
             errors.append({"line": line_number, "error": str(error)})
             continue
+        # Select reports from this invocation, not stale files in a warm cache.
+        for report in event.get("testResult", {}).get("testActionOutput", []):
+            if report["name"] not in ("test.log", "test.xml"):
+                continue
+            try:
+                uri = urlsplit(report.get("uri", ""))
+                if uri.scheme != "file":
+                    raise ValueError(f"Expected a local test report: {report.get('uri')}")
+                path = Path(unquote(uri.path)).resolve()
+                destination = target.parent / "reports" / path.relative_to(output_root)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(path, destination)
+            except (OSError, ValueError) as error:
+                errors.append({"line": line_number, "report": report["name"], "error": str(error)})
         if "started" in event:
             safe = {"uuid", "startTime", "startTimeMillis", "command"}
             event["started"] = {key: value for key, value in event["started"].items() if key in safe}
