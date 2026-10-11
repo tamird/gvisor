@@ -14,7 +14,7 @@
 
 """Run CodeQL extraction and the bundled default queries as a Bazel action."""
 
-load("@io_bazel_rules_go//go:def.bzl", "go_context")
+load("@io_bazel_rules_go//go:def.bzl", "GoPath", "go_context")
 load("@rules_cc//cc:action_names.bzl", "ACTION_NAMES")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
@@ -42,7 +42,26 @@ def _analysis_impl(ctx):
         args.add("--proxy", ctx.file._proxy_root.dirname)
         args.add("--go-mod", ctx.file._go_mod)
         args.add("--go-sum", ctx.file._go_sum)
-        args.add("--go-sources", ctx.file._go_sources)
+        args.add_all(ctx.files._go_sources, before_each = "--go-sources")
+
+        # GoPath publishes the same original files and destination directories
+        # used by its archive builder. Retain that ownership when a command's
+        # sources move out of a directory shared with another Go package.
+        prefix = "src/gvisor.dev/gvisor/"
+        source_map = []
+        for package in ctx.attr._go_packages[GoPath].packages:
+            if not package.dir.startswith(prefix):
+                fail("CodeQL package is outside the repository module: " + package.dir)
+            for src in package.srcs:
+                if src.is_source and not src.short_path.startswith("../"):
+                    source_map.append({
+                        "source": src.short_path,
+                        "path": package.dir.removeprefix(prefix) + "/" + src.basename,
+                    })
+        membership = ctx.actions.declare_file(ctx.label.name + "-source-map.json")
+        ctx.actions.write(membership, json.encode(source_map))
+        args.add("--go-source-map", membership)
+        direct.append(membership)
         args.add("--cc", cc.c_compiler_path)
         args.add("--cxx", cc_common.get_tool_for_action(
             feature_configuration = cc.feature_configuration,
@@ -51,7 +70,7 @@ def _analysis_impl(ctx):
         args.add_all(cc.c_compile_options, format_each = "--cflag=%s")
         args.add_all(cc.cxx_compile_options, format_each = "--cxxflag=%s")
         args.add_all(cc.ld_executable_options, format_each = "--ldflag=%s")
-        direct.extend([go.sdk.go, ctx.file._proxy_root, ctx.file._go_mod, ctx.file._go_sum, ctx.file._go_sources])
+        direct.extend([go.sdk.go, ctx.file._proxy_root, ctx.file._go_mod, ctx.file._go_sum] + ctx.files._go_sources)
         inputs.extend([go.sdk.srcs, go.sdk.headers, go.sdk.tools, go.cc_toolchain_files, ctx.attr._proxy[DefaultInfo].files])
         env.update(go.env)
     ctx.actions.run(
@@ -95,7 +114,8 @@ _go_analysis = go_rule(
     attrs = dict(_ATTRS, **{
         "_go_mod": attr.label(default = "@codeql_go_modules//:module/go.mod", allow_single_file = True),
         "_go_sum": attr.label(default = "@codeql_go_modules//:module/go.sum", allow_single_file = True),
-        "_go_sources": attr.label(default = "//:go_export", allow_single_file = True),
+        "_go_packages": attr.label(default = "//tools/codeql:go_packages", providers = [GoPath]),
+        "_go_sources": attr.label_list(default = ["//:go_export", "//tools/codeql:go_package_sources"], allow_files = [".zip"]),
         "_proxy": attr.label(default = "@codeql_go_modules//:files"),
         "_proxy_root": attr.label(default = "@codeql_go_modules//:modules/cache/download/ROOT", allow_single_file = True),
     }),

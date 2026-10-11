@@ -30,52 +30,90 @@ import zipfile
 from tools.go_export.compile import go_environment
 
 
+# go/build's fileListForExt treats these as package inputs alongside .go files.
+# https://github.com/golang/go/blob/022c86361/src/go/build/build.go#L1085
+GO_BUILD_SUFFIXES = {
+    ".go", ".c", ".cc", ".cpp", ".cxx", ".m", ".h", ".hh", ".hpp",
+    ".hxx", ".f", ".F", ".for", ".f90", ".s", ".S", ".sx", ".swig",
+    ".swigcxx", ".syso",
+}
+
+
 class GoSourceView(TypedDict):
     added: dict[str, str]
     omitted: dict[str, str]
     packages: dict[str, list[str]]
+    relocated: dict[str, list[str]]
 
 
-def prepare_go_packages(source: Path, archive_path: Path) -> GoSourceView:
+def prepare_go_packages(source: Path, archive_paths: list[Path], source_map: Path) -> GoSourceView:
     """Use canonical file membership only for packages defined by the export."""
     added: dict[str, str] = {}
     omitted: dict[str, str] = {}
     packages: dict[str, list[str]] = {}
     files: dict[PurePosixPath, bytes] = {}
-    with zipfile.ZipFile(archive_path) as archive:
-        for entry in archive.infolist():
-            # The exported README describes its synthetic Go branch. Keep the
-            # checkout's original; module files are checked like other sources.
-            if entry.is_dir() or entry.filename == "README.md":
-                continue
-            name = PurePosixPath(entry.filename)
-            if name.is_absolute() or ".." in name.parts:
-                raise ValueError(f"Invalid Go source archive path: {entry.filename}")
-            content = archive.read(entry)
-            target = source / name
-            if target.exists() and target.read_bytes() != content:
-                raise ValueError(f"Exported Go source differs from tracked source: {name}")
-            files[name] = content
-            if name.suffix == ".go":
-                packages.setdefault(str(name.parent), []).append(name.name)
+    relocated: dict[str, list[str]] = {}
+    for archive_path in archive_paths:
+        with zipfile.ZipFile(archive_path) as archive:
+            for entry in archive.infolist():
+                # The exported README describes its synthetic Go branch. Keep the
+                # checkout's original; module files are checked like other sources.
+                if entry.is_dir() or entry.filename == "README.md":
+                    continue
+                name = PurePosixPath(entry.filename)
+                if name.is_absolute() or ".." in name.parts:
+                    raise ValueError(f"Invalid Go source archive path: {entry.filename}")
+                content = archive.read(entry)
+                target = source / name
+                if target.exists() and target.read_bytes() != content:
+                    raise ValueError(f"Exported Go source differs from tracked source: {name}")
+                if name in files:
+                    if files[name] != content:
+                        raise ValueError(f"Conflicting exported Go source: {name}")
+                    continue
+                files[name] = content
+                if name.suffix == ".go":
+                    packages.setdefault(str(name.parent), []).append(name.name)
+
+    # Validate declared moves before changing any source. Identical bytes alone
+    # do not establish ownership: only the producer's source map permits moving
+    # a tracked file out of its original mixed-package directory.
+    for entry in json.loads(source_map.read_text()):
+        original = PurePosixPath(entry["source"])
+        destination = PurePosixPath(entry["path"])
+        if original.is_absolute() or ".." in original.parts or destination.is_absolute() or ".." in destination.parts:
+            raise ValueError(f"Invalid Go source mapping: {entry}")
+        content = files[destination]
+        if (source / original).read_bytes() != content:
+            raise ValueError(f"Relocated Go source differs from tracked source: {original}")
+        if original != destination:
+            relocated.setdefault(str(original), []).append(str(destination))
 
     # A template and its generated instance can declare the same identifiers.
     # Keep the producer's package membership instead of combining both. Other
-    # checkout packages remain intact; omissions are recorded, not guessed to
-    # be templates (they can also be tests or platform-specific source files).
+    # checkout packages remain intact. This also removes raw C/assembly owned by
+    # separate Bazel targets that Go would otherwise treat as package inputs.
+    # Omissions are recorded, not guessed to be templates or other-platform files.
     for package in packages:
-        for target in (source / package).glob("*.go"):
+        for target in (source / package).glob("*"):
+            if not target.is_file() or target.suffix not in GO_BUILD_SUFFIXES:
+                continue
             name = PurePosixPath(target.relative_to(source).as_posix())
             if name not in files:
                 omitted[str(name)] = hashlib.sha256(target.read_bytes()).hexdigest()
                 target.unlink()
+    for original in relocated:
+        target = source / original
+        if PurePosixPath(original) not in files and original not in omitted:
+            omitted[original] = hashlib.sha256(target.read_bytes()).hexdigest()
+            target.unlink()
     for name, content in files.items():
         target = source / name
         if not target.exists():
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(content)
             added[str(name)] = hashlib.sha256(content).hexdigest()
-    return {"added": added, "omitted": omitted, "packages": packages}
+    return {"added": added, "omitted": omitted, "packages": packages, "relocated": relocated}
 
 
 def main() -> None:
@@ -83,8 +121,9 @@ def main() -> None:
     for name in ("codeql", "manifest", "output", "sarif"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--language", choices=("go", "javascript", "python", "ruby"), required=True)
-    for name in ("go", "goroot", "proxy", "go-mod", "go-sum", "go-sources", "cc", "cxx"):
+    for name in ("go", "goroot", "proxy", "go-mod", "go-sum", "go-source-map", "cc", "cxx"):
         parser.add_argument("--" + name, type=Path)
+    parser.add_argument("--go-sources", type=Path, action="append", default=[])
     for name in ("cflag", "cxxflag", "ldflag"):
         parser.add_argument("--" + name, action="append", default=[])
     args = parser.parse_args()
@@ -117,7 +156,8 @@ def main() -> None:
         if args.language == "go":
             # Bazel owns generation and package membership. Analyzing only
             # the export would omit other packages from the checkout.
-            view = prepare_go_packages(source, args.go_sources)
+            shutil.copyfile(args.go_source_map, output / "go-source-map.json")
+            view = prepare_go_packages(source, args.go_sources, args.go_source_map)
             (output / "go-source-view.json").write_text(json.dumps(view, indent=2) + "\n")
             # Use the declared full-checkout dependency profile without
             # changing the checked-in module that belongs to Go source export.

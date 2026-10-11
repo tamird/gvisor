@@ -8,7 +8,10 @@ package(
 proto_library(
     name = "ioctl",
     srcs = ["ioctl.proto"],
-    visibility = ["//tools/ioctl_sniffer:__subpackages__"],
+    visibility = [
+        "//tools/codeql:__pkg__",
+        "//tools/ioctl_sniffer:__subpackages__",
+    ],
 )
 
 cc_binary(

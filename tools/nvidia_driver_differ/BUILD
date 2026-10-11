@@ -56,8 +56,10 @@ go_binary(
     embedsrcs = [
         ":driver_ast_parser",  # keep
     ],
+    importpath = "gvisor.dev/gvisor/tools/nvidia_driver_differ/run_differ",
     # Disable nogo tests because this has C++ dependencies.
     nogo = False,
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/log",
         "//pkg/sentry/devices/nvproxy",

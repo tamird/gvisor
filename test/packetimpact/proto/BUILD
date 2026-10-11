@@ -10,4 +10,8 @@ proto_library(
     name = "posix_server",
     srcs = ["posix_server.proto"],
     has_services = 1,
+    visibility = [
+        "//test/packetimpact:__subpackages__",
+        "//tools/codeql:__pkg__",
+    ],
 )
