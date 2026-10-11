@@ -252,6 +252,7 @@ release_apt.install(
     dependency_set = "qemu_build_deps",
     packages = [
         "base-files:amd64",
+        "binutils:amd64",
         "libattr1-dev:amd64",
         "libcap-ng-dev:amd64",
         "libfdt-dev:amd64",

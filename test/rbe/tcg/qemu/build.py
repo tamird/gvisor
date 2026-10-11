@@ -80,7 +80,7 @@ def main() -> None:
             path.chmod(0o755)
             return path
 
-        for name in ("ninja", "pkg-config", "patch"):
+        for name in ("ninja", "pkg-config", "patch", "strings"):
             wrapper(name, [str(loader), "--inhibit-cache", "--library-path", libraries, str(sysroot / "usr/bin" / name)])
         # Preserve the repository's selected LLVM binaries and resource headers,
         # with the same complete GNU sysroot boundary used by Syzkaller.
@@ -90,11 +90,18 @@ def main() -> None:
             "--sysroot=" + str(sysroot),
             "--gcc-install-dir=" + str(sysroot / "usr/lib/gcc/x86_64-linux-gnu/11"),
             "-resource-dir=" + str(root / config["resource_dir"]),
-            "--ld-path=" + str(root / config["linker"]),
-            "--rtlib=libgcc", "--unwindlib=libgcc", "--stdlib=libstdc++",
         ]
-        cc = wrapper("cc", [str(root / config["cc"]), *flags])
-        cxx = wrapper("cxx", [str(root / config["cxx"]), *flags])
+        link_flags = [
+            "--ld-path=" + str(root / config["linker"]),
+            "--rtlib=libgcc", "--unwindlib=libgcc",
+        ]
+        cxx_flags = ["--stdlib=libstdc++"]
+        # These wrappers serve both compile-only probes and links. Scope Clang's
+        # unused handling to our link-only choices; caller flags follow the
+        # closing marker and retain all of their ordinary warning checks.
+        link_selection = ["--start-no-unused-arguments", *link_flags, "--end-no-unused-arguments"]
+        cc = wrapper("cc", [str(root / config["cc"]), *flags, *link_selection])
+        cxx = wrapper("cxx", [str(root / config["cxx"]), *flags, *cxx_flags, *link_selection])
         # QEMU6.2 requires --meson=internal when an explicit Python is selected.
         # Keep the declared Meson package intact; only its entry point is placed
         # in that expected source layout, using Bazel's existing Python runtime.
@@ -195,6 +202,9 @@ def main() -> None:
             "changedSources": sorted(changed),
             "outputs": {arm: sha256(root / config[arm]) for arm in ("before", "after")},
             "compilerFlags": flags,
+            "cxxOnlyFlags": cxx_flags,
+            "linkerFlags": link_flags,
+            "injectedLinkSelection": link_selection,
         }, indent=2) + "\n")
 
 
