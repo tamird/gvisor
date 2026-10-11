@@ -246,6 +246,38 @@ release_apt.install(
     ],
 )
 
+# Fork-only matched QEMU source builds. Keep the runtime/image inputs below
+# independent of these development packages and on the same immutable snapshot.
+release_apt.install(
+    dependency_set = "qemu_build_deps",
+    packages = [
+        "base-files:amd64",
+        "libattr1-dev:amd64",
+        "libcap-ng-dev:amd64",
+        "libfdt-dev:amd64",
+        "libglib2.0-dev:amd64",
+        "libpixman-1-dev:amd64",
+        "libstdc++-11-dev:amd64",
+        "meson:amd64",
+        "ninja-build:amd64",
+        "patch:amd64",
+        "pkg-config:amd64",
+        "zlib1g-dev:amd64",
+    ],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+)
+
+qemu_source = use_repo_rule("//test/rbe/tcg/qemu:repositories.bzl", "qemu_source")
+
+qemu_source(
+    name = "qemu_source",
+    build_file = "//test/rbe/tcg/qemu:source.BUILD",
+)
+
 # Full-system tests share declared host tools; only the emulators differ.
 _VM_HOST_PACKAGES = [
     "base-files:amd64",
@@ -329,7 +361,7 @@ release_apt.install(
         "jammy-security",
     ],
 )
-use_repo(release_apt, "container_test_tools", "kvm_amd64_guest", "kvm_host_tools", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
+use_repo(release_apt, "container_test_tools", "kvm_amd64_guest", "kvm_host_tools", "qemu_build_deps", "release_tools", "syzkaller_sysroot", "tcg_arm64_guest", "tcg_host_tools")
 
 # Ubuntu's mainline test packages pin the historical RC release, not the
 # mutable Buildkite worker image. Keep the image and modules from one build.
