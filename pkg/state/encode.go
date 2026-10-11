@@ -940,6 +940,6 @@ func (addrSetFunctions) Merge(r1 addrRange, val1 *objectEncodeState, r2 addrRang
 
 func (addrSetFunctions) Split(r addrRange, val *objectEncodeState, _ uintptr) (*objectEncodeState, *objectEncodeState) {
 	// A split should never happen: we don't remove ranges.
-	Failf("unexpected split in addrSet @ %v: %#v", r, val.obj)
+	Failf("unexpected split in addrSet @ %v: %#v", r, val.owner)
 	panic("unreachable")
 }
