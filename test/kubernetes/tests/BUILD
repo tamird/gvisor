@@ -11,6 +11,7 @@ go_library(
     name = "hello",
     testonly = True,
     srcs = ["hello.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/tests/hello",
     deps = [
         "//test/kubernetes/k8sctx",
         "//test/kubernetes/testcluster",
@@ -91,6 +92,7 @@ go_library(
     name = "driver",
     testonly = True,
     srcs = ["driver_version.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/tests/driver",
     deps = [
         "//test/gpu:gpu_driver_versions_go_proto",
         "//test/kubernetes/k8sctx",
@@ -116,6 +118,7 @@ go_library(
     name = "cudatest",
     testonly = True,
     srcs = ["cuda_test_lib.go"],
+    importpath = "gvisor.dev/gvisor/test/kubernetes/tests/cudatest",
     deps = [
         "//pkg/test/dockerutil",
         "//test/kubernetes",
