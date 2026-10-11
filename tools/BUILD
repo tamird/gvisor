@@ -86,6 +86,7 @@ exports_files([
     "gazelle-module-metadata.patch",
     "llvm-linux-header-default.patch",
     "rules_distroless-apt-suite-providers.patch",
+    "rules_distroless-xz-fixture.patch",
     "with_cfg-test-frontend.patch",
 ])
 

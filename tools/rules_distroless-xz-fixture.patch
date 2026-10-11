@@ -1,0 +1,28 @@
+Use the existing declared bsdtar tool to create the xz test input.
+Its libarchive build includes liblzma; no host xz executable is needed.
+
+diff --git a/apt/tests/deb_postfix_test.bzl b/apt/tests/deb_postfix_test.bzl
+--- a/apt/tests/deb_postfix_test.bzl
++++ b/apt/tests/deb_postfix_test.bzl
+@@ -141,7 +141,6 @@
+ 
+ tmpdir=$$(mktemp -d)
+ bsdtar="$$(pwd)/$(BSDTAR_BIN)"
+-zstd="$$(pwd)/$(ZSTD_BIN)"
+ out="$$(pwd)/$@"
+ trap 'rm -rf "$$tmpdir"' EXIT
+ 
+@@ -149,10 +148,9 @@
+ touch "$$tmpdir/var/log/app.log"
+ 
+ cd "$$tmpdir"
+-# Create tar and pipe through xz
+-"$$bsdtar" -cf - ./var | xz -z > "$$out"
+-""",
+-        toolchains = ["@bsd_tar_toolchains//:resolved_toolchain", "@zstd_toolchains//:resolved_toolchain"],
++"$$bsdtar" -cJf "$$out" ./var
++""",
++        toolchains = ["@bsd_tar_toolchains//:resolved_toolchain"],
+     )
+ 
+     deb_postfix(

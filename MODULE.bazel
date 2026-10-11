@@ -82,12 +82,15 @@ single_version_override(
     patches = ["//tools:gazelle-module-metadata.patch"],
 )
 
-# Remove once a release includes the virtual-provider suite fix.
+# Keep targeted fixes until they are included in rules_distroless.
 # https://github.com/bazel-contrib/rules_distroless/pull/281
 single_version_override(
     module_name = "rules_distroless",
     patch_strip = 1,
-    patches = ["//tools:rules_distroless-apt-suite-providers.patch"],
+    patches = [
+        "//tools:rules_distroless-apt-suite-providers.patch",
+        "//tools:rules_distroless-xz-fixture.patch",
+    ],
 )
 
 ### LLVM
