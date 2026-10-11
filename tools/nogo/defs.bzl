@@ -1,7 +1,7 @@
 """Nogo rules."""
 
 load("//tools:arch.bzl", "arch_transition")
-load("//tools/bazeldefs:go.bzl", "go_binary_archive", "go_context", "go_embed_libraries", "go_has_archive", "go_importpath", "go_rule", "nogo_extra_proto_deps")
+load("//tools/bazeldefs:go.bzl", "go_binary_archive", "go_context", "go_embed_libraries", "go_has_archive", "go_importpath", "go_rule", "go_source_files", "nogo_extra_proto_deps")
 
 NogoConfigInfo = provider(
     "information about a nogo configuration",
@@ -292,8 +292,10 @@ def _nogo_aspect_impl(target, ctx):
     # proper type analysis.
     for embed in go_embed_libraries(ctx.rule):
         info = embed[NogoInfo]
-        if hasattr(info, "srcs"):
-            srcs = srcs + info.srcs
+
+        # Source-only GoInfo producers have no archive or standalone analysis.
+        # Their actual generated methods still belong to this package's Nogo.
+        srcs = srcs + go_source_files(embed)
         if hasattr(info, "deps"):
             deps = deps + info.deps
 

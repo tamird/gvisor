@@ -182,29 +182,8 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
     all_deps = deps
     dirname, _, _ = native.package_name().rpartition("/")
     full_pkg = dirname + "/" + name
+    state_sets = calculate_sets(srcs) if stateify else {}
     if stateify:
-        # Only do stateification for non-state packages without manual autogen.
-        # First, we need to segregate the input files via the special suffixes,
-        # and calculate the final output set.
-        state_sets = calculate_sets(srcs)
-        for (suffix, src_subset) in state_sets.items():
-            go_stateify(
-                name = name + suffix + "_state_autogen_with_imports",
-                srcs = src_subset,
-                imports = imports,
-                package = full_pkg,
-                out = name + suffix + "_state_autogen_with_imports.go",
-            )
-            go_imports(
-                name = name + suffix + "_state_autogen",
-                src = name + suffix + "_state_autogen_with_imports.go",
-                out = name + suffix + "_state_autogen.go",
-            )
-        all_srcs = all_srcs + [
-            name + suffix + "_state_autogen.go"
-            for suffix in state_sets.keys()
-        ]
-
         if force_add_state_pkg or "//pkg/state" not in all_deps:
             all_deps = all_deps + ["//pkg/state"]
 
@@ -232,6 +211,31 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
             name + suffix + "_abi_autogen_unsafe.go"
             for suffix in marshal_sets.keys()
         ]
+
+    if state_sets:
+        # One configured package model supplies every production saver.
+        if force_add_state_pkg or "//pkg/state/wire" not in all_deps:
+            all_deps = all_deps + ["//pkg/state/wire"]
+        go_stateify(
+            name = name + "_state_model",
+            srcs = all_srcs,
+            deps = all_deps,
+            group_sources = {src: suffix for suffix, subset in state_sets.items() for src in subset},
+            group_names = state_sets.keys(),
+            outs = [name + suffix + "_state_autogen.go" for suffix in state_sets.keys()],
+            imports = imports,
+            package = full_pkg,
+            importpath = kwargs.get("importpath", "gvisor.dev/gvisor/" + native.package_name()),
+            importmap = kwargs.get("importmap", ""),
+            importpath_aliases = kwargs.get("importpath_aliases", []),
+            checker_embed = kwargs.get("embed", []),
+            cgo = kwargs.get("bazel_cgo", False),
+            gotags = kwargs.get("gotags", []),
+            testonly = kwargs.get("testonly", False),
+        )
+
+        # embed retains the library's Go mode. A srcs edge would reset it.
+        kwargs["embed"] = kwargs.get("embed", []) + [":" + name + "_state_model"]
 
     # For template rendering, split all the sources into groups of related
     # files. This will prevent us from generating non-sensical combinations,

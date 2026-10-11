@@ -47,6 +47,7 @@ func assertValidType(name string, fields []string) {
 type typeEntry struct {
 	ID typeID
 	wire.Type
+	newRecord func(wire.TypeID, int) *wire.Record
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -147,6 +148,12 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 				Name:   name,
 				Fields: fields,
 			},
+			newRecord: wire.NewSlotRecord,
+		}
+		// Registration owns the concrete type. A promoted StateTypeName must
+		// not select the embedded type's captured-field layout.
+		if registered, ok := globalTypeDatabase[name]; ok && registered.typ == typ && registered.newRecord != nil {
+			te.newRecord = registered.newRecord
 		}
 
 		// All done.
@@ -174,10 +181,10 @@ func (tbd *typeDecodeDatabase) LookupName(id typeID) string {
 // LookupType looks up the type by ID.
 func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 	name := tbd.LookupName(id)
-	typ, ok := globalTypeDatabase[name]
+	registered, ok := globalTypeDatabase[name]
 	if !ok {
 		// If not available, see if it's primitive.
-		typ, ok = primitiveTypeDatabase[name]
+		typ, ok := primitiveTypeDatabase[name]
 		if !ok && name == interfaceType {
 			// Matches the built-in interface type.
 			var i any
@@ -189,7 +196,7 @@ func (tbd *typeDecodeDatabase) LookupType(id typeID) reflect.Type {
 		}
 		return typ // Primitive type.
 	}
-	return typ // Registered type.
+	return registered.typ // Registered type.
 }
 
 // singleFieldOrder defines the field order for a single field.
@@ -318,8 +325,15 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 	return r
 }()
 
-// globalTypeDatabase is used for dispatching interfaces on decode.
-var globalTypeDatabase = map[string]reflect.Type{}
+// registeredType owns the concrete Go type and its generated capture layout.
+// Wire IDs and StateFields remain local to each serialization.
+type registeredType struct {
+	typ       reflect.Type
+	newRecord func(wire.TypeID, int) *wire.Record
+}
+
+// globalTypeDatabase is the single registration database for saving and loading.
+var globalTypeDatabase = map[string]registeredType{}
 
 // reverseTypeDatabase is a reverse mapping.
 var reverseTypeDatabase = map[reflect.Type]string{}
@@ -334,8 +348,22 @@ func Release() {
 
 // Register registers a type.
 //
-// This must be called on init and only done once.
+// This must be called on init and only done once. Manually implemented savers
+// use Sink.Save/SaveValue to populate the record's compatibility slots.
 func Register(t Type) {
+	register(t, nil)
+}
+
+// RegisterGenerated registers the record layout emitted with a generated saver.
+// It enters the same type database and capture graph as Register.
+func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
+	if newRecord == nil {
+		Failf("nil record constructor for %T", t)
+	}
+	register(t, newRecord)
+}
+
+func register(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
 	name := t.StateTypeName()
 	typ := reflect.TypeOf(t)
 	if raceEnabled {
@@ -380,5 +408,5 @@ func Register(t Type) {
 		}
 		reverseTypeDatabase[typ] = name
 	}
-	globalTypeDatabase[name] = typ
+	globalTypeDatabase[name] = registeredType{typ: typ, newRecord: newRecord}
 }

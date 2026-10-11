@@ -104,3 +104,12 @@ func TestMultiNameFields(t *testing.T) {
 		multiName{b: "foo", c: "bar", x: 10, y: 20, z: -30},
 	})
 }
+
+func TestSnapshotEmbedding(t *testing.T) {
+	// A child's encoder must not replace the parent's complete representation,
+	// or dereference an embedding chain that ordinary Save preserves as nil.
+	runTestCases(t, false, "embedding", []any{
+		snapshotEmbedded{inner: inner{v: 7}, parent: 11},
+		snapshotNilEmbedded{snapshotPointerEmbedded: nil, parent: 19},
+	})
+}

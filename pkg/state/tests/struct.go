@@ -109,3 +109,22 @@ type multiName struct {
 	x, y    int64
 	z       int32
 }
+
+// snapshotEmbedded requires the parent's saver to include its extra field.
+// +stateify savable
+type snapshotEmbedded struct {
+	inner
+	parent int64
+}
+
+// +stateify savable
+type snapshotPointerEmbedded struct {
+	*inner
+}
+
+// snapshotNilEmbedded tests a promoted method through a nil embedding chain.
+// +stateify savable
+type snapshotNilEmbedded struct {
+	*snapshotPointerEmbedded
+	parent int64
+}
