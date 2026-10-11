@@ -1,4 +1,5 @@
-load("//tools:defs.bzl", "pkg_tar")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//tools:defs.bzl", "go_binary", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -15,13 +16,49 @@ filegroup(
     ],
 )
 
+# The CUDA image contexts and Go analysis use these same declared programs.
+# Their former Docker build used CGO_ENABLED=0; preserve that link contract.
+go_binary(
+    name = "cuda_run_sample",
+    srcs = ["gpu/cuda-tests/run_sample.go"],
+    importpath = "gvisor.dev/gvisor/images/gpu/cuda-tests/run_sample",
+    pure = True,
+    static = True,
+    visibility = ["//tools/codeql:__pkg__"],
+)
+
+go_binary(
+    name = "cuda_12_8_run_sample",
+    srcs = ["gpu/cuda-tests-12-8/run_sample.go"],
+    importpath = "gvisor.dev/gvisor/images/gpu/cuda-tests-12-8/run_sample",
+    pure = True,
+    static = True,
+    visibility = ["//tools/codeql:__pkg__"],
+)
+
+pkg_files(
+    name = "cuda_programs",
+    srcs = [
+        ":cuda_12_8_run_sample",
+        ":cuda_run_sample",
+    ],
+    attributes = pkg_attributes(mode = "0755"),
+    renames = {
+        ":cuda_run_sample": "gpu/cuda-tests/run_sample",
+        ":cuda_12_8_run_sample": "gpu/cuda-tests-12-8/run_sample",
+    },
+)
+
 # Bazel uploads every remote input as executable. Archive metadata preserves
 # context modes independently of that input-tree normalization. Keep these
 # overrides aligned with tracked executable files when adding context sources.
 # https://github.com/bazelbuild/bazel/blob/d84820503/src/main/java/com/google/devtools/build/lib/remote/merkletree/MerkleTree.java#L400
 pkg_tar(
     name = "source_contexts",
-    srcs = [":sources"],
+    srcs = [
+        ":cuda_programs",
+        ":sources",
+    ],
     mode = "0644",
     modes = {
         "arm-qemu/initramfs/init": "0755",

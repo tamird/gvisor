@@ -23,6 +23,8 @@ go_path(
     include_transitive = False,
     mode = "archive",
     deps = [
+        "//images:cuda_12_8_run_sample",
+        "//images:cuda_run_sample",
         "//pkg/ilist:ring",
         "//pkg/seccomp/precompiledseccomp/example/usage",
         "//pkg/seccomp/precompiledseccomp/example/usage:example_precompiled_gen_bin",
