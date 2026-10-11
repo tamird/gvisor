@@ -1532,9 +1532,10 @@ syscall_test(
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        # The same reservation hosts one sequential 2- or 4-vCPU guest.
+        # Explicit compute units prevent predicted sizing from replacing the
+        # requested CPU count. Memory remains the existing explicit 6GB.
         exec_properties = {
-            "test.EstimatedCPU": "4",
+            "test.EstimatedComputeUnits": "4",
             "test.EstimatedMemory": "6GB",
             "test.EstimatedFreeDiskBytes": "8GB",
             "test.container-image": RBE_DOCKER_TOOLS_IMAGE,

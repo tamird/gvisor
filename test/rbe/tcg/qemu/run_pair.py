@@ -59,6 +59,18 @@ def host_cpu_allocation() -> dict[str, dict[str, str]]:
     return observed
 
 
+def require_cpu_capacity(required: int, affinity: list[int], allocation: dict[str, dict[str, str]]) -> None:
+    if len(affinity) < required:
+        raise ValueError(f"Expected at least {required} eligible host CPUs, got {affinity}")
+    quota_value = allocation["/sys/fs/cgroup/cpu.max"].get("value", "")
+    match quota_value.split():
+        case [quota, period] if period.isdecimal() and int(period) > 0:
+            if quota != "max" and (not quota.isdecimal() or int(quota) < required * int(period)):
+                raise ValueError(f"Visible CPU quota cannot supply {required} CPUs: {quota_value!r}")
+        case _:
+            raise ValueError(f"Cannot establish visible CPU quota: {allocation!r}")
+
+
 def main() -> int:
     match sys.argv[1:]:
         case [config_name]:
@@ -111,6 +123,25 @@ def main() -> int:
                 "TEST_SHARD_INDEX": str(config["shard_index"]),
                 "TEST_SHARD_STATUS_FILE": str(arm_output / "shard_status"),
             }
+            affinity_before = sorted(os.sched_getaffinity(0))
+            allocation_before = host_cpu_allocation()
+            capacity = {
+                "requiredHostCpus": max(config["guest_cpus"].values()),
+                "hostAffinity": affinity_before,
+                "hostCpuAllocation": allocation_before,
+            }
+            # Retain setup evidence even if no original guest can be launched.
+            (arm_output / "cpu-allocation-before.json").write_text(json.dumps(capacity, indent=2) + "\n")
+            print(json.dumps({"setup": arm, **capacity}), flush=True)
+            try:
+                require_cpu_capacity(capacity["requiredHostCpus"], affinity_before, allocation_before)
+            except ValueError as error:
+                primary = primary or 1
+                print(f"Guest {arm} was not launched: {error}", file=sys.stderr, flush=True)
+                suite = ET.SubElement(suites, "testsuite", name="QemuPairSetup", tests="1", failures="1", errors="0", skipped="0", time="0")
+                case = ET.SubElement(suite, "testcase", classname="QemuPairSetup", name=arm + "_cpu_capacity", status="run", result="completed", time="0")
+                ET.SubElement(case, "failure", message=str(error)).text = "No original guest ran for this arm"
+                break
             usage_before = resource.getrusage(resource.RUSAGE_CHILDREN)
             started = time.monotonic()
             timed_out = False
@@ -155,6 +186,8 @@ def main() -> int:
                 "arguments": arguments,
                 "hostAffinity": sorted(os.sched_getaffinity(0)),
                 "hostCpuAllocation": host_cpu_allocation(),
+                "hostAffinityBefore": affinity_before,
+                "hostCpuAllocationBefore": allocation_before,
                 "guestCpuCount": guest_cpus,
             }
             records.append(record)
