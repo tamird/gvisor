@@ -516,7 +516,7 @@ run_hybrid_profile() (
       python3 test/rbe/unit_matrix.py hybrid-unit-patterns test/unit.targets \
         "$selection_dir/owners" "$selection_dir/targets" | tee "$selection_dir/selection.json"
       lane_options+=(--config=unit)
-      options+=(--cache_test_results=auto)
+      options+=(--cache_test_results=auto --remote_download_outputs=minimal)
     else
       python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
       bazel aquery --config=rbe-matrix --config=x86_64 \
