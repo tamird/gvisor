@@ -258,6 +258,7 @@ go_library(
         "transport_endpoints_mutex.go",
         "tuple_list.go",
     ],
+    stateify_records = True,
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/atomicbitops",
