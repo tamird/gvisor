@@ -326,7 +326,13 @@ type binaryObject interface {
 // binaryRecord adapts a foreign codec to the same captured-field emitter as
 // generated savers. The codec owns its internal pointer relationships.
 type binaryRecord struct {
-	value wire.String
+	record wire.Record
+	value  wire.String
+}
+
+func newBinaryRecord(id wire.TypeID, count int) *wire.Record {
+	b := &binaryRecord{}
+	return wire.InitRecord(&b.record, id, count, b)
 }
 
 func (b *binaryRecord) SaveFields(w *wire.Writer, first, last int) {
@@ -421,7 +427,7 @@ func registerBinary(value binaryObject) {
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
-	}, wire.NewRecord[binaryRecord])
+	}, newBinaryRecord)
 }
 
 // register publishes metadata in the existing type databases.

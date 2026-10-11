@@ -71,8 +71,9 @@ type recordSet struct {
 }
 
 type recordType struct {
-	name   string
-	fields []fieldEncoding
+	name    string
+	factory string
+	fields  []fieldEncoding
 }
 
 // fieldEncoding describes a field's capture storage and emitter. Scalar fields are
@@ -123,10 +124,14 @@ func encodingFor(t types.Type, customValue bool) fieldEncoding {
 
 func (r *recordType) declare(w io.Writer, wireAlias string) {
 	fmt.Fprintf(w, "type %s struct {\n", r.name)
+	fmt.Fprintf(w, " record %s.Record\n", wireAlias)
 	for i, f := range r.fields {
 		fmt.Fprintf(w, " F%d %s.%s\n", i, wireAlias, f.storage)
 	}
 	fmt.Fprint(w, "}\n\n")
+	fmt.Fprintf(w, "func %s(id %s.TypeID, count int) *%s.Record {\n", r.factory, wireAlias, wireAlias)
+	fmt.Fprintf(w, " value := new(%s)\n", r.name)
+	fmt.Fprintf(w, " return %s.InitRecord(&value.record, id, count, value)\n}\n\n", wireAlias)
 	fmt.Fprintf(w, "func (value *%s) SaveFields(w *%s.Writer, first, last int) {\n", r.name, wireAlias)
 	if len(r.fields) != 0 {
 		fmt.Fprint(w, " switch first {\n")
@@ -406,7 +411,10 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			return nil, fmt.Errorf("no checked type declaration for %s", name)
 		}
 		owner := types.NewPointer(object.Type())
-		record := &recordType{name: unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names)}
+		record := &recordType{
+			name:    unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names),
+			factory: unusedName(fmt.Sprintf("newStateRecord%d_%s", len(name), name), names),
+		}
 		for _, field := range typ.fields {
 			if field.slot < 0 {
 				continue

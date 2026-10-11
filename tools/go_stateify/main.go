@@ -218,7 +218,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 	// Common closures.
 	emitRegister := func(name string) {
 		if records != nil && records.types[name] != nil {
-			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s.NewRecord[%s])", statePrefix, name, records.wireAlias, records.types[name].name))
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s)", statePrefix, name, records.types[name].factory))
 		} else if records != nil && records.forward[name] != "" {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)))", statePrefix, name, statePrefix, records.forward[name]))
 		} else {
