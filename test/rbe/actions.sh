@@ -137,8 +137,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
           'test:buildbuddy_remote_executor --nocache_test_results' \
           'test:buildbuddy_remote_executor --runs_per_test=1' \
-          'test:buildbuddy_remote_executor --flaky_test_attempts=1' \
-          'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
+          'test:buildbuddy_remote_executor --flaky_test_attempts=1'
+        if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+          printf '%s\n' 'test:buildbuddy_remote_executor --zip_undeclared_test_outputs'
+        else
+          # Bazel retains each undeclared file and its manifest directly. The
+          # container worker has no zip; collection format is not test scope.
+          printf '%s\n' 'test:buildbuddy_remote_executor --nozip_undeclared_test_outputs'
+        fi
       fi
     } > "$qualification_rc"
     if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
