@@ -1,17 +1,24 @@
+# Retain the smoke failure report before cleanup and forward the selected
+# qualification clock to the source-built gVisor runtime.
 diff --git a/tools/gvisor-smoke-test.sh b/tools/gvisor-smoke-test.sh
 --- a/tools/gvisor-smoke-test.sh
 +++ b/tools/gvisor-smoke-test.sh
-@@ -9,0 +10,5 @@
+@@ -7,11 +7,24 @@
+ workdir="$(mktemp -d /tmp/syzkaller-gvisor-test.XXXXXX)"
+ 
+ cleanup() {
 +  local status=$?
 +  # Smoke mode writes the full crash report here before exiting.
 +  if [[ -n "${TEST_UNDECLARED_OUTPUTS_DIR:-}" && -f "$workdir/workdir/report.json" ]]; then
 +    sudo -E cp "$workdir/workdir/report.json" "$TEST_UNDECLARED_OUTPUTS_DIR/syzkaller-report.json" || status=1
 +  fi
-@@ -11 +16,2 @@
+   while sudo -E umount "$workdir/workdir/gvisor_root/null-netns" 2>/dev/null; do true; done
 -  sudo -E rm -rf "$workdir"
 +  sudo -E rm -rf "$workdir" || status=1
 +  exit "$status"
-@@ -14,0 +21,7 @@
+ }
+ 
+ trap cleanup EXIT
 +
 +clock_args=
 +case "${GVISOR_TEST_CLOCK_SOURCE:-}" in
@@ -19,6 +26,15 @@ diff --git a/tools/gvisor-smoke-test.sh b/tools/gvisor-smoke-test.sh
 +  calibrated|reference) clock_args="--clock-source=$GVISOR_TEST_CLOCK_SOURCE" ;;
 +  *) printf 'Invalid GVISOR_TEST_CLOCK_SOURCE: %s\n' "$GVISOR_TEST_CLOCK_SOURCE" >&2; exit 2 ;;
 +esac
-@@ -30 +43 @@
+ 
+ syzdir="$(pwd)"
+ cat > "$workdir/config" <<EOF
+@@ -27,7 +40,7 @@
+         "type": "gvisor",
+         "vm": {
+                 "count": 1,
 -                "runsc_args": "--ignore-cgroups --network none"
 +                "runsc_args": "$clock_args --ignore-cgroups --network none"
+         }
+ }
+ EOF
