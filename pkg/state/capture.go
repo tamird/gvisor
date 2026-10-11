@@ -38,15 +38,34 @@ func ForwardRecord(owner Type) func(wire.TypeID, int) *wire.Record {
 	name := owner.StateTypeName()
 	typ := reflect.TypeOf(owner).Elem()
 	return func(id wire.TypeID, count int) *wire.Record {
-		registered, ok := globalTypeDatabase[name]
-		if !ok || registered.typ != typ {
-			Failf("forwarded record type %s is not registered as %v", name, typ)
-		}
+		registered := forwardedType(name, typ)
 		if registered.newRecord == nil {
 			return wire.NewSlotRecord(id, count)
 		}
 		return registered.newRecord(id, count)
 	}
+}
+
+// ForwardNode preserves an identtype's underlying capture allocation. Like
+// ForwardRecord, it resolves registration after package initialization. Manual
+// underlying savers retain their ordinary slot record in the same graph.
+func ForwardNode(owner Type) func(int) *RecordNode {
+	name := owner.StateTypeName()
+	typ := reflect.TypeOf(owner).Elem()
+	return func(count int) *RecordNode {
+		registered := forwardedType(name, typ)
+		if registered.newNode == nil {
+			return new(RecordNode)
+		}
+		return registered.newNode(count)
+	}
+}
+
+func forwardedType(name string, typ reflect.Type) registeredType {
+	if globalTypeDatabase[name] != typ {
+		Failf("forwarded record type %s is not registered as %v", name, typ)
+	}
+	return reverseTypeDatabase[typ]
 }
 
 // Capture saves a graph-bearing child into a stable field of the record. This

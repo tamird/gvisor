@@ -218,9 +218,9 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 	// Common closures.
 	emitRegister := func(name string) {
 		if records != nil && records.types[name] != nil {
-			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s)", statePrefix, name, records.types[name].factory))
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %s)", statePrefix, name, records.types[name].factory, records.types[name].nodeFactory))
 		} else if records != nil && records.forward[name] != "" {
-			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)))", statePrefix, name, statePrefix, records.forward[name]))
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), %sForwardNode((*%s)(nil)))", statePrefix, name, statePrefix, records.forward[name], statePrefix, records.forward[name]))
 		} else {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
 		}
@@ -369,7 +369,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 			if generateSaverLoader && !hasStateSave {
 				if record != nil {
-					record.declare(outputFile, records.wireAlias)
+					record.declare(outputFile, records.wireAlias, statePrefix)
 				}
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
 				fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", saveRecv, ts.Name.Name, statePrefix)

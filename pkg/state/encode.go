@@ -22,6 +22,32 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
+// recordPhase distinguishes allocated capture storage from a snapshot that is
+// visible to recursive saves. A published record may still be filling in a hook.
+type recordPhase uint8
+
+const (
+	recordAbsent recordPhase = iota
+	recordReserved
+	recordPublished
+)
+
+// RecordNode lets a generated constructor allocate the resolver node beside its
+// capture payload. It must not be copied after initialization. The resolver owns
+// its identity, references and queue membership; constructors only reserve the
+// record storage.
+type RecordNode struct {
+	node objectEncodeState
+}
+
+// InitRecordNode reserves a fresh record without assigning a wire type ID or
+// reading source fields. The record becomes visible only when capture begins.
+func InitRecordNode(node *RecordNode, record *wire.Record) *RecordNode {
+	node.node.encoded = record
+	node.node.recordPhase = recordReserved
+	return node
+}
+
 // objectEncodeState the type and identity of an object occupying a memory
 // address range. This is the value type for addrSet, and the intrusive entry
 // for the deferred list.
@@ -42,6 +68,10 @@ type objectEncodeState struct {
 	// how indicates whether this object should be encoded as a value. This
 	// is used only for deferred encoding.
 	how encodeStrategy
+
+	// recordPhase applies to struct snapshots only. Reserved storage is not a
+	// saved value and must not survive adoption as an inline snapshot.
+	recordPhase recordPhase
 
 	// refs are the list of reference objects used by other objects
 	// referring to this object. When the object is updated, these
@@ -162,6 +192,23 @@ func (es *encodeState) nextID() objectID {
 	return objectID(es.lastID)
 }
 
+// newObject allocates graph identity and, when registered, typed capture storage.
+// Looking up immutable registration does not allocate serialization-local IDs.
+func newObject(obj reflect.Value, id objectID) *objectEncodeState {
+	var node *objectEncodeState
+	if obj.Kind() == reflect.Struct {
+		if info, ok := reverseTypeDatabase[obj.Type()]; ok && info.newNode != nil {
+			node = &info.newNode(len(info.Fields)).node
+		}
+	}
+	if node == nil {
+		node = &objectEncodeState{}
+	}
+	node.id = id
+	node.obj = obj
+	return node
+}
+
 // dummyAddr points to the dummy zero-sized address.
 var dummyAddr = reflect.ValueOf(new(struct{})).Pointer()
 
@@ -238,10 +285,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			// 1-byte address at the end of the object.
 			oes, ok := es.zeroValues[typ]
 			if !ok {
-				oes = &objectEncodeState{
-					id:  es.nextID(),
-					obj: obj,
-				}
+				oes = newObject(obj, es.nextID())
 				es.zeroValues[typ] = oes
 				es.pending[oes.id] = oes
 				es.deferred.PushBack(oes)
@@ -289,11 +333,8 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 
 		// This object contains one or more previously-registered objects.
 		// Remove them and update existing references to use the new one.
-		oes := &objectEncodeState{
-			// Reuse the root ID of the first contained element.
-			id:  existing.id,
-			obj: obj,
-		}
+		// Reuse the root ID of the first contained element.
+		oes := newObject(obj, existing.id)
 		type elementEncodeState struct {
 			addr uintptr
 			typ  reflect.Type
@@ -315,12 +356,12 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 				refs: existing.refs,
 			})
 			existing.refs = nil // The containing node takes ownership below.
-			if record, ok := existing.encoded.(*wire.Record); ok {
+			if existing.recordPhase == recordPublished {
 				// This struct is now an inline child of the containing object.
 				// Keep its original snapshot instead of repeating save hooks
 				// and custom values. An active hook may still be filling it.
 				// Arrays, in contrast, must be captured again.
-				es.inlineStructs[existing.obj] = record
+				es.inlineStructs[existing.obj] = existing.encoded.(*wire.Record)
 			}
 			delete(es.pending, existing.id)
 			es.deferred.Remove(existing)
@@ -355,10 +396,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	}
 
 	// No existing object overlaps this one. Register a new object.
-	oes = &objectEncodeState{
-		id:  es.nextID(),
-		obj: obj,
-	}
+	oes = newObject(obj, es.nextID())
 	if seg.Ok() {
 		gap = seg.PrevGap()
 	} else {
@@ -520,6 +558,7 @@ func (es *encodeState) structOwner(obj reflect.Value) *objectEncodeState {
 func (es *encodeState) captureStruct(obj reflect.Value, owner *objectEncodeState, record *wire.Record) {
 	if owner != nil {
 		owner.encoded = record
+		owner.recordPhase = recordPublished
 	} else {
 		es.inlineStructs[obj] = record
 	}
@@ -528,13 +567,14 @@ func (es *encodeState) captureStruct(obj reflect.Value, owner *objectEncodeState
 // encodeStruct encodes a composite object.
 func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	owner := es.structOwner(obj)
-	if owner != nil && owner.encoded != nil {
+	if owner != nil && owner.recordPhase == recordPublished {
 		*dest = owner.encoded
 		return
 	}
 	if s, ok := es.inlineStructs[obj]; ok {
 		if owner != nil {
 			owner.encoded = s
+			owner.recordPhase = recordPublished
 			delete(es.inlineStructs, obj)
 		}
 		*dest = s
@@ -577,7 +617,13 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	}
 
 	// Invoke the provided saver.
-	s := te.newRecord(wire.TypeID(te.ID), len(te.Fields))
+	var s *wire.Record
+	if owner != nil && owner.recordPhase == recordReserved {
+		s = owner.encoded.(*wire.Record)
+		s.TypeID = wire.TypeID(te.ID)
+	} else {
+		s = te.newRecord(wire.TypeID(te.ID), len(te.Fields))
+	}
 	*dest = s
 	es.captureStruct(key, owner, s)
 	oe := objectEncoder{
@@ -720,7 +766,7 @@ func isPrimitiveZero(typ reflect.Type) bool {
 }
 
 // encodeStrategy is the strategy used for encodeObject.
-type encodeStrategy int
+type encodeStrategy uint8
 
 const (
 	// encodeDefault means types are encoded normally as references.
