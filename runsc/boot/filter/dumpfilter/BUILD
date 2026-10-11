@@ -11,6 +11,8 @@ go_binary(
         "dumpfilter.go",
         "dumpfilter_unsafe.go",
     ],
+    importpath = "gvisor.dev/gvisor/runsc/boot/filter/dumpfilter/dumpfilter",
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/bpf",
         "//pkg/log",

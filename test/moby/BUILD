@@ -9,7 +9,9 @@ package(
 go_binary(
     name = "runner",
     srcs = ["moby_runner.go"],
+    importpath = "gvisor.dev/gvisor/test/moby/runner",
     static = True,
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//test/runtimes/proctor",
         "//test/runtimes/proctor/lib",

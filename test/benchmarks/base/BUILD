@@ -13,6 +13,7 @@ go_library(
     srcs = [
         "base.go",
     ],
+    visibility = ["//tools/codeql:__pkg__"],
     deps = [
         "//pkg/test/dockerutil",
         "//test/benchmarks/harness",
