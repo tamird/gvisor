@@ -26,7 +26,9 @@ machine="$8"
 test_setup="$(realpath "$9")"
 emulator_override="${10}"
 if [[ -n "$emulator_override" ]]; then emulator_override="$(realpath "$emulator_override")"; fi
-shift 10
+guest_cpus="${11}"
+[[ "$guest_cpus" =~ ^[1-9][0-9]*$ ]] || { echo "Invalid guest CPU count: $guest_cpus" >&2; exit 1; }
+shift 11
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -145,7 +147,7 @@ QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
-  -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
+  -smp "$guest_cpus" -m 3072 -nic none -L "$host/usr/share/qemu" \
   -kernel "$kernel" -initrd "$initramfs" \
   -append "console=$console rdinit=/init panic=-1" \
   -serial "file:${TEST_UNDECLARED_OUTPUTS_DIR}/console.log" \

@@ -33,3 +33,10 @@ qemu_system(
     patch = "arm-rcsc.patch",
     visibility = ["//test:__subpackages__"],
 )
+
+# Fork-only matched guest CPU cost control.
+py_binary(
+    name = "run_pair",
+    srcs = ["run_pair.py"],
+    main = "run_pair.py",
+)

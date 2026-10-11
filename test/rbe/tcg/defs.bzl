@@ -104,6 +104,7 @@ def _tcg_test_impl(ctx):
         ctx.attr.machine,
         ctx.file._test_setup.short_path,
         ctx.file.emulator.short_path if ctx.file.emulator != None else "",
+        "2",
     ]
     ctx.actions.write(
         executable,
