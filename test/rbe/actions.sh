@@ -170,7 +170,10 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           local graph_dir="$RUNNER_TEMP/qualification/arm64-unit-graph"
           printf '%s %s\n' "$QUALIFICATION_GRAPH_PHASE" "$argument" >> "$graph_dir/calls.txt"
           case "$argument" in
-            query|aquery)
+            query|aquery|info)
+              if [[ $argument == info ]]; then
+                [[ $# == 2 && $1 == info && $2 == max-heap-size ]] || return 2
+              fi
               remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_GRAPH_DEADLINE"])-time.monotonic())))')
               (( remaining > 0 )) || return 124
               timeout --signal=INT --kill-after=30s "${remaining}s" \
@@ -566,7 +569,8 @@ for label,row in phases['empty']['rows'].items():
     else:
         assert row['arguments'] == old['arguments']
 calls = (root/'calls.txt').read_text().splitlines()
-assert all(c.split()[1] in ('query','aquery','test') for c in calls)
+assert all(c.split()[1] in ('query','aquery','info','test') for c in calls)
+assert Counter(c.split()[0] for c in calls if c.endswith(' info')) == {'namespace':1,'empty':1}
 assert Counter(c.split()[0] for c in calls if c.endswith(' test')) == {'namespace':1,'empty':1}
 result = {'status':'PASS_GRAPH_ONLY','coordinator':'actual ARM64 Actions VM','phases':{name:{'owners':len(value['rows']),'declaredShards':sum(value['counts'].values()),'localOwners':len(value['local']),'localShards':sum(value['counts'][x] for x in value['local'])} for name,value in phases.items()},'testExecutions':0,'limits':['Only loading/analysis and final-command interception; no test-body or build execution credit.','Canonical configured unit profiles define the complete selected universe; no historical count is substituted for current source.']}
 (root/'result.json').write_text(json.dumps(result,indent=2)+'\n')
