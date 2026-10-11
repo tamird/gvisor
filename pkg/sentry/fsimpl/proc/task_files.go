@@ -1738,12 +1738,7 @@ func (d *childrenData) Generate(ctx context.Context, buf *bytes.Buffer) error {
 	children := d.task.Children()
 	var childrenTIDs []int
 	for childTask := range children {
-		tid := d.pidns.IDOfTask(childTask)
-		if tid == 0 {
-			// Reaped children have tid 0. Linux never reports 0 here.
-			continue
-		}
-		childrenTIDs = append(childrenTIDs, int(tid))
+		childrenTIDs = append(childrenTIDs, int(d.pidns.IDOfTask(childTask)))
 	}
 
 	// The TIDs need to be in sorted order in accordance with the Linux implementation.
