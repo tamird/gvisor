@@ -47,6 +47,13 @@ func assertValidType(name string, fields []string) {
 type typeEntry struct {
 	ID typeID
 	wire.Type
+
+	// Native metadata can exist before the type is encountered in the wire
+	// stream. ID remains zero until Lookup assigns its original encounter ID.
+	nativeType reflect.Type
+	nativeSize uintptr
+	nativeKind reflect.Kind
+	capture    func(*encodeState, any, *wire.Object)
 }
 
 // reconciledTypeEntry is a reconciled entry in the typeDatabase.
@@ -70,6 +77,21 @@ func makeTypeEncodeDatabase() typeEncodeDatabase {
 	return typeEncodeDatabase{
 		byType: make(map[reflect.Type]*typeEntry),
 	}
+}
+
+// native looks up the owner of native type metadata without assigning a wire
+// ID or calling StateFields. This metadata has no recursive construction.
+func (tdb *typeEncodeDatabase) native(typ reflect.Type) *typeEntry {
+	if te := tdb.byType[typ]; te != nil {
+		return te
+	}
+	te := &typeEntry{
+		nativeType: typ,
+		nativeSize: typ.Size(),
+		nativeKind: typ.Kind(),
+	}
+	tdb.byType[typ] = te
+	return te
 }
 
 // typeDecodeDatabase is an internal TypeInfo database for decoding.
@@ -129,8 +151,8 @@ func lookupNameFields(typ reflect.Type) (string, []string, bool) {
 // the returned typeEntry are nil, then the obj did not implement the Type
 // interface.
 func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
-	te, ok := tdb.byType[typ]
-	if !ok {
+	te := tdb.native(typ)
+	if te.ID == 0 {
 		// Lookup the type information.
 		name, fields, ok := lookupNameFields(typ)
 		if !ok {
@@ -141,16 +163,8 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 
 		// Register the new type.
 		tdb.lastID++
-		te = &typeEntry{
-			ID: tdb.lastID,
-			Type: wire.Type{
-				Name:   name,
-				Fields: fields,
-			},
-		}
-
-		// All done.
-		tdb.byType[typ] = te
+		te.ID = tdb.lastID
+		te.Type = wire.Type{Name: name, Fields: fields}
 		return te, false
 	}
 	return te, true
