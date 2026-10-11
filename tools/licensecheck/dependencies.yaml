@@ -9461,10 +9461,10 @@
   sha256: d4c36b8bcd0616290a3913215e0f53b931bd6e00670596f2960df1b44af2bd07
   license: BSD-2-Clause
 - dependency: module_proxy/codeql_go_modules/github.com/planetscale/vtprotobuf
-  version: github.com/planetscale/vtprotobuf@v0.6.1-0.20240319094008-0393e58bdf10
-  retrieved: "2026-10-06"
-  commit: 0393e58bdf106fe0347e554d272a8f2c84d12461
-  sha256: 6fdbac53c6ace58d732be8ec29c1aae928639eb12960cc4c52a9f7a25395ca05
+  version: github.com/planetscale/vtprotobuf@v0.6.1-0.20240409071808-615f978279ca
+  retrieved: "2026-10-11"
+  commit: 615f978279caa2965ae5d57c7d242f88b38e6802
+  sha256: 19e38fb1b826fb2f9c1d212670d6e5c1119797852f801d97f26722eeffc437b7
   license: BSD-3-Clause
 - dependency: module_proxy/codeql_go_modules/github.com/pmezard/go-difflib
   version: github.com/pmezard/go-difflib@v1.0.1-0.20181226105442-5d4384ee4fb2
@@ -13379,12 +13379,6 @@
   commit: ""
   sha256: a9c7cef2501c9cfede2110fd6d4e5e62296920efe9abfb84648df866e47f58d1
   license: GPL-2.0
-- dependency: pypi/colorama-0.4.6-py2.py3-none-any.whl
-  version: https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl
-  retrieved: "2026-09-29"
-  commit: ""
-  sha256: 4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
-  license: BSD-3-Clause
 - dependency: pypi/packaging-26.3-py3-none-any.whl
   version: https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl
   retrieved: "2026-09-29"
