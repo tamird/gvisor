@@ -31,11 +31,11 @@ func emitAddressSnapshot(w *wire.Writer, snapshot *addressSnapshot) {
 	wire.SaveIntField(w, int64(snapshot.length))
 }
 
-func (value *Address) StateSaveSnapshot(s state.SnapshotSink) {
-	value.beforeSave()
+func (a *Address) StateSaveSnapshot(s state.SnapshotSink) {
+	a.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitAddressSnapshot)
-	s.Save(&value.addr, &snapshot.addr)
-	snapshot.length = value.length
+	s.Save(&a.addr, &snapshot.addr)
+	snapshot.length = a.length
 }
 
 type fullAddressSnapshot struct {
@@ -67,7 +67,7 @@ type ipPacketInfoSnapshot struct {
 	DestinationAddr wire.Object
 }
 
-func emitIpPacketInfoSnapshot(w *wire.Writer, snapshot *ipPacketInfoSnapshot) {
+func emitIPPacketInfoSnapshot(w *wire.Writer, snapshot *ipPacketInfoSnapshot) {
 	wire.SaveIntField(w, int64(snapshot.NIC))
 	wire.Save(w, snapshot.LocalAddr)
 	wire.Save(w, snapshot.DestinationAddr)
@@ -75,7 +75,7 @@ func emitIpPacketInfoSnapshot(w *wire.Writer, snapshot *ipPacketInfoSnapshot) {
 
 func (value *IPPacketInfo) StateSaveSnapshot(s state.SnapshotSink) {
 	value.beforeSave()
-	snapshot := state.BeginSnapshot(s, emitIpPacketInfoSnapshot)
+	snapshot := state.BeginSnapshot(s, emitIPPacketInfoSnapshot)
 	snapshot.NIC = value.NIC
 	s.Save(&value.LocalAddr, &snapshot.LocalAddr)
 	s.Save(&value.DestinationAddr, &snapshot.DestinationAddr)

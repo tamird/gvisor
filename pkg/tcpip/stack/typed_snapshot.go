@@ -182,28 +182,28 @@ func emitPacketBufferSnapshot(w *wire.Writer, snapshot *packetBufferSnapshot) {
 	wire.Save(w, snapshot.tuple)
 }
 
-func (value *PacketBuffer) StateSaveSnapshot(s state.SnapshotSink) {
-	value.beforeSave()
+func (pk *PacketBuffer) StateSaveSnapshot(s state.SnapshotSink) {
+	pk.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitPacketBufferSnapshot)
-	s.Save(&value.packetBufferRefs, &snapshot.packetBufferRefs)
-	s.Save(&value.buf, &snapshot.buf)
-	snapshot.reserved = value.reserved
-	snapshot.pushed = value.pushed
-	snapshot.consumed = value.consumed
-	s.Save(&value.headers, &snapshot.headers)
-	snapshot.NetworkProtocolNumber = value.NetworkProtocolNumber
-	snapshot.TransportProtocolNumber = value.TransportProtocolNumber
-	snapshot.Hash = value.Hash
-	s.Save(&value.Owner, &snapshot.Owner)
-	s.Save(&value.EgressRoute, &snapshot.EgressRoute)
-	s.Save(&value.GSOOptions, &snapshot.GSOOptions)
-	snapshot.snatDone = value.snatDone
-	snapshot.dnatDone = value.dnatDone
-	snapshot.PktType = value.PktType
-	snapshot.NICID = value.NICID
-	snapshot.InputNICID = value.InputNICID
-	snapshot.RXChecksumValidated = value.RXChecksumValidated
-	s.Save(&value.NetworkPacketInfo, &snapshot.NetworkPacketInfo)
-	snapshot.Mark = value.Mark
-	s.Save(&value.tuple, &snapshot.tuple)
+	s.Save(&pk.packetBufferRefs, &snapshot.packetBufferRefs)
+	s.Save(&pk.buf, &snapshot.buf)
+	snapshot.reserved = pk.reserved
+	snapshot.pushed = pk.pushed
+	snapshot.consumed = pk.consumed
+	s.Save(&pk.headers, &snapshot.headers)
+	snapshot.NetworkProtocolNumber = pk.NetworkProtocolNumber
+	snapshot.TransportProtocolNumber = pk.TransportProtocolNumber
+	snapshot.Hash = pk.Hash
+	s.Save(&pk.Owner, &snapshot.Owner)
+	s.Save(&pk.EgressRoute, &snapshot.EgressRoute)
+	s.Save(&pk.GSOOptions, &snapshot.GSOOptions)
+	snapshot.snatDone = pk.snatDone
+	snapshot.dnatDone = pk.dnatDone
+	snapshot.PktType = pk.PktType
+	snapshot.NICID = pk.NICID
+	snapshot.InputNICID = pk.InputNICID
+	snapshot.RXChecksumValidated = pk.RXChecksumValidated
+	s.Save(&pk.NetworkPacketInfo, &snapshot.NetworkPacketInfo)
+	snapshot.Mark = pk.Mark
+	s.Save(&pk.tuple, &snapshot.tuple)
 }

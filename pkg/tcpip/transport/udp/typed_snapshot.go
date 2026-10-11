@@ -34,7 +34,7 @@ type udpPacketSnapshot struct {
 	ttlOrHopLimit      uint8
 }
 
-func emitUdpPacketSnapshot(w *wire.Writer, snapshot *udpPacketSnapshot) {
+func emitUDPPacketSnapshot(w *wire.Writer, snapshot *udpPacketSnapshot) {
 	wire.Save(w, snapshot.udpPacketEntry)
 	wire.SaveUintField(w, uint64(snapshot.netProto))
 	wire.Save(w, snapshot.senderAddress)
@@ -48,7 +48,7 @@ func emitUdpPacketSnapshot(w *wire.Writer, snapshot *udpPacketSnapshot) {
 
 func (value *udpPacket) StateSaveSnapshot(s state.SnapshotSink) {
 	value.beforeSave()
-	snapshot := state.BeginSnapshot(s, emitUdpPacketSnapshot)
+	snapshot := state.BeginSnapshot(s, emitUDPPacketSnapshot)
 	// Custom values are captured before ordinary fields, as in stateify.
 	snapshot.receivedAt = value.saveReceivedAt()
 	s.Save(&value.udpPacketEntry, &snapshot.udpPacketEntry)
