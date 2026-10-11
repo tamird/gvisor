@@ -68,6 +68,7 @@ go_path(
         "//test/packetimpact/dut/runsc",
         "//test/packetimpact/dut/runsc:devid",
         "//test/packetimpact/proto:posix_server_go_proto",
+        "//test/packetimpact/tests:socket_send_recv_helpers",
         "//test/root",
         "//test/runtimes/proctor",
         "//test/runtimes/proctor:proctor_bin",
