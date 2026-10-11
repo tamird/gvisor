@@ -36,9 +36,10 @@ def run_logged(command: list[str], cwd: Path, env: dict[str, str], log: Path) ->
         # Failed actions need their actual configure/compiler error in Bazel's
         # stderr too; failed output trees are not guaranteed to be downloaded.
         sys.stderr.write(log.read_text(errors="replace"))
-        config_log = cwd / "config.log"
-        if config_log.is_file():
-            sys.stderr.write(config_log.read_text(errors="replace"))
+        for name in ("config.log", "meson-logs/meson-log.txt"):
+            diagnostic = cwd / name
+            if diagnostic.is_file():
+                sys.stderr.write(diagnostic.read_text(errors="replace"))
         raise subprocess.CalledProcessError(result.returncode, command)
 
 
@@ -82,6 +83,9 @@ def main() -> None:
 
         for name in ("ninja", "pkg-config", "patch", "strings"):
             wrapper(name, [str(loader), "--inhibit-cache", "--library-path", libraries, str(sysroot / "usr/bin" / name)])
+        # Some QEMU helpers are invoked directly through env python3 instead
+        # of configure's explicit --python interpreter.
+        wrapper("python3", [sys.executable])
         # Preserve the repository's selected LLVM binaries and resource headers,
         # with the same complete GNU sysroot boundary used by Syzkaller.
         # No cd: Meson's relative input/output arguments belong to its own CWD.
