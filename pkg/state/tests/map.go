@@ -14,6 +14,8 @@
 
 package tests
 
+import "gvisor.dev/gvisor/pkg/state"
+
 // +stateify savable
 type mapContainer struct {
 	v map[int]any
@@ -26,3 +28,20 @@ type mapPtrContainer struct {
 
 // +stateify savable
 type registeredMapStruct struct{}
+
+// +stateify savable
+type reassignedMap struct {
+	value   map[int]int
+	byValue bool `state:"nosave"`
+}
+
+func (m *reassignedMap) StateSave(s state.Sink) {
+	if m.byValue {
+		s.SaveValue(0, m.value)
+	} else {
+		s.Save(0, &m.value)
+	}
+	// Map contents are encoded after this saver returns. The addressable
+	// form retains this variable, while SaveValue has retained the old map.
+	m.value = map[int]int{2: 22}
+}
