@@ -1033,7 +1033,6 @@ run_lane() (
         --config=rbe-hybrid-tests
         --local_test_jobs=1
         --test_env=GO_TEST_WRAP_TESTV=1
-        '--test_filter=^TestMultiContainerChainedCheckpointRestore$'
       )
       ;;
     container)
