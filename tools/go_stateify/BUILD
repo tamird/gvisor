@@ -7,9 +7,15 @@ package(
 
 go_binary(
     name = "stateify",
-    srcs = ["main.go"],
+    srcs = [
+        "main.go",
+        "records.go",
+    ],
     visibility = ["//:sandbox"],
-    deps = ["//tools/constraintutil"],
+    deps = [
+        "//tools/constraintutil",
+        "@org_golang_x_tools//go/gcexportdata:go_default_library",
+    ],
 )
 
 bzl_library(

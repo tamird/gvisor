@@ -25,9 +25,9 @@ go_library(
         "endpoint_state.go",
         "forwarder.go",
         "protocol.go",
-        "typed_snapshot.go",
         "udp_packet_list.go",
     ],
+    stateify_records = True,
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/buffer",

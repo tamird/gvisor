@@ -13,11 +13,13 @@ go_library(
         "integer.go",
         "load.go",
         "map.go",
+        "record.go",
         "register.go",
         "snapshot.go",
         "struct.go",
         "tests.go",
     ],
+    stateify_records = True,
     deps = [
         "//pkg/state",
         "//pkg/state/pretty",

@@ -44,8 +44,8 @@ go_library(
         "tcpip.go",
         "tcpip_state.go",
         "timer.go",
-        "typed_snapshot.go",
     ],
+    stateify_records = True,
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/atomicbitops",

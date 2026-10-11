@@ -62,7 +62,7 @@ func (f *typedFields[T]) save(w *Writer) {
 func (*typedFields[T]) load(r *Reader) Object { return Load(r) }
 
 // SaveIntField writes a saved signed field without constructing an Object.
-func SaveIntField(w *Writer, value int64) {
+func SaveIntField(w *Writer, value Int) {
 	if value == 0 {
 		typeNil.save(w)
 	} else {
@@ -72,7 +72,7 @@ func SaveIntField(w *Writer, value int64) {
 }
 
 // SaveStringField writes a saved string without constructing an Object.
-func SaveStringField(w *Writer, value string) {
+func SaveStringField(w *Writer, value String) {
 	if value == "" {
 		typeNil.save(w)
 	} else {
@@ -83,7 +83,7 @@ func SaveStringField(w *Writer, value string) {
 }
 
 // SaveUintField writes a saved unsigned field without constructing an Object.
-func SaveUintField(w *Writer, value uint64) {
+func SaveUintField(w *Writer, value Uint) {
 	if value == 0 {
 		typeNil.save(w)
 	} else {
@@ -93,11 +93,53 @@ func SaveUintField(w *Writer, value uint64) {
 }
 
 // SaveBoolField writes a saved boolean field without constructing an Object.
-func SaveBoolField(w *Writer, value bool) {
+func SaveBoolField(w *Writer, value Bool) {
 	if !value {
 		typeNil.save(w)
 	} else {
 		typeBool.save(w)
 		Bool(value).save(w)
+	}
+}
+
+// SaveFloat32Field preserves the existing Float32 encoding after capture's
+// float64 promotion, including the signaling-NaN conversion boundary.
+func SaveFloat32Field(w *Writer, value Float64) {
+	if value == 0 {
+		typeNil.save(w)
+	} else {
+		typeFloat32.save(w)
+		Float32(value).save(w)
+	}
+}
+
+// SaveFloat64Field writes a saved float64 without constructing an Object.
+func SaveFloat64Field(w *Writer, value Float64) {
+	if value == 0 {
+		typeNil.save(w)
+	} else {
+		typeFloat64.save(w)
+		value.save(w)
+	}
+}
+
+// SaveComplex64Field preserves the existing complex128 promotion boundary.
+func SaveComplex64Field(w *Writer, value Complex128) {
+	if value == 0 {
+		typeNil.save(w)
+	} else {
+		typeComplex64.save(w)
+		narrow := Complex64(value)
+		narrow.save(w)
+	}
+}
+
+// SaveComplex128Field writes a saved complex128 without constructing an Object.
+func SaveComplex128Field(w *Writer, value Complex128) {
+	if value == 0 {
+		typeNil.save(w)
+	} else {
+		typeComplex128.save(w)
+		value.save(w)
 	}
 }
