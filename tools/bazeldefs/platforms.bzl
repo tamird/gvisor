@@ -44,6 +44,9 @@ def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = 
       vfs: Use the host-backed workspace for outputs larger than the VM's
         separate workspace disk; free_disk only sizes the root filesystem.
         https://github.com/buildbuddy-io/buildbuddy/blob/5608c55ae/enterprise/server/remote_execution/containers/firecracker/firecracker.go#L1593
+
+    Returns:
+      Execution properties for the selected VM and execution group.
     """
     prefix = exec_group + "." if exec_group else ""
     properties = {
