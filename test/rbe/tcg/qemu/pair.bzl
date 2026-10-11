@@ -22,7 +22,7 @@ load(":build.bzl", "QemuPairInfo")
 def _pair_impl(ctx):
     if sorted(ctx.attr.order) != ["after", "before"]:
         fail("The pair must execute each QEMU arm exactly once")
-    pair = ctx.attr.qemu[QemuPairInfo]
+    pair = ctx.attr._qemu[QemuPairInfo]
     image = ctx.attr.image[TcgImageInfo]
     if image.architecture != "arm64":
         fail("The RCsc diagnostic requires the original ARM64 guest")
@@ -72,14 +72,14 @@ qemu_pair_test = rule(
     implementation = _pair_impl,
     test = True,
     attrs = {
-        "qemu": attr.label(providers = [QemuPairInfo], mandatory = True),
+        "_qemu": attr.label(default = Label(":pair"), providers = [QemuPairInfo]),
         "order": attr.string_list(mandatory = True),
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
         "image": attr.label(default = "//test/rbe/tcg:guest", providers = [TcgImageInfo]),
         "host_tools": attr.label(default = "@tcg_host_tools//:flat", allow_single_file = True),
         "_launcher": attr.label(default = "//test/rbe/tcg:run", executable = True, cfg = "exec"),
-        "_runner": attr.label(default = ":run_pair", executable = True, cfg = "target"),
+        "_runner": attr.label(default = Label(":run_pair"), executable = True, cfg = "target"),
         "_test_setup": attr.label(default = "@bazel_tools//tools/test:test_setup", allow_single_file = True),
     },
     toolchains = [Label(tar_lib.toolchain_type)],
