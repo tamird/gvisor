@@ -540,6 +540,10 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 
 // encodeArray encodes an array.
 func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
+	if obj.CanAddr() && obj.Type().Elem().Kind() == reflect.Ptr {
+		es.encodeReferenceArray(obj, dest)
+		return
+	}
 	l := obj.Len()
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),
