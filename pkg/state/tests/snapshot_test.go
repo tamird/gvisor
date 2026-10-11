@@ -65,6 +65,7 @@ func TestTypedSnapshotWireAndAliases(t *testing.T) {
 // signaling NaNs distinguish the old reflection promotion from raw bit copies.
 func TestGeneratedPrimitiveRecord(t *testing.T) {
 	runTestCases(t, false, "import_alias", []any{&statewire{value: -19}})
+	runTestCases(t, false, "state_package", []any{&statePackageReceiver{value: -23}})
 	for _, test := range []struct {
 		name  string
 		value primitiveRecord
