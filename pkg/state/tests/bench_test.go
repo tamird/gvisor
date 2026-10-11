@@ -46,6 +46,16 @@ func buildMapObject(n int) any {
 	return &m
 }
 
+// buildMapValueObject keeps each struct in an unaddressable map value.
+func buildMapValueObject(n int) any {
+	b := new(benchStruct)
+	m := make(map[int]benchStruct)
+	for i := 0; i < n; i++ {
+		m[i] = benchStruct{B: b}
+	}
+	return &m
+}
+
 // buildSliceObject builds a benchmark object.
 func buildSliceObject(n int) any {
 	b := new(benchStruct)
@@ -64,6 +74,9 @@ var allObjects = map[string]struct {
 	},
 	"map": {
 		New: buildMapObject,
+	},
+	"map_value": {
+		New: buildMapValueObject,
 	},
 	"slice": {
 		New: buildSliceObject,
