@@ -91,6 +91,8 @@ def _tcg_test_impl(ctx):
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
+    if ctx.file.emulator != None:
+        inputs.append(ctx.file.emulator)
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
@@ -101,6 +103,7 @@ def _tcg_test_impl(ctx):
         str(ctx.attr.payload.label),
         ctx.attr.machine,
         ctx.file._test_setup.short_path,
+        ctx.file.emulator.short_path if ctx.file.emulator != None else "",
     ]
     ctx.actions.write(
         executable,
@@ -122,6 +125,7 @@ _tcg_test = rule(
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
         "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "_launcher": attr.label(default = Label(":run"), executable = True, cfg = "exec"),
