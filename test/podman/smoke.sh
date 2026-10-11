@@ -67,7 +67,7 @@ esac
 # Go flag/value pairs. Only this unprivileged wrapper interprets RUNTIME_ARGS;
 # paths and the OCI command arguments are passed intact.
 {
-  printf '#!/bin/bash\nexec %q --ignore-cgroups --debug --debug-log=%q --sidecar-usage-policy=STRICT ' "$runsc" "$state/runsc.log"
+  printf '#!/bin/bash\nexec %q --ignore-cgroups --debug --debug-log=%q ' "$runsc" "$state/runsc.log"
   if [[ -n ${GVISOR_TEST_CLOCK_SOURCE:-} ]]; then
     printf '%q ' "--clock-source=$GVISOR_TEST_CLOCK_SOURCE"
   fi

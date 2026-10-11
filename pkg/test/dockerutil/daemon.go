@@ -186,7 +186,6 @@ func (d *testDaemon) start(inputs daemonInputs) error {
 		daemonConfig["runtimes"] = runtimeDefinitions(runsc, "runsc", append([]string{
 			// Keep the reusable gofer namespace under fixture ownership.
 			"--shared-root=" + d.root,
-			"--sidecar-usage-policy=STRICT",
 			"--debug",
 			"--debug-log=" + filepath.Join(logDir, "runsc.%TEST%.%TIMESTAMP%.%COMMAND%.log"),
 		}, inputs.RuntimeArgs...), variants)

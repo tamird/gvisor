@@ -160,7 +160,6 @@ containerdConfigPatches:
 	runscConfig := `[runsc_config]
   debug = "true"
   debug-log = "/var/log/runsc/%ID%/gvisor.%COMMAND%.log"
-  sidecar-usage-policy = "STRICT"
 `
 	if source, ok := testutil.RuntimeTestClockSource(); ok {
 		runscConfig += fmt.Sprintf("  clock-source = %q\n", source.String())
