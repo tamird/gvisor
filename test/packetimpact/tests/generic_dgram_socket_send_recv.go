@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package generic_dgram_socket_send_recv_test provides shared packetimpact
+// socket send and receive tests.
 package generic_dgram_socket_send_recv_test
 
 import (
