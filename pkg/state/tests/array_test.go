@@ -24,6 +24,7 @@ import (
 )
 
 var allArrayPrimitives = []any{
+	[0]*int{},
 	[0]uint64{},
 	[2]int64{-1 << 63, 1<<63 - 1},
 	[2]uint64{0, ^uint64(0)},
