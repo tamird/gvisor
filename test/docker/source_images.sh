@@ -66,6 +66,18 @@ else
   test "${id}" = "$(docker image inspect --format '{{.Id}}' "${latest}")"
   printf 'Source image %s (%s); consumer tag %s\n' "${image}" "${id}" "${latest}"
   # Consumers use the canonical latest name in their fresh private daemons.
-  docker save --output "${archive}" "${image}" "${latest}"
+  saved="${work}/image.tar"
+  docker --version
+  printf 'Archive temporary directories: TEST_TMPDIR=%s TMPDIR=%s work=%s\n' \
+    "${TEST_TMPDIR-<unset>}" "${TMPDIR-<unset>}" "${work}"
+  df -P "${work}" "$(dirname "${archive}")" || echo 'Filesystem capacity query failed' >&2
+  printf 'Saving archive on temporary filesystem: %s\n' "${saved}"
+  docker save --output "${saved}" "${image}" "${latest}"
+  printf 'Temporary archive saved: '
+  stat --format='%s bytes' "${saved}"
+  sha256sum "${saved}"
+  printf 'Copying archive to declared output: %s\n' "${archive}"
+  cp "${saved}" "${archive}"
+  printf 'Declared archive copied; hashing output\n'
   sha256sum "${archive}"
 fi
