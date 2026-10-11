@@ -240,6 +240,23 @@ func (c *platformContext) Release() {
 	}
 }
 
+// DebugState samples only Go-owned fields: shared mmap storage may be released
+// by the task goroutine while this diagnostic runs.
+func (c *platformContext) DebugState() string {
+	sc := c.sharedContext.Load()
+	if sc == nil {
+		return "no shared context"
+	}
+	pending := sc.sync.Pending()
+	dispatcher.mu.Lock()
+	nr := dispatcher.nr
+	entrantsEmpty := dispatcher.entrants.Empty()
+	dispatcher.mu.Unlock()
+	stable := c.sharedContext.Load() == sc
+	return fmt.Sprintf("context=%d pending=%#x dispatcher_nr=%d entrants_empty=%t stable=%t",
+		sc.contextID, uint64(pending), nr, entrantsEmpty, stable)
+}
+
 // PrepareSleep implements platform.Context.PrepareSleep.
 func (c *platformContext) PrepareSleep() {
 	ctx := c.sharedContext.Load()

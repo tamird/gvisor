@@ -15,15 +15,24 @@
 package boot
 
 import (
+	"bytes"
+	"fmt"
+
 	"gvisor.dev/gvisor/pkg/log"
+	"gvisor.dev/gvisor/pkg/sentry/kernel"
 )
 
 type debug struct {
+	k *kernel.Kernel
 }
 
 // Stacks collects all sandbox stacks and copies them to 'stacks'.
-func (*debug) Stacks(_ *struct{}, stacks *string) error {
-	buf := log.Stacks(true)
-	*stacks = string(buf)
+func (d *debug) Stacks(_ *struct{}, stacks *string) error {
+	buf := bytes.NewBuffer(log.Stacks(true))
+	pidns := d.k.RootPIDNamespace()
+	for _, task := range pidns.Tasks() {
+		fmt.Fprintf(buf, "\nplatform task %d: %s\n", pidns.IDOfTask(task), task.DebugPlatformContext())
+	}
+	*stacks = buf.String()
 	return nil
 }

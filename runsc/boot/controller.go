@@ -249,7 +249,7 @@ func (c *controller) registerHandlers() {
 	c.srv.Register(&control.State{Kernel: l.k})
 	c.srv.Register(&control.Usage{Kernel: l.k})
 	c.srv.Register(&control.Metrics{})
-	c.srv.Register(&debug{})
+	c.srv.Register(&debug{k: l.k})
 
 	if eps, ok := l.k.RootNetworkNamespace().Stack().(*netstack.Stack); ok {
 		c.srv.Register(&Network{

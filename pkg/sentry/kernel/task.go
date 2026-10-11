@@ -726,6 +726,14 @@ type Task struct {
 	pid *pid
 }
 
+// DebugPlatformContext reports optional, read-only platform diagnostics.
+func (t *Task) DebugPlatformContext() string {
+	if p, ok := t.p.(interface{ DebugState() string }); ok {
+		return p.DebugState()
+	}
+	return "unavailable"
+}
+
 // Task related metrics
 var (
 	// syscallCounter is a metric that tracks how many syscalls the sentry has
