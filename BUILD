@@ -122,6 +122,11 @@ _DO_VARIANTS = [
     ("root", [], "root"),
 ]
 
+config_setting(
+    name = "reference_test_clock",
+    define_values = {"gvisor_test_clock_source": "reference"},
+)
+
 [
     native_test(
         name = "do_" + name + "_test",
@@ -129,7 +134,10 @@ _DO_VARIANTS = [
         src = ":release",
         # Keep each executable beside its declared release sidecars.
         out = "release/do_" + name + ".exe",
-        args = args + [
+        args = args + select({
+            ":reference_test_clock": ["--clock-source=reference"],
+            "//conditions:default": [],
+        }) + [
             "--alsologtostderr",
             "--debug",
             "--sidecar-usage-policy=STRICT",

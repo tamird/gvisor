@@ -21,6 +21,8 @@ import (
 	"maps"
 	"os/exec"
 	"slices"
+
+	"gvisor.dev/gvisor/pkg/test/testutil"
 )
 
 //go:embed runtime_variants.json
@@ -55,7 +57,8 @@ func RuntimeVariants(suite string) ([]RuntimeVariant, error) {
 func runtimeDefinitions(runsc, name string, baseArgs []string, variants []RuntimeVariant) map[string]RuntimeDefinition {
 	runtimes := make(map[string]RuntimeDefinition, len(variants))
 	for _, variant := range variants {
-		args := append(slices.Clone(baseArgs), "--allow-suid")
+		args := append(testutil.RuntimeTestFlags(), baseArgs...)
+		args = append(args, "--allow-suid")
 		args = append(args, variant.Args...)
 		args = append(args, "--TESTONLY-test-name-env=RUNSC_TEST_NAME")
 		runtimes[name+variant.Name] = RuntimeDefinition{Path: runsc, Args: args}

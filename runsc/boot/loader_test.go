@@ -40,6 +40,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/seccheck"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
 	"gvisor.dev/gvisor/pkg/sync"
+	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/pkg/unet"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
@@ -62,6 +63,9 @@ func init() {
 func testConfig() *config.Config {
 	testFlags := flag.NewFlagSet("test", flag.ContinueOnError)
 	config.RegisterFlags(testFlags)
+	if err := testFlags.Parse(testutil.RuntimeTestFlags()); err != nil {
+		panic(err)
+	}
 	conf, err := config.NewFromFlags(testFlags)
 	if err != nil {
 		panic(err)

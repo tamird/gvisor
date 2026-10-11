@@ -157,11 +157,14 @@ containerdConfigPatches:
 	}
 	// These are node-local paths; Docker's shared-root/debug paths belong to
 	// the outer daemon and must not be copied into the nested runtime config.
-	const runscConfig = `[runsc_config]
+	runscConfig := `[runsc_config]
   debug = "true"
   debug-log = "/var/log/runsc/%ID%/gvisor.%COMMAND%.log"
   sidecar-usage-policy = "STRICT"
 `
+	if source, ok := testutil.RuntimeTestClockSource(); ok {
+		runscConfig += fmt.Sprintf("  clock-source = %q\n", source.String())
+	}
 	runscConfigPath := filepath.Join(work, "runsc.toml")
 	if err := os.WriteFile(runscConfigPath, []byte(runscConfig), 0600); err != nil {
 		t.Fatal(err)

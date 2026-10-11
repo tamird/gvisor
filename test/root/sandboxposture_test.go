@@ -200,6 +200,7 @@ func TestSandboxPostureDo(t *testing.T) {
 	const readyMarker = "sandbox-posture-ready"
 	cmd := exec.CommandContext(ctx, runsc,
 		"--network=none",
+		"--clock-source="+conf.ClockSource.String(),
 		"--platform="+conf.Platform,
 		"--directfs="+strconv.FormatBool(conf.DirectFS),
 		"--root", rootDir,

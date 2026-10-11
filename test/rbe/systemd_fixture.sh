@@ -82,7 +82,7 @@ timeout 120 docker exec "${container}" bash -c '
   until systemctl is-system-running --quiet; do sleep 0.2; done
 '
 # Setup must also leave the cgroup root before systemd enables controllers.
-docker exec -i "${container}" systemd-run --scope --quiet --unit=root-setup \
+docker exec -i --env "GVISOR_TEST_CLOCK_SOURCE=${GVISOR_TEST_CLOCK_SOURCE:-}" "${container}" systemd-run --scope --quiet --unit=root-setup \
   --slice=system.slice --expand-environment=no bash -se <<'SETUP'
 set -euo pipefail
 test "$(cat /proc/1/comm)" = systemd
@@ -117,6 +117,7 @@ docker_ready=true
 # the test nor its waiting parent blocks controller delegation at the root.
 set +e
 docker exec --env DOCKER_HOST=unix:///var/run/docker.sock \
+  --env "GVISOR_TEST_CLOCK_SOURCE=${GVISOR_TEST_CLOCK_SOURCE:-}" \
   --env GVISOR_SIDECAR_BINARIES_DIR=/fixture/runtime/gvisor-bin \
   --env TEST_TIMEOUT="${TEST_TIMEOUT:?}" \
   "${container}" systemd-run --scope --quiet --unit=root-tests \

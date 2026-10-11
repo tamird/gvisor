@@ -23,7 +23,7 @@ lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container contai
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
-       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
+       test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
 Run Linux remote lanes using the configured Bazel RBE connection. The default
@@ -60,6 +60,9 @@ For hybrid unit/syscall lanes, --local-test-requirements=NAME[,NAME...] names
 requirements missing from remote workers. The default namespace requirement
 retains architecture-wide Firecracker fallback. An empty list keeps only the
 existing KVM and initial-cgroup local routes. Test selection remains complete.
+The clock source is an explicit runtime qualification setting, defaulting to
+calibrated. Reference mode uses host clocks across the maintained runtime
+fixtures; it does not change production defaults or select different tests.
 A benchmark target selects one member of the continuous suite, retaining its
 original workload and timeout. Other suite members remain unexecuted.
 USAGE
@@ -86,6 +89,7 @@ if [[ $# == 1 && ( $1 == --list || $1 == --help ) ]]; then
 fi
 arch=amd64
 test_execution=remote
+clock_source=calibrated
 local_test_requirements=namespace
 local_requirements_set=false
 syscall_bucket=
@@ -96,6 +100,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
   case "$1" in
     --arch=*) arch=${1#--arch=} ;;
     --test-execution=*) test_execution=${1#--test-execution=} ;;
+    --clock-source=*) clock_source=${1#--clock-source=} ;;
     --local-test-requirements=*) local_test_requirements=${1#--local-test-requirements=}; local_requirements_set=true ;;
     --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
     --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
@@ -110,6 +115,14 @@ case "$arch" in
   all) architecture_config=x86_64 ;;
   *) printf 'Unknown architecture: %s\n' "$arch" >&2; exit 2 ;;
 esac
+case "$clock_source" in
+  calibrated|reference) ;;
+  *) printf 'Unknown clock source: %s\n' "$clock_source" >&2; exit 2 ;;
+esac
+runtime_options=(
+  "--test_env=GVISOR_TEST_CLOCK_SOURCE=$clock_source"
+  "--define=gvisor_test_clock_source=$clock_source"
+)
 case "$test_execution" in
   remote) ;;
   local)
@@ -222,7 +235,7 @@ for lane in "$@"; do
   fi
 done
 
-printf 'Selected lanes for Linux %s (%s tests): %s\n' "$arch" "$test_execution" "$*"
+printf 'Selected lanes for Linux %s (%s tests, %s clocks): %s\n' "$arch" "$test_execution" "$clock_source" "$*"
 if [[ $test_execution == remote ]]; then
   gaps
 fi
@@ -318,7 +331,7 @@ analyze_profile() {
   shift 2
   local rc=$events.bazelrc
   python3 test/rbe/unit_matrix.py universe-rc "$patterns" > "$rc"
-  bazel "--bazelrc=$rc" aquery "$@" "${header_options[@]}" --config=rbe-selection \
+  bazel "--bazelrc=$rc" aquery "${runtime_options[@]}" "$@" "${header_options[@]}" --config=rbe-selection \
     "--build_event_json_file=$events" 'set()'
 }
 
@@ -366,7 +379,7 @@ select_test_profile() {
     --config=rbe-matrix "--config=$target_config" "$@" --build_tests_only
   python3 test/rbe/unit_matrix.py profile-actions \
     "$prefix-profile.json" "$target_arch" "${page_size_options[@]}" "${variant_options[@]}" > "$prefix.query"
-  bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+  bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --build_tests_only \
     "${routing_options[@]}" \
     --output=jsonproto --include_artifacts=false \
     "--build_event_json_file=$prefix-routing.json" \
@@ -411,7 +424,7 @@ run_guest_profile() (
     # Reconcile the combined configuration with both independently selected
     # public profiles before dispatching any TestRunner.
     python3 test/rbe/unit_matrix.py actions "$selection_dir/targets" --exact > "$selection_dir/combined.query"
-    bazel aquery --config=rbe-matrix --config=x86_64 --build_tests_only \
+    bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --build_tests_only \
       --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
       --output=jsonproto --include_artifacts=false \
       "--build_event_json_file=$selection_dir/profile.json" \
@@ -439,7 +452,7 @@ PY
   if [[ $test_execution == local ]]; then
     options=(--config=rbe-hybrid-tests --local_test_jobs=1)
   fi
-  bazel test --config=rbe --config=x86_64 --keep_going \
+  bazel test "${runtime_options[@]}" --config=rbe --config=x86_64 --keep_going \
     --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
     "${options[@]}" --target_pattern_file="$selection_dir/targets"
@@ -466,6 +479,7 @@ save_profile_selection() {
   local selection_dir=$1 lane=$2
   # Preserve the selection, but never upload Bazel's parsed credential options.
   mkdir -p "${RUNNER_TEMP:?}/qualification/$lane-selection"
+  printf '%s\n' "$clock_source" > "$RUNNER_TEMP/qualification/$lane-selection/clock-source.txt"
   cp "$selection_dir/selection.json" "$selection_dir/actions.json" \
     "$selection_dir/targets" "$RUNNER_TEMP/qualification/$lane-selection/"
   if [[ -f $selection_dir/combined-actions.json ]]; then
@@ -504,7 +518,7 @@ run_hybrid_profile() (
     python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
     bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
     python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
-    bazel aquery --config=rbe-matrix --config=x86_64 \
+    bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 \
       --//tools/bazeldefs:local_test_architecture=arm64 \
       "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
       --output=jsonproto --include_artifacts=false \
@@ -540,7 +554,7 @@ Path(sys.argv[2]).write_text("".join(label + "\n" for label in selected))
 PYOWNERS
     python3 test/rbe/unit_matrix.py actions "$selection_dir/combined-owners" --exact \
       > "$selection_dir/combined-actions.query"
-    bazel aquery --config=rbe --config=x86_64 --config=rbe-hybrid-tests --config=unit --strip=never \
+    bazel aquery "${runtime_options[@]}" --config=rbe --config=x86_64 --config=rbe-hybrid-tests --config=unit --strip=never \
       --//tools/bazeldefs:local_test_architecture=arm64 \
       "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
       --incompatible_sandbox_hermetic_tmp=false --test_env=GO_TEST_WRAP_TESTV=1 \
@@ -599,7 +613,7 @@ PY
       "--test_env=GVISOR_HOST_CGROUP_NS=$coordinator_cgroup_ns"
       "--test_env=GVISOR_HOST_MOUNT_NS=$(readlink /proc/self/ns/mnt)")
   fi
-  bazel test --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
+  bazel test "${runtime_options[@]}" --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     "--//tools/bazeldefs:local_test_architecture=$local_arch" \
     "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
     --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
@@ -681,7 +695,7 @@ run_platform_matrix() (
       nogo)
         # Each existing Nogo owner already analyzes both architectures. Select
         # its leaves without applying the positive tag filter to other lanes.
-        bazel aquery --config=rbe-matrix --config=x86_64 --config=nogo \
+        bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --config=nogo \
           --universe_scope=//... \
           "--build_event_json_file=$selection_dir/nogo-profile.json" 'set()'
         python3 test/rbe/unit_matrix.py profile-targets "$selection_dir/nogo-profile.json" amd64 \
@@ -691,7 +705,7 @@ run_platform_matrix() (
         python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
         bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
         python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
-        bazel aquery --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
+        bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
           --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
         if [[ $explicit_unit == true ]]; then
           select_unit_profile "$selection_dir"
@@ -860,7 +874,7 @@ run_platform_matrix() (
     printf 'No requested tests have available remote workers; see the profile exclusions above.\n' >&2
     return 2
   fi
-  bazel "$command" --config=rbe-matrix --config=x86_64 --keep_going \
+  bazel "$command" "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --keep_going \
     --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" "${header_options[@]}" \
     --target_pattern_file="$selection_dir/targets"
 )
@@ -1186,7 +1200,7 @@ run_lane() (
       printf 'ARM64 Firecracker capacity remains unqualified; namespace-dependent tests require it.\n'
     fi
   fi
-  bazel "$command" "--config=$execution_config" "--config=$architecture_config" \
+  bazel "$command" "${runtime_options[@]}" "--config=$execution_config" "--config=$architecture_config" \
     --keep_going "${options[@]}" "${header_options[@]}" "${targets[@]}"
 )
 

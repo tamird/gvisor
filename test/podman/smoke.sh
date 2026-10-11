@@ -57,12 +57,20 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 mkdir -m 700 "$HOME" "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_RUNTIME_DIR" "$TMPDIR"
 
+case "${GVISOR_TEST_CLOCK_SOURCE:-}" in
+  ""|calibrated|reference) ;;
+  *) printf 'Invalid GVISOR_TEST_CLOCK_SOURCE: %s\n' "$GVISOR_TEST_CLOCK_SOURCE" >&2; exit 2 ;;
+esac
+
 # Keep the installed adapter's shell-fragment interface intact. Podman's
 # runtime-flag prefixes each argument with "--", so it cannot carry arbitrary
 # Go flag/value pairs. Only this unprivileged wrapper interprets RUNTIME_ARGS;
 # paths and the OCI command arguments are passed intact.
 {
   printf '#!/bin/bash\nexec %q --ignore-cgroups --debug --debug-log=%q --sidecar-usage-policy=STRICT ' "$runsc" "$state/runsc.log"
+  if [[ -n ${GVISOR_TEST_CLOCK_SOURCE:-} ]]; then
+    printf '%q ' "--clock-source=$GVISOR_TEST_CLOCK_SOURCE"
+  fi
   printf '%s "$@"\n' "${RUNTIME_ARGS:-}"
 } > "$state/runsc"
 chmod 700 "$state/runsc"
