@@ -1,3 +1,3 @@
-# Package roots shared by make syscall-tests and direct Bazel qualification.
-//test/syscalls/...
-//test/rtnetlink/...
+# Fork-only completion of the current public ARM64 TUN resume selection.
+//test/syscalls:tuntap_test_runsc_systrap_directfs_save_resume
+//test/syscalls:tuntap_test_runsc_systrap_shared_save_resume
