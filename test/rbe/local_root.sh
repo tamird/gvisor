@@ -93,11 +93,12 @@ restore_cgroup_state() {
   return "$failed"
 }
 test_directories=("$test_tmp")
+stdio_owners=()
 if [[ -n ${TEST_PREMATURE_EXIT_FILE:-} ]]; then
   test_directories+=("$(dirname "$TEST_PREMATURE_EXIT_FILE")")
 fi
 cleanup() {
-  local status=$?
+  local status=$? fd
   trap - EXIT
   local outputs=("$out" "$test_tmp")
   # Go tests write XML as root; Bazel must own it to normalize output permissions.
@@ -115,6 +116,9 @@ cleanup() {
   fi
   chown -hR "$output_uid:$output_gid" -- "${outputs[@]}" || cleanup_status=1
   chown -h "$output_uid:$output_gid" -- "${test_directories[@]}" || cleanup_status=1
+  for fd in "${!stdio_owners[@]}"; do
+    chown --dereference -- "${stdio_owners[fd]}" "/proc/$$/fd/$fd" || cleanup_status=1
+  done
   if [[ $scratch_alias_mounted == true ]]; then
     if umount /tmp; then
       printf 'Initial cgroup scratch alias removed.\n'
@@ -211,4 +215,9 @@ if [[ -e $runtime ]]; then
     directory=$(dirname "$directory")
   done
 fi
+# A direct root runsc command changes ownership of inherited standard I/O.
+# Restore those exact inodes, including Bazel's log, to their original owners.
+for fd in 0 1 2; do
+  stdio_owners[fd]=$(stat -Lc '%u:%g' "/proc/$$/fd/$fd")
+done
 "$@"
