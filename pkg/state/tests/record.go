@@ -43,3 +43,23 @@ type statewire struct{ value recordSigned }
 func (statewire1 *statewire) beforeSave() {}
 
 func (stateSnapshotObject *primitiveRecord) beforeSave() {}
+
+// +stateify savable
+type nativeRegionChild struct{ value int }
+
+type nativeRegionChildPointer *nativeRegionChild
+
+// +stateify savable
+type nativeRegionParent struct {
+	child nativeRegionChild `state:"nosave"`
+	self  *nativeRegionParent
+	value int
+}
+
+// +stateify savable
+type nativeRegionGraph struct {
+	// Discover the defined-pointer fallback before the ordinary typed pointer.
+	named  nativeRegionChildPointer
+	child  *nativeRegionChild
+	parent *nativeRegionParent
+}

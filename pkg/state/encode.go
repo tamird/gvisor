@@ -29,11 +29,14 @@ type objectEncodeState struct {
 	// id is the assigned ID for this object.
 	id objectID
 
-	// obj is the object value. Note that this may be replaced if we
+	// owner retains the object through a typed pointer or map value. It and
+	// typ occupy the same three words as the former reflect.Value. These may
+	// be replaced if we
 	// encounter an object that contains this object. When this happens (in
 	// resolve), we will update existing references appropriately, below,
 	// and defer a re-encoding of the object.
-	obj reflect.Value
+	owner any
+	typ   *typeEntry
 
 	// encoded is the encoded value of this object. Note that this may not
 	// be up to date if this object is still in the deferred list.
@@ -49,6 +52,17 @@ type objectEncodeState struct {
 	refs []*wire.Ref
 
 	deferredEntry
+}
+
+// value adapts a dynamic region to the original reflective encoder. Maps
+// passed by value retain their value; addressable maps retain their variable
+// so deferred encoding observes it at the same time as before.
+func (oes *objectEncodeState) value() reflect.Value {
+	v := reflect.ValueOf(oes.owner)
+	if oes.how == encodeMapAsValue {
+		return v
+	}
+	return v.Elem()
 }
 
 // encodeState is state used for encoding.
@@ -137,12 +151,12 @@ type encodeState struct {
 // Similarly, &arr[0] and &arr[0].c have the exact same address range.
 //
 // Precondition: parent and child must occupy the same memory.
-func isSameSizeParent(parent reflect.Value, childType reflect.Type) bool {
+func isSameSizeParent(parent reflect.Type, childType reflect.Type) bool {
 	switch parent.Kind() {
 	case reflect.Struct:
 		for i := 0; i < parent.NumField(); i++ {
-			field := parent.Field(i)
-			if field.Type() == childType {
+			field := parent.Field(i).Type
+			if field == childType {
 				return true
 			}
 			// Recurse through any intermediate types.
@@ -166,7 +180,7 @@ func isSameSizeParent(parent reflect.Value, childType reflect.Type) bool {
 		// For non-zero-sized childTypes, parent.Len() must be 1, but a
 		// combination of the precondition and an implicit comparison
 		// between the array element size and childType ensures this.
-		return parent.Len() > 0 && isSameSizeParent(parent.Index(0), childType)
+		return parent.Len() > 0 && isSameSizeParent(parent.Elem(), childType)
 	default:
 		return false
 	}
@@ -184,10 +198,33 @@ var dummyAddr = reflect.ValueOf(new(struct{})).Pointer()
 // resolve records the address range occupied by an object.
 func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	addr := obj.Pointer()
+	if obj.Kind() == reflect.Map {
+		var owner any
+		how := encodeMapAsValue
+		if obj.CanAddr() {
+			owner = obj.Addr().Interface()
+			how = encodeAddressableMapAsValue
+		} else {
+			owner = obj.Interface()
+		}
+		es.resolveRegion(owner, es.types.native(obj.Type()), addr, how, ref)
+		return
+	}
+	if obj.Kind() != reflect.Ptr {
+		Failf("attempt to record non-map and non-pointer object %#v", obj)
+	}
+	value := obj.Elem()
+	// Normalize named pointer types to the pointer to the actual target type.
+	es.resolveRegion(value.Addr().Interface(), es.types.native(value.Type()), addr, encodeDefault, ref)
+}
+
+// resolveRegion is the single graph owner for typed and dynamic callers.
+// owner keeps the address alive independently of the integer lookup key.
+func (es *encodeState) resolveRegion(owner any, te *typeEntry, addr uintptr, how encodeStrategy, ref *wire.Ref) {
 
 	// Is this a map pointer? Just record the single address. It is not
 	// possible to take any pointers into the map internals.
-	if obj.Kind() == reflect.Map {
+	if how == encodeMapAsValue || how == encodeAddressableMapAsValue {
 		if addr == 0 {
 			// Just leave the nil reference alone. This is fine, we
 			// may need to encode as a reference in this way. We
@@ -199,8 +236,8 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		if seg.Ok() {
 			// Ensure the map types match.
 			existing := seg.Value()
-			if existing.obj.Type() != obj.Type() {
-				Failf("overlapping map objects at 0x%x: [new object] %#v [existing object type] %s", addr, obj, existing.obj)
+			if existing.typ != te {
+				Failf("overlapping map objects at 0x%x: [new object] %#v [existing object type] %s", addr, owner, existing.typ.nativeType)
 			}
 
 			// No sense recording refs, maps may not be replaced by
@@ -212,9 +249,10 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		// Record the map.
 		r := addrRange{addr, addr + 1}
 		oes := &objectEncodeState{
-			id:  es.nextID(),
-			obj: obj,
-			how: encodeMapAsValue,
+			id:    es.nextID(),
+			owner: owner,
+			typ:   te,
+			how:   how,
 		}
 		// Use Insert instead of InsertWithoutMergingUnchecked when race
 		// detection is enabled to get additional sanity-checking from Merge.
@@ -231,16 +269,9 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		return
 	}
 
-	// If not a map, then the object must be a pointer.
-	if obj.Kind() != reflect.Ptr {
-		Failf("attempt to record non-map and non-pointer object %#v", obj)
-	}
-
-	obj = obj.Elem() // Value from here.
-
 	// Is this a zero-sized type?
-	typ := obj.Type()
-	size := typ.Size()
+	typ := te.nativeType
+	size := te.nativeSize
 	if size == 0 {
 		if addr == dummyAddr {
 			// Zero-sized objects point to a dummy byte within the
@@ -255,8 +286,9 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			oes, ok := es.zeroValues[typ]
 			if !ok {
 				oes = &objectEncodeState{
-					id:  es.nextID(),
-					obj: obj,
+					id:    es.nextID(),
+					owner: owner,
+					typ:   te,
 				}
 				es.zeroValues[typ] = oes
 				es.pending[oes.id] = oes
@@ -284,7 +316,7 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 	if seg.Ok() && seg.Start() < end {
 		existing := seg.Value()
 
-		if seg.Range() == r && typ == existing.obj.Type() {
+		if seg.Range() == r && te == existing.typ {
 			// This exact object is already registered. Avoid the traversal and
 			// just return directly. We don't need to encode the type
 			// information or any dots here.
@@ -293,12 +325,12 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			return
 		}
 
-		if seg.Range().IsSupersetOf(r) && (seg.Range() != r || isSameSizeParent(existing.obj, typ)) {
+		if seg.Range().IsSupersetOf(r) && (seg.Range() != r || isSameSizeParent(existing.typ.nativeType, typ)) {
 			// This object is contained within a previously-registered object.
 			// Perform traversal from the container to the new object.
 			ref.Root = wire.Uint(existing.id)
-			ref.Dots = traverse(existing.obj.Type(), typ, seg.Start(), addr)
-			ref.Type = es.findType(existing.obj.Type())
+			ref.Dots = traverse(existing.typ.nativeType, typ, seg.Start(), addr)
+			ref.Type = es.findType(existing.typ.nativeType)
 			existing.refs = append(existing.refs, ref)
 			return
 		}
@@ -307,8 +339,9 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 		// Remove them and update existing references to use the new one.
 		oes := &objectEncodeState{
 			// Reuse the root ID of the first contained element.
-			id:  existing.id,
-			obj: obj,
+			id:    existing.id,
+			owner: owner,
+			typ:   te,
 		}
 		type elementEncodeState struct {
 			addr uintptr
@@ -323,11 +356,11 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			// Each contained object should be completely contained within
 			// this one.
 			if raceEnabled && !r.IsSupersetOf(seg.Range()) {
-				Failf("containing object %#v does not contain existing object %#v", obj, existing.obj)
+				Failf("containing object %#v does not contain existing object %#v", owner, existing.owner)
 			}
 			elems = append(elems, elementEncodeState{
 				addr: seg.Start(),
-				typ:  existing.obj.Type(),
+				typ:  existing.typ.nativeType,
 				refs: existing.refs,
 			})
 			delete(es.pending, existing.id)
@@ -364,8 +397,9 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 
 	// No existing object overlaps this one. Register a new object.
 	oes = &objectEncodeState{
-		id:  es.nextID(),
-		obj: obj,
+		id:    es.nextID(),
+		owner: owner,
+		typ:   te,
 	}
 	if seg.Ok() {
 		gap = seg.PrevGap()
@@ -471,20 +505,26 @@ type objectEncoder struct {
 	// encoded is the encoded struct.
 	encoded *wire.Struct
 
-	// fields is the declared number of saved fields. Ordinary slots are
-	// allocated only when the saver first uses a slot.
-	fields int
+	// typ owns this saver's declared fields and native metadata. Ordinary
+	// slots are allocated only when the saver first uses a slot.
+	typ *typeEntry
 }
 
 // save is called by the public methods on Sink.
 func (oe *objectEncoder) save(slot int, obj reflect.Value) {
-	oe.encoded.AllocIfNeeded(oe.fields)
+	oe.encoded.AllocIfNeeded(len(oe.typ.Fields))
 	fieldValue := oe.encoded.Field(slot)
 	oe.es.encodeObject(obj, encodeDefault, fieldValue)
 }
 
 // encodeStruct encodes a composite object.
 func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
+	es.encodeStructValue(obj, nil, dest)
+}
+
+// encodeStructValue preserves the original pre-copy cache and hook boundary.
+// A typed caller can supply its saver without Addr/Interface discovery.
+func (es *encodeState) encodeStructValue(obj reflect.Value, saver SaverLoader, dest *wire.Object) {
 	if s, ok := es.encodedStructs[obj]; ok {
 		*dest = s
 		return
@@ -532,14 +572,17 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	oe := objectEncoder{
 		es:      es,
 		encoded: s,
-		fields:  len(te.Fields),
+		typ:     te,
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()
-	if sl, ok := obj.Addr().Interface().(SaverLoader); ok {
+	if saver == nil {
+		saver, _ = obj.Addr().Interface().(SaverLoader)
+	}
+	if saver != nil {
 		// Note: may be a registered empty struct which does not
 		// implement the saver/loader interfaces.
-		sl.StateSave(Sink{internal: oe})
+		saver.StateSave(Sink{internal: oe})
 	}
 	// Empty savers and manually omitted fields retain the ordinary encoding.
 	// A typed record or any prior Save already owns the storage.
@@ -680,6 +723,10 @@ const (
 
 	// encodeMapAsValue means that even maps will be fully encoded.
 	encodeMapAsValue
+
+	// encodeAddressableMapAsValue additionally retains the map variable until
+	// deferred encoding. It is normalized before calling encodeObject.
+	encodeAddressableMapAsValue
 )
 
 // encodeObject encodes an object.
@@ -776,12 +823,20 @@ func (es *encodeState) Save(obj reflect.Value) {
 			// deferred list yet again. That's expected, and why it
 			// is removed first.
 			es.deferred.Remove(oes)
-			es.encodeObject(oes.obj, oes.how, &oes.encoded)
+			if oes.typ.capture != nil && oes.how == encodeDefault {
+				oes.typ.capture(es, oes.owner, &oes.encoded)
+			} else {
+				how := oes.how
+				if how == encodeAddressableMapAsValue {
+					how = encodeMapAsValue
+				}
+				es.encodeObject(oes.value(), how, &oes.encoded)
+			}
 		}
 	}); err != nil {
 		// Include the object in the error message, if available.
-		if oes != nil && oes.obj.IsValid() {
-			Failf("encoding error: %w\nfor object %#v", err, oes.obj.Interface())
+		if oes != nil {
+			Failf("encoding error: %w\nfor object %#v", err, oes.value().Interface())
 		}
 		Failf("encoding error: %w", err)
 	}
@@ -872,12 +927,12 @@ func (addrSetFunctions) ClearValue(val **objectEncodeState) {
 }
 
 func (addrSetFunctions) Merge(r1 addrRange, val1 *objectEncodeState, r2 addrRange, val2 *objectEncodeState) (*objectEncodeState, bool) {
-	if val1.obj == val2.obj {
+	if val1.value() == val2.value() {
 		// This, should never happen. It would indicate that the same
 		// object exists in two non-contiguous address ranges. Note
 		// that this assertion can only be triggered if the race
 		// detector is enabled.
-		Failf("unexpected merge in addrSet @ %v and %v: %#v and %#v", r1, r2, val1.obj, val2.obj)
+		Failf("unexpected merge in addrSet @ %v and %v: %#v and %#v", r1, r2, val1.owner, val2.owner)
 	}
 	// Reject the merge.
 	return val1, false

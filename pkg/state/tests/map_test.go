@@ -16,6 +16,7 @@ package tests
 
 import (
 	"bytes"
+	"maps"
 	"math"
 	"reflect"
 	"testing"
@@ -60,6 +61,32 @@ func TestMapAliasing(t *testing.T) {
 	ptrToV := &v
 	aliases := []map[int]int{v, v}
 	runTestCases(t, false, "", []any{ptrToV, aliases})
+}
+
+func TestMapDeferredReassignment(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		byValue bool
+		want    map[int]int
+	}{
+		{name: "addressable", want: map[int]int{2: 22}},
+		{name: "value", byValue: true, want: map[int]int{1: 11}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			original := reassignedMap{value: map[int]int{1: 11}, byValue: test.byValue}
+			var buf bytes.Buffer
+			if _, err := state.Save(t.Context(), &buf, &original); err != nil {
+				t.Fatal(err)
+			}
+			var restored reassignedMap
+			if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+				t.Fatal(err)
+			}
+			if !maps.Equal(restored.value, test.want) {
+				t.Fatalf("restored map = %v, want %v", restored.value, test.want)
+			}
+		})
+	}
 }
 
 func TestMapNaNKeys(t *testing.T) {

@@ -405,11 +405,28 @@ func render(outputFile io.Writer, names []string, files []*ast.File, records *re
 					if records != nil {
 						record = records.types[ts.Name.Name]
 					}
+					emitPointer := func(name, expression string) bool {
+						if records == nil {
+							return false
+						}
+						if _, ok := records.pointerFields[ts.Name.Name][fields[name]]; !ok {
+							return false
+						}
+						if record != nil {
+							fmt.Fprintf(outputFile, " %sCapturePointer(stateSinkObject, %s, &%s.F%d)\n", statePrefix, expression, recordLocal, fields[name])
+						} else {
+							fmt.Fprintf(outputFile, " %sSavePointer(stateSinkObject, %d, %s)\n", statePrefix, fields[name], expression)
+						}
+						return true
+					}
 					emitSaveValue := func(name, typName string) {
 						// Keep an explicit typName ascription as a compile-time
 						// check against code generation bugs while avoiding S1021.
 						fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, recv, camelCased(name))
 						fmt.Fprintf(outputFile, "	_ = (%s)(%sValue)\n", typName, name)
+						if emitPointer(name, name+"Value") {
+							return
+						}
 						if record != nil {
 							record.capture(outputFile, records.wireAlias, recordLocal, fields[name], name+"Value", true)
 						} else {
@@ -417,6 +434,9 @@ func render(outputFile io.Writer, names []string, files []*ast.File, records *re
 						}
 					}
 					emitSave := func(name string) {
+						if emitPointer(name, recv+"."+name) {
+							return
+						}
 						if record != nil {
 							record.capture(outputFile, records.wireAlias, recordLocal, fields[name], recv+"."+name, false)
 						} else {

@@ -57,6 +57,62 @@ func TestTypedSnapshotWireAndAliases(t *testing.T) {
 	}
 }
 
+func TestNativeRegionLateParent(t *testing.T) {
+	for _, name := range []string{"alias", "nil", "standalone"} {
+		t.Run(name, func(t *testing.T) {
+			parent := &nativeRegionParent{child: nativeRegionChild{value: 37}, value: 129}
+			parent.self = parent
+			graph := nativeRegionGraph{child: &parent.child, parent: parent}
+			if name == "standalone" {
+				graph.parent = nil
+				graph.child = &nativeRegionChild{value: 37}
+			}
+			if name != "nil" {
+				graph.named = nativeRegionChildPointer(graph.child)
+			}
+			var encoded bytes.Buffer
+			if _, err := state.Save(t.Context(), &encoded, &graph); err != nil {
+				t.Fatal(err)
+			}
+			// A late parent replaces the child before encoding and omits its
+			// field. Discovery must not emit that unused type definition.
+			if got, want := bytes.Contains(encoded.Bytes(), []byte(graph.child.StateTypeName())), name == "standalone"; got != want {
+				t.Fatalf("child type definition present = %t, want %t", got, want)
+			}
+			t.Logf("native-region-wire[%s]: %x", name, encoded.Bytes())
+			var loaded nativeRegionGraph
+			if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+				t.Fatal(err)
+			}
+			if name == "nil" {
+				if loaded.named != nil {
+					t.Fatalf("defined pointer = %p, want nil", loaded.named)
+				}
+			} else if loaded.named != nativeRegionChildPointer(loaded.child) {
+				t.Fatal("defined and ordinary pointers lost their alias")
+			}
+			if name == "standalone" {
+				if loaded.parent != nil || loaded.child == nil {
+					t.Fatalf("standalone child changed: %#v", loaded)
+				}
+				if got, want := loaded.child.value, 37; got != want {
+					t.Fatalf("child value = %d, want %d", got, want)
+				}
+				return
+			}
+			if loaded.parent == nil || loaded.child != &loaded.parent.child || loaded.parent.self != loaded.parent {
+				t.Fatalf("late-parent or cycle identity lost: %#v", loaded)
+			}
+			if got, want := loaded.child.value, 0; got != want {
+				t.Errorf("child value = %d, want %d", got, want)
+			}
+			if got, want := loaded.parent.value, 129; got != want {
+				t.Errorf("parent value = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
 // TestGeneratedPrimitiveRecord covers checked field types and floating-point
 // values whose representation must survive generated capture and emission.
 func TestGeneratedPrimitiveRecord(t *testing.T) {
