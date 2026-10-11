@@ -129,6 +129,10 @@ def go_source_files(target):
     """Returns the canonical source membership, including source-only embeds."""
     return target[GoInfo].srcs
 
+def go_has_source(target):
+    """Returns whether the target exposes its canonical Go source view."""
+    return GoInfo in target
+
 def go_binary_archive(target):
     """Returns compiled Go archive metadata for a binary target."""
     return target[GoArchive].data
