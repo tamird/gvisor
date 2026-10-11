@@ -327,6 +327,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 		}
 		// Identtype forwarding has no Save calls and keeps its existing path.
 		slots := make(map[int]primitive)
+		hasPrimitive := false
 		ast.Inspect(fn.Body, func(node ast.Node) bool {
 			call, ok := node.(*ast.CallExpr)
 			if !ok || len(call.Args) != 2 {
@@ -348,10 +349,15 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package) (*reco
 			if sel.Sel.Name == "Save" {
 				typ = typ.(*types.Pointer).Elem()
 			}
-			slots[int(index)] = primitiveFor(typ)
+			field := primitiveFor(typ)
+			slots[int(index)] = field
+			hasPrimitive = hasPrimitive || field.storage != "Object"
 			return true
 		})
-		if len(slots) == 0 {
+		// A record with only graph-bearing children retains every reflective
+		// capture and adds storage to the ordinary single-field fast path.
+		// Keep canonical Save calls when no primitive operation is removed.
+		if !hasPrimitive {
 			continue
 		}
 		name := owner.Obj().Name()
