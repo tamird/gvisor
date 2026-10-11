@@ -48,12 +48,6 @@ type objectEncodeState struct {
 	// references may be updated directly and automatically.
 	refs []*wire.Ref
 
-	// captured retains struct snapshots from objects this object replaced.
-	// These nodes no longer belong to values, pending or deferred; their
-	// deferredEntry instead links this list. Keeping the original snapshot
-	// avoids repeating save hooks when a containing object is found later.
-	captured deferredList
-
 	deferredEntry
 }
 
@@ -95,7 +89,7 @@ type encodeState struct {
 	deferred deferredList
 
 	// encoding is the node currently being captured. It remains valid even
-	// if a save hook discovers a containing object and adopts this node.
+	// if a save hook discovers a containing object and replaces this node.
 	encoding *objectEncodeState
 
 	// pendingTypes is the list of types to be serialized. Serialization
@@ -108,9 +102,10 @@ type encodeState struct {
 	pending map[objectID]*objectEncodeState
 
 	// inlineStructs owns snapshots without an exact resolver node, including
-	// inline fields and unaddressable custom/map values. Once an exact node
-	// captures one of these values, ownership moves to that node. Reusing a
-	// snapshot avoids repeated StateSave/SaveValue calls and duplicated objects.
+	// inline fields, replaced children and unaddressable custom/map values.
+	// Once an exact node captures one of these values, ownership moves to that
+	// node. Reusing a snapshot avoids repeated StateSave/SaveValue calls and
+	// duplicated objects.
 	inlineStructs map[reflect.Value]*wire.Record
 
 	// binaryBuf holds temporary BinaryAppender output. Each saved value is
@@ -345,15 +340,15 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 				refs: existing.refs,
 			})
 			existing.refs = nil // The containing node takes ownership below.
+			if record, ok := existing.encoded.(*wire.Record); ok {
+				// This struct is now an inline child of the containing object.
+				// Keep its original snapshot instead of repeating save hooks
+				// and custom values. An active hook may still be filling it.
+				// Arrays, in contrast, must be captured again.
+				es.inlineStructs[existing.obj] = record
+			}
 			delete(es.pending, existing.id)
 			es.deferred.Remove(existing)
-			oes.captured.PushBackList(&existing.captured)
-			if _, ok := existing.encoded.(*wire.Record); ok {
-				// Arrays must be captured again, but a struct's save hooks and
-				// custom values must retain their original snapshot. The node
-				// may still be filling that snapshot on the current call stack.
-				oes.captured.PushBack(existing)
-			}
 			gap = es.values.Remove(seg)
 			seg = gap.NextSegment()
 			if !seg.Ok() || seg.Start() >= end {
@@ -527,11 +522,6 @@ func (es *encodeState) structOwner(obj reflect.Value) *objectEncodeState {
 	owner := seg.Value()
 	if owner.obj == obj {
 		return owner
-	}
-	for child := owner.captured.Front(); child != nil; child = child.Next() {
-		if child.obj == obj {
-			return child
-		}
 	}
 	return nil
 }
