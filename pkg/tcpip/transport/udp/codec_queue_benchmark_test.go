@@ -16,6 +16,8 @@ package udp
 
 import (
 	"bytes"
+	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"testing"
@@ -40,6 +42,11 @@ func releaseCodecQueue(queue *udpPacketList) {
 // The chosen occupancies are scenarios, not measured production frequencies.
 // Packet delivery, endpoint freezing and the rest of the kernel are not timed.
 func BenchmarkUDPReceiveQueueSave(b *testing.B) {
+	benchmarkUDPReceiveQueueSave(b, state.Save)
+}
+
+func benchmarkUDPReceiveQueueSave(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
+	b.Helper()
 	for _, count := range []int{1, 8, 32} {
 		b.Run(fmt.Sprint(count), func(b *testing.B) {
 			var queue udpPacketList
@@ -88,15 +95,19 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 			}
 			// These scenarios fit even the endpoint's initial 32KiB quota,
 			// before newEndpoint applies any stack-specific override.
-			if memory > 32*1024 {
-				b.Fatalf("queue memory estimate %d exceeds initial receive quota", memory)
+			if got, want := memory, 32*1024; got > want {
+				b.Fatalf("queue memory estimate = %d, exceeds initial receive quota %d", got, want)
 			}
 
 			var encoded bytes.Buffer
-			if _, err := state.Save(b.Context(), &encoded, &queue); err != nil {
+			if _, err := save(b.Context(), &encoded, &queue); err != nil {
 				b.Fatal(err)
 			}
 			wireSize := encoded.Len()
+			// Retain a digest outside measurement so the before/after method can
+			// compare exact bytes across the two actual binaries. This queue
+			// contains no unordered maps.
+			b.Logf("queue-wire-sha256[%d]: %x", count, sha256.Sum256(encoded.Bytes()))
 			var restored udpPacketList
 			if _, err := state.Load(b.Context(), &encoded, &restored); err != nil {
 				b.Fatal(err)
@@ -108,8 +119,8 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 				if packet == nil || packet.Prev() != previous {
 					b.Fatalf("invalid restored queue link at packet %d", i)
 				}
-				if want := timestamp.Add(time.Duration(i)); !packet.receivedAt.Equal(want) {
-					b.Fatalf("packet %d timestamp = %v, want %v", i, packet.receivedAt, want)
+				if got, want := packet.receivedAt, timestamp.Add(time.Duration(i)); !got.Equal(want) {
+					b.Fatalf("packet %d timestamp = %v, want %v", i, got, want)
 				}
 				view := packet.pkt.Data().AsRange().ToView()
 				valid := bytes.Equal(view.AsSlice(), bytes.Repeat([]byte{byte(i + 1)}, 30))
@@ -126,7 +137,7 @@ func BenchmarkUDPReceiveQueueSave(b *testing.B) {
 			releaseCodecQueue(&restored)
 			b.ReportAllocs()
 			for b.Loop() {
-				if _, err := state.Save(b.Context(), io.Discard, &queue); err != nil {
+				if _, err := save(b.Context(), io.Discard, &queue); err != nil {
 					b.Fatal(err)
 				}
 			}
