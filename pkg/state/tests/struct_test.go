@@ -16,6 +16,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"math/rand"
 	"testing"
 
@@ -246,6 +247,22 @@ func TestStructSnapshotOwnership(t *testing.T) {
 			},
 		},
 		{
+			name: "array_parent",
+			makeGraph: func(calls *int) *system {
+				array := &[1]countedSave{{value: 17, calls: calls}}
+				return &system{v1: &array[0], v2: &system{v1: array}}
+			},
+			check: func(t *testing.T, graph *system) {
+				array := graph.v2.(*system).v1.(*[1]countedSave)
+				if got, want := graph.v1.(*countedSave), &array[0]; got != want {
+					t.Errorf("array element = %p, want %p", got, want)
+				}
+				if got, want := array[0].value, int64(17); got != want {
+					t.Errorf("element value = %d, want %d", got, want)
+				}
+			},
+		},
+		{
 			name: "inline_before_pointer",
 			makeGraph: func(calls *int) *system {
 				child := &countedSave{value: 17, calls: calls}
@@ -295,6 +312,47 @@ func TestStructSnapshotOwnership(t *testing.T) {
 				t.Fatal(err)
 			}
 			test.check(t, loaded)
+		})
+	}
+}
+
+func TestZeroStructSnapshotOwnership(t *testing.T) {
+	for _, name := range []string{"shared_dummy", "late_parent"} {
+		t.Run(name, func(t *testing.T) {
+			var graph *system
+			if name == "shared_dummy" {
+				child := new(countedZeroSave)
+				graph = &system{v1: child, v2: &system{v1: child}}
+			} else {
+				parent := &countedZeroSaveParent{value: 23}
+				graph = &system{v1: &parent.child, v2: &system{v1: parent}}
+			}
+			var calls int
+			ctx := context.WithValue(t.Context(), zeroSaveCountKey{}, &calls)
+			var encoded bytes.Buffer
+			if _, err := state.Save(ctx, &encoded, &graph); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := calls, 1; got != want {
+				t.Fatalf("save calls = %d, want %d", got, want)
+			}
+			var loaded *system
+			if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+				t.Fatal(err)
+			}
+			var child *countedZeroSave
+			if name == "shared_dummy" {
+				child = loaded.v2.(*system).v1.(*countedZeroSave)
+			} else {
+				parent := loaded.v2.(*system).v1.(*countedZeroSaveParent)
+				child = &parent.child
+				if got, want := parent.value, int64(23); got != want {
+					t.Errorf("parent value = %d, want %d", got, want)
+				}
+			}
+			if got, want := loaded.v1.(*countedZeroSave), child; got != want {
+				t.Errorf("zero-sized alias = %p, want %p", got, want)
+			}
 		})
 	}
 }
