@@ -16,7 +16,10 @@ package tests
 
 // This file deliberately shadows a predeclared type name with an import. The
 // generator must use the checked field type, not the spelling of its AST.
-import int64 "time"
+import (
+	"context"
+	int64 "time"
+)
 
 type recordSigned int16
 type recordUnsigned uint64
@@ -43,3 +46,23 @@ type statewire struct{ value recordSigned }
 func (statewire1 *statewire) beforeSave() {}
 
 func (stateSnapshotObject *primitiveRecord) beforeSave() {}
+
+// The receiver is legal in the canonical saver but must not shadow the state
+// package when the checked renderer introduces a qualified capture call.
+// +stateify savable
+type statePackageReceiver struct {
+	value int `state:".(stateObject)"`
+}
+
+// The replacement receiver must not shadow this custom value's type either.
+type stateObject int
+
+func (state *statePackageReceiver) beforeSave() {}
+
+func (state *statePackageReceiver) saveValue() stateObject {
+	return stateObject(state.value)
+}
+
+func (state *statePackageReceiver) loadValue(_ context.Context, value stateObject) {
+	state.value = int(value)
+}

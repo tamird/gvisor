@@ -397,6 +397,13 @@ func render(outputFile io.Writer, names []string, files []*ast.File, records *re
 					emitLoadWait := func(name string) {
 						fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
 					}
+					// Checked capture can introduce package-qualified calls inside
+					// StateSave. Keep a handwritten receiver from shadowing that
+					// import, without renaming the hook or other generated methods.
+					saveRecv := recv
+					if records != nil && statePrefix == recv+"." {
+						saveRecv = records.saveReceiver
+					}
 					recordLocal := "stateSnapshotObject"
 					if recv == recordLocal {
 						recordLocal += "1"
@@ -408,7 +415,7 @@ func render(outputFile io.Writer, names []string, files []*ast.File, records *re
 					emitSaveValue := func(name, typName string) {
 						// Keep an explicit typName ascription as a compile-time
 						// check against code generation bugs while avoiding S1021.
-						fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, recv, camelCased(name))
+						fmt.Fprintf(outputFile, "	%sValue := %s.save%s()\n", name, saveRecv, camelCased(name))
 						fmt.Fprintf(outputFile, "	_ = (%s)(%sValue)\n", typName, name)
 						if record != nil {
 							record.capture(outputFile, records.wireAlias, recordLocal, fields[name], name+"Value", true)
@@ -418,13 +425,13 @@ func render(outputFile io.Writer, names []string, files []*ast.File, records *re
 					}
 					emitSave := func(name string) {
 						if record != nil {
-							record.capture(outputFile, records.wireAlias, recordLocal, fields[name], recv+"."+name, false)
+							record.capture(outputFile, records.wireAlias, recordLocal, fields[name], saveRecv+"."+name, false)
 						} else {
-							fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], recv, name)
+							fmt.Fprintf(outputFile, "	stateSinkObject.Save(%d, &%s.%s)\n", fields[name], saveRecv, name)
 						}
 					}
 					emitZeroCheck := func(name string) {
-						fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, recv, name, statePrefix, name, recv, name)
+						fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, saveRecv, name, statePrefix, name, saveRecv, name)
 					}
 
 					// Generate the type name method.
@@ -474,8 +481,8 @@ func render(outputFile io.Writer, names []string, files []*ast.File, records *re
 							record.declare(outputFile, records.wireAlias)
 						}
 						fmt.Fprintf(outputFile, "// +checklocksignore\n")
-						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", recv, ts.Name.Name, statePrefix)
-						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", recv)
+						fmt.Fprintf(outputFile, "func (%s *%s) StateSave(stateSinkObject %sSink) {\n", saveRecv, ts.Name.Name, statePrefix)
+						fmt.Fprintf(outputFile, "	%s.beforeSave()\n", saveRecv)
 						scanFields(x, scanFunctions{zerovalue: emitZeroCheck})
 						if record != nil {
 							fmt.Fprintf(outputFile, " %s := %sBeginSnapshot(stateSinkObject, %s)\n", recordLocal, statePrefix, record.emitter)

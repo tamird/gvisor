@@ -61,6 +61,7 @@ func TestTypedSnapshotWireAndAliases(t *testing.T) {
 // values whose representation must survive generated capture and emission.
 func TestGeneratedPrimitiveRecord(t *testing.T) {
 	runTestCases(t, false, "import_alias", []any{&statewire{value: -19}})
+	runTestCases(t, false, "state_package", []any{&statePackageReceiver{value: -23}})
 	for _, test := range []struct {
 		name  string
 		value primitiveRecord
