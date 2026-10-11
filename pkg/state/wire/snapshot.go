@@ -14,18 +14,23 @@
 
 package wire
 
-// typedFieldSnapshot owns a fixed record; its emitter writes the ordinary field
-// grammar. It is used only for immutable state-owned snapshots. Loaded structs
-// retain their ordinary mutable Object slots.
-type typedFieldSnapshot interface {
-	Object
-	fieldCount() int
+// fieldEmitter writes the saved values in a typed record.
+type fieldEmitter interface {
+	emitFields(*Writer)
+}
+
+// snapshotFields gives all typed records one concrete storage type. Ordinary
+// Struct field access can distinguish it without an interface assertion.
+// It is embedded in the same allocation as the captured values.
+type snapshotFields struct {
+	count int
+	value fieldEmitter
 }
 
 type typedFields[T any] struct {
 	value T
-	count int
 	emit  func(*Writer, *T)
+	snapshotFields
 }
 
 // AllocSnapshot installs a typed record and returns its stable capture storage.
@@ -40,14 +45,18 @@ func AllocSnapshot[T any](s *Struct, count int, emit func(*Writer, *T)) *T {
 	if s.fields != nil {
 		panic("typed snapshot cannot replace existing fields")
 	}
-	fields := &typedFields[T]{count: count, emit: emit}
-	s.fields = fields
+	fields := &typedFields[T]{emit: emit}
+	fields.snapshotFields.count = count
+	fields.snapshotFields.value = fields
+	s.fields = &fields.snapshotFields
 	return &fields.value
 }
 
-func (f *typedFields[T]) fieldCount() int { return f.count }
+func (f *typedFields[T]) emitFields(w *Writer) {
+	f.emit(w, &f.value)
+}
 
-func (f *typedFields[T]) save(w *Writer) {
+func (f *snapshotFields) save(w *Writer) {
 	switch f.count {
 	case 0:
 		typeNoObjects.save(w)
@@ -56,10 +65,10 @@ func (f *typedFields[T]) save(w *Writer) {
 		typeMultipleObjects.save(w)
 		Uint(f.count).save(w)
 	}
-	f.emit(w, &f.value)
+	f.value.emitFields(w)
 }
 
-func (*typedFields[T]) load(r *Reader) Object { return Load(r) }
+func (*snapshotFields) load(r *Reader) Object { return Load(r) }
 
 // SaveIntField writes a saved signed field without constructing an Object.
 func SaveIntField(w *Writer, value Int) {
