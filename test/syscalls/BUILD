@@ -1207,6 +1207,8 @@ syscall_test(
     # Takes too long to run with S/R.
     save = False,
     shard_count = more_shards,
+    # Spread the datagram workload across additional emulator actions.
+    tcg_shard_count = 8,
     test = "//test/syscalls/linux:socket_unix_dgram_local_test",
 )
 
