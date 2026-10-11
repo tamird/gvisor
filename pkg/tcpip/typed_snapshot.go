@@ -31,10 +31,10 @@ func emitAddressSnapshot(w *wire.Writer, snapshot *addressSnapshot) {
 	wire.SaveIntField(w, int64(snapshot.length))
 }
 
-func (a *Address) StateSaveSnapshot(s state.SnapshotSink) {
+func (a *Address) StateSave(s state.Sink) {
 	a.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitAddressSnapshot)
-	s.Save(&a.addr, &snapshot.addr)
+	s.Capture(&a.addr, &snapshot.addr)
 	snapshot.length = a.length
 }
 
@@ -52,11 +52,11 @@ func emitFullAddressSnapshot(w *wire.Writer, snapshot *fullAddressSnapshot) {
 	wire.SaveStringField(w, string(snapshot.LinkAddr))
 }
 
-func (value *FullAddress) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *FullAddress) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitFullAddressSnapshot)
 	snapshot.NIC = value.NIC
-	s.Save(&value.Addr, &snapshot.Addr)
+	s.Capture(&value.Addr, &snapshot.Addr)
 	snapshot.Port = value.Port
 	snapshot.LinkAddr = value.LinkAddr
 }
@@ -73,10 +73,10 @@ func emitIPPacketInfoSnapshot(w *wire.Writer, snapshot *ipPacketInfoSnapshot) {
 	wire.Save(w, snapshot.DestinationAddr)
 }
 
-func (value *IPPacketInfo) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *IPPacketInfo) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitIPPacketInfoSnapshot)
 	snapshot.NIC = value.NIC
-	s.Save(&value.LocalAddr, &snapshot.LocalAddr)
-	s.Save(&value.DestinationAddr, &snapshot.DestinationAddr)
+	s.Capture(&value.LocalAddr, &snapshot.LocalAddr)
+	s.Capture(&value.DestinationAddr, &snapshot.DestinationAddr)
 }

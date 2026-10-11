@@ -32,9 +32,13 @@ type typedFields[T any] struct {
 // Once capture completes, neither the record nor its child handles may be
 // changed except by the owning graph resolver before emission. The emitter must
 // write exactly count ordinary Objects, without a containing struct header.
+// The struct must not already own ordinary fields or another snapshot.
 func AllocSnapshot[T any](s *Struct, count int, emit func(*Writer, *T)) *T {
 	if count < 0 || emit == nil {
 		panic("invalid typed snapshot")
+	}
+	if s.fields != nil {
+		panic("typed snapshot cannot replace existing fields")
 	}
 	fields := &typedFields[T]{count: count, emit: emit}
 	s.fields = fields

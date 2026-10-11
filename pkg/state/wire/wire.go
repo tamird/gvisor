@@ -796,6 +796,15 @@ func (s *Struct) Alloc(slots int) {
 	}
 }
 
+// AllocIfNeeded allocates ordinary field slots if no representation is installed.
+// It supports lazy allocation by a state saver that may instead install a typed
+// snapshot. Existing field values and typed snapshots are left unchanged.
+func (s *Struct) AllocIfNeeded(slots int) {
+	if s.fields == nil {
+		s.Alloc(slots)
+	}
+}
+
 // Fields returns the number of fields.
 func (s *Struct) Fields() int {
 	switch x := s.fields.(type) {

@@ -37,6 +37,7 @@ go_test(
         "load_test.go",
         "map_test.go",
         "register_test.go",
+        "snapshot_contract_test.go",
         "snapshot_test.go",
         "string_test.go",
         "struct_test.go",

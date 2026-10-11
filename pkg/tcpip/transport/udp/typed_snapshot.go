@@ -46,17 +46,17 @@ func emitUDPPacketSnapshot(w *wire.Writer, snapshot *udpPacketSnapshot) {
 	wire.SaveUintField(w, uint64(snapshot.ttlOrHopLimit))
 }
 
-func (value *udpPacket) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *udpPacket) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitUDPPacketSnapshot)
 	// Custom values are captured before ordinary fields, as in stateify.
 	snapshot.receivedAt = value.saveReceivedAt()
-	s.Save(&value.udpPacketEntry, &snapshot.udpPacketEntry)
+	s.Capture(&value.udpPacketEntry, &snapshot.udpPacketEntry)
 	snapshot.netProto = value.netProto
-	s.Save(&value.senderAddress, &snapshot.senderAddress)
-	s.Save(&value.destinationAddress, &snapshot.destinationAddress)
-	s.Save(&value.packetInfo, &snapshot.packetInfo)
-	s.Save(&value.pkt, &snapshot.pkt)
+	s.Capture(&value.senderAddress, &snapshot.senderAddress)
+	s.Capture(&value.destinationAddress, &snapshot.destinationAddress)
+	s.Capture(&value.packetInfo, &snapshot.packetInfo)
+	s.Capture(&value.pkt, &snapshot.pkt)
 	snapshot.tosOrTClass = value.tosOrTClass
 	snapshot.ttlOrHopLimit = value.ttlOrHopLimit
 }

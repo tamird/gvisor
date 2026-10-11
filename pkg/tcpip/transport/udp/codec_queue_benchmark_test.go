@@ -17,6 +17,7 @@ package udp
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"testing"
@@ -41,7 +42,7 @@ func releaseCodecQueue(queue *udpPacketList) {
 // The chosen occupancies are scenarios, not measured production frequencies.
 // Packet delivery, endpoint freezing and the rest of the kernel are not timed.
 func BenchmarkUDPReceiveQueueSave(b *testing.B) {
-	benchmarkUDPReceiveQueueSave(b, state.SaveSnapshots)
+	benchmarkUDPReceiveQueueSave(b, state.Save)
 }
 
 func benchmarkUDPReceiveQueueSave(b *testing.B, save func(context.Context, io.Writer, any) (state.Stats, error)) {
@@ -103,15 +104,10 @@ func benchmarkUDPReceiveQueueSave(b *testing.B, save func(context.Context, io.Wr
 				b.Fatal(err)
 			}
 			wireSize := encoded.Len()
-			// Keep the unchanged byte format as an actual graph check, outside
-			// the measured loop. The queue contains no unordered maps.
-			var ordinary bytes.Buffer
-			if _, err := state.Save(b.Context(), &ordinary, &queue); err != nil {
-				b.Fatal(err)
-			}
-			if got, want := encoded.Bytes(), ordinary.Bytes(); !bytes.Equal(got, want) {
-				b.Fatalf("snapshot encoding = %x, want ordinary encoding %x", got, want)
-			}
+			// Retain a digest outside measurement so the before/after method can
+			// compare exact bytes across the two actual binaries. This queue
+			// contains no unordered maps.
+			b.Logf("queue-wire-sha256[%d]: %x", count, sha256.Sum256(encoded.Bytes()))
 			var restored udpPacketList
 			if _, err := state.Load(b.Context(), &encoded, &restored); err != nil {
 				b.Fatal(err)

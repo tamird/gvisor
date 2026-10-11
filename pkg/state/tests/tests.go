@@ -65,33 +65,8 @@ func checkEqual(root, loadedValue any) bool {
 	return false
 }
 
-// saveFunc is shared by the ordinary and typed-snapshot fixture runs.
-type saveFunc func(context.Context, io.Writer, any) (state.Stats, error)
-
-// runSaveModes applies the same fixture to ordinary and typed snapshot saves.
-func runSaveModes(t *testing.T, run func(*testing.T, saveFunc)) {
-	t.Helper()
-	for _, mode := range []struct {
-		name string
-		save saveFunc
-	}{
-		{"legacy", state.Save},
-		{"snapshots", state.SaveSnapshots},
-	} {
-		t.Run(mode.name, func(t *testing.T) { run(t, mode.save) })
-	}
-}
-
-// runTestCases runs the same graph and malformed-stream checks in both modes.
+// runTestCases runs a test for each object in objects.
 func runTestCases(t *testing.T, shouldFail bool, prefix string, objects []any) {
-	t.Helper()
-	runSaveModes(t, func(t *testing.T, save saveFunc) {
-		runTestCasesWithSave(t, shouldFail, prefix, objects, save)
-	})
-}
-
-// runTestCasesWithSave checks each object using the selected save operation.
-func runTestCasesWithSave(t *testing.T, shouldFail bool, prefix string, objects []any, save saveFunc) {
 	t.Helper()
 	for i, root := range objects {
 		t.Run(fmt.Sprintf("%s%d", prefix, i), func(t *testing.T) {
@@ -101,7 +76,7 @@ func runTestCasesWithSave(t *testing.T, shouldFail bool, prefix string, objects 
 			saveBuffer := &bytes.Buffer{}
 			saveObjectPtr := reflect.New(reflect.TypeOf(root))
 			saveObjectPtr.Elem().Set(reflect.ValueOf(root))
-			saveStats, err := save(context.Background(), saveBuffer, saveObjectPtr.Interface())
+			saveStats, err := state.Save(context.Background(), saveBuffer, saveObjectPtr.Interface())
 			if err != nil {
 				if shouldFail {
 					return

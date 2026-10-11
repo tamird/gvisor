@@ -32,7 +32,7 @@ func emitHeaderInfoSnapshot(w *wire.Writer, snapshot *headerInfoSnapshot) {
 	wire.SaveIntField(w, int64(snapshot.length))
 }
 
-func (value *headerInfo) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *headerInfo) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitHeaderInfoSnapshot)
 	snapshot.offset = value.offset
@@ -51,7 +51,7 @@ func emitNetworkPacketInfoSnapshot(w *wire.Writer, snapshot *networkPacketInfoSn
 	wire.SaveBoolField(w, snapshot.IsForwardedPacket)
 }
 
-func (value *NetworkPacketInfo) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *NetworkPacketInfo) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitNetworkPacketInfoSnapshot)
 	snapshot.LocalAddressBroadcast = value.LocalAddressBroadcast
@@ -77,7 +77,7 @@ func emitGsoSnapshot(w *wire.Writer, snapshot *gsoSnapshot) {
 	wire.SaveUintField(w, uint64(snapshot.MaxSize))
 }
 
-func (value *GSO) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *GSO) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitGsoSnapshot)
 	snapshot.Type = value.Type
@@ -106,13 +106,13 @@ func emitRouteInfoSnapshot(w *wire.Writer, snapshot *routeInfoSnapshot) {
 	wire.SaveUintField(w, uint64(snapshot.Loop))
 }
 
-func (value *routeInfo) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *routeInfo) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitRouteInfoSnapshot)
-	s.Save(&value.RemoteAddress, &snapshot.RemoteAddress)
-	s.Save(&value.LocalAddress, &snapshot.LocalAddress)
+	s.Capture(&value.RemoteAddress, &snapshot.RemoteAddress)
+	s.Capture(&value.LocalAddress, &snapshot.LocalAddress)
 	snapshot.LocalLinkAddress = value.LocalLinkAddress
-	s.Save(&value.NextHop, &snapshot.NextHop)
+	s.Capture(&value.NextHop, &snapshot.NextHop)
 	snapshot.NetProto = value.NetProto
 	snapshot.Loop = value.Loop
 }
@@ -127,10 +127,10 @@ func emitExportedRouteInfoSnapshot(w *wire.Writer, snapshot *exportedRouteInfoSn
 	wire.SaveStringField(w, string(snapshot.RemoteLinkAddress))
 }
 
-func (value *RouteInfo) StateSaveSnapshot(s state.SnapshotSink) {
+func (value *RouteInfo) StateSave(s state.Sink) {
 	value.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitExportedRouteInfoSnapshot)
-	s.Save(&value.routeInfo, &snapshot.routeInfo)
+	s.Capture(&value.routeInfo, &snapshot.routeInfo)
 	snapshot.RemoteLinkAddress = value.RemoteLinkAddress
 }
 
@@ -182,28 +182,28 @@ func emitPacketBufferSnapshot(w *wire.Writer, snapshot *packetBufferSnapshot) {
 	wire.Save(w, snapshot.tuple)
 }
 
-func (pk *PacketBuffer) StateSaveSnapshot(s state.SnapshotSink) {
+func (pk *PacketBuffer) StateSave(s state.Sink) {
 	pk.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitPacketBufferSnapshot)
-	s.Save(&pk.packetBufferRefs, &snapshot.packetBufferRefs)
-	s.Save(&pk.buf, &snapshot.buf)
+	s.Capture(&pk.packetBufferRefs, &snapshot.packetBufferRefs)
+	s.Capture(&pk.buf, &snapshot.buf)
 	snapshot.reserved = pk.reserved
 	snapshot.pushed = pk.pushed
 	snapshot.consumed = pk.consumed
-	s.Save(&pk.headers, &snapshot.headers)
+	s.Capture(&pk.headers, &snapshot.headers)
 	snapshot.NetworkProtocolNumber = pk.NetworkProtocolNumber
 	snapshot.TransportProtocolNumber = pk.TransportProtocolNumber
 	snapshot.Hash = pk.Hash
-	s.Save(&pk.Owner, &snapshot.Owner)
-	s.Save(&pk.EgressRoute, &snapshot.EgressRoute)
-	s.Save(&pk.GSOOptions, &snapshot.GSOOptions)
+	s.Capture(&pk.Owner, &snapshot.Owner)
+	s.Capture(&pk.EgressRoute, &snapshot.EgressRoute)
+	s.Capture(&pk.GSOOptions, &snapshot.GSOOptions)
 	snapshot.snatDone = pk.snatDone
 	snapshot.dnatDone = pk.dnatDone
 	snapshot.PktType = pk.PktType
 	snapshot.NICID = pk.NICID
 	snapshot.InputNICID = pk.InputNICID
 	snapshot.RXChecksumValidated = pk.RXChecksumValidated
-	s.Save(&pk.NetworkPacketInfo, &snapshot.NetworkPacketInfo)
+	s.Capture(&pk.NetworkPacketInfo, &snapshot.NetworkPacketInfo)
 	snapshot.Mark = pk.Mark
-	s.Save(&pk.tuple, &snapshot.tuple)
+	s.Capture(&pk.tuple, &snapshot.tuple)
 }

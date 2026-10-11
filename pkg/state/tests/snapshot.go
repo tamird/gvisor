@@ -27,13 +27,13 @@ func emitInteger(w *wire.Writer, s *integerSnapshot) {
 	wire.SaveIntField(w, s.value)
 }
 
-func (v *inner) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *inner) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitInteger)
 	snapshot.value = v.v
 }
 
-func (v *savedFieldValue) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *savedFieldValue) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitInteger)
 	snapshot.value = v.v
@@ -43,19 +43,19 @@ type childSnapshot struct{ child wire.Object }
 
 func emitChild(w *wire.Writer, s *childSnapshot) { wire.Save(w, s.child) }
 
-func (v *innerFieldValue) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *innerFieldValue) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitChild)
 	// Preserve the existing custom SaveValue call, including its once-only
 	// allocation and the graph identity of the returned pointer.
 	value := v.saveV()
-	s.SaveValue(value, &snapshot.child)
+	s.CaptureValue(value, &snapshot.child)
 }
 
-func (v *outerSame) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *outerSame) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitChild)
-	s.Save(&v.inner, &snapshot.child)
+	s.Capture(&v.inner, &snapshot.child)
 }
 
 type innerIntegerSnapshot struct {
@@ -73,18 +73,18 @@ func emitIntegerInner(w *wire.Writer, s *innerIntegerSnapshot) {
 	wire.Save(w, s.child)
 }
 
-func (v *outerFieldFirst) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *outerFieldFirst) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitInnerInteger)
-	s.Save(&v.inner, &snapshot.child)
+	s.Capture(&v.inner, &snapshot.child)
 	snapshot.value = v.v
 }
 
-func (v *outerFieldSecond) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *outerFieldSecond) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitIntegerInner)
 	snapshot.value = v.v
-	s.Save(&v.inner, &snapshot.child)
+	s.Capture(&v.inner, &snapshot.child)
 }
 
 type twoChildrenSnapshot struct{ first, second wire.Object }
@@ -94,11 +94,11 @@ func emitTwoChildren(w *wire.Writer, s *twoChildrenSnapshot) {
 	wire.Save(w, s.second)
 }
 
-func (v *system) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *system) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitTwoChildren)
-	s.Save(&v.v1, &snapshot.first)
-	s.Save(&v.v2, &snapshot.second)
+	s.Capture(&v.v1, &snapshot.first)
+	s.Capture(&v.v2, &snapshot.second)
 }
 
 type threeChildrenSnapshot struct{ first, second, third wire.Object }
@@ -109,12 +109,12 @@ func emitThreeChildren(w *wire.Writer, s *threeChildrenSnapshot) {
 	wire.Save(w, s.third)
 }
 
-func (v *system3) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *system3) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitThreeChildren)
-	s.Save(&v.v1, &snapshot.first)
-	s.Save(&v.v2, &snapshot.second)
-	s.Save(&v.v3, &snapshot.third)
+	s.Capture(&v.v1, &snapshot.first)
+	s.Capture(&v.v2, &snapshot.second)
+	s.Capture(&v.v3, &snapshot.third)
 }
 
 type nameSnapshot struct {
@@ -131,7 +131,7 @@ func emitName(w *wire.Writer, s *nameSnapshot) {
 	wire.SaveIntField(w, int64(s.z))
 }
 
-func (v *multiName) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *multiName) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitName)
 	snapshot.b = v.b
@@ -141,29 +141,39 @@ func (v *multiName) StateSaveSnapshot(s state.SnapshotSink) {
 	snapshot.z = v.z
 }
 
-func (v *arraySnapshotSource) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *arraySnapshotSource) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitChild)
-	s.Save(&v.values, &snapshot.child)
+	s.Capture(&v.values, &snapshot.child)
 }
 
-func (v *arraySnapshotMutator) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *arraySnapshotMutator) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitChild)
-	s.Save(&v.target, &snapshot.child)
+	s.Capture(&v.target, &snapshot.child)
 }
 
-func (v *arrayTailDiscovery) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *arrayTailDiscovery) StateSave(s state.Sink) {
 	v.beforeSave()
 	snapshot := state.BeginSnapshot(s, emitChild)
-	s.Save(&v.values, &snapshot.child)
+	s.Capture(&v.values, &snapshot.child)
 }
 
 type emptySnapshot struct{}
 
 func emitEmpty(*wire.Writer, *emptySnapshot) {}
 
-func (v *savableEmptyStruct) StateSaveSnapshot(s state.SnapshotSink) {
+func (v *savableEmptyStruct) StateSave(s state.Sink) {
 	v.beforeSave()
 	state.BeginSnapshot(s, emitEmpty)
+}
+
+// +stateify savable
+type conflictingSnapshot struct {
+	value int64
+	save  func(state.Sink, *int64) `state:"nosave"`
+}
+
+func (v *conflictingSnapshot) StateSave(s state.Sink) {
+	v.save(s, &v.value)
 }

@@ -20,42 +20,22 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// RegisterSnapshot registers a type with an explicit snapshot encoder. Like
-// Register, it must be called once at init. save must describe T's own saved
-// fields, preserve StateSave's hook order, and own all captured values and child
-// handles. In particular, a promoted method does not describe its parent type.
-func RegisterSnapshot[T Type](t T, save func(T, SnapshotSink)) {
-	if save == nil {
-		Failf("snapshot encoder for %T is nil", t)
-	}
-	typ := reflect.TypeOf(t)
-	if typ.Kind() != reflect.Pointer || typ.Elem().Kind() != reflect.Struct {
-		Failf("snapshot type %T must be a pointer to a struct", t)
-	}
-	register(t, func(value any, sink SnapshotSink) { save(value.(T), sink) })
-}
-
-// SnapshotSink captures children through the ordinary graph resolver. Primitive
-// values are copied directly into the typed record returned by BeginSnapshot.
-type SnapshotSink struct {
-	internal objectEncoder
-	fields   int
-}
-
 // BeginSnapshot allocates one record for exactly the type's saved fields.
-// Call it once, before capturing children. emit must write those fields in wire
-// order without consulting the original object or rerunning save hooks.
-func BeginSnapshot[T any](s SnapshotSink, emit func(*wire.Writer, *T)) *T {
-	return wire.AllocSnapshot(s.internal.encoded, s.fields, emit)
+// Call it once from StateSave, before capturing fields. emit must write those
+// fields in wire order without consulting the original object or rerunning
+// save hooks. Ordinary Sink.Save and Sink.SaveValue must not be mixed with a
+// typed record; Capture and CaptureValue populate its stable child slots.
+func BeginSnapshot[T any](s Sink, emit func(*wire.Writer, *T)) *T {
+	return wire.AllocSnapshot(s.internal.encoded, s.internal.fields, emit)
 }
 
-// Save captures an addressable child into a stable slot owned by the snapshot.
+// Capture saves an addressable child into a stable slot owned by the record.
 // Graph discovery and late reference reparenting use the existing resolver.
-func (s SnapshotSink) Save(objPtr any, dest *wire.Object) {
+func (s Sink) Capture(objPtr any, dest *wire.Object) {
 	s.internal.es.encodeObject(reflect.ValueOf(objPtr).Elem(), encodeDefault, dest)
 }
 
-// SaveValue captures a custom value at the same boundary as Sink.SaveValue.
-func (s SnapshotSink) SaveValue(value any, dest *wire.Object) {
+// CaptureValue saves a custom value at the same boundary as Sink.SaveValue.
+func (s Sink) CaptureValue(value any, dest *wire.Object) {
 	s.internal.es.encodeObject(reflect.ValueOf(value), encodeDefault, dest)
 }

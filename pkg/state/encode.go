@@ -470,10 +470,15 @@ type objectEncoder struct {
 
 	// encoded is the encoded struct.
 	encoded *wire.Struct
+
+	// fields is the declared number of saved fields. Ordinary slots are
+	// allocated only when the saver first uses a slot.
+	fields int
 }
 
 // save is called by the public methods on Sink.
 func (oe *objectEncoder) save(slot int, obj reflect.Value) {
+	oe.encoded.AllocIfNeeded(oe.fields)
 	fieldValue := oe.encoded.Field(slot)
 	oe.es.encodeObject(obj, encodeDefault, fieldValue)
 }
@@ -527,14 +532,8 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	oe := objectEncoder{
 		es:      es,
 		encoded: s,
+		fields:  len(te.Fields),
 	}
-	if te.snapshot != nil {
-		es.stats.start(te.ID)
-		defer es.stats.done()
-		te.snapshot(obj.Addr().Interface(), SnapshotSink{internal: oe, fields: len(te.Fields)})
-		return
-	}
-	s.Alloc(len(te.Fields))
 	es.stats.start(te.ID)
 	defer es.stats.done()
 	if sl, ok := obj.Addr().Interface().(SaverLoader); ok {
@@ -542,6 +541,9 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		// implement the saver/loader interfaces.
 		sl.StateSave(Sink{internal: oe})
 	}
+	// Empty savers and manually omitted fields retain the ordinary encoding.
+	// A typed record or any prior Save already owns the storage.
+	s.AllocIfNeeded(len(te.Fields))
 }
 
 // encodeArray encodes an array.
