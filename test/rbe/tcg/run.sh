@@ -24,7 +24,9 @@ tar_tool="$(realpath "$6")"
 payload_label="$7"
 machine="$8"
 test_setup="$(realpath "$9")"
-shift 9
+emulator_override="${10}"
+if [[ -n "$emulator_override" ]]; then emulator_override="$(realpath "$emulator_override")"; fi
+shift 10
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -135,9 +137,12 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
+# ARM TCG supplies its source-built emulator. Guest preparation, recovery,
+# shared libraries and firmware use the existing declared host archive.
+emulator_path="${emulator_override:-$host/usr/bin/$emulator}"
 # Networking and privileged host mounts are not needed by the guest transport.
 QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
-  "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
+  "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
   -smp 2 -m 3072 -nic none -L "$host/usr/share/qemu" \
