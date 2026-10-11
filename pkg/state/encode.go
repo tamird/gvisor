@@ -541,11 +541,24 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 // encodeArray encodes an array.
 func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
 	l := obj.Len()
+	var first reflect.Value
+	if l != 0 {
+		// Reuse this element below so dispatch does not add a reflective
+		// type lookup for ordinary arrays.
+		first = obj.Index(0)
+		if first.Kind() == reflect.Ptr && obj.CanAddr() {
+			es.encodeReferenceArray(obj, dest)
+			return
+		}
+	}
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),
 	}
 	*dest = a
-	for i := 0; i < l; i++ {
+	if l != 0 {
+		es.encodeObject(first, encodeAsValue, &a.Contents[0])
+	}
+	for i := 1; i < l; i++ {
 		// We need to encode the full value because arrays are encoded
 		// using the type information from only the first element.
 		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i])

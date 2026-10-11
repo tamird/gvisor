@@ -915,8 +915,19 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
-		panic(fmt.Errorf("unknown type: %#v", obj))
+		saveRefArray(w, obj)
 	}
+}
+
+// saveRefArray keeps the reference-array dispatch and unknown-object error
+// outside Save's concrete dispatch.
+func saveRefArray(w *Writer, obj Object) {
+	if x, ok := obj.(*RefArray); ok {
+		typeArray.save(w)
+		x.save(w)
+		return
+	}
+	panic(fmt.Errorf("unknown type: %#v", obj))
 }
 
 // Load loads a new object.
