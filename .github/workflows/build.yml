@@ -79,7 +79,7 @@ jobs:
   remote-qualification:
     if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
+    timeout-minutes: ${{ github.ref == 'refs/heads/qualification/native-test-layout-arm64' && 75 || inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 155 || inputs.execution == 'local' && inputs.lanes == 'syscalls-rc' && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
     permissions:
       contents: read
     env:
@@ -147,11 +147,27 @@ jobs:
 
     - name: Coordinate qualification on Actions
       if: inputs.execution == 'local' || inputs.lanes == 'syscalls-64k'
-      timeout-minutes: ${{ inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 145 || inputs.lanes == 'syscalls-rc' && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
+      timeout-minutes: ${{ github.ref == 'refs/heads/qualification/native-test-layout-arm64' && 70 || inputs.execution == 'remote' && inputs.lanes == 'syscalls-64k' && 145 || inputs.lanes == 'syscalls-rc' && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: bash test/rbe/actions.sh
+      run: |
+        QUALIFICATION_WORK_DEADLINE=$(python3 -c 'import time; print(time.monotonic() + 65 * 60)')
+        export QUALIFICATION_WORK_DEADLINE
+        method_dir="$RUNNER_TEMP/qualification/native-layout-method"
+        mkdir -p "$method_dir"
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        test -z "$(git status --porcelain --untracked-files=no)"
+        git cat-file -p HEAD > "$method_dir/commit.txt"
+        cp test/rbe/actions.sh "$method_dir/actions.sh"
+        cp .github/workflows/build.yml "$method_dir/build.yml"
+        export QUALIFICATION_COMMIT=1518c58a91e9d079155ae20808414889e2c919cf
+        if ! git cat-file -e "$QUALIFICATION_COMMIT^{commit}"; then
+          timeout --signal=TERM --kill-after=5s 60s git fetch --depth=1 origin "$QUALIFICATION_COMMIT"
+        fi
+        git checkout --detach "$QUALIFICATION_COMMIT"
+        test -z "$(git status --porcelain --untracked-files=no)"
+        bash "$method_dir/actions.sh"
 
     - name: Retain qualification placement and host facts
       if: always() && (inputs.execution == 'local' || inputs.lanes == 'syscalls-64k')
