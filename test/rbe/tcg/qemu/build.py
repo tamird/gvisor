@@ -114,7 +114,10 @@ def main() -> None:
         env = {
             **os.environ,
             "PATH": str(tools) + ":/usr/bin:/bin",
-            "PYTHONPATH": str(sysroot / "usr/lib/python3/dist-packages"),
+            # Bazel's Python launcher enables safe-path mode. Declare QEMU's
+            # sibling generator packages explicitly instead of relying on the
+            # interpreter to prepend each script directory implicitly.
+            "PYTHONPATH": str(source / "scripts") + ":" + str(sysroot / "usr/lib/python3/dist-packages"),
             "PYTHONNOUSERSITE": "1",
             "PYTHONDONTWRITEBYTECODE": "1",
             # QEMU6.2 selects these tools from the environment, then writes
