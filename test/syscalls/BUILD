@@ -678,6 +678,8 @@ syscall_test(
     # The anonymous mapping name cases require CONFIG_ANON_VMA_NAME.
     native_kernel_requirements = ["anonymous-vma-names"],
     shard_count = most_shards,
+    # Separate the fixed fork/reap workloads across emulator actions.
+    tcg_shard_count = 9,
     # The fixed fork/children workload can take over five minutes under TCG.
     tcg_timeout = "long",
     test = "//test/syscalls/linux:proc_test",
