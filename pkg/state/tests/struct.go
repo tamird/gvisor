@@ -193,3 +193,20 @@ func (m *manualInlineSave) StateLoad(_ context.Context, s state.Source) {
 	m.value = new(countedSave)
 	s.Load(0, m.value)
 }
+
+type zeroSaveCountKey struct{}
+
+// +stateify type
+type countedZeroSave struct{}
+
+func (*countedZeroSave) StateSave(s state.Sink) {
+	*s.Context().Value(zeroSaveCountKey{}).(*int)++
+}
+
+func (*countedZeroSave) StateLoad(context.Context, state.Source) {}
+
+// +stateify savable
+type countedZeroSaveParent struct {
+	child countedZeroSave
+	value int64
+}
