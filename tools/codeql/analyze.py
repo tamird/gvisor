@@ -16,15 +16,41 @@
 """Analyze declared checkout contents without downloading tools or uploading results."""
 
 import argparse
+import hashlib
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import shutil
 import subprocess
 import sys
 import tempfile
+import zipfile
 
 from tools.go_export.compile import go_environment
+
+
+def add_generated_go_sources(source: Path, archive_path: Path) -> dict[str, str]:
+    """Add canonical generated files without replacing tracked source content."""
+    added: dict[str, str] = {}
+    with zipfile.ZipFile(archive_path) as archive:
+        for entry in archive.infolist():
+            # The exported README describes its synthetic Go branch. Keep the
+            # checkout's original; module files are checked like other sources.
+            if entry.is_dir() or entry.filename == "README.md":
+                continue
+            name = PurePosixPath(entry.filename)
+            if name.is_absolute() or ".." in name.parts:
+                raise ValueError(f"Invalid Go source archive path: {entry.filename}")
+            content = archive.read(entry)
+            target = source / name
+            if target.exists():
+                if target.read_bytes() != content:
+                    raise ValueError(f"Exported Go source differs from tracked source: {name}")
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+            added[str(name)] = hashlib.sha256(content).hexdigest()
+    return added
 
 
 def main() -> None:
@@ -32,7 +58,7 @@ def main() -> None:
     for name in ("codeql", "manifest", "output", "sarif"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--language", choices=("go", "javascript", "python", "ruby"), required=True)
-    for name in ("go", "goroot", "proxy", "go-mod", "go-sum", "cc", "cxx"):
+    for name in ("go", "goroot", "proxy", "go-mod", "go-sum", "go-sources", "cc", "cxx"):
         parser.add_argument("--" + name, type=Path)
     for name in ("cflag", "cxxflag", "ldflag"):
         parser.add_argument("--" + name, action="append", default=[])
@@ -64,6 +90,10 @@ def main() -> None:
         path = [str(binaries)] + [str(Path(entry).absolute()) for entry in os.environ.get("PATH", "/usr/bin:/bin").split(os.pathsep)]
         env = dict(os.environ)
         if args.language == "go":
+            # Bazel owns generation and package placement. Supplement the
+            # checkout; analyzing only the export would omit other packages.
+            generated = add_generated_go_sources(source, args.go_sources)
+            (output / "go-generated-sources.json").write_text(json.dumps(generated, indent=2) + "\n")
             # Use the declared full-checkout dependency profile without
             # changing the checked-in module that belongs to Go source export.
             # https://go.dev/ref/mod#build-commands (the -modfile option)
