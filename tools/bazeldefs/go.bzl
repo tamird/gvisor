@@ -97,6 +97,10 @@ def go_binary_archive(target):
     """Returns compiled Go archive metadata for a binary target."""
     return target[GoArchive].data
 
+def go_transitive_archives(target):
+    """Returns the compiler-owned export records for a Go dependency graph."""
+    return target[GoArchive].transitive
+
 def go_binary_nogo_dep(name, noasan = False):  # buildifier: disable=unused-variable
     """Returns the target that nogo should analyze for the given go_binary.
 
@@ -236,6 +240,7 @@ def go_context(ctx, goos = None, goarch = None, attr = None):
             transitive = [go_ctx.sdk.srcs, go_ctx.sdk.headers, go_ctx.sdk.tools, go_ctx.stdlib.libs],
         ),
         stdlib_srcs = go_ctx.sdk.srcs,
+        stdlib_archives = go_ctx.stdlib.libs,
         stdlib_mod = stdlib_mod,
     )
 

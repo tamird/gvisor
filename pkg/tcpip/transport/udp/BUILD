@@ -27,6 +27,7 @@ go_library(
         "protocol.go",
         "udp_packet_list.go",
     ],
+    stateify_records = True,
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/buffer",
