@@ -230,6 +230,10 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, stateify_re
         if any([".tmpl." in src for src in all_srcs]):
             # nogo_facts_render consumes stateify output to render these inputs.
             fail("typed stateify cannot consume dependent .tmpl outputs")
+
+        # Generated emitters import wire directly, in addition to state.
+        if force_add_state_pkg or "//pkg/state/wire" not in all_deps:
+            all_deps = all_deps + ["//pkg/state/wire"]
         go_stateify_records(
             name = name + "_state_records",
             srcs = all_srcs,
