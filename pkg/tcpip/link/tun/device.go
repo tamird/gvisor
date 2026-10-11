@@ -15,6 +15,7 @@
 package tun
 
 import (
+	goContext "context"
 	"fmt"
 
 	"gvisor.dev/gvisor/pkg/buffer"
@@ -111,7 +112,7 @@ func (d *Device) SetIff(ctx context.Context, s *stack.Stack, name string, flags 
 	defer d.mu.Unlock()
 
 	if d.endpoint != nil {
-		return linuxerr.EEXIST
+		return linuxerr.EINVAL
 	}
 
 	// Input validation.
@@ -167,6 +168,8 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 		id := s.NextNICID()
 		endpoint := &tunEndpoint{
 			Endpoint: channel.New(defaultDevOutQueueLen, defaultDevMtu, ""),
+			stack:    s,
+			nicID:    id,
 			name:     name,
 			isTap:    prefix == "tap",
 		}
@@ -175,13 +178,9 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 		if endpoint.name == "" {
 			endpoint.name = fmt.Sprintf("%s%d", prefix, id)
 		}
-		err := s.CreateNICWithOptions(id, packetsocket.New(endpoint), stack.NICOptions{
-			Name:   endpoint.name,
-			Kind:   "tun",
-			MinMTU: header.IPv4MinimumMTU,
-			// Linux drivers/net/tun.c:tun_net_initialize sets max_mtu to
-			// MAX_MTU minus hard_header_len, excluding packet-info bytes.
-			MaxMTU: 65535 - uint32(endpoint.MaxHeaderLength()),
+		err := s.CreateNICWithOptions(endpoint.nicID, packetsocket.New(endpoint), stack.NICOptions{
+			Name: endpoint.name,
+			Kind: "tun",
 		})
 		switch err.(type) {
 		case nil:
@@ -192,7 +191,7 @@ func attachOrCreateNIC(ctx context.Context, s *stack.Stack, name, prefix string,
 				// Race detected: A NIC has been created in between.
 				continue
 			}
-			return nil, linuxerr.EBUSY
+			return nil, linuxerr.EEXIST
 		default:
 			endpoint.DecRef(ctx)
 			return nil, linuxerr.EINVAL
@@ -216,11 +215,10 @@ func (d *Device) MTU() (uint32, error) {
 	return endpoint.MTU(), nil
 }
 
-// Write injects one inbound packet into the network interface. It may trim
-// headers from data; the caller retains ownership of the buffer.
+// Write injects one inbound packet into the network interface.
 //
 // +checklocksexclude:d.mu
-func (d *Device) Write(data *buffer.Buffer) (int64, error) {
+func (d *Device) Write(data *buffer.View) (int64, error) {
 	d.mu.RLock()
 	endpoint := d.endpoint
 	flags := d.flags
@@ -232,29 +230,33 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 		return 0, linuxerr.EIO
 	}
 
-	dataLen := data.Size()
+	dataLen := int64(data.Size())
 
 	// Packet information.
 	var pktInfoHdr PacketInfoHeader
 	if !flags.NoPacketInfo {
-		var hdr [PacketInfoHeaderSize]byte
-		if n, _ := data.ReadAt(hdr[:], 0); n != len(hdr) {
+		if dataLen < PacketInfoHeaderSize {
 			// Ignore bad packet.
 			return dataLen, nil
 		}
-		pktInfoHdr = PacketInfoHeader(hdr[:])
+		pktInfoHdrView := data.Clone()
+		defer pktInfoHdrView.Release()
+		pktInfoHdrView.CapLength(PacketInfoHeaderSize)
+		pktInfoHdr = PacketInfoHeader(pktInfoHdrView.AsSlice())
 		data.TrimFront(PacketInfoHeaderSize)
 	}
 
 	// Ethernet header (TAP only).
 	var ethHdr header.Ethernet
 	if flags.TAP {
-		var hdr [header.EthernetMinimumSize]byte
-		if n, _ := data.ReadAt(hdr[:], 0); n != len(hdr) {
+		if data.Size() < header.EthernetMinimumSize {
 			// Ignore bad packet.
 			return dataLen, nil
 		}
-		ethHdr = header.Ethernet(hdr[:])
+		ethHdrView := data.Clone()
+		defer ethHdrView.Release()
+		ethHdrView.CapLength(header.EthernetMinimumSize)
+		ethHdr = header.Ethernet(ethHdrView.AsSlice())
 		data.TrimFront(header.EthernetMinimumSize)
 	}
 
@@ -268,12 +270,11 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 	case flags.TUN:
 		// TUN interface with IFF_NO_PI enabled, thus
 		// we need to determine protocol from version field
-		var first [1]byte
-		if n, _ := data.ReadAt(first[:], 0); n == 0 {
+		if data.Size() == 0 {
 			// Ignore bad packet.
 			return dataLen, nil
 		}
-		version := first[0] >> 4
+		version := data.AsSlice()[0] >> 4
 		switch version {
 		case 4:
 			protocol = header.IPv4ProtocolNumber
@@ -284,7 +285,7 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 
 	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
 		ReserveHeaderBytes: len(ethHdr),
-		Payload:            data.Clone(),
+		Payload:            buffer.MakeWithView(data.Clone()),
 	})
 	defer pkt.DecRef()
 	copy(pkt.LinkHeader().Push(len(ethHdr)), ethHdr)
@@ -292,22 +293,21 @@ func (d *Device) Write(data *buffer.Buffer) (int64, error) {
 	return dataLen, nil
 }
 
-// Read reads one outgoing packet from the network interface. The caller owns
-// the returned buffer.
+// Read reads one outgoing packet from the network interface.
 //
 // +checklocksexclude:d.mu
-func (d *Device) Read() (buffer.Buffer, error) {
+func (d *Device) Read() (*buffer.View, error) {
 	d.mu.RLock()
 	endpoint := d.endpoint
 	noPacketInfo := d.flags.NoPacketInfo
 	d.mu.RUnlock()
 	if endpoint == nil {
-		return buffer.Buffer{}, linuxerr.EBADFD
+		return nil, linuxerr.EBADFD
 	}
 
 	pkt := endpoint.Read()
 	if pkt == nil {
-		return buffer.Buffer{}, linuxerr.ErrWouldBlock
+		return nil, linuxerr.ErrWouldBlock
 	}
 	v := encodePkt(pkt, noPacketInfo)
 	pkt.DecRef()
@@ -315,20 +315,25 @@ func (d *Device) Read() (buffer.Buffer, error) {
 }
 
 // encodePkt encodes packet for fd side.
-func encodePkt(pkt *stack.PacketBuffer, noPacketInfo bool) buffer.Buffer {
-	data := pkt.ToBuffer()
+func encodePkt(pkt *stack.PacketBuffer, noPacketInfo bool) *buffer.View {
+	var view *buffer.View
 
 	// Packet information.
 	if !noPacketInfo {
-		view := buffer.NewViewSize(PacketInfoHeaderSize)
+		view = buffer.NewView(PacketInfoHeaderSize + pkt.Size())
+		view.Grow(PacketInfoHeaderSize)
 		hdr := PacketInfoHeader(view.AsSlice())
 		hdr.Encode(&PacketInfoFields{
 			Protocol: pkt.NetworkProtocolNumber,
 		})
-		data.Prepend(view)
+		pktView := pkt.ToView()
+		view.Write(pktView.AsSlice())
+		pktView.Release()
+	} else {
+		view = pkt.ToView()
 	}
 
-	return data
+	return view
 }
 
 // Name returns the name of the attached network interface. Empty string if
@@ -383,6 +388,8 @@ type tunEndpoint struct {
 	tunEndpointRefs
 	*channel.Endpoint
 
+	stack *stack.Stack
+	nicID tcpip.NICID
 	name  string
 	isTap bool
 
@@ -440,6 +447,19 @@ func (e *tunEndpoint) SetOnCloseAction(action func()) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.onCloseAction = action
+}
+
+// afterLoad is invoked by stateify.
+//
+// +checklocksexclude:e.mu
+func (e *tunEndpoint) afterLoad(goContext.Context) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if !e.closed {
+		e.onCloseAction = func() {
+			e.stack.RemoveNIC(e.nicID)
+		}
+	}
 }
 
 // DecRef decrements refcount of e, removing NIC if it reaches 0.

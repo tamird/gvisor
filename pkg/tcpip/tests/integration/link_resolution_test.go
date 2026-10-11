@@ -17,6 +17,7 @@ package link_resolution_test
 import (
 	"bytes"
 	"fmt"
+	"net"
 	"runtime"
 	"testing"
 	"time"
@@ -531,11 +532,11 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 			sourceAddr:             tcptestutil.MustParse4("10.0.0.2"),
 			destAddr:               tcptestutil.MustParse4("11.0.0.2"),
 			incomingAddr: tcpip.AddressWithPrefix{
-				Address:   tcptestutil.MustParse4("10.0.0.1"),
+				Address:   tcpip.AddrFromSlice(net.ParseIP("10.0.0.1").To4()),
 				PrefixLen: 8,
 			},
 			outgoingAddr: tcpip.AddressWithPrefix{
-				Address:   tcptestutil.MustParse4("11.0.0.1"),
+				Address:   tcpip.AddrFromSlice(net.ParseIP("11.0.0.1").To4()),
 				PrefixLen: 8,
 			},
 			transportProtocol:            icmp.NewProtocol4,
@@ -551,11 +552,11 @@ func TestForwardingWithLinkResolutionFailure(t *testing.T) {
 			sourceAddr:             tcptestutil.MustParse6("10::2"),
 			destAddr:               tcptestutil.MustParse6("11::2"),
 			incomingAddr: tcpip.AddressWithPrefix{
-				Address:   tcptestutil.MustParse6("10::1"),
+				Address:   tcpip.AddrFromSlice(net.ParseIP("10::1").To16()),
 				PrefixLen: 64,
 			},
 			outgoingAddr: tcpip.AddressWithPrefix{
-				Address:   tcptestutil.MustParse6("11::1"),
+				Address:   tcpip.AddrFromSlice(net.ParseIP("11::1").To16()),
 				PrefixLen: 64,
 			},
 			transportProtocol:            icmp.NewProtocol6,

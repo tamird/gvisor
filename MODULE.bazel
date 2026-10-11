@@ -1794,6 +1794,7 @@ use_repo(
     "org_golang_x_mod",
     "org_golang_x_net",
     "org_golang_x_oauth2",
+    "org_golang_x_perf",
     "org_golang_x_sync",
     "org_golang_x_sys",
     "org_golang_x_telemetry",
@@ -2470,3 +2471,16 @@ http_archive(
     urls = ["https://github.com/NVIDIA/open-gpu-kernel-modules/archive/61dcc93722ecb418bb5f2e00923f05b4b8051dd1.tar.gz"],
 )
 # END generated NVIDIA driver sources
+
+# Benchmark reporting for this codec comparison branch only.
+go_deps.module(
+    indirect = True,
+    path = "github.com/aclements/go-moremath",
+    sum = "h1:xlwdaKcTNVW4PtpQb8aKA4Pjy0CdJHEqvFbAnvR5m2g=",
+    version = "v0.0.0-20210112150236-f10218a38794",
+)
+go_deps.module(
+    path = "golang.org/x/perf",
+    sum = "h1:nyQ/b4GTH65GoH7T/JFxssBadcBB57DTy6JNyQEfZBA=",
+    version = "v0.0.0-20260929162123-406019bb8b68",
+)

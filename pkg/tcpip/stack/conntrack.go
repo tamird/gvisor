@@ -938,7 +938,7 @@ func (ct *ConnTrack) originalDst(epID TransportEndpointID, netProto tcpip.Networ
 	t := ct.connForTID(tid)
 	if t == nil {
 		// Not a tracked connection.
-		return tcpip.Address{}, 0, &tcpip.ErrNoSuchFile{}
+		return tcpip.Address{}, 0, &tcpip.ErrNotConnected{}
 	}
 
 	t.conn.mu.RLock()

@@ -90,9 +90,6 @@ type endpoint struct {
 	// +checklocks:rcvMu
 	rcvDisabled bool
 
-	// +checklocks:rcvMu
-	packetMMapCopyEnabled bool
-
 	mu endpointRWMutex `state:"nosave"`
 	// +checklocks:mu
 	closed bool
@@ -413,11 +410,6 @@ func (ep *endpoint) SetSockOpt(opt tcpip.SettableSocketOption) tcpip.Error {
 // SetSockOptInt implements tcpip.Endpoint.SetSockOptInt.
 func (ep *endpoint) SetSockOptInt(opt tcpip.SockOptInt, v int) tcpip.Error {
 	switch opt {
-	case tcpip.PacketMMapCopyThresholdOption:
-		ep.rcvMu.Lock()
-		ep.packetMMapCopyEnabled = v != 0
-		ep.rcvMu.Unlock()
-		return nil
 	case tcpip.PacketMMapVersionOption:
 		ep.packetMmapMu.Lock()
 		defer ep.packetMmapMu.Unlock()
@@ -510,33 +502,25 @@ func (ep *endpoint) HandlePacket(nicID tcpip.NICID, netProto tcpip.NetworkProtoc
 	}
 	ep.packetMmapMu.RUnlock()
 
-	ep.rcvMu.Lock()
-	wasEmpty := ep.rcvBufSize == 0
-	queued := ep.handlePacketInner(nicID, netProto, pkt)
-	ep.rcvMu.Unlock()
+	wasEmpty := ep.handlePacketInner(nicID, netProto, pkt)
 
 	ep.stats.PacketsReceived.Increment()
 	// Notify waiters that there's data to be read.
-	if queued && wasEmpty {
+	if wasEmpty {
 		ep.waiterQueue.Notify(waiter.ReadableEvents)
 	}
 }
 
-func (ep *endpoint) HandlePacketMMapCopy(nicID tcpip.NICID, netProto tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) bool {
-	ep.rcvMu.Lock()
-	defer ep.rcvMu.Unlock()
-	if !ep.packetMMapCopyEnabled {
-		return false
-	}
-	return ep.handlePacketInner(nicID, netProto, pkt)
+func (ep *endpoint) HandlePacketMMapCopy(nicID tcpip.NICID, netProto tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) {
+	_ = ep.handlePacketInner(nicID, netProto, pkt)
 }
 
-// handlePacketInner reports whether the packet was queued.
-//
-// +checklocks:ep.rcvMu
 func (ep *endpoint) handlePacketInner(nicID tcpip.NICID, netProto tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) bool {
+	ep.rcvMu.Lock()
+
 	// Drop the packet if our buffer is currently full.
 	if ep.rcvClosed {
+		ep.rcvMu.Unlock()
 		ep.stack.Stats().DroppedPackets.Increment()
 		ep.stats.ReceiveErrors.ClosedReceiver.Increment()
 		return false
@@ -544,10 +528,13 @@ func (ep *endpoint) handlePacketInner(nicID tcpip.NICID, netProto tcpip.NetworkP
 
 	rcvBufSize := ep.ops.GetReceiveBufferSize()
 	if ep.rcvDisabled || ep.rcvBufSize >= int(rcvBufSize) {
+		ep.rcvMu.Unlock()
 		ep.stack.Stats().DroppedPackets.Increment()
 		ep.stats.ReceiveErrors.ReceiveBufferOverflow.Increment()
 		return false
 	}
+
+	wasEmpty := ep.rcvBufSize == 0
 
 	rcvdPkt := packet{
 		packetInfo: tcpip.LinkPacketInfo{
@@ -576,7 +563,8 @@ func (ep *endpoint) handlePacketInner(nicID tcpip.NICID, netProto tcpip.NetworkP
 
 	ep.rcvList.PushBack(&rcvdPkt)
 	ep.rcvBufSize += rcvdPkt.data.Size()
-	return true
+	ep.rcvMu.Unlock()
+	return wasEmpty
 }
 
 // State implements socket.Socket.State.

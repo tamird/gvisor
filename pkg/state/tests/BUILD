@@ -13,6 +13,7 @@ go_library(
         "integer.go",
         "load.go",
         "map.go",
+        "reference_array.go",
         "register.go",
         "struct.go",
         "tests.go",
@@ -34,10 +35,14 @@ go_test(
         "integer_test.go",
         "load_test.go",
         "map_test.go",
+        "reference_array_test.go",
         "register_test.go",
         "string_test.go",
         "struct_test.go",
     ],
     embed = [":tests"],
-    deps = ["//pkg/state"],
+    deps = [
+        "//pkg/state",
+        "//pkg/tcpip",
+    ],
 )
