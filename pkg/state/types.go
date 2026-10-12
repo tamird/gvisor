@@ -296,6 +296,14 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 	return r
 }()
 
+// registeredType owns the concrete Go type and its capture layout.
+// Wire IDs remain local to each serialization.
+type registeredType struct {
+	typ       reflect.Type
+	newRecord func(wire.TypeID, int) *wire.Record
+	codec     nativeCodec
+}
+
 // globalTypeDatabase is the single registration database for saving and loading.
 var globalTypeDatabase = map[string]registeredType{}
 
@@ -368,6 +376,44 @@ func loadBinary(value binaryObject, name string, s Source) {
 // compatibility slots.
 func Register(t Type) {
 	registerState(t, nil, nativeCodec{})
+}
+
+func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, codec nativeCodec) {
+	name := t.StateTypeName()
+	fields := t.StateFields()
+	typ := reflect.TypeOf(t)
+	if raceEnabled {
+		// Register must always be called on pointers.
+		if typ.Kind() != reflect.Ptr {
+			Failf("Register must be called on pointers")
+		}
+	}
+	typ = typ.Elem()
+	if raceEnabled {
+		if typ.Kind() == reflect.Struct {
+			// All registered structs must implement SaverLoader. We allow
+			// the registration is non-struct types with just the Type
+			// interface, but we need to call StateSave/StateLoad methods
+			// on aggregate types.
+			if _, ok := t.(SaverLoader); !ok {
+				Failf("struct %T does not implement SaverLoader", t)
+			}
+		} else {
+			// Non-structs must not have any fields. We don't support
+			// calling StateSave/StateLoad methods on any non-struct types.
+			// If custom behavior is required, these types should be
+			// wrapped in a structure of some kind.
+			if len(fields) != 0 {
+				Failf("non-struct %T has non-zero fields %v", t, fields)
+			}
+			// We don't allow non-structs to implement StateSave/StateLoad
+			// methods, because they won't be called and it's confusing.
+			if _, ok := t.(SaverLoader); ok {
+				Failf("non-struct %T implements SaverLoader", t)
+			}
+		}
+	}
+	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, codec)
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
