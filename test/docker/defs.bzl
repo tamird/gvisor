@@ -422,3 +422,56 @@ source_image_archive = rule(
         "@rules_oci//oci:crane_toolchain_type",
     ],
 )
+
+# Fork-only qualification of the existing cached-image conversion path.
+def _cached_source_layout_impl(ctx):
+    make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)
+    if make.target == None or make.env != {"MAKE": make.path}:
+        fail("cached source layouts require the declared GNU Make toolchain")
+    crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
+    layout = ctx.actions.declare_directory(ctx.label.name + ".oci")
+    tags = ctx.actions.declare_file(ctx.label.name + ".tags.txt")
+    ctx.actions.run(
+        executable = "/bin/bash",
+        arguments = [
+            ctx.file._script.path,
+            ctx.attr.architecture,
+            make.path,
+            crane.path,
+            ctx.file._makefile.path,
+            ctx.file._contexts.path,
+            ctx.attr.image,
+            layout.path,
+            tags.path,
+        ],
+        inputs = depset(
+            [ctx.file._script, ctx.file._contexts, ctx.file._makefile, crane],
+            transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
+        ),
+        outputs = [layout, tags],
+        env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
+        mnemonic = "CachedSourceOCI",
+        progress_message = "Pulling cached source layout %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
+        execution_requirements = {"no-cache": "1"},
+    )
+    return [
+        DefaultInfo(files = depset([layout]), runfiles = ctx.runfiles(files = [layout])),
+        OutputGroupInfo(repo_tags = depset([tags])),
+    ]
+
+cached_source_layout = rule(
+    implementation = _cached_source_layout_impl,
+    doc = "Qualification-only cached Make reference; cache misses fail without changing the production rebuild path.",
+    attrs = {
+        "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
+        "image": attr.string(mandatory = True),
+        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "_allowlist_function_transition": attr.label(default = transition_allowlist),
+        "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
+        "_script": attr.label(default = "//test/docker:cached_source_oci.sh", allow_single_file = True),
+    },
+    toolchains = [
+        "@rules_foreign_cc//toolchains:make_toolchain",
+        "@rules_oci//oci:crane_toolchain_type",
+    ],
+)

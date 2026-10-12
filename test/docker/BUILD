@@ -1,8 +1,9 @@
+load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
-load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
+load(":defs.bzl", "cached_source_layout", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -323,5 +324,48 @@ source_image_archive(
         memory = "8GB",
     ),
     image = "runtimes/php8.5.11",
+    tags = ["manual"],
+)
+
+# Fork-only proof that the stock OCI loader converts a cached source image.
+cached_source_layout(
+    name = "oci_conversion_small_layout",
+    testonly = True,
+    architecture = "x86_64",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+    ),
+    image = "containerd/harness",
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "oci_conversion_small_tags",
+    testonly = True,
+    srcs = [":oci_conversion_small_layout"],
+    output_group = "repo_tags",
+    tags = ["manual"],
+)
+
+oci_load(
+    name = "oci_conversion_small_load",
+    testonly = True,
+    format = "docker",
+    image = ":oci_conversion_small_layout",
+    repo_tags = ":oci_conversion_small_tags",
+    tags = ["manual"],
+)
+
+filegroup(
+    name = "oci_conversion_small_archive",
+    testonly = True,
+    srcs = [":oci_conversion_small_load"],
+    output_group = "tarball",
     tags = ["manual"],
 )

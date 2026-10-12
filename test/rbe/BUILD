@@ -15,6 +15,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
@@ -161,6 +162,48 @@ docker_command_test(
         memory = "4GB",
     ),
     tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# Fork-only CPU compatibility check of the actual source archive.
+go_test(
+    name = "source_archive_test",
+    srcs = ["source_archive_test.go"],
+    rundir = ".",
+    tags = ["manual"],
+)
+
+docker_daemon_config(
+    name = "source_archive_config",
+    testonly = True,
+    images = ["//test/docker:oci_conversion_small_archive"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "source_archive_load_test",
+    size = "medium",
+    command = ":source_archive_test",
+    command_args = [
+        "-test.v",
+        "--archive=$(rootpath //test/docker:oci_conversion_small_archive)",
+    ],
+    data = ["//test/docker:oci_conversion_small_archive"],
+    docker_config = ":source_archive_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
