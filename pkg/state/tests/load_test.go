@@ -15,7 +15,12 @@
 package tests
 
 import (
+	"bytes"
+	"strings"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 func TestLoadHooks(t *testing.T) {
@@ -72,7 +77,78 @@ func TestDeadlock(t *testing.T) {
 	bs1.b = &bs2
 	bs2.b = &bs1
 
-	runTestCases(t, true, "deadlock", []any{
-		&bs1,
-	})
+	var buf bytes.Buffer
+	root := &bs1
+	if _, err := state.Save(t.Context(), &buf, &root); err != nil {
+		t.Fatal(err)
+	}
+	var restored *badCycleStruct
+	if _, err := state.Load(t.Context(), &buf, &restored); err == nil || !strings.Contains(err.Error(), "dependency cycle:") {
+		t.Fatalf("Load = %v, want a dependency cycle diagnostic", err)
+	}
+}
+
+func TestSourceReplay(t *testing.T) {
+	// A nested Source remains valid after its array cursor and graph decode
+	// finish. Reversed wire fields independently exercise FieldOrder.
+	var buf bytes.Buffer
+	w := wire.Writer{Writer: &buf}
+	if err := state.WriteHeader(&w, 1, true); err != nil {
+		t.Fatal(err)
+	}
+	wire.Save(&w, &wire.Type{Name: (*replayLoadStruct)(nil).StateTypeName(), Fields: []string{"second", "omitted", "first"}})
+	wire.Save(&w, wire.Uint(1))
+	text := wire.String("retained field")
+	value := wire.Struct{TypeID: 1}
+	value.Alloc(3)
+	*value.Field(0), *value.Field(1), *value.Field(2) = &text, wire.Int(99), wire.Int(17)
+	wire.Save(&w, &wire.Array{Contents: []wire.Object{&value}})
+	const trailing = "following non-state data"
+	buf.WriteString(trailing)
+	var restored [1]replayLoadStruct
+	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+		t.Fatal(err)
+	}
+	r := &restored[0]
+	if got, want := r.first, int64(17); got != want {
+		t.Errorf("first = %d, want %d", got, want)
+	}
+	if got, want := r.repeated, int64(17); got != want {
+		t.Errorf("repeated first = %d, want %d", got, want)
+	}
+	if got, want := r.second, "retained field"; got != want {
+		t.Errorf("second = %q, want %q", got, want)
+	}
+	if got, want := r.after, "retained field"; got != want {
+		t.Errorf("after-load replay = %q, want %q", got, want)
+	}
+	if got, want := r.omitted, int64(0); got != want {
+		t.Errorf("unclaimed field = %d, want %d", got, want)
+	}
+	var replay int64
+	r.source.Load(0, &replay)
+	if got, want := replay, int64(17); got != want {
+		t.Errorf("retained Source replay = %d, want %d", got, want)
+	}
+	if got, want := buf.String(), trailing; got != want {
+		t.Errorf("unconsumed bytes = %q, want %q", got, want)
+	}
+}
+
+func TestValidateBeforeLoadHook(t *testing.T) {
+	var saved bytes.Buffer
+	original := replayLoadStruct{first: 17, second: "valid prefix", omitted: 99}
+	if _, err := state.Save(t.Context(), &saved, &original); err != nil {
+		t.Fatal(err)
+	}
+	// Truncating the unclaimed final field must prevent the hook entirely,
+	// even though both fields it loads precede the invalid bytes.
+	data := saved.Bytes()
+	var restored replayLoadStruct
+	if _, err := state.Load(t.Context(), bytes.NewReader(data[:len(data)-1]), &restored); err == nil {
+		t.Fatal("Load accepted a truncated unclaimed field")
+	}
+	if got, want := restored.calls, 0; got != want {
+		t.Errorf("StateLoad calls before validation = %d, want %d", got, want)
+	}
 }
