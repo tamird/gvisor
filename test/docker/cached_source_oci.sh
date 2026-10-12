@@ -44,14 +44,49 @@ case "${arch}" in
   *) echo "Unknown image architecture: ${arch}" >&2; exit 1 ;;
 esac
 printf 'Cached OCI source: %s platform=%s\n' "${references[0]}" "${platform}"
-# Qualification of the observed parallel HTTP1 path only. A cache miss fails;
-# the production Make pull/rebuild owner remains untouched by this prototype.
-env GODEBUG=http2client=0 "${crane}" pull --format=oci \
-  --platform="${platform}" "${references[0]}" "${work}/layout"
-# Preserve the proven ext4 staging boundary before publishing declared inputs.
-mkdir -p "${layout}"
-cp -a "${work}/layout/." "${layout}/"
-printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
-printf 'Cached OCI tags: %s %s\n' "${references[1]}" "${references[2]}"
-du --bytes --summarize "${work}/layout" "${layout}"
-df -B1 "${work}/layout"
+# Fork-only bounded worker comparison. This stops before declared layout
+# publication and any stock archive conversion, fallback or Docker build.
+saved="${work}/layout"
+printf 'Declared output publication skipped: %s %s\n' "${layout}" "${tags}"
+printf 'Worker probe: %s\n' "$(date --iso-8601=ns)"
+uname -a
+head -30 /proc/cpuinfo
+sha256sum "${crane}"
+od -An -tx1 -N64 "${crane}"
+"${crane}" version
+for file in /proc/sys/net/ipv4/tcp_rmem /proc/sys/net/ipv4/tcp_wmem \
+  /sys/fs/cgroup/cpu.max /sys/fs/cgroup/memory.max /proc/net/dev; do
+  printf 'BEFORE %s\n' "${file}"
+  if [[ -r ${file} ]]; then cat "${file}"; else printf 'unavailable\n'; fi
+done
+df -B1 "${work}"
+set +e
+time timeout --signal=QUIT --kill-after=5s 120s \
+  env GODEBUG=http2client=0 "${crane}" pull --format=oci \
+  --platform="${platform}" "${references[0]}" "${saved}"
+transfer_status=$?
+set -e
+printf 'Transfer status: %s at %s\n' "${transfer_status}" "$(date --iso-8601=ns)"
+printf 'AFTER /proc/net/dev\n'
+cat /proc/net/dev
+if [[ -d ${saved} ]]; then
+  du --bytes --summarize "${saved}"
+  for blob in "${saved}"/blobs/*/*; do
+    if [[ -f ${blob} ]]; then
+      stat --format='OCI blob=%n size=%s blocks=%b block-size=%B' "${blob}"
+    fi
+  done
+  for metadata in oci-layout index.json; do
+    if [[ -f ${saved}/${metadata} ]]; then
+      printf 'OCI metadata %s\n' "${metadata}"
+      cat "${saved}/${metadata}"
+    fi
+  done
+fi
+df -B1 "${work}"
+# Even a completed pull is diagnostic only: never copy or publish a large tree.
+if (( transfer_status == 0 )); then
+  printf 'Pull completed within the probe; output publication intentionally skipped.\n'
+  exit 3
+fi
+exit "${transfer_status}"

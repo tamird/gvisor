@@ -2,7 +2,7 @@ load("@bazel_lib//lib:output_files.bzl", "output_files")
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
 load(":defs.bzl", "cached_source_layout", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
@@ -390,12 +390,19 @@ LARGE_CACHED_IMAGES = {
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        exec_properties = docker_test_exec_properties(
-            exec_group = "",
-            free_disk = "80GB",
-            memory = "12GB",
-            vfs = True,
-        ),
+        # Fork-only worker comparison; retain the original resource requests.
+        exec_properties = select({
+            "//tools/bazeldefs:rbe": dict(
+                docker_exec_properties(
+                    exec_group = "",
+                    free_disk = "80GB",
+                    memory = "12GB",
+                    vfs = True,
+                ),
+                **{"workload-isolation-type": "oci"}
+            ),
+            "//conditions:default": {},
+        }),
         image = image,
         tags = ["manual"],
     )
