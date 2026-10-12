@@ -446,9 +446,10 @@ def _cached_source_layout_impl(ctx):
             ctx.attr.image,
             layout.path,
             tags.path,
+            ctx.file._network_tools.path,
         ],
         inputs = depset(
-            [ctx.file._script, ctx.file._contexts, ctx.file._makefile, crane],
+            [ctx.file._script, ctx.file._contexts, ctx.file._makefile, ctx.file._network_tools, crane],
             transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
         ),
         outputs = [layout, tags],
@@ -468,6 +469,7 @@ cached_source_layout = rule(
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True),
+        "_network_tools": attr.label(default = "@kvm_amd64_guest//:flat", allow_single_file = True, cfg = "exec"),
         "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
