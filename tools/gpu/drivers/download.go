@@ -32,7 +32,7 @@ const (
 	archARM64 = "arm64"
 )
 
-// Downloader copies driver runfiles and computes their SHA256 checksums.
+// Downloader copies NVIDIA .run installers and computes their SHA256 checksums.
 // Its zero value uses the default HTTP client.
 type Downloader struct {
 	client *http.Client
@@ -58,10 +58,10 @@ func driverURL(version nvconf.DriverVersion, arch string) (string, error) {
 	}
 }
 
-// Download writes the complete runfile to dst and returns its SHA256 checksum.
-// It closes the response body on every return path, but does not close dst.
+// Download writes the complete NVIDIA .run installer to dst and returns its
+// SHA256 checksum.
 // A failed transfer returns no checksum, even if some bytes reached dst.
-func (d Downloader) Download(ctx context.Context, version nvconf.DriverVersion, arch string, dst io.Writer) (string, error) {
+func (d *Downloader) Download(ctx context.Context, version nvconf.DriverVersion, arch string, dst io.Writer) (string, error) {
 	url, err := driverURL(version, arch)
 	if err != nil {
 		return "", err
@@ -96,9 +96,9 @@ func checkChecksum(version nvconf.DriverVersion, arch, got, want string) error {
 	return nil
 }
 
-// ValidateChecksum checks the expected runfile or its absence for each
-// supported architecture. A missing runfile does not skip the other one.
-func (d Downloader) ValidateChecksum(ctx context.Context, version nvconf.DriverVersion, checksums nvproxy.Checksums) error {
+// ValidateChecksum checks the expected NVIDIA .run installer or its absence for
+// each supported architecture. A missing installer does not skip the other one.
+func (d *Downloader) ValidateChecksum(ctx context.Context, version nvconf.DriverVersion, checksums nvproxy.Checksums) error {
 	for _, target := range []struct {
 		arch     string
 		checksum string
@@ -109,11 +109,11 @@ func (d Downloader) ValidateChecksum(ctx context.Context, version nvconf.DriverV
 		got, err := d.Download(ctx, version, target.arch, io.Discard)
 		if target.checksum == nvproxy.ChecksumNoDriver {
 			if status, ok := errors.AsType[*downloadStatusError](err); ok && status.code == http.StatusNotFound {
-				log.Infof("Runfile does not exist for driver %q arch: %q", version, target.arch)
+				log.Infof("NVIDIA .run installer does not exist for driver %q arch: %q", version, target.arch)
 				continue
 			}
 			if err == nil {
-				return fmt.Errorf("unexpected runfile for driver %q on arch %q", version, target.arch)
+				return fmt.Errorf("unexpected NVIDIA .run installer for driver %q on arch %q", version, target.arch)
 			}
 		}
 		if err != nil {

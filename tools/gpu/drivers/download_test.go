@@ -146,7 +146,7 @@ func TestValidateChecksum(t *testing.T) {
 		{"second_mismatch", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, "wrong"), http.StatusNotFound, http.StatusOK, "checksum mismatch", 2},
 		{"both_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, nvproxy.ChecksumNoDriver), http.StatusNotFound, http.StatusNotFound, "", 2},
 		{"missing_is_not_forbidden", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusForbidden, http.StatusOK, "HTTP 403", 1},
-		{"unexpected_runfile", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusOK, http.StatusOK, "unexpected runfile", 1},
+		{"unexpected_installer", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusOK, http.StatusOK, "unexpected NVIDIA .run installer", 1},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var bodies []*responseBody

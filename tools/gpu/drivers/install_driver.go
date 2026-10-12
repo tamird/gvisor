@@ -62,13 +62,13 @@ func hostDriver(version nvconf.DriverVersion, checksums nvproxy.Checksums) (inst
 		return installableDriver{}, fmt.Errorf("failed to get checksum for driver %q: %w", version, err)
 	}
 	if checksum == "" || checksum == nvproxy.ChecksumNoDriver {
-		return installableDriver{}, fmt.Errorf("driver %q has no installable runfile for arch %q", version, runtime.GOARCH)
+		return installableDriver{}, fmt.Errorf("driver %q has no NVIDIA .run installer for arch %q", version, runtime.GOARCH)
 	}
 	return installableDriver{version, checksum}, nil
 }
 
 // installableDrivers is the common host-architecture selection for installation
-// and listing. Registered ABIs without an available runfile are excluded.
+// and listing. Registered ABIs without an available installer are excluded.
 func installableDrivers() []installableDriver {
 	var drivers []installableDriver
 	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, checksums nvproxy.Checksums) {
@@ -79,7 +79,7 @@ func installableDrivers() []installableDriver {
 	return drivers
 }
 
-// NewInstaller resolves a supported runfile for the host architecture.
+// NewInstaller selects a supported driver for the host architecture.
 func NewInstaller(requestedVersion string, latest bool) (*Installer, error) {
 	var selected installableDriver
 	if latest {
