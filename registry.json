@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-12T05:21:15.166821+00:00",
+    "updatedAt": "2026-10-12T06:10:59.211156+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -734,20 +734,21 @@
       "url": "https://github.com/google/gvisor/pull/15035",
       "group": "analysis",
       "status": "open",
-      "reviewDecision": "",
-      "updatedAt": "2026-10-09T06:19:20.308717+00:00",
-      "summary": "Root completed the user-authorized rebase and ready transition at 6c6116257. The targeted native AMD64/ARM64 CLI tests and production/test Nogo checks passed on the source-equivalent qualification. The original PR body and thread marker were preserved, and no contributor decision remains.\n\nEarlier observations:\n\nRoot completed the user-requested current-base rebase at 6c6116257. The parser and test bodies are unchanged; the only range-diff context change is the upstream library-to-embed attribute. Root is running the focused CLI and Nogo checks before marking the PR ready. It remains draft at this observation, with no additional contributor decision required.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at ccc387fc0195c118b8e3f75c6116bbddcf49a936. Preserve the draft while assessing a source-preserving refresh. The earlier squash request is satisfied and prerequisite #14502 has landed. No ready-for-review transition or public reply is authorized.\n\nEarlier source and review history:\n\nStanding follow-up: Current ccc387fc0 is a single commit directly on b65c70734, satisfying the earlier squash request. No duplicate amendment/reply; retain current draft disposition.\n\nThe authorized October 2/3 rebase is published at ccc387fc0195c118b8e3f75c6116bbddcf49a936 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15035#issuecomment-5963407255. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 12fa726ad failed lint on Buildifier target shorthand. Published correction ccc387fc01 changes only //tools/nogo:nogo to equivalent //tools/nogo. The original failed check is retained, with no runtime change or validation claim.",
+      "reviewDecision": "APPROVED",
+      "updatedAt": "2026-10-12T06:10:59.211156+00:00",
+      "summary": "milantracy approved the current head 6c6116257 on 2026-10-12T05:59:20Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nRoot completed the user-authorized rebase and ready transition at 6c6116257. The targeted native AMD64/ARM64 CLI tests and production/test Nogo checks passed on the source-equivalent qualification. The original PR body and thread marker were preserved, and no contributor decision remains.\n\nEarlier observations:\n\nRoot completed the user-requested current-base rebase at 6c6116257. The parser and test bodies are unchanged; the only range-diff context change is the upstream library-to-embed attribute. Root is running the focused CLI and Nogo checks before marking the PR ready. It remains draft at this observation, with no additional contributor decision required.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at ccc387fc0195c118b8e3f75c6116bbddcf49a936. Preserve the draft while assessing a source-preserving refresh. The earlier squash request is satisfied and prerequisite #14502 has landed. No ready-for-review transition or public reply is authorized.\n\nEarlier source and review history:\n\nStanding follow-up: Current ccc387fc0 is a single commit directly on b65c70734, satisfying the earlier squash request. No duplicate amendment/reply; retain current draft disposition.\n\nThe authorized October 2/3 rebase is published at ccc387fc0195c118b8e3f75c6116bbddcf49a936 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15035#issuecomment-5963407255. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion. The first rebased head 12fa726ad failed lint on Buildifier target shorthand. Published correction ccc387fc01 changes only //tools/nogo:nogo to equivalent //tools/nogo. The original failed check is retained, with no runtime change or validation claim.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Approved; observe import and merge",
         "owner": "external_sweeps",
-        "nextAction": "Observe the current head after the author\u2019s explicit ready-for-another-look comment; do not duplicate outreach.",
+        "nextAction": "Observe import feedback and merge of the approved current head through the sole watcher; no code amendment or duplicate outreach is requested.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15035#pullrequestreview-5486982467",
           "https://github.com/google/gvisor/pull/15035#issuecomment-5858834825",
           "https://github.com/google/gvisor/pull/15035#issuecomment-6075810113"
         ],
-        "reviewedAt": "2026-10-09T07:13:05.173045+00:00",
+        "reviewedAt": "2026-10-12T06:07:17.517136+00:00",
         "sourceHead": "6c6116257ff32afb41996dcd5704d6d23258aba5",
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
       "head": "6c6116257ff32afb41996dcd5704d6d23258aba5"
@@ -4921,23 +4922,25 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-09T04:49:16.582047+00:00",
-      "summary": "The user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. No upstream PR is open for this collation change.",
+      "updatedAt": "2026-10-12T06:10:59.211156+00:00",
+      "summary": "milantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. No upstream PR is open for this collation change.",
       "followup": {
-        "disposition": "Maintainer review and CI",
+        "disposition": "Approved; observe import and merge",
         "owner": "external_sweeps",
-        "nextAction": "Observe current-head reviews, checks and import progress through the sole event collector.",
+        "nextAction": "Observe import feedback and merge of the approved current head through the sole watcher; no code amendment or duplicate outreach is requested.",
         "sourceHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
-        "reviewedAt": "2026-10-09T04:53:41.563193+00:00",
+        "reviewedAt": "2026-10-12T06:07:17.517136+00:00",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15562#pullrequestreview-5486943810",
           "https://github.com/google/gvisor/pull/15562",
           "https://github.com/tamird/gvisor/commit/fc05ca2668181f45b42463ce84d0d6f498032908",
           "https://github.com/tamird/gvisor/commit/400d11eea2e9923c8e1d111b9f4a56b8fffc9082"
         ],
-        "reviewDecision": null,
+        "reviewDecision": "APPROVED",
         "mergeable": "MERGEABLE"
       },
-      "number": 15562
+      "number": 15562,
+      "reviewDecision": "APPROVED"
     },
     {
       "id": "branch:rbe-current-integration",
@@ -6493,6 +6496,37 @@
           "https://github.com/tamird/gvisor/actions/runs/38188965809"
         ]
       }
+    },
+    {
+      "id": "branch:tcp-nagle-gso",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcp-nagle-gso",
+      "head": "1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
+      "title": "Send full TCP segments without waiting for ACKs",
+      "group": "runtime",
+      "summary": "Contributor review is pending for the standalone Nagle/GSO correction. It sends the full-MSS prefix while retaining a partial tail for coalescing and rechecking the same policy after a window update. The common channel fixture validates a borrowed packet before making its owned copy and completing requested checksum offload. The three-path standalone delta is bound to the reviewed qualification changes by patch identity; no fresh standalone build is claimed. The final affected-helper/E2E validation is closed on 1e2d5cd80, with its earlier before and packet evidence retained at their actual sources. The proposal is one commit on the borrowed PacketBuffer API introduced by PR #15635. Contributor approval and that PR's landing are separate prerequisites for upstream delivery; neither is inferred from qualification success.",
+      "url": "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
+      "status": "Contributor review pending; depends on #15635",
+      "updatedAt": "2026-10-12T06:10:59.211156+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
+        "url": "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6"
+      },
+      "followup": {
+        "disposition": "Contributor review pending; source dependency remains",
+        "owner": "root",
+        "sourceHead": "1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
+        "reviewedAt": "2026-10-12T06:10:59.211156+00:00",
+        "nextAction": "Await the already-issued contributor decision and PR #15635 landing before preparing upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
+          "https://github.com/google/gvisor/pull/15635",
+          "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba",
+          "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4"
+        ]
+      }
     }
   ],
   "edges": [
@@ -7876,6 +7910,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/blob/94fefcd49/tools/nvidia_driver_differ/defs.bzl"
       ]
+    },
+    {
+      "from": "pr:15635",
+      "to": "branch:tcp-nagle-gso",
+      "type": "depends_on",
+      "reason": "The Nagle GSO packet fixture uses the borrowed PacketBuffer.AsView API introduced by PR #15635; PR #15635 must land before this standalone proposal is delivered upstream.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15635",
+        "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6"
+      ]
     }
   ],
   "investigations": [
@@ -7884,8 +7928,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-12T05:21:15.166821+00:00",
-      "summary": "The sender-owner profile follow-up is closed. Actions 38170613265 on 3a8358346 completed four original 120-second CUBIC flows with both sender roles and balanced AB/BA order, compiled on RBE and run on Actions. Standard pprof corroboration in 43589ae4 matches the independent raw-profile reader: 237, 210, 239 and 226 CPU samples, or 2.10\u20132.39 seconds of CPU per roughly 121-second whole-client capture. These profiles cover each complete Netstack client process; they do not establish a sustained CPU bottleneck or the cause of the sharing result. The first decoder invocation 0eedd2d5 remains unknown because no terminal provider response was observed. The corrected decoder transports the same four original gzip profiles through separate environment values and changes no traffic or benchmark inputs.\n\nThe corrected RACK fixture validation is independently closed: all seventy-eight core files, 192 source bodies per archive and forty-eight native-input joins authenticate. Parent 18c8867d failed, and a separate continuation ran only two previously unexecuted information-test owners. The MSS tests report twelve native passes, twelve original failures with SndMss=0, and twelve corrected passes. Native RACK passes all six cases; Netstack passes three of six after the fixture correction, while the original six stopped during setup. Each architecture reports seventeen RACK unit passes and one unchanged TestRACKDetectReorder skip. All three selected Nogo owners pass in both architecture configurations. These reports do not establish that the remaining recovery behavior is fixed. The distinct Nagle/full-MSS candidate was subsequently tested as described below; this earlier fixture result remains separate.\n\nThe first Nagle/full-MSS candidate validation, 85c77c20 on 19f0a41b3, ended Failed after 273.499 seconds. All 194 source bodies and fifty original core files authenticate, while final source/native/result joins are still pending. Every GSO=true leaf in both before and after fails in the common Context.Connect checksum check before the send assertions, because the host partial checksum was not completed; these failures provide no GSO sensitivity or correctness credit. Corrected non-GSO leaves and six other complete TCP/SACK/RACK unit owners pass, as do both-architecture owning analyzers and gofmt. The existing CORK packet owner passes; RACK passes five of six cases, with TestRACKWithSACK still failing. A narrow common-fixture correction is under review, while the remaining RACK behavior is being investigated separately. No second run, complete qualification or contributor-ready claim is recorded.\n\nThe prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
+      "updatedAt": "2026-10-12T06:10:59.211156+00:00",
+      "summary": "The sender-owner profile follow-up is closed. Actions 38170613265 on 3a8358346 completed four original 120-second CUBIC flows with both sender roles and balanced AB/BA order, compiled on RBE and run on Actions. Standard pprof corroboration in 43589ae4 matches the independent raw-profile reader: 237, 210, 239 and 226 CPU samples, or 2.10\u20132.39 seconds of CPU per roughly 121-second whole-client capture. These profiles cover each complete Netstack client process; they do not establish a sustained CPU bottleneck or the cause of the sharing result. The first decoder invocation 0eedd2d5 remains unknown because no terminal provider response was observed. The corrected decoder transports the same four original gzip profiles through separate environment values and changes no traffic or benchmark inputs.\n\nThe corrected RACK fixture validation is independently closed: all seventy-eight core files, 192 source bodies per archive and forty-eight native-input joins authenticate. Parent 18c8867d failed, and a separate continuation ran only two previously unexecuted information-test owners. The MSS tests report twelve native passes, twelve original failures with SndMss=0, and twelve corrected passes. Native RACK passes all six cases; Netstack passes three of six after the fixture correction, while the original six stopped during setup. Each architecture reports seventeen RACK unit passes and one unchanged TestRACKDetectReorder skip. All three selected Nogo owners pass in both architecture configurations. These reports do not establish that the remaining recovery behavior is fixed. The distinct Nagle/full-MSS candidate was subsequently tested as described below; this earlier fixture result remains separate.\n\nThe first Nagle/full-MSS candidate 85c77c20 remains a failed, fixture-limited result; its source, native and core-report verification is now closed. Its GSO cases stopped before send assertions and retain no GSO correctness credit. Continuation fc902df4 corrected the common checksum and RACK timing fixtures and closed the bounded sender/packet validation. The final helper revision then replaced the rejected cleanup pattern with the borrowed AsView API introduced by #15635, and after-only validation 82940fa9 closed the full affected E2E owners and owning analyzers. Earlier before and RACK packet evidence remain tied to their actual sources. The standalone proposal 1c68399f1 now has an actual contributor question pending and separately depends on PR #15635 landing. This establishes no throughput advantage, physical GSO segmentation result, fresh standalone build or internal minRTT-cause diagnosis.\n\nThe prior single-flow high-BDP study showed higher throughput for repaired Netstack CUBIC than repaired Reno. In the separate sharing studies, Netstack received less than half the goodput against Linux, including matched Reno/Reno and CUBIC/CUBIC controls with both sender roles. The tables retain each profile, block and measurement bound. These source-specific results do not establish a universal advantage or a cause.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -8339,7 +8383,7 @@
           ]
         },
         {
-          "text": "The first Nagle/full-MSS candidate run has authenticated source/core reports but pending final native joins. Both arms hit the common GSO connection-checksum fixture before send assertions. Non-GSO checks progress; CORK passes and one of six RACK packet cases remains failing. No GSO correctness or complete qualification credit is claimed.",
+          "text": "The first Nagle/full-MSS candidate 85c77c20 remains a failed, fixture-limited result; its source, native and core-report verification is now closed. Its GSO cases stopped before send assertions and retain no GSO correctness credit. Continuation fc902df4 corrected the common checksum and RACK timing fixtures and closed the bounded sender/packet validation. The final helper revision then replaced the rejected cleanup pattern with the borrowed AsView API introduced by #15635, and after-only validation 82940fa9 closed the full affected E2E owners and owning analyzers. Earlier before and RACK packet evidence remain tied to their actual sources. The standalone proposal 1c68399f1 now has an actual contributor question pending and separately depends on PR #15635 landing. This establishes no throughput advantage, physical GSO segmentation result, fresh standalone build or internal minRTT-cause diagnosis.",
           "evidence": [
             {
               "label": "First Nagle candidate validation",
@@ -8352,11 +8396,19 @@
             {
               "label": "Common-fixture before source",
               "url": "https://github.com/tamird/gvisor/commit/d9327134fa81f598a315747d5e6c845fba1359f7"
+            },
+            {
+              "label": "Final affected helper and E2E validation",
+              "url": "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba"
+            },
+            {
+              "label": "Standalone Nagle proposal awaiting contributor review",
+              "url": "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6"
             }
           ]
         }
       ],
-      "nextStep": "Correct the common GSO connection-checksum fixture and validate the blocked before/after assertions with the original limits. Complete the first run's source/native joins and separately diagnose TestRACKWithSACK; retain the passed owners and all original failures without a throughput-cause claim.",
+      "nextStep": "Await the contributor decision on the standalone Nagle/GSO proposal and its #15635 API dependency. Keep the coherent RACK packet fixture under this investigation; it also needs the TCP_INFO proposal and validated production behavior before changing its expected-failure policy. Preserve the separate throughput and packet evidence without a causal performance claim.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
