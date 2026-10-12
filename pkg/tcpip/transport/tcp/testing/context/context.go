@@ -335,6 +335,7 @@ func (c *Context) CheckNoPacketTimeout(errMsg string, wait time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
 	if pkt := c.linkEP.ReadContext(ctx); pkt != nil {
+		pkt.DecRef()
 		c.t.Fatal(errMsg)
 	}
 }
@@ -395,7 +396,7 @@ func (c *Context) GetPacketNonBlocking() *buffer.View {
 
 // packetView validates an outgoing IPv4 packet and completes any checksum
 // offload on its returned copy. It does not segment the aggregate GSO packet.
-func (c *Context) packetView(pkt *stack.PacketBuffer) (result *buffer.View) {
+func (c *Context) packetView(pkt *stack.PacketBuffer) *buffer.View {
 	c.t.Helper()
 
 	if got, want := pkt.NetworkProtocolNumber, ipv4.ProtocolNumber; got != want {
@@ -410,23 +411,18 @@ func (c *Context) packetView(pkt *stack.PacketBuffer) (result *buffer.View) {
 		c.t.Fatalf("got pkt.TransportProtocolNumber = %d, want = %d", got, want)
 	}
 
-	view := pkt.ToView()
-	defer func() {
-		if result == nil {
-			view.Release()
-		}
-	}()
+	borrowed := pkt.AsView()
 
 	if pkt.GSOOptions.Type != stack.GSONone && pkt.GSOOptions.L3HdrLen != header.IPv4MinimumSize {
 		c.t.Errorf("got L3HdrLen = %d, want = %d", pkt.GSOOptions.L3HdrLen, header.IPv4MinimumSize)
 	}
 
-	checker.IPv4(c.t, view, checker.SrcAddr(StackAddr), checker.DstAddr(TestAddr))
+	checker.IPv4(c.t, &borrowed, checker.SrcAddr(StackAddr), checker.DstAddr(TestAddr))
 	if gso := pkt.GSOOptions; gso.NeedsCsum {
 		if got, want := gso.Type, stack.GSOTCPv4; got != want {
 			c.t.Fatalf("GSO type = %v, want %v", got, want)
 		}
-		ip := header.IPv4(view.AsSlice())
+		ip := header.IPv4(borrowed.AsSlice())
 		if got, want := gso.L3HdrLen, uint16(ip.HeaderLength()); got != want {
 			c.t.Fatalf("GSO L3 header length = %d, want %d", got, want)
 		}
@@ -438,9 +434,15 @@ func (c *Context) packetView(pkt *stack.PacketBuffer) (result *buffer.View) {
 		if got := tcp.Checksum(); got != want {
 			c.t.Fatalf("partial TCP checksum = %d, want %d", got, want)
 		}
-		// The channel has no host to complete CHECKSUM_PARTIAL. Validate
-		// the supplied pseudo-header seed above, then finish it on the view
-		// so ordinary TCP checkers can inspect the aggregate GSO packet.
+	}
+	// All checks above borrow the packet's storage. Only create the
+	// caller-owned copy after validation can no longer abort the test.
+	view := pkt.ToView()
+	if pkt.GSOOptions.NeedsCsum {
+		// The channel has no host to complete CHECKSUM_PARTIAL. Finish the
+		// verified pseudo-header seed on the copy so ordinary TCP checkers
+		// can inspect the aggregate GSO packet without mutating the packet.
+		tcp := header.TCP(header.IPv4(view.AsSlice()).Payload())
 		tcp.SetChecksum(^checksum.Checksum(tcp, 0))
 	}
 	return view
@@ -679,10 +681,10 @@ func (c *Context) GetV6Packet() *buffer.View {
 	if got, want := pkt.NetworkProtocolNumber, ipv6.ProtocolNumber; got != want {
 		c.t.Fatalf("got pkt.NetworkProtocolNumber = %d, want = %d", got, want)
 	}
-	v := pkt.ToView()
+	v := pkt.AsView()
 
-	checker.IPv6(c.t, v, checker.SrcAddr(StackV6Addr), checker.DstAddr(TestV6Addr))
-	return v
+	checker.IPv6(c.t, &v, checker.SrcAddr(StackV6Addr), checker.DstAddr(TestV6Addr))
+	return pkt.ToView()
 }
 
 // SendV6Packet builds and sends an IPv6 Packet via the link layer endpoint of

@@ -3917,25 +3917,57 @@ func TestMSSNotDelayed(t *testing.T) {
 
 func TestPartialSegmentDelayed(t *testing.T) {
 	const maxPayload = 100
+	type sendCounts struct {
+		first       int
+		afterWindow int
+	}
 	for _, option := range []string{"nodelay", "nagle", "cork"} {
 		for _, gso := range []bool{false, true} {
 			for _, test := range []struct {
-				name         string
-				window       seqnum.Size
-				dataSize     int
-				queuedPrefix int
-				openWindow   bool
+				name           string
+				window         seqnum.Size
+				dataSize       int
+				queuedPrefix   int
+				openWindow     bool
+				wantHeld       sendCounts
+				wantNoDelay    sendCounts
+				wantNoDelayGSO sendCounts
 			}{
-				{"full-and-partial", 30000, 2*maxPayload + 1, 0, false},
-				{"window-budget", maxPayload + 51, 2*maxPayload + 1, 0, true},
-				{"window-filled-short", 51, 50, 0, false},
-				{"next-write-too-big", 2*maxPayload + 1, 2*maxPayload + 50, 50, true},
+				{
+					name: "full-and-partial", window: 30000, dataSize: 201,
+					wantHeld:       sendCounts{first: 200},
+					wantNoDelay:    sendCounts{first: 201},
+					wantNoDelayGSO: sendCounts{first: 201},
+				},
+				{
+					name: "window-budget", window: 151, dataSize: 201, openWindow: true,
+					wantHeld:       sendCounts{first: 100, afterWindow: 100},
+					wantNoDelay:    sendCounts{first: 100, afterWindow: 101},
+					wantNoDelayGSO: sendCounts{first: 150, afterWindow: 51},
+				},
+				{
+					name: "window-filled-short", window: 51, dataSize: 50,
+					wantHeld:       sendCounts{first: 50},
+					wantNoDelay:    sendCounts{first: 50},
+					wantNoDelayGSO: sendCounts{first: 50},
+				},
+				{
+					name: "next-write-too-big", window: 201, dataSize: 250, queuedPrefix: 50, openWindow: true,
+					wantHeld: sendCounts{first: 100, afterWindow: 100},
+				},
 			} {
 				if option == "nodelay" && test.queuedPrefix != 0 {
 					// This case needs a held write before queuing the next one.
 					continue
 				}
 				t.Run(fmt.Sprintf("%s/gso=%t/%s", option, gso, test.name), func(t *testing.T) {
+					want := test.wantHeld
+					if option == "nodelay" {
+						want = test.wantNoDelay
+						if gso {
+							want = test.wantNoDelayGSO
+						}
+					}
 					c := context.NewWithOpts(t, context.Options{
 						EnableV4: true,
 						MTU:      e2e.DefaultMTU,
@@ -3975,8 +4007,9 @@ func TestPartialSegmentDelayed(t *testing.T) {
 					}
 					noPacket := func() {
 						t.Helper()
-						// Write sends synchronously. After an ACK-induced send,
-						// acquire the same lock to wait for that send loop to finish.
+						// Write sends synchronously. Each ACK path below first
+						// receives a positive data prefix; acquiring the endpoint
+						// lock then waits for that observed send loop to finish.
 						ep := c.EP.(*tcp.Endpoint)
 						ep.LockUser()
 						defer ep.UnlockUser()
@@ -3993,7 +4026,6 @@ func TestPartialSegmentDelayed(t *testing.T) {
 					c.EP.SocketOptions().SetDelayOption(option == "nagle")
 					c.EP.SocketOptions().SetCorkOption(option == "cork")
 					payload := data[1:]
-					sent := 0
 					if test.queuedPrefix != 0 {
 						write(payload[:test.queuedPrefix])
 						noPacket()
@@ -4001,38 +4033,25 @@ func TestPartialSegmentDelayed(t *testing.T) {
 						// Preserve the existing whole-write exception: do not split
 						// the following write to fill this short segment.
 						receive(test.queuedPrefix)
-						sent = test.queuedPrefix
 					} else {
 						write(payload)
 					}
-					first := min(len(payload)-sent, int(test.window)-1-sent)
-					// Without GSO, the remaining window must fit either a whole
-					// queued segment or at least one MSS before another send.
-					if first >= maxPayload && (option != "nodelay" || (!gso && first < len(payload)-sent)) {
-						first -= first % maxPayload
-					}
-					receive(first)
-					sent += first
+					receive(want.first)
 					noPacket()
 					if test.openWindow {
 						// Reopen the window without acknowledging the full segments.
 						// The deferred tail must still obey Nagle/CORK on this visit.
 						c.SendAck(iss, 1)
-						next := len(payload) - sent
-						if option != "nodelay" {
-							next -= next % maxPayload
-						}
-						receive(next)
-						sent += next
+						receive(want.afterWindow)
 						noPacket()
 					}
-					if sent != len(payload) {
+					if received != len(data) {
 						if option == "cork" {
 							c.EP.SocketOptions().SetCorkOption(false)
 						} else {
 							c.SendAck(iss, received)
 						}
-						receive(len(payload) - sent)
+						receive(len(data) - received)
 						noPacket()
 					}
 					c.SendAck(iss, received)
