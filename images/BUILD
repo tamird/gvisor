@@ -1,22 +1,67 @@
+load("@rules_distroless//distroless:defs.bzl", "cacerts")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
-load("//tools:defs.bzl", "go_binary", "pkg_tar")
+load("//tools:arch.bzl", "select_arch")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
 )
 
-# Include the complete contexts, including files owned by nested packages.
-# tools/images.mk remains responsible for architecture selection and hashing.
-filegroup(
-    name = "sources",
-    srcs = glob(["**"]) + [
-        "//images/gpu/ollama/client:sources",
+cacerts(
+    name = "helper_ca_certificates",
+    package = "@helper_image_packages//ca-certificates:data",
+)
+
+pkg_tar(
+    name = "helper_filesystem",
+    empty_dirs = ["tmp"],
+    mode = "01777",
+)
+
+# Both static Go helpers use this base. Additional runtime commands belong to
+# the image whose caller needs them.
+oci_image(
+    name = "helper_base",
+    architecture = select_arch(
+        amd64 = "amd64",
+        arm64 = "arm64",
+    ),
+    env = {
+        "PATH": "/usr/bin:/bin",
+        "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
+    },
+    os = "linux",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    tars = [
+        ":helper_ca_certificates",
+        ":helper_filesystem",
+    ],
+    user = "0:0",
+    visibility = ["//images:__subpackages__"],
+)
+
+bzl_library(
+    name = "oci_bzl",
+    srcs = ["oci.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        "//tools:defs_bzl",
+        "@rules_oci//oci:defs",
+        "@rules_pkg//pkg:bzl_srcs",
     ],
 )
 
-# Build the CUDA sample runners with the repository Go toolchain.
-# Their former Docker build used CGO_ENABLED=0; preserve that link contract.
+# Source files packaged with the CUDA helper binaries for Make.
+# tools/images.mk selects the architecture and computes image tags.
+filegroup(
+    name = "sources",
+    srcs = glob(["**"]),
+)
+
+# Build static CUDA sample runners with the repository Go toolchain.
 go_binary(
     name = "cuda_run_sample",
     srcs = ["gpu/cuda-tests/run_sample.go"],
@@ -38,13 +83,11 @@ pkg_files(
     srcs = [
         ":cuda_12_8_run_sample",
         ":cuda_run_sample",
-        "//images/gpu/ollama/client",
     ],
     attributes = pkg_attributes(mode = "0755"),
     renames = {
         ":cuda_run_sample": "gpu/cuda-tests/run_sample",
         ":cuda_12_8_run_sample": "gpu/cuda-tests-12-8/run_sample",
-        "//images/gpu/ollama/client": "gpu/ollama/client/client",
     },
 )
 
