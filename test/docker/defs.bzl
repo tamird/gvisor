@@ -3,11 +3,22 @@
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_foreign_cc//toolchains/native_tools:tool_access.bzl", "access_tool")
 load("@rules_oci//oci:defs.bzl", "oci_load")
+load("@with_cfg.bzl//:with_cfg.bzl", "with_cfg")
 load("//tools:arch.bzl", "amd64_config", "arch_config", "arm64_config", "select_arch", "transition_allowlist")
 load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools/bazeldefs:test_architectures.bzl", "test_architecture_tags", "test_architecture_variants", "with_test_architecture")
 load(":config.bzl", "AMD64_IMAGES", "AMD64_RUNTIME_IMAGES", "COHORT_IMAGES")
+
+# Match the source-context transition: an AMD64 image remains AMD64 even when
+# its consumer is built for another CPU or with the Go race detector enabled.
+amd64_image_archive, _amd64_image_archive_transition = with_cfg(native.filegroup).set(
+    "cpu",
+    "k8",
+).set(
+    "platforms",
+    [Label("//tools/bazeldefs:linux_amd64")],
+).set(Label("@io_bazel_rules_go//go/config:race"), False).build()
 
 def _image_name(image):
     return image.replace("/", "_").replace("-", "_")

@@ -2,7 +2,7 @@ load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
-load(":defs.bzl", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
+load(":defs.bzl", "amd64_image_archive", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -87,10 +87,10 @@ source_image_archive(
 
 # The client has no Dockerfile RUN steps; its Bazel-built executable is one
 # declared OCI layer. Preserve the label used by the public GPU cohorts.
-alias(
+amd64_image_archive(
     name = "gpu_ollama_client_source_amd64",
     testonly = True,
-    actual = "//images/gpu/ollama/client:image_archive",
+    srcs = ["//images/gpu/ollama/client:image_archive"],
     tags = ["manual"],
 )
 
@@ -140,6 +140,7 @@ bzl_library(
         "@bazel_skylib//lib:shell",
         "@rules_foreign_cc//toolchains/native_tools:tool_access",
         "@rules_oci//oci:defs",
+        "@with_cfg.bzl//:with_cfg",
     ],
 )
 
