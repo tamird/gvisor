@@ -29,6 +29,7 @@ def _go_stateify_impl(ctx):
     archives = {}
     archive_files = []
     canonical_archives = {}
+    native_imports = {}
 
     # Direct dependencies have the same precedence as the real compiler.
     # Transitives supply types referenced by those export records.
@@ -41,6 +42,8 @@ def _go_stateify_impl(ctx):
                 if is_direct:
                     fail("conflicting direct exports for compiler package %s" % data.importmap)
                 continue
+            if is_direct and data.importmap not in native_imports:
+                native_imports[data.importmap] = data.importpath
             canonical_archives[data.importmap] = export.path
             archive_files.append(export)
             entry = {"File": export.path, "ImportMap": data.importmap}
@@ -74,6 +77,9 @@ def _go_stateify_impl(ctx):
         "Sources": [f.path for f in checker.srcs],
         "Groups": groups,
         "Archives": archives,
+        # Recursive exported types are checker inputs, but only declared direct
+        # dependencies may become imports in the owning compiler's sources.
+        "NativeImports": native_imports,
         "Stdlib": [f.path for f in go.stdlib.libs.to_list()],
         "GOOS": go.env["GOOS"],
         "GOARCH": go.env["GOARCH"],

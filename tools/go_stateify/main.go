@@ -221,6 +221,8 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s)", statePrefix, name, records.types[name].factory))
 		} else if records != nil && records.forward[name] != "" {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)))", statePrefix, name, statePrefix, records.forward[name]))
+		} else if records != nil {
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterType((*%s)(nil))", statePrefix, name))
 		} else {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
 		}
@@ -257,8 +259,16 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
 			}
 		}
+		if records != nil {
+			for _, imported := range records.operationImports {
+				fmt.Fprintf(outputFile, " %s %q\n", imported.name, imported.path)
+			}
+		}
 		fmt.Fprint(outputFile, ")\n\n")
 	})
+	if records != nil && len(records.operations) != 0 {
+		maybeEmitImports()
+	}
 
 	simpleMethods := group.methods
 	for _, model := range group.types {
@@ -467,6 +477,11 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 	}
 
+	if records != nil {
+		for _, operation := range records.operations {
+			initCalls = append(initCalls, fmt.Sprintf("%s%s[%s]()", statePrefix, operation.helper, operation.typ))
+		}
+	}
 	if len(initCalls) > 0 {
 		// Emit the init() function.
 		fmt.Fprintf(outputFile, "func init() {\n")

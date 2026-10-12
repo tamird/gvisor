@@ -262,34 +262,6 @@ func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Object, c
 	}
 }
 
-// walkChild returns a child object from obj, given an accessor path. This is
-// the decode-side equivalent to traverse in encode.go.
-//
-// For the purposes of this function, a child object is either a field within a
-// struct or an array element, with one such indirection per element in
-// path. The returned value may be an unexported field, so it may not be
-// directly assignable. See decode_unsafe.go.
-func walkChild(path []wire.Dot, obj reflect.Value) reflect.Value {
-	// See wire.Ref.Dots. The path here is specified in reverse order.
-	for i := len(path) - 1; i >= 0; i-- {
-		switch pc := path[i].(type) {
-		case *wire.FieldName: // Must be a pointer.
-			if obj.Kind() != reflect.Struct {
-				Failf("next component in child path is a field name, but the current object is not a struct. Path: %v, current obj: %#v", path, obj)
-			}
-			obj = obj.FieldByName(string(*pc))
-		case wire.Index: // Embedded.
-			if obj.Kind() != reflect.Array {
-				Failf("next component in child path is an array index, but the current object is not an array. Path: %v, current obj: %#v", path, obj)
-			}
-			obj = obj.Index(int(pc))
-		default:
-			panic("unreachable: switch should be exhaustive")
-		}
-	}
-	return obj
-}
-
 func (ds *decodeState) growObjectsByID(id objectID) {
 	if len(ds.objectsByID) < int(id) {
 		ds.objectsByID = append(ds.objectsByID, make([]*objectDecodeState, int(id)-len(ds.objectsByID))...)
@@ -330,8 +302,8 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
 	}
-	v := reflect.New(typ)
-	ods = ds.addObject(id, v.Elem())
+	v := operationsFor(typ).memory.newValue()
+	ods = ds.addObject(id, v)
 
 	// Process any deferred objects & callbacks.
 	if encoded, ok := ds.deferred[id]; ok {
@@ -405,6 +377,11 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
+	ops := operationsFor(obj.Type())
+	if ops.memory.load != nil {
+		ops.memory.load(obj.Addr().UnsafePointer(), ds.ctx, Source{internal: od})
+		return
+	}
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
@@ -415,32 +392,28 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 
 // decodeMap decodes a map value.
 func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
-	if obj.IsNil() {
-		// See pointerTo.
-		obj.Set(reflect.MakeMap(obj.Type()))
-	}
-	for i := 0; i < len(encoded.Keys); i++ {
-		// Decode the objects.
-		kv := reflect.New(obj.Type().Key()).Elem()
-		vv := reflect.New(obj.Type().Elem()).Elem()
-		ds.decodeObject(ods, kv, encoded.Keys[i])
-		ds.decodeObject(ods, vv, encoded.Values[i])
+	source := reflectedValue(obj)
+	source.ops.mapOps.initialize(source)
+	for i := range encoded.Keys {
+		// Cells are not reused: load hooks may retain their addresses.
+		key := reflectedValue(source.ops.key.memory.newValue())
+		element := reflectedValue(source.ops.elem.memory.newValue())
+		ds.decodeValue(ods, key, encoded.Keys[i])
+		ds.decodeValue(ods, element, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
-
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		source.ops.mapOps.insert(source, key, element)
 	}
 }
 
 // decodeArray decodes an array value.
-func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, encoded *wire.Array) {
-	if len(encoded.Contents) != obj.Len() {
-		Failf("mismatching array length expect=%d, actual=%d", obj.Len(), len(encoded.Contents))
+func (ds *decodeState) decodeArray(ods *objectDecodeState, obj value, encoded *wire.Array) {
+	if len(encoded.Contents) != int(obj.ops.layout.length) {
+		Failf("mismatching array length expect=%d, actual=%d", obj.ops.layout.length, len(encoded.Contents))
 	}
 	// Decode the contents into the array.
 	for i := 0; i < len(encoded.Contents); i++ {
-		ds.decodeObject(ods, obj.Index(i), encoded.Contents[i])
+		ds.decodeValue(ods, obj.index(i), encoded.Contents[i])
 		ds.waitObject(ods, encoded.Contents[i], nil)
 	}
 }
@@ -455,7 +428,8 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 	case *wire.TypeSpecPointer:
 		return reflect.PointerTo(ds.findType(x.Type))
 	case *wire.TypeSpecArray:
-		return reflect.ArrayOf(int(x.Count), ds.findType(x.Type))
+		element := ds.findType(x.Type)
+		return reflect.ArrayOf(checkedArrayLength(uint64(x.Count), element.Size()), element)
 	case *wire.TypeSpecSlice:
 		return reflect.SliceOf(ds.findType(x.Type))
 	case *wire.TypeSpecMap:
@@ -484,7 +458,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
 	origObj := obj
-	obj = reflect.New(typ).Elem()
+	obj = operationsFor(typ).memory.newValue()
 	defer origObj.Set(obj)
 
 	// With the object now having sufficient type information to actually
@@ -513,87 +487,7 @@ func isComplexEq(x complex128, y complex128) bool {
 
 // decodeObject decodes a object value.
 func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) {
-	switch x := encoded.(type) {
-	case wire.Nil: // Fast path: first.
-		// We leave obj alone here. That's because if obj represents an
-		// interface, it may have been imbued with type information in
-		// decodeInterface, and we don't want to destroy that.
-	case *wire.Ref:
-		// Nil pointers may be encoded in a "forceValue" context. For
-		// those we just leave it alone as the value will already be
-		// correct (nil).
-		if id := objectID(x.Root); id == 0 {
-			return
-		}
-
-		// Note that if this is a map type, we go through a level of
-		// indirection to allow for map aliasing.
-		if obj.Kind() == reflect.Map {
-			v := ds.register(x, obj.Type())
-			if v.IsNil() {
-				// Note that we don't want to clobber the map
-				// if has already been decoded by decodeMap. We
-				// just make it so that we have a consistent
-				// reference when that eventually does happen.
-				v.Set(reflect.MakeMap(v.Type()))
-			}
-			obj.Set(v)
-			return
-		}
-
-		// Normal assignment: authoritative only if no dots.
-		v := ds.register(x, obj.Type().Elem())
-		obj.Set(reflectValueRWAddr(v))
-	case wire.Bool:
-		obj.SetBool(bool(x))
-	case wire.Int:
-		obj.SetInt(int64(x))
-		if obj.Int() != int64(x) {
-			Failf("signed integer truncated from %v to %v", int64(x), obj.Int())
-		}
-	case wire.Uint:
-		obj.SetUint(uint64(x))
-		if obj.Uint() != uint64(x) {
-			Failf("unsigned integer truncated from %v to %v", uint64(x), obj.Uint())
-		}
-	case wire.Float32:
-		obj.SetFloat(float64(x))
-	case wire.Float64:
-		obj.SetFloat(float64(x))
-		if !isFloatEq(obj.Float(), float64(x)) {
-			Failf("floating point number truncated from %v to %v", float64(x), obj.Float())
-		}
-	case *wire.Complex64:
-		obj.SetComplex(complex128(*x))
-	case *wire.Complex128:
-		obj.SetComplex(complex128(*x))
-		if !isComplexEq(obj.Complex(), complex128(*x)) {
-			Failf("complex number truncated from %v to %v", complex128(*x), obj.Complex())
-		}
-	case *wire.String:
-		obj.SetString(string(*x))
-	case *wire.Slice:
-		// See *wire.Ref above; same applies.
-		if id := objectID(x.Ref.Root); id == 0 {
-			return
-		}
-		// Note that it's fine to slice the array here and assume that
-		// contents will still be filled in later on.
-		typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-		v := ds.register(&x.Ref, typ)
-		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
-	case *wire.Array:
-		ds.decodeArray(ods, obj, x)
-	case *wire.Struct:
-		ds.decodeStruct(ods, obj, x)
-	case *wire.Map:
-		ds.decodeMap(ods, obj, x)
-	case *wire.Interface:
-		ds.decodeInterface(ods, obj, x)
-	default:
-		// Should not happen, not propagated as an error.
-		Failf("unknown object %#v for %q", encoded, obj.Type().Name())
-	}
+	ds.decodeValue(ods, reflectedValue(obj), encoded)
 }
 
 // Load deserializes the object graph rooted at obj.
