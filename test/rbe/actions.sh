@@ -39,18 +39,30 @@ options=("--arch=$QUALIFICATION_ARCH" "--clock-source=${QUALIFICATION_CLOCK_SOUR
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi
-if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
-  options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
-fi
-if [[ -n ${QUALIFICATION_BUILD_TARGETS:-} ]]; then
-  if [[ $QUALIFICATION_BUILD_TARGETS == *$'\n'* ]]; then
-    printf 'Supply build target labels on one line.\n' >&2
+if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
+  if [[ $QUALIFICATION_TARGETS == *$'\n'* ]]; then
+    printf 'Supply target labels on one line.\n' >&2
     exit 2
   fi
-  read -r -a build_targets <<< "$QUALIFICATION_BUILD_TARGETS"
-  for target in "${build_targets[@]}"; do
-    options+=("--build-target=$target")
-  done
+  read -r -a selected_targets <<< "$QUALIFICATION_TARGETS"
+  case "${lanes[*]}" in
+    build)
+      for target in "${selected_targets[@]}"; do
+        options+=("--build-target=$target")
+      done
+      ;;
+    benchmarks)
+      if (( ${#selected_targets[@]} != 1 )); then
+        printf 'Select exactly one continuous benchmark target.\n' >&2
+        exit 2
+      fi
+      options+=("--benchmark-target=${selected_targets[0]}")
+      ;;
+    *)
+      printf 'Explicit targets require the build or benchmarks lane.\n' >&2
+      exit 2
+      ;;
+  esac
 fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=

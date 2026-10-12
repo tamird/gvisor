@@ -33,11 +33,8 @@ name: CI
       syscall_bucket:
         description: Optional hash15 bucket (0..14) for local syscall lanes
         type: string
-      benchmark_target:
-        description: Optional individual target from the continuous benchmark suite
-        type: string
-      build_targets:
-        description: Space-separated absolute Bazel labels for the build lane
+      targets:
+        description: Optional build labels, or one continuous benchmark label
         type: string
       header_base:
         description: Full comparison commit SHA for license-headers
@@ -50,7 +47,7 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}-${{ inputs.clock_source }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.lanes == 'benchmarks' && inputs.targets || '' }}-${{ inputs.clock_source }}
   cancel-in-progress: true
 
 jobs:
@@ -93,8 +90,7 @@ jobs:
       QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
       QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_BENCHMARK_TARGET: ${{ inputs.benchmark_target }}
-      QUALIFICATION_BUILD_TARGETS: ${{ inputs.build_targets }}
+      QUALIFICATION_TARGETS: ${{ inputs.targets }}
       QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
       QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
       QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
@@ -142,8 +138,7 @@ jobs:
           --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
           --env="QUALIFICATION_CLOCK_SOURCE=$QUALIFICATION_CLOCK_SOURCE" \
           --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
-          --env="QUALIFICATION_BENCHMARK_TARGET=$QUALIFICATION_BENCHMARK_TARGET" \
-          --env="QUALIFICATION_BUILD_TARGETS=$QUALIFICATION_BUILD_TARGETS" \
+          --env="QUALIFICATION_TARGETS=$QUALIFICATION_TARGETS" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
           --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
           --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
