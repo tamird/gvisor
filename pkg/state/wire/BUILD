@@ -14,6 +14,7 @@ go_library(
         "record.go",
         "wire.go",
     ],
+    gc_goopts = ["-m=2"],
     importpath = "gvisor.dev/gvisor/pkg/state/wire",
     marshal = False,
     stateify = False,
