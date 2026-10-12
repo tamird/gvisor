@@ -15,6 +15,7 @@
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
+load("//tools:defs.bzl", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 
 package(
@@ -161,6 +162,44 @@ docker_command_test(
         memory = "4GB",
     ),
     tags = ["manual"],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# Fork-only CPU check of the actual declared Ollama client image.
+go_test(
+    name = "ollama_client_test",
+    srcs = ["ollama_client_test.go"],
+    tags = ["manual"],
+    deps = ["//pkg/test/dockerutil"],
+)
+
+docker_daemon_config(
+    name = "ollama_client_config",
+    testonly = True,
+    images = ["//test/docker:gpu_ollama_client_source_amd64"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "ollama_client_image_test",
+    size = "medium",
+    command = ":ollama_client_test",
+    command_args = ["-test.v"],
+    docker_config = ":ollama_client_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
     target_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
