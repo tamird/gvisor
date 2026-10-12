@@ -1,3 +1,4 @@
+load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
@@ -79,6 +80,29 @@ source_image_archive(
         ("cuda_samples_source_amd64", "gpu/cuda-tests"),
         ("cuda_samples_12_8_source_amd64", "gpu/cuda-tests-12-8"),
     ]
+]
+
+# Runtime GPU images use the same source/archive producer as the CUDA images.
+# Building these archives requires Docker, but does not execute GPU tests.
+[
+    source_image_archive(
+        name = name,
+        testonly = True,
+        architecture = "x86_64",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ),
+        image = image,
+        tags = ["manual"],
+    )
+    for name, image in GPU_SOURCE_IMAGES.items()
 ]
 
 bzl_library(
