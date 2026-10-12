@@ -252,6 +252,15 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		if records != nil && len(records.types) != 0 {
 			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", records.wireAlias)
 		}
+		if records != nil && len(records.loads) != 0 {
+			fmt.Fprintf(outputFile, " %s \"reflect\"\n", records.reflectAlias)
+			fmt.Fprintf(outputFile, " %s \"unsafe\"\n", records.unsafeAlias)
+		}
+		if records != nil {
+			for _, imported := range records.mapImports {
+				fmt.Fprintf(outputFile, " %s %q\n", imported.alias, imported.path)
+			}
+		}
 		if imports != "" {
 			for _, i := range strings.Split(imports, ",") {
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
@@ -288,20 +297,33 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				emitField(name)
 			}
 			emitLoadValue := func(name, typName string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
+				fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
 			}
-			emitLoad := func(name string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
+			emitLoadField := func(name string, wait bool) {
+				if records != nil {
+					if helper := records.loads[ts.Name.Name][name]; helper != "" {
+						fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, %s.Pointer(&%s.%s)", helper, fields[name], records.unsafeAlias, recv, name)
+						if helper == "LoadPointer" || helper == "LoadMap" {
+							fmt.Fprintf(outputFile, ", %s.TypeOf(&%s.%s).Elem()", records.reflectAlias, recv, name)
+						}
+						fmt.Fprintf(outputFile, ", %t)\n", wait)
+						return
+					}
+				}
+				method := "Load"
+				if wait {
+					method = "LoadWait"
+				}
+				fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], recv, name)
 			}
-			emitLoadWait := func(name string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
-			}
+			emitLoad := func(name string) { emitLoadField(name, false) }
+			emitLoadWait := func(name string) { emitLoadField(name, true) }
 			// Checked capture can introduce package-qualified calls inside
 			// StateSave. Keep a handwritten receiver from shadowing that
 			// import, without renaming the hook or other generated methods.
 			saveRecv := recv
 			if records != nil && statePrefix == recv+"." {
-				saveRecv = records.saveReceiver
+				saveRecv = records.receiver
 			}
 			recordLocal := "stateSnapshotObject"
 			if recv == recordLocal {
@@ -467,6 +489,12 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 	}
 
+	if records != nil {
+		for _, typ := range records.mapTypes {
+			maybeEmitImports()
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterMap[%s]()", statePrefix, typ))
+		}
+	}
 	if len(initCalls) > 0 {
 		// Emit the init() function.
 		fmt.Fprintf(outputFile, "func init() {\n")

@@ -330,8 +330,8 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
 	}
-	v := reflect.New(typ)
-	ods = ds.addObject(id, v.Elem())
+	v := newObject(typ)
+	ods = ds.addObject(id, v)
 
 	// Process any deferred objects & callbacks.
 	if encoded, ok := ds.deferred[id]; ok {
@@ -364,15 +364,22 @@ func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func
 	// is in terms of the local type, where the fields in the encoded
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
-	v := *od.encoded.Field(od.rte.FieldOrder[slot])
+	v := od.field(slot)
 	od.ds.decodeObject(od.ods, objPtr.Elem(), v)
+	od.finishField(v, wait, fn)
+}
+
+func (od *objectDecoder) field(slot int) wire.Object {
+	return *od.encoded.Field(od.rte.FieldOrder[slot])
+}
+
+func (od *objectDecoder) finishField(encoded wire.Object, wait bool, fn func()) {
 	if wait {
-		// Mark this individual object a blocker.
-		od.ds.waitObject(od.ods, v, fn)
+		od.ds.waitObject(od.ods, encoded, fn)
 	}
 }
 
-// aterLoad implements Source.AfterLoad.
+// afterLoad implements Source.AfterLoad.
 func (od *objectDecoder) afterLoad(fn func()) {
 	// Queue the local callback; this will execute when all of the above
 	// data dependencies have been cleared.
@@ -413,24 +420,36 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 }
 
-// decodeMap decodes a map value.
+// decodeMap decodes a map value. Storage operations are selected once for
+// the actual map type; both adapters share entry decoding and dependency order.
 func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
-	if obj.IsNil() {
-		// See pointerTo.
+	native := mapStorage[obj.Type()]
+	address := obj.Addr().UnsafePointer()
+	if native != nil {
+		native.ensure(address)
+	} else if obj.IsNil() {
 		obj.Set(reflect.MakeMap(obj.Type()))
 	}
-	for i := 0; i < len(encoded.Keys); i++ {
-		// Decode the objects.
-		kv := reflect.New(obj.Type().Key()).Elem()
-		vv := reflect.New(obj.Type().Elem()).Elem()
-		ds.decodeObject(ods, kv, encoded.Keys[i])
-		ds.decodeObject(ods, vv, encoded.Values[i])
-		ds.waitObject(ods, encoded.Keys[i], nil)
-		ds.waitObject(ods, encoded.Values[i], nil)
-
-		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+	for i := range encoded.Keys {
+		if native != nil {
+			native.entry(ds, ods, address, encoded.Keys[i], encoded.Values[i])
+		} else {
+			key := reflect.New(obj.Type().Key()).Elem()
+			value := reflect.New(obj.Type().Elem()).Elem()
+			ds.decodeMapEntry(ods, key, value, encoded.Keys[i], encoded.Values[i])
+			obj.SetMapIndex(key, value)
+		}
 	}
+}
+
+// decodeMapEntry completes both fresh cells before the storage adapter inserts
+// them. Hooks may retain these cells; insertion remains immediate after waits
+// are registered, rather than waiting for referenced objects to complete.
+func (ds *decodeState) decodeMapEntry(ods *objectDecodeState, key, value reflect.Value, encodedKey, encodedValue wire.Object) {
+	ds.decodeObject(ods, key, encodedKey)
+	ds.decodeObject(ods, value, encodedValue)
+	ds.waitObject(ods, encodedKey, nil)
+	ds.waitObject(ods, encodedValue, nil)
 }
 
 // decodeArray decodes an array value.
@@ -484,7 +503,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
 	origObj := obj
-	obj = reflect.New(typ).Elem()
+	obj = newObject(typ)
 	defer origObj.Set(obj)
 
 	// With the object now having sufficient type information to actually
@@ -529,49 +548,18 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// Note that if this is a map type, we go through a level of
 		// indirection to allow for map aliasing.
 		if obj.Kind() == reflect.Map {
-			v := ds.register(x, obj.Type())
-			if v.IsNil() {
-				// Note that we don't want to clobber the map
-				// if has already been decoded by decodeMap. We
-				// just make it so that we have a consistent
-				// reference when that eventually does happen.
-				v.Set(reflect.MakeMap(v.Type()))
-			}
-			obj.Set(v)
+			target := ds.mapTarget(x, obj.Type())
+			assignMap(obj.Addr().UnsafePointer(), obj.Type(), target)
 			return
 		}
-
-		// Normal assignment: authoritative only if no dots.
-		v := ds.register(x, obj.Type().Elem())
-		obj.Set(reflectValueRWAddr(v))
-	case wire.Bool:
-		obj.SetBool(bool(x))
-	case wire.Int:
-		obj.SetInt(int64(x))
-		if obj.Int() != int64(x) {
-			Failf("signed integer truncated from %v to %v", int64(x), obj.Int())
+		if obj.Kind() != reflect.Ptr {
+			Failf("wire reference has incompatible destination %v", obj.Type())
 		}
-	case wire.Uint:
-		obj.SetUint(uint64(x))
-		if obj.Uint() != uint64(x) {
-			Failf("unsigned integer truncated from %v to %v", uint64(x), obj.Uint())
+		ds.assignPointer(obj.Addr().UnsafePointer(), obj.Type(), x)
+	case wire.Bool, wire.Int, wire.Uint, wire.Float32, wire.Float64, *wire.Complex64, *wire.Complex128, *wire.String:
+		if !storeScalar(obj, encoded) {
+			Failf("wire value has incompatible destination %v", obj.Type())
 		}
-	case wire.Float32:
-		obj.SetFloat(float64(x))
-	case wire.Float64:
-		obj.SetFloat(float64(x))
-		if !isFloatEq(obj.Float(), float64(x)) {
-			Failf("floating point number truncated from %v to %v", float64(x), obj.Float())
-		}
-	case *wire.Complex64:
-		obj.SetComplex(complex128(*x))
-	case *wire.Complex128:
-		obj.SetComplex(complex128(*x))
-		if !isComplexEq(obj.Complex(), complex128(*x)) {
-			Failf("complex number truncated from %v to %v", complex128(*x), obj.Complex())
-		}
-	case *wire.String:
-		obj.SetString(string(*x))
 	case *wire.Slice:
 		// See *wire.Ref above; same applies.
 		if id := objectID(x.Ref.Root); id == 0 {
