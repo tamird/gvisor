@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-12T06:35:34.910311+00:00",
+    "updatedAt": "2026-10-12T06:47:25.772744+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6534,6 +6534,35 @@
           "https://github.com/google/gvisor/pull/15635",
           "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba",
           "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4"
+        ]
+      }
+    },
+    {
+      "id": "branch:ioctl-sniffer-frames",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/ioctl-sniffer-frames",
+      "head": "ce97df04c17acf1c16b7ef072c6f846d57c8fe0e",
+      "title": "Preserve ioctl results while logging frames",
+      "group": "runtime",
+      "summary": "Contributor review is pending for this independent ioctl-sniffer correction on base 309599c1e. It preserves the real ioctl errno across logging, initializes symbol lookup safely, checks serialization before emitting a frame, and completes partial sends while handling interruption and write errors. The real-hook CPU regression observes the original ENOENT-versus-EBADF failure; the corrected case passes on AMD64 and ARM64. These executed results belong to qualification source e098808b8. The standalone C++/header bodies and new test/dependency declarations match that qualification; only pre-existing qualification BUILD differences are absent, and no fresh standalone build is claimed. Interrupted or short sends and concurrent initialization have source review rather than forced runtime coverage. The qualification parent remains Failed for a later artifact-retention error, with the intended hook recovered from its exact recorded output. No GPU execution, upstream PR, code dependency or contributor approval is inferred.",
+      "url": "https://github.com/tamird/gvisor/commit/ce97df04c17acf1c16b7ef072c6f846d57c8fe0e",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-12T06:47:25.772744+00:00",
+      "contributorReview": {
+        "status": "pending",
+        "head": "ce97df04c17acf1c16b7ef072c6f846d57c8fe0e",
+        "url": "https://github.com/tamird/gvisor/commit/ce97df04c17acf1c16b7ef072c6f846d57c8fe0e"
+      },
+      "followup": {
+        "disposition": "Contributor review pending",
+        "owner": "root",
+        "sourceHead": "ce97df04c17acf1c16b7ef072c6f846d57c8fe0e",
+        "reviewedAt": "2026-10-12T06:47:25.772744+00:00",
+        "nextAction": "Await the already-issued contributor decision for this exact independent proposal before upstream submission.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ce97df04c17acf1c16b7ef072c6f846d57c8fe0e",
+          "https://app.buildbuddy.io/invocation/e336a84e-4547-4b34-869c-5dba78060681"
         ]
       }
     }
