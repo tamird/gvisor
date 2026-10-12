@@ -72,10 +72,9 @@ else
     aarch64) platform=linux/arm64 ;;
     *) echo "Unknown image architecture: ${arch}" >&2; exit 1 ;;
   esac
-  # Retain the local-filesystem spool while avoiding a Docker unpack/save for
-  # cached source images. The retagger changes
-  # only crane's final manifest, so no second full archive is needed.
-  saved="${work}/image.tar"
+  # Fork-only comparison uses crane's concurrent compressed-layer OCI writer.
+  # Partial blobs are diagnostic data, not a verified image or Docker archive.
+  saved="${work}/image.oci"
   # Fork-only diagnostic: capture the stalled command before retrying a full export.
   printf 'Transfer diagnostic: remote=%s platform=%s spool=%s\n' "${remote}" "${platform}" "${saved}"
   uname -m
@@ -169,12 +168,23 @@ NETWORK
   observer_pid=$!
   set +e
   time timeout --signal=QUIT --kill-after=5s 120s \
-    "${crane}" pull --platform="${platform}" "${remote}" "${saved}"
+    "${crane}" pull --format=oci --platform="${platform}" "${remote}" "${saved}"
   transfer_status=$?
   set -e
   printf 'Transfer status: %s\n' "${transfer_status}"
-  if [[ -f ${saved} ]]; then
-    stat --format='Spool size=%s blocks=%b block-size=%B' "${saved}"
+  if [[ -d ${saved} ]]; then
+    du --bytes --summarize "${saved}"
+    for blob in "${saved}"/blobs/*/*; do
+      if [[ -f ${blob} ]]; then
+        stat --format='OCI blob=%n size=%s blocks=%b block-size=%B' "${blob}"
+      fi
+    done
+    for metadata in oci-layout index.json; do
+      if [[ -f ${saved}/${metadata} ]]; then
+        printf 'OCI metadata %s\n' "${metadata}"
+        cat "${saved}/${metadata}"
+      fi
+    done
     df -B1 "${saved}"
   fi
   # Never fall through into a second pull or a full Docker build after profiling.
