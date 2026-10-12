@@ -158,6 +158,16 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+      if [[ $QUALIFICATION_EXECUTION == remote-actions && ${lanes[*]} == build ]]; then
+        # Compare the archive exporters with the original action deadline and
+        # no retries. This experiment's settings are not the permanent policy
+        # for arbitrary builds through the Actions coordinator.
+        printf '%s\n' \
+          'build:buildbuddy_remote_executor --strategy=DockerSourceImage=remote' \
+          'build:buildbuddy_remote_executor --remote_exec_header=x-buildbuddy-platform.default-timeout=5333s' \
+          'build:buildbuddy_remote_executor --remote_exec_header=x-buildbuddy-platform.retry=false' \
+          'build:buildbuddy_remote_executor --remote_retries=0'
+      fi
       if [[ $qualification_retain_reports == true ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
