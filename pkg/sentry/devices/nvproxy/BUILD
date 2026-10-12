@@ -151,3 +151,20 @@ test_suite(
         ":nvproxy_driver_checksums_test",
     ],
 )
+
+# Compile the exact standalone caller without running its external downloads.
+go_test(
+    name = "driver_refactor_standalone_caller_test",
+    size = "large",
+    srcs = ["driver_refactor_standalone_caller_test.go"],
+    tags = ["manual"],
+    visibility = ["//visibility:private"],
+    deps = [
+        ":nvproxy",
+        "//pkg/abi/nvgpu",
+        "//pkg/sentry/devices/nvproxy/nvconf",
+        "//pkg/test/testutil",
+        "//tools/gpu/drivers",
+        "//tools/nvidia_driver_differ/parser",
+    ],
+)

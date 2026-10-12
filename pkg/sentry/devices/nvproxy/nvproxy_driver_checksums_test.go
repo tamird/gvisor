@@ -18,7 +18,6 @@
 package nvproxy_driver_parity_test
 
 import (
-	"context"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
@@ -28,12 +27,13 @@ import (
 
 // TestDriverChecksums tests that the checksums of all drivers are correct.
 func TestDriverChecksums(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	nvproxy.Init()
+	var downloader drivers.Downloader
 	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, checksums nvproxy.Checksums) {
 		t.Run(version.String(), func(t *testing.T) {
 			t.Parallel()
-			if err := drivers.ValidateChecksum(ctx, version.String(), checksums); err != nil {
+			if err := downloader.ValidateChecksum(ctx, version, checksums); err != nil {
 				t.Errorf("checksum mismatch for driver %q: %v", version.String(), err)
 			}
 		})
