@@ -179,16 +179,23 @@ rebuild = \
     docker tag "gvisor.dev/images/$(subst _,/,$(1)):latest" "$(call remote_image,$(1)):$(call tag,$(1))" >&2 && \
     docker tag "$(call remote_image,$(1)):$(call tag,$(1))" "$(call remote_image,$(1)):latest" >&2; \
   else \
-    T=$$(mktemp -d) && cp -a $(call path,$(1))/* $$T && \
-    set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \
-      -f "$$T/$(call dockerfile,$(1))" \
-      -t "$(call remote_image,$(1)):$(call tag,$(1))" \
-      -t "$(call remote_image,$(1))":latest \
-      $$T >&2 && \
-    rm -rf $$T; \
+    T=$$(mktemp -d) && trap 'rm -rf "$$T"' EXIT && cp -a $(call path,$(1))/* "$$T" && \
+    (if [ -n "$(_IMAGE_OCI_OUTPUT)" ]; then \
+      $(OCI_BUILD) $(DOCKER_BUILD_ARGS) --platform="$(_IMAGE_OCI_PLATFORM)" \
+        --file "$$T/$(call dockerfile,$(1))" \
+        --output "type=oci,tar=false,compression=gzip,force-compression=true,dest=$(_IMAGE_OCI_OUTPUT)" \
+        "$$T"; \
+    else \
+      set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \
+        -f "$$T/$(call dockerfile,$(1))" \
+        -t "$(call remote_image,$(1)):$(call tag,$(1))" \
+        -t "$(call remote_image,$(1))":latest \
+        $$T >&2; \
+    fi); \
   fi) && \
-  $(call local_tag,$(1)) && \
-  $(call latest_tag,$(1))
+  (if [ -z "$(_IMAGE_OCI_OUTPUT)" ]; then \
+    $(call local_tag,$(1)) && $(call latest_tag,$(1)); \
+  fi)
 rebuild-%: register-cross ## Force rebuild an image locally.
 	@$(call rebuild,$*)
 
@@ -218,6 +225,30 @@ test-%: register-cross ## Build an image locally if the remote doesn't exist.
 
 local-image-%: register-cross ## Print current 'image:tag' for a local image.
 	echo "$(call local_image,$*):$(call tag,$*)"
+
+# Archive producers use the same prepared-context hash and names as load.
+# Merely printing references must not register cross-emulation or load images.
+image-references-%:
+	@if [ ! -f "$(call path,$*)/$(call dockerfile,$*)" ]; then \
+	  printf 'Image %s is unavailable for %s.\n' "$*" "$(ARCH)" >&2; exit 1; \
+	fi
+	@image_tag="$(call tag,$*)"; \
+	printf '%s\n' "$(call remote_image,$*):$$image_tag" \
+	  "$(call local_image,$*):$$image_tag" "$(call local_image,$*):latest"
+
+# The declared source-image producer uses the same cache-or-rebuild decision,
+# exporting an OCI layout instead of loading an image into the local daemon.
+# It supplies a fresh output path and the pinned standard BuildKit launcher.
+export-oci-%:
+	@test -n "$(_IMAGE_OCI_OUTPUT)" && test ! -e "$(_IMAGE_OCI_OUTPUT)"
+	@test -n "$(_IMAGE_OCI_PLATFORM)" && test -n "$(OCI_BUILD)"
+	@test -f "$(call path,$*)/$(call dockerfile,$*)"
+	@if [ "$(SKIP_IMAGE_LOAD)" == true ]; then \
+	  echo 'Cannot export a fresh OCI layout with SKIP_IMAGE_LOAD set.' >&2; exit 1; \
+	fi
+	@($(CRANE) pull --format=oci --platform="$(_IMAGE_OCI_PLATFORM)" \
+	  "$(call remote_image,$*):$(call tag,$*)" "$(_IMAGE_OCI_OUTPUT)") || \
+	  (rm -rf "$(_IMAGE_OCI_OUTPUT)" && $(call rebuild,$*))
 
 # push pushes the remote image, after validating that the tag doesn't exist
 # yet. Note that this generic rule will match the fully-expanded remote image

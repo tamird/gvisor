@@ -33,8 +33,8 @@ name: CI
       syscall_bucket:
         description: Optional hash15 bucket (0..14) for local syscall lanes
         type: string
-      benchmark_target:
-        description: Optional individual target from the continuous benchmark suite
+      targets:
+        description: Optional build/test labels, or one continuous benchmark label
         type: string
       header_base:
         description: Full comparison commit SHA for license-headers
@@ -47,7 +47,7 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ inputs.benchmark_target }}-${{ inputs.clock_source }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ contains(fromJSON('["build","test","benchmarks"]'), inputs.lanes) && inputs.targets || '' }}-${{ inputs.clock_source }}
   cancel-in-progress: true
 
 jobs:
@@ -79,18 +79,18 @@ jobs:
   remote-qualification:
     if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
     runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes == 'container-v1' && 155 || inputs.execution == 'remote' && inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes) && 155 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'container-v1-pilot' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
+    timeout-minutes: ${{ inputs.execution == 'local' && inputs.lanes == 'container-v1' && 155 || inputs.execution == 'remote' && (contains(fromJSON('["build","test"]'), inputs.lanes) || inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes)) && 155 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'container-v1-pilot' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
     permissions:
       contents: read
     env:
       QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution == 'remote' && inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes) && 'remote-actions' || inputs.execution }}
+      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution == 'remote' && (contains(fromJSON('["build","test"]'), inputs.lanes) || inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes)) && 'remote-actions' || inputs.execution }}
       QUALIFICATION_CLOCK_SOURCE: ${{ github.event_name == 'push' && 'calibrated' || inputs.clock_source }}
       QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
       QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
       QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_BENCHMARK_TARGET: ${{ inputs.benchmark_target }}
+      QUALIFICATION_TARGETS: ${{ inputs.targets }}
       QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
       QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
       QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
@@ -138,7 +138,7 @@ jobs:
           --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
           --env="QUALIFICATION_CLOCK_SOURCE=$QUALIFICATION_CLOCK_SOURCE" \
           --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
-          --env="QUALIFICATION_BENCHMARK_TARGET=$QUALIFICATION_BENCHMARK_TARGET" \
+          --env="QUALIFICATION_TARGETS=$QUALIFICATION_TARGETS" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
           --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
           --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \

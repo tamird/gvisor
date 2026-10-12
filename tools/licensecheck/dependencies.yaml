@@ -8651,6 +8651,18 @@
   commit: f7a0894074d194bcf19eec5411fec0528f7f4180
   sha256: 3369c58038b4d55c08928affafb653716eb1e7b3cabb4a391aef979dd921f4e1
   license: MIT
+- dependency: buildx_linux_amd64
+  version: https://github.com/docker/buildx/releases/download/v0.38.0/buildx-v0.38.0.linux-amd64
+  retrieved: "2026-10-12"
+  commit: 0dbe87f36ed472fe36b6796c3f70b4210a731fc5
+  sha256: 4fe4cc38adf48169132749b6ca22a990928db0118e3407584ee553723115d287
+  license: Apache-2.0
+- dependency: buildx_linux_arm64
+  version: https://github.com/docker/buildx/releases/download/v0.38.0/buildx-v0.38.0.linux-arm64
+  retrieved: "2026-10-12"
+  commit: 0dbe87f36ed472fe36b6796c3f70b4210a731fc5
+  sha256: 38e890e1a162bfdbf32fbe91404991dc4fc28e55b0de901b34374a061bab4d2c
+  license: Apache-2.0
 - dependency: cel-spec
   version: https://github.com/google/cel-spec/archive/refs/tags/v0.25.1.tar.gz
   retrieved: "2026-08-27"

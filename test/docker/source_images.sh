@@ -31,9 +31,13 @@ case "${mode}" in
       touch "${TEST_SHARD_STATUS_FILE}"
     fi
     ;;
-  archive)
-    test "$#" -eq 8
-    archive=$(realpath -m "$8")
+  layout)
+    test "$#" -eq 12
+    layout=$(realpath -m "$8")
+    tags=$(realpath -m "$9")
+    buildx=$(realpath "${10}")
+    buildkit_digest=$(realpath "${11}")
+    builder=$(realpath "${12}")
     ;;
   *) echo "Unknown image source operation: ${mode}" >&2; exit 1 ;;
 esac
@@ -57,17 +61,33 @@ if [[ ${mode} == test ]]; then
     CRANE="${crane_command}" "test-${selection}-images"
 else
   target=${selection//\//_}
+  case "${arch}" in
+    x86_64) platform=linux/amd64 ;;
+    aarch64) platform=linux/arm64 ;;
+    *) echo "Unknown image architecture: ${arch}" >&2; exit 1 ;;
+  esac
+  "${make}" --no-print-directory -s -f "${makefile}" ARCH="${arch}" \
+    _IMAGE_CONTEXT_PREPARED=1 "image-references-${target}" > references
+  mapfile -t references < references
+  test "${#references[@]}" -eq 3
+
+  # Keep the transport used for the qualified concurrent OCI exports local to
+  # the cache read. A miss uses the declared Buildx client and BuildKit image.
+  printf -v crane_command 'env GODEBUG=http2client=0 %q' "${crane}"
+  printf -v build_command '/bin/bash %q %q %q' \
+    "${builder}" "${buildx}" "${buildkit_digest}"
+  # Some executors create empty output directories before invoking the action.
+  # Require that any precreated directory is empty before taking ownership.
+  if [[ -e ${layout} ]]; then
+    rmdir "${layout}"
+  fi
   "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
-    CRANE="${crane_command}" "load-${target}"
-  image=$("${make}" --no-print-directory -s -f "${makefile}" \
-    ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 CRANE="${crane_command}" "local-image-${target}")
-  latest="gvisor.dev/images/${selection}:latest"
-  id=$(docker image inspect --format '{{.Id}}' "${image}")
-  test "${id}" = "$(docker image inspect --format '{{.Id}}' "${latest}")"
-  printf 'Source image %s (%s); consumer tag %s\n' "${image}" "${id}" "${latest}"
-  # Consumers use the canonical latest name in their fresh private daemons.
-  saved="${work}/image.tar"
-  docker save --output "${saved}" "${image}" "${latest}"
-  cp "${saved}" "${archive}"
-  sha256sum "${archive}"
+    CRANE="${crane_command}" OCI_BUILD="${build_command}" \
+    _IMAGE_OCI_OUTPUT="${layout}" _IMAGE_OCI_PLATFORM="${platform}" \
+    "export-oci-${target}"
+
+  # Both standard exporters write the declared layout directly. Bazel only
+  # exposes it to downstream conversion after this action succeeds.
+  printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
+  printf 'Source OCI tags: %s %s\n' "${references[1]}" "${references[2]}"
 fi

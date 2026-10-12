@@ -1,5 +1,7 @@
 """Declared inputs and execution requirements for the maintained Docker suites."""
 
+load("@bazel_lib//lib:output_files.bzl", "output_files")
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_foreign_cc//toolchains/native_tools:tool_access.bzl", "access_tool")
 load("@rules_oci//oci:defs.bzl", "oci_load")
@@ -47,10 +49,11 @@ def docker_image_archive(name, image, architecture, source = None):
         repo_tags = ["gvisor.dev/images/" + image + ":latest"],
         tags = ["manual"],
     )
-    native.filegroup(
+    output_files(
         name = name + "_tar",
-        srcs = [":" + name],
         output_group = "tarball",
+        paths = [paths.join(native.package_name(), name, "tarball.tar")],
+        target = ":" + name,
         tags = ["manual"],
     )
 
@@ -373,54 +376,103 @@ image_source_command = rule(
     ],
 )
 
-def _source_image_archive_impl(ctx):
+def _source_image_layout_impl(ctx):
     make = access_tool(Label("@rules_foreign_cc//toolchains:make_toolchain"), ctx)
     if make.target == None or make.env != {"MAKE": make.path}:
-        fail("source image archives require the declared GNU Make toolchain")
+        fail("source image layouts require the declared GNU Make toolchain")
     crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
-    archive = ctx.actions.declare_file(ctx.label.name + ".tar")
-    inputs = depset(
-        [ctx.file._contexts, ctx.file._makefile, ctx.file._script, crane],
-        transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
-    )
+    layout = ctx.actions.declare_directory(ctx.label.name + ".oci")
+    tags = ctx.actions.declare_file(ctx.label.name + ".tags.txt")
     ctx.actions.run(
         executable = "/bin/bash",
         arguments = [
             ctx.file._script.path,
-            "archive",
+            "layout",
             ctx.attr.architecture,
             make.path,
             crane.path,
             ctx.file._makefile.path,
-            ctx.file._contexts.path,
+            ctx.file.contexts.path,
             ctx.attr.image,
-            archive.path,
+            layout.path,
+            tags.path,
+            ctx.file._buildx.path,
+            ctx.file._buildkit_digest.path,
+            ctx.file._builder.path,
         ],
-        inputs = inputs,
-        outputs = [archive],
-        # The execution worker supplies Docker; RBE callers request init-dockerd.
+        inputs = depset(
+            [ctx.file.contexts, ctx.file._makefile, ctx.file._script, ctx.file._builder, ctx.file._buildx, ctx.file._buildkit_digest, crane],
+            transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
+        ),
+        outputs = [layout, tags],
         env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
-        mnemonic = "DockerSourceImage",
+        mnemonic = "SourceImageOCI",
         progress_message = "Constructing source image %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
         # Dockerfile base tags and package mirrors are mutable network inputs.
         # Share this action among consumers, but do not reuse remote/disk results.
         execution_requirements = {"no-cache": "1"},
     )
-    return [DefaultInfo(files = depset([archive]))]
+    return [
+        DefaultInfo(files = depset([layout])),
+        OutputGroupInfo(repo_tags = depset([tags])),
+    ]
 
-source_image_archive = rule(
-    implementation = _source_image_archive_impl,
-    doc = "Constructs an archive using the execution worker's Docker daemon and Make image rules.",
+_source_image_layout = rule(
+    implementation = _source_image_layout_impl,
+    doc = "Exports the Make-selected cached image or builds its Dockerfile into an OCI layout.",
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
-        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
+        "_buildx": attr.label(default = "//test/docker:buildx", allow_single_file = True, cfg = "exec"),
+        "_buildkit_digest": attr.label(default = "@source_buildkit//:digest", allow_single_file = True),
+        "_builder": attr.label(default = "//test/docker:source_image_build.sh", allow_single_file = True),
     },
     toolchains = [
         "@rules_foreign_cc//toolchains:make_toolchain",
         "@rules_oci//oci:crane_toolchain_type",
     ],
 )
+
+def source_image_archive(name, architecture, image, archive_exec_properties = {}, **kwargs):
+    """Exports a cached image or its source build through the same OCI archive.
+
+    Args:
+      name: Public Docker archive target.
+      architecture: Native architecture for the declared context and builder.
+      image: Image path used by the canonical Make hash and Dockerfile selection.
+      archive_exec_properties: Worker requirements for stock archive conversion.
+      **kwargs: Source builder execution requirements and common target attributes.
+    """
+    common = {key: kwargs[key] for key in ["testonly", "tags", "visibility", "target_compatible_with"] if key in kwargs}
+    _source_image_layout(
+        name = name + "_layout",
+        architecture = architecture,
+        image = image,
+        **kwargs
+    )
+    native.filegroup(
+        name = name + "_tags",
+        srcs = [":" + name + "_layout"],
+        output_group = "repo_tags",
+        **common
+    )
+    oci_load(
+        name = name + "_load",
+        image = ":" + name + "_layout",
+        repo_tags = ":" + name + "_tags",
+        format = "docker",
+        exec_properties = archive_exec_properties,
+        exec_compatible_with = kwargs.get("exec_compatible_with", []),
+        **common
+    )
+    output_files(
+        name = name,
+        target = ":" + name + "_load",
+        output_group = "tarball",
+        paths = [paths.join(native.package_name(), name + "_load", "tarball.tar")],
+        **common
+    )

@@ -18,11 +18,13 @@ set +e
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-lanes=(build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
+lanes=(test build build-all presubmit-build plugin-build nogo unit unit-v1 container container-v1 container-v1-pilot smoke smoke-race release-artifacts release-repository cpu-images gpu-images cos-metadata docker docker-v1 overlay swgso hostnet plugin-network 'do' root portforward posture startup benchmarks containerd bwrap fsstress packetimpact iptables nftables moby kvm packetdrill language-directfs language-goferfs kubernetes podman syzkaller website go-export codeql workflows gazelle lint lint-cc governance license-check license-headers python-distributions syscalls syscalls-kvm syscalls-rc-pilot syscalls-64k syscalls-rc syscalls-save syscalls-resume)
 
 usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
+       test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] build
+       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] test
        test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
@@ -65,6 +67,9 @@ calibrated. Reference mode uses host clocks across the maintained runtime
 fixtures; it does not change production defaults or select different tests.
 A benchmark target selects one member of the continuous suite, retaining its
 original workload and timeout. Other suite members remain unexecuted.
+The test lane runs explicitly selected tests on remote workers.
+The build lane builds explicitly selected targets without running tests.
+Use build-all for the complete recursive build selection.
 USAGE
   printf '\nLanes: %s\n' "${lanes[*]}"
 }
@@ -94,6 +99,8 @@ local_test_requirements=namespace
 local_requirements_set=false
 syscall_bucket=
 benchmark_target=
+build_targets=()
+test_targets=()
 header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
@@ -104,6 +111,8 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --local-test-requirements=*) local_test_requirements=${1#--local-test-requirements=}; local_requirements_set=true ;;
     --syscall-bucket=*) syscall_bucket=${1#--syscall-bucket=} ;;
     --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
+    --build-target=*) build_targets+=("${1#--build-target=}") ;;
+    --test-target=*) test_targets+=("${1#--test-target=}") ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -167,6 +176,29 @@ if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $#
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
   exit 2
 fi
+if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
+  if [[ $# != 1 || $test_execution != remote || $arch == all ]]; then
+    printf 'Explicit targets require one remote build or test lane and a single target architecture.\n' >&2
+    exit 2
+  fi
+  case "$1" in
+    build) explicit_targets=("${build_targets[@]}"); conflicting_targets=${#test_targets[@]} ;;
+    test) explicit_targets=("${test_targets[@]}"); conflicting_targets=${#build_targets[@]} ;;
+    *) printf 'Explicit targets require the matching build or test lane.\n' >&2; exit 2 ;;
+  esac
+  if (( ${#explicit_targets[@]} == 0 || conflicting_targets != 0 )); then
+    printf 'Supply only the target option matching the selected lane.\n' >&2
+    exit 2
+  fi
+  for target in "${explicit_targets[@]}"; do
+    # Keep labels separate from command options and response files. Bazel
+    # validates the label itself against the selected repository graph.
+    if [[ $target != //* && $target != @*//* ]] || [[ $target == *[[:space:]]* ]]; then
+      printf 'Expected an absolute Bazel target label: %s\n' "$target" >&2
+      exit 2
+    fi
+  done
+fi
 if [[ $# == 1 && $1 == amd64 ]]; then
   if [[ $arch != amd64 ]]; then
     printf 'The amd64 profile requires --arch=amd64.\n' >&2
@@ -174,8 +206,8 @@ if [[ $# == 1 && $1 == amd64 ]]; then
   fi
   set --
   for lane in "${lanes[@]}"; do
-    # Host-dependent and alternate-kernel lanes are selected explicitly.
-    if [[ $lane != kvm && $lane != syscalls-kvm && $lane != moby && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
+    # Explicit-target, host-dependent and alternate-kernel lanes are selected separately.
+    if [[ $lane != build && $lane != test && $lane != kvm && $lane != syscalls-kvm && $lane != moby && $lane != syscalls-rc-pilot && $lane != syscalls-64k && $lane != syscalls-rc ]]; then set -- "$@" "$lane"; fi
   done
 fi
 if (( $# == 0 )); then
@@ -190,6 +222,10 @@ for lane in "$@"; do
   fi
   if [[ $lane == syscalls-64k && ( $test_execution != remote || $arch != arm64 ) ]]; then
     printf 'The 64K syscall lane requires --arch=arm64 and remote TCG execution.\n' >&2
+    exit 2
+  fi
+  if [[ $lane == build && ${#build_targets[@]} == 0 || $lane == test && ${#test_targets[@]} == 0 ]]; then
+    printf 'The build and test lanes require explicit matching targets.\n' >&2
     exit 2
   fi
   if [[ $lane == syscalls-rc && $test_execution:$arch != remote:arm64 && $test_execution:$arch != local:amd64 && $test_execution:$arch != local:all ]]; then
@@ -207,7 +243,7 @@ for lane in "$@"; do
     esac
   fi
   case "$lane" in
-    build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
+    test|build|build-all|presubmit-build|plugin-build|nogo|unit|unit-v1|container|container-v1|container-v1-pilot|smoke|smoke-race|release-artifacts|release-repository|cpu-images|gpu-images|cos-metadata|docker|docker-v1|overlay|swgso|hostnet|plugin-network|do|root|portforward|posture|startup|benchmarks|containerd|bwrap|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|language-directfs|language-goferfs|kubernetes|podman|syzkaller|website|go-export|codeql|workflows|gazelle|lint|lint-cc|governance|license-check|license-headers|python-distributions|syscalls|syscalls-kvm|syscalls-rc-pilot|syscalls-64k|syscalls-rc|syscalls-save|syscalls-resume) ;;
     *) printf 'Unknown lane: %s\n' "$lane" >&2; usage >&2; exit 2 ;;
   esac
 done
@@ -947,6 +983,14 @@ run_lane() (
         done
       done
       return "$status"
+      ;;
+    test)
+      targets=("${test_targets[@]}")
+      options=(--strategy=TestRunner=remote --noremote_local_fallback --test_env=GO_TEST_WRAP_TESTV=1)
+      ;;
+    build)
+      command=build
+      targets=("${build_targets[@]}")
       ;;
     build-all)
       command=build
