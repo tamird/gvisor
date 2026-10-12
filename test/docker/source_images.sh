@@ -56,6 +56,13 @@ if [[ ${mode} == test ]]; then
     PARTITION="${partition}" TOTAL_PARTITIONS="${partitions}" \
     CRANE="${crane_command}" "test-${selection}-images"
 else
+  # Fork-only observations distinguish the provider daemon from the test fixture.
+  docker info --format 'Image daemon: version={{.ServerVersion}} runtime={{.DefaultRuntime}} storage={{.Driver}} root={{.DockerRootDir}}'
+  data_root=$(docker info --format '{{.DockerRootDir}}')
+  df -B1 "${data_root}"
+  if [[ -f /etc/docker/daemon.json ]]; then
+    sha256sum /etc/docker/daemon.json
+  fi
   target=${selection//\//_}
   "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
     CRANE="${crane_command}" "load-${target}"
