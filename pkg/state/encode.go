@@ -457,8 +457,8 @@ func (es *encodeState) encodeMap(obj reflect.Value, dest *wire.Object) {
 		k, v := iter.Key(), iter.Value()
 		// Map keys must be encoded using the full value because the
 		// type will be omitted after the first key.
-		es.encodeObject(k, encodeAsValue, &m.Keys[i])
-		es.encodeObject(v, encodeAsValue, &m.Values[i])
+		es.encodeObject(k, encodeAsValue, &m.Keys[i], captureUnknown)
+		es.encodeObject(v, encodeAsValue, &m.Values[i], captureUnknown)
 	}
 }
 
@@ -474,11 +474,57 @@ type objectEncoder struct {
 // save is called by the public methods on Sink.
 func (oe *objectEncoder) save(slot int, obj reflect.Value) {
 	fieldValue := oe.encoded.Field(slot)
-	oe.es.encodeObject(obj, encodeDefault, fieldValue)
+	oe.es.encodeObject(obj, encodeDefault, fieldValue, captureUnknown)
 }
 
 // emptyStructRecord is immutable and has no generated saver or references.
 var emptyStructRecord = wire.NewSlotRecord(0, 0)
+
+// captureOrigin records whether the caller knows that a value is a declared
+// descendant of a source already covered by the resolver. Unknown values still
+// discover their owner through the same graph.
+type captureOrigin uint8
+
+const (
+	captureUnknown captureOrigin = iota
+	captureInline
+)
+
+// properSubrange reports strict containment without overflowing addr+size.
+// Equal ranges require an exact source identity; zero-sized values retain
+// their separate resolver handling.
+func properSubrange(r addrRange, addr, size uintptr) bool {
+	return size != 0 && r.Contains(addr) && size <= r.End-addr && (addr != r.Start || size != r.Length())
+}
+
+// childOrigin binds declared fields or array elements to their actual source.
+// Discovering a containing parent can expand this coverage, but cannot create
+// an independent nonzero node inside it. Published child snapshots move to
+// inlineStructs before the replacement parent is captured.
+func (es *encodeState) childOrigin(obj reflect.Value) captureOrigin {
+	if es.encoding != nil && es.encoding.obj == obj {
+		if es.encodingRange.Length() != 0 {
+			return captureInline
+		}
+		return captureUnknown
+	}
+	if !obj.CanAddr() {
+		return captureUnknown
+	}
+	size := obj.Type().Size()
+	if size == 0 {
+		return captureUnknown
+	}
+	addr := obj.Addr().Pointer()
+	if properSubrange(es.encodingRange, addr, size) {
+		return captureInline
+	}
+	seg, _ := es.values.Find(addr)
+	if seg.Ok() && (seg.Value().obj == obj || properSubrange(seg.Range(), addr, size)) {
+		return captureInline
+	}
+	return captureUnknown
+}
 
 // structOwner finds an exact struct snapshot in the shared resolver graph.
 // Inline fields that have never had a node keep their reflect.Value identity
@@ -502,7 +548,7 @@ func (es *encodeState) structOwner(obj reflect.Value) *objectEncodeState {
 	// any captured snapshots to inlineStructs. A same-sized ancestor may have
 	// replaced the active node, so equal ranges still require discovery.
 	r := es.encodingRange
-	if size != 0 && r.Contains(addr) && size <= r.End-addr && (addr != r.Start || size != r.Length()) {
+	if properSubrange(r, addr, size) {
 		return nil
 	}
 	seg, _ := es.values.Find(addr)
@@ -526,8 +572,13 @@ func (es *encodeState) captureStruct(obj reflect.Value, owner *objectEncodeState
 }
 
 // encodeStruct encodes a composite object.
-func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
-	owner := es.structOwner(obj)
+func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object, origin captureOrigin) {
+	var owner *objectEncodeState
+	// Zero-sized fields retain their independent type/address identity, even
+	// when their containing receiver has an authoritative nonzero region.
+	if origin == captureUnknown || obj.Type().Size() == 0 {
+		owner = es.structOwner(obj)
+	}
 	if owner != nil && owner.encoded != nil {
 		*dest = owner.encoded
 		return
@@ -595,10 +646,13 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 }
 
 // encodeArray encodes an array.
-func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
+func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object, origin captureOrigin) {
 	if captured, ok := es.captureArray(obj); ok {
 		*dest = captured
 		return
+	}
+	if origin == captureUnknown {
+		origin = es.childOrigin(obj)
 	}
 	l := obj.Len()
 	a := &wire.Array{
@@ -608,7 +662,7 @@ func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
 	for i := 0; i < l; i++ {
 		// We need to encode the full value because arrays are encoded
 		// using the type information from only the first element.
-		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i])
+		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i], origin)
 	}
 }
 
@@ -670,7 +724,7 @@ func (es *encodeState) encodeInterface(obj reflect.Value, dest *wire.Object) {
 		Type: es.findType(obj.Type()),
 	}
 	*dest = i
-	es.encodeObject(obj, encodeAsValue, &i.Value)
+	es.encodeObject(obj, encodeAsValue, &i.Value, captureUnknown)
 }
 
 // isPrimitive returns true if this is a primitive object, or a composite
@@ -735,7 +789,7 @@ const (
 )
 
 // encodeObject encodes an object.
-func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest *wire.Object) {
+func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest *wire.Object, origin captureOrigin) {
 	if how == encodeDefault && isPrimitiveZero(obj.Type()) && obj.IsZero() {
 		*dest = wire.Nil{}
 		return
@@ -772,7 +826,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 		s := wire.String(obj.String())
 		*dest = &s // Needs alloc.
 	case reflect.Array:
-		es.encodeArray(obj, dest)
+		es.encodeArray(obj, dest, origin)
 	case reflect.Slice:
 		s := &wire.Slice{
 			Capacity: wire.Uint(obj.Cap()),
@@ -791,7 +845,7 @@ func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest 
 	case reflect.Interface:
 		es.encodeInterface(obj, dest)
 	case reflect.Struct:
-		es.encodeStruct(obj, dest)
+		es.encodeStruct(obj, dest, origin)
 	case reflect.Map:
 		if how == encodeMapAsValue {
 			es.encodeMap(obj, dest)
@@ -836,7 +890,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 					es.encodingRange = addrRange{addr, addr + size}
 				}
 			}
-			es.encodeObject(oes.obj, oes.how, &oes.encoded)
+			es.encodeObject(oes.obj, oes.how, &oes.encoded, captureUnknown)
 		}
 		es.encoding = nil
 		es.encodingRange = addrRange{}
