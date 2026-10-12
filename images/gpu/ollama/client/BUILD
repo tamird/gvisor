@@ -1,5 +1,6 @@
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_load")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//images:oci.bzl", "image_outputs")
 load("//tools:defs.bzl", "go_binary", "pkg_tar")
 
 package(
@@ -36,33 +37,7 @@ oci_image(
     tars = [":client_layer"],
 )
 
-oci_load(
-    name = "load_image",
-    format = "docker",
-    image = ":image",
-    # Make also loads this tag before applying its configured registry tags.
-    repo_tags = ["gvisor.dev/images/gpu/ollama/client:latest"],
-    tags = ["manual"],
-)
-
-filegroup(
+image_outputs(
     name = "image_archive",
-    srcs = [":load_image"],
-    output_group = "tarball",
-    tags = ["manual"],
-    visibility = ["//test/docker:__pkg__"],
-)
-
-pkg_files(
-    name = "make_image",
-    srcs = [":image_archive"],
-    renames = {":image_archive": "image.tar"},
-)
-
-# Hash the assembled image, including its base, instead of a Dockerfile context.
-pkg_tar(
-    name = "make_context",
-    srcs = [":make_image"],
-    package_dir = "images/gpu/ollama/client",
-    visibility = ["//images:__pkg__"],
+    image = ":image",
 )

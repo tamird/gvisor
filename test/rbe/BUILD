@@ -176,6 +176,43 @@ go_test(
     deps = ["//pkg/test/dockerutil"],
 )
 
+go_test(
+    name = "profile_helper_test",
+    srcs = ["profile_helper_test.go"],
+    tags = ["manual"],
+    deps = ["//pkg/test/dockerutil"],
+)
+
+docker_daemon_config(
+    name = "profile_helper_config",
+    testonly = True,
+    images = ["//test/docker:profile_helper_source_amd64"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "profile_helper_image_test",
+    size = "medium",
+    command = ":profile_helper_test",
+    command_args = ["-test.v"],
+    docker_config = ":profile_helper_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
 docker_daemon_config(
     name = "ollama_client_config",
     testonly = True,

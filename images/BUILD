@@ -1,9 +1,20 @@
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
-load("//tools:defs.bzl", "go_binary", "go_test", "pkg_tar")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+bzl_library(
+    name = "oci_bzl",
+    srcs = ["oci.bzl"],
+    visibility = ["//images:__subpackages__"],
+    deps = [
+        "//tools:defs_bzl",
+        "@rules_oci//oci:defs",
+        "@rules_pkg//pkg:bzl_srcs",
+    ],
 )
 
 # Include the complete contexts, including files owned by nested packages.
@@ -90,7 +101,17 @@ pkg_tar(
     visibility = ["//test/docker:__pkg__"],
 )
 
-# CPU image checks and individual Dockerfile builds do not need OCI images.
+# Native archives belong to their image cohort; individual Dockerfile builds
+# continue to use source_contexts without depending on either OCI image.
+pkg_tar(
+    name = "cpu_source_contexts",
+    visibility = ["//test/docker:__pkg__"],
+    deps = [
+        ":source_contexts",
+        "//images/benchmarks/profile-helper:make_context",
+    ],
+)
+
 pkg_tar(
     name = "gpu_source_contexts",
     visibility = ["//test/docker:__pkg__"],

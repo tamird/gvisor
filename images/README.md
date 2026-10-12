@@ -45,17 +45,19 @@ consume that archive directly and never invoke Bazel inside a build action.
 
 ## Declared image archives
 
-The Ollama client image is defined in its BUILD file using `rules_oci`. It
-combines the Bazel-built static client with a pinned Alpine base for AMD64 or
-ARM64. Building this image does not start a Docker daemon.
+The Ollama client and benchmark profile-helper images are defined in their
+BUILD files using `rules_oci`. They combine Bazel-built static programs with
+pinned Alpine and Ubuntu bases for AMD64 or ARM64. The profile helper keeps
+Ubuntu because its Kubernetes caller also uses GNU coreutils. Building these
+images does not start a Docker daemon.
 
-Both the runtime tests and Make consume that image. The Make commands stage
-its `make_context` archive and hash the complete image to derive its cache tag.
+Both the runtime tests and Make consume these images. The Make commands stage
+each `make_context` archive and hash the complete image to derive its cache tag.
 Rebuilding loads that archive before applying the local and registry tags;
 cached pull and manifest checks retain their existing behavior. The archive
-supplies the canonical `gvisor.dev/images/gpu/ollama/client:latest` tag, with
-custom Make prefixes applied after loading. CPU image checks and individual
-Dockerfile builds do not depend on this archive.
+supplies the canonical `gvisor.dev/images/<path>:latest` tag, with custom Make
+prefixes applied after loading. CPU and GPU image checks acquire only their
+respective native image archive; individual Dockerfile builds acquire neither.
 
 The other source-image actions reuse the Dockerfiles and Make's pull/rebuild
 behavior. Their Linux execution worker must supply the Docker CLI and a

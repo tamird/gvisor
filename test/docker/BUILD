@@ -94,6 +94,13 @@ amd64_image_archive(
     tags = ["manual"],
 )
 
+amd64_image_archive(
+    name = "profile_helper_source_amd64",
+    testonly = True,
+    srcs = ["//images/benchmarks/profile-helper:image_archive"],
+    tags = ["manual"],
+)
+
 # Other runtime GPU images use the source/archive producer for CUDA images.
 # Building these archives requires Docker, but does not execute GPU tests.
 [
@@ -148,6 +155,7 @@ image_source_command(
     name = "cpu_image_sources_amd64",
     testonly = True,
     architecture = "x86_64",
+    contexts = "//images:cpu_source_contexts",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -159,6 +167,7 @@ image_source_command(
     name = "cpu_image_sources_arm64",
     testonly = True,
     architecture = "aarch64",
+    contexts = "//images:cpu_source_contexts",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",
