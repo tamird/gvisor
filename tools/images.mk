@@ -48,9 +48,13 @@ header ?= echo --- $(1) >&2
 # tests are using locally-defined images (that are consistent and idempotent).
 REMOTE_IMAGE_PREFIX ?= us-central1-docker.pkg.dev/gvisor-presubmit/gvisor-presubmit-images
 LOCAL_IMAGE_PREFIX  ?= gvisor.dev/images
-ALL_IMAGES          := $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | xargs -n 1 dirname | sort -u)))
-NON_TEST_IMAGES     := gpu/ollama/bench\|gpu/vllm\|gpu/triton\|tpu/vllm
-TEST_IMAGES         := $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | xargs -n 1 dirname | sort -u | grep -v "$(NON_TEST_IMAGES)")))
+# //images/<path>:make_context supplies image.tar for these targets.
+# Make stages the complete archive before hashing and loading the image.
+BAZEL_IMAGES        := benchmarks_profile-helper gpu_ollama_client
+DOCKER_IMAGES       := $(subst /,_,$(subst images/,,$(shell find images/ -name Dockerfile -o -name Dockerfile.$(ARCH) | sed 's,/[^/]*$$,,' | sort -u)))
+ALL_IMAGES          := $(sort $(DOCKER_IMAGES) $(BAZEL_IMAGES))
+NON_TEST_IMAGES     := gpu_ollama_bench% gpu_vllm% gpu_triton% tpu_vllm%
+TEST_IMAGES         := $(filter-out $(NON_TEST_IMAGES),$(ALL_IMAGES))
 GPU_TEST_IMAGES     := $(filter gpu_% tpu_%,$(TEST_IMAGES))
 CPU_TEST_IMAGES     := $(filter-out gpu_% tpu_%,$(TEST_IMAGES))
 
@@ -127,6 +131,7 @@ push-all-test-images: $(patsubst %,push-%,$(TEST_IMAGES))
 # (depending on what's available for the given architecture).
 path = images/$(subst _,/,$(1))
 dockerfile = $$(if [ -f "$(call path,$(1))/Dockerfile.$(ARCH)" ]; then echo Dockerfile.$(ARCH); else echo Dockerfile; fi)
+image_inputs = $(wildcard $(call path,$(1))/image.tar $(call path,$(1))/Dockerfile $(call path,$(1))/Dockerfile.$(ARCH))
 
 # The tag construct is used to memoize the image generated (see README.md).
 # This scheme is used to enable aggressive caching in a central repository, but
@@ -144,7 +149,7 @@ latest_tag = \
   docker tag $(call local_image,$(1)):$(call tag,$(1)) $(call local_image,$(1)):latest >&2
 tag_exists = \
   docker image inspect $(call local_image,$(1)):$(call tag,$(1)) &>/dev/null
-cached_image = $(if $(wildcard $(call path,$(1))/Dockerfile $(call path,$(1))/Dockerfile.$(ARCH)),$(shell \
+cached_image = $(if $(call image_inputs,$(1)),$(shell \
   docker image inspect $(call remote_image,$(1)):$(call tag,$(1)) >/dev/null 2>&1 && echo cached))
 tag-%: ## Tag a local image.
 	@$(call header,TAG $*)
@@ -168,13 +173,19 @@ pull-%: register-cross ## Force a repull of the image.
 # conflicting with the bazel "build" terminology, which is used elsewhere.
 rebuild = \
   $(call header,REBUILD $(1)) && \
-  (T=$$(mktemp -d) && cp -a $(call path,$(1))/* $$T && \
-  set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \
-    -f "$$T/$(call dockerfile,$(1))" \
-    -t "$(call remote_image,$(1)):$(call tag,$(1))" \
-    -t "$(call remote_image,$(1))":latest \
-    $$T >&2 && \
-  rm -rf $$T) && \
+  (if [ -f "$(call path,$(1))/image.tar" ]; then \
+    docker load --input "$(call path,$(1))/image.tar" >&2 && \
+    docker tag "gvisor.dev/images/$(subst _,/,$(1)):latest" "$(call remote_image,$(1)):$(call tag,$(1))" >&2 && \
+    docker tag "$(call remote_image,$(1)):$(call tag,$(1))" "$(call remote_image,$(1)):latest" >&2; \
+  else \
+    T=$$(mktemp -d) && cp -a $(call path,$(1))/* $$T && \
+    set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \
+      -f "$$T/$(call dockerfile,$(1))" \
+      -t "$(call remote_image,$(1)):$(call tag,$(1))" \
+      -t "$(call remote_image,$(1))":latest \
+      $$T >&2 && \
+    rm -rf $$T; \
+  fi) && \
   $(call local_tag,$(1)) && \
   $(call latest_tag,$(1))
 rebuild-%: register-cross ## Force rebuild an image locally.
@@ -189,7 +200,7 @@ rebuild-%: register-cross ## Force rebuild an image locally.
 .SECONDEXPANSION:
 load-%: $$(if $$(call cached_image,$$*),tag-$$*,register-cross) ## Pull or build an image locally.
 	@if [ "$<" = register-cross ]; then \
-	  if [ ! -f "$(call path,$*)/$(call dockerfile,$*)" ]; then \
+	  if [ -z "$(call image_inputs,$*)" ]; then \
 	    echo "Image $* is not available on $$(uname -m), ignoring it." >&2; \
 	  elif [ "$(SKIP_IMAGE_LOAD)" == true ]; then \
 	    if ! $(call tag_exists,$*); then \
@@ -236,19 +247,24 @@ else
 	@
 endif
 
-# Raw-checkout callers first obtain the same context artifact used by Bazel
-# image actions. Prepared contexts are staged before any image hash or cache
-# decision and never invoke Bazel recursively.
+# Stage the selected Bazel context before computing image hashes or checking
+# cached tags. The recursive Make command consumes the extracted context with
+# _IMAGE_CONTEXT_PREPARED set.
 ifneq ($(_IMAGE_CONTEXT_PREPARED),1)
 _image_makefile := $(abspath $(lastword $(MAKEFILE_LIST)))
 _image_root_makefile := $(abspath $(dir $(_image_makefile))/../Makefile)
 _image_context_options = $(if $(filter x86_64 aarch64,$(ARCH)),--config=$(ARCH),$(error Unsupported image helper architecture $(ARCH))) --@io_bazel_rules_go//go/config:race=false
 _image_context_operations := tag pull rebuild load test local-image push
-_image_context_targets := $(foreach op,$(_image_context_operations),$(addprefix $(op)-,gpu_cuda-tests gpu_cuda-tests-12-8 gpu_ollama_client))
+_image_context_targets := $(foreach op,$(_image_context_operations),$(addprefix $(op)-,gpu_cuda-tests gpu_cuda-tests-12-8 $(BAZEL_IMAGES)))
+_image_context_target = //images:source_contexts
+define native_image_context =
+$(foreach op,$(_image_context_operations),$(op)-$(1)): _image_context_target := //images/$(subst _,/,$(1)):make_context
+endef
+$(foreach image,$(BAZEL_IMAGES),$(eval $(call native_image_context,$(image))))
 $(_image_context_targets):
 	@set -eu; image_context_dir=$$(mktemp -d); trap 'rm -rf "$$image_context_dir"' EXIT; \
 	$(MAKE) --no-print-directory -C "$(dir $(_image_root_makefile))" -f "$(_image_root_makefile)" copy \
-	  TARGETS=//images:source_contexts DESTINATION="$$image_context_dir/contexts.tar" \
+	  TARGETS="$(_image_context_target)" DESTINATION="$$image_context_dir/contexts.tar" \
 	  OPTIONS="$(OPTIONS) $(_image_context_options)" && \
 	tar --extract --file "$$image_context_dir/contexts.tar" --directory "$$image_context_dir" --same-permissions --no-same-owner && \
 	cd "$$image_context_dir" && \

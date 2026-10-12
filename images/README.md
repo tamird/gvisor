@@ -2,12 +2,9 @@
 
 This directory contains all images used by tests.
 
-Note that all these images must be pushed to the testing project hosted on
-[Google Container Registry][gcr]. This will happen automatically as part of
-continuous integration. This will speed up loading as images will not need to be
-built from scratch for each test run.
-
-Image tooling is accessible via `make`, specifically via `tools/images.mk`.
+Make targets in `tools/images.mk` build, load and publish images.
+`REMOTE_IMAGE_PREFIX` selects the registry for cached images shared across
+test runs.
 
 ## Why make?
 
@@ -33,20 +30,42 @@ single images via individual `load` targets, or pull all images via a single
 
 ## Go image helpers
 
-Bazel builds the CUDA sample runners and Ollama HTTP client with the repository
-Go SDK and CGO disabled, and packages them with the image sources in
+Bazel builds the CUDA sample runners with the repository Go SDK and CGO
+disabled, and packages them with the image sources in
 `//images:source_contexts`. Their `make` image commands stage that archive before
 computing the image hash, so changes to a helper or the SDK invalidate the image
 cache. The selected architecture controls both the helper binaries and the
 Docker build.
 
-Docker still builds the separate ASCII image converter using `golang:1.25`.
+The ASCII image converter builds with `golang:1.25`.
+
+## Bazel image targets
+
+The Ollama client and benchmark profile helper have image targets in their
+BUILD files. Bazel compiles each static Go program with the repository Go
+toolchain and packages it as an executable layer. Both images use
+`//images:helper_base`, which supplies CA trust and a writable `/tmp`.
+The selected architecture controls the program and package inputs.
+
+The profiling helper's Kubernetes caller invokes `mkdir`, `chmod`, and
+`rm --one-file-system` directly. Its image adds these GNU commands, their
+loader and shared libraries, and their license notices from snapshot-pinned
+Ubuntu packages. The filesystem boundary prevents recursive removal from
+crossing into nested mounts on the host.
+
+Each package exposes an `image_archive` Docker tarball and a `load_image` target
+that loads it into Docker. Its `make_context` target packages the tarball as
+`images/<path>/image.tar`. Make stages this context before computing the cache
+tag, so both the program and its base contribute to the tag. The Make rebuild
+command loads the archive and applies the configured local and registry tags.
 
 ## Adding new images
 
-To add a new image, create a new directory under `images` containing a
-Dockerfile and any other files that the image requires. You may choose to add to
-an existing subdirectory if applicable, or create a new one.
+For a Dockerfile image, create a directory under `images` containing its
+Dockerfile and other required files. For a Bazel image, define its program and
+image layers in a BUILD file, use `image_outputs` from `//images:oci.bzl` to
+expose its archives, and add its Make target name to `BAZEL_IMAGES` in
+`tools/images.mk`.
 
 All images will be tagged and memoized using a hash of the directory contents.
 As a result, every image should be made completely reproducible if possible.
@@ -62,7 +81,7 @@ if available.
 
 ## Building and pushing images
 
-All images can be built manually by running `build-<image>` and pushed using
+All images can be built manually by running `rebuild-<image>` and pushed using
 `push-<image>`. Note that you can also use `push-all-images`. Note that pushing
 will require appropriate permissions in the project.
 
