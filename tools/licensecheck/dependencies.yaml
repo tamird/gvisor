@@ -15743,10 +15743,10 @@
   sha256: 26d4021f6898e23b82ef953078389dd49ac2b5618ac564ade4ef87cced147b38
   license: Apache-2.0
 - dependency: rules_oci
-  version: https://github.com/bazel-contrib/rules_oci/releases/download/v2.3.0/rules_oci-v2.3.0.tar.gz
-  retrieved: "2026-09-27"
-  commit: 5dfb0ea5ee9d4992d930900db73ac78ff9d50197
-  sha256: e987cab7a35475cb9c9060fc3f338a1fc8896c240295a3272968b217acefd0cb
+  version: https://github.com/bazel-contrib/rules_oci/releases/download/v2.3.3/rules_oci-v2.3.3.tar.gz
+  retrieved: "2026-10-12"
+  commit: 522cf5b64e5618ed2e40c05828b6d436f108ef42
+  sha256: 243eac87ec41d68d1d9e6d21884a50ec28e031f702b0b9fcdc7f97c3f3d5389a
   license: Apache-2.0
 - dependency: rules_pkg
   version: https://github.com/bazelbuild/rules_pkg/releases/download/1.0.1/rules_pkg-1.0.1.tar.gz
