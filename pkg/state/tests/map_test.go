@@ -16,6 +16,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"math"
 	"reflect"
 	"testing"
@@ -63,30 +64,164 @@ func TestMapAliasing(t *testing.T) {
 }
 
 func TestMapNaNKeys(t *testing.T) {
-	// Identical NaNs compare unequal, so both entries must survive even
-	// though neither can be retrieved using a map lookup.
-	const nanBits = uint64(0x7ff8000000000001)
-	nan := math.Float64frombits(nanBits)
-	original := map[float64]int{1: 3}
-	original[nan] = 1
-	original[nan] = 2
+	// This distinct, dynamically introduced type has no generated collection
+	// registration. Both it and the generated field must preserve NaN pairs.
+	type dynamicMap map[float64]int
+	for _, native := range []bool{false, true} {
+		name := "dynamic"
+		if native {
+			name = "generated"
+		}
+		t.Run(name, func(t *testing.T) {
+			const nanBits = uint64(0x7ff8000000000001)
+			nan := math.Float64frombits(nanBits)
+			original := map[float64]int{1: 3}
+			original[nan] = 1
+			original[nan] = 2
+			var root, destination any
+			var dynamic dynamicMap
+			var generated nanMapContainer
+			if native {
+				root = &nanMapContainer{values: original}
+				destination = &generated
+			} else {
+				input := dynamicMap(original)
+				root = &input
+				destination = &dynamic
+			}
+			var buf bytes.Buffer
+			if _, err := state.Save(t.Context(), &buf, root); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := state.Load(t.Context(), &buf, destination); err != nil {
+				t.Fatal(err)
+			}
+			restored := map[float64]int(dynamic)
+			if native {
+				restored = generated.values
+			}
+			want := map[int]uint64{1: nanBits, 2: nanBits, 3: math.Float64bits(1)}
+			if len(restored) != len(want) {
+				t.Fatalf("Restored %d entries, want %d", len(restored), len(want))
+			}
+			for key, value := range restored {
+				if bits, ok := want[value]; !ok || math.Float64bits(key) != bits {
+					t.Fatalf("Unexpected restored entry: key bits=%#x, value=%d", math.Float64bits(key), value)
+				}
+				delete(want, value)
+			}
+		})
+	}
+}
+
+func TestCollectionCaptureTiming(t *testing.T) {
+	original := collectionCaptureTiming{
+		addressed: map[int]int{0: 1},
+		snapshot:  map[int]int{0: 2},
+		slice:     []int{5, 11, 13}[:1],
+	}
+	original.mutation.owner = &original
 	var buf bytes.Buffer
 	if _, err := state.Save(t.Context(), &buf, &original); err != nil {
-		t.Fatalf("Save failed: %v", err)
+		t.Fatal(err)
 	}
-	var restored map[float64]int
+	var restored collectionCaptureTiming
 	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
-		t.Fatalf("Load failed: %v", err)
+		t.Fatal(err)
 	}
-	want := map[int]uint64{1: nanBits, 2: nanBits, 3: math.Float64bits(1)}
-	if len(restored) != len(want) {
-		t.Fatalf("Restored %d entries, want %d", len(restored), len(want))
+	if got, want := restored.addressed[0], 3; got != want {
+		t.Errorf("addressed map = %d, want %d", got, want)
 	}
-	for key, value := range restored {
-		if bits, ok := want[value]; !ok || math.Float64bits(key) != bits {
-			t.Fatalf("Unexpected restored entry: key bits=%#x, value=%d", math.Float64bits(key), value)
+	if got, want := restored.snapshot[0], 2; got != want {
+		t.Errorf("value map = %d, want %d", got, want)
+	}
+	if !restored.mutation.cleared {
+		t.Error("slice capacity was not cleared before the later hook")
+	}
+	if got, want := cap(restored.slice), 3; got != want {
+		t.Fatalf("slice capacity = %d, want %d", got, want)
+	}
+	if got, want := len(restored.slice), 1; got != want {
+		t.Fatalf("slice length = %d, want %d", got, want)
+	}
+	if got, want := restored.slice[:3], []int{7, 0, 0}; !reflect.DeepEqual(got, want) {
+		t.Errorf("backing array = %v, want %v", got, want)
+	}
+}
+
+func TestMapEscapingReceiver(t *testing.T) {
+	for _, native := range []bool{false, true} {
+		name := "dynamic"
+		if native {
+			name = "generated"
 		}
-		delete(want, value)
+		t.Run(name, func(t *testing.T) {
+			saves := 0
+			var original any
+			if native {
+				original = &escapingMapContainer{values: map[int]escapingMapValue{1: {value: 11, saves: &saves}, 2: {value: 11, saves: &saves}}}
+			} else {
+				// This exact map shape is not a generated field.
+				original = map[uint]escapingMapValue{1: {value: 11, saves: &saves}, 2: {value: 11, saves: &saves}}
+			}
+			var buf bytes.Buffer
+			if _, err := state.Save(t.Context(), &buf, &original); err != nil {
+				t.Fatal(err)
+			}
+			// Each copied entry is saved inline, then its escaped receiver is
+			// saved once as a graph node. No receiver may be reused for a later entry.
+			if got, want := saves, 4; got != want {
+				t.Errorf("save hooks = %d, want %d", got, want)
+			}
+			var restored any
+			if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+				t.Fatal(err)
+			}
+			var values []escapingMapValue
+			if native {
+				for _, v := range restored.(*escapingMapContainer).values {
+					values = append(values, v)
+				}
+			} else {
+				for _, v := range restored.(map[uint]escapingMapValue) {
+					values = append(values, v)
+				}
+			}
+			if got, want := len(values), 2; got != want {
+				t.Fatalf("map entries = %d, want %d", got, want)
+			}
+			if values[0].self == values[1].self {
+				t.Fatal("different entries share an escaped receiver")
+			}
+			for _, v := range values {
+				if v.self == nil || v.self.value != v.value || v.self.self != v.self {
+					t.Errorf("entry %d has incorrect receiver alias: %+v", v.value, v.self)
+				}
+			}
+		})
+	}
+}
+
+func TestMapEqualWordSnapshots(t *testing.T) {
+	original := countedMapWordContainer{values: map[countedMapWord]countedMapWord{{value: 7}: {value: 7}}}
+	var receivers []*countedMapWord
+	ctx := context.WithValue(t.Context(), mapReceiverKey{}, &receivers)
+	var buf bytes.Buffer
+	if _, err := state.Save(ctx, &buf, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(receivers), 2; got != want {
+		t.Fatalf("hook receivers = %d, want %d", got, want)
+	}
+	if receivers[0] == receivers[1] {
+		t.Fatal("key and value reused a hook receiver")
+	}
+	var restored countedMapWordContainer
+	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(restored, original) {
+		t.Errorf("restored map = %+v, want %+v", restored, original)
 	}
 }
 
@@ -118,5 +253,6 @@ func TestMapContainers(t *testing.T) {
 		mapPtrContainer{v: &nilMap},
 		mapPtrContainer{v: &emptyMap},
 		mapPtrContainer{v: &fullMap},
+		manualMapValue{values: map[int]int{1: 7}},
 	})
 }

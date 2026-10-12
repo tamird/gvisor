@@ -96,4 +96,5 @@ go_test(
     size = "small",
     srcs = ["types_test.go"],
     embed = [":state"],
+    deps = ["//pkg/state/wire"],
 )
