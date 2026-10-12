@@ -409,7 +409,7 @@ func generateRecords(configPath string) error {
 			return err
 		}
 	}
-	info := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue), Defs: make(map[*ast.Ident]types.Object), Scopes: make(map[ast.Node]*types.Scope)}
+	info := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue), Defs: make(map[*ast.Ident]types.Object), Implicits: make(map[ast.Node]types.Object), Scopes: make(map[ast.Node]*types.Scope)}
 	checker := types.Config{
 		Importer:  &exportImporter{fset: fset, archives: config.Archives, packages: make(map[string]*types.Package)},
 		Sizes:     types.SizesFor("gc", config.GOARCH),
@@ -439,6 +439,47 @@ func generateRecords(configPath string) error {
 		}
 	}
 	return nil
+}
+
+// checkedSaverLoader resolves the actual compiler-owned interface only for
+// annotated structs. Packages with no such declarations need not import state.
+func checkedSaverLoader(file *ast.File, info *types.Info, pkg *types.Package) (*types.Interface, error) {
+	statePackage := pkg
+	if statePkg != "" {
+		statePackage = nil
+		for _, imported := range file.Imports {
+			path, err := strconv.Unquote(imported.Path.Value)
+			if err != nil {
+				return nil, err
+			}
+			if path != statePkg {
+				continue
+			}
+			object := info.Implicits[imported]
+			if imported.Name != nil {
+				object = info.Defs[imported.Name]
+			}
+			name, ok := object.(*types.PkgName)
+			if !ok {
+				return nil, fmt.Errorf("state import %q has no checked package binding", path)
+			}
+			// Source import paths may differ from the compiler's importmap.
+			statePackage = name.Imported()
+			break
+		}
+	}
+	if statePackage == nil {
+		return nil, fmt.Errorf("state package %q is not available to the checker", statePkg)
+	}
+	contract := statePackage.Scope().Lookup("SaverLoader")
+	if contract == nil {
+		return nil, fmt.Errorf("state package %q has no SaverLoader contract", statePackage.Path())
+	}
+	saverLoader, ok := contract.Type().Underlying().(*types.Interface)
+	if !ok {
+		return nil, fmt.Errorf("state package %q SaverLoader is not an interface", statePackage.Path())
+	}
+	return saverLoader, nil
 }
 
 // checkedRecords binds the shared field model to compiler-owned types. It
@@ -472,17 +513,26 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		forward:      make(map[string]string),
 	}
 
+	var saverLoader *types.Interface
 	for _, typ := range model.types {
 		name := typ.spec.Name.Name
 		object, ok := pkg.Scope().Lookup(name).(*types.TypeName)
 		if !ok {
 			return nil, fmt.Errorf("no checked type declaration for %s", name)
 		}
-		// A loader owns native callbacks even when StateSave is handwritten.
+		// Generated registration can forward an existing handwritten loader
+		// just as it can a generated one. Field emission remains separate.
+		owner := types.NewPointer(object.Type())
 		var loader *loadType
-		_, structural := typ.spec.Type.(*ast.StructType)
 		_, structUnderlying := object.Type().Underlying().(*types.Struct)
-		if typ.save && structUnderlying && (structural || typ.identical) {
+		if structUnderlying && saverLoader == nil {
+			var err error
+			saverLoader, err = checkedSaverLoader(file, info, pkg)
+			if err != nil {
+				return nil, err
+			}
+		}
+		if structUnderlying && types.Implements(owner, saverLoader) {
 			loader = &loadType{
 				newValue:  unusedName(fmt.Sprintf("newStateValue%d_%s", len(name), name), names),
 				loadValue: unusedName(fmt.Sprintf("loadStateValue%d_%s", len(name), name), names),
@@ -495,7 +545,9 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			}
 			continue
 		}
-		owner := types.NewPointer(object.Type())
+		if !typ.save {
+			continue
+		}
 		_, manual := model.methods[method{name, "StateSave"}]
 		generatedSaver := typ.save && !manual
 		record := &recordType{
