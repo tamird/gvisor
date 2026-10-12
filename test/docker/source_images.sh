@@ -168,7 +168,7 @@ NETWORK
   observer_pid=$!
   set +e
   time timeout --signal=QUIT --kill-after=5s 120s \
-    "${crane}" pull --format=oci --platform="${platform}" "${remote}" "${saved}"
+    env GODEBUG=http2client=0 "${crane}" pull --format=oci --platform="${platform}" "${remote}" "${saved}"
   transfer_status=$?
   set -e
   printf 'Transfer status: %s\n' "${transfer_status}"
