@@ -2,7 +2,7 @@ load("@bazel_lib//lib:output_files.bzl", "output_files")
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
 load(":defs.bzl", "cached_source_layout", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
@@ -381,6 +381,19 @@ LARGE_CACHED_IMAGES = {
     "gpu_triton_cached_amd64": GPU_SOURCE_IMAGES["gpu_triton_source_amd64"],
 }
 
+# Qualify only the remaining Triton pipeline on the observed ordinary worker.
+TRITON_OCI_EXEC_PROPERTIES = select({
+    "//tools/bazeldefs:rbe": dict(
+        docker_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ).items() + [("workload-isolation-type", "oci")],
+    ),
+    "//conditions:default": {},
+})
+
 [
     cached_source_layout(
         name = name + "_layout",
@@ -390,7 +403,7 @@ LARGE_CACHED_IMAGES = {
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        exec_properties = docker_test_exec_properties(
+        exec_properties = TRITON_OCI_EXEC_PROPERTIES if name == "gpu_triton_cached_amd64" else docker_test_exec_properties(
             exec_group = "",
             free_disk = "80GB",
             memory = "12GB",
@@ -421,7 +434,7 @@ LARGE_CACHED_IMAGES = {
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        exec_properties = docker_test_exec_properties(
+        exec_properties = TRITON_OCI_EXEC_PROPERTIES if name == "gpu_triton_cached_amd64" else docker_test_exec_properties(
             exec_group = "",
             free_disk = "80GB",
             memory = "12GB",

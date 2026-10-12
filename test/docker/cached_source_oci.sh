@@ -48,7 +48,7 @@ printf 'Cached OCI source: %s platform=%s\n' "${references[0]}" "${platform}"
 # the production Make pull/rebuild owner remains untouched by this prototype.
 env GODEBUG=http2client=0 "${crane}" pull --format=oci \
   --platform="${platform}" "${references[0]}" "${work}/layout"
-# Preserve the proven ext4 staging boundary before publishing declared inputs.
+# Stage on the worker's local filesystem before publishing declared inputs.
 mkdir -p "${layout}"
 cp -a "${work}/layout/." "${layout}/"
 printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
