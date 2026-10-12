@@ -81,6 +81,67 @@ else
   od -An -tx1 -N64 "${crane}"
   head -30 /proc/cpuinfo
   "${crane}" version
+  network_log="${work}/network.log"
+  observer_pid=
+  # The observer is one bounded process group, reaped before its log is removed.
+  cleanup_network() {
+    local status=$? observer_status=0
+    trap - EXIT
+    set +e
+    if [[ -n ${observer_pid} ]]; then
+      kill -TERM "${observer_pid}" 2>/dev/null
+      wait "${observer_pid}"
+      observer_status=$?
+    fi
+    printf 'Network observer status: %s\n' "${observer_status}"
+    cat "${network_log}"
+    rm -rf "${work}"
+    exit "${status}"
+  }
+  trap cleanup_network EXIT
+  trap 'exit 143' TERM
+  trap 'exit 130' INT
+  timeout --signal=TERM --kill-after=3s 105s /bin/bash -s > "${network_log}" 2>&1 <<'NETWORK' &
+set +e
+printf 'BEGIN NETWORK OBSERVATIONS\n'
+uname -a
+for key in \
+  net/core/rmem_default net/core/rmem_max net/core/wmem_default \
+  net/core/wmem_max net/core/netdev_max_backlog net/ipv4/tcp_rmem \
+  net/ipv4/tcp_wmem net/ipv4/tcp_mem net/ipv4/tcp_moderate_rcvbuf \
+  net/ipv4/tcp_window_scaling net/ipv4/tcp_congestion_control \
+  net/ipv4/tcp_mtu_probing; do
+  if [[ -r /proc/sys/${key} ]]; then
+    printf '%s=' "${key}"
+    cat "/proc/sys/${key}"
+  else
+    printf '%s unavailable\n' "${key}"
+  fi
+done
+for tool in ip tc ss; do
+  command -v "${tool}" || printf '%s unavailable\n' "${tool}"
+done
+if command -v ip >/dev/null; then
+  timeout --foreground 3s ip -s link
+  timeout --foreground 3s ip route
+fi
+if command -v tc >/dev/null; then
+  timeout --foreground 3s tc -s qdisc show
+fi
+for sample in 0 1 2 3; do
+  printf 'NETWORK SAMPLE %s %s\n' "${sample}" "$(date --iso-8601=ns)"
+  if command -v ss >/dev/null; then
+    timeout --foreground --signal=TERM --kill-after=1s 3s ss -tinm
+  fi
+  for file in /proc/net/sockstat /proc/net/netstat /proc/net/snmp; do
+    printf '%s\n' "${file}"
+    cat "${file}"
+  done
+  if (( sample < 3 )); then sleep 30; fi
+done
+printf 'END NETWORK OBSERVATIONS\n'
+NETWORK
+  observer_pid=$!
   set +e
   time timeout --signal=QUIT --kill-after=5s 120s \
     "${crane}" pull --platform="${platform}" "${remote}" "${saved}"
