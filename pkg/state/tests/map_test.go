@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 var allMapPrimitives = []any{
@@ -62,34 +63,61 @@ func TestMapAliasing(t *testing.T) {
 	aliases := []map[int]int{v, v}
 	runTestCases(t, false, "", []any{ptrToV, aliases})
 
-	// Discover the interior map before its enclosing object. The named alias
-	// shares its table but requires the assignable-type assignment boundary.
-	owner := &mapContainer{prefix: 11, v: map[int]any{1: "value"}}
-	original := mapPtrContainer{v: &owner.v, alias: namedContainerMap(owner.v), owner: owner}
-	var buf bytes.Buffer
-	if _, err := state.Save(t.Context(), &buf, &original); err != nil {
-		t.Fatal(err)
-	}
-	var restored mapPtrContainer
-	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
-		t.Fatal(err)
-	}
-	if restored.owner == nil {
-		t.Fatal("missing enclosing map owner")
-	}
-	if got, want := restored.v, &restored.owner.v; got != want {
-		t.Fatalf("interior map address = %p, want %p", got, want)
-	}
-	if got, want := restored.owner.prefix, 11; got != want {
-		t.Errorf("enclosing prefix = %d, want %d", got, want)
-	}
-	if got, want := restored.alias[1], "value"; got != want {
-		t.Errorf("restored alias entry = %v, want %v", got, want)
-	}
-	restored.alias[2] = "shared"
-	if got, want := (*restored.v)[2], "shared"; got != want {
-		t.Errorf("alias update = %v, want %v", got, want)
-	}
+	t.Run("interior", func(t *testing.T) {
+		// Discover the interior map before its enclosing object.
+		owner := &mapContainer{prefix: 11, v: map[int]any{1: "value"}}
+		original := mapPtrContainer{v: &owner.v, owner: owner}
+		var buf bytes.Buffer
+		if _, err := state.Save(t.Context(), &buf, &original); err != nil {
+			t.Fatal(err)
+		}
+		var restored mapPtrContainer
+		if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+			t.Fatal(err)
+		}
+		if restored.owner == nil {
+			t.Fatal("missing enclosing map owner")
+		}
+		if got, want := restored.v, &restored.owner.v; got != want {
+			t.Fatalf("interior map address = %p, want %p", got, want)
+		}
+		if got, want := restored.owner.prefix, 11; got != want {
+			t.Errorf("enclosing prefix = %d, want %d", got, want)
+		}
+		if got, want := (*restored.v)[1], "value"; got != want {
+			t.Errorf("restored map entry = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("assignable", func(t *testing.T) {
+		// Save rejects different Go map types sharing one map. Load permits
+		// different assignable destinations, so exercise that wire boundary
+		// directly: v registers an unnamed map before alias assigns it.
+		var buf bytes.Buffer
+		w := wire.Writer{Writer: &buf}
+		if err := state.WriteHeader(&w, 2, true); err != nil {
+			t.Fatal(err)
+		}
+		wire.Save(&w, &wire.Type{Name: (*mapPtrContainer)(nil).StateTypeName(), Fields: []string{"v", "alias", "owner"}})
+		value := wire.Struct{TypeID: 1}
+		value.Alloc(3)
+		*value.Field(0), *value.Field(1), *value.Field(2) = &wire.Ref{Root: 2}, &wire.Ref{Root: 2}, wire.Nil{}
+		wire.Save(&w, wire.Uint(1))
+		wire.Save(&w, &value)
+		wire.Save(&w, wire.Uint(2))
+		wire.Save(&w, &wire.Map{})
+		var restored mapPtrContainer
+		if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+			t.Fatal(err)
+		}
+		if restored.v == nil || *restored.v == nil || restored.alias == nil {
+			t.Fatal("missing decoded map aliases")
+		}
+		restored.alias[2] = "shared"
+		if got, want := (*restored.v)[2], "shared"; got != want {
+			t.Errorf("alias update = %v, want %v", got, want)
+		}
+	})
 }
 
 func TestMapNaNKeys(t *testing.T) {
