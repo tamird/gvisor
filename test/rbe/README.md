@@ -51,28 +51,22 @@ part of the qualification result.
 
 ## GitHub Actions frontend
 
-On `tamird/gvisor`, a push to `rbe-qualification-upstream-refresh` runs the
-`smoke` lane through the pinned BuildBuddy CLI. The Actions worker submits the
-immutable triggering commit; Bazel and the tests run on hosted Linux workers.
+Use `qualification/current-upstream-refresh` on `tamird/gvisor` for the
+integrated qualification source. The workflow runs only when manually
+dispatched on this branch and records its immutable triggering commit.
+Compilation uses BuildBuddy RBE; the `execution` input chooses remote or
+local tests as described below.
+
 The job requires the existing `BUILDBUDDY_API_KEY` repository secret. It has
 read-only repository permissions and does not persist the checkout credential.
-Pull requests cannot enter this credentialed job. The separate
-`rbe-actions-kvm-syscalls`, `rbe-actions-arm64-resume`,
-`rbe-actions-amd64-syscalls`,
-`rbe-actions-kvm-startup`,
-`rbe-actions-benchmark-partitions`, `rbe-actions-docker-network`,
-`rbe-actions-arm64-docker`, `rbe-actions-arm64-images`,
-`rbe-actions-plugin-network`, `rbe-actions-nftables` and
-`rbe-unit-mixed-hybrid` pilot branches permit
-manual dispatches only.
+Pull requests cannot enter this credentialed job.
 
-The existing CI workflow also accepts a manual dispatch on that branch. Pass
-space-separated `lanes` and an `architecture` selection; the qualification
-script remains the owner of their meaning and test selection. For example:
+Pass space-separated `lanes` and an `architecture` selection; the qualification
+script owns their meaning and test selection. For example:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-qualification-upstream-refresh \
+  --ref qualification/current-upstream-refresh \
   -f lanes='smoke workflows' -f architecture=all
 ```
 
@@ -86,7 +80,7 @@ For a captured catalog at `$COS_IMAGES_JSON`:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-qualification-upstream-refresh \
+  --ref qualification/current-upstream-refresh \
   -f lanes='cos-metadata workflows' -f architecture=all \
   -f "cos_catalog_gzip_base64=$(gzip -n -c "$COS_IMAGES_JSON" | base64 | tr -d '\n')" \
   -f "cos_catalog_sha256=$(sha256sum "$COS_IMAGES_JSON" | cut -d ' ' -f 1)"
@@ -97,8 +91,8 @@ temporary copy after the run. No catalog hosting or GCP credentials are needed
 on the Actions or Remote Bazel workers. Preserve the catalog's capture time
 with the result; these inputs contain public metadata, not credentials.
 
-The CLI returns the remote status. Pushes have a 15-minute remote timeout;
-ordinary manual selections have 45 minutes, with automatic retries disabled.
+The CLI returns the remote status. Ordinary remote selections have a
+45-minute timeout, with automatic retries disabled.
 Those Actions jobs have a 50-minute timeout. Hosted coordinator limits can be
 capped below the requested duration; inspect the accepted action timeout.
 Missing workers, input errors and failed tests remain failures.
@@ -239,7 +233,7 @@ macro's existing `hash15` buckets:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-qualification-upstream-refresh \
+  --ref qualification/current-upstream-refresh \
   -f lanes=syscalls -f architecture=arm64 -f execution=local \
   -f syscall_bucket=0
 ```
@@ -251,7 +245,7 @@ timeouts. It uses the same native frontend, host tools and hash buckets:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-arm64-resume \
+  --ref qualification/current-upstream-refresh \
   -f lanes=syscalls-resume -f architecture=arm64 -f execution=local \
   -f syscall_bucket=0
 ```
@@ -275,7 +269,7 @@ aggregate. Its work/job bounds are 45/50 minutes; incomplete work stays failed.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref qualification/kvm-public-lane \
+  --ref qualification/current-upstream-refresh \
   -f lanes=kvm -f architecture=amd64 -f execution=local
 ```
 
@@ -291,7 +285,7 @@ and hash buckets apply:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-kvm-syscalls \
+  --ref qualification/current-upstream-refresh \
   -f lanes=syscalls-kvm -f architecture=amd64 -f execution=local \
   -f syscall_bucket=0
 ```
@@ -328,7 +322,7 @@ from `tests(//test/benchmarks:continuous_tests)`:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-benchmark-partitions \
+  --ref qualification/current-upstream-refresh \
   -f lanes=benchmarks -f architecture=amd64 -f execution=local \
   -f benchmark_target=//test/benchmarks/fs:bazel_test_continuous_grpc_kvm_owned
 ```
@@ -351,7 +345,7 @@ ARM64 Firecracker capacity.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-arm64-docker \
+  --ref qualification/current-upstream-refresh \
   -f lanes=docker -f architecture=arm64 -f execution=local
 ```
 
@@ -387,7 +381,7 @@ establish comparative performance.
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-kvm-startup \
+  --ref qualification/current-upstream-refresh \
   -f lanes=startup -f architecture=amd64 -f execution=local
 ```
 
@@ -1401,7 +1395,7 @@ privileged Docker fixture, while compilation stays on RBE:
 
 ```sh
 gh workflow run build.yml --repo tamird/gvisor \
-  --ref rbe-actions-nftables \
+  --ref qualification/current-upstream-refresh \
   -f lanes=nftables -f architecture=amd64 -f execution=local
 ```
 
