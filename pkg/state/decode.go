@@ -102,7 +102,10 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 func (ods *objectDecodeState) findCycleFor(target *objectDecodeState) []*objectDecodeState {
 	for _, ic := range ods.callbacks {
 		other := ic.source()
-		if other != nil && other == target {
+		if other == nil {
+			continue
+		}
+		if other == target {
 			return []*objectDecodeState{target}
 		} else if childList := other.findCycleFor(target); childList != nil {
 			return append(childList, other)

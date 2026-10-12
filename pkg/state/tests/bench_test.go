@@ -56,6 +56,27 @@ func buildMapValueObject(n int) any {
 	return &m
 }
 
+// buildMapFieldObject uses an existing generated owner while keeping its
+// interface-valued entries genuinely dynamic.
+func buildMapFieldObject(n int) any {
+	m := &mapContainer{v: make(map[int]any)}
+	b := new(benchStruct)
+	for i := 0; i < n; i++ {
+		m.v[i] = b
+	}
+	return m
+}
+
+// buildScalarMapFieldObject reuses the populated scalar-map fixture. The
+// anonymous-root map benchmarks remain separate fallback controls.
+func buildScalarMapFieldObject(n int) any {
+	m := &nanMapContainer{values: make(map[float64]int)}
+	for i := 0; i < n; i++ {
+		m.values[float64(i)] = i
+	}
+	return m
+}
+
 // buildSliceObject builds a benchmark object.
 func buildSliceObject(n int) any {
 	b := new(benchStruct)
@@ -94,6 +115,12 @@ var allObjects = map[string]struct {
 	},
 	"map_value": {
 		New: buildMapValueObject,
+	},
+	"map_field": {
+		New: buildMapFieldObject,
+	},
+	"map_scalar_field": {
+		New: buildScalarMapFieldObject,
 	},
 	"slice": {
 		New: buildSliceObject,

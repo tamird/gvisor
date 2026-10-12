@@ -200,8 +200,9 @@ type Type interface {
 
 	// StateFields returns information about the type.
 	//
-	// Fields is the set of fields for the object. Calls to Sink.Save and
-	// Source.Load must be made in-order with respect to these fields.
+	// Fields defines stable local slots for the object. Save and Load calls
+	// identify fields by these slots; custom values and reconciled wire schemas
+	// may use a different processing order.
 	//
 	// The field list must be stable for the type.
 	StateFields() []string
