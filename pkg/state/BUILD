@@ -84,13 +84,13 @@ go_library(
         "types.go",
         "value_unsafe.go",
     ],
+    gc_goopts = ["-m=2"],
     importpath = "gvisor.dev/gvisor/pkg/state",
     marshal = False,
     stateify = False,
     visibility = [
         "//visibility:public",
     ],
-    gc_goopts = ["-m=2"],
     deps = [
         "//pkg/gohacks",
         "//pkg/state/wire",
