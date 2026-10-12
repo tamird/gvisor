@@ -14,7 +14,11 @@
 
 package tests
 
-import "context"
+import (
+	"context"
+
+	"gvisor.dev/gvisor/pkg/state"
+)
 
 // +stateify savable
 type genericContainer struct {
@@ -60,4 +64,33 @@ func (b *badCycleStruct) afterLoad(context.Context) {
 		// a deadlock error during load.
 		panic("badCycleStruct.afterLoad called")
 	}
+}
+
+// replayLoadStruct exercises manual non-stream-order access and a Source that
+// survives its callback and the enclosing Load. The omitted field still has to
+// be fully parsed before StateLoad runs.
+// +stateify type
+type replayLoadStruct struct {
+	first    int64
+	second   string
+	omitted  int64
+	source   state.Source `state:"nosave"`
+	repeated int64        `state:"nosave"`
+	after    string       `state:"nosave"`
+	calls    int          `state:"nosave"`
+}
+
+func (r *replayLoadStruct) StateSave(s state.Sink) {
+	s.Save(0, &r.first)
+	s.Save(1, &r.second)
+	s.Save(2, &r.omitted)
+}
+
+func (r *replayLoadStruct) StateLoad(_ context.Context, s state.Source) {
+	r.calls++
+	s.Load(1, &r.second)
+	s.Load(0, &r.first)
+	s.Load(0, &r.repeated)
+	r.source = s
+	s.AfterLoad(func() { s.Load(1, &r.after) })
 }
