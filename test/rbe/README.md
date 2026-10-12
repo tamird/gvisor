@@ -1047,13 +1047,13 @@ bazel test --config=rbe-matrix --config=x86_64 --config=rbe-local-tests \
   //test/gpu:public_smoke
 ```
 
-| Public cohort | Declared action | Original job budget |
-| --- | --- | --- |
-| Smoke | `//test/gpu:public_smoke` | 3300 seconds |
-| Full Ubuntu | `//test/gpu:public_all` | 5400 seconds |
-| L4 | `//test/gpu:public_l4` | 3300 seconds |
-| COS | `//test/gpu:public_cos` | 3300 seconds |
-| CUDA12.8 | `//test/gpu:public_cuda_12_8_partition_1` through `_8` | 5400 seconds per partition |
+| Public cohort         | Declared action                                          | Original job budget        |
+| --------------------- | -------------------------------------------------------- | -------------------------- |
+| Smoke                 | `//test/gpu:public_smoke`                                | 3300 seconds               |
+| Full Ubuntu           | `//test/gpu:public_all`                                  | 5400 seconds               |
+| L4                    | `//test/gpu:public_l4`                                   | 3300 seconds               |
+| COS                   | `//test/gpu:public_cos`                                  | 3300 seconds               |
+| CUDA12.8              | `//test/gpu:public_cuda_12_8_partition_1` through `_8`   | 5400 seconds per partition |
 | All supported drivers | `//test/gpu:public_all_drivers_partition_0` through `_7` | 3300 seconds per partition |
 
 Set `--test_timeout` to the table's budget for the selected host action. These
@@ -1091,6 +1091,13 @@ reuse their existing pinned producers. Source-image builds need Docker and
 network access but no GPU. Building those outputs or analyzing these actions
 provides no hardware execution credit; all six public hardware cohorts remain
 unqualified until they run on appropriate hosts.
+
+Archive creation exports cached source-hash images directly with the declared
+crane tool. It retains compressed layers and configuration bytes while applying
+both local image tags. A failed cache-export command uses the existing Make
+load/rebuild path.
+Both paths keep a local archive spool before publishing the declared output.
+
 
 The maintained Docker runtime lane has an explicit action-owned setup:
 

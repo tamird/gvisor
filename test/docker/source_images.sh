@@ -32,8 +32,9 @@ case "${mode}" in
     fi
     ;;
   archive)
-    test "$#" -eq 8
+    test "$#" -eq 9
     archive=$(realpath -m "$8")
+    retag=$(realpath "$9")
     ;;
   *) echo "Unknown image source operation: ${mode}" >&2; exit 1 ;;
 esac
@@ -57,17 +58,38 @@ if [[ ${mode} == test ]]; then
     CRANE="${crane_command}" "test-${selection}-images"
 else
   target=${selection//\//_}
-  "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
-    CRANE="${crane_command}" "load-${target}"
-  image=$("${make}" --no-print-directory -s -f "${makefile}" \
-    ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 CRANE="${crane_command}" "local-image-${target}")
-  latest="gvisor.dev/images/${selection}:latest"
-  id=$(docker image inspect --format '{{.Id}}' "${image}")
-  test "${id}" = "$(docker image inspect --format '{{.Id}}' "${latest}")"
-  printf 'Source image %s (%s); consumer tag %s\n' "${image}" "${id}" "${latest}"
-  # Consumers use the canonical latest name in their fresh private daemons.
+  "${make}" --no-print-directory -s -f "${makefile}" ARCH="${arch}" \
+    _IMAGE_CONTEXT_PREPARED=1 CRANE="${crane_command}" \
+    "image-references-${target}" > "${work}/references"
+  mapfile -t references < "${work}/references"
+  test "${#references[@]}" -eq 3
+  remote=${references[0]}
+  image=${references[1]}
+  latest=${references[2]}
+  case "${arch}" in
+    x86_64) platform=linux/amd64 ;;
+    aarch64) platform=linux/arm64 ;;
+    *) echo "Unknown image architecture: ${arch}" >&2; exit 1 ;;
+  esac
+  # Retain the local-filesystem spool while avoiding a Docker unpack/save for
+  # cached source images. The retagger changes
+  # only crane's final manifest, so no second full archive is needed.
   saved="${work}/image.tar"
-  docker save --output "${saved}" "${image}" "${latest}"
+  if [[ ${SKIP_IMAGE_LOAD:-} != true ]] && \
+      "${crane}" pull --platform="${platform}" "${remote}" "${saved}"; then
+    "${retag}" "${saved}" "${remote}" "${image}" "${latest}"
+  else
+    # Retain the canonical pull/rebuild and local-only policies when the
+    # crane command fails, including a registry-read or spool-write error.
+    # Later retag and publication errors do not enter this fallback.
+    rm -f "${saved}"
+    "${make}" -f "${makefile}" ARCH="${arch}" _IMAGE_CONTEXT_PREPARED=1 \
+      CRANE="${crane_command}" "load-${target}"
+    id=$(docker image inspect --format '{{.Id}}' "${image}")
+    test "${id}" = "$(docker image inspect --format '{{.Id}}' "${latest}")"
+    printf 'Source image %s (%s); consumer tag %s\n' "${image}" "${id}" "${latest}"
+    docker save --output "${saved}" "${image}" "${latest}"
+  fi
   cp "${saved}" "${archive}"
   sha256sum "${archive}"
 fi
