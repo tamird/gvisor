@@ -439,27 +439,41 @@ func TestGeneratedFieldsBeforeRegistration(t *testing.T) {
 	if _, err := state.Load(t.Context(), bytes.NewReader(earlyFieldWire), &restored); err != nil {
 		t.Fatalf("Load after generated registration: %v", err)
 	}
-	for _, object := range []*earlyFieldOwner{earlyFieldLoaded, &restored} {
-		if got, want := object.child.values[7], 9; got != want {
+	// The same child pointer type was loaded while nil before registration.
+	// Loading it non-nil now also allocates through that earlier type graph.
+	child := &restored.child
+	var directWire bytes.Buffer
+	if _, err := state.Save(t.Context(), &directWire, &child); err != nil {
+		t.Fatalf("Save registered child: %v", err)
+	}
+	var direct *earlyFieldChild
+	if _, err := state.Load(t.Context(), &directWire, &direct); err != nil {
+		t.Fatalf("Load registered child: %v", err)
+	}
+	if direct == nil {
+		t.Fatal("Load registered child returned nil")
+	}
+	for _, object := range []*earlyFieldChild{&earlyFieldLoaded.child, &restored.child, direct} {
+		if got, want := object.values[7], 9; got != want {
 			t.Errorf("map value = %d, want %d", got, want)
 		}
-		if got, want := len(object.child.values), 1; got != want {
+		if got, want := len(object.values), 1; got != want {
 			t.Errorf("map length = %d, want %d", got, want)
 		}
-		if got, want := object.child.custom, 11; got != want {
+		if got, want := object.custom, 11; got != want {
 			t.Errorf("custom value = %d, want %d", got, want)
 		}
-		if got, want := object.child.omitted, (chan int)(nil); got != want {
+		if got, want := object.omitted, (chan int)(nil); got != want {
 			t.Errorf("omitted channel = %v, want %v", got, want)
 		}
-		if got, want := len(object.child.slice), 2; got != want {
+		if got, want := len(object.slice), 2; got != want {
 			t.Fatalf("slice length = %d, want %d", got, want)
 		}
-		if got, want := cap(object.child.slice), 4; got != want {
+		if got, want := cap(object.slice), 4; got != want {
 			t.Fatalf("slice capacity = %d, want %d", got, want)
 		}
 		for i, value := range []int{1, 2, 0, 0} {
-			if got, want := object.child.slice[:4][i], value; got != want {
+			if got, want := object.slice[:4][i], value; got != want {
 				t.Errorf("backing element %d = %d, want %d", i, got, want)
 			}
 		}
