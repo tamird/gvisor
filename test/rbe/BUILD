@@ -166,3 +166,45 @@ docker_command_test(
         "@platforms//cpu:x86_64",
     ],
 )
+
+# Fork-only CPU compatibility check of the actual source archive.
+go_test(
+    name = "source_archive_test",
+    srcs = ["source_archive_test.go"],
+    rundir = ".",
+    tags = ["manual"],
+)
+
+docker_daemon_config(
+    name = "source_archive_config",
+    testonly = True,
+    images = ["//test/docker:containerd_harness_source_amd64"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "source_archive_load_test",
+    size = "medium",
+    command = ":source_archive_test",
+    command_args = [
+        "-test.v",
+        "--archive=$(rootpath //test/docker:containerd_harness_source_amd64)",
+    ],
+    data = ["//test/docker:containerd_harness_source_amd64"],
+    docker_config = ":source_archive_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
