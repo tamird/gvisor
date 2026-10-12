@@ -39,8 +39,30 @@ options=("--arch=$QUALIFICATION_ARCH" "--clock-source=${QUALIFICATION_CLOCK_SOUR
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi
-if [[ -n ${QUALIFICATION_BENCHMARK_TARGET:-} ]]; then
-  options+=("--benchmark-target=$QUALIFICATION_BENCHMARK_TARGET")
+if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
+  if [[ $QUALIFICATION_TARGETS == *$'\n'* ]]; then
+    printf 'Supply target labels on one line.\n' >&2
+    exit 2
+  fi
+  read -r -a selected_targets <<< "$QUALIFICATION_TARGETS"
+  case "${lanes[*]}" in
+    build)
+      for target in "${selected_targets[@]}"; do
+        options+=("--build-target=$target")
+      done
+      ;;
+    benchmarks)
+      if (( ${#selected_targets[@]} != 1 )); then
+        printf 'Select exactly one continuous benchmark target.\n' >&2
+        exit 2
+      fi
+      options+=("--benchmark-target=${selected_targets[0]}")
+      ;;
+    *)
+      printf 'Explicit targets require the build or benchmarks lane.\n' >&2
+      exit 2
+      ;;
+  esac
 fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
@@ -73,13 +95,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           ;;
       esac
     else
-      # Hour-long guest tests need more runway than the hosted coordinator's
-      # observed one-hour cap. Only the coordinator moves; all guest actions
+      # Keep long guest tests and source-image builds observable even when a
+      # hosted coordinator disconnects. Actions owns coordination; actions
       # retain their remote execution requirements and declared deadlines.
       case "$QUALIFICATION_ARCH:${lanes[*]}" in
-        arm64:syscalls-64k|arm64:syscalls-rc) ;;
+        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build) ;;
         *)
-          printf 'Remote tests on the Actions coordinator require an ARM64 guest profile.\n' >&2
+          printf 'The Actions remote coordinator supports ARM64 guest profiles or explicit build targets.\n' >&2
           exit 2
           ;;
       esac
@@ -136,6 +158,18 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+      if [[ $QUALIFICATION_EXECUTION == remote-actions && ${lanes[*]} == build ]]; then
+        # Compare the archive exporters with the original action deadline and
+        # no retries. This experiment's settings are not the permanent policy
+        # for arbitrary builds through the Actions coordinator.
+        printf '%s\n' \
+          'build:buildbuddy_remote_executor --strategy=CachedSourceOCI=remote' \
+          'build:buildbuddy_remote_executor --strategy=OCITarballManifest=remote' \
+          'build:buildbuddy_remote_executor --strategy=OCITarball=remote' \
+          'build:buildbuddy_remote_executor --remote_exec_header=x-buildbuddy-platform.default-timeout=5333s' \
+          'build:buildbuddy_remote_executor --remote_exec_header=x-buildbuddy-platform.retry=false' \
+          'build:buildbuddy_remote_executor --remote_retries=0'
+      fi
       if [[ $qualification_retain_reports == true ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
@@ -198,7 +232,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
             "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
           )
         fi
-        if [[ $qualification_retain_reports == true && $argument == test ]]; then
+        if [[ $qualification_retain_reports == true && ( $argument == build || $argument == test ) ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
           raw_events=$(mktemp "${qualification_private:?}/events-XXXXXX.json")
           events_output=$(mktemp "$RUNNER_TEMP/qualification/guest-events-XXXXXX.jsonl")
@@ -206,10 +240,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         fi
         break
       done
-      if [[ $qualification_retain_reports == true && $argument == test ]]; then
+      if [[ -n $raw_events ]]; then
         # qualify.sh records the selected profile and configured test graph.
         # Keep the actual command and checkout state alongside those records.
         cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
+        if [[ $argument == build ]]; then
+          cohort_dir="$RUNNER_TEMP/qualification/build"
+        fi
         if [[ $qualification_container == true ]]; then
           cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
           # Leave room for the work command and capture termination grace.

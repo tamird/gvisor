@@ -373,3 +373,76 @@ output_files(
     target = ":oci_conversion_small_load",
     tags = ["manual"],
 )
+
+# Fork-only completion of the two cached image conversions. The maintained
+# source_image_archive declarations above retain Make's cache-miss rebuilds.
+LARGE_CACHED_IMAGES = {
+    "gpu_stable_diffusion_cached_amd64": GPU_SOURCE_IMAGES["gpu_stable_diffusion_source_amd64"],
+    "gpu_triton_cached_amd64": GPU_SOURCE_IMAGES["gpu_triton_source_amd64"],
+}
+
+[
+    cached_source_layout(
+        name = name + "_layout",
+        testonly = True,
+        architecture = "x86_64",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ),
+        image = image,
+        tags = ["manual"],
+    )
+    for name, image in LARGE_CACHED_IMAGES.items()
+]
+
+[
+    filegroup(
+        name = name + "_tags",
+        testonly = True,
+        srcs = [":" + name + "_layout"],
+        output_group = "repo_tags",
+        tags = ["manual"],
+    )
+    for name in LARGE_CACHED_IMAGES
+]
+
+[
+    oci_load(
+        name = name + "_load",
+        testonly = True,
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ),
+        format = "docker",
+        image = ":" + name + "_layout",
+        repo_tags = ":" + name + "_tags",
+        tags = ["manual"],
+    )
+    for name in LARGE_CACHED_IMAGES
+]
+
+[
+    output_files(
+        name = name,
+        testonly = True,
+        output_group = "tarball",
+        paths = ["test/docker/" + name + "_load/tarball.tar"],
+        target = ":" + name + "_load",
+        tags = ["manual"],
+    )
+    for name in LARGE_CACHED_IMAGES
+]
