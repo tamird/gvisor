@@ -57,8 +57,8 @@ type recordSlice []recordSigned
 type recordMap map[recordSigned]recordUnsigned
 
 // The receiver must not shadow the state package in generated Save or Load.
-// Defined field types also exercise inferred typed calls without component
-// type spellings or constraints limited to predeclared scalar types.
+// Defined field types exercise checked scalar widths and aggregate
+// destinations without spelling component types.
 // +stateify savable
 type statePackageReceiver struct {
 	value    int `state:".(stateObject)"`
