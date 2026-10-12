@@ -143,15 +143,14 @@ func (i *Installer) MaybeInstall(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to download driver: %w", err)
 	}
-	defer reader.Close()
 
 	f, err := os.CreateTemp("", "")
 	if err != nil {
 		return fmt.Errorf("failed to open driver file: %w", err)
 	}
 	defer os.Remove(f.Name())
-	defer f.Close()
 	if err := i.writeAndCheck(f, reader); err != nil {
+		f.Close()
 		return fmt.Errorf("writeAndCheck: %w", err)
 	}
 	if err := f.Chmod(0755); err != nil {
@@ -180,10 +179,23 @@ func (i *Installer) uninstallDriver(ctx context.Context, driverVersion string) e
 	return nil
 }
 
-func (i *Installer) writeAndCheck(f *os.File, reader io.Reader) error {
+func (i *Installer) writeAndCheck(f *os.File, reader io.ReadCloser) error {
 	checksum := sha256.New()
-	if _, err := io.Copy(io.MultiWriter(f, checksum), reader); err != nil {
-		return fmt.Errorf("failed to copy driver: %w", err)
+	buf := make([]byte, 1024*1024)
+	for {
+		n, err := reader.Read(buf[0:])
+		if err != nil && err != io.EOF {
+			return fmt.Errorf("failed to read: %w", err)
+		}
+		if n == 0 || err == io.EOF {
+			break
+		}
+		if _, err := checksum.Write(buf[:n]); err != nil {
+			return fmt.Errorf("failed to write: %w", err)
+		}
+		if _, err := f.Write(buf[:n]); err != nil {
+			return fmt.Errorf("failed to write: %w", err)
+		}
 	}
 	gotChecksum := fmt.Sprintf("%x", checksum.Sum(nil))
 	c, ok := i.expectedChecksumFunc(i.requestedVersion)
@@ -266,34 +278,34 @@ func ListSupportedDrivers(outfile string) error {
 	return nil
 }
 
-// ChecksumDriver downloads and returns the SHA256 checksum of the driver.
+// ChecksumDriver downloads and returns the SHA265 checksum of the driver.
 func (i *Installer) ChecksumDriver(ctx context.Context, arch string) (string, error) {
-	reader, err := i.downloadFunc(ctx, i.requestedVersion.String(), arch)
+	f, err := DownloadDriver(ctx, i.requestedVersion.String(), arch)
 	if err != nil {
 		return "", fmt.Errorf("failed to download driver: %w", err)
 	}
-	defer reader.Close()
 	checksum := sha256.New()
-	if _, err := io.Copy(checksum, reader); err != nil {
-		return "", fmt.Errorf("failed to copy driver: %w", err)
+	for {
+		n, err := io.Copy(checksum, f)
+		if err == io.EOF || n == 0 {
+			break
+		}
+		if err != nil {
+			return "", fmt.Errorf("failed to copy driver: %w", err)
+		}
 	}
 	return fmt.Sprintf("%x", checksum.Sum(nil)), nil
 }
 
-// DownloadDriver opens a download of the requested driver. The caller must close
-// the returned reader.
+// DownloadDriver downloads the requested driver and returns the binary as a []byte so it can be
+// checked before written to disk.
 func DownloadDriver(ctx context.Context, driverVersion, arch string) (io.ReadCloser, error) {
 	url := getNvidiaBaseURL(driverVersion, arch)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create driver request: %w", err)
-	}
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download driver: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
 		return nil, fmt.Errorf("failed to download driver with statusCode: %d: status: %s", resp.StatusCode, resp.Status)
 	}
 	return resp.Body, nil
