@@ -51,6 +51,21 @@ part of the qualification result.
 
 ## GitHub Actions frontend
 
+The `build` lane accepts explicit Bazel labels through the `build_targets`
+workflow input, separated by spaces. With `execution=remote`, Actions
+coordinates the build and RBE executes its actions. For example, selecting
+`//test/docker:gpu_stable_diffusion_source_amd64` and
+`//test/docker:gpu_triton_source_amd64` builds only those two source-image
+archives and their dependencies. It does not run GPU tests. Keep
+`architecture=amd64` for these declared targets.
+
+Build outputs remain in the remote cache; the Actions artifact retains
+Bazel output identities and the execution log. The coordinator has a
+two-hour work budget, without changing individual action deadlines. A
+newer dispatch with the same concurrency inputs replaces the older one;
+changing only the target labels does not create a separate concurrency group.
+
+
 On `tamird/gvisor`, a push to `rbe-qualification-upstream-refresh` runs the
 `smoke` lane through the pinned BuildBuddy CLI. The Actions worker submits the
 immutable triggering commit; Bazel and the tests run on hosted Linux workers.
