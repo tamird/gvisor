@@ -23,6 +23,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"syscall"
 
 	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/abi/nvgpu"
@@ -227,13 +228,21 @@ func Init() error {
 }
 
 // ReadHookOutput reads the output of the ioctl hook until an EOF is reached.
-func (c Connection) ReadHookOutput(ctx context.Context) *Results {
+// It retains the first error and continues after argument-parsing failures.
+func (c Connection) ReadHookOutput(ctx context.Context) (*Results, error) {
 	res := NewResults()
+	var captureErr error
+	recordError := func(err error) {
+		log.Warningf("%v", err)
+		if captureErr == nil {
+			captureErr = err
+		}
+	}
 	for {
 		ioctlPB, err := c.ReadIoctlProto(ctx)
 		if err != nil {
 			if !errors.Is(err, io.EOF) {
-				log.Warningf("Error reading ioctl proto: %v", err)
+				recordError(fmt.Errorf("reading ioctl proto: %w", err))
 			}
 			break
 		}
@@ -241,7 +250,7 @@ func (c Connection) ReadHookOutput(ctx context.Context) *Results {
 		// Parse the protobuf
 		ioctl, err := ParseIoctlOutput(ioctlPB)
 		if err != nil {
-			log.Warningf("Error parsing ioctl %v: %v", ioctlPB, err)
+			recordError(fmt.Errorf("parsing ioctl %v: %w", ioctlPB, err))
 			continue
 		}
 
@@ -255,12 +264,20 @@ func (c Connection) ReadHookOutput(ctx context.Context) *Results {
 			}
 		}
 	}
-	return res
+	return res, captureErr
 }
 
 // ParseIoctlOutput parses an ioctl protobuf from the ioctl hook.
 func ParseIoctlOutput(ioctl *pb.Ioctl) (Ioctl, error) {
 	parsedIoctl := Ioctl{pb: ioctl}
+	if errno := ioctl.GetArgDataErrno(); errno != 0 {
+		return parsedIoctl, fmt.Errorf("copying ioctl arguments: %w", syscall.Errno(errno))
+	}
+	if ioctl.GetFdPath() != uvmDevPath {
+		if got, want := len(ioctl.GetArgData()), int(linux.IOC_SIZE(uint32(ioctl.GetRequest()))); got != want {
+			return parsedIoctl, fmt.Errorf("captured argument bytes = %d, want %d", got, want)
+		}
+	}
 
 	// Categorize and do class-specific parsing.
 	path := ioctl.GetFdPath()

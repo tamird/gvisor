@@ -19,6 +19,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -38,7 +39,7 @@ type Connection struct {
 // once the context is cancelled and the read would block, or if the read fails.
 func (c *Connection) readFullWithContext(ctx context.Context, buf []byte) error {
 	nread := 0
-	for {
+	for nread < len(buf) {
 		// Don't block for long if we're cancelled.
 		timeout := time.Second
 		if ctx.Err() != nil {
@@ -49,17 +50,17 @@ func (c *Connection) readFullWithContext(ctx context.Context, buf []byte) error 
 			return fmt.Errorf("failed to set deadline: %w", err)
 		}
 
-		n, err := c.conn.Read(buf[nread:])
+		n, err := io.ReadFull(c.conn, buf[nread:])
+		nread += n
 		if err != nil {
 			// Only retry if we're not cancelled.
 			if errors.Is(err, os.ErrDeadlineExceeded) && ctx.Err() == nil {
 				continue
 			}
+			if errors.Is(err, io.EOF) && nread != 0 {
+				err = io.ErrUnexpectedEOF
+			}
 			return fmt.Errorf("failed to read from connection: %w", err)
-		}
-		nread += n
-		if nread == len(buf) {
-			break
 		}
 	}
 
@@ -88,6 +89,9 @@ func (c *Connection) ReadIoctlProto(ctx context.Context) (*pb.Ioctl, error) {
 
 	// Read the proto data.
 	if err := c.readFullWithContext(ctx, c.protoBytesBuf); err != nil {
+		if errors.Is(err, io.EOF) {
+			err = io.ErrUnexpectedEOF
+		}
 		return nil, fmt.Errorf("failed to read proto data: %w", err)
 	}
 
@@ -100,10 +104,15 @@ func (c *Connection) ReadIoctlProto(ctx context.Context) (*pb.Ioctl, error) {
 	return ioctl, nil
 }
 
+type connectionResult struct {
+	results *Results
+	err     error
+}
+
 // Server is a server that accepts connections from the sniffer hook. It reads ioctl protos from
 // each connection and sends them to the results channel.
 type Server struct {
-	resultsChan   chan *Results
+	resultsChan   chan connectionResult
 	connectionsWG sync.WaitGroup
 	listener      net.Listener
 }
@@ -111,7 +120,7 @@ type Server struct {
 // NewServer creates a new Server.
 func NewServer() *Server {
 	return &Server{
-		resultsChan: make(chan *Results),
+		resultsChan: make(chan connectionResult),
 	}
 }
 
@@ -141,35 +150,43 @@ func (s *Server) Serve(ctx context.Context) error {
 		for ctx.Err() == nil {
 			conn, err := s.listener.Accept()
 			if err != nil {
-				errChan <- fmt.Errorf("failed to accept connection: %w", err)
+				errChan <- err
 				return
 			}
 
 			s.connectionsWG.Add(1)
 			go func() {
-				conn := Connection{conn: conn}
-				s.resultsChan <- conn.ReadHookOutput(ctx)
-				s.connectionsWG.Done()
+				defer s.connectionsWG.Done()
+				connection := Connection{conn: conn}
+				results, err := connection.ReadHookOutput(ctx)
+				// This goroutine owns the accepted connection. Close it before
+				// waiting for the caller to collect its results.
+				if closeErr := conn.Close(); closeErr != nil {
+					err = errors.Join(err, fmt.Errorf("closing hook connection: %w", closeErr))
+				}
+				s.resultsChan <- connectionResult{results, err}
 			}()
 		}
 	}()
 
 	// Wait for the context cancellation.
 	<-ctx.Done()
+	var resultErr error
 	if err := s.listener.Close(); err != nil {
-		return fmt.Errorf("failed to close socket: %w", err)
+		resultErr = fmt.Errorf("failed to close socket: %w", err)
 	}
 	for err := range errChan {
 		if errors.Is(err, net.ErrClosed) {
 			continue
 		}
-		return fmt.Errorf("failed to accept connection: %w", err)
+		resultErr = errors.Join(resultErr, fmt.Errorf("failed to accept connection: %w", err))
 	}
-	return nil
+	return resultErr
 }
 
 // AllResults blocks until all connections have closed and returns an aggregate of all the results.
-func (s *Server) AllResults() *Results {
+// Serve must have returned before calling AllResults, so no new readers can be added.
+func (s *Server) AllResults() (*Results, error) {
 	// Wait for all connections to close.
 	// Do this in a separate goroutine so we can start reading from the results channel.
 	go func() {
@@ -178,10 +195,12 @@ func (s *Server) AllResults() *Results {
 	}()
 
 	finalResults := NewResults()
-	for results := range s.resultsChan {
-		finalResults.Merge(results)
+	var resultErr error
+	for result := range s.resultsChan {
+		finalResults.Merge(result.results)
+		resultErr = errors.Join(resultErr, result.err)
 	}
-	return finalResults
+	return finalResults, resultErr
 }
 
 // Addr returns the address of the socket.
