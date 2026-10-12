@@ -221,8 +221,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s)", statePrefix, name, records.types[name].factory))
 		} else if records != nil && records.forward[name] != "" {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)))", statePrefix, name, statePrefix, records.forward[name]))
-		} else if records != nil {
-			initCalls = append(initCalls, fmt.Sprintf("%sRegisterType((*%s)(nil))", statePrefix, name))
 		} else {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
 		}
@@ -300,12 +298,26 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			emitLoadValue := func(name, typName string) {
 				fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
 			}
-			emitLoad := func(name string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
+			var declaration *declaredFields
+			if records != nil {
+				declaration = records.fields[ts.Name.Name]
 			}
-			emitLoadWait := func(name string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
+			emitBindFields := func(source, receiver string) {
+				fmt.Fprintf(outputFile, " %s := %s.Fields(%s, []int{", declaration.local, source, receiver)
+				for _, index := range declaration.indices {
+					fmt.Fprintf(outputFile, "%d,", index)
+				}
+				fmt.Fprint(outputFile, "})\n")
 			}
+			emitLoadField := func(name, method string) {
+				if declaration.has(fields[name]) {
+					fmt.Fprintf(outputFile, " %s.%s(%d)\n", declaration.local, method, fields[name])
+				} else {
+					fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], recv, name)
+				}
+			}
+			emitLoad := func(name string) { emitLoadField(name, "Load") }
+			emitLoadWait := func(name string) { emitLoadField(name, "LoadWait") }
 			// Checked capture can introduce package-qualified calls inside
 			// StateSave. Keep a handwritten receiver from shadowing that
 			// import, without renaming the hook or other generated methods.
@@ -329,7 +341,17 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, fields[name], name+"Value", true)
 			}
 			emitSave := func(name string) {
-				record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, fields[name], saveRecv+"."+name, false)
+				slot := fields[name]
+				field := record.fields[slot]
+				if declaration.has(slot) && (field.capture != "" || field.storage == "Object") {
+					method := field.capture
+					if method == "" {
+						method = "Capture"
+					}
+					fmt.Fprintf(outputFile, " %s.%s(%d, &%s.F%d)\n", declaration.local, method, slot, recordLocal, slot)
+				} else {
+					record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, slot, saveRecv+"."+name, false)
+				}
 			}
 			emitZeroCheck := func(name string) {
 				fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, saveRecv, name, statePrefix, name, saveRecv, name)
@@ -393,6 +415,15 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 						fmt.Fprintf(outputFile, " %s := %sRecord[%s](stateSinkObject, %d)\n", recordLocal, statePrefix, record.name, len(record.fields))
 					}
 					model.scan(scanFunctions{value: emitSaveValue})
+					bindFields := false
+					for slot, field := range record.fields {
+						if declaration.has(slot) && (field.capture != "" || field.storage == "Object") {
+							bindFields = true
+						}
+					}
+					if bindFields {
+						emitBindFields("stateSinkObject", saveRecv)
+					}
 					model.scan(scanFunctions{normal: emitSave, wait: emitSave})
 				}
 				fmt.Fprintf(outputFile, "}\n\n")
@@ -414,6 +445,9 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			if generateSaverLoader {
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
 				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
+				if declaration != nil {
+					emitBindFields("stateSourceObject", recv)
+				}
 				model.scan(scanFunctions{normal: emitLoad, wait: emitLoadWait})
 				model.scan(scanFunctions{value: emitLoadValue})
 				if hasAfterLoad {

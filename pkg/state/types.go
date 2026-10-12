@@ -302,10 +302,8 @@ type registeredType struct {
 	typ       reflect.Type
 	info      *wire.Type
 	newRecord func(wire.TypeID, int) *wire.Record
-	memory    *valueMemory
 	mapOps    *mapOperations
 	slice     *sliceOperations
-	array     arrayAllocator
 }
 
 // globalTypeDatabase is the single registration database for saving and loading.
@@ -315,12 +313,24 @@ var globalTypeDatabase = map[string]*registeredType{}
 // info provide native operations without introducing a wire name or type ID.
 var reverseTypeDatabase = map[reflect.Type]*registeredType{}
 
+// definitionFor returns the shared exact-type definition while the operation
+// registry lock is held. Collection discovery need not introduce a wire name.
+func definitionFor(typ reflect.Type) *registeredType {
+	definition := reverseTypeDatabase[typ]
+	if definition == nil {
+		definition = &registeredType{typ: typ}
+		reverseTypeDatabase[typ] = definition
+	}
+	return definition
+}
+
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
 // in order to save memory.
 func Release() {
 	operationRegistry.Lock()
 	defer operationRegistry.Unlock()
+	operationRegistry.fields.Clear()
 	operationRegistry.cache.Clear()
 	globalTypeDatabase = nil
 	reverseTypeDatabase = nil
@@ -380,32 +390,19 @@ func loadBinary(value binaryObject, name string, s Source) {
 // Manually implemented savers use Sink.Save/SaveValue to populate the record's
 // compatibility slots.
 func Register(t Type) {
-	registerState(t, nil, nil, nil)
-}
-
-// RegisterType is stateify's typed form of Register for declarations with a
-// manual saver or no record fields. Both entry points use the same schema and
-// exact-type database.
-func RegisterType[T any, P interface {
-	*T
-	Type
-}](t P) {
-	registerState(t, nil, memoryFor[T], memoryFor[*T])
+	registerState(t, nil)
 }
 
 // RegisterGenerated registers the record layout emitted with a generated saver.
 // It enters the same type database and capture graph as Register.
-func RegisterGenerated[T any, P interface {
-	*T
-	Type
-}](t P, newRecord func(wire.TypeID, int) *wire.Record) {
+func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
 	if newRecord == nil {
 		Failf("nil record constructor for %T", t)
 	}
-	registerState(t, newRecord, memoryFor[T], memoryFor[*T])
+	registerState(t, newRecord)
 }
 
-func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, memory, pointerMemory func() *valueMemory) {
+func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
 	name := t.StateTypeName()
 	fields := t.StateFields()
 	typ := reflect.TypeOf(t)
@@ -440,7 +437,7 @@ func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, memory
 			}
 		}
 	}
-	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, memory, pointerMemory)
+	register(typ, wire.Type{Name: name, Fields: fields}, newRecord)
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -453,11 +450,11 @@ func registerBinary[T any, P interface {
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
-	}, newBinaryRecord, memoryFor[T], memoryFor[*T])
+	}, newBinaryRecord)
 }
 
 // register publishes metadata in the existing type databases.
-func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record, memory, pointerMemory func() *valueMemory) {
+func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record) {
 	operationRegistry.Lock()
 	defer operationRegistry.Unlock()
 	if info.Name == "" {
@@ -482,19 +479,9 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	definition := reverseTypeDatabase[typ]
-	if definition == nil {
-		definition = &registeredType{typ: typ}
-		reverseTypeDatabase[typ] = definition
-	}
+	definition := definitionFor(typ)
 	definition.info = &info
 	definition.newRecord = newRecord
-	if memory != nil {
-		if definition.memory == nil {
-			definition.memory = memory()
-		}
-		addMemory(reflect.PointerTo(typ), pointerMemory)
-	}
 	globalTypeDatabase[info.Name] = definition
 }
 

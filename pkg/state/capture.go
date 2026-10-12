@@ -60,26 +60,16 @@ func (s Sink) CaptureValue(value any, dest *wire.Object) {
 	s.internal.es.encodeObject(reflect.ValueOf(value), encodeDefault, dest)
 }
 
-// CaptureMap preserves Sink.Save's addressable map value. In particular, a
-// later save hook may reassign the original map variable before its deferred
-// capture; passing the map by value here would change that existing timing.
-func CaptureMap(s Sink, valuePtr any, dest *wire.Ref) {
-	s.internal.es.resolveMap(reflect.ValueOf(valuePtr).Elem(), dest)
-}
-
 // CaptureMapValue captures a custom map value as Sink.SaveValue does.
 func CaptureMapValue(s Sink, value any, dest *wire.Ref) {
 	s.internal.es.resolveMap(reflect.ValueOf(value), dest)
 }
 
-// CaptureInterface saves an interface's dynamic type and value. A nil Type in
-// dest denotes the primitive-zero field, rather than a typed interface value.
-func CaptureInterface(s Sink, valuePtr any, dest *wire.Interface) {
-	obj := reflect.ValueOf(valuePtr).Elem()
+func (es *encodeState) captureInterface(obj reflect.Value, dest *wire.Interface) {
 	if obj.IsNil() {
 		return
 	}
 	value := obj.Elem()
-	dest.Type = s.internal.es.findType(value.Type())
-	s.internal.es.encodeObject(value, encodeAsValue, &dest.Value)
+	dest.Type = es.findType(value.Type())
+	es.encodeObject(value, encodeAsValue, &dest.Value)
 }

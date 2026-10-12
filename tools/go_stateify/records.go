@@ -68,9 +68,33 @@ type recordSet struct {
 	wireAlias        string
 	saveReceiver     string
 	types            map[string]*recordType
+	fields           map[string]*declaredFields
 	forward          map[string]string
 	operations       []nativeOperation
 	operationImports []nativeImport
+}
+
+// declaredFields binds schema slots to checked direct Go field indices.
+// It is independent of recordType because a manual saver may have an
+// automatically generated loader.
+type declaredFields struct {
+	local   string
+	indices []int
+}
+
+func (f *declaredFields) has(slot int) bool {
+	return f != nil && slot >= 0 && slot < len(f.indices) && f.indices[slot] >= 0
+}
+
+func boundFieldType(t types.Type) bool {
+	switch t := t.Underlying().(type) {
+	case *types.Basic:
+		return t.Kind() != types.UnsafePointer
+	case *types.Pointer, *types.Slice, *types.Array, *types.Map, *types.Struct, *types.Interface:
+		return true
+	default:
+		return false
+	}
 }
 
 type nativeOperation struct{ helper, typ string }
@@ -162,19 +186,14 @@ func (r *recordType) declare(w io.Writer, wireAlias string) {
 func (r *recordType) capture(w io.Writer, wireAlias, statePrefix, local string, slot int, expression string, value bool) {
 	f := r.fields[slot]
 	if f.capture != "" {
+		if !value {
+			panic("ordinary field capture has no checked declaration")
+		}
 		capture := f.capture
-		address := ""
 		if capture == "CaptureMap" {
-			if value {
-				capture = "CaptureMapValue"
-			} else {
-				address = "&"
-			}
+			capture = "CaptureMapValue"
 		}
-		if capture == "CaptureInterface" {
-			address = "&"
-		}
-		fmt.Fprintf(w, " %s%s(stateSinkObject, %s%s, &%s.F%d)\n", statePrefix, capture, address, expression, local, slot)
+		fmt.Fprintf(w, " %s%s(stateSinkObject, %s, &%s.F%d)\n", statePrefix, capture, expression, local, slot)
 	} else if f.storage != "Object" {
 		fmt.Fprintf(w, " %s.F%d = %s.%s(%s)\n", local, slot, wireAlias, f.storage, expression)
 	} else if value {
@@ -392,11 +411,17 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 	}
 	for _, typ := range model.types {
 		names[typ.receiver] = struct{}{}
+		for _, field := range typ.fields {
+			if field.kind == fieldValue {
+				names[field.name+"Value"] = struct{}{}
+			}
+		}
 	}
 	records := &recordSet{
 		wireAlias:    unusedName("statewire", names),
 		saveReceiver: unusedName("stateObject", names),
 		types:        make(map[string]*recordType),
+		fields:       make(map[string]*declaredFields),
 		forward:      make(map[string]string),
 	}
 	// Identity and source spelling are deliberately separate. An exported Go
@@ -475,6 +500,15 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		owner := types.NewPointer(object.Type())
 		_, manual := model.methods[method{name, "StateSave"}]
 		generatedSaver := typ.save && !manual
+		declaration := &declaredFields{
+			local: unusedName("stateBoundFields", names),
+		}
+		for _, field := range typ.fields {
+			if field.slot >= 0 {
+				declaration.indices = append(declaration.indices, -1)
+			}
+		}
+		hasDeclaredField := false
 		record := &recordType{
 			name:    unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names),
 			factory: unusedName(fmt.Sprintf("newStateRecord%d_%s", len(name), name), names),
@@ -488,7 +522,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			if field.kind == fieldValue {
 				lookup = "save" + camelCased(field.name)
 			}
-			member, _, _ := types.LookupFieldOrMethod(owner, true, pkg, lookup)
+			member, index, _ := types.LookupFieldOrMethod(owner, true, pkg, lookup)
 			if member == nil {
 				if !generatedSaver && field.kind == fieldValue {
 					continue
@@ -506,6 +540,13 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 				valueType = signature.Results().At(0).Type()
 			} else {
 				valueType = member.Type()
+				if typ.save && boundFieldType(valueType) {
+					if _, ok := member.(*types.Var); !ok || len(index) != 1 {
+						return nil, fmt.Errorf("%s.%s is not a direct checked Go field", name, lookup)
+					}
+					declaration.indices[field.slot] = index[0]
+					hasDeclaredField = true
+				}
 			}
 			if generatedSaver && field.slot != len(record.fields) {
 				panic("noncontiguous field model")
@@ -518,14 +559,17 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		if generatedSaver {
 			records.types[name] = record
 		}
+		if hasDeclaredField {
+			records.fields[name] = declaration
+		}
 	}
 	return records, nil
 }
 
 // nameableType checks whether generated code in pkg may spell this exact type.
 // Named aliases are checked before unaliasing so an accessible public alias is
-// not lost. Opaque foreign components still get memory operations through the
-// generic collection constructor, and dynamic collections use the same adapter.
+// not lost. Opaque foreign components use central exact-type allocation, while
+// dynamic collections retain the existing reflection adapter.
 func nameableType(t types.Type, pkg *types.Package, nativeImports map[string]string) bool {
 	switch t := t.(type) {
 	case *types.Alias:

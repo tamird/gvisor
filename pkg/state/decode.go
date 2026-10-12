@@ -302,7 +302,7 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	if len(r.Dots) != 0 {
 		typ = ds.findType(r.Type)
 	}
-	v := operationsFor(typ).memory.newValue()
+	v := reflect.New(typ).Elem()
 	ods = ds.addObject(id, v)
 
 	// Process any deferred objects & callbacks.
@@ -331,13 +331,17 @@ type objectDecoder struct {
 
 // load is helper for the public methods on Source.
 func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func()) {
+	od.loadValue(slot, reflectedValue(objPtr.Elem()), wait, fn)
+}
+
+func (od *objectDecoder) loadValue(slot int, obj value, wait bool, fn func()) {
 	// Note that we have reconciled the type and may remap the fields here
 	// to match what's expected by the decoder. The "slot" parameter here
 	// is in terms of the local type, where the fields in the encoded
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
 	v := *od.encoded.Field(od.rte.FieldOrder[slot])
-	od.ds.decodeObject(od.ods, objPtr.Elem(), v)
+	od.ds.decodeValue(od.ods, obj, v)
 	if wait {
 		// Mark this individual object a blocker.
 		od.ds.waitObject(od.ods, v, fn)
@@ -377,11 +381,6 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	ops := operationsFor(obj.Type())
-	if ops.memory.load != nil {
-		ops.memory.load(obj.Addr().UnsafePointer(), ds.ctx, Source{internal: od})
-		return
-	}
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
@@ -391,8 +390,7 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 }
 
 // decodeMap decodes a map value.
-func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
-	source := reflectedValue(obj)
+func (ds *decodeState) decodeMap(ods *objectDecodeState, source value, encoded *wire.Map) {
 	source.ops.mapOps.initialize(source)
 	for i := range encoded.Keys {
 		// Cells are not reused: load hooks may retain their addresses.
@@ -458,7 +456,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
 	origObj := obj
-	obj = operationsFor(typ).memory.newValue()
+	obj = reflect.New(typ).Elem()
 	defer origObj.Set(obj)
 
 	// With the object now having sufficient type information to actually

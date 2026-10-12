@@ -158,9 +158,12 @@ var dummyAddr = reflect.ValueOf(new(struct{})).Pointer()
 // private map representation. Identity is fixed now; the deferred source may
 // still be an addressed header that a later hook reassigns.
 func (es *encodeState) resolveMap(obj reflect.Value, ref *wire.Ref) {
-	source := reflectedValue(obj)
-	source.require(reflect.Map)
-	es.resolveValue(source, uintptr(obj.UnsafePointer()), ref, encodeMapAsValue)
+	es.resolveMapValue(reflectedValue(obj), ref)
+}
+
+func (es *encodeState) resolveMapValue(obj value, ref *wire.Ref) {
+	obj.require(reflect.Map)
+	es.resolveValue(obj, uintptr(obj.pointer()), ref, encodeMapAsValue)
 }
 
 // resolveValue is the sole graph resolver. address is the identity captured now;
@@ -195,7 +198,7 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 		// headers retain the caller's actual slot and its deferred reassignment
 		// behavior; aliases found above require no additional storage.
 		if obj.address == nil {
-			copy := obj.ops.memory.copyValue(obj.reflect())
+			copy := copyValue(obj.reflect())
 			obj.address = copy.Addr().UnsafePointer()
 		}
 		// Record the map.
@@ -439,7 +442,7 @@ func (es *encodeState) encodeStruct(source value, dest *wire.Object) {
 	// this is a map key as a struct. Either way, we need to make a copy to
 	// obtain an addressable value.
 	if source.address == nil {
-		obj = source.ops.memory.copyValue(obj)
+		obj = copyValue(obj)
 		source.address = obj.Addr().UnsafePointer()
 	} else if !obj.CanAddr() {
 		obj = reflect.NewAt(source.ops.layout.typ, source.address).Elem()
@@ -479,10 +482,6 @@ func (es *encodeState) encodeStruct(source value, dest *wire.Object) {
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()
-	if source.ops.memory.save != nil {
-		source.ops.memory.save(source.address, te.Name, Sink{internal: oe})
-		return
-	}
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
 		value.StateSave(Sink{internal: oe})
@@ -646,7 +645,7 @@ func (es *encodeState) encodeValue(obj value, how encodeStrategy, dest *wire.Obj
 		}
 		r := new(wire.Ref)
 		*dest = r
-		es.resolveValue(obj, uintptr(obj.reflect().UnsafePointer()), r, encodeMapAsValue)
+		es.resolveMapValue(obj, r)
 	default:
 		Failf("unknown object %#v", obj.reflect().Interface())
 		panic("unreachable")

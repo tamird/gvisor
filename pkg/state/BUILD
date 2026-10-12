@@ -73,6 +73,7 @@ go_library(
         "deferred_list.go",
         "encode.go",
         "encode_unsafe.go",
+        "fields_unsafe.go",
         "ods_list.go",
         "operations_unsafe.go",
         "state.go",

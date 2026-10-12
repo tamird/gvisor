@@ -15,6 +15,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"net/netip"
 	"time"
@@ -174,7 +175,7 @@ type countedSaveParent struct {
 }
 
 // This receiver name must not collide with the generated field context.
-func (stateFieldCapture *countedSaveParent) beforeSave() {}
+func (stateBoundFields *countedSaveParent) beforeSave() {}
 
 // manualForwardedParent captures an external receiver into matching slots.
 // Its child may already have a resolver node even though the receiver does not.
@@ -255,3 +256,47 @@ type zeroSizedFields struct {
 	array     [2]zeroSizedArrayElement
 	value     int64
 }
+
+// earlyFieldChild is used before its generated registration init runs. Blank,
+// omitted and custom fields make physical indices differ from wire slots.
+// +stateify savable
+type earlyFieldChild struct {
+	_       uint64
+	omitted chan int    `state:"nosave"`
+	values  map[int]int `state:"wait"`
+	custom  int         `state:".(int)"`
+	slice   []int
+}
+
+func (e *earlyFieldChild) saveCustom() int                         { return e.custom }
+func (e *earlyFieldChild) loadCustom(_ context.Context, value int) { e.custom = value }
+
+// This manual owner forwards to a different receiver and supplies the schema
+// before the generated child's registration has run.
+type earlyFieldOwner struct {
+	prefix uint64
+	child  earlyFieldChild
+}
+
+func (*earlyFieldOwner) StateTypeName() string                           { return "state.tests.earlyFieldOwner" }
+func (*earlyFieldOwner) StateFields() []string                           { return []string{"values", "custom", "slice"} }
+func (e *earlyFieldOwner) StateSave(s state.Sink)                        { e.child.StateSave(s) }
+func (e *earlyFieldOwner) StateLoad(ctx context.Context, s state.Source) { e.child.StateLoad(ctx, s) }
+
+// Save reaches the generated method through interface dispatch from a package
+// variable initializer. It must not depend on a generated descriptor's runtime
+// initializer or on the native collection registration that happens in init.
+var earlyFieldWire, earlyFieldLoaded, earlyFieldError = func() ([]byte, *earlyFieldOwner, error) {
+	state.Register((*earlyFieldOwner)(nil))
+	backing := []int{1, 2, 99, 99}
+	owner := earlyFieldOwner{prefix: 123, child: earlyFieldChild{
+		omitted: make(chan int), values: map[int]int{7: 9}, custom: 11, slice: backing[:2:4],
+	}}
+	var buf bytes.Buffer
+	if _, err := state.Save(context.Background(), &buf, &owner); err != nil {
+		return nil, nil, err
+	}
+	var restored earlyFieldOwner
+	_, err := state.Load(context.Background(), bytes.NewReader(buf.Bytes()), &restored)
+	return buf.Bytes(), &restored, err
+}()

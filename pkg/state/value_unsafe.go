@@ -29,6 +29,14 @@ type value struct {
 	reflected reflect.Value
 }
 
+// copyValue gives a value snapshot separate addressable storage. The caller
+// retains the original reflected identity when it is used as a capture key.
+func copyValue(source reflect.Value) reflect.Value {
+	copy := reflect.New(source.Type()).Elem()
+	copy.Set(source)
+	return copy
+}
+
 func valueAt(address unsafe.Pointer, ops *typeOperations) value {
 	return value{ops: ops, address: address}
 }

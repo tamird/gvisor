@@ -61,19 +61,17 @@ func RegisterMap[M ~map[K]V, K comparable, V any]() {
 	operationRegistry.Lock()
 	defer operationRegistry.Unlock()
 	typ := reflect.TypeFor[M]()
-	if definition := reverseTypeDatabase[typ]; definition != nil && definition.mapOps != nil {
+	definition := definitionFor(typ)
+	if definition.mapOps != nil {
 		return
 	}
-	addMemory(typ, memoryFor[M])
-	addMemory(reflect.TypeFor[K](), memoryFor[K])
-	addMemory(reflect.TypeFor[V](), memoryFor[V])
 	read := func(source value) M {
 		if source.address != nil {
 			return *(*M)(source.address)
 		}
 		return source.reflected.Interface().(M)
 	}
-	reverseTypeDatabase[typ].mapOps = &mapOperations{
+	definition.mapOps = &mapOperations{
 		length: func(source value) (int, bool) { m := read(source); return len(m), m == nil },
 		assign: func(dest, source value) { *(*M)(dest.address) = *(*M)(source.address) },
 		visit: func(source value, visit func(value, value)) {
@@ -109,13 +107,9 @@ func mapEntry[T any](cell *T, ops *typeOperations) value {
 	return source
 }
 
-type arrayAllocator func(int) unsafe.Pointer
-
 type sliceOperations struct {
 	capture func(*encodeState, value, *wire.Slice)
-	// array allocates a GC-scanned backing array of a runtime extent.
-	array arrayAllocator
-	set   func(value, value, int, int)
+	set     func(value, value, int, int)
 }
 
 // makeReflectedSliceOperations runs inside private descriptor construction.
@@ -143,18 +137,17 @@ func makeReflectedSliceOperations() *sliceOperations {
 	}
 }
 
-// RegisterSlice stages native header capture, capacity clearing and backing
-// allocation. Runtime capacity remains part of the exact array descriptor.
+// RegisterSlice stages native header capture and capacity clearing. Runtime
+// capacity remains part of the exact array descriptor.
 func RegisterSlice[S ~[]E, E any]() {
 	operationRegistry.Lock()
 	defer operationRegistry.Unlock()
 	typ := reflect.TypeFor[S]()
-	if definition := reverseTypeDatabase[typ]; definition != nil && definition.slice != nil {
+	definition := definitionFor(typ)
+	if definition.slice != nil {
 		return
 	}
-	addMemory(typ, memoryFor[S])
-	addMemory(reflect.TypeFor[E](), memoryFor[E])
-	reverseTypeDatabase[typ].slice = &sliceOperations{
+	definition.slice = &sliceOperations{
 		capture: func(es *encodeState, source value, dest *wire.Slice) {
 			var s S
 			if source.address != nil {
@@ -171,12 +164,8 @@ func RegisterSlice[S ~[]E, E any]() {
 			p := unsafe.Pointer(unsafe.SliceData(s))
 			es.resolveValue(value{ops: ops, address: p}, uintptr(p), &dest.Ref, encodeDefault)
 		},
-		array: func(capacity int) unsafe.Pointer { return unsafe.Pointer(unsafe.SliceData(make([]E, capacity))) },
 		set: func(dest, array value, length, capacity int) {
 			*(*S)(dest.address) = S(unsafe.Slice((*E)(array.address), capacity)[:length:capacity])
 		},
-	}
-	if reverseTypeDatabase[reflect.TypeFor[E]()].array == nil {
-		reverseTypeDatabase[reflect.TypeFor[E]()].array = reverseTypeDatabase[typ].slice.array
 	}
 }

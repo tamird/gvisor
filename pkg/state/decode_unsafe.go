@@ -175,7 +175,7 @@ func (ds *decodeState) decodeValue(ods *objectDecodeState, obj value, encoded wi
 		if len(x.Keys) != len(x.Values) {
 			Failf("map has %d keys and %d values", len(x.Keys), len(x.Values))
 		}
-		ds.decodeMap(ods, obj.reflect(), x)
+		ds.decodeMap(ods, obj, x)
 	case *wire.Interface:
 		obj.require(reflect.Interface)
 		ds.decodeInterface(ods, obj.reflect(), x)
