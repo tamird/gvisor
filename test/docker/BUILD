@@ -381,8 +381,8 @@ LARGE_CACHED_IMAGES = {
     "gpu_triton_cached_amd64": GPU_SOURCE_IMAGES["gpu_triton_source_amd64"],
 }
 
-# Qualify only the remaining Triton pipeline on the observed ordinary worker.
-TRITON_OCI_EXEC_PROPERTIES = select({
+# Qualify cached image pipelines on the observed ordinary worker.
+CACHED_OCI_EXEC_PROPERTIES = select({
     "//tools/bazeldefs:rbe": dict(
         docker_exec_properties(
             exec_group = "",
@@ -403,12 +403,7 @@ TRITON_OCI_EXEC_PROPERTIES = select({
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        exec_properties = TRITON_OCI_EXEC_PROPERTIES if name == "gpu_triton_cached_amd64" else docker_test_exec_properties(
-            exec_group = "",
-            free_disk = "80GB",
-            memory = "12GB",
-            vfs = True,
-        ),
+        exec_properties = CACHED_OCI_EXEC_PROPERTIES,
         image = image,
         tags = ["manual"],
     )
@@ -434,12 +429,7 @@ TRITON_OCI_EXEC_PROPERTIES = select({
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
-        exec_properties = TRITON_OCI_EXEC_PROPERTIES if name == "gpu_triton_cached_amd64" else docker_test_exec_properties(
-            exec_group = "",
-            free_disk = "80GB",
-            memory = "12GB",
-            vfs = True,
-        ),
+        exec_properties = CACHED_OCI_EXEC_PROPERTIES,
         format = "docker",
         image = ":" + name + "_layout",
         repo_tags = ":" + name + "_tags",
