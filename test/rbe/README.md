@@ -991,6 +991,45 @@ budget; cancellation leaves incomplete qualification. The image declares both
 architectures, but ARM64 Firecracker capacity is still required and its
 execution remains unqualified.
 
+The existing-driver GPU smoke suite can run on a dedicated Linux AMD64 host
+with an installed NVIDIA driver and Container Toolkit:
+
+```sh
+bazel test --config=rbe-matrix --config=x86_64 --config=rbe-local-tests \
+  --run_under=//test/rbe:local_root \
+  //test/gpu:existing_driver_smoke
+```
+
+Run this command as an unprivileged user with passwordless sudo on a disposable
+host. No other Docker daemon or GPU test may run on that host during this
+command: the root fixture creates a private mount namespace but shares the host
+network namespace, including Docker's bridge and firewall state. The existing
+root fixture needs mount-namespace and cgroup access. Docker,
+containerd, runc and `nvidia-container-runtime-hook` must be installed on the
+effective PATH inherited by the root test process. [Docker discovers the NVIDIA
+hook through that PATH](https://github.com/moby/moby/blob/fca702de7/daemon/nvidia_linux.go#L32-L46)
+when registering its GPU DeviceRequests driver; the fixture does not register
+or install a separate NVIDIA runtime. The host must expose the control and
+assigned GPU devices needed by that driver; assignment need not start at index
+zero. Docker and the existing native `TestNvidiaSmi` exercise actual device access
+and report toolkit or driver incompatibility.
+
+Compilation and the two declared CUDA source-image archives use the existing
+remote build graph. The three test actions run locally, one at a time, without
+test-result caching: native-runc smoke, runsc smoke with `--nvproxy=true`, and
+runsc GPU checkpoint/restore with the same flag. Each uses the existing private
+Docker daemon and cleanup, its declared images and release inputs, and the raw
+suite's 300-second default action timeout. The frontends prohibit remote and
+sandbox execution. The two source-image producers retain their networked build
+behavior; graph analysis alone does not establish that those builds or any GPU
+test ran.
+
+These tests use the currently installed driver. They neither install the latest
+driver nor validate every supported driver checksum. Existing CUDA-version and
+checkpoint/restore skips remain visible test outcomes. COS, the full GPU and L4
+cohorts, the full CUDA 12.8 suite, and the exclusive all-driver installation
+matrix still require their own execution contracts and capable hosts.
+
 The maintained Docker runtime lane has an explicit action-owned setup:
 
 ```sh

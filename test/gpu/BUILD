@@ -1,9 +1,76 @@
+load("//test/docker:defs.bzl", "docker_command_test", "docker_daemon_config")
 load("//tools:defs.bzl", "go_test", "proto_library")
 load("//tools/bazeldefs:platforms.bzl", "network_test_exec_properties")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+# These frontends exercise an already installed driver through an owned daemon.
+# They do not install the latest driver or qualify the public all-driver matrix.
+[
+    docker_daemon_config(
+        name = "smoke_" + mode + "_config",
+        testonly = True,
+        images = [
+            "//test/docker:cuda_samples_source_amd64",
+            "//test/docker:cuda_samples_12_8_source_amd64",
+        ],
+        runtime = runtime,
+        runtime_args = args,
+        tags = ["manual"],
+    )
+    for mode, runtime, args in [
+        ("runc", None, []),
+        (
+            "runsc",
+            "//:release",
+            ["--nvproxy=true"],
+        ),
+    ]
+]
+
+[
+    docker_command_test(
+        name = name,
+        # Match the existing smoke_test and sr_test default action timeout.
+        size = "medium",
+        command = command,
+        command_args = ["-test.v"],
+        docker_config = config,
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        tags = [
+            "external",
+            "manual",
+            "no-remote-exec",
+            "no-sandbox",
+            "requires-gpu",
+        ],
+        target_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    )
+    for name, command, config in [
+        ("smoke_runc_owned", ":smoke_test", ":smoke_runc_config"),
+        ("smoke_runsc_owned", ":smoke_test", ":smoke_runsc_config"),
+        ("sr_runsc_owned", ":sr_test", ":smoke_runsc_config"),
+    ]
+]
+
+test_suite(
+    name = "existing_driver_smoke",
+    tags = ["manual"],
+    tests = [
+        ":smoke_runc_owned",
+        ":smoke_runsc_owned",
+        ":sr_runsc_owned",
+    ],
+    visibility = ["//:sandbox"],
 )
 
 go_test(
