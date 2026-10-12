@@ -29,7 +29,7 @@ type typeOperations struct {
 	layout *typeLayout
 	key    *typeOperations
 	elem   *typeOperations
-	decode func(*decodeState, *objectDecodeState, location, wire.Object)
+	decode func(*decodeState, *objectDecodeState, location, wire.Value) objectID
 	codec  nativeCodec
 }
 

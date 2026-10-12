@@ -26,19 +26,19 @@ type unsigned interface {
 // storeBool and the other scalar stores are shared by generated field helpers
 // and the dynamic destination dispatcher. false reports a wire-kind mismatch;
 // numeric truncation retains the existing write-before-error behavior.
-func storeBool[T ~bool](dst *T, encoded wire.Object) bool {
-	x, ok := encoded.(wire.Bool)
-	if ok {
-		*dst = T(x)
-	}
-	return ok
-}
-
-func storeSigned[T signed](dst *T, encoded wire.Object) bool {
-	x, ok := encoded.(wire.Int)
-	if !ok {
+func storeBool[T ~bool](dst *T, encoded wire.Value) bool {
+	if encoded.Kind() != wire.BoolKind {
 		return false
 	}
+	*dst = T(encoded.Bool())
+	return true
+}
+
+func storeSigned[T signed](dst *T, encoded wire.Value) bool {
+	if encoded.Kind() != wire.IntKind {
+		return false
+	}
+	x := encoded.Int()
 	v := T(x)
 	*dst = v
 	if got := int64(v); got != int64(x) {
@@ -47,11 +47,11 @@ func storeSigned[T signed](dst *T, encoded wire.Object) bool {
 	return true
 }
 
-func storeUnsigned[T unsigned](dst *T, encoded wire.Object) bool {
-	x, ok := encoded.(wire.Uint)
-	if !ok {
+func storeUnsigned[T unsigned](dst *T, encoded wire.Value) bool {
+	if encoded.Kind() != wire.UintKind {
 		return false
 	}
+	x := encoded.Uint()
 	v := T(x)
 	*dst = v
 	if got := uint64(v); got != uint64(x) {
@@ -60,11 +60,13 @@ func storeUnsigned[T unsigned](dst *T, encoded wire.Object) bool {
 	return true
 }
 
-func storeFloat[T ~float32 | ~float64](dst *T, encoded wire.Object) bool {
-	switch x := encoded.(type) {
-	case wire.Float32:
+func storeFloat[T ~float32 | ~float64](dst *T, encoded wire.Value) bool {
+	switch encoded.Kind() {
+	case wire.Float32Kind:
+		x := encoded.Float32()
 		*dst = T(x)
-	case wire.Float64:
+	case wire.Float64Kind:
+		x := encoded.Float64()
 		v := T(x)
 		*dst = v
 		if got := float64(v); !isFloatEq(got, float64(x)) {
@@ -76,15 +78,17 @@ func storeFloat[T ~float32 | ~float64](dst *T, encoded wire.Object) bool {
 	return true
 }
 
-func storeComplex[T ~complex64 | ~complex128](dst *T, encoded wire.Object) bool {
-	switch x := encoded.(type) {
-	case *wire.Complex64:
-		*dst = T(*x)
-	case *wire.Complex128:
-		v := T(*x)
+func storeComplex[T ~complex64 | ~complex128](dst *T, encoded wire.Value) bool {
+	switch encoded.Kind() {
+	case wire.Complex64Kind:
+		x := encoded.Complex64()
+		*dst = T(x)
+	case wire.Complex128Kind:
+		x := encoded.Complex128()
+		v := T(x)
 		*dst = v
-		if got := complex128(v); !isComplexEq(got, complex128(*x)) {
-			Failf("complex number truncated from %v to %v", *x, got)
+		if got := complex128(v); !isComplexEq(got, complex128(x)) {
+			Failf("complex number truncated from %v to %v", x, got)
 		}
 	default:
 		return false
@@ -92,10 +96,10 @@ func storeComplex[T ~complex64 | ~complex128](dst *T, encoded wire.Object) bool 
 	return true
 }
 
-func storeString[T ~string](dst *T, encoded wire.Object) bool {
-	x, ok := encoded.(*wire.String)
-	if ok {
-		*dst = T(*x)
+func storeString[T ~string](dst *T, encoded wire.Value) bool {
+	if encoded.Kind() != wire.StringKind {
+		return false
 	}
-	return ok
+	*dst = T(encoded.Text())
+	return true
 }

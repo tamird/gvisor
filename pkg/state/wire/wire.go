@@ -81,21 +81,10 @@ type Object interface {
 	//
 	// Panic is used for error control flow.
 	save(*Writer)
-
-	// load loads a new object of the given type.
-	//
-	// Panic is used for error control flow.
-	load(*Reader) Object
 }
 
 // Bool is a boolean.
 type Bool bool
-
-// loadBool loads an object of type Bool.
-func loadBool(r *Reader) Bool {
-	b := loadUint(r)
-	return Bool(b == 1)
-}
 
 // save implements Object.save.
 func (b Bool) save(w *Writer) {
@@ -108,23 +97,10 @@ func (b Bool) save(w *Writer) {
 	v.save(w)
 }
 
-// load implements Object.load.
-func (Bool) load(r *Reader) Object { return loadBool(r) }
-
 // Int is a signed integer.
 //
 // This uses varint encoding.
 type Int int64
-
-// loadInt loads an object of type Int.
-func loadInt(r *Reader) Int {
-	u := loadUint(r)
-	x := Int(u >> 1)
-	if u&1 != 0 {
-		x = ^x
-	}
-	return x
-}
 
 // save implements Object.save.
 func (i Int) save(w *Writer) {
@@ -135,32 +111,8 @@ func (i Int) save(w *Writer) {
 	u.save(w)
 }
 
-// load implements Object.load.
-func (Int) load(r *Reader) Object { return loadInt(r) }
-
 // Uint is an unsigned integer.
 type Uint uint64
-
-// loadUint loads an object of type Uint.
-func loadUint(r *Reader) Uint {
-	var (
-		u Uint
-		s uint
-	)
-	for i := 0; i <= 9; i++ {
-		b := r.readByte()
-		if b < 0x80 {
-			if i == 9 && b > 1 {
-				panic("overflow")
-			}
-			u |= Uint(b) << s
-			return u
-		}
-		u |= Uint(b&0x7f) << s
-		s += 7
-	}
-	panic("unreachable")
-}
 
 // save implements Object.save.
 func (u Uint) save(w *Writer) {
@@ -176,17 +128,8 @@ func (u Uint) save(w *Writer) {
 	}
 }
 
-// load implements Object.load.
-func (Uint) load(r *Reader) Object { return loadUint(r) }
-
 // Float32 is a 32-bit floating point number.
 type Float32 float32
-
-// loadFloat32 loads an object of type Float32.
-func loadFloat32(r *Reader) Float32 {
-	n := loadUint(r)
-	return Float32(math.Float32frombits(uint32(n)))
-}
 
 // save implements Object.save.
 func (f Float32) save(w *Writer) {
@@ -194,17 +137,8 @@ func (f Float32) save(w *Writer) {
 	n.save(w)
 }
 
-// load implements Object.load.
-func (Float32) load(r *Reader) Object { return loadFloat32(r) }
-
 // Float64 is a 64-bit floating point number.
 type Float64 float64
-
-// loadFloat64 loads an object of type Float64.
-func loadFloat64(r *Reader) Float64 {
-	n := loadUint(r)
-	return Float64(math.Float64frombits(uint64(n)))
-}
 
 // save implements Object.save.
 func (f Float64) save(w *Writer) {
@@ -212,18 +146,8 @@ func (f Float64) save(w *Writer) {
 	n.save(w)
 }
 
-// load implements Object.load.
-func (Float64) load(r *Reader) Object { return loadFloat64(r) }
-
 // Complex64 is a 64-bit complex number.
 type Complex64 complex128
-
-// loadComplex64 loads an object of type Complex64.
-func loadComplex64(r *Reader) Complex64 {
-	re := loadFloat32(r)
-	im := loadFloat32(r)
-	return Complex64(complex(float32(re), float32(im)))
-}
 
 // save implements Object.save.
 func (c *Complex64) save(w *Writer) {
@@ -233,21 +157,8 @@ func (c *Complex64) save(w *Writer) {
 	im.save(w)
 }
 
-// load implements Object.load.
-func (*Complex64) load(r *Reader) Object {
-	c := loadComplex64(r)
-	return &c
-}
-
 // Complex128 is a 128-bit complex number.
 type Complex128 complex128
-
-// loadComplex128 loads an object of type Complex128.
-func loadComplex128(r *Reader) Complex128 {
-	re := loadFloat64(r)
-	im := loadFloat64(r)
-	return Complex128(complex(float64(re), float64(im)))
-}
 
 // save implements Object.save.
 func (c *Complex128) save(w *Writer) {
@@ -257,22 +168,8 @@ func (c *Complex128) save(w *Writer) {
 	im.save(w)
 }
 
-// load implements Object.load.
-func (*Complex128) load(r *Reader) Object {
-	c := loadComplex128(r)
-	return &c
-}
-
 // String is a string.
 type String string
-
-// loadString loads an object of type String.
-func loadString(r *Reader) String {
-	l := loadUint(r)
-	p := make([]byte, l)
-	readFull(r, p)
-	return String(gohacks.StringFromImmutableBytes(p))
-}
 
 // save implements Object.save.
 func (s *String) save(w *Writer) {
@@ -283,12 +180,6 @@ func (s *String) save(w *Writer) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// load implements Object.load.
-func (*String) load(r *Reader) Object {
-	s := loadString(r)
-	return &s
 }
 
 // Dot is a kind of reference: one of Index and FieldName.
@@ -321,34 +212,6 @@ type Ref struct {
 	Type TypeSpec
 }
 
-// loadRef loads an object of type Ref (abstract).
-func loadRef(r *Reader) Ref {
-	ref := Ref{
-		Root: loadUint(r),
-	}
-	l := loadUint(r)
-	ref.Dots = make([]Dot, l)
-	for i := 0; i < int(l); i++ {
-		// Disambiguate between an Index (non-negative) and a field
-		// name (negative). This does some space and avoids a dedicate
-		// loadDot function. See Ref.save for the other side.
-		d := loadInt(r)
-		if d >= 0 {
-			ref.Dots[i] = Index(d)
-			continue
-		}
-		p := make([]byte, -d)
-		readFull(r, p)
-		fieldName := FieldName(gohacks.StringFromImmutableBytes(p))
-		ref.Dots[i] = &fieldName
-	}
-	if l != 0 {
-		// Only if dots is non-zero.
-		ref.Type = loadTypeSpec(r)
-	}
-	return ref
-}
-
 // save implements Object.save.
 func (r *Ref) save(w *Writer) {
 	r.Root.save(w)
@@ -378,40 +241,17 @@ func (r *Ref) save(w *Writer) {
 	}
 }
 
-// load implements Object.load.
-func (*Ref) load(r *Reader) Object {
-	ref := loadRef(r)
-	return &ref
-}
-
 // Nil is a primitive zero value of any type.
 type Nil struct{}
 
-// loadNil loads an object of type Nil.
-func loadNil(r *Reader) Nil {
-	return Nil{}
-}
-
 // save implements Object.save.
 func (Nil) save(w *Writer) {}
-
-// load implements Object.load.
-func (Nil) load(r *Reader) Object { return loadNil(r) }
 
 // Slice is a slice value.
 type Slice struct {
 	Length   Uint
 	Capacity Uint
 	Ref      Ref
-}
-
-// loadSlice loads an object of type Slice.
-func loadSlice(r *Reader) Slice {
-	return Slice{
-		Length:   loadUint(r),
-		Capacity: loadUint(r),
-		Ref:      loadRef(r),
-	}
 }
 
 // save implements Object.save.
@@ -421,37 +261,9 @@ func (s *Slice) save(w *Writer) {
 	s.Ref.save(w)
 }
 
-// load implements Object.load.
-func (*Slice) load(r *Reader) Object {
-	s := loadSlice(r)
-	return &s
-}
-
 // Array is an array value.
 type Array struct {
 	Contents []Object
-}
-
-// loadArray loads an object of type Array.
-func loadArray(r *Reader) Array {
-	l := loadUint(r)
-	if l == 0 {
-		// Note that there isn't a single object available to encode
-		// the type of, so we need this additional branch.
-		return Array{}
-	}
-	// All the objects here have the same type, so use dynamic dispatch
-	// only once. All other objects will automatically take the same type
-	// as the first object.
-	contents := make([]Object, l)
-	v := Load(r)
-	contents[0] = v
-	for i := 1; i < int(l); i++ {
-		contents[i] = v.load(r)
-	}
-	return Array{
-		Contents: contents,
-	}
 }
 
 // save implements Object.save.
@@ -469,40 +281,10 @@ func (a *Array) save(w *Writer) {
 	}
 }
 
-// load implements Object.load.
-func (*Array) load(r *Reader) Object {
-	a := loadArray(r)
-	return &a
-}
-
 // Map is a map value.
 type Map struct {
 	Keys   []Object
 	Values []Object
-}
-
-// loadMap loads an object of type Map.
-func loadMap(r *Reader) Map {
-	l := loadUint(r)
-	if l == 0 {
-		// See LoadArray.
-		return Map{}
-	}
-	// See type dispatch notes in Array.
-	keys := make([]Object, l)
-	values := make([]Object, l)
-	k := Load(r)
-	v := Load(r)
-	keys[0] = k
-	values[0] = v
-	for i := 1; i < int(l); i++ {
-		keys[i] = k.load(r)
-		values[i] = v.load(r)
-	}
-	return Map{
-		Keys:   keys,
-		Values: values,
-	}
 }
 
 // save implements Object.save.
@@ -523,12 +305,6 @@ func (m *Map) save(w *Writer) {
 		m.Keys[i].save(w)
 		m.Values[i].save(w)
 	}
-}
-
-// load implements Object.load.
-func (*Map) load(r *Reader) Object {
-	m := loadMap(r)
-	return &m
 }
 
 // TypeSpec is a type dereference.
@@ -590,37 +366,6 @@ const (
 	typeSpecNil
 )
 
-// loadTypeSpec loads TypeSpec values.
-func loadTypeSpec(r *Reader) TypeSpec {
-	switch hdr := loadUint(r); hdr {
-	case typeSpecTypeID:
-		return TypeID(loadUint(r))
-	case typeSpecPointer:
-		return &TypeSpecPointer{
-			Type: loadTypeSpec(r),
-		}
-	case typeSpecArray:
-		return &TypeSpecArray{
-			Count: loadUint(r),
-			Type:  loadTypeSpec(r),
-		}
-	case typeSpecSlice:
-		return &TypeSpecSlice{
-			Type: loadTypeSpec(r),
-		}
-	case typeSpecMap:
-		return &TypeSpecMap{
-			Key:   loadTypeSpec(r),
-			Value: loadTypeSpec(r),
-		}
-	case typeSpecNil:
-		return TypeSpecNil{}
-	default:
-		// This is not a valid stream?
-		panic(fmt.Errorf("unknown header: %d", hdr))
-	}
-}
-
 // saveTypeSpec saves TypeSpec values.
 func saveTypeSpec(w *Writer, t TypeSpec) {
 	switch x := t.(type) {
@@ -655,44 +400,16 @@ type Interface struct {
 	Value Object
 }
 
-// loadInterface loads an object of type Interface.
-func loadInterface(r *Reader) Interface {
-	return Interface{
-		Type:  loadTypeSpec(r),
-		Value: Load(r),
-	}
-}
-
 // save implements Object.save.
 func (i *Interface) save(w *Writer) {
 	saveTypeSpec(w, i.Type)
 	Save(w, i.Value)
 }
 
-// load implements Object.load.
-func (*Interface) load(r *Reader) Object {
-	i := loadInterface(r)
-	return &i
-}
-
 // Type is type information.
 type Type struct {
 	Name   string
 	Fields []string
-}
-
-// loadType loads an object of type Type.
-func loadType(r *Reader) Type {
-	name := string(loadString(r))
-	l := loadUint(r)
-	fields := make([]string, l)
-	for i := 0; i < int(l); i++ {
-		fields[i] = string(loadString(r))
-	}
-	return Type{
-		Name:   name,
-		Fields: fields,
-	}
 }
 
 // save implements Object.save.
@@ -707,24 +424,8 @@ func (t *Type) save(w *Writer) {
 	}
 }
 
-// load implements Object.load.
-func (*Type) load(r *Reader) Object {
-	t := loadType(r)
-	return &t
-}
-
 // multipleObjects is a special type for serializing multiple objects.
 type multipleObjects []Object
-
-// loadMultipleObjects loads a series of objects.
-func loadMultipleObjects(r *Reader) multipleObjects {
-	l := loadUint(r)
-	m := make(multipleObjects, l)
-	for i := 0; i < int(l); i++ {
-		m[i] = Load(r)
-	}
-	return m
-}
 
 // save implements Object.save.
 func (m *multipleObjects) save(w *Writer) {
@@ -735,23 +436,11 @@ func (m *multipleObjects) save(w *Writer) {
 	}
 }
 
-// load implements Object.load.
-func (*multipleObjects) load(r *Reader) Object {
-	m := loadMultipleObjects(r)
-	return &m
-}
-
 // noObjects represents no objects.
 type noObjects struct{}
 
-// loadNoObjects loads a sentinel.
-func loadNoObjects(r *Reader) noObjects { return noObjects{} }
-
 // save implements Object.save.
 func (noObjects) save(w *Writer) {}
-
-// load implements Object.load.
-func (noObjects) load(r *Reader) Object { return loadNoObjects(r) }
 
 // Struct is a basic composite value.
 type Struct struct {
@@ -805,14 +494,6 @@ func (s *Struct) Fields() int {
 	}
 }
 
-// loadStruct loads an object of type Struct.
-func loadStruct(r *Reader) Struct {
-	return Struct{
-		TypeID: TypeID(loadUint(r)),
-		fields: Load(r),
-	}
-}
-
 // save implements Object.save.
 //
 // Precondition: Alloc must have been called, and the fields all filled in
@@ -820,12 +501,6 @@ func loadStruct(r *Reader) Struct {
 func (s *Struct) save(w *Writer) {
 	Uint(s.TypeID).save(w)
 	Save(w, s.fields)
-}
-
-// load implements Object.load.
-func (*Struct) load(r *Reader) Object {
-	s := loadStruct(r)
-	return &s
 }
 
 // Object types.
@@ -925,60 +600,12 @@ func Save(w *Writer, obj Object) {
 	}
 }
 
-// Load loads a new object.
-//
-// +checkescape all
-//
-// N.B. This function will panic on error.
-func Load(r *Reader) Object {
-	switch hdr := loadUint(r); hdr {
-	case typeBool:
-		return loadBool(r)
-	case typeInt:
-		return loadInt(r)
-	case typeUint:
-		return loadUint(r)
-	case typeFloat32:
-		return loadFloat32(r)
-	case typeFloat64:
-		return loadFloat64(r)
-	case typeNil:
-		return loadNil(r)
-	case typeRef:
-		return ((*Ref)(nil)).load(r) // Escapes.
-	case typeString:
-		return ((*String)(nil)).load(r) // Escapes.
-	case typeSlice:
-		return ((*Slice)(nil)).load(r) // Escapes.
-	case typeArray:
-		return ((*Array)(nil)).load(r) // Escapes.
-	case typeMap:
-		return ((*Map)(nil)).load(r) // Escapes.
-	case typeStruct:
-		return ((*Struct)(nil)).load(r) // Escapes.
-	case typeNoObjects: // Special for struct.
-		return loadNoObjects(r)
-	case typeMultipleObjects: // Special for struct.
-		return ((*multipleObjects)(nil)).load(r) // Escapes.
-	case typeInterface:
-		return ((*Interface)(nil)).load(r) // Escapes.
-	case typeComplex64:
-		return ((*Complex64)(nil)).load(r) // Escapes.
-	case typeComplex128:
-		return ((*Complex128)(nil)).load(r) // Escapes.
-	case typeType:
-		return ((*Type)(nil)).load(r) // Escapes.
-	default:
-		// This is not a valid stream?
-		panic(fmt.Errorf("unknown header: %d", hdr))
-	}
-}
-
 // LoadUint loads a single unsigned integer.
 //
 // N.B. This function will panic on error.
 func LoadUint(r *Reader) uint64 {
-	return uint64(loadUint(r))
+	p := parser{stream: r}
+	return uint64(p.uint())
 }
 
 // SaveUint saves a single unsigned integer.

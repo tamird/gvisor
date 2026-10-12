@@ -49,6 +49,7 @@ go_test(
     embed = [":tests"],
     deps = [
         "//pkg/state",
+        "//pkg/state/wire",
         "//pkg/tcpip",
     ],
 )

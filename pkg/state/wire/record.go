@@ -132,8 +132,3 @@ func (r *Record) save(w *Writer) {
 	}
 	r.fields.SaveFields(w, 0, r.count)
 }
-
-func (*Record) load(r *Reader) Object {
-	s := loadStruct(r)
-	return &s
-}

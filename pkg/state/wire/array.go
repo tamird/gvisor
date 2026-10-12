@@ -18,7 +18,7 @@ import "slices"
 
 // capturedArray owns the save-side homogeneous array representation. Primitive
 // payloads are copied; reference payloads remain stable until graph resolution
-// completes. All use the ordinary Array wire grammar and mutable decoder.
+// completes. All use the ordinary Array wire grammar.
 type capturedArray interface {
 	Object
 	capturedArray()
@@ -27,11 +27,6 @@ type capturedArray interface {
 type arrayCapture struct{}
 
 func (arrayCapture) capturedArray() {}
-
-func (arrayCapture) load(r *Reader) Object {
-	a := loadArray(r)
-	return &a
-}
 
 func snapshotValues[T any](values []T) []T {
 	if len(values) == 0 {

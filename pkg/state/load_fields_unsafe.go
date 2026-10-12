@@ -24,10 +24,10 @@ import (
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadBool(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeBool((*bool)(dst), encoded) {
+	if !encoded.IsNil() && !storeBool((*bool)(dst), encoded) {
 		Failf("wire value has incompatible bool destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadInt loads a checked generated field. dst must point to writable Go
@@ -35,10 +35,10 @@ func (s *Source) LoadBool(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadInt(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeSigned((*int)(dst), encoded) {
+	if !encoded.IsNil() && !storeSigned((*int)(dst), encoded) {
 		Failf("wire value has incompatible int destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadInt8 loads a checked generated field. dst must point to writable Go
@@ -46,10 +46,10 @@ func (s *Source) LoadInt(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadInt8(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeSigned((*int8)(dst), encoded) {
+	if !encoded.IsNil() && !storeSigned((*int8)(dst), encoded) {
 		Failf("wire value has incompatible int8 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadInt16 loads a checked generated field. dst must point to writable Go
@@ -57,10 +57,10 @@ func (s *Source) LoadInt8(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadInt16(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeSigned((*int16)(dst), encoded) {
+	if !encoded.IsNil() && !storeSigned((*int16)(dst), encoded) {
 		Failf("wire value has incompatible int16 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadInt32 loads a checked generated field. dst must point to writable Go
@@ -68,10 +68,10 @@ func (s *Source) LoadInt16(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadInt32(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeSigned((*int32)(dst), encoded) {
+	if !encoded.IsNil() && !storeSigned((*int32)(dst), encoded) {
 		Failf("wire value has incompatible int32 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadInt64 loads a checked generated field. dst must point to writable Go
@@ -79,10 +79,10 @@ func (s *Source) LoadInt32(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadInt64(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeSigned((*int64)(dst), encoded) {
+	if !encoded.IsNil() && !storeSigned((*int64)(dst), encoded) {
 		Failf("wire value has incompatible int64 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadUint loads a checked generated field. dst must point to writable Go
@@ -90,10 +90,10 @@ func (s *Source) LoadInt64(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadUint(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned((*uint)(dst), encoded) {
+	if !encoded.IsNil() && !storeUnsigned((*uint)(dst), encoded) {
 		Failf("wire value has incompatible uint destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadUint8 loads a checked generated field. dst must point to writable Go
@@ -101,10 +101,10 @@ func (s *Source) LoadUint(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadUint8(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned((*uint8)(dst), encoded) {
+	if !encoded.IsNil() && !storeUnsigned((*uint8)(dst), encoded) {
 		Failf("wire value has incompatible uint8 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadUint16 loads a checked generated field. dst must point to writable Go
@@ -112,10 +112,10 @@ func (s *Source) LoadUint8(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadUint16(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned((*uint16)(dst), encoded) {
+	if !encoded.IsNil() && !storeUnsigned((*uint16)(dst), encoded) {
 		Failf("wire value has incompatible uint16 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadUint32 loads a checked generated field. dst must point to writable Go
@@ -123,10 +123,10 @@ func (s *Source) LoadUint16(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadUint32(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned((*uint32)(dst), encoded) {
+	if !encoded.IsNil() && !storeUnsigned((*uint32)(dst), encoded) {
 		Failf("wire value has incompatible uint32 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadUint64 loads a checked generated field. dst must point to writable Go
@@ -134,10 +134,10 @@ func (s *Source) LoadUint32(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadUint64(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned((*uint64)(dst), encoded) {
+	if !encoded.IsNil() && !storeUnsigned((*uint64)(dst), encoded) {
 		Failf("wire value has incompatible uint64 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadUintptr loads a checked generated field. dst must point to writable Go
@@ -145,10 +145,10 @@ func (s *Source) LoadUint64(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadUintptr(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned((*uintptr)(dst), encoded) {
+	if !encoded.IsNil() && !storeUnsigned((*uintptr)(dst), encoded) {
 		Failf("wire value has incompatible uintptr destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadFloat32 loads a checked generated field. dst must point to writable Go
@@ -156,10 +156,10 @@ func (s *Source) LoadUintptr(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadFloat32(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeFloat((*float32)(dst), encoded) {
+	if !encoded.IsNil() && !storeFloat((*float32)(dst), encoded) {
 		Failf("wire value has incompatible float32 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadFloat64 loads a checked generated field. dst must point to writable Go
@@ -167,10 +167,10 @@ func (s *Source) LoadFloat32(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadFloat64(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeFloat((*float64)(dst), encoded) {
+	if !encoded.IsNil() && !storeFloat((*float64)(dst), encoded) {
 		Failf("wire value has incompatible float64 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadComplex64 loads a checked generated field. dst must point to writable Go
@@ -178,10 +178,10 @@ func (s *Source) LoadFloat64(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadComplex64(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeComplex((*complex64)(dst), encoded) {
+	if !encoded.IsNil() && !storeComplex((*complex64)(dst), encoded) {
 		Failf("wire value has incompatible complex64 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadComplex128 loads a checked generated field. dst must point to writable Go
@@ -189,10 +189,10 @@ func (s *Source) LoadComplex64(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadComplex128(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeComplex((*complex128)(dst), encoded) {
+	if !encoded.IsNil() && !storeComplex((*complex128)(dst), encoded) {
 		Failf("wire value has incompatible complex128 destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadString loads a checked generated field. dst must point to writable Go
@@ -200,10 +200,10 @@ func (s *Source) LoadComplex128(slot int, dst unsafe.Pointer, wait bool) {
 // call. Source and dst are not retained. wait requests the usual dependency.
 func (s *Source) LoadString(slot int, dst unsafe.Pointer, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) && !storeString((*string)(dst), encoded) {
+	if !encoded.IsNil() && !storeString((*string)(dst), encoded) {
 		Failf("wire value has incompatible string destination")
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(0, wait, nil)
 }
 
 // LoadPointer loads a checked generated pointer field through the common
@@ -211,14 +211,16 @@ func (s *Source) LoadString(slot int, dst unsafe.Pointer, wait bool) {
 // a Go pointer type. The address and Source are not retained.
 func (s *Source) LoadPointer(slot int, dst unsafe.Pointer, typ reflect.Type, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) {
+	var root objectID
+	if !encoded.IsNil() {
 		if typ.Kind() != reflect.Ptr {
 			Failf("wire value has incompatible pointer destination %v", typ)
 		}
-		target := s.internal.ds.pointerTarget(encoded, typ.Elem(), nil)
+		var target location
+		target, root = s.internal.ds.pointerTarget(encoded, typ.Elem(), nil)
 		*(*unsafe.Pointer)(dst) = target.address
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(root, wait, nil)
 }
 
 // LoadObject loads a checked generated aggregate or dynamic field through the
@@ -226,9 +228,10 @@ func (s *Source) LoadPointer(slot int, dst unsafe.Pointer, typ reflect.Type, wai
 // live through this call. Source is not retained; hooks may retain dst.
 func (s *Source) LoadObject(slot int, dst unsafe.Pointer, typ reflect.Type, wait bool) {
 	encoded := s.internal.field(slot)
-	if !isNilObject(encoded) {
+	var root objectID
+	if !encoded.IsNil() {
 		obj := location{ops: operationsFor(typ), address: dst}
-		s.internal.ds.decodeObject(s.internal.ods, obj, encoded)
+		root = s.internal.ds.decodeObject(s.internal.ods, obj, encoded)
 	}
-	s.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(root, wait, nil)
 }

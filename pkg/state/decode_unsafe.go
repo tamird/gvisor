@@ -108,7 +108,7 @@ func walkChild(path []wire.Dot, obj location, expected *typeOperations) location
 // decoderForKind selects one shared operation per built-in destination kind.
 // It does not create per-user-type closures or reject unsupported kinds before
 // decodeObject has handled the universal nil no-op.
-func decoderForKind(kind reflect.Kind) func(*decodeState, *objectDecodeState, location, wire.Object) {
+func decoderForKind(kind reflect.Kind) func(*decodeState, *objectDecodeState, location, wire.Value) objectID {
 	switch kind {
 	case reflect.Bool:
 		return decodeBool
@@ -161,62 +161,70 @@ func decoderForKind(kind reflect.Kind) func(*decodeState, *objectDecodeState, lo
 	}
 }
 
-func decodeUnsupported(_ *decodeState, _ *objectDecodeState, obj location, _ wire.Object) {
+func decodeUnsupported(_ *decodeState, _ *objectDecodeState, obj location, _ wire.Value) objectID {
 	obj.incompatible()
+	return 0
 }
 
-func decodeBool(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func decodeBool(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
 	if !storeBool((*bool)(obj.address), encoded) {
 		obj.incompatible()
 	}
+	return 0
 }
 
-func decodeSigned[T signed](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func decodeSigned[T signed](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
 	if !storeSigned((*T)(obj.address), encoded) {
 		obj.incompatible()
 	}
+	return 0
 }
 
-func decodeUnsigned[T unsigned](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func decodeUnsigned[T unsigned](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
 	if !storeUnsigned((*T)(obj.address), encoded) {
 		obj.incompatible()
 	}
+	return 0
 }
 
-func decodeFloat[T ~float32 | ~float64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func decodeFloat[T ~float32 | ~float64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
 	if !storeFloat((*T)(obj.address), encoded) {
 		obj.incompatible()
 	}
+	return 0
 }
 
-func decodeComplex[T ~complex64 | ~complex128](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func decodeComplex[T ~complex64 | ~complex128](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
 	if !storeComplex((*T)(obj.address), encoded) {
 		obj.incompatible()
 	}
+	return 0
 }
 
-func decodeString(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func decodeString(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
 	if !storeString((*string)(obj.address), encoded) {
 		obj.incompatible()
 	}
+	return 0
 }
 
 // pointerTarget is shared by generated pointer fields and dynamic destinations.
-func (ds *decodeState) pointerTarget(encoded wire.Object, typ reflect.Type, expected *typeOperations) location {
-	ref, ok := encoded.(*wire.Ref)
-	if !ok {
+func (ds *decodeState) pointerTarget(encoded wire.Value, typ reflect.Type, expected *typeOperations) (location, objectID) {
+	if encoded.Kind() != wire.RefKind {
 		Failf("wire value has incompatible pointer target type %v", typ)
 	}
-	target := ds.register(ref, typ, expected)
+	ref := encoded.Ref()
+	target := ds.register(&ref, typ, expected)
 	if target.ops.layout.typ != typ {
 		Failf("pointer target type %v does not match %v", target.ops.layout.typ, typ)
 	}
-	return target
+	return target, objectID(ref.Root)
 }
 
-func decodePointer(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	target := ds.pointerTarget(encoded, obj.ops.elem.layout.typ, obj.ops.elem)
+func decodePointer(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
+	target, root := ds.pointerTarget(encoded, obj.ops.elem.layout.typ, obj.ops.elem)
 	*(*unsafe.Pointer)(obj.address) = target.address
+	return root
 }
 
 func (ds *decodeState) mapTarget(ref *wire.Ref, typ reflect.Type, expected *typeOperations) location {
@@ -236,26 +244,26 @@ func assignMap(dst, target reflect.Value) {
 	dst.Set(target)
 }
 
-func decodeMapLocation(ds *decodeState, ods *objectDecodeState, obj location, encoded wire.Object) {
-	switch x := encoded.(type) {
-	case *wire.Ref:
-		target := ds.mapTarget(x, obj.ops.layout.typ, obj.ops)
+func decodeMapLocation(ds *decodeState, ods *objectDecodeState, obj location, encoded wire.Value) objectID {
+	switch encoded.Kind() {
+	case wire.RefKind:
+		ref := encoded.Ref()
+		target := ds.mapTarget(&ref, obj.ops.layout.typ, obj.ops)
 		assignMap(obj.reflect(), target.reflect())
-	case *wire.Map:
-		if len(x.Keys) != len(x.Values) {
-			Failf("map has %d keys and %d values", len(x.Keys), len(x.Values))
-		}
-		ds.decodeMap(ods, obj, x)
+		return objectID(ref.Root)
+	case wire.MapKind:
+		ds.decodeMap(ods, obj, encoded.Map())
 	default:
 		obj.incompatible()
 	}
+	return 0
 }
 
-func (ds *decodeState) sliceTarget(encoded wire.Object, element reflect.Type) (location, int, int) {
-	x, ok := encoded.(*wire.Slice)
-	if !ok {
+func (ds *decodeState) sliceTarget(encoded wire.Value, element reflect.Type) (location, int, int, objectID) {
+	if encoded.Kind() != wire.SliceKind {
 		Failf("wire value has incompatible slice element type %v", element)
 	}
+	x := encoded.Slice()
 	capacity := checkedArrayLength(uint64(x.Capacity), element.Size())
 	if x.Length > x.Capacity {
 		Failf("slice length %d exceeds capacity %d", x.Length, x.Capacity)
@@ -267,12 +275,13 @@ func (ds *decodeState) sliceTarget(encoded wire.Object, element reflect.Type) (l
 	if target.ops.layout.kind != reflect.Array || target.ops.elem.layout.typ != element || target.ops.layout.length < uintptr(capacity) {
 		Failf("slice backing type %v does not contain %d elements of %v", target.ops.layout.typ, capacity, element)
 	}
-	return target, int(x.Length), capacity
+	return target, int(x.Length), capacity, objectID(x.Ref.Root)
 }
 
-func decodeSlice(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	target, length, capacity := ds.sliceTarget(encoded, obj.ops.elem.layout.typ)
+func decodeSlice(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Value) objectID {
+	target, length, capacity, root := ds.sliceTarget(encoded, obj.ops.elem.layout.typ)
 	obj.reflect().Set(reflectValueRWSlice3(target.reflect(), 0, length, capacity))
+	return root
 }
 
 func checkedArrayLength(count uint64, elementSize uintptr) int {

@@ -113,7 +113,7 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 		ctx:      ctx,
 		r:        wire.Reader{Reader: r},
 		types:    makeTypeDecodeDatabase(),
-		deferred: make(map[objectID]wire.Object),
+		deferred: make(map[objectID]wire.Value),
 	}
 
 	// Attempt our decode.
@@ -200,8 +200,9 @@ type Type interface {
 
 	// StateFields returns information about the type.
 	//
-	// Fields is the set of fields for the object. Calls to Sink.Save and
-	// Source.Load must be made in-order with respect to these fields.
+	// Each entry identifies a stable local slot for Sink and Source calls.
+	// Calls need not follow field order; the decoder reconciles wire field
+	// names to these local slots before invoking StateLoad.
 	//
 	// The field list must be stable for the type.
 	StateFields() []string

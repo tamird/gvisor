@@ -10,6 +10,7 @@ go_library(
     srcs = [
         "array.go",
         "fields.go",
+        "reader.go",
         "record.go",
         "wire.go",
     ],
