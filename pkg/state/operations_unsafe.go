@@ -17,27 +17,26 @@ package state
 import (
 	"reflect"
 	"sync"
+
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 // typeOperations is one immutable operation description. Child references may
-// form cycles, but no partially built graph is visible to a save or load.
-// Physical layout is separate from capture support: an ignored field does not
-// require a saver merely because an interior pointer traverses its storage.
+// form cycles, but no partially built graph is visible to a loader.
+// Physical layout is independent of the schema: an ignored field need not
+// have decoding operations merely because an interior pointer traverses it.
 type typeOperations struct {
-	layout          *typeLayout
-	key             *typeOperations
-	elem            *typeOperations
-	primitiveZero   bool
-	zeroUnsupported reflect.Type
-	mapOps          *mapOperations
-	slice           *sliceOperations
+	layout *typeLayout
+	key    *typeOperations
+	elem   *typeOperations
+	decode func(*decodeState, *objectDecodeState, location, wire.Object)
+	mapOps *mapOperations
+	slice  *sliceOperations
 }
 
-// newValue retains the already-selected operations when allocating an entry.
-// Its caller need not rediscover the type of a cell it just requested.
-func (ops *typeOperations) newValue() value {
-	obj := reflect.New(ops.layout.typ).Elem()
-	return value{ops: ops, address: obj.Addr().UnsafePointer(), reflected: obj}
+// newLocation retains the already-selected operations for a fresh Go cell.
+func (ops *typeOperations) newLocation() location {
+	return location{ops: ops, address: reflect.New(ops.layout.typ).UnsafePointer()}
 }
 
 var operationRegistry = struct {
@@ -65,8 +64,7 @@ func (b *operationBuilder) forType(typ reflect.Type) *typeOperations {
 	if ops := b.staged[typ]; ops != nil {
 		return ops
 	}
-	ops := &typeOperations{layout: layoutFor(typ)}
-	ops.primitiveZero, ops.zeroUnsupported = ops.layout.zeroEncoding()
+	ops := &typeOperations{layout: layoutFor(typ), decode: decoderForKind(typ.Kind())}
 	b.staged[typ] = ops
 	if definition := reverseTypeDatabase[typ]; definition != nil {
 		ops.mapOps = definition.mapOps
@@ -82,7 +80,7 @@ func (b *operationBuilder) forType(typ reflect.Type) *typeOperations {
 	case reflect.Ptr, reflect.Slice, reflect.Array:
 		ops.elem = b.forType(typ.Elem())
 		if typ.Kind() == reflect.Slice && ops.slice == nil {
-			ops.slice = makeReflectedSliceOperations()
+			ops.slice = reflectedSliceOperations
 		}
 	}
 

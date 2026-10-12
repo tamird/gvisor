@@ -341,17 +341,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, fields[name], name+"Value", true)
 			}
 			emitSave := func(name string) {
-				slot := fields[name]
-				field := record.fields[slot]
-				if declaration.has(slot) && (field.capture != "" || field.storage == "Object") {
-					method := field.capture
-					if method == "" {
-						method = "Capture"
-					}
-					fmt.Fprintf(outputFile, " %s.%s(%d, &%s.F%d)\n", declaration.local, method, slot, recordLocal, slot)
-				} else {
-					record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, slot, saveRecv+"."+name, false)
-				}
+				record.capture(outputFile, records.wireAlias, statePrefix, recordLocal, fields[name], saveRecv+"."+name, false)
 			}
 			emitZeroCheck := func(name string) {
 				fmt.Fprintf(outputFile, "	if !%sIsZeroValue(&%s.%s) { %sFailf(\"%s is %%#v, expected zero\", &%s.%s) }\n", statePrefix, saveRecv, name, statePrefix, name, saveRecv, name)
@@ -415,15 +405,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 						fmt.Fprintf(outputFile, " %s := %sRecord[%s](stateSinkObject, %d)\n", recordLocal, statePrefix, record.name, len(record.fields))
 					}
 					model.scan(scanFunctions{value: emitSaveValue})
-					bindFields := false
-					for slot, field := range record.fields {
-						if declaration.has(slot) && (field.capture != "" || field.storage == "Object") {
-							bindFields = true
-						}
-					}
-					if bindFields {
-						emitBindFields("stateSinkObject", saveRecv)
-					}
 					model.scan(scanFunctions{normal: emitSave, wait: emitSave})
 				}
 				fmt.Fprintf(outputFile, "}\n\n")

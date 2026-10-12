@@ -51,14 +51,13 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 //
 // For the purposes of this function, a child object is either a field within a
 // struct or an array element, with one such indirection per element in
-// path. The returned value may be an unexported field, so it may not be
-// directly assignable. See decode_unsafe.go.
-func walkChild(path []wire.Dot, obj reflect.Value) reflect.Value {
+// path. expected may be reused only when its exact type matches the child.
+func walkChild(path []wire.Dot, obj location, expected *typeOperations) location {
 	if len(path) == 0 {
 		return obj
 	}
-	layout := layoutFor(obj.Type())
-	base := obj.Addr().UnsafePointer()
+	layout := obj.ops.layout
+	base := obj.address
 	offset := uintptr(0)
 	for i := len(path) - 1; i >= 0; i-- {
 		switch component := path[i].(type) {
@@ -99,89 +98,196 @@ func walkChild(path []wire.Dot, obj reflect.Value) reflect.Value {
 	}
 	// Native offsets are bounded by the current Go layout. A promoted-field
 	// traversal establishes a new checked base through public reflection.
-	return reflect.NewAt(layout.typ, unsafe.Add(base, offset)).Elem()
+	ops := expected
+	if ops == nil || ops.layout.typ != layout.typ {
+		ops = operationsFor(layout.typ)
+	}
+	return location{ops: ops, address: unsafe.Add(base, offset)}
 }
 
-func (ds *decodeState) decodeValue(ods *objectDecodeState, obj value, encoded wire.Object) {
+// decoderForKind selects one shared operation per built-in destination kind.
+// It does not create per-user-type closures or reject unsupported kinds before
+// decodeObject has handled the universal nil no-op.
+func decoderForKind(kind reflect.Kind) func(*decodeState, *objectDecodeState, location, wire.Object) {
+	switch kind {
+	case reflect.Bool:
+		return decodeBool
+	case reflect.Int:
+		return decodeSigned[int]
+	case reflect.Int8:
+		return decodeSigned[int8]
+	case reflect.Int16:
+		return decodeSigned[int16]
+	case reflect.Int32:
+		return decodeSigned[int32]
+	case reflect.Int64:
+		return decodeSigned[int64]
+	case reflect.Uint:
+		return decodeUnsigned[uint]
+	case reflect.Uint8:
+		return decodeUnsigned[uint8]
+	case reflect.Uint16:
+		return decodeUnsigned[uint16]
+	case reflect.Uint32:
+		return decodeUnsigned[uint32]
+	case reflect.Uint64:
+		return decodeUnsigned[uint64]
+	case reflect.Uintptr:
+		return decodeUnsigned[uintptr]
+	case reflect.Float32:
+		return decodeFloat[float32]
+	case reflect.Float64:
+		return decodeFloat[float64]
+	case reflect.Complex64:
+		return decodeComplex[complex64]
+	case reflect.Complex128:
+		return decodeComplex[complex128]
+	case reflect.String:
+		return decodeString
+	case reflect.Ptr:
+		return decodePointer
+	case reflect.Map:
+		return decodeMapLocation
+	case reflect.Slice:
+		return decodeSlice
+	case reflect.Array:
+		return (*decodeState).decodeArray
+	case reflect.Struct:
+		return (*decodeState).decodeStruct
+	case reflect.Interface:
+		return (*decodeState).decodeInterface
+	default:
+		return decodeUnsupported
+	}
+}
+
+func decodeUnsupported(_ *decodeState, _ *objectDecodeState, obj location, _ wire.Object) {
+	obj.incompatible()
+}
+
+func decodeBool(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	x, ok := encoded.(wire.Bool)
+	if !ok {
+		obj.incompatible()
+	}
+	*(*bool)(obj.address) = bool(x)
+}
+
+func decodeSigned[T int | int8 | int16 | int32 | int64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	x, ok := encoded.(wire.Int)
+	if !ok {
+		obj.incompatible()
+	}
+	v := T(x)
+	*(*T)(obj.address) = v
+	if int64(v) != int64(x) {
+		Failf("signed integer truncated from %v to %v", x, v)
+	}
+}
+
+func decodeUnsigned[T uint | uint8 | uint16 | uint32 | uint64 | uintptr](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	x, ok := encoded.(wire.Uint)
+	if !ok {
+		obj.incompatible()
+	}
+	v := T(x)
+	*(*T)(obj.address) = v
+	if uint64(v) != uint64(x) {
+		Failf("unsigned integer truncated from %v to %v", x, v)
+	}
+}
+
+func decodeFloat[T float32 | float64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
 	switch x := encoded.(type) {
-	case wire.Nil:
-		// Preserve the existing no-op, including an interface's imbued type.
-	case *wire.Ref:
-		if x.Root == 0 {
-			return
-		}
-		if obj.ops.layout.kind == reflect.Map {
-			target := reflectedValue(ds.register(x, obj.ops.layout.typ))
-			if target.ops.layout.kind != reflect.Map || (target.ops.layout.typ != obj.ops.layout.typ && !target.ops.layout.typ.AssignableTo(obj.ops.layout.typ)) {
-				Failf("map reference type %v does not match %v", target.ops.layout.typ, obj.ops.layout.typ)
-			}
-			target.ops.mapOps.initialize(target)
-			if target.ops.layout.typ == obj.ops.layout.typ {
-				obj.ops.mapOps.assign(obj, target)
-			} else {
-				// Compatible named/unnamed map types use Go's public
-				// assignment boundary, not an unchecked native reinterpretation.
-				obj.reflect().Set(target.reflect())
-			}
-			return
-		}
-		obj.require(reflect.Ptr)
-		target := ds.register(x, obj.ops.elem.layout.typ)
-		if target.Type() != obj.ops.elem.layout.typ {
-			Failf("pointer target type %v does not match %v", target.Type(), obj.ops.elem.layout.typ)
-		}
-		*(*unsafe.Pointer)(obj.address) = target.Addr().UnsafePointer()
-	case wire.Bool:
-		obj.require(reflect.Bool)
-		*(*bool)(obj.address) = bool(x)
-	case wire.Int:
-		obj.setSigned(int64(x))
-	case wire.Uint:
-		obj.setUnsigned(uint64(x))
 	case wire.Float32:
-		obj.setFloat(float64(x), false)
+		*(*T)(obj.address) = T(x)
 	case wire.Float64:
-		obj.setFloat(float64(x), true)
+		v := T(x)
+		*(*T)(obj.address) = v
+		if !isFloatEq(float64(v), float64(x)) {
+			Failf("floating point number truncated from %v to %v", x, v)
+		}
+	default:
+		obj.incompatible()
+	}
+}
+
+func decodeComplex[T complex64 | complex128](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	switch x := encoded.(type) {
 	case *wire.Complex64:
-		obj.setComplex(complex128(*x), false)
+		*(*T)(obj.address) = T(*x)
 	case *wire.Complex128:
-		obj.setComplex(complex128(*x), true)
-	case *wire.String:
-		obj.require(reflect.String)
-		*(*string)(obj.address) = string(*x)
-	case *wire.Slice:
-		if x.Ref.Root == 0 {
-			return
+		v := T(*x)
+		*(*T)(obj.address) = v
+		if !isComplexEq(complex128(v), complex128(*x)) {
+			Failf("complex number truncated from %v to %v", *x, v)
 		}
-		obj.require(reflect.Slice)
-		capacity := checkedArrayLength(uint64(x.Capacity), obj.ops.elem.layout.size)
-		if x.Length > x.Capacity {
-			Failf("slice length %d exceeds capacity %d", x.Length, x.Capacity)
+	default:
+		obj.incompatible()
+	}
+}
+
+func decodeString(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	x, ok := encoded.(*wire.String)
+	if !ok {
+		obj.incompatible()
+	}
+	*(*string)(obj.address) = string(*x)
+}
+
+func decodePointer(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	x, ok := encoded.(*wire.Ref)
+	if !ok {
+		obj.incompatible()
+	}
+	target := ds.register(x, obj.ops.elem.layout.typ, obj.ops.elem)
+	if target.ops.layout.typ != obj.ops.elem.layout.typ {
+		Failf("pointer target type %v does not match %v", target.ops.layout.typ, obj.ops.elem.layout.typ)
+	}
+	*(*unsafe.Pointer)(obj.address) = target.address
+}
+
+func decodeMapLocation(ds *decodeState, ods *objectDecodeState, obj location, encoded wire.Object) {
+	switch x := encoded.(type) {
+	case *wire.Ref:
+		target := ds.register(x, obj.ops.layout.typ, obj.ops)
+		if target.ops.layout.kind != reflect.Map || (target.ops.layout.typ != obj.ops.layout.typ && !target.ops.layout.typ.AssignableTo(obj.ops.layout.typ)) {
+			Failf("map reference type %v does not match %v", target.ops.layout.typ, obj.ops.layout.typ)
 		}
-		typ := reflect.ArrayOf(capacity, obj.ops.elem.layout.typ)
-		target := reflectedValue(ds.register(&x.Ref, typ))
-		if target.ops.layout.kind != reflect.Array || target.ops.elem.layout.typ != obj.ops.elem.layout.typ || target.ops.layout.length < uintptr(capacity) {
-			Failf("slice backing type %v does not contain %d elements of %v", target.ops.layout.typ, capacity, obj.ops.elem.layout.typ)
+		target.ops.mapOps.initialize(target)
+		if target.ops.layout.typ == obj.ops.layout.typ {
+			obj.ops.mapOps.assign(obj, target)
+		} else {
+			// Named/unnamed map compatibility uses Go's assignment boundary.
+			obj.reflect().Set(target.reflect())
 		}
-		obj.ops.slice.set(obj, target, int(x.Length), capacity)
-	case *wire.Array:
-		obj.require(reflect.Array)
-		ds.decodeArray(ods, obj, x)
-	case *wire.Struct:
-		obj.require(reflect.Struct)
-		ds.decodeStruct(ods, obj.reflect(), x)
 	case *wire.Map:
-		obj.require(reflect.Map)
 		if len(x.Keys) != len(x.Values) {
 			Failf("map has %d keys and %d values", len(x.Keys), len(x.Values))
 		}
 		ds.decodeMap(ods, obj, x)
-	case *wire.Interface:
-		obj.require(reflect.Interface)
-		ds.decodeInterface(ods, obj.reflect(), x)
 	default:
-		Failf("unknown object %#v for %q", encoded, obj.ops.layout.typ.Name())
+		obj.incompatible()
 	}
+}
+
+func decodeSlice(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	x, ok := encoded.(*wire.Slice)
+	if !ok {
+		obj.incompatible()
+	}
+	capacity := checkedArrayLength(uint64(x.Capacity), obj.ops.elem.layout.size)
+	if x.Length > x.Capacity {
+		Failf("slice length %d exceeds capacity %d", x.Length, x.Capacity)
+	}
+	typ := reflect.ArrayOf(capacity, obj.ops.elem.layout.typ)
+	// An existing backing array may contain a longer prefix than this slice.
+	// Resolve its actual operations instead of building an unused prefix type.
+	target := ds.register(&x.Ref, typ, nil)
+	if target.ops.layout.kind != reflect.Array || target.ops.elem.layout.typ != obj.ops.elem.layout.typ || target.ops.layout.length < uintptr(capacity) {
+		Failf("slice backing type %v does not contain %d elements of %v", target.ops.layout.typ, capacity, obj.ops.elem.layout.typ)
+	}
+	obj.ops.slice.set(obj, target, int(x.Length), capacity)
 }
 
 func checkedArrayLength(count uint64, elementSize uintptr) int {

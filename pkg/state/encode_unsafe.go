@@ -21,98 +21,103 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
+// arrayFromSlice constructs a new pointer to the slice data.
+//
+// It would be similar to the following:
+//
+//	x := make([]Foo, l, c)
+//	a := ([l]Foo*)(unsafe.Pointer(x[0]))
+func arrayFromSlice(obj reflect.Value) reflect.Value {
+	arr := reflect.NewAt(
+		reflect.ArrayOf(obj.Cap(), obj.Type().Elem()),
+		unsafe.Pointer(obj.Pointer()))
+	if obj.Len() < obj.Cap() {
+		arr.Elem().Slice(obj.Len(), obj.Cap()).Clear()
+	}
+	return arr
+}
+
 // captureArray selects one save-owned array representation without
 // reflecting or boxing each primitive or pointer element. Kind selects its
 // native width and layout, including defined scalar types. Typed copies retain
 // GC ownership for strings. Other kinds and unaddressable values use encodeArray's
 // existing path. Each invocation captures anew; late parent replacement must
 // remain able to observe changes made before re-encoding a containing array.
-func (es *encodeState) captureArray(obj value) (wire.Object, bool) {
-	if obj.address == nil {
+func (es *encodeState) captureArray(obj reflect.Value) (wire.Object, bool) {
+	if !obj.CanAddr() {
 		return nil, false
 	}
 	var captured wire.Object
-	length := int(obj.ops.layout.length)
-	switch obj.ops.elem.layout.kind {
+	length := obj.Len()
+	switch obj.Type().Elem().Kind() {
 	case reflect.Ptr:
 		es.encodeReferenceArray(obj, &captured)
 		return captured, true
 	case reflect.Bool:
-		captured = wire.CaptureBoolArray(unsafe.Slice((*bool)(obj.address), length))
+		captured = wire.CaptureBoolArray(unsafe.Slice((*bool)(obj.Addr().UnsafePointer()), length))
 	case reflect.Int:
-		captured = wire.CaptureIntArray(unsafe.Slice((*int)(obj.address), length))
+		captured = wire.CaptureIntArray(unsafe.Slice((*int)(obj.Addr().UnsafePointer()), length))
 	case reflect.Int8:
-		captured = wire.CaptureIntArray(unsafe.Slice((*int8)(obj.address), length))
+		captured = wire.CaptureIntArray(unsafe.Slice((*int8)(obj.Addr().UnsafePointer()), length))
 	case reflect.Int16:
-		captured = wire.CaptureIntArray(unsafe.Slice((*int16)(obj.address), length))
+		captured = wire.CaptureIntArray(unsafe.Slice((*int16)(obj.Addr().UnsafePointer()), length))
 	case reflect.Int32:
-		captured = wire.CaptureIntArray(unsafe.Slice((*int32)(obj.address), length))
+		captured = wire.CaptureIntArray(unsafe.Slice((*int32)(obj.Addr().UnsafePointer()), length))
 	case reflect.Int64:
-		captured = wire.CaptureIntArray(unsafe.Slice((*int64)(obj.address), length))
+		captured = wire.CaptureIntArray(unsafe.Slice((*int64)(obj.Addr().UnsafePointer()), length))
 	case reflect.Uint:
-		captured = wire.CaptureUintArray(unsafe.Slice((*uint)(obj.address), length))
+		captured = wire.CaptureUintArray(unsafe.Slice((*uint)(obj.Addr().UnsafePointer()), length))
 	case reflect.Uint8:
-		captured = wire.CaptureUintArray(unsafe.Slice((*uint8)(obj.address), length))
+		captured = wire.CaptureUintArray(unsafe.Slice((*uint8)(obj.Addr().UnsafePointer()), length))
 	case reflect.Uint16:
-		captured = wire.CaptureUintArray(unsafe.Slice((*uint16)(obj.address), length))
+		captured = wire.CaptureUintArray(unsafe.Slice((*uint16)(obj.Addr().UnsafePointer()), length))
 	case reflect.Uint32:
-		captured = wire.CaptureUintArray(unsafe.Slice((*uint32)(obj.address), length))
+		captured = wire.CaptureUintArray(unsafe.Slice((*uint32)(obj.Addr().UnsafePointer()), length))
 	case reflect.Uint64:
-		captured = wire.CaptureUintArray(unsafe.Slice((*uint64)(obj.address), length))
+		captured = wire.CaptureUintArray(unsafe.Slice((*uint64)(obj.Addr().UnsafePointer()), length))
 	case reflect.Uintptr:
-		captured = wire.CaptureUintArray(unsafe.Slice((*uintptr)(obj.address), length))
+		captured = wire.CaptureUintArray(unsafe.Slice((*uintptr)(obj.Addr().UnsafePointer()), length))
 	case reflect.Float32:
-		captured = wire.CaptureFloat32Array(unsafe.Slice((*float32)(obj.address), length))
+		captured = wire.CaptureFloat32Array(unsafe.Slice((*float32)(obj.Addr().UnsafePointer()), length))
 	case reflect.Float64:
-		captured = wire.CaptureFloat64Array(unsafe.Slice((*float64)(obj.address), length))
+		captured = wire.CaptureFloat64Array(unsafe.Slice((*float64)(obj.Addr().UnsafePointer()), length))
 	case reflect.Complex64:
-		captured = wire.CaptureComplex64Array(unsafe.Slice((*complex64)(obj.address), length))
+		captured = wire.CaptureComplex64Array(unsafe.Slice((*complex64)(obj.Addr().UnsafePointer()), length))
 	case reflect.Complex128:
-		captured = wire.CaptureComplex128Array(unsafe.Slice((*complex128)(obj.address), length))
+		captured = wire.CaptureComplex128Array(unsafe.Slice((*complex128)(obj.Addr().UnsafePointer()), length))
 	case reflect.String:
-		captured = wire.CaptureStringArray(unsafe.Slice((*string)(obj.address), length))
+		captured = wire.CaptureStringArray(unsafe.Slice((*string)(obj.Addr().UnsafePointer()), length))
 	default:
 		return nil, false
 	}
 	return captured, true
 }
 
-// encodeReferenceArray uses the same resolver directly from GC-visible element
-// pointers. No reflected scratch pointer or alternate array representation is
-// retained.
-func (es *encodeState) encodeReferenceArray(obj value, dest *wire.Object) {
-	a := &wire.RefArray{Contents: make([]wire.Ref, int(obj.ops.layout.length))}
-	*dest = a
-	pointers := unsafe.Slice((*unsafe.Pointer)(obj.address), int(obj.ops.layout.length))
+// referenceArray owns a reusable pointer slot alongside the wire container.
+// Keeping the slot here avoids allocating one scratch cell per element. The
+// retained pointer to RefArray keeps this entire allocation reachable.
+type referenceArray struct {
+	wire.RefArray
+	current unsafe.Pointer
+}
+
+// encodeReferenceArray captures an addressable array of pointers. The element
+// kind is checked by encodeArray before borrowing its pointer-sized cells.
+func (es *encodeState) encodeReferenceArray(obj reflect.Value, dest *wire.Object) {
+	a := &referenceArray{RefArray: wire.RefArray{Contents: make([]wire.Ref, obj.Len())}}
+	*dest = &a.RefArray
+	// A pointer of the array's exact element type reads the reusable GC-visible
+	// slot. resolve retains its pointee value, never this changing slot.
+	value := reflect.NewAt(obj.Type().Elem(), unsafe.Pointer(&a.current)).Elem()
+	pointers := unsafe.Slice((*unsafe.Pointer)(obj.Addr().UnsafePointer()), obj.Len())
 	for i, pointer := range pointers {
-		if pointer != nil {
-			es.resolveValue(value{ops: obj.ops.elem.elem, address: pointer}, uintptr(pointer), &a.Contents[i], encodeDefault)
+		if pointer == nil {
+			// The full pointer value is a zero Ref, including in a homogeneous
+			// array whose first element is nil.
+			continue
 		}
+		a.current = pointer
+		es.resolve(value, &a.Contents[i])
 	}
-}
-
-// objectValue owns an addressable graph source. Original reflected snapshot
-// keys belong to the inline value adapters, not every retained graph node.
-type objectValue struct {
-	ops     *typeOperations
-	address unsafe.Pointer
-}
-
-func (obj objectValue) value() value           { return value{ops: obj.ops, address: obj.address} }
-func (obj objectValue) reflect() reflect.Value { return obj.value().reflect() }
-
-// CapturePointer records a pointer in a stable, inline reference slot. The
-// resolver may change that slot if a containing object is discovered later.
-// The slot must initially be zero and must outlive graph discovery.
-func CapturePointer[T any](s Sink, value *T, dest *wire.Ref) {
-	if value != nil {
-		s.internal.es.resolveValue(valueAt(unsafe.Pointer(value), operationsFor(reflect.TypeFor[T]())), uintptr(unsafe.Pointer(value)), dest, encodeDefault)
-	}
-}
-
-// CaptureSlice snapshots the slice header, clears its unused capacity, and
-// resolves the backing array for deferred capture.
-func CaptureSlice[S ~[]E, E any](s Sink, slice S, dest *wire.Slice) {
-	source := valueAt(unsafe.Pointer(&slice), operationsFor(reflect.TypeFor[S]()))
-	source.ops.slice.capture(s.internal.es, source, dest)
+	a.current = nil
 }

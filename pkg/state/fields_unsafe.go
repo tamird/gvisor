@@ -17,8 +17,6 @@ package state
 import (
 	"reflect"
 	"unsafe"
-
-	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 type fieldOperation struct {
@@ -72,59 +70,12 @@ func bindFields(receiver any, indices []int) boundFields {
 	return boundFields{base: obj.UnsafePointer(), fields: operationsForFields(obj.Type(), indices)}
 }
 
-func (f boundFields) value(slot int) value {
+func (f *boundFields) location(slot int) location {
 	if slot < 0 || slot >= len(f.fields) || f.fields[slot].ops == nil {
 		Failf("invalid generated field slot %d", slot)
 	}
 	field := f.fields[slot]
-	return valueAt(unsafe.Add(f.base, field.offset), field.ops)
-}
-
-// FieldSink addresses declared fields of this generated callee's receiver.
-// The receiver may differ from the object whose manual saver supplied Sink.
-type FieldSink struct {
-	boundFields
-	es *encodeState
-}
-
-// Fields binds the actual generated receiver without reading its fields.
-// indices maps local wire slots to direct Go field indices, with -1 for custom
-// or unsupported fields. Stateify supplies one consistent map per exact type.
-func (s Sink) Fields(receiver any, indices []int) FieldSink {
-	return FieldSink{boundFields: bindFields(receiver, indices), es: s.internal.es}
-}
-
-// Capture captures an ordinary graph-bearing field through the common engine.
-func (s FieldSink) Capture(slot int, dest *wire.Object) {
-	s.es.encodeValue(s.value(slot), encodeDefault, dest)
-}
-
-// CapturePointer resolves the field's current pointed-to object.
-func (s FieldSink) CapturePointer(slot int, dest *wire.Ref) {
-	value := s.value(slot)
-	value.require(reflect.Ptr)
-	if pointer := value.pointer(); pointer != nil {
-		s.es.resolveValue(valueAt(pointer, value.ops.elem), uintptr(pointer), dest, encodeDefault)
-	}
-}
-
-// CaptureMap retains the addressed map slot for deferred capture.
-func (s FieldSink) CaptureMap(slot int, dest *wire.Ref) {
-	s.es.resolveMapValue(s.value(slot), dest)
-}
-
-// CaptureSlice snapshots the header and clears unused capacity immediately.
-func (s FieldSink) CaptureSlice(slot int, dest *wire.Slice) {
-	value := s.value(slot)
-	value.require(reflect.Slice)
-	value.ops.slice.capture(s.es, value, dest)
-}
-
-// CaptureInterface crosses the dynamic interface boundary at capture time.
-func (s FieldSink) CaptureInterface(slot int, dest *wire.Interface) {
-	value := s.value(slot)
-	value.require(reflect.Interface)
-	s.es.captureInterface(value.reflect(), dest)
+	return location{ops: field.ops, address: unsafe.Add(f.base, field.offset)}
 }
 
 // FieldSource addresses the generated loader's actual receiver. Local field
@@ -134,18 +85,18 @@ type FieldSource struct {
 	decoder objectDecoder
 }
 
-// Fields binds the actual generated receiver using the same checked local
-// indices as Sink.Fields. Incoming wire order remains the Source's concern.
+// Fields binds the actual generated receiver using checked local field indices.
+// Incoming wire order remains the Source's concern.
 func (s Source) Fields(receiver any, indices []int) FieldSource {
 	return FieldSource{boundFields: bindFields(receiver, indices), decoder: s.internal}
 }
 
 // Load decodes a declared field using its already-resolved exact operations.
-func (s FieldSource) Load(slot int) {
-	s.decoder.loadValue(slot, s.value(slot), false, nil)
+func (s *FieldSource) Load(slot int) {
+	s.decoder.loadLocation(slot, s.location(slot), false, nil)
 }
 
 // LoadWait also waits for the field's referenced objects before AfterLoad.
-func (s FieldSource) LoadWait(slot int) {
-	s.decoder.loadValue(slot, s.value(slot), true, nil)
+func (s *FieldSource) LoadWait(slot int) {
+	s.decoder.loadLocation(slot, s.location(slot), true, nil)
 }

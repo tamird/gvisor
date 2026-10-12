@@ -60,16 +60,46 @@ func (s Sink) CaptureValue(value any, dest *wire.Object) {
 	s.internal.es.encodeObject(reflect.ValueOf(value), encodeDefault, dest)
 }
 
-// CaptureMapValue captures a custom map value as Sink.SaveValue does.
-func CaptureMapValue(s Sink, value any, dest *wire.Ref) {
-	s.internal.es.resolveMap(reflect.ValueOf(value), dest)
+// CapturePointer records a pointer in a stable, inline reference slot. The
+// resolver may change that slot if a containing object is discovered later.
+// The slot must initially be zero and must outlive graph discovery.
+func CapturePointer[T any](s Sink, value *T, dest *wire.Ref) {
+	if value != nil {
+		s.internal.es.resolve(reflect.ValueOf(value), dest)
+	}
 }
 
-func (es *encodeState) captureInterface(obj reflect.Value, dest *wire.Interface) {
+// CaptureSlice snapshots the slice header and resolves its backing array. The
+// existing array owner still clears and captures the unused capacity.
+func CaptureSlice(s Sink, value any, dest *wire.Slice) {
+	obj := reflect.ValueOf(value)
+	dest.Length = wire.Uint(obj.Len())
+	dest.Capacity = wire.Uint(obj.Cap())
+	if !obj.IsNil() {
+		s.internal.es.resolve(arrayFromSlice(obj), &dest.Ref)
+	}
+}
+
+// CaptureMap preserves Sink.Save's addressable map value. In particular, a
+// later save hook may reassign the original map variable before its deferred
+// capture; passing the map by value here would change that existing timing.
+func CaptureMap(s Sink, valuePtr any, dest *wire.Ref) {
+	s.internal.es.resolve(reflect.ValueOf(valuePtr).Elem(), dest)
+}
+
+// CaptureMapValue captures a custom map value as Sink.SaveValue does.
+func CaptureMapValue(s Sink, value any, dest *wire.Ref) {
+	s.internal.es.resolve(reflect.ValueOf(value), dest)
+}
+
+// CaptureInterface saves an interface's dynamic type and value. A nil Type in
+// dest denotes the primitive-zero field, rather than a typed interface value.
+func CaptureInterface(s Sink, valuePtr any, dest *wire.Interface) {
+	obj := reflect.ValueOf(valuePtr).Elem()
 	if obj.IsNil() {
 		return
 	}
 	value := obj.Elem()
-	dest.Type = es.findType(value.Type())
-	es.encodeObject(value, encodeAsValue, &dest.Value)
+	dest.Type = s.internal.es.findType(value.Type())
+	s.internal.es.encodeObject(value, encodeAsValue, &dest.Value)
 }

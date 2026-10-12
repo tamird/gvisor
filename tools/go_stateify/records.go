@@ -186,14 +186,19 @@ func (r *recordType) declare(w io.Writer, wireAlias string) {
 func (r *recordType) capture(w io.Writer, wireAlias, statePrefix, local string, slot int, expression string, value bool) {
 	f := r.fields[slot]
 	if f.capture != "" {
-		if !value {
-			panic("ordinary field capture has no checked declaration")
-		}
 		capture := f.capture
+		address := ""
 		if capture == "CaptureMap" {
-			capture = "CaptureMapValue"
+			if value {
+				capture = "CaptureMapValue"
+			} else {
+				address = "&"
+			}
 		}
-		fmt.Fprintf(w, " %s%s(stateSinkObject, %s, &%s.F%d)\n", statePrefix, capture, expression, local, slot)
+		if capture == "CaptureInterface" {
+			address = "&"
+		}
+		fmt.Fprintf(w, " %s%s(stateSinkObject, %s%s, &%s.F%d)\n", statePrefix, capture, address, expression, local, slot)
 	} else if f.storage != "Object" {
 		fmt.Fprintf(w, " %s.F%d = %s.%s(%s)\n", local, slot, wireAlias, f.storage, expression)
 	} else if value {

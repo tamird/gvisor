@@ -33,7 +33,7 @@ type objectEncodeState struct {
 	// encounter an object that contains this object. When this happens (in
 	// resolve), we will update existing references appropriately, below,
 	// and defer a re-encoding of the object.
-	obj objectValue
+	obj reflect.Value
 
 	// encoded is the encoded value of this object. Note that this may not
 	// be up to date if this object is still in the deferred list.
@@ -141,8 +141,8 @@ type encodeState struct {
 // Similarly, &arr[0] and &arr[0].c have the exact same address range.
 //
 // Precondition: parent and child must occupy the same memory.
-func isSameSizeParent(parent objectValue, child *typeLayout) bool {
-	return parent.ops.layout.find(child, 0, nil)
+func isSameSizeParent(parent reflect.Value, childType reflect.Type) bool {
+	return findTraversal(parent.Type(), childType, 0, nil)
 }
 
 // nextID returns the next valid ID.
@@ -154,25 +154,13 @@ func (es *encodeState) nextID() objectID {
 // dummyAddr points to the dummy zero-sized address.
 var dummyAddr = reflect.ValueOf(new(struct{})).Pointer()
 
-// resolveMap adapts the public map-header boundary without inspecting Go's
-// private map representation. Identity is fixed now; the deferred source may
-// still be an addressed header that a later hook reassigns.
-func (es *encodeState) resolveMap(obj reflect.Value, ref *wire.Ref) {
-	es.resolveMapValue(reflectedValue(obj), ref)
-}
-
-func (es *encodeState) resolveMapValue(obj value, ref *wire.Ref) {
-	obj.require(reflect.Map)
-	es.resolveValue(obj, uintptr(obj.pointer()), ref, encodeMapAsValue)
-}
-
-// resolveValue is the sole graph resolver. address is the identity captured now;
-// an addressed map's value still reads its live header when deferred capture runs.
-func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how encodeStrategy) {
+// resolve records the address range occupied by an object.
+func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
+	addr := obj.Pointer()
 
 	// Is this a map pointer? Just record the single address. It is not
 	// possible to take any pointers into the map internals.
-	if how == encodeMapAsValue {
+	if obj.Kind() == reflect.Map {
 		if addr == 0 {
 			// Just leave the nil reference alone. This is fine, we
 			// may need to encode as a reference in this way. We
@@ -184,8 +172,8 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 		if seg.Ok() {
 			// Ensure the map types match.
 			existing := seg.Value()
-			if existing.obj.ops.layout.typ != obj.ops.layout.typ {
-				Failf("overlapping map objects at 0x%x: [new object] %#v [existing object type] %s", addr, obj, existing.obj.ops.layout.typ)
+			if existing.obj.Type() != obj.Type() {
+				Failf("overlapping map objects at 0x%x: [new object] %#v [existing object type] %s", addr, obj, existing.obj)
 			}
 
 			// No sense recording refs, maps may not be replaced by
@@ -194,18 +182,11 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 			return
 		}
 
-		// Copy a by-value header only for a newly discovered map. Addressed
-		// headers retain the caller's actual slot and its deferred reassignment
-		// behavior; aliases found above require no additional storage.
-		if obj.address == nil {
-			copy := copyValue(obj.reflect())
-			obj.address = copy.Addr().UnsafePointer()
-		}
 		// Record the map.
 		r := addrRange{addr, addr + 1}
 		oes := &objectEncodeState{
 			id:  es.nextID(),
-			obj: objectValue{ops: obj.ops, address: obj.address},
+			obj: obj,
 			how: encodeMapAsValue,
 		}
 		// Use Insert instead of InsertWithoutMergingUnchecked when race
@@ -223,9 +204,16 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 		return
 	}
 
+	// If not a map, then the object must be a pointer.
+	if obj.Kind() != reflect.Ptr {
+		Failf("attempt to record non-map and non-pointer object %#v", obj)
+	}
+
+	obj = obj.Elem() // Value from here.
+
 	// Is this a zero-sized type?
-	typ := obj.ops.layout.typ
-	size := obj.ops.layout.size
+	typ := obj.Type()
+	size := typ.Size()
 	if size == 0 {
 		if addr == dummyAddr {
 			// Zero-sized objects point to a dummy byte within the
@@ -241,7 +229,7 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 			if !ok {
 				oes = &objectEncodeState{
 					id:  es.nextID(),
-					obj: objectValue{ops: obj.ops, address: obj.address},
+					obj: obj,
 				}
 				es.zeroValues[typ] = oes
 				es.pending[oes.id] = oes
@@ -269,7 +257,7 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 	if seg.Ok() && seg.Start() < end {
 		existing := seg.Value()
 
-		if seg.Range() == r && typ == existing.obj.ops.layout.typ {
+		if seg.Range() == r && typ == existing.obj.Type() {
 			// This exact object is already registered. Avoid the traversal and
 			// just return directly. We don't need to encode the type
 			// information or any dots here.
@@ -278,12 +266,12 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 			return
 		}
 
-		if seg.Range().IsSupersetOf(r) && (seg.Range() != r || isSameSizeParent(existing.obj, obj.ops.layout)) {
+		if seg.Range().IsSupersetOf(r) && (seg.Range() != r || isSameSizeParent(existing.obj, typ)) {
 			// This object is contained within a previously-registered object.
 			// Perform traversal from the container to the new object.
 			ref.Root = wire.Uint(existing.id)
-			ref.Dots = traverseLayouts(existing.obj.ops.layout, obj.ops.layout, seg.Start(), addr)
-			ref.Type = es.findType(existing.obj.ops.layout.typ)
+			ref.Dots = traverse(existing.obj.Type(), typ, seg.Start(), addr)
+			ref.Type = es.findType(existing.obj.Type())
 			existing.refs = append(existing.refs, ref)
 			return
 		}
@@ -293,12 +281,12 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 		oes := &objectEncodeState{
 			// Reuse the root ID of the first contained element.
 			id:  existing.id,
-			obj: objectValue{ops: obj.ops, address: obj.address},
+			obj: obj,
 		}
 		type elementEncodeState struct {
-			addr   uintptr
-			layout *typeLayout
-			refs   []*wire.Ref
+			addr uintptr
+			typ  reflect.Type
+			refs []*wire.Ref
 		}
 		var (
 			elems []elementEncodeState
@@ -311,9 +299,9 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 				Failf("containing object %#v does not contain existing object %#v", obj, existing.obj)
 			}
 			elems = append(elems, elementEncodeState{
-				addr:   seg.Start(),
-				layout: existing.obj.ops.layout,
-				refs:   existing.refs,
+				addr: seg.Start(),
+				typ:  existing.obj.Type(),
+				refs: existing.refs,
 			})
 			delete(es.pending, existing.id)
 			es.deferred.Remove(existing)
@@ -326,7 +314,7 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 		}
 		wt := es.findType(typ)
 		for _, elem := range elems {
-			dots := traverseLayouts(obj.ops.layout, elem.layout, addr, elem.addr)
+			dots := traverse(typ, elem.typ, addr, elem.addr)
 			for _, ref := range elem.refs {
 				ref.Root = wire.Uint(oes.id)
 				ref.Dots = append(ref.Dots, dots...)
@@ -350,7 +338,7 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 	// No existing object overlaps this one. Register a new object.
 	oes = &objectEncodeState{
 		id:  es.nextID(),
-		obj: objectValue{ops: obj.ops, address: obj.address},
+		obj: obj,
 	}
 	if seg.Ok() {
 		gap = seg.PrevGap()
@@ -368,46 +356,91 @@ func (es *encodeState) resolveValue(obj value, addr uintptr, ref *wire.Ref, how 
 	oes.refs = append(oes.refs, ref)
 }
 
-// traverseLayouts searches for a target object within a root object, where the target
+// traverse searches for a target object within a root object, where the target
 // object is a struct field or array element within root, with potentially
-// multiple intervening types. traverseLayouts returns the set of field or element
+// multiple intervening types. traverse returns the set of field or element
 // traversals required to reach the target.
 //
-// Note that for efficiency, traverseLayouts returns the dots in the reverse order.
+// Note that for efficiency, traverse returns the dots in the reverse order.
 // That is, the first traversal required will be the last element of the list.
 //
 // Precondition: The target object must lie completely within the range defined
-// by [rootAddr, rootAddr + root.size].
-func traverseLayouts(root, target *typeLayout, rootAddr, targetAddr uintptr) []wire.Dot {
+// by [rootAddr, rootAddr + sizeof(rootType)].
+func traverse(rootType, targetType reflect.Type, rootAddr, targetAddr uintptr) []wire.Dot {
 	var dots []wire.Dot
-	if root.find(target, targetAddr-rootAddr, &dots) {
+	if findTraversal(rootType, targetType, targetAddr-rootAddr, &dots) {
 		return dots
 	}
-	Failf("traverse failed for root type %v @%x and target type %v @%x", root.typ, rootAddr, target.typ, targetAddr)
+	Failf("traverse failed for root type %v @%x and target type %v @%x", rootType, rootAddr, targetType, targetAddr)
 	panic("unreachable")
 }
 
+// findTraversal searches for targetType at offset within rootType. If dots is
+// non-nil, it appends the matching path in reverse order. Containment checks
+// can omit dots without allocating a path that would immediately be discarded.
+func findTraversal(rootType, targetType reflect.Type, offset uintptr, dots *[]wire.Dot) bool {
+	if offset > rootType.Size() || targetType.Size() > rootType.Size()-offset {
+		return false
+	}
+	if targetType == rootType && offset == 0 {
+		return true
+	}
+	switch rootType.Kind() {
+	case reflect.Struct:
+		for i := rootType.NumField(); i > 0; i-- {
+			field := rootType.Field(i - 1)
+			// Zero-sized fields can share an offset with other fields. An
+			// address match alone does not identify the target's type.
+			if field.Offset <= offset && findTraversal(field.Type, targetType, offset-field.Offset, dots) {
+				if dots != nil {
+					fieldName := wire.FieldName(field.Name)
+					*dots = append(*dots, &fieldName)
+				}
+				return true
+			}
+		}
+	case reflect.Array:
+		if rootType.Len() == 0 {
+			return false
+		}
+		index := uintptr(0)
+		if size := rootType.Elem().Size(); size != 0 {
+			index, offset = offset/size, offset%size
+		}
+		// Zero-sized elements all share an address; any matching element
+		// represents the same pointer. Use element zero without division.
+		if index < uintptr(rootType.Len()) && findTraversal(rootType.Elem(), targetType, offset, dots) {
+			if dots != nil {
+				*dots = append(*dots, wire.Index(index))
+			}
+			return true
+		}
+	}
+	return false
+}
+
 // encodeMap encodes a map.
-func (es *encodeState) encodeMap(source value, dest *wire.Object) {
-	length, nilMap := source.ops.mapOps.length(source)
-	if nilMap {
+func (es *encodeState) encodeMap(obj reflect.Value, dest *wire.Object) {
+	if obj.IsNil() {
 		// Because there is a difference between a nil map and an empty
 		// map, we need to not decode in the case of a truly nil map.
 		*dest = wire.Nil{}
 		return
 	}
-	l := length
+	l := obj.Len()
 	m := &wire.Map{
 		Keys:   make([]wire.Object, l),
 		Values: make([]wire.Object, l),
 	}
 	*dest = m
-	i := 0
-	source.ops.mapOps.visit(source, func(key, element value) {
-		es.encodeValue(key, encodeAsValue, &m.Keys[i])
-		es.encodeValue(element, encodeAsValue, &m.Values[i])
-		i++
-	})
+	iter := obj.MapRange()
+	for i := 0; iter.Next(); i++ {
+		k, v := iter.Key(), iter.Value()
+		// Map keys must be encoded using the full value because the
+		// type will be omitted after the first key.
+		es.encodeObject(k, encodeAsValue, &m.Keys[i])
+		es.encodeObject(v, encodeAsValue, &m.Values[i])
+	}
 }
 
 // objectEncoder is for encoding structs.
@@ -429,8 +462,7 @@ func (oe *objectEncoder) save(slot int, obj reflect.Value) {
 var emptyStructRecord = wire.NewSlotRecord(0, 0)
 
 // encodeStruct encodes a composite object.
-func (es *encodeState) encodeStruct(source value, dest *wire.Object) {
-	obj := source.reflect()
+func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	if s, ok := es.encodedStructs[obj]; ok {
 		*dest = s
 		return
@@ -441,11 +473,10 @@ func (es *encodeState) encodeStruct(source value, dest *wire.Object) {
 	// not. First, is when this is dispatched via SaveValue. Second, when
 	// this is a map key as a struct. Either way, we need to make a copy to
 	// obtain an addressable value.
-	if source.address == nil {
-		obj = copyValue(obj)
-		source.address = obj.Addr().UnsafePointer()
-	} else if !obj.CanAddr() {
-		obj = reflect.NewAt(source.ops.layout.typ, source.address).Elem()
+	if !obj.CanAddr() {
+		localObj := reflect.New(obj.Type())
+		localObj.Elem().Set(obj)
+		obj = localObj.Elem()
 	}
 
 	// Look the type up in the database.
@@ -491,12 +522,12 @@ func (es *encodeState) encodeStruct(source value, dest *wire.Object) {
 }
 
 // encodeArray encodes an array.
-func (es *encodeState) encodeArray(obj value, dest *wire.Object) {
+func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
 	if captured, ok := es.captureArray(obj); ok {
 		*dest = captured
 		return
 	}
-	l := int(obj.ops.layout.length)
+	l := obj.Len()
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),
 	}
@@ -504,7 +535,7 @@ func (es *encodeState) encodeArray(obj value, dest *wire.Object) {
 	for i := 0; i < l; i++ {
 		// We need to encode the full value because arrays are encoded
 		// using the type information from only the first element.
-		es.encodeValue(obj.index(i), encodeAsValue, &a.Contents[i])
+		es.encodeObject(obj.Index(i), encodeAsValue, &a.Contents[i])
 	}
 }
 
@@ -569,6 +600,52 @@ func (es *encodeState) encodeInterface(obj reflect.Value, dest *wire.Object) {
 	es.encodeObject(obj, encodeAsValue, &i.Value)
 }
 
+// isPrimitive returns true if this is a primitive object, or a composite
+// object composed entirely of primitives.
+func isPrimitiveZero(typ reflect.Type) bool {
+	switch typ.Kind() {
+	case reflect.Ptr:
+		// Pointers are always treated as primitive types because we
+		// won't encode directly from here. Returning true here won't
+		// prevent the object from being encoded correctly.
+		return true
+	case reflect.Bool:
+		return true
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return true
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return true
+	case reflect.Float32, reflect.Float64:
+		return true
+	case reflect.Complex64, reflect.Complex128:
+		return true
+	case reflect.String:
+		return true
+	case reflect.Slice:
+		// The slice itself a primitive, but not necessarily the array
+		// that points to. This is similar to a pointer.
+		return true
+	case reflect.Array:
+		// We cannot treat an array as a primitive, because it may be
+		// composed of structures or other things with side-effects.
+		return isPrimitiveZero(typ.Elem())
+	case reflect.Interface:
+		// Since we now that this type is the zero type, the interface
+		// value must be zero. Therefore this is primitive.
+		return true
+	case reflect.Struct:
+		return false
+	case reflect.Map:
+		// The isPrimitiveZero function is called only on zero-types to
+		// see if it's safe to serialize. Since a zero map has no
+		// elements, it is safe to treat as a primitive.
+		return true
+	default:
+		Failf("unknown type %q", typ.Name())
+	}
+	panic("unreachable")
+}
+
 // encodeStrategy is the strategy used for encodeObject.
 type encodeStrategy int
 
@@ -586,56 +663,60 @@ const (
 
 // encodeObject encodes an object.
 func (es *encodeState) encodeObject(obj reflect.Value, how encodeStrategy, dest *wire.Object) {
-	es.encodeValue(reflectedValue(obj), how, dest)
-}
-
-func (es *encodeState) encodeValue(obj value, how encodeStrategy, dest *wire.Object) {
-	if how == encodeDefault && obj.ops.zeroUnsupported != nil {
-		Failf("unknown type %q", obj.ops.zeroUnsupported.Name())
-	}
-	if how == encodeDefault && obj.ops.primitiveZero && obj.zero() {
+	if how == encodeDefault && isPrimitiveZero(obj.Type()) && obj.IsZero() {
 		*dest = wire.Nil{}
 		return
 	}
-	switch obj.ops.layout.kind {
+	switch obj.Kind() {
 	case reflect.Ptr: // Fast path: first.
 		r := new(wire.Ref)
 		*dest = r
-		if obj.pointer() == nil {
+		if obj.IsNil() {
 			// May be in an array or elsewhere such that a value is
 			// required. So we encode as a reference to the zero
 			// object, which does not exist. Note that this has to
 			// be handled correctly in the decode path as well.
 			return
 		}
-		es.resolveValue(value{ops: obj.ops.elem, address: obj.pointer()}, uintptr(obj.pointer()), r, encodeDefault)
+		es.resolve(obj, r)
 	case reflect.Bool:
-		*dest = wire.Bool(obj.boolean())
+		*dest = wire.Bool(obj.Bool())
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		*dest = wire.Int(obj.signed())
+		*dest = wire.Int(obj.Int())
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		*dest = wire.Uint(obj.unsigned())
+		*dest = wire.Uint(obj.Uint())
 	case reflect.Float32:
-		*dest = wire.Float32(obj.floating())
+		*dest = wire.Float32(obj.Float())
 	case reflect.Float64:
-		*dest = wire.Float64(obj.floating())
+		*dest = wire.Float64(obj.Float())
 	case reflect.Complex64:
-		c := wire.Complex64(obj.complex())
+		c := wire.Complex64(obj.Complex())
 		*dest = &c // Needs alloc.
 	case reflect.Complex128:
-		c := wire.Complex128(obj.complex())
+		c := wire.Complex128(obj.Complex())
 		*dest = &c // Needs alloc.
 	case reflect.String:
-		s := wire.String(obj.text())
+		s := wire.String(obj.String())
 		*dest = &s // Needs alloc.
 	case reflect.Array:
 		es.encodeArray(obj, dest)
 	case reflect.Slice:
-		s := new(wire.Slice)
+		s := &wire.Slice{
+			Capacity: wire.Uint(obj.Cap()),
+			Length:   wire.Uint(obj.Len()),
+		}
 		*dest = s
-		obj.ops.slice.capture(es, obj, s)
+		// Note that we do need to provide a wire.Slice type here as
+		// how is not encodeDefault. If this were the case, then it
+		// would have been caught by the IsZero check above and we
+		// would have just used wire.Nil{}.
+		if obj.IsNil() {
+			return
+		}
+		// Slices need pointer resolution.
+		es.resolve(arrayFromSlice(obj), &s.Ref)
 	case reflect.Interface:
-		es.encodeInterface(obj.reflect(), dest)
+		es.encodeInterface(obj, dest)
 	case reflect.Struct:
 		es.encodeStruct(obj, dest)
 	case reflect.Map:
@@ -645,9 +726,9 @@ func (es *encodeState) encodeValue(obj value, how encodeStrategy, dest *wire.Obj
 		}
 		r := new(wire.Ref)
 		*dest = r
-		es.resolveMapValue(obj, r)
+		es.resolve(obj, r)
 	default:
-		Failf("unknown object %#v", obj.reflect().Interface())
+		Failf("unknown object %#v", obj.Interface())
 		panic("unreachable")
 	}
 }
@@ -663,8 +744,7 @@ func (es *encodeState) Save(obj reflect.Value) {
 	// objects on the pending list. All queued objects should be fully
 	// resolved, and we should be able to serialize after this call.
 	var root wire.Ref
-	source := reflectedValue(obj)
-	es.resolveValue(source, uintptr(source.address), &root, encodeDefault)
+	es.resolve(obj.Addr(), &root)
 
 	// Encode the graph.
 	var oes *objectEncodeState
@@ -675,12 +755,12 @@ func (es *encodeState) Save(obj reflect.Value) {
 			// deferred list yet again. That's expected, and why it
 			// is removed first.
 			es.deferred.Remove(oes)
-			es.encodeValue(oes.obj.value(), oes.how, &oes.encoded)
+			es.encodeObject(oes.obj, oes.how, &oes.encoded)
 		}
 	}); err != nil {
 		// Include the object in the error message, if available.
-		if oes != nil && oes.obj.ops != nil {
-			Failf("encoding error: %w\nfor object %#v", err, oes.obj.reflect().Interface())
+		if oes != nil && oes.obj.IsValid() {
+			Failf("encoding error: %w\nfor object %#v", err, oes.obj.Interface())
 		}
 		Failf("encoding error: %w", err)
 	}
