@@ -24,10 +24,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <cerrno>
 #include <cstring>
 #include <iostream>
 #include <string>
 
+#include "absl/cleanup/cleanup.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "tools/ioctl_sniffer/ioctl.pb.h"
@@ -35,29 +37,22 @@
 
 using gvisor::Ioctl;
 
-libc_ioctl libc_ioctl_handle = nullptr;
-
-void init_libc_ioctl_handle() {
-  if (libc_ioctl_handle) {
-    return;
-  }
-
-  libc_ioctl_handle = (libc_ioctl)dlsym(RTLD_NEXT, "ioctl");
-  if (!libc_ioctl_handle) {
-    std::cerr << "Failed to hook ioctl: " << dlerror() << "\n";
-    exit(1);
-  }
-}
-
 extern "C" {
 
 int ioctl(int fd, uint64_t request, void* argp) {
-  if (!libc_ioctl_handle) {
-    init_libc_ioctl_handle();
-  }
+  static const libc_ioctl libc_ioctl_handle = [] {
+    auto handle = reinterpret_cast<libc_ioctl>(dlsym(RTLD_NEXT, "ioctl"));
+    if (!handle) {
+      std::cerr << "Failed to hook ioctl: " << dlerror() << "\n";
+      exit(1);
+    }
+    return handle;
+  }();
 
   // Forward the ioctl call.
   int ret = libc_ioctl_handle(fd, request, argp);
+  const auto restore_errno =
+      absl::MakeCleanup([ioctl_errno = errno] { errno = ioctl_errno; });
 
   // Check the file name to see if this is an Nvidia ioctl.
   // We only want to do protobuf logging for these ioctls.
