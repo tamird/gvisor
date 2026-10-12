@@ -14,21 +14,13 @@
 
 package state
 
-import (
-	"reflect"
-
-	"gvisor.dev/gvisor/pkg/state/wire"
-)
+import "gvisor.dev/gvisor/pkg/state/wire"
 
 type signed interface {
 	~int | ~int8 | ~int16 | ~int32 | ~int64
 }
 type unsigned interface {
 	~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
-}
-
-func incompatibleDestination[T any]() {
-	Failf("wire value has incompatible destination type %v", reflect.TypeFor[T]())
 }
 
 // storeBool and the other scalar stores are shared by generated field helpers
@@ -106,64 +98,4 @@ func storeString[T ~string](dst *T, encoded wire.Object) bool {
 		*dst = T(*x)
 	}
 	return ok
-}
-
-// LoadBool decodes a generated field and optionally waits for its dependencies.
-// The helper does not retain source. slot is the local schema slot.
-func LoadBool[T ~bool](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) && !storeBool(dst, encoded) {
-		incompatibleDestination[T]()
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadSigned decodes a generated field and optionally waits for its dependencies.
-// The helper does not retain source. slot is the local schema slot.
-func LoadSigned[T signed](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) && !storeSigned(dst, encoded) {
-		incompatibleDestination[T]()
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadUnsigned decodes a generated field and optionally waits for its dependencies.
-// The helper does not retain source. slot is the local schema slot.
-func LoadUnsigned[T unsigned](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) && !storeUnsigned(dst, encoded) {
-		incompatibleDestination[T]()
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadFloat decodes a generated field and optionally waits for its dependencies.
-// The helper does not retain source. slot is the local schema slot.
-func LoadFloat[T ~float32 | ~float64](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) && !storeFloat(dst, encoded) {
-		incompatibleDestination[T]()
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadComplex decodes a generated field and optionally waits for its dependencies.
-// The helper does not retain source. slot is the local schema slot.
-func LoadComplex[T ~complex64 | ~complex128](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) && !storeComplex(dst, encoded) {
-		incompatibleDestination[T]()
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadString decodes a generated field and optionally waits for its dependencies.
-// The helper does not retain source. slot is the local schema slot.
-func LoadString[T ~string](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) && !storeString(dst, encoded) {
-		incompatibleDestination[T]()
-	}
-	source.internal.finishField(encoded, wait, nil)
 }

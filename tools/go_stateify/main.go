@@ -217,10 +217,22 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 
 	// Common closures.
 	emitRegister := func(name string) {
-		if records != nil && records.types[name] != nil {
-			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s)", statePrefix, name, records.types[name].factory))
-		} else if records != nil && records.forward[name] != "" {
-			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)))", statePrefix, name, statePrefix, records.forward[name]))
+		newRecord, newValue, loadValue := "nil", "nil", "nil"
+		if records != nil {
+			if record := records.types[name]; record != nil {
+				newRecord = record.factory
+			} else if records.forward[name] != "" {
+				newRecord = fmt.Sprintf("%sForwardRecord((*%s)(nil))", statePrefix, records.forward[name])
+			}
+			if loader := records.loaders[name]; loader != nil {
+				newValue, loadValue = loader.newValue, loader.loadValue
+				fmt.Fprintf(outputFile, "func %s() %s.Pointer { return %s.Pointer(new(%s)) }\n\n", newValue, records.unsafeAlias, records.unsafeAlias, name)
+				fmt.Fprintf(outputFile, "func %s(%s context.Context, %s %s.Pointer, %s %sSource) {\n", loadValue, records.contextLocal, records.addressLocal, records.unsafeAlias, records.sourceLocal, statePrefix)
+				fmt.Fprintf(outputFile, " (*%s)(%s).StateLoad(%s, %s)\n}\n\n", name, records.addressLocal, records.contextLocal, records.sourceLocal)
+			}
+		}
+		if newRecord != "nil" || newValue != "nil" {
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %s, %s)", statePrefix, name, newRecord, newValue, loadValue))
 		} else {
 			initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
 		}
@@ -251,6 +263,10 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 		if records != nil && len(records.types) != 0 {
 			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", records.wireAlias)
+		}
+		if records != nil && len(records.loaders) != 0 {
+			fmt.Fprintf(outputFile, " %s \"reflect\"\n", records.reflectAlias)
+			fmt.Fprintf(outputFile, " %s \"unsafe\"\n", records.unsafeAlias)
 		}
 		if imports != "" {
 			for _, i := range strings.Split(imports, ",") {
@@ -287,37 +303,26 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			emitFieldValue := func(name string, _ string) {
 				emitField(name)
 			}
-			loadRecv := recv
-			if records != nil {
-				// Preserve established receiver names unless a typed call
-				// introduces an actual import or helper-name collision.
-				if statePrefix == recv+"." && len(records.loads[ts.Name.Name]) != 0 {
-					loadRecv = records.receiver
-				} else if statePrefix == "" {
-					for _, helper := range records.loads[ts.Name.Name] {
-						if recv == helper {
-							loadRecv = records.receiver
-							break
-						}
-					}
-				}
-			}
 			emitLoadValue := func(name, typName string) {
-				fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, loadRecv, camelCased(name), typName)
+				fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
 			}
 			emitLoadField := func(name string, wait bool) {
 				if records != nil {
-					helper := records.loads[ts.Name.Name][name]
-					if helper == "" {
-						panic("generated load has no checked field helper")
+					field := records.loaders[ts.Name.Name].fields[fields[name]]
+					if field.method == "" {
+						panic("generated load has no checked destination operation")
 					}
-					fmt.Fprintf(outputFile, " %s%s(&stateSourceObject, %d, &%s.%s, %t)\n", statePrefix, helper, fields[name], loadRecv, name, wait)
+					fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, %s.Pointer(&%s.%s)", field.method, fields[name], records.unsafeAlias, recv, name)
+					if field.typeInfo {
+						fmt.Fprintf(outputFile, ", %s.TypeOf(&%s.%s).Elem()", records.reflectAlias, recv, name)
+					}
+					fmt.Fprintf(outputFile, ", %t)\n", wait)
 				} else {
 					method := "Load"
 					if wait {
 						method = "LoadWait"
 					}
-					fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], loadRecv, name)
+					fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], recv, name)
 				}
 			}
 			emitLoad := func(name string) { emitLoadField(name, false) }
@@ -429,7 +434,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			// N.B. See the comment above for the save method.
 			if generateSaverLoader {
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
-				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", loadRecv, ts.Name.Name, statePrefix)
+				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
 				model.scan(scanFunctions{normal: emitLoad, wait: emitLoadWait})
 				model.scan(scanFunctions{value: emitLoadValue})
 				if hasAfterLoad {
@@ -437,7 +442,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 					// AfterLoad is called, the object encodes a dependency on
 					// referred objects (i.e. fields). This means that afterLoad
 					// will not be called until the other afterLoads are called.
-					fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", loadRecv)
+					fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", recv)
 				}
 				fmt.Fprintf(outputFile, "}\n\n")
 			}

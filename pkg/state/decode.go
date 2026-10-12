@@ -364,10 +364,7 @@ func (od *objectDecoder) afterLoad(fn func()) {
 
 // decodeStruct decodes a struct value.
 func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj location, object wire.Object) {
-	ds.decodeStructValue(ods, obj.ops.layout.typ, obj.reflect().Addr().Interface(), object)
-}
-
-func (ds *decodeState) decodeStructValue(ods *objectDecodeState, typ reflect.Type, pointer any, object wire.Object) {
+	typ := obj.ops.layout.typ
 	if typ.Kind() != reflect.Struct {
 		Failf("wire value has incompatible destination type %v", typ)
 	}
@@ -399,7 +396,11 @@ func (ds *decodeState) decodeStructValue(ods *objectDecodeState, typ reflect.Typ
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	switch value := pointer.(type) {
+	if obj.ops.codec.loadValue != nil {
+		obj.ops.codec.loadValue(ds.ctx, obj.address, Source{internal: od})
+		return
+	}
+	switch value := obj.reflect().Addr().Interface().(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
 	case binaryObject:
@@ -416,10 +417,8 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, source location, encode
 	for i := range encoded.Keys {
 		// Keep the fresh reflected cells at the allocation/insertion boundary.
 		// Hooks may retain their addresses, so neither cell can be reused.
-		key := reflect.New(source.ops.key.layout.typ).Elem()
-		element := reflect.New(source.ops.elem.layout.typ).Elem()
-		keyLocation := location{ops: source.ops.key, address: key.Addr().UnsafePointer()}
-		elementLocation := location{ops: source.ops.elem, address: element.Addr().UnsafePointer()}
+		keyLocation, key := source.ops.key.newCell()
+		elementLocation, element := source.ops.elem.newCell()
 		ds.decodeObject(ods, keyLocation, encoded.Keys[i])
 		ds.decodeObject(ods, elementLocation, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)
@@ -481,8 +480,8 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj location, obj
 
 	// Decode into a distinct cell of the dynamic type before assigning it to
 	// the interface. Hooks may retain this cell's address.
-	target := operationsFor(ds.findType(encoded.Type)).newLocation()
-	defer obj.reflect().Set(target.reflect())
+	target, value := operationsFor(ds.findType(encoded.Type)).newCell()
+	defer obj.reflect().Set(value)
 	ds.decodeObject(ods, target, encoded.Value)
 }
 

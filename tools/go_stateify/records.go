@@ -64,43 +64,78 @@ type sourceGroup struct {
 }
 
 type recordSet struct {
-	wireAlias string
-	receiver  string
-	types     map[string]*recordType
-	loads     map[string]map[string]string
-	forward   map[string]string
+	wireAlias    string
+	reflectAlias string
+	unsafeAlias  string
+	receiver     string
+	contextLocal string
+	addressLocal string
+	sourceLocal  string
+	types        map[string]*recordType
+	loaders      map[string]*loadType
+	forward      map[string]string
 }
 
-// loadHelperFor selects a shared typed entry from the checked field kind.
-// Calls infer their exact named type from the field pointer, so no component
-// type spelling or additional imports are needed.
-func loadHelperFor(t types.Type) string {
-	switch t := t.Underlying().(type) {
-	case *types.Basic:
-		switch t.Kind() {
+// loadField records the checked destination operation, independently of the
+// generated saver's capture storage. typeInfo is needed only at a dynamic or
+// reference boundary, never to spell a possibly inaccessible component type.
+type loadField struct {
+	method   string
+	typeInfo bool
+}
+
+type loadType struct {
+	newValue  string
+	loadValue string
+	fields    []loadField
+}
+
+// loadFieldFor selects one common operation for the exact underlying kind.
+// Generated code passes the actual field address; builtin names need not be
+// resolved in the consumer package, where they may be shadowed.
+func loadFieldFor(t types.Type) loadField {
+	if basic, ok := t.Underlying().(*types.Basic); ok {
+		switch basic.Kind() {
 		case types.Bool:
-			return "LoadBool"
-		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return "LoadSigned"
-		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
-			return "LoadUnsigned"
-		case types.Float32, types.Float64:
-			return "LoadFloat"
-		case types.Complex64, types.Complex128:
-			return "LoadComplex"
+			return loadField{method: "LoadBool"}
+		case types.Int:
+			return loadField{method: "LoadInt"}
+		case types.Int8:
+			return loadField{method: "LoadInt8"}
+		case types.Int16:
+			return loadField{method: "LoadInt16"}
+		case types.Int32:
+			return loadField{method: "LoadInt32"}
+		case types.Int64:
+			return loadField{method: "LoadInt64"}
+		case types.Uint:
+			return loadField{method: "LoadUint"}
+		case types.Uint8:
+			return loadField{method: "LoadUint8"}
+		case types.Uint16:
+			return loadField{method: "LoadUint16"}
+		case types.Uint32:
+			return loadField{method: "LoadUint32"}
+		case types.Uint64:
+			return loadField{method: "LoadUint64"}
+		case types.Uintptr:
+			return loadField{method: "LoadUintptr"}
+		case types.Float32:
+			return loadField{method: "LoadFloat32"}
+		case types.Float64:
+			return loadField{method: "LoadFloat64"}
+		case types.Complex64:
+			return loadField{method: "LoadComplex64"}
+		case types.Complex128:
+			return loadField{method: "LoadComplex128"}
 		case types.String:
-			return "LoadString"
+			return loadField{method: "LoadString"}
 		}
-	case *types.Pointer:
-		return "LoadPointer"
-	case *types.Map:
-		return "LoadMap"
-	case *types.Slice:
-		return "LoadSlice"
-	case *types.Struct:
-		return "LoadStruct"
 	}
-	return "LoadObject"
+	if _, ok := t.Underlying().(*types.Pointer); ok {
+		return loadField{method: "LoadPointer", typeInfo: true}
+	}
+	return loadField{method: "LoadObject", typeInfo: true}
 }
 
 type recordType struct {
@@ -425,11 +460,16 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		}
 	}
 	records := &recordSet{
-		wireAlias: unusedName("statewire", names),
-		receiver:  unusedName("stateObject", names),
-		types:     make(map[string]*recordType),
-		loads:     make(map[string]map[string]string),
-		forward:   make(map[string]string),
+		wireAlias:    unusedName("statewire", names),
+		reflectAlias: unusedName("stateReflect", names),
+		unsafeAlias:  unusedName("stateUnsafe", names),
+		receiver:     unusedName("stateObject", names),
+		contextLocal: unusedName("stateContext", names),
+		addressLocal: unusedName("stateAddress", names),
+		sourceLocal:  unusedName("stateSource", names),
+		types:        make(map[string]*recordType),
+		loaders:      make(map[string]*loadType),
+		forward:      make(map[string]string),
 	}
 
 	for _, typ := range model.types {
@@ -437,6 +477,17 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		object, ok := pkg.Scope().Lookup(name).(*types.TypeName)
 		if !ok {
 			return nil, fmt.Errorf("no checked type declaration for %s", name)
+		}
+		// A loader owns native callbacks even when StateSave is handwritten.
+		var loader *loadType
+		_, structural := typ.spec.Type.(*ast.StructType)
+		_, structUnderlying := object.Type().Underlying().(*types.Struct)
+		if typ.save && structUnderlying && (structural || typ.identical) {
+			loader = &loadType{
+				newValue:  unusedName(fmt.Sprintf("newStateValue%d_%s", len(name), name), names),
+				loadValue: unusedName(fmt.Sprintf("loadStateValue%d_%s", len(name), name), names),
+			}
+			records.loaders[name] = loader
 		}
 		if _, structural := typ.spec.Type.(*ast.StructType); !structural {
 			if typ.save && typ.identical {
@@ -447,7 +498,6 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		owner := types.NewPointer(object.Type())
 		_, manual := model.methods[method{name, "StateSave"}]
 		generatedSaver := typ.save && !manual
-		loadHelpers := make(map[string]string)
 		record := &recordType{
 			name:    unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names),
 			factory: unusedName(fmt.Sprintf("newStateRecord%d_%s", len(name), name), names),
@@ -455,6 +505,12 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		for _, field := range typ.fields {
 			if field.slot < 0 {
 				continue
+			}
+			if loader != nil {
+				if field.slot != len(loader.fields) {
+					panic("noncontiguous load field model")
+				}
+				loader.fields = append(loader.fields, loadField{})
 			}
 			var valueType types.Type
 			lookup := field.name
@@ -483,7 +539,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 					if _, ok := member.(*types.Var); !ok {
 						return nil, fmt.Errorf("%s.%s is not a checked Go field", name, lookup)
 					}
-					loadHelpers[field.name] = loadHelperFor(valueType)
+					loader.fields[field.slot] = loadFieldFor(valueType)
 				}
 			}
 			if generatedSaver && field.slot != len(record.fields) {
@@ -495,9 +551,6 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		}
 		if generatedSaver {
 			records.types[name] = record
-		}
-		if len(loadHelpers) != 0 {
-			records.loads[name] = loadHelpers
 		}
 	}
 	return records, nil

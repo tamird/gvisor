@@ -17,74 +17,218 @@ package state
 import (
 	"reflect"
 	"unsafe"
-
-	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// LoadPointer decodes a generated pointer field using the common graph resolver.
-// source is not retained; wait requests the ordinary field dependency.
-func LoadPointer[P ~*T, T any](source *Source, slot int, dst *P, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) {
-		target := source.internal.ds.pointerTarget(encoded, reflect.TypeFor[T](), nil)
-		*dst = P((*T)(target.address))
+// LoadBool loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is bool, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadBool(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeBool((*bool)(dst), encoded) {
+		Failf("wire value has incompatible bool destination")
 	}
-	source.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(encoded, wait, nil)
 }
 
-// LoadMap decodes a generated map field. Payloads still use the shared dynamic
-// map loop, including fresh cells and immediate insertion after recording dependencies.
-func LoadMap[M ~map[K]V, K comparable, V any](source *Source, slot int, dst *M, wait bool) {
-	encoded := source.internal.field(slot)
+// LoadInt loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is int, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadInt(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeSigned((*int)(dst), encoded) {
+		Failf("wire value has incompatible int destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadInt8 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is int8, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadInt8(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeSigned((*int8)(dst), encoded) {
+		Failf("wire value has incompatible int8 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadInt16 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is int16, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadInt16(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeSigned((*int16)(dst), encoded) {
+		Failf("wire value has incompatible int16 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadInt32 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is int32, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadInt32(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeSigned((*int32)(dst), encoded) {
+		Failf("wire value has incompatible int32 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadInt64 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is int64, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadInt64(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeSigned((*int64)(dst), encoded) {
+		Failf("wire value has incompatible int64 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadUint loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is uint, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadUint(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeUnsigned((*uint)(dst), encoded) {
+		Failf("wire value has incompatible uint destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadUint8 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is uint8, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadUint8(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeUnsigned((*uint8)(dst), encoded) {
+		Failf("wire value has incompatible uint8 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadUint16 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is uint16, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadUint16(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeUnsigned((*uint16)(dst), encoded) {
+		Failf("wire value has incompatible uint16 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadUint32 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is uint32, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadUint32(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeUnsigned((*uint32)(dst), encoded) {
+		Failf("wire value has incompatible uint32 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadUint64 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is uint64, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadUint64(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeUnsigned((*uint64)(dst), encoded) {
+		Failf("wire value has incompatible uint64 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadUintptr loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is uintptr, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadUintptr(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeUnsigned((*uintptr)(dst), encoded) {
+		Failf("wire value has incompatible uintptr destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadFloat32 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is float32, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadFloat32(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeFloat((*float32)(dst), encoded) {
+		Failf("wire value has incompatible float32 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadFloat64 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is float64, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadFloat64(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeFloat((*float64)(dst), encoded) {
+		Failf("wire value has incompatible float64 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadComplex64 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is complex64, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadComplex64(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeComplex((*complex64)(dst), encoded) {
+		Failf("wire value has incompatible complex64 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadComplex128 loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is complex128, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadComplex128(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeComplex((*complex128)(dst), encoded) {
+		Failf("wire value has incompatible complex128 destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadString loads a checked generated field. dst must point to writable Go
+// storage whose underlying type is string, and must remain live through this
+// call. Source and dst are not retained. wait requests the usual dependency.
+func (s *Source) LoadString(slot int, dst unsafe.Pointer, wait bool) {
+	encoded := s.internal.field(slot)
+	if !isNilObject(encoded) && !storeString((*string)(dst), encoded) {
+		Failf("wire value has incompatible string destination")
+	}
+	s.internal.finishField(encoded, wait, nil)
+}
+
+// LoadPointer loads a checked generated pointer field through the common
+// resolver. dst must point to writable storage of exactly typ, which must be
+// a Go pointer type. The address and Source are not retained.
+func (s *Source) LoadPointer(slot int, dst unsafe.Pointer, typ reflect.Type, wait bool) {
+	encoded := s.internal.field(slot)
 	if !isNilObject(encoded) {
-		typ := reflect.TypeFor[M]()
-		if ref, ok := encoded.(*wire.Ref); ok {
-			target := source.internal.ds.mapTarget(ref, typ, nil)
-			if target.ops.layout.typ == typ {
-				m := (*M)(target.address)
-				if *m == nil {
-					*m = make(M)
-				}
-				*dst = *m
-			} else {
-				assignMap(reflect.ValueOf(dst).Elem(), target.reflect())
-			}
-		} else {
-			obj := location{ops: operationsFor(typ), address: unsafe.Pointer(dst)}
-			obj.ops.decode(source.internal.ds, source.internal.ods, obj, encoded)
+		if typ.Kind() != reflect.Ptr {
+			Failf("wire value has incompatible pointer destination %v", typ)
 		}
+		target := s.internal.ds.pointerTarget(encoded, typ.Elem(), nil)
+		*(*unsafe.Pointer)(dst) = target.address
 	}
-	source.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(encoded, wait, nil)
 }
 
-// LoadSlice resolves and checks the complete backing extent before assigning a
-// generated slice field. It does not require a registered type-specific callback.
-func LoadSlice[S ~[]E, E any](source *Source, slot int, dst *S, wait bool) {
-	encoded := source.internal.field(slot)
+// LoadObject loads a checked generated aggregate or dynamic field through the
+// shared dispatcher. dst must be writable Go storage of exactly typ and remain
+// live through this call. Source is not retained; hooks may retain dst.
+func (s *Source) LoadObject(slot int, dst unsafe.Pointer, typ reflect.Type, wait bool) {
+	encoded := s.internal.field(slot)
 	if !isNilObject(encoded) {
-		target, length, capacity := source.internal.ds.sliceTarget(encoded, reflect.TypeFor[E]())
-		*dst = S(unsafe.Slice((*E)(target.address), capacity)[:length:capacity])
+		obj := location{ops: operationsFor(typ), address: dst}
+		s.internal.ds.decodeObject(s.internal.ods, obj, encoded)
 	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadStruct supplies the known receiver pointer to the common hook and binary
-// codec dispatch without reconstructing it from a reflected field address.
-func LoadStruct[T any](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) {
-		source.internal.ds.decodeStructValue(source.internal.ods, reflect.TypeFor[T](), dst, encoded)
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadObject handles generated arrays, interfaces and unsupported field kinds
-// through the same runtime dispatcher used by public/manual Source calls.
-func LoadObject[T any](source *Source, slot int, dst *T, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) {
-		obj := location{ops: operationsFor(reflect.TypeFor[T]()), address: unsafe.Pointer(dst)}
-		obj.ops.decode(source.internal.ds, source.internal.ods, obj, encoded)
-	}
-	source.internal.finishField(encoded, wait, nil)
+	s.internal.finishField(encoded, wait, nil)
 }

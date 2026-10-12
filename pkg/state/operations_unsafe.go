@@ -30,11 +30,27 @@ type typeOperations struct {
 	key    *typeOperations
 	elem   *typeOperations
 	decode func(*decodeState, *objectDecodeState, location, wire.Object)
+	codec  nativeCodec
 }
 
 // newLocation retains the already-selected operations for a fresh Go cell.
 func (ops *typeOperations) newLocation() location {
+	if ops.codec.newValue != nil {
+		return location{ops: ops, address: ops.codec.newValue()}
+	}
 	return location{ops: ops, address: reflect.New(ops.layout.typ).UnsafePointer()}
+}
+
+// newCell keeps the reflection value only where map insertion or interface
+// assignment requires it. Every nonzero-sized cell is a fresh allocation;
+// zero-sized allocations retain Go's permitted shared-address behavior.
+func (ops *typeOperations) newCell() (location, reflect.Value) {
+	if ops.codec.newValue != nil {
+		obj := ops.newLocation()
+		return obj, obj.reflect()
+	}
+	value := reflect.New(ops.layout.typ).Elem()
+	return location{ops: ops, address: value.Addr().UnsafePointer()}, value
 }
 
 var operationRegistry = struct {
@@ -43,9 +59,10 @@ var operationRegistry = struct {
 }{}
 
 // operationBuilder resolves recursive types within one private transaction.
-// Operations depend only on Go types, independently of wire registration, and
-// are published only after the recursive graph is complete. Construction never
-// reenters operationsFor or its lock.
+// Physical layouts depend on Go types; native callbacks snapshot exact-type
+// registration when this graph is built. An early-init fallback stays immutable
+// after later registration. Publication waits for the complete recursive graph,
+// and construction never reenters operationsFor or its lock.
 type operationBuilder struct {
 	staged map[reflect.Type]*typeOperations
 }
@@ -59,6 +76,11 @@ func (b *operationBuilder) forType(typ reflect.Type) *typeOperations {
 	}
 	ops := &typeOperations{layout: layoutFor(typ), decode: decoderForKind(typ.Kind())}
 	b.staged[typ] = ops
+	if info, ok := reverseTypeDatabase[typ]; ok {
+		if registered, ok := globalTypeDatabase[info.Name]; ok && registered.typ == typ {
+			ops.codec = registered.codec
+		}
+	}
 	switch typ.Kind() {
 	case reflect.Map:
 		ops.key = b.forType(typ.Key())

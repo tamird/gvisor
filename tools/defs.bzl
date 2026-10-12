@@ -222,7 +222,7 @@ def go_library(name, srcs, deps = [], imports = [], stateify = True, force_add_s
             deps = all_deps,
             group_sources = {src: suffix for suffix, subset in state_sets.items() for src in subset},
             group_names = state_sets.keys(),
-            outs = [name + suffix + "_state_autogen.go" for suffix in state_sets.keys()],
+            outs = [name + suffix + "_state_autogen_unsafe.go" for suffix in state_sets.keys()],
             imports = imports,
             package = full_pkg,
             importpath = kwargs.get("importpath", "gvisor.dev/gvisor/" + native.package_name()),
