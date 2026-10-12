@@ -987,6 +987,9 @@ run_lane() (
     test)
       targets=("${test_targets[@]}")
       options=(--strategy=TestRunner=remote --noremote_local_fallback --test_env=GO_TEST_WRAP_TESTV=1)
+      # Qualification-only evidence for the retained large-load startup signal.
+      # This observer does not shorten the selected test's declared deadline.
+      options+=("--run_under=//test/rbe:worker_identity --observe-process")
       ;;
     build)
       command=build

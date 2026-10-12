@@ -344,8 +344,8 @@ fixture to load their declared cached archives, then verify both aliases,
 configuration and ordered layer digests. They execute no container or GPU
 workload. Run them separately through `lanes=test` with `execution=remote`.
 The ordinary OCI producers retain their 5,333-second action deadlines and
-original resources. Each load action has its own one-hour deadline and a
-disposable 256GB root filesystem: the archives are 21.7GB and 48.3GB compressed,
+original resources. Each load action has its own one-hour deadline and requests
+a disposable 256GB root filesystem: the archives are 21.7GB and 48.3GB compressed,
 and the earlier 80GB worker exhausted its disk while exporting Stable.
 Unpacked sizes are measured by the check; compressed size does not bound them.
 The source-layout dependency may run again because it deliberately disables
