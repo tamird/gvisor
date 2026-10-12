@@ -72,17 +72,17 @@ func layoutFor(typ reflect.Type) *typeLayout {
 
 // find searches for the exact target type at offset. A failed branch appends
 // nothing. Successful paths use the existing reverse wire.Dot order.
-func (root *typeLayout) find(target *typeLayout, offset uintptr, dots *[]wire.Dot) bool {
-	if offset > root.size || target.size > root.size-offset {
+func (layout *typeLayout) find(target *typeLayout, offset uintptr, dots *[]wire.Dot) bool {
+	if offset > layout.size || target.size > layout.size-offset {
 		return false
 	}
-	if root.typ == target.typ && offset == 0 {
+	if layout.typ == target.typ && offset == 0 {
 		return true
 	}
-	switch root.kind {
+	switch layout.kind {
 	case reflect.Struct:
-		for i := len(root.fields); i > 0; i-- {
-			field := &root.fields[i-1]
+		for i := len(layout.fields); i > 0; i-- {
+			field := &layout.fields[i-1]
 			// Zero-sized fields may share an offset with a different type.
 			if field.offset <= offset && field.layout.find(target, offset-field.offset, dots) {
 				if dots != nil {
@@ -95,16 +95,16 @@ func (root *typeLayout) find(target *typeLayout, offset uintptr, dots *[]wire.Do
 			}
 		}
 	case reflect.Array:
-		if root.length == 0 {
+		if layout.length == 0 {
 			return false
 		}
 		index := uintptr(0)
-		if size := root.elem.size; size != 0 {
+		if size := layout.elem.size; size != 0 {
 			index, offset = offset/size, offset%size
 		}
 		// Zero-sized elements share an address. Element zero preserves the
 		// same legal pointer identity without division by zero.
-		if index < root.length && root.elem.find(target, offset, dots) {
+		if index < layout.length && layout.elem.find(target, offset, dots) {
 			if dots != nil {
 				*dots = append(*dots, wire.Index(index))
 			}
