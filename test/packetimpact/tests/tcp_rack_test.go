@@ -199,7 +199,10 @@ func TestRACKWithSACK(t *testing.T) {
 		t.Fatalf("expected payload was not received: %s", err)
 	}
 
-	time.Sleep(simulatedRTT)
+	// RACK ignores retransmission samples shorter than its minimum RTT
+	// (RFC 8985, section 6.2). Wait longer than the warmup ACKs to leave margin
+	// for scheduling jitter in that comparison.
+	time.Sleep(2 * simulatedRTT)
 	// ACK for #1 packet.
 	conn.Send(t, testbench.TCP{Flags: testbench.TCPFlags(header.TCPFlagAck), AckNum: testbench.Uint32(uint32(end))})
 
