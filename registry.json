@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-12T09:30:07.698385+00:00",
+    "updatedAt": "2026-10-12T09:58:40.519611+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6502,31 +6502,35 @@
       "number": 15666
     },
     {
-      "id": "branch:proc-reap-phase",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15667",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "proc-reap-phase",
       "head": "1feac14b64d92439afbc13e3bc9d8a506c84c2df",
       "title": "test: focus proc children stress on reaping",
       "group": "tests",
-      "summary": "The contributor approved this proc regression-test correction with a reader-array revision. The amended source is public at 1feac14b6 after two source reviews; focused native-Linux and systrap validation is being prepared before the authorized PR. Four readers now start after each batch reaches the zombie state, attempt a scan before reaping begins, and stop and join before the next batch is created. All thirty-two batches of sixty-four children remain; failed reads are reported and assertion cleanup stops readers before joining. The original standalone patch b6968083c was identical to the qualified change; the amendment derives readiness from the reader array and stops and joins that array at batch exit. Reverting the production guard reproduces the intended reported_zero=true failure. Native Linux reports 143 passes and six skips; the corrected AMD64 runtime passes all 149 cases, and both complete ARM TCG owners pass all 298 cases with the same case universe and original limits. Both complete public ARM profiles subsequently pass with the correction integrated. The original standalone source was tied to those results by patch identity. The array amendment has source review but no new runtime result yet; it makes no performance guarantee or explanation of the original post-reap stall. No further contributor question is required; the PR will follow the focused result.",
-      "url": "https://github.com/tamird/gvisor/commit/1feac14b64d92439afbc13e3bc9d8a506c84c2df",
-      "status": "Contributor-approved; focused validation pending",
-      "updatedAt": "2026-10-12T09:30:07.698385+00:00",
+      "summary": "The contributor-approved proc regression-test correction is now PR #15667 at exact head 1feac14b6. The requested array owns the reader count, and cleanup stops and joins its threads at batch exit. Both source reviews pass; the focused amended case passes on native Linux and gVisor systrap in the integrated qualification source. Four readers now start after each batch reaches the zombie state, attempt a scan before reaping begins, and stop and join before the next batch is created. All thirty-two batches of sixty-four children remain; failed reads are reported and assertion cleanup stops readers before joining. The original standalone patch b6968083c was identical to the qualified change; the amendment derives readiness from the reader array and stops and joins that array at batch exit. Reverting the production guard reproduces the intended reported_zero=true failure. Native Linux reports 143 passes and six skips; the corrected AMD64 runtime passes all 149 cases, and both complete ARM TCG owners pass all 298 cases with the same case universe and original limits. Both complete public ARM profiles subsequently pass with the correction integrated. The original standalone source was tied to those results by patch identity. The array amendment has sixteen successful remote test actions, with two named C++ cases and fourteen empty wrappers; all thirty-two original reports and eleven source captures are authenticated. The exact amended function, includes and helpers match the standalone proposal; unrelated qualification edits elsewhere in proc.cc remain distinct. This is integrated-source validation, not a new complete standalone or ARM suite, and does not explain the original post-reap stall. Upstream review and current-head CI are now followed by the existing watcher.",
+      "url": "https://github.com/google/gvisor/pull/15667",
+      "status": "open",
+      "updatedAt": "2026-10-12T09:58:40.519611+00:00",
       "followup": {
-        "disposition": "Contributor-approved; focused validation pending",
-        "owner": "root",
+        "disposition": "Contributor-approved; upstream review and CI",
+        "owner": "external_sweeps",
         "sourceHead": "1feac14b64d92439afbc13e3bc9d8a506c84c2df",
-        "reviewedAt": "2026-10-12T09:30:07.698385+00:00",
-        "nextAction": "ROOT will verify the focused native-Linux and systrap array amendment, then publish under the existing approval.",
+        "reviewedAt": "2026-10-12T09:58:40.519611+00:00",
+        "nextAction": "Follow current-head CI, maintainer comments and review threads. No merge or auto-merge is authorized.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15667",
+          "https://app.buildbuddy.io/invocation/83e4faab-0f45-428b-9f75-4d43dc6f1a5b",
           "https://github.com/tamird/gvisor/commit/1feac14b64d92439afbc13e3bc9d8a506c84c2df",
           "https://github.com/tamird/gvisor/commit/b6968083ca1dc3e9deef344538811068bcdfaf35",
           "https://app.buildbuddy.io/invocation/4b0c0153-e152-43e7-8707-5f8171a3426c",
           "https://github.com/tamird/gvisor/actions/runs/38188936833",
           "https://github.com/tamird/gvisor/actions/runs/38188965809"
-        ]
-      }
+        ],
+        "mergeable": "MERGEABLE"
+      },
+      "number": 15667
     },
     {
       "id": "branch:tcp-nagle-gso",
