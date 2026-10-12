@@ -29,7 +29,6 @@
 #include <iostream>
 #include <string>
 
-#include "absl/cleanup/cleanup.h"
 #include "absl/strings/match.h"
 #include "absl/strings/str_cat.h"
 #include "tools/ioctl_sniffer/ioctl.pb.h"
@@ -37,35 +36,21 @@
 
 using gvisor::Ioctl;
 
-extern "C" {
+namespace {
 
-int ioctl(int fd, uint64_t request, void* argp) {
-  static const libc_ioctl libc_ioctl_handle = [] {
-    auto handle = reinterpret_cast<libc_ioctl>(dlsym(RTLD_NEXT, "ioctl"));
-    if (!handle) {
-      std::cerr << "Failed to hook ioctl: " << dlerror() << "\n";
-      exit(1);
-    }
-    return handle;
-  }();
-
-  // Forward the ioctl call.
-  int ret = libc_ioctl_handle(fd, request, argp);
-  const auto restore_errno =
-      absl::MakeCleanup([ioctl_errno = errno] { errno = ioctl_errno; });
-
+void ReportIoctl(int fd, uint64_t request, void* argp, int ret) {
   // Check the file name to see if this is an Nvidia ioctl.
   // We only want to do protobuf logging for these ioctls.
   char file_name[PATH_MAX + 1];
   int n = readlink(absl::StrCat("/proc/self/fd/", fd).c_str(), file_name,
                    sizeof(file_name) - 1);
   if (n < 0) {
-    return ret;
+    return;
   }
 
   file_name[n] = '\0';
   if (!absl::StartsWith(file_name, "/dev/nvidia")) {
-    return ret;
+    return;
   }
 
   // Prepare ioctl proto for logging.
@@ -80,7 +65,27 @@ int ioctl(int fd, uint64_t request, void* argp) {
   info.set_arg_data(argp, arg_size);
 
   WriteIoctlProto(info);
+}
 
+}  // namespace
+
+extern "C" {
+
+int ioctl(int fd, uint64_t request, void* argp) {
+  static const libc_ioctl libc_ioctl_handle = [] {
+    auto handle = reinterpret_cast<libc_ioctl>(dlsym(RTLD_NEXT, "ioctl"));
+    if (!handle) {
+      std::cerr << "Failed to hook ioctl: " << dlerror() << "\n";
+      exit(1);
+    }
+    return handle;
+  }();
+
+  const int ret = libc_ioctl_handle(fd, request, argp);
+  const int ioctl_errno = errno;
+  ReportIoctl(fd, request, argp, ret);
+  // Reporting performs its own syscalls, but errno belongs to the ioctl result.
+  errno = ioctl_errno;
   return ret;
 }
 

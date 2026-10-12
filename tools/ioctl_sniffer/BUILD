@@ -29,7 +29,6 @@ cc_binary(
     linkshared = True,
     deps = [
         ":ioctl_cc_proto",
-        "@com_google_absl//absl/cleanup",
         "@com_google_absl//absl/strings",
     ],
 )
@@ -47,6 +46,25 @@ cc_test(
         "//test/util:cleanup",
         "//test/util:test_main",
         "//test/util:test_util",
+    ],
+)
+
+cc_test(
+    name = "sniffer_bridge_test",
+    size = "small",
+    srcs = [
+        "sniffer_bridge.cc",
+        "sniffer_bridge.h",
+        "sniffer_bridge_test.cc",
+    ],
+    deps = select_gtest() + [
+        ":ioctl_cc_proto",
+        "//test/util:cleanup",
+        "//test/util:file_descriptor",
+        "//test/util:socket_util",
+        "//test/util:test_main",
+        "//test/util:test_util",
+        "//test/util:thread_util",
     ],
 )
 
