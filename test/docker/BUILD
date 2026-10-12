@@ -398,8 +398,7 @@ LARGE_CACHED_IMAGES = {
                     free_disk = "80GB",
                     memory = "12GB",
                     vfs = True,
-                ),
-                **{"workload-isolation-type": "oci"}
+                ).items() + [("workload-isolation-type", "oci")],
             ),
             "//conditions:default": {},
         }),
