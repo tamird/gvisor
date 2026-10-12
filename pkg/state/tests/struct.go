@@ -174,9 +174,6 @@ type countedSaveParent struct {
 	value int64
 }
 
-// This receiver name must not collide with the generated field context.
-func (stateBoundFields *countedSaveParent) beforeSave() {}
-
 // manualForwardedParent captures an external receiver into matching slots.
 // Its child may already have a resolver node even though the receiver does not.
 // +stateify type
@@ -284,8 +281,8 @@ func (e *earlyFieldOwner) StateSave(s state.Sink)                        { e.chi
 func (e *earlyFieldOwner) StateLoad(ctx context.Context, s state.Source) { e.child.StateLoad(ctx, s) }
 
 // Save reaches the generated method through interface dispatch from a package
-// variable initializer. It must not depend on a generated descriptor's runtime
-// initializer or on the native collection registration that happens in init.
+// variable initializer. Both directions must work before the generated child's
+// registration, using the forwarding owner's already-registered wire schema.
 var earlyFieldWire, earlyFieldLoaded, earlyFieldError = func() ([]byte, *earlyFieldOwner, error) {
 	state.Register((*earlyFieldOwner)(nil))
 	backing := []int{1, 2, 99, 99}

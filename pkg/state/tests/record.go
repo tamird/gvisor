@@ -49,11 +49,26 @@ func (statewire1 *statewire) beforeSave() {}
 
 func (stateSnapshotObject *primitiveRecord) beforeSave() {}
 
-// The receiver is legal in the canonical saver but must not shadow the state
-// package when the checked renderer introduces a qualified capture call.
+type recordBool bool
+type recordString string
+type recordFloat float64
+type recordComplex complex128
+type recordSlice []recordSigned
+type recordMap map[recordSigned]recordUnsigned
+
+// The receiver must not shadow the state package in generated Save or Load.
+// Defined field types also exercise inferred typed calls without component
+// type spellings or constraints limited to predeclared scalar types.
 // +stateify savable
 type statePackageReceiver struct {
-	value int `state:".(stateObject)"`
+	value    int `state:".(stateObject)"`
+	enabled  recordBool
+	text     recordString
+	fraction recordFloat
+	complex  recordComplex
+	pointer  referenceIntPointer
+	slice    recordSlice
+	mapping  recordMap
 }
 
 // The replacement receiver must not shadow this custom value's type either.
