@@ -339,7 +339,7 @@ def _image_source_command_impl(ctx):
                 make.path,
                 tool_root,
                 shell.quote(ctx.file._makefile.short_path),
-                shell.quote(ctx.file._contexts.short_path),
+                shell.quote(ctx.file.contexts.short_path),
                 shell.quote(ctx.attr.image_class),
             ),
             "",
@@ -347,7 +347,7 @@ def _image_source_command_impl(ctx):
         is_executable = True,
     )
     runfiles = ctx.runfiles(
-        files = [ctx.file._contexts, ctx.file._makefile, ctx.file._script],
+        files = [ctx.file.contexts, ctx.file._makefile, ctx.file._script],
         root_symlinks = tools,
     )
     make_runfiles = make.target[DefaultInfo].default_runfiles
@@ -363,7 +363,7 @@ image_source_command = rule(
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image_class": attr.string(default = "cpu", values = ["cpu", "gpu"], doc = "Selects Make's CPU or GPU/ML test-image cohort."),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
-        "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
+        "contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
     },

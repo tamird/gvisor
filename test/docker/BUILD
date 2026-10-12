@@ -85,8 +85,8 @@ source_image_archive(
     ]
 ]
 
-# The client has no Dockerfile RUN steps; its Bazel-built executable is one
-# declared OCI layer. Preserve the label used by the public GPU cohorts.
+# The Bazel-built client is one OCI layer. Preserve the AMD64 image label
+# used by the public GPU cohorts independently of the caller's architecture.
 amd64_image_archive(
     name = "gpu_ollama_client_source_amd64",
     testonly = True,
@@ -170,6 +170,7 @@ image_source_command(
     name = "gpu_image_sources_amd64",
     testonly = True,
     architecture = "x86_64",
+    contexts = "//images:gpu_source_contexts",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -182,6 +183,7 @@ image_source_command(
     name = "gpu_image_sources_arm64",
     testonly = True,
     architecture = "aarch64",
+    contexts = "//images:gpu_source_contexts",
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:aarch64",

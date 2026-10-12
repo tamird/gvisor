@@ -33,26 +33,29 @@ single images via individual `load` targets, or pull all images via a single
 
 ## Go image helpers
 
-The CUDA sample runners and Ollama HTTP client are built by Bazel with the
-repository Go SDK and CGO disabled, then included in the architecture-selected
-image context archive. This replaces their former Docker compilation with
-`golang:1.25` and `golang:1.22`, respectively. The separately sourced ASCII image
-converter retains its own Docker build stage.
+The CUDA sample runners are built by Bazel with the repository Go SDK and
+CGO disabled, then included in the architecture-selected image context archive.
+This replaces their former Docker compilation with `golang:1.25`. The
+separately sourced ASCII image converter retains its own Docker build stage.
 
-The normal `make` image commands stage the same declared archive in a temporary
-directory before hashing or loading either CUDA image or the Ollama client
-image. Helper or SDK changes therefore change the image tag. The declared
-image-source actions consume that archive directly and do not invoke Bazel
-inside their Docker build action.
+The normal `make` image commands stage the declared context archive in a
+temporary directory before hashing or loading either CUDA image. Helper or
+SDK changes therefore change the image tag. Declared image-source actions
+consume that archive directly and never invoke Bazel inside a build action.
 
 ## Declared image archives
 
-The runtime tests consume image archives through `//test/docker` labels.
-The Ollama client archive uses `rules_oci` to combine the declared executable
-with a pinned Alpine base; building it does not start a Docker daemon.
-It supplies the same local `gvisor.dev/images/gpu/ollama/client:latest` tag.
-Bazel's declared inputs identify this archive, independently of Make's
-registry cache tags.
+The Ollama client image is defined in its BUILD file using `rules_oci`. It
+combines the Bazel-built static client with a pinned Alpine base for AMD64 or
+ARM64. Building this image does not start a Docker daemon.
+
+Both the runtime tests and Make consume that image. The Make commands stage
+its `make_context` archive and hash the complete image to derive its cache tag.
+Rebuilding loads that archive before applying the local and registry tags;
+cached pull and manifest checks retain their existing behavior. The archive
+supplies the canonical `gvisor.dev/images/gpu/ollama/client:latest` tag, with
+custom Make prefixes applied after loading. CPU image checks and individual
+Dockerfile builds do not depend on this archive.
 
 The other source-image actions reuse the Dockerfiles and Make's pull/rebuild
 behavior. Their Linux execution worker must supply the Docker CLI and a
@@ -62,9 +65,11 @@ their separate private daemon so they can select runsc and isolate test state.
 
 ## Adding new images
 
-To add a new image, create a new directory under `images` containing a
-Dockerfile and any other files that the image requires. You may choose to add to
-an existing subdirectory if applicable, or create a new one.
+To add a Dockerfile image, create a directory under `images` containing its
+Dockerfile and other required files. Images assembled directly by Bazel instead
+expose a `make_context` target containing `images/<path>/image.tar`, and are
+listed in `BAZEL_IMAGES` in `tools/images.mk`. Include their contexts in the
+corresponding declared image-source cohort.
 
 All images will be tagged and memoized using a hash of the directory contents.
 As a result, every image should be made completely reproducible if possible.

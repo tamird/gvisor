@@ -7,12 +7,6 @@ package(
     licenses = ["notice"],
 )
 
-filegroup(
-    name = "sources",
-    srcs = glob(["**"]),
-    visibility = ["//images:__pkg__"],
-)
-
 go_binary(
     name = "client",
     srcs = ["client.go"],
@@ -33,16 +27,12 @@ pkg_tar(
     srcs = [":client_file"],
 )
 
-# The Dockerfile only copies this executable and sets its default command.
 oci_image(
     name = "image",
-    base = "@ollama_client_alpine_linux_amd64",
+    base = "@ollama_client_alpine",
     cmd = ["/usr/bin/httpclient"],
     tags = ["manual"],
-    target_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
+    target_compatible_with = ["@platforms//os:linux"],
     tars = [":client_layer"],
 )
 
@@ -50,8 +40,7 @@ oci_load(
     name = "load_image",
     format = "docker",
     image = ":image",
-    # The declared archive supplies the tag used by the runtime tests.
-    # Bazel owns its cache identity; this does not publish Make's registry tags.
+    # Make also loads this tag before applying its configured registry tags.
     repo_tags = ["gvisor.dev/images/gpu/ollama/client:latest"],
     tags = ["manual"],
 )
@@ -62,4 +51,18 @@ filegroup(
     output_group = "tarball",
     tags = ["manual"],
     visibility = ["//test/docker:__pkg__"],
+)
+
+pkg_files(
+    name = "make_image",
+    srcs = [":image_archive"],
+    renames = {":image_archive": "image.tar"},
+)
+
+# Hash the assembled image, including its base, instead of a Dockerfile context.
+pkg_tar(
+    name = "make_context",
+    srcs = [":make_image"],
+    package_dir = "images/gpu/ollama/client",
+    visibility = ["//images:__pkg__"],
 )

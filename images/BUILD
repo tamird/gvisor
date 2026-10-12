@@ -11,7 +11,6 @@ package(
 filegroup(
     name = "sources",
     srcs = glob(["**"]) + [
-        "//images/gpu/ollama/client:sources",
         "//images/jekyll:sources",
     ],
 )
@@ -51,13 +50,11 @@ pkg_files(
     srcs = [
         ":cuda_12_8_run_sample",
         ":cuda_run_sample",
-        "//images/gpu/ollama/client",
     ],
     attributes = pkg_attributes(mode = "0755"),
     renames = {
         ":cuda_run_sample": "gpu/cuda-tests/run_sample",
         ":cuda_12_8_run_sample": "gpu/cuda-tests-12-8/run_sample",
-        "//images/gpu/ollama/client": "gpu/ollama/client/client",
     },
 )
 
@@ -91,4 +88,14 @@ pkg_tar(
     package_dir = "images",
     strip_prefix = ".",
     visibility = ["//test/docker:__pkg__"],
+)
+
+# CPU image checks and individual Dockerfile builds do not need OCI images.
+pkg_tar(
+    name = "gpu_source_contexts",
+    visibility = ["//test/docker:__pkg__"],
+    deps = [
+        ":source_contexts",
+        "//images/gpu/ollama/client:make_context",
+    ],
 )
