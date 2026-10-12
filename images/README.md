@@ -31,17 +31,19 @@ The continuous integration system can either take fine-grained dependencies on
 single images via individual `load` targets, or pull all images via a single
 `load-all-test-images` invocation.
 
-## CUDA image helpers
+## Go image helpers
 
-The CUDA sample runners are built by Bazel with the repository Go SDK and
-CGO disabled, then included in the architecture-selected image context archive.
-This replaces their former Docker compilation with `golang:1.25`; the separate
-ASCII image converter still uses that Docker build stage.
+The CUDA sample runners and Ollama HTTP client are built by Bazel with the
+repository Go SDK and CGO disabled, then included in the architecture-selected
+image context archive. This replaces their former Docker compilation with
+`golang:1.25` and `golang:1.22`, respectively. The separately sourced ASCII image
+converter retains its own Docker build stage.
 
 The normal `make` image commands stage the same declared archive in a temporary
-directory before hashing or loading either CUDA image. Helper or SDK changes
-therefore change the image tag. The declared image-source actions consume that
-archive directly and do not invoke Bazel inside their Docker build action.
+directory before hashing or loading either CUDA image or the Ollama client
+image. Helper or SDK changes therefore change the image tag. The declared
+image-source actions consume that archive directly and do not invoke Bazel
+inside their Docker build action.
 
 ## Adding new images
 
