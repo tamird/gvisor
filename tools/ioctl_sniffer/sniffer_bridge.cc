@@ -35,7 +35,8 @@ thread_local int socket_fd = -1;
 void InitializeSocket() {
   int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
   if (sfd < 0) {
-    std::cerr << "Failed to create socket: " << strerror(errno) << "\n";
+    const int socket_errno = errno;
+    std::cerr << "Failed to create socket: " << strerror(socket_errno) << "\n";
     exit(1);
   }
 
@@ -48,8 +49,9 @@ void InitializeSocket() {
   addr.sun_path[sizeof(addr.sun_path) - 1] = '\0';
 
   if (connect(sfd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
+    const int connect_errno = errno;
     std::cerr << "Failed to connect to socket " << addr.sun_path << ": "
-              << strerror(errno) << "\n";
+              << strerror(connect_errno) << "\n";
     exit(1);
   }
 
@@ -68,7 +70,28 @@ void WriteIoctlProto(gvisor::Ioctl& ioctl) {
 
   // Write size of the proto message first.
   memcpy(buffer.data(), &size, sizeof(size));
-  ioctl.SerializeToArray(buffer.data() + sizeof(size), size);
+  if (!ioctl.SerializeToArray(buffer.data() + sizeof(size), size)) {
+    std::cerr << "Failed to serialize ioctl message\n";
+    exit(1);
+  }
 
-  write(socket_fd, buffer.data(), buffer.size());
+  size_t written = 0;
+  while (written < buffer.size()) {
+    const ssize_t n = send(socket_fd, buffer.data() + written,
+                           buffer.size() - written, MSG_NOSIGNAL);
+    if (n < 0) {
+      const int send_errno = errno;
+      if (send_errno == EINTR) {
+        continue;
+      }
+      std::cerr << "Failed to write ioctl message: " << strerror(send_errno)
+                << "\n";
+      exit(1);
+    }
+    if (n == 0) {
+      std::cerr << "Failed to write ioctl message: no progress\n";
+      exit(1);
+    }
+    written += n;
+  }
 }
