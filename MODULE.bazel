@@ -440,7 +440,15 @@ oci.pull(
         "linux/arm64/v8",
     ],
 )
-use_repo(oci, "ollama_client_alpine", "profile_helper_ubuntu")
+use_repo(
+    oci,
+    "ollama_client_alpine",
+    "ollama_client_alpine_linux_amd64",
+    "ollama_client_alpine_linux_arm64_v8",
+    "profile_helper_ubuntu",
+    "profile_helper_ubuntu_linux_amd64",
+    "profile_helper_ubuntu_linux_arm64_v8",
+)
 
 # images/arch-systemd, built by tools/images.mk as ad890a55561e4450.
 oci.pull(
