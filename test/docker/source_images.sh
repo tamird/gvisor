@@ -32,9 +32,10 @@ case "${mode}" in
     fi
     ;;
   archive)
-    test "$#" -eq 9
+    test "$#" -eq 10
     archive=$(realpath -m "$8")
     retag=$(realpath "$9")
+    network_tools=$(realpath "${10}")
     ;;
   *) echo "Unknown image source operation: ${mode}" >&2; exit 1 ;;
 esac
@@ -81,6 +82,12 @@ else
   od -An -tx1 -N64 "${crane}"
   head -30 /proc/cpuinfo
   "${crane}" version
+  # Reuse the complete pinned KVM userspace archive as private read-only tools.
+  # It includes iproute2 and its loader/library closure; nothing is installed.
+  network_root="${work}/network-tools"
+  mkdir "${network_root}"
+  tar --extract --file "${network_tools}" --directory "${network_root}" \
+    --same-permissions --no-same-owner
   network_log="${work}/network.log"
   observer_pid=
   # The observer is one bounded process group, reaped before its log is removed.
@@ -101,7 +108,7 @@ else
   trap cleanup_network EXIT
   trap 'exit 143' TERM
   trap 'exit 130' INT
-  timeout --signal=TERM --kill-after=3s 105s /bin/bash -s > "${network_log}" 2>&1 <<'NETWORK' &
+  timeout --signal=TERM --kill-after=3s 105s /bin/bash -s -- "${network_root}" > "${network_log}" 2>&1 <<'NETWORK' &
 set +e
 printf 'BEGIN NETWORK OBSERVATIONS\n'
 uname -a
@@ -118,21 +125,39 @@ for key in \
     printf '%s unavailable\n' "${key}"
   fi
 done
+network_root=$1
+loader="${network_root}/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2"
+libraries="${network_root}/lib/x86_64-linux-gnu:${network_root}/usr/lib/x86_64-linux-gnu"
+if [[ ! -x ${loader} ]]; then
+  printf 'Declared loader unavailable: %s\n' "${loader}"
+  exit 1
+fi
+declare -A tools
 for tool in ip tc ss; do
-  command -v "${tool}" || printf '%s unavailable\n' "${tool}"
+  for directory in usr/bin usr/sbin bin sbin; do
+    candidate="${network_root}/${directory}/${tool}"
+    if [[ -x ${candidate} ]]; then tools[${tool}]=${candidate}; break; fi
+  done
+  if [[ -z ${tools[${tool}]:-} ]]; then
+    printf 'Declared tool unavailable: %s\n' "${tool}"
+    exit 1
+  fi
+  printf 'Declared %s: %s\n' "${tool}" "${tools[${tool}]}"
+  "${loader}" --library-path "${libraries}" --list "${tools[${tool}]}"
+  printf '%s loader-list status: %s\n' "${tool}" "$?"
 done
-if command -v ip >/dev/null; then
-  timeout --foreground 3s ip -s link
-  timeout --foreground 3s ip route
-fi
-if command -v tc >/dev/null; then
-  timeout --foreground 3s tc -s qdisc show
-fi
+"${loader}" --library-path "${libraries}" "${tools[ss]}" --version
+timeout --foreground 3s "${loader}" --library-path "${libraries}" "${tools[ip]}" -s link
+printf 'ip-link status: %s\n' "$?"
+timeout --foreground 3s "${loader}" --library-path "${libraries}" "${tools[ip]}" route
+printf 'ip-route status: %s\n' "$?"
+timeout --foreground 3s "${loader}" --library-path "${libraries}" "${tools[tc]}" -s qdisc show
+printf 'tc status: %s\n' "$?"
 for sample in 0 1 2 3; do
   printf 'NETWORK SAMPLE %s %s\n' "${sample}" "$(date --iso-8601=ns)"
-  if command -v ss >/dev/null; then
-    timeout --foreground --signal=TERM --kill-after=1s 3s ss -tinm
-  fi
+  timeout --foreground --signal=TERM --kill-after=1s 3s \
+    "${loader}" --library-path "${libraries}" "${tools[ss]}" -tinm
+  printf 'ss status: %s\n' "$?"
   for file in /proc/net/sockstat /proc/net/netstat /proc/net/snmp; do
     printf '%s\n' "${file}"
     cat "${file}"

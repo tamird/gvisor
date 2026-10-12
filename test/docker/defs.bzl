@@ -369,7 +369,7 @@ def _source_image_archive_impl(ctx):
     crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
     archive = ctx.actions.declare_file(ctx.label.name + ".tar")
     inputs = depset(
-        [ctx.file._contexts, ctx.file._makefile, ctx.file._script, ctx.file._config, crane],
+        [ctx.file._contexts, ctx.file._makefile, ctx.file._script, ctx.file._config, ctx.file._network_tools, crane],
         transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
     )
     ctx.actions.run(
@@ -389,6 +389,7 @@ def _source_image_archive_impl(ctx):
             ctx.attr.image,
             archive.path,
             ctx.executable._retag.path,
+            ctx.file._network_tools.path,
         ],
         inputs = inputs,
         tools = [ctx.attr._retag[DefaultInfo].files_to_run],
@@ -409,6 +410,7 @@ source_image_archive = rule(
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
+        "_network_tools": attr.label(default = "@kvm_amd64_guest//:flat", allow_single_file = True, cfg = "exec"),
         "_config": attr.label(default = "//test/docker:image_source_config", allow_single_file = True),
         "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
