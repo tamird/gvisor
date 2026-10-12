@@ -17,10 +17,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy"
 	"gvisor.dev/gvisor/pkg/sentry/devices/nvproxy/nvconf"
@@ -106,7 +109,6 @@ func TestShaMismatch(t *testing.T) {
 
 // TestDriverInstalls tests the successful installation of a driver.
 func TestDriverInstalls(t *testing.T) {
-	ctx := context.Background()
 	content := []byte("some content")
 	checksum := fmt.Sprintf("%x", sha256.Sum256(content))
 	version := nvconf.NewDriverVersion(1, 2, 3)
@@ -122,14 +124,34 @@ func TestDriverInstalls(t *testing.T) {
 			return emptyChecksum, false
 		},
 		downloadFunc: func(context.Context, string, string) (io.ReadCloser, error) {
-			reader := bytes.NewReader(content)
+			// Readers may return the final bytes and EOF together.
+			reader := iotest.DataErrReader(bytes.NewReader(content))
 			return io.NopCloser(reader), nil
 		},
-		installFunc: func(_ string) error {
+		installFunc: func(path string) error {
+			data, err := os.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			if got, want := data, content; !bytes.Equal(got, want) {
+				t.Errorf("installer contents = %q, want %q", got, want)
+			}
 			return nil
 		},
 	}
-	if err := installer.MaybeInstall(ctx); err != nil {
+	if err := installer.MaybeInstall(t.Context()); err != nil {
 		t.Fatalf("Installation failed: %v", err)
+	}
+}
+
+func TestChecksumDriverReadError(t *testing.T) {
+	installer := &Installer{
+		downloadFunc: func(context.Context, string, string) (io.ReadCloser, error) {
+			return io.NopCloser(iotest.ErrReader(io.ErrUnexpectedEOF)), nil
+		},
+	}
+	_, err := installer.ChecksumDriver(t.Context(), archAMD64)
+	if got, want := err, io.ErrUnexpectedEOF; !errors.Is(got, want) {
+		t.Errorf("ChecksumDriver() error = %v, want %v", got, want)
 	}
 }
