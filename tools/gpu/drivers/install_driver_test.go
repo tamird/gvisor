@@ -123,7 +123,7 @@ func TestDriverInstalls(t *testing.T) {
 				},
 				downloader: Downloader{client: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 					steps = append(steps, "download")
-					var reader io.Reader = iotest.DataErrReader(strings.NewReader(content))
+					reader := iotest.DataErrReader(strings.NewReader(content))
 					if test.readErr != nil {
 						reader = iotest.ErrReader(test.readErr)
 					}
