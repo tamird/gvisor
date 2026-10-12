@@ -289,9 +289,18 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 			loadRecv := recv
 			if records != nil {
-				// Typed calls can name either the state import or an unqualified
-				// helper. Use the reserved receiver for both forms.
-				loadRecv = records.receiver
+				// Preserve established receiver names unless a typed call
+				// introduces an actual import or helper-name collision.
+				if statePrefix == recv+"." && len(records.loads[ts.Name.Name]) != 0 {
+					loadRecv = records.receiver
+				} else if statePrefix == "" {
+					for _, helper := range records.loads[ts.Name.Name] {
+						if recv == helper {
+							loadRecv = records.receiver
+							break
+						}
+					}
+				}
 			}
 			emitLoadValue := func(name, typName string) {
 				fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, loadRecv, camelCased(name), typName)
