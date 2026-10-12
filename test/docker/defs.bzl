@@ -388,8 +388,10 @@ def _source_image_archive_impl(ctx):
             ctx.file._contexts.path,
             ctx.attr.image,
             archive.path,
+            ctx.executable._retag.path,
         ],
         inputs = inputs,
+        tools = [ctx.attr._retag[DefaultInfo].files_to_run],
         outputs = [archive],
         # The pinned execution image supplies the daemon and Docker CLI.
         env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
@@ -403,7 +405,7 @@ def _source_image_archive_impl(ctx):
 
 source_image_archive = rule(
     implementation = _source_image_archive_impl,
-    doc = "Constructs one Docker-save archive with the existing native daemon and Make image rules.",
+    doc = "Constructs one Docker archive from canonical source-image references or Make rebuilds.",
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
@@ -412,6 +414,7 @@ source_image_archive = rule(
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
+        "_retag": attr.label(default = "//test/docker/retag_archive", executable = True, cfg = "exec"),
         "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "exec"),
     },
     toolchains = [

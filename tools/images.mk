@@ -208,6 +208,16 @@ test-%: register-cross ## Build an image locally if the remote doesn't exist.
 local-image-%: register-cross ## Print current 'image:tag' for a local image.
 	echo "$(call local_image,$*):$(call tag,$*)"
 
+# Archive producers use the same prepared-context hash and names as load.
+# Merely printing references must not register cross-emulation or load images.
+image-references-%:
+	@if [ ! -f "$(call path,$*)/$(call dockerfile,$*)" ]; then \
+	  printf 'Image %s is unavailable for %s.\n' "$*" "$(ARCH)" >&2; exit 1; \
+	fi
+	@image_tag="$(call tag,$*)"; \
+	printf '%s\n' "$(call remote_image,$*):$$image_tag" \
+	  "$(call local_image,$*):$$image_tag" "$(call local_image,$*):latest"
+
 # push pushes the remote image, after validating that the tag doesn't exist
 # yet. Note that this generic rule will match the fully-expanded remote image
 # tag.
@@ -244,7 +254,7 @@ ifneq ($(_IMAGE_CONTEXT_PREPARED),1)
 _cuda_images_makefile := $(abspath $(lastword $(MAKEFILE_LIST)))
 _cuda_root_makefile := $(abspath $(dir $(_cuda_images_makefile))/../Makefile)
 _cuda_context_options = $(if $(filter x86_64 aarch64,$(ARCH)),--config=$(ARCH),$(error Unsupported CUDA image architecture $(ARCH))) --@io_bazel_rules_go//go/config:race=false
-_cuda_context_operations := tag pull rebuild load test local-image push
+_cuda_context_operations := tag pull rebuild load test local-image image-references push
 _cuda_context_targets := $(foreach op,$(_cuda_context_operations),$(addprefix $(op)-,gpu_cuda-tests gpu_cuda-tests-12-8))
 $(_cuda_context_targets):
 	@set -eu; image_context_dir=$$(mktemp -d); trap 'rm -rf "$$image_context_dir"' EXIT; \
