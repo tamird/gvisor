@@ -313,11 +313,6 @@ var reverseTypeDatabase = map[reflect.Type]wire.Type{}
 // Must only be called in contexts where they will definitely never be used,
 // in order to save memory.
 func Release() {
-	operationRegistry.Lock()
-	defer operationRegistry.Unlock()
-	operationRegistry.cache.Clear()
-	operationRegistry.maps = nil
-	physicalLayouts.Clear()
 	globalTypeDatabase = nil
 	reverseTypeDatabase = nil
 }
