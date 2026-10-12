@@ -40,7 +40,11 @@ cc_test(
     data = [":ioctl_hook"],
     linkopts = ["-ldl"],
     deps = select_gtest() + [
+        ":ioctl_cc_proto",
         "//test/util:cleanup",
+        "//test/util:file_descriptor",
+        "//test/util:memory_util",
+        "//test/util:socket_util",
         "//test/util:test_main",
         "//test/util:test_util",
     ],

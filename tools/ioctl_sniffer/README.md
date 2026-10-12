@@ -13,6 +13,13 @@ contained in the list. For `NV_ESC_RM_CONTROL` and `NV_ESC_RM_ALLOC` calls, it
 also extracts the control command and allocation class respectively, and checks
 if nvproxy supports them.
 
+Argument capture uses `process_vm_readv(2)` on the calling thread, which the
+application's seccomp policy must permit. Failed or partial copies are reported
+as incomplete capture; they do not replace the intercepted ioctl's return value
+or `errno`. Readable arguments from failed ioctls are still classified. Capture
+and decoding errors make the sniffer return a nonzero exit status independently
+of compatibility enforcement.
+
 ## Usage
 
 To start, we need to build the shared library and Go binary:
