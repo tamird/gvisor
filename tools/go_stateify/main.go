@@ -383,6 +383,9 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 						fmt.Fprintf(outputFile, " %s := %sRecord[%s](stateSinkObject, %d)\n", recordLocal, statePrefix, record.name, len(record.fields))
 					}
 					model.scan(scanFunctions{value: emitSaveValue})
+					if record.fieldCapture != "" {
+						fmt.Fprintf(outputFile, " %s := stateSinkObject.Fields(%s)\n", record.fieldCapture, saveRecv)
+					}
 					model.scan(scanFunctions{normal: emitSave, wait: emitSave})
 				}
 				fmt.Fprintf(outputFile, "}\n\n")

@@ -49,15 +49,39 @@ func ForwardRecord(owner Type) func(wire.TypeID, int) *wire.Record {
 	}
 }
 
+// FieldSink captures declared fields of one generated saver receiver. It is
+// transient source provenance, not a separate graph or capture representation.
+type FieldSink struct {
+	es     *encodeState
+	origin captureOrigin
+}
+
+// Fields binds the actual receiver of a generated saver, after its custom value
+// captures. Manual forwarding may invoke that saver on a different receiver
+// from the Sink's original owner, so the receiver is always supplied explicitly.
+func (s Sink) Fields(receiver any) FieldSink {
+	return FieldSink{
+		es:     s.internal.es,
+		origin: s.internal.es.childOrigin(reflect.ValueOf(receiver).Elem()),
+	}
+}
+
+// Capture saves a declared struct or array field of the bound receiver. objPtr
+// must point to that field, not to a value reached through a pointer, map or
+// interface. Arbitrary addressed values use Sink.Capture or Sink.Save instead.
+func (s FieldSink) Capture(objPtr any, dest *wire.Object) {
+	s.es.encodeObject(reflect.ValueOf(objPtr).Elem(), encodeDefault, dest, s.origin)
+}
+
 // Capture saves a graph-bearing child into a stable field of the record. This
 // uses the same resolver, deferred queue and object IDs as Sink.Save.
 func (s Sink) Capture(objPtr any, dest *wire.Object) {
-	s.internal.es.encodeObject(reflect.ValueOf(objPtr).Elem(), encodeDefault, dest)
+	s.internal.es.encodeObject(reflect.ValueOf(objPtr).Elem(), encodeDefault, dest, captureUnknown)
 }
 
 // CaptureValue captures a custom value at the same point as Sink.SaveValue.
 func (s Sink) CaptureValue(value any, dest *wire.Object) {
-	s.internal.es.encodeObject(reflect.ValueOf(value), encodeDefault, dest)
+	s.internal.es.encodeObject(reflect.ValueOf(value), encodeDefault, dest, captureUnknown)
 }
 
 // CapturePointer records a pointer in a stable, inline reference slot. The
@@ -101,5 +125,5 @@ func CaptureInterface(s Sink, valuePtr any, dest *wire.Interface) {
 	}
 	value := obj.Elem()
 	dest.Type = s.internal.es.findType(value.Type())
-	s.internal.es.encodeObject(value, encodeAsValue, &dest.Value)
+	s.internal.es.encodeObject(value, encodeAsValue, &dest.Value, captureUnknown)
 }

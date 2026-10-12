@@ -71,55 +71,57 @@ type recordSet struct {
 }
 
 type recordType struct {
-	name    string
-	factory string
-	fields  []fieldEncoding
+	name         string
+	factory      string
+	fields       []fieldEncoding
+	fieldCapture string
 }
 
 // fieldEncoding describes a field's capture storage and emitter. Scalar fields are
 // unboxed and references use inline stable slots; Object represents a child
 // requiring dynamic capture. No owner structs or ignored fields are copied.
 type fieldEncoding struct {
-	storage string
-	emit    string
-	capture string
+	storage    string
+	emit       string
+	capture    string
+	boundField bool
 }
 
 func encodingFor(t types.Type, customValue bool) fieldEncoding {
 	if b, ok := t.Underlying().(*types.Basic); ok {
 		switch b.Kind() {
 		case types.Bool:
-			return fieldEncoding{"Bool", "SaveBoolField", ""}
+			return fieldEncoding{storage: "Bool", emit: "SaveBoolField"}
 		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return fieldEncoding{"Int", "SaveIntField", ""}
+			return fieldEncoding{storage: "Int", emit: "SaveIntField"}
 		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
-			return fieldEncoding{"Uint", "SaveUintField", ""}
+			return fieldEncoding{storage: "Uint", emit: "SaveUintField"}
 		case types.String:
-			return fieldEncoding{"String", "SaveStringField", ""}
+			return fieldEncoding{storage: "String", emit: "SaveStringField"}
 		case types.Float32:
 			// Preserve reflect.Value.Float's promotion, including signaling NaNs.
-			return fieldEncoding{"Float64", "SaveFloat32Field", ""}
+			return fieldEncoding{storage: "Float64", emit: "SaveFloat32Field"}
 		case types.Float64:
-			return fieldEncoding{"Float64", "SaveFloat64Field", ""}
+			return fieldEncoding{storage: "Float64", emit: "SaveFloat64Field"}
 		case types.Complex64:
-			return fieldEncoding{"Complex128", "SaveComplex64Field", ""}
+			return fieldEncoding{storage: "Complex128", emit: "SaveComplex64Field"}
 		case types.Complex128:
-			return fieldEncoding{"Complex128", "SaveComplex128Field", ""}
+			return fieldEncoding{storage: "Complex128", emit: "SaveComplex128Field"}
 		}
 	}
 	switch t.Underlying().(type) {
 	case *types.Pointer:
-		return fieldEncoding{"Ref", "SaveRefField", "CapturePointer"}
+		return fieldEncoding{storage: "Ref", emit: "SaveRefField", capture: "CapturePointer"}
 	case *types.Slice:
-		return fieldEncoding{"Slice", "SaveSliceField", "CaptureSlice"}
+		return fieldEncoding{storage: "Slice", emit: "SaveSliceField", capture: "CaptureSlice"}
 	case *types.Map:
-		return fieldEncoding{"Ref", "SaveRefField", "CaptureMap"}
+		return fieldEncoding{storage: "Ref", emit: "SaveRefField", capture: "CaptureMap"}
 	case *types.Interface:
 		if !customValue {
-			return fieldEncoding{"Interface", "SaveInterfaceField", "CaptureInterface"}
+			return fieldEncoding{storage: "Interface", emit: "SaveInterfaceField", capture: "CaptureInterface"}
 		}
 	}
-	return fieldEncoding{"Object", "Save", ""}
+	return fieldEncoding{storage: "Object", emit: "Save"}
 }
 
 func (r *recordType) declare(w io.Writer, wireAlias string) {
@@ -173,6 +175,8 @@ func (r *recordType) capture(w io.Writer, wireAlias, statePrefix, local string, 
 		fmt.Fprintf(w, " %s.F%d = %s.%s(%s)\n", local, slot, wireAlias, f.storage, expression)
 	} else if value {
 		fmt.Fprintf(w, " stateSinkObject.CaptureValue(%s, &%s.F%d)\n", expression, local, slot)
+	} else if f.boundField {
+		fmt.Fprintf(w, " %s.Capture(&%s, &%s.F%d)\n", r.fieldCapture, expression, local, slot)
 	} else {
 		fmt.Fprintf(w, " stateSinkObject.Capture(&%s, &%s.F%d)\n", expression, local, slot)
 	}
@@ -385,7 +389,16 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 	}
 	for _, typ := range model.types {
 		names[typ.receiver] = struct{}{}
+		for _, field := range typ.fields {
+			if field.kind == fieldValue {
+				names[field.name+"Value"] = struct{}{}
+			}
+		}
 	}
+	// The renderer reserves these locals independently of package names.
+	names["stateSinkObject"] = struct{}{}
+	names["stateSnapshotObject"] = struct{}{}
+	names["stateSnapshotObject1"] = struct{}{}
 	records := &recordSet{
 		wireAlias:    unusedName("statewire", names),
 		saveReceiver: unusedName("stateObject", names),
@@ -440,7 +453,17 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			if field.slot != len(record.fields) {
 				panic("noncontiguous field model")
 			}
-			record.fields = append(record.fields, encodingFor(types.Unalias(valueType), field.kind == fieldValue))
+			encoding := encodingFor(types.Unalias(valueType), field.kind == fieldValue)
+			if field.kind == fieldNormal || field.kind == fieldWait {
+				switch valueType.Underlying().(type) {
+				case *types.Struct, *types.Array:
+					encoding.boundField = true
+					if record.fieldCapture == "" {
+						record.fieldCapture = unusedName("stateFieldCapture", names)
+					}
+				}
+			}
+			record.fields = append(record.fields, encoding)
 		}
 		records.types[name] = record
 	}

@@ -173,6 +173,27 @@ type countedSaveParent struct {
 	value int64
 }
 
+// This receiver name must not collide with the generated field context.
+func (stateFieldCapture *countedSaveParent) beforeSave() {}
+
+// manualForwardedParent captures an external receiver into matching slots.
+// Its child may already have a resolver node even though the receiver does not.
+// +stateify type
+type manualForwardedParent struct {
+	child  countedSave
+	value  int64
+	source *countedSaveParent `state:"nosave"`
+}
+
+func (m *manualForwardedParent) StateSave(s state.Sink) {
+	m.source.StateSave(s)
+}
+
+func (m *manualForwardedParent) StateLoad(_ context.Context, s state.Source) {
+	s.Load(0, &m.child)
+	s.Load(1, &m.value)
+}
+
 // +stateify savable
 type countedSaveGrandparent struct {
 	parent countedSaveParent

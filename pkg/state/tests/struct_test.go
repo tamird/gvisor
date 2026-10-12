@@ -324,6 +324,36 @@ func TestStructSnapshotOwnership(t *testing.T) {
 			},
 		},
 		{
+			name: "forwarded_external_parent",
+			makeGraph: func(calls *int) *system {
+				parent := &countedSaveParent{child: countedSave{value: 17, calls: calls}, value: 23}
+				// Capture the child, forward the still-unresolved parent into
+				// a different saver, then discover the enclosing parent.
+				return &system{v1: &parent.child, v2: &system{
+					v1: &manualForwardedParent{source: parent},
+					v2: &system{v1: parent},
+				}}
+			},
+			check: func(t *testing.T, graph *system) {
+				middle := graph.v2.(*system)
+				forwarded := middle.v1.(*manualForwardedParent)
+				parent := middle.v2.(*system).v1.(*countedSaveParent)
+				if got, want := graph.v1.(*countedSave), &parent.child; got != want {
+					t.Errorf("forwarded parent child alias = %p, want %p", got, want)
+				}
+				for _, value := range []int64{forwarded.child.value, parent.child.value} {
+					if got, want := value, int64(17); got != want {
+						t.Errorf("forwarded child value = %d, want %d", got, want)
+					}
+				}
+				for _, value := range []int64{forwarded.value, parent.value} {
+					if got, want := value, int64(23); got != want {
+						t.Errorf("forwarded parent value = %d, want %d", got, want)
+					}
+				}
+			},
+		},
+		{
 			name: "pointer_before_inline",
 			makeGraph: func(calls *int) *system {
 				child := &countedSave{value: 17, calls: calls}
