@@ -814,7 +814,7 @@ The complete existing unit selection is shared with `make unit-tests`:
 
 ```sh
 bazel test --config=rbe --config=x86_64 --config=unit \
-  --strip=never --incompatible_sandbox_hermetic_tmp=false --keep_going
+  --strip=never --sandbox_add_mount_pair=/tmp --keep_going
 ```
 
 Run this command from the workspace root without additional target arguments.

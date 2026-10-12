@@ -454,7 +454,7 @@ PY
   fi
   bazel test "${runtime_options[@]}" --config=rbe --config=x86_64 --keep_going \
     --//tools/bazeldefs:local_test_architecture= --//tools/bazeldefs:page_size=4k \
-    --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
+    --strip=never --sandbox_add_mount_pair=/tmp --test_output=errors \
     "${options[@]}" --target_pattern_file="$selection_dir/targets"
 )
 
@@ -605,7 +605,7 @@ PY
   bazel test "${runtime_options[@]}" --config=rbe --config=x86_64 --config=rbe-hybrid-tests --keep_going \
     "--//tools/bazeldefs:local_test_architecture=$local_arch" \
     "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
-    --strip=never --incompatible_sandbox_hermetic_tmp=false --test_output=errors \
+    --strip=never --sandbox_add_mount_pair=/tmp --test_output=errors \
     --test_env=GO_TEST_WRAP_TESTV=1 "${lane_options[@]}" "${options[@]}" --target_pattern_file="$selection_dir/targets"
 )
 
@@ -904,7 +904,7 @@ PY
     save_profile_selection "$selection_dir" "$lane"
   fi
   bazel "$command" "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --keep_going \
-    --incompatible_sandbox_hermetic_tmp=false --test_output=errors "${options[@]}" "${header_options[@]}" \
+    --sandbox_add_mount_pair=/tmp --test_output=errors "${options[@]}" "${header_options[@]}" \
     --target_pattern_file="$selection_dir/targets"
 )
 
@@ -1205,7 +1205,7 @@ run_lane() (
     if [[ $lane != release-repository ]]; then
       options+=(--strip=never)
     fi
-    options+=(--incompatible_sandbox_hermetic_tmp=false --test_output=errors)
+    options+=(--sandbox_add_mount_pair=/tmp --test_output=errors)
     if [[ $test_execution == local ]]; then
       case "$lane" in
         plugin-network|nftables|moby|kvm|language-goferfs|startup|posture|portforward|root|benchmarks|docker|cpu-images|gpu-images)
