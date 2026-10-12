@@ -71,8 +71,8 @@ void ReportIoctl(int fd, uint64_t request, void* argp, int ret) {
     data->resize(arg_size);
     const iovec local = {data->data(), arg_size};
     const iovec remote = {argp, arg_size};
-    const ssize_t copied = syscall(SYS_process_vm_readv, syscall(SYS_gettid),
-                                   &local, 1, &remote, 1, 0);
+    const pid_t tid = syscall(SYS_gettid);
+    const ssize_t copied = process_vm_readv(tid, &local, 1, &remote, 1, 0);
     if (copied < 0) {
       info.set_arg_data_errno(errno);
       data->clear();

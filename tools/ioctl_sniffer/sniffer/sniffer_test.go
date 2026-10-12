@@ -127,7 +127,8 @@ func TestReadHookOutput(t *testing.T) {
 				}
 				written <- errors.Join(err, writer.Close())
 			}()
-			results, err := (Connection{conn: reader}).ReadHookOutput(t.Context())
+			connection := Connection{conn: reader}
+			results, err := connection.ReadHookOutput(t.Context())
 			if got, want := err != nil, tc.wantError; got != want {
 				t.Errorf("ReadHookOutput error = %v, want error=%v", err, want)
 			}

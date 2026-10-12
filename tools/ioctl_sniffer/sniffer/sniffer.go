@@ -229,7 +229,7 @@ func Init() error {
 
 // ReadHookOutput reads the output of the ioctl hook until an EOF is reached.
 // It retains the first error and continues after argument-parsing failures.
-func (c Connection) ReadHookOutput(ctx context.Context) (*Results, error) {
+func (c *Connection) ReadHookOutput(ctx context.Context) (*Results, error) {
 	res := NewResults()
 	var captureErr error
 	recordError := func(err error) {
