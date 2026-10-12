@@ -430,3 +430,45 @@ func TestZeroStructSnapshotOwnership(t *testing.T) {
 		})
 	}
 }
+
+func TestGeneratedFieldsBeforeRegistration(t *testing.T) {
+	if earlyFieldError != nil {
+		t.Fatalf("Save/Load during package initialization: %v", earlyFieldError)
+	}
+	var restored earlyFieldOwner
+	if _, err := state.Load(t.Context(), bytes.NewReader(earlyFieldWire), &restored); err != nil {
+		t.Fatalf("Load after generated registration: %v", err)
+	}
+	for _, object := range []*earlyFieldOwner{earlyFieldLoaded, &restored} {
+		if got, want := object.child.values[7], 9; got != want {
+			t.Errorf("map value = %d, want %d", got, want)
+		}
+		if got, want := len(object.child.values), 1; got != want {
+			t.Errorf("map length = %d, want %d", got, want)
+		}
+		if got, want := object.child.custom, 11; got != want {
+			t.Errorf("custom value = %d, want %d", got, want)
+		}
+		if got, want := object.child.omitted, (chan int)(nil); got != want {
+			t.Errorf("omitted channel = %v, want %v", got, want)
+		}
+		if got, want := len(object.child.slice), 2; got != want {
+			t.Fatalf("slice length = %d, want %d", got, want)
+		}
+		if got, want := cap(object.child.slice), 4; got != want {
+			t.Fatalf("slice capacity = %d, want %d", got, want)
+		}
+		for i, value := range []int{1, 2, 0, 0} {
+			if got, want := object.child.slice[:4][i], value; got != want {
+				t.Errorf("backing element %d = %d, want %d", i, got, want)
+			}
+		}
+	}
+	var buf bytes.Buffer
+	if _, err := state.Save(t.Context(), &buf, &restored); err != nil {
+		t.Fatalf("Save after generated registration: %v", err)
+	}
+	if got, want := buf.Bytes(), earlyFieldWire; !bytes.Equal(got, want) {
+		t.Errorf("wire changed after registration: %x, want %x", got, want)
+	}
+}
