@@ -316,6 +316,7 @@ func Release() {
 	operationRegistry.Lock()
 	defer operationRegistry.Unlock()
 	operationRegistry.cache.Clear()
+	operationRegistry.maps = nil
 	physicalLayouts.Clear()
 	globalTypeDatabase = nil
 	reverseTypeDatabase = nil

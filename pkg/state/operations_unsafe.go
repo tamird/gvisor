@@ -34,12 +34,18 @@ type typeOperations struct {
 
 // newLocation retains the already-selected operations for a fresh Go cell.
 func (ops *typeOperations) newLocation() location {
+	if ops.layout.kind == reflect.Map {
+		if native := operationRegistry.maps[ops.layout.typ]; native != nil {
+			return location{ops: ops, address: native.newMap()}
+		}
+	}
 	return location{ops: ops, address: reflect.New(ops.layout.typ).UnsafePointer()}
 }
 
 var operationRegistry = struct {
 	sync.Mutex
-	cache sync.Map // map[reflect.Type]*typeOperations
+	cache sync.Map                       // map[reflect.Type]*typeOperations
+	maps  map[reflect.Type]mapOperations // Registered during init; released terminally.
 }{}
 
 // operationBuilder resolves recursive types within one private transaction.

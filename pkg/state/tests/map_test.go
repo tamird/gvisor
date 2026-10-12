@@ -61,6 +61,35 @@ func TestMapAliasing(t *testing.T) {
 	ptrToV := &v
 	aliases := []map[int]int{v, v}
 	runTestCases(t, false, "", []any{ptrToV, aliases})
+
+	// Discover the interior map before its enclosing object. The named alias
+	// shares its table but requires the assignable-type assignment boundary.
+	owner := &mapContainer{prefix: 11, v: map[int]any{1: "value"}}
+	original := mapPtrContainer{v: &owner.v, alias: namedContainerMap(owner.v), owner: owner}
+	var buf bytes.Buffer
+	if _, err := state.Save(t.Context(), &buf, &original); err != nil {
+		t.Fatal(err)
+	}
+	var restored mapPtrContainer
+	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+		t.Fatal(err)
+	}
+	if restored.owner == nil {
+		t.Fatal("missing enclosing map owner")
+	}
+	if got, want := restored.v, &restored.owner.v; got != want {
+		t.Fatalf("interior map address = %p, want %p", got, want)
+	}
+	if got, want := restored.owner.prefix, 11; got != want {
+		t.Errorf("enclosing prefix = %d, want %d", got, want)
+	}
+	if got, want := restored.alias[1], "value"; got != want {
+		t.Errorf("restored alias entry = %v, want %v", got, want)
+	}
+	restored.alias[2] = "shared"
+	if got, want := (*restored.v)[2], "shared"; got != want {
+		t.Errorf("alias update = %v, want %v", got, want)
+	}
 }
 
 func TestMapNaNKeys(t *testing.T) {
@@ -203,25 +232,42 @@ func TestMapEscapingReceiver(t *testing.T) {
 }
 
 func TestMapEqualWordSnapshots(t *testing.T) {
-	original := countedMapWordContainer{values: map[countedMapWord]countedMapWord{{value: 7}: {value: 7}}}
-	var receivers []*countedMapWord
+	original := countedMapWordContainer{
+		values: map[countedMapWord]countedMapWord{{value: 7}: {value: 7}, {value: 8}: {value: 8}},
+		zeros:  map[registeredMapStruct]registeredMapStruct{{}: {}},
+	}
+	var receivers mapReceiverCensus
 	ctx := context.WithValue(t.Context(), mapReceiverKey{}, &receivers)
 	var buf bytes.Buffer
 	if _, err := state.Save(ctx, &buf, &original); err != nil {
 		t.Fatal(err)
 	}
-	if got, want := len(receivers), 2; got != want {
-		t.Fatalf("hook receivers = %d, want %d", got, want)
-	}
-	if receivers[0] == receivers[1] {
-		t.Fatal("key and value reused a hook receiver")
-	}
 	var restored countedMapWordContainer
-	if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
+	if _, err := state.Load(ctx, &buf, &restored); err != nil {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(restored, original) {
 		t.Errorf("restored map = %+v, want %+v", restored, original)
+	}
+	for _, census := range []struct {
+		name   string
+		values []*countedMapWord
+	}{{"Save", receivers.saved}, {"Load", receivers.loaded}} {
+		if got, want := len(census.values), 4; got != want {
+			t.Fatalf("%s hook receivers = %d, want %d", census.name, got, want)
+		}
+		seen := make(map[*countedMapWord]bool)
+		words := make(map[uint64]int)
+		for _, receiver := range census.values {
+			if seen[receiver] {
+				t.Fatalf("%s reused receiver %p", census.name, receiver)
+			}
+			seen[receiver] = true
+			words[receiver.value]++
+		}
+		if got, want := words, map[uint64]int{7: 2, 8: 2}; !reflect.DeepEqual(got, want) {
+			t.Errorf("%s retained receiver values = %v, want %v", census.name, got, want)
+		}
 	}
 }
 

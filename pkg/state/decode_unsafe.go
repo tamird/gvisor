@@ -229,18 +229,28 @@ func (ds *decodeState) mapTarget(ref *wire.Ref, typ reflect.Type, expected *type
 
 // assignMap keeps Go's assignment boundary for dynamic and assignable named
 // map types. References need a non-nil header before the payload is decoded.
-func assignMap(dst, target reflect.Value) {
-	if target.IsNil() {
-		target.Set(reflect.MakeMap(target.Type()))
+func assignMap(dst, target location) {
+	if native := operationRegistry.maps[target.ops.layout.typ]; native != nil {
+		native.ensure(target.address)
+		if dst.ops.layout.typ == target.ops.layout.typ {
+			native.assign(dst.address, target.address)
+			return
+		}
+	} else {
+		value := target.reflect()
+		if value.IsNil() {
+			value.Set(reflect.MakeMap(value.Type()))
+		}
 	}
-	dst.Set(target)
+	// Different assignable map types still use Go's checked assignment.
+	dst.reflect().Set(target.reflect())
 }
 
 func decodeMapLocation(ds *decodeState, ods *objectDecodeState, obj location, encoded wire.Object) {
 	switch x := encoded.(type) {
 	case *wire.Ref:
 		target := ds.mapTarget(x, obj.ops.layout.typ, obj.ops)
-		assignMap(obj.reflect(), target.reflect())
+		assignMap(obj, target)
 	case *wire.Map:
 		if len(x.Keys) != len(x.Values) {
 			Failf("map has %d keys and %d values", len(x.Keys), len(x.Values))

@@ -37,19 +37,20 @@ import (
 // Groups preserve stateify's existing per-file-suffix hook visibility and
 // outputs. Sources additionally includes independent generated Go files.
 type packageConfig struct {
-	Package      string
-	ImportPath   string
-	StatePackage string
-	Imports      []string
-	Sources      []string
-	Groups       []sourceGroup
-	Archives     map[string]compilerExport
-	Stdlib       []string
-	GOOS         string
-	GOARCH       string
-	Tags         []string
-	GoVersion    string
-	CgoEnabled   bool
+	Package       string
+	ImportPath    string
+	StatePackage  string
+	Imports       []string
+	Sources       []string
+	Groups        []sourceGroup
+	Archives      map[string]compilerExport
+	NativeImports map[string]string
+	Stdlib        []string
+	GOOS          string
+	GOARCH        string
+	Tags          []string
+	GoVersion     string
+	CgoEnabled    bool
 }
 
 // compilerExport separates source import spellings from compiler identity.
@@ -64,11 +65,18 @@ type sourceGroup struct {
 }
 
 type recordSet struct {
-	wireAlias string
-	receiver  string
-	types     map[string]*recordType
-	loads     map[string]map[string]string
-	forward   map[string]string
+	wireAlias  string
+	receiver   string
+	types      map[string]*recordType
+	loads      map[string]map[string]string
+	forward    map[string]string
+	mapTypes   []string
+	mapImports []mapImport
+}
+
+type mapImport struct {
+	path  string
+	alias string
 }
 
 // loadHelperFor selects a shared typed entry from the checked field kind.
@@ -93,8 +101,6 @@ func loadHelperFor(t types.Type) string {
 		}
 	case *types.Pointer:
 		return "LoadPointer"
-	case *types.Map:
-		return "LoadMap"
 	case *types.Slice:
 		return "LoadSlice"
 	case *types.Struct:
@@ -347,6 +353,9 @@ func generateRecords(configPath string) error {
 	}
 	// The canonical GoStdLib provider owns these trees. Index only its compiled
 	// archives, whose path below pkg/<target> is the standard import path.
+	if config.NativeImports == nil {
+		config.NativeImports = make(map[string]string)
+	}
 	for _, root := range config.Stdlib {
 		err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
 			if walkErr != nil {
@@ -368,6 +377,7 @@ func generateRecords(configPath string) error {
 				return fmt.Errorf("duplicate compiler exports for %s: %s and %s", name, old.File, path)
 			}
 			config.Archives[name] = compilerExport{File: path, ImportMap: name}
+			config.NativeImports[name] = name
 			return nil
 		})
 		if err != nil {
@@ -393,7 +403,7 @@ func generateRecords(configPath string) error {
 		if canonical[i] == nil {
 			fmt.Fprintf(&b, "//go:build ignore\n\npackage %s\n", pkg.Name())
 		} else {
-			records, err := checkedRecords(canonical[i], info, pkg, models[i])
+			records, err := checkedRecords(canonical[i], info, pkg, models[i], config.NativeImports)
 			if err != nil {
 				return err
 			}
@@ -408,8 +418,13 @@ func generateRecords(configPath string) error {
 
 // checkedRecords binds the shared field model to compiler-owned types. It
 // does not infer the schema from generated Save calls or field spellings.
-func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel) (*recordSet, error) {
+func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel, nativeImports map[string]string) (*recordSet, error) {
 	names := make(map[string]struct{})
+	// Newly introduced import aliases must not shadow builtin spellings in
+	// other map type arguments, including arguments already emitted.
+	for _, name := range types.Universe.Names() {
+		names[name] = struct{}{}
+	}
 	for _, name := range pkg.Scope().Names() {
 		names[name] = struct{}{}
 	}
@@ -430,6 +445,15 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		types:     make(map[string]*recordType),
 		loads:     make(map[string]map[string]string),
 		forward:   make(map[string]string),
+	}
+	maps := mapDiscovery{
+		pkg: pkg, scope: info.Scopes[file], imports: nativeImports,
+		names: names, records: records, qualifiers: make(map[string]string),
+	}
+	for _, name := range info.Scopes[file].Names() {
+		if imported, ok := info.Scopes[file].Lookup(name).(*types.PkgName); ok && name != "." && name != "_" {
+			maps.qualifiers[imported.Imported().Path()] = name
+		}
 	}
 
 	for _, typ := range model.types {
@@ -484,6 +508,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 						return nil, fmt.Errorf("%s.%s is not a checked Go field", name, lookup)
 					}
 					loadHelpers[field.name] = loadHelperFor(valueType)
+					maps.collect(valueType)
 				}
 			}
 			if generatedSaver && field.slot != len(record.fields) {
@@ -501,6 +526,157 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		}
 	}
 	return records, nil
+}
+
+// mapDiscovery visits only types reachable from generated Load destinations.
+// It never discovers fields inside a struct with its own loader. Traversal and
+// emission have separate identities: an inaccessible spelling must not suppress
+// a later accessible alias for the same exact map type.
+type mapDiscovery struct {
+	pkg        *types.Package
+	scope      *types.Scope
+	imports    map[string]string
+	names      map[string]struct{}
+	records    *recordSet
+	qualifiers map[string]string
+	visited    []types.Type
+	emitted    []types.Type
+}
+
+func containsCheckedType(typesSeen []types.Type, typ types.Type) bool {
+	for _, seen := range typesSeen {
+		if types.Identical(seen, typ) {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *mapDiscovery) collect(typ types.Type) {
+	identity := types.Unalias(typ)
+	if _, ok := identity.Underlying().(*types.Map); ok && !containsCheckedType(d.emitted, identity) && d.nameable(typ) {
+		d.records.mapTypes = append(d.records.mapTypes, types.TypeString(typ, d.qualify))
+		d.emitted = append(d.emitted, identity)
+	}
+	if containsCheckedType(d.visited, identity) {
+		return
+	}
+	d.visited = append(d.visited, identity)
+	switch t := identity.Underlying().(type) {
+	case *types.Map:
+		d.collect(t.Key())
+		d.collect(t.Elem())
+	case *types.Pointer:
+		d.collect(t.Elem())
+	case *types.Slice:
+		d.collect(t.Elem())
+	case *types.Array:
+		d.collect(t.Elem())
+	}
+}
+
+func (d *mapDiscovery) qualify(pkg *types.Package) string {
+	if pkg == d.pkg {
+		return ""
+	}
+	if alias := d.qualifiers[pkg.Path()]; alias != "" {
+		return alias
+	}
+	alias := unusedName(pkg.Name(), d.names)
+	d.qualifiers[pkg.Path()] = alias
+	d.records.mapImports = append(d.records.mapImports, mapImport{path: d.imports[pkg.Path()], alias: alias})
+	return alias
+}
+
+func (d *mapDiscovery) named(object *types.TypeName, arguments *types.TypeList) bool {
+	if pkg := object.Pkg(); pkg != nil && pkg != d.pkg {
+		if !object.Exported() || d.imports[pkg.Path()] == "" {
+			return false
+		}
+	} else {
+		for _, scope := range []*types.Scope{d.scope, d.pkg.Scope()} {
+			if shadow := scope.Lookup(object.Name()); shadow != nil && shadow != object {
+				return false
+			}
+		}
+	}
+	for i := 0; i < arguments.Len(); i++ {
+		if !d.nameable(arguments.At(i)) {
+			return false
+		}
+	}
+	return true
+}
+
+// nameable checks only the syntax that TypeString will emit. A named map can
+// hide inaccessible components: RegisterMap infers them from that map's type.
+// Anonymous foreign structs/interfaces with inaccessible members are left at
+// the reflection boundary rather than inventing an inequivalent Go spelling.
+func (d *mapDiscovery) nameable(typ types.Type) bool {
+	switch t := typ.(type) {
+	case *types.Alias:
+		return d.named(t.Obj(), t.TypeArgs())
+	case *types.Named:
+		return d.named(t.Obj(), t.TypeArgs())
+	case *types.Basic:
+		if t.Kind() == types.UnsafePointer || t.Info()&types.IsUntyped != 0 {
+			return false
+		}
+		for _, scope := range []*types.Scope{d.scope, d.pkg.Scope()} {
+			if object := scope.Lookup(t.Name()); object != nil {
+				name, ok := object.(*types.TypeName)
+				if !ok || !types.Identical(name.Type(), t) {
+					return false
+				}
+			}
+		}
+		return true
+	case *types.Pointer:
+		return d.nameable(t.Elem())
+	case *types.Slice:
+		return d.nameable(t.Elem())
+	case *types.Array:
+		return d.nameable(t.Elem())
+	case *types.Map:
+		return d.nameable(t.Key()) && d.nameable(t.Elem())
+	case *types.Chan:
+		return d.nameable(t.Elem())
+	case *types.Struct:
+		for i := 0; i < t.NumFields(); i++ {
+			field := t.Field(i)
+			if (!field.Exported() && field.Pkg() != d.pkg) || !d.nameable(field.Type()) {
+				return false
+			}
+		}
+		return true
+	case *types.Interface:
+		for i := 0; i < t.NumExplicitMethods(); i++ {
+			method := t.ExplicitMethod(i)
+			if (!method.Exported() && method.Pkg() != d.pkg) || !d.nameable(method.Type()) {
+				return false
+			}
+		}
+		for i := 0; i < t.NumEmbeddeds(); i++ {
+			if !d.nameable(t.EmbeddedType(i)) {
+				return false
+			}
+		}
+		return true
+	case *types.Signature:
+		if t.TypeParams().Len() != 0 {
+			return false
+		}
+		for _, tuple := range []*types.Tuple{t.Params(), t.Results()} {
+			for i := 0; i < tuple.Len(); i++ {
+				if !d.nameable(tuple.At(i).Type()) {
+					return false
+				}
+			}
+		}
+		return true
+	default:
+		return false
+	}
 }
 
 // unusedName reserves a new generated identifier against existing scope names.

@@ -22,12 +22,17 @@ import (
 
 // +stateify savable
 type mapContainer struct {
-	v map[int]any
+	prefix int
+	v      map[int]any
 }
+
+type namedContainerMap map[int]any
 
 // +stateify savable
 type mapPtrContainer struct {
-	v *map[int]any
+	v     *map[int]any
+	alias namedContainerMap
+	owner *mapContainer
 }
 
 // +stateify savable
@@ -91,22 +96,32 @@ type nanMapContainer struct {
 
 type mapReceiverKey struct{}
 
+type mapReceiverCensus struct {
+	saved  []*countedMapWord
+	loaded []*countedMapWord
+}
+
 // One-word equal values must retain MapRange's separate indirect snapshot
 // keys; plain interface boxing is permitted to reuse equal small values.
 // +stateify type
 type countedMapWord struct{ value uint64 }
 
 func (v *countedMapWord) StateSave(s state.Sink) {
-	receivers := s.Context().Value(mapReceiverKey{}).(*[]*countedMapWord)
-	*receivers = append(*receivers, v)
+	receivers := s.Context().Value(mapReceiverKey{}).(*mapReceiverCensus)
+	receivers.saved = append(receivers.saved, v)
 	s.Save(0, &v.value)
 }
 
-func (v *countedMapWord) StateLoad(_ context.Context, s state.Source) { s.Load(0, &v.value) }
+func (v *countedMapWord) StateLoad(ctx context.Context, s state.Source) {
+	receivers := ctx.Value(mapReceiverKey{}).(*mapReceiverCensus)
+	receivers.loaded = append(receivers.loaded, v)
+	s.Load(0, &v.value)
+}
 
 // +stateify savable
 type countedMapWordContainer struct {
 	values map[countedMapWord]countedMapWord
+	zeros  map[registeredMapStruct]registeredMapStruct
 }
 
 // A manual saver owns custom capture and does not require a saveValues helper.

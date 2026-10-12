@@ -17,8 +17,6 @@ package state
 import (
 	"reflect"
 	"unsafe"
-
-	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 // LoadPointer decodes a generated pointer field using the common graph resolver.
@@ -28,31 +26,6 @@ func LoadPointer[P ~*T, T any](source *Source, slot int, dst *P, wait bool) {
 	if !isNilObject(encoded) {
 		target := source.internal.ds.pointerTarget(encoded, reflect.TypeFor[T](), nil)
 		*dst = P((*T)(target.address))
-	}
-	source.internal.finishField(encoded, wait, nil)
-}
-
-// LoadMap decodes a generated map field. Payloads still use the shared dynamic
-// map loop, including fresh cells and immediate insertion after recording dependencies.
-func LoadMap[M ~map[K]V, K comparable, V any](source *Source, slot int, dst *M, wait bool) {
-	encoded := source.internal.field(slot)
-	if !isNilObject(encoded) {
-		typ := reflect.TypeFor[M]()
-		if ref, ok := encoded.(*wire.Ref); ok {
-			target := source.internal.ds.mapTarget(ref, typ, nil)
-			if target.ops.layout.typ == typ {
-				m := (*M)(target.address)
-				if *m == nil {
-					*m = make(M)
-				}
-				*dst = *m
-			} else {
-				assignMap(reflect.ValueOf(dst).Elem(), target.reflect())
-			}
-		} else {
-			obj := location{ops: operationsFor(typ), address: unsafe.Pointer(dst)}
-			obj.ops.decode(source.internal.ds, source.internal.ods, obj, encoded)
-		}
 	}
 	source.internal.finishField(encoded, wait, nil)
 }
@@ -78,7 +51,7 @@ func LoadStruct[T any](source *Source, slot int, dst *T, wait bool) {
 	source.internal.finishField(encoded, wait, nil)
 }
 
-// LoadObject handles generated arrays, interfaces and unsupported field kinds
+// LoadObject handles generated maps, arrays, interfaces and unsupported fields
 // through the same runtime dispatcher used by public/manual Source calls.
 func LoadObject[T any](source *Source, slot int, dst *T, wait bool) {
 	encoded := source.internal.field(slot)

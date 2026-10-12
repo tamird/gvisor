@@ -102,7 +102,10 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 func (ods *objectDecodeState) findCycleFor(target *objectDecodeState) []*objectDecodeState {
 	for _, ic := range ods.callbacks {
 		other := ic.source()
-		if other != nil && other == target {
+		if other == nil {
+			continue
+		}
+		if other == target {
 			return []*objectDecodeState{target}
 		} else if childList := other.findCycleFor(target); childList != nil {
 			return append(childList, other)
@@ -409,22 +412,39 @@ func (ds *decodeState) decodeStructValue(ods *objectDecodeState, typ reflect.Typ
 
 // decodeMap decodes a map value.
 func (ds *decodeState) decodeMap(ods *objectDecodeState, source location, encoded *wire.Map) {
-	m := source.reflect()
-	if m.IsNil() {
-		m.Set(reflect.MakeMap(source.ops.layout.typ))
+	native := operationRegistry.maps[source.ops.layout.typ]
+	var m reflect.Value
+	if native != nil {
+		native.ensure(source.address)
+	} else {
+		m = source.reflect()
+		if m.IsNil() {
+			m.Set(reflect.MakeMap(source.ops.layout.typ))
+		}
 	}
 	for i := range encoded.Keys {
-		// Keep the fresh reflected cells at the allocation/insertion boundary.
-		// Hooks may retain their addresses, so neither cell can be reused.
-		key := reflect.New(source.ops.key.layout.typ).Elem()
-		element := reflect.New(source.ops.elem.layout.typ).Elem()
-		keyLocation := location{ops: source.ops.key, address: key.Addr().UnsafePointer()}
-		elementLocation := location{ops: source.ops.elem, address: element.Addr().UnsafePointer()}
+		keyLocation := location{ops: source.ops.key}
+		elementLocation := location{ops: source.ops.elem}
+		var key, element reflect.Value
+		if native != nil {
+			keyLocation.address, elementLocation.address = native.cells()
+		} else {
+			// Keep the actual reflected cells until insertion, without NewAt
+			// reconstruction. Hooks may retain either cell's address.
+			key = reflect.New(source.ops.key.layout.typ).Elem()
+			element = reflect.New(source.ops.elem.layout.typ).Elem()
+			keyLocation.address = key.Addr().UnsafePointer()
+			elementLocation.address = element.Addr().UnsafePointer()
+		}
 		ds.decodeObject(ods, keyLocation, encoded.Keys[i])
 		ds.decodeObject(ods, elementLocation, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
-		m.SetMapIndex(key, element)
+		if native != nil {
+			native.insert(source.address, keyLocation.address, elementLocation.address)
+		} else {
+			m.SetMapIndex(key, element)
+		}
 	}
 }
 

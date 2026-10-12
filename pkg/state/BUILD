@@ -75,6 +75,7 @@ go_library(
         "load_fields.go",
         "load_fields_unsafe.go",
         "location_unsafe.go",
+        "map_operations_unsafe.go",
         "ods_list.go",
         "operations_unsafe.go",
         "state.go",

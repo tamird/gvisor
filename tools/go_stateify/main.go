@@ -252,6 +252,11 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		if records != nil && len(records.types) != 0 {
 			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", records.wireAlias)
 		}
+		if records != nil {
+			for _, imported := range records.mapImports {
+				fmt.Fprintf(outputFile, " %s %q\n", imported.alias, imported.path)
+			}
+		}
 		if imports != "" {
 			for _, i := range strings.Split(imports, ",") {
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
@@ -493,6 +498,12 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 	}
 
+	if records != nil {
+		for _, typ := range records.mapTypes {
+			maybeEmitImports()
+			initCalls = append(initCalls, fmt.Sprintf("%sRegisterMap[%s]()", statePrefix, typ))
+		}
+	}
 	if len(initCalls) > 0 {
 		// Emit the init() function.
 		fmt.Fprintf(outputFile, "func init() {\n")
