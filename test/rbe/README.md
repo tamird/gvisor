@@ -985,6 +985,109 @@ budget; cancellation leaves incomplete qualification. The image declares both
 architectures, but ARM64 Firecracker capacity is still required and its
 execution remains unqualified.
 
+The existing-driver GPU smoke suite can run on a dedicated Linux AMD64 host
+with an installed NVIDIA driver and Container Toolkit:
+
+```sh
+bazel test --config=rbe-matrix --config=x86_64 --config=rbe-local-tests \
+  --run_under=//test/rbe:local_root \
+  //test/gpu:existing_driver_smoke
+```
+
+Run this command as an unprivileged user with passwordless sudo on a disposable
+host. No other Docker daemon or GPU test may run on that host during this
+command: the root fixture creates a private mount namespace but shares the host
+network namespace, including Docker's bridge and firewall state. The existing
+root fixture needs mount-namespace and cgroup access. Docker,
+containerd, runc and `nvidia-container-runtime-hook` must be installed on the
+effective PATH inherited by the root test process. [Docker discovers the NVIDIA
+hook through that PATH](https://github.com/moby/moby/blob/fca702de7/daemon/nvidia_linux.go#L32-L46)
+when registering its GPU DeviceRequests driver; the fixture does not register
+or install a separate NVIDIA runtime. The host must expose the control and
+assigned GPU devices needed by that driver; assignment need not start at index
+zero. Docker and the existing native `TestNvidiaSmi` exercise actual device access
+and report toolkit or driver incompatibility.
+
+Compilation and the two declared CUDA source-image archives use the existing
+remote build graph. The three test actions run locally, one at a time, without
+test-result caching: native-runc smoke, runsc smoke with `--nvproxy=true`, and
+runsc GPU checkpoint/restore with the same flag. Each uses the existing private
+Docker daemon and cleanup, its declared images and release inputs, and the raw
+suite's 300-second default action timeout. The frontends prohibit remote and
+sandbox execution. The two source-image producers retain their networked build
+behavior; graph analysis alone does not establish that those builds or any GPU
+test ran.
+
+The `existing_driver_all`, `existing_driver_l4`, `existing_driver_cos`, and
+`existing_driver_cuda_12_8` suites expose the other original runtime commands
+without replacing the installed driver. Ubuntu full and L4 tests use all driver
+capabilities; COS keeps only `--nvproxy=true` and passes `--cos-gpu` to each raw
+test. COS retains the public disabled-ffmpeg test and its existing driver paths
+under `/home/kubernetes/bin/nvidia` or `/var/lib/nvidia`. Its device helper and
+the raw tests' GPU-count helper retain their existing contiguous-index
+assumptions; these declarations do not generalize device enumeration. CUDA12.8
+includes both CUDA images because its version probe uses the older image too.
+Eight independent CUDA frontends pass the existing one-based partition flags;
+they do not shard the single top-level Go test with Bazel.
+
+The complete public cohorts have ordered host actions, including the original
+latest-driver installation and smoke/checksum phases. On an exclusively owned,
+disposable host meeting the prerequisites above, use the same remote compilation
+and serial local execution flags and select one action:
+
+```sh
+bazel test --config=rbe-matrix --config=x86_64 --config=rbe-local-tests \
+  --run_under=//test/rbe:local_root --test_timeout=3300 \
+  //test/gpu:public_smoke
+```
+
+| Public cohort         | Declared action                                          | Original job budget        |
+| --------------------- | -------------------------------------------------------- | -------------------------- |
+| Smoke                 | `//test/gpu:public_smoke`                                | 3300 seconds               |
+| Full Ubuntu           | `//test/gpu:public_all`                                  | 5400 seconds               |
+| L4                    | `//test/gpu:public_l4`                                   | 3300 seconds               |
+| COS                   | `//test/gpu:public_cos`                                  | 3300 seconds               |
+| CUDA12.8              | `//test/gpu:public_cuda_12_8_partition_1` through `_8`   | 5400 seconds per partition |
+| All supported drivers | `//test/gpu:public_all_drivers_partition_0` through `_7` | 3300 seconds per partition |
+
+Set `--test_timeout` to the table's budget for the selected host action. These
+are the public coordinator budgets, distinct from the individual existing-driver
+frontends' 300-second defaults and CUDA's eternal timeout. The complete host
+action runs the built commands directly, matching Make's serial phase order;
+it does not start nested Make or Bazel or inherit separate TestRunner timeouts
+for its child commands. Each child clears the outer Bazel timeout, filter,
+fail-fast and shard environment; CUDA retains its explicit sample partition
+arguments. The outer action deadline still bounds the complete sequence. Build
+time is outside the host action's budget.
+
+Except for COS, the public actions may replace the host's kernel driver using
+`tools/gpu:main`. The host must have the CLI's existing DKMS, matching kernel
+headers and compiler prerequisites, plus network access to the registry's
+checksum-verified NVIDIA installers. No device user or other workload may run
+on that host. A test does not restore its original driver afterward: discard
+the host after qualification, including after cancellation or installation
+failure. COS uses its preinstalled driver and never invokes the installer.
+The three Docker smoke frontends finish cleanup before another driver install
+starts. No new worker pool, scheduler property or provisioning is implied.
+
+The all-driver actions share the original script's sorted architecture-filtered
+registry and zero-based modulo-eight partitioning. `drivers.tsv` records each
+successful installation, failed installation, smoke failure and pass. Empty
+partitions are explicit; failed installs are skipped, and a nonempty partition
+must successfully test at least one driver. A passing wrapper therefore does
+not prove that every assigned driver ran. Per-step output directories and child XML paths preserve
+the individual fixture outputs without overwriting the outer action report. Existing CUDA-version and checkpoint/restore
+skips remain visible outcomes.
+
+All runtime binaries, release inputs, two CUDA image archives and eight other
+GPU image archives are declared. The common basic and ffmpeg archives reuse
+their existing pinned producers. Dockerfile-backed builds need Docker and
+network access but no GPU; the Ollama client uses the standard OCI rules to
+assemble its pinned base and Bazel-built executable without a build daemon.
+Building those outputs or analyzing these actions provides no hardware
+execution credit; all six public hardware cohorts remain unqualified until
+they run on appropriate hosts.
+
 The maintained Docker runtime lane has an explicit action-owned setup:
 
 ```sh

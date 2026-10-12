@@ -369,16 +369,12 @@ def _source_image_archive_impl(ctx):
     crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
     archive = ctx.actions.declare_file(ctx.label.name + ".tar")
     inputs = depset(
-        [ctx.file._contexts, ctx.file._makefile, ctx.file._script, ctx.file._config, crane],
+        [ctx.file._contexts, ctx.file._makefile, ctx.file._script, crane],
         transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
     )
     ctx.actions.run(
-        executable = ctx.attr._wrapper[DefaultInfo].files_to_run,
+        executable = "/bin/bash",
         arguments = [
-            "--runtime=runc",
-            "--docker_test_config=" + ctx.file._config.path,
-            "--",
-            "/bin/bash",
             ctx.file._script.path,
             "archive",
             ctx.attr.architecture,
@@ -391,7 +387,7 @@ def _source_image_archive_impl(ctx):
         ],
         inputs = inputs,
         outputs = [archive],
-        # The pinned execution image supplies the daemon and Docker CLI.
+        # The execution worker supplies Docker; RBE callers request init-dockerd.
         env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
         mnemonic = "DockerSourceImage",
         progress_message = "Constructing source image %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
@@ -403,16 +399,14 @@ def _source_image_archive_impl(ctx):
 
 source_image_archive = rule(
     implementation = _source_image_archive_impl,
-    doc = "Constructs one Docker-save archive with the existing native daemon and Make image rules.",
+    doc = "Constructs an archive using the execution worker's Docker daemon and Make image rules.",
     attrs = {
         "architecture": attr.string(mandatory = True, values = ["x86_64", "aarch64"]),
         "image": attr.string(mandatory = True, doc = "Image name relative to gvisor.dev/images."),
-        "_config": attr.label(default = "//test/docker:image_source_config", allow_single_file = True),
         "_contexts": attr.label(default = "//images:source_contexts", allow_single_file = True, cfg = _image_context_architecture),
         "_allowlist_function_transition": attr.label(default = transition_allowlist),
         "_makefile": attr.label(default = "//tools:images.mk", allow_single_file = True),
         "_script": attr.label(default = "//test/docker:source_images.sh", allow_single_file = True),
-        "_wrapper": attr.label(default = "//test/docker/runner", executable = True, cfg = "exec"),
     },
     toolchains = [
         "@rules_foreign_cc//toolchains:make_toolchain",

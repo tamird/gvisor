@@ -209,11 +209,11 @@ func (c *Command) PID() int {
 // ExitCode returns the exit code of the command.
 func (c *Command) ExitCode(ctx context.Context) (int, error) {
 	c.mu.Lock()
-	if !c.started {
-		c.mu.Unlock()
+	started := c.started
+	c.mu.Unlock()
+	if !started {
 		return 0, errors.New("command not started")
 	}
-	c.mu.Unlock()
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()

@@ -1,3 +1,4 @@
+load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
@@ -32,6 +33,7 @@ source_image_archive(
         exec_group = "",
         free_disk = "40GB",
         memory = "8GB",
+        start_daemon = True,
     ),
     image = "containerd/harness",
     tags = ["manual"],
@@ -50,13 +52,14 @@ source_image_archive(
         exec_group = "",
         free_disk = "40GB",
         memory = "8GB",
+        start_daemon = True,
     ),
     image = "moby",
     tags = ["manual"],
 )
 
 # Build the CUDA contexts with their declared Go runners without requiring GPU
-# execution. Runtime suites retain their independently pinned image archives.
+# execution. The GPU smoke and CUDA cohorts consume these declared archives.
 [
     source_image_archive(
         name = name,
@@ -70,6 +73,7 @@ source_image_archive(
             exec_group = "",
             free_disk = "80GB",
             memory = "12GB",
+            start_daemon = True,
             vfs = True,
         ),
         image = image,
@@ -79,6 +83,39 @@ source_image_archive(
         ("cuda_samples_source_amd64", "gpu/cuda-tests"),
         ("cuda_samples_12_8_source_amd64", "gpu/cuda-tests-12-8"),
     ]
+]
+
+# The client has no Dockerfile RUN steps; its Bazel-built executable is one
+# declared OCI layer. Preserve the label used by the public GPU cohorts.
+alias(
+    name = "gpu_ollama_client_source_amd64",
+    testonly = True,
+    actual = "//images/gpu/ollama/client:image_archive",
+    tags = ["manual"],
+)
+
+# Other runtime GPU images use the source/archive producer for CUDA images.
+# Building these archives requires Docker, but does not execute GPU tests.
+[
+    source_image_archive(
+        name = name,
+        testonly = True,
+        architecture = "x86_64",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            start_daemon = True,
+            vfs = True,
+        ),
+        image = image,
+        tags = ["manual"],
+    )
+    for name, image in GPU_SOURCE_IMAGES.items()
 ]
 
 bzl_library(
@@ -297,6 +334,7 @@ source_image_archive(
         exec_group = "",
         free_disk = "40GB",
         memory = "8GB",
+        start_daemon = True,
     ),
     image = "runtimes/php8.5.11",
     tags = ["manual"],

@@ -28,7 +28,11 @@ func TestCommandExitCode(t *testing.T) {
 	if err := command.Start(ctx); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
-	if got, err := command.ExitCode(ctx); err != nil || got != 23 {
-		t.Fatalf("ExitCode: got (%d, %v), want (23, nil)", got, err)
+	code, err := command.ExitCode(ctx)
+	if err != nil {
+		t.Fatalf("ExitCode: %v", err)
+	}
+	if got, want := code, 23; got != want {
+		t.Fatalf("ExitCode: got %d, want %d", got, want)
 	}
 }

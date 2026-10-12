@@ -27,14 +27,14 @@ def network_test_exec_properties():
         "//conditions:default": {},
     })
 
-def docker_test_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False):
+def docker_test_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False, start_daemon = False):
     """Selects Docker VM properties when remote execution is enabled."""
     return select({
-        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group, vfs),
+        Label("//tools/bazeldefs:rbe"): docker_exec_properties(free_disk, memory, exec_group, vfs, start_daemon),
         "//conditions:default": {},
     })
 
-def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False):
+def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = False, start_daemon = False):
     """Returns a remote VM with Docker tools for an owned daemon.
 
     Args:
@@ -44,6 +44,7 @@ def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = 
       vfs: Use the host-backed workspace for outputs larger than the VM's
         separate workspace disk; free_disk only sizes the root filesystem.
         https://github.com/buildbuddy-io/buildbuddy/blob/5608c55ae/enterprise/server/remote_execution/containers/firecracker/firecracker.go#L1593
+      start_daemon: Start the worker's native Docker daemon before the action.
 
     Returns:
       Execution properties for the selected VM and execution group.
@@ -63,6 +64,8 @@ def docker_exec_properties(free_disk, memory = None, exec_group = "test", vfs = 
     }
     if vfs:
         properties[prefix + "enable-vfs"] = "true"
+    if start_daemon:
+        properties[prefix + "init-dockerd"] = "true"
     return properties
 
 def namespace_test_exec_properties(user = "root", image = None, memory = None):

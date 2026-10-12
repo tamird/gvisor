@@ -22,8 +22,11 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/syscall.h>
+#include <sys/uio.h>
 #include <unistd.h>
 
+#include <cerrno>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -35,42 +38,21 @@
 
 using gvisor::Ioctl;
 
-libc_ioctl libc_ioctl_handle = nullptr;
+namespace {
 
-void init_libc_ioctl_handle() {
-  if (libc_ioctl_handle) {
-    return;
-  }
-
-  libc_ioctl_handle = (libc_ioctl)dlsym(RTLD_NEXT, "ioctl");
-  if (!libc_ioctl_handle) {
-    std::cerr << "Failed to hook ioctl: " << dlerror() << "\n";
-    exit(1);
-  }
-}
-
-extern "C" {
-
-int ioctl(int fd, uint64_t request, void* argp) {
-  if (!libc_ioctl_handle) {
-    init_libc_ioctl_handle();
-  }
-
-  // Forward the ioctl call.
-  int ret = libc_ioctl_handle(fd, request, argp);
-
+void ReportIoctl(int fd, uint64_t request, void* argp, int ret) {
   // Check the file name to see if this is an Nvidia ioctl.
   // We only want to do protobuf logging for these ioctls.
   char file_name[PATH_MAX + 1];
   int n = readlink(absl::StrCat("/proc/self/fd/", fd).c_str(), file_name,
                    sizeof(file_name) - 1);
   if (n < 0) {
-    return ret;
+    return;
   }
 
   file_name[n] = '\0';
   if (!absl::StartsWith(file_name, "/dev/nvidia")) {
-    return ret;
+    return;
   }
 
   // Prepare ioctl proto for logging.
@@ -82,10 +64,47 @@ int ioctl(int fd, uint64_t request, void* argp) {
   // ioctl calls to uvm don't encode their size in the request.
   uint32_t arg_size =
       strcmp(file_name, "/dev/nvidia-uvm") == 0 ? 0 : _IOC_SIZE(request);
-  info.set_arg_data(argp, arg_size);
+  if (arg_size != 0) {
+    // The ioctl may have rejected an unreadable pointer. Copy through the
+    // kernel so reporting cannot fault while inspecting that pointer.
+    std::string* data = info.mutable_arg_data();
+    data->resize(arg_size);
+    const iovec local = {data->data(), arg_size};
+    const iovec remote = {argp, arg_size};
+    const pid_t tid = syscall(SYS_gettid);
+    const ssize_t copied = process_vm_readv(tid, &local, 1, &remote, 1, 0);
+    if (copied < 0) {
+      info.set_arg_data_errno(errno);
+      data->clear();
+    } else {
+      // A short read remains visibly incomplete; do not classify its prefix
+      // as a complete ioctl argument.
+      data->resize(static_cast<size_t>(copied));
+    }
+  }
 
   WriteIoctlProto(info);
+}
 
+}  // namespace
+
+extern "C" {
+
+int ioctl(int fd, uint64_t request, void* argp) {
+  static const libc_ioctl libc_ioctl_handle = [] {
+    auto handle = reinterpret_cast<libc_ioctl>(dlsym(RTLD_NEXT, "ioctl"));
+    if (!handle) {
+      std::cerr << "Failed to hook ioctl: " << dlerror() << "\n";
+      exit(1);
+    }
+    return handle;
+  }();
+
+  const int ret = libc_ioctl_handle(fd, request, argp);
+  const int ioctl_errno = errno;
+  ReportIoctl(fd, request, argp, ret);
+  // Reporting performs its own syscalls, but errno belongs to the ioctl result.
+  errno = ioctl_errno;
   return ret;
 }
 

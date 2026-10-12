@@ -17,6 +17,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -100,10 +101,9 @@ func Main(ctx context.Context) error {
 
 	serveCtx, serveCancel := context.WithCancel(ctx)
 	defer serveCancel()
+	serveResult := make(chan error, 1)
 	go func() {
-		if err := server.Serve(serveCtx); err != nil {
-			log.Warningf("failed to serve sniffer server: %w", err)
-		}
+		serveResult <- server.Serve(serveCtx)
 	}()
 
 	// Set up command from flags
@@ -125,24 +125,30 @@ func Main(ctx context.Context) error {
 
 	// Once our command is done, we can close the sniffer server and print the
 	// results.
-	cmdErr := cmd.Wait()
+	var errs []error
+	if err := cmd.Wait(); err != nil {
+		errs = append(errs, fmt.Errorf("command exited with error: %w", err))
+	}
 	serveCancel()
+	// Stop accepting before AllResults waits for the connection readers.
+	if err := <-serveResult; err != nil {
+		errs = append(errs, fmt.Errorf("serving sniffer: %w", err))
+	}
 
 	// Merge results from each connection.
-	finalResults := server.AllResults()
+	finalResults, err := server.AllResults()
+	if err != nil {
+		errs = append(errs, fmt.Errorf("incomplete ioctl capture: %w", err))
+	}
 	if finalResults.HasUnsupportedIoctl() {
 		if *enforceCompatibility != "" {
-			return fmt.Errorf("unsupported ioctls found: %v", finalResults)
+			errs = append(errs, fmt.Errorf("unsupported ioctls found: %v", finalResults))
+		} else {
+			log.Infof("============== Unsupported ioctls ==============")
+			log.Infof("%v", finalResults)
 		}
-		log.Infof("============== Unsupported ioctls ==============")
-		log.Infof("%v", finalResults)
 	}
-
-	if cmdErr != nil {
-		return fmt.Errorf("command exited with error: %w", cmdErr)
-	}
-
-	return nil
+	return errors.Join(errs...)
 }
 
 func main() {

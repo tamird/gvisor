@@ -31,17 +31,34 @@ The continuous integration system can either take fine-grained dependencies on
 single images via individual `load` targets, or pull all images via a single
 `load-all-test-images` invocation.
 
-## CUDA image helpers
+## Go image helpers
 
-The CUDA sample runners are built by Bazel with the repository Go SDK and
-CGO disabled, then included in the architecture-selected image context archive.
-This replaces their former Docker compilation with `golang:1.25`; the separate
-ASCII image converter still uses that Docker build stage.
+The CUDA sample runners and Ollama HTTP client are built by Bazel with the
+repository Go SDK and CGO disabled, then included in the architecture-selected
+image context archive. This replaces their former Docker compilation with
+`golang:1.25` and `golang:1.22`, respectively. The separately sourced ASCII image
+converter retains its own Docker build stage.
 
 The normal `make` image commands stage the same declared archive in a temporary
-directory before hashing or loading either CUDA image. Helper or SDK changes
-therefore change the image tag. The declared image-source actions consume that
-archive directly and do not invoke Bazel inside their Docker build action.
+directory before hashing or loading either CUDA image or the Ollama client
+image. Helper or SDK changes therefore change the image tag. The declared
+image-source actions consume that archive directly and do not invoke Bazel
+inside their Docker build action.
+
+## Declared image archives
+
+The runtime tests consume image archives through `//test/docker` labels.
+The Ollama client archive uses `rules_oci` to combine the declared executable
+with a pinned Alpine base; building it does not start a Docker daemon.
+It supplies the same local `gvisor.dev/images/gpu/ollama/client:latest` tag.
+Bazel's declared inputs identify this archive, independently of Make's
+registry cache tags.
+
+The other source-image actions reuse the Dockerfiles and Make's pull/rebuild
+behavior. Their Linux execution worker must supply the Docker CLI and a
+running daemon. The RBE configuration requests BuildBuddy's managed daemon;
+a local Linux invocation requires an existing daemon. Runtime tests keep
+their separate private daemon so they can select runsc and isolate test state.
 
 ## Adding new images
 
