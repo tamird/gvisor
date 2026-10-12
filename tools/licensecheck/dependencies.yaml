@@ -14202,6 +14202,12 @@
   commit: ""
   sha256: 3217dcc807155e45db462d7ef2431f5ddda0d7273b700d05a67b271ceb1287ab
   license: MIT
+- dependency: qemu_source
+  version: https://download.qemu.org/qemu-11.1.2.tar.xz
+  retrieved: "2026-10-11"
+  commit: ""
+  sha256: 731b5681e4bb18be313231579b8efd0296c5b015fa36dc533874b639ba838016
+  license: LicenseRef-QEMU-11.1.2-Source
 - dependency: rules_cc
   version: https://github.com/bazelbuild/rules_cc/releases/download/0.2.25/rules_cc-0.2.25.tar.gz
   retrieved: "2026-09-26"

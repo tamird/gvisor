@@ -26,10 +26,11 @@ machine="$8"
 test_setup="$(realpath "$9")"
 shift 9
 # The owning rule writes this declared configuration beside the launcher.
-declare guest_memory_mib guest_scratch_gib guest_run_under
+declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator
 declare -a guest_env guest_inherited_env
 # shellcheck disable=SC1090
 source "${GVISOR_TEST_GUEST_CONFIG:?}"
+if [[ -n "$guest_emulator" ]]; then guest_emulator="$(realpath "$guest_emulator")"; fi
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
@@ -153,9 +154,12 @@ cleanup() {
 trap cleanup EXIT
 trap 'exit 143' TERM
 trap 'exit 130' INT
+# ARM TCG supplies its source-built emulator. Guest preparation, recovery,
+# shared libraries and firmware use the existing declared host archive.
+emulator_path="${guest_emulator:-$host/usr/bin/$emulator}"
 # Networking and privileged host mounts are not needed by the guest transport.
 QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
-  "$loader" --inhibit-cache --library-path "$libraries" "$host/usr/bin/$emulator" \
+  "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \
   -no-user-config -nodefaults -display none -monitor none \
   "${machine_options[@]}" \
   -smp 2 -m "$guest_memory_mib" -nic none -L "$host/usr/share/qemu" \

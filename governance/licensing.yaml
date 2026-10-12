@@ -3557,6 +3557,19 @@ exceptions:
       grant. These tools are not distribution runtime requirements or payload
       files.
       The distribution action stages only the declared project sources.
+  - dependency: qemu_source
+    license: LicenseRef-QEMU-11.1.2-Source
+    exception_rationale: >-
+      The pinned QEMU distribution and bundled build tools are used only
+      to build the ARM full-system test emulator. The source license
+      declares the emulator as a whole GPLv2 with compatible
+      file-specific terms; the retained audit separately records bundled
+      Meson, pycotap and qemu.qmp notices. The build disables
+      installation of firmware blobs and copies only the emulator
+      executable and build evidence to declared test outputs. Separately
+      licensed firmware is not represented as GPLv2 by this audit. This
+      scoped exception does not authorize linking or packaging QEMU in
+      gVisor release artifacts.
   - dependency: tcg_arm64_rc_image
     license: GPL-2.0-only
     exception_rationale: >-
