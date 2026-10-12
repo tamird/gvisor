@@ -209,3 +209,59 @@ docker_command_test(
         "@platforms//cpu:x86_64",
     ],
 )
+
+# Qualification-only checks of the completed cached exports. Each action owns
+# a disposable daemon; no container or GPU workload is executed.
+_LARGE_ARCHIVES = {
+    "stable_diffusion": "gpu/stable-diffusion-xl",
+    "triton": "gpu/triton",
+}
+
+[
+    docker_daemon_config(
+        name = name + "_archive_config",
+        testonly = True,
+        images = ["//test/docker:gpu_" + name + "_cached_amd64"],
+        runtime = None,
+        tags = ["manual"],
+    )
+    for name in _LARGE_ARCHIVES
+]
+
+[
+    docker_command_test(
+        name = name + "_archive_load_test",
+        size = "enormous",
+        timeout = "eternal",
+        command = ":source_archive_test",
+        command_args = [
+            "-test.v",
+            "--archive=$(rootpath //test/docker:gpu_" + name + "_cached_amd64)",
+            "--image=" + image,
+        ],
+        data = ["//test/docker:gpu_" + name + "_cached_amd64"],
+        docker_config = ":" + name + "_archive_config",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        # The prior 80GB source worker ran out of disk while exporting Stable.
+        # These archives are 21.7/48.3GB compressed; expanded sizes remain an
+        # observed result, not an assumed equality with compressed bytes.
+        exec_properties = docker_test_exec_properties(
+            free_disk = "256GB",
+            memory = "12GB",
+            vfs = True,
+        ),
+        tags = [
+            "external",
+            "manual",
+            "no-local",
+        ],
+        target_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    )
+    for name, image in _LARGE_ARCHIVES.items()
+]

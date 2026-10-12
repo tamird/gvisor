@@ -330,6 +330,28 @@ workload images; the GPU image check does not execute workloads on a GPU.
 Each lane gets a 70-minute step and 75-minute job so both original one-hour
 shards can finish, with at most two local tests and remote compilation unchanged.
 
+The `build` and `test` lanes accept explicit space-separated labels in `targets`.
+Both use the existing Actions coordinator and remote execution; `test` runs the
+selected TestRunners and retains their original reports and compact action log.
+They require one architecture and matching `--build-target` or `--test-target`
+options when calling `qualify.sh` directly. These explicit selections are not
+part of the aggregate `amd64` profile. Their workflow concurrency keys include
+the selected labels.
+
+The qualification-only `stable_diffusion_archive_load_test` and
+`triton_archive_load_test` under `//test/rbe` use the existing private Docker
+fixture to load their declared cached archives, then verify both aliases,
+configuration and ordered layer digests. They execute no container or GPU
+workload. Run them separately through `lanes=test` with `execution=remote`.
+The ordinary OCI producers retain their 5,333-second action deadlines and
+original resources. Each load action has its own one-hour deadline and a
+disposable 256GB root filesystem: the archives are 21.7GB and 48.3GB compressed,
+and the earlier 80GB worker exhausted its disk while exporting Stable.
+Unpacked sizes are measured by the check; compressed size does not bound them.
+The source-layout dependency may run again because it deliberately disables
+action-result caching. Result evidence must compare the archive actually loaded
+with the previously completed output before claiming the same output was tested.
+
 Continuous benchmarks can exceed one Actions job when queued together. To
 qualify individual owners concurrently, pass `targets` with one label
 from `tests(//test/benchmarks:continuous_tests)`:

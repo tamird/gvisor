@@ -31,6 +31,7 @@ import (
 )
 
 var sourceArchive = flag.String("archive", "", "Declared archive already loaded by the private Docker fixture")
+var sourceImage = flag.String("image", "containerd/harness", "Canonical image path in the declared archive")
 
 func TestSourceArchiveLoad(t *testing.T) {
 	file, err := os.Open(*sourceArchive)
@@ -79,7 +80,7 @@ func TestSourceArchiveLoad(t *testing.T) {
 	if got, want := len(image.RepoTags), 2; got != want {
 		t.Fatalf("image tags = %q (%d), want %d tags", image.RepoTags, got, want)
 	}
-	const latest = "gvisor.dev/images/containerd/harness:latest"
+	latest := "gvisor.dev/images/" + *sourceImage + ":latest"
 	if got, want := image.RepoTags[1], latest; got != want {
 		t.Fatalf("latest tag = %q, want %q", got, want)
 	}
@@ -106,7 +107,8 @@ func TestSourceArchiveLoad(t *testing.T) {
 			t.Fatalf("layer %q is not the expected compressed layer: %v", name, err)
 		}
 		plainHash := sha256.New()
-		if _, err := io.Copy(plainHash, unpacked); err != nil {
+		unpackedBytes, err := io.Copy(plainHash, unpacked)
+		if err != nil {
 			t.Fatal(err)
 		}
 		if err := unpacked.Close(); err != nil {
@@ -116,6 +118,7 @@ func TestSourceArchiveLoad(t *testing.T) {
 			t.Fatalf("layer digest = %q, want filename digest %q", got, want)
 		}
 		diffIDs = append(diffIDs, "sha256:"+hex.EncodeToString(plainHash.Sum(nil)))
+		t.Logf("Validated layer %s: compressed=%d bytes, unpacked=%d bytes", name, layer.size, unpackedBytes)
 	}
 	args := append([]string{"image", "inspect"}, image.RepoTags...)
 	output, err := exec.CommandContext(t.Context(), "docker", args...).CombinedOutput()

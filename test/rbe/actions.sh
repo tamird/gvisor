@@ -46,9 +46,9 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
   fi
   read -r -a selected_targets <<< "$QUALIFICATION_TARGETS"
   case "${lanes[*]}" in
-    build)
+    build|test)
       for target in "${selected_targets[@]}"; do
-        options+=("--build-target=$target")
+        options+=("--${lanes[0]}-target=$target")
       done
       ;;
     benchmarks)
@@ -59,7 +59,7 @@ if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
       options+=("--benchmark-target=${selected_targets[0]}")
       ;;
     *)
-      printf 'Explicit targets require the build or benchmarks lane.\n' >&2
+      printf 'Explicit targets require the build, test or benchmarks lane.\n' >&2
       exit 2
       ;;
   esac
@@ -99,9 +99,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       # hosted coordinator disconnects. Actions owns coordination; actions
       # retain their remote execution requirements and declared deadlines.
       case "$QUALIFICATION_ARCH:${lanes[*]}" in
-        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build) ;;
+        arm64:syscalls-64k|arm64:syscalls-rc|amd64:build|arm64:build|amd64:test|arm64:test) ;;
         *)
-          printf 'The Actions remote coordinator supports ARM64 guest profiles or explicit build targets.\n' >&2
+          printf 'The Actions remote coordinator supports ARM64 guest profiles or explicit build/test targets.\n' >&2
           exit 2
           ;;
       esac
@@ -158,7 +158,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-      if [[ $QUALIFICATION_EXECUTION == remote-actions && ${lanes[*]} == build ]]; then
+      if [[ $QUALIFICATION_EXECUTION == remote-actions && ( ${lanes[*]} == build || ${lanes[*]} == test ) ]]; then
         # Compare the archive exporters with the original action deadline and
         # no retries. This experiment's settings are not the permanent policy
         # for arbitrary builds through the Actions coordinator.
@@ -244,8 +244,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # qualify.sh records the selected profile and configured test graph.
         # Keep the actual command and checkout state alongside those records.
         cohort_dir="$RUNNER_TEMP/qualification/tcg-full-profile"
-        if [[ $argument == build ]]; then
-          cohort_dir="$RUNNER_TEMP/qualification/build"
+        if [[ $argument == build || $QUALIFICATION_LANES == test ]]; then
+          cohort_dir="$RUNNER_TEMP/qualification/$argument"
         fi
         if [[ $qualification_container == true ]]; then
           cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
