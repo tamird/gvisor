@@ -158,30 +158,31 @@ func (s *Server) Serve(ctx context.Context) error {
 			go func() {
 				defer s.connectionsWG.Done()
 				connection := Connection{conn: conn}
-				results, err := connection.ReadHookOutput(ctx)
+				var result connectionResult
+				result.results, result.err = connection.ReadHookOutput(ctx)
 				// This goroutine owns the accepted connection. Close it before
 				// waiting for the caller to collect its results.
-				if closeErr := conn.Close(); closeErr != nil {
-					err = errors.Join(err, fmt.Errorf("closing hook connection: %w", closeErr))
+				if err := conn.Close(); err != nil {
+					result.err = errors.Join(result.err, fmt.Errorf("closing hook connection: %w", err))
 				}
-				s.resultsChan <- connectionResult{results, err}
+				s.resultsChan <- result
 			}()
 		}
 	}()
 
 	// Wait for the context cancellation.
 	<-ctx.Done()
-	var resultErr error
+	var errs []error
 	if err := s.listener.Close(); err != nil {
-		resultErr = fmt.Errorf("failed to close socket: %w", err)
+		errs = append(errs, fmt.Errorf("failed to close socket: %w", err))
 	}
 	for err := range errChan {
 		if errors.Is(err, net.ErrClosed) {
 			continue
 		}
-		resultErr = errors.Join(resultErr, fmt.Errorf("failed to accept connection: %w", err))
+		errs = append(errs, fmt.Errorf("failed to accept connection: %w", err))
 	}
-	return resultErr
+	return errors.Join(errs...)
 }
 
 // AllResults blocks until all connections have closed and returns an aggregate of all the results.
@@ -195,12 +196,12 @@ func (s *Server) AllResults() (*Results, error) {
 	}()
 
 	finalResults := NewResults()
-	var resultErr error
+	var err error
 	for result := range s.resultsChan {
 		finalResults.Merge(result.results)
-		resultErr = errors.Join(resultErr, result.err)
+		err = errors.Join(err, result.err)
 	}
-	return finalResults, resultErr
+	return finalResults, err
 }
 
 // Addr returns the address of the socket.

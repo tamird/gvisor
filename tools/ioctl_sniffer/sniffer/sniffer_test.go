@@ -101,19 +101,19 @@ func TestReadHookOutput(t *testing.T) {
 	unsupported := marshalFrame(t, &pb.Ioctl{FdPath: "/dev/nvidia0", Request: uint64(linux.IOWR('F', 0xfd, 0)), Ret: -1})
 	payload := encodeFrame([]byte{1, 2, 3, 4})
 	for _, tc := range []struct {
-		name         string
-		input        []byte
-		wantError    bool
-		wrappedError error
-		unsupported  bool
+		name        string
+		input       []byte
+		wantError   bool
+		err         error
+		unsupported bool
 	}{
 		{name: "clean_eof"},
 		{name: "empty_proto", input: encodeFrame(nil), unsupported: true},
-		{name: "partial_header", input: []byte{1, 2, 3}, wantError: true, wrappedError: io.ErrUnexpectedEOF},
-		{name: "missing_payload", input: payload[:8], wantError: true, wrappedError: io.ErrUnexpectedEOF},
-		{name: "partial_payload", input: payload[:10], wantError: true, wrappedError: io.ErrUnexpectedEOF},
+		{name: "partial_header", input: []byte{1, 2, 3}, wantError: true, err: io.ErrUnexpectedEOF},
+		{name: "missing_payload", input: payload[:8], wantError: true, err: io.ErrUnexpectedEOF},
+		{name: "partial_payload", input: payload[:10], wantError: true, err: io.ErrUnexpectedEOF},
 		{name: "malformed_proto", input: encodeFrame([]byte{0xff}), wantError: true},
-		{name: "capture_error_then_valid", input: append(captureError, unsupported...), wantError: true, wrappedError: syscall.EFAULT, unsupported: true},
+		{name: "capture_error_then_valid", input: append(captureError, unsupported...), wantError: true, err: syscall.EFAULT, unsupported: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			reader, writer := net.Pipe()
@@ -132,8 +132,8 @@ func TestReadHookOutput(t *testing.T) {
 			if got, want := err != nil, tc.wantError; got != want {
 				t.Errorf("ReadHookOutput error = %v, want error=%v", err, want)
 			}
-			if tc.wrappedError != nil && !errors.Is(err, tc.wrappedError) {
-				t.Errorf("ReadHookOutput error = %v, want %v", err, tc.wrappedError)
+			if tc.err != nil && !errors.Is(err, tc.err) {
+				t.Errorf("ReadHookOutput error = %v, want %v", err, tc.err)
 			}
 			if got, want := results.HasUnsupportedIoctl(), tc.unsupported; got != want {
 				t.Errorf("unsupported = %v, want %v", got, want)

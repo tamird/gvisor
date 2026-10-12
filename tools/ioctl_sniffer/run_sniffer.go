@@ -125,34 +125,30 @@ func Main(ctx context.Context) error {
 
 	// Once our command is done, we can close the sniffer server and print the
 	// results.
-	cmdErr := cmd.Wait()
+	var errs []error
+	if err := cmd.Wait(); err != nil {
+		errs = append(errs, fmt.Errorf("command exited with error: %w", err))
+	}
 	serveCancel()
 	// Stop accepting before AllResults waits for the connection readers.
-	serveErr := <-serveResult
+	if err := <-serveResult; err != nil {
+		errs = append(errs, fmt.Errorf("serving sniffer: %w", err))
+	}
 
 	// Merge results from each connection.
-	finalResults, captureErr := server.AllResults()
-	var resultErr error
+	finalResults, err := server.AllResults()
+	if err != nil {
+		errs = append(errs, fmt.Errorf("incomplete ioctl capture: %w", err))
+	}
 	if finalResults.HasUnsupportedIoctl() {
 		if *enforceCompatibility != "" {
-			resultErr = fmt.Errorf("unsupported ioctls found: %v", finalResults)
+			errs = append(errs, fmt.Errorf("unsupported ioctls found: %v", finalResults))
 		} else {
 			log.Infof("============== Unsupported ioctls ==============")
 			log.Infof("%v", finalResults)
 		}
 	}
-	if captureErr != nil {
-		resultErr = errors.Join(resultErr, fmt.Errorf("incomplete ioctl capture: %w", captureErr))
-	}
-	if serveErr != nil {
-		resultErr = errors.Join(resultErr, fmt.Errorf("serving sniffer: %w", serveErr))
-	}
-
-	if cmdErr != nil {
-		resultErr = errors.Join(resultErr, fmt.Errorf("command exited with error: %w", cmdErr))
-	}
-
-	return resultErr
+	return errors.Join(errs...)
 }
 
 func main() {

@@ -230,12 +230,11 @@ func Init() error {
 // ReadHookOutput reads the output of the ioctl hook until an EOF is reached.
 // It retains the first error and continues after argument-parsing failures.
 func (c *Connection) ReadHookOutput(ctx context.Context) (*Results, error) {
-	res := NewResults()
-	var captureErr error
+	result := connectionResult{results: NewResults()}
 	recordError := func(err error) {
 		log.Warningf("%v", err)
-		if captureErr == nil {
-			captureErr = err
+		if result.err == nil {
+			result.err = err
 		}
 	}
 	for {
@@ -257,14 +256,14 @@ func (c *Connection) ReadHookOutput(ctx context.Context) (*Results, error) {
 		log.Debugf("%s", ioctl)
 
 		if !ioctl.IsSupported() {
-			res.AddUnsupportedIoctl(ioctl)
+			result.results.AddUnsupportedIoctl(ioctl)
 			if crashOnUnsupportedIoctl {
 				log.Warningf("Unsupported ioctl found; crashing immediately: %v", ioctl)
 				os.Exit(1)
 			}
 		}
 	}
-	return res, captureErr
+	return result.results, result.err
 }
 
 // ParseIoctlOutput parses an ioctl protobuf from the ioctl hook.
