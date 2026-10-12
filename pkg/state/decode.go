@@ -396,8 +396,8 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 	source.ops.mapOps.initialize(source)
 	for i := range encoded.Keys {
 		// Cells are not reused: load hooks may retain their addresses.
-		key := reflectedValue(source.ops.key.memory.newValue())
-		element := reflectedValue(source.ops.elem.memory.newValue())
+		key := source.ops.key.newValue()
+		element := source.ops.elem.newValue()
 		ds.decodeValue(ods, key, encoded.Keys[i])
 		ds.decodeValue(ods, element, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)

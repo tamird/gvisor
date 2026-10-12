@@ -38,7 +38,8 @@ var reflectedMapOperations = &mapOperations{
 		iter := source.reflect().MapRange()
 		for iter.Next() {
 			// Copy both entries before either hook can mutate the source map.
-			key, element := reflectedValue(iter.Key()), reflectedValue(iter.Value())
+			key := value{ops: source.ops.key, reflected: iter.Key()}
+			element := value{ops: source.ops.elem, reflected: iter.Value()}
 			visit(key, element)
 		}
 	},
@@ -117,23 +118,29 @@ type sliceOperations struct {
 	set   func(value, value, int, int)
 }
 
-var reflectedSliceOperations = &sliceOperations{
-	set: func(dest, array value, length, capacity int) {
-		dest.reflect().Set(reflectValueRWSlice3(array.reflect(), 0, length, capacity))
-	},
-	capture: func(es *encodeState, source value, dest *wire.Slice) {
-		obj := source.reflect()
-		dest.Length, dest.Capacity = wire.Uint(obj.Len()), wire.Uint(obj.Cap())
-		if obj.IsNil() {
-			return
-		}
-		typ := reflect.ArrayOf(obj.Cap(), source.ops.elem.layout.typ)
-		array := reflect.NewAt(typ, obj.UnsafePointer()).Elem()
-		if obj.Len() < obj.Cap() {
-			array.Slice(obj.Len(), obj.Cap()).Clear()
-		}
-		es.resolveValue(reflectedValue(array), uintptr(obj.UnsafePointer()), &dest.Ref, encodeDefault)
-	},
+// makeReflectedSliceOperations runs inside private descriptor construction.
+// A package initializer cannot reference capture's dynamic type lookup, which
+// in turn selects this adapter. The returned callbacks execute only after the
+// complete descriptor graph has been published.
+func makeReflectedSliceOperations() *sliceOperations {
+	return &sliceOperations{
+		set: func(dest, array value, length, capacity int) {
+			dest.reflect().Set(reflectValueRWSlice3(array.reflect(), 0, length, capacity))
+		},
+		capture: func(es *encodeState, source value, dest *wire.Slice) {
+			obj := source.reflect()
+			dest.Length, dest.Capacity = wire.Uint(obj.Len()), wire.Uint(obj.Cap())
+			if obj.IsNil() {
+				return
+			}
+			typ := reflect.ArrayOf(obj.Cap(), source.ops.elem.layout.typ)
+			array := reflect.NewAt(typ, obj.UnsafePointer()).Elem()
+			if obj.Len() < obj.Cap() {
+				array.Slice(obj.Len(), obj.Cap()).Clear()
+			}
+			es.resolveValue(reflectedValue(array), uintptr(obj.UnsafePointer()), &dest.Ref, encodeDefault)
+		},
+	}
 }
 
 // RegisterSlice stages native header capture, capacity clearing and backing

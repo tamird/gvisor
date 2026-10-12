@@ -74,6 +74,13 @@ type typeOperations struct {
 	slice           *sliceOperations
 }
 
+// newValue retains the already-selected operations when allocating an entry.
+// Its caller need not rediscover the type of a cell it just requested.
+func (ops *typeOperations) newValue() value {
+	obj := ops.memory.newValue()
+	return value{ops: ops, address: obj.Addr().UnsafePointer(), reflected: obj}
+}
+
 var operationRegistry = struct {
 	sync.Mutex
 	cache sync.Map // map[reflect.Type]*typeOperations
@@ -128,7 +135,7 @@ func (b *operationBuilder) forType(typ reflect.Type) *typeOperations {
 	case reflect.Ptr, reflect.Slice, reflect.Array:
 		ops.elem = b.forType(typ.Elem())
 		if typ.Kind() == reflect.Slice && ops.slice == nil {
-			ops.slice = reflectedSliceOperations
+			ops.slice = makeReflectedSliceOperations()
 		}
 	}
 
