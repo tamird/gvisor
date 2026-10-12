@@ -114,20 +114,24 @@ func TestPromotedChildPath(t *testing.T) {
 }
 
 func TestZeroReferencesLeaveDestination(t *testing.T) {
-	for _, encoded := range []wire.Object{&wire.Ref{}, &wire.Slice{}} {
-		var buf bytes.Buffer
-		writer := wire.Writer{Writer: &buf}
-		if err := WriteHeader(&writer, 1, true); err != nil {
-			t.Fatal(err)
-		}
-		wire.Save(&writer, wire.Uint(1))
-		wire.Save(&writer, encoded)
-		destination := int64(17)
-		if _, err := Load(t.Context(), &buf, &destination); err != nil {
-			t.Fatal(err)
-		}
-		if got, want := destination, int64(17); got != want {
-			t.Errorf("zero %T changed destination to %d, want %d", encoded, got, want)
+	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Ref{}, &wire.Slice{}} {
+		// A non-nil channel is otherwise an unsupported decode destination.
+		integer, channel := int64(17), make(chan int)
+		for _, destination := range []any{&integer, &channel} {
+			original := reflect.ValueOf(destination).Elem().Interface()
+			var buf bytes.Buffer
+			writer := wire.Writer{Writer: &buf}
+			if err := WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, encoded)
+			if _, err := Load(t.Context(), &buf, destination); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := reflect.ValueOf(destination).Elem().Interface(), original; got != want {
+				t.Errorf("zero %T changed destination to %v, want %v", encoded, got, want)
+			}
 		}
 	}
 }
