@@ -1,5 +1,7 @@
 """Declared inputs and execution requirements for the maintained Docker suites."""
 
+load("@bazel_lib//lib:output_files.bzl", "output_files")
+load("@bazel_skylib//lib:paths.bzl", "paths")
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_foreign_cc//toolchains/native_tools:tool_access.bzl", "access_tool")
 load("@rules_oci//oci:defs.bzl", "oci_load")
@@ -36,10 +38,11 @@ def docker_image_archive(name, image, architecture, source = None):
         repo_tags = ["gvisor.dev/images/" + image + ":latest"],
         tags = ["manual"],
     )
-    native.filegroup(
+    output_files(
         name = name + "_tar",
-        srcs = [":" + name],
         output_group = "tarball",
+        paths = [paths.join(native.package_name(), name, "tarball.tar")],
+        target = ":" + name,
         tags = ["manual"],
     )
 

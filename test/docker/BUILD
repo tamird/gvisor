@@ -1,3 +1,4 @@
+load("@bazel_lib//lib:output_files.bzl", "output_files")
 load("@rules_oci//oci:defs.bzl", "oci_load")
 load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
 load("//tools:defs.bzl", "bzl_library", "go_binary")
@@ -125,6 +126,8 @@ bzl_library(
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
         "//tools/bazeldefs:test_architectures_bzl",
+        "@bazel_lib//lib:output_files",
+        "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:shell",
         "@rules_foreign_cc//toolchains/native_tools:tool_access",
         "@rules_oci//oci:defs",
@@ -362,10 +365,11 @@ oci_load(
     tags = ["manual"],
 )
 
-filegroup(
+output_files(
     name = "oci_conversion_small_archive",
     testonly = True,
-    srcs = [":oci_conversion_small_load"],
     output_group = "tarball",
+    paths = ["test/docker/oci_conversion_small_load/tarball.tar"],
+    target = ":oci_conversion_small_load",
     tags = ["manual"],
 )
