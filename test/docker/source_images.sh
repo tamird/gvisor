@@ -83,7 +83,7 @@ else
   "${crane}" version
   set +e
   time timeout --signal=QUIT --kill-after=5s 120s \
-    "${crane}" pull --platform="${platform}" "${remote}" "${saved}"
+    env GODEBUG=http2client=0 "${crane}" pull --platform="${platform}" "${remote}" "${saved}"
   transfer_status=$?
   set -e
   printf 'Transfer status: %s\n' "${transfer_status}"
