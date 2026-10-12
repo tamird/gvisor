@@ -17,6 +17,7 @@ package tests
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/netip"
 	"time"
 
@@ -287,11 +288,24 @@ func (e *earlyFieldOwner) StateLoad(ctx context.Context, s state.Source) { e.chi
 // registration, using the forwarding owner's already-registered wire schema.
 var earlyFieldWire, earlyFieldLoaded, earlyFieldError = func() ([]byte, *earlyFieldOwner, error) {
 	state.Register((*earlyFieldOwner)(nil))
+	// A nil slot can be checkpointed before its element's registration. Its
+	// later non-nil use must retain valid operation metadata after init.
+	var child *earlyFieldChild
+	var buf bytes.Buffer
+	if _, err := state.Save(context.Background(), &buf, &child); err != nil {
+		return nil, nil, err
+	}
+	if _, err := state.Load(context.Background(), &buf, &child); err != nil {
+		return nil, nil, err
+	}
+	if got, want := child, (*earlyFieldChild)(nil); got != want {
+		return nil, nil, fmt.Errorf("early nil child = %v, want %v", got, want)
+	}
+	buf.Reset()
 	backing := []int{1, 2, 99, 99}
 	owner := earlyFieldOwner{prefix: 123, child: earlyFieldChild{
 		omitted: make(chan int), values: map[int]int{7: 9}, custom: 11, slice: backing[:2:4],
 	}}
-	var buf bytes.Buffer
 	if _, err := state.Save(context.Background(), &buf, &owner); err != nil {
 		return nil, nil, err
 	}
