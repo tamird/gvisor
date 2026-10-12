@@ -75,6 +75,24 @@ else
   # cached source images. The retagger changes
   # only crane's final manifest, so no second full archive is needed.
   saved="${work}/image.tar"
+  # Fork-only diagnostic: capture the stalled command before retrying a full export.
+  printf 'Transfer diagnostic: remote=%s platform=%s spool=%s\n' "${remote}" "${platform}" "${saved}"
+  uname -m
+  od -An -tx1 -N64 "${crane}"
+  head -30 /proc/cpuinfo
+  "${crane}" version
+  set +e
+  time timeout --signal=QUIT --kill-after=5s 120s \
+    "${crane}" pull --platform="${platform}" "${remote}" "${saved}"
+  transfer_status=$?
+  set -e
+  printf 'Transfer status: %s\n' "${transfer_status}"
+  if [[ -f ${saved} ]]; then
+    stat --format='Spool size=%s blocks=%b block-size=%B' "${saved}"
+    df -B1 "${saved}"
+  fi
+  # Never fall through into a second pull or a full Docker build after profiling.
+  exit "${transfer_status}"
   if [[ ${SKIP_IMAGE_LOAD:-} != true ]] && \
       "${crane}" pull --platform="${platform}" "${remote}" "${saved}"; then
     "${retag}" "${saved}" "${remote}" "${image}" "${latest}"
