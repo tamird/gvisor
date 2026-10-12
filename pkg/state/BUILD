@@ -90,6 +90,7 @@ go_library(
     visibility = [
         "//visibility:public",
     ],
+    gc_goopts = ["-m=2"],
     deps = [
         "//pkg/gohacks",
         "//pkg/state/wire",
