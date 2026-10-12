@@ -79,7 +79,7 @@ func TestMalformedValueDestinations(t *testing.T) {
 		{"array_kind", new(int64), &wire.Array{}},
 		{"field_in_array", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{&field}}},
 		{"index_at_length", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{wire.Index(1)}}},
-		{"index_overflow", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{wire.Index(^uint64(0))}}},
+		{"index_maximum", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{^wire.Index(0)}}},
 		{"pointer_type", new(*uint64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{wire.Index(0)}}},
 		{"slice_length", new([]int64), &wire.Slice{Ref: wire.Ref{Root: 2}, Length: 2, Capacity: 1}},
 		{"slice_capacity", new([]int64), &wire.Slice{Ref: wire.Ref{Root: 2}, Capacity: wire.Uint(^uint64(0))}},
