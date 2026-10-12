@@ -340,11 +340,18 @@ func (od *objectDecoder) loadLocation(slot int, obj location, wait bool, fn func
 	// is in terms of the local type, where the fields in the encoded
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
-	v := *od.encoded.Field(od.rte.FieldOrder[slot])
+	v := od.field(slot)
 	od.ds.decodeObject(od.ods, obj, v)
+	od.finishField(v, wait, fn)
+}
+
+func (od *objectDecoder) field(slot int) wire.Object {
+	return *od.encoded.Field(od.rte.FieldOrder[slot])
+}
+
+func (od *objectDecoder) finishField(encoded wire.Object, wait bool, fn func()) {
 	if wait {
-		// Mark this individual object a blocker.
-		od.ds.waitObject(od.ods, v, fn)
+		od.ds.waitObject(od.ods, encoded, fn)
 	}
 }
 
@@ -357,23 +364,30 @@ func (od *objectDecoder) afterLoad(fn func()) {
 
 // decodeStruct decodes a struct value.
 func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj location, object wire.Object) {
+	ds.decodeStructValue(ods, obj.ops.layout.typ, obj.reflect().Addr().Interface(), object)
+}
+
+func (ds *decodeState) decodeStructValue(ods *objectDecodeState, typ reflect.Type, pointer any, object wire.Object) {
+	if typ.Kind() != reflect.Struct {
+		Failf("wire value has incompatible destination type %v", typ)
+	}
 	encoded, ok := object.(*wire.Struct)
 	if !ok {
-		obj.incompatible()
+		Failf("wire value has incompatible destination type %v", typ)
 	}
 	if encoded.TypeID == 0 {
 		// Allow anonymous empty structs, but only if the encoded
 		// object also has no fields.
-		if encoded.Fields() == 0 && len(obj.ops.layout.fields) == 0 {
+		if encoded.Fields() == 0 && typ.NumField() == 0 {
 			return
 		}
 
 		// Propagate an error.
-		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, obj.ops.layout.typ.Name())
+		Failf("empty struct on wire %#v has field mismatch with type %q", encoded, typ.Name())
 	}
 
 	// Lookup the object type.
-	rte := ds.types.Lookup(typeID(encoded.TypeID), obj.ops.layout.typ)
+	rte := ds.types.Lookup(typeID(encoded.TypeID), typ)
 	ods.typ = typeID(encoded.TypeID)
 
 	// Invoke the loader.
@@ -385,7 +399,7 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj location, object
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	switch value := obj.reflect().Addr().Interface().(type) {
+	switch value := pointer.(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
 	case binaryObject:
@@ -395,16 +409,22 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj location, object
 
 // decodeMap decodes a map value.
 func (ds *decodeState) decodeMap(ods *objectDecodeState, source location, encoded *wire.Map) {
-	source.ops.mapOps.initialize(source)
+	m := source.reflect()
+	if m.IsNil() {
+		m.Set(reflect.MakeMap(source.ops.layout.typ))
+	}
 	for i := range encoded.Keys {
-		// Cells are not reused: load hooks may retain their addresses.
-		key := source.ops.key.newLocation()
-		element := source.ops.elem.newLocation()
-		ds.decodeObject(ods, key, encoded.Keys[i])
-		ds.decodeObject(ods, element, encoded.Values[i])
+		// Keep the fresh reflected cells at the allocation/insertion boundary.
+		// Hooks may retain their addresses, so neither cell can be reused.
+		key := reflect.New(source.ops.key.layout.typ).Elem()
+		element := reflect.New(source.ops.elem.layout.typ).Elem()
+		keyLocation := location{ops: source.ops.key, address: key.Addr().UnsafePointer()}
+		elementLocation := location{ops: source.ops.elem, address: element.Addr().UnsafePointer()}
+		ds.decodeObject(ods, keyLocation, encoded.Keys[i])
+		ds.decodeObject(ods, elementLocation, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
-		source.ops.mapOps.insert(source, key, element)
+		m.SetMapIndex(key, element)
 	}
 }
 
@@ -485,22 +505,25 @@ func isComplexEq(x complex128, y complex128) bool {
 	return isFloatEq(real(x), real(y)) && isFloatEq(imag(x), imag(y))
 }
 
-// decodeObject preserves the common nil no-op before selecting the destination
-// operation. Even an otherwise unsupported destination accepts these values.
-func (ds *decodeState) decodeObject(ods *objectDecodeState, obj location, encoded wire.Object) {
+// isNilObject preserves the universal wire no-op, even for destinations that
+// otherwise reject decoding. It does not clear an already-initialized value.
+func isNilObject(encoded wire.Object) bool {
 	switch x := encoded.(type) {
 	case wire.Nil:
-		return
+		return true
 	case *wire.Ref:
-		if x.Root == 0 {
-			return
-		}
+		return x.Root == 0
 	case *wire.Slice:
-		if x.Ref.Root == 0 {
-			return
-		}
+		return x.Ref.Root == 0
+	default:
+		return false
 	}
-	obj.ops.decode(ds, ods, obj, encoded)
+}
+
+func (ds *decodeState) decodeObject(ods *objectDecodeState, obj location, encoded wire.Object) {
+	if !isNilObject(encoded) {
+		obj.ops.decode(ds, ods, obj, encoded)
+	}
 }
 
 // Load deserializes the object graph rooted at obj.

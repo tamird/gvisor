@@ -73,8 +73,8 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 
 // lookupTypeInfo extracts the metadata for a type.
 func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
-	if definition := reverseTypeDatabase[typ]; definition != nil && definition.info != nil {
-		return *definition.info, true
+	if info, ok := reverseTypeDatabase[typ]; ok {
+		return info, true
 	}
 	v := reflect.Zero(reflect.PointerTo(typ)).Interface()
 	t, ok := v.(Type)
@@ -300,29 +300,14 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 // Wire IDs remain local to each serialization.
 type registeredType struct {
 	typ       reflect.Type
-	info      *wire.Type
 	newRecord func(wire.TypeID, int) *wire.Record
-	mapOps    *mapOperations
-	slice     *sliceOperations
 }
 
 // globalTypeDatabase is the single registration database for saving and loading.
-var globalTypeDatabase = map[string]*registeredType{}
+var globalTypeDatabase = map[string]registeredType{}
 
-// reverseTypeDatabase is the exact-type definition owner. Definitions without
-// info provide native operations without introducing a wire name or type ID.
-var reverseTypeDatabase = map[reflect.Type]*registeredType{}
-
-// definitionFor returns the shared exact-type definition while the operation
-// registry lock is held. Collection discovery need not introduce a wire name.
-func definitionFor(typ reflect.Type) *registeredType {
-	definition := reverseTypeDatabase[typ]
-	if definition == nil {
-		definition = &registeredType{typ: typ}
-		reverseTypeDatabase[typ] = definition
-	}
-	return definition
-}
+// reverseTypeDatabase holds immutable metadata indexed by the original type.
+var reverseTypeDatabase = map[reflect.Type]wire.Type{}
 
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
@@ -330,11 +315,10 @@ func definitionFor(typ reflect.Type) *registeredType {
 func Release() {
 	operationRegistry.Lock()
 	defer operationRegistry.Unlock()
-	operationRegistry.fields.Clear()
 	operationRegistry.cache.Clear()
+	physicalLayouts.Clear()
 	globalTypeDatabase = nil
 	reverseTypeDatabase = nil
-	physicalLayouts.Clear()
 }
 
 // binaryObject is a value with a self-contained binary representation.
@@ -442,10 +426,7 @@ func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
 
 // registerBinary registers a named foreign struct once, retaining its original
 // type for fields, map keys and interfaces. value must point to a named struct.
-func registerBinary[T any, P interface {
-	*T
-	binaryObject
-}](value P) {
+func registerBinary(value binaryObject) {
 	typ := reflect.TypeOf(value).Elem()
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
@@ -455,8 +436,6 @@ func registerBinary[T any, P interface {
 
 // register publishes metadata in the existing type databases.
 func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record) {
-	operationRegistry.Lock()
-	defer operationRegistry.Unlock()
 	if info.Name == "" {
 		Failf("type has empty name")
 	}
@@ -479,10 +458,8 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	definition := definitionFor(typ)
-	definition.info = &info
-	definition.newRecord = newRecord
-	globalTypeDatabase[info.Name] = definition
+	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord}
+	reverseTypeDatabase[typ] = info
 }
 
 func init() {

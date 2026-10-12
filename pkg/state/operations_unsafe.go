@@ -30,8 +30,6 @@ type typeOperations struct {
 	key    *typeOperations
 	elem   *typeOperations
 	decode func(*decodeState, *objectDecodeState, location, wire.Object)
-	mapOps *mapOperations
-	slice  *sliceOperations
 }
 
 // newLocation retains the already-selected operations for a fresh Go cell.
@@ -41,18 +39,13 @@ func (ops *typeOperations) newLocation() location {
 
 var operationRegistry = struct {
 	sync.Mutex
-	cache  sync.Map // map[reflect.Type]*typeOperations
-	fields sync.Map // map[reflect.Type][]fieldOperation, keyed by receiver pointer type
+	cache sync.Map // map[reflect.Type]*typeOperations
 }{}
 
-// Definitions are registered during init, like wire schemas. An earlier init
-// function may already have used a type: its published operations remain valid
-// and immutable, retaining their reflection adapters. Later native discovery
-// affects only descriptors that have not yet been built. No cache generations
-// or concurrent registration contract are introduced.
-
 // operationBuilder resolves recursive types within one private transaction.
-// Recursive construction never reenters operationsFor or its lock.
+// Operations depend only on Go types, independently of wire registration, and
+// are published only after the recursive graph is complete. Construction never
+// reenters operationsFor or its lock.
 type operationBuilder struct {
 	staged map[reflect.Type]*typeOperations
 }
@@ -66,22 +59,12 @@ func (b *operationBuilder) forType(typ reflect.Type) *typeOperations {
 	}
 	ops := &typeOperations{layout: layoutFor(typ), decode: decoderForKind(typ.Kind())}
 	b.staged[typ] = ops
-	if definition := reverseTypeDatabase[typ]; definition != nil {
-		ops.mapOps = definition.mapOps
-		ops.slice = definition.slice
-	}
 	switch typ.Kind() {
 	case reflect.Map:
 		ops.key = b.forType(typ.Key())
 		ops.elem = b.forType(typ.Elem())
-		if ops.mapOps == nil {
-			ops.mapOps = reflectedMapOperations
-		}
 	case reflect.Ptr, reflect.Slice, reflect.Array:
 		ops.elem = b.forType(typ.Elem())
-		if typ.Kind() == reflect.Slice && ops.slice == nil {
-			ops.slice = reflectedSliceOperations
-		}
 	}
 
 	return ops

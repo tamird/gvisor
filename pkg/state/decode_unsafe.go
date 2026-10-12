@@ -166,101 +166,81 @@ func decodeUnsupported(_ *decodeState, _ *objectDecodeState, obj location, _ wir
 }
 
 func decodeBool(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	x, ok := encoded.(wire.Bool)
-	if !ok {
-		obj.incompatible()
-	}
-	*(*bool)(obj.address) = bool(x)
-}
-
-func decodeSigned[T int | int8 | int16 | int32 | int64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	x, ok := encoded.(wire.Int)
-	if !ok {
-		obj.incompatible()
-	}
-	v := T(x)
-	*(*T)(obj.address) = v
-	if int64(v) != int64(x) {
-		Failf("signed integer truncated from %v to %v", x, v)
-	}
-}
-
-func decodeUnsigned[T uint | uint8 | uint16 | uint32 | uint64 | uintptr](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	x, ok := encoded.(wire.Uint)
-	if !ok {
-		obj.incompatible()
-	}
-	v := T(x)
-	*(*T)(obj.address) = v
-	if uint64(v) != uint64(x) {
-		Failf("unsigned integer truncated from %v to %v", x, v)
-	}
-}
-
-func decodeFloat[T float32 | float64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	switch x := encoded.(type) {
-	case wire.Float32:
-		*(*T)(obj.address) = T(x)
-	case wire.Float64:
-		v := T(x)
-		*(*T)(obj.address) = v
-		if !isFloatEq(float64(v), float64(x)) {
-			Failf("floating point number truncated from %v to %v", x, v)
-		}
-	default:
+	if !storeBool((*bool)(obj.address), encoded) {
 		obj.incompatible()
 	}
 }
 
-func decodeComplex[T complex64 | complex128](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	switch x := encoded.(type) {
-	case *wire.Complex64:
-		*(*T)(obj.address) = T(*x)
-	case *wire.Complex128:
-		v := T(*x)
-		*(*T)(obj.address) = v
-		if !isComplexEq(complex128(v), complex128(*x)) {
-			Failf("complex number truncated from %v to %v", *x, v)
-		}
-	default:
+func decodeSigned[T signed](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	if !storeSigned((*T)(obj.address), encoded) {
+		obj.incompatible()
+	}
+}
+
+func decodeUnsigned[T unsigned](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	if !storeUnsigned((*T)(obj.address), encoded) {
+		obj.incompatible()
+	}
+}
+
+func decodeFloat[T ~float32 | ~float64](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	if !storeFloat((*T)(obj.address), encoded) {
+		obj.incompatible()
+	}
+}
+
+func decodeComplex[T ~complex64 | ~complex128](_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	if !storeComplex((*T)(obj.address), encoded) {
 		obj.incompatible()
 	}
 }
 
 func decodeString(_ *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	x, ok := encoded.(*wire.String)
-	if !ok {
+	if !storeString((*string)(obj.address), encoded) {
 		obj.incompatible()
 	}
-	*(*string)(obj.address) = string(*x)
+}
+
+// pointerTarget is shared by generated pointer fields and dynamic destinations.
+func (ds *decodeState) pointerTarget(encoded wire.Object, typ reflect.Type, expected *typeOperations) location {
+	ref, ok := encoded.(*wire.Ref)
+	if !ok {
+		Failf("wire value has incompatible pointer target type %v", typ)
+	}
+	target := ds.register(ref, typ, expected)
+	if target.ops.layout.typ != typ {
+		Failf("pointer target type %v does not match %v", target.ops.layout.typ, typ)
+	}
+	return target
 }
 
 func decodePointer(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
-	x, ok := encoded.(*wire.Ref)
-	if !ok {
-		obj.incompatible()
-	}
-	target := ds.register(x, obj.ops.elem.layout.typ, obj.ops.elem)
-	if target.ops.layout.typ != obj.ops.elem.layout.typ {
-		Failf("pointer target type %v does not match %v", target.ops.layout.typ, obj.ops.elem.layout.typ)
-	}
+	target := ds.pointerTarget(encoded, obj.ops.elem.layout.typ, obj.ops.elem)
 	*(*unsafe.Pointer)(obj.address) = target.address
+}
+
+func (ds *decodeState) mapTarget(ref *wire.Ref, typ reflect.Type, expected *typeOperations) location {
+	target := ds.register(ref, typ, expected)
+	if target.ops.layout.kind != reflect.Map || (target.ops.layout.typ != typ && !target.ops.layout.typ.AssignableTo(typ)) {
+		Failf("map reference type %v does not match %v", target.ops.layout.typ, typ)
+	}
+	return target
+}
+
+// assignMap keeps Go's assignment boundary for dynamic and assignable named
+// map types. References need a non-nil header before the payload is decoded.
+func assignMap(dst, target reflect.Value) {
+	if target.IsNil() {
+		target.Set(reflect.MakeMap(target.Type()))
+	}
+	dst.Set(target)
 }
 
 func decodeMapLocation(ds *decodeState, ods *objectDecodeState, obj location, encoded wire.Object) {
 	switch x := encoded.(type) {
 	case *wire.Ref:
-		target := ds.register(x, obj.ops.layout.typ, obj.ops)
-		if target.ops.layout.kind != reflect.Map || (target.ops.layout.typ != obj.ops.layout.typ && !target.ops.layout.typ.AssignableTo(obj.ops.layout.typ)) {
-			Failf("map reference type %v does not match %v", target.ops.layout.typ, obj.ops.layout.typ)
-		}
-		target.ops.mapOps.initialize(target)
-		if target.ops.layout.typ == obj.ops.layout.typ {
-			obj.ops.mapOps.assign(obj, target)
-		} else {
-			// Named/unnamed map compatibility uses Go's assignment boundary.
-			obj.reflect().Set(target.reflect())
-		}
+		target := ds.mapTarget(x, obj.ops.layout.typ, obj.ops)
+		assignMap(obj.reflect(), target.reflect())
 	case *wire.Map:
 		if len(x.Keys) != len(x.Values) {
 			Failf("map has %d keys and %d values", len(x.Keys), len(x.Values))
@@ -271,23 +251,28 @@ func decodeMapLocation(ds *decodeState, ods *objectDecodeState, obj location, en
 	}
 }
 
-func decodeSlice(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+func (ds *decodeState) sliceTarget(encoded wire.Object, element reflect.Type) (location, int, int) {
 	x, ok := encoded.(*wire.Slice)
 	if !ok {
-		obj.incompatible()
+		Failf("wire value has incompatible slice element type %v", element)
 	}
-	capacity := checkedArrayLength(uint64(x.Capacity), obj.ops.elem.layout.size)
+	capacity := checkedArrayLength(uint64(x.Capacity), element.Size())
 	if x.Length > x.Capacity {
 		Failf("slice length %d exceeds capacity %d", x.Length, x.Capacity)
 	}
-	typ := reflect.ArrayOf(capacity, obj.ops.elem.layout.typ)
+	typ := reflect.ArrayOf(capacity, element)
 	// An existing backing array may contain a longer prefix than this slice.
 	// Resolve its actual operations instead of building an unused prefix type.
 	target := ds.register(&x.Ref, typ, nil)
-	if target.ops.layout.kind != reflect.Array || target.ops.elem.layout.typ != obj.ops.elem.layout.typ || target.ops.layout.length < uintptr(capacity) {
-		Failf("slice backing type %v does not contain %d elements of %v", target.ops.layout.typ, capacity, obj.ops.elem.layout.typ)
+	if target.ops.layout.kind != reflect.Array || target.ops.elem.layout.typ != element || target.ops.layout.length < uintptr(capacity) {
+		Failf("slice backing type %v does not contain %d elements of %v", target.ops.layout.typ, capacity, element)
 	}
-	obj.ops.slice.set(obj, target, int(x.Length), capacity)
+	return target, int(x.Length), capacity
+}
+
+func decodeSlice(ds *decodeState, _ *objectDecodeState, obj location, encoded wire.Object) {
+	target, length, capacity := ds.sliceTarget(encoded, obj.ops.elem.layout.typ)
+	obj.reflect().Set(reflectValueRWSlice3(target.reflect(), 0, length, capacity))
 }
 
 func checkedArrayLength(count uint64, elementSize uintptr) int {

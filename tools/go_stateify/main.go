@@ -257,16 +257,8 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
 			}
 		}
-		if records != nil {
-			for _, imported := range records.operationImports {
-				fmt.Fprintf(outputFile, " %s %q\n", imported.name, imported.path)
-			}
-		}
 		fmt.Fprint(outputFile, ")\n\n")
 	})
-	if records != nil && len(records.operations) != 0 {
-		maybeEmitImports()
-	}
 
 	simpleMethods := group.methods
 	for _, model := range group.types {
@@ -295,35 +287,38 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			emitFieldValue := func(name string, _ string) {
 				emitField(name)
 			}
-			emitLoadValue := func(name, typName string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
-			}
-			var declaration *declaredFields
+			loadRecv := recv
 			if records != nil {
-				declaration = records.fields[ts.Name.Name]
+				// Typed calls can name either the state import or an unqualified
+				// helper. Use the reserved receiver for both forms.
+				loadRecv = records.receiver
 			}
-			emitBindFields := func(source, receiver string) {
-				fmt.Fprintf(outputFile, " %s := %s.Fields(%s, []int{", declaration.local, source, receiver)
-				for _, index := range declaration.indices {
-					fmt.Fprintf(outputFile, "%d,", index)
-				}
-				fmt.Fprint(outputFile, "})\n")
+			emitLoadValue := func(name, typName string) {
+				fmt.Fprintf(outputFile, "\tstateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, loadRecv, camelCased(name), typName)
 			}
-			emitLoadField := func(name, method string) {
-				if declaration.has(fields[name]) {
-					fmt.Fprintf(outputFile, " %s.%s(%d)\n", declaration.local, method, fields[name])
+			emitLoadField := func(name string, wait bool) {
+				if records != nil {
+					helper := records.loads[ts.Name.Name][name]
+					if helper == "" {
+						panic("generated load has no checked field helper")
+					}
+					fmt.Fprintf(outputFile, " %s%s(&stateSourceObject, %d, &%s.%s, %t)\n", statePrefix, helper, fields[name], loadRecv, name, wait)
 				} else {
-					fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], recv, name)
+					method := "Load"
+					if wait {
+						method = "LoadWait"
+					}
+					fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, fields[name], loadRecv, name)
 				}
 			}
-			emitLoad := func(name string) { emitLoadField(name, "Load") }
-			emitLoadWait := func(name string) { emitLoadField(name, "LoadWait") }
+			emitLoad := func(name string) { emitLoadField(name, false) }
+			emitLoadWait := func(name string) { emitLoadField(name, true) }
 			// Checked capture can introduce package-qualified calls inside
 			// StateSave. Keep a handwritten receiver from shadowing that
 			// import, without renaming the hook or other generated methods.
 			saveRecv := recv
 			if records != nil && statePrefix == recv+"." {
-				saveRecv = records.saveReceiver
+				saveRecv = records.receiver
 			}
 			recordLocal := "stateSnapshotObject"
 			if recv == recordLocal {
@@ -425,10 +420,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			// N.B. See the comment above for the save method.
 			if generateSaverLoader {
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
-				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
-				if declaration != nil {
-					emitBindFields("stateSourceObject", recv)
-				}
+				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", loadRecv, ts.Name.Name, statePrefix)
 				model.scan(scanFunctions{normal: emitLoad, wait: emitLoadWait})
 				model.scan(scanFunctions{value: emitLoadValue})
 				if hasAfterLoad {
@@ -436,7 +428,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 					// AfterLoad is called, the object encodes a dependency on
 					// referred objects (i.e. fields). This means that afterLoad
 					// will not be called until the other afterLoads are called.
-					fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", recv)
+					fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", loadRecv)
 				}
 				fmt.Fprintf(outputFile, "}\n\n")
 			}
@@ -492,11 +484,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 	}
 
-	if records != nil {
-		for _, operation := range records.operations {
-			initCalls = append(initCalls, fmt.Sprintf("%s%s[%s]()", statePrefix, operation.helper, operation.typ))
-		}
-	}
 	if len(initCalls) > 0 {
 		// Emit the init() function.
 		fmt.Fprintf(outputFile, "func init() {\n")

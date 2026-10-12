@@ -37,20 +37,19 @@ import (
 // Groups preserve stateify's existing per-file-suffix hook visibility and
 // outputs. Sources additionally includes independent generated Go files.
 type packageConfig struct {
-	Package       string
-	ImportPath    string
-	StatePackage  string
-	Imports       []string
-	Sources       []string
-	Groups        []sourceGroup
-	Archives      map[string]compilerExport
-	NativeImports map[string]string
-	Stdlib        []string
-	GOOS          string
-	GOARCH        string
-	Tags          []string
-	GoVersion     string
-	CgoEnabled    bool
+	Package      string
+	ImportPath   string
+	StatePackage string
+	Imports      []string
+	Sources      []string
+	Groups       []sourceGroup
+	Archives     map[string]compilerExport
+	Stdlib       []string
+	GOOS         string
+	GOARCH       string
+	Tags         []string
+	GoVersion    string
+	CgoEnabled   bool
 }
 
 // compilerExport separates source import spellings from compiler identity.
@@ -65,40 +64,44 @@ type sourceGroup struct {
 }
 
 type recordSet struct {
-	wireAlias        string
-	saveReceiver     string
-	types            map[string]*recordType
-	fields           map[string]*declaredFields
-	forward          map[string]string
-	operations       []nativeOperation
-	operationImports []nativeImport
+	wireAlias string
+	receiver  string
+	types     map[string]*recordType
+	loads     map[string]map[string]string
+	forward   map[string]string
 }
 
-// declaredFields binds schema slots to checked direct Go field indices.
-// It is independent of recordType because a manual saver may have an
-// automatically generated loader.
-type declaredFields struct {
-	local   string
-	indices []int
-}
-
-func (f *declaredFields) has(slot int) bool {
-	return f != nil && slot >= 0 && slot < len(f.indices) && f.indices[slot] >= 0
-}
-
-func boundFieldType(t types.Type) bool {
+// loadHelperFor selects a shared typed entry from the checked field kind.
+// Calls infer their exact named type from the field pointer, so no component
+// type spelling or additional imports are needed.
+func loadHelperFor(t types.Type) string {
 	switch t := t.Underlying().(type) {
 	case *types.Basic:
-		return t.Kind() != types.UnsafePointer
-	case *types.Pointer, *types.Slice, *types.Array, *types.Map, *types.Struct, *types.Interface:
-		return true
-	default:
-		return false
+		switch t.Kind() {
+		case types.Bool:
+			return "LoadBool"
+		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
+			return "LoadSigned"
+		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
+			return "LoadUnsigned"
+		case types.Float32, types.Float64:
+			return "LoadFloat"
+		case types.Complex64, types.Complex128:
+			return "LoadComplex"
+		case types.String:
+			return "LoadString"
+		}
+	case *types.Pointer:
+		return "LoadPointer"
+	case *types.Map:
+		return "LoadMap"
+	case *types.Slice:
+		return "LoadSlice"
+	case *types.Struct:
+		return "LoadStruct"
 	}
+	return "LoadObject"
 }
-
-type nativeOperation struct{ helper, typ string }
-type nativeImport struct{ name, path string }
 
 type recordType struct {
 	name    string
@@ -365,7 +368,6 @@ func generateRecords(configPath string) error {
 				return fmt.Errorf("duplicate compiler exports for %s: %s and %s", name, old.File, path)
 			}
 			config.Archives[name] = compilerExport{File: path, ImportMap: name}
-			config.NativeImports[name] = name
 			return nil
 		})
 		if err != nil {
@@ -391,7 +393,7 @@ func generateRecords(configPath string) error {
 		if canonical[i] == nil {
 			fmt.Fprintf(&b, "//go:build ignore\n\npackage %s\n", pkg.Name())
 		} else {
-			records, err := checkedRecords(canonical[i], info, pkg, models[i], config.NativeImports)
+			records, err := checkedRecords(canonical[i], info, pkg, models[i])
 			if err != nil {
 				return err
 			}
@@ -406,7 +408,7 @@ func generateRecords(configPath string) error {
 
 // checkedRecords binds the shared field model to compiler-owned types. It
 // does not infer the schema from generated Save calls or field spellings.
-func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel, nativeImports map[string]string) (*recordSet, error) {
+func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel) (*recordSet, error) {
 	names := make(map[string]struct{})
 	for _, name := range pkg.Scope().Names() {
 		names[name] = struct{}{}
@@ -423,70 +425,11 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		}
 	}
 	records := &recordSet{
-		wireAlias:    unusedName("statewire", names),
-		saveReceiver: unusedName("stateObject", names),
-		types:        make(map[string]*recordType),
-		fields:       make(map[string]*declaredFields),
-		forward:      make(map[string]string),
-	}
-	// Identity and source spelling are deliberately separate. An exported Go
-	// alias can name a foreign unexported defined map or slice.
-	seen := make(map[types.Type]bool)
-	registered := make(map[types.Type]bool)
-	importNames := make(map[string]string)
-	for _, path := range strings.Split(imports, ",") {
-		if path != "" {
-			importNames[path] = ""
-		}
-	}
-	if statePkg != "" {
-		importNames[statePkg] = ""
-	}
-	qualifier := func(imported *types.Package) string {
-		if imported == pkg {
-			return ""
-		}
-		path := nativeImports[imported.Path()]
-		if name, ok := importNames[path]; ok {
-			if name == "" {
-				return imported.Name()
-			}
-			return name
-		}
-		name := unusedName("stateType"+imported.Name(), names)
-		importNames[path] = name
-		records.operationImports = append(records.operationImports, nativeImport{name, path})
-		return name
-	}
-	var collect func(types.Type)
-	collect = func(spelling types.Type) {
-		canonical := types.Unalias(spelling)
-		helper := ""
-		switch canonical.Underlying().(type) {
-		case *types.Map:
-			helper = "RegisterMap"
-		case *types.Slice:
-			helper = "RegisterSlice"
-		}
-		if helper != "" && !registered[canonical] && nameableType(spelling, pkg, nativeImports) {
-			records.operations = append(records.operations, nativeOperation{helper, types.TypeString(spelling, qualifier)})
-			registered[canonical] = true
-		}
-		if seen[canonical] {
-			return
-		}
-		seen[canonical] = true
-		switch underlying := canonical.Underlying().(type) {
-		case *types.Map:
-			collect(underlying.Key())
-			collect(underlying.Elem())
-		case *types.Slice:
-			collect(underlying.Elem())
-		case *types.Array:
-			collect(underlying.Elem())
-		case *types.Pointer:
-			collect(underlying.Elem())
-		}
+		wireAlias: unusedName("statewire", names),
+		receiver:  unusedName("stateObject", names),
+		types:     make(map[string]*recordType),
+		loads:     make(map[string]map[string]string),
+		forward:   make(map[string]string),
 	}
 
 	for _, typ := range model.types {
@@ -495,7 +438,6 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		if !ok {
 			return nil, fmt.Errorf("no checked type declaration for %s", name)
 		}
-		collect(object.Type())
 		if _, structural := typ.spec.Type.(*ast.StructType); !structural {
 			if typ.save && typ.identical {
 				_, records.forward[name] = resolveTypeName(typ.spec.Type)
@@ -505,15 +447,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		owner := types.NewPointer(object.Type())
 		_, manual := model.methods[method{name, "StateSave"}]
 		generatedSaver := typ.save && !manual
-		declaration := &declaredFields{
-			local: unusedName("stateBoundFields", names),
-		}
-		for _, field := range typ.fields {
-			if field.slot >= 0 {
-				declaration.indices = append(declaration.indices, -1)
-			}
-		}
-		hasDeclaredField := false
+		loadHelpers := make(map[string]string)
 		record := &recordType{
 			name:    unusedName(fmt.Sprintf("stateRecord%d_%s", len(name), name), names),
 			factory: unusedName(fmt.Sprintf("newStateRecord%d_%s", len(name), name), names),
@@ -527,7 +461,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			if field.kind == fieldValue {
 				lookup = "save" + camelCased(field.name)
 			}
-			member, index, _ := types.LookupFieldOrMethod(owner, true, pkg, lookup)
+			member, _, _ := types.LookupFieldOrMethod(owner, true, pkg, lookup)
 			if member == nil {
 				if !generatedSaver && field.kind == fieldValue {
 					continue
@@ -545,18 +479,16 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 				valueType = signature.Results().At(0).Type()
 			} else {
 				valueType = member.Type()
-				if typ.save && boundFieldType(valueType) {
-					if _, ok := member.(*types.Var); !ok || len(index) != 1 {
-						return nil, fmt.Errorf("%s.%s is not a direct checked Go field", name, lookup)
+				if typ.save {
+					if _, ok := member.(*types.Var); !ok {
+						return nil, fmt.Errorf("%s.%s is not a checked Go field", name, lookup)
 					}
-					declaration.indices[field.slot] = index[0]
-					hasDeclaredField = true
+					loadHelpers[field.name] = loadHelperFor(valueType)
 				}
 			}
 			if generatedSaver && field.slot != len(record.fields) {
 				panic("noncontiguous field model")
 			}
-			collect(valueType)
 			if generatedSaver {
 				record.fields = append(record.fields, encodingFor(types.Unalias(valueType), field.kind == fieldValue))
 			}
@@ -564,56 +496,11 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		if generatedSaver {
 			records.types[name] = record
 		}
-		if hasDeclaredField {
-			records.fields[name] = declaration
+		if len(loadHelpers) != 0 {
+			records.loads[name] = loadHelpers
 		}
 	}
 	return records, nil
-}
-
-// nameableType checks whether generated code in pkg may spell this exact type.
-// Named aliases are checked before unaliasing so an accessible public alias is
-// not lost. Opaque foreign components use central exact-type allocation, while
-// dynamic collections retain the existing reflection adapter.
-func nameableType(t types.Type, pkg *types.Package, nativeImports map[string]string) bool {
-	switch t := t.(type) {
-	case *types.Alias:
-		if t.Obj().Pkg() != nil && t.Obj().Pkg() != pkg && (!t.Obj().Exported() || nativeImports[t.Obj().Pkg().Path()] == "") {
-			return false
-		}
-		for i := 0; i < t.TypeArgs().Len(); i++ {
-			if !nameableType(t.TypeArgs().At(i), pkg, nativeImports) {
-				return false
-			}
-		}
-		return true
-	case *types.Named:
-		if t.Obj().Pkg() != nil && t.Obj().Pkg() != pkg && (!t.Obj().Exported() || nativeImports[t.Obj().Pkg().Path()] == "") {
-			return false
-		}
-		for i := 0; i < t.TypeArgs().Len(); i++ {
-			if !nameableType(t.TypeArgs().At(i), pkg, nativeImports) {
-				return false
-			}
-		}
-		return true
-	case *types.Basic:
-		// This unsupported value kind also has a fixed unsafe.Pointer spelling,
-		// rather than a qualifier selected through its compiler package.
-		return t.Kind() != types.UnsafePointer
-	case *types.Pointer:
-		return nameableType(t.Elem(), pkg, nativeImports)
-	case *types.Slice:
-		return nameableType(t.Elem(), pkg, nativeImports)
-	case *types.Array:
-		return nameableType(t.Elem(), pkg, nativeImports)
-	case *types.Map:
-		return nameableType(t.Key(), pkg, nativeImports) && nameableType(t.Elem(), pkg, nativeImports)
-	case *types.Interface:
-		return t.NumMethods() == 0
-	default:
-		return false
-	}
 }
 
 // unusedName reserves a new generated identifier against existing scope names.
