@@ -104,10 +104,11 @@ def _tcg_test_impl(ctx):
     environment.update(ctx.attr.guest_env)
     ctx.actions.write(
         configuration,
-        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\n" % (
+        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\n" % (
             ctx.attr.memory_mib,
             ctx.attr.scratch_gib,
             shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
+            shell.quote(ctx.file.emulator.short_path if ctx.file.emulator != None else ""),
         ) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
             " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
@@ -115,6 +116,8 @@ def _tcg_test_impl(ctx):
         ),
     )
     inputs = [ctx.file.archive, ctx.file.host_tools, image.kernel, image.initramfs, configuration, ctx.executable._launcher, ctx.file._test_setup, tar.tarinfo.binary]
+    if ctx.file.emulator != None:
+        inputs.append(ctx.file.emulator)
     arguments = [
         ctx.file.host_tools.short_path,
         image.kernel.short_path,
@@ -147,6 +150,7 @@ _tcg_test = rule(
         "payload": attr.label(executable = True, cfg = "target", mandatory = True),
         "archive": attr.label(allow_single_file = True, mandatory = True),
         "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
+        "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
@@ -190,6 +194,7 @@ def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
         name = name,
         payload = payload,
         image = image,
+        emulator = Label("//test/rbe/tcg/qemu:system_aarch64"),
         tags = tags + ["no-local"],
         exec_properties = {
             "test.EstimatedCPU": "2",
