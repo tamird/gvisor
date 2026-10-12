@@ -419,6 +419,15 @@ http_archive(
 ### Docker integration test images
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
+# Exact Alpine base selected by the qualified Dockerfile build in bf0be970.
+oci.pull(
+    name = "ollama_client_alpine",
+    digest = "sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6",
+    image = "docker.io/library/alpine",
+    platforms = ["linux/amd64"],
+)
+use_repo(oci, "ollama_client_alpine", "ollama_client_alpine_linux_amd64")
+
 # images/arch-systemd, built by tools/images.mk as ad890a55561e4450.
 oci.pull(
     name = "docker_image_arch_systemd_amd64",

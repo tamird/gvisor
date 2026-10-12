@@ -179,7 +179,7 @@ go_test(
 docker_daemon_config(
     name = "ollama_client_config",
     testonly = True,
-    images = ["//test/docker:gpu_ollama_client_source_amd64"],
+    images = ["//images/gpu/ollama/client:image_archive"],
     runtime = None,
     tags = ["manual"],
 )
