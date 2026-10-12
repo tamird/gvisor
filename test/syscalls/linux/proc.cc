@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <ctime>
 #include <functional>
@@ -50,6 +51,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <regex>  // NOLINT
 #include <string>
@@ -2929,7 +2931,8 @@ TEST(ProcTask, VerifyTaskChildrenNeverReportsZeroTID) {
     }
 
     std::atomic<bool> stop = false;
-    absl::BlockingCounter readers_started(4);
+    std::array<std::optional<ScopedThread>, 4> readers;
+    absl::BlockingCounter readers_started(readers.size());
     auto read = [&] {
       bool success = scan();
       readers_started.DecrementCount();
@@ -2937,14 +2940,19 @@ TEST(ProcTask, VerifyTaskChildrenNeverReportsZeroTID) {
         success = scan();
       }
     };
-    ScopedThread reader1(read);
-    ScopedThread reader2(read);
-    ScopedThread reader3(read);
-    ScopedThread reader4(read);
     // Stop before joining, including when a reap assertion fails. Joining the
     // readers also keeps them out of the next batch's setup.
-    auto stop_readers =
-        Cleanup([&] { stop.store(true, std::memory_order_relaxed); });
+    auto stop_readers = Cleanup([&] {
+      stop.store(true, std::memory_order_relaxed);
+      for (auto& reader : readers) {
+        if (reader) {
+          reader->Join();
+        }
+      }
+    });
+    for (auto& reader : readers) {
+      reader.emplace(read);
+    }
     readers_started.Wait();
 
     // Every reader has attempted a scan and successful readers continue while
@@ -2953,12 +2961,6 @@ TEST(ProcTask, VerifyTaskChildrenNeverReportsZeroTID) {
       ASSERT_THAT(RetryEINTR(waitpid)(child, nullptr, 0),
                   SyscallSucceedsWithValue(child));
     }
-
-    stop_readers.Release()();
-    reader1.Join();
-    reader2.Join();
-    reader3.Join();
-    reader4.Join();
   }
 
   EXPECT_FALSE(reported_zero.load(std::memory_order_relaxed));
