@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T15:36:59.773847+00:00",
+    "updatedAt": "2026-10-13T16:06:35.652889+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6235,27 +6235,29 @@
       "id": "branch:checkescape-annotation-syntax",
       "type": "branch",
       "repo": "tamird/gvisor",
-      "ref": "checkescape-annotation-syntax",
-      "head": "5a145857c55bad19c858775d4831da002844e555",
-      "title": "Diagnose malformed checkescape annotations",
+      "ref": "checkescape-annotation-contract-proposal",
+      "head": "cb095665ee4a7ac41054541765d32d27049c3f86",
+      "title": "Preserve wire allocation guards and reject malformed annotations",
       "group": "analysis",
-      "url": "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555",
-      "status": "Revision work",
-      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
-      "summary": "The original standalone 5a145857c parser proposal is validated against its retained controls, but the contributor requested a historical-intent correction before publication. The owner is resolving that condition; this is agent revision work, not an unanswered approval question. No upstream PR or analyzer adoption is claimed. The original before controls, corrected checks and separate canonical Gazelle correction remain source-specific evidence; existing #14181 is a separate vettool change.",
+      "url": "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T16:06:35.652889+00:00",
+      "summary": "The revised proposal cb095665ee enables transitive hard allocation checks on wire.Save and wire.Load while diagnosing malformed annotations. It retains eleven constructor exemptions and narrowly excludes scalar boxing and invalid-input formatting. Hosted qualification passed six owning actions, including a temporary allocation witness proving that the numeric helper remains checked; the witness is absent from the final proposal. This is a new explicit heap/builtin contract, not a claim that historical all-reasons enforcement worked. A new contributor decision is pending for this exact public revision. Original5a remains historical; no upstream PR, analyzer adoption or performance claim is made.",
       "followup": {
         "owner": "restore_integration_review",
-        "disposition": "Contributor-requested history correction",
-        "sourceHead": "5a145857c55bad19c858775d4831da002844e555",
-        "nextAction": "Complete the historical restriction correction and its evidence before submitting a revised standalone proposal.",
+        "disposition": "New exact-head contributor decision pending",
+        "sourceHead": "cb095665ee4a7ac41054541765d32d27049c3f86",
+        "nextAction": "Await the contributor decision on the concrete qualified hard-allocation contract before upstream publication.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86",
           "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555"
         ],
-        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+        "observedAt": "2026-10-13T16:06:35.652889+00:00"
       },
-      "contributorChangesRequested": {
-        "head": "5a145857c55bad19c858775d4831da002844e555",
-        "url": "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555"
+      "contributorReview": {
+        "status": "pending",
+        "head": "cb095665ee4a7ac41054541765d32d27049c3f86",
+        "url": "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86"
       }
     },
     {
