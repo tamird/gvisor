@@ -20,6 +20,44 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_registry_decision_does_not_inherit_older_github_clock(self):
+        full_at = "2026-10-12T11:48:00Z"
+        decision_at = "2026-10-12T14:41:00Z"
+        branch = {"id": "branch:proposal", "type": "branch", "ref": "proposal",
+                  "head": "b" * 40,
+                  "contributorReview": {"status": "pending", "head": "b" * 40}}
+        registry = {"meta": {"updatedAt": decision_at}, "nodes": [branch]}
+        pr = original(checkedAt=full_at)
+        states = record_states([pr], registry, {}, full_at)
+        decision = states[branch["id"]]["contributor-review"]
+        self.assertEqual((decision["since"], decision["observedAt"]), (decision_at, decision_at))
+        self.assertEqual(states["pr:1"]["maintainer-review"]["observedAt"], full_at)
+        registry["meta"]["updatedAt"] = "2026-10-12T15:00:00Z"
+        later = record_states([pr], registry, {"workStates": states}, full_at)
+        self.assertEqual(later[branch["id"]]["contributor-review"]["since"], decision_at)
+        self.assertEqual(later["pr:1"]["maintainer-review"]["observedAt"], full_at)
+
+    def test_direct_terminal_observation_preserves_exact_transition(self):
+        full_at = "2026-10-12T11:48:00Z"
+        merged_at = "2026-10-12T17:54:16Z"
+        observed_at = "2026-10-12T18:05:00+00:00"
+        pr = original(status="merged", mergedAt=merged_at, checkedAt=full_at,
+                      statusObservation={"checkedAt": observed_at})
+        state = record_states([pr], {"nodes": []}, {}, full_at)["pr:1"]["merged"]
+        self.assertEqual((state["since"], state["basis"], state["observedAt"]),
+                         (merged_at, "transition", observed_at))
+        pr["checkedAt"] = "2026-10-12T18:36:00Z"
+        self.assertEqual(record_states([pr], {"nodes": []}, {}, full_at)["pr:1"]["merged"]["observedAt"],
+                         pr["checkedAt"])
+
+    def test_legacy_first_observation_uses_pr_time(self):
+        pr = original(checkedAt="2026-10-12T12:00:00Z")
+        previous = {"checkedAt": "2026-10-12T11:00:00Z", "prs": [copy.deepcopy(pr)]}
+        pr["checkedAt"] = "2026-10-12T13:00:00Z"
+        state = record_states([pr], {"nodes": []}, previous, pr["checkedAt"])["pr:1"]["maintainer-review"]
+        self.assertEqual((state["since"], state["observedAt"]),
+                         ("2026-10-12T12:00:00Z", "2026-10-12T13:00:00Z"))
+
     def test_reassociated_old_approval_is_not_a_fresh_submission(self):
         pr = original(reviewDecision="APPROVED", headCommittedAt="2026-10-09T19:31:21Z",
                       headIntroducedAt="2026-10-09T19:32:12Z")
@@ -184,7 +222,9 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(second["pr:1"]["maintainer-review"]["since"], first["checkedAt"])
         previous = {"checkedAt": "2026-10-02T00:00:00Z", "prs": [copy.deepcopy(pr)], "workStates": second}
         pr["updatedAt"] = "2026-10-03T00:00:00Z"
-        self.assertEqual(record_states([pr], registry, previous, "2026-10-03T00:00:00Z"), second)
+        refreshed = record_states([pr], registry, previous, "2026-10-03T00:00:00Z")
+        self.assertEqual(refreshed["pr:1"]["maintainer-review"], {
+            **second["pr:1"]["maintainer-review"], "observedAt": "2026-10-03T00:00:00Z"})
         pr["head"] = "c" * 40
         self.assertEqual(record_states([pr], registry, previous, "2026-10-03T00:00:00Z")["pr:1"]["maintainer-review"]["since"], "2026-10-03T00:00:00Z")
         previous = {"checkedAt": "2026-10-03T00:00:00Z", "prs": [original(reviewDecision="APPROVED")], "workStates": {"pr:1": {}}}

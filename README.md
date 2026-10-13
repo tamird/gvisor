@@ -70,6 +70,15 @@ payload. There is a 48-attempt ceiling, including retries, and a 200-open-PR bou
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
 unchanged.
 
+State ages use their own `observedAt` clock. PR states use that PR's service
+observation; an independently recorded terminal-status read may establish a
+newer merge or close time. Contributor decisions use the registry observation.
+These clocks preserve first-observed dates across metadata-only updates without
+advancing the full GitHub snapshot or claiming fresh review-thread evidence.
+Older records without `observedAt` retain the full-snapshot clock. Run the clock
+and classification checks with `python3 -m unittest work_states_test` and
+`node --test app_test.mjs`.
+
 The updater owns the complete GitHub status/attribute snapshot. Each PR records its exact
 head and base SHAs, observation time, GitHub review decision, labels, merge state, unresolved
 review threads, and visible check/status rollup. Nested lists are bounded to 100

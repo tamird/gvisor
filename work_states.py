@@ -21,6 +21,7 @@ class Observation(ScopedState):
 
 class StateObservation(Observation, total=False):
     evidence: str
+    observedAt: str
 
 
 StateMap = dict[str, dict[str, StateEvidence]]
@@ -228,6 +229,8 @@ def derive_states(prs: list[dict], registry: dict) -> StateMap:
 
 def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: str) -> ObservationMap:
     current = derive_states(prs, registry)
+    current_prs = {f"pr:{pr['number']}": pr for pr in prs}
+    previous_prs = {f"pr:{pr['number']}": pr for pr in previous.get("prs", [])}
     prior_prs = {f"pr:{pr['number']}": pr_states(pr) for pr in previous.get("prs", [])}
     # The old collector's aggregate approval cannot backdate the first
     # observation under the exact-head and submission-time rules.
@@ -240,6 +243,15 @@ def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: s
     for identity, states in current.items():
         result[identity] = {}
         for state, evidence in states.items():
+            if pr := current_prs.get(identity):
+                observed_at = pr.get("checkedAt", checked_at)
+                if state in {"merged", "closed"} and (terminal := pr.get("statusObservation")):
+                    observed_at = max(observed_at, terminal["checkedAt"],
+                                      key=lambda value: datetime.fromisoformat(value.replace("Z", "+00:00")))
+            else:
+                # Contributor decisions are registry evidence, independent of
+                # the last complete GitHub collection.
+                observed_at = registry.get("meta", {}).get("updatedAt", checked_at)
             old = history.get(identity, {}).get(state, {})
             # Legacy PR review meant maintainer review. Legacy branch review
             # was emitted only for an explicit contributor-review-requested
@@ -256,11 +268,11 @@ def record_states(prs: list[dict], registry: dict, previous: dict, checked_at: s
             elif old.get("scope") == evidence["scope"] and old.get("since"):
                 since, basis = old["since"], old["basis"]
             elif prior_prs.get(identity, {}).get(state, {}).get("scope") == evidence["scope"]:
-                since, basis = previous["checkedAt"], "observed"
+                since, basis = previous_prs[identity].get("checkedAt", previous["checkedAt"]), "observed"
             else:
-                since, basis = checked_at, "observed"
+                since, basis = observed_at, "observed"
             result[identity][state] = {"scope": evidence["scope"], "since": since, "basis": basis,
-                                       "qualifier": evidence.get("qualifier")}
+                                       "qualifier": evidence.get("qualifier"), "observedAt": observed_at}
             if old.get("scope") == evidence["scope"] and old.get("evidence"):
                 result[identity][state]["evidence"] = old["evidence"]
     return result

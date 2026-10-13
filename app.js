@@ -151,9 +151,12 @@ function appendChecks(container, pr, heading) {
 }
 function conflictRecord(pr) {
   const previous = pr.mergeabilityObservation;
-  if (pr.mergeable === "CONFLICTING") return { scope: pr.head, since: pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt, basis: "observed", qualifier: null };
+  if (pr.mergeable === "CONFLICTING") {
+    const observedAt = pr.conflictCheckedAt || pr.mergeabilityCheckedAt || pr.checkedAt;
+    return { scope: pr.head, since: observedAt, observedAt, basis: "observed", qualifier: null };
+  }
   if (pr.mergeable === "UNKNOWN" && previous?.state === "CONFLICTING" && previous.head === pr.head)
-    return { scope: pr.head, since: previous.checkedAt, basis: "observed", qualifier: "Last observed conflict; GitHub is recomputing current mergeability" };
+    return { scope: pr.head, since: previous.checkedAt, observedAt: previous.checkedAt, basis: "observed", qualifier: "Last observed conflict; GitHub is recomputing current mergeability" };
   return null;
 }
 function mergeDescription(pr) {
@@ -304,7 +307,7 @@ function matches(node) {
 function filtered() { return $("search").value.trim() || $("group-filter").value || (model.statesAvailable && stateFilters.size); }
 function age(record) {
   if (record.basis === "unknown") return "age unknown";
-  const minutes = Math.max(0, Math.floor((Date.parse(model.checkedAt || new Date().toISOString()) - Date.parse(record.since)) / 60000));
+  const minutes = Math.max(0, Math.floor((Date.parse(record.observedAt || model.checkedAt) - Date.parse(record.since)) / 60000));
   const duration = minutes < 60 ? `${minutes}m` : minutes < 1440 ? `${Math.floor(minutes / 60)}h` : `${Math.floor(minutes / 1440)}d`;
   return `${record.basis === "observed" ? "obs " : ""}${duration}`;
 }
@@ -326,7 +329,7 @@ function stateLabel(node, state) {
 }
 function stateTitle(state, record) {
   if (record.basis === "unknown") return `${STATE_LABELS[state]} · Revision not recorded; state age unknown.`;
-  return `${STATE_LABELS[state]} · ${record.basis === "observed" ? "Observed since" : "Transition recorded"} ${date(record.since)}. ${record.basis === "observed" ? "First observation in the retained interval; the state may have begun earlier. Continuity between snapshots is unknown." : "GitHub transition timestamp."}`;
+  return `${STATE_LABELS[state]} · ${record.basis === "observed" ? "Observed since" : "Transition recorded"} ${date(record.since)}. ${record.basis === "observed" ? "First observation in the retained interval; the state may have begun earlier. Continuity between snapshots is unknown." : "GitHub transition timestamp."} State observed ${date(record.observedAt || model.checkedAt)}.`;
 }
 function appendStates(parent, node, detail = false) {
   for (const [state, record] of Object.entries(states(node))) {
@@ -362,7 +365,7 @@ function drawStateFilters() {
 }
 function stateAge(node) {
   const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
-  return records.length ? Math.max(...records.map(([, record]) => Date.parse(model.checkedAt) - Date.parse(record.since))) : -1;
+  return records.length ? Math.max(...records.map(([, record]) => Date.parse(record.observedAt || model.checkedAt) - Date.parse(record.since))) : -1;
 }
 const URL_FIELDS = ["view", "state", "q", "group", "resolved", "focus", "investigation-status"];
 function selectedFromURL() {
@@ -816,7 +819,7 @@ function stateRecords(snapshot, node) {
         ? decision === "CHANGES_REQUESTED" ? "changes-requested" : decision !== "APPROVED" ? "maintainer-review" : null : null;
       if (state) records[state] = pr.revisionChanged && state === "maintainer-review"
         ? { scope: null, since: null, basis: "unknown", qualifier: "New head; approval has not been collected" }
-        : { scope: pr.head, since: pr.conflictCheckedAt, basis: "observed", qualifier: null };
+        : { scope: pr.head, since: pr.conflictCheckedAt, observedAt: pr.conflictCheckedAt, basis: "observed", qualifier: null };
     }
     // Reconcile legacy aggregate-failure records only from complete inventories.
     // Administrative assignment errors remain visible in the raw check details.
@@ -837,7 +840,7 @@ function stateRecords(snapshot, node) {
     if (node.github.mergeable !== "MERGEABLE") delete records["waiting-merge"];
     if (["merged", "closed"].includes(node.github.status) && node.github.conflictCheckedAt) {
       for (const key of Object.keys(records)) delete records[key];
-      records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
+      records[node.github.status] = { scope: node.github.head, since: node.github.conflictCheckedAt, observedAt: node.github.conflictCheckedAt, basis: "observed", qualifier: null };
     }
   }
   return records;
@@ -933,12 +936,18 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
   if (snapshot.registryDate !== nextRegistry.meta.updatedAt) throw new Error("Published registry and GitHub snapshot revisions differ");
   if (snapshot.workStates !== undefined) {
     if (!snapshot.workStates || Array.isArray(snapshot.workStates) || typeof snapshot.workStates !== "object") throw new Error("Invalid state history");
-    for (const records of Object.values(snapshot.workStates)) {
+    for (const [identity, records] of Object.entries(snapshot.workStates)) {
       if (!records || Array.isArray(records) || typeof records !== "object") throw new Error("Invalid state records");
       for (const [state, record] of Object.entries(records)) {
+        const pr = snapshot.prs.find(item => `pr:${item.number}` === identity);
+        const sourceTime = pr ? Math.max(Date.parse(pr.checkedAt || snapshot.checkedAt),
+          ["merged", "closed"].includes(state) && pr.statusObservation ? Date.parse(pr.statusObservation.checkedAt) : 0)
+          : Date.parse(nextRegistry.meta.updatedAt);
+        const observedTime = Date.parse(record?.observedAt ?? snapshot.checkedAt);
         if ((!Object.hasOwn(STATE_LABELS, state) && state !== "review") || !record || !["observed", "transition", "unknown"].includes(record.basis) ||
+            (record.observedAt !== undefined && (typeof record.observedAt !== "string" || !Number.isFinite(observedTime) || !Number.isFinite(sourceTime) || observedTime > sourceTime)) ||
             (record.basis === "unknown" ? record.scope !== null || record.since !== null :
-              typeof record.scope !== "string" || !Number.isFinite(Date.parse(record.since)) || Date.parse(record.since) > Date.parse(snapshot.checkedAt)) || (record.qualifier != null && typeof record.qualifier !== "string")) throw new Error("Invalid state observation");
+              typeof record.scope !== "string" || !Number.isFinite(Date.parse(record.since)) || Date.parse(record.since) > observedTime) || (record.qualifier != null && typeof record.qualifier !== "string")) throw new Error("Invalid state observation");
       }
     }
   }
