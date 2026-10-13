@@ -105,6 +105,76 @@ test('attention assigns simultaneous public and internal failures to their actua
   assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /refresh and investigate/);
 });
 
+function deniedImportRetry() {
+  const node = attentionNode(15333), imported = attentionImport(node, 15339);
+  node.repo = 'google/gvisor';
+  node.ciRecovery = { kind: 'dependency-download-retry-denied', sourceHead: node.github.head,
+    importNumber: imported.number, importHead: imported.head, workflowRun: 38434851950, job: 115426066833,
+    jobURL: 'https://github.com/google/gvisor/actions/runs/38434851950/job/115426066833',
+    checkId: 'check-1', checkName: 'generate', statuses: [{ id: 'status-1', name: 'go tests' }],
+    httpStatus: 403, observedAt: '2026-10-13T17:35:00Z' };
+  imported.checks = { complete: true, state: 'FAILURE', total: 2, contexts: [
+    { id: 'check-1', name: 'generate', kind: 'check-run', appSlug: 'github-actions', state: 'FAILURE', purpose: 'validation', url: node.ciRecovery.jobURL },
+    { ...serviceStatus('go tests', 'FAILURE'), id: 'status-1' },
+  ] };
+  node.github.imports = [imported];
+  return node;
+}
+
+test('denied exact import retry is maintainer work while unrelated failures stay agent work', () => {
+  const node = deniedImportRetry();
+  assert.ok(idsFor(node).includes('maintainer-ci-retry'));
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  assert.ok(!idsFor(node).includes('maintainer-internal-feedback'));
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry').owner, 'maintainer');
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-ci-retry').detail, /HTTP 403/);
+  assert.equal(node.github.imports[0].checks.state, 'FAILURE');
+  node.github.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('feedback/copybara', 'FAILURE')] };
+  assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
+  assert.ok(!idsFor(node).includes('maintainer-import-checks'));
+  node.github.imports[0].checks.contexts.push({ ...serviceStatus('buildkite/pipeline', 'FAILURE'), id: 'another-status' });
+  node.github.imports[0].checks.total++;
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  assert.ok(idsFor(node).includes('maintainer-ci-retry'));
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /buildkite\/pipeline/);
+});
+
+test('retry recovery expires on changed heads, missing identities, or superseding checks', () => {
+  const mutations = [
+    node => { node.github.head = 'c'.repeat(40); node.github.imports[0].sourceHead = node.github.head; },
+    node => { node.github.imports[0].head = 'c'.repeat(40); },
+    node => { node.github.imports[0].checks.contexts[0].id = 'new-job'; },
+    node => { node.github.imports[0].checks.contexts[0].state = 'SUCCESS'; },
+    node => { node.github.imports[0].checks.contexts[1].id = 'new-status'; },
+    node => { delete node.github.imports[0].checks.contexts[0].id; },
+    node => { node.github.imports[0].checks.complete = false; },
+    node => { node.github.imports[0].checks.contexts.push({ ...node.github.imports[0].checks.contexts[0], id: 'new-job', state: 'IN_PROGRESS' }); node.github.imports[0].checks.total++; },
+  ];
+  for (const mutate of mutations) {
+    const node = deniedImportRetry(); mutate(node);
+    assert.ok(!idsFor(node).includes('maintainer-ci-retry'), mutate.toString());
+    assert.ok(idsFor(node).includes('maintainer-import-checks'), mutate.toString());
+  }
+  const node = deniedImportRetry(); delete node.ciRecovery;
+  node.summary = 'Retry failed with HTTP 403';
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  assert.ok(!idsFor(node).includes('maintainer-ci-retry'));
+});
+
+test('CI recovery schema binds public job and exact identities without rejecting older snapshots', () => {
+  const context = client(); context.nodeInput = deniedImportRetry();
+  context.registryInput = { meta: { repo: 'google/gvisor', owner: 'tamird', updatedAt: '2026-10-13T18:00:00Z' }, nodes: [context.nodeInput], groups: [], edges: [] };
+  vm.runInContext('validateRegistry(registryInput)', context);
+  context.nodeInput.ciRecovery.jobURL = 'https://example.com/job/115426066833';
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid CI recovery/);
+  context.nodeInput.ciRecovery.jobURL = 'https://github.com/google/gvisor/actions/runs/38434851950/job/115426066833';
+  context.nodeInput.ciRecovery.statuses.push({ id: 'status-1', name: 'another status' });
+  assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid CI recovery/);
+  const legacy = client(); legacy.nodeInput = attentionNode(); legacy.nodeInput.github.checkedAt = legacy.snapshotInput.checkedAt;
+  legacy.snapshotInput.prs = [legacy.nodeInput.github];
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput)', legacy);
+});
+
 test('agent work, contributor decisions and maintainer blockers have distinct owners', () => {
   const node = attentionNode(); node.github.mergeable = 'CONFLICTING';
   node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [serviceStatus('gazelle', 'FAILURE'), serviceStatus('import/copybara', 'ERROR')] };

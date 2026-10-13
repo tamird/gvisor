@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-13T17:23:23.161451+00:00",
-  "registryDate": "2026-10-13T17:20:21.778585+00:00",
+  "registryDate": "2026-10-13T17:55:57.019787+00:00",
   "prs": [
     {
       "number": 12470,
@@ -81313,7 +81313,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T17:20:21.778585+00:00"
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -81322,7 +81322,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T17:20:21.778585+00:00"
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -81331,7 +81331,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T17:20:21.778585+00:00"
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
       }
     },
     "branch:native-go-images": {
@@ -81340,7 +81340,34 @@
         "since": "2026-10-13T15:36:59.773847+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T17:20:21.778585+00:00"
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
+      }
+    },
+    "branch:review/runner-xml-correction": {
+      "contributor-review": {
+        "scope": "d1f84723ff6c82f67c843dd3454f9e2af04a6d30",
+        "since": "2026-10-13T17:55:57.019787+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
+      }
+    },
+    "branch:review/gpu-driver-preparation-correction": {
+      "contributor-review": {
+        "scope": "69ca892cd3f85379eb68541836396453310188aa",
+        "since": "2026-10-13T17:55:57.019787+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
+      }
+    },
+    "branch:review/crosstool-dynamic-linking": {
+      "contributor-review": {
+        "scope": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
+        "since": "2026-10-13T17:55:57.019787+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
       }
     }
   },

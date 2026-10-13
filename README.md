@@ -127,6 +127,14 @@ The site does not claim to have read logs or passed tests from a green rollup.
 No rollup means unavailable. Both original and import rollups must match their
 own returned head SHA before publication.
 
+A curated `ciRecovery` record can identify a diagnosed dependency-download
+failure whose retry returned HTTP 403. It binds the source and import heads,
+the exact public Actions job and check ID, and any explicitly linked status
+IDs. Only those still-failing identities route to **Maintainer CI retry needed**;
+other failures remain agent work. Missing IDs, incomplete evidence, changed
+heads, or successful/superseding checks invalidate the exception. Raw check
+results remain visible. This record never comes from parsing comments or prose.
+
 The browser loads this single published snapshot; **Reload snapshot** downloads
 both the registry and GitHub snapshot without querying GitHub or changing the
 observation time. **Check conflicts on GitHub** in selected PR details makes

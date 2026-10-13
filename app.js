@@ -121,6 +121,7 @@ const ATTENTION_REASONS = [
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Unpublished proposal decision" },
+  { id: "maintainer-ci-retry", owner: "maintainer", title: "Maintainer CI retry needed" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
   { id: "maintainer-response", owner: "maintainer", title: "Review follow-up" },
@@ -171,6 +172,22 @@ function reviewAttention(pr, owner) {
   }
   return { author, response, unknown, incomplete: !complete };
 }
+function blockedImportRetry(node, imported) {
+  const recovery = node.ciRecovery, pr = node.github;
+  if (!recovery || !pr || pr.revisionChanged || pr.status !== "open" || recovery.sourceHead !== pr.head
+      || !imported.matchesSourceHead || imported.sourceHead !== pr.head || !["open", "draft"].includes(imported.status)
+      || recovery.importHead !== imported.head || recovery.importNumber !== imported.number || !completeChecks(imported)) return null;
+  const expected = [{ id: recovery.checkId, name: recovery.checkName, kind: "check-run" },
+    ...recovery.statuses.map(item => ({ ...item, kind: "status" }))];
+  for (const signal of expected) {
+    const matching = imported.checks.contexts.filter(check => check.kind === signal.kind && check.name === signal.name);
+    // A missing identity or another same-name check may supersede this failure.
+    if (matching.length !== 1 || matching[0].id !== signal.id || !FAILURE_STATES.has(matching[0].state)) return null;
+    if (signal.kind === "check-run" && (matching[0].url !== recovery.jobURL || matching[0].appSlug !== "github-actions")) return null;
+  }
+  return { ids: new Set(expected.map(item => item.id)), jobURL: recovery.jobURL,
+    detail: `Import #${imported.number}: ${recovery.checkName} failed while downloading a dependency. The agent’s retry request returned HTTP 403. A maintainer needs to retry the workflow or check Actions access.` };
+}
 function attentionReasons(node, owner) {
   const reasons = [], add = (id, detail, title) => {
     if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), ...(title ? { title } : {}), detail });
@@ -200,18 +217,26 @@ function attentionReasons(node, owner) {
   const active = current.filter(item => ["open", "draft"].includes(item.status));
   for (const item of active) if (conflictRecord(item)) add("author-conflicts", `Import #${item.number}: ${mergeDescription(item)}`);
   const failed = active.filter(item => checkInfo(item).tone === "bad");
+  const recoveries = new Map(failed.map(item => [item.number, blockedImportRetry(node, item)]));
+  const retryDetails = [...recoveries.values()].filter(Boolean).map(item => item.detail);
+  if (retryDetails.length) add("maintainer-ci-retry", retryDetails.join(" "));
   const publicImportFailures = failed.flatMap(item => validationChecks(item)
     .filter(check => FAILURE_STATES.has(check.state)
+      && !recoveries.get(item.number)?.ids.has(check.id)
       && !(check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name)))
     .map(check => `Import #${item.number}: ${check.name}: ${check.state} (${safeURL(check.url) || "direct link not recorded"})`));
   for (const item of failed) if (!completeChecks(item) || !validationChecks(item).some(check => FAILURE_STATES.has(check.state)))
     publicImportFailures.push(`Import #${item.number}: failure evidence is incomplete; refresh and investigate its public check records`);
   const importFailures = failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`);
+  const internalImportFailures = failed.flatMap(item => validationChecks(item)
+    .filter(check => check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name) && FAILURE_STATES.has(check.state))
+    .map(check => `Import #${item.number}: ${check.name}: ${check.state}`));
   if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) importFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
+  if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) internalImportFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
   if (publicImportFailures.length)
     add("maintainer-import-checks", `${publicImportFailures.join(". ")}. ${importFailures.join(". ")}. Investigate the import’s CI logs.`);
-  else if (importFailures.length)
-    add("maintainer-internal-feedback", `${importFailures.join(". ")}. Copybara reports an internal failure; no separate public import-check failure is recorded.`);
+  else if (internalImportFailures.length)
+    add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Ask for the current Copybara check status.`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
   if (review.incomplete || checkInfo(pr).tone === "unknown" || active.some(item => checkInfo(item).tone === "unknown")
@@ -416,6 +441,8 @@ function appendAttributes(container, node) {
   section.append(element("h4", "", "Verified import PRs"));
   for (const imported of pr.imports) {
     const block = element("div", "import-detail");
+    const recovery = blockedImportRetry(node, imported);
+    if (recovery) block.append(element("p", "detail-meta", `Maintainer CI retry needed. ${recovery.detail}`), link("Failed import job ↗", recovery.jobURL));
     block.append(link(`#${imported.number} · ${imported.status} ↗`, imported.url), element("p", "detail-meta", imported.matchesSourceHead
       ? `Copybara footer matches source ${imported.sourceHead.slice(0, 9)}.`
       : `Older source: ${imported.sourceHead.slice(0, 9)}; current PR is ${pr.head.slice(0, 9)}. These checks do not validate the current source.`));
@@ -1100,6 +1127,21 @@ function validateRegistry(candidate) {
     if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
         !/^[a-f0-9]{40}$/.test(changes.head) || changes.url !== `https://github.com/tamird/gvisor/commit/${changes.head}`))
       throw new Error("Invalid contributor changes request");
+    const recovery = node.ciRecovery;
+    if (recovery !== undefined && (!recovery || node.type !== "pr" || node.repo !== candidate.meta.repo
+        || recovery.kind !== "dependency-download-retry-denied" || recovery.httpStatus !== 403
+        || !/^[a-f0-9]{40}$/.test(recovery.sourceHead) || !/^[a-f0-9]{40}$/.test(recovery.importHead)
+        || !Number.isSafeInteger(recovery.importNumber) || recovery.importNumber <= 0
+        || !Number.isSafeInteger(recovery.workflowRun) || recovery.workflowRun <= 0
+        || !Number.isSafeInteger(recovery.job) || recovery.job <= 0
+        || recovery.jobURL !== `https://github.com/${candidate.meta.repo}/actions/runs/${recovery.workflowRun}/job/${recovery.job}`
+        || ![recovery.checkId, recovery.checkName].every(value => typeof value === "string" && value.trim())
+        || !Number.isFinite(Date.parse(recovery.observedAt)) || Date.parse(recovery.observedAt) > Date.parse(candidate.meta.updatedAt)
+        || !Array.isArray(recovery.statuses)
+        || !recovery.statuses.every(item => item && [item.id, item.name].every(value => typeof value === "string" && value.trim()))
+        || new Set(recovery.statuses.map(item => item.name)).size !== recovery.statuses.length
+        || new Set([recovery.checkId, ...recovery.statuses.map(item => item.id)]).size !== recovery.statuses.length + 1))
+      throw new Error("Invalid CI recovery record");
   }
   const ids = new Set(candidate.nodes.map((node) => node.id));
   if (ids.size !== candidate.nodes.length || candidate.edges.some((edge) => !ids.has(edge.from) || !ids.has(edge.to))) throw new Error("Registry contains invalid relationships");
@@ -1169,6 +1211,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
       for (const check of item.checks?.contexts || []) {
+        if (check.id !== undefined && (typeof check.id !== "string" || !check.id.trim())) throw new Error("Invalid check identity");
         if (check.purpose !== undefined && !["validation", "reviewer-assignment"].includes(check.purpose)) throw new Error("Invalid check purpose");
         if (check.purpose === "reviewer-assignment" && (check.kind !== "check-run" || check.appSlug !== "github-actions" || check.workflow !== "Auto Assign" || check.name !== "assign")) throw new Error("Unverified administrative check identity");
       }

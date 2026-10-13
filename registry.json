@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T17:20:21.778585+00:00",
+    "updatedAt": "2026-10-13T17:55:57.019787+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2934,7 +2934,7 @@
       "head": "d711e04eba974b274a4785f1ab11ba15598fe4a5",
       "number": 15333,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-13T17:17:56.957876+00:00",
+      "updatedAt": "2026-10-13T17:48:06.680542+00:00",
       "followup": {
         "disposition": "Matching import regenerated; checks pending",
         "owner": "external_sweeps",
@@ -2950,6 +2950,25 @@
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "d711e04eba974b274a4785f1ab11ba15598fe4a5",
         "observedAt": "2026-10-13T17:17:56.957876+00:00"
+      },
+      "ciRecovery": {
+        "kind": "dependency-download-retry-denied",
+        "sourceHead": "d711e04eba974b274a4785f1ab11ba15598fe4a5",
+        "importNumber": 15339,
+        "importHead": "b532421c488af6bafe52630d1464d1f7d7d69978",
+        "workflowRun": 38434851950,
+        "job": 115426066833,
+        "jobURL": "https://github.com/google/gvisor/actions/runs/38434851950/job/115426066833",
+        "checkId": "CR_kwDOB9IlXs8AAAAa3-4BkQ",
+        "checkName": "generate",
+        "statuses": [
+          {
+            "id": "SC_kwDOB9IlXs8AAAANGL445A",
+            "name": "go tests"
+          }
+        ],
+        "httpStatus": 403,
+        "observedAt": "2026-10-13T17:48:06.680542+00:00"
       }
     },
     {
@@ -4898,12 +4917,12 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-12T06:10:59.211156+00:00",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
       "summary": "milantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. No upstream PR is open for this collation change.",
       "followup": {
-        "disposition": "Approved; observe import and merge",
+        "disposition": "Published source unchanged; amendment awaiting contributor decision",
         "owner": "external_sweeps",
-        "nextAction": "Observe import feedback and merge of the approved current head through the sole watcher; no code amendment or duplicate outreach is requested.",
+        "nextAction": "Follow the published source and import checks; the separate proposed amendment awaits the contributor’s decision.",
         "sourceHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
         "reviewedAt": "2026-10-12T06:07:17.517136+00:00",
         "evidence": [
@@ -4913,7 +4932,8 @@
           "https://github.com/tamird/gvisor/commit/400d11eea2e9923c8e1d111b9f4a56b8fffc9082"
         ],
         "reviewDecision": "APPROVED",
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
       },
       "number": 15562,
       "reviewDecision": "APPROVED"
@@ -6061,21 +6081,22 @@
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/15669",
       "status": "open",
-      "updatedAt": "2026-10-12T12:22:01.641015+00:00",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
       "summary": "The contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
       "followup": {
-        "disposition": "Contributor-approved; upstream review and CI",
+        "disposition": "Published source unchanged; amendment awaiting contributor decision",
         "owner": "external_sweeps",
         "sourceHead": "60834ef0c08df041dc049c2fecf0038dfe34351a",
         "reviewedAt": "2026-10-12T12:22:01.641015+00:00",
-        "nextAction": "Follow current-head CI, maintainer comments and review threads. No merge or auto-merge is authorized.",
+        "nextAction": "Follow the published source and import checks; the separate proposed amendment awaits the contributor’s decision.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15669",
           "https://github.com/tamird/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a",
           "https://app.buildbuddy.io/invocation/52bef731-5b2f-4bda-b442-29aae4bac58d",
           "https://app.buildbuddy.io/invocation/84380b15-85ae-4831-b450-ac933f4c3b6b"
-        ]
+        ],
+        "observedAt": "2026-10-13T17:55:57.019787+00:00"
       },
       "number": 15669
     },
@@ -6274,6 +6295,90 @@
       "status": "open",
       "updatedAt": "2026-10-13T15:16:16.359295+00:00",
       "summary": "The provider-recovery attempt exhausted the coordinator budget without an ActionResult, worker identity, logs or output. The published issue asks BuildBuddy to inspect attempts, lease transitions and effective timeouts. One visible execution record does not establish the physical attempt count. No Dockerfile, disk, OOM, deployment or recovery cause is inferred."
+    },
+    {
+      "id": "branch:review/runner-xml-correction",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/runner-xml-correction",
+      "head": "d1f84723ff6c82f67c843dd3454f9e2af04a6d30",
+      "title": "Preserve XML test suites during collation",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/d1f84723ff6c82f67c843dd3454f9e2af04a6d30",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
+      "summary": "Qualified amendment places XML collation in a shared library with its tests so the import packaging preserves the runner consumer. The published PR remains unchanged; the contributor is reviewing this exact amendment.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "d1f84723ff6c82f67c843dd3454f9e2af04a6d30",
+        "url": "https://github.com/tamird/gvisor/commit/d1f84723ff6c82f67c843dd3454f9e2af04a6d30"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "d1f84723ff6c82f67c843dd3454f9e2af04a6d30",
+        "observedAt": "2026-10-13T17:55:57.019787+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/d1f84723ff6c82f67c843dd3454f9e2af04a6d30"
+        ]
+      }
+    },
+    {
+      "id": "branch:review/gpu-driver-preparation-correction",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/gpu-driver-preparation-correction",
+      "head": "69ca892cd3f85379eb68541836396453310188aa",
+      "title": "Consolidate GPU driver preparation",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
+      "summary": "Qualified amendment records public installer availability per architecture and preserves supported driver ABIs. It also fixes read-only listing output ownership and complete file replacement. The published PR remains unchanged; the contributor is reviewing this exact amendment.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "69ca892cd3f85379eb68541836396453310188aa",
+        "url": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "69ca892cd3f85379eb68541836396453310188aa",
+        "observedAt": "2026-10-13T17:55:57.019787+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
+        ]
+      }
+    },
+    {
+      "id": "branch:review/crosstool-dynamic-linking",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/crosstool-dynamic-linking",
+      "head": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
+      "title": "Fix shared-library linking in the C++ toolchain",
+      "group": "bazel",
+      "url": "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
+      "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The contributor is deciding whether to open this independent PR.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
+        "url": "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
+        "observedAt": "2026-10-13T17:55:57.019787+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
+        ]
+      }
     }
   ],
   "edges": [
@@ -7691,6 +7796,22 @@
         "https://github.com/tamird/gvisor/commit/ec93b8986b6c95cf692ec0f14f86e49571495a3b",
         "https://github.com/tamird/gvisor/commit/1c78239707ec090d2f02df86814773b3dbf24f7e"
       ]
+    },
+    {
+      "from": "branch:review/runner-xml-correction",
+      "to": "pr:15562",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR is unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/d1f84723ff6c82f67c843dd3454f9e2af04a6d30"
+    },
+    {
+      "from": "branch:review/gpu-driver-preparation-correction",
+      "to": "pr:15669",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR is unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
     }
   ],
   "investigations": [
@@ -8507,7 +8628,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T17:20:21.778585+00:00",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.",
       "findings": [
         {
@@ -8855,7 +8976,7 @@
           ]
         }
       ],
-      "nextStep": "The runtime-array prototype is implemented at e0515a1d8b and is undergoing the existing full correctness comparison against shared-fixture control 225fdf9301. The run is active; no current runtime, performance or adoption result is claimed. Earlier fixed and profile results remain source-specific and unpromoted.",
+      "nextStep": "The runtime-array prototype at e0515a1d8b has completed independent correctness review against shared-fixture control 225fdf9301. Its fixed comparison is now active; no current performance or adoption result is claimed. Earlier fixed and profile results remain source-specific and unpromoted.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9202,8 +9323,12 @@
           "url": "https://github.com/tamird/gvisor/commit/e0515a1d8be95e6dec1bfdf01e1c4031c56b25da"
         },
         {
-          "label": "Active runtime-array correctness comparison",
+          "label": "Closed runtime-array correctness comparison",
           "url": "https://app.buildbuddy.io/invocation/b62a5fb8-1ab3-4964-8625-64e05e730280"
+        },
+        {
+          "label": "Active runtime-array fixed comparison",
+          "url": "https://app.buildbuddy.io/invocation/af66560f-0a50-4a47-a52e-4c9288b04c7e"
         }
       ]
     },
@@ -9212,7 +9337,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T17:20:21.778585+00:00",
+      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.",
       "findings": [
         {
@@ -9717,7 +9842,7 @@
           ]
         }
       ],
-      "nextStep": "The runtime-array prototype is implemented at e0515a1d8b and is undergoing the existing full correctness comparison against shared-fixture control 225fdf9301. The run is active; no current runtime, performance or adoption result is claimed. Earlier fixed and profile results remain source-specific and unpromoted.",
+      "nextStep": "The runtime-array prototype at e0515a1d8b has completed independent correctness review against shared-fixture control 225fdf9301. Its fixed comparison is now active; no current performance or adoption result is claimed. Earlier fixed and profile results remain source-specific and unpromoted.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10112,8 +10237,12 @@
           "url": "https://github.com/tamird/gvisor/commit/e0515a1d8be95e6dec1bfdf01e1c4031c56b25da"
         },
         {
-          "label": "Active runtime-array correctness comparison",
+          "label": "Closed runtime-array correctness comparison",
           "url": "https://app.buildbuddy.io/invocation/b62a5fb8-1ab3-4964-8625-64e05e730280"
+        },
+        {
+          "label": "Active runtime-array fixed comparison",
+          "url": "https://app.buildbuddy.io/invocation/af66560f-0a50-4a47-a52e-4c9288b04c7e"
         }
       ],
       "comparisons": [
