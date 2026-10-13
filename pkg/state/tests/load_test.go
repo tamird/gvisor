@@ -46,6 +46,8 @@ func TestLoadHooks(t *testing.T) {
 }
 
 func TestGeneratedLegacyFields(t *testing.T) {
+	emptySchema := wire.Struct{TypeID: 2}
+	emptySchema.Alloc(0)
 	for _, test := range []struct {
 		name    string
 		field   int
@@ -54,7 +56,7 @@ func TestGeneratedLegacyFields(t *testing.T) {
 		want    restoreLegacyFields
 	}{
 		{"nil_interface_in_integer", 0, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Int(17)}, restoreLegacyFields{}, restoreLegacyFields{integer: 17}},
-		{"schema_in_integer", 0, &wire.Struct{TypeID: 2}, restoreLegacyFields{integer: 23}, restoreLegacyFields{integer: 23}},
+		{"schema_in_integer", 0, &emptySchema, restoreLegacyFields{integer: 23}, restoreLegacyFields{integer: 23}},
 		{"empty_array_in_string", 1, &wire.Array{}, restoreLegacyFields{}, restoreLegacyFields{}},
 		{"array_noops_in_string", 1, &wire.Array{Contents: []wire.Object{wire.Nil{}, &wire.Ref{}}}, restoreLegacyFields{text: "ab"}, restoreLegacyFields{text: "ab"}},
 		{"array_in_slice", 2, &wire.Array{Contents: []wire.Object{wire.Int(17), wire.Int(29)}}, restoreLegacyFields{slice: []int64{0, 0}}, restoreLegacyFields{slice: []int64{17, 29}}},
