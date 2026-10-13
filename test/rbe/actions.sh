@@ -206,7 +206,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     fi
     bazel() {
       local argument result=0 capture_status=0 raw_events="" events_output="" remaining cohort_dir="" capture_seconds=600
-      local -a evidence=() command_prefix=() capture_prefix=()
+      local -a evidence=() command_prefix=() capture_prefix=() arguments=()
       if [[ $qualification_root_bazel == true ]]; then
         command_prefix=(sudo -n -H env "USE_BAZEL_VERSION=$USE_BAZEL_VERSION")
         # Reports from root Bazel may be under /root. Use the same identity
@@ -250,17 +250,26 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         [[ ! -s "$cohort_dir/source-before.txt" ]]
         git cat-file -p HEAD > "$cohort_dir/commit.txt"
       fi
+      # Make separates targets with --; evidence flags must remain options.
+      for argument in "$@"; do
+        if [[ $argument == -- ]]; then
+          arguments+=("${evidence[@]}")
+          evidence=()
+        fi
+        arguments+=("$argument")
+      done
+      arguments+=("${evidence[@]}")
       if [[ -n ${QUALIFICATION_WORK_DEADLINE:-} ]]; then
         remaining=$(python3 -c 'import os,time; print(max(0,int(float(os.environ["QUALIFICATION_WORK_DEADLINE"])-time.monotonic())))')
         if (( remaining > 0 )); then
           "${command_prefix[@]}" timeout --signal=INT --kill-after=30s "${remaining}s" \
-            "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+            "$(command -v bazelisk)" --bazelrc="$qualification_rc" "${arguments[@]}" || result=$?
         else
           printf 'Qualification work deadline exhausted.\n' >&2
           result=124
         fi
       else
-        "${command_prefix[@]}" "$(command -v bazelisk)" --bazelrc="$qualification_rc" "$@" "${evidence[@]}" || result=$?
+        "${command_prefix[@]}" "$(command -v bazelisk)" --bazelrc="$qualification_rc" "${arguments[@]}" || result=$?
       fi
       if [[ -n $raw_events ]]; then
         "${capture_prefix[@]}" timeout --signal=TERM --kill-after=5s "${capture_seconds}s" python3 - "$raw_events" "$events_output" <<'GUEST_EVENTS' || capture_status=$?
@@ -463,6 +472,7 @@ DEADLINE
     bash -x "$script" > "$RUNNER_TEMP/qualification/list-$phase.stdout" \
     2> "$RUNNER_TEMP/qualification/list-$phase.stderr" || status=$?
   printf '%s\n' "$status" > "$RUNNER_TEMP/qualification/list-$phase.exit"
+  sha256sum bazel-bin/tools/gpu/main_/main > "$RUNNER_TEMP/qualification/list-$phase-cli-sha256.txt" || list_result=1
   if [[ $phase == before ]]; then
     if [[ $status != 2 ]] || ! grep -q 'Failed to list drivers: failed to write supported drivers: open /tmp/.*: permission denied' "$RUNNER_TEMP/qualification/list-$phase.stderr"; then
       list_result=1
