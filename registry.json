@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T18:49:25.453082+00:00",
+    "updatedAt": "2026-10-13T19:43:08.268452+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4005,19 +4005,19 @@
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-13T18:15:44.204101+00:00",
+      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
       "summary": "The contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; current c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
         "owner": "root",
-        "disposition": "Agent review and implementation assigned",
+        "disposition": "Qualified proposals awaiting contributor decisions",
         "sourceHead": "c10df898b36cf59e0265ad7dddc6803a97001f67",
-        "nextAction": "Assess current-head address-family and invalid-address feedback and prepare justified serialization/test-cleanup precursors and corrected core. Published source is unchanged; any new submissions or replies await review of concrete proposals.",
+        "nextAction": "Await the contributor’s decisions on the three independent precursor PRs and exact fd737bf7a guard amendment plus prepared replies. Published c10 source and unresolved upstream review threads remain unchanged until delivery is authorized.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
         ],
-        "observedAt": "2026-10-13T18:15:44.204101+00:00"
+        "observedAt": "2026-10-13T19:37:42.271874+00:00"
       },
       "evidence": [
         {
@@ -6392,6 +6392,146 @@
           "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
         ]
       }
+    },
+    {
+      "id": "branch:state-netip-registration",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "state-netip-registration",
+      "head": "e3aec09f591cef5b1d123a42f39583b3fe737b07",
+      "title": "Register netip types for checkpoints",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/e3aec09f591cef5b1d123a42f39583b3fe737b07",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
+      "summary": "Independent precursor registers netip values through the existing binary checkpoint adapter. Both-architecture state suites pass, including equality, map-key and interior-pointer checks. The contributor is deciding whether to open this standalone PR.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "e3aec09f591cef5b1d123a42f39583b3fe737b07",
+        "url": "https://github.com/tamird/gvisor/commit/e3aec09f591cef5b1d123a42f39583b3fe737b07"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "e3aec09f591cef5b1d123a42f39583b3fe737b07",
+        "observedAt": "2026-10-13T19:37:42.271874+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e3aec09f591cef5b1d123a42f39583b3fe737b07",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Independently reviewed remote validation",
+          "url": "https://app.buildbuddy.io/invocation/3bdb8c23-d9fd-421e-af1e-91700189c014"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcpip-ipv6-control-address",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcpip-ipv6-control-address",
+      "head": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+      "title": "Restore the IPv6 control test’s source address",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
+      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The contributor is deciding whether to open this standalone PR.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+        "url": "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+        "observedAt": "2026-10-13T19:37:42.271874+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Independently reviewed remote validation",
+          "url": "https://app.buildbuddy.io/invocation/3bdb8c23-d9fd-421e-af1e-91700189c014"
+        }
+      ]
+    },
+    {
+      "id": "branch:tcpip-cidr-route-fixtures",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "tcpip-cidr-route-fixtures",
+      "head": "233a8335d793eaef755df814f226a380a1cbd756",
+      "title": "Use CIDR masks in route-selection tests",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
+      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The contributor is deciding whether to open this standalone PR.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "233a8335d793eaef755df814f226a380a1cbd756",
+        "url": "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "233a8335d793eaef755df814f226a380a1cbd756",
+        "observedAt": "2026-10-13T19:37:42.271874+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Independently reviewed remote validation",
+          "url": "https://app.buildbuddy.io/invocation/3bdb8c23-d9fd-421e-af1e-91700189c014"
+        }
+      ]
+    },
+    {
+      "id": "branch:review/tcpip-netip-review-correction",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcpip-netip-review-correction",
+      "head": "fd737bf7a231d864418e95edff2e3191efc07c2c",
+      "title": "Handle invalid addresses in the netip migration",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
+      "summary": "Qualified amendment addresses the two current review findings while preserving zero-value filter wildcards. Full stack suites and owning analyzers pass on both architectures; the initial over-strict wildcard correction and its NAT failures remain recorded. The folded, rebased patch is source-equivalent. The contributor is deciding whether to update PR #15730 and send the prepared inline replies; the published PR remains unchanged.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "fd737bf7a231d864418e95edff2e3191efc07c2c",
+        "url": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "fd737bf7a231d864418e95edff2e3191efc07c2c",
+        "observedAt": "2026-10-13T19:37:42.271874+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Independently reviewed remote validation",
+          "url": "https://app.buildbuddy.io/invocation/aa1d3750-9d79-4a85-9e39-90bbf46a8cfc"
+        }
+      ]
     }
   ],
   "edges": [
@@ -7832,6 +7972,14 @@
       "type": "depends_on",
       "reason": "The requested lean shared-base revision introduces APT package catalog entries. Upstream delivery requires the APT enumeration interface, which itself waits on #15146; canonical integration already has that interface. This is a landing prerequisite, not a contributor approval hold.",
       "evidence": "https://github.com/tamird/gvisor/commit/f45d2da255bc574585dac6c53a76a53fc1061d6b"
+    },
+    {
+      "from": "branch:review/tcpip-netip-review-correction",
+      "to": "pr:15730",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR and unresolved feedback are unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c"
     }
   ],
   "investigations": [
@@ -8648,7 +8796,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T18:49:25.453082+00:00",
+      "updatedAt": "2026-10-13T19:43:08.268452+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.",
       "findings": [
         {
@@ -8996,7 +9144,7 @@
           ]
         }
       ],
-      "nextStep": "A shared nongeneric array loop and view revision at 173993df1f is undergoing the focused qualification with six test/analyzer owners and four executables. It has no current result or timing claim; the closed runtime-array comparison remains source-specific and unpromoted.",
+      "nextStep": "The shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051; production links hit the original deadline and are continuing separately under ce620e7f. A reviewed shared-pointer helper at fffd29842d6d is undergoing six-owner/two-test-executable validation under 113f6ac0. Neither continuation has a current result, and no new timing or adoption claim is made.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9365,7 +9513,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T18:49:25.453082+00:00",
+      "updatedAt": "2026-10-13T19:43:08.268452+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.",
       "findings": [
         {
@@ -9870,7 +10018,7 @@
           ]
         }
       ],
-      "nextStep": "A shared nongeneric array loop and view revision at 173993df1f is undergoing the focused qualification with six test/analyzer owners and four executables. It has no current result or timing claim; the closed runtime-array comparison remains source-specific and unpromoted.",
+      "nextStep": "The shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051; production links hit the original deadline and are continuing separately under ce620e7f. A reviewed shared-pointer helper at fffd29842d6d is undergoing six-owner/two-test-executable validation under 113f6ac0. Neither continuation has a current result, and no new timing or adoption claim is made.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
