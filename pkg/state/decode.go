@@ -101,27 +101,6 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 	ods.callbacks = append(ods.callbacks, ic)
 }
 
-// findCycleFor returns when the given object is found in the blocking set.
-func (ods *objectDecodeState) findCycleFor(target *objectDecodeState) []*objectDecodeState {
-	for _, ic := range ods.callbacks {
-		other := ic.source()
-		if other != nil && other == target {
-			return []*objectDecodeState{target}
-		} else if childList := other.findCycleFor(target); childList != nil {
-			return append(childList, other)
-		}
-	}
-
-	// This should not occur.
-	Failf("no deadlock found?")
-	panic("unreachable")
-}
-
-// findCycle finds a dependency cycle.
-func (ods *objectDecodeState) findCycle() []*objectDecodeState {
-	return append(ods.findCycleFor(ods), ods)
-}
-
 // source implements internalCallback.source.
 func (ods *objectDecodeState) source() *objectDecodeState {
 	return ods
@@ -381,6 +360,9 @@ func (od *objectDecoder) afterLoad(fn func()) {
 
 // decodeStruct decodes a struct value.
 func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, encoded *wire.Struct) {
+	if obj.Kind() != reflect.Struct {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
 	if encoded.TypeID == 0 {
 		// Allow anonymous empty structs, but only if the encoded
 		// object also has no fields.
@@ -415,6 +397,12 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 
 // decodeMap decodes a map value.
 func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
+	if obj.Kind() != reflect.Map {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
+	if len(encoded.Keys) != len(encoded.Values) {
+		Failf("map has %d keys and %d values", len(encoded.Keys), len(encoded.Values))
+	}
 	if obj.IsNil() {
 		// See pointerTo.
 		obj.Set(reflect.MakeMap(obj.Type()))
@@ -435,6 +423,9 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 
 // decodeArray decodes an array value.
 func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, encoded *wire.Array) {
+	if obj.Kind() != reflect.Array {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
 	if len(encoded.Contents) != obj.Len() {
 		Failf("mismatching array length expect=%d, actual=%d", obj.Len(), len(encoded.Contents))
 	}
@@ -455,7 +446,8 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 	case *wire.TypeSpecPointer:
 		return reflect.PointerTo(ds.findType(x.Type))
 	case *wire.TypeSpecArray:
-		return reflect.ArrayOf(int(x.Count), ds.findType(x.Type))
+		element := ds.findType(x.Type)
+		return reflect.ArrayOf(checkedArrayLength(uint64(x.Count), element.Size()), element)
 	case *wire.TypeSpecSlice:
 		return reflect.SliceOf(ds.findType(x.Type))
 	case *wire.TypeSpecMap:
@@ -469,6 +461,9 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 
 // decodeInterface decodes an interface value.
 func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded *wire.Interface) {
+	if obj.Kind() != reflect.Interface {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
 	if _, ok := encoded.Type.(wire.TypeSpecNil); ok {
 		// Special case; the nil object. Just decode directly, which
 		// will read nil from the wire (if encoded correctly).
@@ -530,6 +525,12 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// indirection to allow for map aliasing.
 		if obj.Kind() == reflect.Map {
 			v := ds.register(x, obj.Type())
+			if v.Kind() != reflect.Map || !v.Type().AssignableTo(obj.Type()) {
+				Failf("map reference type %v does not match %v", v.Type(), obj.Type())
+			}
+			// Dots may reach an unexported map field. Its storage belongs
+			// to the graph, but its reflected view carries a read-only flag.
+			v = reflectValueRWAddr(v).Elem()
 			if v.IsNil() {
 				// Note that we don't want to clobber the map
 				// if has already been decoded by decodeMap. We
@@ -541,8 +542,13 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 			return
 		}
 
-		// Normal assignment: authoritative only if no dots.
+		if obj.Kind() != reflect.Ptr {
+			Failf("wire reference has incompatible destination %v", obj.Type())
+		}
 		v := ds.register(x, obj.Type().Elem())
+		if v.Type() != obj.Type().Elem() {
+			Failf("pointer target type %v does not match %v", v.Type(), obj.Type().Elem())
+		}
 		obj.Set(reflectValueRWAddr(v))
 	case wire.Bool:
 		obj.SetBool(bool(x))
@@ -577,11 +583,22 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		if id := objectID(x.Ref.Root); id == 0 {
 			return
 		}
+		if obj.Kind() != reflect.Slice {
+			Failf("wire value has incompatible destination type %v", obj.Type())
+		}
+		element := obj.Type().Elem()
+		capacity := checkedArrayLength(uint64(x.Capacity), element.Size())
+		if x.Length > x.Capacity {
+			Failf("slice length %d exceeds capacity %d", x.Length, x.Capacity)
+		}
 		// Note that it's fine to slice the array here and assume that
 		// contents will still be filled in later on.
-		typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
+		typ := reflect.ArrayOf(capacity, element)
 		v := ds.register(&x.Ref, typ)
-		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
+		if v.Kind() != reflect.Array || v.Type().Elem() != element || v.Len() < capacity {
+			Failf("slice backing type %v does not contain %d elements of %v", v.Type(), capacity, element)
+		}
+		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), capacity))
 	case *wire.Array:
 		ds.decodeArray(ods, obj, x)
 	case *wire.Struct:
@@ -594,6 +611,45 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// Should not happen, not propagated as an error.
 		Failf("unknown object %#v for %q", encoded, obj.Type().Name())
 	}
+}
+
+func checkedArrayLength(count uint64, elementSize uintptr) int {
+	maxInt := uint64(^uint(0) >> 1)
+	if count > maxInt || (elementSize != 0 && count > maxInt/uint64(elementSize)) {
+		Failf("array length %d overflows storage for %d-byte elements", count, elementSize)
+	}
+	return int(count)
+}
+
+// findCycle finds a dependency cycle after all unblocked objects have completed.
+// Every remaining object has a blocker that is also incomplete. Following one
+// blocker per object must reach a cycle, even if the starting object is only
+// waiting on that cycle. No recursion is needed to construct the error report.
+//
+// Preconditions:
+//   - ds.pending is nonempty.
+//   - All unblocked objects have completed.
+func (ds *decodeState) findCycle() []*objectDecodeState {
+	blockers := make(map[*objectDecodeState]*objectDecodeState)
+	for elem := ds.pending.Front(); elem != nil; elem = elem.Next() {
+		for _, callback := range elem.ods.callbacks {
+			// User callbacks do not represent blocking dependencies.
+			if waiter := callback.source(); waiter != nil {
+				blockers[waiter] = elem.ods
+			}
+		}
+	}
+	visited := make(map[*objectDecodeState]int)
+	var path []*objectDecodeState
+	for obj := ds.pending.Front().ods; obj != nil; obj = blockers[obj] {
+		if start, ok := visited[obj]; ok {
+			return append(path[start:], obj)
+		}
+		visited[obj] = len(path)
+		path = append(path, obj)
+	}
+	Failf("incomplete object has no blocking dependency")
+	panic("unreachable")
 }
 
 // Load deserializes the object graph rooted at obj.
@@ -699,9 +755,9 @@ func (ds *decodeState) Load(obj reflect.Value) {
 
 	// Check if we have any remaining dependency cycles. If there are any
 	// objects left in the pending list, then it must be due to a cycle.
-	if elem := ds.pending.Front(); elem != nil {
+	if ds.pending.Front() != nil {
 		// This must be the result of a dependency cycle.
-		cycle := elem.ods.findCycle()
+		cycle := ds.findCycle()
 		var buf bytes.Buffer
 		buf.WriteString("dependency cycle: {")
 		for i, cycleOS := range cycle {

@@ -28,8 +28,8 @@ var earlyBinaryError error
 
 func init() {
 	// Using a type during an earlier init must not prevent a later init from
-	// registering its wire schema. Any already-built fallback operations stay
-	// valid; the subsequent saves below must find the newly registered codec.
+	// registering its wire schema. The subsequent saves below must find the
+	// newly registered codec.
 	var buf bytes.Buffer
 	_, earlyBinaryError = Save(context.Background(), &buf, &binaryFailure{})
 	registerBinary((*binaryFailure)(nil))
@@ -77,6 +77,9 @@ func TestMalformedValueDestinations(t *testing.T) {
 	}{
 		{"scalar_kind", new(int64), wire.Bool(true)},
 		{"array_kind", new(int64), &wire.Array{}},
+		{"array_in_slice", new([]int64), &wire.Array{}},
+		{"map_in_slice", &[]int64{}, &wire.Map{}},
+		{"interface_in_scalar", new(int64), &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}},
 		{"field_in_array", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{&field}}},
 		{"index_at_length", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{wire.Index(1)}}},
 		{"index_maximum", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{^wire.Index(0)}}},
@@ -107,8 +110,8 @@ func TestPromotedChildPath(t *testing.T) {
 	type inner struct{ Value int }
 	root := struct{ *inner }{inner: &inner{Value: 17}}
 	name := wire.FieldName("Value")
-	child := walkChild([]wire.Dot{&name}, reflectedLocation(reflect.ValueOf(&root).Elem()), nil)
-	if got, want := child.reflect().Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
+	child := walkChild([]wire.Dot{&name}, reflect.ValueOf(&root).Elem())
+	if got, want := child.Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
 		t.Fatalf("promoted field address = %#x, want %#x", got, want)
 	}
 }

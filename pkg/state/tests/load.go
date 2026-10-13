@@ -94,3 +94,10 @@ func (r *replayLoadStruct) StateLoad(_ context.Context, s state.Source) {
 	r.source = s
 	s.AfterLoad(func() { s.Load(1, &r.after) })
 }
+
+// +stateify savable
+type branchingCycle struct {
+	reachable   *branchingCycle
+	waitFor     *branchingCycle `state:"wait"`
+	alsoWaitFor *branchingCycle `state:"wait"`
+}
