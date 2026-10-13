@@ -315,6 +315,26 @@ test('a directly observed new-head conflict remains actionable while old checks 
   assert.equal(node.github.revisionChanged, true); assert.equal(node.github.checks, null);
 });
 
+test('direct REST refresh replaces the repository and branch identity even on the same head', async () => {
+  const context = client(), original = attentionNode().github;
+  original.headRepo = 'tamird/gvisor'; original.ref = 'old-name'; original.checkedAt = '2026-10-13T09:00:00Z';
+  context.originalInput = original;
+  context.document = { querySelector: () => null };
+  context.AbortSignal = { timeout: () => undefined };
+  vm.runInContext('registry = registryInput; drawDetails = () => {}; applyLive = () => {};', context);
+  for (const repo of [{ full_name: 'tamird/renamed-fork' }, null, undefined]) {
+    context.fetch = async () => ({ ok: true, json: async () => ({ number: 1, html_url: 'https://github.com/google/gvisor/pull/1',
+      head: { sha: original.head, ref: 'new-name', ...(repo === undefined ? {} : { repo }) },
+      base: { sha: 'b'.repeat(40) }, mergeable: true, state: 'open', merged: false, draft: false }) });
+    await vm.runInContext('lastConflictAttempt = 0; refreshConflict(1)', context);
+    const current = JSON.parse(vm.runInContext('JSON.stringify(withConflictResult(originalInput))', context));
+    assert.equal(current.headRepo, repo?.full_name ?? null);
+    assert.equal(current.ref, 'new-name');
+    assert.equal(current.revisionChanged, false);
+    assert.equal(current.head, original.head);
+  }
+});
+
 test('unpublished proposal decisions do not replace the published head review', () => {
   const node = attentionNode(); node.github.reviewDecision = 'REVIEW_REQUIRED'; node.workStates['contributor-review'] = { scope: 'c'.repeat(40) };
   assert.ok(idsFor(node).includes('author-proposal')); assert.ok(idsFor(node).includes('maintainer-review'));

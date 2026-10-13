@@ -366,7 +366,7 @@ function withConflictResult(pr) {
       ? { ...pr, mergeabilityObservation: observed } : pr;
   }
   const changed = result.head !== pr.head;
-  const current = { ...pr, head: result.head, base: result.base, status: result.status,
+  const current = { ...pr, head: result.head, headRepo: result.headRepo ?? null, ref: result.ref, base: result.base, status: result.status,
     mergeable: result.state, conflictCheckedAt: result.checkedAt, revisionChanged: changed, statusChanged: result.status !== pr.status };
   if (changed) Object.assign(current, { reviewDecision: null, approvedHead: null, githubReviewDecision: null,
     reviewsComplete: false, reviewRequestsComplete: false, checks: null, labels: [], labelsComplete: false,
@@ -382,12 +382,14 @@ async function refreshConflict(number) {
     const response = await fetch(`https://api.github.com/repos/${registry.meta.repo}/pulls/${number}`, {
       cache: "no-cache", credentials: "omit", headers: { Accept: "application/vnd.github+json" }, signal: AbortSignal.timeout(10000) });
     if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? "GitHub rate limit or access restriction; try later or open the PR" : `GitHub returned ${response.status}`);
-    const data = await response.json();
+    const data = await response.json(), headRepo = data.head?.repo?.full_name ?? null;
     if (data.number !== number || data.html_url !== `https://github.com/${registry.meta.repo}/pull/${number}` ||
         !/^[a-f0-9]{40}$/.test(data.head?.sha) || !/^[a-f0-9]{40}$/.test(data.base?.sha) ||
+        typeof data.head.ref !== "string" || !data.head.ref ||
+        headRepo !== null && (typeof headRepo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(headRepo)) ||
         ![true, false, null].includes(data.mergeable) || !["open", "closed"].includes(data.state) || typeof data.merged !== "boolean")
       throw new Error("GitHub returned an unexpected PR identity or mergeability result");
-    const result = { head: data.head.sha, base: data.base.sha, state: data.mergeable === true ? "MERGEABLE" : data.mergeable === false ? "CONFLICTING" : "UNKNOWN",
+    const result = { head: data.head.sha, headRepo, ref: data.head.ref, base: data.base.sha, state: data.mergeable === true ? "MERGEABLE" : data.mergeable === false ? "CONFLICTING" : "UNKNOWN",
       status: data.merged ? "merged" : data.state === "closed" ? "closed" : data.draft ? "draft" : "open", checkedAt: new Date().toISOString() };
     // A newer unknown response must not erase a concrete result obtained in this tab.
     const old = conflictResults.get(number);
