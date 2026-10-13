@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-13T19:40:09.629169+00:00",
-  "registryDate": "2026-10-13T19:43:08.268452+00:00",
+  "registryDate": "2026-10-13T19:56:48.971156+00:00",
   "prs": [
     {
       "number": 12470,
@@ -87079,7 +87079,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -87088,7 +87088,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -87097,7 +87097,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:native-go-images": {
@@ -87106,7 +87106,7 @@
         "since": "2026-10-13T15:36:59.773847+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:review/runner-xml-correction": {
@@ -87115,7 +87115,7 @@
         "since": "2026-10-13T17:55:57.019787+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:review/gpu-driver-preparation-correction": {
@@ -87124,7 +87124,7 @@
         "since": "2026-10-13T17:55:57.019787+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:review/crosstool-dynamic-linking": {
@@ -87133,7 +87133,7 @@
         "since": "2026-10-13T17:55:57.019787+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:state-netip-registration": {
@@ -87142,7 +87142,7 @@
         "since": "2026-10-13T19:37:42.271874+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:tcpip-ipv6-control-address": {
@@ -87151,7 +87151,7 @@
         "since": "2026-10-13T19:37:42.271874+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:tcpip-cidr-route-fixtures": {
@@ -87160,7 +87160,7 @@
         "since": "2026-10-13T19:37:42.271874+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     },
     "branch:review/tcpip-netip-review-correction": {
@@ -87169,7 +87169,16 @@
         "since": "2026-10-13T19:37:42.271874+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-13T19:43:08.268452+00:00"
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
+      }
+    },
+    "branch:review/syscall-linux-ci-guidance": {
+      "contributor-review": {
+        "scope": "01e70f3a44a37a665f17d3c247d81dc608908a72",
+        "since": "2026-10-13T19:56:48.971156+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       }
     }
   },

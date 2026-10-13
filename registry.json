@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T19:43:08.268452+00:00",
+    "updatedAt": "2026-10-13T19:56:48.971156+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2982,11 +2982,11 @@
       "group": "tests",
       "status": "open",
       "summary": "The complete discussion already answers the configuration question: Konstantin described the provisioning configuration as internal, and Etienne recommended inspecting the intended build’s worker environment until public Terraform is available. Public pipeline and Bazel routing identify queues and selections, but do not pin exact worker kernel images. The dated kernel table should be replaced with durable instructions for locating current run evidence. No unanswered maintainer question is blocking that source decision.",
-      "updatedAt": "2026-10-10T14:31:51.129671+00:00",
+      "updatedAt": "2026-10-13T19:56:48.971156+00:00",
       "followup": {
-        "disposition": "Configuration discussion assessed; documentation revision owned",
+        "disposition": "Documentation amendment awaiting contributor decision",
         "owner": "root",
-        "nextAction": "Prepare the concise documentation revision around public routing and inspection of the intended run. If an authoritative provisioning link is required, that link remains unavailable in the supplied evidence; do not ask the same answered question again.",
+        "nextAction": "Await the decision on exact 01e70f3a documentation amendment and prepared reply/resolution. The current 7b311c5b source and unresolved upstream thread remain unchanged.",
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
@@ -3001,7 +3001,8 @@
           "https://github.com/google/gvisor/pull/15439#issuecomment-6048752827",
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049267317",
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049316326"
-        ]
+        ],
+        "observedAt": "2026-10-13T19:56:48.971156+00:00"
       },
       "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
       "number": 15439,
@@ -6532,6 +6533,35 @@
           "url": "https://app.buildbuddy.io/invocation/aa1d3750-9d79-4a85-9e39-90bbf46a8cfc"
         }
       ]
+    },
+    {
+      "id": "branch:review/syscall-linux-ci-guidance",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/syscall-linux-ci-guidance",
+      "head": "01e70f3a44a37a665f17d3c247d81dc608908a72",
+      "title": "Document how to identify syscall CI kernels",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T19:56:48.971156+00:00",
+      "summary": "The reviewed documentation amendment replaces a dated kernel table with public CI routing, target filters and the maintainer’s current-worker inspection guidance. Agent or distribution names are explicitly distinct from the actual kernel release. The contributor is deciding whether to amend PR #15439, reply and resolve the moving-target thread; the published PR is unchanged.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "01e70f3a44a37a665f17d3c247d81dc608908a72",
+        "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
+      },
+      "followup": {
+        "disposition": "Contributor decision pending",
+        "owner": "root",
+        "sourceHead": "01e70f3a44a37a665f17d3c247d81dc608908a72",
+        "observedAt": "2026-10-13T19:56:48.971156+00:00",
+        "nextAction": "Await the contributor’s decision on this exact published documentation amendment and prepared review response.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
+          "https://github.com/google/gvisor/pull/15439#discussion_r4212422885"
+        ]
+      }
     }
   ],
   "edges": [
@@ -7980,6 +8010,14 @@
       "role": "proposed_update",
       "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR and unresolved feedback are unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c"
+    },
+    {
+      "from": "branch:review/syscall-linux-ci-guidance",
+      "to": "pr:15439",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Separate reviewed documentation amendment awaiting the contributor’s decision; the published PR is unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
     }
   ],
   "investigations": [
