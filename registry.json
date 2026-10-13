@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T22:12:25.629104+00:00",
+    "updatedAt": "2026-10-13T23:29:09.539922+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6626,6 +6626,29 @@
           "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
           "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3",
           "https://github.com/golang/go/issues/61767#issuecomment-4939164585"
+        ]
+      }
+    },
+    {
+      "id": "branch:checksum-test-reporting",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "checksum-test-reporting",
+      "head": "3eb91384d828db55d0521c293c0e39296a2d0ed3",
+      "title": "Group checksum trials by size and alignment",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/3eb91384d828db55d0521c293c0e39296a2d0ed3",
+      "status": "Agent work · remote validation pending",
+      "updatedAt": "2026-10-13T23:29:09.539922+00:00",
+      "summary": "The public checksum-test change groups the existing deterministic trials by size and alignment, retaining 675,000 valid comparisons while reducing the proposed subtest count from 900,000 to 180. It addresses roughly 260 MB of log and XML output per architecture in the existing verbose run. Remote validation is pending; no measured output reduction, contributor decision or upstream PR is claimed.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Agent-owned remote validation",
+        "sourceHead": "3eb91384d828db55d0521c293c0e39296a2d0ed3",
+        "observedAt": "2026-10-13T23:29:09.539922+00:00",
+        "nextAction": "Complete the owned remote validation and inspect the original reports before proposing upstream delivery.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/3eb91384d828db55d0521c293c0e39296a2d0ed3"
         ]
       }
     }
