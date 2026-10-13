@@ -15,7 +15,6 @@
 package state
 
 import (
-	"fmt"
 	"reflect"
 	"unsafe"
 )
@@ -27,19 +26,4 @@ import (
 // Preconditions: obj.CanAddr().
 func reflectValueRWAddr(obj reflect.Value) reflect.Value {
 	return reflect.NewAt(obj.Type(), unsafe.Pointer(obj.UnsafeAddr()))
-}
-
-// reflectValueRWSlice3 is equivalent to arr.Slice3(i, j, k), except that the
-// returned reflect.Value is usable in assignments even if obj was obtained by
-// the use of unexported struct fields.
-//
-// Preconditions:
-//   - arr.Kind() == reflect.Array and arr.CanAddr().
-//   - i, j, k >= 0.
-//   - i <= j <= k <= arr.Len().
-func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
-	if arr.Kind() != reflect.Array {
-		panic(fmt.Sprintf("arr has kind %v, wanted %v", arr.Kind(), reflect.Array))
-	}
-	return reflectValueRWAddr(arr).Elem().Slice3(i, j, k)
 }

@@ -61,19 +61,14 @@ type objectDecodeState struct {
 	// type-registered structure.
 	typ typeID
 
-	// obj is the object. This may or may not be valid yet, depending on
+	// objPtr points to the object. This may or may not be valid yet, depending on
 	// whether complete returns true. However, regardless of whether the
-	// object is valid, obj contains a final storage location for the
+	// object is valid, objPtr contains a final storage location for the
 	// object. This is immutable.
 	//
-	// Note that this must be addressable (obj.Addr() must not panic).
-	//
-	// The obj passed to the decode methods below will equal this obj only
-	// in the case of decoding the top-level object. However, the passed
-	// obj may represent individual fields, elements of a slice, etc. that
-	// are effectively embedded within the reflect.Value below but with
-	// distinct types.
-	obj reflect.Value
+	// Keep the caller's or allocator's pointer so references and struct
+	// loaders do not need to reconstruct it from the object's value.
+	objPtr reflect.Value
 
 	// blockedBy is the number of dependencies this object has.
 	blockedBy int
@@ -275,10 +270,10 @@ func (ds *decodeState) growObjectsByID(id objectID) {
 	}
 }
 
-func (ds *decodeState) addObject(id objectID, obj reflect.Value) *objectDecodeState {
+func (ds *decodeState) addObject(id objectID, objPtr reflect.Value) *objectDecodeState {
 	ods := &objectDecodeState{
-		id:  id,
-		obj: obj,
+		id:     id,
+		objPtr: objPtr,
 	}
 	ods.pendingEntry.ods = ods
 	ods.leafEntry.ods = ods
@@ -289,7 +284,7 @@ func (ds *decodeState) addObject(id objectID, obj reflect.Value) *objectDecodeSt
 	return ods
 }
 
-// register registers a decode with a type.
+// register registers a decode with a type and returns a pointer to its storage.
 //
 // This type is only used to instantiate a new object if it has not been
 // registered previously. This depends on the type provided if none is
@@ -301,24 +296,24 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 	// Does this object already exist?
 	ds.growObjectsByID(id)
 	ods := ds.objectsByID[id-1]
-	if ods != nil {
-		return walkChild(r.Dots, ods.obj)
+	if ods == nil {
+		// Publish the enclosing allocation before consuming its deferred body.
+		if len(r.Dots) != 0 {
+			typ = ds.findType(r.Type)
+		}
+		ods = ds.addObject(id, reflect.New(typ))
+		if encoded, ok := ds.deferred[id]; ok {
+			delete(ds.deferred, id)
+			ds.decodeObject(ods, ods.objPtr, encoded)
+		}
 	}
 
-	// Create the object.
-	if len(r.Dots) != 0 {
-		typ = ds.findType(r.Type)
+	if len(r.Dots) == 0 {
+		return ods.objPtr
 	}
-	v := reflect.New(typ)
-	ods = ds.addObject(id, v.Elem())
-
-	// Process any deferred objects & callbacks.
-	if encoded, ok := ds.deferred[id]; ok {
-		delete(ds.deferred, id)
-		ds.decodeObject(ods, ods.obj, encoded)
-	}
-
-	return walkChild(r.Dots, ods.obj)
+	// An interior field can have a read-only reflected view even though the
+	// graph owns its storage. Normalize that view only at this boundary.
+	return reflectValueRWAddr(walkChild(r.Dots, ods.objPtr.Elem()))
 }
 
 // objectDecoder is for decoding structs.
@@ -344,7 +339,7 @@ func (od *objectDecoder) load(slot int, objPtr reflect.Value, wait bool, fn func
 	// object are in terms of the wire object's type, which might be in a
 	// different order (but will have the same fields).
 	v := *od.encoded.Field(od.rte.FieldOrder[slot])
-	od.ds.decodeObject(od.ods, objPtr.Elem(), v)
+	od.ds.decodeObject(od.ods, objPtr, v)
 	if wait {
 		// Mark this individual object a blocker.
 		od.ds.waitObject(od.ods, v, fn)
@@ -359,7 +354,8 @@ func (od *objectDecoder) afterLoad(fn func()) {
 }
 
 // decodeStruct decodes a struct value.
-func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, encoded *wire.Struct) {
+func (ds *decodeState) decodeStruct(ods *objectDecodeState, objPtr reflect.Value, encoded *wire.Struct) {
+	obj := objPtr.Elem()
 	if obj.Kind() != reflect.Struct {
 		Failf("wire value has incompatible destination type %v", obj.Type())
 	}
@@ -387,7 +383,11 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 	}
 	ds.stats.start(ods.typ)
 	defer ds.stats.done()
-	switch value := obj.Addr().Interface().(type) {
+	// Methods belong to *T, even if the caller supplied a defined pointer type.
+	if objPtr.Type().Name() != "" {
+		objPtr = objPtr.Convert(reflect.PointerTo(obj.Type()))
+	}
+	switch value := objPtr.Interface().(type) {
 	case SaverLoader:
 		value.StateLoad(ds.ctx, Source{internal: od})
 	case binaryObject:
@@ -409,15 +409,15 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 	}
 	for i := 0; i < len(encoded.Keys); i++ {
 		// Decode the objects.
-		kv := reflect.New(obj.Type().Key()).Elem()
-		vv := reflect.New(obj.Type().Elem()).Elem()
-		ds.decodeObject(ods, kv, encoded.Keys[i])
-		ds.decodeObject(ods, vv, encoded.Values[i])
+		keyPtr := reflect.New(obj.Type().Key())
+		valuePtr := reflect.New(obj.Type().Elem())
+		ds.decodeObject(ods, keyPtr, encoded.Keys[i])
+		ds.decodeObject(ods, valuePtr, encoded.Values[i])
 		ds.waitObject(ods, encoded.Keys[i], nil)
 		ds.waitObject(ods, encoded.Values[i], nil)
 
 		// Set in the map.
-		obj.SetMapIndex(kv, vv)
+		obj.SetMapIndex(keyPtr.Elem(), valuePtr.Elem())
 	}
 }
 
@@ -431,7 +431,7 @@ func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, en
 	}
 	// Decode the contents into the array.
 	for i := 0; i < len(encoded.Contents); i++ {
-		ds.decodeObject(ods, obj.Index(i), encoded.Contents[i])
+		ds.decodeValue(ods, obj.Index(i), encoded.Contents[i])
 		ds.waitObject(ods, encoded.Contents[i], nil)
 	}
 }
@@ -467,7 +467,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	if _, ok := encoded.Type.(wire.TypeSpecNil); ok {
 		// Special case; the nil object. Just decode directly, which
 		// will read nil from the wire (if encoded correctly).
-		ds.decodeObject(ods, obj, encoded.Value)
+		ds.decodeValue(ods, obj, encoded.Value)
 		return
 	}
 
@@ -478,13 +478,12 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// decode normally. In order to avoid issues with setting value-types,
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
-	origObj := obj
-	obj = reflect.New(typ).Elem()
-	defer origObj.Set(obj)
+	objPtr := reflect.New(typ)
+	defer obj.Set(objPtr.Elem())
 
 	// With the object now having sufficient type information to actually
 	// have Set called on it, we can proceed to decode the value.
-	ds.decodeObject(ods, obj, encoded.Value)
+	ds.decodeObject(ods, objPtr, encoded.Value)
 }
 
 // isFloatEq determines if x and y represent the same value.
@@ -506,8 +505,19 @@ func isComplexEq(x complex128, y complex128) bool {
 	return isFloatEq(real(x), real(y)) && isFloatEq(imag(x), imag(y))
 }
 
-// decodeObject decodes a object value.
-func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) {
+// decodeObject decodes through an existing allocation or caller pointer.
+// Struct loaders use that receiver; other values use the shared value decoder.
+func (ds *decodeState) decodeObject(ods *objectDecodeState, objPtr reflect.Value, encoded wire.Object) {
+	if x, ok := encoded.(*wire.Struct); ok {
+		ds.decodeStruct(ods, objPtr, x)
+		return
+	}
+	ds.decodeValue(ods, objPtr.Elem(), encoded)
+}
+
+// decodeValue decodes a writable value, including embedded array elements that
+// do not have a separate allocation pointer.
+func (ds *decodeState) decodeValue(ods *objectDecodeState, obj reflect.Value, encoded wire.Object) {
 	switch x := encoded.(type) {
 	case wire.Nil: // Fast path: first.
 		// We leave obj alone here. That's because if obj represents an
@@ -524,13 +534,10 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// Note that if this is a map type, we go through a level of
 		// indirection to allow for map aliasing.
 		if obj.Kind() == reflect.Map {
-			v := ds.register(x, obj.Type())
+			v := ds.register(x, obj.Type()).Elem()
 			if v.Kind() != reflect.Map || !v.Type().AssignableTo(obj.Type()) {
 				Failf("map reference type %v does not match %v", v.Type(), obj.Type())
 			}
-			// Dots may reach an unexported map field. Its storage belongs
-			// to the graph, but its reflected view carries a read-only flag.
-			v = reflectValueRWAddr(v).Elem()
 			if v.IsNil() {
 				// Note that we don't want to clobber the map
 				// if has already been decoded by decodeMap. We
@@ -546,10 +553,15 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 			Failf("wire reference has incompatible destination %v", obj.Type())
 		}
 		v := ds.register(x, obj.Type().Elem())
-		if v.Type() != obj.Type().Elem() {
-			Failf("pointer target type %v does not match %v", v.Type(), obj.Type().Elem())
+		if v.Type().Elem() != obj.Type().Elem() {
+			Failf("pointer target type %v does not match %v", v.Type().Elem(), obj.Type().Elem())
 		}
-		obj.Set(reflectValueRWAddr(v))
+		// The root may have a different defined pointer type with this same
+		// exact pointee. Convert its type without changing its storage.
+		if v.Type() != obj.Type() {
+			v = v.Convert(obj.Type())
+		}
+		obj.Set(v)
 	case wire.Bool:
 		obj.SetBool(bool(x))
 	case wire.Int:
@@ -594,15 +606,15 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// Note that it's fine to slice the array here and assume that
 		// contents will still be filled in later on.
 		typ := reflect.ArrayOf(capacity, element)
-		v := ds.register(&x.Ref, typ)
+		v := ds.register(&x.Ref, typ).Elem()
 		if v.Kind() != reflect.Array || v.Type().Elem() != element || v.Len() < capacity {
 			Failf("slice backing type %v does not contain %d elements of %v", v.Type(), capacity, element)
 		}
-		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), capacity))
+		obj.Set(v.Slice3(0, int(x.Length), capacity))
 	case *wire.Array:
 		ds.decodeArray(ods, obj, x)
 	case *wire.Struct:
-		ds.decodeStruct(ods, obj, x)
+		ds.decodeStruct(ods, obj.Addr(), x)
 	case *wire.Map:
 		ds.decodeMap(ods, obj, x)
 	case *wire.Interface:
@@ -652,17 +664,17 @@ func (ds *decodeState) findCycle() []*objectDecodeState {
 	panic("unreachable")
 }
 
-// Load deserializes the object graph rooted at obj.
+// Load deserializes the object graph rooted at objPtr.
 //
 // This function may panic and should be run in safely().
-func (ds *decodeState) Load(obj reflect.Value) {
+func (ds *decodeState) Load(objPtr reflect.Value) {
 	ds.stats.init()
 	defer ds.stats.fini(func(id typeID) string {
 		return ds.types.LookupName(id)
 	})
 
 	// Add the root object with ID 1.
-	_ = ds.addObject(1, obj)
+	_ = ds.addObject(1, objPtr)
 
 	// Read the number of objects.
 	numObjects, object, err := ReadHeader(&ds.r)
@@ -700,7 +712,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 				ods = ds.lookup(id)
 				if ods != nil {
 					// Decode the object.
-					ds.decodeObject(ods, ods.obj, encoded)
+					ds.decodeObject(ods, ods.objPtr, encoded)
 				} else {
 					// If an object hasn't had interest registered
 					// previously or isn't yet valid, we deferred
@@ -718,7 +730,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 		// Include as much information as we can, taking into account
 		// the possible state transitions above.
 		if ods != nil {
-			Failf("error decoding object ID %d (%T) from %#v: %w", id, ods.obj.Interface(), encoded, err)
+			Failf("error decoding object ID %d (%T) from %#v: %w", id, ods.objPtr.Elem().Interface(), encoded, err)
 		} else if encoded != nil {
 			Failf("error decoding from %#v: %w", encoded, err)
 		} else {
@@ -750,7 +762,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 			ds.checkComplete(elem.ods)
 		}
 	}); err != nil {
-		Failf("error executing callbacks: %w\nfor object %#v", err, ods.obj.Interface())
+		Failf("error executing callbacks: %w\nfor object %#v", err, ods.objPtr.Elem().Interface())
 	}
 
 	// Check if we have any remaining dependency cycles. If there are any
@@ -764,7 +776,7 @@ func (ds *decodeState) Load(obj reflect.Value) {
 			if i > 0 {
 				buf.WriteString(" => ")
 			}
-			fmt.Fprintf(&buf, "%q", cycleOS.obj.Type())
+			fmt.Fprintf(&buf, "%q", cycleOS.objPtr.Type().Elem())
 		}
 		buf.WriteString("}")
 		Failf("incomplete graph: %s", buf.String())
