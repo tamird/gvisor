@@ -855,8 +855,6 @@ const (
 
 // Save saves the given object.
 //
-// +checkescape all
-//
 // N.B. This function will panic on error.
 func Save(w *Writer, obj Object) {
 	switch x := obj.(type) {
@@ -920,8 +918,6 @@ func Save(w *Writer, obj Object) {
 }
 
 // Load loads a new object.
-//
-// +checkescape all
 //
 // N.B. This function will panic on error.
 func Load(r *Reader) Object {
