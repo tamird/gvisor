@@ -1,0 +1,3 @@
+Large source-image qualification through the maintained Dockerfile and Buildx.
+This marker changes the canonical Make source hash without changing build steps.
+Retain the observed cache response and source-build log; do not infer a miss.
