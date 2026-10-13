@@ -118,7 +118,11 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 
 	// Attempt our decode.
 	err := safely(func() {
-		ds.Load(reflect.ValueOf(rootPtr).Elem())
+		objPtr := reflect.ValueOf(rootPtr)
+		// Check the caller's indirection before reading the stream, while
+		// retaining the original pointer as the graph's storage owner.
+		_ = objPtr.Elem()
+		ds.Load(objPtr)
 	})
 	return ds.stats, err
 }

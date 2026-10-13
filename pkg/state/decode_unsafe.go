@@ -100,9 +100,5 @@ func storeScalar(obj reflect.Value, encoded wire.Object) bool {
 //   - destination points to writable Go storage of exactly typ, a pointer type.
 //   - ref.Root is nonzero.
 func (ds *decodeState) assignPointer(destination unsafe.Pointer, typ reflect.Type, ref *wire.Ref) {
-	target := ds.register(ref, typ.Elem())
-	if target.Type() != typ.Elem() {
-		Failf("pointer target type %v does not match %v", target.Type(), typ.Elem())
-	}
-	*(*unsafe.Pointer)(destination) = target.Addr().UnsafePointer()
+	*(*unsafe.Pointer)(destination) = ds.pointerTarget(ref, typ).UnsafePointer()
 }

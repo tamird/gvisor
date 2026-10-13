@@ -106,6 +106,26 @@ func TestEmbeddedPointers(t *testing.T) {
 	})
 }
 
+func TestDefinedPointerRoot(t *testing.T) {
+	type rootPointer *system
+	root := &system{v2: int64(17)}
+	root.v1 = root
+	var encoded bytes.Buffer
+	if _, err := state.Save(t.Context(), &encoded, rootPointer(root)); err != nil {
+		t.Fatal(err)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), &encoded, rootPointer(&loaded)); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := loaded.v1, &loaded; got != want {
+		t.Errorf("root reference = %p, want %p", got, want)
+	}
+	if got, want := loaded.v2, any(int64(17)); got != want {
+		t.Errorf("root value = %v, want %v", got, want)
+	}
+}
+
 func TestZeroSizedFieldPointers(t *testing.T) {
 	for _, test := range []struct {
 		name  string

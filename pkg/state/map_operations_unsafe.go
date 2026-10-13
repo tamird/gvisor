@@ -35,7 +35,7 @@ type typedMapOperations[M ~map[K]V, K comparable, V any] struct{}
 func (typedMapOperations[M, K, V]) newMap() reflect.Value {
 	// A pointer or interface may refer to a nil map. The zero header must
 	// remain nil if its eventual body is wire.Nil.
-	return reflect.ValueOf(new(M)).Elem()
+	return reflect.ValueOf(new(M))
 }
 
 func (typedMapOperations[M, K, V]) ensure(address unsafe.Pointer) {
@@ -49,7 +49,7 @@ func (typedMapOperations[M, K, V]) entry(ds *decodeState, ods *objectDecodeState
 	// Allocate both cells before either hook. Escaping receivers remain
 	// separate for nonzero-sized values; zero-sized cells follow Go's rules.
 	key, value := new(K), new(V)
-	ds.decodeMapEntry(ods, reflect.ValueOf(key).Elem(), reflect.ValueOf(value).Elem(), encodedKey, encodedValue)
+	ds.decodeMapEntry(ods, reflect.ValueOf(key), reflect.ValueOf(value), encodedKey, encodedValue)
 	// Hooks may replace the header, so read it only after decoding both cells.
 	(*(*M)(address))[*key] = *value
 }
@@ -75,8 +75,8 @@ func RegisterMap[M ~map[K]V, K comparable, V any]() {
 	mapStorage[typ] = typedMapOperations[M, K, V]{}
 }
 
-// newObject allocates zero storage before the common graph publishes it. Only
-// map allocation has native storage operations; all other types keep the
+// newObject returns a pointer to zero storage before the graph publishes it.
+// Only map allocation has native storage operations; all other types keep the
 // coherent decoder's allocation boundary.
 func newObject(typ reflect.Type) reflect.Value {
 	if typ.Kind() == reflect.Map {
@@ -84,33 +84,35 @@ func newObject(typ reflect.Type) reflect.Value {
 			return native.newMap()
 		}
 	}
-	return reflect.New(typ).Elem()
+	return reflect.New(typ)
 }
 
 func (ds *decodeState) mapTarget(ref *wire.Ref, typ reflect.Type) reflect.Value {
-	target := ds.register(ref, typ)
+	targetPtr := ds.register(ref, typ)
+	target := targetPtr.Elem()
 	if target.Kind() != reflect.Map || !target.Type().AssignableTo(typ) {
 		Failf("map reference type %v does not match %v", target.Type(), typ)
 	}
-	return target
+	// A map reference makes its header usable before the payload is decoded.
+	// Pointer and interface allocations remain zero until this boundary.
+	if native := mapStorage[target.Type()]; native != nil {
+		native.ensure(targetPtr.UnsafePointer())
+	} else if target.IsNil() {
+		target.Set(reflect.MakeMap(target.Type()))
+	}
+	return targetPtr
 }
 
-// assignMap initializes a reference before its payload is decoded, without
-// replacing an already decoded header. Different assignable map types retain
-// Go's checked assignment; only exact types use the native store.
-func assignMap(destination unsafe.Pointer, typ reflect.Type, target reflect.Value) {
+// assignMap assigns the initialized map returned by mapTarget. Different
+// assignable map types retain Go's checked assignment; only exact types use
+// the native store.
+func assignMap(destination unsafe.Pointer, typ reflect.Type, targetPtr reflect.Value) {
+	target := targetPtr.Elem()
 	if native := mapStorage[target.Type()]; native != nil {
-		native.ensure(target.Addr().UnsafePointer())
 		if target.Type() == typ {
-			native.assign(destination, target.Addr().UnsafePointer())
+			native.assign(destination, targetPtr.UnsafePointer())
 			return
 		}
-	}
-	// Interior paths may pass through unexported fields. The graph owns
-	// writable storage, but FieldByName's view retains a read-only flag.
-	target = reflectValueRWAddr(target).Elem()
-	if target.IsNil() {
-		target.Set(reflect.MakeMap(target.Type()))
 	}
 	reflect.NewAt(typ, destination).Elem().Set(target)
 }
