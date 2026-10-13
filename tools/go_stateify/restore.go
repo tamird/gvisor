@@ -189,8 +189,14 @@ func (r *restoreSet) nameable(t types.Type) bool {
 	case *types.Named:
 		return objectNameable(t.Obj(), t.TypeArgs())
 	case *types.Basic:
+		if t.Kind() == types.UnsafePointer {
+			// Bare unsafe.Pointer would require an unsafe generated file.
+			// Named or aliased spellings are checked above instead.
+			return false
+		}
+		builtin := types.Universe.Lookup(t.Name())
 		_, found := r.scope.LookupParent(t.Name(), token.NoPos)
-		return found == types.Universe.Lookup(t.Name())
+		return builtin != nil && found == builtin
 	case *types.Pointer:
 		return r.nameable(t.Elem())
 	case *types.Slice:
