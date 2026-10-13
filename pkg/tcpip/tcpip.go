@@ -1289,6 +1289,9 @@ type TCPInfoOption struct {
 	// SndCwnd is the congestion window, in packets.
 	SndCwnd uint32
 
+	// SndMss is the maximum TCP payload size, in bytes.
+	SndMss uint32
+
 	// SndSsthresh is the threshold between slow start and congestion
 	// avoidance.
 	SndSsthresh uint32
