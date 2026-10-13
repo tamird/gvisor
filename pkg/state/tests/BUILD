@@ -21,6 +21,7 @@ go_library(
         "struct.go",
         "tests.go",
     ],
+    gc_goopts = ["-m=2"],
     deps = [
         "//pkg/state",
         "//pkg/state/pretty",
