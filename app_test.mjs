@@ -61,111 +61,155 @@ test('browser conflict refresh retains first observation and uses the service cl
   assert.equal(context.result.merged.observedAt, '2026-10-12T15:00:00Z');
 });
 
-function handoffNode(number = 1) {
+function attentionNode(number = 1) {
   const head = 'a'.repeat(40), url = `https://github.com/google/gvisor/pull/${number}`;
-  return { id: `pr:${number}`, type: 'pr', number, title: `Change ${number}`, url, workStates: {}, github: {
+  return { id: `pr:${number}`, type: 'pr', number, title: `Change ${number}`, url, status: 'open', workStates: {}, github: {
     number, url, head, headOwner: 'tamird', status: 'open', reviewsComplete: true, reviewDecision: 'APPROVED',
     approvedHead: head, approvedAt: '2026-10-13T09:00:00Z', headCommittedAt: '2026-10-13T08:00:00Z',
     headIntroducedAt: '2026-10-13T08:01:00Z', headHistoryComplete: true, mergeable: 'MERGEABLE',
-    importsComplete: true, imports: [], checks: { complete: true, total: 1, state: 'SUCCESS', contexts: [{ name: 'test', state: 'SUCCESS', purpose: 'validation', kind: 'check-run' }] },
+    importsComplete: true, imports: [], threads: { complete: true, unresolved: 0, total: 0 }, feedback: { complete: true, items: [] },
+    checks: { complete: true, total: 1, state: 'SUCCESS', contexts: [{ name: 'test', state: 'SUCCESS', purpose: 'validation', kind: 'check-run' }] },
   } };
 }
-function handoffImport(node, number = 2) {
-  return { ...handoffNode(number).github, head: 'b'.repeat(40), headOwner: 'google',
-    sourceHead: node.github.head, matchesSourceHead: true };
+function attentionImport(node, number = 2) {
+  return { ...attentionNode(number).github, head: 'b'.repeat(40), headOwner: 'google', sourceHead: node.github.head, matchesSourceHead: true };
 }
-function classifyHandoff(nodes) {
-  const context = client(); context.nodesInput = nodes;
-  return JSON.parse(vm.runInContext('JSON.stringify(handoffGroups(nodesInput, "tamird"))', context));
+function reasonsFor(node) {
+  const context = client(); context.nodeInput = node;
+  return JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
 }
-function handoffGroup(node) {
-  return classifyHandoff([node]).find(group => group.entries.length)?.id;
-}
+function idsFor(node) { return reasonsFor(node).map(reason => reason.id); }
+function serviceStatus(name, state) { return { name, state, kind: 'status', purpose: 'validation', url: null }; }
 
-test('handoff distinguishes explicit import errors, feedback failure, and import check failures', () => {
-  const node = handoffNode();
-  const status = (name, state) => ({ name, state, kind: 'status', purpose: 'validation', url: null });
-  node.github.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [status('import/copybara', 'ERROR')] };
-  node.workStates.failing = { scope: node.github.head, basis: 'observed', since: '2026-10-01T00:00:00Z' };
-  assert.equal(handoffGroup(node), 'import-failed');
-  const entry = classifyHandoff([node])[0].entries[0];
-  assert.equal(entry.observation, ''); // A generic failure clock cannot date this context.
-  assert.equal(entry.reason, 'import/copybara: ERROR.');
-  assert.match(classifyHandoff([node])[0].ask, /internal import errors/);
-  node.github.checks.contexts.push(status('gazelle', 'FAILURE')); node.github.checks.total = 2;
-  assert.equal(handoffGroup(node), 'import-failed'); // Do not hide a concrete internal error.
-  node.github.checks.contexts = [status('import/copybara', 'SUCCESS'), status('feedback/copybara', 'FAILURE')];
-  assert.equal(handoffGroup(node), 'internal-status');
-  assert.match(classifyHandoff([node]).find(group => group.entries.length).entries[0].reason, /import\/copybara: SUCCESS/);
-  const imported = handoffImport(node); imported.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [status('Buildkite', 'FAILURE')] };
-  node.github.imports = [imported];
-  assert.equal(handoffGroup(node), 'import-checks');
+test('attention assigns simultaneous public and internal failures to their actual owners', () => {
+  const node = attentionNode();
+  node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [serviceStatus('import/copybara', 'ERROR'), serviceStatus('gazelle', 'FAILURE')] };
+  assert.ok(idsFor(node).includes('author-public-checks'));
+  assert.ok(idsFor(node).includes('maintainer-import-failed'));
+  node.github.checks.contexts = [serviceStatus('import/copybara', 'SUCCESS'), serviceStatus('feedback/copybara', 'FAILURE')];
+  assert.ok(!idsFor(node).includes('author-public-checks'));
+  assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
+  const imported = attentionImport(node); imported.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('buildkite/pipeline', 'FAILURE')] }; node.github.imports = [imported];
+  assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  assert.ok(idsFor(node).includes('maintainer-merge'));
 });
 
-test('handoff uses current-head approval and import association, not historical links or prose', () => {
-  const node = handoffNode();
-  node.github.feedback = { items: [{ body: 'The import failed last week.' }] };
-  const imported = handoffImport(node); imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed';
-  node.github.imports = [imported];
-  assert.equal(handoffGroup(node), 'import');
+test('attention uses current approvals and import associations without inventing import failures', () => {
+  const node = attentionNode(), imported = attentionImport(node);
+  imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed'; node.github.imports = [imported];
+  node.github.feedback.items = [{ kind: 'comment', body: 'The import failed last week.' }];
+  assert.deepEqual(idsFor(node), ['maintainer-import']);
   node.github.approvedHead = 'c'.repeat(40);
-  node.workStates['maintainer-review'] = { scope: 'c'.repeat(40), basis: 'observed', since: '2026-10-01T00:00:00Z' };
-  assert.equal(handoffGroup(node), 'review');
-  assert.equal(classifyHandoff([node]).find(group => group.entries.length).entries[0].observation, '');
+  assert.deepEqual(idsFor(node), ['maintainer-review']);
   node.github.revisionChanged = true;
-  assert.equal(handoffGroup(node), 'internal-status');
+  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
 });
 
-test('handoff identifies imported-but-unmerged without declaring readiness', () => {
-  const node = handoffNode(); const imported = handoffImport(node); node.github.imports = [imported];
-  const scope = `${node.github.head},${imported.number}:${imported.head}`;
-  node.workStates['waiting-merge'] = { scope, basis: 'observed', since: '2026-10-13T09:00:00Z' };
-  assert.equal(handoffGroup(node), 'merge');
-  imported.checks.complete = false;
-  assert.equal(handoffGroup(node), 'merge');
-  assert.match(classifyHandoff([node]).find(group => group.entries.length).entries[0].reason, /incomplete or unknown/);
-  imported.checks.complete = true; imported.mergeable = 'UNKNOWN';
-  assert.equal(handoffGroup(node), 'merge');
-  assert.match(classifyHandoff([node]).find(group => group.entries.length).entries[0].reason, /mergeability unknown/);
-  imported.status = 'draft';
-  assert.equal(handoffGroup(node), 'internal-status');
-  imported.status = 'closed';
-  assert.equal(handoffGroup(node), 'internal-status');
-  imported.status = 'merged';
-  assert.equal(handoffGroup(node), 'internal-status');
-  node.github.imports = []; node.github.importsComplete = false;
-  assert.equal(handoffGroup(node), 'internal-status');
-  node.github.importsComplete = true; node.github.checks.contexts = [{ name: 'import/copybara', kind: 'status', state: 'SUCCESS', purpose: 'validation' }];
-  assert.equal(handoffGroup(node), 'internal-status');
+test('unanswered feedback stays author work after a mechanical new head or outdated location', () => {
+  const node = attentionNode(); node.github.reviewDecision = 'CHANGES_REQUESTED'; node.github.threads = { complete: true, total: 1, unresolved: 1 };
+  const comment = { kind: 'inline', threadId: 'thread', isResolved: false, isOutdated: false, createdAt: '2026-10-13T09:10:00Z', author: { login: 'reviewer', __typename: 'User' } };
+  node.github.feedback.items = [comment];
+  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(!idsFor(node).includes('maintainer-response'));
+  node.github.feedback.items.push({ ...comment, createdAt: '2026-10-13T09:20:00Z', author: { login: 'tamird', __typename: 'User' } });
+  assert.ok(!idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-response'));
+  node.github.feedback.items.push({ ...comment, createdAt: '2026-10-13T09:21:00Z' });
+  assert.ok(idsFor(node).includes('author-feedback'));
+  node.github.headIntroducedAt = '2026-10-13T09:30:00Z'; node.github.head = 'd'.repeat(40);
+  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(!idsFor(node).includes('maintainer-response'));
+  for (const item of node.github.feedback.items) item.isOutdated = true;
+  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(!idsFor(node).includes('maintainer-response'));
+  node.github.feedback.items.push({ ...comment, createdAt: '2026-10-13T09:40:00Z', author: { login: 'tamird' } });
+  assert.ok(!idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-response'));
+  assert.equal(node.github.reviewDecision, 'CHANGES_REQUESTED'); // Preserve GitHub's fact, not its old action assignment.
 });
 
-test('handoff omits drafts, resolved sources and contributor-only work but not assignment errors', () => {
-  const nodes = Array.from({ length: 6 }, (_, index) => handoffNode(index + 1));
-  nodes[0].github.status = 'draft'; nodes[1].github.status = 'merged'; nodes[2].github.status = 'closed';
-  nodes[3].github.reviewDecision = 'CHANGES_REQUESTED'; nodes[4].github.mergeable = 'CONFLICTING';
-  nodes[5].github.checks.contexts[0].state = 'FAILURE'; nodes[5].github.checks.state = 'FAILURE';
-  assert.equal(classifyHandoff(nodes).flatMap(group => group.entries).length, 0);
-  const node = handoffNode(10);
-  node.github.checks.contexts.push({ name: 'assign', state: 'FAILURE', purpose: 'reviewer-assignment' });
-  node.github.checks.total = 2; node.github.checks.state = 'FAILURE';
-  assert.equal(handoffGroup(node), 'import');
+test('known bot feedback needs author triage even with incomplete review inventory', () => {
+  const node = attentionNode();
+  const comment = { kind: 'inline', threadId: 'bot-thread', isResolved: false, isOutdated: false, createdAt: '2026-10-13T09:10:00Z', author: { login: 'review-bot', __typename: 'Bot' } };
+  node.github.feedback.items = [comment]; node.github.threads = { complete: true, total: 1, unresolved: 1 };
+  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(!idsFor(node).includes('maintainer-unknown'));
+  node.github.reviewsComplete = false; node.github.feedback.complete = false; node.github.threads.complete = false;
+  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-unknown'));
+  node.github.feedback.items.push({ ...comment, createdAt: '2026-10-13T09:20:00Z', author: { login: 'tamird' } });
+  assert.ok(!idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-response')); assert.ok(idsFor(node).includes('maintainer-unknown'));
 });
 
-test('copied handoff has one linked source per group, revision-qualified imports and scoped observations', () => {
-  const node = handoffNode(10); node.title = 'Title ] with\nnew line';
-  const imported = handoffImport(node, 20); imported.matchesSourceHead = false; imported.sourceHead = 'c'.repeat(40); node.github.imports = [imported];
-  node.workStates['awaiting-import'] = { scope: node.github.head, basis: 'observed', since: '2026-10-13T08:30:00Z' };
-  const excluded = handoffNode(30); excluded.github.status = 'draft';
-  const context = client(); context.nodesInput = [node, excluded];
-  const text = vm.runInContext('handoffMarkdown(handoffGroups(nodesInput, "tamird"), "2026-10-13T09:05:00Z")', context);
+test('accepted older snapshots without feedback render an explicit unknown reason', () => {
+  const context = client(), node = attentionNode(); node.github.labels = []; node.github.checkedAt = context.snapshotInput.checkedAt; delete node.github.feedback;
+  context.snapshotInput.prs = [node.github]; context.nodeInput = node;
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
+  assert.ok(JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context)).some(reason => reason.id === 'maintainer-unknown'));
+  node.github.feedback = { complete: true, items: null };
+  assert.ok(idsFor(node).includes('maintainer-unknown')); assert.ok(!idsFor(node).includes('author-feedback'));
+});
+
+test('review-level holds and incomplete discussion remain unknown instead of author code requests', () => {
+  const node = attentionNode(); node.github.reviewDecision = 'CHANGES_REQUESTED';
+  node.github.feedback.items = [{ kind: 'review', state: 'CHANGES_REQUESTED', commit: { oid: node.github.head }, author: { login: 'reviewer' }, body: 'Hold for internal exceptions.' }];
+  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+  node.github.feedback.complete = false;
+  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+});
+
+test('a fresh mergeable head overrides old conflict metadata', () => {
+  const node = attentionNode(); node.workStates.conflicts = { scope: 'c'.repeat(40) };
+  assert.ok(!idsFor(node).includes('author-conflicts'));
+  node.github.mergeable = 'UNKNOWN'; node.github.mergeabilityObservation = { state: 'CONFLICTING', head: node.github.head, checkedAt: '2026-10-13T09:00:00Z' };
+  assert.ok(idsFor(node).includes('author-conflicts'));
+  node.github.mergeabilityObservation.head = 'c'.repeat(40);
+  assert.ok(!idsFor(node).includes('author-conflicts'));
+});
+
+test('a directly observed new-head conflict remains actionable while old checks are invalidated', () => {
+  const context = client(), node = attentionNode(); node.github.checkedAt = '2026-10-13T09:00:00Z'; context.nodeInput = node;
+  context.observationInput = { head: 'd'.repeat(40), base: 'e'.repeat(40), status: 'open', state: 'CONFLICTING', checkedAt: '2026-10-13T10:00:00Z' };
+  const result = JSON.parse(vm.runInContext('conflictResults.set(nodeInput.number, observationInput); nodeInput.github = withConflictResult(nodeInput.github); JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
+  assert.deepEqual(result.map(reason => reason.id), ['author-conflicts', 'maintainer-unknown']);
+  assert.equal(node.github.revisionChanged, true); assert.equal(node.github.checks, null);
+});
+
+test('unpublished proposal decisions do not replace the published head review', () => {
+  const node = attentionNode(); node.github.reviewDecision = 'REVIEW_REQUIRED'; node.workStates['contributor-review'] = { scope: 'c'.repeat(40) };
+  assert.ok(idsFor(node).includes('author-proposal')); assert.ok(idsFor(node).includes('maintainer-review'));
+  const context = client(); context.nodeInput = node;
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird")[0].id', context), 'maintainer-review');
+  assert.equal(vm.runInContext('attentionGroups([nodeInput], "tamird", true, new Set(["author-proposal"]))[0].id', context), 'author-proposal');
+});
+
+test('imported-unmerged does not assert readiness and administrative failures are maintainer work', () => {
+  const node = attentionNode(), imported = attentionImport(node); node.github.imports = [imported]; imported.mergeable = 'UNKNOWN'; imported.checks.complete = false;
+  assert.ok(idsFor(node).includes('maintainer-merge')); assert.ok(idsFor(node).includes('maintainer-unknown'));
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-merge').detail, /mergeability unknown/);
+  imported.status = 'closed'; assert.ok(!idsFor(node).includes('maintainer-import-failed'));
+  assert.ok(idsFor(node).includes('maintainer-unknown'));
+  node.github.imports = []; node.github.checks.contexts.push({ name: 'assign', state: 'FAILURE', purpose: 'reviewer-assignment' }); node.github.checks.total = 2; node.github.checks.state = 'FAILURE';
+  assert.ok(!idsFor(node).includes('author-public-checks')); assert.ok(idsFor(node).includes('maintainer-assignment'));
+});
+
+test('table copying is plaintext, one full source URL per line, with disjoint displayed groups', () => {
+  const node = attentionNode(10); node.title = 'Title ] with\nnew line'; node.github.mergeable = 'CONFLICTING';
+  node.github.checks.contexts.push(serviceStatus('import/copybara', 'ERROR')); node.github.checks.total = 2;
+  node.github.imports = [attentionImport(node, 20)];
+  const draft = attentionNode(30); draft.status = draft.github.status = 'draft';
+  const branch = { id: 'branch:x', type: 'branch', title: 'Branch', url: 'https://github.com/tamird/gvisor/tree/x', workStates: {} };
+  const context = client(); context.nodesInput = [node, draft, branch];
+  const text = vm.runInContext('attentionText(attentionGroups(nodesInput, "tamird"), "2026-10-13T09:05:00Z")', context);
   assert.match(text, /Public GitHub snapshot: 2026-10-13 09:05 UTC/);
-  assert.match(text, /Title \\\] with new line/);
-  assert.equal(text.split('https://github.com/google/gvisor/pull/10').length - 1, 1);
-  assert.match(text, /Earlier-revision import #20\]\(https:\/\/github.com\/google\/gvisor\/pull\/20\)/);
-  assert.match(text, /Awaiting-import state first observed 2026-10-13 08:30 UTC/);
-  assert.ok(!text.includes('/pull/30'));
-  assert.equal(text.split('## ').length - 1, 1);
-  assert.equal(text.split('Could you confirm or start imports').length - 1, 1);
+  assert.ok(!/^#{1,6} |^- |\[[^\n]*\]\(|`/m.test(text));
+  assert.deepEqual(text.split('\n').filter(line => line.startsWith('https://')), ['https://github.com/google/gvisor/pull/10', 'https://github.com/google/gvisor/pull/30']);
+  assert.ok(!text.includes('/pull/20')); assert.ok(!text.includes('Title')); assert.ok(!text.includes('/tree/x'));
+  assert.equal(text.split('/pull/10').length - 1, 1);
+  const selected = vm.runInContext('attentionText(attentionGroups([nodesInput[0]], "tamird", true, new Set(["maintainer-import-failed"])), "2026-10-13T09:05:00Z")', context);
+  assert.match(selected, /^Could you help/); assert.match(selected, /Needs maintainer attention: Import failed/);
+  assert.ok(!selected.includes('Needs author attention'));
+});
+
+test('shared table URLs preserve multiple attention reasons and legacy handoff navigation', () => {
+  const context = client(); context.location = new URL('https://example.test/?view=handoff&q=15518#handoff-import-failed');
+  const alias = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context)); assert.equal(alias.view, 'table'); assert.equal(alias.tableGrouping, true); assert.equal(alias.search, '15518');
+  context.location = new URL('https://example.test/?view=table&group-by=attention&reason=author-conflicts&reason=maintainer-import-failed&sort=number&order=asc');
+  const shared = JSON.parse(vm.runInContext('JSON.stringify(readViewURL())', context)); assert.deepEqual(shared.reasonFilters, ['author-conflicts', 'maintainer-import-failed']); assert.equal(shared.sortKey, 'number'); assert.equal(shared.sortDirection, 1);
 });
 
 test('clipboard fallback and pending writes cannot restore a stale handoff after invalidation', async () => {

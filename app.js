@@ -4,13 +4,15 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
-const VIEWS = ["dag", "table", "handoff", "investigations"];
+const VIEWS = ["dag", "table", "investigations"];
+const SORT_KEYS = ["number", "title", "impact", "direct", "age", "review", "checks", "group"];
 const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting import", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
 const FILTER_STATES = ["contributor-review", "maintainer-review", "proposed-update", "awaiting-import", "importing", "waiting-merge", "failing", "changes-requested", "checks-pending", "conflicts", "draft"];
 const FAILURE_STATES = new Set(["FAILURE", "ERROR", "TIMED_OUT", "CANCELLED", "ACTION_REQUIRED", "STALE"]);
-let stateFilters = new Set();
+let stateFilters = new Set(), reasonFilters = new Set();
+let tableGrouping = false, visibleTableGroups = [];
 const STALE_AGE = 2 * 60 * 60 * 1000;
 const CARD = { width: 216, height: 70, column: 264, row: 84 };
 const READABLE_SCALE = .9;
@@ -112,126 +114,133 @@ function checkInfo(pr) {
   return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
 }
 
-const HANDOFF_GROUPS = [
-  { id: "import-failed", title: "Import failed", ask: "Could you check these internal import errors and confirm the retry status? Public statuses do not include the internal error details." },
-  { id: "import-checks", title: "Import checks failing", ask: "Could you check the failing import pipelines and share the next action?" },
-  { id: "internal-status", title: "Needs internal status update", ask: "Could you confirm the internal status and next action for these revisions?" },
-  { id: "review", title: "Awaiting maintainer review", ask: "Could you review the current revisions?" },
-  { id: "import", title: "Awaiting import", ask: "Could you confirm or start imports for these approved revisions? An internal CL may already exist." },
-  { id: "merge", title: "Imported, unmerged", ask: "Could you confirm the remaining internal gates and merge status for these imports?" },
+const ATTENTION_REASONS = [
+  { id: "author-conflicts", owner: "author", title: "Merge conflicts" },
+  { id: "author-public-checks", owner: "author", title: "Public source checks failing" },
+  { id: "author-feedback", owner: "author", title: "Review feedback to address" },
+  { id: "author-proposal", owner: "author", title: "Unpublished proposal decision" },
+  { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
+  { id: "maintainer-internal-feedback", owner: "maintainer", title: "Internal feedback failed" },
+  { id: "maintainer-import-checks", owner: "maintainer", title: "Import checks failing" },
+  { id: "maintainer-response", owner: "maintainer", title: "Review updated revision or reply" },
+  { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
+  { id: "maintainer-import", owner: "maintainer", title: "Awaiting import" },
+  { id: "maintainer-merge", owner: "maintainer", title: "Imported, unmerged" },
+  { id: "maintainer-assignment", owner: "maintainer", title: "Reviewer assignment" },
+  { id: "maintainer-unknown", owner: "maintainer", title: "Status needs clarification" },
 ];
+const OTHER_ATTENTION_GROUPS = [
+  { id: "draft", owner: "other", title: "Draft PRs" },
+  { id: "resolved", owner: "other", title: "Resolved PRs" },
+  { id: "other", owner: "other", title: "Other work" },
+];
+const ATTENTION_OWNERS = { author: "Needs author attention", maintainer: "Needs maintainer attention", other: "Other visible work" };
+const LEGACY_HANDOFF_GROUPS = { "import-failed": "maintainer-import-failed", "import-checks": "maintainer-import-checks", "internal-status": "maintainer-unknown", review: "maintainer-review", import: "maintainer-import", merge: "maintainer-merge" };
 let handoffCopyVersion = 0;
 function handoffTimestamp(value) {
   return Number.isFinite(Date.parse(value)) ? `${new Date(value).toISOString().slice(0, 16).replace("T", " ")} UTC` : null;
 }
-function handoffObservation(node, key, scope, description) {
-  const record = states(node)[key];
-  const timestamp = record?.basis === "observed" && record.scope === scope && handoffTimestamp(record.since);
-  return timestamp ? `${description} first observed ${timestamp}.` : "";
-}
-function handoffEntry(node, owner) {
-  const pr = node.github;
-  if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return null;
-  if (pr.revisionChanged || !pr.head) return { node, group: "internal-status", imports: [], observation: "",
-    reason: "Source revision changed or is unavailable; current-head review and checks need a snapshot refresh." };
+function reviewAttention(pr, owner) {
+  const items = Array.isArray(pr.feedback?.items) ? pr.feedback.items : [];
+  const complete = pr.reviewsComplete === true && pr.threads?.complete === true && pr.feedback?.complete === true && Array.isArray(pr.feedback.items);
+  const threads = new Map();
+  for (const item of items) if (item.kind === "inline") {
+    if (!threads.has(item.threadId)) threads.set(item.threadId, []);
+    threads.get(item.threadId).push(item);
+  }
+  let author = false, response = false, unknown = !complete;
+  for (const comments of threads.values()) {
+    comments.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+    const latest = comments.at(-1);
+    if (latest.isResolved) continue;
+    // A newer head or an outdated location does not answer a finding.
+    if (latest.author?.login === owner) response = true;
+    else if (latest.author?.login) author = true;
+    else unknown = true;
+  }
   const decision = effectiveReviewDecision(pr);
-  const isCopybara = check => check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name);
-  const importCheck = validationChecks(pr).find(check => check.kind === "status" && check.name === "import/copybara");
-  const feedbackCheck = validationChecks(pr).find(check => check.kind === "status" && check.name === "feedback/copybara");
-  const importFailed = importCheck && FAILURE_STATES.has(importCheck.state);
-  // A concrete import-service error remains an internal-status ask even when
-  // source checks also fail. Omit work that needs only contributor attention.
-  if (!importFailed && (decision === "CHANGES_REQUESTED" || states(node).conflicts || pr.mergeable === "CONFLICTING"
-      || validationChecks(pr).some(check => !isCopybara(check) && FAILURE_STATES.has(check.state)))) return null;
+  if (decision === "CHANGES_REQUESTED" && !author && !response) {
+    const requests = items.filter(item => item.kind === "review" && item.state === "CHANGES_REQUESTED" && item.author?.login !== owner);
+    response = Boolean(threads.size && pr.threads.unresolved === 0
+      || requests.length && requests.every(item => item.commit?.oid && item.commit.oid !== pr.head));
+    // A review-level hold does not identify an author code change. Its text is
+    // available in details; do not infer intent from free-form wording.
+    return { author, response, unknown: unknown || !response };
+  }
+  return { author, response, unknown };
+}
+function attentionReasons(node, owner) {
+  const reasons = [], add = (id, detail) => {
+    if (!reasons.some(item => item.id === id)) reasons.push({ ...ATTENTION_REASONS.find(item => item.id === id), detail });
+  };
+  if (states(node)["contributor-review"])
+    add("author-proposal", "A decision is pending on a separate proposed revision; this does not change the published head's review status.");
+  if (contributorChanges(node)) add("author-feedback", "The contributor requested changes to this branch revision.");
+  const pr = node.github;
+  if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return reasons;
+  if (pr.head && conflictRecord(pr)) add("author-conflicts", mergeDescription(pr));
+  if (pr.revisionChanged || !pr.head) {
+    add("maintainer-unknown", "Current source revision or its review/check evidence needs a snapshot refresh.");
+    return reasons;
+  }
+  const contexts = pr.checks?.contexts || [];
+  const copybara = name => contexts.find(check => check.kind === "status" && check.name === name);
+  const importStatus = copybara("import/copybara"), feedbackStatus = copybara("feedback/copybara");
+  const publicFailures = validationChecks(pr).filter(check => FAILURE_STATES.has(check.state)
+    && !(check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name)));
+  if (publicFailures.length) add("author-public-checks", publicFailures.map(check => `${check.name}: ${check.state}`).join("; "));
+  const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
+  if (review.author) add("author-feedback", "A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
+  if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
+  if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) add("maintainer-internal-feedback", `feedback/copybara: ${feedbackStatus.state}${importStatus ? `; import/copybara: ${importStatus.state}` : ""}.`);
+  if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
+    add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
   const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const active = current.filter(item => ["open", "draft"].includes(item.status));
   const failed = active.filter(item => checkInfo(item).tone === "bad");
-  const importScope = active.map(item => `${item.number}:${item.head}`).join(",");
-  let group, reason, observation = "", imports = current;
-  if (importFailed) {
-    group = "import-failed";
-    reason = `import/copybara: ${importCheck.state}.`;
-    // The generic failure clock does not identify which status context failed.
-  } else if (failed.length) {
-    group = "import-checks";
-    const checks = failed.flatMap(item => validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name} (${check.state.toLowerCase()})`));
-    const detail = checks.length ? `${checks.slice(0, 2).join("; ")}${checks.length > 2 ? "; more failures in the import PR" : ""}` : "GitHub reports failing import checks";
-    reason = `${detail}.`;
-    observation = handoffObservation(node, "failing", failed.map(item => `${item.number}:${item.head}`).join(","), "Import-check failure");
-  } else if (feedbackCheck && FAILURE_STATES.has(feedbackCheck.state)) {
-    group = "internal-status";
-    reason = `feedback/copybara: ${feedbackCheck.state}${importCheck ? `; import/copybara: ${importCheck.state}` : ""}.`;
-  } else if (current.some(item => item.status === "merged") && !active.length) {
-    group = "internal-status";
-    reason = "Matching public import merged; source PR remains open.";
-  } else if (pr.reviewsComplete !== true) {
-    group = "internal-status";
-    reason = "Current-head review evidence incomplete.";
-  } else if (decision !== "APPROVED") {
-    group = "review";
-    reason = pr.approvedHead || pr.githubReviewDecision === "APPROVED" ? "Current-head approval is not established." : "";
-    observation = handoffObservation(node, "maintainer-review", pr.head, "Review wait");
-  } else if (active.length) {
-    if (active.some(item => item.status === "open")) {
-      group = "merge";
-      const facts = [];
-      if (active.some(item => !checkInfo(item).passed && checkInfo(item).tone === "pending")) facts.push("Import checks pending");
-      else if (active.some(item => !checkInfo(item).passed)) facts.push("Import checks incomplete or unknown");
-      else facts.push("Visible import checks pass");
-      if (active.some(item => item.mergeable === "CONFLICTING")) facts.push("import conflicts reported");
-      else if (active.some(item => item.mergeable !== "MERGEABLE")) facts.push("mergeability unknown");
-      if (active.some(item => effectiveReviewDecision(item) === "CHANGES_REQUESTED")) facts.push("import changes requested");
-      if (!checkInfo(pr).passed) facts.push(`source checks ${checkInfo(pr).text.toLowerCase()}`);
-      if (!pr.importsComplete) facts.push("public import lookup incomplete");
-      reason = `${facts.join("; ")}.`;
-      observation = handoffObservation(node, "importing", importScope, "Matching import");
-    } else {
-      group = "internal-status";
-      reason = "Matching public import is a draft.";
-      observation = handoffObservation(node, "importing", importScope, "Matching import");
-    }
-  } else if (current.length) {
-    group = "internal-status";
-    reason = "Matching public import closed without a recorded merge; internal disposition unknown.";
-  } else if (!pr.importsComplete) {
-    group = "internal-status";
-    reason = "Public import lookup incomplete; internal CL status unknown.";
-  } else if (importCheck || checkInfo(pr).tone === "bad") {
-    group = "internal-status";
-    reason = importCheck ? `import/copybara: ${importCheck.state}; no matching public import link.`
-      : "Source check failure reported without identifying details.";
-  } else {
-    group = "import";
-    reason = !checkInfo(pr).passed ? `Source checks: ${checkInfo(pr).text.toLowerCase()}.` : "";
-    observation = handoffObservation(node, "awaiting-import", pr.head, "Awaiting-import state");
+  if (failed.length) add("maintainer-import-checks", failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`).join(". "));
+  const authorBlocked = reasons.some(item => item.owner === "author" && item.id !== "author-proposal");
+  if (review.unknown) add("maintainer-unknown", "Review evidence is incomplete or its next action is unclear; any positively observed author or reviewer follow-up remains listed.");
+  if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
+  if (decision !== "APPROVED" && !authorBlocked && !review.response && !review.unknown)
+    add("maintainer-review", "Approval of the current published revision is not established.");
+  if (decision === "APPROVED") {
+    const open = active.filter(item => item.status === "open");
+    if (open.length) {
+      const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
+      add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
+      if (open.some(item => checkInfo(item).tone === "unknown")) add("maintainer-unknown", "A matching public import exists, but its check status is incomplete or unknown.");
+    } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.");
+    else if (current.length) add("maintainer-unknown", current.some(item => item.status === "merged") ? "Matching import merged; source PR remains open." : "Matching import closed without a recorded merge; internal disposition unknown.");
+    else if (!pr.importsComplete) add("maintainer-unknown", "Public import lookup is incomplete; an internal CL may exist.");
+    else if (importStatus) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. An internal CL may exist.`);
+    else if (!authorBlocked) add("maintainer-import", "No matching public import was found; an internal CL may already exist.");
   }
-  // A previous revision's import is useful context, never current import proof.
-  if (!imports.length && pr.imports.length) imports = [pr.imports[0]];
-  return { node, group, reason, observation, imports };
+  if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
+    add("maintainer-unknown", "Check failure reported without enough context to assign an action owner.");
+  return ATTENTION_REASONS.flatMap(definition => reasons.filter(reason => reason.id === definition.id));
 }
-function handoffGroups(nodes, owner) {
-  const entries = nodes.map(node => handoffEntry(node, owner)).filter(Boolean).sort((a, b) => a.node.number - b.node.number);
-  return HANDOFF_GROUPS.map(group => ({ ...group, entries: entries.filter(entry => entry.group === group.id) }));
+function attentionGroups(nodes, owner, grouped = true, filters = reasonFilters) {
+  const entries = nodes.map(node => ({ node, reasons: attentionReasons(node, owner),
+    copyURL: node.type === "pr" && node.github?.headOwner === owner ? safeURL(node.url) : null }));
+  if (!grouped) return [{ id: "visible", owner: "other", title: "Visible PRs", entries }];
+  const groups = [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => ({ ...group, entries: [] }));
+  for (const entry of entries) {
+    const primary = entry.reasons.find(item => filters.has(item.id)) || entry.reasons.find(item => item.id !== "author-proposal") || entry.reasons[0];
+    const id = primary?.id || (resolved(entry.node) ? "resolved" : entry.node.github?.status === "draft" ? "draft" : "other");
+    groups.find(group => group.id === id).entries.push(entry);
+  }
+  return groups.filter(group => group.entries.length);
 }
-function handoffImportLabel(entry, imported) {
-  return `${imported.matchesSourceHead && imported.sourceHead === entry.node.github.head ? "Import" : "Earlier-revision import"} #${imported.number}`;
-}
-function handoffMarkdown(groups, checkedAt) {
-  const escape = value => String(value).replace(/[\r\n]+/g, " ").replace(/[\\[\]]/g, "\\$&");
-  const linked = (text, url) => `[${escape(text)}](${(safeURL(url) || "").replace(/[()]/g, encodeURIComponent)})`;
-  const sections = groups.filter(group => group.entries.length).map(group => `## ${group.title}\n\n${group.ask}\n\n${group.entries.map(entry => {
-    const source = linked(`#${entry.node.number} ${entry.node.title}`, entry.node.url);
-    const imports = entry.imports.map(item => linked(handoffImportLabel(entry, item), item.url)).join(", ");
-    const facts = [entry.reason, entry.observation].filter(Boolean).map(escape).join(" ");
-    return `- ${source}${imports ? ` · ${imports}` : ""}${facts ? ` — ${facts}` : ""}`;
-  }).join("\n")}`);
-  return [`Public GitHub snapshot: ${handoffTimestamp(checkedAt) || "unavailable"}. Internal CL progress may not be visible here.`, ...sections].join("\n\n");
+function attentionText(groups, checkedAt) {
+  const shown = groups.filter(group => group.entries.some(entry => entry.copyURL));
+  const intro = shown.length && shown.every(group => group.owner === "maintainer") ? "Could you help with these PRs?" : "PRs grouped by the next action.";
+  const sections = shown.map(group => `${group.owner === "other" ? group.title : `${ATTENTION_OWNERS[group.owner]}: ${group.title}`}\n${group.entries.filter(entry => entry.copyURL).map(entry => entry.copyURL).join("\n")}`);
+  return [intro, `Public GitHub snapshot: ${handoffTimestamp(checkedAt) || "unavailable"}. Internal status may not be visible.`, ...sections].join("\n\n");
 }
 function invalidateHandoffCopy() {
-  $("handoff-manual").hidden = true;
-  $("handoff-copy-text").value = "";
-  $("handoff-copy-status").textContent = "";
-  $("handoff-copy-all").textContent = "Copy all shown";
+  $("handoff-manual").hidden = true; $("handoff-copy-text").value = ""; $("handoff-copy-status").textContent = "";
+  $("handoff-copy-all").textContent = "Copy visible";
   return ++handoffCopyVersion;
 }
 async function copyHandoff(text, description, control) {
@@ -239,51 +248,13 @@ async function copyHandoff(text, description, control) {
   try {
     await navigator.clipboard.writeText(text);
     if (version !== handoffCopyVersion) return;
-    $("handoff-manual").hidden = true;
     $("handoff-copy-status").textContent = `${description} copied.`;
     if (control) control.textContent = "Copied ✓";
   } catch {
     if (version !== handoffCopyVersion) return;
-    const input = $("handoff-copy-text");
-    $("handoff-manual").hidden = false; input.value = text; input.focus(); input.select();
-    $("handoff-copy-status").textContent = "Clipboard unavailable. The text below is selected; copy it with your keyboard or device menu.";
+    const input = $("handoff-copy-text"); $("handoff-manual").hidden = false; input.value = text; input.focus(); input.select();
+    $("handoff-copy-status").textContent = "Clipboard unavailable. The plain text below is selected for manual copying.";
   }
-}
-function drawHandoff() {
-  const checkedAt = model.checkedAt;
-  const candidates = model.nodes.filter(matchesBase);
-  const groups = handoffGroups(candidates, registry.meta.owner), entries = groups.flatMap(group => group.entries);
-  const list = $("handoff-list"); list.replaceChildren();
-  $("handoff-copy-all").disabled = !checkedAt || !entries.length;
-  $("handoff-copy-all").textContent = "Copy all shown";
-  $("handoff-snapshot").textContent = checkedAt ? `Public snapshot ${handoffTimestamp(checkedAt)} · copy uses the groups shown below.` : "No public snapshot is available. Reload the snapshot to prepare a handoff.";
-  if (!checkedAt) return [];
-  for (const group of groups) {
-    const id = `handoff-${group.id}`;
-    if (!group.entries.length && selected !== id) continue;
-    const section = element("section", `handoff-group ${group.id}${selected === id ? " selected" : ""}`), header = element("div", "handoff-group-heading");
-    section.id = id;
-    const heading = element("h2"), permalink = element("a", "handoff-group-link", `${group.title} · ${group.entries.length}`);
-    permalink.href = currentViewURL(id); permalink.title = "Link to this attention group";
-    if (selected === id) permalink.setAttribute("aria-current", "location");
-    heading.append(permalink);
-    const copy = button("Copy group", event => copyHandoff(handoffMarkdown([group], checkedAt), group.title, event.currentTarget));
-    copy.disabled = !group.entries.length;
-    header.append(heading, copy);
-    section.append(header, element("p", "handoff-group-ask", group.ask));
-    const items = element("ul", "handoff-items");
-    for (const entry of group.entries) {
-      const item = element("li"), title = element("div", "handoff-item-title");
-      title.append(link(`#${entry.node.number} ${entry.node.title}`, entry.node.url));
-      for (const imported of entry.imports) title.append(link(handoffImportLabel(entry, imported), imported.url, "handoff-import"));
-      item.append(title);
-      if (entry.reason) item.append(element("p", "", entry.reason));
-      if (entry.observation) item.append(element("small", "handoff-observation", entry.observation));
-      items.append(item);
-    }
-    section.append(items); list.append(section);
-  }
-  return entries;
 }
 
 function badge(info, title) {
@@ -438,8 +409,7 @@ function appendAttributes(container, node) {
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
 function investigationMap() { return new Map((registry.investigations || []).map(item => [item.id, item])); }
-function selectionMap() { return view === "investigations" ? investigationMap() : view === "handoff"
-  ? new Map(HANDOFF_GROUPS.map(group => [`handoff-${group.id}`, group])) : nodeMap(); }
+function selectionMap() { return view === "investigations" ? investigationMap() : new Map([...nodeMap(), ...(view === "table" && tableGrouping ? [...ATTENTION_REASONS, ...OTHER_ATTENTION_GROUPS].map(group => [`attention-${group.id}`, group]) : [])]); }
 function activeDependencyEdges() {
   const active = new Set(model.nodes.filter((node) => !resolved(node) && node.status !== "resolved").map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
@@ -477,9 +447,10 @@ function matchesBase(node) {
 }
 function states(node) { return node.workStates || {}; }
 function matches(node) {
-  return matchesBase(node) && (!model.statesAvailable || !stateFilters.size || [...stateFilters].some((state) => states(node)[state]));
+  return matchesBase(node) && (!model.statesAvailable || !stateFilters.size || [...stateFilters].some((state) => states(node)[state]))
+    && (!reasonFilters.size || attentionReasons(node, registry.meta.owner).some(reason => reasonFilters.has(reason.id)));
 }
-function filtered() { return $("search").value.trim() || $("group-filter").value || (model.statesAvailable && stateFilters.size); }
+function filtered() { return $("search").value.trim() || $("group-filter").value || (model.statesAvailable && stateFilters.size) || reasonFilters.size; }
 function age(record) {
   if (record.basis === "unknown") return "age unknown";
   const minutes = Math.max(0, Math.floor((Date.parse(record.observedAt || model.checkedAt) - Date.parse(record.since)) / 60000));
@@ -528,21 +499,30 @@ function appendStates(parent, node, detail = false) {
   }
 }
 function drawStateFilters() {
-  const counts = new Map(FILTER_STATES.map((state) => [state, 0]));
-  const candidates = model.nodes.filter((node) => matchesBase(node) && !resolved(node));
-  for (const node of candidates) for (const state of Object.keys(states(node))) if (counts.has(state)) counts.set(state, counts.get(state) + 1);
-  for (const control of $("state-filters").querySelectorAll("button")) {
-    const state = control.dataset.state;
-    control.setAttribute("aria-pressed", state ? stateFilters.has(state) : !stateFilters.size);
-    control.textContent = state ? `${STATE_LABELS[state]} ${model.statesAvailable ? counts.get(state) : "—"}` : `All ${model.nodes.filter((node) => matchesBase(node) && (!resolved(node) || $("show-resolved").checked)).length}`;
-    control.disabled = Boolean(state && !model.statesAvailable);
+  // Initial snapshot loading precedes creation of the attention controls.
+  if (initializing) return;
+  const counts = new Map(ATTENTION_REASONS.map(reason => [reason.id, 0]));
+  const candidates = model.nodes.filter(node => matchesBase(node) && (!resolved(node) || $("show-resolved").checked));
+  for (const node of candidates) for (const reason of attentionReasons(node, registry.meta.owner)) counts.set(reason.id, counts.get(reason.id) + 1);
+  for (const control of $("state-filters").querySelectorAll("input[data-reason]")) {
+    control.checked = reasonFilters.has(control.dataset.reason);
+    control.nextElementSibling.textContent = `${ATTENTION_REASONS.find(reason => reason.id === control.dataset.reason).title} ${counts.get(control.dataset.reason)}`;
   }
+  $("all-reasons").textContent = `All ${candidates.length}`;
+  $("all-reasons").setAttribute("aria-pressed", !reasonFilters.size && !stateFilters.size);
+  for (const owner of ["author", "maintainer"]) {
+    const count = candidates.filter(node => attentionReasons(node, registry.meta.owner).some(reason => reason.owner === owner)).length;
+    $(`attention-${owner}-summary`).textContent = `${ATTENTION_OWNERS[owner]} · ${count}`;
+  }
+  $("legacy-state-filter").hidden = !stateFilters.size;
+  $("legacy-state-filter").textContent = stateFilters.size ? `Shared legacy state filter: ${[...stateFilters].map(key => STATE_LABELS[key]).join(", ")}. Reset to clear.` : "";
 }
+
 function stateAge(node) {
   const records = Object.entries(states(node)).filter(([state, record]) => record.basis !== "unknown" && (!stateFilters.size || stateFilters.has(state)));
   return records.length ? Math.max(...records.map(([, record]) => Date.parse(record.observedAt || model.checkedAt) - Date.parse(record.since))) : -1;
 }
-const URL_FIELDS = ["view", "state", "q", "group", "resolved", "focus", "investigation-status"];
+const URL_FIELDS = ["view", "state", "reason", "group-by", "sort", "order", "q", "group", "resolved", "focus", "investigation-status"];
 function selectedFromURL() {
   try { return decodeURIComponent(location.hash.slice(1)) || null; } catch { return null; }
 }
@@ -553,11 +533,17 @@ function currentViewURL(selection = selected) {
     if ($("investigation-search").value) url.searchParams.set("q", $("investigation-search").value);
     if ($("investigation-filter").value) url.searchParams.set("investigation-status", $("investigation-filter").value);
   } else {
-    if (view !== "handoff") for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
+    for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
+    for (const reason of ATTENTION_REASONS) if (reasonFilters.has(reason.id)) url.searchParams.append("reason", reason.id);
+    if (view === "table") {
+      if (tableGrouping) url.searchParams.set("group-by", "attention");
+      if (sortKey !== "impact") url.searchParams.set("sort", sortKey);
+      if (sortDirection === 1) url.searchParams.set("order", "asc");
+    }
     if ($("search").value) url.searchParams.set("q", $("search").value);
     if ($("group-filter").value) url.searchParams.set("group", $("group-filter").value);
-    if (view !== "handoff" && $("show-resolved").checked) url.searchParams.set("resolved", "1");
-    if (view !== "handoff" && focus) url.searchParams.set("focus", focus);
+    if ($("show-resolved").checked) url.searchParams.set("resolved", "1");
+    if (focus) url.searchParams.set("focus", focus);
   }
   url.hash = selection ? encodeURIComponent(selection) : "";
   return url.pathname + url.search + url.hash;
@@ -565,13 +551,19 @@ function currentViewURL(selection = selected) {
 function readViewURL() {
   const params = new URL(location.href).searchParams;
   return { explicit: URL_FIELDS.some(key => params.has(key)),
-    view: VIEWS.includes(params.get("view")) ? params.get("view") : "dag",
+    view: params.get("view") === "handoff" ? "table" : VIEWS.includes(params.get("view")) ? params.get("view") : "dag",
+    tableGrouping: params.get("view") === "handoff" || params.get("group-by") === "attention",
+    reasonFilters: params.getAll("reason"), sortKey: params.get("sort") || "impact", sortDirection: params.get("order") === "asc" ? 1 : -1,
     stateFilters: params.getAll("state"), search: params.get("q") || "", group: params.get("group") || "",
     investigationStatus: params.get("investigation-status") || "",
     resolved: params.get("resolved") === "1", selected: selectedFromURL(), focus: params.get("focus") || null };
 }
 function applyView(saved) {
-  view = VIEWS.includes(saved.view) ? saved.view : "dag";
+  view = saved.view === "handoff" ? "table" : VIEWS.includes(saved.view) ? saved.view : "dag";
+  tableGrouping = saved.view === "handoff" || saved.tableGrouping === true;
+  reasonFilters = new Set((Array.isArray(saved.reasonFilters) ? saved.reasonFilters : []).filter(id => ATTENTION_REASONS.some(reason => reason.id === id)));
+  sortKey = SORT_KEYS.includes(saved.sortKey) ? saved.sortKey : "impact"; sortDirection = saved.sortDirection === 1 ? 1 : -1;
+  if (saved.selected?.startsWith("handoff-")) saved = { ...saved, selected: `attention-${LEGACY_HANDOFF_GROUPS[saved.selected.slice(8)] || saved.selected.slice(8)}` };
   const validID = id => typeof id === "string" && /^[^\s]{1,240}$/.test(id) ? id : null;
   const ids = nodeMap();
   // URLs affect their displayed area. Saved preferences can retain both areas
@@ -599,7 +591,7 @@ function syncViewURL(navigation) {
 }
 function saveView() {
   if (initializing) return;
-  try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
+  try { localStorage.setItem(UI_KEY, JSON.stringify({ url: currentViewURL(), view, tableGrouping, reasonFilters: [...reasonFilters], stateFilters: [...stateFilters], selected, focus, camera, sortKey, sortDirection,
     search: view === "investigations" ? $("investigation-search").value : $("search").value,
     workSearch: $("search").value, investigationSearch: $("investigation-search").value, investigationStatus: $("investigation-filter").value,
     group: $("group-filter").value, resolved: $("show-resolved").checked })); } catch { /* Storage is optional. */ }
@@ -847,7 +839,20 @@ function drawTable(nodes) {
     age: stateAge(node), status: status(node), review: node.type === "pr" ? reviewInfo(node.github).text : "", checks: node.type === "pr" ? checkInfo(node.github).text : "",
     group: groups.get(node.group) || "", number: node.number || 0 })[sortKey];
   nodes.sort((a, b) => (typeof value(a) === "number" ? value(a) - value(b) : String(value(a)).localeCompare(String(value(b)))) * sortDirection || a.title.localeCompare(b.title));
-  for (const node of nodes) {
+  visibleTableGroups = attentionGroups(nodes, registry.meta.owner, tableGrouping);
+  $("handoff-copy-all").disabled = !model.checkedAt || !visibleTableGroups.some(group => group.entries.some(entry => entry.copyURL));
+  $("handoff-snapshot").textContent = `Copy visible exports the source PRs shown as plain text. Snapshot ${handoffTimestamp(model.checkedAt) || "unavailable"}.`;
+  for (const group of visibleTableGroups) {
+    if (tableGrouping) {
+      const headingRow = element("tr", `attention-heading ${group.owner}${selected === `attention-${group.id}` ? " selected" : ""}`);
+      headingRow.id = `attention-${group.id}`;
+      const cell = element("th"), wrap = element("div", "attention-heading-content"), anchor = element("a", "attention-group-link", `${group.owner === "other" ? group.title : `${ATTENTION_OWNERS[group.owner]} · ${group.title}`} · ${group.entries.length}`);
+      cell.colSpan = head.cells.length; cell.scope = "rowgroup"; anchor.href = currentViewURL(headingRow.id);
+      const copy = button("Copy group", event => copyHandoff(attentionText([group], model.checkedAt), group.title, event.currentTarget));
+      copy.disabled = !group.entries.some(entry => entry.copyURL); wrap.append(anchor, copy); cell.append(wrap); headingRow.append(cell); body.append(headingRow);
+    }
+    for (const entry of group.entries) {
+    const node = entry.node;
     const row = element("tr", selected === node.id ? "selected" : ""); row.dataset.nodeId = node.id;
     const reach = impact(node.id), title = element("td", "work-title"), identity = element("td", `identity ${node.type}`);
     identity.append(link(label(node), node.url));
@@ -855,6 +860,7 @@ function drawTable(nodes) {
     title.append(choose);
     const review = element("td", "review-cell"), checks = element("td", "checks-cell"), state = element("td", "status-cell");
     state.append(element("span", "base-status", status(node))); appendStates(state, node);
+    for (const reason of entry.reasons) { const item = element("span", `attention-reason ${reason.owner}`, reason.title); item.title = `${ATTENTION_OWNERS[reason.owner]}. ${reason.detail}`; state.append(item); }
     if (node.type === "pr") {
       review.append(badge(reviewInfo(node.github), attributeTitle(node)));
       checks.append(badge(checkInfo(node.github), node.github ? `Original PR head ${node.github.head.slice(0, 9)}. ${checkInfo(node.github).detail}` : "No published check data."));
@@ -863,6 +869,7 @@ function drawTable(nodes) {
     row.append(identity, title, element("td", "numeric reach-cell", String(reach.prs)), element("td", "numeric", String(reach.direct)),
       state, review, checks, importCell(node), element("td", "group-cell", groups.get(node.group) || ""));
     body.append(row);
+    }
   }
 }
 function drawDetails() {
@@ -923,7 +930,7 @@ function select(id) {
   if (previous) document.querySelector(`${view === "dag" ? "#graph" : "#work-table"} [data-node="${CSS.escape(previous)}"]`)?.focus();
 }
 function focusWork(id) {
-  focus = id; selected = id; $("search").value = ""; $("group-filter").value = ""; stateFilters.clear();
+  focus = id; selected = id; $("search").value = ""; $("group-filter").value = ""; stateFilters.clear(); reasonFilters.clear();
   setView("dag");
 }
 function drawChainSelector() {
@@ -938,28 +945,25 @@ function drawChainSelector() {
 }
 function render(reposition = false, navigation = "replace") {
   invalidateHandoffCopy();
-  const dag = view === "dag", investigations = view === "investigations", handoff = view === "handoff";
+  const dag = view === "dag", investigations = view === "investigations";
   $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations;
-  $("handoff-pane").hidden = !handoff;
   for (const choice of VIEWS) $(`${choice}-view`).setAttribute("aria-pressed", view === choice);
   document.body.classList.toggle("investigation-mode", investigations);
-  document.body.classList.toggle("handoff-mode", handoff);
-  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations; $("resolved-control").hidden = investigations || handoff;
-  $("work-state-controls").hidden = investigations || handoff; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
-  $("chain-control").hidden = !dag;
-  const nodes = investigations ? drawInvestigations() : handoff ? drawHandoff() : dag ? graphNodes() : tableNodes();
-  $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : handoff ? `${nodes.length} source PRs · one attention group each` : dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
-  $("filter-note").textContent = investigations ? "Research records · separate from GitHub status" : handoff ? "Search and workstream filter the copied list" : !model.statesAvailable ? "State history unavailable in this snapshot" : dag && filtered() ? "Matches with dependency context" : "";
-  $("empty").hidden = nodes.length !== 0;
-  $("empty-title").textContent = investigations ? "No matching investigations" : handoff ? "No maintainer handoff items" : "No matching work";
-  if (handoff) $("details").hidden = true; else drawDetails();
-  drawStateFilters();
+  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations; $("resolved-control").hidden = investigations;
+  $("work-state-controls").hidden = investigations; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
+  $("chain-control").hidden = !dag; $("group-by-attention").checked = tableGrouping;
+  const nodes = investigations ? drawInvestigations() : dag ? graphNodes() : tableNodes();
+  $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : `${nodes.length} items${dag ? " · prerequisite → dependent" : " · click a title for relationships"}`;
+  $("filter-note").textContent = investigations ? "Research records · separate from GitHub status" : reasonFilters.size ? "Matching any selected attention reason" : dag && filtered() ? "Matches with dependency context" : "";
+  $("empty").hidden = nodes.length !== 0; $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
+  drawDetails(); drawStateFilters();
   if (dag) { drawGraph(nodes); drawChainSelector(); } else if (view === "table") drawTable(nodes);
-  $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items · ${investigationMap().size} investigations`;
+  $("inventory").textContent = `${model.nodes.filter(node => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items · ${investigationMap().size} investigations`;
   if (reposition && dag) resetCamera();
-  if (reposition && (investigations || handoff) && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
+  if (reposition && selected && (investigations || view === "table" && tableGrouping)) document.getElementById(selected)?.scrollIntoView({ block: "start" });
   syncViewURL(navigation); saveView();
 }
+
 function setFreshness(text, warning = false, live = false) {
   $("freshness-text").textContent = text;
   $("freshness-dot").className = `status-dot${warning ? " warning" : live ? " live" : ""}`;
@@ -1027,7 +1031,7 @@ function stateRecords(snapshot, node) {
 function applyLive(snapshot, nextRegistry = registry) {
   const focusedInvestigation = view === "investigations" ? document.activeElement?.closest(".investigation-card")?.id : null;
   liveSnapshot = snapshot;
-  const scrollPositions = ["table-pane", "handoff-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
+  const scrollPositions = ["table-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
@@ -1181,8 +1185,8 @@ async function refresh(force = false) {
 }
 
 function setView(next) {
-  const separateView = [view, next].some(item => ["investigations", "handoff"].includes(item));
-  if (separateView) selected = null;
+  const separateView = [view, next].includes("investigations");
+  if (separateView || next !== "table" && selected?.startsWith("attention-")) selected = null;
   view = next; searchEditing = false; render(!separateView, "push");
 }
 function resetFilters(redraw = true) {
@@ -1190,25 +1194,28 @@ function resetFilters(redraw = true) {
     $("investigation-search").value = ""; $("investigation-filter").value = ""; selected = null;
     if (redraw) render(false, "push"); return;
   }
-  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; stateFilters.clear();
+  $("search").value = ""; $("group-filter").value = ""; $("show-resolved").checked = false; focus = null; stateFilters.clear(); reasonFilters.clear();
   if (redraw) render(true, "push");
 }
 function initialize() {
-  for (const state of ["", ...FILTER_STATES]) {
-    const control = button("", () => {
-      if (!state) stateFilters.clear();
-      else if (stateFilters.has(state)) stateFilters.delete(state);
-      else stateFilters.add(state);
-      render(true, "push");
-    });
-    control.dataset.state = state; $("state-filters").append(control);
+  const all = button("All", () => { stateFilters.clear(); reasonFilters.clear(); selected = null; render(true, "push"); }); all.id = "all-reasons"; $("state-filters").append(all);
+  for (const owner of ["author", "maintainer"]) {
+    const chooser = element("details", "attention-selector"), summary = element("summary"); summary.id = `attention-${owner}-summary`; chooser.append(summary);
+    const options = element("div", "attention-options"), reasons = ATTENTION_REASONS.filter(reason => reason.owner === owner);
+    options.append(button("Select all reasons", () => { stateFilters.clear(); for (const reason of reasons) reasonFilters.add(reason.id); selected = null; render(true, "push"); }));
+    for (const reason of reasons) {
+      const label = element("label"), input = element("input"); input.type = "checkbox"; input.dataset.reason = reason.id;
+      input.addEventListener("change", () => { stateFilters.clear(); if (input.checked) reasonFilters.add(reason.id); else reasonFilters.delete(reason.id); selected = null; render(true, "push"); });
+      label.append(input, element("span", "", reason.title)); options.append(label);
+    }
+    chooser.append(options); $("state-filters").append(chooser);
   }
-  $("search").addEventListener("input", () => { if (view === "handoff") selected = null; render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
+  $("search").addEventListener("input", () => { if (selected?.startsWith("attention-")) selected = null; render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-search").addEventListener("input", () => { selected = null; render(false, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("investigation-search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-filter").addEventListener("change", () => { selected = null; render(false, "push"); });
-  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => { if (view === "handoff") selected = null; render(true, "push"); });
+  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => { if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; render(true, "push"); });
   for (const next of VIEWS) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
@@ -1216,7 +1223,8 @@ function initialize() {
     const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number", "age"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
   $("refresh").addEventListener("click", () => refresh(true));
-  $("handoff-copy-all").addEventListener("click", event => copyHandoff(handoffMarkdown(handoffGroups(model.nodes.filter(matchesBase), registry.meta.owner), model.checkedAt), "All shown groups", event.currentTarget));
+  $("handoff-copy-all").addEventListener("click", event => copyHandoff(attentionText(visibleTableGroups, model.checkedAt), "Visible PRs", event.currentTarget));
+  $("group-by-attention").addEventListener("change", () => { tableGrouping = $("group-by-attention").checked; if (selected?.startsWith("attention-")) selected = null; render(true, "push"); });
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
   $("fit").addEventListener("click", () => resetCamera(true, true)); $("reset-view").addEventListener("click", () => resetCamera(false));
   const graph = $("graph");
@@ -1257,7 +1265,7 @@ async function start() {
     // A failed refresh leaves the validated registry as the known inventory.
     await refresh();
     initialize(); const restored = restoreView(); initializing = false; render(!restored);
-    if (view === "handoff" && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
+    if (view === "table" && tableGrouping && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
   } catch (error) { $("visible-count").textContent = "Registry unavailable"; setFreshness(error.message, true); }
 }
 start();
