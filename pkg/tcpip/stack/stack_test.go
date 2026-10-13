@@ -78,7 +78,7 @@ func TestRemoveNICWaitsForLinkResolution(t *testing.T) {
 				started := make(chan struct{})
 				resume := make(chan struct{})
 				clock := faketime.NewManualClock()
-				firstRemote := tcpip.AddrFrom4([4]byte{192, 0, 2, 2})
+				firstRemote := netip.AddrFrom4([4]byte{192, 0, 2, 2})
 				var s *stack.Stack
 				var retained *stack.PacketBuffer
 				s = stack.New(stack.Options{
@@ -110,12 +110,15 @@ func TestRemoveNICWaitsForLinkResolution(t *testing.T) {
 				if err := s.CreateNIC(1, ep); err != nil {
 					t.Fatalf("CreateNIC: %s", err)
 				}
-				local := tcpip.AddrFrom4([4]byte{192, 0, 2, 1})
-				addr := tcpip.ProtocolAddress{Protocol: ipv4.ProtocolNumber, AddressWithPrefix: tcpip.AddressWithPrefix{Address: local, PrefixLen: 24}}
+				local := netip.AddrFrom4([4]byte{192, 0, 2, 1})
+				addr := tcpip.ProtocolAddress{
+					Protocol:          ipv4.ProtocolNumber,
+					AddressWithPrefix: netip.PrefixFrom(local, 24),
+				}
 				if err := s.AddProtocolAddress(1, addr, stack.AddressProperties{}); err != nil {
 					t.Fatalf("AddProtocolAddress: %s", err)
 				}
-				s.SetRouteTable([]tcpip.Route{{Destination: addr.AddressWithPrefix.Subnet(), NIC: 1}})
+				s.SetRouteTable([]tcpip.Route{{Destination: addr.AddressWithPrefix.Masked(), NIC: 1}})
 				count := 1
 				if overflow {
 					// The queue admits 64 pending resolutions; the 65th dispatches
@@ -123,7 +126,7 @@ func TestRemoveNICWaitsForLinkResolution(t *testing.T) {
 					count = 65
 				}
 				for i := range count {
-					remote := tcpip.AddrFrom4([4]byte{192, 0, 2, byte(i + 2)})
+					remote := netip.AddrFrom4([4]byte{192, 0, 2, byte(i + 2)})
 					r, err := s.FindRoute(1, local, remote, ipv4.ProtocolNumber, false)
 					if err != nil {
 						t.Fatalf("FindRoute: %s", err)
