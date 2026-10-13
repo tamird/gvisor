@@ -48,6 +48,26 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+# Qualification-only: retain the copied executable through this helper's
+# builder removal. cleanup removes its private directory only after Buildx rm.
+work=$(realpath "${work}")
+printf 'Buildx staging source: %s\nBuildx staging directory: %s\n' "${buildx}" "${work}"
+df -T -- "${buildx}" "${work}"
+if [[ ${buildx} != /vfs/* || ${work} != /tmp/* ]] || \
+   [[ $(stat -f -c %t "${buildx}") == $(stat -f -c %t "${work}") ]]; then
+  echo 'Expected VFS input and a separate /tmp filesystem for this diagnostic' >&2
+  exit 1
+fi
+source_digest=$(sha256sum -- "${buildx}")
+staged_buildx=$(mktemp "${work}/buildx.XXXXXX")
+cp -- "${buildx}" "${staged_buildx}"
+chmod 0555 "${staged_buildx}"
+staged_digest=$(sha256sum -- "${staged_buildx}")
+printf 'Buildx source SHA256: %s\nBuildx staged SHA256: %s\n' \
+  "${source_digest%% *}" "${staged_digest%% *}"
+test "${source_digest%% *}" = "${staged_digest%% *}"
+buildx=${staged_buildx}
+
 "${buildx}" version
 # The public digest file comes from the MODULE pin. The stock driver fetches
 # the image using Docker's normal verification and image-store mechanisms.
