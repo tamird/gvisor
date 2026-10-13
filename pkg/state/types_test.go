@@ -28,8 +28,8 @@ var earlyBinaryError error
 
 func init() {
 	// Using a type during an earlier init must not prevent a later init from
-	// registering its wire schema. Any already-built fallback operations stay
-	// valid; the subsequent saves below must find the newly registered codec.
+	// registering its wire schema. The subsequent saves below must find the
+	// newly registered codec.
 	var buf bytes.Buffer
 	_, earlyBinaryError = Save(context.Background(), &buf, &binaryFailure{})
 	registerBinary((*binaryFailure)(nil))
@@ -107,14 +107,57 @@ func TestPromotedChildPath(t *testing.T) {
 	type inner struct{ Value int }
 	root := struct{ *inner }{inner: &inner{Value: 17}}
 	name := wire.FieldName("Value")
-	child := walkChild([]wire.Dot{&name}, reflectedLocation(reflect.ValueOf(&root).Elem()), nil)
-	if got, want := child.reflect().Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
+	child := walkChild([]wire.Dot{&name}, reflect.ValueOf(&root).Elem())
+	if got, want := child.Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
 		t.Fatalf("promoted field address = %#x, want %#x", got, want)
 	}
 }
 
+// TestLegacyValueDestinations preserves existing destination conversions while
+// changing how the decoder retains object storage. The empty-map case is a raw
+// wire value; Save ordinarily encodes a map through a reference.
+func TestLegacyValueDestinations(t *testing.T) {
+	var nilInterface any
+	var integerInterface any = int64(17)
+	for _, test := range []struct {
+		name        string
+		source      any
+		encoded     wire.Object
+		destination any
+		want        any
+	}{
+		{"array_in_slice", &[2]int64{17, 29}, nil, &[]int64{0, 0}, []int64{17, 29}},
+		{"empty_array_in_nil_slice", &[0]int64{}, nil, new([]int64), []int64(nil)},
+		{"interface_in_scalar", &integerInterface, nil, new(int64), int64(17)},
+		{"nil_interface_in_scalar", &nilInterface, nil, new(int64(23)), int64(23)},
+		{"empty_map_in_slice", nil, &wire.Map{}, &[]int64{23}, []int64{23}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			if test.source != nil {
+				if _, err := Save(t.Context(), &buf, test.source); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				writer := wire.Writer{Writer: &buf}
+				if err := WriteHeader(&writer, 1, true); err != nil {
+					t.Fatal(err)
+				}
+				wire.Save(&writer, wire.Uint(1))
+				wire.Save(&writer, test.encoded)
+			}
+			if _, err := Load(t.Context(), &buf, test.destination); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := reflect.ValueOf(test.destination).Elem().Interface(), test.want; !reflect.DeepEqual(got, want) {
+				t.Errorf("Load = %v, want %v", got, want)
+			}
+		})
+	}
+}
+
 func TestZeroReferencesLeaveDestination(t *testing.T) {
-	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Ref{}, &wire.Slice{}} {
+	for _, encoded := range []wire.Object{wire.Nil{}, &wire.Ref{}, &wire.Slice{}, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}} {
 		// A non-nil channel is otherwise an unsupported decode destination.
 		integer, channel := int64(17), make(chan int)
 		for _, destination := range []any{&integer, &channel} {

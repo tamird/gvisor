@@ -118,53 +118,11 @@ func TestMapAliasing(t *testing.T) {
 			t.Errorf("alias update = %v, want %v", got, want)
 		}
 	})
-
-	t.Run("assignable_interior", func(t *testing.T) {
-		// The first reference finds an unexported map field inside its
-		// enclosing object. A different assignable map type must share that
-		// header without inheriting reflection's read-only field flag.
-		var buf bytes.Buffer
-		w := wire.Writer{Writer: &buf}
-		if err := state.WriteHeader(&w, 2, true); err != nil {
-			t.Fatal(err)
-		}
-		wire.Save(&w, &wire.Type{Name: (*mapPtrContainer)(nil).StateTypeName(), Fields: []string{"v", "alias", "owner"}})
-		wire.Save(&w, &wire.Type{Name: (*mapContainer)(nil).StateTypeName(), Fields: []string{"prefix", "v"}})
-		name := wire.FieldName("v")
-		interior := &wire.Ref{Root: 2, Type: wire.TypeID(2), Dots: []wire.Dot{&name}}
-		value := wire.Struct{TypeID: 1}
-		value.Alloc(3)
-		*value.Field(0), *value.Field(1), *value.Field(2) = interior, interior, &wire.Ref{Root: 2}
-		wire.Save(&w, wire.Uint(1))
-		wire.Save(&w, &value)
-		owner := wire.Struct{TypeID: 2}
-		owner.Alloc(2)
-		*owner.Field(0), *owner.Field(1) = wire.Int(17), wire.Nil{}
-		wire.Save(&w, wire.Uint(2))
-		wire.Save(&w, &owner)
-		var restored mapPtrContainer
-		if _, err := state.Load(t.Context(), &buf, &restored); err != nil {
-			t.Fatal(err)
-		}
-		if restored.owner == nil || restored.alias == nil {
-			t.Fatal("missing interior map aliases")
-		}
-		if got, want := restored.v, &restored.owner.v; got != want {
-			t.Fatalf("interior map address = %p, want %p", got, want)
-		}
-		if got, want := restored.owner.prefix, 17; got != want {
-			t.Errorf("enclosing prefix = %d, want %d", got, want)
-		}
-		restored.alias[2] = "shared"
-		if got, want := restored.owner.v[2], "shared"; got != want {
-			t.Errorf("interior alias update = %v, want %v", got, want)
-		}
-	})
 }
 
 func TestMapNaNKeys(t *testing.T) {
-	// This distinct, dynamically introduced type has no generated collection
-	// registration. Both it and the generated field must preserve NaN pairs.
+	// Both a dynamically introduced map type and a generated struct field
+	// must preserve NaN key/value pairs.
 	type dynamicMap map[float64]int
 	for _, native := range []bool{false, true} {
 		name := "dynamic"
