@@ -132,8 +132,8 @@ func TestWaitForNextCheckpoint(t *testing.T) {
 
 		wantErr := errors.New("next checkpoint failed")
 		k.OnCheckpointAttempt(wantErr)
-		if got := <-result; got != wantErr {
-			t.Errorf("WaitForCheckpoint() = %v, want %v", got, wantErr)
+		if got, want := <-result, wantErr; got != want {
+			t.Errorf("WaitForCheckpoint() = %v, want %v", got, want)
 		}
 	})
 }
