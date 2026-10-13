@@ -264,27 +264,42 @@ func RestoreOpaque[T any](d Decoder, target *T, value wire.Value) {
 // owns a new no-Dots pointee, never an existing or enclosing graph allocation.
 func RestorePointer[P ~*T, T any](d Decoder, target *P, value wire.Value, restore Restore) {
 	value = dataValue(value)
+	if value.Kind() != wire.KindRef {
+		restorePointerValue(d, target, value)
+		return
+	}
+	ref := value.Reference()
+	if objectID(ref.Root) == 0 {
+		return
+	}
+	var allocate Allocate
+	if restore != nil {
+		allocate = NewObject[T]
+	}
+	pointee := resolvePointer[*T](d, &ref, reflect.TypeFor[T](), allocate, restore)
+	if pointee == nil {
+		// A nil caller-supplied root has no addressable referent.
+		Failf("reference %d has no object storage", ref.Root)
+	}
+	*target = P(pointee)
+}
+
+// resolvePointer returns the graph's canonical pointer before the caller
+// converts it to a possibly defined pointer type. Ptr must be the unnamed
+// pointer to typ. Using a basic constraint lets pointer types share this body.
+func resolvePointer[Ptr any](d Decoder, ref *wire.Ref, typ reflect.Type, allocate Allocate, restore Restore) Ptr {
+	pointer := d.ds.register(ref, typ, allocate, restore)
+	if len(ref.Dots) != 0 {
+		child := walkChild(ref.Dots, reflect.ValueOf(pointer).Elem())
+		pointer = reflectValueRWAddr(child).Interface()
+	}
+	return pointer.(Ptr)
+}
+
+// restorePointerValue handles the non-reference forms accepted by pointer
+// destinations. These operations already require a dynamic destination view.
+func restorePointerValue(d Decoder, target any, value wire.Value) {
 	switch value.Kind() {
-	case wire.KindRef:
-		ref := value.Reference()
-		if objectID(ref.Root) == 0 {
-			return
-		}
-		var allocate Allocate
-		if restore != nil {
-			allocate = NewObject[T]
-		}
-		pointer := d.ds.register(&ref, reflect.TypeFor[T](), allocate, restore)
-		if len(ref.Dots) != 0 {
-			child := walkChild(ref.Dots, reflect.ValueOf(pointer).Elem())
-			pointer = reflectValueRWAddr(child).Interface()
-		}
-		pointee := pointer.(*T)
-		if pointee == nil {
-			// A nil caller-supplied root has no addressable referent.
-			Failf("reference %d has no object storage", ref.Root)
-		}
-		*target = P(pointee)
 	case wire.KindSlice:
 		d.ds.assignSlice(reflect.ValueOf(target).Elem(), value.Slice())
 	case wire.KindArray:
