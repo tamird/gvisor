@@ -398,7 +398,7 @@ func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, enco
 // decodeArray supplies dynamic element views, including the legacy slice and
 // read-only string cases, to the common array operation.
 func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, encoded wire.Value) {
-	restoreElements[reflect.Value](Decoder{ds: ds, ods: ods}, reflectedElements{object: obj}, encoded)
+	restoreElements(Decoder{ds: ds, ods: ods}, reflectedElements{object: obj}, encoded)
 }
 
 // findType finds the type for the given wire.TypeSpecs.

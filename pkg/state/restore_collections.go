@@ -20,19 +20,20 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
+type elements interface {
+	length() int
+	restoreElement(Decoder, int, wire.Value)
+}
+
 // restoreElements owns array length checks, traversal and element waits for
 // both typed elements and dynamically obtained (possibly read-only) views.
-func restoreElements[E any, S interface {
-	length() int
-	element(int) E
-	restore(Decoder, E, wire.Value)
-}](d Decoder, storage S, value wire.Value) {
+func restoreElements(d Decoder, storage elements, value wire.Value) {
 	if value.Len() != storage.length() {
 		Failf("mismatching array length expect=%d, actual=%d", storage.length(), value.Len())
 	}
 	for i := 0; i < value.Len(); i++ {
 		element := value.Element(i)
-		storage.restore(d, storage.element(i), element)
+		storage.restoreElement(d, i, element)
 		d.Wait(element)
 	}
 }
@@ -45,12 +46,8 @@ func (s reflectedElements) length() int {
 	return s.object.Len()
 }
 
-func (s reflectedElements) element(i int) reflect.Value {
-	return s.object.Index(i)
-}
-
-func (reflectedElements) restore(d Decoder, target reflect.Value, value wire.Value) {
-	d.ds.decodeObject(d.ods, target, value)
+func (s reflectedElements) restoreElement(d Decoder, i int, value wire.Value) {
+	d.ds.decodeObject(d.ods, s.object.Index(i), value)
 }
 
 type typedElements[T any] struct {
@@ -62,12 +59,8 @@ func (s typedElements[T]) length() int {
 	return len(s.values)
 }
 
-func (s typedElements[T]) element(i int) *T {
-	return &s.values[i]
-}
-
-func (s typedElements[T]) restore(d Decoder, target *T, value wire.Value) {
-	s.decode(d, target, value)
+func (s typedElements[T]) restoreElement(d Decoder, i int, value wire.Value) {
+	s.decode(d, &s.values[i], value)
 }
 
 type typedPointerElements[T any] struct {
@@ -79,12 +72,8 @@ func (s typedPointerElements[T]) length() int {
 	return len(s.values)
 }
 
-func (s typedPointerElements[T]) element(i int) **T {
-	return &s.values[i]
-}
-
-func (s typedPointerElements[T]) restore(d Decoder, target **T, value wire.Value) {
-	RestorePointer(d, target, value, s.restoreObject)
+func (s typedPointerElements[T]) restoreElement(d Decoder, i int, value wire.Value) {
+	RestorePointer(d, &s.values[i], value, s.restoreObject)
 }
 
 // restoreEntries owns the map lifetime and ordering contract. Both cells must
@@ -210,7 +199,7 @@ func RestoreMap[M ~map[K]V, K comparable, V any](d Decoder, target *M, value wir
 func RestoreArray[A, T any](d Decoder, target *A, elements []T, value wire.Value, element func(Decoder, *T, wire.Value)) {
 	value = dataValue(value)
 	if value.Kind() == wire.KindArray {
-		restoreElements[*T](d, typedElements[T]{values: elements, decode: element}, value)
+		restoreElements(d, typedElements[T]{values: elements, decode: element}, value)
 		return
 	}
 	restoreArrayEnvelope(d, target, value)
@@ -223,9 +212,8 @@ func RestoreArray[A, T any](d Decoder, target *A, elements []T, value wire.Value
 func RestoreRuntimeArray[T any](d Decoder, pointer any, value wire.Value, element func(Decoder, *T, wire.Value)) {
 	value = dataValue(value)
 	if value.Kind() == wire.KindArray {
-		array := reflect.ValueOf(pointer).Elem()
-		values := reflectValueRWSlice3(array, 0, array.Len(), array.Len()).Interface().([]T)
-		restoreElements[*T](d, typedElements[T]{values: values, decode: element}, value)
+		values := runtimeArrayValues(pointer).([]T)
+		restoreElements(d, typedElements[T]{values: values, decode: element}, value)
 		return
 	}
 	restoreArrayEnvelope(d, pointer, value)
@@ -236,12 +224,18 @@ func RestoreRuntimeArray[T any](d Decoder, pointer any, value wire.Value, elemen
 func RestoreRuntimePointerArray[T any](d Decoder, pointer any, value wire.Value, restore Restore) {
 	value = dataValue(value)
 	if value.Kind() == wire.KindArray {
-		array := reflect.ValueOf(pointer).Elem()
-		values := reflectValueRWSlice3(array, 0, array.Len(), array.Len()).Interface().([]*T)
-		restoreElements[**T](d, typedPointerElements[T]{values: values, restoreObject: restore}, value)
+		values := runtimeArrayValues(pointer).([]*T)
+		restoreElements(d, typedPointerElements[T]{values: values, restoreObject: restore}, value)
 		return
 	}
 	restoreArrayEnvelope(d, pointer, value)
+}
+
+// runtimeArrayValues returns the complete typed slice view of the supplied
+// array allocation. The interface retains the view's ordinary GC-visible data.
+func runtimeArrayValues(pointer any) any {
+	array := reflect.ValueOf(pointer).Elem()
+	return reflectValueRWSlice3(array, 0, array.Len(), array.Len()).Interface()
 }
 
 // restoreArrayEnvelope keeps legacy operations on the array itself shared by

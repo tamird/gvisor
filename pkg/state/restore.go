@@ -304,7 +304,7 @@ func RestoreSlice[S ~[]T, T any](d Decoder, target *S, value wire.Value, element
 	case wire.KindSlice:
 		d.ds.assignSlice(reflect.ValueOf(target).Elem(), value.Slice())
 	case wire.KindArray:
-		restoreElements[*T](d, typedElements[T]{values: *target, decode: element}, value)
+		restoreElements(d, typedElements[T]{values: *target, decode: element}, value)
 	case wire.KindRef:
 		d.ds.assignReference(reflect.ValueOf(target).Elem(), value.Reference())
 	case wire.KindMap:
