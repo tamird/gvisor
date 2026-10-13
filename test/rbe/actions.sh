@@ -160,16 +160,16 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       if [[ $QUALIFICATION_EXECUTION == remote-actions && ( ${lanes[*]} == build || ${lanes[*]} == test ) ]]; then
         # Qualification-only control on this source-build branch. Preserve the
-        # original large action budget and no-retry policy independently of
-        # the coordinator's 7200-second work limit. Do not adopt this block as
-        # generic build/test-lane policy.
+        # original large action budget and disable Bazel client retries within
+        # the coordinator's 7200-second work limit. Leave provider recovery at
+        # its default so a lost lease can be re-enqueued. Do not adopt this
+        # block as generic build/test-lane policy.
         printf '%s\n' \
           'build:buildbuddy_remote_executor --config=source-image-qualification' \
           'build:source-image-qualification --strategy=SourceImageOCI=remote' \
           'build:source-image-qualification --strategy=OCITarballManifest=remote' \
           'build:source-image-qualification --strategy=OCITarball=remote' \
           'build:source-image-qualification --remote_exec_header=x-buildbuddy-platform.default-timeout=5333s' \
-          'build:source-image-qualification --remote_exec_header=x-buildbuddy-platform.retry=false' \
           'build:source-image-qualification --remote_retries=0'
       fi
       if [[ $qualification_retain_reports == true ]]; then
