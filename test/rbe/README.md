@@ -1387,8 +1387,10 @@ It binds that worker filesystem into the sandbox and uses a test-owned runtime
 directory. No Docker daemon or container image archive is needed. The complete
 test selection retains its existing unsupported user-namespace joining case.
 `make bwrap-tests` continues to pass its staged or custom `--runsc` executable.
-The public CI also runs this suite on ARM64; that worker lane remains
-unqualified by this AMD64 profile.
+The ARM64 suite can use the Actions frontend with `lanes=bwrap`,
+`architecture=arm64` and `execution=local`; compilation still uses RBE.
+Fully remote ARM64 execution requires a worker with the same namespace
+and cgroup support.
 
 The packetimpact lane selects the same complete suite as `make packetimpact-tests`:
 
