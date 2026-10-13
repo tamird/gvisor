@@ -63,6 +63,7 @@ go_template_instance(
 
 go_library(
     name = "state",
+    gc_goopts = ["-m=2"],
     srcs = [
         "addr_range.go",
         "addr_set.go",

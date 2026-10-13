@@ -7,6 +7,7 @@ package(
 
 go_library(
     name = "tests",
+    gc_goopts = ["-m=2"],
     srcs = [
         "array.go",
         "bench.go",
