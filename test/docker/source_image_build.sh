@@ -49,6 +49,9 @@ cleanup() {
   local result=$? cleanup_status=0
   set +e
   observe_guest
+  if [[ -d ${work}/oci-layout ]]; then
+    observe native-layout-size du --bytes --summarize -- "${work}/oci-layout"
+  fi
   observe kernel /bin/bash -o pipefail -c 'dmesg --color=never | tail -n 160'
   if [[ ${created} == true ]]; then
     observe builder-state docker inspect --format \
@@ -85,6 +88,7 @@ trap 'exit 143' TERM
 # Qualification-only: retain the copied executable through this helper's
 # builder removal. cleanup removes its private directory only after Buildx rm.
 work=$(realpath "${work}")
+staged_layout="${work}/oci-layout"
 printf 'Buildx staging source: %s\nBuildx staging directory: %s\n' "${buildx}" "${work}"
 df -T -- "${buildx}" "${work}"
 if [[ ${buildx} != /vfs/* || ${work} != /tmp/* ]] || \
@@ -110,16 +114,22 @@ buildx=${staged_buildx}
   --driver-opt "image=${image}"
 created=true
 # Stock oci_load expects one image manifest, not an attestation index.
-# Stream the standard OCI archive into its layout without retaining a second
-# full archive or using Buildx's client content-store output path.
-mkdir -- "${layout}"
+# The prior VFS export was canceled after BuildKit session health timeouts.
+# Stage natively to separate the live session from later VFS output writes;
+# whether that latency caused the failed health checks is still unverified.
+mkdir -- "${layout}" "${staged_layout}"
+if [[ ${layout} != /vfs/* ]] || \
+   [[ $(stat -f -c %t "${layout}") == $(stat -f -c %t "${staged_layout}") ]]; then
+  echo 'Expected distinct native staging and VFS output filesystems' >&2
+  exit 1
+fi
 observe_guest
 set +e
-# Qualification-only: compare the stock 1 MiB pipe-read request with the
-# default 10 KiB buffer, keeping the output filesystem and pipeline unchanged.
+# Qualification-only: preserve the tested 1 MiB read request; change only the
+# extraction filesystem and defer the output copy until the stream completes.
 "${buildx}" build --builder "${builder}" --provenance=false --progress=plain \
   --output=type=oci,tar=true,compression=gzip,force-compression=true,dest=- "$@" | \
-  "${bsdtar}" --extract -b 2048 --file - --directory "${layout}" --no-same-owner
+  "${bsdtar}" --extract -b 2048 --file - --directory "${staged_layout}" --no-same-owner
 statuses=("${PIPESTATUS[@]}")
 set -e
 printf 'Source OCI export status: buildx=%s tar=%s\n' "${statuses[0]}" "${statuses[1]}" >&2
@@ -131,3 +141,8 @@ if (( statuses[1] != 0 )); then
 fi
 printf 'Source builder image %s: ' "${image}"
 docker image inspect --format '{{.Id}}' "${image}"
+observe native-layout-size du --bytes --summarize -- "${staged_layout}"
+printf 'Copying completed native OCI layout to declared output: %s\n' "${layout}" >&2
+cp -R -- "${staged_layout}/." "${layout}/"
+printf 'Completed native OCI layout copy.\n' >&2
+observe declared-layout-size du --bytes --summarize -- "${layout}"

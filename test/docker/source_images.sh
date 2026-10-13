@@ -87,8 +87,8 @@ else
     _IMAGE_OCI_OUTPUT="${layout}" _IMAGE_OCI_PLATFORM="${platform}" \
     "export-oci-${target}"
 
-  # Both standard exporters write the declared layout directly. Bazel only
-  # exposes it to downstream conversion after this action succeeds.
+  # Both standard exporters produce the declared layout before this action
+  # succeeds. Bazel then exposes it to downstream conversion.
   printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
   printf 'Source OCI tags: %s %s\n' "${references[1]}" "${references[2]}"
 fi
