@@ -879,19 +879,21 @@ step. Neither a passing probe nor host `/dev/kvm` access qualifies the full
 container lane. The original payload environment, arguments, shards and
 individual timeouts remain part of result verification.
 
-ARM64 unit qualification retains the full canonical selection. These owners
-require Firecracker workers and remain unqualified without ARM64 capacity:
+Fully remote ARM64 unit qualification requires ARM64 Firecracker workers for
+these namespace-dependent owners:
 
 - `//runsc/cmd:cmd_test`
 - `//runsc/sandbox:sandbox_test`
 - `//sandboxexec/sandbox:sandbox_test`
 - `//sandboxexec/sandbox/python:sandbox_py_test`
 
-Their unavailable workers remain errors; passing OCI tests alone does not make
-the full ARM64 unit gate pass. HTTPS tests use the existing multiarch networking
-image for CA trust. Docker suites use a separate provider image that declares
-both Linux architectures and supplies their daemon tools. ARM64 Firecracker
-execution remains unqualified.
+Without those workers, select `lanes=unit`, `architecture=arm64` and
+`execution=local` in the [GitHub Actions frontend](#github-actions-frontend).
+That route keeps compilation and other unit tests remote while running these
+owners on the Actions runner. The remote-only profile still reports unavailable
+workers as errors. HTTPS tests use the existing multiarch networking image for
+CA trust. Docker suites use a separate provider image that declares both Linux
+architectures and supplies their daemon tools.
 
 The `fsstress` lane runs the complete three-case filesystem stress suite
 against the declared release and a private Docker daemon:
@@ -981,7 +983,8 @@ builds the image from its Dockerfile; a manifest hit does not prove a fresh
 image build. Base-image and package downloads retain their network behavior.
 The GPU/ML cohort includes Make's TPU images and preserves its `NON_TEST_IMAGES`
 exclusions. These checks build images when needed; they do not run their GPU/TPU
-workloads or require accelerator devices. ARM64 execution remains unqualified.
+workloads or require accelerator devices. ARM64 image checks can use
+`execution=local` in the [GitHub Actions frontend](#github-actions-frontend).
 
 The action uses declared Make and crane tools with a private native-runc Docker
 daemon. It needs no gVisor release or preloaded images. Complete contexts are
@@ -996,9 +999,9 @@ builder for the coordinator.
 Each shard requests the existing Docker worker image, four CPUs, 8GB memory
 and 40GB disk. These are capacity allowances, not measured minimums. The
 declared one-hour test timeout does not override a shorter coordinator work
-budget; cancellation leaves incomplete qualification. The image declares both
-architectures, but ARM64 Firecracker capacity is still required and its
-execution remains unqualified.
+budget; cancellation leaves incomplete qualification. Fully remote ARM64 image
+checks require ARM64 Firecracker workers. The Actions route instead runs the
+selected image-check owners on its native ARM64 runner.
 
 Runtime suites consume Docker archives through `source_image_archive`. The
 same canonical Make context hash and architecture select a published cache
