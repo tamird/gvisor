@@ -207,20 +207,28 @@ func RestoreStruct[T any, P interface {
 	*T
 	SaverLoader
 }](d Decoder, target *T, value wire.Value) {
+	restoreStruct(d, P(target), value)
+}
+
+// restoreStruct shares schema preparation, accounting and receiver dispatch
+// across generated pointer types. target is always a typed pointer, including
+// when its value is nil. Pointer metadata is read after selecting a Struct value.
+func restoreStruct(d Decoder, target SaverLoader, value wire.Value) {
 	value = dataValue(value)
 	if value.Kind() != wire.KindStruct {
 		restoreEnvelope(d, target, value)
 		return
 	}
-	if target == nil {
+	pointer := reflect.ValueOf(target)
+	if pointer.IsNil() {
 		Failf("cannot restore a struct through nil %T", target)
 	}
-	source, ok := d.ds.structSource(d.ods, reflect.TypeFor[T](), value)
+	source, ok := d.ds.structSource(d.ods, pointer.Type().Elem(), value)
 	if !ok {
 		return
 	}
 	defer d.ds.stats.done()
-	P(target).StateLoad(d.ds.ctx, source)
+	target.StateLoad(d.ds.ctx, source)
 }
 
 // RestoreOpaque adapts a genuinely runtime or inaccessible destination type
