@@ -47,11 +47,13 @@ type restoreSet struct {
 }
 
 type restoreShape struct {
-	typ      types.Type
-	spelling string
-	typed    string
-	erased   string
-	encoding restoreEncoding
+	typ          types.Type
+	spelling     string
+	typed        string
+	erased       string
+	array        string
+	pointerArray string
+	encoding     restoreEncoding
 }
 
 type restoreEncoding struct {
@@ -132,7 +134,11 @@ func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, model
 		}
 		owner := object.Type()
 		if _, structural := owner.Underlying().(*types.Struct); structural && types.Implements(types.NewPointer(owner), r.loader) {
-			r.registered[name] = r.shape(owner)
+			if shape := r.shape(owner); shape != nil {
+				shape.array = unusedName(shape.erased+"Array", r.names)
+				shape.pointerArray = unusedName(shape.erased+"PointerArray", r.names)
+				r.registered[name] = shape
+			}
 		}
 		// Handwritten and forwarding loaders own their own fields. Their
 		// exact typed graph callback still invokes the existing StateLoad.
@@ -335,5 +341,11 @@ func (r *restoreSet) declare(w io.Writer, prefix, wireAlias string) {
 		fmt.Fprint(w, "}\n\n")
 		fmt.Fprintf(w, "func %s(%s %sDecoder, %s interface{}, %s %s.Value) {\n", shape.erased, r.decoder, prefix, r.target, r.value, wireAlias)
 		fmt.Fprintf(w, " %s(%s, %s.(*%s), %s)\n}\n\n", shape.typed, r.decoder, r.target, shape.spelling, r.value)
+		if shape.array != "" {
+			fmt.Fprintf(w, "func %s(%s %sDecoder, %s interface{}, %s %s.Value) {\n", shape.array, r.decoder, prefix, r.target, r.value, wireAlias)
+			fmt.Fprintf(w, " %sRestoreRuntimeArray(%s, %s, %s, %s)\n}\n\n", prefix, r.decoder, r.target, r.value, shape.typed)
+			fmt.Fprintf(w, "func %s(%s %sDecoder, %s interface{}, %s %s.Value) {\n", shape.pointerArray, r.decoder, prefix, r.target, r.value, wireAlias)
+			fmt.Fprintf(w, " %sRestoreRuntimePointerArray[%s](%s, %s, %s, %s)\n}\n\n", prefix, shape.spelling, r.decoder, r.target, r.value, shape.erased)
+		}
 	}
 }

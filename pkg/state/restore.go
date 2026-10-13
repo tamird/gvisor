@@ -52,12 +52,35 @@ func restoreDynamicObject(d Decoder, pointer any, value wire.Value) {
 }
 
 func registeredRestore(typ reflect.Type) (Allocate, Restore) {
-	if info, ok := reverseTypeDatabase[typ]; ok {
-		if registered, ok := globalTypeDatabase[info.Name]; ok && registered.typ == typ && registered.allocate != nil {
-			return registered.allocate, registered.restore
+	if registered, ok := restoreType(typ); ok && registered.allocate != nil {
+		return registered.allocate, registered.restore
+	}
+	if typ.Kind() == reflect.Array {
+		element := typ.Elem()
+		if registered, ok := restoreType(element); ok && registered.restoreArray != nil {
+			return newDynamicObject, registered.restoreArray
+		}
+		// A defined pointer type is not interchangeable with the unnamed
+		// *T used by the registered pointer-array operation.
+		if element.Kind() == reflect.Pointer && element == reflect.PointerTo(element.Elem()) {
+			if registered, ok := restoreType(element.Elem()); ok && registered.restorePointerArray != nil {
+				return newDynamicObject, registered.restorePointerArray
+			}
 		}
 	}
 	return newDynamicObject, restoreDynamicObject
+}
+
+func restoreType(typ reflect.Type) (registeredType, bool) {
+	if info, ok := reverseTypeDatabase[typ]; ok {
+		if registered, ok := globalTypeDatabase[info.Name]; ok && registered.typ == typ {
+			return registered, true
+		}
+	}
+	if registered, ok := primitiveTypeDatabase[typ.Name()]; ok && registered.typ == typ {
+		return registered, true
+	}
+	return registeredType{}, false
 }
 
 // Context returns the context supplied to Load.

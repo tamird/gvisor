@@ -226,11 +226,11 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				} else if forward := records.forward[name]; forward != "" {
 					capture = fmt.Sprintf("%sForwardRecord((*%s)(nil))", statePrefix, forward)
 				}
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s)", statePrefix, name, capture, statePrefix, name, shape.erased))
+				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s, %s, %s)", statePrefix, name, capture, statePrefix, name, shape.erased, shape.array, shape.pointerArray))
 				return
 			}
 			if forward := records.forward[name]; forward != "" {
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, nil)", statePrefix, name, statePrefix, forward))
+				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, nil, nil, nil)", statePrefix, name, statePrefix, forward))
 				return
 			}
 		}

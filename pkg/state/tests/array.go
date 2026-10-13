@@ -15,6 +15,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 
 	"gvisor.dev/gvisor/pkg/state"
@@ -90,4 +91,27 @@ func (a *arrayFloatEncoding) StateSave(s state.Sink) {
 func (a *arrayFloatEncoding) StateLoad(_ context.Context, s state.Source) {
 	s.Load(0, &a.floats)
 	s.Load(1, &a.complexes)
+}
+
+// +stateify savable
+type countedArrayContainer struct {
+	first    any
+	values   []countedMapWord
+	pointers []*countedMapWord
+	zeros    []registeredMapStruct
+}
+
+// Initializers run before generated registration. The known array destination
+// therefore has no typed operation yet. Zero references are valid no-ops even
+// for struct elements; the later test repeats this after registration.
+var earlyArrayValues, earlyArrayError = loadZeroReferenceArray()
+
+func loadZeroReferenceArray() ([2]countedMapWord, error) {
+	var encoded bytes.Buffer
+	if _, err := state.Save(context.Background(), &encoded, &[2]*int{}); err != nil {
+		return [2]countedMapWord{}, err
+	}
+	values := [2]countedMapWord{{value: 7}, {value: 11}}
+	_, err := state.Load(context.Background(), &encoded, &values)
+	return values, err
 }
