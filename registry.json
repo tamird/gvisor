@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T21:38:33.708003+00:00",
+    "updatedAt": "2026-10-13T22:00:47.154029+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6205,18 +6205,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "native-go-images",
-      "head": "8a9cc17982f663ac56f356c85373e0d168d55d70",
+      "head": "a8a75954ed3dccb1d82ef25ddf6b64813615f351",
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/8a9cc17982f663ac56f356c85373e0d168d55d70",
-      "status": "Qualified; awaiting prerequisites",
-      "updatedAt": "2026-10-13T21:38:33.708003+00:00",
-      "summary": "The revised lean shared-base proposal is public at 8a9cc17982. Its image implementation is byte-identical to qualified 624a; the final proposal adds the two generated module-catalog entries. The shared CA/minimal-filesystem base and profile-only GNU rm/mkdir/chmod layer have independently closed package/image and AMD64 runtime evidence; ARM64 contents were inspected without an ARM runtime claim. Canonical qualification at 532973a841 also passes all 1,994 license entries after the four scoped CA/OpenSSL exceptions. Ten prior entries retained after fetch errors and 25 manual artifact records remain explicit; this is not an all-fresh catalog claim. The standalone proposal still contains only its 196 module-catalog rows. Its final upstream assembly must include the helper APT catalog/policy additions when the APT prerequisite lands. CUDA, Ollama and APT discovery remain delivery prerequisites. No current contributor question or upstream PR exists; the earlier 24c8 feedback is historical.",
+      "url": "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351",
+      "status": "Contributor review pending; prerequisites remain",
+      "updatedAt": "2026-10-13T22:00:47.154029+00:00",
+      "summary": "The complete lean-image proposal is public at a8a75954ed. It preserves the qualified shared CA/minimal-filesystem base and selected GNU rm/mkdir/chmod runtime, and now includes all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a841 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. The contributor is deciding whether to open this exact complete proposal after the Ollama and APT prerequisites land. No upstream PR or unconditional approval exists; earlier 24c8 revision feedback and incomplete 8a assembly are historical.",
       "followup": {
         "owner": "syscall_validation",
-        "disposition": "Qualified revision awaiting prerequisites and final catalog assembly",
-        "sourceHead": "8a9cc17982f663ac56f356c85373e0d168d55d70",
-        "nextAction": "Complete the prerequisite-dependent upstream catalog/policy assembly, then present the exact publishable proposal for contributor review.",
+        "disposition": "Exact complete proposal awaiting conditional contributor decision",
+        "sourceHead": "a8a75954ed3dccb1d82ef25ddf6b64813615f351",
+        "nextAction": "Await the contributor’s decision on opening this exact complete proposal after the Ollama and APT prerequisites land.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
           "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
@@ -6224,9 +6224,15 @@
           "https://app.buildbuddy.io/invocation/cd5cc330-041b-42ab-b72f-b2fe5aa80b97",
           "https://github.com/tamird/gvisor/commit/8a9cc17982f663ac56f356c85373e0d168d55d70",
           "https://github.com/tamird/gvisor/commit/532973a8413353482e7d4e4498192916a5b49a52",
-          "https://app.buildbuddy.io/invocation/94f4fb93-e3f9-4d7b-b011-4588c06ad8f3"
+          "https://app.buildbuddy.io/invocation/94f4fb93-e3f9-4d7b-b011-4588c06ad8f3",
+          "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351"
         ],
-        "observedAt": "2026-10-13T21:38:33.708003+00:00"
+        "observedAt": "2026-10-13T22:00:47.154029+00:00"
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "a8a75954ed3dccb1d82ef25ddf6b64813615f351",
+        "url": "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351"
       }
     },
     {
