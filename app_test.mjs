@@ -95,6 +95,23 @@ test('attention assigns simultaneous public and internal failures to their actua
   assert.ok(idsFor(node).includes('maintainer-merge'));
 });
 
+test('agent work, contributor decisions and maintainer blockers have distinct owners', () => {
+  const node = attentionNode(); node.github.mergeable = 'CONFLICTING';
+  node.github.checks = { complete: true, total: 2, state: 'FAILURE', contexts: [serviceStatus('gazelle', 'FAILURE'), serviceStatus('import/copybara', 'ERROR')] };
+  node.github.threads = { complete: true, total: 1, unresolved: 1 };
+  node.github.feedback.items = [{ kind: 'inline', threadId: 'thread', isResolved: false, author: { login: 'reviewer' }, createdAt: '2026-10-13T09:10:00Z' }];
+  node.workStates['contributor-review'] = { scope: 'c'.repeat(40) };
+  const owners = Object.fromEntries(reasonsFor(node).map(reason => [reason.id, reason.owner]));
+  assert.equal(owners['author-conflicts'], 'agent'); assert.equal(owners['author-public-checks'], 'agent'); assert.equal(owners['author-feedback'], 'agent');
+  assert.equal(owners['author-proposal'], 'user'); assert.equal(owners['maintainer-import-failed'], 'maintainer');
+  assert.deepEqual(reasonsFor(node).filter(reason => reason.owner === 'user').map(reason => reason.id), ['author-proposal']);
+  const branch = { type: 'branch', head: 'c'.repeat(40), contributorChangesRequested: { head: 'c'.repeat(40) }, workStates: {} };
+  assert.deepEqual(reasonsFor(branch).map(reason => reason.owner), ['agent']);
+  const context = client();
+  assert.equal(vm.runInContext('ATTENTION_OWNERS.agent', context), 'Agent work');
+  assert.equal(vm.runInContext('ATTENTION_OWNERS.user', context), 'Needs your decision');
+});
+
 test('attention uses current approvals and import associations without inventing import failures', () => {
   const node = attentionNode(), imported = attentionImport(node);
   imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed'; node.github.imports = [imported];
@@ -103,7 +120,8 @@ test('attention uses current approvals and import associations without inventing
   node.github.approvedHead = 'c'.repeat(40);
   assert.deepEqual(idsFor(node), ['maintainer-review']);
   node.github.revisionChanged = true;
-  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+  assert.equal(reasonsFor(node)[0].owner, 'agent');
 });
 
 test('unanswered feedback stays author work after a mechanical new head or outdated location', () => {
@@ -165,7 +183,7 @@ test('a directly observed new-head conflict remains actionable while old checks 
   const context = client(), node = attentionNode(); node.github.checkedAt = '2026-10-13T09:00:00Z'; context.nodeInput = node;
   context.observationInput = { head: 'd'.repeat(40), base: 'e'.repeat(40), status: 'open', state: 'CONFLICTING', checkedAt: '2026-10-13T10:00:00Z' };
   const result = JSON.parse(vm.runInContext('conflictResults.set(nodeInput.number, observationInput); nodeInput.github = withConflictResult(nodeInput.github); JSON.stringify(attentionReasons(nodeInput, "tamird"))', context));
-  assert.deepEqual(result.map(reason => reason.id), ['author-conflicts', 'maintainer-unknown']);
+  assert.deepEqual(result.map(reason => reason.id), ['author-conflicts', 'agent-refresh']);
   assert.equal(node.github.revisionChanged, true); assert.equal(node.github.checks, null);
 });
 
@@ -202,7 +220,7 @@ test('table copying is plaintext, one full source URL per line, with disjoint di
   assert.equal(text.split('/pull/10').length - 1, 1);
   const selected = vm.runInContext('attentionText(attentionGroups([nodesInput[0]], "tamird", true, new Set(["maintainer-import-failed"])), "2026-10-13T09:05:00Z")', context);
   assert.match(selected, /^Could you help/); assert.match(selected, /Needs maintainer attention: Import failed/);
-  assert.ok(!selected.includes('Needs author attention'));
+  assert.ok(!selected.includes('Agent work'));
 });
 
 test('shared table URLs preserve multiple attention reasons and legacy handoff navigation', () => {

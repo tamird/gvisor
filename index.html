@@ -8,8 +8,8 @@
   <meta name="description" content="Track gVisor reviews, imports and dependencies, with branchless investigations and their findings.">
   <title>gVisor · Dependencies</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=attention-table-1">
-  <script src="app.js?v=attention-table-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=attention-table-2">
+  <script src="app.js?v=attention-table-2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#workspace">Skip to work</a>
@@ -31,7 +31,7 @@
     <section id="work-state-controls" class="state-toolbar" aria-label="Work state filters">
       <div id="state-filters" class="state-filters" role="group" aria-label="Filter by state; select multiple reasons to match any"></div>
       <span id="legacy-state-filter" hidden></span>
-      <details class="state-help"><summary>Attention &amp; evidence</summary><p>Choose any reasons under Needs author attention or Needs maintainer attention. Reasons can overlap; selecting several matches any. Public source checks, internal Copybara feedback and import checks stay distinct. An author reply can require reviewer follow-up without establishing that the fix is accepted. A newer head or outdated location alone does not answer unresolved feedback. Unclear review holds are marked for clarification.</p><p>Unpublished proposal decisions do not change a published PR's review status. Drafts, resolved items and other work remain explicit table groups. Grouped rows appear once under the first matching reason; all their reasons remain visible. Internal CL progress and merge gates may be unknown. Recorded state ages retain their original revision-scoped observation clocks; attention labels do not invent new timestamps.</p></details>
+      <details class="state-help"><summary>Attention &amp; evidence</summary><p>Choose reasons under Agent work, Needs your decision, or Needs maintainer attention. Conflicts, public source failures and feedback triage are agent work; only actual proposal decisions require you. Reasons can overlap; selecting several matches any. Public source checks, internal Copybara feedback and import checks stay distinct. An author reply can require reviewer follow-up without establishing that the fix is accepted. A newer head or outdated location alone does not answer unresolved feedback. Unclear review holds are marked for clarification.</p><p>Unpublished proposal decisions do not change a published PR's review status. Drafts, resolved items and other work remain explicit table groups. Grouped rows appear once under the first matching reason; all their reasons remain visible. Internal CL progress and merge gates may be unknown. Recorded state ages retain their original revision-scoped observation clocks; attention labels do not invent new timestamps.</p></details>
     </section>
     <div class="workspace-body">
       <section class="work-pane" aria-label="Work inventory">

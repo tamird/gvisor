@@ -115,10 +115,11 @@ function checkInfo(pr) {
 }
 
 const ATTENTION_REASONS = [
-  { id: "author-conflicts", owner: "author", title: "Merge conflicts" },
-  { id: "author-public-checks", owner: "author", title: "Public source checks failing" },
-  { id: "author-feedback", owner: "author", title: "Review feedback to address" },
-  { id: "author-proposal", owner: "author", title: "Unpublished proposal decision" },
+  { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
+  { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
+  { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
+  { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
+  { id: "author-proposal", owner: "user", title: "Unpublished proposal decision" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
   { id: "maintainer-internal-feedback", owner: "maintainer", title: "Internal feedback failed" },
   { id: "maintainer-import-checks", owner: "maintainer", title: "Import checks failing" },
@@ -134,7 +135,7 @@ const OTHER_ATTENTION_GROUPS = [
   { id: "resolved", owner: "other", title: "Resolved PRs" },
   { id: "other", owner: "other", title: "Other work" },
 ];
-const ATTENTION_OWNERS = { author: "Needs author attention", maintainer: "Needs maintainer attention", other: "Other visible work" };
+const ATTENTION_OWNERS = { agent: "Agent work", user: "Needs your decision", maintainer: "Needs maintainer attention", other: "Other visible work" };
 const LEGACY_HANDOFF_GROUPS = { "import-failed": "maintainer-import-failed", "import-checks": "maintainer-import-checks", "internal-status": "maintainer-unknown", review: "maintainer-review", import: "maintainer-import", merge: "maintainer-merge" };
 let handoffCopyVersion = 0;
 function handoffTimestamp(value) {
@@ -180,7 +181,7 @@ function attentionReasons(node, owner) {
   if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return reasons;
   if (pr.head && conflictRecord(pr)) add("author-conflicts", mergeDescription(pr));
   if (pr.revisionChanged || !pr.head) {
-    add("maintainer-unknown", "Current source revision or its review/check evidence needs a snapshot refresh.");
+    add("agent-refresh", "Current source revision or its review/check evidence needs a public snapshot refresh.");
     return reasons;
   }
   const contexts = pr.checks?.contexts || [];
@@ -199,10 +200,10 @@ function attentionReasons(node, owner) {
   const active = current.filter(item => ["open", "draft"].includes(item.status));
   const failed = active.filter(item => checkInfo(item).tone === "bad");
   if (failed.length) add("maintainer-import-checks", failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`).join(". "));
-  const authorBlocked = reasons.some(item => item.owner === "author" && item.id !== "author-proposal");
+  const agentBlocked = reasons.some(item => item.owner === "agent");
   if (review.unknown) add("maintainer-unknown", "Review evidence is incomplete or its next action is unclear; any positively observed author or reviewer follow-up remains listed.");
   if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
-  if (decision !== "APPROVED" && !authorBlocked && !review.response && !review.unknown)
+  if (decision !== "APPROVED" && !agentBlocked && !review.response && !review.unknown)
     add("maintainer-review", "Approval of the current published revision is not established.");
   if (decision === "APPROVED") {
     const open = active.filter(item => item.status === "open");
@@ -214,7 +215,7 @@ function attentionReasons(node, owner) {
     else if (current.length) add("maintainer-unknown", current.some(item => item.status === "merged") ? "Matching import merged; source PR remains open." : "Matching import closed without a recorded merge; internal disposition unknown.");
     else if (!pr.importsComplete) add("maintainer-unknown", "Public import lookup is incomplete; an internal CL may exist.");
     else if (importStatus) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. An internal CL may exist.`);
-    else if (!authorBlocked) add("maintainer-import", "No matching public import was found; an internal CL may already exist.");
+    else if (!agentBlocked) add("maintainer-import", "No matching public import was found; an internal CL may already exist.");
   }
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
     add("maintainer-unknown", "Check failure reported without enough context to assign an action owner.");
@@ -510,7 +511,7 @@ function drawStateFilters() {
   }
   $("all-reasons").textContent = `All ${candidates.length}`;
   $("all-reasons").setAttribute("aria-pressed", !reasonFilters.size && !stateFilters.size);
-  for (const owner of ["author", "maintainer"]) {
+  for (const owner of ["agent", "user", "maintainer"]) {
     const count = candidates.filter(node => attentionReasons(node, registry.meta.owner).some(reason => reason.owner === owner)).length;
     $(`attention-${owner}-summary`).textContent = `${ATTENTION_OWNERS[owner]} · ${count}`;
   }
@@ -1199,7 +1200,7 @@ function resetFilters(redraw = true) {
 }
 function initialize() {
   const all = button("All", () => { stateFilters.clear(); reasonFilters.clear(); selected = null; render(true, "push"); }); all.id = "all-reasons"; $("state-filters").append(all);
-  for (const owner of ["author", "maintainer"]) {
+  for (const owner of ["agent", "user", "maintainer"]) {
     const chooser = element("details", "attention-selector"), summary = element("summary"); summary.id = `attention-${owner}-summary`; chooser.append(summary);
     const options = element("div", "attention-options"), reasons = ATTENTION_REASONS.filter(reason => reason.owner === owner);
     options.append(button("Select all reasons", () => { stateFilters.clear(); for (const reason of reasons) reasonFilters.add(reason.id); selected = null; render(true, "push"); }));
