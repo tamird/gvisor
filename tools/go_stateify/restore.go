@@ -206,7 +206,15 @@ func (r *restoreSet) nameable(t types.Type) bool {
 	case *types.Map:
 		return r.nameable(t.Key()) && r.nameable(t.Elem())
 	case *types.Interface:
-		return t.NumMethods() == 0
+		if t.NumMethods() != 0 || !t.IsMethodSet() {
+			return false
+		}
+		for i := 0; i < t.NumEmbeddeds(); i++ {
+			if !r.nameable(t.EmbeddedType(i)) {
+				return false
+			}
+		}
+		return true
 	default:
 		return false
 	}
