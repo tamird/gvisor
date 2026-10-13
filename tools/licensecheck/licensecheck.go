@@ -839,17 +839,9 @@ func moduleLicenses(body []byte, prefix string) (Licenses, error) {
 	if len(notices) == 0 {
 		return nil, errors.New("no license notice at module root")
 	}
-	slices.SortFunc(notices, func(a, b *zip.File) int {
-		return strings.Compare(a.Name, b.Name)
-	})
 	var licenses Licenses
 	for _, f := range notices {
-		r, err := f.Open()
-		if err != nil {
-			return nil, fmt.Errorf("cannot open %s: %w", f.Name, err)
-		}
-		text, err := io.ReadAll(r)
-		r.Close()
+		text, err := fs.ReadFile(z, f.Name)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read %s: %w", f.Name, err)
 		}
