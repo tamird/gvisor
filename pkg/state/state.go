@@ -118,7 +118,7 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 
 	// Attempt our decode.
 	err := safely(func() {
-		ds.Load(reflect.ValueOf(rootPtr).Elem())
+		ds.Load(reflect.ValueOf(rootPtr))
 	})
 	return ds.stats, err
 }

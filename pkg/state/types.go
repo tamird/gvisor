@@ -296,11 +296,14 @@ var primitiveTypeDatabase = func() map[string]reflect.Type {
 	return r
 }()
 
-// registeredType owns the concrete Go type and its capture layout.
+// registeredType owns one concrete Go type, its capture layout and its
+// optional static restore pair.
 // Wire IDs remain local to each serialization.
 type registeredType struct {
 	typ       reflect.Type
 	newRecord func(wire.TypeID, int) *wire.Record
+	allocate  Allocate
+	restore   Restore
 }
 
 // globalTypeDatabase is the single registration database for saving and loading.
@@ -370,19 +373,21 @@ func loadBinary(value binaryObject, name string, s Source) {
 // Manually implemented savers use Sink.Save/SaveValue to populate the record's
 // compatibility slots.
 func Register(t Type) {
-	registerState(t, nil)
+	registerState(t, nil, nil, nil)
 }
 
-// RegisterGenerated registers the record layout emitted with a generated saver.
-// It enters the same type database and capture graph as Register.
-func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
-	if newRecord == nil {
-		Failf("nil record constructor for %T", t)
+// RegisterGenerated adds generated capture and restore operations to ordinary
+// Type registration. A handwritten saver may omit newRecord; a capture-only
+// registration may omit both restore functions. A restore pair must allocate
+// and restore *T for the concrete T represented by t, not a promoted name.
+func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, restore Restore) {
+	if (allocate == nil) != (restore == nil) {
+		Failf("incomplete generated restore pair for %T", t)
 	}
-	registerState(t, newRecord)
+	registerState(t, newRecord, allocate, restore)
 }
 
-func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
+func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, restore Restore) {
 	name := t.StateTypeName()
 	fields := t.StateFields()
 	typ := reflect.TypeOf(t)
@@ -417,7 +422,7 @@ func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record) {
 			}
 		}
 	}
-	register(typ, wire.Type{Name: name, Fields: fields}, newRecord)
+	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, allocate, restore)
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -427,11 +432,11 @@ func registerBinary(value binaryObject) {
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
-	}, newBinaryRecord)
+	}, newBinaryRecord, nil, nil)
 }
 
 // register publishes metadata in the existing type databases.
-func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record) {
+func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, restore Restore) {
 	if info.Name == "" {
 		Failf("type has empty name")
 	}
@@ -454,7 +459,7 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord}
+	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord, allocate: allocate, restore: restore}
 	reverseTypeDatabase[typ] = info
 }
 

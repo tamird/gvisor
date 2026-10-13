@@ -11,6 +11,7 @@ go_binary(
         "main.go",
         "model.go",
         "records.go",
+        "restore.go",
     ],
     visibility = ["//:sandbox"],
     deps = [

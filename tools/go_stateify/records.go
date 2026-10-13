@@ -68,6 +68,7 @@ type recordSet struct {
 	saveReceiver string
 	types        map[string]*recordType
 	forward      map[string]string
+	restore      *restoreSet
 }
 
 type recordType struct {
@@ -341,7 +342,7 @@ func generateRecords(configPath string) error {
 			return err
 		}
 	}
-	info := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue), Defs: make(map[*ast.Ident]types.Object), Scopes: make(map[ast.Node]*types.Scope)}
+	info := &types.Info{Types: make(map[ast.Expr]types.TypeAndValue), Defs: make(map[*ast.Ident]types.Object), Implicits: make(map[ast.Node]types.Object), Scopes: make(map[ast.Node]*types.Scope)}
 	checker := types.Config{
 		Importer:  &exportImporter{fset: fset, archives: config.Archives, packages: make(map[string]*types.Package)},
 		Sizes:     types.SizesFor("gc", config.GOARCH),
@@ -360,7 +361,7 @@ func generateRecords(configPath string) error {
 		if canonical[i] == nil {
 			fmt.Fprintf(&b, "//go:build ignore\n\npackage %s\n", pkg.Name())
 		} else {
-			records, err := checkedRecords(canonical[i], info, pkg, models[i])
+			records, err := checkedRecords(canonical[i], info, pkg, models[i], selected)
 			if err != nil {
 				return err
 			}
@@ -375,7 +376,7 @@ func generateRecords(configPath string) error {
 
 // checkedRecords binds the shared field model to compiler-owned types. It
 // does not infer the schema from generated Save calls or field spellings.
-func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel) (*recordSet, error) {
+func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel, sources map[string]*ast.File) (*recordSet, error) {
 	names := make(map[string]struct{})
 	for _, name := range pkg.Scope().Names() {
 		names[name] = struct{}{}
@@ -385,6 +386,12 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 	}
 	for _, typ := range model.types {
 		names[typ.receiver] = struct{}{}
+		for _, field := range typ.fields {
+			names[field.name+"Value"] = struct{}{}
+		}
+	}
+	for _, name := range types.Universe.Names() {
+		names[name] = struct{}{}
 	}
 	records := &recordSet{
 		wireAlias:    unusedName("statewire", names),
@@ -443,6 +450,11 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 			record.fields = append(record.fields, encodingFor(types.Unalias(valueType), field.kind == fieldValue))
 		}
 		records.types[name] = record
+	}
+	var err error
+	records.restore, err = checkedRestores(file, info, pkg, model, sources, names)
+	if err != nil {
+		return nil, err
 	}
 	return records, nil
 }

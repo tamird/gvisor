@@ -120,8 +120,9 @@ func (v *countedMapWord) StateLoad(ctx context.Context, s state.Source) {
 
 // +stateify savable
 type countedMapWordContainer struct {
-	values map[countedMapWord]countedMapWord
-	zeros  map[registeredMapStruct]registeredMapStruct
+	dynamic any
+	values  map[countedMapWord]countedMapWord
+	zeros   map[registeredMapStruct]registeredMapStruct
 }
 
 // A manual saver owns custom capture and does not require a saveValues helper.

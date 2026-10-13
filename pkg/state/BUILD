@@ -73,6 +73,8 @@ go_library(
         "encode.go",
         "encode_unsafe.go",
         "ods_list.go",
+        "restore.go",
+        "restore_collections.go",
         "state.go",
         "state_norace.go",
         "state_race.go",
