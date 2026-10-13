@@ -23,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"testing/iotest"
@@ -58,6 +59,31 @@ func TestHostDriverRequiresChecksum(t *testing.T) {
 	}
 	if got, want := got.checksum, want; got != want {
 		t.Errorf("checksum = %q, want %q", got, want)
+	}
+	checksums := nvproxy.NewChecksums(want, want)
+	// Availability on the other architecture must not hide this host's driver.
+	switch runtime.GOARCH {
+	case archAMD64:
+		checksums.NoPublicARM64Installer = true
+	case archARM64:
+		checksums.NoPublicX86_64Installer = true
+	default:
+		t.Fatalf("unsupported test architecture %q", runtime.GOARCH)
+	}
+	if _, err := hostDriver(version, checksums); err != nil {
+		t.Fatalf("hostDriver with available host installer: %v", err)
+	}
+	checksums.NoPublicX86_64Installer = true
+	checksums.NoPublicARM64Installer = true
+	if _, err := hostDriver(version, checksums); err == nil {
+		t.Error("hostDriver accepted a known hash without a public installer")
+	}
+	retained, err := checksums.Checksum()
+	if err != nil {
+		t.Fatalf("Checksum: %v", err)
+	}
+	if got, want := retained, want; got != want {
+		t.Errorf("retained checksum = %q, want %q", got, want)
 	}
 }
 
