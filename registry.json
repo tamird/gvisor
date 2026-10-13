@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T16:06:35.652889+00:00",
+    "updatedAt": "2026-10-13T16:29:41.427120+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4918,24 +4918,26 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "c36ff4a226472cd424848a2135727b5aad0d97b2",
+      "head": "ddd23376f391b04aea96441c0be4c800877bd4c9",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
+      "url": "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
       "status": "Targeted upstream refresh and tmpfs quota correction adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is c36ff4a22647, with the exact tested tree from 0fae764d9e. It incorporates upstream changes through ae980d605 and preserves the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The separately discovered ACL-error leak remains a different correction under validation and is not claimed here.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those full profiles were not repeated for these targeted adoptions, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.",
-      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh is ddd23376f391, adding the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporates upstream changes through ae980d605 and preserves the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags; source availability is under agent investigation. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those full profiles were not repeated for these targeted adoptions, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.",
+      "updatedAt": "2026-10-13T16:29:41.427120+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Current targeted qualification adopted",
-        "sourceHead": "c36ff4a226472cd424848a2135727b5aad0d97b2",
-        "observedAt": "2026-10-13T15:16:16.359295+00:00",
-        "nextAction": "Preserve source-specific qualification and remaining full-profile/hardware limits; track Triton issue #13789 and the separate ACL-error correction.",
+        "sourceHead": "ddd23376f391b04aea96441c0be4c800877bd4c9",
+        "observedAt": "2026-10-13T16:29:41.427120+00:00",
+        "nextAction": "Preserve source-specific qualification and remaining full-profile/hardware limits; investigate NVIDIA source availability and track Triton issue #13789.",
         "evidence": [
+          "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
           "https://github.com/buildbuddy-io/buildbuddy/issues/13789",
           "https://app.buildbuddy.io/invocation/db7e8238-52d0-4b32-9535-f0a52fbfdbaa",
-          "https://app.buildbuddy.io/invocation/bf4e93ea-a5d8-4fff-a118-2a704d8bee03"
+          "https://app.buildbuddy.io/invocation/bf4e93ea-a5d8-4fff-a118-2a704d8bee03",
+          "https://app.buildbuddy.io/invocation/e95de9e2-1623-4e3a-86ca-ac2ab76e887e"
         ]
       },
       "evidence": [
@@ -6232,33 +6234,29 @@
       }
     },
     {
-      "id": "branch:checkescape-annotation-syntax",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15740",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "checkescape-annotation-contract-proposal",
-      "head": "cb095665ee4a7ac41054541765d32d27049c3f86",
-      "title": "Preserve wire allocation guards and reject malformed annotations",
+      "head": "152315bedef75d0410639c9382cf27db9befb4d4",
+      "title": "Reject malformed checkescape annotations",
       "group": "analysis",
-      "url": "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T16:06:35.652889+00:00",
-      "summary": "The revised proposal cb095665ee enables transitive hard allocation checks on wire.Save and wire.Load while diagnosing malformed annotations. It retains eleven constructor exemptions and narrowly excludes scalar boxing and invalid-input formatting. Hosted qualification passed six owning actions, including a temporary allocation witness proving that the numeric helper remains checked; the witness is absent from the final proposal. This is a new explicit heap/builtin contract, not a claim that historical all-reasons enforcement worked. A new contributor decision is pending for this exact public revision. Original5a remains historical; no upstream PR, analyzer adoption or performance claim is made.",
+      "url": "https://github.com/google/gvisor/pull/15740",
+      "status": "open",
+      "updatedAt": "2026-10-13T16:27:19.752664+00:00",
+      "summary": "The contributor-approved allocation-guard proposal is delivered as PR #15740 at 152315bede. It is a source-identical signed rebase of cb095 onto current master; all four bodies and the commit message match the approved proposal. Six hosted owning actions qualified the hard heap/builtin contract, including a temporary helper-allocation sensitivity witness absent from the final source. The original5a proposal remains historical; no performance or historical all-reasons enforcement claim is made. Current review and CI state come from the GitHub snapshot.",
       "followup": {
         "owner": "restore_integration_review",
-        "disposition": "New exact-head contributor decision pending",
-        "sourceHead": "cb095665ee4a7ac41054541765d32d27049c3f86",
-        "nextAction": "Await the contributor decision on the concrete qualified hard-allocation contract before upstream publication.",
+        "disposition": "Delivered; awaiting maintainer review",
+        "sourceHead": "152315bedef75d0410639c9382cf27db9befb4d4",
+        "nextAction": "Follow current public checks and maintainer review on PR #15740.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86",
-          "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555"
+          "https://github.com/google/gvisor/pull/15740",
+          "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86"
         ],
-        "observedAt": "2026-10-13T16:06:35.652889+00:00"
+        "observedAt": "2026-10-13T16:27:19.752664+00:00"
       },
-      "contributorReview": {
-        "status": "pending",
-        "head": "cb095665ee4a7ac41054541765d32d27049c3f86",
-        "url": "https://github.com/tamird/gvisor/commit/cb095665ee4a7ac41054541765d32d27049c3f86"
-      }
+      "number": 15740
     },
     {
       "id": "external:triton-worker-result",

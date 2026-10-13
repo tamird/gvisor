@@ -130,7 +130,7 @@ test('attention uses current approvals and import associations without inventing
   node.github.labels = ['ready to pull'];
   assert.deepEqual(idsFor(node), ['maintainer-import']);
   node.github.labelsComplete = false;
-  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
   node.github.labelsComplete = true;
   imported.sourceHead = node.github.head; imported.matchesSourceHead = true; imported.status = 'open'; node.github.labels = [];
   assert.deepEqual(idsFor(node), ['maintainer-merge']);
@@ -166,26 +166,37 @@ test('known bot feedback needs author triage even with incomplete review invento
   node.github.feedback.items = [comment]; node.github.threads = { complete: true, total: 1, unresolved: 1 };
   assert.ok(idsFor(node).includes('author-feedback')); assert.ok(!idsFor(node).includes('maintainer-unknown'));
   node.github.reviewsComplete = false; node.github.feedback.complete = false; node.github.threads.complete = false;
-  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-unknown'));
+  assert.ok(idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('agent-refresh'));
   node.github.feedback.items.push({ ...comment, createdAt: '2026-10-13T09:20:00Z', author: { login: 'tamird' } });
-  assert.ok(!idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-response')); assert.ok(idsFor(node).includes('maintainer-unknown'));
+  assert.ok(!idsFor(node).includes('author-feedback')); assert.ok(idsFor(node).includes('maintainer-response')); assert.ok(idsFor(node).includes('agent-refresh'));
 });
 
 test('accepted older snapshots without feedback render an explicit unknown reason', () => {
   const context = client(), node = attentionNode(); node.github.labels = []; node.github.checkedAt = context.snapshotInput.checkedAt; delete node.github.feedback;
   context.snapshotInput.prs = [node.github]; context.nodeInput = node;
   vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
-  assert.ok(JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context)).some(reason => reason.id === 'maintainer-unknown'));
+  assert.ok(JSON.parse(vm.runInContext('JSON.stringify(attentionReasons(nodeInput, "tamird"))', context)).some(reason => reason.id === 'agent-refresh'));
   node.github.feedback = { complete: true, items: null };
-  assert.ok(idsFor(node).includes('maintainer-unknown')); assert.ok(!idsFor(node).includes('author-feedback'));
+  assert.ok(idsFor(node).includes('agent-refresh')); assert.ok(!idsFor(node).includes('author-feedback'));
 });
 
 test('review-level holds and incomplete discussion remain unknown instead of author code requests', () => {
   const node = attentionNode(); node.github.reviewDecision = 'CHANGES_REQUESTED';
   node.github.feedback.items = [{ kind: 'review', state: 'CHANGES_REQUESTED', commit: { oid: node.github.head }, author: { login: 'reviewer' }, body: 'Hold for internal exceptions.' }];
-  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+  assert.deepEqual(idsFor(node), ['maintainer-response']);
   node.github.feedback.complete = false;
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+});
+
+test('a confirmed conflict takes priority over opaque import progress', () => {
+  const node = attentionNode(15337);
+  node.github.checks.contexts = [serviceStatus('import/copybara', 'SUCCESS')];
   assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+  assert.equal(reasonsFor(node)[0].title, 'Import succeeded; no public PR');
+  node.github.mergeable = 'CONFLICTING';
+  assert.deepEqual(idsFor(node), ['author-conflicts']);
+  node.github.mergeable = 'UNKNOWN';
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
 });
 
 test('a fresh mergeable head overrides old conflict metadata', () => {
@@ -215,8 +226,11 @@ test('unpublished proposal decisions do not replace the published head review', 
 
 test('imported-unmerged does not assert readiness and administrative failures are maintainer work', () => {
   const node = attentionNode(), imported = attentionImport(node); node.github.imports = [imported]; imported.mergeable = 'UNKNOWN'; imported.checks.complete = false;
-  assert.ok(idsFor(node).includes('maintainer-merge')); assert.ok(idsFor(node).includes('maintainer-unknown'));
-  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-merge').detail, /mergeability unknown/);
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+  imported.mergeable = 'MERGEABLE'; imported.checks.complete = true;
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  imported.mergeable = 'CONFLICTING';
+  assert.deepEqual(idsFor(node), ['author-conflicts']);
   imported.status = 'closed'; assert.ok(!idsFor(node).includes('maintainer-import-failed'));
   assert.ok(idsFor(node).includes('maintainer-unknown'));
   node.github.imports = []; node.github.checks.contexts.push({ name: 'assign', state: 'FAILURE', purpose: 'reviewer-assignment' }); node.github.checks.total = 2; node.github.checks.state = 'FAILURE';

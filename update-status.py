@@ -179,7 +179,7 @@ def normalize(pr: dict) -> dict:
         "reviewRequests": [item["requestedReviewer"] for item in pr["reviewRequests"]["nodes"] if item["requestedReviewer"]],
         "reviewRequestsComplete": not pr["reviewRequests"]["pageInfo"]["hasNextPage"],
         "mergeable": pr["mergeable"],
-        "mergeabilityCheckedAt": pr["_retrievedAt"],
+        "mergeabilityCheckedAt": pr.get("_mergeabilityRetrievedAt", pr["_retrievedAt"]),
         "mergeState": pr["mergeStateStatus"],
         "labels": [label["name"] for label in pr["labels"]["nodes"]],
         "labelsComplete": not pr["labels"]["pageInfo"]["hasNextPage"],
@@ -222,6 +222,30 @@ def import_source(candidate: dict, original: dict) -> str | None:
     if len(heads) > 1:
         raise RuntimeError(f"Import #{candidate['number']} contains ambiguous source revisions")
     return next(iter(heads), None)
+
+
+def recheck_unknown_mergeability(prs: list[dict]) -> None:
+    """Give GitHub's asynchronous calculation one bounded, head-checked read."""
+    unknown = {pr["number"]: pr for pr in prs
+               if pr["state"] == "OPEN" and pr["mergeable"] == "UNKNOWN"}
+    if not unknown or requests >= REQUEST_LIMIT:
+        return
+    owner, name = REPO.split("/")
+    fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid baseRefOid state mergeable mergeStateStatus}}"
+                      for number in unknown)
+    response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
+    retrieved_at = datetime.now(timezone.utc).isoformat()
+    if set(response) != {f"p{number}" for number in unknown}:
+        raise RuntimeError("Mergeability recheck inventory is incomplete; previous snapshot is unchanged")
+    for number, pr in unknown.items():
+        result = response[f"p{number}"]
+        if (not result or result["number"] != number or result["headRefOid"] != pr["headRefOid"]
+                or result["state"] != pr["state"]):
+            raise RuntimeError(f"PR #{number} changed during mergeability recheck; previous snapshot is unchanged")
+        if result["mergeable"] not in {"MERGEABLE", "CONFLICTING", "UNKNOWN"}:
+            raise RuntimeError(f"Unexpected mergeability for PR #{number}; previous snapshot is unchanged")
+        pr.update(baseRefOid=result["baseRefOid"], mergeable=result["mergeable"],
+                  mergeStateStatus=result["mergeStateStatus"], _mergeabilityRetrievedAt=retrieved_at)
 
 
 def main() -> None:
@@ -277,6 +301,7 @@ def main() -> None:
                 matches[candidate["number"]] = head
         relations[number] = matches
     imported = fetch_numbers(sorted({number for matches in relations.values() for number in matches}), timeline=False)
+    recheck_unknown_mergeability([*originals.values(), *imported.values()])
     prs = []
     for number, pr in originals.items():
         for other, head in relations[number].items():
