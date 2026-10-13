@@ -97,7 +97,7 @@ func dataValue(value wire.Value) wire.Value {
 // restoreEnvelope handles shared no-op, schema and dynamic-interface
 // operations after a typed destination has handled its other supported forms.
 // Unsupported kinds do not re-enter a second value decoder.
-func restoreEnvelope[T any](d Decoder, target *T, value wire.Value) {
+func restoreEnvelope(d Decoder, target any, value wire.Value) {
 	switch value.Kind() {
 	case wire.KindNil:
 		return
@@ -118,7 +118,7 @@ func restoreEnvelope[T any](d Decoder, target *T, value wire.Value) {
 		d.ds.decodeStruct(d.ods, reflect.ValueOf(target).Elem(), value)
 		return
 	}
-	Failf("wire kind %d cannot restore %v", value.Kind(), reflect.TypeFor[T]())
+	Failf("wire kind %d cannot restore %v", value.Kind(), reflect.TypeOf(target).Elem())
 }
 
 // RestoreBool restores a compiled boolean destination.
