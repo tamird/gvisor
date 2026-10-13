@@ -45,9 +45,16 @@ func TestLoadHooks(t *testing.T) {
 	})
 }
 
+// TestGeneratedLegacyFields checks accepted raw wire forms through generated
+// fields, including forms that state.Save does not produce.
 func TestGeneratedLegacyFields(t *testing.T) {
 	emptySchema := wire.Struct{TypeID: 2}
 	emptySchema.Alloc(0)
+	// Arrays omit element tags after the first. Uniform interface elements
+	// carry the different no-op and store payloads without changing that grammar.
+	wrapped := func(value wire.Object) wire.Object {
+		return &wire.Interface{Type: wire.TypeSpecNil{}, Value: value}
+	}
 	for _, test := range []struct {
 		name    string
 		field   int
@@ -58,12 +65,12 @@ func TestGeneratedLegacyFields(t *testing.T) {
 		{"nil_interface_in_integer", 0, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Int(17)}, restoreLegacyFields{}, restoreLegacyFields{integer: 17}},
 		{"schema_in_integer", 0, &emptySchema, restoreLegacyFields{integer: 23}, restoreLegacyFields{integer: 23}},
 		{"empty_array_in_string", 1, &wire.Array{}, restoreLegacyFields{}, restoreLegacyFields{}},
-		{"array_noops_in_string", 1, &wire.Array{Contents: []wire.Object{wire.Nil{}, &wire.Ref{}}}, restoreLegacyFields{text: "ab"}, restoreLegacyFields{text: "ab"}},
+		{"array_noops_in_string", 1, &wire.Array{Contents: []wire.Object{wrapped(wire.Nil{}), wrapped(&wire.Ref{})}}, restoreLegacyFields{text: "ab"}, restoreLegacyFields{text: "ab"}},
 		{"array_in_slice", 2, &wire.Array{Contents: []wire.Object{wire.Int(17), wire.Int(29)}}, restoreLegacyFields{slice: []int64{0, 0}}, restoreLegacyFields{slice: []int64{17, 29}}},
 		{"empty_map_in_slice", 2, &wire.Map{}, restoreLegacyFields{slice: []int64{23}}, restoreLegacyFields{slice: []int64{23}}},
 		{"empty_map_in_pointer", 3, &wire.Map{}, restoreLegacyFields{pointer: new(int64(23))}, restoreLegacyFields{pointer: new(int64(23))}},
 		{"converted_zero_reference", 3, &wire.Ref{Root: 1 << 32}, restoreLegacyFields{pointer: new(int64(23))}, restoreLegacyFields{pointer: new(int64(23))}},
-		{"array_in_array", 4, &wire.Array{Contents: []wire.Object{wire.Nil{}, wire.Int(29)}}, restoreLegacyFields{array: [2]int64{17, 0}}, restoreLegacyFields{array: [2]int64{17, 29}}},
+		{"array_in_array", 4, &wire.Array{Contents: []wire.Object{wrapped(wire.Nil{}), wrapped(wire.Int(29))}}, restoreLegacyFields{array: [2]int64{17, 0}}, restoreLegacyFields{array: [2]int64{17, 29}}},
 		{"empty_array_in_map", 5, &wire.Array{}, restoreLegacyFields{mapping: map[int]int64{}}, restoreLegacyFields{mapping: map[int]int64{}}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
