@@ -330,14 +330,17 @@ sh_test(
         "$(rootpath //test/docker:source_image_build.sh)",
         "$(rootpath //test/docker:buildx)",
         "$(rootpath @source_buildkit//:digest)",
+        "$(rootpath @bsd_tar_toolchains//:resolved_target_toolchain)",
         "$(rootpath //test/docker:source_image_miss_context)",
     ],
     data = [
         "//test/docker:buildx",
         "//test/docker:source_image_build.sh",
         "//test/docker:source_image_miss_context",
+        "@bsd_tar_toolchains//:resolved_target_toolchain",
         "@source_buildkit//:digest",
     ],
+    env = {"LC_ALL": "C.UTF-8"},
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",

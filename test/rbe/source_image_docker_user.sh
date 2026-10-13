@@ -27,8 +27,8 @@ if [[ ${1:-} == --child ]]; then
   export DOCKER_HOST=unix:///var/run/docker.sock
   unset DOCKER_CONTEXT DOCKER_CONFIG DOCKER_CERT_PATH DOCKER_TLS_VERIFY
   /bin/bash "${work}/builder.sh" "${work}/buildx" "${work}/digest" \
+    "${work}/bsdtar" "${work}/layout" \
     --platform=linux/amd64 --file="${work}/images/basic/redis/Dockerfile" \
-    --output="type=oci,tar=false,compression=gzip,force-compression=true,dest=${work}/layout" \
     "${work}/images/basic/redis"
   test -s "${work}/layout/index.json"
   # The helper owns only its task-specific builder and configuration directory.
@@ -42,7 +42,7 @@ if [[ ${1:-} == --child ]]; then
   exit 0
 fi
 
-test "$#" -eq 4
+test "$#" -eq 5
 test "$(id -u)" -eq 0
 setpriv=$(command -v setpriv)
 "${setpriv}" --version
@@ -66,10 +66,11 @@ cp "$0" "${work}/check.sh"
 cp "$1" "${work}/builder.sh"
 cp "$2" "${work}/buildx"
 cp "$3" "${work}/digest"
-sha256sum "$1" "$2" "$3" "${work}/builder.sh" "${work}/buildx" "${work}/digest"
-tar --extract --file "$4" --directory "${work}" --same-permissions --no-same-owner
+cp "$4" "${work}/bsdtar"
+sha256sum "$1" "$2" "$3" "$4" "${work}/builder.sh" "${work}/buildx" "${work}/digest" "${work}/bsdtar"
+tar --extract --file "$5" --directory "${work}" --same-permissions --no-same-owner
 mkdir "${work}/home" "${work}/tmp"
-chmod 0755 "${work}/buildx"
+chmod 0755 "${work}/buildx" "${work}/bsdtar"
 chown -R 65534:65534 "${work}"
 set +e
 "${setpriv}" --reuid=65534 --regid=65534 --groups="${socket_gid}" \

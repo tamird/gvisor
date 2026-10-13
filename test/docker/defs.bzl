@@ -381,6 +381,7 @@ def _source_image_layout_impl(ctx):
     if make.target == None or make.env != {"MAKE": make.path}:
         fail("source image layouts require the declared GNU Make toolchain")
     crane = ctx.toolchains[Label("@rules_oci//oci:crane_toolchain_type")].crane_info.binary
+    bsdtar = ctx.toolchains[Label("@tar.bzl//tar/toolchain:type")]
     layout = ctx.actions.declare_directory(ctx.label.name + ".oci")
     tags = ctx.actions.declare_file(ctx.label.name + ".tags.txt")
     ctx.actions.run(
@@ -399,13 +400,14 @@ def _source_image_layout_impl(ctx):
             ctx.file._buildx.path,
             ctx.file._buildkit_digest.path,
             ctx.file._builder.path,
+            bsdtar.tarinfo.binary.path,
         ],
         inputs = depset(
             [ctx.file.contexts, ctx.file._makefile, ctx.file._script, ctx.file._builder, ctx.file._buildx, ctx.file._buildkit_digest, crane],
-            transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files],
+            transitive = [make.target.files, make.target[DefaultInfo].default_runfiles.files, bsdtar.default.files],
         ),
         outputs = [layout, tags],
-        env = {"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"},
+        env = dict(bsdtar.tarinfo.default_env, PATH = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"),
         mnemonic = "SourceImageOCI",
         progress_message = "Constructing source image %s (%s)" % (ctx.attr.image, ctx.attr.architecture),
         # Dockerfile base tags and package mirrors are mutable network inputs.
@@ -434,6 +436,7 @@ _source_image_layout = rule(
     toolchains = [
         "@rules_foreign_cc//toolchains:make_toolchain",
         "@rules_oci//oci:crane_toolchain_type",
+        "@tar.bzl//tar/toolchain:type",
     ],
 )
 
