@@ -463,7 +463,7 @@ function failureSources(node) {
   if (!pr) return [];
   return [pr, ...pr.imports.filter(item => item.matchesSourceHead && ["open", "draft"].includes(item.status))]
     .filter(item => [...codeCheckStates(item)].some(state => FAILURE_STATES.has(state)))
-    .map(item => ({ ...item, failureLabel: item === pr ? "Source checks failing" : `Import #${item.number} failing` }));
+    .map(item => ({ ...item, failureLabel: item === pr ? "PR checks failing" : `Import #${item.number} failing` }));
 }
 function contributorChanges(node) {
   const decision = node.contributorChangesRequested;

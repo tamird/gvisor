@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T12:58:39.864725+00:00",
+    "updatedAt": "2026-10-13T15:16:16.359295+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1184,21 +1184,21 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-13T09:01:33.623366+00:00",
-      "summary": "The approved Init explanation was posted at unchanged a306517c6, describing the unused-kernel construction requirement and checklocks coverage. The Init discussion remains unresolved. A separate source-preserving rebase and comment clarification is published for contributor review at 8e86fcf938; it has not replaced the live PR.",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The contributor-approved Init explanation is published at ebebea2d3997 after the source-preserving rebase. It explains why field guards keep exclusive initialization writes checked. The existing discussion received a reply and was resolved. Maintainer follow-up is pending; the native review re-request returned HTTP 404, so no successful new request is claimed.",
       "followup": {
         "owner": "root",
-        "disposition": "Proposed amendment has a separate contributor decision",
-        "sourceHead": "a306517c61094f024f927a94fbf44d9e5d410f90",
+        "disposition": "Published amendment; maintainer follow-up",
+        "sourceHead": "ebebea2d39970e0da947503e4dc75af172a55e8c",
         "reviewedAt": "2026-10-10T18:38:04.777493+00:00",
-        "nextAction": "Keep the live PR unchanged until the amendment decision is answered.",
+        "nextAction": "Follow current-head public CI and maintainer feedback. The Init proposal no longer needs a contributor decision.",
         "evidence": [
-          "https://github.com/google/gvisor/pull/14343#discussion_r4238079320",
-          "https://github.com/tamird/gvisor/commit/8e86fcf9386720918ac93733ed8cd8fe233a0251"
+          "https://github.com/google/gvisor/pull/14343#discussion_r4260325076",
+          "https://github.com/tamird/gvisor/commit/ebebea2d39970e0da947503e4dc75af172a55e8c"
         ],
-        "observedAt": "2026-10-13T09:01:33.623366+00:00"
+        "observedAt": "2026-10-13T15:16:16.359295+00:00"
       },
-      "head": "a306517c61094f024f927a94fbf44d9e5d410f90"
+      "head": "ebebea2d39970e0da947503e4dc75af172a55e8c"
     },
     {
       "id": "pr:14338",
@@ -4918,36 +4918,37 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "0ea7a7346023c74de50d9f1600222660af7da8c2",
+      "head": "c36ff4a226472cd424848a2135727b5aad0d97b2",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/0ea7a7346023c74de50d9f1600222660af7da8c2",
-      "status": "Targeted upstream refreshes and image tooling adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is 0ea7a7346023. It includes the reviewed upstream refresh through 10e1efc8a, qualified native Ollama/profile-helper images shared by Make and Bazel, rules_oci 2.3.3 and the generated license catalog, and the validated nonrecursive state cycle search. It also includes the canonical Gazelle sniffer BUILD correction and the independently qualified portable image exporter, which extracts a complete OCI layout on native temporary storage before copying it to the declared output. The separate checkescape proposal is not adopted.\n\nThe latest upstream refresh passed 30 fresh remote owners: six unit suites, nineteen analyzer wrappers with both CPU findings, four CRI-version executions of the EmptyDir regression, and the checkpoint families with prefix cases. Source/native/report joins are independently closed. The README now documents the existing ARM64 Actions-local bwrap route with remote compilation; fully remote ARM Firecracker support remains a separate capacity limitation.\n\nThe complete ARM qualification remains pinned to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed. Those full profiles were not repeated for these targeted adoptions, and the ARM64-64K lane remains required. Cached large-image archives and their actual Docker-load checks passed separately. The Stable image rebuilt from its Dockerfile now passes source export, stock archive conversion and actual Docker load. Triton remains under a source-specific provider-recovery continuation after a status-only failure; no completed Triton source-export/load result is claimed. No GPU execution is claimed.",
-      "updatedAt": "2026-10-13T12:53:55.610351+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
+      "status": "Targeted upstream refresh and tmpfs quota correction adopted",
+      "summary": "Canonical qualification/current-upstream-refresh is c36ff4a22647, with the exact tested tree from 0fae764d9e. It incorporates upstream changes through ae980d605 and preserves the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The separately discovered ACL-error leak remains a different correction under validation and is not claimed here.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those full profiles were not repeated for these targeted adoptions, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Current targeted qualification adopted",
-        "sourceHead": "0ea7a7346023c74de50d9f1600222660af7da8c2",
-        "observedAt": "2026-10-13T10:31:38.169181+00:00",
-        "nextAction": "Preserve the closed source-specific qualification and remaining full-profile/hardware obligations. Stable source export/conversion/load is closed; follow the unchanged-action Triton provider-recovery continuation without inferring a result from execution status.",
+        "sourceHead": "c36ff4a226472cd424848a2135727b5aad0d97b2",
+        "observedAt": "2026-10-13T15:16:16.359295+00:00",
+        "nextAction": "Preserve source-specific qualification and remaining full-profile/hardware limits; track Triton issue #13789 and the separate ACL-error correction.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/0ea7a7346023c74de50d9f1600222660af7da8c2",
-          "https://github.com/tamird/gvisor/actions/runs/38374128617",
-          "https://github.com/tamird/gvisor/actions/runs/38396565746"
+          "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
+          "https://github.com/buildbuddy-io/buildbuddy/issues/13789",
+          "https://app.buildbuddy.io/invocation/db7e8238-52d0-4b32-9535-f0a52fbfdbaa",
+          "https://app.buildbuddy.io/invocation/bf4e93ea-a5d8-4fff-a118-2a704d8bee03"
         ]
       },
       "evidence": [
         {
           "label": "Current adopted canonical source",
-          "url": "https://github.com/tamird/gvisor/commit/0ea7a7346023c74de50d9f1600222660af7da8c2"
+          "url": "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2"
         },
         {
           "label": "Completed Stable Dockerfile export, archive and load",
           "url": "https://github.com/tamird/gvisor/actions/runs/38374128617"
         },
         {
-          "label": "Active Triton provider-recovery continuation",
+          "label": "Closed Triton provider-recovery attempt",
           "url": "https://github.com/tamird/gvisor/actions/runs/38396565746"
         },
         {
@@ -4955,7 +4956,7 @@
           "url": "https://github.com/tamird/gvisor/commit/4b385e3d38740b6e969dfff0ab103c32ad36ed24"
         },
         {
-          "label": "Qualified upstream refresh source",
+          "label": "Earlier targeted upstream refresh source",
           "url": "https://github.com/tamird/gvisor/commit/56882b2804d0"
         },
         {
@@ -4969,6 +4970,18 @@
         {
           "label": "Closed large source-export attempt",
           "url": "https://github.com/tamird/gvisor/actions/runs/38364887126"
+        },
+        {
+          "label": "Current targeted upstream checks; original proc method failure retained",
+          "url": "https://app.buildbuddy.io/invocation/db7e8238-52d0-4b32-9535-f0a52fbfdbaa"
+        },
+        {
+          "label": "Corrected focused proc cases",
+          "url": "https://app.buildbuddy.io/invocation/bf4e93ea-a5d8-4fff-a118-2a704d8bee03"
+        },
+        {
+          "label": "Triton provider investigation",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789"
         }
       ]
     },
@@ -6151,52 +6164,48 @@
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/ec93b8986b6c95cf692ec0f14f86e49571495a3b",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T09:01:33.623366+00:00",
-      "summary": "This proposal replaces the Ollama and profile-helper Dockerfiles with one standard OCI image definition per program shared by Make and Bazel. It includes the required rules_oci release and canonical license record. Both architecture artifacts, CPU analyzers, real raw/prepared Make load/cache/tag behavior and license checks are independently qualified. ARM image construction is not ARM execution, and no GPU coverage is claimed. Contributor review of exact ec93b8986 is pending. Upstream delivery also requires CUDA #15670 and the approved Ollama client prerequisite.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "ec93b8986b6c95cf692ec0f14f86e49571495a3b",
-        "url": "https://github.com/tamird/gvisor/commit/ec93b8986b6c95cf692ec0f14f86e49571495a3b"
-      },
+      "status": "Revision work",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The original ec93b8986 proposal shares native Ollama/profile-helper OCI definitions between Make and Bazel. Its architecture artifacts, analyzers, Make load/cache/tag behavior and license checks remain independently qualified. The contributor requested revision: the owner is aligning the description with the current architecture and verifying the actual registered release. This is agent work, not a pending user approval. No revised publication or upstream PR is claimed. Upstream delivery still depends on CUDA #15670 and the approved Ollama prerequisite; no ARM execution or GPU coverage is implied.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor-requested revision",
         "sourceHead": "ec93b8986b6c95cf692ec0f14f86e49571495a3b",
-        "nextAction": "Await the existing contributor decision and image prerequisites; do not open a duplicate or dependency-only PR.",
+        "nextAction": "Complete the current-architecture description and actual release verification before presenting the revised source and delivery state.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ec93b8986b6c95cf692ec0f14f86e49571495a3b"
         ],
-        "observedAt": "2026-10-13T09:01:33.623366+00:00"
+        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+      },
+      "contributorChangesRequested": {
+        "head": "ec93b8986b6c95cf692ec0f14f86e49571495a3b",
+        "url": "https://github.com/tamird/gvisor/commit/ec93b8986b6c95cf692ec0f14f86e49571495a3b"
       }
     },
     {
-      "id": "branch:state-dependency-cycle-search",
-      "type": "branch",
-      "repo": "tamird/gvisor",
+      "id": "pr:15738",
+      "type": "pr",
+      "repo": "google/gvisor",
       "ref": "state-dependency-cycle-search",
-      "head": "ccad70dad8c098c237996bd4fd33c04beca7c196",
-      "title": "Find state dependency cycles without recursion",
+      "head": "d4ff1a6238fb597f869266ffdc654c3f102a4a5e",
+      "title": "Report state dependency cycles without recursion",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/ccad70dad8c098c237996bd4fd33c04beca7c196",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T09:01:33.623366+00:00",
-      "summary": "The standalone cycle-search correction avoids nil dereferences and unbounded recursion while finding a cycle in the remaining dependency graph. Before controls reproduce two nil dereferences and a stack overflow; corrected AMD64/ARM64 state suites and the three owning analyzers pass. A masked before failure does not establish separate sensitivity for every graph case. Exact ccad70dad is published and awaits contributor approval to open a PR. Its unchanged patch is already qualified and adopted on the fork.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "ccad70dad8c098c237996bd4fd33c04beca7c196",
-        "url": "https://github.com/tamird/gvisor/commit/ccad70dad8c098c237996bd4fd33c04beca7c196"
-      },
+      "url": "https://github.com/google/gvisor/pull/15738",
+      "status": "open",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The contributor-approved dependency-cycle correction is delivered as PR #15738 at d4ff1a6238, a one-commit source-equivalent rebase of qualified ccad70dad. Original controls reproduce two nil dereferences and a stack overflow; corrected AMD64/ARM64 state suites and three owning analyzers pass. A masked before failure does not establish separate sensitivity for every graph case. Current public CI and maintainer review remain distinct from this retained validation. The unchanged patch is already adopted in the fork.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor decision pending",
-        "sourceHead": "ccad70dad8c098c237996bd4fd33c04beca7c196",
-        "nextAction": "Await the existing contributor decision for this standalone proposal.",
+        "owner": "restore_integration_review",
+        "disposition": "Delivered; public review pending",
+        "sourceHead": "d4ff1a6238fb597f869266ffdc654c3f102a4a5e",
+        "nextAction": "Follow the published head and maintainer review; no contributor publication decision remains.",
         "evidence": [
+          "https://github.com/google/gvisor/pull/15738",
           "https://github.com/tamird/gvisor/commit/ccad70dad8c098c237996bd4fd33c04beca7c196"
         ],
-        "observedAt": "2026-10-13T09:01:33.623366+00:00"
-      }
+        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+      },
+      "number": 15738
     },
     {
       "id": "branch:pr14343-init-guards",
@@ -6207,23 +6216,19 @@
       "title": "Clarify initialization field guards for #14343",
       "group": "analysis",
       "url": "https://github.com/tamird/gvisor/commit/8e86fcf9386720918ac93733ed8cd8fe233a0251",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T09:01:33.623366+00:00",
-      "summary": "This source-preserving rebase adds a short explanation that initialization is exclusive but checklocks cannot infer that fact from a receiver parameter; the field guards keep the writes checked. The current upstream PR remains at a306517c6. Contributor authorization to publish the revision, reply, resolve the addressed discussion and re-request review is pending; none of those actions is credited yet.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "8e86fcf9386720918ac93733ed8cd8fe233a0251",
-        "url": "https://github.com/tamird/gvisor/commit/8e86fcf9386720918ac93733ed8cd8fe233a0251"
-      },
+      "status": "resolved",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "This historical proposal at 8e86fcf938 was approved. Its exact two-line Init explanation is now included in published PR #14343 at ebebea2d3997; the existing discussion was replied to and resolved. This preserved proposal object has no outstanding contributor decision. The native reviewer re-request returned HTTP 404 and is not credited.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor decision pending",
+        "disposition": "Historical proposal delivered in #14343",
         "sourceHead": "8e86fcf9386720918ac93733ed8cd8fe233a0251",
-        "nextAction": "Await the existing decision on this exact proposed amendment; preserve the live PR and unresolved discussion.",
+        "nextAction": "Follow the live PR; no separate proposal action remains.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/8e86fcf9386720918ac93733ed8cd8fe233a0251"
+          "https://github.com/google/gvisor/pull/14343",
+          "https://github.com/tamird/gvisor/commit/ebebea2d39970e0da947503e4dc75af172a55e8c"
         ],
-        "observedAt": "2026-10-13T09:01:33.623366+00:00"
+        "observedAt": "2026-10-13T15:16:16.359295+00:00"
       }
     },
     {
@@ -6235,24 +6240,35 @@
       "title": "Diagnose malformed checkescape annotations",
       "group": "analysis",
       "url": "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T09:01:33.623366+00:00",
-      "summary": "The parser now reports previously ignored +checkescape suffix syntax. The regression keeps two supported forms and rejects three malformed separators; before controls miss those three diagnostics and the corrected checker passes on both CPUs. Six analyzer wrappers pass. Two wire wrappers contain zero named cases and provide only build/runner evidence. A separate generated sniffer BUILD mismatch was corrected and canonical Gazelle then passed. Standalone 5a145857c is validated and awaits contributor review; no upstream PR or analyzer adoption is claimed. Existing #14181 addresses exposing a vettool and is a separate change.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "5a145857c55bad19c858775d4831da002844e555",
-        "url": "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555"
-      },
+      "status": "Revision work",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The original standalone 5a145857c parser proposal is validated against its retained controls, but the contributor requested a historical-intent correction before publication. The owner is resolving that condition; this is agent revision work, not an unanswered approval question. No upstream PR or analyzer adoption is claimed. The original before controls, corrected checks and separate canonical Gazelle correction remain source-specific evidence; existing #14181 is a separate vettool change.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor decision pending",
+        "owner": "restore_integration_review",
+        "disposition": "Contributor-requested history correction",
         "sourceHead": "5a145857c55bad19c858775d4831da002844e555",
-        "nextAction": "Await the existing contributor decision before opening the standalone PR.",
+        "nextAction": "Complete the historical restriction correction and its evidence before submitting a revised standalone proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555"
         ],
-        "observedAt": "2026-10-13T09:01:33.623366+00:00"
+        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+      },
+      "contributorChangesRequested": {
+        "head": "5a145857c55bad19c858775d4831da002844e555",
+        "url": "https://github.com/tamird/gvisor/commit/5a145857c55bad19c858775d4831da002844e555"
       }
+    },
+    {
+      "id": "external:triton-worker-result",
+      "type": "issue",
+      "repo": "buildbuddy-io/buildbuddy",
+      "number": 13789,
+      "title": "Triton source action has no worker result",
+      "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789",
+      "group": "rbe",
+      "status": "open",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The provider-recovery attempt exhausted the coordinator budget without an ActionResult, worker identity, logs or output. The published issue asks BuildBuddy to inspect attempts, lease transitions and effective timeouts. One visible execution record does not establish the physical attempt count. No Dockerfile, disk, OOM, deployment or recovery cause is inferred."
     }
   ],
   "edges": [
@@ -8486,8 +8502,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T12:58:39.864725+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. This is additional size/correctness evidence; new timing and allocation results are pending. No successor is proposed for adoption.",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -8834,7 +8850,7 @@
           ]
         }
       ],
-      "nextStep": "The fixed comparison of shared-struct source 2831e4a8e2 against the same coherent control is accepted as 81aaa49e. Its sole observer is active; no new timing or allocation result is available. Earlier measurements remain specific to their original sources.",
+      "nextStep": "The runtime-array design remains design-only. Central selection and generator/API reviews are closed, but the lifetime review is unfinished. No implementation or workload has started; prior fixed/profile results remain source-specific and unpromoted.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9167,6 +9183,14 @@
         {
           "label": "Closed balanced master/original/refined comparison",
           "url": "https://app.buildbuddy.io/invocation/5b1e64cd-0b69-414c-9f46-85f618ed6d95"
+        },
+        {
+          "label": "Closed shared-struct fixed comparison",
+          "url": "https://app.buildbuddy.io/invocation/81aaa49e-e5bf-4852-a8f4-c3d1fcaadd72"
+        },
+        {
+          "label": "Closed focused adoption profiles",
+          "url": "https://app.buildbuddy.io/invocation/096400a1-937d-4fdc-b3b4-12aff75fac66"
         }
       ]
     },
@@ -9175,8 +9199,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T12:58:39.864725+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. This is additional size/correctness evidence; new timing and allocation results are pending. No successor is proposed for adoption.",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -9674,13 +9698,13 @@
               "url": "https://app.buildbuddy.io/invocation/ff0d8ec2-b87d-4494-a52c-08eef59288c7"
             },
             {
-              "label": "Public reference-array proposal; contributor decision pending",
+              "label": "Historical reference-array proposal",
               "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52"
             }
           ]
         }
       ],
-      "nextStep": "The fixed comparison of shared-struct source 2831e4a8e2 against the same coherent control is accepted as 81aaa49e. Its sole observer is active; no new timing or allocation result is available. Earlier measurements remain specific to their original sources.",
+      "nextStep": "The runtime-array design remains design-only. Central selection and generator/API reviews are closed, but the lifetime review is unfinished. No implementation or workload has started; prior fixed/profile results remain source-specific and unpromoted.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10059,8 +10083,16 @@
           "url": "https://app.buildbuddy.io/invocation/ff0d8ec2-b87d-4494-a52c-08eef59288c7"
         },
         {
-          "label": "Public reference-array proposal; contributor decision pending",
+          "label": "Historical reference-array proposal",
           "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52"
+        },
+        {
+          "label": "Closed shared-struct fixed comparison",
+          "url": "https://app.buildbuddy.io/invocation/81aaa49e-e5bf-4852-a8f4-c3d1fcaadd72"
+        },
+        {
+          "label": "Closed focused adoption profiles",
+          "url": "https://app.buildbuddy.io/invocation/096400a1-937d-4fdc-b3b4-12aff75fac66"
         }
       ],
       "comparisons": [
@@ -10690,10 +10722,10 @@
       "title": "Large image source export and load",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-13T12:53:55.610351+00:00",
-      "summary": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The active provider-recovery continuation removes only the diagnostic no-retry coordinator header; its actual source action and inputs are unchanged. No completed Triton source layout, archive or load is claimed.",
+      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "summary": "Cached Stable Diffusion and Triton archives and their actual Docker-load cases passed in earlier source-bound runs. Small Redis source misses also passed through stock OCI conversion, actual load and a non-root Docker user. Those results remain separate from rebuilding the large Dockerfiles.\n\nStable now completes the entire Dockerfile-to-load path at 5ba04f3e2 in Actions 38374128617. The unchanged Buildx/bsdtar stream extracts into private native temporary storage; both pipeline stages and the subsequent copy to declared output succeed. The complete layout contains 22 files and 21,627,729,213 bytes. Stock conversion produces a 21,627,743,232-byte archive, and the actual named load case passes with all eighteen ordered layer checks. Peak root use during source export was 74,633,879,552 of 198,258,896,896 bytes. This establishes the selected source/export/conversion/load path, without a GPU, throughput or latency-cause claim.\n\nThe prior live-stream attempt is retained: Stable's builder logs show a session healthcheck timeout, fatal healthcheck and subsequent Solve/tar cancellation. OOMKilled=false and a running builder do not identify the initiating latency or starvation cause. Native staging is independently small-image-qualified and adopted in the fork's canonical qualification branch.\n\nTriton's first native-layout attempt, Actions 38384451587, ended with provider status 13, “stream closed with task still claimed”, and no ActionResult, worker, real timing, usage, logs or output. This is not disk-fit evidence. The provider-recovery continuation removed only the diagnostic no-retry coordinator header; its actual source action and inputs stayed unchanged. Its 7,200-second coordinator budget expired, and the execution API reported CANCELLED (1), invocation cancelled, without an ActionResult, worker identity, nonzero action timing, logs or outputs. Twenty-one snapshots retain one visible execution ID, which does not establish the number of physical attempts. No completed Triton source layout, archive or load is claimed.",
       "findings": [],
-      "nextStep": "Observe the sole Triton provider-recovery continuation, Actions 38396565746 at source 85051262ee. Its latest saved action state is EXECUTING without a worker result. Requested disk remains subject to the observed 200 GB provider cap; fit is unproved.",
+      "nextStep": "Follow public BuildBuddy issue #13789 for the provider attempt/lease evidence and effective timeout. No further full image run is justified by the current no-worker-result evidence. Disk fit and the underlying cause remain unproved.",
       "evidence": [
         {
           "label": "Completed Stable source export, archive and load",
@@ -10712,7 +10744,7 @@
           "url": "https://github.com/tamird/gvisor/actions/runs/38384451587"
         },
         {
-          "label": "Active unchanged-action Triton continuation",
+          "label": "Closed unchanged-action provider-recovery attempt",
           "url": "https://github.com/tamird/gvisor/actions/runs/38396565746"
         },
         {
@@ -10730,6 +10762,10 @@
         {
           "label": "Small miss, load and non-root qualification",
           "url": "https://app.buildbuddy.io/invocation/2cdd4c80-73d3-4a85-b676-506ecee95dbc"
+        },
+        {
+          "label": "Published provider investigation and evidence limits",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789"
         }
       ]
     }
