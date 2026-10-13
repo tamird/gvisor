@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T16:46:34.678785+00:00",
+    "updatedAt": "2026-10-13T17:20:21.778585+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2343,15 +2343,16 @@
       "url": "https://github.com/google/gvisor/pull/15188",
       "group": "tests",
       "status": "open",
-      "summary": "The approved source patch was refreshed onto current master at 9e4c812a82, resolving the source/import base mismatch while preserving the exact patch. GitHub reported the source PR mergeable; its fresh checks and current review state are in the paired snapshot. Import #15257 still names the historical source head and needs regeneration. The maintainer was notified; the generated Google branch has not been modified or claimed repaired.\n\nEarlier source-specific history (states below apply to the named old heads):\n\nAt the 20:40 scan, the maintainer import state changed: #15257 at a990ad3eb7cc2fb56f57638f416b11a1fbb0f97b (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. Etienne’s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 now matches this source; its latest internal build failed without a public cause while its public pipeline remains pending. Current check states are retained in the paired snapshot.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
+      "summary": "The approved source patch was refreshed onto current master at 9e4c812a82, preserving the exact patch. Import #15257 has now been regenerated at c3f137cfd4 and explicitly names this current source. Fresh source checks pass. The regenerated import still has pending checks and no reported failure. Current check details and observation times are in the paired snapshot; no merge is established.\n\nEarlier source-specific history (states below apply to the named old heads):\n\nAt the 20:40 scan, the maintainer import state changed: #15257 at a990ad3eb7cc2fb56f57638f416b11a1fbb0f97b (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nThe requested rebase is published at 2a8efe7eaada9f144311acac49f65ed5bd818a10 on master 658c9c10144f34bca6d35d471ed0a519df59f5f7. The complete four-file patch and commit message are unchanged; normal signing and exact-lease SSH publication succeeded. Local, tracking and live heads match, and GitHub reported OPEN, MERGEABLE and APPROVED at publication. Etienne’s request was https://github.com/google/gvisor/pull/15188#issuecomment-6000677541. No public reply or runtime rerun was needed. Import #15257 now matches this source; its latest internal build failed without a public cause while its public pipeline remains pending. Current check states are retained in the paired snapshot.\n\nEarlier source-specific evidence:\n\nEtienne approved exact current 9099a8c50 at 07:06:01 UTC on October 3: https://github.com/google/gvisor/pull/15188#pullrequestreview-5399470801. Approval does not imply landing.\n\nThe authorized October 2/3 rebase is published at 9099a8c50728847b08105a7a632fab82386b328a on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15188#issuecomment-5963411896. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published source b0bef9da5 removes the ignored internal netstack checkpoint option, 50 duplicate syscall targets and the unused Make environment setting. Actual before/after graphs verify all 176 retained targets and a matching ordinary save target for every removed duplicate, including complete inputs and runner arguments. The owning runner Nogo target passes AMD64 and ARM64. Ordinary save/restore, distinct save/resume and the deprecated external runsc flag remain supported. The reviewer-requested Make removal is folded into this single commit; the obsolete docker-remove-netstack-env branch has been deleted. The patch is included in qualification; the current PR head is rebased onto b426401b3. No syscall runtime workload was repeated for these no-op removals.",
       "number": 15188,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-13T16:46:34.678785+00:00",
+      "updatedAt": "2026-10-13T17:17:56.957876+00:00",
       "followup": {
-        "disposition": "Source refreshed; await matching import regeneration",
+        "disposition": "Matching import regenerated; checks pending",
         "owner": "external_sweeps",
-        "nextAction": "Follow fresh source CI and maintainer regeneration of import #15257; old import results and conflicts remain historical until a current-source association is verified.",
+        "nextAction": "Follow the current-source-matching import #15257 through its remaining public checks and maintainer merge.",
         "evidence": [
+          "https://github.com/google/gvisor/commit/c3f137cfd48efd3a44d2edb11c3923e347bee751",
           "https://github.com/tamird/gvisor/commit/9e4c812a82770b2a084f66471e6732aef75de5fa",
           "https://github.com/google/gvisor/pull/15188#issuecomment-6150476018",
           "https://github.com/google/gvisor/pull/15188#issuecomment-6000677541",
@@ -2360,7 +2361,7 @@
         ],
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
         "sourceHead": "9e4c812a82770b2a084f66471e6732aef75de5fa",
-        "observedAt": "2026-10-13T16:46:34.678785+00:00"
+        "observedAt": "2026-10-13T17:17:56.957876+00:00"
       },
       "head": "9e4c812a82770b2a084f66471e6732aef75de5fa"
     },
@@ -2929,16 +2930,17 @@
       "url": "https://github.com/google/gvisor/pull/15333",
       "group": "tests",
       "status": "open",
-      "summary": "The approved source patch was refreshed onto current master at d711e04eba, resolving the source/import base mismatch while preserving the exact patch. GitHub reported the source PR mergeable; its fresh checks and current review state are in the paired snapshot. Import #15339 still names the historical source head and needs regeneration. The maintainer was notified; the generated Google branch has not been modified or claimed repaired.\n\nEarlier source-specific history (states below apply to the named old heads):\n\nAt the 20:40 scan, the maintainer import state changed: #15339 at 7572cd03c87293dc741c5858afee400f854fa76f (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nOpened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:23Z.\n\nMatching import #15339 at eec76d397 reported a failed rollup after eperot canceled public build 49634. Its ten ARM64 64K jobs were canceled; all four earlier failed jobs had successful automatic replacements, leaving no failed step. CI remains incomplete; this does not establish a new source regression.",
+      "summary": "The approved source patch was refreshed onto current master at d711e04eba, preserving the exact patch. Import #15339 has now been regenerated at b532421c48 and explicitly names this current source. Fresh source checks pass. The regenerated import’s public pipeline and internal Buildkite checks pass; other import checks remain pending. Current check details and observation times are in the paired snapshot; no merge is established.\n\nEarlier source-specific history (states below apply to the named old heads):\n\nAt the 20:40 scan, the maintainer import state changed: #15339 at 7572cd03c87293dc741c5858afee400f854fa76f (pending). These are new import heads. Earlier import results below remain tied to their original heads and do not qualify the refreshed heads. No source PR head changed and no landing is established.\n\nOpened ready for review after explicit user approval at 73d62b335ccacd564193b201c861b482e0c1ab18, independently based on master 4ac0fde02. Root verified the exact published title, body, head and base. Earlier focused validation passed the existing shared-volume overlay case in both cgroup modes, preserving its original timeout and worker configuration. No full suite or production gofer behavior claim.\n\nCurrent upstream review: EtiennePerot approved this exact source head at 2026-10-05T23:14:23Z.\n\nMatching import #15339 at eec76d397 reported a failed rollup after eperot canceled public build 49634. Its ten ARM64 64K jobs were canceled; all four earlier failed jobs had successful automatic replacements, leaving no failed step. CI remains incomplete; this does not establish a new source regression.",
       "head": "d711e04eba974b274a4785f1ab11ba15598fe4a5",
       "number": 15333,
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-13T16:46:34.678785+00:00",
+      "updatedAt": "2026-10-13T17:17:56.957876+00:00",
       "followup": {
-        "disposition": "Source refreshed; await matching import regeneration",
+        "disposition": "Matching import regenerated; checks pending",
         "owner": "external_sweeps",
-        "nextAction": "Follow fresh source CI and maintainer regeneration of import #15339; old import results and conflicts remain historical until a current-source association is verified.",
+        "nextAction": "Follow the current-source-matching import #15339 through its remaining public checks and maintainer merge.",
         "evidence": [
+          "https://github.com/google/gvisor/commit/b532421c488af6bafe52630d1464d1f7d7d69978",
           "https://github.com/tamird/gvisor/commit/d711e04eba974b274a4785f1ab11ba15598fe4a5",
           "https://github.com/google/gvisor/pull/15333#issuecomment-6150476967",
           "https://github.com/google/gvisor/pull/15333#pullrequestreview-5421807283",
@@ -2947,7 +2949,7 @@
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
         "sourceHead": "d711e04eba974b274a4785f1ab11ba15598fe4a5",
-        "observedAt": "2026-10-13T16:46:34.678785+00:00"
+        "observedAt": "2026-10-13T17:17:56.957876+00:00"
       }
     },
     {
@@ -8505,7 +8507,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "updatedAt": "2026-10-13T17:20:21.778585+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.",
       "findings": [
         {
@@ -8853,7 +8855,7 @@
           ]
         }
       ],
-      "nextStep": "The runtime-array design remains design-only. Central selection and generator/API reviews are closed, but the lifetime review is unfinished. No implementation or workload has started; prior fixed/profile results remain source-specific and unpromoted.",
+      "nextStep": "The runtime-array prototype is implemented at e0515a1d8b and is undergoing the existing full correctness comparison against shared-fixture control 225fdf9301. The run is active; no current runtime, performance or adoption result is claimed. Earlier fixed and profile results remain source-specific and unpromoted.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9194,6 +9196,14 @@
         {
           "label": "Closed focused adoption profiles",
           "url": "https://app.buildbuddy.io/invocation/096400a1-937d-4fdc-b3b4-12aff75fac66"
+        },
+        {
+          "label": "Runtime-array experimental source",
+          "url": "https://github.com/tamird/gvisor/commit/e0515a1d8be95e6dec1bfdf01e1c4031c56b25da"
+        },
+        {
+          "label": "Active runtime-array correctness comparison",
+          "url": "https://app.buildbuddy.io/invocation/b62a5fb8-1ab3-4964-8625-64e05e730280"
         }
       ]
     },
@@ -9202,7 +9212,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T15:16:16.359295+00:00",
+      "updatedAt": "2026-10-13T17:20:21.778585+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.",
       "findings": [
         {
@@ -9707,7 +9717,7 @@
           ]
         }
       ],
-      "nextStep": "The runtime-array design remains design-only. Central selection and generator/API reviews are closed, but the lifetime review is unfinished. No implementation or workload has started; prior fixed/profile results remain source-specific and unpromoted.",
+      "nextStep": "The runtime-array prototype is implemented at e0515a1d8b and is undergoing the existing full correctness comparison against shared-fixture control 225fdf9301. The run is active; no current runtime, performance or adoption result is claimed. Earlier fixed and profile results remain source-specific and unpromoted.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10096,6 +10106,14 @@
         {
           "label": "Closed focused adoption profiles",
           "url": "https://app.buildbuddy.io/invocation/096400a1-937d-4fdc-b3b4-12aff75fac66"
+        },
+        {
+          "label": "Runtime-array experimental source",
+          "url": "https://github.com/tamird/gvisor/commit/e0515a1d8be95e6dec1bfdf01e1c4031c56b25da"
+        },
+        {
+          "label": "Active runtime-array correctness comparison",
+          "url": "https://app.buildbuddy.io/invocation/b62a5fb8-1ab3-4964-8625-64e05e730280"
         }
       ],
       "comparisons": [
