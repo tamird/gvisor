@@ -274,9 +274,9 @@ func loadRef(r *Reader) Ref {
 		}
 		p := make([]byte, -d) // Escapes: decoded field name storage.
 		readFull(r, p)
-		var fieldName FieldName // Escapes: decoded field name interface.
-		fieldName = FieldName(gohacks.StringFromImmutableBytes(p))
-		ref.Dots[i] = &fieldName
+		fieldName := new(FieldName) // Escapes: decoded field name interface.
+		*fieldName = FieldName(gohacks.StringFromImmutableBytes(p))
+		ref.Dots[i] = fieldName
 	}
 	if l != 0 {
 		// Only if dots is non-zero.
