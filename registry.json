@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T19:56:48.971156+00:00",
+    "updatedAt": "2026-10-13T20:54:45.641197+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4012,13 +4012,14 @@
         "owner": "root",
         "disposition": "Qualified proposals awaiting contributor decisions",
         "sourceHead": "c10df898b36cf59e0265ad7dddc6803a97001f67",
-        "nextAction": "Await the contributor’s decisions on the three independent precursor PRs and exact fd737bf7a guard amendment plus prepared replies. Published c10 source and unresolved upstream review threads remain unchanged until delivery is authorized.",
+        "nextAction": "Await decisions on the two independent fixture cleanups and exact fd737bf7a guard amendment plus prepared replies. The contributor prefers keeping netip registration with the core migration; that standalone split is held. Published c10 and unresolved upstream review threads remain unchanged.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158"
         ],
-        "observedAt": "2026-10-13T19:37:42.271874+00:00"
+        "observedAt": "2026-10-13T20:52:44.306042+00:00"
       },
       "evidence": [
         {
@@ -4968,8 +4969,8 @@
         "owner": "root",
         "disposition": "Current targeted qualification adopted",
         "sourceHead": "ddd23376f391b04aea96441c0be4c800877bd4c9",
-        "observedAt": "2026-10-13T16:29:41.427120+00:00",
-        "nextAction": "Preserve source-specific qualification and remaining full-profile/hardware limits; investigate NVIDIA source availability and track Triton issue #13789.",
+        "observedAt": "2026-10-13T20:47:40.801722+00:00",
+        "nextAction": "The separate evening refresh at 68cf1f5a is still under qualification. Its full hybrid unit run reached 209 of 687 test owners before the 45-minute coordinator deadline; the original partial results are retained, and a bounded coordinator-budget/report-retention correction is being prepared. Focused capability diagnostics remain separate. Canonical ddd23376 is unchanged.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -6208,16 +6209,19 @@
       "url": "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
       "status": "Revision work",
       "updatedAt": "2026-10-13T15:36:59.773847+00:00",
-      "summary": "The contributor requested a lean shared base and a separately built coreutils layer justified by the actual profiling consumers. FOURTH is revising the public 24c8f3c9ca proposal; this is agent work, not an unanswered contributor decision. The earlier ec93 executable inputs were qualified, but no new image implementation or validation is claimed. No upstream PR is open; CUDA #15670 and the approved Ollama prerequisite remain delivery dependencies.",
+      "summary": "The requested lean shared-base implementation is public at 624a360f322f on qualification/native-go-lean-source. Its single CA/minimal-filesystem base and profile-only GNU rm/mkdir/chmod layer have independently closed package/image and AMD64 runtime evidence; ARM64 image contents were inspected without an ARM runtime claim. Original inspector and audit failures are retained. The remaining APT catalog/audit prerequisite is running under cd5cc330 at 49df6b1791ad, including actual fetches for the four unmatched CA/OpenSSL artifacts. No complete audit, adoption or new contributor approval is claimed. The public native-go-images review branch remains at 24c8 while its requested revision is prepared. No upstream PR is open; CUDA, Ollama and APT discovery remain delivery prerequisites.",
       "followup": {
         "owner": "syscall_validation",
         "disposition": "Contributor-requested revision",
         "sourceHead": "24c8f3c9ca888a1ac94798308a7d7c45e2064069",
-        "nextAction": "Review the actual profiling consumers, then prepare the lean shared base and explicit coreutils layer for a concrete revised proposal.",
+        "nextAction": "Complete the existing APT fetch/license audit, then present the source-bound lean implementation for contributor review.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069"
+          "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
+          "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
+          "https://github.com/tamird/gvisor/commit/49df6b1791ad254ebbea802c5476b85674e2fd0d",
+          "https://app.buildbuddy.io/invocation/cd5cc330-041b-42ab-b72f-b2fe5aa80b97"
         ],
-        "observedAt": "2026-10-13T15:36:59.773847+00:00"
+        "observedAt": "2026-10-13T20:47:40.801722+00:00"
       },
       "contributorChangesRequested": {
         "head": "24c8f3c9ca888a1ac94798308a7d7c45e2064069",
@@ -6403,23 +6407,19 @@
       "title": "Register netip types for checkpoints",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/e3aec09f591cef5b1d123a42f39583b3fe737b07",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
-      "summary": "Independent precursor registers netip values through the existing binary checkpoint adapter. Both-architecture state suites pass, including equality, map-key and interior-pointer checks. The contributor is deciding whether to open this standalone PR.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "e3aec09f591cef5b1d123a42f39583b3fe737b07",
-        "url": "https://github.com/tamird/gvisor/commit/e3aec09f591cef5b1d123a42f39583b3fe737b07"
-      },
+      "status": "Standalone split held",
+      "updatedAt": "2026-10-13T20:52:44.306042+00:00",
+      "summary": "The source-reviewed registration extraction and its passing state checks are retained. The contributor publicly preferred keeping this otherwise inert registration with the core netip migration, so a separate PR is held; this is not an unanswered contributor decision.",
       "followup": {
-        "disposition": "Contributor decision pending",
+        "disposition": "Standalone split held after contributor preference",
         "owner": "root",
         "sourceHead": "e3aec09f591cef5b1d123a42f39583b3fe737b07",
-        "observedAt": "2026-10-13T19:37:42.271874+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "observedAt": "2026-10-13T20:52:44.306042+00:00",
+        "nextAction": "Keep the registration in the core migration unless the contributor chooses a separate landing.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e3aec09f591cef5b1d123a42f39583b3fe737b07",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158"
         ]
       },
       "evidence": [
@@ -6560,6 +6560,35 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
           "https://github.com/google/gvisor/pull/15439#discussion_r4212422885"
+        ]
+      }
+    },
+    {
+      "id": "branch:sandboxexec-example-network-tests",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "sandboxexec-example-network-tests",
+      "head": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+      "title": "Exercise example network modes with a listener",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T20:47:40.801722+00:00",
+      "summary": "The reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The contributor is deciding whether to open this independent PR; no upstream PR exists.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+        "url": "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Contributor decision pending",
+        "sourceHead": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+        "observedAt": "2026-10-13T20:47:40.801722+00:00",
+        "nextAction": "Await the contributor’s decision on opening this exact reviewed network-test correction.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+          "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb"
         ]
       }
     }
@@ -8834,8 +8863,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T19:43:08.268452+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.",
+      "updatedAt": "2026-10-13T20:54:45.641197+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9182,7 +9211,7 @@
           ]
         }
       ],
-      "nextStep": "The shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051; production links hit the original deadline and are continuing separately under ce620e7f. A reviewed shared-pointer helper at fffd29842d6d is undergoing six-owner/two-test-executable validation under 113f6ac0. Neither continuation has a current result, and no new timing or adoption claim is made.",
+      "nextStep": "Assess the existing representative checkpoint/restore benchmarks and their actual populated state and timing boundaries before proposing any bounded end-to-end run. The current comparison is fully reviewed; no new sample or pilot is running.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9551,8 +9580,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T19:43:08.268452+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.",
+      "updatedAt": "2026-10-13T20:54:45.641197+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -10039,7 +10068,7 @@
           ]
         },
         {
-          "text": "The final reference-array refinement is retained after the balanced three-arm experiment 5b1e64cd: twelve blocks and all six source-order permutations twice, 78 actions and 324 measured rows. Against master, Slice Save improves 28.30% (p<.001), allocated bytes fall 18.43%, and allocations fall from 1,067 to 43. UDP Save is nonsignificant (p=.128); Map Load improves 2.05% (p=.010) without a decoder-cause claim, and the other six timings are nonsignificant. The within-run refined-versus-original comparison reports UDP Save -1.10% (p=.001), with eight other timings nonsignificant. Reported wire sizes are unchanged. State and UDP executables grow 4,096 and 8,192 bytes versus master; observed UDP initialization remains 51,496 B and 98 allocations per sequence. This one-worker, pinned-logical-CPU experiment establishes neither cross-machine equivalence nor retained-heap or startup benefits. The final-code coherent-kernel continuation ff0d8ec2 passed three RestoreEmpty operations; its baseline is reused from the earlier invocation, so this is compatibility only. The public review commit 103f5c36f has the measured tree. Root has now sent the actual contributor question; no approval or upstream PR exists.",
+          "text": "The final reference-array refinement is retained after the balanced three-arm experiment 5b1e64cd: twelve blocks and all six source-order permutations twice, 78 actions and 324 measured rows. Against master, Slice Save improves 28.30% (p<.001), allocated bytes fall 18.43%, and allocations fall from 1,067 to 43. UDP Save is nonsignificant (p=.128); Map Load improves 2.05% (p=.010) without a decoder-cause claim, and the other six timings are nonsignificant. The within-run refined-versus-original comparison reports UDP Save -1.10% (p=.001), with eight other timings nonsignificant. Reported wire sizes are unchanged. State and UDP executables grow 4,096 and 8,192 bytes versus master; observed UDP initialization remains 51,496 B and 98 allocations per sequence. This one-worker, pinned-logical-CPU experiment establishes neither cross-machine equivalence nor retained-heap or startup benefits. The final-code coherent-kernel continuation ff0d8ec2 passed three RestoreEmpty operations; its baseline is reused from the earlier invocation, so this is compatibility only. The public review commit 103f5c36f has the measured tree. This historical proposal was subsequently redirected toward redesign; it is not a current unanswered contributor question or an upstream PR.",
           "evidence": [
             {
               "label": "Closed balanced master/original/refined comparison",
@@ -10056,7 +10085,7 @@
           ]
         }
       ],
-      "nextStep": "The shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051; production links hit the original deadline and are continuing separately under ce620e7f. A reviewed shared-pointer helper at fffd29842d6d is undergoing six-owner/two-test-executable validation under 113f6ac0. Neither continuation has a current result, and no new timing or adoption claim is made.",
+      "nextStep": "Assess the existing representative checkpoint/restore benchmarks and their actual populated state and timing boundaries before proposing any bounded end-to-end run. The current comparison is fully reviewed; no new sample or pilot is running.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
