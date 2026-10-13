@@ -25,6 +25,7 @@ go_binary(
         "//pkg/test/testutil",
         "//runsc/specutils",
         "//test/runner/gtest",
+        "//test/runner/junit",
         "//test/trace/config",
         "//test/uds",
         "@com_github_creack_pty//:go_default_library",
