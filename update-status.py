@@ -84,10 +84,10 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
                 continue
             raise RuntimeError("GitHub query timed out; previous file is unchanged") from None
         if result.returncode:
-            # Retry this read-only query once for an interrupted transport.
+            # Retry this read-only query once for transport or gateway errors.
             interrupted = any(error in result.stderr for error in (
                 "net/http: TLS handshake timeout", "unexpected EOF", "gh: HTTP 499",
-                "i/o timeout",
+                "i/o timeout", "gh: HTTP 502", "gh: HTTP 504",
             ))
             if attempt == 0 and requests < REQUEST_LIMIT and interrupted:
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
