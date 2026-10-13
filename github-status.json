@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-13T15:20:26.874315+00:00",
-  "registryDate": "2026-10-13T15:16:16.359295+00:00",
+  "registryDate": "2026-10-13T15:28:27.968051+00:00",
   "prs": [
     {
       "number": 12470,
@@ -81024,7 +81024,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+        "observedAt": "2026-10-13T15:28:27.968051+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -81033,7 +81033,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+        "observedAt": "2026-10-13T15:28:27.968051+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -81042,16 +81042,16 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+        "observedAt": "2026-10-13T15:28:27.968051+00:00"
       }
     },
     "branch:native-go-images": {
-      "changes-requested": {
-        "scope": "ec93b8986b6c95cf692ec0f14f86e49571495a3b",
-        "since": "2026-10-13T15:16:16.359295+00:00",
+      "contributor-review": {
+        "scope": "24c8f3c9ca888a1ac94798308a7d7c45e2064069",
+        "since": "2026-10-13T15:28:27.968051+00:00",
         "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+        "qualifier": null,
+        "observedAt": "2026-10-13T15:28:27.968051+00:00"
       }
     },
     "branch:checkescape-annotation-syntax": {
@@ -81060,7 +81060,7 @@
         "since": "2026-10-13T15:16:16.359295+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-13T15:16:16.359295+00:00"
+        "observedAt": "2026-10-13T15:28:27.968051+00:00"
       }
     }
   },
