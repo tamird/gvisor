@@ -59,8 +59,7 @@ func (fs *filesystem) readFromTar(ctx context.Context, tr *tar.Reader, cb tarRea
 	// directory below, once all directories exist.
 	headerToRegularFile := map[*tar.Header]*inode{}
 	defer func() {
-		// Release regular files that were never attached, due to an
-		// error or a later entry with the same name.
+		// Release regular files that were never attached due to an error.
 		for _, ino := range headerToRegularFile {
 			ino.decRef(ctx)
 		}
@@ -77,17 +76,25 @@ func (fs *filesystem) readFromTar(ctx context.Context, tr *tar.Reader, cb tarRea
 		switch header.Typeflag {
 		case tar.TypeDir:
 			directoryToHeader[header.Name] = header
-		case tar.TypeReg:
-			ino, err := fs.newRegularFile(auth.KUID(header.Uid), auth.KGID(header.Gid), linux.FileMode(header.Mode), nil /* parentDir */)
-			if err != nil {
-				return err
+		case tar.TypeReg, tar.TypeFifo, tar.TypeBlock, tar.TypeChar:
+			// Only the last entry for this path is attached. Release its
+			// predecessor before allocating the replacement so that both
+			// versions do not count against the filesystem's limits.
+			previous := fileToHeader[header.Name]
+			if ino := headerToRegularFile[previous]; ino != nil {
+				delete(headerToRegularFile, previous)
+				ino.decRef(ctx)
 			}
-			headerToRegularFile[header] = ino
-			if err := cb.regularFileRead(ctx, header, tr, ino.impl.(*regularFile)); err != nil {
-				return fmt.Errorf("failed to read file %v: %w", header.Name, err)
+			if header.Typeflag == tar.TypeReg {
+				ino, err := fs.newRegularFile(auth.KUID(header.Uid), auth.KGID(header.Gid), linux.FileMode(header.Mode), nil /* parentDir */)
+				if err != nil {
+					return err
+				}
+				headerToRegularFile[header] = ino
+				if err := cb.regularFileRead(ctx, header, tr, ino.impl.(*regularFile)); err != nil {
+					return fmt.Errorf("failed to read file %v: %w", header.Name, err)
+				}
 			}
-			fileToHeader[header.Name] = header
-		case tar.TypeFifo, tar.TypeBlock, tar.TypeChar:
 			fileToHeader[header.Name] = header
 		case tar.TypeSymlink:
 			symlinkToHeader[header.Name] = header
