@@ -11,6 +11,7 @@ go_library(
         "array.go",
         "fields.go",
         "record.go",
+        "value_unsafe.go",
         "wire.go",
     ],
     importpath = "gvisor.dev/gvisor/pkg/state/wire",

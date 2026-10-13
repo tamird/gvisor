@@ -128,6 +128,7 @@ func TestLegacyValueDestinations(t *testing.T) {
 	}{
 		{"array_in_slice", &[2]int64{17, 29}, nil, &[]int64{0, 0}, []int64{17, 29}},
 		{"empty_array_in_nil_slice", &[0]int64{}, nil, new([]int64), []int64(nil)},
+		{"empty_array_in_empty_string", &[0]int64{}, nil, new(string), ""},
 		{"interface_in_scalar", &integerInterface, nil, new(int64), int64(17)},
 		{"nil_interface_in_scalar", &nilInterface, nil, new(int64(23)), int64(23)},
 		{"empty_map_in_slice", nil, &wire.Map{}, &[]int64{23}, []int64{23}},

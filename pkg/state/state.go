@@ -113,7 +113,7 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 		ctx:      ctx,
 		r:        wire.Reader{Reader: r},
 		types:    makeTypeDecodeDatabase(),
-		deferred: make(map[objectID]wire.Object),
+		deferred: make(map[objectID]wire.Value),
 	}
 
 	// Attempt our decode.
