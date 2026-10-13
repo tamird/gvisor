@@ -17,6 +17,10 @@
 set -euo pipefail
 [[ $(uname -s) == Linux ]]
 [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
+# This qualification branch exercises only the public driver-list caller.
+[[ $QUALIFICATION_EXECUTION == remote-actions ]]
+[[ $QUALIFICATION_ARCH == amd64 && $QUALIFICATION_LANES == build ]]
+[[ $QUALIFICATION_TARGETS == //tools/gpu:main ]]
 
 # read consumes one line. Reject extra lines rather than losing selected lanes.
 if [[ $QUALIFICATION_LANES == *$'\n'* ]]; then
@@ -176,7 +180,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     } > "$qualification_rc"
     qualification_seconds=0
     if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
-      qualification_seconds=7200
+      qualification_seconds=1200
     else
       case "${lanes[*]}" in
         container) qualification_seconds=4800 ;;
@@ -419,3 +423,56 @@ if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
 fi
 
 test/rbe/qualify.sh "${options[@]}" "${lanes[@]}"
+
+# The imported failure crossed from an agent-owned mktemp file to root.
+# Exercise both exact public scripts on the normal Actions user and filesystem.
+[[ $(id -u) != 0 ]]
+[[ $(sudo -n id -u) == 0 ]]
+[[ $(sysctl -n fs.protected_regular) -ge 1 ]]
+{
+  id
+  stat -c 'tmp uid=%u gid=%g mode=%a' /tmp
+  sysctl fs.protected_regular
+} > "$RUNNER_TEMP/qualification/list-user-host.txt"
+
+timeout --signal=TERM --kill-after=5s 60s git fetch origin 60834ef0c08df041dc049c2fecf0038dfe34351a
+before_script=$qualification_private/all_drivers_before.sh
+git show 60834ef0c08df041dc049c2fecf0038dfe34351a:tools/gpu/all_drivers_test.sh > "$before_script"
+cp "$before_script" "$RUNNER_TEMP/qualification/list-before-source.sh"
+cp tools/gpu/all_drivers_test.sh "$RUNNER_TEMP/qualification/list-after-source.sh"
+sha256sum "$before_script" tools/gpu/all_drivers_test.sh > "$RUNNER_TEMP/qualification/list-source-sha256.txt"
+list_result=0
+for phase in before after; do
+  script=$before_script
+  if [[ $phase == after ]]; then script=tools/gpu/all_drivers_test.sh; fi
+  remaining=$(python3 - "$QUALIFICATION_WORK_DEADLINE" <<'DEADLINE'
+import math
+import sys
+import time
+remaining = float(sys.argv[1]) - time.monotonic()
+if remaining <= 0:
+    raise SystemExit("Driver listing work deadline expired")
+print(min(300, math.ceil(remaining)))
+DEADLINE
+  )
+  status=0
+  timeout --signal=INT --kill-after=10s "$remaining" env \
+    MAKEFLAGS='DOCKER_BUILD=false' \
+    BAZEL_OPTIONS='--config=rbe-matrix --config=x86_64 --strip=never --noremote_local_fallback --remote_retries=0' \
+    BUILDKITE_PARALLEL_JOB=65535 BUILDKITE_PARALLEL_JOB_COUNT=65536 TMPDIR=/tmp \
+    bash -x "$script" > "$RUNNER_TEMP/qualification/list-$phase.stdout" \
+    2> "$RUNNER_TEMP/qualification/list-$phase.stderr" || status=$?
+  printf '%s\n' "$status" > "$RUNNER_TEMP/qualification/list-$phase.exit"
+  if [[ $phase == before ]]; then
+    if [[ $status != 2 ]] || ! grep -q 'Failed to list drivers: failed to write supported drivers: open /tmp/.*: permission denied' "$RUNNER_TEMP/qualification/list-$phase.stderr"; then
+      list_result=1
+    fi
+  elif [[ $status != 0 ]] || ! grep -q 'No versions to test on this shard' "$RUNNER_TEMP/qualification/list-$phase.stderr"; then
+    list_result=1
+  fi
+  if grep -q 'Installing driver' "$RUNNER_TEMP/qualification/list-$phase.stderr"; then
+    list_result=1
+  fi
+done
+printf '%s\n' "$list_result" > "$RUNNER_TEMP/qualification/list-verification.exit"
+exit "$list_result"
