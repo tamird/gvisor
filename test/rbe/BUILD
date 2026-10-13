@@ -364,19 +364,23 @@ sh_test(
 # Checks of the source exports. Each action owns a disposable daemon;
 # no container or GPU workload is executed.
 _LARGE_ARCHIVES = {
-    "stable_diffusion": "gpu/stable-diffusion-xl",
-    "triton": "gpu/triton",
+    "stable_diffusion": ("gpu/stable-diffusion-xl", "//test/docker:gpu_stable_diffusion_source_amd64"),
+    "triton": ("gpu/triton", "//test/docker:gpu_triton_source_amd64"),
+    # Qualification-only: load each actual cache-miss build in the same graph,
+    # so a separate test invocation does not repeat the no-cache producer.
+    "stable_diffusion_source_miss": ("gpu/stable-diffusion-xl", "//test/docker:gpu_stable_diffusion_source_miss_amd64"),
+    "triton_source_miss": ("gpu/triton", "//test/docker:gpu_triton_source_miss_amd64"),
 }
 
 [
     docker_daemon_config(
         name = name + "_archive_config",
         testonly = True,
-        images = ["//test/docker:gpu_" + name + "_source_amd64"],
+        images = [archive],
         runtime = None,
         tags = ["manual"],
     )
-    for name in _LARGE_ARCHIVES
+    for name, (_, archive) in _LARGE_ARCHIVES.items()
 ]
 
 [
@@ -387,10 +391,10 @@ _LARGE_ARCHIVES = {
         command = ":source_archive_test",
         command_args = [
             "-test.v",
-            "--archive=$(rootpath //test/docker:gpu_" + name + "_source_amd64)",
+            "--archive=$(rootpath " + archive + ")",
             "--image=" + image,
         ],
-        data = ["//test/docker:gpu_" + name + "_source_amd64"],
+        data = [archive],
         docker_config = ":" + name + "_archive_config",
         exec_compatible_with = [
             "@platforms//os:linux",
@@ -414,5 +418,5 @@ _LARGE_ARCHIVES = {
             "@platforms//cpu:x86_64",
         ],
     )
-    for name, image in _LARGE_ARCHIVES.items()
+    for name, (image, archive) in _LARGE_ARCHIVES.items()
 ]

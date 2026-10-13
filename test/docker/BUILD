@@ -112,6 +112,7 @@ _SOURCE_BUILD_QUALIFICATION = {
     name.replace("_source_amd64", "_source_miss_amd64"): GPU_SOURCE_IMAGES[name]
     for name in [
         "gpu_stable_diffusion_source_amd64",
+        "gpu_triton_source_amd64",
     ]
 }
 
