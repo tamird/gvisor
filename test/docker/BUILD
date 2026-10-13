@@ -1,6 +1,7 @@
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 load("//test/gpu:config.bzl", "GPU_SOURCE_IMAGES")
-load("//tools:defs.bzl", "bzl_library", "go_binary")
-load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
+load("//tools:defs.bzl", "bzl_library", "go_binary", "pkg_tar")
+load("//tools/bazeldefs:platforms.bzl", "docker_exec_properties", "docker_test_exec_properties")
 load(":config.bzl", "CONTAINERD_IMAGES", "DOCKER_TESTS", "INTEGRATION_TESTS", "INTEGRATION_VARIANTS", "PLUGIN_NETWORK_VARIANT")
 load(":defs.bzl", "amd64_image_archive", "docker_command_test", "docker_daemon_config", "docker_image_archives", "image_source_command", "source_image_archive")
 
@@ -8,6 +9,64 @@ package(
     default_applicable_licenses = ["//:license"],
     default_visibility = ["//:sandbox"],
     licenses = ["notice"],
+)
+
+filegroup(
+    name = "buildx",
+    srcs = select({
+        "@platforms//cpu:x86_64": ["@buildx_linux_amd64//file"],
+        "@platforms//cpu:aarch64": ["@buildx_linux_arm64//file"],
+    }),
+)
+
+# Conversion only reads OCI content and writes a compressed Docker archive.
+# Keep it on the ordinary executor used by the completed large-image exports.
+SOURCE_ARCHIVE_EXEC_PROPERTIES = select({
+    "//tools/bazeldefs:rbe": dict(
+        docker_exec_properties(
+            exec_group = "",
+            free_disk = "80GB",
+            memory = "12GB",
+            vfs = True,
+        ).items() + [("workload-isolation-type", "oci")],
+    ),
+    "//conditions:default": {},
+})
+
+# A context-only marker changes the canonical directory hash without changing
+# the Redis Dockerfile. Its apt RUN exercises the source build on a cache miss.
+pkg_files(
+    name = "source_image_miss_marker",
+    srcs = ["source_image_miss.txt"],
+    renames = {"source_image_miss.txt": "images/basic/redis/.qualification-miss"},
+    tags = ["manual"],
+)
+
+pkg_tar(
+    name = "source_image_miss_context",
+    srcs = [":source_image_miss_marker"],
+    tags = ["manual"],
+    deps = ["//images:source_contexts"],
+)
+
+source_image_archive(
+    name = "redis_source_miss_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    contexts = ":source_image_miss_context",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+        start_daemon = True,
+    ),
+    image = "basic/redis",
+    tags = ["manual"],
 )
 
 docker_image_archives(
@@ -25,6 +84,7 @@ source_image_archive(
     name = "containerd_harness_source_amd64",
     testonly = True,
     architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -44,6 +104,7 @@ source_image_archive(
     name = "moby_source_amd64",
     testonly = True,
     architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",
@@ -65,6 +126,7 @@ source_image_archive(
         name = name,
         testonly = True,
         architecture = "x86_64",
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
@@ -102,19 +164,25 @@ amd64_image_archive(
 )
 
 # Other runtime GPU images use the source/archive producer for CUDA images.
-# Building these archives requires Docker, but does not execute GPU tests.
+# Source builds require a disposable namespace-capable worker; no GPU test runs.
 [
     source_image_archive(
         name = name,
         testonly = True,
         architecture = "x86_64",
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
         exec_compatible_with = [
             "@platforms//os:linux",
             "@platforms//cpu:x86_64",
         ],
         exec_properties = docker_test_exec_properties(
             exec_group = "",
-            free_disk = "80GB",
+            # The measured Triton load used 119.5GB before a builder cache.
+            # Large source builds also retain compressed content and snapshots.
+            free_disk = "256GB" if image in [
+                "gpu/stable-diffusion-xl",
+                "gpu/triton",
+            ] else "80GB",
             memory = "12GB",
             start_daemon = True,
             vfs = True,
@@ -144,6 +212,8 @@ bzl_library(
         "//tools:defs_bzl",
         "//tools/bazeldefs:platforms_bzl",
         "//tools/bazeldefs:test_architectures_bzl",
+        "@bazel_lib//lib:output_files",
+        "@bazel_skylib//lib:paths",
         "@bazel_skylib//lib:shell",
         "@rules_foreign_cc//toolchains/native_tools:tool_access",
         "@rules_oci//oci:defs",
@@ -338,6 +408,7 @@ source_image_archive(
     name = "php_source_amd64",
     testonly = True,
     architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
     exec_compatible_with = [
         "@platforms//os:linux",
         "@platforms//cpu:x86_64",

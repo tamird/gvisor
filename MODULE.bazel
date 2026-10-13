@@ -429,6 +429,18 @@ archive_override(
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 
+# The Buildx docker-container driver uses this same digest file at runtime.
+oci.pull(
+    name = "source_buildkit",
+    digest = "sha256:b059f8d7226d0b326bc871af489a5dddf65e36af4d20d14251b072974d9ee87c",
+    image = "docker.io/moby/buildkit",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
+)
+use_repo(oci, "source_buildkit", "source_buildkit_linux_amd64", "source_buildkit_linux_arm64")
+
 # Pin both supported client platforms to the same Alpine release index.
 oci.pull(
     name = "ollama_client_alpine",
@@ -1482,6 +1494,23 @@ use_repo(kernel_headers, "kernel_headers")
 
 ### Repo rules
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+# Invoke the declared Buildx client directly; no worker plugin installation.
+http_file(
+    name = "buildx_linux_amd64",
+    downloaded_file_path = "buildx",
+    executable = True,
+    sha256 = "4fe4cc38adf48169132749b6ca22a990928db0118e3407584ee553723115d287",
+    urls = ["https://github.com/docker/buildx/releases/download/v0.38.0/buildx-v0.38.0.linux-amd64"],
+)
+
+http_file(
+    name = "buildx_linux_arm64",
+    downloaded_file_path = "buildx",
+    executable = True,
+    sha256 = "38e890e1a162bfdbf32fbe91404991dc4fc28e55b0de901b34374a061bab4d2c",
+    urls = ["https://github.com/docker/buildx/releases/download/v0.38.0/buildx-v0.38.0.linux-arm64"],
+)
 
 # Keep the official CLI, compatible precompiled queries, and all bundled notices
 # together. The CLI has its own CodeQL Terms; the Action repository's MIT license

@@ -70,6 +70,21 @@ gh workflow run build.yml --repo tamird/gvisor \
   -f lanes='smoke workflows' -f architecture=all
 ```
 
+The `build` and `test` lanes accept explicit space-separated labels through
+`targets`. They use the Actions coordinator for long remote operations, with
+the same configured-output and test-report retention as the named lanes:
+
+```sh
+gh workflow run build.yml --repo tamird/gvisor \
+  --ref qualification/current-upstream-refresh \
+  -f lanes=build -f architecture=amd64 -f execution=remote \
+  -f targets='//test/docker:gpu_triton_source_amd64'
+```
+
+The coordinator allows 120 minutes of work. Individual action and test
+deadlines remain separate; a qualification method must record any override.
+Neither lane installs diagnostic timeout or retry policy into unrelated builds.
+
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested
 commit before qualification. For `cos-metadata` or the full `amd64` profile,
@@ -985,6 +1000,44 @@ budget; cancellation leaves incomplete qualification. The image declares both
 architectures, but ARM64 Firecracker capacity is still required and its
 execution remains unqualified.
 
+Runtime suites consume Docker archives through `source_image_archive`. The
+same canonical Make context hash and architecture select a published cache
+image or a Dockerfile build. A cache hit is exported with the declared crane
+tool into an OCI layout. If that command fails, Make builds the same context
+with declared Buildx and a BuildKit container pinned by the MODULE digest.
+Buildx uses the caller's Docker daemon, including ordinary non-root Docker
+users, and removes its task-specific builder afterward. It does not require a
+global BuildKit socket or a separately installed Docker CLI plugin.
+
+Both paths write the declared OCI layout directly. Stock `oci_load` produces
+the Docker archive with Make's source-hash and `latest` aliases; the public
+archive label exposes only that tar file. The source action needs a
+Docker-capable worker for cache misses. Archive conversion needs no daemon and
+uses the ordinary remote executor. Neither archive construction nor loading
+requires a GPU. The cache read uses command-local HTTP/1 after the bounded
+transfer comparison; this does not identify a specific HTTP/2 defect.
+
+The source producer retains network access and disables disk and remote result
+caching because Dockerfile tags and package mirrors are mutable. A cache hit
+does not qualify source construction. `//test/rbe:source_image_miss_load_test`
+uses a marked Redis context with the unchanged Dockerfile to exercise a miss;
+its recorded producer log must show the miss and build.
+`source_image_docker_user_test` invokes the same builder helper as UID 65534
+with the daemon socket's group, private writable state and no effective
+capabilities. This checks Docker-user compatibility, not Docker isolation.
+The ordinary
+`source_archive_load_test`, `stable_diffusion_archive_load_test` and
+`triton_archive_load_test` check the loaded tags, config and ordered layer
+identities without starting application containers.
+
+Large source builds request 256GB disk and 12GB memory; conversion requests
+80GB disk and 12GB memory. These are requests, not guaranteed capacity or
+measured source-build requirements. Prior large load workers supplied about
+198GB on the root filesystem; Triton had a separate 49GB workspace and used
+about 119.5GB at peak on the root filesystem. BuildKit cache,
+snapshots and the exported layout coexist; their source-build peak remains a
+separate qualification result.
+
 The existing-driver GPU smoke suite can run on a dedicated Linux AMD64 host
 with an installed NVIDIA driver and Container Toolkit:
 
@@ -1290,9 +1343,9 @@ test/rbe/qualify.sh containerd
 Each version owns an outer Docker daemon that loads only the
 `containerd/harness` image. On AMD64, all four versions depend on one declared
 archive from `//test/docker:containerd_harness_source_amd64`. That build action
-uses the existing native Docker daemon and canonical Make image load/build
-rules, then saves the source-hash and canonical `latest` tags. The ordinary
-test fixture loads the archive into its separate daemon; no registry push or
+uses the canonical Make cache/build selection and the shared OCI producer
+described above, preserving the source-hash and canonical `latest` tags. The
+ordinary test fixture loads the archive into its separate daemon; no registry push or
 per-test image compilation is required. ARM64 retains its existing image pin.
 
 The source archive is not hermetic: Dockerfile base tags and package mirrors

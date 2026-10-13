@@ -242,3 +242,174 @@ docker_command_test(
         "@platforms//cpu:x86_64",
     ],
 )
+
+# CPU compatibility check of the actual source archive.
+go_test(
+    name = "source_archive_test",
+    srcs = ["source_archive_test.go"],
+    rundir = ".",
+    tags = ["manual"],
+)
+
+docker_daemon_config(
+    name = "source_archive_config",
+    testonly = True,
+    images = ["//test/docker:containerd_harness_source_amd64"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "source_archive_load_test",
+    size = "medium",
+    command = ":source_archive_test",
+    command_args = [
+        "-test.v",
+        "--archive=$(rootpath //test/docker:containerd_harness_source_amd64)",
+    ],
+    data = ["//test/docker:containerd_harness_source_amd64"],
+    docker_config = ":source_archive_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+docker_daemon_config(
+    name = "source_image_miss_config",
+    testonly = True,
+    images = ["//test/docker:redis_source_miss_amd64"],
+    runtime = None,
+    tags = ["manual"],
+)
+
+docker_command_test(
+    name = "source_image_miss_load_test",
+    size = "medium",
+    command = ":source_archive_test",
+    command_args = [
+        "-test.v",
+        "--archive=$(rootpath //test/docker:redis_source_miss_amd64)",
+        "--image=basic/redis",
+    ],
+    data = ["//test/docker:redis_source_miss_amd64"],
+    docker_config = ":source_image_miss_config",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(free_disk = "20GB"),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# The maintained Make path runs as the host UID with Docker socket access.
+# Exercise the same builder helper as a non-root UID in a disposable VM.
+sh_test(
+    name = "source_image_docker_user_test",
+    size = "large",
+    srcs = ["source_image_docker_user.sh"],
+    args = [
+        "$(rootpath //test/docker:source_image_build.sh)",
+        "$(rootpath //test/docker:buildx)",
+        "$(rootpath @source_buildkit//:digest)",
+        "$(rootpath //test/docker:source_image_miss_context)",
+    ],
+    data = [
+        "//test/docker:buildx",
+        "//test/docker:source_image_build.sh",
+        "//test/docker:source_image_miss_context",
+        "@source_buildkit//:digest",
+    ],
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        free_disk = "40GB",
+        memory = "8GB",
+        start_daemon = True,
+    ),
+    tags = [
+        "external",
+        "manual",
+        "no-local",
+    ],
+    target_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+# Checks of the source exports. Each action owns a disposable daemon;
+# no container or GPU workload is executed.
+_LARGE_ARCHIVES = {
+    "stable_diffusion": "gpu/stable-diffusion-xl",
+    "triton": "gpu/triton",
+}
+
+[
+    docker_daemon_config(
+        name = name + "_archive_config",
+        testonly = True,
+        images = ["//test/docker:gpu_" + name + "_source_amd64"],
+        runtime = None,
+        tags = ["manual"],
+    )
+    for name in _LARGE_ARCHIVES
+]
+
+[
+    docker_command_test(
+        name = name + "_archive_load_test",
+        size = "enormous",
+        timeout = "eternal",
+        command = ":source_archive_test",
+        command_args = [
+            "-test.v",
+            "--archive=$(rootpath //test/docker:gpu_" + name + "_source_amd64)",
+            "--image=" + image,
+        ],
+        data = ["//test/docker:gpu_" + name + "_source_amd64"],
+        docker_config = ":" + name + "_archive_config",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        # The prior 80GB source worker ran out of disk while exporting Stable.
+        # These archives are 21.7/48.3GB compressed; expanded sizes remain an
+        # observed result, not an assumed equality with compressed bytes.
+        exec_properties = docker_test_exec_properties(
+            free_disk = "256GB",
+            memory = "12GB",
+            vfs = True,
+        ),
+        tags = [
+            "external",
+            "manual",
+            "no-local",
+        ],
+        target_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+    )
+    for name, image in _LARGE_ARCHIVES.items()
+]
