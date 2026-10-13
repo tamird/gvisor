@@ -131,8 +131,13 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       container|container-v1|container-v1-pilot) qualification_container=true ;;
     esac
     export qualification_container
+    qualification_full_unit=false
+    if [[ $QUALIFICATION_EXECUTION == local && $QUALIFICATION_ARCH == all && ${lanes[*]} == unit ]]; then
+      qualification_full_unit=true
+    fi
+    export qualification_full_unit
     qualification_retain_reports=false
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || ( $QUALIFICATION_EXECUTION == local && $qualification_container == true ) ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ( $QUALIFICATION_EXECUTION == local && $qualification_container == true ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
@@ -161,7 +166,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       if [[ $qualification_retain_reports == true ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \
-          'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$' \
+          'build:buildbuddy_remote_executor --remote_download_regex=.*[/]test[.](log|xml)$'
+      fi
+      # Report retention must not force successful unit tests to run again.
+      if [[ $qualification_retain_reports == true && $qualification_full_unit == false ]]; then
+        printf '%s\n' \
           'test:buildbuddy_remote_executor --nocache_test_results' \
           'test:buildbuddy_remote_executor --runs_per_test=1' \
           'test:buildbuddy_remote_executor --flaky_test_attempts=1'
@@ -175,7 +184,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       fi
     } > "$qualification_rc"
     qualification_seconds=0
-    if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true ]]; then
       qualification_seconds=7200
     else
       case "${lanes[*]}" in
@@ -239,6 +248,9 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           cohort_dir="$RUNNER_TEMP/qualification/$QUALIFICATION_LANES-full-profile"
           # Leave room for the work command and capture termination grace.
           capture_seconds=540
+        fi
+        if [[ $qualification_full_unit == true ]]; then
+          cohort_dir="$RUNNER_TEMP/qualification/unit-full-profile"
         fi
         mkdir -p "$cohort_dir"
         printf '%s\n' "$@" > "$cohort_dir/executed-arguments.txt"
