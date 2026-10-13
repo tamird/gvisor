@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T15:28:27.968051+00:00",
+    "updatedAt": "2026-10-13T15:36:59.773847+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6164,21 +6164,20 @@
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T15:28:27.968051+00:00",
-      "summary": "The revised native Go image proposal is public at 24c8f3c9ca. It updates comments, documentation and the proposal text to describe the current architecture and actual rebuild command. Executable, image, dependency and license inputs remain unchanged from the previously qualified ec93 proposal; this is not a new runtime result. A new contributor decision has been requested for this exact revised head. No upstream PR is open, and delivery still depends on CUDA #15670 and the approved Ollama prerequisite. No ARM execution or GPU coverage is claimed.",
+      "status": "Revision work",
+      "updatedAt": "2026-10-13T15:36:59.773847+00:00",
+      "summary": "The contributor requested a lean shared base and a separately built coreutils layer justified by the actual profiling consumers. FOURTH is revising the public 24c8f3c9ca proposal; this is agent work, not an unanswered contributor decision. The earlier ec93 executable inputs were qualified, but no new image implementation or validation is claimed. No upstream PR is open; CUDA #15670 and the approved Ollama prerequisite remain delivery dependencies.",
       "followup": {
-        "owner": "root",
-        "disposition": "New exact-head contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor-requested revision",
         "sourceHead": "24c8f3c9ca888a1ac94798308a7d7c45e2064069",
-        "nextAction": "Await the actual contributor decision for 24c8f3c9 and the CUDA/Ollama prerequisites before opening the upstream PR.",
+        "nextAction": "Review the actual profiling consumers, then prepare the lean shared base and explicit coreutils layer for a concrete revised proposal.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069"
         ],
-        "observedAt": "2026-10-13T15:28:27.968051+00:00"
+        "observedAt": "2026-10-13T15:36:59.773847+00:00"
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "24c8f3c9ca888a1ac94798308a7d7c45e2064069",
         "url": "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069"
       }

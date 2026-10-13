@@ -67,7 +67,7 @@ function attentionNode(number = 1) {
     number, url, head, headOwner: 'tamird', status: 'open', reviewsComplete: true, reviewDecision: 'APPROVED',
     approvedHead: head, approvedAt: '2026-10-13T09:00:00Z', headCommittedAt: '2026-10-13T08:00:00Z',
     headIntroducedAt: '2026-10-13T08:01:00Z', headHistoryComplete: true, mergeable: 'MERGEABLE',
-    importsComplete: true, imports: [], threads: { complete: true, unresolved: 0, total: 0 }, feedback: { complete: true, items: [] },
+    importsComplete: true, imports: [], labelsComplete: true, labels: [], threads: { complete: true, unresolved: 0, total: 0 }, feedback: { complete: true, items: [] },
     checks: { complete: true, total: 1, state: 'SUCCESS', contexts: [{ name: 'test', state: 'SUCCESS', purpose: 'validation', kind: 'check-run' }] },
   } };
 }
@@ -89,10 +89,20 @@ test('attention assigns simultaneous public and internal failures to their actua
   node.github.checks.contexts = [serviceStatus('import/copybara', 'SUCCESS'), serviceStatus('feedback/copybara', 'FAILURE')];
   assert.ok(!idsFor(node).includes('author-public-checks'));
   assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
-  const imported = attentionImport(node); imported.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [serviceStatus('buildkite/pipeline', 'FAILURE')] }; node.github.imports = [imported];
-  assert.ok(idsFor(node).includes('maintainer-internal-feedback'));
+  const imported = attentionImport(node); imported.checks = { complete: true, total: 1, state: 'FAILURE', contexts: [{ ...serviceStatus('buildkite/pipeline', 'FAILURE'), url: 'https://buildkite.com/gvisor/pipeline/builds/50515' }] }; node.github.imports = [imported];
+  assert.ok(!idsFor(node).includes('maintainer-internal-feedback'));
   assert.ok(idsFor(node).includes('maintainer-import-checks'));
-  assert.ok(idsFor(node).includes('maintainer-merge'));
+  assert.equal(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').owner, 'agent');
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /Source feedback\/copybara: FAILURE/);
+  assert.ok(!idsFor(node).some(id => id === 'maintainer-merge'));
+  imported.checks.contexts[0].url = null;
+  assert.ok(!idsFor(node).includes('maintainer-internal-feedback'));
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /direct link not recorded/);
+  imported.checks.contexts = []; imported.checks.complete = false;
+  assert.ok(!idsFor(node).includes('maintainer-internal-feedback'));
+  assert.ok(idsFor(node).includes('maintainer-import-checks'));
+  assert.match(reasonsFor(node).find(reason => reason.id === 'maintainer-import-checks').detail, /refresh and investigate/);
 });
 
 test('agent work, contributor decisions and maintainer blockers have distinct owners', () => {
@@ -116,7 +126,15 @@ test('attention uses current approvals and import associations without inventing
   const node = attentionNode(), imported = attentionImport(node);
   imported.sourceHead = 'c'.repeat(40); imported.matchesSourceHead = false; imported.status = 'closed'; node.github.imports = [imported];
   node.github.feedback.items = [{ kind: 'comment', body: 'The import failed last week.' }];
+  assert.deepEqual(idsFor(node), ['maintainer-import-label']);
+  node.github.labels = ['ready to pull'];
   assert.deepEqual(idsFor(node), ['maintainer-import']);
+  node.github.labelsComplete = false;
+  assert.deepEqual(idsFor(node), ['maintainer-unknown']);
+  node.github.labelsComplete = true;
+  imported.sourceHead = node.github.head; imported.matchesSourceHead = true; imported.status = 'open'; node.github.labels = [];
+  assert.deepEqual(idsFor(node), ['maintainer-merge']);
+  node.github.imports = [];
   node.github.approvedHead = 'c'.repeat(40);
   assert.deepEqual(idsFor(node), ['maintainer-review']);
   node.github.revisionChanged = true;

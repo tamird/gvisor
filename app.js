@@ -117,15 +117,16 @@ function checkInfo(pr) {
 const ATTENTION_REASONS = [
   { id: "author-conflicts", owner: "agent", title: "Merge conflicts" },
   { id: "author-public-checks", owner: "agent", title: "Public source checks failing" },
+  { id: "maintainer-import-checks", owner: "agent", title: "Public import checks failing" },
   { id: "author-feedback", owner: "agent", title: "Review feedback to address" },
   { id: "agent-refresh", owner: "agent", title: "Public status refresh needed" },
   { id: "author-proposal", owner: "user", title: "Unpublished proposal decision" },
   { id: "maintainer-import-failed", owner: "maintainer", title: "Import failed" },
-  { id: "maintainer-internal-feedback", owner: "maintainer", title: "Internal feedback failed" },
-  { id: "maintainer-import-checks", owner: "maintainer", title: "Import checks failing" },
+  { id: "maintainer-internal-feedback", owner: "maintainer", title: "Import checks failing" },
   { id: "maintainer-response", owner: "maintainer", title: "Review updated revision or reply" },
   { id: "maintainer-review", owner: "maintainer", title: "Maintainer review" },
-  { id: "maintainer-import", owner: "maintainer", title: "Awaiting import" },
+  { id: "maintainer-import-label", owner: "maintainer", title: "Needs import label" },
+  { id: "maintainer-import", owner: "maintainer", title: "Ready for import" },
   { id: "maintainer-merge", owner: "maintainer", title: "Imported, unmerged" },
   { id: "maintainer-assignment", owner: "maintainer", title: "Reviewer assignment" },
   { id: "maintainer-unknown", owner: "maintainer", title: "Status needs clarification" },
@@ -193,13 +194,23 @@ function attentionReasons(node, owner) {
   const review = reviewAttention(pr, owner), decision = effectiveReviewDecision(pr);
   if (review.author) add("author-feedback", "A current unresolved review thread awaits author triage or a response; automated feedback is included without endorsing its finding.");
   if (importStatus && FAILURE_STATES.has(importStatus.state)) add("maintainer-import-failed", `import/copybara: ${importStatus.state}. Internal error details are not public.`);
-  if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) add("maintainer-internal-feedback", `feedback/copybara: ${feedbackStatus.state}${importStatus ? `; import/copybara: ${importStatus.state}` : ""}.`);
   if (contexts.some(check => check.purpose === "reviewer-assignment" && FAILURE_STATES.has(check.state)))
     add("maintainer-assignment", "Reviewer assignment failed; this is separate from source validation.");
   const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
   const active = current.filter(item => ["open", "draft"].includes(item.status));
   const failed = active.filter(item => checkInfo(item).tone === "bad");
-  if (failed.length) add("maintainer-import-checks", failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`).join(". "));
+  const publicImportFailures = failed.flatMap(item => validationChecks(item)
+    .filter(check => FAILURE_STATES.has(check.state)
+      && !(check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name)))
+    .map(check => `Import #${item.number}: ${check.name}: ${check.state} (${safeURL(check.url) || "direct link not recorded"})`));
+  for (const item of failed) if (!completeChecks(item) || !validationChecks(item).some(check => FAILURE_STATES.has(check.state)))
+    publicImportFailures.push(`Import #${item.number}: failure evidence is incomplete; refresh and investigate its public check records`);
+  const importFailures = failed.map(item => `Import #${item.number}: ${validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name}: ${check.state}`).join("; ") || "failing checks"}`);
+  if (feedbackStatus && FAILURE_STATES.has(feedbackStatus.state)) importFailures.unshift(`Source feedback/copybara: ${feedbackStatus.state}`);
+  if (publicImportFailures.length)
+    add("maintainer-import-checks", `${publicImportFailures.join(". ")}. ${importFailures.join(". ")}. Investigate the import’s CI logs.`);
+  else if (importFailures.length)
+    add("maintainer-internal-feedback", `${importFailures.join(". ")}. Copybara reports an internal failure; no separate public import-check failure is recorded.`);
   const agentBlocked = reasons.some(item => item.owner === "agent");
   if (review.unknown) add("maintainer-unknown", "Review evidence is incomplete or its next action is unclear; any positively observed author or reviewer follow-up remains listed.");
   if (review.response) add("maintainer-response", "An author reply, resolved threads or an older review-level decision calls for reviewer follow-up. This does not assert the fix is accepted.");
@@ -209,13 +220,17 @@ function attentionReasons(node, owner) {
     const open = active.filter(item => item.status === "open");
     if (open.length) {
       const facts = open.map(item => `Import #${item.number}: ${checkInfo(item).text.toLowerCase()} checks${item.mergeable === "UNKNOWN" ? "; mergeability unknown" : item.mergeable === "CONFLICTING" ? "; conflicts" : ""}`);
-      add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
+      if (!publicImportFailures.length) add("maintainer-merge", `${facts.join(". ")}. Remaining internal gates are not established.`);
       if (open.some(item => checkInfo(item).tone === "unknown")) add("maintainer-unknown", "A matching public import exists, but its check status is incomplete or unknown.");
     } else if (active.length) add("maintainer-unknown", "The matching public import is a draft.");
     else if (current.length) add("maintainer-unknown", current.some(item => item.status === "merged") ? "Matching import merged; source PR remains open." : "Matching import closed without a recorded merge; internal disposition unknown.");
     else if (!pr.importsComplete) add("maintainer-unknown", "Public import lookup is incomplete; an internal CL may exist.");
     else if (importStatus) add("maintainer-unknown", `import/copybara: ${importStatus.state}; no matching public import link. An internal CL may exist.`);
-    else if (!agentBlocked) add("maintainer-import", "No matching public import was found; an internal CL may already exist.");
+    else if (!agentBlocked && !feedbackStatus) {
+      if (pr.labelsComplete !== true) add("maintainer-unknown", "Import-label inventory is incomplete; an internal CL may exist.");
+      else if (!pr.labels.includes("ready to pull")) add("maintainer-import-label", "Current-head approval is recorded, but the ready to pull label is absent. A maintainer needs to mark the PR for import; an internal CL may already exist.");
+      else add("maintainer-import", "Current-head approval and the ready to pull label are recorded; no matching public import was found. An internal CL may already exist.");
+    }
   }
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
     add("maintainer-unknown", "Check failure reported without enough context to assign an action owner.");
