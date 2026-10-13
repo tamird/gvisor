@@ -183,7 +183,6 @@ rebuild = \
     (if [ -n "$(_IMAGE_OCI_OUTPUT)" ]; then \
       $(OCI_BUILD) $(DOCKER_BUILD_ARGS) --platform="$(_IMAGE_OCI_PLATFORM)" \
         --file "$$T/$(call dockerfile,$(1))" \
-        --output "type=oci,tar=false,compression=gzip,force-compression=true,dest=$(_IMAGE_OCI_OUTPUT)" \
         "$$T"; \
     else \
       set -x && docker build $(DOCKER_PLATFORM_ARGS) $(DOCKER_BUILD_ARGS) \

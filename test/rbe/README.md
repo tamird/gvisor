@@ -1012,9 +1012,17 @@ Buildx uses the caller's Docker daemon, including ordinary non-root Docker
 users, and removes its task-specific builder afterward. It does not require a
 global BuildKit socket or a separately installed Docker CLI plugin.
 
-Both paths write the declared OCI layout directly. Stock `oci_load` produces
-the Docker archive with Make's source-hash and `latest` aliases; the public
-archive label exposes only that tar file. The source action needs a
+The cache path writes the declared OCI layout directly. A source build streams
+BuildKit's OCI tar output through the declared BSD tar extractor into task-owned
+scratch, then copies the completed layout to its declared output. This keeps
+output writes outside the live BuildKit session, whose health checks timed out
+during earlier large exports. The cause of those stalls remains unverified.
+The client also runs from scratch after a prior VFS execution received SIGBUS;
+direct execution remains unqualified for large builds. The builder is removed
+before deleting scratch. Both pipeline processes and the output copy must
+succeed before the source action publishes its output. Stock `oci_load`
+produces the Docker archive with Make's source-hash and `latest` aliases; the
+public archive label exposes only that tar file. The source action needs a
 Docker-capable worker for cache misses. Archive conversion needs no daemon and
 uses the ordinary remote executor. Neither archive construction nor loading
 requires a GPU. The cache read uses command-local HTTP/1 after the bounded

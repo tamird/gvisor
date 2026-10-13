@@ -42,6 +42,10 @@ bazel_dep(name = "cel-spec", version = "0.25.1")
 governance = use_extension("//governance/tools/maintainers:repositories.bzl", "governance")
 use_repo(governance, "governance_areas")
 
+# Expose the existing tar toolchain to the Docker-user source-build fixture.
+tar_toolchains = use_extension("@tar.bzl//tar:extensions.bzl", "toolchains")
+use_repo(tar_toolchains, "bsd_tar_toolchains")
+
 # Reuse the upstream test frontend for per-target test-action transitions.
 single_version_override(
     module_name = "with_cfg.bzl",

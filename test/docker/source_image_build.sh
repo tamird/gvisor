@@ -15,10 +15,12 @@
 # limitations under the License.
 
 set -euo pipefail
-test "$#" -ge 3
+test "$#" -ge 5
 buildx=$1
 image_digest=$2
-shift 2
+bsdtar=$3
+layout=$4
+shift 4
 image="docker.io/moby/buildkit@$(cat "${image_digest}")"
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/source-image-builder.XXXXXX")
@@ -48,13 +50,37 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+# A large export received SIGBUS while this client ran from BuildBuddy's VFS.
+# Keep a scratch copy until direct execution can be validated on that worker.
+cp -- "${buildx}" "${work}/buildx"
+chmod 0555 "${work}/buildx"
+buildx="${work}/buildx"
+staged_layout="${work}/oci-layout"
+
 "${buildx}" version
+"${bsdtar}" --version
 # The public digest file comes from the MODULE pin. The stock driver fetches
 # the image using Docker's normal verification and image-store mechanisms.
 "${buildx}" create --name "${builder}" --driver docker-container \
   --driver-opt "image=${image}"
 created=true
 # Stock oci_load expects one image manifest, not an attestation index.
-"${buildx}" build --builder "${builder}" --provenance=false --progress=plain "$@"
+# BuildKit's health checks stay active during export. Finish that session before
+# copying the layout to remotely served outputs.
+mkdir -- "${layout}" "${staged_layout}"
+set +e
+"${buildx}" build --builder "${builder}" --provenance=false --progress=plain \
+  --output=type=oci,tar=true,compression=gzip,force-compression=true,dest=- "$@" | \
+  "${bsdtar}" --extract -b 2048 --file - --directory "${staged_layout}" --no-same-owner
+statuses=("${PIPESTATUS[@]}")
+set -e
+printf 'Source OCI export status: buildx=%s tar=%s\n' "${statuses[0]}" "${statuses[1]}" >&2
+if (( statuses[0] != 0 )); then
+  exit "${statuses[0]}"
+fi
+if (( statuses[1] != 0 )); then
+  exit "${statuses[1]}"
+fi
 printf 'Source builder image %s: ' "${image}"
 docker image inspect --format '{{.Id}}' "${image}"
+cp -R -- "${staged_layout}/." "${layout}/"

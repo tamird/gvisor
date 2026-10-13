@@ -32,12 +32,13 @@ case "${mode}" in
     fi
     ;;
   layout)
-    test "$#" -eq 12
+    test "$#" -eq 13
     layout=$(realpath -m "$8")
     tags=$(realpath -m "$9")
     buildx=$(realpath "${10}")
     buildkit_digest=$(realpath "${11}")
     builder=$(realpath "${12}")
+    bsdtar=$(realpath "${13}")
     ;;
   *) echo "Unknown image source operation: ${mode}" >&2; exit 1 ;;
 esac
@@ -74,8 +75,8 @@ else
   # Keep the transport used for the qualified concurrent OCI exports local to
   # the cache read. A miss uses the declared Buildx client and BuildKit image.
   printf -v crane_command 'env GODEBUG=http2client=0 %q' "${crane}"
-  printf -v build_command '/bin/bash %q %q %q' \
-    "${builder}" "${buildx}" "${buildkit_digest}"
+  printf -v build_command '/bin/bash %q %q %q %q %q' \
+    "${builder}" "${buildx}" "${buildkit_digest}" "${bsdtar}" "${layout}"
   # Some executors create empty output directories before invoking the action.
   # Require that any precreated directory is empty before taking ownership.
   if [[ -e ${layout} ]]; then
@@ -86,8 +87,8 @@ else
     _IMAGE_OCI_OUTPUT="${layout}" _IMAGE_OCI_PLATFORM="${platform}" \
     "export-oci-${target}"
 
-  # Both standard exporters write the declared layout directly. Bazel only
-  # exposes it to downstream conversion after this action succeeds.
+  # Both standard exporters produce the declared layout before this action
+  # succeeds. Bazel then exposes it to downstream conversion.
   printf '%s\n' "${references[1]}" "${references[2]}" > "${tags}"
   printf 'Source OCI tags: %s %s\n' "${references[1]}" "${references[2]}"
 fi
