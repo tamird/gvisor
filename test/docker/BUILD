@@ -69,6 +69,43 @@ source_image_archive(
     tags = ["manual"],
 )
 
+# Qualification-only: exercise the same export stream with one large blob,
+# without rebuilding the Stable Diffusion application and model layers.
+pkg_files(
+    name = "oci_stream_probe_source",
+    srcs = ["oci_stream_probe.Dockerfile"],
+    renames = {"oci_stream_probe.Dockerfile": "images/basic/oci-stream-probe/Dockerfile"},
+    tags = ["manual"],
+)
+
+pkg_tar(
+    name = "oci_stream_probe_context",
+    srcs = [":oci_stream_probe_source"],
+    tags = ["manual"],
+    deps = ["//images:source_contexts"],
+)
+
+source_image_archive(
+    name = "oci_stream_probe_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    contexts = ":oci_stream_probe_context",
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "256GB",
+        memory = "12GB",
+        start_daemon = True,
+        vfs = True,
+    ),
+    image = "basic/oci-stream-probe",
+    tags = ["manual"],
+)
+
 # Qualification-only cache misses for the actual maintained large Dockerfiles.
 # The marker is hashed by Make but is not copied by either Dockerfile.
 _SOURCE_BUILD_QUALIFICATION = {

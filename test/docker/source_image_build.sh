@@ -26,11 +26,40 @@ image="docker.io/moby/buildkit@$(cat "${image_digest}")"
 work=$(mktemp -d "${TMPDIR:-/tmp}/source-image-builder.XXXXXX")
 export BUILDX_CONFIG="${work}"
 builder="gvisor-source-${work##*.}"
+container="buildx_buildkit_${builder}0"
+started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 created=false
+# Qualification-only observations are bounded and never replace the build's
+# status. Restrict Docker reads to this helper's private builder container.
+observe() {
+  local label=$1 status=0
+  shift
+  printf 'Source stream observation %s at %s\n' "${label}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" >&2
+  timeout --signal=TERM --kill-after=1s 5s "$@" >&2 || status=$?
+  printf 'Source stream observation %s status=%s\n' "${label}" "${status}" >&2
+}
+observe_guest() {
+  observe memory cat /proc/meminfo /proc/pressure/memory
+  observe filesystems df -T -- "${work}" "${layout}"
+}
 cleanup() {
   local result=$? cleanup_status=0
   set +e
+  observe_guest
+  observe kernel /bin/bash -o pipefail -c 'dmesg --color=never | tail -n 160'
   if [[ ${created} == true ]]; then
+    observe builder-state docker inspect --format \
+      'id={{.Id}} name={{.Name}} image={{.Image}} state={{json .State}} restarts={{.RestartCount}} memory_limit={{.HostConfig.Memory}} swap_limit={{.HostConfig.MemorySwap}}' \
+      "${container}"
+    observe builder-stats docker stats --no-stream --format \
+      '{{.ID}} memory={{.MemUsage}} memory_percent={{.MemPerc}} pids={{.PIDs}}' "${container}"
+    # The observed child shell expands its own positional argument.
+    # shellcheck disable=SC2016
+    observe builder-log /bin/bash -o pipefail -c \
+      'docker logs --timestamps --tail 200 "$1" 2>&1 | head -c 262144' source-stream-log "${container}"
+    observe builder-events docker events --since "${started_at}" \
+      --until "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --filter "container=${container}" \
+      --format '{{.TimeNano}} {{.Action}} {{.Actor.ID}} exit={{index .Actor.Attributes "exitCode"}}'
     "${buildx}" rm --force "${builder}"
     cleanup_status=$?
   fi
@@ -81,6 +110,7 @@ created=true
 # Stream the standard OCI archive into its layout without retaining a second
 # full archive or using Buildx's client content-store output path.
 mkdir -- "${layout}"
+observe_guest
 set +e
 "${buildx}" build --builder "${builder}" --provenance=false --progress=plain \
   --output=type=oci,tar=true,compression=gzip,force-compression=true,dest=- "$@" | \
