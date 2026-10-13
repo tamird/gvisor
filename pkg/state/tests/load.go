@@ -25,6 +25,18 @@ type genericContainer struct {
 	v any
 }
 
+// These ordinary fields exercise legacy wire operations through generated
+// StateLoad, rather than only through the manual Source adapter.
+// +stateify savable
+type restoreLegacyFields struct {
+	integer int64
+	text    string
+	slice   []int64
+	pointer *int64
+	array   [2]int64
+	mapping map[int]int64
+}
+
 // +stateify savable
 type afterLoadStruct struct {
 	v int `state:"nosave"`

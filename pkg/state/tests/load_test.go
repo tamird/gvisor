@@ -16,6 +16,7 @@ package tests
 
 import (
 	"bytes"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -42,6 +43,51 @@ func TestLoadHooks(t *testing.T) {
 		&mapContainer{v: map[int]any{0: &afterLoadStruct{v: 1}}},
 		&mapContainer{v: map[int]any{0: &valueLoadStruct{v: 1}}},
 	})
+}
+
+func TestGeneratedLegacyFields(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		field   int
+		encoded wire.Object
+		initial restoreLegacyFields
+		want    restoreLegacyFields
+	}{
+		{"nil_interface_in_integer", 0, &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Int(17)}, restoreLegacyFields{}, restoreLegacyFields{integer: 17}},
+		{"schema_in_integer", 0, &wire.Struct{TypeID: 2}, restoreLegacyFields{integer: 23}, restoreLegacyFields{integer: 23}},
+		{"empty_array_in_string", 1, &wire.Array{}, restoreLegacyFields{}, restoreLegacyFields{}},
+		{"array_noops_in_string", 1, &wire.Array{Contents: []wire.Object{wire.Nil{}, &wire.Ref{}}}, restoreLegacyFields{text: "ab"}, restoreLegacyFields{text: "ab"}},
+		{"array_in_slice", 2, &wire.Array{Contents: []wire.Object{wire.Int(17), wire.Int(29)}}, restoreLegacyFields{slice: []int64{0, 0}}, restoreLegacyFields{slice: []int64{17, 29}}},
+		{"empty_map_in_slice", 2, &wire.Map{}, restoreLegacyFields{slice: []int64{23}}, restoreLegacyFields{slice: []int64{23}}},
+		{"empty_map_in_pointer", 3, &wire.Map{}, restoreLegacyFields{pointer: new(int64(23))}, restoreLegacyFields{pointer: new(int64(23))}},
+		{"converted_zero_reference", 3, &wire.Ref{Root: 1 << 32}, restoreLegacyFields{pointer: new(int64(23))}, restoreLegacyFields{pointer: new(int64(23))}},
+		{"array_in_array", 4, &wire.Array{Contents: []wire.Object{wire.Nil{}, wire.Int(29)}}, restoreLegacyFields{array: [2]int64{17, 0}}, restoreLegacyFields{array: [2]int64{17, 29}}},
+		{"empty_array_in_map", 5, &wire.Array{}, restoreLegacyFields{mapping: map[int]int64{}}, restoreLegacyFields{mapping: map[int]int64{}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var saved bytes.Buffer
+			writer := wire.Writer{Writer: &saved}
+			if err := state.WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, &wire.Type{Name: (*restoreLegacyFields)(nil).StateTypeName(), Fields: (*restoreLegacyFields)(nil).StateFields()})
+			wire.Save(&writer, &wire.Type{Name: "int64"})
+			value := wire.Struct{TypeID: 1}
+			value.Alloc(6)
+			for i := range 6 {
+				*value.Field(i) = wire.Nil{}
+			}
+			*value.Field(test.field) = test.encoded
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, &value)
+			if _, err := state.Load(t.Context(), &saved, &test.initial); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := test.initial, test.want; !reflect.DeepEqual(got, want) {
+				t.Errorf("Load = %+v, want %+v", got, want)
+			}
+		})
+	}
 }
 
 func TestCycles(t *testing.T) {

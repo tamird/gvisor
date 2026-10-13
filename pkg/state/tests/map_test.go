@@ -17,6 +17,7 @@ package tests
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"math"
 	"reflect"
 	"testing"
@@ -260,41 +261,89 @@ func TestMapEscapingReceiver(t *testing.T) {
 }
 
 func TestMapEqualWordSnapshots(t *testing.T) {
-	original := countedMapWordContainer{
-		values: map[countedMapWord]countedMapWord{{value: 7}: {value: 7}, {value: 8}: {value: 8}},
-		zeros:  map[registeredMapStruct]registeredMapStruct{{}: {}},
-	}
-	var receivers mapReceiverCensus
-	ctx := context.WithValue(t.Context(), mapReceiverKey{}, &receivers)
-	var buf bytes.Buffer
-	if _, err := state.Save(ctx, &buf, &original); err != nil {
-		t.Fatal(err)
-	}
-	var restored countedMapWordContainer
-	if _, err := state.Load(ctx, &buf, &restored); err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(restored, original) {
-		t.Errorf("restored map = %+v, want %+v", restored, original)
-	}
-	for _, census := range []struct {
-		name   string
-		values []*countedMapWord
-	}{{"Save", receivers.saved}, {"Load", receivers.loaded}} {
-		if got, want := len(census.values), 4; got != want {
-			t.Fatalf("%s hook receivers = %d, want %d", census.name, got, want)
-		}
-		seen := make(map[*countedMapWord]bool)
-		words := make(map[uint64]int)
-		for _, receiver := range census.values {
-			if seen[receiver] {
-				t.Fatalf("%s reused receiver %p", census.name, receiver)
-			}
-			seen[receiver] = true
-			words[receiver.value]++
-		}
-		if got, want := words, map[uint64]int{7: 2, 8: 2}; !reflect.DeepEqual(got, want) {
-			t.Errorf("%s retained receiver values = %v, want %v", census.name, got, want)
+	for _, dynamicFirst := range []bool{false, true} {
+		for _, deferred := range []bool{false, true} {
+			t.Run(fmt.Sprintf("dynamic_first=%t/deferred=%t", dynamicFirst, deferred), func(t *testing.T) {
+				original := countedMapWordContainer{
+					values: map[countedMapWord]countedMapWord{{value: 7}: {value: 7}, {value: 8}: {value: 8}},
+					zeros:  map[registeredMapStruct]registeredMapStruct{{}: {}},
+				}
+				if dynamicFirst {
+					original.dynamic = original.values
+				}
+				var receivers mapReceiverCensus
+				ctx := context.WithValue(t.Context(), mapReceiverKey{}, &receivers)
+				var buf bytes.Buffer
+				if _, err := state.Save(ctx, &buf, &original); err != nil {
+					t.Fatal(err)
+				}
+				if deferred {
+					// Put all object bodies before root1. The map must keep its
+					// first registration's storage/restore owner when deferred data
+					// is drained, even if the other field later reaches that map.
+					reader := wire.Reader{Reader: &buf}
+					count, object, err := state.ReadHeader(&reader)
+					if err != nil || !object {
+						t.Fatalf("ReadHeader = %d, %t, %v", count, object, err)
+					}
+					var schemas []wire.Object
+					type objectBody struct{ id, value wire.Object }
+					var objects []objectBody
+					for uint64(len(objects)) < count {
+						value := wire.Load(&reader)
+						if _, ok := value.(*wire.Type); ok {
+							schemas = append(schemas, value)
+							continue
+						}
+						objects = append(objects, objectBody{value, wire.Load(&reader)})
+					}
+					buf.Reset()
+					writer := wire.Writer{Writer: &buf}
+					if err := state.WriteHeader(&writer, count, true); err != nil {
+						t.Fatal(err)
+					}
+					for _, schema := range schemas {
+						wire.Save(&writer, schema)
+					}
+					for i := len(objects) - 1; i >= 0; i-- {
+						wire.Save(&writer, objects[i].id)
+						wire.Save(&writer, objects[i].value)
+					}
+				}
+				var restored countedMapWordContainer
+				if _, err := state.Load(ctx, &buf, &restored); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := restored, original; !reflect.DeepEqual(got, want) {
+					t.Errorf("restored map = %+v, want %+v", got, want)
+				}
+				for _, census := range []struct {
+					name   string
+					values []*countedMapWord
+				}{{"Save", receivers.saved}, {"Load", receivers.loaded}} {
+					if got, want := len(census.values), 4; got != want {
+						t.Fatalf("%s hook receivers = %d, want %d", census.name, got, want)
+					}
+					seen := make(map[*countedMapWord]bool)
+					words := make(map[uint64]int)
+					for _, receiver := range census.values {
+						if seen[receiver] {
+							t.Fatalf("%s reused receiver %p", census.name, receiver)
+						}
+						seen[receiver] = true
+						words[receiver.value]++
+					}
+					if got, want := words, map[uint64]int{7: 2, 8: 2}; !reflect.DeepEqual(got, want) {
+						t.Errorf("%s retained receiver values = %v, want %v", census.name, got, want)
+					}
+				}
+				if dynamicFirst {
+					restored.values[countedMapWord{value: 11}] = countedMapWord{value: 13}
+					if got, want := restored.dynamic.(map[countedMapWord]countedMapWord)[countedMapWord{value: 11}].value, uint64(13); got != want {
+						t.Errorf("map alias value = %d, want %d", got, want)
+					}
+				}
+			})
 		}
 	}
 }
