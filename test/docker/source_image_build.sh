@@ -26,6 +26,9 @@ image="docker.io/moby/buildkit@$(cat "${image_digest}")"
 work=$(mktemp -d "${TMPDIR:-/tmp}/source-image-builder.XXXXXX")
 export BUILDX_CONFIG="${work}"
 builder="gvisor-source-${work##*.}"
+# Buildx lowercases names before assigning its default node. Use that same
+# spelling for creation and the exact owned-container observations below.
+builder=${builder,,}
 container="buildx_buildkit_${builder}0"
 started_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 created=false
@@ -112,9 +115,11 @@ created=true
 mkdir -- "${layout}"
 observe_guest
 set +e
+# Qualification-only: compare the stock 1 MiB pipe-read request with the
+# default 10 KiB buffer, keeping the output filesystem and pipeline unchanged.
 "${buildx}" build --builder "${builder}" --provenance=false --progress=plain \
   --output=type=oci,tar=true,compression=gzip,force-compression=true,dest=- "$@" | \
-  "${bsdtar}" --extract --file - --directory "${layout}" --no-same-owner
+  "${bsdtar}" --extract -b 2048 --file - --directory "${layout}" --no-same-owner
 statuses=("${PIPESTATUS[@]}")
 set -e
 printf 'Source OCI export status: buildx=%s tar=%s\n' "${statuses[0]}" "${statuses[1]}" >&2
