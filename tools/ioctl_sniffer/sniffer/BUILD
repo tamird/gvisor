@@ -9,7 +9,7 @@ go_test(
     name = "sniffer_test",
     size = "small",
     srcs = ["sniffer_test.go"],
-    library = ":sniffer",
+    embed = [":sniffer"],
     deps = [
         "//pkg/abi/linux",
         "//pkg/abi/nvgpu",
