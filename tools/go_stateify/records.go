@@ -452,7 +452,7 @@ func checkedRecords(file *ast.File, info *types.Info, pkg *types.Package, model 
 		records.types[name] = record
 	}
 	var err error
-	records.restore, err = checkedRestores(file, info, pkg, model, sources, names)
+	records.restore, err = checkedRestores(file, info, pkg, model)
 	if err != nil {
 		return nil, err
 	}

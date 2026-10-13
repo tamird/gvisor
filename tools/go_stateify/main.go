@@ -26,7 +26,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"sort"
 	"strings"
 	"sync"
 
@@ -219,18 +218,22 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 	// Common closures.
 	emitRegister := func(name string) {
 		if records != nil {
-			if shape := records.restore.registered[name]; shape != nil {
+			if _, ok := records.restore.registered[name]; ok {
 				capture := "nil"
 				if record := records.types[name]; record != nil {
 					capture = record.factory
 				} else if forward := records.forward[name]; forward != "" {
 					capture = fmt.Sprintf("%sForwardRecord((*%s)(nil))", statePrefix, forward)
 				}
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s, %s, %s)", statePrefix, name, capture, statePrefix, name, shape.erased, shape.array, shape.pointerArray))
+				fields := "nil"
+				if _, ok := records.restore.fields[name]; ok {
+					fields = fmt.Sprintf("(*%s)(nil).StateLoadFields()", name)
+				}
+				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s)", statePrefix, name, capture, statePrefix, name, fields))
 				return
 			}
 			if forward := records.forward[name]; forward != "" {
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, nil, nil, nil)", statePrefix, name, statePrefix, forward))
+				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, nil)", statePrefix, name, statePrefix, forward))
 				return
 			}
 		}
@@ -260,22 +263,12 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		if statePkg != "" {
 			fmt.Fprintf(outputFile, "	\"%s\"\n", statePkg)
 		}
-		if records != nil && (len(records.types) != 0 || len(records.restore.shapes) != 0) {
+		if records != nil && len(records.types) != 0 {
 			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", records.wireAlias)
 		}
 		if imports != "" {
 			for _, i := range strings.Split(imports, ",") {
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
-			}
-		}
-		if records != nil {
-			var paths []string
-			for path := range records.restore.imports {
-				paths = append(paths, path)
-			}
-			sort.Strings(paths)
-			for _, path := range paths {
-				fmt.Fprintf(outputFile, " %s %q\n", records.restore.imports[path], path)
 			}
 		}
 		fmt.Fprint(outputFile, ")\n\n")
@@ -310,33 +303,17 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 			loadRecv := recv
 			if records != nil {
-				for _, encoding := range records.restore.fields[ts.Name.Name] {
-					if statePrefix == recv+"." || statePrefix == "" && encoding.helper == recv {
-						loadRecv = records.restore.receiver
+				// Custom value type spellings still occur in this method
+				// even though ordinary fields no longer emit typed operations.
+				for _, field := range model.fields {
+					if field.kind == fieldValue && typeUsesName(field.valueType, recv) {
+						loadRecv = records.saveReceiver
 						break
 					}
 				}
 			}
 			emitLoadValue := func(name, typName string) {
 				fmt.Fprintf(outputFile, " stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, loadRecv, camelCased(name), typName)
-			}
-			emitTypedLoad := func(name string, wait bool) {
-				if records == nil {
-					return // The checker needs declarations, not method bodies.
-				}
-				r := records.restore
-				fmt.Fprintf(outputFile, " {\n %s := stateSourceObject.Field(%d)\n", r.value, fields[name])
-				r.fields[ts.Name.Name][name].emit(outputFile, statePrefix, "stateSourceObject.Decoder()", "&"+loadRecv+"."+name, r.value)
-				if wait {
-					fmt.Fprintf(outputFile, " stateSourceObject.Decoder().Wait(%s)\n", r.value)
-				}
-				fmt.Fprint(outputFile, " }\n")
-			}
-			emitLoad := func(name string) {
-				emitTypedLoad(name, false)
-			}
-			emitLoadWait := func(name string) {
-				emitTypedLoad(name, true)
 			}
 			// Checked capture can introduce package-qualified calls inside
 			// StateSave. Keep a handwritten receiver from shadowing that
@@ -440,13 +417,36 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				fmt.Fprintf(outputFile, "func (%s *%s) afterLoad(context.Context) {}\n\n", recv, ts.Name.Name)
 			}
 
+			// Metadata is callable before init and contains no receiver access.
+			// The decoder caches it; the per-object method only invokes the
+			// common field loop and the existing custom hooks.
+			if generateSaverLoader {
+				fmt.Fprintf(outputFile, "func (*%s) StateLoadFields() []%sLoadField {\n", ts.Name.Name, statePrefix)
+				if records == nil || len(records.restore.fields[ts.Name.Name]) == 0 {
+					fmt.Fprint(outputFile, " return nil\n")
+				} else {
+					fmt.Fprintf(outputFile, " return []%sLoadField{\n", statePrefix)
+					for _, field := range records.restore.fields[ts.Name.Name] {
+						fmt.Fprintf(outputFile, " {Index: %d, Slot: %d", field.index, field.slot)
+						if field.wait {
+							fmt.Fprintf(outputFile, ", Wait: %s", records.restore.waitValue)
+						}
+						fmt.Fprint(outputFile, "},\n")
+					}
+					fmt.Fprint(outputFile, " }\n")
+				}
+				fmt.Fprint(outputFile, "}\n\n")
+			}
+
 			// Generate the load method.
 			//
 			// N.B. See the comment above for the save method.
 			if generateSaverLoader {
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
 				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", loadRecv, ts.Name.Name, statePrefix)
-				model.scan(scanFunctions{normal: emitLoad, wait: emitLoadWait})
+				if records != nil && len(records.restore.fields[ts.Name.Name]) != 0 {
+					fmt.Fprintf(outputFile, " stateSourceObject.LoadFields(%s)\n", loadRecv)
+				}
 				model.scan(scanFunctions{value: emitLoadValue})
 				if hasAfterLoad {
 					// The call to afterLoad is made conditionally, because when
@@ -509,9 +509,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 	}
 
-	if records != nil {
-		records.restore.declare(outputFile, statePrefix, records.wireAlias)
-	}
 	if len(initCalls) > 0 {
 		// Emit the init() function.
 		fmt.Fprintf(outputFile, "func init() {\n")
@@ -520,4 +517,30 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 		fmt.Fprintf(outputFile, "}\n")
 	}
+}
+
+// typeUsesName checks lexical type-expression names, not selector members.
+// Retained custom LoadValue types are emitted inside the receiver's scope.
+func typeUsesName(expression, name string) bool {
+	expr, err := parser.ParseExpr(expression)
+	if err != nil {
+		panic(fmt.Sprintf("invalid checked custom type %q: %v", expression, err))
+	}
+	found := false
+	var visit func(ast.Node) bool
+	visit = func(node ast.Node) bool {
+		switch node := node.(type) {
+		case *ast.Ident:
+			found = found || node.Name == name
+		case *ast.Field:
+			ast.Inspect(node.Type, visit)
+			return false
+		case *ast.SelectorExpr:
+			ast.Inspect(node.X, visit)
+			return false
+		}
+		return true
+	}
+	ast.Inspect(expr, visit)
+	return found
 }

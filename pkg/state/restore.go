@@ -15,60 +15,68 @@
 package state
 
 import (
-	"context"
 	"reflect"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// Decoder is a copyable view of the graph and the object currently being
-// restored. Unlike Source, it does not select a struct schema or field set.
-type Decoder struct {
-	ds  *decodeState
-	ods *objectDecodeState
-}
-
-// Allocate creates zero storage for an exact graph object type. Generated
-// allocators return new(T); the dynamic allocator handles runtime shapes.
+// Allocate creates zero storage for the exact registered graph object type.
+// The returned pointer is published before any deferred body is restored.
 type Allocate func(reflect.Type) any
 
-// Restore fills the authoritative *T returned by its paired Allocate.
-// The graph publishes that pointer before invoking Restore. The pair must
-// agree on the exact T; neither function may replace the allocation.
-type Restore func(Decoder, any, wire.Value)
+// NewObject allocates the exact T represented by its registration.
+func NewObject[T any](_ reflect.Type) any { return new(T) }
 
-// NewObject allocates the exact T used by its generated restore function.
-// The type argument is checked by the generator before it selects this pair.
-func NewObject[T any](_ reflect.Type) any {
-	return new(T)
+// LoadField describes an ordinary generated field. Index is its physical Go
+// field index; Slot is its stable local schema slot, before wire reconciliation.
+type LoadField struct {
+	Index int
+	Slot  int
+	Wait  bool
 }
 
-func newDynamicObject(typ reflect.Type) any {
-	return reflect.New(typ).Interface()
+// fieldLoader supplies metadata without relying on package initialization.
+// Generated accessors do not dereference their receiver.
+type fieldLoader interface {
+	Type
+	StateLoadFields() []LoadField
 }
 
-func restoreDynamicObject(d Decoder, pointer any, value wire.Value) {
-	d.ds.decodeObject(d.ods, reflect.ValueOf(pointer).Elem(), value)
+type restoreField struct {
+	offset uintptr
+	plan   *restorePlan
+	slot   int
+	wait   bool
 }
 
-func registeredRestore(typ reflect.Type) (Allocate, Restore) {
-	if registered, ok := restoreType(typ); ok && registered.allocate != nil {
-		return registered.allocate, registered.restore
+// restorePlan contains metadata derived from one actual Go type during Load.
+// Child plans and ordinary fields are resolved only when they are used.
+type restorePlan struct {
+	typ         reflect.Type
+	kind        reflect.Kind
+	size        uintptr
+	element     *restorePlan
+	fields      []restoreField
+	fieldsReady bool
+}
+
+func (ds *decodeState) plan(typ reflect.Type) *restorePlan {
+	if plan := ds.types.plans[typ]; plan != nil {
+		return plan
 	}
-	if typ.Kind() == reflect.Array {
-		element := typ.Elem()
-		if registered, ok := restoreType(element); ok && registered.restoreArray != nil {
-			return newDynamicObject, registered.restoreArray
-		}
-		// A defined pointer type is not interchangeable with the unnamed
-		// *T used by the registered pointer-array operation.
-		if element.Kind() == reflect.Pointer && element == reflect.PointerTo(element.Elem()) {
-			if registered, ok := restoreType(element.Elem()); ok && registered.restorePointerArray != nil {
-				return newDynamicObject, registered.restorePointerArray
-			}
-		}
+	if ds.types.plans == nil {
+		ds.types.plans = make(map[reflect.Type]*restorePlan)
 	}
-	return newDynamicObject, restoreDynamicObject
+	plan := &restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
+	ds.types.plans[typ] = plan
+	return plan
+}
+
+func (ds *decodeState) elementPlan(plan *restorePlan) *restorePlan {
+	if plan.element == nil {
+		plan.element = ds.plan(plan.typ.Elem())
+	}
+	return plan.element
 }
 
 func restoreType(typ reflect.Type) (registeredType, bool) {
@@ -83,29 +91,64 @@ func restoreType(typ reflect.Type) (registeredType, bool) {
 	return registeredType{}, false
 }
 
-// Context returns the context supplied to Load.
-func (d Decoder) Context() context.Context {
-	return d.ds.ctx
+func allocateObject(typ reflect.Type) any {
+	if registered, ok := restoreType(typ); ok && registered.allocate != nil {
+		return registered.allocate(typ)
+	}
+	return reflect.New(typ).Interface()
 }
 
-// Wait registers the dependencies of a value after it has been restored.
-func (d Decoder) Wait(value wire.Value) {
-	d.ds.waitObject(d.ods, value, nil)
+// LoadFields restores generated ordinary fields in declaration order. Custom
+// LoadValue calls and AfterLoad remain in the generated StateLoad method.
+// Reconciliation belongs to this Source, not to the receiver's cached layout:
+// an identtype loader may forward to a different concrete receiver type.
+func (s Source) LoadFields(receiver fieldLoader) {
+	pointer := reflect.ValueOf(receiver)
+	plan := s.internal.ds.plan(pointer.Type().Elem())
+	if !plan.fieldsReady {
+		var fields []LoadField
+		if registered, ok := restoreType(plan.typ); ok && registered.fields != nil {
+			fields = registered.fields
+		} else {
+			fields = receiver.StateLoadFields()
+		}
+		// Validate physical metadata against this receiver's local schema.
+		// The Source may belong to an identtype that forwarded to it.
+		info, ok := reverseTypeDatabase[plan.typ]
+		if !ok {
+			info.Fields = receiver.StateFields()
+		}
+		plan.fields = make([]restoreField, 0, len(fields))
+		for _, field := range fields {
+			member := plan.typ.Field(field.Index)
+			if field.Slot < 0 || field.Slot >= len(info.Fields) || member.Name != info.Fields[field.Slot] {
+				Failf("invalid generated field %v for %v", field, plan.typ)
+			}
+			plan.fields = append(plan.fields, restoreField{offset: member.Offset, plan: s.internal.ds.plan(member.Type), slot: field.Slot, wait: field.Wait})
+		}
+		plan.fieldsReady = true
+	}
+	if len(plan.fields) == 0 {
+		return
+	}
+	// The old generated &receiver.Field expression requires a nonnil receiver
+	// even when the field's wire value is a no-op.
+	if pointer.IsNil() {
+		Failf("cannot restore fields through nil %T", receiver)
+	}
+	object := s.internal.ds.pointerDestination(pointer)
+	for _, field := range plan.fields {
+		encoded := s.internal.field(field.slot)
+		target := object.field(field.plan, field.offset)
+		s.internal.ds.restoreValue(s.internal.ods, target, encoded)
+		if field.wait {
+			s.internal.ds.waitObject(s.internal.ods, encoded, nil)
+		}
+	}
 }
 
-// Decoder returns the graph context shared by this Source's fields.
-func (s *Source) Decoder() Decoder {
-	return Decoder{ds: s.internal.ds, ods: s.internal.ods}
-}
-
-// Field selects a local schema slot. The parsed result can be read repeatedly,
-// including after the reader advances, and has already been fully validated.
-func (s *Source) Field(slot int) wire.Value {
-	return s.internal.field(slot)
-}
-
-// dataValue applies the wire's nil-interface delegation once at each restore
-// entry. Wait registration still receives the original immutable field value.
+// dataValue preserves nil-interface delegation before any address or view is
+// required. Wait registration still receives the original parsed value.
 func dataValue(value wire.Value) wire.Value {
 	for value.Kind() == wire.KindInterface {
 		typ, inner := value.Interface()
@@ -117,216 +160,74 @@ func dataValue(value wire.Value) wire.Value {
 	return value
 }
 
-// restoreEnvelope handles shared no-op, schema and dynamic-interface
-// operations after a typed destination has handled its other supported forms.
-// Unsupported kinds do not re-enter a second value decoder.
-func restoreEnvelope(d Decoder, target any, value wire.Value) {
-	switch value.Kind() {
+// restoreValue owns every encoded-kind operation, for generated fields,
+// manual Source calls, graph objects and dynamic interface/map storage alike.
+func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
+	encoded = dataValue(encoded)
+	switch encoded.Kind() {
 	case wire.KindNil:
 		return
 	case wire.KindRef:
-		if objectID(value.Reference().Root) == 0 {
-			return
-		}
-	case wire.KindSlice:
-		if objectID(value.Slice().Ref.Root) == 0 {
-			return
-		}
-	case wire.KindInterface:
-		d.ds.decodeInterface(d.ods, reflect.ValueOf(target).Elem(), value)
-		return
-	case wire.KindStruct:
-		// The legacy schema operation can name a scalar too. It reconciles
-		// the schema and invokes a receiver only if one actually exists.
-		d.ds.decodeStruct(d.ods, reflect.ValueOf(target).Elem(), value)
-		return
-	}
-	Failf("wire kind %d cannot restore %v", value.Kind(), reflect.TypeOf(target).Elem())
-}
-
-// RestoreBool restores a compiled boolean destination.
-func RestoreBool[T ~bool](d Decoder, target *T, value wire.Value) {
-	value = dataValue(value)
-	if value.Kind() == wire.KindBool {
-		*target = T(value.Bool())
-		return
-	}
-	restoreEnvelope(d, target, value)
-}
-
-// RestoreInt restores a compiled signed destination, checking after the store
-// as the ordinary decoder does.
-func RestoreInt[T ~int | ~int8 | ~int16 | ~int32 | ~int64](d Decoder, target *T, value wire.Value) {
-	value = dataValue(value)
-	if value.Kind() == wire.KindInt {
-		x := value.Int()
-		*target = T(x)
-		checkInt(x, int64(*target))
-		return
-	}
-	restoreEnvelope(d, target, value)
-}
-
-// RestoreUint restores a compiled unsigned destination.
-func RestoreUint[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](d Decoder, target *T, value wire.Value) {
-	value = dataValue(value)
-	if value.Kind() == wire.KindUint {
-		x := value.Uint()
-		*target = T(x)
-		checkUint(x, uint64(*target))
-		return
-	}
-	restoreEnvelope(d, target, value)
-}
-
-// RestoreFloat restores either wire float width into a compiled float field.
-func RestoreFloat[T ~float32 | ~float64](d Decoder, target *T, value wire.Value) {
-	value = dataValue(value)
-	switch value.Kind() {
+		ds.restoreReference(target, encoded.Reference())
+	case wire.KindBool:
+		target.storeBool(encoded.Bool())
+	case wire.KindInt:
+		value := encoded.Int()
+		checkInt(value, target.storeInt(value))
+	case wire.KindUint:
+		value := encoded.Uint()
+		checkUint(value, target.storeUint(value))
 	case wire.KindFloat32:
-		*target = T(value.Float())
+		target.storeFloat(encoded.Float())
 	case wire.KindFloat64:
-		x := value.Float()
-		*target = T(x)
-		checkFloat(x, float64(*target))
-	default:
-		restoreEnvelope(d, target, value)
-	}
-}
-
-// RestoreComplex restores either wire complex width into a compiled field.
-func RestoreComplex[T ~complex64 | ~complex128](d Decoder, target *T, value wire.Value) {
-	value = dataValue(value)
-	switch value.Kind() {
+		value := encoded.Float()
+		checkFloat(value, target.storeFloat(value))
 	case wire.KindComplex64:
-		*target = T(value.Complex())
+		target.storeComplex(encoded.Complex())
 	case wire.KindComplex128:
-		x := value.Complex()
-		*target = T(x)
-		checkComplex(x, complex128(*target))
-	default:
-		restoreEnvelope(d, target, value)
-	}
-}
-
-// RestoreString restores a compiled string destination. Its legacy Array form
-// uses the common array operation, retaining read-only string element views.
-func RestoreString[T ~string](d Decoder, target *T, value wire.Value) {
-	value = dataValue(value)
-	switch value.Kind() {
+		value := encoded.Complex()
+		checkComplex(value, target.storeComplex(value))
 	case wire.KindString:
-		*target = T(value.Text())
+		target.storeString(encoded.Text())
+	case wire.KindSlice:
+		if objectID(encoded.Slice().Ref.Root) != 0 {
+			ds.assignSlice(target.value(), encoded.Slice())
+		}
 	case wire.KindArray:
-		d.ds.decodeArray(d.ods, reflect.ValueOf(target).Elem(), value)
+		ds.restoreArray(ods, target, encoded)
+	case wire.KindMap:
+		ds.restoreMap(ods, target, encoded)
+	case wire.KindStruct:
+		ds.decodeStruct(ods, target.value(), encoded)
+	case wire.KindInterface:
+		ds.decodeInterface(ods, target.value(), encoded)
 	default:
-		restoreEnvelope(d, target, value)
+		Failf("unknown object %#v for %q", encoded, target.value().Type().Name())
 	}
 }
 
-// RestoreStruct invokes a compiler-known struct receiver after the common
-// schema and completion preparation. T must be a struct; the generator checks
-// this separately from its SaverLoader method set.
-func RestoreStruct[T any, P interface {
-	*T
-	SaverLoader
-}](d Decoder, target *T, value wire.Value) {
-	restoreStruct(d, P(target), value)
-}
-
-// restoreStruct shares schema preparation, accounting and receiver dispatch
-// across generated pointer types. target is always a typed pointer, including
-// when its value is nil. Pointer metadata is read after selecting a Struct value.
-func restoreStruct(d Decoder, target SaverLoader, value wire.Value) {
-	value = dataValue(value)
-	if value.Kind() != wire.KindStruct {
-		restoreEnvelope(d, target, value)
-		return
-	}
-	pointer := reflect.ValueOf(target)
-	if pointer.IsNil() {
-		Failf("cannot restore a struct through nil %T", target)
-	}
-	source, ok := d.ds.structSource(d.ods, pointer.Type().Elem(), value)
-	if !ok {
-		return
-	}
-	defer d.ds.stats.done()
-	target.StateLoad(d.ds.ctx, source)
-}
-
-// RestoreOpaque adapts a genuinely runtime or inaccessible destination type
-// to the same value operations. Generated known fields use their typed stores.
-func RestoreOpaque[T any](d Decoder, target *T, value wire.Value) {
-	d.ds.decodeObject(d.ods, reflect.ValueOf(target).Elem(), value)
-}
-
-// RestorePointer restores a compiled pointer slot. Its optional static pair
-// owns a new no-Dots pointee, never an existing or enclosing graph allocation.
-func RestorePointer[P ~*T, T any](d Decoder, target *P, value wire.Value, restore Restore) {
-	value = dataValue(value)
-	if value.Kind() != wire.KindRef {
-		restorePointerValue(d, target, value)
-		return
-	}
-	ref := value.Reference()
+// restoreReference retains register/Dots/assignment order. Only ordinary
+// pointer stores bypass reflect.Set; maps retain actual source flags and type.
+func (ds *decodeState) restoreReference(target restoreDestination, ref wire.Ref) {
 	if objectID(ref.Root) == 0 {
 		return
 	}
-	var allocate Allocate
-	if restore != nil {
-		allocate = NewObject[T]
+	if target.plan == nil {
+		target.value().Type() // Preserve the invalid destination error.
 	}
-	pointee := resolvePointer[*T](d, &ref, reflect.TypeFor[T](), allocate, restore)
-	if pointee == nil {
-		// A nil caller-supplied root has no addressable referent.
+	if target.plan.kind == reflect.Map {
+		object := walkChild(ref.Dots, reflect.ValueOf(ds.register(&ref, target.plan.typ)).Elem())
+		assignMap(target.value(), object)
+		return
+	}
+	pointer := reflect.ValueOf(ds.register(&ref, target.plan.typ.Elem()))
+	if len(ref.Dots) != 0 {
+		pointer = reflectValueRWAddr(walkChild(ref.Dots, pointer.Elem()))
+	}
+	if pointer.IsNil() {
 		Failf("reference %d has no object storage", ref.Root)
 	}
-	*target = P(pointee)
-}
-
-// resolvePointer returns the graph's canonical pointer before the caller
-// converts it to a possibly defined pointer type. Ptr must be the unnamed
-// pointer to typ. Using a basic constraint lets pointer types share this body.
-func resolvePointer[Ptr any](d Decoder, ref *wire.Ref, typ reflect.Type, allocate Allocate, restore Restore) Ptr {
-	pointer := d.ds.register(ref, typ, allocate, restore)
-	if len(ref.Dots) != 0 {
-		child := walkChild(ref.Dots, reflect.ValueOf(pointer).Elem())
-		pointer = reflectValueRWAddr(child).Interface()
-	}
-	return pointer.(Ptr)
-}
-
-// restorePointerValue handles the non-reference forms accepted by pointer
-// destinations. These operations already require a dynamic destination view.
-func restorePointerValue(d Decoder, target any, value wire.Value) {
-	switch value.Kind() {
-	case wire.KindSlice:
-		d.ds.assignSlice(reflect.ValueOf(target).Elem(), value.Slice())
-	case wire.KindArray:
-		d.ds.decodeArray(d.ods, reflect.ValueOf(target).Elem(), value)
-	case wire.KindMap:
-		d.ds.decodeMap(d.ods, reflect.ValueOf(target).Elem(), value)
-	default:
-		restoreEnvelope(d, target, value)
-	}
-}
-
-// RestoreSlice restores a compiled slice header. Its backing allocation has a
-// runtime extent and retains the graph's existing array and slicing adapters.
-func RestoreSlice[S ~[]T, T any](d Decoder, target *S, value wire.Value, element func(Decoder, *T, wire.Value)) {
-	value = dataValue(value)
-	switch value.Kind() {
-	case wire.KindSlice:
-		d.ds.assignSlice(reflect.ValueOf(target).Elem(), value.Slice())
-	case wire.KindArray:
-		restoreElements(d, typedElements[T]{values: *target, decode: element}, value)
-	case wire.KindRef:
-		d.ds.assignReference(reflect.ValueOf(target).Elem(), value.Reference())
-	case wire.KindMap:
-		d.ds.decodeMap(d.ods, reflect.ValueOf(target).Elem(), value)
-	default:
-		restoreEnvelope(d, target, value)
-	}
+	target.storePointer(pointer)
 }
 
 func checkInt(value, stored int64) {

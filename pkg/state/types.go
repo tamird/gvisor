@@ -56,6 +56,10 @@ func makeTypeEncodeDatabase() typeEncodeDatabase {
 
 // typeDecodeDatabase is an internal TypeInfo database for decoding.
 type typeDecodeDatabase struct {
+	// plans caches derived actual-type layouts for this Load only. Unlike wire
+	// IDs, actual types also cover unnamed and runtime-length collections.
+	plans map[reflect.Type]*restorePlan
+
 	// byID maps by ID to type.
 	byID []*reconciledTypeEntry
 
@@ -269,20 +273,18 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 // interfaceType defines all interfaces.
 const interfaceType = "interface"
 
-// primitiveTypeDatabase owns the fixed wire identities and their optional
-// array operations. Named types with the same underlying kind remain distinct.
+// primitiveTypeDatabase owns the fixed wire identities. Named types with the
+// same underlying kind remain distinct.
 var primitiveTypeDatabase = map[string]registeredType{}
 
-// registeredType owns one concrete Go type, its capture layout and its
-// optional static restore pair.
-// Wire IDs remain local to each serialization.
+// registeredType owns one concrete type, capture layout, optional exact
+// allocation and generated ordinary-field data. Traversal belongs to the
+// common decoder, not to a family of per-type callbacks.
 type registeredType struct {
-	typ                 reflect.Type
-	newRecord           func(wire.TypeID, int) *wire.Record
-	allocate            Allocate
-	restore             Restore
-	restoreArray        Restore
-	restorePointerArray Restore
+	typ       reflect.Type
+	newRecord func(wire.TypeID, int) *wire.Record
+	allocate  Allocate
+	fields    []LoadField
 }
 
 // globalTypeDatabase is the single registration database for saving and loading.
@@ -333,7 +335,7 @@ func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
 	}
 	// Copy before reusing binaryBuf: wire objects are serialized only after
 	// the full graph is encoded. Strings also decode inline, so map keys are
-	// complete when decodeMap inserts them into the restored map.
+	// complete when restoreMap inserts them into the restored map.
 	Record[binaryRecord](s, 1).value = wire.String(data)
 }
 
@@ -352,22 +354,17 @@ func loadBinary(value binaryObject, name string, s Source) {
 // Manually implemented savers use Sink.Save/SaveValue to populate the record's
 // compatibility slots.
 func Register(t Type) {
-	registerState(t, nil, nil, nil, nil, nil)
+	registerState(t, nil, nil, nil)
 }
 
-// RegisterGenerated adds generated capture and restore operations to ordinary
-// Type registration. A handwritten saver may omit newRecord; a capture-only
-// registration may omit both restore functions. A restore pair must allocate
-// and restore *T for the concrete T represented by t, not a promoted name.
-// The optional array operations restore *[N]T and *[N]*T for any runtime N.
-func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, restore, array, pointerArray Restore) {
-	if (allocate == nil) != (restore == nil) {
-		Failf("incomplete generated restore pair for %T", t)
-	}
-	registerState(t, newRecord, allocate, restore, array, pointerArray)
+// RegisterGenerated adds captured-record and ordinary-field metadata to the
+// existing registration. allocate, when present, returns the exact *T. Manual
+// and forwarding loaders omit fields and retain their existing StateLoad.
+func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField) {
+	registerState(t, newRecord, allocate, fields)
 }
 
-func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, restore, array, pointerArray Restore) {
+func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, loadFields []LoadField) {
 	name := t.StateTypeName()
 	fields := t.StateFields()
 	typ := reflect.TypeOf(t)
@@ -402,7 +399,7 @@ func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, alloca
 			}
 		}
 	}
-	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, allocate, restore, array, pointerArray)
+	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, allocate, loadFields)
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -412,11 +409,11 @@ func registerBinary(value binaryObject) {
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
-	}, newBinaryRecord, nil, nil, nil, nil)
+	}, newBinaryRecord, nil, nil)
 }
 
 // register publishes metadata in the existing type databases.
-func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, restore, array, pointerArray Restore) {
+func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField) {
 	if info.Name == "" {
 		Failf("type has empty name")
 	}
@@ -439,31 +436,20 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord, allocate: allocate, restore: restore, restoreArray: array, restorePointerArray: pointerArray}
+	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord, allocate: allocate, fields: fields}
 	reverseTypeDatabase[typ] = info
 }
 
 func init() {
-	for _, entry := range []registeredType{
-		{typ: reflect.TypeFor[bool](), restoreArray: restoreBoolArray[bool], restorePointerArray: restoreBoolPointerArray[bool]},
-		{typ: reflect.TypeFor[int](), restoreArray: restoreIntArray[int], restorePointerArray: restoreIntPointerArray[int]},
-		{typ: reflect.TypeFor[int8](), restoreArray: restoreIntArray[int8], restorePointerArray: restoreIntPointerArray[int8]},
-		{typ: reflect.TypeFor[int16](), restoreArray: restoreIntArray[int16], restorePointerArray: restoreIntPointerArray[int16]},
-		{typ: reflect.TypeFor[int32](), restoreArray: restoreIntArray[int32], restorePointerArray: restoreIntPointerArray[int32]},
-		{typ: reflect.TypeFor[int64](), restoreArray: restoreIntArray[int64], restorePointerArray: restoreIntPointerArray[int64]},
-		{typ: reflect.TypeFor[uint](), restoreArray: restoreUintArray[uint], restorePointerArray: restoreUintPointerArray[uint]},
-		{typ: reflect.TypeFor[uintptr](), restoreArray: restoreUintArray[uintptr], restorePointerArray: restoreUintPointerArray[uintptr]},
-		{typ: reflect.TypeFor[uint8](), restoreArray: restoreUintArray[uint8], restorePointerArray: restoreUintPointerArray[uint8]},
-		{typ: reflect.TypeFor[uint16](), restoreArray: restoreUintArray[uint16], restorePointerArray: restoreUintPointerArray[uint16]},
-		{typ: reflect.TypeFor[uint32](), restoreArray: restoreUintArray[uint32], restorePointerArray: restoreUintPointerArray[uint32]},
-		{typ: reflect.TypeFor[uint64](), restoreArray: restoreUintArray[uint64], restorePointerArray: restoreUintPointerArray[uint64]},
-		{typ: reflect.TypeFor[string](), restoreArray: restoreStringArray[string], restorePointerArray: restoreStringPointerArray[string]},
-		{typ: reflect.TypeFor[float32](), restoreArray: restoreFloatArray[float32], restorePointerArray: restoreFloatPointerArray[float32]},
-		{typ: reflect.TypeFor[float64](), restoreArray: restoreFloatArray[float64], restorePointerArray: restoreFloatPointerArray[float64]},
-		{typ: reflect.TypeFor[complex64](), restoreArray: restoreComplexArray[complex64], restorePointerArray: restoreComplexPointerArray[complex64]},
-		{typ: reflect.TypeFor[complex128](), restoreArray: restoreComplexArray[complex128], restorePointerArray: restoreComplexPointerArray[complex128]},
+	for _, typ := range []reflect.Type{
+		reflect.TypeFor[bool](),
+		reflect.TypeFor[int](), reflect.TypeFor[int8](), reflect.TypeFor[int16](), reflect.TypeFor[int32](), reflect.TypeFor[int64](),
+		reflect.TypeFor[uint](), reflect.TypeFor[uintptr](), reflect.TypeFor[uint8](), reflect.TypeFor[uint16](), reflect.TypeFor[uint32](), reflect.TypeFor[uint64](),
+		reflect.TypeFor[string](),
+		reflect.TypeFor[float32](), reflect.TypeFor[float64](),
+		reflect.TypeFor[complex64](), reflect.TypeFor[complex128](),
 	} {
-		primitiveTypeDatabase[entry.typ.Name()] = entry
+		primitiveTypeDatabase[typ.Name()] = registeredType{typ: typ}
 	}
 	registerBinary((*time.Time)(nil))
 	registerBinary((*netip.Addr)(nil))

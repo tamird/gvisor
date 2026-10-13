@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
@@ -349,5 +350,106 @@ func TestArrayRegistrationAfterEarlyLoad(t *testing.T) {
 	}
 	if got, want := loaded, expected; got != want {
 		t.Errorf("registered array = %v, want %v", got, want)
+	}
+}
+
+// TestArrayLiveSliceHeader covers the generated and manual/dynamic entries to
+// the same legacy Array-to-slice operation. A first hook changes the actual
+// header, so a captured []T view would restore the wrong second receiver.
+func TestArrayLiveSliceHeader(t *testing.T) {
+	for _, generated := range []bool{false, true} {
+		for _, shrink := range []bool{false, true} {
+			t.Run(fmt.Sprintf("generated=%t/shrink=%t", generated, shrink), func(t *testing.T) {
+				values := [2]arraySliceLoadWord{{value: 7}, {value: 11}}
+				var encoded bytes.Buffer
+				var saved any = &values
+				if generated {
+					saved = &arraySliceLoad{values: values[:]}
+				}
+				if _, err := state.Save(t.Context(), &encoded, saved); err != nil {
+					t.Fatal(err)
+				}
+				backing := [2]arraySliceLoadWord{}
+				replacement := [2]arraySliceLoadWord{{value: 101}, {value: 103}}
+				loaded := arraySliceLoad{values: backing[:]}
+				load := arraySliceLoadState{target: &loaded.values, replacement: replacement[:]}
+				if shrink {
+					load.replacement = load.replacement[:1]
+				}
+				ctx := context.WithValue(t.Context(), arraySliceLoadKey{}, &load)
+				var target any = &loaded.values
+				if generated {
+					target = &loaded
+				}
+				_, err := state.Load(ctx, &encoded, target)
+				if shrink {
+					if err == nil || !strings.Contains(err.Error(), "slice index out of range") {
+						t.Fatalf("Load error = %v, want slice index out of range", err)
+					}
+					if got, want := len(load.receivers), 1; got != want {
+						t.Fatalf("Load receivers = %d, want %d", got, want)
+					}
+				} else {
+					if err != nil {
+						t.Fatal(err)
+					}
+					if got, want := len(load.receivers), 2; got != want {
+						t.Fatalf("Load receivers = %d, want %d", got, want)
+					}
+					if got, want := load.receivers[1], &replacement[1]; got != want {
+						t.Errorf("second receiver = %p, want %p", got, want)
+					}
+					if got, want := replacement[1].value, uint64(11); got != want {
+						t.Errorf("replacement value = %d, want %d", got, want)
+					}
+				}
+				if got, want := load.receivers[0], &backing[0]; got != want {
+					t.Errorf("first receiver = %p, want %p", got, want)
+				}
+				if got, want := loaded.values, load.replacement; !reflect.DeepEqual(got, want) {
+					t.Errorf("header after hook = %v, want %v", got, want)
+				}
+				if got, want := backing[0].value, uint64(7); got != want {
+					t.Errorf("first store = %d, want %d", got, want)
+				}
+				if got, want := backing[1].value, uint64(0); got != want {
+					t.Errorf("old second slot = %d, want %d", got, want)
+				}
+			})
+		}
+	}
+}
+
+func TestEarlyLoadFields(t *testing.T) {
+	loaded, err := loadEarlyFields()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := earlyLoadFields{value: 29, text: "before registration"}
+	if got, want := loaded, want; got != want {
+		t.Errorf("registered loaded fields = %+v, want %+v", got, want)
+	}
+	if stateRaceEnabled {
+		if earlyFieldsError == nil {
+			t.Fatal("early Save/Load succeeded without race-mode registration")
+		}
+		return
+	}
+	if earlyFieldsError != nil {
+		t.Fatal(earlyFieldsError)
+	}
+	if got, want := earlyFieldsValue, want; got != want {
+		t.Errorf("early loaded fields = %+v, want %+v", got, want)
+	}
+}
+
+func TestNilEmptyArrayDestination(t *testing.T) {
+	var encoded bytes.Buffer
+	if _, err := state.Save(t.Context(), &encoded, &[0]int{}); err != nil {
+		t.Fatal(err)
+	}
+	var target *[0]int
+	if _, err := state.Load(t.Context(), &encoded, target); err == nil {
+		t.Fatal("Load accepted an Array without destination storage")
 	}
 }

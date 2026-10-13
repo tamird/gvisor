@@ -61,7 +61,8 @@ type recordMap map[recordSigned]recordUnsigned
 // destinations without spelling component types.
 // +stateify savable
 type statePackageReceiver struct {
-	value    int `state:".(stateObject)"`
+	value    int        `state:".(stateObject)"`
+	object   state.Type `state:".(state.Type)"`
 	enabled  recordBool
 	text     recordString
 	fraction recordFloat
@@ -82,6 +83,14 @@ func (state *statePackageReceiver) saveValue() stateObject {
 
 func (state *statePackageReceiver) loadValue(_ context.Context, value stateObject) {
 	state.value = int(value)
+}
+
+// Signature types do not share the receiver's body scope. The generated
+// LoadValue body must keep the state import visible for this custom type.
+func (state *statePackageReceiver) saveObject() state.Type { return state.object }
+
+func (state *statePackageReceiver) loadObject(_ context.Context, value state.Type) {
+	state.object = value
 }
 
 // The forwarding owner deliberately precedes its underlying type's

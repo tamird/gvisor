@@ -115,3 +115,64 @@ func loadZeroReferenceArray() ([2]countedMapWord, error) {
 	_, err := state.Load(context.Background(), &encoded, &values)
 	return values, err
 }
+
+// +stateify type
+type arraySliceLoadWord struct{ value uint64 }
+
+func (v *arraySliceLoadWord) StateSave(s state.Sink) { s.Save(0, &v.value) }
+
+func (v *arraySliceLoadWord) StateLoad(ctx context.Context, s state.Source) {
+	s.Load(0, &v.value)
+	load := ctx.Value(arraySliceLoadKey{}).(*arraySliceLoadState)
+	load.receivers = append(load.receivers, v)
+	if len(load.receivers) == 1 {
+		*load.target = load.replacement
+	}
+}
+
+type arraySliceLoadKey struct{}
+
+type arraySliceLoadState struct {
+	target      *[]arraySliceLoadWord
+	replacement []arraySliceLoadWord
+	receivers   []*arraySliceLoadWord
+}
+
+// A handwritten saver can supply an Array to an ordinary generated slice
+// field. Use the public producer so the fixture cannot invent invalid wire
+// constructors or heterogeneous array framing.
+// +stateify savable
+type arraySliceLoad struct {
+	ignored uint64 `state:"nosave"`
+	values  []arraySliceLoadWord
+}
+
+func (v *arraySliceLoad) StateSave(s state.Sink) {
+	var values [2]arraySliceLoadWord
+	copy(values[:], v.values)
+	s.SaveValue(0, values)
+}
+
+// +stateify savable
+type earlyLoadFields struct {
+	ignored uint64 `state:"nosave"`
+	value   uint64
+	_       uint64 `state:"nosave"`
+	text    string
+}
+
+// The normal build permits unregistered concrete Save/Load before generated
+// init. Race mode deliberately rejects the missing registration; the test
+// preserves that distinction instead of attributing a new early load to it.
+var earlyFieldsValue, earlyFieldsError = loadEarlyFields()
+
+func loadEarlyFields() (earlyLoadFields, error) {
+	original := earlyLoadFields{value: 29, text: "before registration"}
+	var encoded bytes.Buffer
+	if _, err := state.Save(context.Background(), &encoded, &original); err != nil {
+		return earlyLoadFields{}, err
+	}
+	var loaded earlyLoadFields
+	_, err := state.Load(context.Background(), &encoded, &loaded)
+	return loaded, err
+}
