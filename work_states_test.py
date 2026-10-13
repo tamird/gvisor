@@ -7,7 +7,7 @@ from work_states import check_purpose, checks_passed, pr_states, record_states, 
 
 
 def original(**changes: object) -> dict:
-    pr = {"number": 1, "status": "open", "head": "a" * 40, "ref": "topic",
+    pr = {"number": 1, "status": "open", "head": "a" * 40, "ref": "topic", "headOwner": "tamird", "headRepo": "tamird/gvisor",
           "reviewDecision": None, "headHistoryComplete": True, "headCommittedAt": "2026-08-31T00:00:00Z",
           "imports": [], "importsComplete": True,
           "labels": [], "labelsComplete": True, "checks": None}
@@ -231,10 +231,10 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(record_states([original()], registry, previous, "2026-10-04T00:00:00Z")["pr:1"]["maintainer-review"]["since"], "2026-10-04T00:00:00Z")
 
     def test_exact_close_timestamp_and_curated_head(self):
-        branch = {"id": "branch:other", "type": "branch", "ref": "other", "head": "b" * 40,
+        branch = {"id": "branch:other", "type": "branch", "repo": "tamird/gvisor", "ref": "other", "head": "b" * 40,
                   "status": "contributor review requested",
                   "contributorReview": {"status": "pending", "head": "b" * 40}}
-        registry = {"nodes": [branch]}
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}
         pr = original(status="merged", mergedAt="2026-10-01T01:00:00Z")
         states = record_states([pr], registry, {}, "2026-10-02T00:00:00Z")
         self.assertEqual(states["pr:1"]["merged"]["basis"], "transition")
@@ -245,6 +245,21 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual((unknown["basis"], unknown["since"], unknown["scope"]), ("unknown", None, None))
         branch["ref"] = "topic"
         self.assertNotIn("branch:other", record_states([pr], registry, {}, "2026-10-02T00:00:00Z"))
+
+    def test_same_branch_name_in_another_repository_is_not_promoted(self):
+        branch = {"id": "branch:go", "type": "branch", "repo": "tamird/go", "ref": "topic",
+                  "head": "b" * 40, "contributorReview": {"status": "pending", "head": "b" * 40}}
+        registry = {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}
+        states = record_states([original()], registry, {}, "2026-10-02T00:00:00Z")
+        self.assertEqual(states[branch["id"]]["contributor-review"]["scope"], branch["head"])
+        branch["repo"] = "tamird/gvisor"
+        self.assertNotIn(branch["id"], record_states([original()], registry, {}, "2026-10-02T00:00:00Z"))
+        for head_repo in (None, "tamird/renamed-fork"):
+            with self.subTest(head_repo=head_repo):
+                states = record_states([original(headRepo=head_repo)], registry, {}, "2026-10-02T00:00:00Z")
+                self.assertIn(branch["id"], states)
+        branch["repo"] = "tamird/renamed-fork"
+        self.assertNotIn(branch["id"], record_states([original(headRepo="tamird/renamed-fork")], registry, {}, "2026-10-02T00:00:00Z"))
 
     def test_contributor_changes_are_current_head_branch_evidence(self):
         branch = {"id": "branch:revision", "type": "branch", "ref": "revision",
@@ -271,7 +286,8 @@ class WorkStatesTest(unittest.TestCase):
         self.assertEqual(set(current[branch["id"]]), {"changes-requested"})
         self.assertEqual(current[branch["id"]]["changes-requested"]["since"], "2026-10-02T00:00:00Z")
         branch["ref"] = "topic"
-        self.assertNotIn(branch["id"], record_states([original()], {"nodes": [branch]}, previous,
+        branch["repo"] = "tamird/gvisor"
+        self.assertNotIn(branch["id"], record_states([original()], {"meta": {"repo": "google/gvisor"}, "nodes": [branch]}, previous,
                                                     "2026-10-03T00:00:00Z"))
 
     def test_waiting_merge_requires_verified_complete_green_heads(self):

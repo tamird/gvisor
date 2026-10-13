@@ -210,10 +210,11 @@ def pr_states(pr: dict) -> dict[str, StateEvidence]:
 
 def derive_states(prs: list[dict], registry: dict) -> StateMap:
     states = {f"pr:{pr['number']}": pr_states(pr) for pr in prs}
-    promoted = {pr["ref"] for pr in prs if pr["status"] in {"open", "draft", "merged"}}
+    promoted = {(pr["headRepo"], pr["ref"]) for pr in prs
+                if pr.get("headRepo") and pr["status"] in {"open", "draft", "merged"}}
     closed = {f"pr:{pr['number']}" for pr in prs if pr["status"] in {"closed", "merged"}}
     for node in registry["nodes"]:
-        if node["type"] != "branch" or node["id"] in closed or node.get("ref") in promoted:
+        if node["type"] != "branch" or node["id"] in closed or (node.get("repo"), node.get("ref")) in promoted:
             continue
         # Only the task owner records actual pending contributor decisions.
         # An unpublished amendment is its own branch, not the live PR's state.

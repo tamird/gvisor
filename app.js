@@ -1087,7 +1087,7 @@ function applyLive(snapshot, nextRegistry = registry) {
   for (const original of [...snapshot.prs, ...(snapshot.resolved || [])]) {
     const pr = withConflictResult(original);
     const id = `pr:${pr.number}`, existing = ids.get(id);
-    const branch = pr.ref ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === `${registry.meta.owner}/gvisor`) : null;
+    const branch = pr.ref && pr.headRepo ? nodes.find((node) => node.type === "branch" && node.ref === pr.ref && node.repo === pr.headRepo) : null;
     const node = { ...existing, id, type: "pr", number: pr.number, repo: registry.meta.repo, title: pr.title, url: pr.url,
       status: pr.status, updatedAt: pr.updatedAt, ref: pr.ref || existing?.ref, group: existing?.group || branch?.group || "new",
       workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
@@ -1120,12 +1120,14 @@ function validateRegistry(candidate) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
   for (const node of candidate.nodes) {
+    const proposalRepo = node.type === "branch" && typeof node.repo === "string"
+      && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) && node.repo.split("/")[0] === candidate.meta.owner ? node.repo : null;
     const decision = node.contributorReview;
     if (decision !== undefined && (!decision || decision.status !== "pending" || !/^[a-f0-9]{40}$/.test(decision.head) ||
-        decision.url !== `https://github.com/tamird/gvisor/commit/${decision.head}`)) throw new Error("Invalid contributor decision");
+        !proposalRepo || decision.url !== `https://github.com/${proposalRepo}/commit/${decision.head}`)) throw new Error("Invalid contributor decision");
     const changes = node.contributorChangesRequested;
     if (changes !== undefined && (!changes || node.type !== "branch" || decision !== undefined ||
-        !/^[a-f0-9]{40}$/.test(changes.head) || changes.url !== `https://github.com/tamird/gvisor/commit/${changes.head}`))
+        !/^[a-f0-9]{40}$/.test(changes.head) || !proposalRepo || changes.url !== `https://github.com/${proposalRepo}/commit/${changes.head}`))
       throw new Error("Invalid contributor changes request");
     const recovery = node.ciRecovery;
     if (recovery !== undefined && (!recovery || node.type !== "pr" || node.repo !== candidate.meta.repo
@@ -1205,6 +1207,7 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
       const observation = item.mergeabilityObservation;
       if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation time");
       if (item.base != null && !/^[a-f0-9]{40}$/.test(item.base)) throw new Error("Invalid PR base");
+      if (item.headRepo != null && (typeof item.headRepo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(item.headRepo))) throw new Error("Invalid PR head repository");
       if (observation != null && (!["MERGEABLE", "CONFLICTING"].includes(observation.state) ||
           !/^[a-f0-9]{40}$/.test(observation.head) || (observation.base != null && !/^[a-f0-9]{40}$/.test(observation.base)) ||
           !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation");

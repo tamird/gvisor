@@ -26,6 +26,35 @@ test('new contributor observation survives an older full snapshot and controls a
   assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid state observation/);
 });
 
+test('contributor decisions bind the registered branch repository and exact proposal head', () => {
+  const context = client(), head = 'c'.repeat(40);
+  for (const repo of ['tamird/gvisor', 'tamird/go']) {
+    const node = { id: 'branch:proposal', type: 'branch', repo, head,
+      contributorReview: { status: 'pending', head, url: `https://github.com/${repo}/commit/${head}` },
+      workStates: { 'contributor-review': { scope: head, basis: 'unknown', since: null } } };
+    context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+    context.nodeInput = node;
+    vm.runInContext('validateRegistry(registryInput)', context);
+    assert.deepEqual(idsFor(node), ['author-proposal']);
+    assert.equal(reasonsFor(node)[0].owner, 'user');
+    const correct = node.contributorReview.url;
+    for (const url of [`https://github.com/tamird/unrelated/commit/${head}`,
+      `https://github.com/${repo}/commit/${'d'.repeat(40)}`, `https://github.com/google/go/commit/${head}`]) {
+      node.contributorReview.url = url;
+      assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor decision/);
+    }
+    node.contributorReview.url = correct;
+    node.contributorChangesRequested = { head, url: correct };
+    delete node.contributorReview;
+    vm.runInContext('validateRegistry(registryInput)', context);
+    node.contributorChangesRequested.url = `https://github.com/tamird/unrelated/commit/${head}`;
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor changes request/);
+    node.contributorChangesRequested.url = correct;
+    node.repo = 'tamird/go/extra';
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid contributor changes request/);
+  }
+});
+
 test('direct terminal status refresh does not refresh other PR states', () => {
   const context = client();
   context.snapshotInput.prs = [{ number: 1, imports: [], head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: context.snapshotInput.checkedAt,

@@ -33,7 +33,7 @@ commits(last:1) { nodes { commit { oid committedDate statusCheckRollup {
 """
 FIELDS = """
 number title url state isDraft headRefName headRefOid baseRefOid updatedAt createdAt mergedAt closedAt
-headRepository { owner { login } } repository { nameWithOwner }
+headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
 comments(last:100) { pageInfo { hasPreviousPage } nodes {
@@ -172,6 +172,7 @@ def normalize(pr: dict) -> dict:
         "headIntroducedAt": max((event["createdAt"] for event in pr.get("headHistory", {}).get("nodes", [])
                                  if (event.get("afterCommit") or {}).get("oid") == pr["headRefOid"]), default=None),
         "headOwner": (pr["headRepository"] or {}).get("owner", {}).get("login"),
+        "headRepo": (pr["headRepository"] or {}).get("nameWithOwner"),
         "updatedAt": pr["updatedAt"], "createdAt": pr["createdAt"],
         "mergedAt": pr["mergedAt"], "closedAt": pr["closedAt"],
         "githubReviewDecision": pr["reviewDecision"],

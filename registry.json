@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T22:00:47.154029+00:00",
+    "updatedAt": "2026-10-13T22:12:25.629104+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6598,6 +6598,36 @@
           "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb"
         ]
       }
+    },
+    {
+      "id": "branch:go-benchmark-repeat-failure",
+      "type": "branch",
+      "repo": "tamird/go",
+      "ref": "benchmark-repeat-failure",
+      "head": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
+      "title": "testing: propagate repeated benchmark failures",
+      "group": "runtime",
+      "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
+      "status": "Contributor review pending",
+      "updatedAt": "2026-10-13T22:12:25.629104+00:00",
+      "summary": "The Go fix preserves failure propagation from later benchmark count/CPU repetitions to the original benchmark. Before/after validation reproduces the incorrect native exit 0/PASS after a real failure, then verifies exit 1/FAIL with the fix. The full testing and test2json package checks pass, with one intentional fuzz seed skip retained. The contributor is deciding whether to upload this exact source as a new Gerrit change; no Gerrit change has been uploaded for this proposal. The independent containerd upload failure and incomplete Nginx pilot remain separate.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
+        "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43"
+      },
+      "followup": {
+        "owner": "restore_integration_review",
+        "disposition": "Qualified Go proposal awaiting contributor decision",
+        "sourceHead": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
+        "observedAt": "2026-10-13T22:12:25.629104+00:00",
+        "nextAction": "Await the contributor’s decision on uploading this exact fix to Go Gerrit.",
+        "evidence": [
+          "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
+          "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3",
+          "https://github.com/golang/go/issues/61767#issuecomment-4939164585"
+        ]
+      }
     }
   ],
   "edges": [
@@ -8874,7 +8904,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T21:38:33.708003+00:00",
+      "updatedAt": "2026-10-13T22:12:25.629104+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe subsequent idle-Nginx restore pilot is independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.",
       "findings": [
         {
@@ -9220,9 +9250,22 @@
               "url": "https://app.buildbuddy.io/invocation/301eb325-1b7e-4032-961d-cf0fd8e6dd60"
             }
           ]
+        },
+        {
+          "text": "A later benchmark repetition could fail without marking its original Go benchmark as failed. The source-bound before/after validation now closes a narrow Go fix, including both repetition-by-count and repetition-by-CPU cases, full testing/test2json checks and the same native late-failure reproducer. This does not repair the independent containerd upload failure or complete the Nginx pilot. The contributor is deciding whether to upload the exact Go fix to Gerrit.",
+          "evidence": [
+            {
+              "label": "Qualified Go proposal awaiting contributor decision",
+              "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43"
+            },
+            {
+              "label": "Original before/after status validation",
+              "url": "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate the containerd duplicate-content upload failure and the separate Go repeated-benchmark failure-reporting bug before another workload. The fixed comparison remains fully reviewed and mixed; the incomplete Nginx pilot is not a passed performance result.",
+      "nextStep": "The Go benchmark-status fix is qualified and awaiting a contributor decision on Gerrit upload. Agent work continues on the containerd content-lifetime fix and the holistic state redesign. The fixed count=1 cohort remains qualified; the six-row Nginx pilot remains incomplete.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9591,7 +9634,7 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T21:38:33.708003+00:00",
+      "updatedAt": "2026-10-13T22:12:25.629104+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe subsequent idle-Nginx restore pilot is independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.",
       "findings": [
         {
@@ -10094,9 +10137,22 @@
               "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52"
             }
           ]
+        },
+        {
+          "text": "A later benchmark repetition could fail without marking its original Go benchmark as failed. The source-bound before/after validation now closes a narrow Go fix, including both repetition-by-count and repetition-by-CPU cases, full testing/test2json checks and the same native late-failure reproducer. This does not repair the independent containerd upload failure or complete the Nginx pilot. The contributor is deciding whether to upload the exact Go fix to Gerrit.",
+          "evidence": [
+            {
+              "label": "Qualified Go proposal awaiting contributor decision",
+              "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43"
+            },
+            {
+              "label": "Original before/after status validation",
+              "url": "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3"
+            }
+          ]
         }
       ],
-      "nextStep": "Investigate the containerd duplicate-content upload failure and the separate Go repeated-benchmark failure-reporting bug before another workload. The fixed comparison remains fully reviewed and mixed; the incomplete Nginx pilot is not a passed performance result.",
+      "nextStep": "The Go benchmark-status fix is qualified and awaiting a contributor decision on Gerrit upload. Agent work continues on the containerd content-lifetime fix and the holistic state redesign. The fixed count=1 cohort remains qualified; the six-row Nginx pilot remains incomplete.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
