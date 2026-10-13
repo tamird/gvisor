@@ -25,10 +25,12 @@ import (
 	"strings"
 	"testing"
 
+	"gvisor.dev/gvisor/pkg/abi/linux"
 	"gvisor.dev/gvisor/pkg/context"
 	"gvisor.dev/gvisor/pkg/sentry/contexttest"
 	"gvisor.dev/gvisor/pkg/sentry/kernel/auth"
 	"gvisor.dev/gvisor/pkg/sentry/vfs"
+	"gvisor.dev/gvisor/pkg/usermem"
 )
 
 func TestTarXattrRoundTrip(t *testing.T) {
@@ -102,7 +104,7 @@ func tarWithFile(t *testing.T, name string, content []byte) *bytes.Buffer {
 
 // mountFromTarTestOnly mounts a tmpfs from the tar archive in src. The mount
 // is released when the test ends.
-func mountFromTarTestOnly(t *testing.T, ctx context.Context, src io.Reader) *filesystem {
+func mountFromTarTestOnly(t *testing.T, ctx context.Context, src io.Reader, data string) *filesystem {
 	t.Helper()
 	creds := auth.CredentialsFromContext(ctx)
 	vfsObj := &vfs.VirtualFilesystem{}
@@ -114,6 +116,7 @@ func mountFromTarTestOnly(t *testing.T, ctx context.Context, src io.Reader) *fil
 	})
 	mntns, err := vfsObj.NewMountNamespace(ctx, creds, "", "tmpfs", &vfs.MountOptions{
 		GetFilesystemOptions: vfs.GetFilesystemOptions{
+			Data: data,
 			InternalData: FilesystemOpts{
 				SourceTar: io.NopCloser(src),
 			},
@@ -177,7 +180,7 @@ func TestSourceTarLongSymlinkRelease(t *testing.T) {
 	}}, [][]byte{nil})
 
 	// Without the fix, the release on cleanup underflows fs.pagesUsed and panics.
-	mountFromTarTestOnly(t, ctx, src)
+	mountFromTarTestOnly(t, ctx, src, "")
 }
 
 // TestTarRegularFileRoundTrip checks that file contents survive a restore and
@@ -187,7 +190,7 @@ func TestTarRegularFileRoundTrip(t *testing.T) {
 		t.Run(fmt.Sprint(size), func(t *testing.T) {
 			ctx := contexttest.Context(t)
 			want := randomBytes(size)
-			fs := mountFromTarTestOnly(t, ctx, tarWithFile(t, "./file", want))
+			fs := mountFromTarTestOnly(t, ctx, tarWithFile(t, "./file", want), "")
 
 			var out bytes.Buffer
 			if err := fs.tarWrite(ctx, &out, tarDefaultWriterCallbacks{}); err != nil {
@@ -212,7 +215,7 @@ func TestTarRegularFileAllocation(t *testing.T) {
 
 	var before, after runtime.MemStats
 	runtime.ReadMemStats(&before)
-	fs := mountFromTarTestOnly(t, ctx, src)
+	fs := mountFromTarTestOnly(t, ctx, src, "")
 	runtime.ReadMemStats(&after)
 	allocated := after.TotalAlloc - before.TotalAlloc
 	t.Logf("restoring a %d byte file allocated %d bytes", fileSize, allocated)
@@ -233,19 +236,74 @@ func TestTarRegularFileAllocation(t *testing.T) {
 	}
 }
 
-// TestTarDuplicateRegularFile checks that the last of several entries for the
-// same path wins and that earlier ones are released.
+// TestTarDuplicateRegularFile checks that replacing an entry releases its
+// resources before the replacement is allocated, and hard links use the winner.
 func TestTarDuplicateRegularFile(t *testing.T) {
-	ctx := contexttest.Context(t)
 	first := randomBytes(5 << 12)
 	second := []byte("second")
-	src := tarWithEntries(t, []*tar.Header{
-		{Name: "./f", Typeflag: tar.TypeReg, Mode: 0644, Size: int64(len(first))},
-		{Name: "./f", Typeflag: tar.TypeReg, Mode: 0644, Size: int64(len(second))},
-	}, [][]byte{first, second})
-	fs := mountFromTarTestOnly(t, ctx, src)
-	if got := fs.pagesUsed.Load(); got != 1 {
-		t.Errorf("pagesUsed = %d, want 1", got)
+	for _, test := range []struct {
+		name     string
+		data     string
+		typeflag byte
+		mode     uint32
+	}{
+		// Each version fits, but both versions together exceed the limit.
+		{name: "pages", data: fmt.Sprintf("size=%d", len(first)), typeflag: tar.TypeReg, mode: linux.S_IFREG},
+		// Two inodes allow the root directory and one file, not two versions.
+		{name: "inodes", data: "nr_inodes=2", typeflag: tar.TypeReg, mode: linux.S_IFREG},
+		{name: "fifo", data: "nr_inodes=2", typeflag: tar.TypeFifo, mode: linux.S_IFIFO},
+		{name: "block", data: "nr_inodes=2", typeflag: tar.TypeBlock, mode: linux.S_IFBLK},
+		{name: "char", data: "nr_inodes=2", typeflag: tar.TypeChar, mode: linux.S_IFCHR},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := contexttest.Context(t)
+			replacement := &tar.Header{Name: "./f", Typeflag: test.typeflag, Mode: 0644}
+			var content []byte
+			var wantPages uint64
+			if test.typeflag == tar.TypeReg {
+				content = second
+				replacement.Size = int64(len(content))
+				wantPages = 1
+			}
+			src := tarWithEntries(t, []*tar.Header{
+				{Name: "./f", Typeflag: tar.TypeReg, Mode: 0644, Size: int64(len(first))},
+				replacement,
+				{Name: "./alias", Typeflag: tar.TypeLink, Linkname: "./f"},
+			}, [][]byte{first, content, nil})
+			fs := mountFromTarTestOnly(t, ctx, src, test.data)
+			if got, want := fs.pagesUsed.Load(), wantPages; got != want {
+				t.Errorf("pagesUsed = %d, want %d", got, want)
+			}
+			if got, want := fs.inodesUsed.Load(), uint64(2); got != want {
+				t.Errorf("inodesUsed = %d, want %d", got, want)
+			}
+			fs.mu.RLock()
+			children := fs.root.inode.impl.(*directory).childMap
+			file, alias := children["f"], children["alias"]
+			fs.mu.RUnlock()
+			if file == nil || alias == nil {
+				t.Fatal("restored file or its hard link is missing")
+			}
+			if got, want := file.inode.mode.Load()&linux.S_IFMT, test.mode; got != want {
+				t.Errorf("file type = %#o, want %#o", got, want)
+			}
+			if got, want := alias.inode, file.inode; got != want {
+				t.Errorf("hard-link inode = %p, want replacement inode %p", got, want)
+			}
+			if test.typeflag == tar.TypeReg {
+				rf := file.inode.impl.(*regularFile)
+				if got, want := rf.size.Load(), uint64(len(content)); got != want {
+					t.Errorf("size = %d, want %d", got, want)
+				}
+				buf := make([]byte, len(content))
+				rw := getRegularFileReadWriter(rf, 0, 0)
+				n, err := usermem.BytesIOSequence(buf).CopyOutFrom(ctx, rw)
+				putRegularFileReadWriter(rw)
+				if got, want := buf, content; err != nil || n != int64(len(want)) || !bytes.Equal(got, want) {
+					t.Errorf("replacement contents = %q (%d bytes, %v), want %q", got, n, err, want)
+				}
+			}
+		})
 	}
 }
 
@@ -253,7 +311,7 @@ func TestTarDuplicateRegularFile(t *testing.T) {
 // exceeds the size limit fails without corrupting page accounting.
 func TestFSCheckpointRestoreSizeLimit(t *testing.T) {
 	ctx := contexttest.Context(t)
-	src := mountFromTarTestOnly(t, ctx, tarWithFile(t, "./f", randomBytes(16<<12)))
+	src := mountFromTarTestOnly(t, ctx, tarWithFile(t, "./f", randomBytes(16<<12)), "")
 	var ckpt bytes.Buffer
 	if err := FSCheckpointWrite(ctx, &src.vfsfs, &ckpt); err != nil {
 		t.Fatalf("FSCheckpointWrite: %v", err)
