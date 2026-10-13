@@ -729,5 +729,5 @@ func isInboundMulticastOrBroadcast(pkt *PacketBuffer, localAddr netip.Addr) bool
 }
 
 func isSpecified(addr netip.Addr) bool {
-	return addr != header.IPv4Any && addr != header.IPv6Any
+	return addr.IsValid() && !addr.IsUnspecified()
 }

@@ -360,17 +360,22 @@ func (fl IPHeaderFilter) NetworkProtocol() tcpip.NetworkProtocolNumber {
 
 // filterAddress returns whether addr matches the filter.
 func filterAddress(addr, mask, filterAddr netip.Addr, invert bool) bool {
-	matches := true
+	// Rules may omit their IPHeaderFilter to match any address.
+	if !mask.IsValid() && !filterAddr.IsValid() {
+		return addr.IsValid() != invert
+	}
 	addrBytes := addr.AsSlice()
 	maskBytes := mask.AsSlice()
 	filterBytes := filterAddr.AsSlice()
-	for i := range filterAddr.AsSlice() {
-		if addrBytes[i]&maskBytes[i] != filterBytes[i] {
-			matches = false
-			break
+	if len(addrBytes) == 0 || len(addrBytes) != len(maskBytes) || len(addrBytes) != len(filterBytes) {
+		return invert
+	}
+	for i, b := range filterBytes {
+		if addrBytes[i]&maskBytes[i] != b {
+			return invert
 		}
 	}
-	return matches != invert
+	return !invert
 }
 
 // A Matcher is the interface for matching packets.
