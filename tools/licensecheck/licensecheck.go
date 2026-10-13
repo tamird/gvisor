@@ -156,7 +156,7 @@ type dep struct {
 	modulePath string // kindGoModule: module path, independent of the audit name.
 	url        string // kindArchive, kindWheel or kindApt.
 	sha256     string // Bazel's pinned artifact hash.
-	aptRepo    string // kindApt: imported repository reference.
+	aptRepo    string // kindApt: canonical repository reference.
 	aptArch    string // kindApt: selected target architecture, including for Architecture: all.
 	aptPackage string // kindApt: binary package name owning usr/share/doc/<name>/copyright.
 }
@@ -481,7 +481,7 @@ func enumerate(p Paths) ([]dep, error) {
 			}
 			deps = append(deps, modules...)
 		case "translate_dependency_set":
-			packages, err := aptDependencies(r.name, r.ref, repo)
+			packages, err := aptDependencies(r.name, repo)
 			if err != nil {
 				return nil, err
 			}

@@ -47,7 +47,11 @@ type aptLock struct {
 	Sources map[string]struct{ URIs []string }
 }
 
-func aptDependencies(name, ref string, repo repoInfo) ([]dep, error) {
+func aptDependencies(name string, repo repoInfo) ([]dep, error) {
+	canonical := repo.first("name")
+	if !fs.ValidPath(canonical) || canonical == "." || strings.ContainsAny(canonical, `/\`) {
+		return nil, fmt.Errorf("apt hub %s: invalid canonical repository name %q", name, canonical)
+	}
 	var lock aptLock
 	if err := json.Unmarshal([]byte(repo.first("lock_content")), &lock); err != nil {
 		return nil, fmt.Errorf("apt hub %s: invalid lock_content: %w", name, err)
@@ -98,7 +102,7 @@ func aptDependencies(name, ref string, repo repoInfo) ([]dep, error) {
 				return nil, fmt.Errorf("apt package %s must have an HTTPS archive URL without credentials", key)
 			}
 			d := dep{name: "apt/" + name + "/" + arch + "/" + pkg.Name, kind: kindApt,
-				url: artifact, sha256: hex.EncodeToString(hash), aptRepo: ref, aptArch: arch, aptPackage: pkg.Name}
+				url: artifact, sha256: hex.EncodeToString(hash), aptRepo: "@@" + canonical, aptArch: arch, aptPackage: pkg.Name}
 			if old, ok := byName[d.name]; ok && old != d {
 				return nil, fmt.Errorf("conflicting apt package artifacts for %s", d.name)
 			}
@@ -239,51 +243,88 @@ func aptLicenseText(files map[string]aptFile, pkg string) (string, error) {
 // package extraction and architecture selection. Each archive is built/read
 // once, not once for every package in its closure.
 func fetchAptLicenses(deps []dep) map[string]fetchResult {
-	type selection struct{ repo, arch string }
-	groups := make(map[selection][]dep)
-	var order []selection
+	groups := make(map[string]map[string][]dep)
 	for _, d := range deps {
 		if d.kind == kindApt {
-			key := selection{d.aptRepo, d.aptArch}
-			if _, ok := groups[key]; !ok {
-				order = append(order, key)
+			if groups[d.aptArch] == nil {
+				groups[d.aptArch] = make(map[string][]dep)
 			}
-			groups[key] = append(groups[key], d)
+			groups[d.aptArch][d.aptRepo] = append(groups[d.aptArch][d.aptRepo], d)
 		}
 	}
 	results := make(map[string]fetchResult)
-	for _, selected := range order {
-		files, err := materializeAptArchive(selected.repo, selected.arch)
-		for _, d := range groups[selected] {
-			if err != nil {
-				results[d.name] = fetchResult{err: err}
-				continue
+	for _, arch := range slices.Sorted(maps.Keys(groups)) {
+		repos := slices.Sorted(maps.Keys(groups[arch]))
+		paths, buildErr := materializeAptArchives(repos, arch)
+		for _, repo := range repos {
+			var files map[string]aptFile
+			err := buildErr
+			if err == nil {
+				files, err = readAptArchiveFile(paths[repo])
 			}
-			text, textErr := aptLicenseText(files, d.aptPackage)
-			var licenses Licenses
-			if textErr == nil {
-				licenses, textErr = classify(text)
+			for _, d := range groups[arch][repo] {
+				if err != nil {
+					results[d.name] = fetchResult{err: err}
+					continue
+				}
+				text, textErr := aptLicenseText(files, d.aptPackage)
+				var licenses Licenses
+				if textErr == nil {
+					licenses, textErr = classify(text)
+				}
+				results[d.name] = fetchResult{fetched: &fetched{sha256: d.sha256, license: licenses}, err: textErr}
 			}
-			results[d.name] = fetchResult{fetched: &fetched{sha256: d.sha256, license: licenses}, err: textErr}
 		}
 	}
 	return results
 }
 
-func materializeAptArchive(repo, arch string) (map[string]aptFile, error) {
+// materializeAptArchives exposes independent hubs in one build graph per CPU.
+// A failed batch supplies errors for that CPU's dependencies; Fetch may retain
+// their exact previously audited records, but no old output files are read.
+func materializeAptArchives(repos []string, arch string) (map[string]string, error) {
 	config, ok := map[string]string{"amd64": "x86_64", "arm64": "aarch64"}[arch]
 	if !ok {
-		return nil, fmt.Errorf("apt hub %s: unsupported target architecture %s", repo, arch)
+		return nil, fmt.Errorf("apt hubs: unsupported target architecture %s", arch)
 	}
-	out, err := makeBazel("build", "--remote_download_outputs=toplevel --config="+config, repo+"//:flat")
+	var targets []string
+	for _, repo := range repos {
+		targets = append(targets, repo+"//:flat")
+	}
+	out, err := makeBazel("build", "--remote_download_outputs=toplevel --config="+config, targets...)
 	if err != nil {
 		return nil, err
 	}
-	paths := strings.Split(strings.TrimSpace(out), "\n")
-	if len(paths) != 1 || filepath.Base(paths[0]) != "flat.tar" {
-		return nil, fmt.Errorf("apt hub %s: expected one flat.tar output, got %q", repo, out)
+	return aptArchivePaths(repos, out)
+}
+
+// aptArchivePaths binds Make's unordered absolute output paths to canonical
+// repositories. Each root-package flat.tar is directly below its repository's
+// directory, including when Make translates paths from the Docker builder.
+func aptArchivePaths(repos []string, out string) (map[string]string, error) {
+	expected := make(map[string]struct{}, len(repos))
+	for _, repo := range repos {
+		expected[repo] = struct{}{}
 	}
-	f, err := os.Open(paths[0])
+	paths := make(map[string]string, len(repos))
+	for line := range strings.SplitSeq(strings.TrimSpace(out), "\n") {
+		repo := "@@" + filepath.Base(filepath.Dir(line))
+		if _, ok := expected[repo]; !ok || !filepath.IsAbs(line) || filepath.Base(line) != "flat.tar" {
+			return nil, fmt.Errorf("apt hubs: unexpected flat.tar output %q", line)
+		}
+		if _, ok := paths[repo]; ok {
+			return nil, fmt.Errorf("apt hub %s: duplicate flat.tar output", repo)
+		}
+		paths[repo] = line
+	}
+	if len(paths) != len(expected) {
+		return nil, fmt.Errorf("apt hubs: expected %d flat.tar outputs, got %d", len(expected), len(paths))
+	}
+	return paths, nil
+}
+
+func readAptArchiveFile(path string) (map[string]aptFile, error) {
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}

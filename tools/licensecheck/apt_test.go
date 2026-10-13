@@ -20,6 +20,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 	"testing"
@@ -44,11 +45,11 @@ var (
 
 func TestAptDependencies(t *testing.T) {
 	// Exercise the actual escaped lock_content attribute in show_repo output.
-	repos, err := parseShowRepos(fmt.Sprintf("## @tools:\ntranslate_dependency_set(\n  depset_name = %q,\n  lock_content = %q,\n)\n", "container_test_tools", aptLockText))
+	repos, err := parseShowRepos(fmt.Sprintf("## @tools:\ntranslate_dependency_set(\n  name = %q,\n  depset_name = %q,\n  lock_content = %q,\n)\n", "rules_distroless++apt+tools", "container_test_tools", aptLockText))
 	if err != nil {
 		t.Fatal(err)
 	}
-	deps, err := aptDependencies("tools", "@tools", repos["@tools"])
+	deps, err := aptDependencies("tools", repos["@tools"])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +63,7 @@ func TestAptDependencies(t *testing.T) {
 			t.Fatalf("missing %s", name)
 		}
 		d := deps[i]
-		if d.kind != kindApt || d.aptRepo != "@tools" || d.aptArch != arch || d.aptPackage != "erofs-utils" ||
+		if d.kind != kindApt || d.aptRepo != "@@rules_distroless++apt+tools" || d.aptArch != arch || d.aptPackage != "erofs-utils" ||
 			d.source() != "https://snapshot.ubuntu.com/ubuntu/20260928T000000Z/pool/universe/e/erofs-utils/erofs-utils_1.4-1_"+arch+".deb" || len(d.sha256) != 64 {
 			t.Errorf("selected package = %+v", d)
 		}
@@ -92,8 +93,8 @@ func TestAptDependencyArchitectures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo := repoInfo{rule: "translate_dependency_set", attrs: map[string][]string{"depset_name": {"container_test_tools"}, "lock_content": {string(content)}}}
-	deps, err := aptDependencies("tools", "@tools", repo)
+	repo := repoInfo{rule: "translate_dependency_set", attrs: map[string][]string{"name": {"rules_distroless++apt+tools"}, "depset_name": {"container_test_tools"}, "lock_content": {string(content)}}}
+	deps, err := aptDependencies("tools", repo)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,9 +151,62 @@ func TestAptInvalidInventory(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			repo := repoInfo{rule: "translate_dependency_set", attrs: map[string][]string{"depset_name": {"container_test_tools"}, "lock_content": {string(content)}}}
-			if _, err := aptDependencies("tools", "@tools", repo); err == nil || !strings.Contains(err.Error(), test.problem) {
+			repo := repoInfo{rule: "translate_dependency_set", attrs: map[string][]string{"name": {"rules_distroless++apt+tools"}, "depset_name": {"container_test_tools"}, "lock_content": {string(content)}}}
+			if _, err := aptDependencies("tools", repo); err == nil || !strings.Contains(err.Error(), test.problem) {
 				t.Fatalf("error = %v, want %q", err, test.problem)
+			}
+		})
+	}
+}
+
+func TestAptCanonicalRepository(t *testing.T) {
+	for _, test := range []struct {
+		name, canonical string
+	}{
+		{"empty", ""},
+		{"dot", "."},
+		{"parent", "../other"},
+		{"absolute", "/other"},
+		{"backslash", `other\repo`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			repo := repoInfo{rule: "translate_dependency_set", attrs: map[string][]string{"name": {test.canonical}, "depset_name": {"container_test_tools"}, "lock_content": {aptLockText}}}
+			if _, err := aptDependencies("tools", repo); err == nil || !strings.Contains(err.Error(), "canonical repository name") {
+				t.Errorf("aptDependencies(%q) error = %v, want invalid canonical repository name", test.canonical, err)
+			}
+		})
+	}
+}
+
+func TestAptArchivePaths(t *testing.T) {
+	const (
+		first      = "@@rules_distroless++apt+first"
+		second     = "@@rules_distroless++apt+second"
+		firstPath  = "/host/cache/output/bin/external/rules_distroless++apt+first/flat.tar"
+		secondPath = "/translated/container/bin/external/rules_distroless++apt+second/flat.tar"
+	)
+	repos := []string{first, second}
+	// Output order and translated path prefixes do not identify a hub.
+	paths, err := aptArchivePaths(repos, secondPath+"\n"+firstPath+"\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := paths, map[string]string{first: firstPath, second: secondPath}; !maps.Equal(got, want) {
+		t.Errorf("archive paths = %v, want %v", got, want)
+	}
+	for _, test := range []struct {
+		name, output string
+	}{
+		{"empty", ""},
+		{"missing", firstPath},
+		{"duplicate", firstPath + "\n" + firstPath},
+		{"unknown", firstPath + "\n/host/cache/output/bin/external/unselected/flat.tar"},
+		{"wrong_file", firstPath + "\n" + strings.TrimSuffix(secondPath, "flat.tar") + "other.tar"},
+		{"relative", firstPath + "\n" + strings.TrimPrefix(secondPath, "/")},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if paths, err := aptArchivePaths(repos, test.output); err == nil || paths != nil {
+				t.Errorf("archive paths = %v, error = %v; want nil paths and an error", paths, err)
 			}
 		})
 	}
