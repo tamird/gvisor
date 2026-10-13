@@ -223,8 +223,8 @@ func (es *encodeState) resolve(obj reflect.Value, ref *wire.Ref) {
 			//
 			// Note that zero-sized objects must be *true*
 			// zero-sized objects. They cannot be part of some
-			// larger object. In that case, they are assigned a
-			// 1-byte address at the end of the object.
+			// larger object. Interior zero-sized fields are represented
+			// by a one-byte address range below.
 			oes, ok := es.zeroValues[typ]
 			if !ok {
 				oes = &objectEncodeState{

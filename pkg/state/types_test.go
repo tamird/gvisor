@@ -77,6 +77,9 @@ func TestMalformedValueDestinations(t *testing.T) {
 	}{
 		{"scalar_kind", new(int64), wire.Bool(true)},
 		{"array_kind", new(int64), &wire.Array{}},
+		{"array_in_slice", new([]int64), &wire.Array{}},
+		{"map_in_slice", &[]int64{}, &wire.Map{}},
+		{"interface_in_scalar", new(int64), &wire.Interface{Type: wire.TypeSpecNil{}, Value: wire.Nil{}}},
 		{"field_in_array", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{&field}}},
 		{"index_at_length", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{wire.Index(1)}}},
 		{"index_maximum", new(*int64), &wire.Ref{Root: 2, Type: arrayType, Dots: []wire.Dot{^wire.Index(0)}}},

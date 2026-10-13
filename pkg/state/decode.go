@@ -105,7 +105,10 @@ func (ods *objectDecodeState) addCallback(ic internalCallback) {
 func (ods *objectDecodeState) findCycleFor(target *objectDecodeState) []*objectDecodeState {
 	for _, ic := range ods.callbacks {
 		other := ic.source()
-		if other != nil && other == target {
+		if other == nil {
+			continue
+		}
+		if other == target {
 			return []*objectDecodeState{target}
 		} else if childList := other.findCycleFor(target); childList != nil {
 			return append(childList, other)
@@ -388,6 +391,9 @@ func (od *objectDecoder) afterLoad(fn func()) {
 
 // decodeStruct decodes a struct value.
 func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, encoded *wire.Struct) {
+	if obj.Kind() != reflect.Struct {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
 	if encoded.TypeID == 0 {
 		// Allow anonymous empty structs, but only if the encoded
 		// object also has no fields.
@@ -423,6 +429,12 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 // decodeMap decodes a map value. Storage operations are selected once for
 // the actual map type; both adapters share entry decoding and dependency order.
 func (ds *decodeState) decodeMap(ods *objectDecodeState, obj reflect.Value, encoded *wire.Map) {
+	if obj.Kind() != reflect.Map {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
+	if len(encoded.Keys) != len(encoded.Values) {
+		Failf("map has %d keys and %d values", len(encoded.Keys), len(encoded.Values))
+	}
 	native := mapStorage[obj.Type()]
 	address := obj.Addr().UnsafePointer()
 	if native != nil {
@@ -454,6 +466,9 @@ func (ds *decodeState) decodeMapEntry(ods *objectDecodeState, key, value reflect
 
 // decodeArray decodes an array value.
 func (ds *decodeState) decodeArray(ods *objectDecodeState, obj reflect.Value, encoded *wire.Array) {
+	if obj.Kind() != reflect.Array {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
 	if len(encoded.Contents) != obj.Len() {
 		Failf("mismatching array length expect=%d, actual=%d", obj.Len(), len(encoded.Contents))
 	}
@@ -474,7 +489,8 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 	case *wire.TypeSpecPointer:
 		return reflect.PointerTo(ds.findType(x.Type))
 	case *wire.TypeSpecArray:
-		return reflect.ArrayOf(int(x.Count), ds.findType(x.Type))
+		element := ds.findType(x.Type)
+		return reflect.ArrayOf(checkedArrayLength(uint64(x.Count), element.Size()), element)
 	case *wire.TypeSpecSlice:
 		return reflect.SliceOf(ds.findType(x.Type))
 	case *wire.TypeSpecMap:
@@ -488,6 +504,9 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 
 // decodeInterface decodes an interface value.
 func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded *wire.Interface) {
+	if obj.Kind() != reflect.Interface {
+		Failf("wire value has incompatible destination type %v", obj.Type())
+	}
 	if _, ok := encoded.Type.(wire.TypeSpecNil); ok {
 		// Special case; the nil object. Just decode directly, which
 		// will read nil from the wire (if encoded correctly).
@@ -565,11 +584,22 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		if id := objectID(x.Ref.Root); id == 0 {
 			return
 		}
+		if obj.Kind() != reflect.Slice {
+			Failf("wire value has incompatible destination type %v", obj.Type())
+		}
+		element := obj.Type().Elem()
+		capacity := checkedArrayLength(uint64(x.Capacity), element.Size())
+		if x.Length > x.Capacity {
+			Failf("slice length %d exceeds capacity %d", x.Length, x.Capacity)
+		}
 		// Note that it's fine to slice the array here and assume that
 		// contents will still be filled in later on.
-		typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
+		typ := reflect.ArrayOf(capacity, element)
 		v := ds.register(&x.Ref, typ)
-		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
+		if v.Kind() != reflect.Array || v.Type().Elem() != element || v.Len() < capacity {
+			Failf("slice backing type %v does not contain %d elements of %v", v.Type(), capacity, element)
+		}
+		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), capacity))
 	case *wire.Array:
 		ds.decodeArray(ods, obj, x)
 	case *wire.Struct:
@@ -582,6 +612,14 @@ func (ds *decodeState) decodeObject(ods *objectDecodeState, obj reflect.Value, e
 		// Should not happen, not propagated as an error.
 		Failf("unknown object %#v for %q", encoded, obj.Type().Name())
 	}
+}
+
+func checkedArrayLength(count uint64, elementSize uintptr) int {
+	maxInt := uint64(^uint(0) >> 1)
+	if count > maxInt || (elementSize != 0 && count > maxInt/uint64(elementSize)) {
+		Failf("array length %d overflows storage for %d-byte elements", count, elementSize)
+	}
+	return int(count)
 }
 
 // Load deserializes the object graph rooted at obj.
