@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test")
+load("//tools:defs.bzl", "bzl_library", "go_binary")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -8,10 +8,7 @@ package(
 go_binary(
     name = "runner",
     testonly = 1,
-    srcs = [
-        "main.go",
-        "xml.go",
-    ],
+    srcs = ["main.go"],
     data = [
         "//:release",
         "//test/runner/fuse",
@@ -28,21 +25,13 @@ go_binary(
         "//pkg/test/testutil",
         "//runsc/specutils",
         "//test/runner/gtest",
+        "//test/runner/junit",
         "//test/trace/config",
         "//test/uds",
         "@com_github_creack_pty//:go_default_library",
         "@com_github_moby_sys_capability//:go_default_library",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
-    ],
-)
-
-go_test(
-    name = "xml_test",
-    size = "small",
-    srcs = [
-        "xml.go",
-        "xml_test.go",
     ],
 )
 
