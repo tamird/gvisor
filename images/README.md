@@ -45,11 +45,17 @@ consume that archive directly and never invoke Bazel inside a build action.
 
 ## Declared image archives
 
-The Ollama client and benchmark profile-helper images are defined in their
-BUILD files using `rules_oci`. They combine Bazel-built static programs with
-pinned Alpine and Ubuntu bases for AMD64 or ARM64. The profile helper keeps
-Ubuntu because its Kubernetes caller also uses GNU coreutils. Building these
-images does not start a Docker daemon.
+The Ollama client and benchmark profile helper have image targets in their
+BUILD files. Bazel compiles each static Go program with the repository Go
+toolchain and packages it as an executable layer. Both images use
+`//images:helper_base`, which supplies CA trust and a writable `/tmp`.
+The selected architecture controls the program and package inputs.
+
+The profiling helper's Kubernetes caller invokes `mkdir`, `chmod`, and
+`rm --one-file-system` directly. Its image adds these GNU commands, their
+loader and shared libraries, and their license notices from snapshot-pinned
+Ubuntu packages. The filesystem boundary prevents recursive removal from
+crossing into nested mounts on the host.
 
 Both the runtime tests and Make consume these images. The Make commands stage
 each `make_context` archive and hash the complete image to derive its cache tag.

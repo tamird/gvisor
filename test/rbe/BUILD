@@ -180,7 +180,11 @@ go_test(
     name = "profile_helper_test",
     srcs = ["profile_helper_test.go"],
     tags = ["manual"],
-    deps = ["//pkg/test/dockerutil"],
+    deps = [
+        "//pkg/test/dockerutil",
+        "@com_github_docker_docker//api/types/mount:go_default_library",
+        "@org_golang_x_sys//unix:go_default_library",
+    ],
 )
 
 docker_daemon_config(

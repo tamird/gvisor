@@ -88,4 +88,22 @@ func TestOllamaClientImage(t *testing.T) {
 			t.Errorf("missing client timestamp %q in output:\n%s", name, output)
 		}
 	}
+
+	t.Run("system_certificates", func(t *testing.T) {
+		container := dockerutil.MakeNativeContainer(ctx, t)
+		defer container.CleanUp(ctx)
+		// Use the shipped trust bundle without mounting or injecting a test CA.
+		output, err := container.Run(ctx, dockerutil.RunOpts{
+			Image:       "gpu/ollama/client",
+			NetworkMode: "host",
+		}, "httpclient", "--url=https://gvisor.dev/", "--timeout=30s")
+		if err != nil {
+			t.Fatalf("HTTPS with packaged CA trust: %v\n%s", err, output)
+		}
+		for _, marker := range []string{"BODY:", "STATS:"} {
+			if !strings.Contains(output, marker) {
+				t.Errorf("missing %q in HTTPS output:\n%s", marker, output)
+			}
+		}
+	})
 }

@@ -445,36 +445,35 @@ oci.pull(
 )
 use_repo(oci, "source_buildkit", "source_buildkit_linux_amd64", "source_buildkit_linux_arm64")
 
-# Pin both supported client platforms to the same Alpine release index.
-oci.pull(
-    name = "ollama_client_alpine",
-    digest = "sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6",
-    image = "docker.io/library/alpine",
-    platforms = [
-        "linux/amd64",
-        "linux/arm64/v8",
+# The images consume selected files from these packages, without running their
+# installation scripts. The snapshot fixes the packages for both architectures.
+image_apt = use_extension("@rules_distroless//apt:extensions.bzl", "apt")
+image_apt.sources_list(
+    architectures = [
+        "amd64",
+        "arm64",
+    ],
+    components = ["main"],
+    suites = [
+        "jammy",
+        "jammy-updates",
+        "jammy-security",
+    ],
+    types = ["deb"],
+    uris = ["https://snapshot.ubuntu.com/ubuntu/20260928T000000Z"],
+)
+image_apt.install(
+    dependency_set = "helper_image_packages",
+    packages = [
+        "base-files (= 12ubuntu4.7)",
+        "ca-certificates (= 20260601~22.04.1)",
+        "coreutils (= 8.32-4.1ubuntu1.4)",
+        "libc6 (= 2.35-0ubuntu3.15)",
+        "libpcre2-8-0 (= 10.39-3ubuntu0.1)",
+        "libselinux1 (= 3.3-1build2)",
     ],
 )
-
-# The profiling DaemonSet also uses GNU coreutils from the existing Ubuntu base.
-oci.pull(
-    name = "profile_helper_ubuntu",
-    digest = "sha256:5ec03bb3441e8b0bf3b4f9cd4629a1ae763010dc3035bb8da3ae6cf026486401",
-    image = "docker.io/library/ubuntu",
-    platforms = [
-        "linux/amd64",
-        "linux/arm64/v8",
-    ],
-)
-use_repo(
-    oci,
-    "ollama_client_alpine",
-    "ollama_client_alpine_linux_amd64",
-    "ollama_client_alpine_linux_arm64_v8",
-    "profile_helper_ubuntu",
-    "profile_helper_ubuntu_linux_amd64",
-    "profile_helper_ubuntu_linux_arm64_v8",
-)
+use_repo(image_apt, "helper_image_packages")
 
 # images/arch-systemd, built by tools/images.mk as ad890a55561e4450.
 oci.pull(

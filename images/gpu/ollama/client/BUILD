@@ -30,7 +30,7 @@ pkg_tar(
 
 oci_image(
     name = "image",
-    base = "@ollama_client_alpine",
+    base = "//images:helper_base",
     cmd = ["/usr/bin/httpclient"],
     tags = ["manual"],
     target_compatible_with = ["@platforms//os:linux"],

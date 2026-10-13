@@ -1,9 +1,46 @@
+load("@rules_distroless//distroless:defs.bzl", "cacerts")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
+load("//tools:arch.bzl", "select_arch")
 load("//tools:defs.bzl", "bzl_library", "go_binary", "go_test", "pkg_tar")
 
 package(
     default_applicable_licenses = ["//:license"],
     licenses = ["notice"],
+)
+
+cacerts(
+    name = "helper_ca_certificates",
+    package = "@helper_image_packages//ca-certificates:data",
+)
+
+pkg_tar(
+    name = "helper_filesystem",
+    empty_dirs = ["tmp"],
+    mode = "01777",
+)
+
+# Both static Go helpers use this base. Additional runtime commands belong to
+# the image whose caller needs them.
+oci_image(
+    name = "helper_base",
+    architecture = select_arch(
+        amd64 = "amd64",
+        arm64 = "arm64",
+    ),
+    env = {
+        "PATH": "/usr/bin:/bin",
+        "SSL_CERT_FILE": "/etc/ssl/certs/ca-certificates.crt",
+    },
+    os = "linux",
+    tags = ["manual"],
+    target_compatible_with = ["@platforms//os:linux"],
+    tars = [
+        ":helper_ca_certificates",
+        ":helper_filesystem",
+    ],
+    user = "0:0",
+    visibility = ["//images:__subpackages__"],
 )
 
 bzl_library(
