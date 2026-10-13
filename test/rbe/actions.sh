@@ -158,6 +158,20 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+      if [[ $QUALIFICATION_EXECUTION == remote-actions && ${lanes[*]} == build ]]; then
+        # Qualification-only control on this source-build branch. Preserve the
+        # original large action budget and no-retry policy independently of
+        # the coordinator's 7200-second work limit. Do not adopt this block as
+        # generic build-lane policy.
+        printf '%s\n' \
+          'build:buildbuddy_remote_executor --config=source-image-qualification' \
+          'build:source-image-qualification --strategy=SourceImageOCI=remote' \
+          'build:source-image-qualification --strategy=OCITarballManifest=remote' \
+          'build:source-image-qualification --strategy=OCITarball=remote' \
+          'build:source-image-qualification --remote_exec_header=x-buildbuddy-platform.default-timeout=5333s' \
+          'build:source-image-qualification --remote_exec_header=x-buildbuddy-platform.retry=false' \
+          'build:source-image-qualification --remote_retries=0'
+      fi
       if [[ $qualification_retain_reports == true ]]; then
         printf '%s\n' \
           'build:buildbuddy_remote_executor --remote_download_outputs=minimal' \

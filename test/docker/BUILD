@@ -69,6 +69,60 @@ source_image_archive(
     tags = ["manual"],
 )
 
+# Qualification-only cache misses for the actual maintained large Dockerfiles.
+# The marker is hashed by Make but is not copied by either Dockerfile.
+_SOURCE_BUILD_QUALIFICATION = {
+    name.replace("_source_amd64", "_source_miss_amd64"): GPU_SOURCE_IMAGES[name]
+    for name in [
+        "gpu_stable_diffusion_source_amd64",
+        "gpu_triton_source_amd64",
+    ]
+}
+
+[
+    pkg_files(
+        name = name + "_marker",
+        srcs = ["large_source_image_miss.txt"],
+        renames = {"large_source_image_miss.txt": "images/" + image + "/.qualification-miss"},
+        tags = ["manual"],
+    )
+    for name, image in _SOURCE_BUILD_QUALIFICATION.items()
+]
+
+[
+    pkg_tar(
+        name = name + "_context",
+        srcs = [":" + name + "_marker"],
+        tags = ["manual"],
+        deps = ["//images:source_contexts"],
+    )
+    for name in _SOURCE_BUILD_QUALIFICATION
+]
+
+[
+    source_image_archive(
+        name = name,
+        testonly = True,
+        architecture = "x86_64",
+        archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+        contexts = ":" + name + "_context",
+        exec_compatible_with = [
+            "@platforms//os:linux",
+            "@platforms//cpu:x86_64",
+        ],
+        exec_properties = docker_test_exec_properties(
+            exec_group = "",
+            free_disk = "256GB",
+            memory = "12GB",
+            start_daemon = True,
+            vfs = True,
+        ),
+        image = image,
+        tags = ["manual"],
+    )
+    for name, image in _SOURCE_BUILD_QUALIFICATION.items()
+]
+
 docker_image_archives(
     name = "images",
     extra_images = CONTAINERD_IMAGES,
