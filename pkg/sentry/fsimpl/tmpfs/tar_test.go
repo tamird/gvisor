@@ -18,6 +18,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"crypto/rand"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -181,6 +183,52 @@ func TestSourceTarLongSymlinkRelease(t *testing.T) {
 
 	// Without the fix, the release on cleanup underflows fs.pagesUsed and panics.
 	mountFromTarTestOnly(t, ctx, src, "")
+}
+
+// TestTarInvalidACLRelease checks that malformed metadata does not leave
+// detached inodes or long-symlink pages charged to the filesystem.
+func TestTarInvalidACLRelease(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		header tar.Header
+	}{
+		{name: "directory", header: tar.Header{Name: "./entry/", Typeflag: tar.TypeDir}},
+		{name: "fifo", header: tar.Header{Name: "./entry", Typeflag: tar.TypeFifo}},
+		{name: "block", header: tar.Header{Name: "./entry", Typeflag: tar.TypeBlock, Devmajor: 1, Devminor: 1}},
+		{name: "char", header: tar.Header{Name: "./entry", Typeflag: tar.TypeChar, Devmajor: 1, Devminor: 3}},
+		{name: "symlink", header: tar.Header{Name: "./entry", Typeflag: tar.TypeSymlink, Linkname: strings.Repeat("a", shortSymlinkLen)}},
+		// Regular files already have detached-inode error cleanup.
+		{name: "regular", header: tar.Header{Name: "./entry", Typeflag: tar.TypeReg, Size: 1}},
+	} {
+		for _, acl := range []struct {
+			name  string
+			xattr string
+		}{
+			{name: "access", xattr: linux.XATTR_NAME_POSIX_ACL_ACCESS},
+			{name: "default", xattr: linux.XATTR_NAME_POSIX_ACL_DEFAULT},
+		} {
+			t.Run(test.name+"/"+acl.name, func(t *testing.T) {
+				ctx := contexttest.Context(t)
+				fs := mountFromTarTestOnly(t, ctx, tarWithEntries(t, nil, nil), "")
+				inodes, pages := fs.inodesUsed.Load(), fs.pagesUsed.Load()
+				hdr := test.header
+				hdr.Mode = 0755
+				hdr.PAXRecords = map[string]string{paxXattrPrefix + acl.xattr: "!"}
+				src := tarWithEntries(t, []*tar.Header{&hdr}, [][]byte{make([]byte, hdr.Size)})
+				err := fs.tarRead(ctx, src, tarDefaultReaderCallbacks{})
+				var invalid base64.CorruptInputError
+				if !errors.As(err, &invalid) {
+					t.Fatalf("tarRead: got %v, want invalid ACL encoding", err)
+				}
+				if got, want := fs.inodesUsed.Load(), inodes; got != want {
+					t.Errorf("inodesUsed after invalid ACL = %d, want %d", got, want)
+				}
+				if got, want := fs.pagesUsed.Load(), pages; got != want {
+					t.Errorf("pagesUsed after invalid ACL = %d, want %d", got, want)
+				}
+			})
+		}
+	}
 }
 
 // TestTarRegularFileRoundTrip checks that file contents survive a restore and
