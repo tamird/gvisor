@@ -178,6 +178,15 @@ exceptions:
       the selected GNU runtime in the profiling helper image. These
       files are image data, not inputs linked into gVisor release
       binaries.
+  - dependency: apt/helper_image_packages/amd64/ca-certificates
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MPL-2.0
+    exception_rationale: &helper_image_ca >-
+      Supplies the CA trust bundle shared by both Go helper images. The
+      package copyright notice is retained alongside the bundle; its
+      maintenance scripts are excluded from the assembled filesystem.
   - dependency: apt/helper_image_packages/amd64/coreutils
     license:
       - BSD-3-Clause
@@ -329,6 +338,13 @@ exceptions:
       - GPL-2.0
       - GPL-2.0-only
     exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/amd64/openssl
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
+    exception_rationale: *helper_image_resolver
   - dependency: apt/helper_image_packages/amd64/perl-base
     license:
       - Artistic-1.0-Perl
@@ -362,6 +378,12 @@ exceptions:
       - GPL-3.0
       - GPL-3.0-or-later
     exception_rationale: *helper_image_notices
+  - dependency: apt/helper_image_packages/arm64/ca-certificates
+    license:
+      - GPL-2.0
+      - GPL-2.0-or-later
+      - MPL-2.0
+    exception_rationale: *helper_image_ca
   - dependency: apt/helper_image_packages/arm64/coreutils
     license:
       - BSD-3-Clause
@@ -494,6 +516,13 @@ exceptions:
     license:
       - GPL-2.0
       - GPL-2.0-only
+    exception_rationale: *helper_image_resolver
+  - dependency: apt/helper_image_packages/arm64/openssl
+    license:
+      - Apache-2.0
+      - Artistic-1.0-Perl
+      - GPL-1.0
+      - GPL-1.0-or-later
     exception_rationale: *helper_image_resolver
   - dependency: apt/helper_image_packages/arm64/perl-base
     license:
