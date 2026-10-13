@@ -46,6 +46,7 @@ import (
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/specutils"
 	"gvisor.dev/gvisor/test/runner/gtest"
+	"gvisor.dev/gvisor/test/runner/junit"
 	"gvisor.dev/gvisor/test/trace/config"
 	"gvisor.dev/gvisor/test/uds"
 
@@ -126,7 +127,7 @@ func removeShardAndXMLEnvVars(env []string, tc *gtest.TestCase) []string {
 		// so their individual C++ metadata and results are preserved. They will be collated later.
 		if origXML, ok := unix.Getenv("XML_OUTPUT_FILE"); ok && len(origXML) > 0 {
 			safeName := strings.ReplaceAll(tc.Name, "/", "_")
-			env = append(env, fmt.Sprintf("XML_OUTPUT_FILE=%s.%s%s", origXML, safeName, uniqueXMLSuffix))
+			env = append(env, fmt.Sprintf("XML_OUTPUT_FILE=%s.%s%s", origXML, safeName, junit.UniqueSuffix))
 		}
 	}
 	return env
@@ -1222,7 +1223,7 @@ func main() {
 			tests = append(tests, testing.InternalTest{
 				Name: "FakeTestForNotOneSandbox_CollateXML",
 				F: func(t *testing.T) {
-					if err := collateXMLs(origXML); err != nil {
+					if err := junit.Collate(origXML); err != nil {
 						t.Fatalf("Failed to collate XML files: %v", err)
 					}
 				},

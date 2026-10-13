@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package junit
 
 import (
 	"encoding/xml"
@@ -48,12 +48,12 @@ func TestCollateXMLs(t *testing.T) {
 		`<testsuites name="AllTests" tests="0" failures="0" disabled="0" errors="0" time="0."/>`,
 	}
 	for i, input := range inputs {
-		path := fmt.Sprintf("%s.%d%s", report, i, uniqueXMLSuffix)
+		path := fmt.Sprintf("%s.%d%s", report, i, UniqueSuffix)
 		if err := os.WriteFile(path, []byte(input), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
-	if err := collateXMLs(report); err != nil {
+	if err := Collate(report); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(report)
@@ -140,7 +140,7 @@ func TestCollateXMLsNoReports(t *testing.T) {
 	if err := os.WriteFile(report, []byte(original), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := collateXMLs(report); err != nil {
+	if err := Collate(report); err != nil {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(report)
@@ -158,10 +158,10 @@ func TestCollateXMLsMalformedReport(t *testing.T) {
 	if err := os.WriteFile(report, []byte(original), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(report+".bad"+uniqueXMLSuffix, []byte("<testsuites><testsuite>"), 0600); err != nil {
+	if err := os.WriteFile(report+".bad"+UniqueSuffix, []byte("<testsuites><testsuite>"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if err := collateXMLs(report); err == nil {
+	if err := Collate(report); err == nil {
 		t.Fatal("malformed input was accepted")
 	}
 	data, err := os.ReadFile(report)

@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+// Package junit combines the runner's per-test XML reports.
+package junit
 
 import (
 	"encoding/xml"
@@ -23,8 +24,8 @@ import (
 	"time"
 )
 
-// uniqueXMLSuffix is the suffix for individual per-testcase XML outputs.
-const uniqueXMLSuffix = ".unique.xml"
+// UniqueSuffix is the suffix for individual per-testcase XML outputs.
+const UniqueSuffix = ".unique.xml"
 
 // Keep each suite's complete contents and attributes, including failure and
 // skipped elements, properties and any additional GoogleTest metadata.
@@ -50,8 +51,10 @@ type xmlTestSuites struct {
 	Suites     []xmlTestSuite `xml:"testsuite"`
 }
 
-func collateXMLs(origXML string) error {
-	matches, err := filepath.Glob(origXML + ".*" + uniqueXMLSuffix)
+// Collate combines the per-test reports into origXML, preserving each suite's
+// complete contents and attributes.
+func Collate(origXML string) error {
+	matches, err := filepath.Glob(origXML + ".*" + UniqueSuffix)
 	if err != nil {
 		return fmt.Errorf("failed to glob individual XML files: %w", err)
 	}
