@@ -281,34 +281,7 @@ func TestMapEqualWordSnapshots(t *testing.T) {
 					// Put all object bodies before root1. The map must keep its
 					// first registration's storage/restore owner when deferred data
 					// is drained, even if the other field later reaches that map.
-					reader := wire.Reader{Reader: &buf}
-					count, object, err := state.ReadHeader(&reader)
-					if err != nil || !object {
-						t.Fatalf("ReadHeader = %d, %t, %v", count, object, err)
-					}
-					var schemas []wire.Object
-					type objectBody struct{ id, value wire.Object }
-					var objects []objectBody
-					for uint64(len(objects)) < count {
-						value := wire.Load(&reader)
-						if _, ok := value.(*wire.Type); ok {
-							schemas = append(schemas, value)
-							continue
-						}
-						objects = append(objects, objectBody{value, wire.Load(&reader)})
-					}
-					buf.Reset()
-					writer := wire.Writer{Writer: &buf}
-					if err := state.WriteHeader(&writer, count, true); err != nil {
-						t.Fatal(err)
-					}
-					for _, schema := range schemas {
-						wire.Save(&writer, schema)
-					}
-					for i := len(objects) - 1; i >= 0; i-- {
-						wire.Save(&writer, objects[i].id)
-						wire.Save(&writer, objects[i].value)
-					}
+					reverseObjectBodies(t, &buf)
 				}
 				var restored countedMapWordContainer
 				if _, err := state.Load(ctx, &buf, &restored); err != nil {
@@ -378,4 +351,38 @@ func TestMapContainers(t *testing.T) {
 		mapPtrContainer{v: &fullMap},
 		manualMapValue{values: map[int]int{1: 7}},
 	})
+}
+
+// reverseObjectBodies puts every non-root object before root without changing
+// the schema order, object IDs, or each value's encoding.
+func reverseObjectBodies(t *testing.T, buf *bytes.Buffer) {
+	t.Helper()
+	reader := wire.Reader{Reader: buf}
+	count, object, err := state.ReadHeader(&reader)
+	if err != nil || !object {
+		t.Fatalf("ReadHeader = %d, %t, %v", count, object, err)
+	}
+	var schemas []wire.Object
+	type objectBody struct{ id, value wire.Object }
+	var objects []objectBody
+	for uint64(len(objects)) < count {
+		value := wire.Load(&reader)
+		if _, ok := value.(*wire.Type); ok {
+			schemas = append(schemas, value)
+			continue
+		}
+		objects = append(objects, objectBody{value, wire.Load(&reader)})
+	}
+	buf.Reset()
+	writer := wire.Writer{Writer: buf}
+	if err := state.WriteHeader(&writer, count, true); err != nil {
+		t.Fatal(err)
+	}
+	for _, schema := range schemas {
+		wire.Save(&writer, schema)
+	}
+	for i := len(objects) - 1; i >= 0; i-- {
+		wire.Save(&writer, objects[i].id)
+		wire.Save(&writer, objects[i].value)
+	}
 }

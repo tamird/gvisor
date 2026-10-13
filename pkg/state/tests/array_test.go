@@ -16,6 +16,8 @@ package tests
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"math"
 	"reflect"
 	"testing"
@@ -230,5 +232,122 @@ func TestPrimitiveArrayFloatEncoding(t *testing.T) {
 			}
 			t.Logf("primitive-array-wire[%s]: %x", test.name, captured.Bytes())
 		})
+	}
+}
+
+func TestArrayRetainedLoadReceivers(t *testing.T) {
+	for _, first := range []string{"slice", "dynamic", "interior", "pointer_dynamic", "pointer_interior"} {
+		for _, deferred := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/deferred=%t", first, deferred), func(t *testing.T) {
+				backing := [3]countedMapWord{{value: 7}, {value: 11}, {value: 13}}
+				pointers := [3]*countedMapWord{&backing[0], &backing[1], nil}
+				original := countedArrayContainer{
+					values: backing[:2], pointers: pointers[:2],
+					zeros: make([]registeredMapStruct, 2),
+				}
+				switch first {
+				case "dynamic":
+					original.first = original.values
+				case "interior":
+					original.first = &backing[1]
+				case "pointer_dynamic":
+					original.first = original.pointers
+				case "pointer_interior":
+					original.first = &pointers[1]
+				}
+				var receivers mapReceiverCensus
+				ctx := context.WithValue(t.Context(), mapReceiverKey{}, &receivers)
+				var encoded bytes.Buffer
+				if _, err := state.Save(ctx, &encoded, &original); err != nil {
+					t.Fatal(err)
+				}
+				if deferred {
+					reverseObjectBodies(t, &encoded)
+				}
+				var restored countedArrayContainer
+				if _, err := state.Load(ctx, &encoded, &restored); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := restored, original; !reflect.DeepEqual(got, want) {
+					t.Fatalf("restored arrays = %+v, want %+v", got, want)
+				}
+				if got, want := cap(restored.values), 3; got != want {
+					t.Fatalf("value capacity = %d, want %d", got, want)
+				}
+				if got, want := cap(restored.pointers), 3; got != want {
+					t.Fatalf("pointer capacity = %d, want %d", got, want)
+				}
+				values := restored.values[:3]
+				if got, want := len(receivers.loaded), 3; got != want {
+					t.Fatalf("Load receivers = %d, want %d", got, want)
+				}
+				seen := make(map[*countedMapWord]struct{})
+				for _, receiver := range receivers.loaded {
+					if _, ok := seen[receiver]; ok {
+						t.Fatalf("reused Load receiver %p", receiver)
+					}
+					seen[receiver] = struct{}{}
+				}
+				for i := range values {
+					if _, ok := seen[&values[i]]; !ok {
+						t.Errorf("Load did not use backing element %d at %p", i, &values[i])
+					}
+				}
+				for i, pointer := range restored.pointers {
+					if got, want := pointer, &values[i]; got != want {
+						t.Errorf("pointer %d = %p, want %p", i, got, want)
+					}
+				}
+				if got, want := values[2].value, uint64(0); got != want {
+					t.Errorf("cleared tail = %d, want %d", got, want)
+				}
+				if got, want := restored.pointers[:3][2], (*countedMapWord)(nil); got != want {
+					t.Errorf("pointer tail = %p, want %p", got, want)
+				}
+				for _, receiver := range receivers.loaded {
+					if receiver == &values[1] {
+						receiver.value = 29
+					}
+				}
+				if got, want := restored.pointers[1].value, uint64(29); got != want {
+					t.Errorf("receiver mutation = %d, want %d", got, want)
+				}
+				switch first {
+				case "dynamic":
+					if got, want := &restored.first.([]countedMapWord)[1], &values[1]; got != want {
+						t.Errorf("dynamic array alias = %p, want %p", got, want)
+					}
+				case "interior":
+					if got, want := restored.first.(*countedMapWord), &values[1]; got != want {
+						t.Errorf("interior alias = %p, want %p", got, want)
+					}
+				case "pointer_dynamic":
+					if got, want := &restored.first.([]*countedMapWord)[1], &restored.pointers[1]; got != want {
+						t.Errorf("dynamic pointer array alias = %p, want %p", got, want)
+					}
+				case "pointer_interior":
+					if got, want := restored.first.(**countedMapWord), &restored.pointers[1]; got != want {
+						t.Errorf("pointer interior alias = %p, want %p", got, want)
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestArrayRegistrationAfterEarlyLoad(t *testing.T) {
+	if earlyArrayError != nil {
+		t.Fatal(earlyArrayError)
+	}
+	expected := [2]countedMapWord{{value: 7}, {value: 11}}
+	if got, want := earlyArrayValues, expected; got != want {
+		t.Errorf("early array = %v, want %v", got, want)
+	}
+	loaded, err := loadZeroReferenceArray()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := loaded, expected; got != want {
+		t.Errorf("registered array = %v, want %v", got, want)
 	}
 }
