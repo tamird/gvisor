@@ -35,25 +35,25 @@ const (
 	checksumCmdStr              = "checksum"
 	checksumDescription         = "computes the sha256 checksum for a given driver version"
 	validateChecksumCmdStr      = "validate_checksum"
-	validateChecksumDescription = "validates the checksum of all supported drivers"
+	validateChecksumDescription = "validates public installer checksums and expected absences"
 	listCmdStr                  = "list"
-	listDescription             = "lists the supported drivers"
+	listDescription             = "lists publicly installable drivers for this host"
 )
 
 var (
 	// Install installs a give driver on the host machine.
 	installCmd = flag.NewFlagSet(installCmdStr, flag.ContinueOnError)
-	latest     = installCmd.Bool("latest", false, "install the latest supported driver")
+	latest     = installCmd.Bool("latest", false, "install the latest publicly available driver for this host")
 	version    = installCmd.String("version", "", "version of the driver")
 
 	// Computes the sha256 checksum for a given driver's .run file from the nvidia site.
 	checksumCmd     = flag.NewFlagSet(checksumCmdStr, flag.ContinueOnError)
 	checksumVersion = checksumCmd.String("version", "", "version of the driver")
 
-	// Validates all supported driver's checksums of each driver's .run file from the nvidia site.
+	// Validates public installer checksums and declared absence at NVIDIA URLs.
 	validateChecksumCmd = flag.NewFlagSet(validateChecksumCmdStr, flag.ContinueOnError)
 
-	// The list command returns the list of supported drivers from this tool.
+	// The list command returns the publicly installable drivers for this host.
 	listCmd = flag.NewFlagSet(listCmdStr, flag.ContinueOnError)
 	outfile = listCmd.String("outfile", "", "if set, write the list output to this file")
 

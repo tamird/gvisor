@@ -15,6 +15,7 @@ package drivers
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"errors"
 	"fmt"
@@ -133,6 +134,14 @@ func TestDownload(t *testing.T) {
 
 func TestValidateChecksum(t *testing.T) {
 	const content = "arm64 driver"
+	unavailableARM := nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content))
+	unavailableARM.NoPublicARM64Installer = true
+	unavailableARMWithPublicAMD := unavailableARM
+	unavailableARMWithPublicAMD.X86_64 = checksum(content)
+	unavailableAMD := nvproxy.NewChecksums(checksum(content), checksum(content))
+	unavailableAMD.NoPublicX86_64Installer = true
+	emptyARM := unavailableARM
+	emptyARM.ARM64 = ""
 	for _, test := range []struct {
 		name      string
 		checksums nvproxy.Checksums
@@ -140,19 +149,32 @@ func TestValidateChecksum(t *testing.T) {
 		armStatus int
 		wantErr   string
 		requests  int
+		armError  error
 	}{
-		{"both_present", nvproxy.NewChecksums(checksum(content), checksum(content)), http.StatusOK, http.StatusOK, "", 2},
-		{"first_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusNotFound, http.StatusOK, "", 2},
-		{"second_mismatch", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, "wrong"), http.StatusNotFound, http.StatusOK, "checksum mismatch", 2},
-		{"both_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, nvproxy.ChecksumNoDriver), http.StatusNotFound, http.StatusNotFound, "", 2},
-		{"missing_is_not_forbidden", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusForbidden, http.StatusOK, "HTTP 403", 1},
-		{"unexpected_installer", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusOK, http.StatusOK, "unexpected NVIDIA .run installer", 1},
+		{"both_present", nvproxy.NewChecksums(checksum(content), checksum(content)), http.StatusOK, http.StatusOK, "", 2, nil},
+		{"first_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusNotFound, http.StatusOK, "", 2, nil},
+		{"second_mismatch", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, "wrong"), http.StatusNotFound, http.StatusOK, "checksum mismatch", 2, nil},
+		{"both_missing", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, nvproxy.ChecksumNoDriver), http.StatusNotFound, http.StatusNotFound, "", 2, nil},
+		{"missing_is_not_forbidden", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusForbidden, http.StatusOK, "HTTP 403", 1, nil},
+		{"unexpected_installer", nvproxy.NewChecksums(nvproxy.ChecksumNoDriver, checksum(content)), http.StatusOK, http.StatusOK, "unexpected NVIDIA .run installer", 1, nil},
+		{"unavailable_arm", unavailableARM, http.StatusNotFound, http.StatusNotFound, "", 2, nil},
+		{"unavailable_arm_public_amd", unavailableARMWithPublicAMD, http.StatusOK, http.StatusNotFound, "", 2, nil},
+		{"unavailable_amd_public_arm", unavailableAMD, http.StatusNotFound, http.StatusOK, "", 2, nil},
+		{"unavailable_arm_published", unavailableARM, http.StatusNotFound, http.StatusOK, "unexpected NVIDIA .run installer", 2, nil},
+		{"unavailable_arm_forbidden", unavailableARM, http.StatusNotFound, http.StatusForbidden, "HTTP 403", 2, nil},
+		{"unavailable_arm_transport_error", unavailableARM, http.StatusNotFound, 0, "context deadline exceeded", 2, context.DeadlineExceeded},
+		{"unavailable_arm_empty_checksum", emptyARM, http.StatusNotFound, http.StatusNotFound, "empty NVIDIA installer checksum", 0, nil},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var bodies []*responseBody
+			var requests int
 			downloader := Downloader{client: &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				requests++
 				status := test.amdStatus
 				if strings.Contains(req.URL.Path, "aarch64") {
+					if test.armError != nil {
+						return nil, test.armError
+					}
 					status = test.armStatus
 				}
 				body := &responseBody{Reader: strings.NewReader(content)}
@@ -167,7 +189,10 @@ func TestValidateChecksum(t *testing.T) {
 			} else if err == nil || !strings.Contains(err.Error(), test.wantErr) {
 				t.Errorf("ValidateChecksum error = %v, want %q", err, test.wantErr)
 			}
-			if got, want := len(bodies), test.requests; got != want {
+			if test.armError != nil && !errors.Is(err, test.armError) {
+				t.Errorf("ValidateChecksum error = %v, want %v", err, test.armError)
+			}
+			if got, want := requests, test.requests; got != want {
 				t.Errorf("requests = %d, want %d", got, want)
 			}
 			for _, body := range bodies {

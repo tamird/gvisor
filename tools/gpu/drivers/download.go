@@ -96,20 +96,34 @@ func checkChecksum(version nvconf.DriverVersion, arch, got, want string) error {
 	return nil
 }
 
-// ValidateChecksum checks the expected NVIDIA .run installer or its absence for
-// each supported architecture. A missing installer does not skip the other one.
+// ValidateChecksum checks the public NVIDIA .run installer or its declared
+// absence for each architecture. An absent public installer does not validate
+// a retained hash or skip checking the other architecture.
 func (d *Downloader) ValidateChecksum(ctx context.Context, version nvconf.DriverVersion, checksums nvproxy.Checksums) error {
-	for _, target := range []struct {
-		arch     string
-		checksum string
+	targets := []struct {
+		arch        string
+		checksum    string
+		unavailable bool
 	}{
-		{archAMD64, checksums.X86_64},
-		{archARM64, checksums.ARM64},
-	} {
+		{arch: archAMD64, checksum: checksums.X86_64},
+		{arch: archARM64, checksum: checksums.ARM64},
+	}
+	for i := range targets {
+		unavailable, err := checksums.PublicInstallerUnavailable(targets[i].arch)
+		if err != nil {
+			return fmt.Errorf("invalid installer metadata for driver %q: %w", version, err)
+		}
+		targets[i].unavailable = unavailable
+	}
+	for _, target := range targets {
 		got, err := d.Download(ctx, version, target.arch, io.Discard)
-		if target.checksum == nvproxy.ChecksumNoDriver {
+		if target.unavailable {
 			if status, ok := errors.AsType[*downloadStatusError](err); ok && status.code == http.StatusNotFound {
-				log.Infof("NVIDIA .run installer does not exist for driver %q arch: %q", version, target.arch)
+				if target.checksum == nvproxy.ChecksumNoDriver {
+					log.Infof("NVIDIA .run installer does not exist for driver %q arch: %q", version, target.arch)
+				} else {
+					log.Infof("NVIDIA .run installer is unavailable at the public URL for driver %q arch: %q; registered checksum: %q", version, target.arch, target.checksum)
+				}
 				continue
 			}
 			if err == nil {

@@ -57,18 +57,22 @@ type installableDriver struct {
 }
 
 func hostDriver(version nvconf.DriverVersion, checksums nvproxy.Checksums) (installableDriver, error) {
+	unavailable, err := checksums.PublicInstallerUnavailable(runtime.GOARCH)
+	if err != nil {
+		return installableDriver{}, fmt.Errorf("invalid installer metadata for driver %q: %w", version, err)
+	}
+	if unavailable {
+		return installableDriver{}, fmt.Errorf("driver %q has no public NVIDIA .run installer for arch %q", version, runtime.GOARCH)
+	}
 	checksum, err := checksums.Checksum()
 	if err != nil {
 		return installableDriver{}, fmt.Errorf("failed to get checksum for driver %q: %w", version, err)
-	}
-	if checksum == "" || checksum == nvproxy.ChecksumNoDriver {
-		return installableDriver{}, fmt.Errorf("driver %q has no NVIDIA .run installer for arch %q", version, runtime.GOARCH)
 	}
 	return installableDriver{version, checksum}, nil
 }
 
 // installableDrivers is the common host-architecture selection for installation
-// and listing. Registered ABIs without an available installer are excluded.
+// and listing. Registered ABIs without a public installer are excluded.
 func installableDrivers() []installableDriver {
 	var drivers []installableDriver
 	nvproxy.ForEachSupportDriver(func(version nvconf.DriverVersion, checksums nvproxy.Checksums) {
@@ -79,7 +83,7 @@ func installableDrivers() []installableDriver {
 	return drivers
 }
 
-// NewInstaller selects a supported driver for the host architecture.
+// NewInstaller selects a supported, publicly installable driver for this host.
 func NewInstaller(requestedVersion string, latest bool) (*Installer, error) {
 	var selected installableDriver
 	if latest {
@@ -218,8 +222,8 @@ func getCurrentDriver(ctx context.Context) (nvconf.DriverVersion, error) {
 	return nvconf.DriverVersionFrom(sameVersion)
 }
 
-// ListSupportedDrivers prints the drivers to stdout in a format that can be
-// consumed by the Makefile to iterate tests across drivers.
+// ListSupportedDrivers prints the publicly installable drivers for this host in
+// a format that can be consumed by the Makefile to iterate tests across drivers.
 func ListSupportedDrivers(outfile string) error {
 	var list []string
 	for _, driver := range installableDrivers() {
