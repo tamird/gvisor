@@ -4,7 +4,7 @@ const $ = (id) => document.getElementById(id);
 const SVG = "http://www.w3.org/2000/svg";
 const CACHE_KEY = "gvisor-work-map-attributes-v1";
 const UI_KEY = "gvisor-work-map-view-v1";
-const VIEWS = ["dag", "table", "investigations"];
+const VIEWS = ["dag", "table", "handoff", "investigations"];
 const STATE_LABELS = { "contributor-review": "Contributor review", "maintainer-review": "Maintainer review", "proposed-update": "Prepared proposals", "changes-requested": "Changes requested",
   "awaiting-import": "Awaiting import", importing: "Import PR open", "waiting-merge": "Waiting for merge", failing: "Failing checks",
   "checks-pending": "Checks pending", conflicts: "Conflicts", draft: "Draft", imported: "Imported", merged: "Merged", closed: "Closed" };
@@ -109,7 +109,181 @@ function checkInfo(pr) {
   const result = failed ? { text: "Failure", tone: "bad", glyph: "!" } : pending ? { text: "Pending", tone: "pending", glyph: "○" }
     : passed ? { text: assignmentFailures.length ? "Passed · assignment issue" : "Success", tone: assignmentFailures.length ? "pending" : "good", glyph: assignmentFailures.length ? "!" : "✓" }
       : { text: "Unknown", tone: "unknown", glyph: "?" };
-  return { ...result, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+  return { ...result, passed, detail: `${substantive.length} validation check/status contexts${checks.complete ? "" : "; context list incomplete"}. ${assignmentFailures.length ? "Reviewer assignment failed; its raw result remains below and is not a contributor-source failure. " : ""}GitHub's aggregate is ${checks.state}. Checks/statuses are not test-case counts.` };
+}
+
+const HANDOFF_GROUPS = [
+  { id: "import-failed", title: "Import failed", ask: "Could you check these internal import errors and confirm the retry status? Public statuses do not include the internal error details." },
+  { id: "import-checks", title: "Import checks failing", ask: "Could you check the failing import pipelines and share the next action?" },
+  { id: "internal-status", title: "Needs internal status update", ask: "Could you confirm the internal status and next action for these revisions?" },
+  { id: "review", title: "Awaiting maintainer review", ask: "Could you review the current revisions?" },
+  { id: "import", title: "Awaiting import", ask: "Could you confirm or start imports for these approved revisions? An internal CL may already exist." },
+  { id: "merge", title: "Imported, unmerged", ask: "Could you confirm the remaining internal gates and merge status for these imports?" },
+];
+let handoffCopyVersion = 0;
+function handoffTimestamp(value) {
+  return Number.isFinite(Date.parse(value)) ? `${new Date(value).toISOString().slice(0, 16).replace("T", " ")} UTC` : null;
+}
+function handoffObservation(node, key, scope, description) {
+  const record = states(node)[key];
+  const timestamp = record?.basis === "observed" && record.scope === scope && handoffTimestamp(record.since);
+  return timestamp ? `${description} first observed ${timestamp}.` : "";
+}
+function handoffEntry(node, owner) {
+  const pr = node.github;
+  if (node.type !== "pr" || pr?.headOwner !== owner || pr.status !== "open") return null;
+  if (pr.revisionChanged || !pr.head) return { node, group: "internal-status", imports: [], observation: "",
+    reason: "Source revision changed or is unavailable; current-head review and checks need a snapshot refresh." };
+  const decision = effectiveReviewDecision(pr);
+  const isCopybara = check => check.kind === "status" && ["import/copybara", "feedback/copybara"].includes(check.name);
+  const importCheck = validationChecks(pr).find(check => check.kind === "status" && check.name === "import/copybara");
+  const feedbackCheck = validationChecks(pr).find(check => check.kind === "status" && check.name === "feedback/copybara");
+  const importFailed = importCheck && FAILURE_STATES.has(importCheck.state);
+  // A concrete import-service error remains an internal-status ask even when
+  // source checks also fail. Omit work that needs only contributor attention.
+  if (!importFailed && (decision === "CHANGES_REQUESTED" || states(node).conflicts || pr.mergeable === "CONFLICTING"
+      || validationChecks(pr).some(check => !isCopybara(check) && FAILURE_STATES.has(check.state)))) return null;
+  const current = pr.imports.filter(item => item.matchesSourceHead && item.sourceHead === pr.head);
+  const active = current.filter(item => ["open", "draft"].includes(item.status));
+  const failed = active.filter(item => checkInfo(item).tone === "bad");
+  const importScope = active.map(item => `${item.number}:${item.head}`).join(",");
+  let group, reason, observation = "", imports = current;
+  if (importFailed) {
+    group = "import-failed";
+    reason = `import/copybara: ${importCheck.state}.`;
+    // The generic failure clock does not identify which status context failed.
+  } else if (failed.length) {
+    group = "import-checks";
+    const checks = failed.flatMap(item => validationChecks(item).filter(check => FAILURE_STATES.has(check.state)).map(check => `${check.name} (${check.state.toLowerCase()})`));
+    const detail = checks.length ? `${checks.slice(0, 2).join("; ")}${checks.length > 2 ? "; more failures in the import PR" : ""}` : "GitHub reports failing import checks";
+    reason = `${detail}.`;
+    observation = handoffObservation(node, "failing", failed.map(item => `${item.number}:${item.head}`).join(","), "Import-check failure");
+  } else if (feedbackCheck && FAILURE_STATES.has(feedbackCheck.state)) {
+    group = "internal-status";
+    reason = `feedback/copybara: ${feedbackCheck.state}${importCheck ? `; import/copybara: ${importCheck.state}` : ""}.`;
+  } else if (current.some(item => item.status === "merged") && !active.length) {
+    group = "internal-status";
+    reason = "Matching public import merged; source PR remains open.";
+  } else if (pr.reviewsComplete !== true) {
+    group = "internal-status";
+    reason = "Current-head review evidence incomplete.";
+  } else if (decision !== "APPROVED") {
+    group = "review";
+    reason = pr.approvedHead || pr.githubReviewDecision === "APPROVED" ? "Current-head approval is not established." : "";
+    observation = handoffObservation(node, "maintainer-review", pr.head, "Review wait");
+  } else if (active.length) {
+    if (active.some(item => item.status === "open")) {
+      group = "merge";
+      const facts = [];
+      if (active.some(item => !checkInfo(item).passed && checkInfo(item).tone === "pending")) facts.push("Import checks pending");
+      else if (active.some(item => !checkInfo(item).passed)) facts.push("Import checks incomplete or unknown");
+      else facts.push("Visible import checks pass");
+      if (active.some(item => item.mergeable === "CONFLICTING")) facts.push("import conflicts reported");
+      else if (active.some(item => item.mergeable !== "MERGEABLE")) facts.push("mergeability unknown");
+      if (active.some(item => effectiveReviewDecision(item) === "CHANGES_REQUESTED")) facts.push("import changes requested");
+      if (!checkInfo(pr).passed) facts.push(`source checks ${checkInfo(pr).text.toLowerCase()}`);
+      if (!pr.importsComplete) facts.push("public import lookup incomplete");
+      reason = `${facts.join("; ")}.`;
+      observation = handoffObservation(node, "importing", importScope, "Matching import");
+    } else {
+      group = "internal-status";
+      reason = "Matching public import is a draft.";
+      observation = handoffObservation(node, "importing", importScope, "Matching import");
+    }
+  } else if (current.length) {
+    group = "internal-status";
+    reason = "Matching public import closed without a recorded merge; internal disposition unknown.";
+  } else if (!pr.importsComplete) {
+    group = "internal-status";
+    reason = "Public import lookup incomplete; internal CL status unknown.";
+  } else if (importCheck || checkInfo(pr).tone === "bad") {
+    group = "internal-status";
+    reason = importCheck ? `import/copybara: ${importCheck.state}; no matching public import link.`
+      : "Source check failure reported without identifying details.";
+  } else {
+    group = "import";
+    reason = !checkInfo(pr).passed ? `Source checks: ${checkInfo(pr).text.toLowerCase()}.` : "";
+    observation = handoffObservation(node, "awaiting-import", pr.head, "Awaiting-import state");
+  }
+  // A previous revision's import is useful context, never current import proof.
+  if (!imports.length && pr.imports.length) imports = [pr.imports[0]];
+  return { node, group, reason, observation, imports };
+}
+function handoffGroups(nodes, owner) {
+  const entries = nodes.map(node => handoffEntry(node, owner)).filter(Boolean).sort((a, b) => a.node.number - b.node.number);
+  return HANDOFF_GROUPS.map(group => ({ ...group, entries: entries.filter(entry => entry.group === group.id) }));
+}
+function handoffImportLabel(entry, imported) {
+  return `${imported.matchesSourceHead && imported.sourceHead === entry.node.github.head ? "Import" : "Earlier-revision import"} #${imported.number}`;
+}
+function handoffMarkdown(groups, checkedAt) {
+  const escape = value => String(value).replace(/[\r\n]+/g, " ").replace(/[\\[\]]/g, "\\$&");
+  const linked = (text, url) => `[${escape(text)}](${(safeURL(url) || "").replace(/[()]/g, encodeURIComponent)})`;
+  const sections = groups.filter(group => group.entries.length).map(group => `## ${group.title}\n\n${group.ask}\n\n${group.entries.map(entry => {
+    const source = linked(`#${entry.node.number} ${entry.node.title}`, entry.node.url);
+    const imports = entry.imports.map(item => linked(handoffImportLabel(entry, item), item.url)).join(", ");
+    const facts = [entry.reason, entry.observation].filter(Boolean).map(escape).join(" ");
+    return `- ${source}${imports ? ` · ${imports}` : ""}${facts ? ` — ${facts}` : ""}`;
+  }).join("\n")}`);
+  return [`Public GitHub snapshot: ${handoffTimestamp(checkedAt) || "unavailable"}. Internal CL progress may not be visible here.`, ...sections].join("\n\n");
+}
+function invalidateHandoffCopy() {
+  $("handoff-manual").hidden = true;
+  $("handoff-copy-text").value = "";
+  $("handoff-copy-status").textContent = "";
+  $("handoff-copy-all").textContent = "Copy all shown";
+  return ++handoffCopyVersion;
+}
+async function copyHandoff(text, description, control) {
+  const version = invalidateHandoffCopy();
+  try {
+    await navigator.clipboard.writeText(text);
+    if (version !== handoffCopyVersion) return;
+    $("handoff-manual").hidden = true;
+    $("handoff-copy-status").textContent = `${description} copied.`;
+    if (control) control.textContent = "Copied ✓";
+  } catch {
+    if (version !== handoffCopyVersion) return;
+    const input = $("handoff-copy-text");
+    $("handoff-manual").hidden = false; input.value = text; input.focus(); input.select();
+    $("handoff-copy-status").textContent = "Clipboard unavailable. The text below is selected; copy it with your keyboard or device menu.";
+  }
+}
+function drawHandoff() {
+  const checkedAt = model.checkedAt;
+  const candidates = model.nodes.filter(matchesBase);
+  const groups = handoffGroups(candidates, registry.meta.owner), entries = groups.flatMap(group => group.entries);
+  const list = $("handoff-list"); list.replaceChildren();
+  $("handoff-copy-all").disabled = !checkedAt || !entries.length;
+  $("handoff-copy-all").textContent = "Copy all shown";
+  $("handoff-snapshot").textContent = checkedAt ? `Public snapshot ${handoffTimestamp(checkedAt)} · copy uses the groups shown below.` : "No public snapshot is available. Reload the snapshot to prepare a handoff.";
+  if (!checkedAt) return [];
+  for (const group of groups) {
+    const id = `handoff-${group.id}`;
+    if (!group.entries.length && selected !== id) continue;
+    const section = element("section", `handoff-group ${group.id}${selected === id ? " selected" : ""}`), header = element("div", "handoff-group-heading");
+    section.id = id;
+    const heading = element("h2"), permalink = element("a", "handoff-group-link", `${group.title} · ${group.entries.length}`);
+    permalink.href = currentViewURL(id); permalink.title = "Link to this attention group";
+    if (selected === id) permalink.setAttribute("aria-current", "location");
+    heading.append(permalink);
+    const copy = button("Copy group", event => copyHandoff(handoffMarkdown([group], checkedAt), group.title, event.currentTarget));
+    copy.disabled = !group.entries.length;
+    header.append(heading, copy);
+    section.append(header, element("p", "handoff-group-ask", group.ask));
+    const items = element("ul", "handoff-items");
+    for (const entry of group.entries) {
+      const item = element("li"), title = element("div", "handoff-item-title");
+      title.append(link(`#${entry.node.number} ${entry.node.title}`, entry.node.url));
+      for (const imported of entry.imports) title.append(link(handoffImportLabel(entry, imported), imported.url, "handoff-import"));
+      item.append(title);
+      if (entry.reason) item.append(element("p", "", entry.reason));
+      if (entry.observation) item.append(element("small", "handoff-observation", entry.observation));
+      items.append(item);
+    }
+    section.append(items); list.append(section);
+  }
+  return entries;
 }
 
 function badge(info, title) {
@@ -264,7 +438,8 @@ function appendAttributes(container, node) {
 function resolved(node) { return node.type === "pr" && ["merged", "closed"].includes(node.status); }
 function nodeMap() { return new Map(model.nodes.map((node) => [node.id, node])); }
 function investigationMap() { return new Map((registry.investigations || []).map(item => [item.id, item])); }
-function selectionMap() { return view === "investigations" ? investigationMap() : nodeMap(); }
+function selectionMap() { return view === "investigations" ? investigationMap() : view === "handoff"
+  ? new Map(HANDOFF_GROUPS.map(group => [`handoff-${group.id}`, group])) : nodeMap(); }
 function activeDependencyEdges() {
   const active = new Set(model.nodes.filter((node) => !resolved(node) && node.status !== "resolved").map((node) => node.id));
   return model.edges.filter((edge) => ["depends_on", "blocked_by"].includes(edge.type) && active.has(edge.from) && active.has(edge.to));
@@ -378,11 +553,11 @@ function currentViewURL(selection = selected) {
     if ($("investigation-search").value) url.searchParams.set("q", $("investigation-search").value);
     if ($("investigation-filter").value) url.searchParams.set("investigation-status", $("investigation-filter").value);
   } else {
-    for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
+    if (view !== "handoff") for (const state of FILTER_STATES) if (stateFilters.has(state)) url.searchParams.append("state", state);
     if ($("search").value) url.searchParams.set("q", $("search").value);
     if ($("group-filter").value) url.searchParams.set("group", $("group-filter").value);
-    if ($("show-resolved").checked) url.searchParams.set("resolved", "1");
-    if (focus) url.searchParams.set("focus", focus);
+    if (view !== "handoff" && $("show-resolved").checked) url.searchParams.set("resolved", "1");
+    if (view !== "handoff" && focus) url.searchParams.set("focus", focus);
   }
   url.hash = selection ? encodeURIComponent(selection) : "";
   return url.pathname + url.search + url.hash;
@@ -762,23 +937,27 @@ function drawChainSelector() {
   select.disabled = Boolean(filtered());
 }
 function render(reposition = false, navigation = "replace") {
-  const dag = view === "dag", investigations = view === "investigations";
+  invalidateHandoffCopy();
+  const dag = view === "dag", investigations = view === "investigations", handoff = view === "handoff";
   $("dag-pane").hidden = !dag; $("table-pane").hidden = view !== "table"; $("investigations-pane").hidden = !investigations;
+  $("handoff-pane").hidden = !handoff;
   for (const choice of VIEWS) $(`${choice}-view`).setAttribute("aria-pressed", view === choice);
   document.body.classList.toggle("investigation-mode", investigations);
-  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations; $("resolved-control").hidden = investigations;
-  $("work-state-controls").hidden = investigations; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
+  document.body.classList.toggle("handoff-mode", handoff);
+  $("search").closest("label").hidden = investigations; $("group-control").hidden = investigations; $("resolved-control").hidden = investigations || handoff;
+  $("work-state-controls").hidden = investigations || handoff; $("investigation-search-control").hidden = !investigations; $("investigation-filter-control").hidden = !investigations;
   $("chain-control").hidden = !dag;
-  const nodes = investigations ? drawInvestigations() : dag ? graphNodes() : tableNodes();
-  $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
-  $("filter-note").textContent = investigations ? "Research records · separate from GitHub status" : !model.statesAvailable ? "State history unavailable in this snapshot" : dag && filtered() ? "Matches with dependency context" : "";
+  const nodes = investigations ? drawInvestigations() : handoff ? drawHandoff() : dag ? graphNodes() : tableNodes();
+  $("visible-count").textContent = investigations ? `${nodes.length} / ${investigationMap().size} investigations` : handoff ? `${nodes.length} source PRs · one attention group each` : dag ? `${nodes.length} / ${model.nodes.length} items · prerequisite → dependent · unconnected items stand alone` : `${nodes.length} items · click a title for relationships`;
+  $("filter-note").textContent = investigations ? "Research records · separate from GitHub status" : handoff ? "Search and workstream filter the copied list" : !model.statesAvailable ? "State history unavailable in this snapshot" : dag && filtered() ? "Matches with dependency context" : "";
   $("empty").hidden = nodes.length !== 0;
-  $("empty-title").textContent = investigations ? "No matching investigations" : "No matching work";
-  drawDetails(); drawStateFilters();
-  if (dag) { drawGraph(nodes); drawChainSelector(); } else if (!investigations) drawTable(nodes);
+  $("empty-title").textContent = investigations ? "No matching investigations" : handoff ? "No maintainer handoff items" : "No matching work";
+  if (handoff) $("details").hidden = true; else drawDetails();
+  drawStateFilters();
+  if (dag) { drawGraph(nodes); drawChainSelector(); } else if (view === "table") drawTable(nodes);
   $("inventory").textContent = `${model.nodes.filter((node) => node.type === "pr" && !resolved(node)).length} open PRs · ${model.nodes.length} tracked items · ${investigationMap().size} investigations`;
-  if (reposition && !investigations) resetCamera();
-  if (reposition && investigations && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
+  if (reposition && dag) resetCamera();
+  if (reposition && (investigations || handoff) && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
   syncViewURL(navigation); saveView();
 }
 function setFreshness(text, warning = false, live = false) {
@@ -848,7 +1027,7 @@ function stateRecords(snapshot, node) {
 function applyLive(snapshot, nextRegistry = registry) {
   const focusedInvestigation = view === "investigations" ? document.activeElement?.closest(".investigation-card")?.id : null;
   liveSnapshot = snapshot;
-  const scrollPositions = ["table-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
+  const scrollPositions = ["table-pane", "handoff-pane", "investigations-pane", "details"].map((id) => ({ id, top: $(id).scrollTop, left: $(id).scrollLeft }));
   const openSections = new Set([...$("details").querySelectorAll(".check-details[open], .curated-notes[open]")].map((section) => section.dataset.pr));
   registry = nextRegistry;
   updateRegistryControls();
@@ -1002,9 +1181,9 @@ async function refresh(force = false) {
 }
 
 function setView(next) {
-  const investigationTransition = view === "investigations" || next === "investigations";
-  if (investigationTransition) selected = null;
-  view = next; searchEditing = false; render(!investigationTransition, "push");
+  const separateView = [view, next].some(item => ["investigations", "handoff"].includes(item));
+  if (separateView) selected = null;
+  view = next; searchEditing = false; render(!separateView, "push");
 }
 function resetFilters(redraw = true) {
   if (view === "investigations") {
@@ -1024,12 +1203,12 @@ function initialize() {
     });
     control.dataset.state = state; $("state-filters").append(control);
   }
-  $("search").addEventListener("input", () => { render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
+  $("search").addEventListener("input", () => { if (view === "handoff") selected = null; render(true, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-search").addEventListener("input", () => { selected = null; render(false, searchEditing ? "replace" : "push"); searchEditing = true; });
   $("investigation-search").addEventListener("blur", () => { searchEditing = false; });
   $("investigation-filter").addEventListener("change", () => { selected = null; render(false, "push"); });
-  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => render(true, "push"));
+  for (const id of ["group-filter", "show-resolved"]) $(id).addEventListener("change", () => { if (view === "handoff") selected = null; render(true, "push"); });
   $("chain-filter").addEventListener("change", () => { focus = $("chain-filter").value || null; selected = null; render(true, "push"); });
   for (const next of VIEWS) $(`${next}-view`).addEventListener("click", () => setView(next));
   for (const id of ["reset-filters", "toolbar-reset"]) $(id).addEventListener("click", () => resetFilters());
@@ -1037,6 +1216,7 @@ function initialize() {
     const next = button.dataset.sort; sortDirection = sortKey === next ? -sortDirection : ["impact", "direct", "number", "age"].includes(next) ? -1 : 1; sortKey = next; render();
   }));
   $("refresh").addEventListener("click", () => refresh(true));
+  $("handoff-copy-all").addEventListener("click", event => copyHandoff(handoffMarkdown(handoffGroups(model.nodes.filter(matchesBase), registry.meta.owner), model.checkedAt), "All shown groups", event.currentTarget));
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
   $("fit").addEventListener("click", () => resetCamera(true, true)); $("reset-view").addEventListener("click", () => resetCamera(false));
   const graph = $("graph");
@@ -1077,6 +1257,7 @@ async function start() {
     // A failed refresh leaves the validated registry as the known inventory.
     await refresh();
     initialize(); const restored = restoreView(); initializing = false; render(!restored);
+    if (view === "handoff" && selected) document.getElementById(selected)?.scrollIntoView({ block: "start" });
   } catch (error) { $("visible-count").textContent = "Registry unavailable"; setFreshness(error.message, true); }
 }
 start();

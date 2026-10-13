@@ -350,3 +350,14 @@ the exact branch head. The existing Changes requested filter includes it
 with an explicit Contributor qualifier. Older clients accept the optional
 field and the unchanged state enum. Live PR approval continues to come
 only from a maintainer review of the current GitHub head.
+
+
+### Maintainer handoff
+
+The Maintainer handoff view groups open source PRs by the next public-evidence-backed request: an explicit Copybara import error, failing checks on a matching import PR, missing internal status, current-revision review, import, or merge follow-up. Each PR appears once. Copy a group or all shown groups as Markdown with source/import links. Search and workstream filters also filter the copied list; each group heading has a shareable URL. If clipboard access is unavailable, the same text is selected in a read-only field for manual copying.
+
+Only the exact current-head `import/copybara` commit-status context establishes an import failure. A `feedback/copybara` failure, an old or closed import, missing public links, and elapsed time do not establish that failure. A successful import context without a matching public import is an internal-status question. Drafts and resolved sources are excluded, as is contributor-only work; explicit import-service errors remain visible even when source checks also fail. Generic failure ages cannot date individual Copybara contexts, so those ages are omitted. Other first-observation dates require an exact matching state/revision scope.
+
+The view derives from the existing GitHub snapshot and work-state model. It adds no collector, polling process, or separate status file. Internal CL progress and the reasons behind opaque service statuses still require a maintainer update.
+
+The handoff’s “Imported, unmerged” group means an approved current source has a matching open import; pending checks or unknown mergeability remain explicit in its bullet. It does not mean merge-ready. The existing stricter “Waiting for merge” badge is unchanged. Common requests appear once per copied group. A filter, navigation, or snapshot redraw clears prior copy confirmations and manual fallback text; an older clipboard promise cannot restore that stale UI afterward.
