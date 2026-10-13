@@ -68,6 +68,7 @@ type objectDecodeState struct {
 	//
 	// Keep the caller's or allocator's pointer so references and struct
 	// loaders do not need to reconstruct it from the object's value.
+	// Its type is the unnamed *T, even if the caller supplied a defined pointer.
 	objPtr reflect.Value
 
 	// blockedBy is the number of dependencies this object has.
@@ -284,7 +285,8 @@ func (ds *decodeState) addObject(id objectID, objPtr reflect.Value) *objectDecod
 	return ods
 }
 
-// register registers a decode with a type and returns a pointer to its storage.
+// register registers a decode with a type and returns the enclosing object's
+// pointer. The caller applies r.Dots to select the required child view.
 //
 // This type is only used to instantiate a new object if it has not been
 // registered previously. This depends on the type provided if none is
@@ -308,10 +310,7 @@ func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) reflect.Value {
 		}
 	}
 
-	if len(r.Dots) == 0 {
-		return ods.objPtr
-	}
-	return walkChild(r.Dots, ods.objPtr.Elem()).Addr()
+	return ods.objPtr
 }
 
 // objectDecoder is for decoding structs.
@@ -516,7 +515,7 @@ func (ds *decodeState) decodeValue(ods *objectDecodeState, obj reflect.Value, en
 		// Note that if this is a map type, we go through a level of
 		// indirection to allow for map aliasing.
 		if obj.Kind() == reflect.Map {
-			v := ds.register(x, obj.Type()).Elem()
+			v := walkChild(x.Dots, ds.register(x, obj.Type()).Elem())
 			if v.IsNil() {
 				// Note that we don't want to clobber the map
 				// if has already been decoded by decodeMap. We
@@ -528,21 +527,10 @@ func (ds *decodeState) decodeValue(ods *objectDecodeState, obj reflect.Value, en
 			return
 		}
 
-		if obj.Kind() != reflect.Ptr {
-			Failf("wire reference has incompatible destination %v", obj.Type())
-		}
 		v := ds.register(x, obj.Type().Elem())
-		if v.Type().Elem() != obj.Type().Elem() {
-			Failf("pointer target type %v does not match %v", v.Type().Elem(), obj.Type().Elem())
-		}
 		if len(x.Dots) != 0 {
 			// Interior pointer assignments may refer to unexported fields.
-			v = reflectValueRWAddr(v.Elem())
-		}
-		// The root may have a different defined pointer type with this same
-		// exact pointee. Convert its type without changing its storage.
-		if v.Type() != obj.Type() {
-			v = v.Convert(obj.Type())
+			v = reflectValueRWAddr(walkChild(x.Dots, v.Elem()))
 		}
 		obj.Set(v)
 	case wire.Bool:
@@ -581,7 +569,7 @@ func (ds *decodeState) decodeValue(ods *objectDecodeState, obj reflect.Value, en
 		// Note that it's fine to slice the array here and assume that
 		// contents will still be filled in later on.
 		typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-		v := ds.register(&x.Ref, typ).Elem()
+		v := walkChild(x.Ref.Dots, ds.register(&x.Ref, typ).Elem())
 		obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 	case *wire.Array:
 		ds.decodeArray(ods, obj, x)
@@ -636,6 +624,12 @@ func (ds *decodeState) Load(objPtr reflect.Value) {
 	defer ds.stats.fini(func(id typeID) string {
 		return ds.types.LookupName(id)
 	})
+
+	// All graph allocations use unnamed *T pointers. Normalize a defined root
+	// pointer once so reference assignments can use the same checked Set.
+	if objPtr.Type().Name() != "" {
+		objPtr = objPtr.Convert(reflect.PointerTo(objPtr.Type().Elem()))
+	}
 
 	// Add the root object with ID 1.
 	_ = ds.addObject(1, objPtr)
