@@ -138,7 +138,7 @@ func (v Value) Kind() Kind {
 
 func (v Value) require(kind Kind) {
 	if v.Kind() != kind {
-		panic(fmt.Sprintf("wire value has kind %d, wanted %d", v.Kind(), kind))
+		panic(fmt.Sprintf("wire value has kind %d, wanted %d", v.Kind(), kind)) // Escapes: error formatting.
 	}
 }
 
@@ -290,6 +290,11 @@ func (v Value) Type() *Type {
 
 // LoadValue parses one complete value before returning it. This is the sole
 // data-value grammar used by state restoration and the Object adapter.
+// Owned payload allocations are exempted at their construction sites so
+// primitive parsing and calls that fill those payloads remain checked.
+//
+// +checkescape:hard
+//
 // N.B. This function will panic on error.
 func LoadValue(r *Reader) Value {
 	return loadValuePayload(r, Kind(loadUint(r)))
@@ -300,7 +305,7 @@ func loadReferenceValue(r *Reader) Value {
 	if len(ref.Dots) == 0 {
 		return scalarValue(KindRef, uint64(ref.Root))
 	}
-	p := &refValue{valueHeader: valueHeader{KindRef}, dots: ref.Dots, typ: ref.Type}
+	p := &refValue{valueHeader: valueHeader{KindRef}, dots: ref.Dots, typ: ref.Type} // Escapes: decoded reference metadata.
 	return Value{bits: uint64(ref.Root), payload: unsafe.Pointer(p)}
 }
 
@@ -325,24 +330,26 @@ func loadValuePayload(r *Reader, kind Kind) Value {
 		return scalarValue(kind, uint64(re)|uint64(im)<<32)
 	case KindComplex128:
 		re, im := uint64(loadUint(r)), uint64(loadUint(r))
-		p := &complexValue{valueHeader: valueHeader{kind}, imaginary: im}
+		p := &complexValue{valueHeader: valueHeader{kind}, imaginary: im} // Escapes: decoded complex payload.
 		return Value{bits: re, payload: unsafe.Pointer(p)}
 	case KindNil, KindNoObjects:
 		return scalarValue(kind, 0)
 	case KindRef:
 		return loadReferenceValue(r)
 	case KindString:
-		p := &stringValue{valueHeader: valueHeader{kind}, value: string(loadString(r))}
+		value := string(loadString(r))
+		p := &stringValue{valueHeader: valueHeader{kind}, value: value} // Escapes: decoded string payload.
 		return Value{payload: unsafe.Pointer(p)}
 	case KindSlice:
 		length, capacity := loadUint(r), loadUint(r)
-		p := &sliceValue{valueHeader: valueHeader{kind}, capacity: capacity, ref: loadReferenceValue(r)}
+		ref := loadReferenceValue(r)
+		p := &sliceValue{valueHeader: valueHeader{kind}, capacity: capacity, ref: ref} // Escapes: decoded slice payload.
 		return Value{bits: uint64(length), payload: unsafe.Pointer(p)}
 	case KindArray:
 		length := loadUint(r)
-		p := &arrayValue{valueHeader: valueHeader{kind}}
+		p := &arrayValue{valueHeader: valueHeader{kind}} // Escapes: decoded array payload.
 		if length != 0 {
-			p.values = make([]Value, length)
+			p.values = make([]Value, length) // Escapes: decoded array elements.
 			p.values[0] = LoadValue(r)
 			elementKind := p.values[0].Kind()
 			for i := 1; i < len(p.values); i++ {
@@ -352,9 +359,9 @@ func loadValuePayload(r *Reader, kind Kind) Value {
 		return Value{payload: unsafe.Pointer(p)}
 	case KindMap:
 		length := loadUint(r)
-		p := &mapValue{valueHeader: valueHeader{kind}}
+		p := &mapValue{valueHeader: valueHeader{kind}} // Escapes: decoded map payload.
 		if length != 0 {
-			p.entries = make([]valuePair, length)
+			p.entries = make([]valuePair, length) // Escapes: decoded map entries.
 			p.entries[0] = valuePair{key: LoadValue(r), value: LoadValue(r)}
 			keyKind, valueKind := p.entries[0].key.Kind(), p.entries[0].value.Kind()
 			for i := 1; i < len(p.entries); i++ {
@@ -364,28 +371,33 @@ func loadValuePayload(r *Reader, kind Kind) Value {
 		return Value{payload: unsafe.Pointer(p)}
 	case KindStruct:
 		id := loadUint(r)
-		p := &structValue{valueHeader: valueHeader{kind}, fields: LoadValue(r)}
+		fields := LoadValue(r)
+		p := &structValue{valueHeader: valueHeader{kind}, fields: fields} // Escapes: decoded struct payload.
 		return Value{bits: uint64(id), payload: unsafe.Pointer(p)}
 	case KindMultipleObjects:
-		p := &arrayValue{valueHeader: valueHeader{kind}, values: make([]Value, loadUint(r))}
+		length := loadUint(r)
+		values := make([]Value, length)                                  // Escapes: decoded field values.
+		p := &arrayValue{valueHeader: valueHeader{kind}, values: values} // Escapes: decoded field payload.
 		for i := range p.values {
 			p.values[i] = LoadValue(r)
 		}
 		return Value{payload: unsafe.Pointer(p)}
 	case KindInterface:
-		p := &interfaceValue{valueHeader: valueHeader{kind}, typ: loadTypeSpec(r), value: LoadValue(r)}
+		typ, value := loadTypeSpec(r), LoadValue(r)
+		p := &interfaceValue{valueHeader: valueHeader{kind}, typ: typ, value: value} // Escapes: decoded interface payload.
 		return Value{payload: unsafe.Pointer(p)}
 	case KindType:
-		p := &typeValue{valueHeader: valueHeader{kind}}
+		p := &typeValue{valueHeader: valueHeader{kind}} // Escapes: decoded schema payload.
 		p.typ.Name = string(loadString(r))
-		p.typ.Fields = make([]string, loadUint(r))
+		length := loadUint(r)
+		p.typ.Fields = make([]string, length) // Escapes: decoded schema fields.
 		for i := range p.typ.Fields {
 			p.typ.Fields[i] = string(loadString(r))
 		}
 		return Value{payload: unsafe.Pointer(p)}
 	default:
 		// Kind retains the full tag width; no unknown high bits are discarded.
-		panic(fmt.Errorf("unknown header: %d", kind))
+		panic(fmt.Errorf("unknown header: %d", kind)) // Escapes: error formatting.
 	}
 }
 
@@ -396,51 +408,62 @@ func materialize(v Value) Object {
 	case KindBool:
 		return Bool(v.Bool())
 	case KindInt:
-		return Int(v.Int())
+		value := Int(v.Int())
+		return value // Escapes: boxing the decoded scalar.
 	case KindUint:
-		return Uint(v.Uint())
+		value := Uint(v.Uint())
+		return value // Escapes: boxing the decoded scalar.
 	case KindFloat32:
-		return Float32(math.Float32frombits(uint32(v.bits)))
+		value := Float32(math.Float32frombits(uint32(v.bits)))
+		return value // Escapes: boxing the decoded scalar.
 	case KindFloat64:
-		return Float64(v.Float())
+		value := Float64(v.Float())
+		return value // Escapes: boxing the decoded scalar.
 	case KindComplex64:
-		c := Complex64(v.Complex())
+		var c Complex64 // Escapes: mutable Object storage.
+		c = Complex64(v.Complex())
 		return &c
 	case KindComplex128:
-		c := Complex128(v.Complex())
+		var c Complex128 // Escapes: mutable Object storage.
+		c = Complex128(v.Complex())
 		return &c
 	case KindNil:
 		return Nil{}
 	case KindNoObjects:
 		return noObjects{}
 	case KindString:
-		s := String(v.Text())
+		var s String // Escapes: mutable Object storage.
+		s = String(v.Text())
 		return &s
 	case KindRef:
-		r := v.Reference()
+		var r Ref // Escapes: mutable Object storage.
+		r = v.Reference()
 		if len(r.Dots) == 0 {
 			r.Dots = make([]Dot, 0)
 		}
 		return &r
 	case KindSlice:
-		s := v.Slice()
+		var s Slice // Escapes: mutable Object storage.
+		s = v.Slice()
 		if len(s.Ref.Dots) == 0 {
 			s.Ref.Dots = make([]Dot, 0)
 		}
 		return &s
 	case KindArray:
-		a := &Array{}
+		a := &Array{} // Escapes: mutable Object storage.
 		if v.Len() != 0 {
-			a.Contents = make([]Object, v.Len())
+			length := v.Len()
+			a.Contents = make([]Object, length) // Escapes: mutable array elements.
 			for i := range a.Contents {
 				a.Contents[i] = materialize(v.Element(i))
 			}
 		}
 		return a
 	case KindMap:
-		m := &Map{}
+		m := &Map{} // Escapes: mutable Object storage.
 		if v.Len() != 0 {
-			m.Keys, m.Values = make([]Object, v.Len()), make([]Object, v.Len())
+			length := v.Len()
+			m.Keys, m.Values = make([]Object, length), make([]Object, length) // Escapes: mutable map entries.
 			for i := range m.Keys {
 				key, value := v.Entry(i)
 				m.Keys[i], m.Values[i] = materialize(key), materialize(value)
@@ -448,16 +471,19 @@ func materialize(v Value) Object {
 		}
 		return m
 	case KindStruct:
-		return &Struct{TypeID: v.StructType(), fields: materialize((*structValue)(v.payload).fields)}
+		id, fields := v.StructType(), materialize((*structValue)(v.payload).fields)
+		return &Struct{TypeID: id, fields: fields} // Escapes: mutable Object storage.
 	case KindMultipleObjects:
-		m := make(multipleObjects, v.Len())
+		length := v.Len()
+		m := make(multipleObjects, length) // Escapes: mutable Object storage and fields.
 		for i := range m {
 			m[i] = materialize(v.Element(i))
 		}
 		return &m
 	case KindInterface:
 		typ, value := v.Interface()
-		return &Interface{Type: typ, Value: materialize(value)}
+		obj := materialize(value)
+		return &Interface{Type: typ, Value: obj} // Escapes: mutable Object storage.
 	case KindType:
 		return v.Type()
 	default:

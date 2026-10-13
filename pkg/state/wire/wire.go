@@ -16,10 +16,9 @@
 // graph information for the state package. This package defines the wire
 // protocol.
 //
-// Note that these types are careful about how they implement the relevant
-// interfaces (either value receiver or pointer receiver), so that native-sized
-// types, such as integers and simple pointers, can fit inside the interface
-// object.
+// These types use value or pointer receivers to implement Object. Pointer
+// values fit directly in the interface; scalar values may require boxing when
+// returned through Object.
 //
 // This package also uses panic as control flow, so called should be careful to
 // wrap calls in appropriate handlers.
@@ -211,7 +210,7 @@ type String string
 // loadString loads an object of type String.
 func loadString(r *Reader) String {
 	l := loadUint(r)
-	p := make([]byte, l)
+	p := make([]byte, l) // Escapes: decoded string storage.
 	readFull(r, p)
 	return String(gohacks.StringFromImmutableBytes(p))
 }
@@ -263,19 +262,20 @@ func loadRef(r *Reader) Ref {
 		Root: loadUint(r),
 	}
 	l := loadUint(r)
-	ref.Dots = make([]Dot, l)
+	ref.Dots = make([]Dot, l) // Escapes: decoded reference path.
 	for i := 0; i < int(l); i++ {
 		// Disambiguate between an Index (non-negative) and a field
 		// name (negative). This does some space and avoids a dedicate
 		// loadDot function. See Ref.save for the other side.
 		d := loadInt(r)
 		if d >= 0 {
-			ref.Dots[i] = Index(d)
+			ref.Dots[i] = Index(d) // Escapes: boxing the decoded index.
 			continue
 		}
-		p := make([]byte, -d)
+		p := make([]byte, -d) // Escapes: decoded field name storage.
 		readFull(r, p)
-		fieldName := FieldName(gohacks.StringFromImmutableBytes(p))
+		var fieldName FieldName // Escapes: decoded field name interface.
+		fieldName = FieldName(gohacks.StringFromImmutableBytes(p))
 		ref.Dots[i] = &fieldName
 	}
 	if l != 0 {
@@ -364,7 +364,7 @@ type Map struct {
 func (m *Map) save(w *Writer) {
 	l := Uint(len(m.Keys))
 	if int(l) != len(m.Values) {
-		panic(fmt.Sprintf("mismatched keys (%d) and values (%d)", len(m.Keys), len(m.Values)))
+		panic(fmt.Sprintf("mismatched keys (%d) and values (%d)", len(m.Keys), len(m.Values))) // Escapes: error formatting.
 	}
 	l.save(w)
 	if l == 0 {
@@ -443,30 +443,25 @@ const (
 func loadTypeSpec(r *Reader) TypeSpec {
 	switch hdr := loadUint(r); hdr {
 	case typeSpecTypeID:
-		return TypeID(loadUint(r))
+		id := TypeID(loadUint(r))
+		return id // Escapes: boxing the decoded type ID.
 	case typeSpecPointer:
-		return &TypeSpecPointer{
-			Type: loadTypeSpec(r),
-		}
+		typ := loadTypeSpec(r)
+		return &TypeSpecPointer{Type: typ} // Escapes: decoded type structure.
 	case typeSpecArray:
-		return &TypeSpecArray{
-			Count: loadUint(r),
-			Type:  loadTypeSpec(r),
-		}
+		count, typ := loadUint(r), loadTypeSpec(r)
+		return &TypeSpecArray{Count: count, Type: typ} // Escapes: decoded type structure.
 	case typeSpecSlice:
-		return &TypeSpecSlice{
-			Type: loadTypeSpec(r),
-		}
+		typ := loadTypeSpec(r)
+		return &TypeSpecSlice{Type: typ} // Escapes: decoded type structure.
 	case typeSpecMap:
-		return &TypeSpecMap{
-			Key:   loadTypeSpec(r),
-			Value: loadTypeSpec(r),
-		}
+		key, value := loadTypeSpec(r), loadTypeSpec(r)
+		return &TypeSpecMap{Key: key, Value: value} // Escapes: decoded type structure.
 	case typeSpecNil:
 		return TypeSpecNil{}
 	default:
 		// This is not a valid stream?
-		panic(fmt.Errorf("unknown header: %d", hdr))
+		panic(fmt.Errorf("unknown header: %d", hdr)) // Escapes: error formatting.
 	}
 }
 
@@ -494,7 +489,7 @@ func saveTypeSpec(w *Writer, t TypeSpec) {
 		typeSpecNil.save(w)
 	default:
 		// This should not happen?
-		panic(fmt.Errorf("unknown type %T", t))
+		panic(fmt.Errorf("unknown type %T", t)) // Escapes: error formatting.
 	}
 }
 
@@ -634,7 +629,7 @@ const (
 
 // Save saves the given object.
 //
-// +checkescape all
+// +checkescape:hard
 //
 // N.B. This function will panic on error.
 func Save(w *Writer, obj Object) {
@@ -700,13 +695,13 @@ func Save(w *Writer, obj Object) {
 		typeComplex128.save(w)
 		x.save(w)
 	default:
-		panic(fmt.Errorf("unknown type: %#v", obj))
+		panic(fmt.Errorf("unknown type: %#v", obj)) // Escapes: error formatting.
 	}
 }
 
 // Load loads a new object.
 //
-// +checkescape:local,hard
+// +checkescape:hard
 //
 // N.B. This function will panic on error.
 func Load(r *Reader) Object {

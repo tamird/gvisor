@@ -24,6 +24,7 @@ import (
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 var allArrayPrimitives = []any{
@@ -444,12 +445,29 @@ func TestEarlyLoadFields(t *testing.T) {
 }
 
 func TestNilEmptyArrayDestination(t *testing.T) {
-	var encoded bytes.Buffer
-	if _, err := state.Save(t.Context(), &encoded, &[0]int{}); err != nil {
-		t.Fatal(err)
-	}
-	var target *[0]int
-	if _, err := state.Load(t.Context(), &encoded, target); err == nil {
-		t.Fatal("Load accepted an Array without destination storage")
+	// Save compresses a zero array to Nil. Emit both valid wire operations
+	// explicitly: Nil needs no storage, but Array still needs an array view.
+	for _, test := range []struct {
+		name    string
+		value   wire.Object
+		wantErr bool
+	}{
+		{name: "nil", value: wire.Nil{}},
+		{name: "array", value: &wire.Array{}, wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var encoded bytes.Buffer
+			writer := wire.Writer{Writer: &encoded}
+			if err := state.WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, test.value)
+			var target *[0]int
+			_, err := state.Load(t.Context(), &encoded, target)
+			if got, want := err != nil, test.wantErr; got != want {
+				t.Errorf("Load error = %v (failed %t), want failed %t", err, got, want)
+			}
+		})
 	}
 }

@@ -76,7 +76,7 @@ func TestGeneratedPrimitiveRecord(t *testing.T) {
 	runTestCases(t, false, "import_alias", []any{&statewire{value: -19}})
 	pointed := 31
 	runTestCases(t, false, "state_package", []any{&statePackageReceiver{
-		value: -23, object: &statewire{value: -29}, enabled: true, text: "named fields", fraction: 1.25,
+		value: -23, object: []state.Type{&statewire{value: -29}}, enabled: true, text: "named fields", fraction: 1.25,
 		complex: complex(2.5, -3.75), pointer: &pointed,
 		slice: recordSlice{-7, 11}, mapping: recordMap{-13: 17},
 	}})
