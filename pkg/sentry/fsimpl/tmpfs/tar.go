@@ -190,13 +190,13 @@ func (fs *filesystem) mkdirFromTar(hdr *tar.Header, pathToInode map[string]*inod
 	if !ok {
 		return nil, fmt.Errorf("parent inode at %v is not a directory", dir)
 	}
-	childDir, err := fs.newDirectory(auth.KUID(hdr.Uid), auth.KGID(hdr.Gid), linux.FileMode(hdr.Mode), nil /* parentDir */)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create new directory inode: %v", err)
-	}
 	acl, defaultACL, err := getACLsFromHeader(hdr)
 	if err != nil {
 		return nil, err
+	}
+	childDir, err := fs.newDirectory(auth.KUID(hdr.Uid), auth.KGID(hdr.Gid), linux.FileMode(hdr.Mode), nil /* parentDir */)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create new directory inode: %v", err)
 	}
 	childDir.inode.accessACL.Store(acl)
 	childDir.inode.defaultACL.Store(defaultACL)
@@ -222,8 +222,11 @@ func (fs *filesystem) mknodFromTar(hdr *tar.Header, pathToInode map[string]*inod
 	if !ok {
 		return fmt.Errorf("%v is not a directory", dir)
 	}
+	acl, defaultACL, err := getACLsFromHeader(hdr)
+	if err != nil {
+		return err
+	}
 	var childInode *inode
-	var err error
 	switch hdr.Typeflag {
 	case tar.TypeReg:
 		childInode = headerToRegularFile[hdr]
@@ -236,10 +239,6 @@ func (fs *filesystem) mknodFromTar(hdr *tar.Header, pathToInode map[string]*inod
 	default:
 		return fmt.Errorf("mknod unsupported file type %v for %v", hdr.Typeflag, hdr.Name)
 	}
-	if err != nil {
-		return err
-	}
-	acl, defaultACL, err := getACLsFromHeader(hdr)
 	if err != nil {
 		return err
 	}
@@ -289,6 +288,10 @@ func (fs *filesystem) symlinkFromTar(hdr *tar.Header, pathToInode map[string]*in
 	if !ok {
 		return fmt.Errorf("%v is not a directory", dir)
 	}
+	acl, defaultACL, err := getACLsFromHeader(hdr)
+	if err != nil {
+		return err
+	}
 	// Linux allocates a page to store symlink targets that have length larger
 	// than shortSymlinkLen. Mirror SymlinkAt's accounting so creation and
 	// teardown stay balanced; otherwise (*inode).decRef's matching
@@ -304,10 +307,6 @@ func (fs *filesystem) symlinkFromTar(hdr *tar.Header, pathToInode map[string]*in
 		return fmt.Errorf("failed to create inode from tar: %v", err)
 	}
 	child := fs.newDentry(childInode)
-	acl, defaultACL, err := getACLsFromHeader(hdr)
-	if err != nil {
-		return err
-	}
 	child.inode.accessACL.Store(acl)
 	child.inode.defaultACL.Store(defaultACL)
 	child.inode.mtime.Store(hdr.ModTime.UnixNano())
