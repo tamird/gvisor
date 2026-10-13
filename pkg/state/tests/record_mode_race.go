@@ -21,3 +21,5 @@ package tests
 type recordModeValue [2]uint64
 
 func recordModeSample() recordModeValue { return recordModeValue{19, 23} }
+
+const stateRaceEnabled = true

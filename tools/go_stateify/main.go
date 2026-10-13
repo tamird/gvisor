@@ -287,14 +287,25 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			emitFieldValue := func(name string, _ string) {
 				emitField(name)
 			}
+			loadRecv := recv
+			if records != nil {
+				// Custom value types occur inside the receiver scope. Keep
+				// their referenced type and package names visible there.
+				for _, field := range model.fields {
+					if field.kind == fieldValue && typeUsesName(field.valueType, recv) {
+						loadRecv = records.saveReceiver
+						break
+					}
+				}
+			}
 			emitLoadValue := func(name, typName string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, recv, camelCased(name), typName)
+				fmt.Fprintf(outputFile, "	stateSourceObject.LoadValue(%d, new(%s), func(y any) { %s.load%s(ctx, y.(%s)) })\n", fields[name], typName, loadRecv, camelCased(name), typName)
 			}
 			emitLoad := func(name string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], recv, name)
+				fmt.Fprintf(outputFile, "	stateSourceObject.Load(%d, &%s.%s)\n", fields[name], loadRecv, name)
 			}
 			emitLoadWait := func(name string) {
-				fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], recv, name)
+				fmt.Fprintf(outputFile, "	stateSourceObject.LoadWait(%d, &%s.%s)\n", fields[name], loadRecv, name)
 			}
 			// Checked capture can introduce package-qualified calls inside
 			// StateSave. Keep a handwritten receiver from shadowing that
@@ -403,7 +414,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			// N.B. See the comment above for the save method.
 			if generateSaverLoader {
 				fmt.Fprintf(outputFile, "// +checklocksignore\n")
-				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", recv, ts.Name.Name, statePrefix)
+				fmt.Fprintf(outputFile, "func (%s *%s) StateLoad(ctx context.Context, stateSourceObject %sSource) {\n", loadRecv, ts.Name.Name, statePrefix)
 				model.scan(scanFunctions{normal: emitLoad, wait: emitLoadWait})
 				model.scan(scanFunctions{value: emitLoadValue})
 				if hasAfterLoad {
@@ -411,7 +422,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 					// AfterLoad is called, the object encodes a dependency on
 					// referred objects (i.e. fields). This means that afterLoad
 					// will not be called until the other afterLoads are called.
-					fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", recv)
+					fmt.Fprintf(outputFile, "	stateSourceObject.AfterLoad(func () { %s.afterLoad(ctx) })\n", loadRecv)
 				}
 				fmt.Fprintf(outputFile, "}\n\n")
 			}
@@ -475,4 +486,30 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		}
 		fmt.Fprintf(outputFile, "}\n")
 	}
+}
+
+// typeUsesName checks lexical type-expression names, not selector members.
+// Retained custom LoadValue types are emitted inside the receiver's scope.
+func typeUsesName(expression, name string) bool {
+	expr, err := parser.ParseExpr(expression)
+	if err != nil {
+		panic(fmt.Sprintf("invalid checked custom type %q: %v", expression, err))
+	}
+	found := false
+	var visit func(ast.Node) bool
+	visit = func(node ast.Node) bool {
+		switch node := node.(type) {
+		case *ast.Ident:
+			found = found || node.Name == name
+		case *ast.Field:
+			ast.Inspect(node.Type, visit)
+			return false
+		case *ast.SelectorExpr:
+			ast.Inspect(node.X, visit)
+			return false
+		}
+		return true
+	}
+	ast.Inspect(expr, visit)
+	return found
 }
