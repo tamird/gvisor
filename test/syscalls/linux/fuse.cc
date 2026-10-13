@@ -26,11 +26,9 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-// glibc 2.30+ gets statx from linux/stat.h. glibc 2.28/2.29 and musl define it
-// in sys/stat.h instead, and including linux/stat.h conflicts with those
-// definitions. https://github.com/bminor/glibc/commit/5dad6ffbb
+// Only some versions of glibc define the statx types in sys/stat.h.
 #if defined(__GLIBC__) && \
-    (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 30))
+    !(__GLIBC__ == 2 && (__GLIBC_MINOR__ == 28 || __GLIBC_MINOR__ == 29))
 #include <linux/stat.h>
 #endif
 
@@ -58,6 +56,11 @@
 #include "test/util/thread_util.h"
 
 using ::testing::Ge;
+
+// Old versions of glibc do not define this flag.
+#ifndef AT_STATX_DONT_SYNC
+#define AT_STATX_DONT_SYNC 0x4000
+#endif  // AT_STATX_DONT_SYNC
 
 namespace gvisor {
 namespace testing {
