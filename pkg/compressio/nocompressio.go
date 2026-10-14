@@ -101,9 +101,14 @@ type SimpleReader struct {
 
 	// scratch is a scratch buffer used for reading chunk size and hash values.
 	scratch [sha256.Size]byte
+
+	// byteBuf is separate from scratch because Read may verify a chunk while
+	// filling it, overwriting the chunk header and hash scratch.
+	byteBuf [1]byte
 }
 
 var _ io.Reader = (*SimpleReader)(nil)
+var _ io.ByteReader = (*SimpleReader)(nil)
 
 const (
 	defaultBufSize = 256 * 1024
@@ -130,6 +135,19 @@ func (r *SimpleReader) fail(err error) (int, error) {
 		r.err = err
 	}
 	return 0, r.err
+}
+
+// ReadByte implements io.ByteReader.ReadByte using the same stream as Read.
+func (r *SimpleReader) ReadByte() (byte, error) {
+	if r.h == nil {
+		return r.bin.ReadByte()
+	}
+	// Keep keyed chunk accounting and verification in Read. Large chunks
+	// retain their existing streaming-before-verification behavior.
+	if _, err := io.ReadFull(r, r.byteBuf[:]); err != nil {
+		return 0, err
+	}
+	return r.byteBuf[0], nil
 }
 
 // Read implements io.Reader.Read.

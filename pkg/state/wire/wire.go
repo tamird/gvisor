@@ -20,13 +20,14 @@
 // values fit directly in the interface; scalar values may require boxing when
 // returned through Object.
 //
-// This package also uses panic as control flow, so called should be careful to
+// This package also uses panic as control flow, so callers should be careful to
 // wrap calls in appropriate handlers.
 //
 // Testing for this package is driven by the state test package.
 package wire
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"math"
@@ -34,22 +35,36 @@ import (
 	"gvisor.dev/gvisor/pkg/gohacks"
 )
 
-// Reader bundles an io.Reader with a buffer used to implement readByte
-// efficiently.
+// Reader reads wire values without buffering ahead of the caller's stream.
+// Construct it with NewReader so byte reads can use the stream's own buffer.
 type Reader struct {
-	io.Reader
-
-	buf [1]byte
+	reader     io.Reader
+	byteReader io.ByteReader
+	buf        [1]byte
 }
 
-// readByte reads a single byte from r.Reader without allocation. It panics on
-// error.
-func (r *Reader) readByte() byte {
-	n, err := r.Read(r.buf[:])
-	if n != 1 {
-		panic(err)
+var _ io.Reader = Reader{}
+var _ io.ByteReader = (*Reader)(nil)
+
+// NewReader uses r for both byte and bulk reads. Any buffering belongs to r,
+// which can continue reading after this Reader is no longer used.
+func NewReader(r io.Reader) Reader {
+	br, _ := r.(io.ByteReader)
+	return Reader{reader: r, byteReader: br}
+}
+
+// Read implements io.Reader.Read.
+func (r Reader) Read(p []byte) (int, error) {
+	return r.reader.Read(p)
+}
+
+// ReadByte adapts readers that do not implement io.ByteReader. ReadFull permits
+// transient empty reads without consuming bytes beyond the requested byte.
+func (r *Reader) ReadByte() (byte, error) {
+	if _, err := io.ReadFull(r.reader, r.buf[:]); err != nil {
+		return 0, err
 	}
-	return r.buf[0]
+	return r.buf[0], nil
 }
 
 // Writer bundles an io.Writer with a buffer used to implement writeByte
@@ -131,23 +146,15 @@ type Uint uint64
 
 // loadUint loads an object of type Uint.
 func loadUint(r *Reader) Uint {
-	var (
-		u Uint
-		s uint
-	)
-	for i := 0; i <= 9; i++ {
-		b := r.readByte()
-		if b < 0x80 {
-			if i == 9 && b > 1 {
-				panic("overflow")
-			}
-			u |= Uint(b) << s
-			return u
-		}
-		u |= Uint(b&0x7f) << s
-		s += 7
+	br := r.byteReader
+	if br == nil {
+		br = r
 	}
-	panic("unreachable")
+	u, err := binary.ReadUvarint(br)
+	if err != nil {
+		panic(err)
+	}
+	return Uint(u)
 }
 
 // save implements Object.save.

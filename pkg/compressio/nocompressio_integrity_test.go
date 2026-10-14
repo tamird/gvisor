@@ -19,6 +19,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 )
@@ -81,6 +82,109 @@ func testData(size int) []byte {
 
 func newReader(b []byte) *SimpleReader {
 	return NewSimpleReader(io.NopCloser(bytes.NewReader(b)), integrityKey)
+}
+
+func TestSimpleReaderReadByte(t *testing.T) {
+	for _, test := range []struct {
+		name      string
+		chunkSize uint32
+		size      int
+	}{
+		{"chunk_boundaries", 3, 8},
+		{"streamed_chunk", maxVerifiedChunkSize + 1, maxVerifiedChunkSize + 1},
+	} {
+		for _, key := range [][]byte{nil, integrityKey} {
+			t.Run(fmt.Sprintf("%s/keyed=%t", test.name, len(key) != 0), func(t *testing.T) {
+				data := testData(test.size)
+				var saved bytes.Buffer
+				w := NewSimpleWriter(&saved, key, test.chunkSize)
+				// A larger single Write may bypass chunking. Feed bounded writes
+				// so this case crosses real authenticated chunk boundaries.
+				for remaining := data; len(remaining) != 0; {
+					n := min(len(remaining), int(test.chunkSize))
+					if _, err := w.Write(remaining[:n]); err != nil {
+						t.Fatal(err)
+					}
+					remaining = remaining[n:]
+				}
+				if err := w.Close(); err != nil {
+					t.Fatal(err)
+				}
+				r := NewSimpleReader(io.NopCloser(&saved), key)
+				defer r.Close()
+				first, err := r.ReadByte()
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got, want := first, data[0]; got != want {
+					t.Fatalf("first byte = %d, want %d", got, want)
+				}
+				if len(key) != 0 {
+					want := ErrTrailingData
+					if test.chunkSize > maxVerifiedChunkSize {
+						// Oversized chunks intentionally stream before verification.
+						want = ErrUnverifiedData
+					}
+					if got := r.Verify(); !errors.Is(got, want) {
+						t.Fatalf("partial Verify = %v, want %v", got, want)
+					}
+				}
+				middle := make([]byte, len(data)-2)
+				if _, err := io.ReadFull(r, middle); err != nil {
+					t.Fatal(err)
+				}
+				for i, value := range middle {
+					if got, want := value, data[i+1]; got != want {
+						t.Fatalf("bulk byte %d = %d, want %d", i, got, want)
+					}
+				}
+				last, err := r.ReadByte()
+				if err != nil {
+					t.Fatal(err)
+				}
+				// In the streamed case this byte also completes hash verification.
+				if got, want := last, data[len(data)-1]; got != want {
+					t.Errorf("last byte = %d, want %d", got, want)
+				}
+				if err := r.Verify(); err != nil {
+					t.Fatal(err)
+				}
+				_, err = r.ReadByte()
+				if got, want := err, io.EOF; got != want {
+					t.Errorf("final ReadByte error = %v, want %v", got, want)
+				}
+			})
+		}
+	}
+}
+
+func TestSimpleReaderReadByteHashFailure(t *testing.T) {
+	for _, size := range []int{3, maxVerifiedChunkSize + 1} {
+		t.Run(fmt.Sprintf("size=%d", size), func(t *testing.T) {
+			data := testData(size)
+			stream := writeKeyed(t, data, uint32(size))
+			stream[len(stream)-1] ^= 1
+			r := newReader(stream)
+			defer r.Close()
+			if size > maxVerifiedChunkSize {
+				// Large chunks may stream until their final byte and hash.
+				if _, err := io.CopyN(io.Discard, r, int64(size-1)); err != nil {
+					t.Fatal(err)
+				}
+			}
+			// Small chunks fail before their first byte; large chunks fail on
+			// completion. Subsequent reads and Verify retain that same failure.
+			for range 2 {
+				_, err := r.ReadByte()
+				if got, want := err, ErrHashMismatch; !errors.Is(got, want) {
+					t.Fatalf("ReadByte error = %v, want %v", got, want)
+				}
+			}
+			if got, want := r.Verify(), ErrHashMismatch; !errors.Is(got, want) {
+				t.Errorf("Verify = %v, want %v", got, want)
+			}
+		})
+	}
 }
 
 // TestReframedStreamIsRejected makes sure that the reader rejects a stream

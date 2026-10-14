@@ -357,7 +357,7 @@ func TestMapContainers(t *testing.T) {
 // the schema order, object IDs, or each value's encoding.
 func reverseObjectBodies(t *testing.T, buf *bytes.Buffer) {
 	t.Helper()
-	reader := wire.Reader{Reader: buf}
+	reader := wire.NewReader(buf)
 	count, object, err := state.ReadHeader(&reader)
 	if err != nil || !object {
 		t.Fatalf("ReadHeader = %d, %t, %v", count, object, err)

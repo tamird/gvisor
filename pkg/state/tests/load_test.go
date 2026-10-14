@@ -16,14 +16,117 @@ package tests
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
+	"io"
 	"reflect"
 	"strings"
 	"sync"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
+
+// TestStatefileReaderContinuity exercises the shared reader used for successive
+// CPUID and kernel graphs, then a memory header and raw memory payload.
+func TestStatefileReaderContinuity(t *testing.T) {
+	for _, compression := range []statefile.CompressionLevel{statefile.CompressionLevelNone, statefile.CompressionLevelFlateBestSpeed} {
+		for _, key := range [][]byte{nil, []byte("statefile continuity key")} {
+			t.Run(fmt.Sprintf("%v/keyed=%t", compression, len(key) != 0), func(t *testing.T) {
+				var saved bytes.Buffer
+				w, err := statefile.NewWriter(&saved, key, compression.ToMetadata())
+				if err != nil {
+					t.Fatal(err)
+				}
+				first := int64(-129)
+				second := []string{"kernel", strings.Repeat("x", 300<<10)}
+				if _, err := state.Save(t.Context(), w, &first); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := state.Save(t.Context(), w, &second); err != nil {
+					t.Fatal(err)
+				}
+				tail := []byte("raw memory payload")
+				wr := wire.Writer{Writer: w}
+				if err := state.WriteHeader(&wr, uint64(len(tail)), false); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := w.Write(tail); err != nil {
+					t.Fatal(err)
+				}
+				if err := w.Close(); err != nil {
+					t.Fatal(err)
+				}
+
+				r, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(saved.Bytes())), key)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer r.Close()
+				var restoredFirst int64
+				if _, err := state.Load(t.Context(), r, &restoredFirst); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := restoredFirst, first; got != want {
+					t.Errorf("first graph = %d, want %d", got, want)
+				}
+				var restoredSecond []string
+				if _, err := state.Load(t.Context(), r, &restoredSecond); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := len(restoredSecond), len(second); got != want {
+					t.Fatalf("second graph length = %d, want %d", got, want)
+				}
+				for i, value := range restoredSecond {
+					if got, want := value, second[i]; got != want {
+						t.Fatalf("second graph string %d = %.32q (%d bytes), want %.32q (%d bytes)", i, got, len(got), want, len(want))
+					}
+				}
+				rr := wire.NewReader(r)
+				length, object, err := state.ReadHeader(&rr)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got, want := length, uint64(len(tail)); got != want || object {
+					t.Fatalf("memory header = %d, object=%t, want %d, false", got, object, want)
+				}
+				// Read through the original owner, as pgalloc does. A temporary
+				// buffer in either state.Load or wire.Reader would lose data here.
+				restoredTail := make([]byte, len(tail))
+				if _, err := io.ReadFull(r, restoredTail); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := restoredTail, tail; !bytes.Equal(got, want) {
+					t.Errorf("memory payload = %q, want %q", got, want)
+				}
+				if err := r.Verify(); err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
+func TestReadHeaderTruncation(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		data []byte
+		err  error
+	}{
+		{"empty", nil, io.EOF},
+		{"partial_varint", []byte{128}, io.ErrUnexpectedEOF},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			r := wire.NewReader(bytes.NewReader(test.data))
+			_, _, err := state.ReadHeader(&r)
+			if got, want := err, test.err; !errors.Is(got, want) {
+				t.Errorf("ReadHeader error = %v, want %v", got, want)
+			}
+		})
+	}
+}
 
 func TestLoadHooks(t *testing.T) {
 	runTestCases(t, false, "load-hooks", []any{
@@ -248,7 +351,7 @@ func TestConcurrentFieldLayouts(t *testing.T) {
 	// Start with the actual producer's one-object stream. Reorder both the
 	// schema and the corresponding payload slots, leaving graph IDs intact.
 	normal := bytes.Clone(saved.Bytes())
-	reader := wire.Reader{Reader: &saved}
+	reader := wire.NewReader(&saved)
 	count, object, err := state.ReadHeader(&reader)
 	if got, want := count, uint64(1); err != nil || got != want || !object {
 		t.Fatalf("ReadHeader = %d, %t, %v, want %d, true, nil", got, object, err, want)
