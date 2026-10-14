@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T01:51:36.289778+00:00",
+    "updatedAt": "2026-10-14T02:11:46.464449+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1017,19 +1017,20 @@
       "status": "open",
       "reviewDecision": "",
       "updatedAt": "2026-09-24T13:54:47Z",
-      "summary": "The authorized October 2/3 rebase is published at 0943d0f425c80d8a1b9372fcaba1b87711d51a92 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14503#issuecomment-5963494160. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published rebase 06ad0ffc9 preserves alias-aware lock-state diagnostics and current ignored-field behavior. The maintained checklocks fixture Nogo owner passes ARM64 and AMD64 analysis on the hosted GNU coordinator. The former separate strict owner and anchors are unnecessary under the landed all-fixture policy. This standalone PR is not included in the qualification branch; no runtime or production-wide result is claimed.",
+      "summary": "The current published head 1d029eafd has a newly observed merge conflict. Agent work is repairing it; the complete public lookup records no matching import. Earlier qualification and review evidence remains tied to its recorded source.\n\nThe authorized October 2/3 rebase is published at 0943d0f425c80d8a1b9372fcaba1b87711d51a92 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/14503#issuecomment-5963494160. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: Published rebase 06ad0ffc9 preserves alias-aware lock-state diagnostics and current ignored-field behavior. The maintained checklocks fixture Nogo owner passes ARM64 and AMD64 analysis on the hosted GNU coordinator. The former separate strict owner and anchors are unnecessary under the landed all-fixture policy. That standalone qualification did not claim a runtime or production-wide result.",
       "followup": {
-        "disposition": "awaiting upstream review or import",
-        "owner": "external_sweeps",
-        "nextAction": "No outstanding substantive revision request found in the complete current feedback. Observe review, checks and exact import lineage; do not manufacture a source task.",
+        "disposition": "Agent conflict repair in progress",
+        "owner": "restore_integration_review",
+        "nextAction": "Repair the newly observed conflict on published head 1d029eafd, preserving the intended lock-state change and existing review requests. Follow fresh checks and current-head review after the rebase is published. No matching public import is recorded in the complete lookup.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14503"
         ],
         "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
-        "sourceHead": "0943d0f425c80d8a1b9372fcaba1b87711d51a92",
+        "sourceHead": "1d029eafdcc0016369800d77233a86a94c99ade7",
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
-      }
+        "observedAt": "2026-10-14T02:08:38.669006+00:00"
+      },
+      "head": "1d029eafdcc0016369800d77233a86a94c99ade7"
     },
     {
       "id": "pr:14502",
@@ -2758,27 +2759,29 @@
       "url": "https://github.com/google/gvisor/pull/15337",
       "group": "bazel",
       "status": "open",
-      "summary": "Root refreshed this change onto current master. The exact published head is 3e19d6003; current CI and mergeability are reported in the snapshot. The rebase retains rules_cc 0.2.25 and rules_python 2.0.2. A fresh Etienne review notice was posted; prior-head approval is not current approval.",
+      "summary": "The published head 9bf16bfd9 resolves the page-size import conflict while preserving the approved BPF patch. The current GitHub observation reports no merge conflict and requires fresh current-head review. The existing reviewer notice is public.\n\nThe earlier 3e19d6003 rebase retained rules_cc 0.2.25 and rules_python 2.0.2; its review and validation remain historical source-specific evidence.",
       "number": 15337,
-      "head": "3e19d6003589c7f1553e55a5d72bff748d3d18e4",
+      "head": "9bf16bfd9e40c00ba6d066a667612ab1c0320aa2",
       "reviewDecision": "REVIEW_REQUIRED",
       "updatedAt": "2026-10-10T14:31:51.129671+00:00",
       "followup": {
-        "disposition": "Rebase published; current checks and review tracked",
+        "disposition": "Repaired head awaiting current maintainer review",
         "owner": "external_sweeps",
-        "nextAction": "Observe exact-head checks, reviews and import lineage. Route new actionable failures immediately; do not duplicate the writer or review notice.",
-        "sourceHead": "3e19d6003589c7f1553e55a5d72bff748d3d18e4",
+        "nextAction": "Follow current-head checks and maintainer review at 9bf16bfd9. The page-size import conflict is repaired and GitHub reports no conflict; prior-head approval is not current approval. The existing reviewer notice is already published, so do not duplicate it.",
+        "sourceHead": "9bf16bfd9e40c00ba6d066a667612ab1c0320aa2",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": "REVIEW_REQUIRED",
-        "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15337#issuecomment-6089130397",
           "https://github.com/google/gvisor/pull/15337#pullrequestreview-5422561286",
           "https://github.com/tamird/gvisor/commit/0d35a2a12a00d0504ecf8ab63e4105ca2b3006a0",
           "https://github.com/google/gvisor/actions/runs/37564117954/job/112607818943",
           "https://github.com/tamird/gvisor/commit/e899dca1fbf56133d8973c20261f4983ef8e4212",
-          "https://github.com/google/gvisor/pull/15414"
-        ]
+          "https://github.com/google/gvisor/pull/15414",
+          "https://github.com/tamird/gvisor/commit/9bf16bfd9e40c00ba6d066a667612ab1c0320aa2",
+          "https://github.com/google/gvisor/pull/15337#issuecomment-6150111285"
+        ],
+        "observedAt": "2026-10-14T02:08:38.669006+00:00"
       }
     },
     {
@@ -4935,9 +4938,9 @@
       "updatedAt": "2026-10-13T17:55:57.019787+00:00",
       "summary": "milantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
-        "disposition": "Amendment covered by regenerated import",
+        "disposition": "New public import CI failure under investigation",
         "owner": "external_sweeps",
-        "nextAction": "Follow the fresh CI and merge of import #15687 at bc25b28dd. Its packaging covers the proposed XML amendment, so that separate contributor decision is withdrawn. Keep the known source conflict visible, but do not immediately rebase while this current-source-matching import is active. The source PR is unchanged; old import failures do not establish the result of the regenerated head.",
+        "nextAction": "Import #15687 at bc25b28dd covers the obsolete XML amendment, whose contributor decision is withdrawn. Its new public pipeline 50720 fails the gtest discovery fixture in all three failed jobs. The existing qualified GNU link-ordering proposal remains pending a contributor decision; these new CI logs omit subprocess stderr, so they do not independently prove that linker diagnosis. Keep the known source conflict visible, but do not immediately rebase while this current-source-matching import is active.",
         "sourceHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
         "reviewedAt": "2026-10-12T06:07:17.517136+00:00",
         "evidence": [
@@ -4946,10 +4949,12 @@
           "https://github.com/tamird/gvisor/commit/fc05ca2668181f45b42463ce84d0d6f498032908",
           "https://github.com/tamird/gvisor/commit/400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
           "https://github.com/google/gvisor/pull/15687",
-          "https://github.com/google/gvisor/commit/bc25b28dd702fa5fbb76b6d15549a1e198aeb74e"
+          "https://github.com/google/gvisor/commit/bc25b28dd702fa5fbb76b6d15549a1e198aeb74e",
+          "https://buildkite.com/gvisor/pipeline/builds/50720",
+          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
         ],
         "reviewDecision": "APPROVED",
-        "observedAt": "2026-10-14T00:43:35.633011+00:00"
+        "observedAt": "2026-10-14T02:08:38.669006+00:00"
       },
       "number": 15562,
       "reviewDecision": "APPROVED"
