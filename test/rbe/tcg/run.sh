@@ -34,7 +34,7 @@ if [[ -n "$guest_emulator" ]]; then guest_emulator="$(realpath "$guest_emulator"
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
-    machine_options=(-machine "virt-6.2,gic-version=3" -cpu cortex-a57 -accel "tcg,thread=multi")
+    machine_options=(-machine "virt-6.2,gic-version=3" -cpu cortex-a57,midr=0x411fd073 -accel "tcg,thread=multi")
     if [[ "$guest_arm64_el2" == true ]]; then
       machine_options[1]+=",virtualization=on"
     fi
