@@ -779,14 +779,15 @@ run_platform_matrix() (
       unit)
         python3 test/rbe/unit_matrix.py query test/unit.targets > "$selection_dir/owners.query"
         bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
-        python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+        unit_environment_targets > "$selection_dir/environment-owners"
+        python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" \
+          --additional-owners "$selection_dir/environment-owners" > "$selection_dir/actions.query"
         bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --output=jsonproto --include_artifacts=false \
           --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
         if [[ $explicit_unit == true ]]; then
           select_unit_profile "$selection_dir"
           unit_selection_options=(--profile "$selection_dir/unit-profile.json")
         fi
-        unit_environment_targets > "$selection_dir/environment-owners"
         python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
           "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}" \
           --environment-owners "$selection_dir/environment-owners" | tee "$selection_dir/unit-selection.json"
@@ -795,7 +796,15 @@ run_platform_matrix() (
         else
           cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
           # Also retain these explicit owners in the combined-filter check.
-          cat "$selection_dir/environment-owners" >> "$selection_dir/explicit-targets"
+          python3 - "$selection_dir/unit-selection.json" >> "$selection_dir/explicit-targets" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+selection = json.loads(Path(sys.argv[1]).read_text())
+for owner in selection["additional_environment_owners"]:
+    print(owner)
+PY
           options+=(--config=unit)
         fi
         options+=(--strip=never)

@@ -109,7 +109,7 @@ def unit_patterns(
 
 def test_requirements(
     actions_path: str,
-    architecture: str = "arm64",
+    architecture: str | None = "arm64",
     configurations: dict[str, str] | None = None,
 ) -> dict[str, dict[str, str]]:
     decoded = json.loads(Path(actions_path).read_text())
@@ -141,6 +141,7 @@ def test_requirements(
                 raise ValueError(f"Invalid action configuration: {configuration}")
             checksums[str(config_id)] = checksum
     requirements: dict[str, dict[str, str]] = {}
+    architectures = ("amd64", "arm64") if architecture is None else (architecture,)
     for action in actions:
         if (
             not isinstance(action, dict)
@@ -163,7 +164,7 @@ def test_requirements(
             ):
                 raise ValueError(f"Invalid execution property: {entry}")
             properties[key] = value
-        if properties.get("Arch") != architecture or properties.get("OSFamily") != "linux":
+        if properties.get("Arch") not in architectures or properties.get("OSFamily") != "linux":
             raise ValueError(f"Unexpected native test routing for {label}: {properties}")
         if properties.get("workload-isolation-type") not in ("oci", "firecracker"):
             raise ValueError(f"Unknown worker requirement for {label}: {properties}")
@@ -508,10 +509,14 @@ def select_variants(
     owners = owner_labels(owners_path)
     variants = {owner + "_arm64" for owner in owners}
     environment = set(environment_owners)
-    expected = variants | environment if hybrid else variants
-    requirements = test_requirements(actions_path)
+    expected = variants | environment
+    requirements = test_requirements(actions_path, architecture="arm64" if hybrid else None)
     if requirements.keys() != expected:
         raise ValueError(f"Configured test owners differ from selection: {sorted(expected ^ requirements.keys())}")
+    for owner, properties in requirements.items():
+        architecture = "arm64" if owner in variants else owner.rsplit("_", 1)[-1]
+        if properties["Arch"] != architecture:
+            raise ValueError(f"Unexpected target architecture for {owner}: {properties['Arch']}")
     if hybrid:
         if profile_path is None:
             raise ValueError("Hybrid units require the canonical native unit profile")
@@ -542,8 +547,13 @@ def select_variants(
             "profile_excluded_variants": sorted(expected - eligible),
         }, indent=2))
         return
-    unavailable = sorted(label for label, properties in requirements.items() if properties["workload-isolation-type"] == "firecracker")
-    selected = sorted(expected - set(unavailable))
+    unavailable = sorted(
+        label for label, properties in requirements.items()
+        if properties["Arch"] == "arm64" and properties["workload-isolation-type"] == "firecracker"
+    )
+    available = expected - set(unavailable)
+    selected = sorted(variants & available)
+    selected_environment = sorted(environment & available)
     if profile_path is None:
         # Ordinary mixed units retain their original patterns and build-only
         # work. Other lanes that require neutral filters use canonical leaves.
@@ -552,10 +562,10 @@ def select_variants(
         original = configured_tests(profile_path)
         selected = sorted(set(selected) & {label + "_arm64" for label in original})
         output = "".join(label + "\n" for label in sorted(original) + selected)
-    Path(output_path).write_text(output + "".join(label + "\n" for label in environment_owners))
+    Path(output_path).write_text(output + "".join(label + "\n" for label in selected_environment))
     print(json.dumps({
         "additional_arm64_variants": selected,
-        "additional_environment_owners": environment_owners,
+        "additional_environment_owners": selected_environment,
         "unavailable_arm64_firecracker": unavailable,
         "canonical_selection": profile_path or patterns_path,
     }, indent=2))
