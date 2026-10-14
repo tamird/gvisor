@@ -21,6 +21,7 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/atomicbitops"
 	"gvisor.dev/gvisor/pkg/hostsyscall"
 	"gvisor.dev/gvisor/pkg/ring0"
 	"gvisor.dev/gvisor/pkg/sentry/arch"
@@ -190,4 +191,64 @@ func bluepillArchHandleExit(c *vCPU, context unsafe.Pointer) bool {
 		c.dieAndDumpExitReason(bluepillArchContext(context))
 		return false
 	}
+}
+
+// Diagnostic-only: cap output across all signal-handler entries. These helpers
+// run on the owning host thread, outside KVM_RUN, never in guest EL1.
+var bluepillTraceCount atomicbitops.Uint64
+
+var (
+	bluepillTraceBeforeTitle        = []byte("KVM trace before sequence")
+	bluepillTraceEnterTitle         = []byte("KVM trace enter sequence")
+	bluepillTraceReturnTitle        = []byte("KVM trace return sequence")
+	bluepillTraceFDTitle            = []byte("KVM trace fd")
+	bluepillTraceErrnoTitle         = []byte("KVM trace errno")
+	bluepillTraceExitReasonTitle    = []byte("KVM trace exit reason")
+	bluepillTraceRegisterIDTitle    = []byte("KVM trace register id")
+	bluepillTraceRegisterErrnoTitle = []byte("KVM trace register errno")
+	bluepillTraceRegisterValueTitle = []byte("KVM trace register value")
+	bluepillTraceResumePCTitle      = []byte("KVM trace resume PC")
+)
+
+//go:nosplit
+func bluepillTraceRegisters(c *vCPU) {
+	for _, id := range [...]uint64{_KVM_ARM64_REGS_PC, _KVM_ARM64_REGS_PSTATE} {
+		printHex(bluepillTraceRegisterIDTitle, id)
+		var value uint64
+		reg := kvmOneReg{id: id, addr: uint64(uintptr(unsafe.Pointer(&value)))}
+		errno := c.getOneRegister(&reg)
+		printHex(bluepillTraceRegisterErrnoTitle, uint64(errno))
+		if errno == 0 {
+			printHex(bluepillTraceRegisterValueTitle, value)
+		}
+	}
+}
+
+//go:nosplit
+func bluepillTraceBefore(c *vCPU) uint64 {
+	sequence := bluepillTraceCount.Add(1)
+	if sequence > 16 {
+		return 0
+	}
+	printHex(bluepillTraceBeforeTitle, sequence)
+	printHex(bluepillTraceFDTitle, uint64(c.fd))
+	printHex(bluepillTraceResumePCTitle, c.CPU.Registers().Pc)
+	bluepillTraceRegisters(c)
+	// Emit this only after the register reads return, immediately before RUN.
+	printHex(bluepillTraceEnterTitle, sequence)
+	return sequence
+}
+
+//go:nosplit
+func bluepillTraceAfter(c *vCPU, sequence uint64, errno unix.Errno) {
+	if sequence == 0 {
+		return
+	}
+	printHex(bluepillTraceReturnTitle, sequence)
+	printHex(bluepillTraceErrnoTitle, uint64(errno))
+	// exitReason is valid only after a successful KVM_RUN ioctl.
+	if errno == 0 {
+		printHex(bluepillTraceExitReasonTitle, uint64(c.runData.exitReason))
+	}
+	bluepillTraceRegisters(c)
 }

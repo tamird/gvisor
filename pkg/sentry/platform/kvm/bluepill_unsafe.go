@@ -171,7 +171,9 @@ func bluepillHandler(context unsafe.Pointer) {
 
 	for {
 		hostExitCounter.Increment()
+		trace := bluepillTraceBefore(c)
 		errno := hostsyscall.RawSyscallErrno(unix.SYS_IOCTL, uintptr(c.fd), KVM_RUN, 0) // escapes: no.
+		bluepillTraceAfter(c, trace, errno)
 		switch errno {
 		case 0: // Expected case.
 		case unix.EINTR:

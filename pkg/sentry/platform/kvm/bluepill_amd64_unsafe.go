@@ -211,3 +211,11 @@ func bluepillUserHandler(frame uintptr) {
 	bluepillHandler(unsafe.Pointer(frame))
 	sigframe.Sigreturn((*arch.UContext64)(unsafe.Pointer(frame)))
 }
+
+// Diagnostic-only ARM64 entry tracing leaves AMD64 unchanged.
+//
+//go:nosplit
+func bluepillTraceBefore(c *vCPU) uint64 { return 0 }
+
+//go:nosplit
+func bluepillTraceAfter(c *vCPU, sequence uint64, errno unix.Errno) {}
