@@ -165,6 +165,12 @@ trap 'exit 130' INT
 # ARM TCG supplies its source-built emulator. Guest preparation, recovery,
 # shared libraries and firmware use the existing declared host archive.
 emulator_path="${guest_emulator:-$host/usr/bin/$emulator}"
+# This diagnostic endpoint belongs to the stock --run_under wrapper. It is
+# private to this QEMU process; the wrapper owns its bounded snapshot/resume.
+if [[ -n "${GVISOR_TCG_QMP_SOCKET:-}" ]]; then
+  [[ "$machine" == arm64_tcg && "$GVISOR_TCG_QMP_SOCKET" =~ ^[a-zA-Z0-9_-]+$ ]] || exit 1
+  machine_options+=(-qmp "unix:$GVISOR_TCG_QMP_SOCKET,server=on,wait=off,abstract=on")
+fi
 # Networking and privileged host mounts are not needed by the guest transport.
 QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   "$loader" --inhibit-cache --library-path "$libraries" "$emulator_path" \

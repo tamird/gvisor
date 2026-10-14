@@ -13,6 +13,7 @@
 # limitations under the License.
 
 load("@rules_distroless//distroless:defs.bzl", "flatten")
+load("@rules_python//python:defs.bzl", "py_binary")
 load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 load("//tools:defs.bzl", "bzl_library", "pkg_tar")
 load(":defs.bzl", "tcg_image")
@@ -34,6 +35,14 @@ sh_binary(
     testonly = True,
     srcs = ["run.sh"],
     tags = ["manual"],
+)
+
+py_binary(
+    name = "kvm_monitor",
+    testonly = True,
+    srcs = ["kvm_monitor.py"],
+    tags = ["manual"],
+    visibility = ["//pkg/sentry/platform/kvm:__pkg__"],
 )
 
 tcg_image(
