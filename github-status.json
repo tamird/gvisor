@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-14T21:51:48.143862+00:00",
-  "registryDate": "2026-10-14T21:41:00.062222+00:00",
+  "registryDate": "2026-10-14T21:54:35.871162+00:00",
   "prs": [
     {
       "number": 12470,
@@ -90026,12 +90026,12 @@
       }
     },
     "branch:review/pinring-teardown-timing": {
-      "changes-requested": {
-        "scope": "6541c99536042416bbe20eb793f1c58edd23368d",
-        "since": "2026-10-14T21:41:00.062222+00:00",
+      "contributor-review": {
+        "scope": "971719ac3c3cf88b3e73ee7a82573ab4e362444b",
+        "since": "2026-10-14T21:54:35.871162+00:00",
         "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-10-14T21:41:00.062222+00:00"
+        "qualifier": null,
+        "observedAt": "2026-10-14T21:54:35.871162+00:00"
       }
     }
   },
