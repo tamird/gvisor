@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-13T23:50:00.547196+00:00",
+    "updatedAt": "2026-10-14T00:25:54.549474+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4969,8 +4969,8 @@
         "owner": "root",
         "disposition": "Current targeted qualification adopted",
         "sourceHead": "ddd23376f391b04aea96441c0be4c800877bd4c9",
-        "observedAt": "2026-10-13T23:50:00.547196+00:00",
-        "nextAction": "The full unit continuation at 70b9485459 is running as Actions 38486417087 after the coordinator-memory correction and qualified checksum-reporting adoption, with the same 687-target selection. No completed full-profile pass is claimed. The failed 101d run remains recorded: Java heap exhaustion (exit 33), 209 passing test targets and no reported test failures before interruption. Canonical ddd23376 is unchanged.",
+        "observedAt": "2026-10-14T00:25:54.549474+00:00",
+        "nextAction": "The full unit profile at 70b9485459 completed all 687 test summaries: 686 passed and only sniffer_test_arm64 failed (native exit 3, report capture 0 with no capture errors). It did not hit heap exhaustion. The failure is in the fork’s net.Pipe test fixture; agent work is validating a Unix-stream fixture correction on both CPUs, including 100 repeats and the owning analyzers. The correction is uncommitted and not a contributor proposal. No complete passing full profile is claimed. The earlier 101d run remains recorded as Java heap exhaustion (exit 33) after 209 passing targets. Canonical ddd23376 is unchanged.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -4983,13 +4983,14 @@
           "https://github.com/tamird/gvisor/actions/runs/38482438303",
           "https://github.com/tamird/gvisor/commit/101d2643c923dcd961b52ad705c80a26e4771182",
           "https://github.com/tamird/gvisor/commit/70b94854596884523f67a6a363a983fe050cd2c2",
-          "https://github.com/tamird/gvisor/actions/runs/38486417087"
+          "https://github.com/tamird/gvisor/actions/runs/38486417087",
+          "https://app.buildbuddy.io/invocation/0810fe99-202d-4737-b27b-e8a59e279d4e"
         ]
       },
       "evidence": [
         {
           "label": "Current adopted canonical source",
-          "url": "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2"
+          "url": "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9"
         },
         {
           "label": "Completed Stable Dockerfile export, archive and load",
@@ -8937,7 +8938,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-13T23:50:00.547196+00:00",
+      "updatedAt": "2026-10-14T00:25:54.549474+00:00",
       "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe subsequent idle-Nginx restore pilot is independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.",
       "findings": [
         {
@@ -9298,10 +9299,18 @@
           ]
         },
         {
-          "text": "The public data-plan restore successor replaces specialized restore callback families with a common encoded-kind engine and generated field metadata, with shared fixture corrections and the approved transitive allocation guard. Its validation parent is DISCONNECTED; the owner is retrieving the actual outcome without resubmission. The observed control pass and probe diagnostics are partial evidence. No completed full candidate qualification or timing result is claimed.",
+          "text": "The public data-plan restore successor replaces specialized restore callback families with a common encoded-kind engine and generated field metadata, with shared fixture corrections and the approved transitive allocation guard. The current 221124de7d continuation has passing normal, race and owning-analyzer children; its production stages and original-evidence collection remain active, so combined correctness is not yet closed. The earlier cfffbf863 run is retained with provider status 13 and missing execution traces. No completed full candidate qualification, timing result or adoption is claimed.",
           "evidence": [
             {
-              "label": "Public data-plan successor under validation",
+              "label": "Current public data-plan successor",
+              "url": "https://github.com/tamird/gvisor/commit/221124de7d920c5dbe897307642925ff158e61c7"
+            },
+            {
+              "label": "Current correctness continuation; combined result pending",
+              "url": "https://app.buildbuddy.io/invocation/a5629941-2b49-437a-aa05-7e4f26e49978"
+            },
+            {
+              "label": "Earlier data-plan source; provider failure retained",
               "url": "https://github.com/tamird/gvisor/commit/cfffbf863e8c2c5742b49e098de78cd4742d066e"
             },
             {
@@ -9309,13 +9318,13 @@
               "url": "https://github.com/tamird/gvisor/commit/3aa3a761cfef54164ef16e19c417965b154d94fa"
             },
             {
-              "label": "Current correctness validation",
+              "label": "Earlier validation with provider status 13",
               "url": "https://app.buildbuddy.io/invocation/6b487eaa-7c8d-48eb-b27c-e4b2271f0ac6"
             }
           ]
         }
       ],
-      "nextStep": "The public data-plan validation parent is disconnected; the owner is retrieving its actual outcome without resubmission. Full candidate correctness, performance and adoption remain unestablished. The Go benchmark-status fix is qualified and awaiting a contributor decision on Gerrit upload. Agent work continues on the containerd content-lifetime fix and the holistic state redesign. The fixed count=1 cohort remains qualified; the six-row Nginx pilot remains incomplete.",
+      "nextStep": "Finish the current data-plan correctness continuation and verify its original production/source evidence. Passing test and analyzer children do not yet close combined qualification; performance and adoption remain unestablished. The Go benchmark-status fix is qualified and awaiting a contributor decision on Gerrit upload. Agent work continues on the containerd content-lifetime fix and the holistic state redesign. The fixed count=1 cohort remains qualified; the six-row Nginx pilot remains incomplete.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
