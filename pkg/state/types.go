@@ -36,6 +36,10 @@ type reconciledTypeEntry struct {
 	wire.Type
 	LocalType  reflect.Type
 	FieldOrder []int
+
+	// registered is the exact owner found during reconciliation. Forwarding
+	// loaders may use a different receiver and must check its actual type.
+	registered *registeredType
 }
 
 // typeEncodeDatabase is an internal TypeInfo database for encoding.
@@ -219,9 +223,11 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 		Failf("typeDatabase contains conflicting definitions for id %d: %s->%v (current) and %s->%v (existing)",
 			id, name, fields, pending.Name, pending.Fields)
 	}
+	registered, _ := restoreType(typ)
 	rte := &reconciledTypeEntry{
-		Type:      info,
-		LocalType: typ,
+		Type:       info,
+		LocalType:  typ,
+		registered: registered,
 	}
 	// If there are zero or one fields, then we skip allocating the field
 	// slice. There is special handling for decoding in this case. If the

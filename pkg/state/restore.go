@@ -115,7 +115,15 @@ func allocateObject(typ reflect.Type) any {
 func (s Source) LoadFields(receiver fieldLoader) {
 	pointer := reflect.ValueOf(receiver)
 	typ := pointer.Type().Elem()
-	registered, _ := restoreType(typ)
+	var registered *registeredType
+	if rte := s.internal.rte; rte != nil {
+		registered = rte.registered
+	}
+	// Reuse the reconciled owner only for this actual receiver. Identtype
+	// forwarding and registration after an early Load retain normal lookup.
+	if registered == nil || registered.typ != typ {
+		registered, _ = restoreType(typ)
+	}
 	var plan *restorePlan
 	if registered != nil && registered.loadFields != nil {
 		plan = &registered.restorePlan
