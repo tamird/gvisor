@@ -17,8 +17,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -175,17 +177,38 @@ func testBootPosture(t *testing.T, tc postureCase) {
 	}
 
 	pid := c.Sandbox.Getpid()
-	// Capture the blocked Sentry without changing the start operation or its locks.
-	stacksDone := make(chan struct{})
-	stacksTimer := time.AfterFunc(30*time.Second, func() {
-		defer close(stacksDone)
-		fmt.Fprintf(os.Stderr, "BootPosture start diagnostic: requesting sandbox %s PID %d stacks\n", c.ID, pid)
-		stacks, err := c.Sandbox.Stacks()
-		fmt.Fprintf(os.Stderr, "BootPosture start diagnostic: stacks error=%v\n%s\n", err, stacks)
+	pidfd, err := unix.PidfdOpen(pid, 0)
+	if err != nil {
+		t.Fatalf("Opening Sentry PID %d pidfd: %v", pid, err)
+	}
+	defer unix.Close(pidfd)
+	taskDir := fmt.Sprintf("/proc/%d/task", pid)
+	taskRoot, err := os.OpenRoot(taskDir)
+	if err != nil {
+		t.Fatalf("Opening Sentry task directory %s: %v", taskDir, err)
+	}
+	defer taskRoot.Close()
+	// Capture native thread state before requesting a dump from this exact Sentry.
+	diagnosticDone := make(chan struct{})
+	diagnosticTimer := time.AfterFunc(30*time.Second, func() {
+		defer close(diagnosticDone)
+		threads, err := fs.ReadDir(taskRoot.FS(), ".")
+		fmt.Fprintf(os.Stderr, "BootPosture thread diagnostic: %s error=%v\n", taskDir, err)
+		for _, thread := range threads {
+			for _, name := range []string{"syscall", "stack", "wchan", "status"} {
+				path := filepath.Join(thread.Name(), name)
+				fmt.Fprintf(os.Stderr, "BootPosture thread diagnostic: reading %s\n", path)
+				data, err := taskRoot.ReadFile(path)
+				fmt.Fprintf(os.Stderr, "BootPosture thread diagnostic: %s error=%v\n%s\n", path, err, data)
+			}
+		}
+		fmt.Fprintf(os.Stderr, "BootPosture thread diagnostic: sending SIGQUIT to sandbox %s PID %d\n", c.ID, pid)
+		err = unix.PidfdSendSignal(pidfd, unix.SIGQUIT, nil, 0)
+		fmt.Fprintf(os.Stderr, "BootPosture thread diagnostic: SIGQUIT error=%v\n", err)
 	})
 	err = c.Start(conf)
-	if !stacksTimer.Stop() {
-		<-stacksDone
+	if !diagnosticTimer.Stop() {
+		<-diagnosticDone
 	}
 	if err != nil {
 		t.Fatalf("Error starting container: %v", err)
