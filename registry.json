@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T23:24:21.634958+00:00",
+    "updatedAt": "2026-10-14T23:55:56.416922+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4099,12 +4099,12 @@
       "url": "https://github.com/google/gvisor/pull/15416",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-10-14T22:29:26.456798+00:00",
-      "summary": "Public native Linux CI rejects the nftables rule `fib saddr . iif oifname exists`. Linux permits presence checks only for the outgoing-interface index. Standalone correction 9b8c1371b removes the invalid fixture clause and aligns gVisor result validation and initialization with Linux. Independent source reviews passed; focused native/gVisor and before/after checks are running. No failure is attributed to this PR’s own change.\n\nMechanically refreshed and published at 20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf on current upstream e1bc74024. Independent combined source review verifies identical complete source edit sequences and preserved author, date and message; existing validation remains tied to its original source. Publication receipt d5d609287507 verifies exact old-head leases, unchanged PR body and matching local/public/tracking heads. At publication GitHub reported MERGEABLE; current CI and reviews appear in the synchronized snapshot. No new runtime workload was launched for this unchanged rebase.\n\nEarlier delivery and source-specific evidence:\n\nThe contributor-approved independent metadata-retention fix is now open as PR #15416 at the exact reviewed head. Fetch keeps a prior Go module commit only when the fresh lookup has no commit and the module version and nonempty ZIP hash match. Fresh license results and nonempty commits remain authoritative; retrieval dates are retained only when the complete record is unchanged. This is a source correction, not a license-policy approval.\n\nParent 06830b2d passes in 118.408 seconds at exact d0d1a2a13. The existing checker passes all four roots without skips on one uncached remote AMD64 OCI action with its original 60-second timeout. Canonical Fetch and Verify accept 190 entries and produce a byte-identical catalog. Outcome 607161f6e640 and independent saved peer efda85edb7c6 bind 131 files, 21 source records and the actual Action/Command/stdout/XML join. Fresh pre-reconciliation metadata was not logged, so this run does not identify which requests exercised the fallback. No catalog or policy change was adopted.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "summary": "Its public import fails the native nftables FIB fixture in Buildkite 50807: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nMechanically refreshed and published at 20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf on current upstream e1bc74024. Independent combined source review verifies identical complete source edit sequences and preserved author, date and message; existing validation remains tied to its original source. Publication receipt d5d609287507 verifies exact old-head leases, unchanged PR body and matching local/public/tracking heads. At publication GitHub reported MERGEABLE; current CI and reviews appear in the synchronized snapshot. No new runtime workload was launched for this unchanged rebase.\n\nEarlier delivery and source-specific evidence:\n\nThe contributor-approved independent metadata-retention fix is now open as PR #15416 at the exact reviewed head. Fetch keeps a prior Go module commit only when the fresh lookup has no commit and the module version and nonempty ZIP hash match. Fresh license results and nonempty commits remain authoritative; retrieval dates are retained only when the complete record is unchanged. This is a source correction, not a license-policy approval.\n\nParent 06830b2d passes in 118.408 seconds at exact d0d1a2a13. The existing checker passes all four roots without skips on one uncached remote AMD64 OCI action with its original 60-second timeout. Canonical Fetch and Verify accept 190 entries and produce a byte-identical catalog. Outcome 607161f6e640 and independent saved peer efda85edb7c6 bind 131 files, 21 source records and the actual Action/Command/stdout/XML join. Fresh pre-reconciliation metadata was not logged, so this run does not identify which requests exercised the fallback. No catalog or policy change was adopted.",
       "followup": {
-        "disposition": "Shared public CI correction under validation",
-        "owner": "syscall_validation",
-        "nextAction": "Validate fixes/nft-fib-presence on native Linux and gVisor, then request contributor review of the independent correction.",
+        "disposition": "Shared public CI correction qualified",
+        "owner": "root",
+        "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d0d1a2a13b6780095986864fa2f7536d5834f9b9",
           "https://app.buildbuddy.io/invocation/06830b2d-b071-4da3-8d99-633dede68c38",
@@ -4112,13 +4112,14 @@
           "https://github.com/tamird/gvisor/commit/20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
           "https://buildkite.com/gvisor/pipeline/builds/50800",
           "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
-          "https://buildkite.com/gvisor/pipeline/builds/50807"
+          "https://buildkite.com/gvisor/pipeline/builds/50807",
+          "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
         ],
         "reviewedAt": "2026-10-08T21:05:14.556649+00:00",
         "sourceHead": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
         "mergeable": "MERGEABLE",
         "reviewDecision": "APPROVED",
-        "observedAt": "2026-10-14T22:52:32.747547+00:00"
+        "observedAt": "2026-10-14T23:55:56.416922+00:00"
       },
       "number": 15416
     },
@@ -4983,19 +4984,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "df5554eb8c8120fde14afeb81b74c9682af2b2cf",
+      "head": "3f8de1331609559819a1ee58b2dc6a5b4b2da8ff",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/df5554eb8c8120fde14afeb81b74c9682af2b2cf",
-      "status": "Qualified environment integration adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is now df5554eb8. The three established canonical refs advanced together after independently reviewed environment routing analysis and the focused pinring EOF checks. The existing selector now records the additional environment owners and checks their actual architecture and execution requirements; remote-all excludes unsupported ARM Firecracker owners while the dedicated hybrid ARM route retains its existing scope. The corrected docprocessor network fixture and source-bound completed environment evidence are included. Routing analysis executed no build or test actions, and this adoption does not claim a new full 687-owner runtime pass. The native MODULE.bazel.lock was generated and independently verified, including a cold error-mode analysis with both repository caches disabled. The resumed ARM64 KVM diagnostic reaches execution and times out at its unchanged 90-second deadline. Its bounded exception trace repeatedly faults at ring0.start during a stage-2 translation for a stage-1 table walk. The guest enables the Cortex-A57 erratum 834220 workaround; Linux removed the old S1PTW exclusion from that path. Both CPU comparisons now pass the actual guest entry case: Cortex-A72 in 0.280 seconds and the original Cortex-A57 reporting revision r1p3 in 0.890 seconds. Kernel, QEMU, test ELF and payload are identical. The diagnostic parents remain failed because their tracing wrapper saw the guest finish before tracing began. These results establish dependence on the CPU identification/workaround path, not the exact kernel defect. A clean candidate uses QEMU's software CPU identity and is being prepared for the existing KVM and ordinary syscall owners.\n\nThe preceding canonical export update was ff4888692. The three established canonical refs advanced together after the Go export correction passed focused archive, assembler, analyzer and Linux AMD64 cgo consumer checks. The actual archive preserves both upstream sentry mains and all five command-source groups. This export-only qualification does not repeat or transfer the full mixed-unit run to the new head; that evidence remains pinned below. The separate unit-report-retention ref remains at 74061d8f8.\n\nThe preceding canonical source 74061d8f8 has the independently reviewed full mixed unit profile. All 687 owner summaries passed, with 707 test results: 689 remote cache hits, 13 fresh remote executions and 5 local executions. All 1,414 original log/XML reports are retained; 80 skipped case entries have the same identities as the prior run. This closes the full unit profile, while the other public CI lanes retain their separately recorded source-bound qualifications. GPU capacity and a completed fresh Triton qualification remain outstanding.\n\nThe prior canonical source ddd23376f391 added the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporated upstream changes through ae980d605 and preserved the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. The original sixteen NVIDIA source-tag skips remain historical; the later driver-availability correction and current public checks are recorded on PR #15669. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those dedicated full profiles were not repeated by this mixed unit run, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.\n\nFocused checks now cover eleven of the twelve previously skipped environment cases across qualified sources. The first ten and both CPU examples passed at 1f80186d6. The pinring timing correction at 4c3ad453e passes all four privileged cases (AMD64 AF/KVM, native ARM64 AF and ARM64 KVM in the TCG guest) plus both analyzers. The original full-unit skip records and earlier ARM assertion failure remain retained; that full-unit evidence remains source-bound to 74061d8f8. The remaining ARM64 boot case subsequently reached its actual 900-second test timeout, distinct from the earlier outer-budget interruption. Recovered partial logs end between memory-manager creation and executable loading; they do not establish the cause. A subsequent thread diagnostic intentionally terminated the process after collecting evidence: one sampled Sentry thread was in KVM execution, the main Go stack was unavailable, and stack collection was waiting for stop-the-world. This is diagnostic evidence, not a passing qualification, and the cause remains unknown. The earlier package-resolution failures remain retained; the native-lock continuation now supplies the entry-fault trace described above.",
-      "updatedAt": "2026-10-14T23:24:21.634958+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/3f8de1331609559819a1ee58b2dc6a5b4b2da8ff",
+      "status": "ARM64 KVM cohort qualified and adopted",
+      "summary": "Canonical qualification/current-upstream-refresh is now 3f8de1331. The three established qualification refs advanced together after the normal ARM64 launcher passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Both Bazel phases exit zero. The parent fails afterward in the scratch report collector, which attempts to decode a blank BEP line as JSON; all 47 original reports were recovered without rerunning tests. Independent review binds the compiled source, executables, launcher configuration and results. This closes the selected ARM64 KVM cohort. Earlier full-profile results remain tied to their recorded sources.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified environment integration adopted; historical full-profile evidence retained",
-        "sourceHead": "df5554eb8c8120fde14afeb81b74c9682af2b2cf",
-        "observedAt": "2026-10-14T23:24:21.634958+00:00",
-        "nextAction": "Qualify the software CPU through the ordinary launcher, including KVM entry, VM release, boot posture and a non-EL2 syscall owner. Keep canonical df5554eb8 until the required cases pass.",
+        "disposition": "ARM64 KVM cohort qualified and adopted",
+        "sourceHead": "3f8de1331609559819a1ee58b2dc6a5b4b2da8ff",
+        "observedAt": "2026-10-14T23:55:56.416922+00:00",
+        "nextAction": "Integrate the qualified nftables correction and any separately verified attribute-policy fix; continue the remaining source-built CI lanes and tracked provider gaps.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -5022,13 +5023,14 @@
           "https://app.buildbuddy.io/invocation/42784561-7dce-4315-baf1-dabac752e341",
           "https://app.buildbuddy.io/invocation/9f6ce6a6-08c9-4a9a-a1ab-ee3d078cc89d",
           "https://app.buildbuddy.io/invocation/da0c0047-816e-4036-bcc3-b7a5e0525e06",
-          "https://github.com/tamird/gvisor/commit/3f8de1331609559819a1ee58b2dc6a5b4b2da8ff"
+          "https://github.com/tamird/gvisor/commit/3f8de1331609559819a1ee58b2dc6a5b4b2da8ff",
+          "https://app.buildbuddy.io/invocation/fad2318e-ff34-4ab3-b84a-c621d9b725db"
         ]
       },
       "evidence": [
         {
           "label": "Current adopted canonical source",
-          "url": "https://github.com/tamird/gvisor/commit/df5554eb8c8120fde14afeb81b74c9682af2b2cf"
+          "url": "https://github.com/tamird/gvisor/commit/3f8de1331609559819a1ee58b2dc6a5b4b2da8ff"
         },
         {
           "label": "Completed Stable Dockerfile export, archive and load",
@@ -5375,24 +5377,25 @@
       "url": "https://github.com/google/gvisor/pull/15603",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-14T22:29:26.456798+00:00",
-      "summary": "Public native Linux CI rejects the nftables rule `fib saddr . iif oifname exists`. Linux permits presence checks only for the outgoing-interface index. Standalone correction 9b8c1371b removes the invalid fixture clause and aligns gVisor result validation and initialization with Linux. Independent source reviews passed; focused native/gVisor and before/after checks are running. No failure is attributed to this PR’s own change.\n\nThe mechanical rebase is delivered at 912173d85 on current master. Its only conflict combined imports with the upstream NaN map test; independent review confirmed the approved production patch is unchanged. The published PR is mergeable, with ordinary review gates pending. No prior human approval needed re-requesting.\n\nMap decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries retain fresh storage for delayed callbacks, while interfaces keep independent dynamic storage. Existing nil-transition, typed-nil and retained-receiver tests and the separate Map Load measurements remain bound to their recorded source.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "summary": "Its public import fails the native nftables FIB fixture in Buildkite 50801: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nThe mechanical rebase is delivered at 912173d85 on current master. Its only conflict combined imports with the upstream NaN map test; independent review confirmed the approved production patch is unchanged. The published PR is mergeable, with ordinary review gates pending. No prior human approval needed re-requesting.\n\nMap decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries retain fresh storage for delayed callbacks, while interfaces keep independent dynamic storage. Existing nil-transition, typed-nil and retained-receiver tests and the separate Map Load measurements remain bound to their recorded source.",
       "followup": {
-        "disposition": "Shared public CI correction under validation",
-        "owner": "syscall_validation",
+        "disposition": "Shared public CI correction qualified",
+        "owner": "root",
         "sourceHead": "912173d856d9dab41c698afad3f3499602dce009",
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
-        "nextAction": "Validate fixes/nft-fib-presence on native Linux and gVisor, then request contributor review of the independent correction.",
+        "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/912173d856d9dab41c698afad3f3499602dce009",
           "https://github.com/google/gvisor/pull/15603",
           "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
           "https://buildkite.com/gvisor/pipeline/builds/50801",
-          "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b"
+          "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
+          "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
         ],
         "mergeable": "MERGEABLE",
         "reviewDecision": null,
-        "observedAt": "2026-10-14T22:52:32.747547+00:00"
+        "observedAt": "2026-10-14T23:55:56.416922+00:00"
       },
       "number": 15603
     },
@@ -5702,22 +5705,25 @@
       "group": "rbe",
       "url": "https://github.com/google/gvisor/pull/15644",
       "status": "open",
-      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
-      "summary": "The approved three-line policy is published as PR #15644 at the exact reviewed head. It disables per-syscall tracing for the fixed page-table leak workload while retaining debug logs, the original deadline and every assertion. The original one-hour timeout advertised a 1.3 GiB boot log; an untraced control with identical kernel/payload inputs completed in 1450.760 seconds. Different workers prevent an isolated tracing-cost claim.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "summary": "Its public import fails the native nftables FIB fixture in Buildkite 50815: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nThe approved three-line policy is published as PR #15644 at the exact reviewed head. It disables per-syscall tracing for the fixed page-table leak workload while retaining debug logs, the original deadline and every assertion. The original one-hour timeout advertised a 1.3 GiB boot log; an untraced control with identical kernel/payload inputs completed in 1450.760 seconds. Different workers prevent an isolated tracing-cost claim.",
       "followup": {
-        "disposition": "Approved change delivered; maintainer review pending",
-        "owner": "external_sweeps",
+        "disposition": "Shared public CI correction qualified",
+        "owner": "root",
         "sourceHead": "3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Observe exact-head CI, maintainer feedback and import status through the existing finite sweep. Contributor approval is fulfilled; no merge is authorized.",
+        "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15644",
           "https://github.com/tamird/gvisor/commit/3e45c1519a0a7fb5083283bf3efa2a20acbdb765",
           "https://github.com/tamird/gvisor/actions/runs/38083534945",
-          "https://github.com/tamird/gvisor/actions/runs/38088752551"
+          "https://github.com/tamird/gvisor/actions/runs/38088752551",
+          "https://buildkite.com/gvisor/pipeline/builds/50815",
+          "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
         ],
         "reviewDecision": null,
-        "mergeable": "MERGEABLE"
+        "mergeable": "MERGEABLE",
+        "observedAt": "2026-10-14T23:55:56.416922+00:00"
       },
       "number": 15644,
       "reviewDecision": null
@@ -6781,18 +6787,21 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15770",
       "status": "open",
-      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
-      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "summary": "The import regenerated again at e6d1f4369; pipeline 50822 and the other checks are pending.\n\nIts preceding import head d63585383 failed the native nftables FIB fixture in Buildkite 50817: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nIndependent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "disposition": "Delivered; following CI and review",
-        "owner": "external_sweeps",
+        "disposition": "Shared public CI correction qualified",
+        "owner": "root",
         "sourceHead": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
-        "observedAt": "2026-10-14T11:06:01.686863+00:00",
-        "nextAction": "Follow PR #15770 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "observedAt": "2026-10-14T23:55:56.416922+00:00",
+        "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
-          "https://github.com/google/gvisor/pull/15770"
+          "https://github.com/google/gvisor/pull/15770",
+          "https://buildkite.com/gvisor/pipeline/builds/50817",
+          "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+          "https://buildkite.com/gvisor/pipeline/builds/50822"
         ]
       },
       "evidence": [
@@ -6845,20 +6854,21 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15772",
       "status": "open",
-      "updatedAt": "2026-10-14T22:36:13.150061+00:00",
-      "summary": "Its matching public import #15796 fails the native nftables FIB rule in Buildkite 50808, the same failure as #15416 and #15603. The independent correction 9b8c1371b is under remote validation. The contributor has answered the upstream-location question; no duplicate reply is pending.\n\nThe qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The approved patch and commit message are preserved in independent PR #15772 at 928823b75. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "summary": "Its public import fails the native nftables FIB fixture in Buildkite 50808: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nThe qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The approved patch and commit message are preserved in independent PR #15772 at 928823b75. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "disposition": "Shared public CI correction under validation",
-        "owner": "syscall_validation",
+        "disposition": "Shared public CI correction qualified",
+        "owner": "root",
         "sourceHead": "928823b75a0f7c72de98da966416c489057e4b24",
-        "observedAt": "2026-10-14T22:54:18.247713+00:00",
-        "nextAction": "Finish the independent nftables FIB correction and watch the import. The contributor answered the upstream-location question in comment 6180028045.",
+        "observedAt": "2026-10-14T23:55:56.416922+00:00",
+        "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
           "https://github.com/google/gvisor/pull/15772",
           "https://github.com/google/gvisor/pull/15772#issuecomment-6180028045",
           "https://buildkite.com/gvisor/pipeline/builds/50808",
-          "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b"
+          "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
+          "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
         ]
       },
       "number": 15772
@@ -6897,26 +6907,34 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/nft-fib-presence",
-      "head": "9b8c1371b17f51b561ed95e1287238c6ea6b274b",
+      "head": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
       "title": "Match Linux nftables FIB presence results",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
-      "status": "Runtime diagnosis in progress",
-      "summary": "Linux rejects FIB presence checks on interface names and address types; only outgoing-interface indices support them. The correction reproduces four defective results before the fix, passes both 591-entry package suites and both-architecture analyzers afterward, and removes the invalid positive syscall-test clause. Runtime checks expose two further boundaries: the hosted native worker rejects the first valid inet-FIB rule with ENOENT, consistent with the previously reported missing worker features; gVisor installs the rules and completes TCP synchronization, but the UDP check times out. The current worker kernel configuration is not recorded, so its missing feature remains unconfirmed. Focused packet-path diagnosis and a capable native reference are in progress; this is not ready for upstream review.",
-      "updatedAt": "2026-10-14T23:24:21.634958+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+      "status": "Contributor review requested",
+      "summary": "The standalone correction removes the invalid oifname-exists clause, restricts presence queries to outgoing-interface indices, clears their complete 32-bit register and zero-pads interface names. Corrected package and analyzer checks pass on both CPUs; original gVisor IPv4/IPv6 runtime cases pass. The native reference passes on Linux 6.17.0-1022-azure with FIB modules. The padding parent retains a report-capture failure; missing XML was recovered from its original actions. Independent result review is complete. The standalone package files match the tested composition; the fixture retains master’s surrounding harness and removes the same invalid clause. Final source/message review passes. The exact combined commit is awaiting contributor review before an upstream PR is opened.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
       "followup": {
-        "owner": "syscall_validation",
-        "disposition": "Runtime diagnosis in progress",
-        "sourceHead": "9b8c1371b17f51b561ed95e1287238c6ea6b274b",
-        "observedAt": "2026-10-14T23:24:21.634958+00:00",
-        "nextAction": "Diagnose the gVisor UDP predicate/arrival failure and run the native reference on the existing Actions bridge with its actual kernel capabilities recorded.",
+        "owner": "root",
+        "disposition": "Qualified correction; contributor decision pending",
+        "sourceHead": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+        "observedAt": "2026-10-14T23:55:56.416922+00:00",
+        "nextAction": "Review the exact combined correction and decide whether to open its standalone upstream PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
           "https://github.com/torvalds/linux/commit/ab185e0c4fb82dfba6fb86f8271e06f931d9c64c",
           "https://app.buildbuddy.io/invocation/a14e682d-44fb-4f98-bba9-504155781e23",
           "https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5953753295",
-          "https://buildkite.com/gvisor/gvisor/builds/50815"
+          "https://buildkite.com/gvisor/gvisor/builds/50815",
+          "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+          "https://app.buildbuddy.io/invocation/9cedd785-fd8b-441c-9987-4da3892954f0",
+          "https://github.com/tamird/gvisor/actions/runs/38654426088"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+        "url": "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
       }
     }
   ],
@@ -8372,6 +8390,34 @@
       "role": "proposed_update",
       "reason": "Unpublished comment-only amendment awaiting contributor decision.",
       "evidence": "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e"
+    },
+    {
+      "from": "branch:fixes/nft-fib-presence",
+      "to": "pr:15416",
+      "reason": "The current public import fails the shared native nftables fixture. This correction removes the invalid rule and repairs gVisor result storage; the PR does not depend on its source changes.",
+      "evidence": "https://buildkite.com/gvisor/pipeline/builds/50807",
+      "type": "blocked_by"
+    },
+    {
+      "from": "branch:fixes/nft-fib-presence",
+      "to": "pr:15603",
+      "reason": "The current public import fails the shared native nftables fixture. This correction removes the invalid rule and repairs gVisor result storage; the PR does not depend on its source changes.",
+      "evidence": "https://buildkite.com/gvisor/pipeline/builds/50801",
+      "type": "blocked_by"
+    },
+    {
+      "from": "branch:fixes/nft-fib-presence",
+      "to": "pr:15772",
+      "reason": "The current public import fails the shared native nftables fixture. This correction removes the invalid rule and repairs gVisor result storage; the PR does not depend on its source changes.",
+      "evidence": "https://buildkite.com/gvisor/pipeline/builds/50808",
+      "type": "blocked_by"
+    },
+    {
+      "from": "branch:fixes/nft-fib-presence",
+      "to": "pr:15644",
+      "reason": "The current public import fails the shared native nftables fixture. This correction removes the invalid rule and repairs gVisor result storage; the PR does not depend on its source changes.",
+      "evidence": "https://buildkite.com/gvisor/pipeline/builds/50815",
+      "type": "blocked_by"
     }
   ],
   "investigations": [
@@ -9192,8 +9238,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-14T23:24:21.634958+00:00",
-      "summary": "The decoded-frame design shares one parser and generated restore methods. Its stable-block version passes the selected correctness, ownership, race and allocation checks. The fixed paired comparison is mixed: large synthetic Load is 12.56% faster and allocates 48.60% fewer bytes; small control-message Load is 3.23% slower, and both allocate more objects. The next experiment embeds the mandatory first four frames to remove their separate allocation, measuring the fixed-storage cost before further timing. No replacement has been adopted.",
+      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "summary": "The shared decoded-frame parser now has a qualified inline-storage experiment. Compared with stable blocks, the four first-Load fixtures remove one or two allocations, with allocated bytes unchanged or lower; correctness, retained-value, race and allocation-guard checks pass. The preceding fixed timing comparison was mixed: large synthetic Load improved, while control-message Load slowed. A fixed comparison of the inline candidate against the contiguous-frame baseline will determine whether both improve. No replacement has been adopted.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9717,9 +9763,22 @@
               "url": "https://app.buildbuddy.io/invocation/852ae9c0-ab7f-417e-8a09-fc431693b415"
             }
           ]
+        },
+        {
+          "text": "Inline candidate 790792633 passes the twelve-phase correctness and cost run fd13dcd8. Original first-Load rows remove one allocation for control messages and synthetic adoption with unchanged allocated bytes; ordinary and retained-Source fixtures remove two allocations and 24/48 bytes. The inline array occupies 96 bytes in the frame owner. Both measured test executables and production AMD64 shrink by 4096 bytes; the ARM64 file size is unchanged. These single-run allocation observations do not establish timing changes. Independent runtime/input/guard reviews and the original cost checks are complete.",
+          "evidence": [
+            {
+              "label": "Inline storage candidate",
+              "url": "https://github.com/tamird/gvisor/commit/790792633a42f930b8c85deb0a3af04e30c2e372"
+            },
+            {
+              "label": "Completed inline correctness and cost run",
+              "url": "https://app.buildbuddy.io/invocation/fd13dcd8-917e-4821-8095-5f3e6eedfc61"
+            }
+          ]
         }
       ],
-      "nextStep": "Finish the focused block-storage checks, then run the fixed paired control-message and synthetic restore comparisons if correctness and cost checks pass.",
+      "nextStep": "Compare exact inline candidate 790792633 with contiguous-frame baseline 9f5def3bd using the same two workloads and twelve balanced pairs; do not rerun unchanged correctness checks.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
