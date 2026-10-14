@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T22:59:51.862540+00:00",
+    "updatedAt": "2026-10-14T23:24:21.634958+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4988,14 +4988,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/df5554eb8c8120fde14afeb81b74c9682af2b2cf",
       "status": "Qualified environment integration adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is now df5554eb8. The three established canonical refs advanced together after independently reviewed environment routing analysis and the focused pinring EOF checks. The existing selector now records the additional environment owners and checks their actual architecture and execution requirements; remote-all excludes unsupported ARM Firecracker owners while the dedicated hybrid ARM route retains its existing scope. The corrected docprocessor network fixture and source-bound completed environment evidence are included. Routing analysis executed no build or test actions, and this adoption does not claim a new full 687-owner runtime pass. The native MODULE.bazel.lock was generated and independently verified, including a cold error-mode analysis with both repository caches disabled. The resumed ARM64 KVM diagnostic reaches execution and times out at its unchanged 90-second deadline. Its bounded exception trace repeatedly faults at ring0.start during a stage-2 translation for a stage-1 table walk. The guest enables the Cortex-A57 erratum 834220 workaround; Linux removed the old S1PTW exclusion from that path. The CPU-only Cortex-A72 comparison is running at 746ea4dc6 in 9f6ce6a6, with the same kernel, QEMU, test ELF and deadlines. It tests CPU-path dependence; the exact kernel cause remains unconfirmed.\n\nThe preceding canonical export update was ff4888692. The three established canonical refs advanced together after the Go export correction passed focused archive, assembler, analyzer and Linux AMD64 cgo consumer checks. The actual archive preserves both upstream sentry mains and all five command-source groups. This export-only qualification does not repeat or transfer the full mixed-unit run to the new head; that evidence remains pinned below. The separate unit-report-retention ref remains at 74061d8f8.\n\nThe preceding canonical source 74061d8f8 has the independently reviewed full mixed unit profile. All 687 owner summaries passed, with 707 test results: 689 remote cache hits, 13 fresh remote executions and 5 local executions. All 1,414 original log/XML reports are retained; 80 skipped case entries have the same identities as the prior run. This closes the full unit profile, while the other public CI lanes retain their separately recorded source-bound qualifications. GPU capacity and a completed fresh Triton qualification remain outstanding.\n\nThe prior canonical source ddd23376f391 added the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporated upstream changes through ae980d605 and preserved the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. The original sixteen NVIDIA source-tag skips remain historical; the later driver-availability correction and current public checks are recorded on PR #15669. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those dedicated full profiles were not repeated by this mixed unit run, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.\n\nFocused checks now cover eleven of the twelve previously skipped environment cases across qualified sources. The first ten and both CPU examples passed at 1f80186d6. The pinring timing correction at 4c3ad453e passes all four privileged cases (AMD64 AF/KVM, native ARM64 AF and ARM64 KVM in the TCG guest) plus both analyzers. The original full-unit skip records and earlier ARM assertion failure remain retained; that full-unit evidence remains source-bound to 74061d8f8. The remaining ARM64 boot case subsequently reached its actual 900-second test timeout, distinct from the earlier outer-budget interruption. Recovered partial logs end between memory-manager creation and executable loading; they do not establish the cause. A subsequent thread diagnostic intentionally terminated the process after collecting evidence: one sampled Sentry thread was in KVM execution, the main Go stack was unavailable, and stack collection was waiting for stop-the-world. This is diagnostic evidence, not a passing qualification, and the cause remains unknown. The earlier package-resolution failures remain retained; the native-lock continuation now supplies the entry-fault trace described above.",
-      "updatedAt": "2026-10-14T22:59:51.862540+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh is now df5554eb8. The three established canonical refs advanced together after independently reviewed environment routing analysis and the focused pinring EOF checks. The existing selector now records the additional environment owners and checks their actual architecture and execution requirements; remote-all excludes unsupported ARM Firecracker owners while the dedicated hybrid ARM route retains its existing scope. The corrected docprocessor network fixture and source-bound completed environment evidence are included. Routing analysis executed no build or test actions, and this adoption does not claim a new full 687-owner runtime pass. The native MODULE.bazel.lock was generated and independently verified, including a cold error-mode analysis with both repository caches disabled. The resumed ARM64 KVM diagnostic reaches execution and times out at its unchanged 90-second deadline. Its bounded exception trace repeatedly faults at ring0.start during a stage-2 translation for a stage-1 table walk. The guest enables the Cortex-A57 erratum 834220 workaround; Linux removed the old S1PTW exclusion from that path. Both CPU comparisons now pass the actual guest entry case: Cortex-A72 in 0.280 seconds and the original Cortex-A57 reporting revision r1p3 in 0.890 seconds. Kernel, QEMU, test ELF and payload are identical. The diagnostic parents remain failed because their tracing wrapper saw the guest finish before tracing began. These results establish dependence on the CPU identification/workaround path, not the exact kernel defect. A clean candidate uses QEMU's software CPU identity and is being prepared for the existing KVM and ordinary syscall owners.\n\nThe preceding canonical export update was ff4888692. The three established canonical refs advanced together after the Go export correction passed focused archive, assembler, analyzer and Linux AMD64 cgo consumer checks. The actual archive preserves both upstream sentry mains and all five command-source groups. This export-only qualification does not repeat or transfer the full mixed-unit run to the new head; that evidence remains pinned below. The separate unit-report-retention ref remains at 74061d8f8.\n\nThe preceding canonical source 74061d8f8 has the independently reviewed full mixed unit profile. All 687 owner summaries passed, with 707 test results: 689 remote cache hits, 13 fresh remote executions and 5 local executions. All 1,414 original log/XML reports are retained; 80 skipped case entries have the same identities as the prior run. This closes the full unit profile, while the other public CI lanes retain their separately recorded source-bound qualifications. GPU capacity and a completed fresh Triton qualification remain outstanding.\n\nThe prior canonical source ddd23376f391 added the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporated upstream changes through ae980d605 and preserved the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. The original sixteen NVIDIA source-tag skips remain historical; the later driver-availability correction and current public checks are recorded on PR #15669. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those dedicated full profiles were not repeated by this mixed unit run, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.\n\nFocused checks now cover eleven of the twelve previously skipped environment cases across qualified sources. The first ten and both CPU examples passed at 1f80186d6. The pinring timing correction at 4c3ad453e passes all four privileged cases (AMD64 AF/KVM, native ARM64 AF and ARM64 KVM in the TCG guest) plus both analyzers. The original full-unit skip records and earlier ARM assertion failure remain retained; that full-unit evidence remains source-bound to 74061d8f8. The remaining ARM64 boot case subsequently reached its actual 900-second test timeout, distinct from the earlier outer-budget interruption. Recovered partial logs end between memory-manager creation and executable loading; they do not establish the cause. A subsequent thread diagnostic intentionally terminated the process after collecting evidence: one sampled Sentry thread was in KVM execution, the main Go stack was unavailable, and stack collection was waiting for stop-the-world. This is diagnostic evidence, not a passing qualification, and the cause remains unknown. The earlier package-resolution failures remain retained; the native-lock continuation now supplies the entry-fault trace described above.",
+      "updatedAt": "2026-10-14T23:24:21.634958+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Qualified environment integration adopted; historical full-profile evidence retained",
         "sourceHead": "df5554eb8c8120fde14afeb81b74c9682af2b2cf",
-        "observedAt": "2026-10-14T22:59:51.862540+00:00",
-        "nextAction": "Collect the CPU-only Cortex-A72 comparison and verify its actual guest result and artifact identity. Preserve canonical df5554eb8 and the source-bound full-profile evidence; this diagnostic does not qualify the complete ARM64 runtime.",
+        "observedAt": "2026-10-14T23:24:21.634958+00:00",
+        "nextAction": "Qualify the software CPU through the ordinary launcher, including KVM entry, VM release, boot posture and a non-EL2 syscall owner. Keep canonical df5554eb8 until the required cases pass.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -5020,7 +5020,9 @@
           "https://github.com/tamird/gvisor/commit/df5554eb8c8120fde14afeb81b74c9682af2b2cf",
           "https://app.buildbuddy.io/invocation/65674190-c780-403a-b0ed-7ff22052c984",
           "https://app.buildbuddy.io/invocation/42784561-7dce-4315-baf1-dabac752e341",
-          "https://app.buildbuddy.io/invocation/9f6ce6a6-08c9-4a9a-a1ab-ee3d078cc89d"
+          "https://app.buildbuddy.io/invocation/9f6ce6a6-08c9-4a9a-a1ab-ee3d078cc89d",
+          "https://app.buildbuddy.io/invocation/da0c0047-816e-4036-bcc3-b7a5e0525e06",
+          "https://github.com/tamird/gvisor/commit/3f8de1331609559819a1ee58b2dc6a5b4b2da8ff"
         ]
       },
       "evidence": [
@@ -6899,19 +6901,21 @@
       "title": "Match Linux nftables FIB presence results",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
-      "status": "Remote validation in progress",
-      "summary": "Linux rejects presence checks on interface names and address types; only outgoing-interface indices support them. The standalone fix removes the invalid positive syscall-test rule, rejects invalid attributes in gVisor and initializes the complete result consistently. Two source reviews pass. Focused Linux/gVisor checks and production-revert regressions are running in a14e682d; contributor review has not been requested.",
-      "updatedAt": "2026-10-14T22:54:18.247713+00:00",
+      "status": "Runtime diagnosis in progress",
+      "summary": "Linux rejects FIB presence checks on interface names and address types; only outgoing-interface indices support them. The correction reproduces four defective results before the fix, passes both 591-entry package suites and both-architecture analyzers afterward, and removes the invalid positive syscall-test clause. Runtime checks expose two further boundaries: the hosted native worker rejects the first valid inet-FIB rule with ENOENT, consistent with the previously reported missing worker features; gVisor installs the rules and completes TCP synchronization, but the UDP check times out. The current worker kernel configuration is not recorded, so its missing feature remains unconfirmed. Focused packet-path diagnosis and a capable native reference are in progress; this is not ready for upstream review.",
+      "updatedAt": "2026-10-14T23:24:21.634958+00:00",
       "followup": {
         "owner": "syscall_validation",
-        "disposition": "Remote validation in progress",
+        "disposition": "Runtime diagnosis in progress",
         "sourceHead": "9b8c1371b17f51b561ed95e1287238c6ea6b274b",
-        "observedAt": "2026-10-14T22:54:18.247713+00:00",
-        "nextAction": "Finish the focused source-bound regression checks before requesting upstream submission.",
+        "observedAt": "2026-10-14T23:24:21.634958+00:00",
+        "nextAction": "Diagnose the gVisor UDP predicate/arrival failure and run the native reference on the existing Actions bridge with its actual kernel capabilities recorded.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
           "https://github.com/torvalds/linux/commit/ab185e0c4fb82dfba6fb86f8271e06f931d9c64c",
-          "https://app.buildbuddy.io/invocation/a14e682d-44fb-4f98-bba9-504155781e23"
+          "https://app.buildbuddy.io/invocation/a14e682d-44fb-4f98-bba9-504155781e23",
+          "https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5953753295",
+          "https://buildkite.com/gvisor/gvisor/builds/50815"
         ]
       }
     }
@@ -9188,8 +9192,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-14T22:59:51.862540+00:00",
-      "summary": "The decoded-frame design uses one parser and generated restore methods to reduce per-value allocation and reflection. The first version sharply reduced allocation counts in the large fixture but allocated more bytes because its contiguous frame array repeatedly grew and copied. The revised prototype uses small stable blocks. Its focused remote run at 4bb1684e6 completed successfully; original correctness, ownership, allocation and executable-size results are being checked before the paired performance comparison. Earlier measured tradeoffs remain below.",
+      "updatedAt": "2026-10-14T23:24:21.634958+00:00",
+      "summary": "The decoded-frame design shares one parser and generated restore methods. Its stable-block version passes the selected correctness, ownership, race and allocation checks. The fixed paired comparison is mixed: large synthetic Load is 12.56% faster and allocates 48.60% fewer bytes; small control-message Load is 3.23% slower, and both allocate more objects. The next experiment embeds the mandatory first four frames to remove their separate allocation, measuring the fixed-storage cost before further timing. No replacement has been adopted.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9694,6 +9698,23 @@
             {
               "label": "Measured candidate plus unchanged profile decoder",
               "url": "https://github.com/tamird/gvisor/commit/1a7d68924d95e61f6b22141216b285cd011be59e"
+            }
+          ]
+        },
+        {
+          "text": "Stable-block source 4bb1684e6 versus contiguous-frame control 9f5def3bd completes all 52 actions and 48 measured rows in twelve balanced pairs. Control-message Load rises from 11,962 to 12,348.5 ns (p=0.045), with allocations 94 to 97. Synthetic adoption Load falls from 613,248 to 536,234.5 ns (p<0.001) and bytes from 578,008 to 297,080, while allocations rise 74 to 80. Independent numeric and source/native result reviews pass. Process RSS also rises, but includes setup and calibration and is not a per-operation retained-memory measurement. These two fixtures do not establish checkpoint throughput.",
+          "evidence": [
+            {
+              "label": "Stable-block source",
+              "url": "https://github.com/tamird/gvisor/commit/4bb1684e642e36629ca16c9f5edf6a4f6876d2d7"
+            },
+            {
+              "label": "Completed correctness and cost checks",
+              "url": "https://app.buildbuddy.io/invocation/07af610b-0eea-40e0-a521-c523225f4c94"
+            },
+            {
+              "label": "Completed twelve-pair comparison",
+              "url": "https://app.buildbuddy.io/invocation/852ae9c0-ab7f-417e-8a09-fc431693b415"
             }
           ]
         }
