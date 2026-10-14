@@ -97,6 +97,14 @@ func TestIncompleteArguments(t *testing.T) {
 }
 
 func TestReadHookOutput(t *testing.T) {
+	// Use the hook's Unix-stream transport, which allows deadline changes
+	// after the peer closes. Linux assigns an abstract address for an empty name.
+	listener, err := net.ListenUnix("unix", &net.UnixAddr{Net: "unix"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
 	captureError := marshalFrame(t, &pb.Ioctl{FdPath: "/dev/nvidia0", Ret: -1, ArgDataErrno: int32(syscall.EFAULT)})
 	unsupported := marshalFrame(t, &pb.Ioctl{FdPath: "/dev/nvidia0", Request: uint64(linux.IOWR('F', 0xfd, 0)), Ret: -1})
 	payload := encodeFrame([]byte{1, 2, 3, 4})
@@ -116,17 +124,22 @@ func TestReadHookOutput(t *testing.T) {
 		{name: "capture_error_then_valid", input: append(captureError, unsupported...), wantError: true, err: syscall.EFAULT, unsupported: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			reader, writer := net.Pipe()
-			defer reader.Close()
+			writer, err := net.Dial("unix", listener.Addr().String())
+			if err != nil {
+				t.Fatal(err)
+			}
 			defer writer.Close()
-			written := make(chan error, 1)
-			go func() {
-				var err error
-				if len(tc.input) != 0 {
-					_, err = writer.Write(tc.input)
-				}
-				written <- errors.Join(err, writer.Close())
-			}()
+			reader, err := listener.Accept()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer reader.Close()
+			if _, err := writer.Write(tc.input); err != nil {
+				t.Fatal(err)
+			}
+			if err := writer.Close(); err != nil {
+				t.Fatal(err)
+			}
 			connection := Connection{conn: reader}
 			results, err := connection.ReadHookOutput(t.Context())
 			if got, want := err != nil, tc.wantError; got != want {
@@ -137,9 +150,6 @@ func TestReadHookOutput(t *testing.T) {
 			}
 			if got, want := results.HasUnsupportedIoctl(), tc.unsupported; got != want {
 				t.Errorf("unsupported = %v, want %v", got, want)
-			}
-			if err := <-written; err != nil {
-				t.Errorf("writing fixture: %v", err)
 			}
 		})
 	}
