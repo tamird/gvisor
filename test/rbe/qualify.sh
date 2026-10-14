@@ -789,7 +789,7 @@ run_platform_matrix() (
         unit_environment_targets > "$selection_dir/environment-owners"
         python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
           "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}" \
-          --environment-owners "$selection_dir/environment-owners"
+          --environment-owners "$selection_dir/environment-owners" | tee "$selection_dir/unit-selection.json"
         if [[ $explicit_unit == true ]]; then
           cat "$selection_dir/unit-targets" >> "$selection_dir/explicit-targets"
         else
@@ -953,22 +953,27 @@ run_platform_matrix() (
     printf 'No requested tests have available remote workers; see the profile exclusions above.\n' >&2
     return 2
   fi
-  if [[ $test_execution == local ]]; then
-    # The public container profile keeps every owner. Its architecture
-    # frontends route only declared unavailable host requirements to Actions.
-    python3 - "$selection_dir" "$lane" <<'PY'
+  python3 - "$selection_dir" "$arch" "$@" <<'PY'
 import json
 from pathlib import Path
 import sys
 
 directory = Path(sys.argv[1])
-(directory / "selection.json").write_text(json.dumps({
-    "profile_architecture": "amd64",
-    "lane": sys.argv[2],
-    "selected_owners": directory.joinpath("targets").read_text().splitlines(),
-}, indent=2) + "\n")
+selection = {
+    "profile_architecture": sys.argv[2],
+    "lanes": sys.argv[3:],
+    "target_patterns": directory.joinpath("targets").read_text().splitlines(),
+    "limitation": "Loading selection only; configured owners, shards and placement come from the actual test results.",
+}
+unit_selection = directory / "unit-selection.json"
+if unit_selection.exists():
+    selection["unit_selection"] = json.loads(unit_selection.read_text())
+text = json.dumps(selection, indent=2) + "\n"
+(directory / "selection.json").write_text(text)
+print(text, end="")
 PY
-    save_profile_selection "$selection_dir" "$lane"
+  if [[ -n ${RUNNER_TEMP:-} ]]; then
+    save_profile_selection "$selection_dir" "$(IFS=+; printf '%s' "$*")"
   fi
   bazel "$command" "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 --keep_going \
     --sandbox_add_mount_pair=/tmp --test_output=errors "${options[@]}" "${header_options[@]}" \
