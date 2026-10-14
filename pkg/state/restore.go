@@ -16,6 +16,7 @@ package state
 
 import (
 	"reflect"
+	"sync/atomic"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
@@ -49,46 +50,55 @@ type restoreField struct {
 	wait   bool
 }
 
-// restorePlan contains metadata derived from one actual Go type during Load.
-// Child plans and ordinary fields are resolved only when they are used.
+// restorePlan describes one actual Go type. Registered types own their plans;
+// other types are scoped to a Load or to a generated field layout. Only the
+// field cache changes, publishing a complete immutable layout at once.
 type restorePlan struct {
-	typ         reflect.Type
-	kind        reflect.Kind
-	size        uintptr
-	element     *restorePlan
-	fields      []restoreField
-	fieldsReady bool
+	typ    reflect.Type
+	kind   reflect.Kind
+	size   uintptr
+	fields atomic.Pointer[[]restoreField]
+}
+
+func newRestorePlan(typ reflect.Type) restorePlan {
+	return restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
 }
 
 func (ds *decodeState) plan(typ reflect.Type) *restorePlan {
+	if registered, ok := restoreType(typ); ok {
+		return &registered.restorePlan
+	}
+	return ds.localPlan(typ)
+}
+
+// localPlan also owns accessor-derived fields when registration did not supply
+// generated metadata. Such accessors retain their existing per-Load scope.
+func (ds *decodeState) localPlan(typ reflect.Type) *restorePlan {
 	if plan := ds.types.plans[typ]; plan != nil {
 		return plan
 	}
 	if ds.types.plans == nil {
 		ds.types.plans = make(map[reflect.Type]*restorePlan)
 	}
-	plan := &restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
-	ds.types.plans[typ] = plan
-	return plan
+	plan := newRestorePlan(typ)
+	ds.types.plans[typ] = &plan
+	return &plan
 }
 
 func (ds *decodeState) elementPlan(plan *restorePlan) *restorePlan {
-	if plan.element == nil {
-		plan.element = ds.plan(plan.typ.Elem())
-	}
-	return plan.element
+	return ds.plan(plan.typ.Elem())
 }
 
-func restoreType(typ reflect.Type) (registeredType, bool) {
-	if info, ok := reverseTypeDatabase[typ]; ok {
-		if registered, ok := globalTypeDatabase[info.Name]; ok && registered.typ == typ {
+func restoreType(typ reflect.Type) (*registeredType, bool) {
+	if entry, ok := reverseTypeDatabase[typ]; ok {
+		if registered, ok := globalTypeDatabase[entry.info.Name]; ok && registered.typ == typ {
 			return registered, true
 		}
 	}
 	if registered, ok := primitiveTypeDatabase[typ.Name()]; ok && registered.typ == typ {
 		return registered, true
 	}
-	return registeredType{}, false
+	return nil, false
 }
 
 func allocateObject(typ reflect.Type) any {
@@ -104,31 +114,16 @@ func allocateObject(typ reflect.Type) any {
 // an identtype loader may forward to a different concrete receiver type.
 func (s Source) LoadFields(receiver fieldLoader) {
 	pointer := reflect.ValueOf(receiver)
-	plan := s.internal.ds.plan(pointer.Type().Elem())
-	if !plan.fieldsReady {
-		var fields []LoadField
-		if registered, ok := restoreType(plan.typ); ok && registered.fields != nil {
-			fields = registered.fields
-		} else {
-			fields = receiver.StateLoadFields()
-		}
-		// Validate physical metadata against this receiver's local schema.
-		// The Source may belong to an identtype that forwarded to it.
-		info, ok := reverseTypeDatabase[plan.typ]
-		if !ok {
-			info.Fields = receiver.StateFields()
-		}
-		plan.fields = make([]restoreField, 0, len(fields))
-		for _, field := range fields {
-			member := plan.typ.Field(field.Index)
-			if field.Slot < 0 || field.Slot >= len(info.Fields) || member.Name != info.Fields[field.Slot] {
-				Failf("invalid generated field %v for %v", field, plan.typ)
-			}
-			plan.fields = append(plan.fields, restoreField{offset: member.Offset, plan: s.internal.ds.plan(member.Type), slot: field.Slot, wait: field.Wait})
-		}
-		plan.fieldsReady = true
+	typ := pointer.Type().Elem()
+	registered, _ := restoreType(typ)
+	var plan *restorePlan
+	if registered != nil && registered.loadFields != nil {
+		plan = &registered.restorePlan
+	} else {
+		plan = s.internal.ds.localPlan(typ)
 	}
-	if len(plan.fields) == 0 {
+	fields := plan.loadFields(receiver, registered)
+	if len(fields) == 0 {
 		return
 	}
 	// The old generated &receiver.Field expression requires a nonnil receiver
@@ -136,8 +131,8 @@ func (s Source) LoadFields(receiver fieldLoader) {
 	if pointer.IsNil() {
 		Failf("cannot restore fields through nil %T", receiver)
 	}
-	object := s.internal.ds.pointerDestination(pointer)
-	for _, field := range plan.fields {
+	object := restoreDestination{plan: plan, pointer: pointer.UnsafePointer()}
+	for _, field := range fields {
 		encoded := s.internal.field(field.slot)
 		target := object.field(field.plan, field.offset)
 		s.internal.ds.restoreValue(s.internal.ods, target, encoded)
@@ -145,6 +140,50 @@ func (s Source) LoadFields(receiver fieldLoader) {
 			s.internal.ds.waitObject(s.internal.ods, encoded, nil)
 		}
 	}
+}
+
+func (plan *restorePlan) loadFields(receiver fieldLoader, registered *registeredType) []restoreField {
+	if fields := plan.fields.Load(); fields != nil {
+		return *fields
+	}
+	var metadata []LoadField
+	if registered != nil && registered.loadFields != nil {
+		metadata = registered.loadFields
+	} else {
+		metadata = receiver.StateLoadFields()
+	}
+	// Reconciliation belongs to Source. Validate physical metadata against
+	// this receiver's local schema, including an identtype's forwarded receiver.
+	var names []string
+	if entry, ok := reverseTypeDatabase[plan.typ]; ok {
+		names = entry.info.Fields
+	} else {
+		names = receiver.StateFields()
+	}
+	fields := make([]restoreField, 0, len(metadata))
+	for _, field := range metadata {
+		member := plan.typ.Field(field.Index)
+		if field.Slot < 0 || field.Slot >= len(names) || member.Name != names[field.Slot] {
+			Failf("invalid generated field %v for %v", field, plan.typ)
+		}
+		var child *restorePlan
+		if owner, ok := restoreType(member.Type); ok {
+			child = &owner.restorePlan
+		} else {
+			// A shared layout must not retain a Load's plan. This shallow
+			// descriptor is owned by the field layout and has no wire state.
+			layout := newRestorePlan(member.Type)
+			child = &layout
+		}
+		fields = append(fields, restoreField{offset: member.Offset, plan: child, slot: field.Slot, wait: field.Wait})
+	}
+	// Validation can panic. Publish only the complete layout, so a failed
+	// first Load cannot leave a partial layout for a later Load to consume.
+	// Concurrent first users may build duplicates; only one is retained.
+	if plan.fields.CompareAndSwap(nil, &fields) {
+		return fields
+	}
+	return *plan.fields.Load()
 }
 
 // dataValue preserves nil-interface delegation before any address or view is

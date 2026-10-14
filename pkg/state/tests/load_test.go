@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state"
@@ -234,5 +235,78 @@ func TestValidateBeforeLoadHook(t *testing.T) {
 	}
 	if got, want := restored.calls, 0; got != want {
 		t.Errorf("StateLoad calls before validation = %d, want %d", got, want)
+	}
+}
+
+func TestConcurrentFieldLayouts(t *testing.T) {
+	original := sharedLayoutFields{first: 17, second: 29, text: "shared layout"}
+	original.next = &original
+	var saved bytes.Buffer
+	if _, err := state.Save(t.Context(), &saved, &original); err != nil {
+		t.Fatal(err)
+	}
+	// Start with the actual producer's one-object stream. Reorder both the
+	// schema and the corresponding payload slots, leaving graph IDs intact.
+	normal := bytes.Clone(saved.Bytes())
+	reader := wire.Reader{Reader: &saved}
+	count, object, err := state.ReadHeader(&reader)
+	if got, want := count, uint64(1); err != nil || got != want || !object {
+		t.Fatalf("ReadHeader = %d, %t, %v, want %d, true, nil", got, object, err, want)
+	}
+	schema, ok := wire.Load(&reader).(*wire.Type)
+	if !ok {
+		t.Fatal("Save did not emit a type schema")
+	}
+	if got, want := schema.Fields, []string{"first", "second", "text", "next"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("schema fields = %v, want %v", got, want)
+	}
+	id := wire.Load(&reader)
+	if got, want := id, wire.Uint(1); got != want {
+		t.Fatalf("root ID = %v, want %v", got, want)
+	}
+	value, ok := wire.Load(&reader).(*wire.Struct)
+	if !ok {
+		t.Fatal("Save did not emit a struct")
+	}
+	if got, want := value.Fields(), 4; got != want {
+		t.Fatalf("struct fields = %d, want %d", got, want)
+	}
+	schema.Fields[0], schema.Fields[1] = schema.Fields[1], schema.Fields[0]
+	*value.Field(0), *value.Field(1) = *value.Field(1), *value.Field(0)
+	var reordered bytes.Buffer
+	writer := wire.Writer{Writer: &reordered}
+	if err := state.WriteHeader(&writer, count, true); err != nil {
+		t.Fatal(err)
+	}
+	wire.Save(&writer, schema)
+	wire.Save(&writer, id)
+	wire.Save(&writer, value)
+
+	var restored [8]sharedLayoutFields
+	var errors [8]error
+	start := make(chan struct{})
+	var workers sync.WaitGroup
+	for i := range restored {
+		workers.Go(func() {
+			<-start
+			data := normal
+			if i%2 != 0 {
+				data = reordered.Bytes()
+			}
+			_, errors[i] = state.Load(t.Context(), bytes.NewReader(data), &restored[i])
+		})
+	}
+	close(start)
+	workers.Wait()
+	for i := range restored {
+		if err := errors[i]; err != nil {
+			t.Fatalf("Load %d: %v", i, err)
+		}
+		want := original
+		want.next = &restored[i]
+		want.loads = 1
+		if got, want := restored[i], want; got != want {
+			t.Errorf("Load %d = %+v, want %+v", i, got, want)
+		}
 	}
 }

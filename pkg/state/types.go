@@ -56,8 +56,8 @@ func makeTypeEncodeDatabase() typeEncodeDatabase {
 
 // typeDecodeDatabase is an internal TypeInfo database for decoding.
 type typeDecodeDatabase struct {
-	// plans caches derived actual-type layouts for this Load only. Unlike wire
-	// IDs, actual types also cover unnamed and runtime-length collections.
+	// plans owns layouts absent from registration and accessor-derived fields
+	// for this Load. In particular, runtime-length arrays never become global.
 	plans map[reflect.Type]*restorePlan
 
 	// byID maps by ID to type.
@@ -78,7 +78,7 @@ func makeTypeDecodeDatabase() typeDecodeDatabase {
 // lookupTypeInfo extracts the metadata for a type.
 func lookupTypeInfo(typ reflect.Type) (wire.Type, bool) {
 	if info, ok := reverseTypeDatabase[typ]; ok {
-		return info, true
+		return info.info, true
 	}
 	v := reflect.Zero(reflect.PointerTo(typ)).Interface()
 	t, ok := v.(Type)
@@ -275,23 +275,25 @@ const interfaceType = "interface"
 
 // primitiveTypeDatabase owns the fixed wire identities. Named types with the
 // same underlying kind remain distinct.
-var primitiveTypeDatabase = map[string]registeredType{}
+var primitiveTypeDatabase = map[string]*registeredType{}
 
 // registeredType owns one concrete type, capture layout, optional exact
 // allocation and generated ordinary-field data. Traversal belongs to the
 // common decoder, not to a family of per-type callbacks.
 type registeredType struct {
-	typ       reflect.Type
-	newRecord func(wire.TypeID, int) *wire.Record
-	allocate  Allocate
-	fields    []LoadField
+	restorePlan
+	info       wire.Type
+	newRecord  func(wire.TypeID, int) *wire.Record
+	allocate   Allocate
+	loadFields []LoadField
 }
 
 // globalTypeDatabase is the single registration database for saving and loading.
-var globalTypeDatabase = map[string]registeredType{}
+var globalTypeDatabase = map[string]*registeredType{}
 
-// reverseTypeDatabase holds immutable metadata indexed by the original type.
-var reverseTypeDatabase = map[reflect.Type]wire.Type{}
+// reverseTypeDatabase indexes the same owner by its original type. Wire schema
+// metadata and generated physical layouts have one registration lifetime.
+var reverseTypeDatabase = map[reflect.Type]*registeredType{}
 
 // Release releases references to global type databases.
 // Must only be called in contexts where they will definitely never be used,
@@ -360,6 +362,7 @@ func Register(t Type) {
 // RegisterGenerated adds captured-record and ordinary-field metadata to the
 // existing registration. allocate, when present, returns the exact *T. Manual
 // and forwarding loaders omit fields and retain their existing StateLoad.
+// The generated fields must remain unchanged after registration.
 func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField) {
 	registerState(t, newRecord, allocate, fields)
 }
@@ -436,8 +439,9 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	globalTypeDatabase[info.Name] = registeredType{typ: typ, newRecord: newRecord, allocate: allocate, fields: fields}
-	reverseTypeDatabase[typ] = info
+	entry := &registeredType{restorePlan: newRestorePlan(typ), info: info, newRecord: newRecord, allocate: allocate, loadFields: fields}
+	globalTypeDatabase[info.Name] = entry
+	reverseTypeDatabase[typ] = entry
 }
 
 func init() {
@@ -449,7 +453,7 @@ func init() {
 		reflect.TypeFor[float32](), reflect.TypeFor[float64](),
 		reflect.TypeFor[complex64](), reflect.TypeFor[complex128](),
 	} {
-		primitiveTypeDatabase[typ.Name()] = registeredType{typ: typ}
+		primitiveTypeDatabase[typ.Name()] = &registeredType{restorePlan: newRestorePlan(typ)}
 	}
 	registerBinary((*time.Time)(nil))
 	registerBinary((*netip.Addr)(nil))

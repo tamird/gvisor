@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
@@ -33,6 +34,75 @@ func init() {
 	var buf bytes.Buffer
 	_, earlyBinaryError = Save(context.Background(), &buf, &binaryFailure{})
 	registerBinary((*binaryFailure)(nil))
+	RegisterGenerated((*invalidFieldLayout)(nil), nil, nil, []LoadField{{Index: 0, Slot: 0}, {Index: 0, Slot: 1}})
+	Register((*accessorFieldLayout)(nil))
+}
+
+// The valid first descriptor makes a partially published layout observable if
+// compilation stops at the second, invalid descriptor.
+type invalidFieldLayout struct{ value int64 }
+
+func (*invalidFieldLayout) StateTypeName() string { return "state.invalidFieldLayout" }
+func (*invalidFieldLayout) StateFields() []string { return []string{"value"} }
+func (*invalidFieldLayout) StateLoadFields() []LoadField {
+	return []LoadField{{Index: 0, Slot: 0}, {Index: 0, Slot: 1}}
+}
+func (v *invalidFieldLayout) StateSave(s Sink)                      { s.Save(0, &v.value) }
+func (v *invalidFieldLayout) StateLoad(_ context.Context, s Source) { s.LoadFields(v) }
+
+func TestInvalidFieldLayoutRetry(t *testing.T) {
+	var saved bytes.Buffer
+	if _, err := Save(t.Context(), &saved, &invalidFieldLayout{value: 17}); err != nil {
+		t.Fatal(err)
+	}
+	for range 2 {
+		var restored invalidFieldLayout
+		_, err := Load(t.Context(), bytes.NewReader(saved.Bytes()), &restored)
+		if _, ok := errors.AsType[*ErrState](err); !ok || !strings.Contains(err.Error(), "invalid generated field") {
+			t.Fatalf("Load = %v, want ErrState for invalid metadata", err)
+		}
+		if got, want := restored.value, int64(0); got != want {
+			t.Errorf("value after invalid layout = %d, want %d", got, want)
+		}
+	}
+}
+
+// A manual registration supplies no generated layout. Its accessor retains
+// the existing per-Load scope even though the basic type plan can be shared.
+type accessorFieldLayout struct {
+	first      int64
+	second     int64
+	loadSecond bool
+}
+
+func (*accessorFieldLayout) StateTypeName() string { return "state.accessorFieldLayout" }
+func (*accessorFieldLayout) StateFields() []string { return []string{"first", "second"} }
+func (v *accessorFieldLayout) StateLoadFields() []LoadField {
+	if v.loadSecond {
+		return []LoadField{{Index: 1, Slot: 1}}
+	}
+	return []LoadField{{Index: 0, Slot: 0}}
+}
+func (v *accessorFieldLayout) StateSave(s Sink) {
+	s.Save(0, &v.first)
+	s.Save(1, &v.second)
+}
+func (v *accessorFieldLayout) StateLoad(_ context.Context, s Source) { s.LoadFields(v) }
+
+func TestAccessorFieldLayoutPerLoad(t *testing.T) {
+	var saved bytes.Buffer
+	if _, err := Save(t.Context(), &saved, &accessorFieldLayout{first: 17, second: 29}); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []accessorFieldLayout{{first: 17}, {second: 29, loadSecond: true}} {
+		restored := accessorFieldLayout{loadSecond: want.loadSecond}
+		if _, err := Load(t.Context(), bytes.NewReader(saved.Bytes()), &restored); err != nil {
+			t.Fatal(err)
+		}
+		if got, want := restored, want; got != want {
+			t.Errorf("Load = %+v, want %+v", got, want)
+		}
+	}
 }
 
 var errBinary = errors.New("binary codec failed")
