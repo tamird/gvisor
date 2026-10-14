@@ -113,3 +113,17 @@ type branchingCycle struct {
 	waitFor     *branchingCycle `state:"wait"`
 	alsoWaitFor *branchingCycle `state:"wait"`
 }
+
+// sharedLayoutFields is first loaded concurrently with different wire field
+// orders. The recursive pointer must not require recursive layout construction.
+// +stateify savable
+type sharedLayoutFields struct {
+	_      uint64
+	first  int64
+	second int64
+	text   string
+	next   *sharedLayoutFields
+	loads  int `state:"nosave"`
+}
+
+func (s *sharedLayoutFields) afterLoad(context.Context) { s.loads++ }
