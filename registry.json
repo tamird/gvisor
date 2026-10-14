@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T00:56:24.890029+00:00",
+    "updatedAt": "2026-10-14T01:13:17.719249+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4959,19 +4959,19 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "qualification/current-upstream-refresh",
-      "head": "ddd23376f391b04aea96441c0be4c800877bd4c9",
+      "head": "74061d8f8d9851abcbf6eaae32b208be4ecee98e",
       "title": "Current public-CI qualification",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
-      "status": "Targeted upstream refresh and tmpfs quota correction adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is ddd23376f391, adding the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporates upstream changes through ae980d605 and preserves the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags; source availability is under agent investigation. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those full profiles were not repeated for these targeted adoptions, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.",
-      "updatedAt": "2026-10-13T16:29:41.427120+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/74061d8f8d9851abcbf6eaae32b208be4ecee98e",
+      "status": "Full mixed unit profile adopted",
+      "summary": "Canonical qualification/current-upstream-refresh is now 74061d8f8, adopted from the exact independently reviewed full mixed unit profile. All 687 owner summaries passed, with 707 test results: 689 remote cache hits, 13 fresh remote executions and 5 local executions. All 1,414 original log/XML reports are retained; 80 skipped case entries have the same identities as the prior run. This closes the full unit profile, while the other public CI lanes retain their separately recorded source-bound qualifications. GPU capacity and a completed fresh Triton qualification remain outstanding.\n\nThe prior canonical source ddd23376f391 added the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporated upstream changes through ae980d605 and preserved the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags; source availability is under agent investigation. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those dedicated full profiles were not repeated by this mixed unit run, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.",
+      "updatedAt": "2026-10-14T01:11:43.944165+00:00",
       "followup": {
         "owner": "root",
-        "disposition": "Current targeted qualification adopted",
-        "sourceHead": "ddd23376f391b04aea96441c0be4c800877bd4c9",
-        "observedAt": "2026-10-14T00:54:58.248716+00:00",
-        "nextAction": "The full unit profile at 70b948545 completed all 687 test summaries: 686 passed and only sniffer_test_arm64 failed (native exit 3, report capture 0 with no capture errors). It did not hit heap exhaustion. The fork-only net.Pipe fixture has since been replaced by a qualified Unix-stream fixture: both CPU suites passed 100 repeats and the owning analyzers passed. Corrected public source 74061d8f8 is running the same complete profile as Actions 38492014825; no new full-profile pass is claimed. The earlier 101d2643c run remains recorded as Java heap exhaustion (exit 33) after 209 passing targets. Canonical ddd23376f is unchanged.",
+        "disposition": "Full mixed unit profile passed and adopted",
+        "sourceHead": "74061d8f8d9851abcbf6eaae32b208be4ecee98e",
+        "observedAt": "2026-10-14T01:11:43.944165+00:00",
+        "nextAction": "The exact 74061d8f8 source is adopted after all 687 unit owner summaries passed. Retain the cache/fresh split and unchanged skipped cases; this does not establish a fresh pass for every public CI lane. The old 70b948545 result remains 686/687 passing, and the earlier 101d2643c heap failure remains recorded. The held e3adde51d sniffer proposal keeps its separate contributor-review and PR #15668 dependency status.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -4993,7 +4993,7 @@
       "evidence": [
         {
           "label": "Current adopted canonical source",
-          "url": "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9"
+          "url": "https://github.com/tamird/gvisor/commit/74061d8f8d9851abcbf6eaae32b208be4ecee98e"
         },
         {
           "label": "Completed Stable Dockerfile export, archive and load",
@@ -5034,6 +5034,10 @@
         {
           "label": "Triton provider investigation",
           "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789"
+        },
+        {
+          "label": "Completed full mixed unit profile at the adopted source",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38492014825"
         }
       ]
     },
