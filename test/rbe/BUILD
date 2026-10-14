@@ -416,3 +416,25 @@ _LARGE_ARCHIVES = {
     )
     for name, image in _LARGE_ARCHIVES.items()
 ]
+
+# The ordinary unit owners retain portable environment skips. Qualification
+# explicitly selects these complementary identities to execute those cases.
+[
+    test_suite(
+        name = "unit_environment_tests_" + architecture,
+        tags = ["manual"],
+        tests = [
+            target + "_" + architecture
+            for target in [
+                "//pkg/pinring:pinring_afpacket_privileged_test",
+                "//runsc/fsgofer:lisafs_hardlink_privileged_test",
+                "//runsc/fsgofer:lisafs_permissions_nonroot_test",
+                "//sandboxexec/sandbox:sandbox_network_nonroot_test",
+            ]
+        ],
+    )
+    for architecture in [
+        "amd64",
+        "arm64",
+    ]
+]

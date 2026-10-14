@@ -18,8 +18,10 @@ package pinring
 // on; see the package comment.
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"slices"
@@ -68,6 +70,20 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 		probe(deferRelease)
+		// runProbe passes readiness and release pipes as descriptors 3 and 4.
+		// Finish creating and registering resources before the parent times us.
+		ready := os.NewFile(3, "probe-ready")
+		var signal [1]byte
+		if _, err := ready.Write(signal[:]); err != nil {
+			fmt.Printf("signal probe readiness: %v\n", err)
+			os.Exit(1)
+		}
+		ready.Close()
+		release := os.NewFile(4, "probe-release")
+		if _, err := io.ReadFull(release, signal[:]); err != nil {
+			fmt.Printf("wait for probe release: %v\n", err)
+			os.Exit(1)
+		}
 		os.Exit(0)
 	}
 	os.Exit(m.Run())
@@ -211,12 +227,52 @@ func compareProbes(t *testing.T, env, what string) {
 	}
 }
 
-func runProbe(env string, deferRelease bool) (string, time.Duration, error) {
+func runProbe(env string, deferRelease bool) (output string, duration time.Duration, err error) {
+	readyRead, readyWrite, err := os.Pipe()
+	if err != nil {
+		return "", 0, err
+	}
+	defer readyRead.Close()
+	defer readyWrite.Close()
+	releaseRead, releaseWrite, err := os.Pipe()
+	if err != nil {
+		return "", 0, err
+	}
+	defer releaseRead.Close()
+	defer releaseWrite.Close()
 	cmd := exec.Command(os.Args[0])
 	cmd.Env = append(os.Environ(), env+"="+strconv.FormatBool(deferRelease))
-	start := time.Now()
-	out, err := cmd.CombinedOutput()
-	return string(out), time.Since(start), err
+	cmd.ExtraFiles = []*os.File{readyWrite, releaseRead}
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	err = cmd.Start()
+	// Close the parent's child ends now so child exit can produce EOF.
+	readyWrite.Close()
+	releaseRead.Close()
+	if err != nil {
+		return out.String(), 0, err
+	}
+	var start time.Time
+	defer func() {
+		// Release a surviving child before waiting, including on setup errors.
+		releaseWrite.Close()
+		err = errors.Join(err, cmd.Wait())
+		if !start.IsZero() {
+			duration = time.Since(start)
+		}
+		// Wait also drains the writer shared by stdout and stderr.
+		output = out.String()
+	}()
+	var signal [1]byte
+	if _, err := io.ReadFull(readyRead, signal[:]); err != nil {
+		return "", 0, err
+	}
+	// Exclude process startup and resource creation. Both modes include the
+	// release handshake and process reaping around the teardown under test.
+	start = time.Now()
+	_, err = releaseWrite.Write(signal[:])
+	return "", 0, err
 }
 
 func timeProbe(t *testing.T, env string, deferRelease bool) time.Duration {

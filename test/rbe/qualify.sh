@@ -49,8 +49,8 @@ The syscalls-rc lane selects the public ordinary profile for each requested CPU.
 Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
 The license-headers lane requires an explicit base and complete Git history.
 The cos-metadata lane requires COS_IMAGES_JSON with the complete gcloud catalog.
-Local execution supports smoke, bwrap, ordinary syscalls, ARM64 unit/resume tests
-and AMD64 container/cgroup-v1 tests, KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
+Local execution supports explicit test targets on either architecture, smoke,
+bwrap, ordinary syscalls, ARM64 unit/resume tests and AMD64 container/cgroup-v1 tests, KVM package/integration tests, KVM/RC syscalls, nftables, Moby, PHP,
 plugin-network and startup/posture/portforward/root/benchmarks.
 With --arch=all, the unit lane uses an ARM64 coordinator and runs AMD64 and
 ordinary ARM64 tests remotely, with ARM64 namespace tests on the coordinator.
@@ -67,7 +67,8 @@ calibrated. Reference mode uses host clocks across the maintained runtime
 fixtures; it does not change production defaults or select different tests.
 A benchmark target selects one member of the continuous suite, retaining its
 original workload and timeout. Other suite members remain unexecuted.
-The test lane runs explicitly selected tests on remote workers.
+The test lane runs explicitly selected tests on remote workers, or on the
+matching Actions host with --test-execution=local and architecture frontends.
 The build lane builds explicitly selected targets without running tests.
 Use build-all for the complete recursive build selection.
 USAGE
@@ -156,8 +157,8 @@ case "$test_execution" in
       exit 2
     fi
     case "$1:$arch" in
-      smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
-      *) printf 'Local tests support smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
+      test:amd64|test:arm64|smoke:amd64|smoke:arm64|bwrap:amd64|bwrap:arm64|unit:arm64|unit:all|container:amd64|container-v1:amd64|container-v1-pilot:amd64|docker:arm64|cpu-images:arm64|gpu-images:arm64|syscalls:amd64|syscalls:arm64|syscalls-resume:arm64|syscalls-kvm:amd64|syscalls-rc-pilot:amd64|syscalls-rc:amd64|syscalls-rc:all|plugin-network:amd64|nftables:amd64|moby:amd64|kvm:amd64|language-goferfs:amd64|startup:amd64|posture:amd64|portforward:amd64|root:amd64|benchmarks:amd64) ;;
+      *) printf 'Local tests support explicit test targets, smoke, bwrap, ordinary syscalls, ARM64 unit/resume/Docker/image profiles and AMD64 container/KVM package/integration/syscall tests, nftables/Moby/PHP/plugin-network/startup/posture/portforward/root/benchmarks.\n' >&2; exit 2 ;;
     esac
     ;;
   *) printf 'Unknown test execution: %s\n' "$test_execution" >&2; exit 2 ;;
@@ -177,8 +178,8 @@ if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $#
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
-  if [[ $# != 1 || $test_execution != remote || $arch == all ]]; then
-    printf 'Explicit targets require one remote build or test lane and a single target architecture.\n' >&2
+  if [[ $# != 1 || $arch == all || ( $test_execution == local && ${1:-} != test ) ]]; then
+    printf 'Explicit targets require one build or test lane and a single target architecture; only tests may execute locally.\n' >&2
     exit 2
   fi
   case "$1" in
@@ -318,7 +319,14 @@ shared_test_targets() {
     overlay|swgso|hostnet) targets=("//test/docker:${1}_tests") ;;
     containerd) targets=(//test/root:crictl_test_owned) ;;
     moby) targets=(//test/moby:moby_owned) ;;
-    kvm) targets=(//pkg/sentry/platform/kvm:kvm_test //test/docker:kvm_tests) ;;
+    kvm)
+      targets=(
+        //pkg/sentry/platform/kvm:kvm_test
+        //test/docker:kvm_tests
+        //pkg/pinring:pinring_kvm_test_amd64
+        //runsc/cmd:boot_posture_kvm_test_amd64
+      )
+      ;;
     fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
     packetimpact) targets=(//test/packetimpact/tests:all_tests) ;;
     iptables|nftables|packetdrill) targets=("//test/$1:owned_tests") ;;
@@ -511,6 +519,19 @@ select_unit_profile() {
   cat "$selection_dir/unit-build-targets" >> "$selection_dir/targets"
 }
 
+# These environment-specific frontends reuse the maintained unit executables.
+# Keep them in ordinary qualification, while the KVM lane owns KVM cases.
+unit_environment_targets() {
+  local targets
+  local -a suites=("//test/rbe:unit_environment_tests_$arch")
+  if [[ $arch == all ]]; then
+    suites=(//test/rbe:unit_environment_tests_amd64 //test/rbe:unit_environment_tests_arm64)
+  fi
+  targets=$(bazel query --output=label "tests(set(${suites[*]}))")
+  [[ -n $targets ]]
+  printf '%s\n' "$targets"
+}
+
 save_profile_selection() {
   local selection_dir=$1 lane=$2
   # Preserve the selection, but never upload Bazel's parsed credential options.
@@ -587,6 +608,9 @@ run_hybrid_profile() (
     cp "$selection_dir/$lane-$arch-targets" "$selection_dir/targets"
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
+  fi
+  if [[ $lane == unit ]]; then
+    unit_environment_targets >> "$selection_dir/targets"
   fi
   save_profile_selection "$selection_dir" "$lane"
   printf '%s %s profile: test placement follows the recorded per-target requirements; compilation stays remote.\n' "$arch" "$lane"
@@ -761,6 +785,7 @@ run_platform_matrix() (
         fi
         python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
           "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}"
+        unit_environment_targets >> "$selection_dir/explicit-targets"
         if [[ $explicit_unit == true ]]; then
           cat "$selection_dir/unit-targets" >> "$selection_dir/explicit-targets"
         else
@@ -986,7 +1011,15 @@ run_lane() (
       ;;
     test)
       targets=("${test_targets[@]}")
-      options=(--strategy=TestRunner=remote --noremote_local_fallback --test_env=GO_TEST_WRAP_TESTV=1)
+      options=(--test_env=GO_TEST_WRAP_TESTV=1)
+      if [[ $test_execution == local ]]; then
+        # Architecture frontends retain the existing root/nobody test identity;
+        # only TestRunners are local. Compilation remains on the RBE platform.
+        options+=("--//tools/bazeldefs:local_test_architecture=$arch"
+          --//tools/bazeldefs:local_test_requirements=namespace)
+      else
+        options+=(--strategy=TestRunner=remote --noremote_local_fallback)
+      fi
       ;;
     build)
       command=build
@@ -1056,6 +1089,14 @@ run_lane() (
       # test/unit.targets also retains non-test build targets and the existing
       # exclusions. Keep its selection separate from Nogo's positive tag filter.
       options=(--config=unit)
+      if [[ $lane == unit ]]; then
+        local unit_targets
+        unit_targets=$(mktemp)
+        trap 'rm -f "$unit_targets"' EXIT
+        cat test/unit.targets > "$unit_targets"
+        unit_environment_targets >> "$unit_targets"
+        options+=("--target_pattern_file=$unit_targets")
+      fi
       ;;
     container-v1-pilot)
       if [[ $arch != amd64 || $test_execution != local ]]; then

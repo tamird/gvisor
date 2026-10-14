@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties", "native_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -41,4 +41,21 @@ go_test(
         "//pkg/test/testutil",
         "@com_github_opencontainers_runtime_spec//specs-go:go_default_library",
     ],
+)
+
+# Check the existing rejection before sandbox networking acquires privileges.
+native_test(
+    name = "sandbox_network_nonroot_test",
+    src = ":sandbox_test",
+    args = ["-test.run=^TestNonRootNetworkingError$$"],
+    env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    exec_properties = namespace_test_exec_properties(user = "nobody"),
+    tags = [
+        "manual",
+        "nogotsan",
+    ],
+    visibility = ["//test/rbe:__pkg__"],
 )
