@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/sync"
@@ -174,7 +175,19 @@ func testBootPosture(t *testing.T, tc postureCase) {
 	}
 
 	pid := c.Sandbox.Getpid()
-	if err := c.Start(conf); err != nil {
+	// Capture the blocked Sentry without changing the start operation or its locks.
+	stacksDone := make(chan struct{})
+	stacksTimer := time.AfterFunc(30*time.Second, func() {
+		defer close(stacksDone)
+		fmt.Fprintf(os.Stderr, "BootPosture start diagnostic: requesting sandbox %s PID %d stacks\n", c.ID, pid)
+		stacks, err := c.Sandbox.Stacks()
+		fmt.Fprintf(os.Stderr, "BootPosture start diagnostic: stacks error=%v\n%s\n", err, stacks)
+	})
+	err = c.Start(conf)
+	if !stacksTimer.Stop() {
+		<-stacksDone
+	}
+	if err != nil {
 		t.Fatalf("Error starting container: %v", err)
 	}
 	goferPid := c.GoferPid.Load()
