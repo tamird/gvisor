@@ -103,7 +103,8 @@ func (op *fib) storeResult(regs *registerSet, nicID tcpip.NICID, st *stack.Stack
 	case linux.NFT_FIB_RESULT_OIFNAME:
 		name := st.FindNICNameFromID(nicID)
 		startIdx, endIdx := op.dregIdx, op.dregIdx+linux.IFNAMSIZ
-		copy(regs.data[startIdx:endIdx], name)
+		n := copy(regs.data[startIdx:endIdx], name)
+		clear(regs.data[startIdx+n : endIdx])
 	}
 }
 
@@ -228,15 +229,8 @@ func (op *fib) evaluateOIF(regs *registerSet, evalCtx opEvalCtx) {
 	}
 	addr := dstAddr
 
-	// Set the default result to 0 now and only set the regs based on the
-	// the result of route lookup.
-	// Linux had a CVE-2026-53134 related to not clearing the register.
-	if op.result == linux.NFT_FIB_RESULT_OIFNAME {
-		startIdx, endIdx := op.dregIdx, op.dregIdx+linux.IFNAMSIZ
-		clear(regs.data[startIdx:endIdx])
-	} else {
-		binary.NativeEndian.PutUint32(regs.data[op.dregIdx:], uint32(0))
-	}
+	// Initialize the complete result before a lookup that may fail.
+	op.storeResult(regs, 0, st)
 
 	rt, release, err := fibGetOrFindRoute(evalCtx, srcAddr, dstAddr, netProto, nicID, dAddr)
 	defer release()
@@ -439,8 +433,14 @@ func newFIB(result int, flags uint32, dreg uint8) (*fib, *syserr.AnnotatedError)
 		return nil, syserr.NewAnnotatedError(syserr.ErrInvalidArgument, fmt.Sprintf("unknown fib result: %d", result))
 	}
 
-	dataLen := resLen
-	dregIdx, err := regNumToIdx(dreg, dataLen)
+	if flags&linux.NFTA_FIB_F_PRESENT != 0 {
+		if result != linux.NFT_FIB_RESULT_OIF {
+			return nil, syserr.NewAnnotatedError(syserr.ErrInvalidArgument, "fib presence requires result OIF")
+		}
+		resLen = 1
+	}
+
+	dregIdx, err := regNumToIdx(dreg, resLen)
 	if err != nil {
 		return nil, err
 	}
