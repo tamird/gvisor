@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-14T13:35:29.566051+00:00",
-  "registryDate": "2026-10-14T13:37:21.439435+00:00",
+  "registryDate": "2026-10-14T15:57:43.919316+00:00",
   "prs": [
     {
       "number": 12470,
@@ -88841,7 +88841,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T13:37:21.439435+00:00"
+        "observedAt": "2026-10-14T15:57:43.919316+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -88850,7 +88850,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T13:37:21.439435+00:00"
+        "observedAt": "2026-10-14T15:57:43.919316+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -88859,25 +88859,25 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T13:37:21.439435+00:00"
+        "observedAt": "2026-10-14T15:57:43.919316+00:00"
       }
     },
     "branch:review/syscall-linux-ci-guidance": {
-      "changes-requested": {
-        "scope": "1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b",
-        "since": "2026-10-14T13:37:21.439435+00:00",
+      "contributor-review": {
+        "scope": "ab15420244eab07ae10f962c442a1f4414fcd046",
+        "since": "2026-10-14T15:57:43.919316+00:00",
         "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-10-14T13:37:21.439435+00:00"
+        "qualifier": null,
+        "observedAt": "2026-10-14T15:57:43.919316+00:00"
       }
     },
     "branch:review/pinring-teardown-timing": {
-      "changes-requested": {
-        "scope": "3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b",
-        "since": "2026-10-14T13:37:21.439435+00:00",
+      "contributor-review": {
+        "scope": "6541c99536042416bbe20eb793f1c58edd23368d",
+        "since": "2026-10-14T15:57:43.919316+00:00",
         "basis": "observed",
-        "qualifier": "Contributor",
-        "observedAt": "2026-10-14T13:37:21.439435+00:00"
+        "qualifier": null,
+        "observedAt": "2026-10-14T15:57:43.919316+00:00"
       }
     }
   },
