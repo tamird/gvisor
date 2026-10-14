@@ -227,17 +227,19 @@ func compareProbes(t *testing.T, env, what string) {
 	}
 }
 
-func runProbe(env string, deferRelease bool) (string, time.Duration, error) {
+func runProbe(env string, deferRelease bool) (output string, duration time.Duration, err error) {
 	readyRead, readyWrite, err := os.Pipe()
 	if err != nil {
 		return "", 0, err
 	}
 	defer readyRead.Close()
+	defer readyWrite.Close()
 	releaseRead, releaseWrite, err := os.Pipe()
 	if err != nil {
-		readyWrite.Close()
 		return "", 0, err
 	}
+	defer releaseRead.Close()
+	defer releaseWrite.Close()
 	cmd := exec.Command(os.Args[0])
 	cmd.Env = append(os.Environ(), env+"="+strconv.FormatBool(deferRelease))
 	cmd.ExtraFiles = []*os.File{readyWrite, releaseRead}
@@ -245,28 +247,32 @@ func runProbe(env string, deferRelease bool) (string, time.Duration, error) {
 	cmd.Stdout = &out
 	cmd.Stderr = &out
 	err = cmd.Start()
+	// Close the parent's child ends now so child exit can produce EOF.
 	readyWrite.Close()
 	releaseRead.Close()
 	if err != nil {
-		releaseWrite.Close()
 		return out.String(), 0, err
 	}
-	var signal [1]byte
-	if _, err := io.ReadFull(readyRead, signal[:]); err != nil {
-		// EOF also covers a child that failed during setup. Closing the release
-		// pipe lets a surviving child stop waiting before we reap it.
+	var start time.Time
+	defer func() {
+		// Release a surviving child before waiting, including on setup errors.
 		releaseWrite.Close()
 		err = errors.Join(err, cmd.Wait())
-		return out.String(), 0, err
+		if !start.IsZero() {
+			duration = time.Since(start)
+		}
+		// Wait also drains the writer shared by stdout and stderr.
+		output = out.String()
+	}()
+	var signal [1]byte
+	if _, err := io.ReadFull(readyRead, signal[:]); err != nil {
+		return "", 0, err
 	}
 	// Exclude process startup and resource creation. Both modes include the
 	// release handshake and process reaping around the teardown under test.
-	start := time.Now()
+	start = time.Now()
 	_, err = releaseWrite.Write(signal[:])
-	releaseWrite.Close()
-	err = errors.Join(err, cmd.Wait())
-	duration := time.Since(start)
-	return out.String(), duration, err
+	return "", 0, err
 }
 
 func timeProbe(t *testing.T, env string, deferRelease bool) time.Duration {
