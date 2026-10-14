@@ -227,7 +227,7 @@ func compareProbes(t *testing.T, env, what string) {
 	}
 }
 
-func runProbe(env string, deferRelease bool) (output string, duration time.Duration, err error) {
+func runProbe(env string, deferRelease bool) (string, time.Duration, error) {
 	readyRead, readyWrite, err := os.Pipe()
 	if err != nil {
 		return "", 0, err
@@ -253,26 +253,20 @@ func runProbe(env string, deferRelease bool) (output string, duration time.Durat
 	if err != nil {
 		return out.String(), 0, err
 	}
-	var start time.Time
-	defer func() {
-		// Release a surviving child before waiting, including on setup errors.
-		releaseWrite.Close()
-		err = errors.Join(err, cmd.Wait())
-		if !start.IsZero() {
-			duration = time.Since(start)
-		}
-		// Wait also drains the writer shared by stdout and stderr.
-		output = out.String()
-	}()
 	var signal [1]byte
-	if _, err := io.ReadFull(readyRead, signal[:]); err != nil {
-		return "", 0, err
-	}
+	_, err = io.ReadFull(readyRead, signal[:])
 	// Exclude process startup and resource creation. Both modes include the
 	// release handshake and process reaping around the teardown under test.
-	start = time.Now()
-	_, err = releaseWrite.Write(signal[:])
-	return "", 0, err
+	start := time.Now()
+	if err == nil {
+		_, err = releaseWrite.Write(signal[:])
+	}
+	// EOF also releases the child if the handshake failed. Wait reaps it and
+	// drains the shared output writer before we read the buffer.
+	releaseWrite.Close()
+	err = errors.Join(err, cmd.Wait())
+	duration := time.Since(start)
+	return out.String(), duration, err
 }
 
 func timeProbe(t *testing.T, env string, deferRelease bool) time.Duration {
