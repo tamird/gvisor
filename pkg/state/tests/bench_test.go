@@ -17,6 +17,7 @@ package tests
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ import (
 	"time"
 
 	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
@@ -286,4 +288,66 @@ func BenchmarkControlMessageDecoding(b *testing.B) {
 		}
 	}
 	b.ReportMetric(float64(len(encoded)), "wire-B/op")
+}
+
+// BenchmarkStatefileAdoptionDecoding includes the default production reader's
+// construction and buffer allocation. Only graph construction and saving are
+// outside the measured loop; the backing file bytes remain in memory.
+func BenchmarkStatefileAdoptionDecoding(b *testing.B) {
+	graph := buildAdoptionObject(1024, true)
+	var image bytes.Buffer
+	writer, err := statefile.NewWriter(&image, nil, statefile.CompressionLevelNone.ToMetadata())
+	if err != nil {
+		b.Fatal(err)
+	}
+	payloadHash := sha256.New()
+	if _, err := state.Save(b.Context(), io.MultiWriter(writer, payloadHash), graph); err != nil {
+		b.Fatal(err)
+	}
+	if err := writer.Close(); err != nil {
+		b.Fatal(err)
+	}
+
+	b.ReportAllocs()
+	var restored benchAdoption
+	for b.Loop() {
+		restored = benchAdoption{}
+		reader, _, err := statefile.NewReader(io.NopCloser(bytes.NewReader(image.Bytes())), nil)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_, loadErr := state.Load(b.Context(), reader, &restored)
+		verifyErr := reader.Verify()
+		closeErr := reader.Close()
+		if loadErr != nil {
+			b.Fatal(loadErr)
+		}
+		if verifyErr != nil {
+			b.Fatal(verifyErr)
+		}
+		if closeErr != nil {
+			b.Fatal(closeErr)
+		}
+	}
+
+	if restored.Parent == nil || restored.Parent.Next == nil {
+		b.Fatal("restored graph is missing its enclosing array owner")
+	}
+	values := restored.Parent.Next.Values
+	if got, want := len(values), len(graph.Pointers); got != want {
+		b.Fatalf("array length = %d, want %d", got, want)
+	}
+	if got, want := len(restored.Pointers), len(values); got != want {
+		b.Fatalf("pointer count = %d, want %d", got, want)
+	}
+	for i, child := range restored.Pointers {
+		if got, want := child, &values[i]; got != want {
+			b.Fatalf("child %d = %p, want %p", i, got, want)
+		}
+		if got, want := child.Value, int64(i+1); got != want {
+			b.Fatalf("child %d value = %d, want %d", i, got, want)
+		}
+	}
+	b.Logf("statefile-payload-sha256: %x", payloadHash.Sum(nil))
+	b.ReportMetric(float64(image.Len()), "statefile-B/op")
 }
