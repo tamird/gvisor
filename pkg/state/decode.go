@@ -128,6 +128,10 @@ type decodeState struct {
 	// r is the input stream.
 	r wire.Reader
 
+	// values owns only temporary parsed data. Escaping Sources and deferred
+	// bodies use owned subtrees, never this buffer's backing storage.
+	values wire.ValueBuffer
+
 	// types is the type database.
 	types typeDecodeDatabase
 
@@ -222,17 +226,17 @@ func (ds *decodeState) wait(waiter *objectDecodeState, id objectID, callback fun
 func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Value, callback func()) {
 	switch encoded.Kind() {
 	case wire.KindRef:
-		if ref := encoded.Reference(); ref.Root != 0 {
-			ds.wait(ods, objectID(ref.Root), callback)
+		if ref := encoded.ReferenceView(); ref.Root() != 0 {
+			ds.wait(ods, objectID(ref.Root()), callback)
 			return
 		}
 	case wire.KindSlice:
-		if slice := encoded.Slice(); slice.Ref.Root != 0 {
-			ds.wait(ods, objectID(slice.Ref.Root), callback)
+		if slice := encoded.SliceView(); slice.Ref.Root() != 0 {
+			ds.wait(ods, objectID(slice.Ref.Root()), callback)
 			return
 		}
 	case wire.KindInterface:
-		_, value := encoded.Interface()
+		_, value := encoded.InterfaceView()
 		ds.waitObject(ods, value, callback)
 		return
 	}
@@ -248,22 +252,20 @@ func (ds *decodeState) waitObject(ods *objectDecodeState, encoded wire.Value, ca
 // struct or an array element, with one such indirection per element in
 // path. The returned value may be an unexported field, so it may not be
 // directly assignable. See decode_unsafe.go.
-func walkChild(path []wire.Dot, obj reflect.Value) reflect.Value {
+func walkChild(path wire.ReferenceView, obj reflect.Value) reflect.Value {
 	// See wire.Ref.Dots. The path here is specified in reverse order.
-	for i := len(path) - 1; i >= 0; i-- {
-		switch pc := path[i].(type) {
-		case *wire.FieldName: // Must be a pointer.
+	for i := path.Dots() - 1; i >= 0; i-- {
+		step := path.Dot(i)
+		if step.Field {
 			if obj.Kind() != reflect.Struct {
 				Failf("next component in child path is a field name, but the current object is not a struct. Path: %v, current obj: %#v", path, obj)
 			}
-			obj = obj.FieldByName(string(*pc))
-		case wire.Index: // Embedded.
+			obj = obj.FieldByName(step.Name)
+		} else {
 			if obj.Kind() != reflect.Array {
 				Failf("next component in child path is an array index, but the current object is not an array. Path: %v, current obj: %#v", path, obj)
 			}
-			obj = obj.Index(int(pc))
-		default:
-			panic("unreachable: switch should be exhaustive")
+			obj = obj.Index(int(step.Index))
 		}
 	}
 	return obj
@@ -292,14 +294,14 @@ func (ds *decodeState) addObject(id objectID, pointer any, plan *restorePlan) *o
 
 // register publishes the enclosing allocation before restoring a deferred
 // body. Dots always chooses the actual enclosing type, never the child's plan.
-func (ds *decodeState) register(r *wire.Ref, typ reflect.Type) any {
-	id := objectID(r.Root)
+func (ds *decodeState) register(r wire.ReferenceView, typ reflect.Type) any {
+	id := objectID(r.Root())
 	ds.growObjectsByID(id)
 	if ods := ds.objectsByID[id-1]; ods != nil {
 		return ods.pointer
 	}
-	if len(r.Dots) != 0 {
-		typ = ds.findType(r.Type)
+	if r.Dots() != 0 {
+		typ = ds.findType(r.Type())
 	}
 	pointer := allocateObject(typ)
 	ods := ds.addObject(id, pointer, ds.plan(typ))
@@ -370,14 +372,42 @@ func (ds *decodeState) structSource(ods *objectDecodeState, typ reflect.Type, en
 
 // decodeStruct adapts the actual receiver into the shared prepared Source.
 // Generated and manual methods both return their fields to the same engine.
-func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, encoded wire.Value) {
-	source, ok := ds.structSource(ods, obj.Type(), encoded)
+func (ds *decodeState) decodeStruct(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
+	var obj reflect.Value
+	var typ reflect.Type
+	if target.writable() && target.plan.kind == reflect.Struct {
+		typ = target.plan.typ
+	} else {
+		obj = target.value()
+		typ = obj.Type() // Preserve invalid/read-only destination behavior.
+	}
+	source, ok := ds.structSource(ods, typ, encoded)
 	if !ok {
 		return
 	}
 	defer ds.stats.done()
+	mode := LoadCustom
+	registered := source.internal.rte.registered
+	if registered != nil && registered.typ == typ {
+		mode = registered.loadMode
+	}
+	if mode == LoadFieldsOnly && target.writable() && target.plan.kind == reflect.Struct {
+		if len(registered.loadFields) != 0 {
+			fields := registered.restorePlan.loadFields(nil, registered)
+			source.loadFields(target, fields)
+		}
+		return
+	}
+	if !obj.IsValid() {
+		obj = target.value()
+	}
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
+		if mode == LoadCustom {
+			// A handwritten or forwarding loader may retain Source. An
+			// already owned Source keeps its original shared children.
+			source.internal.encoded = encoded.Own()
+		}
 		value.StateLoad(ds.ctx, source)
 	case binaryObject:
 		loadBinary(value, source.internal.rte.Name, source)
@@ -385,20 +415,21 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, obj reflect.Value, e
 }
 
 // findType finds the type for the given wire.TypeSpecs.
-func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
-	switch x := t.(type) {
-	case wire.TypeID:
-		typ := ds.types.LookupType(typeID(x))
-		rte := ds.types.Lookup(typeID(x), typ)
+func (ds *decodeState) findType(t wire.TypeView) reflect.Type {
+	switch t.Kind() {
+	case wire.TypeIDKind:
+		typ := ds.types.LookupType(typeID(t.ID()))
+		rte := ds.types.Lookup(typeID(t.ID()), typ)
 		return rte.LocalType
-	case *wire.TypeSpecPointer:
-		return reflect.PointerTo(ds.findType(x.Type))
-	case *wire.TypeSpecArray:
-		return reflect.ArrayOf(int(x.Count), ds.findType(x.Type))
-	case *wire.TypeSpecSlice:
-		return reflect.SliceOf(ds.findType(x.Type))
-	case *wire.TypeSpecMap:
-		return reflect.MapOf(ds.findType(x.Key), ds.findType(x.Value))
+	case wire.TypePointerKind:
+		return reflect.PointerTo(ds.findType(t.Element()))
+	case wire.TypeArrayKind:
+		return reflect.ArrayOf(int(t.Count()), ds.findType(t.Element()))
+	case wire.TypeSliceKind:
+		return reflect.SliceOf(ds.findType(t.Element()))
+	case wire.TypeMapKind:
+		key, value := t.Map()
+		return reflect.MapOf(ds.findType(key), ds.findType(value))
 	default:
 		// Should not happen.
 		Failf("unknown type %#v", t)
@@ -409,7 +440,7 @@ func (ds *decodeState) findType(t wire.TypeSpec) reflect.Type {
 // decodeInterface restores an actual dynamic type. dataValue has already
 // applied nil-interface delegation at the common restore entry.
 func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value, encoded wire.Value) {
-	encodedType, value := encoded.Interface()
+	encodedType, value := encoded.InterfaceView()
 	// We now need to resolve the actual type.
 	typ := ds.findType(encodedType)
 
@@ -452,15 +483,15 @@ func assignMap(target, object reflect.Value) {
 
 // assignSlice owns runtime array construction, interior slicing and the
 // dynamic destination's ordinary assignment relation.
-func (ds *decodeState) assignSlice(obj reflect.Value, x wire.Slice) {
+func (ds *decodeState) assignSlice(obj reflect.Value, x wire.SliceView) {
 	// See *wire.Ref above; same applies.
-	if id := objectID(x.Ref.Root); id == 0 {
+	if id := objectID(x.Ref.Root()); id == 0 {
 		return
 	}
 	// Note that it's fine to slice the array here and assume that
 	// contents will still be filled in later on.
 	typ := reflect.ArrayOf(int(x.Capacity), obj.Type().Elem()) // The object type.
-	v := walkChild(x.Ref.Dots, reflect.ValueOf(ds.register(&x.Ref, typ)).Elem())
+	v := walkChild(x.Ref, reflect.ValueOf(ds.register(x.Ref, typ)).Elem())
 	obj.Set(reflectValueRWSlice3(v, 0, int(x.Length), int(x.Capacity)))
 }
 
@@ -499,6 +530,9 @@ func (ds *decodeState) findCycle() []*objectDecodeState {
 //
 // This function may panic and should be run in safely().
 func (ds *decodeState) Load(pointer reflect.Value) {
+	// This outer defer runs after active restoration defers and the encoded
+	// value's error diagnostic. Retained Sources must not keep scratch alive.
+	defer ds.values.Release()
 	ds.stats.init()
 	defer ds.stats.fini(func(id typeID) string {
 		return ds.types.LookupName(id)
@@ -532,7 +566,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 		// decoding loop in state/pretty/pretty.printer.printStream().
 		for i := uint64(0); i < numObjects; {
 			// Unmarshal either a type object or object ID.
-			encoded = wire.LoadValue(&ds.r)
+			encoded = ds.values.Load(&ds.r)
 			switch encoded.Kind() {
 			case wire.KindType:
 				ds.types.Register(encoded.Type())
@@ -542,7 +576,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 				id = objectID(encoded.Uint())
 				i++
 				// Unmarshal and resolve the actual object.
-				encoded = wire.LoadValue(&ds.r)
+				encoded = ds.values.Load(&ds.r)
 				ods = ds.lookup(id)
 				if ods != nil {
 					// Decode the object.
@@ -551,7 +585,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 					// If an object hasn't had interest registered
 					// previously or isn't yet valid, we deferred
 					// decoding until interest is registered.
-					ds.deferred[id] = encoded
+					ds.deferred[id] = encoded.Own()
 				}
 				// For error handling.
 				ods = nil
@@ -581,6 +615,10 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 			Failf("unused deferred object: ID %d, %#v", id, encoded)
 		}
 	}
+
+	// Every retained Source and deferred body is independent of scratch. Drop
+	// its backing capacity before callbacks, which may themselves retain Source.
+	ds.values.Release()
 
 	// Scan and fire all callbacks. We iterate over the list of incomplete
 	// objects until all have been finished. We stop iterating if no

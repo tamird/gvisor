@@ -71,6 +71,41 @@ func TestLoadUnknownWideTag(t *testing.T) {
 	Load(&Reader{Reader: &buf})
 }
 
+func TestValueBufferOwnership(t *testing.T) {
+	field := FieldName("Value")
+	want := &Array{Contents: []Object{
+		&Ref{Root: 7, Dots: []Dot{Index(257), &field}, Type: &TypeSpecArray{Count: 8, Type: TypeID(3)}},
+		&Ref{Root: 9, Dots: []Dot{Index(0)}, Type: &TypeSpecPointer{Type: TypeID(4)}},
+	}}
+	parent := Struct{TypeID: 1}
+	parent.Alloc(3)
+	text := String("independent string")
+	*parent.Field(0), *parent.Field(1), *parent.Field(2) = Uint(17), want, &text
+	var buf bytes.Buffer
+	w := Writer{Writer: &buf}
+	Save(&w, &parent)
+	Save(&w, &Array{Contents: []Object{&text, &text, &text}})
+	Save(&w, Uint(29))
+	r := Reader{Reader: &buf}
+	var values ValueBuffer
+	first := values.Load(&r)
+	owned := first.Field(1).Own()
+	retainedText := first.Field(2).Text()
+	// Reuse both node and string storage, then release the entire parser.
+	// Only the selected subtree and independently owned string remain usable.
+	values.Load(&r)
+	if got, want := values.Load(&r).Uint(), uint64(29); got != want {
+		t.Fatalf("following value = %d, want %d", got, want)
+	}
+	values.Release()
+	if got, want := materialize(owned), Object(want); !reflect.DeepEqual(got, want) {
+		t.Errorf("owned subtree = %#v, want %#v", got, want)
+	}
+	if got, want := retainedText, string(text); got != want {
+		t.Errorf("retained text = %q, want %q", got, want)
+	}
+}
+
 // BenchmarkUintSave benchmarks saving a Uint. This benchmark is important
 // because almost all types in this package boil down to Uints. So
 // Uint.save() performance is critical for checkpoint performance.

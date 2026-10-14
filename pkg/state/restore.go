@@ -36,6 +36,21 @@ type LoadField struct {
 	Wait  bool
 }
 
+// LoadMode describes the exact StateLoad implementation emitted by stateify.
+// Handwritten, promoted and forwarding methods must use LoadCustom.
+type LoadMode uint8
+
+const (
+	// LoadCustom receives an owned Source that it may retain.
+	LoadCustom LoadMode = iota
+	// LoadGenerated is an exact native generated method. Its custom callbacks
+	// capture typed storage, receiver and context, never Source itself.
+	LoadGenerated
+	// LoadFieldsOnly consists solely of the ordinary/wait field loop (or is
+	// empty), so the common decoder can execute its layout directly.
+	LoadFieldsOnly
+)
+
 // fieldLoader supplies metadata without relying on package initialization.
 // Generated accessors do not dereference their receiver.
 type fieldLoader interface {
@@ -140,6 +155,11 @@ func (s Source) LoadFields(receiver fieldLoader) {
 		Failf("cannot restore fields through nil %T", receiver)
 	}
 	object := restoreDestination{plan: plan, pointer: pointer.UnsafePointer()}
+	s.loadFields(object, fields)
+}
+
+// loadFields is shared by generated method calls and direct ordinary layouts.
+func (s Source) loadFields(object restoreDestination, fields []restoreField) {
 	for _, field := range fields {
 		encoded := s.internal.field(field.slot)
 		target := object.field(field.plan, field.offset)
@@ -155,19 +175,20 @@ func (plan *restorePlan) loadFields(receiver fieldLoader, registered *registered
 		return *fields
 	}
 	var metadata []LoadField
+	var names []string
 	if registered != nil && registered.loadFields != nil {
 		metadata = registered.loadFields
+		names = registered.info.Fields
 	} else {
 		metadata = receiver.StateLoadFields()
+		if entry, ok := reverseTypeDatabase[plan.typ]; ok {
+			names = entry.info.Fields
+		} else {
+			names = receiver.StateFields()
+		}
 	}
 	// Reconciliation belongs to Source. Validate physical metadata against
 	// this receiver's local schema, including an identtype's forwarded receiver.
-	var names []string
-	if entry, ok := reverseTypeDatabase[plan.typ]; ok {
-		names = entry.info.Fields
-	} else {
-		names = receiver.StateFields()
-	}
 	fields := make([]restoreField, 0, len(metadata))
 	for _, field := range metadata {
 		member := plan.typ.Field(field.Index)
@@ -198,8 +219,8 @@ func (plan *restorePlan) loadFields(receiver fieldLoader, registered *registered
 // required. Wait registration still receives the original parsed value.
 func dataValue(value wire.Value) wire.Value {
 	for value.Kind() == wire.KindInterface {
-		typ, inner := value.Interface()
-		if _, ok := typ.(wire.TypeSpecNil); !ok {
+		typ, inner := value.InterfaceView()
+		if typ.Kind() != wire.TypeNilKind {
 			break
 		}
 		value = inner
@@ -215,7 +236,7 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 	case wire.KindNil:
 		return
 	case wire.KindRef:
-		ds.restoreReference(target, encoded.Reference())
+		ds.restoreReference(target, encoded.ReferenceView())
 	case wire.KindBool:
 		target.storeBool(encoded.Bool())
 	case wire.KindInt:
@@ -237,15 +258,15 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 	case wire.KindString:
 		target.storeString(encoded.Text())
 	case wire.KindSlice:
-		if objectID(encoded.Slice().Ref.Root) != 0 {
-			ds.assignSlice(target.value(), encoded.Slice())
+		if slice := encoded.SliceView(); objectID(slice.Ref.Root()) != 0 {
+			ds.assignSlice(target.value(), slice)
 		}
 	case wire.KindArray:
 		ds.restoreArray(ods, target, encoded)
 	case wire.KindMap:
 		ds.restoreMap(ods, target, encoded)
 	case wire.KindStruct:
-		ds.decodeStruct(ods, target.value(), encoded)
+		ds.decodeStruct(ods, target, encoded)
 	case wire.KindInterface:
 		ds.decodeInterface(ods, target.value(), encoded)
 	default:
@@ -255,24 +276,24 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 
 // restoreReference retains register/Dots/assignment order. Only ordinary
 // pointer stores bypass reflect.Set; maps retain actual source flags and type.
-func (ds *decodeState) restoreReference(target restoreDestination, ref wire.Ref) {
-	if objectID(ref.Root) == 0 {
+func (ds *decodeState) restoreReference(target restoreDestination, ref wire.ReferenceView) {
+	if objectID(ref.Root()) == 0 {
 		return
 	}
 	if target.plan == nil {
 		target.value().Type() // Preserve the invalid destination error.
 	}
 	if target.plan.kind == reflect.Map {
-		object := walkChild(ref.Dots, reflect.ValueOf(ds.register(&ref, target.plan.typ)).Elem())
+		object := walkChild(ref, reflect.ValueOf(ds.register(ref, target.plan.typ)).Elem())
 		assignMap(target.value(), object)
 		return
 	}
-	pointer := reflect.ValueOf(ds.register(&ref, target.plan.typ.Elem()))
-	if len(ref.Dots) != 0 {
-		pointer = reflectValueRWAddr(walkChild(ref.Dots, pointer.Elem()))
+	pointer := reflect.ValueOf(ds.register(ref, target.plan.typ.Elem()))
+	if ref.Dots() != 0 {
+		pointer = reflectValueRWAddr(walkChild(ref, pointer.Elem()))
 	}
 	if pointer.IsNil() {
-		Failf("reference %d has no object storage", ref.Root)
+		Failf("reference %d has no object storage", ref.Root())
 	}
 	target.storePointer(pointer)
 }

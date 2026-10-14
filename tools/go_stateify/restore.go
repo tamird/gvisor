@@ -27,6 +27,7 @@ import (
 type restoreSet struct {
 	registered map[string]struct{}
 	fields     map[string][]restoreField
+	modes      map[string]string
 	waitValue  string
 }
 
@@ -36,13 +37,13 @@ type restoreField struct {
 	wait  bool
 }
 
-func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, model *groupModel) (*restoreSet, error) {
-	r := &restoreSet{registered: make(map[string]struct{}), fields: make(map[string][]restoreField), waitValue: "true"}
+func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, group *groupModel) (*restoreSet, error) {
+	r := &restoreSet{registered: make(map[string]struct{}), fields: make(map[string][]restoreField), modes: make(map[string]string), waitValue: "true"}
 	// A package or import may shadow the predeclared boolean identifier.
 	if _, value := info.Scopes[file].LookupParent("true", token.NoPos); value != types.Universe.Lookup("true") {
 		r.waitValue = "0 == 0"
 	}
-	if len(model.types) == 0 {
+	if len(group.types) == 0 {
 		return r, nil
 	}
 	statePackage := pkg
@@ -60,7 +61,7 @@ func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, model
 		return nil, fmt.Errorf("no checked state.SaverLoader interface")
 	}
 	loader := object.Type().Underlying().(*types.Interface)
-	for _, model := range model.types {
+	for _, model := range group.types {
 		name := model.spec.Name.Name
 		owner, ok := pkg.Scope().Lookup(name).(*types.TypeName)
 		if !ok {
@@ -76,7 +77,17 @@ func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, model
 		if _, native := model.spec.Type.(*ast.StructType); !native {
 			continue
 		}
+		// Only this exact native generated method has the borrowing contract.
+		// Identtype forwarding, promoted methods and handwritten loaders may
+		// expose Source, even when their ordinary field layouts look similar.
+		mode := "LoadFieldsOnly"
+		if _, hooked := group.methods[method{typeName: name, methodName: "afterLoad"}]; hooked {
+			mode = "LoadGenerated"
+		}
 		for _, field := range model.fields {
+			if field.kind == fieldValue {
+				mode = "LoadGenerated"
+			}
 			if field.kind != fieldNormal && field.kind != fieldWait {
 				continue
 			}
@@ -86,6 +97,7 @@ func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, model
 			}
 			r.fields[name] = append(r.fields[name], restoreField{index: index[0], slot: field.slot, wait: field.kind == fieldWait})
 		}
+		r.modes[name] = mode
 	}
 	return r, nil
 }

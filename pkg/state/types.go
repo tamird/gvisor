@@ -292,6 +292,7 @@ type registeredType struct {
 	newRecord  func(wire.TypeID, int) *wire.Record
 	allocate   Allocate
 	loadFields []LoadField
+	loadMode   LoadMode
 }
 
 // globalTypeDatabase is the single registration database for saving and loading.
@@ -362,18 +363,18 @@ func loadBinary(value binaryObject, name string, s Source) {
 // Manually implemented savers use Sink.Save/SaveValue to populate the record's
 // compatibility slots.
 func Register(t Type) {
-	registerState(t, nil, nil, nil)
+	registerState(t, nil, nil, nil, LoadCustom)
 }
 
 // RegisterGenerated adds captured-record and ordinary-field metadata to the
 // existing registration. allocate, when present, returns the exact *T. Manual
-// and forwarding loaders omit fields and retain their existing StateLoad.
+// and forwarding loaders use LoadCustom and retain their existing StateLoad.
 // The generated fields must remain unchanged after registration.
-func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField) {
-	registerState(t, newRecord, allocate, fields)
+func RegisterGenerated(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField, mode LoadMode) {
+	registerState(t, newRecord, allocate, fields, mode)
 }
 
-func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, loadFields []LoadField) {
+func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, loadFields []LoadField, mode LoadMode) {
 	name := t.StateTypeName()
 	fields := t.StateFields()
 	typ := reflect.TypeOf(t)
@@ -408,7 +409,7 @@ func registerState(t Type, newRecord func(wire.TypeID, int) *wire.Record, alloca
 			}
 		}
 	}
-	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, allocate, loadFields)
+	register(typ, wire.Type{Name: name, Fields: fields}, newRecord, allocate, loadFields, mode)
 }
 
 // registerBinary registers a named foreign struct once, retaining its original
@@ -418,11 +419,11 @@ func registerBinary(value binaryObject) {
 	register(typ, wire.Type{
 		Name:   typ.PkgPath() + "." + typ.Name(),
 		Fields: []string{"value"},
-	}, newBinaryRecord, nil, nil)
+	}, newBinaryRecord, nil, nil, LoadCustom)
 }
 
 // register publishes metadata in the existing type databases.
-func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField) {
+func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int) *wire.Record, allocate Allocate, fields []LoadField, mode LoadMode) {
 	if info.Name == "" {
 		Failf("type has empty name")
 	}
@@ -445,7 +446,7 @@ func register(typ reflect.Type, info wire.Type, newRecord func(wire.TypeID, int)
 			Failf("conflicting name for %v: matches interfaceType", typ)
 		}
 	}
-	entry := &registeredType{restorePlan: newRestorePlan(typ), info: info, newRecord: newRecord, allocate: allocate, loadFields: fields}
+	entry := &registeredType{restorePlan: newRestorePlan(typ), info: info, newRecord: newRecord, allocate: allocate, loadFields: fields, loadMode: mode}
 	globalTypeDatabase[info.Name] = entry
 	reverseTypeDatabase[typ] = entry
 }

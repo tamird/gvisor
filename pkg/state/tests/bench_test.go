@@ -287,3 +287,69 @@ func BenchmarkControlMessageDecoding(b *testing.B) {
 	}
 	b.ReportMetric(float64(len(encoded)), "wire-B/op")
 }
+
+// BenchmarkFirstRestore is selected one leaf at a time with benchtime=1x and
+// count=1 in a fresh process. Setup saves the graph but never loads it, so the
+// timed operation includes first-use restoration metadata. Repeated iterations
+// are valid operations but do not have that first-use interpretation.
+func BenchmarkFirstRestore(b *testing.B) {
+	b.Run("ordinary", func(b *testing.B) {
+		firstRestore(b, benchAdopted{Value: 17}, func(restored *benchAdopted) {
+			if got, want := restored.Value, int64(17); got != want {
+				b.Fatalf("restored value = %d, want %d", got, want)
+			}
+		})
+	})
+	b.Run("retained_source", func(b *testing.B) {
+		firstRestore(b, replayLoadStruct{first: 17, second: "retained field", omitted: 99}, func(restored *replayLoadStruct) {
+			if got, want := restored.calls, 1; got != want {
+				b.Fatalf("StateLoad calls = %d, want %d", got, want)
+			}
+			if got, want := restored.first, int64(17); got != want {
+				b.Fatalf("restored first = %d, want %d", got, want)
+			}
+			if got, want := restored.after, "retained field"; got != want {
+				b.Fatalf("AfterLoad replay = %q, want %q", got, want)
+			}
+			var replay int64
+			restored.source.Load(0, &replay)
+			if got, want := replay, int64(17); got != want {
+				b.Fatalf("retained Source replay = %d, want %d", got, want)
+			}
+		})
+	})
+	b.Run("control_message", func(b *testing.B) {
+		original := tcpip.ReceivableControlMessages{
+			HasTimestamp: true,
+			Timestamp:    time.Date(2026, time.October, 7, 12, 0, 0, 123456789, time.UTC),
+		}
+		firstRestore(b, original, func(restored *tcpip.ReceivableControlMessages) {
+			if got, want := restored.HasTimestamp, true; got != want {
+				b.Fatalf("HasTimestamp = %t, want %t", got, want)
+			}
+			if got, want := restored.Timestamp, original.Timestamp; !got.Equal(want) {
+				b.Fatalf("restored timestamp = %v, want %v", got, want)
+			}
+		})
+	})
+}
+
+func firstRestore[T any](b *testing.B, original T, check func(*T)) {
+	b.Helper()
+	var encoded bytes.Buffer
+	if _, err := state.Save(b.Context(), &encoded, &original); err != nil {
+		b.Fatal(err)
+	}
+	var restored, zero T
+	var reader bytes.Reader
+	b.ReportAllocs()
+	for b.Loop() {
+		restored = zero
+		reader.Reset(encoded.Bytes())
+		if _, err := state.Load(b.Context(), &reader, &restored); err != nil {
+			b.Fatal(err)
+		}
+	}
+	check(&restored)
+	b.ReportMetric(float64(encoded.Len()), "wire-B/op")
+}

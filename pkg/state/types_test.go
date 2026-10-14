@@ -34,7 +34,7 @@ func init() {
 	var buf bytes.Buffer
 	_, earlyBinaryError = Save(context.Background(), &buf, &binaryFailure{})
 	registerBinary((*binaryFailure)(nil))
-	RegisterGenerated((*invalidFieldLayout)(nil), nil, nil, []LoadField{{Index: 0, Slot: 0}, {Index: 0, Slot: 1}})
+	RegisterGenerated((*invalidFieldLayout)(nil), nil, nil, []LoadField{{Index: 0, Slot: 0}, {Index: 0, Slot: 1}}, LoadCustom)
 	Register((*accessorFieldLayout)(nil))
 }
 
@@ -177,7 +177,11 @@ func TestPromotedChildPath(t *testing.T) {
 	type inner struct{ Value int }
 	root := struct{ *inner }{inner: &inner{Value: 17}}
 	name := wire.FieldName("Value")
-	child := walkChild([]wire.Dot{&name}, reflect.ValueOf(&root).Elem())
+	var buf bytes.Buffer
+	writer := wire.Writer{Writer: &buf}
+	wire.Save(&writer, &wire.Ref{Root: 1, Dots: []wire.Dot{&name}, Type: wire.TypeID(0)})
+	reader := wire.Reader{Reader: &buf}
+	child := walkChild(wire.LoadValue(&reader).ReferenceView(), reflect.ValueOf(&root).Elem())
 	if got, want := child.Addr().Pointer(), reflect.ValueOf(&root.Value).Pointer(); got != want {
 		t.Fatalf("promoted field address = %#x, want %#x", got, want)
 	}

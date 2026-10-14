@@ -229,11 +229,15 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				if _, ok := records.restore.fields[name]; ok {
 					fields = fmt.Sprintf("(*%s)(nil).StateLoadFields()", name)
 				}
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s)", statePrefix, name, capture, statePrefix, name, fields))
+				mode := records.restore.modes[name]
+				if mode == "" {
+					mode = "LoadCustom"
+				}
+				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s, %s%s)", statePrefix, name, capture, statePrefix, name, fields, statePrefix, mode))
 				return
 			}
 			if forward := records.forward[name]; forward != "" {
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, nil)", statePrefix, name, statePrefix, forward))
+				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, nil, %sLoadCustom)", statePrefix, name, statePrefix, forward, statePrefix))
 				return
 			}
 		}

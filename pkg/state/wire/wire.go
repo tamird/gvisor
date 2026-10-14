@@ -256,35 +256,6 @@ type Ref struct {
 	Type TypeSpec
 }
 
-// loadRef loads an object of type Ref (abstract).
-func loadRef(r *Reader) Ref {
-	ref := Ref{
-		Root: loadUint(r),
-	}
-	l := loadUint(r)
-	ref.Dots = make([]Dot, l) // Escapes: decoded reference path.
-	for i := 0; i < int(l); i++ {
-		// Disambiguate between an Index (non-negative) and a field
-		// name (negative). This does some space and avoids a dedicate
-		// loadDot function. See Ref.save for the other side.
-		d := loadInt(r)
-		if d >= 0 {
-			ref.Dots[i] = Index(d) // Escapes: boxing the decoded index.
-			continue
-		}
-		p := make([]byte, -d) // Escapes: decoded field name storage.
-		readFull(r, p)
-		fieldName := new(FieldName) // Escapes: decoded field name interface.
-		*fieldName = FieldName(gohacks.StringFromImmutableBytes(p))
-		ref.Dots[i] = fieldName
-	}
-	if l != 0 {
-		// Only if dots is non-zero.
-		ref.Type = loadTypeSpec(r)
-	}
-	return ref
-}
-
 // save implements Object.save.
 func (r *Ref) save(w *Writer) {
 	r.Root.save(w)
@@ -428,7 +399,7 @@ func (TypeSpecNil) isTypeSpec() {}
 // TypeSpec types.
 //
 // These use a distinct encoding on the wire, as they are used only in the
-// interface object. They are decoded through the dedicated loadTypeSpec and
+// interface object. They are decoded through the dedicated valueFrame.loadType and
 // saveTypeSpec functions.
 const (
 	typeSpecTypeID Uint = iota
@@ -438,32 +409,6 @@ const (
 	typeSpecMap
 	typeSpecNil
 )
-
-// loadTypeSpec loads TypeSpec values.
-func loadTypeSpec(r *Reader) TypeSpec {
-	switch hdr := loadUint(r); hdr {
-	case typeSpecTypeID:
-		id := TypeID(loadUint(r))
-		return id // Escapes: boxing the decoded type ID.
-	case typeSpecPointer:
-		typ := loadTypeSpec(r)
-		return &TypeSpecPointer{Type: typ} // Escapes: decoded type structure.
-	case typeSpecArray:
-		count, typ := loadUint(r), loadTypeSpec(r)
-		return &TypeSpecArray{Count: count, Type: typ} // Escapes: decoded type structure.
-	case typeSpecSlice:
-		typ := loadTypeSpec(r)
-		return &TypeSpecSlice{Type: typ} // Escapes: decoded type structure.
-	case typeSpecMap:
-		key, value := loadTypeSpec(r), loadTypeSpec(r)
-		return &TypeSpecMap{Key: key, Value: value} // Escapes: decoded type structure.
-	case typeSpecNil:
-		return TypeSpecNil{}
-	default:
-		// This is not a valid stream?
-		panic(fmt.Errorf("unknown header: %d", hdr)) // Escapes: error formatting.
-	}
-}
 
 // saveTypeSpec saves TypeSpec values.
 func saveTypeSpec(w *Writer, t TypeSpec) {
@@ -705,7 +650,8 @@ func Save(w *Writer, obj Object) {
 //
 // N.B. This function will panic on error.
 func Load(r *Reader) Object {
-	return materialize(LoadValue(r))
+	buffer := new(ValueBuffer) // Escapes: temporary parsing storage.
+	return materialize(buffer.Load(r))
 }
 
 // LoadUint loads a single unsigned integer.
