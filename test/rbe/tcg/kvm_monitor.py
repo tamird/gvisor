@@ -12,16 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Capture one stopped QEMU CPU snapshot after the minimal KVM entry marker."""
+"""Briefly log QEMU exceptions after the minimal KVM entry, without pausing."""
 
 import json
 import os
 from pathlib import Path
 import re
+import select
 import signal
 import socket
 import subprocess
 import sys
+import threading
 import time
 
 
@@ -29,21 +31,23 @@ ENTER = re.compile(rb"(?m)^KVM trace enter sequence 0000000000000001\r?\n")
 RETURN = re.compile(rb"(?m)^KVM trace return sequence 0000000000000001\r?\n")
 MAX_CONSOLE_BYTES = 2 * 1024 * 1024
 MAX_QMP_BYTES = 256 * 1024
+MAX_LOG_BYTES = 2 * 1024 * 1024
+LOG_SECONDS = 0.25
 
 
-def snapshot(address: str, output: Path) -> None:
-    """Pause our running VM, read both CPUs, and always attempt to resume it."""
+def trace_interrupts(address: str, log_fd: int, output: Path) -> None:
+    """Enable one short exception log window and always attempt to disable it."""
     started = time.monotonic()
     deadline = started + 5
     pending = bytearray()
     received = 0
     sent: set[str] = set()
-    stop_sent = False
+    logging_sent = False
     capture_error: OSError | None = None
     with output.open("x") as capture, socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as connection:
         def record(value: dict[str, object]) -> None:
             nonlocal capture_error
-            # Recording failures must not prevent our finally from resuming.
+            # Recording failures must not prevent our finally from disabling logging.
             if capture_error is None:
                 try:
                     row = {"elapsedSeconds": time.monotonic() - started, **value}
@@ -55,14 +59,14 @@ def snapshot(address: str, output: Path) -> None:
         def remaining() -> float:
             value = deadline - time.monotonic()
             if value <= 0:
-                raise TimeoutError("QMP snapshot exhausted its client deadline")
+                raise TimeoutError("QMP trace exhausted its client deadline")
             return value
 
         def receive() -> dict[str, object]:
             nonlocal received
             while b"\n" not in pending:
                 if len(pending) >= 65536 or received >= MAX_QMP_BYTES:
-                    raise ValueError("QMP snapshot exceeded its output bound")
+                    raise ValueError("QMP trace exceeded its output bound")
                 connection.settimeout(remaining())
                 data = connection.recv(
                     min(4096, 65536 - len(pending), MAX_QMP_BYTES - received)
@@ -96,7 +100,7 @@ def snapshot(address: str, output: Path) -> None:
                 if "event" in reply:
                     continue
                 if reply.get("id") != identifier:
-                    # A timed-out stop may return while finally awaits cont.
+                    # A timed-out enable may return while finally awaits disable.
                     if isinstance(reply.get("id"), str) and reply["id"] in sent:
                         continue
                     raise ValueError(f"Unexpected QMP reply: {reply}")
@@ -114,7 +118,7 @@ def snapshot(address: str, output: Path) -> None:
             case {"running": True, "status": "running"}:
                 pass
             case state:
-                raise ValueError(f"Refusing to stop or resume an unexpectedly stopped VM: {state}")
+                raise ValueError(f"Refusing to log an unexpectedly stopped VM: {state}")
         match command("query-cpus-fast", "cpus"):
             case [{"cpu-index": int() as first, "target": "aarch64"},
                   {"cpu-index": int() as second, "target": "aarch64"}] if sorted((first, second)) == [0, 1]:
@@ -125,53 +129,50 @@ def snapshot(address: str, output: Path) -> None:
             raise capture_error
         errors = []
         try:
-            # Set ownership before send: a lost reply does not undo the stop.
-            stop_sent = True
-            command("stop", "stop")
-            match command("query-status", "stopped-after"):
-                case {"running": False, "status": "paused"}:
-                    pass
-                case state:
-                    raise ValueError(f"QMP did not confirm a stopped VM: {state}")
-            dump = command(
-                "human-monitor-command", "registers", {"command-line": "info registers -a"}
+            # The inherited pipe already has a reader. Opening this descriptor
+            # path cannot create an unbounded log file or block on FIFO open.
+            reply = command(
+                "human-monitor-command", "logfile",
+                {"command-line": f"logfile /proc/self/fd/{log_fd}"},
             )
-            if not isinstance(dump, str) or sorted(re.findall(r"CPU#(\d+)", dump)) != ["0", "1"]:
-                raise ValueError(f"Expected a register dump for both CPUs, got {dump!r}")
-            if (
-                len(re.findall(r" PC=[0-9a-fA-F]{16} ", dump)) != 2
-                or len(re.findall(r"PSTATE=[0-9a-fA-F]{16} .*EL[0-3][ht]", dump)) != 2
-            ):
-                raise ValueError(f"Expected PC and current EL for both CPUs, got {dump!r}")
-            for cpu in (0, 1):
-                for register in ("HCR_EL2", "VTTBR_EL2", "ELR_EL2", "SPSR_EL2"):
-                    value = command(
-                        "human-monitor-command", f"cpu{cpu}-{register}",
-                        {"command-line": f"p/x ${register}", "cpu-index": cpu},
-                    )
-                    if not isinstance(value, str) or not re.fullmatch(r"\s*(?:0x[0-9a-fA-F]+|0)\s*", value):
-                        raise ValueError(f"CPU{cpu} {register} was not a scalar register value: {value!r}")
+            if reply != "":
+                raise ValueError(f"Unexpected logfile response: {reply!r}")
+            # A lost response does not undo an already enabled log. HMP reports
+            # some failures only on stderr, so actual bytes are required too.
+            logging_sent = True
+            reply = command("human-monitor-command", "enable", {"command-line": "log int"})
+            if reply != "":
+                raise ValueError(f"Unexpected log response: {reply!r}")
+            if remaining() < LOG_SECONDS:
+                raise TimeoutError("Insufficient QMP budget for the full log window")
+            record({"windowStarted": True, "requestedSeconds": LOG_SECONDS})
+            time.sleep(LOG_SECONDS)
+            record({"windowFinished": True})
         except (OSError, ValueError) as error:
             errors.append(str(error))
-            record({"readError": str(error)})
+            record({"traceError": str(error)})
         finally:
-            if stop_sent:
-                # Reserve two seconds beyond the read budget for our resume.
-                # A client timeout cannot cancel an already executing QMP stop;
-                # the original worker deadline and owned cleanup stay in force.
+            if logging_sent:
+                # Reserve two seconds beyond setup/window for disabling. A
+                # timed-out command may still execute; the pipe keeps draining
+                # until the child is reaped under the original worker deadline.
                 deadline = time.monotonic() + 2
                 try:
-                    command("cont", "resume")
+                    reply = command(
+                        "human-monitor-command", "disable", {"command-line": "log none"}
+                    )
+                    if reply != "":
+                        raise ValueError(f"Unexpected disable response: {reply!r}")
                     match command("query-status", "running-after"):
                         case {"running": True, "status": "running"}:
                             pass
                         case state:
-                            raise ValueError(f"QMP did not confirm resumed execution: {state}")
+                            raise ValueError(f"VM was no longer running after logging: {state}")
                 except (OSError, ValueError) as error:
                     errors.append(str(error))
-                    record({"resumeError": str(error)})
+                    record({"disableError": str(error)})
         if capture_error is not None:
-            errors.append(f"Snapshot output failed: {capture_error}")
+            errors.append(f"QMP output failed: {capture_error}")
         if errors:
             raise ValueError("; ".join(errors))
 
@@ -215,16 +216,52 @@ def main() -> int:
     for signum in (signal.SIGTERM, signal.SIGINT):
         signal.signal(signum, interrupted)
     process = None
+    read_fd, write_fd = os.pipe()
+    drain_stop = threading.Event()
+    drain_deadline = float("inf")
+    retained = bytearray()
+    drain: dict[str, object] = {"bytesRead": 0, "eof": False}
+
+    def drain_log() -> None:
+        try:
+            while not drain_stop.is_set() or time.monotonic() < drain_deadline:
+                if not select.select([read_fd], [], [], 0.1)[0]:
+                    if drain_stop.is_set():
+                        break
+                    continue
+                try:
+                    data = os.read(read_fd, 65536)
+                except BlockingIOError:
+                    continue
+                if not data:
+                    drain["eof"] = True
+                    break
+                drain["bytesRead"] += len(data)
+                # After the cap, discard while still consuming the pipe. Never
+                # close it or block QEMU merely because retention is complete.
+                retained.extend(data[:max(0, MAX_LOG_BYTES - len(retained))])
+        except OSError as error:
+            drain["error"] = str(error)
+            # Keep the read descriptor open until child cleanup; do not turn a
+            # reader error into a SIGPIPE in the original QEMU process.
+
+    drainer = threading.Thread(target=drain_log, name="qemu-int-drain")
     result_write_failed = False
     observed = bytearray()
     marker_time = None
     diagnostic: dict[str, object] = {"status": "ENTRY_MARKER_NOT_OBSERVED"}
     try:
+        os.set_blocking(read_fd, False)
+        drainer.start()
         process = subprocess.Popen(
             [executable, *arguments],
             env={**os.environ, "GVISOR_TCG_QMP_SOCKET": address},
             start_new_session=True,
+            pass_fds=(write_fd,),
         )
+        os.close(write_fd)
+        log_fd = write_fd
+        write_fd = None
         while process.poll() is None and not cancelled:
             if diagnostic["status"] == "ENTRY_MARKER_NOT_OBSERVED":
                 try:
@@ -234,23 +271,23 @@ def main() -> int:
                 except FileNotFoundError:
                     pass
                 if len(observed) > MAX_CONSOLE_BYTES:
-                    diagnostic = {"status": "ERROR", "error": "Console exceeds two MiB before snapshot"}
+                    diagnostic = {"status": "ERROR", "error": "Console exceeds two MiB before interrupt tracing"}
                 elif RETURN.search(observed):
-                    diagnostic = {"status": "RETURNED_BEFORE_SNAPSHOT"}
+                    diagnostic = {"status": "RETURNED_BEFORE_TRACE"}
                 elif ENTER.search(observed):
                     if marker_time is None:
                         marker_time = time.monotonic()
                     elif time.monotonic() - marker_time >= 2:
                         diagnostic = {
-                            "status": "SNAPSHOT_ATTEMPTED",
-                            "markerToSnapshotSeconds": time.monotonic() - marker_time,
+                            "status": "TRACE_ATTEMPTED",
+                            "markerToTraceSeconds": time.monotonic() - marker_time,
                         }
                         try:
-                            snapshot(address, output / "qmp-snapshot.jsonl")
+                            trace_interrupts(address, log_fd, output / "qmp-int.jsonl")
                         except (OSError, ValueError) as error:
                             diagnostic.update(status="ERROR", error=str(error))
                         else:
-                            diagnostic["status"] = "STOPPED_SNAPSHOT_RESUMED"
+                            diagnostic["status"] = "LOG_WINDOW_DISABLED"
             try:
                 process.wait(timeout=0.1)
             except subprocess.TimeoutExpired:
@@ -259,9 +296,29 @@ def main() -> int:
         if process is not None:
             terminate(process)
             child_status = process.returncode
+        if write_fd is not None:
+            os.close(write_fd)
+        # The original launcher has now reaped QEMU. Allow one second for any
+        # final pipe bytes; a missing EOF is retained as incomplete drainage.
+        drain_deadline = time.monotonic() + 1
+        drain_stop.set()
+        if drainer.ident is not None:
+            drainer.join()
+        os.close(read_fd)
+        drain.update(retainedBytes=len(retained), discardedBytes=drain["bytesRead"] - len(retained))
+        if not drain["eof"]:
+            drain.setdefault("error", "Pipe did not reach EOF after child reap")
+        if not retained:
+            drain.setdefault("error", "No exception log bytes were received")
+        diagnostic["log"] = drain
+        try:
+            (output / "qemu-int.log").write_bytes(retained)
+        except OSError as error:
+            drain["error"] = str(error)
+        if process is not None:
             diagnostic.update(childStatus=child_status, cancelledSignal=cancelled)
             try:
-                (output / "qmp-snapshot-result.json").write_text(
+                (output / "qmp-int-result.json").write_text(
                     json.dumps(diagnostic, indent=2) + "\n"
                 )
             except OSError as error:
@@ -276,7 +333,9 @@ def main() -> int:
         128 + cancelled if cancelled
         else 128 - child_status if child_status < 0 else child_status
     )
-    return status or int(result_write_failed or diagnostic["status"] != "STOPPED_SNAPSHOT_RESUMED")
+    return status or int(
+        result_write_failed or "error" in drain or diagnostic["status"] != "LOG_WINDOW_DISABLED"
+    )
 
 
 if __name__ == "__main__":
