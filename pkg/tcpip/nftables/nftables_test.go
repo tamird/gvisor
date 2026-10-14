@@ -2651,8 +2651,8 @@ func TestFIBResultStorage(t *testing.T) {
 	}{
 		{name: "loopback_name", result: linux.NFT_FIB_RESULT_OIFNAME, loopback: true, want: append([]byte("lo"), make([]byte, linux.IFNAMSIZ-2)...)},
 		{name: "lookup_failure_name", result: linux.NFT_FIB_RESULT_OIFNAME, want: make([]byte, linux.IFNAMSIZ)},
-		{name: "loopback_present", result: linux.NFT_FIB_RESULT_OIF, present: true, loopback: true, want: []byte{1}},
-		{name: "lookup_failure_present", result: linux.NFT_FIB_RESULT_OIF, present: true, want: []byte{0}},
+		{name: "loopback_present", result: linux.NFT_FIB_RESULT_OIF, present: true, loopback: true, want: []byte{1, 0, 0, 0}},
+		{name: "lookup_failure_present", result: linux.NFT_FIB_RESULT_OIF, present: true, want: []byte{0, 0, 0, 0}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			// Without configured protocols, the ordinary route lookup fails.

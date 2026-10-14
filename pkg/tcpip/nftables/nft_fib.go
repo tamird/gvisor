@@ -87,12 +87,11 @@ func fibGetAddrRouteType(netProto tcpip.NetworkProtocolNumber, st *stack.Stack, 
 
 // Ref: net/netfilter/nft_fib.c:nft_fib_store_result()
 func (op *fib) storeResult(regs *registerSet, nicID tcpip.NICID, st *stack.Stack) {
-	// Just set the boolean result if the flag is set.
 	if op.flags&linux.NFTA_FIB_F_PRESENT != 0 {
+		// Linux nft_reg_store8 clears the containing 32-bit register.
+		clear(regs.data[op.dregIdx : op.dregIdx+linux.NFT_REG32_SIZE])
 		if nicID != 0 {
 			regs.data[op.dregIdx] = uint8(1)
-		} else {
-			regs.data[op.dregIdx] = uint8(0)
 		}
 		return
 	}
