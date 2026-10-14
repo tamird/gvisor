@@ -581,24 +581,30 @@ run_hybrid_profile() (
     fi
     python3 test/rbe/unit_matrix.py query test/unit.targets "${query_options[@]}" > "$selection_dir/owners.query"
     bazel query --output=label --query_file="$selection_dir/owners.query" > "$selection_dir/owners"
+    unit_environment_targets > "$selection_dir/environment-owners"
     if [[ $arch == all ]]; then
       # Loading discovers the declared variants; the one test invocation owns
       # compatibility, canonical filters and per-target execution requirements.
-      python3 test/rbe/unit_matrix.py hybrid-unit-patterns test/unit.targets \
-        "$selection_dir/owners" "$selection_dir/targets" | tee "$selection_dir/selection.json"
+      python3 test/rbe/unit_matrix.py unit-patterns test/unit.targets "$selection_dir/targets" \
+        --owners "$selection_dir/owners" --environment-owners "$selection_dir/environment-owners" \
+        | tee "$selection_dir/selection.json"
       lane_options+=(--config=unit)
       options+=(--cache_test_results=auto --remote_download_outputs=minimal)
     else
-      python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" > "$selection_dir/actions.query"
+      python3 test/rbe/unit_matrix.py actions "$selection_dir/owners" \
+        --additional-owners "$selection_dir/environment-owners" > "$selection_dir/actions.query"
       bazel aquery "${runtime_options[@]}" --config=rbe-matrix --config=x86_64 \
         --//tools/bazeldefs:local_test_architecture=arm64 \
         "--//tools/bazeldefs:local_test_requirements=$local_test_requirements" \
         --output=jsonproto --include_artifacts=false \
         --query_file="$selection_dir/actions.query" > "$selection_dir/actions.json"
-      analyze_profile test/unit.targets "$selection_dir/profile.json" \
+      python3 test/rbe/unit_matrix.py unit-patterns test/unit.targets "$selection_dir/unit-patterns" \
+        --environment-owners "$selection_dir/environment-owners" > /dev/null
+      analyze_profile "$selection_dir/unit-patterns" "$selection_dir/profile.json" \
         --config=rbe-matrix --config=aarch64 --config=unit --strip=never --build_tests_only
       python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
         "$selection_dir/actions.json" "$selection_dir/targets" --profile "$selection_dir/profile.json" --hybrid \
+        --environment-owners "$selection_dir/environment-owners" \
         "--local-test-requirements=$local_test_requirements" \
         | tee "$selection_dir/selection.json"
     fi
@@ -608,9 +614,6 @@ run_hybrid_profile() (
     cp "$selection_dir/$lane-$arch-targets" "$selection_dir/targets"
     cp "$selection_dir/$lane-$arch-actions.json" "$selection_dir/actions.json"
     cp "$selection_dir/$lane-$arch-profile.json" "$selection_dir/profile.json"
-  fi
-  if [[ $lane == unit ]]; then
-    unit_environment_targets >> "$selection_dir/targets"
   fi
   save_profile_selection "$selection_dir" "$lane"
   printf '%s %s profile: test placement follows the recorded per-target requirements; compilation stays remote.\n' "$arch" "$lane"
@@ -783,13 +786,16 @@ run_platform_matrix() (
           select_unit_profile "$selection_dir"
           unit_selection_options=(--profile "$selection_dir/unit-profile.json")
         fi
+        unit_environment_targets > "$selection_dir/environment-owners"
         python3 test/rbe/unit_matrix.py select test/unit.targets "$selection_dir/owners" \
-          "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}"
-        unit_environment_targets >> "$selection_dir/explicit-targets"
+          "$selection_dir/actions.json" "$selection_dir/unit-targets" "${unit_selection_options[@]}" \
+          --environment-owners "$selection_dir/environment-owners"
         if [[ $explicit_unit == true ]]; then
           cat "$selection_dir/unit-targets" >> "$selection_dir/explicit-targets"
         else
           cat "$selection_dir/unit-targets" >> "$selection_dir/targets"
+          # Also retain these explicit owners in the combined-filter check.
+          cat "$selection_dir/environment-owners" >> "$selection_dir/explicit-targets"
           options+=(--config=unit)
         fi
         options+=(--strip=never)
@@ -1090,12 +1096,16 @@ run_lane() (
       # exclusions. Keep its selection separate from Nogo's positive tag filter.
       options=(--config=unit)
       if [[ $lane == unit ]]; then
-        local unit_targets
-        unit_targets=$(mktemp)
-        trap 'rm -f "$unit_targets"' EXIT
-        cat test/unit.targets > "$unit_targets"
-        unit_environment_targets >> "$unit_targets"
-        options+=("--target_pattern_file=$unit_targets")
+        local selection_dir
+        selection_dir=$(mktemp -d)
+        trap 'rm -rf "$selection_dir"' EXIT
+        unit_environment_targets > "$selection_dir/environment-owners"
+        python3 test/rbe/unit_matrix.py unit-patterns test/unit.targets "$selection_dir/targets" \
+          --environment-owners "$selection_dir/environment-owners" | tee "$selection_dir/selection.json"
+        if [[ -n ${RUNNER_TEMP:-} ]]; then
+          save_profile_selection "$selection_dir" unit
+        fi
+        options+=("--target_pattern_file=$selection_dir/targets")
       fi
       ;;
     container-v1-pilot)

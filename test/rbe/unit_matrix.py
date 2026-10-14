@@ -88,14 +88,20 @@ def owner_query(patterns_path: str, unit_rc: str | None = None) -> str:
     return result
 
 
-def hybrid_unit_patterns(patterns_path: str, owners_path: str, output_path: str) -> None:
-    """Add declared ARM variants while retaining canonical AMD64 build roots."""
-    variants = [owner + "_arm64" for owner in owner_labels(owners_path)]
+def unit_patterns(
+    patterns_path: str,
+    output_path: str,
+    owners_path: str | None,
+    environment_owners: list[str],
+) -> None:
+    """Retain canonical build roots and record each explicitly added owner."""
+    variants = [owner + "_arm64" for owner in owner_labels(owners_path)] if owners_path else []
     patterns = Path(patterns_path).read_text().rstrip() + "\n"
-    Path(output_path).write_text(patterns + "".join(label + "\n" for label in variants))
+    Path(output_path).write_text(patterns + "".join(label + "\n" for label in sorted(set(variants + environment_owners))))
     print(json.dumps({
         "canonical_patterns": patterns_path,
         "additional_arm64_variants": variants,
+        "additional_environment_owners": environment_owners,
         "placement": "The declared test frontends apply local_test_requirements during the test invocation.",
         "limitation": "Loading selection only; configured owners, shards and placement come from the actual test results.",
     }, indent=2))
@@ -495,34 +501,40 @@ def select_variants(
     output_path: str,
     profile_path: str | None,
     *,
+    environment_owners: list[str],
     hybrid: bool = False,
     local_test_requirements: str = "namespace",
 ) -> None:
     owners = owner_labels(owners_path)
-    expected = {owner + "_arm64" for owner in owners}
+    variants = {owner + "_arm64" for owner in owners}
+    environment = set(environment_owners)
+    expected = variants | environment if hybrid else variants
     requirements = test_requirements(actions_path)
     if requirements.keys() != expected:
-        raise ValueError(f"Missing configured test owners: {sorted(expected - requirements.keys())}")
+        raise ValueError(f"Configured test owners differ from selection: {sorted(expected ^ requirements.keys())}")
     if hybrid:
         if profile_path is None:
             raise ValueError("Hybrid units require the canonical native unit profile")
         original = configured_tests(profile_path)
-        eligible = expected & {label + "_arm64" for label in original}
+        if missing := environment - original.keys():
+            raise ValueError(f"Environment owners missing from configured unit profile: {sorted(missing)}")
+        eligible = (variants & {label + "_arm64" for label in original}) | environment
         groups = hybrid_local_owners(eligible, requirements)
         selected = sorted(label for group in groups.values() for label in group)
         remote = sorted(eligible - set(selected))
-        shared = sorted(set(original) - set(owners))
+        shared = sorted(set(original) - set(owners) - environment)
         targets = sorted(eligible | set(shared))
         Path(output_path).write_text("".join(label + "\n" for label in targets))
         print(json.dumps({
             "canonical_selection": profile_path,
             "selected_owners": targets,
+            "additional_environment_owners": environment_owners,
             "local_owners": groups,
             "local_requirements": {label: requirements[label] for label in selected},
             "local_test_requirements": local_test_requirements.split(",") if local_test_requirements else [],
             "local_routing_reasons": local_routing_reasons(
                 groups, requirements,
-                {label: original[label[:-len("_arm64")]] for label in eligible},
+                {label: original[label if label in environment else label[:-len("_arm64")]] for label in eligible},
                 local_test_requirements,
             ),
             "remote_arm64_owners": remote,
@@ -540,9 +552,10 @@ def select_variants(
         original = configured_tests(profile_path)
         selected = sorted(set(selected) & {label + "_arm64" for label in original})
         output = "".join(label + "\n" for label in sorted(original) + selected)
-    Path(output_path).write_text(output)
+    Path(output_path).write_text(output + "".join(label + "\n" for label in environment_owners))
     print(json.dumps({
         "additional_arm64_variants": selected,
+        "additional_environment_owners": environment_owners,
         "unavailable_arm64_firecracker": unavailable,
         "canonical_selection": profile_path or patterns_path,
     }, indent=2))
@@ -554,18 +567,22 @@ def main() -> None:
     query = commands.add_parser("query")
     query.add_argument("patterns")
     query.add_argument("--unit-rc", help="Apply the canonical unit test-tag exclusions before adding ARM variants")
-    hybrid_unit = commands.add_parser("hybrid-unit-patterns")
-    for name in ("patterns", "owners", "output"):
-        hybrid_unit.add_argument(name)
+    unit = commands.add_parser("unit-patterns")
+    for name in ("patterns", "output"):
+        unit.add_argument(name)
+    unit.add_argument("--owners", help="Add ARM64 variants of these canonical owners")
+    unit.add_argument("--environment-owners", help="Add these exact complementary test frontends")
     actions = commands.add_parser("actions")
     actions.add_argument("owners")
     actions.add_argument("--exact", action="store_true", help="Query these configured labels without adding ARM64 variants")
+    actions.add_argument("--additional-owners", help="Include these exact configured labels in the same query")
     select = commands.add_parser("select")
     for name in ("patterns", "owners", "actions", "output"):
         select.add_argument(name)
     select.add_argument("--profile", help="Select explicit ordinary and ARM owners from this canonical unit profile")
     select.add_argument("--hybrid", action="store_true", help="Select the canonical ARM profile with namespace owners local and ordinary/shared owners remote")
     select.add_argument("--local-test-requirements", default="namespace", help="Comma-separated requirements missing from remote workers")
+    select.add_argument("--environment-owners", help="Add these exact complementary test frontends")
     cgroup = commands.add_parser("cgroup-targets")
     cgroup.add_argument("events")
     cgroup.add_argument("--guest-kvm", action="store_true")
@@ -610,13 +627,18 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "query":
         print(owner_query(args.patterns, args.unit_rc))
-    elif args.command == "hybrid-unit-patterns":
-        hybrid_unit_patterns(args.patterns, args.owners, args.output)
+    elif args.command == "unit-patterns":
+        environment = owner_labels(args.environment_owners) if args.environment_owners else []
+        unit_patterns(args.patterns, args.output, args.owners, environment)
     elif args.command == "actions":
         suffix = "" if args.exact else "_arm64"
-        print('mnemonic("^TestRunner$", ' + target_set([owner + suffix for owner in owner_labels(args.owners)]) + ")")
+        labels = [owner + suffix for owner in owner_labels(args.owners)]
+        if args.additional_owners:
+            labels.extend(owner_labels(args.additional_owners))
+        print('mnemonic("^TestRunner$", ' + target_set(sorted(set(labels))) + ")")
     elif args.command == "select":
-        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, local_test_requirements=args.local_test_requirements)
+        environment = owner_labels(args.environment_owners) if args.environment_owners else []
+        select_variants(args.patterns, args.owners, args.actions, args.output, args.profile, hybrid=args.hybrid, local_test_requirements=args.local_test_requirements, environment_owners=environment)
     elif args.command == "cgroup-targets":
         print("\n".join(cgroup_targets(args.events, guest_kvm=args.guest_kvm)))
     elif args.command == "container-platform-targets":
