@@ -645,6 +645,10 @@ func (t *fibTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool)
 		return fmt.Errorf("no non-loopback interface found")
 	}
 	log.Infof("FIB test using interface: %s (Index: %d)", targetIface.Name, targetIface.Index)
+	defer func() {
+		out, err := nftCmdOut([]string{"list", "chain", "inet", "filter", "input"})
+		log.Infof("FIB diagnostic input chain: %s; error: %v", out, err)
+	}()
 
 	// install_rules
 	{
@@ -663,6 +667,14 @@ func (t *fibTest) ContainerAction(ctx context.Context, ip netip.Addr, ipv6 bool)
 			{"add", "rule", "inet", "filter", "output", "tcp", "sport", "8995", "meta", "oifname", targetIface.Name, "accept"},
 			{"add", "rule", "inet", "filter", "output", "meta", "l4proto", "icmp", "accept"},
 			{"add", "rule", "inet", "filter", "output", "meta", "l4proto", "ipv6-icmp", "accept"},
+			// Diagnostic counters observe each predicate without changing verdicts.
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "counter", "comment", "\"fib_arrival\""},
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "meta", "iifname", targetIface.Name, "counter", "comment", "\"fib_iifname\""},
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "fib", "saddr", ".", "iif", "oif", fmt.Sprintf("%d", targetIface.Index), "counter", "comment", "\"fib_oif\""},
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "fib", "saddr", ".", "iif", "oifname", targetIface.Name, "counter", "comment", "\"fib_oifname\""},
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "fib", "saddr", ".", "iif", "oif", "exists", "counter", "comment", "\"fib_present\""},
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "fib", "saddr", "type", "unicast", "counter", "comment", "\"fib_source_type\""},
+			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005", "fib", "daddr", "type", "local", "counter", "comment", "\"fib_destination_type\""},
 			// Try to trigger all the FIB paths and validate iifname.
 			{"add", "rule", "inet", "filter", "input", "udp", "dport", "9005",
 				"meta", "iifname", targetIface.Name,
@@ -819,7 +831,9 @@ func (t *fibTest) LocalAction(ctx context.Context, ip netip.Addr, ipv6 bool) err
 
 		// Send multiple times to ensure delivery over UDP
 		for i := 0; i < 10; i++ {
-			conn.Write([]byte("remote_test"))
+			if _, err := conn.Write([]byte("remote_test")); err != nil {
+				return fmt.Errorf("failed to write remote UDP packet: %v", err)
+			}
 			time.Sleep(1 * time.Second)
 		}
 		log.Infof("fibTest (LocalAction): Finished sending remote UDP packets")

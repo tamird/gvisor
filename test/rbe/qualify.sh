@@ -342,7 +342,9 @@ shared_test_targets() {
       ;;
     fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
     packetimpact) targets=(//test/packetimpact/tests:all_tests) ;;
-    iptables|nftables|packetdrill) targets=("//test/$1:owned_tests") ;;
+    # Diagnostic branch: retain the native Docker route with only the FIB owner.
+    nftables) targets=(//test/nftables:nftables_test_native_owned_amd64) ;;
+    iptables|packetdrill) targets=("//test/$1:owned_tests") ;;
     kubernetes) targets=(//test/kubernetes/tests:kind_test) ;;
     podman) targets=(//test/podman:podman_test) ;;
     syzkaller) targets=(//test/syzkaller:smoke_test) ;;
@@ -1167,7 +1169,12 @@ run_lane() (
         options+=(--run_under='sudo -n -E' --test_arg=-test.v)
       fi
       ;;
-    do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|nftables|moby|kvm|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
+    nftables)
+      [[ $arch == amd64 && $test_execution == local ]] || return 2
+      shared_test_targets "$lane" "$arch"
+      options+=(--test_filter='^TestNftablesValidation$/^fibTest_IPv[46]$')
+      ;;
+    do|docker|root|portforward|workflows|governance|overlay|swgso|hostnet|containerd|fsstress|packetimpact|iptables|moby|kvm|packetdrill|podman|cpu-images|gpu-images|cos-metadata)
       if [[ $lane == "do" && $arch != amd64 ]]; then
         printf 'The public do smoke checks are declared for AMD64.\n' >&2
         return 2

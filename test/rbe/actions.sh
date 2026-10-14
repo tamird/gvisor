@@ -137,7 +137,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     fi
     export qualification_full_unit
     qualification_retain_reports=false
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ( $QUALIFICATION_EXECUTION == local && ( $qualification_container == true || ${lanes[*]} == test ) ) ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ( $QUALIFICATION_EXECUTION == local && ( $qualification_container == true || ${lanes[*]} == test || ${lanes[*]} == nftables ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
@@ -392,6 +392,23 @@ GUEST_EVENTS
         # These suites exercise nftables in their private Docker namespaces.
         sudo -n modprobe nfnetlink
         sudo -n modprobe nf_tables
+      fi
+      if [[ ${lanes[*]} == nftables ]]; then
+        # Record the actual kernel before loading the FIB family used by inet.
+        {
+          uname -a
+          if [[ -r /boot/config-$(uname -r) ]]; then
+            cat "/boot/config-$(uname -r)"
+          elif [[ -r /proc/config.gz ]]; then
+            gzip -cd /proc/config.gz
+          else
+            printf 'Current kernel configuration unavailable\n'
+          fi
+          cat /proc/modules
+          modinfo nft_fib_inet || true
+        } > "$RUNNER_TEMP/qualification/nft-fib-kernel-before.txt"
+        sudo -n modprobe nft_fib_inet
+        cat /proc/modules > "$RUNNER_TEMP/qualification/nft-fib-modules-after.txt"
       fi
       if [[ ${lanes[*]} == plugin-network ]]; then
         # The plugin opens host vhost-net and TUN devices inside its sandbox.
