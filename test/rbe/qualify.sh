@@ -45,6 +45,8 @@ image-source lanes; unavailable workers are reported before execution.
 The remote syscalls-64k lane selects the public ARM64 64K systrap profile.
 The local AMD64 syscalls-rc-pilot lane runs four mincore owners in a pinned
 RC guest, including nested KVM. It does not select the full RC profile.
+The KVM lane uses local AMD64 execution, or remote ARM64 unit payloads in an
+EL2-enabled TCG guest. Guest skips remain incomplete qualification.
 The syscalls-rc lane selects the public ordinary profile for each requested CPU.
 Use remote execution for ARM64, or local AMD64 execution for AMD64 or both CPUs.
 The license-headers lane requires an explicit base and complete Git history.
@@ -233,7 +235,11 @@ for lane in "$@"; do
     printf 'RC guests require remote ARM64 or local AMD64/all execution.\n' >&2
     exit 2
   fi
-  if [[ ( $lane == kvm || $lane == syscalls-kvm || $lane == syscalls-rc-pilot ) && ( $test_execution != local || $arch != amd64 ) ]]; then
+  if [[ $lane == kvm && $test_execution:$arch != local:amd64 && $test_execution:$arch != remote:arm64 ]]; then
+    printf 'The KVM lane requires local AMD64 or remote ARM64 guest execution.\n' >&2
+    exit 2
+  fi
+  if [[ ( $lane == syscalls-kvm || $lane == syscalls-rc-pilot ) && ( $test_execution != local || $arch != amd64 ) ]]; then
     printf 'The KVM syscall lane requires local AMD64 execution.\n' >&2
     exit 2
   fi
@@ -320,12 +326,19 @@ shared_test_targets() {
     containerd) targets=(//test/root:crictl_test_owned) ;;
     moby) targets=(//test/moby:moby_owned) ;;
     kvm)
-      targets=(
-        //pkg/sentry/platform/kvm:kvm_test
-        //test/docker:kvm_tests
-        //pkg/pinring:pinring_kvm_test_amd64
-        //runsc/cmd:boot_posture_kvm_test_amd64
-      )
+      if [[ $target_arch == arm64 ]]; then
+        targets=(
+          //pkg/pinring:pinring_kvm_arm64_tcg_test
+          //runsc/cmd:boot_posture_kvm_arm64_tcg_test
+        )
+      else
+        targets=(
+          //pkg/sentry/platform/kvm:kvm_test
+          //test/docker:kvm_tests
+          //pkg/pinring:pinring_kvm_test_amd64
+          //runsc/cmd:boot_posture_kvm_test_amd64
+        )
+      fi
       ;;
     fsstress) targets=(//test/fsstress:fsstress_test_owned) ;;
     packetimpact) targets=(//test/packetimpact/tests:all_tests) ;;

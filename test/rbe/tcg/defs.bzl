@@ -90,6 +90,8 @@ def _tcg_test_impl(ctx):
     architecture = {"arm64_tcg": "arm64", "amd64_kvm": "amd64"}[ctx.attr.machine]
     if image.architecture != architecture:
         fail("Guest image architecture %s does not match %s" % (image.architecture, ctx.attr.machine))
+    if ctx.attr.arm64_el2 and architecture != "arm64":
+        fail("EL2 exposure requires an ARM64 guest")
     tar = ctx.toolchains["@tar.bzl//tar/toolchain:target_type"]
     executable = ctx.actions.declare_file(ctx.label.name + ".sh")
     configuration = ctx.actions.declare_file(ctx.label.name + ".guest.sh")
@@ -104,11 +106,12 @@ def _tcg_test_impl(ctx):
     environment.update(ctx.attr.guest_env)
     ctx.actions.write(
         configuration,
-        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\n" % (
+        "guest_memory_mib=%d\nguest_scratch_gib=%d\nguest_run_under=%s\nguest_emulator=%s\nguest_arm64_el2=%s\n" % (
             ctx.attr.memory_mib,
             ctx.attr.scratch_gib,
             shell.quote(ctx.executable.run_under.short_path if ctx.executable.run_under else ""),
             shell.quote(ctx.file.emulator.short_path if ctx.file.emulator != None else ""),
+            "true" if ctx.attr.arm64_el2 else "false",
         ) +
         "guest_env=(%s)\nguest_inherited_env=(%s)\n" % (
             " ".join([shell.quote(key + "=" + value) for key, value in environment.items()]),
@@ -152,6 +155,7 @@ _tcg_test = rule(
         "host_tools": attr.label(default = Label("@tcg_host_tools//:flat"), allow_single_file = True),
         "emulator": attr.label(allow_single_file = True, cfg = "exec"),
         "machine": attr.string(default = "arm64_tcg", values = ["arm64_tcg", "amd64_kvm"]),
+        "arm64_el2": attr.bool(default = False),
         "image": attr.label(default = Label(":guest"), providers = [TcgImageInfo]),
         "run_under": attr.label(executable = True, cfg = "target"),
         "guest_env": attr.string_dict(),
@@ -187,9 +191,6 @@ def _guest_test(name, payload, tags, image, run_under = None, **kwargs):
 def arm64_tcg_test(name, payload, tags, image = Label(":guest"), **kwargs):
     """Wraps an ARM64 payload for unprivileged emulation on an AMD64 worker."""
 
-    # Avoid per-syscall trace formatting under software emulation. Keep debug
-    # logging; later arguments can opt back into tracing for diagnosis.
-    kwargs["args"] = ["--strace=false"] + kwargs.get("args", [])
     _guest_test(
         name = name,
         payload = payload,
