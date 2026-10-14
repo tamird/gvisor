@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+    "updatedAt": "2026-10-14T11:41:43.692401+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5381,22 +5381,24 @@
       "url": "https://github.com/google/gvisor/pull/15604",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-09T23:49:32.283379+00:00",
+      "updatedAt": "2026-10-14T11:41:43.692401+00:00",
       "summary": "The user-authorized cubic-polynomial amendment is delivered at 98d5af4a3. Existing full TCP unit checks passed on AMD64 and ARM64, together with the owning analyzers. The reply was posted and the review thread is resolved. Current-head GitHub checks now pass; fresh maintainer review is pending.\n\nEtienne reported microbenchmark results of 13.670 to 1.912 ns and 12.625 to 1.934 ns (20 samples); the comment did not include benchmark source or environment. The amendment replaces math.Pow(t, 3) with t*t*t while keeping multiplication by C outside the cube.\n\nThe epoch change initializes curves from the recovered window, preserves the remembered maximum for fast convergence, and uses the RFC 9438 ACK-driven Reno-friendly estimate. Its selected before/after unit and analyzer evidence is closed. The earlier ACK-credit prerequisite #15579 has merged.",
       "followup": {
         "disposition": "Amendment delivered; fresh maintainer review pending",
         "owner": "external_sweeps",
         "sourceHead": "98d5af4a32ab97ff02115b815ceda526d108d5ce",
         "reviewedAt": "2026-10-09T23:49:32.283379+00:00",
-        "nextAction": "Observe fresh maintainer review and subsequent current-head CI changes. The amendment and thread reply are complete, current checks pass, and existing Manning and Milan review requests remain in place.",
+        "nextAction": "Milan handed review to Nayana in the complete public discussion. The current requests are Nayana and Manning; retain them without a duplicate ping and follow current-head review and CI. The amendment and original thread reply remain complete.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15604#discussion_r4235389901",
           "https://github.com/tamird/gvisor/commit/98d5af4a32ab97ff02115b815ceda526d108d5ce",
           "https://app.buildbuddy.io/invocation/d1ed9946-bff4-41d1-93e5-5fdc83ba76b9",
-          "https://github.com/google/gvisor/pull/15604#discussion_r4235310519"
+          "https://github.com/google/gvisor/pull/15604#discussion_r4235310519",
+          "https://github.com/google/gvisor/pull/15604#issuecomment-6162336250"
         ],
         "mergeable": "MERGEABLE",
-        "reviewDecision": null
+        "reviewDecision": null,
+        "observedAt": "2026-10-14T11:41:43.692401+00:00"
       },
       "number": 15604
     },
@@ -6247,18 +6249,18 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "native-go-images",
-      "head": "a8a75954ed3dccb1d82ef25ddf6b64813615f351",
+      "head": "62b68fd8b397112f4d4de7964a488801d20b73ae",
       "title": "Share native Go images between Make and Bazel",
       "group": "rbe",
-      "url": "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351",
-      "status": "Contributor review pending; prerequisites remain",
-      "updatedAt": "2026-10-13T22:00:47.154029+00:00",
-      "summary": "The complete lean-image proposal is public at a8a75954ed. It preserves the qualified shared CA/minimal-filesystem base and selected GNU rm/mkdir/chmod runtime, and now includes all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a841 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. The contributor is deciding whether to open this exact complete proposal after the Ollama and APT prerequisites land. No upstream PR or unconditional approval exists; earlier 24c8 revision feedback and incomplete 8a assembly are historical.",
+      "url": "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae",
+      "status": "Approved; awaiting landing prerequisites",
+      "updatedAt": "2026-10-14T11:41:43.692401+00:00",
+      "summary": "The complete lean-image proposal is contributor-approved, with the requested package explanations and platform-guard clarification delivered at 62b68fd8b. The shared base no longer has an unnecessary Linux guard; its two Go leaves retain their explained platform constraints. Dependency versions and qualified image/license inputs are unchanged. The proposal preserves the shared CA/minimal-filesystem base, selected GNU rm/mkdir/chmod runtime, all 46 helper APT records and 40 helper-specific policy exceptions. Package/image and AMD64 runtime evidence are closed; ARM64 contents were inspected without an ARM runtime claim. The canonical audit at 532973a84 passes all 1,994 entries, retaining ten fetch-error entries and 25 manual artifacts. The standalone proposal has 242 catalog entries; no new 242-entry Verify by its older module-only checker is claimed. Only the existing Ollama and APT landing prerequisites remain before opening the upstream PR. Earlier revision feedback is historical; no contributor decision is pending.",
       "followup": {
         "owner": "syscall_validation",
-        "disposition": "Exact complete proposal awaiting conditional contributor decision",
-        "sourceHead": "a8a75954ed3dccb1d82ef25ddf6b64813615f351",
-        "nextAction": "Await the contributor’s decision on opening this exact complete proposal after the Ollama and APT prerequisites land.",
+        "disposition": "Approved; awaiting landing prerequisites",
+        "sourceHead": "62b68fd8b397112f4d4de7964a488801d20b73ae",
+        "nextAction": "Deliver after the existing Ollama client and APT enumeration prerequisites land. The contributor-approved comment and guard refinements are published; no new review question remains.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/24c8f3c9ca888a1ac94798308a7d7c45e2064069",
           "https://github.com/tamird/gvisor/commit/624a360f322f816c7d3be5c971ec2e8381c4b40b",
@@ -6267,14 +6269,10 @@
           "https://github.com/tamird/gvisor/commit/8a9cc17982f663ac56f356c85373e0d168d55d70",
           "https://github.com/tamird/gvisor/commit/532973a8413353482e7d4e4498192916a5b49a52",
           "https://app.buildbuddy.io/invocation/94f4fb93-e3f9-4d7b-b011-4588c06ad8f3",
-          "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351"
+          "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351",
+          "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae"
         ],
-        "observedAt": "2026-10-13T22:00:47.154029+00:00"
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "a8a75954ed3dccb1d82ef25ddf6b64813615f351",
-        "url": "https://github.com/tamird/gvisor/commit/a8a75954ed3dccb1d82ef25ddf6b64813615f351"
+        "observedAt": "2026-10-14T11:41:43.692401+00:00"
       }
     },
     {

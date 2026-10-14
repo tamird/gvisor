@@ -19,7 +19,7 @@ const READABLE_SCALE = .9;
 let registry, model, selected = null, focus = null, view = "dag";
 let sortKey = "impact", sortDirection = -1;
 let camera = { x: 20, y: 20, scale: 1 }, bounds = { width: 900, height: 600, positions: new Map() };
-let refreshing = false, lastAttempt = 0, drag = null, moved = false;
+let refreshing = false, lastAttempt = 0, moved = false;
 let liveSnapshot = null, conflictRequest = false, lastConflictAttempt = 0;
 const conflictResults = new Map();
 let lastNavigationURL = null, searchEditing = false, initializing = true;
@@ -751,12 +751,15 @@ function resetCamera(fit = true, overview = false) {
   }
   applyCamera();
 }
+function moveCamera(origin, from, to, factor) {
+  const scale = Math.max(.12, Math.min(2.5, origin.scale * factor)), ratio = scale / origin.scale;
+  camera = { x: to.x - (from.x - origin.x) * ratio, y: to.y - (from.y - origin.y) * ratio, scale };
+  applyCamera();
+}
 function zoom(factor, x, y) {
   const box = $("graph-stage").getBoundingClientRect();
   x ??= box.width / 2; y ??= box.height / 2;
-  const scale = Math.max(.12, Math.min(2.5, camera.scale * factor)), ratio = scale / camera.scale;
-  camera = { x: x - (x - camera.x) * ratio, y: y - (y - camera.y) * ratio, scale };
-  applyCamera();
+  moveCamera(camera, { x, y }, { x, y }, factor);
 }
 function wrap(text, length = 29, maxLines = 2) {
   const words = text.split(/\s+/), lines = []; let line = "";
@@ -1297,14 +1300,50 @@ function initialize() {
   $("zoom-in").addEventListener("click", () => zoom(1.2)); $("zoom-out").addEventListener("click", () => zoom(1 / 1.2));
   $("fit").addEventListener("click", () => resetCamera(true, true)); $("reset-view").addEventListener("click", () => resetCamera(false));
   const graph = $("graph");
-  graph.addEventListener("pointerdown", (event) => { if (event.button !== 0) return; moved = false; drag = { x: event.clientX, y: event.clientY, originX: camera.x, originY: camera.y }; });
-  graph.addEventListener("pointermove", (event) => {
-    if (!drag) return;
-    const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
-    if (Math.abs(dx) + Math.abs(dy) > 4) { moved = true; graph.classList.add("dragging"); graph.setPointerCapture(event.pointerId); }
-    if (moved) { camera.x = drag.originX + dx; camera.y = drag.originY + dy; applyCamera(); }
+  const pointers = new Map();
+  let gesture = null;
+  const point = (event) => { const box = graph.getBoundingClientRect(); return { x: event.clientX - box.left, y: event.clientY - box.top }; };
+  function gesturePosition() {
+    const [first, second] = pointers.values();
+    return second ? { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2,
+      distance: Math.hypot(second.x - first.x, second.y - first.y) } : { ...first, distance: 0 };
+  }
+  function anchorGesture() {
+    gesture = pointers.size ? { point: gesturePosition(), camera: { ...camera } } : null;
+    graph.classList.toggle("dragging", moved && pointers.size > 0);
+  }
+  graph.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0) return;
+    if (!pointers.size) moved = false;
+    pointers.set(event.pointerId, point(event));
+    if (pointers.size > 1) {
+      moved = true;
+      for (const id of pointers.keys()) graph.setPointerCapture(id);
+    }
+    anchorGesture();
   });
-  for (const name of ["pointerup", "pointercancel"]) graph.addEventListener(name, () => { drag = null; graph.classList.remove("dragging"); });
+  graph.addEventListener("pointermove", (event) => {
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, point(event));
+    const position = gesturePosition();
+    if (Math.abs(position.x - gesture.point.x) + Math.abs(position.y - gesture.point.y) > 4) moved = true;
+    if (!moved) return;
+    graph.classList.add("dragging"); graph.setPointerCapture(event.pointerId);
+    const factor = gesture.point.distance > 0 ? position.distance / gesture.point.distance : 1;
+    moveCamera(gesture.camera, gesture.point, position, factor);
+  });
+  function endPointer(event) {
+    if (pointers.delete(event.pointerId)) anchorGesture();
+  }
+  for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, endPointer);
+  graph.addEventListener("lostpointercapture", (event) => {
+    // Moving implicit touch capture from a node to the graph is not an end.
+    if (event.target === graph) endPointer(event);
+  });
+  window.addEventListener("blur", () => {
+    for (const id of pointers.keys()) if (graph.hasPointerCapture(id)) graph.releasePointerCapture(id);
+    pointers.clear(); moved = true; anchorGesture();
+  });
   graph.addEventListener("wheel", (event) => {
     event.preventDefault(); const box = graph.getBoundingClientRect();
     if (event.ctrlKey || event.metaKey) zoom(Math.exp(-event.deltaY * .005), event.clientX - box.left, event.clientY - box.top);
