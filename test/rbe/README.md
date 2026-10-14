@@ -81,9 +81,14 @@ gh workflow run build.yml --repo tamird/gvisor \
   -f targets='//test/docker:gpu_triton_source_amd64'
 ```
 
-The coordinator allows 120 minutes of work. Individual action and test
+Remote coordination allows 120 minutes of work. Individual action and test
 deadlines remain separate; a qualification method must record any override.
 Neither lane installs diagnostic timeout or retry policy into unrelated builds.
+
+Explicit `test` targets also support `execution=local` with one architecture.
+Select their `_amd64` or `_arm64` frontends so the existing declared root or
+nonroot identity reaches the matching Actions runner. Compilation remains on
+RBE, while the ordinary local-test bound and report retention apply.
 
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested
@@ -190,6 +195,15 @@ Bazel's caller-supplied `run_under` remains outside the frontend executable.
 Only these native namespace/KVM TestRunners require local execution; compiler tags
 and actions remain unchanged. At most two local tests run at once on the
 four-core host, while remote work keeps 400 jobs.
+
+Unit qualification also selects `//test/rbe:unit_environment_tests_amd64` and
+its ARM64 counterpart for the chosen architecture. These manual frontends
+reuse the original Go executables and runfiles to exercise AF_PACKET with
+CAP_NET_RAW, hard links with CAP_DAC_READ_SEARCH, and the unreadable-directory
+and sandbox-network validation cases as a nonroot user. The original unit
+owners retain their portable environment skips. The KVM lane separately
+selects the pinring VM-release and boot-posture KVM cases. A skipped required
+case remains unqualified even when its owner exits successfully.
 
 The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
 leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends

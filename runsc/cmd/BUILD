@@ -1,4 +1,4 @@
-load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties")
+load("//tools:defs.bzl", "go_library", "go_test", "namespace_test_exec_properties", "native_test")
 
 package(
     default_applicable_licenses = ["//:license"],
@@ -152,4 +152,22 @@ go_test(
         "@org_golang_google_protobuf//proto:go_default_library",
         "@org_golang_x_sys//unix:go_default_library",
     ],
+)
+
+# The KVM lane also checks the boot command's actual KVM security posture.
+native_test(
+    name = "boot_posture_kvm_test",
+    size = "medium",
+    src = ":cmd_test",
+    args = ["-test.run=^TestBootPosture$/^kvm$"],
+    env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    exec_properties = namespace_test_exec_properties(),
+    tags = [
+        "manual",
+        "requires-kvm",
+    ],
+    visibility = ["//test/rbe:__pkg__"],
 )

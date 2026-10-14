@@ -137,7 +137,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     fi
     export qualification_full_unit
     qualification_retain_reports=false
-    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ( $QUALIFICATION_EXECUTION == local && $qualification_container == true ) ]]; then
+    if [[ $QUALIFICATION_EXECUTION == remote-actions || $qualification_full_unit == true || ( $QUALIFICATION_EXECUTION == local && ( $qualification_container == true || ${lanes[*]} == test ) ) ]]; then
       qualification_retain_reports=true
     fi
     export qualification_retain_reports
