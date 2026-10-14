@@ -35,7 +35,7 @@ native_test(
     name = "pinring_afpacket_privileged_test",
     size = "medium",
     src = ":pinring_test",
-    args = ["-test.run=^TestAFPacketDeferredRelease$"],
+    args = ["-test.run=^TestAFPacketDeferredRelease$$"],
     env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",
@@ -50,7 +50,7 @@ native_test(
     name = "pinring_kvm_test",
     size = "medium",
     src = ":pinring_test",
-    args = ["-test.run=^TestKVMVMDeferredRelease$"],
+    args = ["-test.run=^TestKVMVMDeferredRelease$$"],
     env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",

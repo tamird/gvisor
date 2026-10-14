@@ -45,7 +45,7 @@ native_test(
     name = "lisafs_hardlink_privileged_test",
     size = "small",
     src = ":lisafs_test",
-    args = ["-test.run=^TestFSGofer$/^HardLink$"],
+    args = ["-test.run=^TestFSGofer$$/^HardLink$$"],
     env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",
@@ -60,7 +60,7 @@ native_test(
     name = "lisafs_permissions_nonroot_test",
     size = "small",
     src = ":lisafs_test",
-    args = ["-test.run=^TestXattrWithoutReadPermission$"],
+    args = ["-test.run=^TestXattrWithoutReadPermission$$"],
     env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",

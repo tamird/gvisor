@@ -47,7 +47,7 @@ go_test(
 native_test(
     name = "sandbox_network_nonroot_test",
     src = ":sandbox_test",
-    args = ["-test.run=^TestNonRootNetworkingError$"],
+    args = ["-test.run=^TestNonRootNetworkingError$$"],
     env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",

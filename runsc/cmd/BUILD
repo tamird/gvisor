@@ -159,7 +159,7 @@ native_test(
     name = "boot_posture_kvm_test",
     size = "medium",
     src = ":cmd_test",
-    args = ["-test.run=^TestBootPosture$/^kvm$"],
+    args = ["-test.run=^TestBootPosture$$/^kvm$$"],
     env = {
         "GO_TEST_RUN_FROM_BAZEL": "1",
         "GO_TEST_WRAP_TESTV": "1",
