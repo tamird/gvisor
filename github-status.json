@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-14T12:01:21.166593+00:00",
-  "registryDate": "2026-10-14T11:41:43.692401+00:00",
+  "registryDate": "2026-10-14T12:07:48.032204+00:00",
   "prs": [
     {
       "number": 12470,
@@ -16293,7 +16293,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "MERGEABLE",
-      "mergeabilityCheckedAt": "2026-10-14T11:59:17.755440+00:00",
+      "mergeabilityCheckedAt": "2026-10-14T12:06:16.604946+00:00",
       "mergeState": "BLOCKED",
       "labels": [
         "ready to pull"
@@ -16521,12 +16521,12 @@
       "approvedAt": null,
       "importsComplete": true,
       "imports": [],
-      "checkedAt": "2026-10-14T12:01:21.166593+00:00",
+      "checkedAt": "2026-10-14T12:06:16.605434+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "fc9590023c2424202c5683e4e9d4fa39f4bdfb89",
         "base": "3cd71284c0396d09e31fd5b1ef789f492c015a56",
-        "checkedAt": "2026-10-14T11:59:17.755440+00:00"
+        "checkedAt": "2026-10-14T12:06:16.604946+00:00"
       }
     },
     {
@@ -87196,7 +87196,7 @@
         "since": "2026-10-14T12:01:21.166593+00:00",
         "basis": "observed",
         "qualifier": "No effective approval for the current head",
-        "observedAt": "2026-10-14T12:01:21.166593+00:00"
+        "observedAt": "2026-10-14T12:06:16.605434+00:00"
       }
     },
     "pr:15107": {
@@ -88829,7 +88829,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T11:41:43.692401+00:00"
+        "observedAt": "2026-10-14T12:07:48.032204+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -88838,7 +88838,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T11:41:43.692401+00:00"
+        "observedAt": "2026-10-14T12:07:48.032204+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -88847,7 +88847,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T11:41:43.692401+00:00"
+        "observedAt": "2026-10-14T12:07:48.032204+00:00"
       }
     },
     "branch:review/syscall-linux-ci-guidance": {
@@ -88856,7 +88856,7 @@
         "since": "2026-10-14T11:06:01.686863+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-14T11:41:43.692401+00:00"
+        "observedAt": "2026-10-14T12:07:48.032204+00:00"
       }
     },
     "branch:review/pinring-teardown-timing": {
@@ -88865,7 +88865,7 @@
         "since": "2026-10-14T11:06:01.686863+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-14T11:41:43.692401+00:00"
+        "observedAt": "2026-10-14T12:07:48.032204+00:00"
       }
     }
   },

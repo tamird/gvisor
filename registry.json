@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T11:41:43.692401+00:00",
+    "updatedAt": "2026-10-14T12:07:48.032204+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -520,23 +520,25 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "REVIEW_REQUIRED",
-      "updatedAt": "2026-10-09T21:18:07.200813+00:00",
-      "summary": "Current-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved change was refreshed onto master 254aeb360ee148130c24b62f0655bc832a647fe0 and published at 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Independent review verified exact ordered additions/removals in every changed path and the unchanged commit message, while retaining current upstream Gazelle/importpath/embed context. The delivery owner verified the exact live head and matching tracking ref; lint passed at publication. Current checks and mergeability are shown from the latest snapshot. Earlier runtime evidence remains tied to its original source; this rebase adds no new execution claim.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 8d55f931860145475cae7e872db3784499faf855. Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.\n\nEarlier source and review history:\n\nThe authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
+      "updatedAt": "2026-10-14T12:07:48.032204+00:00",
+      "summary": "The conflict repair is published at fc9590023 and current GitHub mergeability is confirmed. All eight applicable public checks pass, with four conditional skips. Earlier approvals do not establish approval of this rebased head; the existing fvoznika review request remains. No new reviewer notice has been posted yet.\n\nFocused standalone validation passed the assembler and two analyzer owners. Its archive build stopped because that worker lacked the ambient clang used by the existing BPF rule. A reviewed qualification composition uses the existing declared BPF toolchain and adds the existing Linux exported-package consumer; its archive/consumer result is still pending. This does not erase the original environment failure or claim a completed archive build.\n\nEarlier source and review record:\n\nCurrent-head approval assessment: GitHub’s aggregate approval is from an older or no-longer-effective review. No effective approval matches 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Maintainer review is still required; existing import labels and checks are separate.\n\nThe approved change was refreshed onto master 254aeb360ee148130c24b62f0655bc832a647fe0 and published at 0827e3e26b7f35218ebd0b6caa5bfdb8e3063557. Independent review verified exact ordered additions/removals in every changed path and the unchanged commit message, while retaining current upstream Gazelle/importpath/embed context. The delivery owner verified the exact live head and matching tracking ref; lint passed at publication. Current checks and mergeability are shown from the latest snapshot. Earlier runtime evidence remains tied to its original source; this rebase adds no new execution claim.\n\nEarlier observations:\n\nThe complete 2026-10-08T10:56:46.936958+00:00 snapshot confirms a current-base conflict at 8d55f931860145475cae7e872db3784499faf855. Root will assess a source-preserving refresh. Existing approval and addressed suggestions remain recorded; no new semantic source change is inferred.\n\nEarlier source and review history:\n\nThe authorized October 2/3 rebase is published at 8d55f931860145475cae7e872db3784499faf855 on then-current master b65c70734a1bc7df49d000b911848b3ad2a9cce0. The requested attributed comment to @EtiennePerot is verified at https://github.com/google/gvisor/pull/15106#issuecomment-5963408295. Current checks and feedback are recorded in the GitHub snapshot; mergeability does not establish review or CI completion.\n\nEarlier source-specific evidence and review history: After contributor review, the live PR was amended to 83ad8d7a06ba6ec04bc5b9d54db3f4e24f211d24 and Zach's two review suggestions were answered publicly. Command filegroups exclude test sources and the archive includes go.mod from its already-read bytes. The exact amendment passed archive inspection, existing unit tests and both-architecture Nogo in remote parent 7209e858-0ca7-4a76-9c9b-d5a1047d8263, with independent evidence reconciliation. The current PR is approved and mergeable; the current-head GitHub check rollup now passes, including generate. Publication and reply were independently verified at 21:07 UTC.",
       "followup": {
-        "disposition": "Fresh review requested for current head",
-        "owner": "external_sweeps",
-        "nextAction": "Observe the requested review of this exact head and current-head CI/import progression; do not duplicate the notice.",
-        "sourceHead": "0827e3e26b7f35218ebd0b6caa5bfdb8e3063557",
+        "disposition": "Rebase delivered; archive qualification pending",
+        "owner": "root",
+        "nextAction": "Complete the bounded hermetic archive and exported-package qualification, then follow up with the existing requested reviewer. Keep old approvals historical; no new notice or full archive pass is claimed yet.",
+        "sourceHead": "fc9590023c2424202c5683e4e9d4fa39f4bdfb89",
         "reviewDecision": "REVIEW_REQUIRED",
         "mergeable": "MERGEABLE",
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
         "evidence": [
           "https://github.com/google/gvisor/pull/15106#issuecomment-6089127435",
           "https://github.com/google/gvisor/pull/15106",
-          "https://github.com/tamird/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557"
-        ]
+          "https://github.com/tamird/gvisor/commit/0827e3e26b7f35218ebd0b6caa5bfdb8e3063557",
+          "https://github.com/tamird/gvisor/commit/fc9590023c2424202c5683e4e9d4fa39f4bdfb89"
+        ],
+        "observedAt": "2026-10-14T12:06:16.605434+00:00"
       },
-      "head": "0827e3e26b7f35218ebd0b6caa5bfdb8e3063557"
+      "head": "fc9590023c2424202c5683e4e9d4fa39f4bdfb89"
     },
     {
       "id": "pr:15084",
