@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+    "updatedAt": "2026-10-14T11:06:01.686863+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2987,11 +2987,11 @@
       "group": "tests",
       "status": "open",
       "summary": "The complete discussion already answers the configuration question: Konstantin described the provisioning configuration as internal, and Etienne recommended inspecting the intended build’s worker environment until public Terraform is available. Public pipeline and Bazel routing identify queues and selections, but do not pin exact worker kernel images. The dated kernel table should be replaced with durable instructions for locating current run evidence. No unanswered maintainer question is blocking that source decision.",
-      "updatedAt": "2026-10-13T19:56:48.971156+00:00",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
       "followup": {
-        "disposition": "Contributor-requested documentation rewrite",
+        "disposition": "Revised proposal awaiting contributor review",
         "owner": "root",
-        "nextAction": "The contributor requested a maintainer-focused rewrite of the proposed 01e70f3a documentation amendment. Agent revision work remains; the published source and unresolved upstream thread are unchanged.",
+        "nextAction": "The maintainer-focused rewrite at 1e01fb220 now has a pending contributor decision. Published #15439 remains unchanged until approval.",
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
@@ -3005,9 +3005,10 @@
           "https://github.com/google/gvisor/pull/15439#issuecomment-6048573660",
           "https://github.com/google/gvisor/pull/15439#issuecomment-6048752827",
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049267317",
-          "https://github.com/google/gvisor/pull/15439#issuecomment-6049316326"
+          "https://github.com/google/gvisor/pull/15439#issuecomment-6049316326",
+          "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
         ],
-        "observedAt": "2026-10-14T04:59:30.036233+00:00"
+        "observedAt": "2026-10-14T11:06:01.686863+00:00"
       },
       "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
       "number": 15439,
@@ -4006,25 +4007,26 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcpip-netip-core",
-      "head": "c10df898b36cf59e0265ad7dddc6803a97001f67",
+      "head": "080bd49c2aba00bd6840083edec54786c5a863eb",
       "title": "Use netip types throughout the network stack",
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
-      "summary": "The contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; current c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The contributor-approved guard amendment is delivered in PR #15730 at 080bd49c2. Both inline responses were posted together and both threads are resolved. Length and family checks preserve zero-value filter wildcards. Independent fixture cleanups are now PRs #15770 and #15771; the separate state-registration split remains held under the contributor’s preference. The existing benchstat description is unchanged.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; current c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
-        "owner": "root",
-        "disposition": "Approved amendment delivery queued",
-        "sourceHead": "c10df898b36cf59e0265ad7dddc6803a97001f67",
-        "nextAction": "The contributor approved the two independent fixture cleanups and exact fd737bf7a guard amendment. Owners are delivering those approved sources. The separate netip registration split remains held under the contributor’s preference; published c10 and unresolved upstream threads remain unchanged until verified publication.",
+        "owner": "external_sweeps",
+        "disposition": "Delivered; awaiting maintainer review",
+        "sourceHead": "080bd49c2aba00bd6840083edec54786c5a863eb",
+        "nextAction": "Follow maintainer review of the delivered guards and independent fixture PRs #15770/#15771. The registration split stays held; no contributor decision remains for these delivered patches.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158",
+          "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb"
         ],
-        "observedAt": "2026-10-14T04:59:30.036233+00:00"
+        "observedAt": "2026-10-14T11:06:01.686863+00:00"
       },
       "evidence": [
         {
@@ -4937,12 +4939,12 @@
       "url": "https://github.com/google/gvisor/pull/15562",
       "group": "tests",
       "status": "open",
-      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
       "summary": "milantracy approved the current head 400d11eea on 2026-10-12T05:53:15Z. The PR is marked ready to pull and its import/copybara status is successful. It remains open; a successful import status is not a merged commit. No corrective review request or additional outreach is pending.\n\nEarlier source and validation record:\n\nThe user-approved change is now open as PR #15562 at 400d11eea. The current-base rebase preserves the approved fc05ca266 patch and commit message. No contributor decision remains. Current-head checks and maintainer review are tracked separately.\n\nPrior validation record:\n\nIt parses complete suites, preserving self-closing cases, case contents and suite metadata, and adds real-file regressions to the existing unit selection. The earlier filename-identity fix is already open as #15550. Independent source and saved-result reviews are closed: the old parser loses First.B and Second.Last; the corrected three parser cases and one discovery case pass, owning Nogo passes both CPUs, and the existing ARM64/64K shared cgroup run has all 56 console and XML identities exactly once with no skips. The parent remains failed because it retains the expected baseline failure. This is focused validation, not a full public-CI or performance result. This validation preceded PR #15562.",
       "followup": {
         "disposition": "New public import CI failure under investigation",
         "owner": "external_sweeps",
-        "nextAction": "Import #15687 at bc25b28dd covers the obsolete XML amendment, whose contributor decision is withdrawn. Its new public pipeline 50720 fails the gtest discovery fixture in all three failed jobs. The existing qualified GNU link-ordering proposal is contributor-approved and queued for independent delivery; these new CI logs omit subprocess stderr, so they do not independently prove that linker diagnosis. Keep the known source conflict visible, but do not immediately rebase while this current-source-matching import is active.",
+        "nextAction": "Import #15687 at bc25b28dd covers the obsolete XML amendment, whose contributor decision is withdrawn. Its new public pipeline 50720 fails the gtest discovery fixture in all three failed jobs. The existing qualified GNU link-ordering proposal is now delivered as independent PR #15772; these new CI logs omit subprocess stderr, so they do not independently prove that linker diagnosis. Keep the known source conflict visible, but do not immediately rebase while this current-source-matching import is active.",
         "sourceHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
         "reviewedAt": "2026-10-12T06:07:17.517136+00:00",
         "evidence": [
@@ -4953,10 +4955,11 @@
           "https://github.com/google/gvisor/pull/15687",
           "https://github.com/google/gvisor/commit/bc25b28dd702fa5fbb76b6d15549a1e198aeb74e",
           "https://buildkite.com/gvisor/pipeline/builds/50720",
-          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
+          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
+          "https://github.com/google/gvisor/pull/15772"
         ],
         "reviewDecision": "APPROVED",
-        "observedAt": "2026-10-14T02:08:38.669006+00:00"
+        "observedAt": "2026-10-14T11:06:01.686863+00:00"
       },
       "number": 15562,
       "reviewDecision": "APPROVED"
@@ -6127,27 +6130,28 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "review/gpu-driver-preparation-clarity",
-      "head": "60834ef0c08df041dc049c2fecf0038dfe34351a",
+      "head": "c8b2b48967734b73fb4e62d7ad4a3439fb103a59",
       "title": "Consolidate GPU driver preparation",
       "group": "runtime",
       "url": "https://github.com/google/gvisor/pull/15669",
       "status": "open",
-      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
-      "summary": "The contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The contributor-approved installer-availability and listing corrections are delivered in PR #15669 at c8b2b4896. The source preserves newly upstream driver ABI handlers, and the exact current head has eight applicable public checks passing with four conditional skips. The earlier import belongs to the old source head; it is not current-head validation. The existing reviewer follow-up remains posted; no additional review request succeeded.\n\nEarlier source and qualification record:\n\nThe contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
       "followup": {
-        "disposition": "Approved amendment delivery queued",
-        "owner": "root",
-        "sourceHead": "60834ef0c08df041dc049c2fecf0038dfe34351a",
+        "disposition": "Delivered; awaiting maintainer review",
+        "owner": "external_sweeps",
+        "sourceHead": "c8b2b48967734b73fb4e62d7ad4a3439fb103a59",
         "reviewedAt": "2026-10-12T12:22:01.641015+00:00",
-        "nextAction": "Exact 69ca892cd is contributor-approved; ROOT owns its amendment delivery. The published source and matching import remain unchanged until that delivery is verified.",
+        "nextAction": "Follow current-head review and CI for the delivered amendment. Retain the existing reviewer request and follow-up without a duplicate ping.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15669",
           "https://github.com/tamird/gvisor/commit/60834ef0c08df041dc049c2fecf0038dfe34351a",
           "https://app.buildbuddy.io/invocation/52bef731-5b2f-4bda-b442-29aae4bac58d",
-          "https://app.buildbuddy.io/invocation/84380b15-85ae-4831-b450-ac933f4c3b6b"
+          "https://app.buildbuddy.io/invocation/84380b15-85ae-4831-b450-ac933f4c3b6b",
+          "https://github.com/tamird/gvisor/commit/c8b2b48967734b73fb4e62d7ad4a3439fb103a59"
         ],
-        "observedAt": "2026-10-14T04:59:30.036233+00:00"
+        "observedAt": "2026-10-14T11:06:01.686863+00:00"
       },
       "number": 15669
     },
@@ -6389,21 +6393,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/gpu-driver-preparation-correction",
-      "head": "69ca892cd3f85379eb68541836396453310188aa",
+      "head": "c8b2b48967734b73fb4e62d7ad4a3439fb103a59",
       "title": "Consolidate GPU driver preparation",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "Qualified amendment records public installer availability per architecture and preserves supported driver ABIs. It also fixes read-only listing output ownership and complete file replacement. The contributor approved exact 69ca892cd for delivery; the published PR remains unchanged until its owner publishes the amendment.",
+      "url": "https://github.com/google/gvisor/pull/15669",
+      "status": "Delivered in #15669",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The contributor-approved installer-availability and listing corrections are delivered in PR #15669 at c8b2b4896. The source preserves newly upstream driver ABI handlers, and the exact current head has eight applicable public checks passing with four conditional skips. The earlier import belongs to the old source head; it is not current-head validation. The existing reviewer follow-up remains posted; no additional review request succeeded.",
       "followup": {
-        "disposition": "Contributor-approved; delivery queued",
-        "owner": "root",
-        "sourceHead": "69ca892cd3f85379eb68541836396453310188aa",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Amend PR #15669 on review/gpu-driver-preparation-clarity; preserve approved source and inspect current matching import before delivery.",
+        "disposition": "Delivered; awaiting maintainer review",
+        "owner": "external_sweeps",
+        "sourceHead": "c8b2b48967734b73fb4e62d7ad4a3439fb103a59",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow current-head review and CI for the delivered amendment. Retain the existing reviewer request and follow-up without a duplicate ping.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
+          "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa",
+          "https://github.com/google/gvisor/pull/15669"
         ]
       }
     },
@@ -6412,21 +6417,22 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/crosstool-dynamic-linking",
-      "head": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
+      "head": "928823b75a0f7c72de98da966416c489057e4b24",
       "title": "Fix shared-library linking in the C++ toolchain",
       "group": "bazel",
-      "url": "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The contributor approved this exact source for an independent PR; delivery is queued.",
+      "url": "https://github.com/google/gvisor/pull/15772",
+      "status": "Published as #15772",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The approved patch and commit message are preserved in independent PR #15772 at 928823b75. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "disposition": "Contributor-approved; delivery queued",
+        "disposition": "Delivered; following CI and review",
         "owner": "external_sweeps",
-        "sourceHead": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
+        "sourceHead": "928823b75a0f7c72de98da966416c489057e4b24",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15772 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
+          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
+          "https://github.com/google/gvisor/pull/15772"
         ]
       }
     },
@@ -6466,22 +6472,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcpip-ipv6-control-address",
-      "head": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+      "head": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
       "title": "Restore the IPv6 control test’s source address",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The contributor approved this exact source for a standalone PR; delivery is queued.",
+      "url": "https://github.com/google/gvisor/pull/15770",
+      "status": "Published as #15770",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "disposition": "Contributor-approved; delivery queued",
+        "disposition": "Delivered; following CI and review",
         "owner": "external_sweeps",
-        "sourceHead": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
+        "sourceHead": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15770 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15770"
         ]
       },
       "evidence": [
@@ -6496,22 +6503,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "tcpip-cidr-route-fixtures",
-      "head": "233a8335d793eaef755df814f226a380a1cbd756",
+      "head": "6b1f66d119b28c6f8af317925b95ca19f6e6f97d",
       "title": "Use CIDR masks in route-selection tests",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The contributor approved this exact source for a standalone PR; delivery is queued.",
+      "url": "https://github.com/google/gvisor/pull/15771",
+      "status": "Published as #15771",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The approved patch and commit message are preserved in independent PR #15771 at 6b1f66d11. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "disposition": "Contributor-approved; delivery queued",
+        "disposition": "Delivered; following CI and review",
         "owner": "external_sweeps",
-        "sourceHead": "233a8335d793eaef755df814f226a380a1cbd756",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
+        "sourceHead": "6b1f66d119b28c6f8af317925b95ca19f6e6f97d",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15771 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15771"
         ]
       },
       "evidence": [
@@ -6526,22 +6534,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/tcpip-netip-review-correction",
-      "head": "fd737bf7a231d864418e95edff2e3191efc07c2c",
+      "head": "080bd49c2aba00bd6840083edec54786c5a863eb",
       "title": "Handle invalid addresses in the netip migration",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "Qualified amendment addresses the two current review findings while preserving zero-value filter wildcards. Full stack suites and owning analyzers pass on both architectures; the initial over-strict wildcard correction and its NAT failures remain recorded. The folded, rebased patch is source-equivalent. The contributor approved exact fd737bf7a for delivery. The published PR and unresolved review threads remain unchanged until its owner completes publication and the authorized responses.",
+      "url": "https://github.com/google/gvisor/pull/15730",
+      "status": "Delivered in #15730",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The contributor-approved guard amendment is delivered in PR #15730 at 080bd49c2. Both inline responses were posted together and both threads are resolved. Length and family checks preserve zero-value filter wildcards. Independent fixture cleanups are now PRs #15770 and #15771; the separate state-registration split remains held under the contributor’s preference. The existing benchstat description is unchanged.",
       "followup": {
-        "disposition": "Contributor-approved; delivery queued",
-        "owner": "root",
-        "sourceHead": "fd737bf7a231d864418e95edff2e3191efc07c2c",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Deliver the approved guard amendment to PR #15730, preserving the zero-value wildcard behavior and the prepared review-response scope.",
+        "disposition": "Delivered; awaiting maintainer review",
+        "owner": "external_sweeps",
+        "sourceHead": "080bd49c2aba00bd6840083edec54786c5a863eb",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow maintainer review of the delivered guards and independent fixture PRs #15770/#15771. The registration split stays held; no contributor decision remains for these delivered patches.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c",
-          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15730"
         ]
       },
       "evidence": [
@@ -6556,27 +6565,29 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/syscall-linux-ci-guidance",
-      "head": "01e70f3a44a37a665f17d3c247d81dc608908a72",
+      "head": "1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b",
       "title": "Document how to identify syscall CI kernels",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
-      "status": "Changes requested; agent revision",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "The reviewed documentation amendment replaces a dated kernel table with public CI routing, target filters and the maintainer’s current-worker inspection guidance. Agent or distribution names are explicitly distinct from the actual kernel release. The contributor requested a rewrite from the maintainer’s perspective. Revise the documentation proposal; the current draft is not approved. The published PR and unresolved thread remain unchanged.",
+      "url": "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b",
+      "status": "contributor-review-requested",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The revised documentation is written for maintainers: it replaces a dated kernel table with current CI routing and instructions for identifying the actual worker kernel. The maintainer-focused rewrite passed independent prose review and is public at 1e01fb220. The contributor has been asked to approve this exact revision for updating #15439 and replying to the existing thread. The source PR is unchanged.",
       "followup": {
-        "disposition": "Contributor requested revision",
+        "disposition": "Contributor review requested",
         "owner": "root",
-        "sourceHead": "01e70f3a44a37a665f17d3c247d81dc608908a72",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "The contributor requested a rewrite from the maintainer’s perspective. Revise the documentation proposal; the current draft is not approved.",
+        "sourceHead": "1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Await the contributor’s decision on exact 1e01fb220 before updating #15439 or its existing discussion.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
-          "https://github.com/google/gvisor/pull/15439#discussion_r4212422885"
+          "https://github.com/google/gvisor/pull/15439#discussion_r4212422885",
+          "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
         ]
       },
-      "contributorChangesRequested": {
-        "head": "01e70f3a44a37a665f17d3c247d81dc608908a72",
-        "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
+      "contributorReview": {
+        "status": "pending",
+        "head": "1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b",
+        "url": "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
       }
     },
     {
@@ -6584,22 +6595,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "sandboxexec-example-network-tests",
-      "head": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+      "head": "b6f522fdd45c47713425c27e9866627d2b6bb727",
       "title": "Exercise example network modes with a listener",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "The reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The contributor approved this exact source for an independent PR; no upstream PR has been opened yet.",
+      "url": "https://github.com/google/gvisor/pull/15769",
+      "status": "Published as #15769",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The approved patch and commit message are preserved in independent PR #15769 at b6f522fdd. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
         "owner": "external_sweeps",
-        "disposition": "Contributor-approved; delivery queued",
-        "sourceHead": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
+        "disposition": "Delivered; following CI and review",
+        "sourceHead": "b6f522fdd45c47713425c27e9866627d2b6bb727",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15769 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
-          "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb"
+          "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb",
+          "https://github.com/google/gvisor/pull/15769"
         ]
       }
     },
@@ -6608,23 +6620,25 @@
       "type": "branch",
       "repo": "tamird/go",
       "ref": "benchmark-repeat-failure",
-      "head": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
+      "head": "b1bdc6967785c3537e8fe77b3de36fad942c0347",
       "title": "testing: propagate repeated benchmark failures",
       "group": "runtime",
-      "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "The Go fix preserves failure propagation from later benchmark count/CPU repetitions to the original benchmark. Before/after validation reproduces the incorrect native exit 0/PASS after a real failure, then verifies exit 1/FAIL with the fix. The full testing and test2json package checks pass, with one intentional fuzz seed skip retained. The contributor approved this exact source for Gerrit delivery; no Gerrit change has been uploaded for this proposal yet. The independent containerd upload failure and incomplete Nginx pilot remain separate.",
+      "url": "https://go-review.googlesource.com/c/go/+/849206",
+      "status": "Submitted; Gerrit review pending",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The Go fix preserves failure propagation from later benchmark count/CPU repetitions to the original benchmark. Before/after validation reproduces the incorrect native exit 0/PASS after a real failure, then verifies exit 1/FAIL with the fix. The full testing and test2json package checks pass, with one intentional fuzz seed skip retained. The approved patch is submitted as Go Gerrit CL 849206, revision b1bdc6967. The public change remains NEW, with no review score or TryBot result observed yet. The independent containerd upload failure and incomplete Nginx pilot remain separate.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor-approved; delivery queued",
-        "sourceHead": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Deliver the approved fix through Go Gerrit using the existing source and validation packet.",
+        "owner": "external_sweeps",
+        "disposition": "Submitted to Go Gerrit",
+        "sourceHead": "b1bdc6967785c3537e8fe77b3de36fad942c0347",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow CL 849206 review and validation events through the existing external watcher. ROOT owns any source amendment.",
         "evidence": [
           "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
           "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3",
-          "https://github.com/golang/go/issues/61767#issuecomment-4939164585"
+          "https://github.com/golang/go/issues/61767#issuecomment-4939164585",
+          "https://go-review.googlesource.com/c/go/+/849206",
+          "https://github.com/tamird/go/commit/b1bdc6967785c3537e8fe77b3de36fad942c0347"
         ]
       }
     },
@@ -6633,22 +6647,23 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "checksum-test-reporting",
-      "head": "e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
+      "head": "1add4163ce20b373d8b150af2e285884582be210",
       "title": "Group checksum trials by size and alignment",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
-      "status": "Approved; delivery queued",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "The qualified checksum-test change groups the same 675,000 valid comparisons into 180 subtests instead of 900,000. Both CPU suites and analyzers pass; independently reviewed log/XML reports shrink from about 259.5 MB to 506,553 bytes per CPU (99.8%). The contributor approved this exact public proposal for upstream delivery; no upstream PR has been opened yet.",
+      "url": "https://github.com/google/gvisor/pull/15768",
+      "status": "Published as #15768",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The qualified checksum-test change groups the same 675,000 valid comparisons into 180 subtests instead of 900,000. Both CPU suites and analyzers pass; independently reviewed log/XML reports shrink from about 259.5 MB to 506,553 bytes per CPU (99.8%). The approved patch and commit message are preserved in independent PR #15768 at 1add4163c. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
         "owner": "external_sweeps",
-        "disposition": "Contributor-approved; delivery queued",
-        "sourceHead": "e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
+        "disposition": "Delivered; following CI and review",
+        "sourceHead": "1add4163ce20b373d8b150af2e285884582be210",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15768 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
-          "https://app.buildbuddy.io/invocation/6d46817e-da0a-4034-9d06-04392b770d26"
+          "https://app.buildbuddy.io/invocation/6d46817e-da0a-4034-9d06-04392b770d26",
+          "https://github.com/google/gvisor/pull/15768"
         ]
       }
     },
@@ -6657,28 +6672,171 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "review/pinring-teardown-timing",
-      "head": "a34bac7751984f777eae03eb1d8234844580c5dc",
+      "head": "3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b",
       "title": "Correct pinring teardown timing",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc",
-      "status": "Changes requested; agent revision",
-      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
-      "summary": "The standalone correction is patch- and message-identical to the qualified pinring timing fix. All four privileged named cases and both CPU analyzers passed on the preserved qualification source. The contributor requested a revision to use deferred cleanup. Revise the proposal and preserve its independently qualified behavior before asking for review again. No upstream PR exists and no dependency is recorded. The qualification does not establish a speedup or explain the original ARM latency result.",
+      "url": "https://github.com/tamird/gvisor/commit/3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b",
+      "status": "contributor-review-requested",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The revised standalone fix uses the requested deferred cleanup. Four privileged named cases and both CPU analyzers pass, with independent result review closed. Public 3ac8ac41e preserves the qualified patch when rebased onto the current upstream base. The contributor has been asked to approve this exact revision for a standalone PR. No dependency or speedup claim is made.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor requested revision",
-        "sourceHead": "a34bac7751984f777eae03eb1d8234844580c5dc",
-        "observedAt": "2026-10-14T04:59:30.036233+00:00",
-        "nextAction": "The contributor requested a revision to use deferred cleanup. Revise the proposal and preserve its independently qualified behavior before asking for review again.",
+        "disposition": "Contributor review requested",
+        "sourceHead": "3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Await the contributor’s decision on exact 3ac8ac41e before opening its standalone PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc",
-          "https://github.com/tamird/gvisor/commit/4c3ad453e186dddacd7b88e6d4ae2b79a281f495"
+          "https://github.com/tamird/gvisor/commit/4c3ad453e186dddacd7b88e6d4ae2b79a281f495",
+          "https://github.com/tamird/gvisor/commit/3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b"
         ]
       },
-      "contributorChangesRequested": {
-        "head": "a34bac7751984f777eae03eb1d8234844580c5dc",
-        "url": "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc"
+      "contributorReview": {
+        "status": "pending",
+        "head": "3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b",
+        "url": "https://github.com/tamird/gvisor/commit/3ac8ac41ee9ae8f0e5868a961f07d4c48fb73d7b"
       }
+    },
+    {
+      "id": "pr:15768",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "checksum-test-reporting",
+      "head": "1add4163ce20b373d8b150af2e285884582be210",
+      "title": "Group checksum trials by size and alignment",
+      "group": "runtime",
+      "url": "https://github.com/google/gvisor/pull/15768",
+      "status": "open",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The qualified checksum-test change groups the same 675,000 valid comparisons into 180 subtests instead of 900,000. Both CPU suites and analyzers pass; independently reviewed log/XML reports shrink from about 259.5 MB to 506,553 bytes per CPU (99.8%). The approved patch and commit message are preserved in independent PR #15768 at 1add4163c. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "followup": {
+        "owner": "external_sweeps",
+        "disposition": "Delivered; following CI and review",
+        "sourceHead": "1add4163ce20b373d8b150af2e285884582be210",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15768 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
+          "https://app.buildbuddy.io/invocation/6d46817e-da0a-4034-9d06-04392b770d26",
+          "https://github.com/google/gvisor/pull/15768"
+        ]
+      },
+      "number": 15768
+    },
+    {
+      "id": "pr:15769",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "sandboxexec-example-network-tests",
+      "head": "b6f522fdd45c47713425c27e9866627d2b6bb727",
+      "title": "Exercise example network modes with a listener",
+      "group": "tests",
+      "url": "https://github.com/google/gvisor/pull/15769",
+      "status": "open",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The approved patch and commit message are preserved in independent PR #15769 at b6f522fdd. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "followup": {
+        "owner": "external_sweeps",
+        "disposition": "Delivered; following CI and review",
+        "sourceHead": "b6f522fdd45c47713425c27e9866627d2b6bb727",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15769 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
+          "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb",
+          "https://github.com/google/gvisor/pull/15769"
+        ]
+      },
+      "number": 15769
+    },
+    {
+      "id": "pr:15770",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tcpip-ipv6-control-address",
+      "head": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
+      "title": "Restore the IPv6 control test's source address",
+      "group": "tests",
+      "url": "https://github.com/google/gvisor/pull/15770",
+      "status": "open",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "followup": {
+        "disposition": "Delivered; following CI and review",
+        "owner": "external_sweeps",
+        "sourceHead": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15770 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15770"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Independently reviewed remote validation",
+          "url": "https://app.buildbuddy.io/invocation/3bdb8c23-d9fd-421e-af1e-91700189c014"
+        }
+      ],
+      "number": 15770
+    },
+    {
+      "id": "pr:15771",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "tcpip-cidr-route-fixtures",
+      "head": "6b1f66d119b28c6f8af317925b95ca19f6e6f97d",
+      "title": "Use CIDR masks in route-selection tests",
+      "group": "tests",
+      "url": "https://github.com/google/gvisor/pull/15771",
+      "status": "open",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The approved patch and commit message are preserved in independent PR #15771 at 6b1f66d11. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "followup": {
+        "disposition": "Delivered; following CI and review",
+        "owner": "external_sweeps",
+        "sourceHead": "6b1f66d119b28c6f8af317925b95ca19f6e6f97d",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15771 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
+          "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
+          "https://github.com/google/gvisor/pull/15771"
+        ]
+      },
+      "evidence": [
+        {
+          "label": "Independently reviewed remote validation",
+          "url": "https://app.buildbuddy.io/invocation/3bdb8c23-d9fd-421e-af1e-91700189c014"
+        }
+      ],
+      "number": 15771
+    },
+    {
+      "id": "pr:15772",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "ref": "review/crosstool-dynamic-linking",
+      "head": "928823b75a0f7c72de98da966416c489057e4b24",
+      "title": "Fix shared-library linking in the C++ toolchain",
+      "group": "bazel",
+      "url": "https://github.com/google/gvisor/pull/15772",
+      "status": "open",
+      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The approved patch and commit message are preserved in independent PR #15772 at 928823b75. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "followup": {
+        "disposition": "Delivered; following CI and review",
+        "owner": "external_sweeps",
+        "sourceHead": "928823b75a0f7c72de98da966416c489057e4b24",
+        "observedAt": "2026-10-14T11:06:01.686863+00:00",
+        "nextAction": "Follow PR #15772 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
+          "https://github.com/google/gvisor/pull/15772"
+        ]
+      },
+      "number": 15772
     }
   ],
   "edges": [
@@ -8098,20 +8256,11 @@
       ]
     },
     {
-      "from": "branch:review/runner-xml-correction",
-      "to": "pr:15562",
-      "type": "includes",
-      "role": "proposed_update",
-      "reason": "Historical amendment is covered by the regenerated import #15687; its contributor-decision request is withdrawn and the branch is retained as evidence.",
-      "evidence": "https://github.com/tamird/gvisor/commit/d1f84723ff6c82f67c843dd3454f9e2af04a6d30"
-    },
-    {
       "from": "branch:review/gpu-driver-preparation-correction",
       "to": "pr:15669",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Separate qualified amendment is contributor-approved; the published PR remains unchanged until delivery is verified.",
-      "evidence": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
+      "reason": "The contributor-approved amendment is delivered in the source PR; the separate branch preserves its evidence.",
+      "evidence": "https://github.com/tamird/gvisor/commit/c8b2b48967734b73fb4e62d7ad4a3439fb103a59"
     },
     {
       "from": "branch:apt-license-enumeration-upstream",
@@ -8124,17 +8273,16 @@
       "from": "branch:review/tcpip-netip-review-correction",
       "to": "pr:15730",
       "type": "includes",
-      "role": "proposed_update",
-      "reason": "Separate qualified amendment is contributor-approved; the published PR remains unchanged until delivery is verified.",
-      "evidence": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c"
+      "reason": "The contributor-approved amendment is delivered in the source PR; the separate branch preserves its evidence.",
+      "evidence": "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb"
     },
     {
       "from": "branch:review/syscall-linux-ci-guidance",
       "to": "pr:15439",
       "type": "includes",
       "role": "proposed_update",
-      "reason": "The contributor requested a rewrite of this documentation proposal; the published PR remains unchanged.",
-      "evidence": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
+      "reason": "The revised maintainer-focused amendment awaits a contributor decision; the source PR remains unchanged.",
+      "evidence": "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
     }
   ],
   "investigations": [
@@ -9418,7 +9566,7 @@
           ]
         }
       ],
-      "nextStep": "Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The Go benchmark-status fix is now contributor-approved for Gerrit delivery.",
+      "nextStep": "Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The approved Go benchmark-status fix is submitted as Gerrit CL 849206; follow its review separately from the incomplete historical pilot.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10378,7 +10526,7 @@
           ]
         }
       ],
-      "nextStep": "Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The Go benchmark-status fix is now contributor-approved for Gerrit delivery.",
+      "nextStep": "Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The approved Go benchmark-status fix is submitted as Gerrit CL 849206; follow its review separately from the incomplete historical pilot.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",

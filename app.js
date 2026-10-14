@@ -1207,12 +1207,12 @@ function validateSnapshot(snapshot, nextRegistry = registry) {
     numbers.add(pr.number);
     for (const item of [pr, ...pr.imports]) {
       const observation = item.mergeabilityObservation;
-      if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation time");
+      if (item.mergeabilityCheckedAt != null && (!Number.isFinite(Date.parse(item.mergeabilityCheckedAt)) || Date.parse(item.mergeabilityCheckedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation time");
       if (item.base != null && !/^[a-f0-9]{40}$/.test(item.base)) throw new Error("Invalid PR base");
       if (item.headRepo != null && (typeof item.headRepo !== "string" || !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(item.headRepo))) throw new Error("Invalid PR head repository");
       if (observation != null && (!["MERGEABLE", "CONFLICTING"].includes(observation.state) ||
           !/^[a-f0-9]{40}$/.test(observation.head) || (observation.base != null && !/^[a-f0-9]{40}$/.test(observation.base)) ||
-          !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(snapshot.checkedAt))) throw new Error("Invalid mergeability observation");
+          !Number.isFinite(Date.parse(observation.checkedAt)) || Date.parse(observation.checkedAt) > Date.parse(item.checkedAt))) throw new Error("Invalid mergeability observation");
       if (!/^[a-f0-9]{40}$/.test(item.head) || !Array.isArray(item.labels) || !item.threads ||
           !Number.isFinite(Date.parse(item.checkedAt)) || (item.checks && !Array.isArray(item.checks.contexts))) throw new Error("Invalid PR attributes");
       for (const check of item.checks?.contexts || []) {

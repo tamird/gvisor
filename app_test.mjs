@@ -66,6 +66,29 @@ test('direct terminal status refresh does not refresh other PR states', () => {
   assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid state observation/);
 });
 
+test('scoped mergeability observations use each source or import PR clock', () => {
+  const context = client();
+  const source = { number: 1, head: 'a'.repeat(40), labels: [], threads: {}, checkedAt: '2026-10-12T18:05:00Z' };
+  const imported = { number: 2, head: 'b'.repeat(40), labels: [], threads: {}, checkedAt: '2026-10-12T17:00:00Z' };
+  source.imports = [imported];
+  for (const item of [source, imported]) {
+    item.mergeabilityCheckedAt = item.checkedAt;
+    item.mergeabilityObservation = { state: 'MERGEABLE', head: item.head, checkedAt: item.checkedAt };
+  }
+  context.snapshotInput.prs = [source];
+  vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context);
+  assert.equal(context.snapshotInput.checkedAt, '2026-10-12T11:48:00Z');
+  for (const item of [source, imported]) {
+    const future = new Date(Date.parse(item.checkedAt) + 1000).toISOString();
+    item.mergeabilityCheckedAt = future;
+    assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid mergeability observation time/);
+    item.mergeabilityCheckedAt = item.checkedAt;
+    item.mergeabilityObservation.checkedAt = future;
+    assert.throws(() => vm.runInContext('validateSnapshot(snapshotInput, registryInput)', context), /Invalid mergeability observation/);
+    item.mergeabilityObservation.checkedAt = item.checkedAt;
+  }
+});
+
 test('legacy observations retain the full-snapshot bound', () => {
   const context = client();
   const record = { scope: 'a'.repeat(40), basis: 'observed', since: '2026-10-12T10:00:00Z' };
