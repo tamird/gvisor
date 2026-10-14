@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T15:57:43.919316+00:00",
+    "updatedAt": "2026-10-14T21:41:00.062222+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2992,11 +2992,11 @@
       "group": "tests",
       "status": "open",
       "summary": "The complete discussion already answers the configuration question: Konstantin described the provisioning configuration as internal, and Etienne recommended inspecting the intended build’s worker environment until public Terraform is available. Public pipeline and Bazel routing identify queues and selections, but do not pin exact worker kernel images. The dated kernel table should be replaced with durable instructions for locating current run evidence. No unanswered maintainer question is blocking that source decision.",
-      "updatedAt": "2026-10-14T15:57:43.919316+00:00",
+      "updatedAt": "2026-10-14T21:41:00.062222+00:00",
       "followup": {
-        "disposition": "Revised proposal awaiting contributor review",
-        "owner": "root",
-        "nextAction": "Self-contained fork revision ab1542024 is published and independently reviewed; await the contributor’s decision before updating the source PR.",
+        "disposition": "Approved documentation amendment in delivery",
+        "owner": "external_sweeps",
+        "nextAction": "Deliver approved fork revision ab1542024 to this PR and verify its new head/body.",
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
@@ -3013,7 +3013,7 @@
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049316326",
           "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
         ],
-        "observedAt": "2026-10-14T15:57:43.919316+00:00"
+        "observedAt": "2026-10-14T21:41:00.062222+00:00"
       },
       "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
       "number": 15439,
@@ -4986,7 +4986,7 @@
         "disposition": "Qualified export update adopted; full-profile evidence retained",
         "sourceHead": "ff4888692f6d502615941328020dc9a45736ad68",
         "observedAt": "2026-10-14T12:51:53.426487+00:00",
-        "nextAction": "Maintain canonical ff4888692 with the closed export qualification. Retain the 74061d8f8 full mixed-unit result and its cache/fresh split, the earlier failed attempts, and the held sniffer proposal’s separate approval and #15668 prerequisite state. Eleven selected environment cases are covered across qualified sources; the remaining ARM64 boot diagnosis is still unresolved. The simpler pinring revision6541c9953 is qualified for its focused checks and now awaits the contributor’s decision; no upstream approval is inferred.",
+        "nextAction": "Maintain canonical ff4888692 with the closed export qualification. Retain the 74061d8f8 full mixed-unit result and its cache/fresh split, the earlier failed attempts, and the held sniffer proposal’s separate approval and #15668 prerequisite state. Eleven selected environment cases are covered across qualified sources; the remaining ARM64 boot diagnosis is still unresolved. The contributor requested an EOF handshake in pinring revision6541c9953; root owns that revision, with no new approval inferred.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -6574,26 +6574,21 @@
       "title": "Document how to identify syscall CI kernels",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/ab15420244eab07ae10f962c442a1f4414fcd046",
-      "status": "contributor-review-requested",
-      "updatedAt": "2026-10-14T15:57:43.919316+00:00",
-      "summary": "The revised CI document states the established worker/kernel policy directly and removes links to PR discussions. Public pipeline, Bazel configuration, Ubuntu mainline and master-run links remain. Independent prose review is complete; the contributor has been asked to review this exact head before updating #15439. The published source PR is unchanged.",
+      "status": "Approved; delivery in progress",
+      "updatedAt": "2026-10-14T21:41:00.062222+00:00",
+      "summary": "The contributor approved exact ab1542024. Its self-contained CI guidance removes PR-discussion links while retaining the actual public configuration citations. The approved amendment is being delivered to #15439; the upstream head is not yet claimed updated.",
       "followup": {
-        "disposition": "Contributor review requested",
-        "owner": "root",
+        "disposition": "Contributor approved; delivery in progress",
+        "owner": "external_sweeps",
         "sourceHead": "ab15420244eab07ae10f962c442a1f4414fcd046",
-        "observedAt": "2026-10-14T15:57:43.919316+00:00",
-        "nextAction": "Await the contributor’s decision on this exact revision before updating #15439 or its discussion.",
+        "observedAt": "2026-10-14T21:41:00.062222+00:00",
+        "nextAction": "Rebase the approved patch without changing its content, update #15439, and verify the published branch and description.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
           "https://github.com/google/gvisor/pull/15439#discussion_r4212422885",
           "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b",
           "https://github.com/tamird/gvisor/commit/ab15420244eab07ae10f962c442a1f4414fcd046"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "ab15420244eab07ae10f962c442a1f4414fcd046",
-        "url": "https://github.com/tamird/gvisor/commit/ab15420244eab07ae10f962c442a1f4414fcd046"
       }
     },
     {
@@ -6682,15 +6677,15 @@
       "title": "Correct pinring teardown timing",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/6541c99536042416bbe20eb793f1c58edd23368d",
-      "status": "contributor-review-requested",
-      "updatedAt": "2026-10-14T15:57:43.919316+00:00",
-      "summary": "The revised pinring proposal uses straight-line cleanup after starting the probe, with no named returns or deferred mutation. Source review and focused privileged AF_PACKET, ordinary skip-path and both-CPU analyzer checks pass; earlier source-specific ARM/KVM coverage remains separate. The contributor has been asked to review this exact head before opening its standalone PR.",
+      "status": "Contributor changes requested",
+      "updatedAt": "2026-10-14T21:41:00.062222+00:00",
+      "summary": "The contributor requested replacing the byte handshake with EOF in exact6541c9953. Root owns that revision. Prior focused qualification remains tied to the earlier file; no new approval or upstream PR is claimed.",
       "followup": {
         "owner": "root",
-        "disposition": "Contributor review requested",
+        "disposition": "Contributor revision requested",
         "sourceHead": "6541c99536042416bbe20eb793f1c58edd23368d",
-        "observedAt": "2026-10-14T15:57:43.919316+00:00",
-        "nextAction": "Await the contributor’s decision on this exact revision before opening its standalone PR.",
+        "observedAt": "2026-10-14T21:41:00.062222+00:00",
+        "nextAction": "Replace the handshake with EOF, retain the intended timing boundary, and qualify the revised source before presenting it for review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc",
           "https://github.com/tamird/gvisor/commit/4c3ad453e186dddacd7b88e6d4ae2b79a281f495",
@@ -6698,8 +6693,7 @@
           "https://github.com/tamird/gvisor/commit/6541c99536042416bbe20eb793f1c58edd23368d"
         ]
       },
-      "contributorReview": {
-        "status": "pending",
+      "contributorChangesRequested": {
         "head": "6541c99536042416bbe20eb793f1c58edd23368d",
         "url": "https://github.com/tamird/gvisor/commit/6541c99536042416bbe20eb793f1c58edd23368d"
       }

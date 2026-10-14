@@ -1,7 +1,10 @@
 """Regressions for review/import classification and observation continuity."""
 
 import copy
+from importlib import import_module
+import subprocess
 import unittest
+from unittest.mock import patch
 
 from work_states import check_purpose, checks_passed, pr_states, record_states, remember_mergeability, review_decision
 
@@ -20,6 +23,22 @@ def original(**changes: object) -> dict:
 
 
 class WorkStatesTest(unittest.TestCase):
+    def test_optional_transport_failure_preserves_primary_observations(self):
+        # Use the normal module finder for the collector's CLI filename.
+        collector = import_module("update-status")
+        primary = {"number": 1, "state": "OPEN", "mergeable": "UNKNOWN",
+                   "headRefOid": "a" * 40, "baseRefOid": "b" * 40,
+                   "mergeStateStatus": "UNKNOWN", "_retrievedAt": "2026-10-14T20:00:00Z"}
+        before = copy.deepcopy(primary)
+        failure = subprocess.CompletedProcess([], 1, stdout="", stderr="gh: HTTP 502")
+        with patch.object(collector, "requests", 0), patch.object(collector.subprocess, "run", return_value=failure) as calls:
+            self.assertEqual(collector.recheck_unknown_mergeability([primary]),
+                             {"status": "unavailable", "numbers": [1]})
+            self.assertEqual(primary, before)
+            with self.assertRaises(collector.GitHubTransportError):
+                collector.fetch_numbers([1], timeline=False)
+            self.assertEqual(calls.call_count, 4)
+
     def test_registry_decision_does_not_inherit_older_github_clock(self):
         full_at = "2026-10-12T11:48:00Z"
         decision_at = "2026-10-12T14:41:00Z"

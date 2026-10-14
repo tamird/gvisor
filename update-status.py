@@ -65,6 +65,10 @@ headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
 """
 
 
+class GitHubTransportError(RuntimeError):
+    """A bounded request failed before a usable GitHub response arrived."""
+
+
 def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
     global requests, query_cost, rate_remaining
     query = query.rstrip().removesuffix("}") + " rateLimit { cost remaining } }"
@@ -82,7 +86,7 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
             if attempt == 0 and requests < REQUEST_LIMIT:
                 print("GitHub query timed out; retrying once within the request cap", file=sys.stderr)
                 continue
-            raise RuntimeError("GitHub query timed out; previous file is unchanged") from None
+            raise GitHubTransportError("GitHub query timed out") from None
         if result.returncode:
             # Retry this read-only query once for transport or gateway errors.
             interrupted = any(error in result.stderr for error in (
@@ -92,6 +96,8 @@ def graphql(query: str, variables: dict[str, object] | None = None) -> dict:
             if attempt == 0 and requests < REQUEST_LIMIT and interrupted:
                 print("GitHub transport interrupted; retrying once within the request cap", file=sys.stderr)
                 continue
+            if interrupted:
+                raise GitHubTransportError(f"GitHub transport failed: {result.stderr.strip()}")
             raise RuntimeError(f"GitHub query failed: {result.stderr.strip() or 'gh returned no diagnostic'}")
         response = json.loads(result.stdout)
         if response.get("errors"):
@@ -225,16 +231,24 @@ def import_source(candidate: dict, original: dict) -> str | None:
     return next(iter(heads), None)
 
 
-def recheck_unknown_mergeability(prs: list[dict]) -> None:
+def recheck_unknown_mergeability(prs: list[dict]) -> dict[str, object]:
     """Give GitHub's asynchronous calculation one bounded, head-checked read."""
     unknown = {pr["number"]: pr for pr in prs
                if pr["state"] == "OPEN" and pr["mergeable"] == "UNKNOWN"}
-    if not unknown or requests >= REQUEST_LIMIT:
-        return
+    if not unknown:
+        return {"status": "not-needed", "numbers": []}
+    if requests >= REQUEST_LIMIT:
+        return {"status": "budget-exhausted", "numbers": sorted(unknown)}
     owner, name = REPO.split("/")
     fields = " ".join(f"p{number}:pullRequest(number:{number}){{number headRefOid baseRefOid state mergeable mergeStateStatus}}"
                       for number in unknown)
-    response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
+    try:
+        response = graphql(f'query {{ repository(owner:"{owner}",name:"{name}") {{ {fields} }} }}')["repository"]
+    except GitHubTransportError as error:
+        # The primary observations remain valid UNKNOWN results. This optional
+        # read must not discard them or advance their mergeability timestamps.
+        print(f"Mergeability recheck unavailable; retaining primary observations: {error}", file=sys.stderr)
+        return {"status": "unavailable", "numbers": sorted(unknown)}
     retrieved_at = datetime.now(timezone.utc).isoformat()
     if set(response) != {f"p{number}" for number in unknown}:
         raise RuntimeError("Mergeability recheck inventory is incomplete; previous snapshot is unchanged")
@@ -247,6 +261,7 @@ def recheck_unknown_mergeability(prs: list[dict]) -> None:
             raise RuntimeError(f"Unexpected mergeability for PR #{number}; previous snapshot is unchanged")
         pr.update(baseRefOid=result["baseRefOid"], mergeable=result["mergeable"],
                   mergeStateStatus=result["mergeStateStatus"], _mergeabilityRetrievedAt=retrieved_at)
+    return {"status": "completed", "numbers": sorted(unknown)}
 
 
 def main() -> None:
@@ -302,19 +317,6 @@ def main() -> None:
                 matches[candidate["number"]] = head
         relations[number] = matches
     imported = fetch_numbers(sorted({number for matches in relations.values() for number in matches}), timeline=False)
-    recheck_unknown_mergeability([*originals.values(), *imported.values()])
-    prs = []
-    for number, pr in originals.items():
-        for other, head in relations[number].items():
-            if import_source(imported[other], pr) != head:
-                raise RuntimeError(f"Import #{other} source footer changed during retrieval")
-        item = normalize(pr)
-        item["importsComplete"] = not pr["timelineItems"]["pageInfo"]["hasPreviousPage"]
-        item["imports"] = [{**normalize(imported[other]), "sourceHead": head,
-                            "matchesSourceHead": head == pr["headRefOid"],
-                            "relationshipEvidence": imported[other]["url"]}
-                           for other, head in relations[number].items()]
-        prs.append(item)
     issue_fields = []
     issue_ids = {}
     for index, node in enumerate(REGISTRY["nodes"]):
@@ -331,6 +333,21 @@ def main() -> None:
             if value and value["issue"]:
                 issue = value["issue"]
                 issues[issue_ids[alias]] = {"githubState": issue["state"].lower(), "updatedAt": issue["updatedAt"]}
+    # Finish every required fetch before spending the remaining request budget
+    # on GitHub's optional asynchronous mergeability recalculation.
+    mergeability_recheck = recheck_unknown_mergeability([*originals.values(), *imported.values()])
+    prs = []
+    for number, pr in originals.items():
+        for other, head in relations[number].items():
+            if import_source(imported[other], pr) != head:
+                raise RuntimeError(f"Import #{other} source footer changed during retrieval")
+        item = normalize(pr)
+        item["importsComplete"] = not pr["timelineItems"]["pageInfo"]["hasPreviousPage"]
+        item["imports"] = [{**normalize(imported[other]), "sourceHead": head,
+                            "matchesSourceHead": head == pr["headRefOid"],
+                            "relationshipEvidence": imported[other]["url"]}
+                           for other, head in relations[number].items()]
+        prs.append(item)
     # A merge can occur while these bounded requests are in flight. Stamp the
     # completed observation, so its exact transition never appears in the future.
     checked_at = datetime.now(timezone.utc).isoformat()
@@ -343,7 +360,8 @@ def main() -> None:
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "prs": prs, "issues": issues,
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
-                "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining, "nestedPageSize": 100, "maxOpenPRs": 200}}
+                "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
+                           "nestedPageSize": 100, "maxOpenPRs": 200, "mergeabilityRecheck": mergeability_recheck}}
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
     # Run the same validator used by the browser before publishing any bytes.
