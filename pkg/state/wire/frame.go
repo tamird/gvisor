@@ -60,18 +60,20 @@ func (b *ValueBuffer) Load(r *Reader) Value {
 	return frameValue(&b.frame, index)
 }
 
-// Release drops all backing storage. In particular, retaining a Source must
-// not retain a Load's largest unrelated temporary frame through decodeState.
+// Release drops all backing allocations. The fixed inline nodes remain part of
+// the buffer, but retaining a Source does not retain a Load's largest unrelated
+// temporary frame through decodeState.
 func (b *ValueBuffer) Release() {
 	b.frame.nodes = frameNodes{}
 	b.frame.strings = nil
 }
 
-// frameNodes grows without copying existing nodes. Block sizes are 4, 8,
-// 16, ...; the small first block avoids reserving a large page for tiny values.
-// Only the block headers move when their slice grows. Logical indices remain
-// stable, including when a reserved child range crosses block boundaries.
+// frameNodes grows without copying existing nodes. Its first four nodes are
+// inline; overflow blocks double in size starting at eight nodes. Only their
+// headers move when the slice grows. Logical indices remain stable, including
+// when a reserved child range crosses block boundaries.
 type frameNodes struct {
+	inline   [4]frameNode
 	blocks   [][]frameNode
 	length   int
 	capacity int
@@ -81,10 +83,13 @@ func (n *frameNodes) at(index int) *frameNode {
 	if uint(index) >= uint(n.length) {
 		panic("decoded node index out of bounds")
 	}
+	if index < len(n.inline) {
+		return &n.inline[index]
+	}
 	// Add in the unsigned domain: a valid index near MaxInt must not wrap.
 	x := uint(index) + 4
 	shift := bits.Len(x) - 1
-	return &n.blocks[shift-2][int(x-(uint(1)<<shift))]
+	return &n.blocks[shift-3][int(x-(uint(1)<<shift))]
 }
 
 func (f *valueFrame) node(index int) frameNode {
@@ -106,6 +111,9 @@ func (f *valueFrame) reserve(count uint64) int {
 	}
 	first := n.length
 	end := first + int(count)
+	if n.capacity == 0 {
+		n.capacity = len(n.inline)
+	}
 	for n.capacity < end {
 		// The final block may be shorter so capacity stays representable.
 		size := min(uint(n.capacity)+4, uint(maxInt-n.capacity))
