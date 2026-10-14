@@ -31,5 +31,10 @@ qemu_system(
         "default-timeout": "30m",
     },
     patch = "arm-rcsc.patch",
-    visibility = ["//test:__subpackages__"],
+    visibility = [
+        "//pkg/pinring:__pkg__",
+        "//pkg/sentry/platform/kvm:__pkg__",
+        "//runsc/cmd:__pkg__",
+        "//test:__subpackages__",
+    ],
 )

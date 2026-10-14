@@ -26,7 +26,7 @@ machine="$8"
 test_setup="$(realpath "$9")"
 shift 9
 # The owning rule writes this declared configuration beside the launcher.
-declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator
+declare guest_memory_mib guest_scratch_gib guest_run_under guest_emulator guest_arm64_el2
 declare -a guest_env guest_inherited_env
 # shellcheck disable=SC1090
 source "${GVISOR_TEST_GUEST_CONFIG:?}"
@@ -34,7 +34,13 @@ if [[ -n "$guest_emulator" ]]; then guest_emulator="$(realpath "$guest_emulator"
 case "$machine" in
   arm64_tcg)
     emulator=qemu-system-aarch64
-    machine_options=(-machine "virt-6.2,gic-version=3" -cpu cortex-a57 -accel "tcg,thread=multi")
+    # QEMU's software CPU identity avoids Linux workarounds for physical CPU
+    # errata, which can prevent the emulated guest from entering KVM.
+    # https://github.com/qemu/qemu/blob/4fc49f46d/target/arm/tcg/cpu64.c#L1189-L1206
+    machine_options=(-machine "virt-6.2,gic-version=3" -cpu max -accel "tcg,thread=multi")
+    if [[ "$guest_arm64_el2" == true ]]; then
+      machine_options[1]+=",virtualization=on"
+    fi
     console=ttyAMA0
     ;;
   amd64_kvm)
@@ -95,6 +101,11 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
   # The guest harness owns aliases, runfiles lookup and fallback XML. The outer
   # harness packages returned outputs, so the guest does not request a ZIP.
   printf 'export RUNFILES_DIR="$TEST_SRCDIR"\nexport EXPERIMENTAL_SPLIT_XML_GENERATION=0\ncd /work/payload\n'
+  if [[ "$guest_arm64_el2" == true ]]; then
+    # Require an accessible device before the payload. The selected tests
+    # establish KVM ioctl support; their own skips remain incomplete.
+    printf '%s\n' '[[ -c /dev/kvm && -r /dev/kvm && -w /dev/kvm ]] || { echo "ARM64 guest KVM device unavailable" >&2; exit 1; }'
+  fi
   printf 'exec /bin/bash /input/test-setup.sh'
   if [[ -n $guest_run_under ]]; then
     # Both executables and their runfiles are in the declared payload archive.

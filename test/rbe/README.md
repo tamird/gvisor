@@ -39,6 +39,15 @@ serialized mock state and does not require a host systemd manager. Remote KVM
 worker capacity remains unavailable; the Actions frontend below supplies local
 KVM execution. All variants remain available through their owning Bazel targets.
 
+With `--arch=arm64 --test-execution=remote kvm`, the KVM lane selects the
+existing pinring VM-release and boot-posture unit cases inside the declared
+ARM64 release-candidate guest. Its QEMU declaration enables EL2; other TCG
+guests keep EL2 disabled by default. The guest must provide `/dev/kvm`,
+and both selected cases must execute without skips to establish coverage.
+The retained guest kernel configuration, console, test XML and original
+statuses distinguish missing prerequisites from completed KVM operations.
+This ARM64 cohort does not select the AMD64 Docker KVM integration suite.
+
 SlimVM remains an optional, unqualified platform: the public syscall profiles
 exclude it in [.bazelrc](../../.bazelrc), and the [benchmark adapters](../../Makefile)
 explicitly skip it. Its manual test targets are outside this public CI selection;

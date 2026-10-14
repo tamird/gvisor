@@ -1,4 +1,4 @@
-load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test")
+load("//test/rbe/tcg:defs.bzl", "amd64_kvm_test", "arm64_tcg_test")
 load("//tools:defs.bzl", "go_library", "go_test")
 load("//tools/bazeldefs:platforms.bzl", "docker_test_exec_properties")
 load("//tools/go_generics:defs.bzl", "go_template_instance")
@@ -194,4 +194,23 @@ amd64_kvm_test(
     run_under = "//test/rbe:cgroup_v1",
     scratch_gib = 8,
     tags = [],
+)
+
+# Isolate KVM entry and exit with the existing ARM64 unit test body.
+arm64_tcg_test(
+    name = "kernel_syscall_arm64_tcg_test",
+    size = "large",
+    args = ["-test.run=^TestKernelSyscall$$"],
+    arm64_el2 = True,
+    guest_env = {
+        "GO_TEST_RUN_FROM_BAZEL": "1",
+        "GO_TEST_WRAP_TESTV": "1",
+    },
+    image = "//test/rbe/tcg:rc_guest",
+    payload = ":kvm_test_arm64",
+    tags = [
+        "manual",
+        "nogotsan",
+    ],
+    visibility = ["//test/rbe:__pkg__"],
 )

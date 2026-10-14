@@ -203,6 +203,10 @@ def _syscall_test(
     # Emulation may need more wall time than the native payload. Keep that
     # allowance on the outer TCG tests, without changing native or KVM tests.
     tcg_attributes = {key: value for key, value in kwargs.items() if key in ["args", "size", "timeout", "shard_count", "flaky"]}
+
+    # Avoid per-syscall trace formatting under software emulation. Keep debug
+    # logging; later arguments can opt back into tracing for diagnosis.
+    tcg_attributes["args"] = ["--strace=false"] + tcg_attributes.get("args", [])
     if tcg_timeout != None:
         tcg_attributes["timeout"] = tcg_timeout
     if tcg_shard_count != None:
