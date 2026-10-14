@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T22:08:59.534800+00:00",
+    "updatedAt": "2026-10-14T22:29:26.456798+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4099,22 +4099,24 @@
       "url": "https://github.com/google/gvisor/pull/15416",
       "group": "release",
       "status": "open",
-      "updatedAt": "2026-10-07T08:35:21.745964+00:00",
-      "summary": "Mechanically refreshed and published at 20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf on current upstream e1bc74024. Independent combined source review verifies identical complete source edit sequences and preserved author, date and message; existing validation remains tied to its original source. Publication receipt d5d609287507 verifies exact old-head leases, unchanged PR body and matching local/public/tracking heads. At publication GitHub reported MERGEABLE; current CI and reviews appear in the synchronized snapshot. No new runtime workload was launched for this unchanged rebase.\n\nEarlier delivery and source-specific evidence:\n\nThe contributor-approved independent metadata-retention fix is now open as PR #15416 at the exact reviewed head. Fetch keeps a prior Go module commit only when the fresh lookup has no commit and the module version and nonempty ZIP hash match. Fresh license results and nonempty commits remain authoritative; retrieval dates are retained only when the complete record is unchanged. This is a source correction, not a license-policy approval.\n\nParent 06830b2d passes in 118.408 seconds at exact d0d1a2a13. The existing checker passes all four roots without skips on one uncached remote AMD64 OCI action with its original 60-second timeout. Canonical Fetch and Verify accept 190 entries and produce a byte-identical catalog. Outcome 607161f6e640 and independent saved peer efda85edb7c6 bind 131 files, 21 source records and the actual Action/Command/stdout/XML join. Fresh pre-reconciliation metadata was not logged, so this run does not identify which requests exercised the fallback. No catalog or policy change was adopted.",
+      "updatedAt": "2026-10-14T22:29:26.456798+00:00",
+      "summary": "Buildkite 50800 failed the native Linux nftables FIB case in the preceding matching import aa9751717. The rule rejects `fib saddr . iif oifname exists` with EINVAL; the peer timeout follows that failure. The regenerated import d4000cd9e has pipeline 50807 pending. The same native failure also affects #15603. Its cause is being investigated.\n\nMechanically refreshed and published at 20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf on current upstream e1bc74024. Independent combined source review verifies identical complete source edit sequences and preserved author, date and message; existing validation remains tied to its original source. Publication receipt d5d609287507 verifies exact old-head leases, unchanged PR body and matching local/public/tracking heads. At publication GitHub reported MERGEABLE; current CI and reviews appear in the synchronized snapshot. No new runtime workload was launched for this unchanged rebase.\n\nEarlier delivery and source-specific evidence:\n\nThe contributor-approved independent metadata-retention fix is now open as PR #15416 at the exact reviewed head. Fetch keeps a prior Go module commit only when the fresh lookup has no commit and the module version and nonempty ZIP hash match. Fresh license results and nonempty commits remain authoritative; retrieval dates are retained only when the complete record is unchanged. This is a source correction, not a license-policy approval.\n\nParent 06830b2d passes in 118.408 seconds at exact d0d1a2a13. The existing checker passes all four roots without skips on one uncached remote AMD64 OCI action with its original 60-second timeout. Canonical Fetch and Verify accept 190 entries and produce a byte-identical catalog. Outcome 607161f6e640 and independent saved peer efda85edb7c6 bind 131 files, 21 source records and the actual Action/Command/stdout/XML join. Fresh pre-reconciliation metadata was not logged, so this run does not identify which requests exercised the fallback. No catalog or policy change was adopted.",
       "followup": {
-        "disposition": "Current-head approval; import open",
-        "owner": "external_sweeps",
-        "nextAction": "Observe the current-source import checks and merge state.",
+        "disposition": "Public import failure under investigation",
+        "owner": "syscall_validation",
+        "nextAction": "Establish why native Linux rejects the FIB rule; follow the regenerated import separately while preserving the original failure evidence.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/d0d1a2a13b6780095986864fa2f7536d5834f9b9",
           "https://app.buildbuddy.io/invocation/06830b2d-b071-4da3-8d99-633dede68c38",
           "https://github.com/google/gvisor/pull/15416",
-          "https://github.com/tamird/gvisor/commit/20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf"
+          "https://github.com/tamird/gvisor/commit/20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
+          "https://buildkite.com/gvisor/pipeline/builds/50800"
         ],
         "reviewedAt": "2026-10-08T21:05:14.556649+00:00",
         "sourceHead": "20a8b6c63ec2e42775b9a7675f21d9cb0d0330bf",
         "mergeable": "MERGEABLE",
-        "reviewDecision": "APPROVED"
+        "reviewDecision": "APPROVED",
+        "observedAt": "2026-10-14T22:29:26.456798+00:00"
       },
       "number": 15416
     },
@@ -5366,21 +5368,23 @@
       "url": "https://github.com/google/gvisor/pull/15603",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-10T02:46:30.966405+00:00",
-      "summary": "The mechanical rebase is delivered at 912173d85 on current master. Its only conflict combined imports with the upstream NaN map test; independent review confirmed the approved production patch is unchanged. The published PR is mergeable, with ordinary review gates pending. No prior human approval needed re-requesting.\n\nMap decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries retain fresh storage for delayed callbacks, while interfaces keep independent dynamic storage. Existing nil-transition, typed-nil and retained-receiver tests and the separate Map Load measurements remain bound to their recorded source.",
+      "updatedAt": "2026-10-14T22:29:26.456798+00:00",
+      "summary": "The matching import #15780 at 144b34ade fails public Buildkite 50801 in the native Linux nftables FIB case. Its rule installation returns EINVAL before the peer times out, matching #15416’s import failure. The shared cause is under investigation.\n\nThe mechanical rebase is delivered at 912173d85 on current master. Its only conflict combined imports with the upstream NaN map test; independent review confirmed the approved production patch is unchanged. The published PR is mergeable, with ordinary review gates pending. No prior human approval needed re-requesting.\n\nMap decoding reuses cleared temporary storage for non-aggregate keys and values. Struct and Array entries retain fresh storage for delayed callbacks, while interfaces keep independent dynamic storage. Existing nil-transition, typed-nil and retained-receiver tests and the separate Map Load measurements remain bound to their recorded source.",
       "followup": {
-        "disposition": "Rebase delivered; maintainer review pending",
-        "owner": "external_sweeps",
+        "disposition": "Public import failure under investigation",
+        "owner": "syscall_validation",
         "sourceHead": "912173d856d9dab41c698afad3f3499602dce009",
         "reviewedAt": "2026-10-10T18:54:22.165285+00:00",
-        "nextAction": "Observe fresh-head checks and maintainer feedback at 912173d85. Source-preservation review is complete, the conflict is resolved, and no contributor hold or repeated review notification applies.",
+        "nextAction": "Investigate the shared native nftables FIB rejection with #15416; no source correction or retry is assumed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/912173d856d9dab41c698afad3f3499602dce009",
           "https://github.com/google/gvisor/pull/15603",
-          "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10"
+          "https://github.com/tamird/gvisor/commit/2751ca4d759a1847ea4ed3a8d181dfc24272ab10",
+          "https://buildkite.com/gvisor/pipeline/builds/50801"
         ],
         "mergeable": "MERGEABLE",
-        "reviewDecision": null
+        "reviewDecision": null,
+        "observedAt": "2026-10-14T22:29:26.456798+00:00"
       },
       "number": 15603
     },
@@ -6833,20 +6837,49 @@
       "group": "bazel",
       "url": "https://github.com/google/gvisor/pull/15772",
       "status": "open",
-      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
+      "updatedAt": "2026-10-14T22:23:22.330360+00:00",
       "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The approved patch and commit message are preserved in independent PR #15772 at 928823b75. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
-        "disposition": "Delivered; following CI and review",
-        "owner": "external_sweeps",
+        "disposition": "Approved; upstream-location question awaiting reply authorization",
+        "owner": "root",
         "sourceHead": "928823b75a0f7c72de98da966416c489057e4b24",
-        "observedAt": "2026-10-14T11:06:01.686863+00:00",
-        "nextAction": "Follow PR #15772 current-head checks and maintainer feedback. The approved standalone delivery is complete.",
+        "observedAt": "2026-10-14T22:23:22.330360+00:00",
+        "nextAction": "Post the prepared explanation if authorized: Coral is archived and gVisor already pins its final master commit.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
           "https://github.com/google/gvisor/pull/15772"
         ]
       },
       "number": 15772
+    },
+    {
+      "id": "branch:review/checksum-report-comment",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/checksum-report-comment",
+      "head": "974fc3e8db2da5a93c204d7ce44974ca92dd070e",
+      "title": "Remove historical checksum test comment",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e",
+      "status": "Contributor decision requested",
+      "updatedAt": "2026-10-14T22:23:22.330360+00:00",
+      "summary": "Proposed amendment to #15768 removes the two historical source-comment lines identified by Etienne. The checksum test code and commit message are unchanged; the proposal is rebased onto current master. The published PR still has its previous head.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "974fc3e8db2da5a93c204d7ce44974ca92dd070e",
+        "url": "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Comment-only correction ready; publication and reply decision pending",
+        "sourceHead": "974fc3e8db2da5a93c204d7ce44974ca92dd070e",
+        "observedAt": "2026-10-14T22:23:22.330360+00:00",
+        "nextAction": "Publish the amendment and reply to Etienne if authorized. No test rerun is needed for the comment deletion.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e",
+          "https://github.com/google/gvisor/pull/15768#discussion_r4276737393"
+        ]
+      }
     }
   ],
   "edges": [
@@ -8293,6 +8326,14 @@
       "role": "proposed_update",
       "reason": "The revised maintainer-focused amendment awaits a contributor decision; the source PR remains unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
+    },
+    {
+      "from": "branch:review/checksum-report-comment",
+      "to": "pr:15768",
+      "type": "includes",
+      "role": "proposed_update",
+      "reason": "Unpublished comment-only amendment awaiting contributor decision.",
+      "evidence": "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e"
     }
   ],
   "investigations": [
@@ -9113,8 +9154,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-14T22:08:59.534800+00:00",
-      "summary": "The decoded-frame prototype at 9034ac6c9 passes the selected correctness, race, stream-preservation, analyzer and allocation-guard checks. Generated restore methods read compact frames through the common decoder; manual methods retain owned values. The matched control is afa425b94. The original run reached its work deadline during the final ARM64 link; a separate continuation completed only that link.\n\nThe large adoption fixture drops from 4,957 to 91 allocations per Load, while allocated bytes rise from 255,408 to 578,864. Control-message Load changes from 115 to 107 allocations and 5,328 to 7,192 bytes. Ordinary and retained-Source fixtures allocate more. These are single measured Loads, not a latency comparison. Production runsc grows 45,056 bytes on AMD64 and 65,536 on ARM64. All eight complete executable files and the original cost logs are independently verified. The prototype is not proposed for adoption; allocation profiles are next to identify the extra memory cost. Earlier designs and their measured tradeoffs remain in the findings below.",
+      "updatedAt": "2026-10-14T22:23:22.330360+00:00",
+      "summary": "The decoded-frame prototype at 9034ac6c9 passes the selected correctness, race, stream-preservation, analyzer and allocation-guard checks. Generated restore methods read compact frames through the common decoder; manual methods retain owned values. The matched control is afa425b94. The original run reached its work deadline during the final ARM64 link; a separate continuation completed only that link.\n\nThe large adoption fixture drops from 4,957 to 91 allocations per Load, while allocated bytes rise from 255,408 to 578,864. Control-message Load changes from 115 to 107 allocations and 5,328 to 7,192 bytes. Ordinary and retained-Source fixtures allocate more. These are single measured Loads, not a latency comparison. Production runsc grows 45,056 bytes on AMD64 and 65,536 on ARM64. All eight complete executable files and the original cost logs are independently verified. The prototype is not proposed for adoption; completed profiles identify repeated frame-buffer growth as the main allocation site. Earlier designs and their measured tradeoffs remain in the findings below.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9608,9 +9649,22 @@
               "url": "https://app.buildbuddy.io/invocation/1541490b-1e46-4b8c-b729-d7c450be5441"
             }
           ]
+        },
+        {
+          "text": "The four short allocation profiles completed in c9451b9d and pass independent source/native and raw-profile review. In the large adoption fixture, growing the contiguous frame-node array accounts for about 475 KB of the 577 KB estimated allocation bytes per final benchmark iteration. The profile contains successively larger allocations at that site, including roughly 27 KB, 41 KB, 57 KB, 82 KB, 115 KB and 156 KB blocks. The next revision will avoid recopying prior nodes as the frame grows. Profiles include setup and calibration; these normalized sampled values are not exact allocation counts or a latency comparison.",
+          "evidence": [
+            {
+              "label": "Completed four-action profile comparison",
+              "url": "https://app.buildbuddy.io/invocation/c9451b9d-71eb-40df-85cc-d6db112e0598"
+            },
+            {
+              "label": "Measured candidate plus unchanged profile decoder",
+              "url": "https://github.com/tamird/gvisor/commit/1a7d68924d95e61f6b22141216b285cd011be59e"
+            }
+          ]
         }
       ],
-      "nextStep": "Profile allocation sites in the measured decoded-frame candidate and matched control, using the existing bounded profiling method, before changing frame storage. Preserve manual-method ownership and retained-Source behavior. No extra timing samples or promotion are implied.",
+      "nextStep": "Replace contiguous frame growth with small typed blocks while preserving the single parser, logical indices and owned manual-method values. Review block boundaries and lifetime, then measure small and large fixtures before proposing adoption.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
