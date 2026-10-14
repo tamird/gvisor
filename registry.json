@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-14T04:02:36.266694+00:00",
+    "updatedAt": "2026-10-14T04:59:30.036233+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -2989,9 +2989,9 @@
       "summary": "The complete discussion already answers the configuration question: Konstantin described the provisioning configuration as internal, and Etienne recommended inspecting the intended build’s worker environment until public Terraform is available. Public pipeline and Bazel routing identify queues and selections, but do not pin exact worker kernel images. The dated kernel table should be replaced with durable instructions for locating current run evidence. No unanswered maintainer question is blocking that source decision.",
       "updatedAt": "2026-10-13T19:56:48.971156+00:00",
       "followup": {
-        "disposition": "Documentation amendment awaiting contributor decision",
+        "disposition": "Contributor-requested documentation rewrite",
         "owner": "root",
-        "nextAction": "Await the decision on exact 01e70f3a documentation amendment and prepared reply/resolution. The current 7b311c5b source and unresolved upstream thread remain unchanged.",
+        "nextAction": "The contributor requested a maintainer-focused rewrite of the proposed 01e70f3a documentation amendment. Agent revision work remains; the published source and unresolved upstream thread are unchanged.",
         "sourceHead": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
         "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
         "reviewDecision": null,
@@ -3007,7 +3007,7 @@
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049267317",
           "https://github.com/google/gvisor/pull/15439#issuecomment-6049316326"
         ],
-        "observedAt": "2026-10-13T19:56:48.971156+00:00"
+        "observedAt": "2026-10-14T04:59:30.036233+00:00"
       },
       "head": "7b311c5b99556fb580635557c0f4d7c59c0f350c",
       "number": 15439,
@@ -4015,16 +4015,16 @@
       "summary": "The contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; current c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified proposals awaiting contributor decisions",
+        "disposition": "Approved amendment delivery queued",
         "sourceHead": "c10df898b36cf59e0265ad7dddc6803a97001f67",
-        "nextAction": "Await decisions on the two independent fixture cleanups and exact fd737bf7a guard amendment plus prepared replies. The contributor prefers keeping netip registration with the core migration; that standalone split is held. Published c10 and unresolved upstream review threads remain unchanged.",
+        "nextAction": "The contributor approved the two independent fixture cleanups and exact fd737bf7a guard amendment. Owners are delivering those approved sources. The separate netip registration split remains held under the contributor’s preference; published c10 and unresolved upstream threads remain unchanged until verified publication.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158"
         ],
-        "observedAt": "2026-10-13T20:52:44.306042+00:00"
+        "observedAt": "2026-10-14T04:59:30.036233+00:00"
       },
       "evidence": [
         {
@@ -4942,7 +4942,7 @@
       "followup": {
         "disposition": "New public import CI failure under investigation",
         "owner": "external_sweeps",
-        "nextAction": "Import #15687 at bc25b28dd covers the obsolete XML amendment, whose contributor decision is withdrawn. Its new public pipeline 50720 fails the gtest discovery fixture in all three failed jobs. The existing qualified GNU link-ordering proposal remains pending a contributor decision; these new CI logs omit subprocess stderr, so they do not independently prove that linker diagnosis. Keep the known source conflict visible, but do not immediately rebase while this current-source-matching import is active.",
+        "nextAction": "Import #15687 at bc25b28dd covers the obsolete XML amendment, whose contributor decision is withdrawn. Its new public pipeline 50720 fails the gtest discovery fixture in all three failed jobs. The existing qualified GNU link-ordering proposal is contributor-approved and queued for independent delivery; these new CI logs omit subprocess stderr, so they do not independently prove that linker diagnosis. Keep the known source conflict visible, but do not immediately rebase while this current-source-matching import is active.",
         "sourceHead": "400d11eea2e9923c8e1d111b9f4a56b8fffc9082",
         "reviewedAt": "2026-10-12T06:07:17.517136+00:00",
         "evidence": [
@@ -4971,14 +4971,14 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/74061d8f8d9851abcbf6eaae32b208be4ecee98e",
       "status": "Full mixed unit profile adopted",
-      "summary": "Canonical qualification/current-upstream-refresh is now 74061d8f8, adopted from the exact independently reviewed full mixed unit profile. All 687 owner summaries passed, with 707 test results: 689 remote cache hits, 13 fresh remote executions and 5 local executions. All 1,414 original log/XML reports are retained; 80 skipped case entries have the same identities as the prior run. This closes the full unit profile, while the other public CI lanes retain their separately recorded source-bound qualifications. GPU capacity and a completed fresh Triton qualification remain outstanding.\n\nThe prior canonical source ddd23376f391 added the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporated upstream changes through ae980d605 and preserved the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags; source availability is under agent investigation. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those dedicated full profiles were not repeated by this mixed unit run, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.\n\nFocused checks now cover eleven of the twelve previously skipped environment cases across qualified sources. The first ten and both CPU examples passed at 1f80186d6. The pinring timing correction at 4c3ad453e passes all four privileged cases (AMD64 AF/KVM, native ARM64 AF and ARM64 KVM in the TCG guest) plus both analyzers. The original full-unit skip records and earlier ARM assertion failure remain retained; canonical qualification remains 74061d8f8. The remaining ARM64 boot case subsequently reached its actual 900-second test timeout, distinct from the earlier outer-budget interruption. Recovered partial logs end between memory-manager creation and executable loading; they do not establish the cause. The pending stack diagnostic is agent work, not a maintainer blocker.",
-      "updatedAt": "2026-10-14T04:02:36.266694+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh is now 74061d8f8, adopted from the exact independently reviewed full mixed unit profile. All 687 owner summaries passed, with 707 test results: 689 remote cache hits, 13 fresh remote executions and 5 local executions. All 1,414 original log/XML reports are retained; 80 skipped case entries have the same identities as the prior run. This closes the full unit profile, while the other public CI lanes retain their separately recorded source-bound qualifications. GPU capacity and a completed fresh Triton qualification remain outstanding.\n\nThe prior canonical source ddd23376f391 added the independently qualified ACL-error cleanup to c36ff4a22647 (whose tree was tested at 0fae764d9e). It incorporated upstream changes through ae980d605 and preserved the stronger previously qualified proc reader-start fixture. The independently qualified tmpfs tar replacement fix releases superseded detached files before replacement allocation, so duplicate entries do not exceed quotas solely because old storage waits for final cleanup. The combined quota and ACL correction passed both full TMPFS suites (177 XML entries per CPU) and both analyzer wrappers, with all four CPU-specific findings chains independently verified.\n\nTargeted upstream checks passed 18 unit suites, 23 analyzer wrappers with both CPU findings, and 13 checkpoint XML entries. Sixteen NVIDIA ABI cases were explicitly skipped for missing public source tags; source availability is under agent investigation. The original proc wrapper/selector errors are retained; a separate corrected run passes five named cases on native Linux and five on systrap/directfs. The tmpfs quota fix has its own paired before-failure and after-suite/analyzer evidence. These source-bound checks are not a fresh full qualification.\n\nEarlier adopted native Go images, rules_oci 2.3.3 and its license catalog, nonrecursive state cycle search, generated sniffer BUILD correction and portable native-layout image exporter remain included. The complete ARM qualification remains source-bound to 8c6d014fb: 661 owners in the 64 KiB profile and 919 in the release-candidate-kernel profile passed; those dedicated full profiles were not repeated by this mixed unit run, and the ARM64-64K lane remains required. Stable Dockerfile export, stock conversion and actual load are closed. Triton has no completed source layout/archive/load; the provider investigation is tracked in BuildBuddy #13789. No GPU execution is claimed.\n\nFocused checks now cover eleven of the twelve previously skipped environment cases across qualified sources. The first ten and both CPU examples passed at 1f80186d6. The pinring timing correction at 4c3ad453e passes all four privileged cases (AMD64 AF/KVM, native ARM64 AF and ARM64 KVM in the TCG guest) plus both analyzers. The original full-unit skip records and earlier ARM assertion failure remain retained; canonical qualification remains 74061d8f8. The remaining ARM64 boot case subsequently reached its actual 900-second test timeout, distinct from the earlier outer-budget interruption. Recovered partial logs end between memory-manager creation and executable loading; they do not establish the cause. A subsequent thread diagnostic intentionally terminated the process after collecting evidence: one sampled Sentry thread was in KVM execution, the main Go stack was unavailable, and stack collection was waiting for stop-the-world. This is diagnostic evidence, not a passing qualification, and the cause remains unknown. Agent work is isolating the boundary with the existing minimal kernel-syscall case.",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Full mixed unit profile passed and adopted",
         "sourceHead": "74061d8f8d9851abcbf6eaae32b208be4ecee98e",
-        "observedAt": "2026-10-14T04:02:36.266694+00:00",
-        "nextAction": "The exact 74061d8f8 source is adopted after all 687 unit owner summaries passed. Retain the cache/fresh split and unchanged skipped cases; this does not establish a fresh pass for every public CI lane. The old 70b948545 result remains 686/687 passing, and the earlier 101d2643c heap failure remains recorded. The held e3adde51d sniffer proposal keeps its separate contributor-review and PR #15668 dependency status. Eleven of twelve selected environment cases are now covered across qualified sources. Investigate the remaining ARM64 boot case after its actual 900-second timeout; retain the earlier assertion failure and coordinator interruption separately. The standalone pinring correction has its own contributor-review request; canonical refs remain 74061d8f8.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "The exact 74061d8f8 source is adopted after all 687 unit owner summaries passed. Retain the cache/fresh split and unchanged skipped cases; this does not establish a fresh pass for every public CI lane. The old 70b948545 result remains 686/687 passing, and the earlier 101d2643c heap failure remains recorded. The held e3adde51d sniffer proposal keeps its separate contributor-review and PR #15668 dependency status. Eleven of twelve selected environment cases are now covered across qualified sources. Investigate the remaining ARM64 boot case after its actual 900-second timeout; retain the earlier assertion failure and coordinator interruption separately. The standalone pinring correction now needs the contributor-requested deferred-cleanup revision; canonical refs remain 74061d8f8.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ddd23376f391b04aea96441c0be4c800877bd4c9",
           "https://github.com/tamird/gvisor/commit/c36ff4a226472cd424848a2135727b5aad0d97b2",
@@ -6135,11 +6135,11 @@
       "updatedAt": "2026-10-13T17:55:57.019787+00:00",
       "summary": "The contributor-approved driver refactor is now PR #15669 at exact head 60834ef0c. It includes the requested pointer receivers, comment cleanup and NVIDIA .run installer terminology. One downloader owns HTTP response lifetime and the shared copy/checksum operation. Missing installers use typed HTTP status and validation continues to the other architecture. Installation resolves the host checksum once, rejects an unknown installed-driver state, performs PCI preflight and prepares, verifies and closes the replacement before uninstalling. Listing shares the same host eligibility selection and replaces the complete output file.\n\nBoth complete native unit owners and all six CLI/caller links passed on the preceding integrated source. Two analyzer owners passed initially; the third rejected a redundant test variable type, then passed after its one-line correction. Those results are independently closed. The requested amendment has separate verified build-only evidence: four AMD64 unit/CLI/caller links, including the exact standalone caller through a private build witness. This checks the amended method sets and consumers without repeating the previous runtime or analyzer suites.\n\nThe original EOF failure and analyzer-only failed parent remain retained. No NVIDIA download, installation or GPU workload ran; HTTP and command cancellation remain source-reviewed. The independent PR is open and mergeable, and the existing watcher follows current-head CI and review feedback.",
       "followup": {
-        "disposition": "Published source unchanged; amendment awaiting contributor decision",
-        "owner": "external_sweeps",
+        "disposition": "Approved amendment delivery queued",
+        "owner": "root",
         "sourceHead": "60834ef0c08df041dc049c2fecf0038dfe34351a",
         "reviewedAt": "2026-10-12T12:22:01.641015+00:00",
-        "nextAction": "Follow the published source and import checks; the separate proposed amendment awaits the contributor’s decision.",
+        "nextAction": "Exact 69ca892cd is contributor-approved; ROOT owns its amendment delivery. The published source and matching import remain unchanged until that delivery is verified.",
         "mergeable": "MERGEABLE",
         "evidence": [
           "https://github.com/google/gvisor/pull/15669",
@@ -6147,7 +6147,7 @@
           "https://app.buildbuddy.io/invocation/52bef731-5b2f-4bda-b442-29aae4bac58d",
           "https://app.buildbuddy.io/invocation/84380b15-85ae-4831-b450-ac933f4c3b6b"
         ],
-        "observedAt": "2026-10-13T17:55:57.019787+00:00"
+        "observedAt": "2026-10-14T04:59:30.036233+00:00"
       },
       "number": 15669
     },
@@ -6393,20 +6393,15 @@
       "title": "Consolidate GPU driver preparation",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
-      "summary": "Qualified amendment records public installer availability per architecture and preserves supported driver ABIs. It also fixes read-only listing output ownership and complete file replacement. The published PR remains unchanged; the contributor is reviewing this exact amendment.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "69ca892cd3f85379eb68541836396453310188aa",
-        "url": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "Qualified amendment records public installer availability per architecture and preserves supported driver ABIs. It also fixes read-only listing output ownership and complete file replacement. The contributor approved exact 69ca892cd for delivery; the published PR remains unchanged until its owner publishes the amendment.",
       "followup": {
-        "disposition": "Contributor decision pending",
+        "disposition": "Contributor-approved; delivery queued",
         "owner": "root",
         "sourceHead": "69ca892cd3f85379eb68541836396453310188aa",
-        "observedAt": "2026-10-13T17:55:57.019787+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Amend PR #15669 on review/gpu-driver-preparation-clarity; preserve approved source and inspect current matching import before delivery.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
         ]
@@ -6421,20 +6416,15 @@
       "title": "Fix shared-library linking in the C++ toolchain",
       "group": "bazel",
       "url": "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T17:55:57.019787+00:00",
-      "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The contributor is deciding whether to open this independent PR.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
-        "url": "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The qualified GNU toolchain correction puts the linker control flag before dependency libraries while leaving runtime libraries in place. Paired hosted GCC12 checks fail before and pass afterward under shared linking. The contributor approved this exact source for an independent PR; delivery is queued.",
       "followup": {
-        "disposition": "Contributor decision pending",
-        "owner": "root",
+        "disposition": "Contributor-approved; delivery queued",
+        "owner": "external_sweeps",
         "sourceHead": "1fe65e0636d3842eaecff007ca1d6051fcce6595",
-        "observedAt": "2026-10-13T17:55:57.019787+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/1fe65e0636d3842eaecff007ca1d6051fcce6595"
         ]
@@ -6480,20 +6470,15 @@
       "title": "Restore the IPv6 control test’s source address",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
-      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The contributor is deciding whether to open this standalone PR.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
-        "url": "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "Independent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The contributor approved this exact source for a standalone PR; delivery is queued.",
       "followup": {
-        "disposition": "Contributor decision pending",
-        "owner": "root",
+        "disposition": "Contributor-approved; delivery queued",
+        "owner": "external_sweeps",
         "sourceHead": "fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
-        "observedAt": "2026-10-13T19:37:42.271874+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
@@ -6515,20 +6500,15 @@
       "title": "Use CIDR masks in route-selection tests",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
-      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The contributor is deciding whether to open this standalone PR.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "233a8335d793eaef755df814f226a380a1cbd756",
-        "url": "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "Independent precursor replaces noncontiguous fixture masks with two IPv4 halves while preserving the selected routing, NIC-lifecycle and route-removal cases. Both-architecture stack suites pass. This preserves the selected test matrix, not general noncontiguous-mask behavior. The contributor approved this exact source for a standalone PR; delivery is queued.",
       "followup": {
-        "disposition": "Contributor decision pending",
-        "owner": "root",
+        "disposition": "Contributor-approved; delivery queued",
+        "owner": "external_sweeps",
         "sourceHead": "233a8335d793eaef755df814f226a380a1cbd756",
-        "observedAt": "2026-10-13T19:37:42.271874+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/233a8335d793eaef755df814f226a380a1cbd756",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
@@ -6550,20 +6530,15 @@
       "title": "Handle invalid addresses in the netip migration",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T19:37:42.271874+00:00",
-      "summary": "Qualified amendment addresses the two current review findings while preserving zero-value filter wildcards. Full stack suites and owning analyzers pass on both architectures; the initial over-strict wildcard correction and its NAT failures remain recorded. The folded, rebased patch is source-equivalent. The contributor is deciding whether to update PR #15730 and send the prepared inline replies; the published PR remains unchanged.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "fd737bf7a231d864418e95edff2e3191efc07c2c",
-        "url": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "Qualified amendment addresses the two current review findings while preserving zero-value filter wildcards. Full stack suites and owning analyzers pass on both architectures; the initial over-strict wildcard correction and its NAT failures remain recorded. The folded, rebased patch is source-equivalent. The contributor approved exact fd737bf7a for delivery. The published PR and unresolved review threads remain unchanged until its owner completes publication and the authorized responses.",
       "followup": {
-        "disposition": "Contributor decision pending",
+        "disposition": "Contributor-approved; delivery queued",
         "owner": "root",
         "sourceHead": "fd737bf7a231d864418e95edff2e3191efc07c2c",
-        "observedAt": "2026-10-13T19:37:42.271874+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published proposal before upstream delivery.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Deliver the approved guard amendment to PR #15730, preserving the zero-value wildcard behavior and the prepared review-response scope.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162"
@@ -6585,24 +6560,23 @@
       "title": "Document how to identify syscall CI kernels",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T19:56:48.971156+00:00",
-      "summary": "The reviewed documentation amendment replaces a dated kernel table with public CI routing, target filters and the maintainer’s current-worker inspection guidance. Agent or distribution names are explicitly distinct from the actual kernel release. The contributor is deciding whether to amend PR #15439, reply and resolve the moving-target thread; the published PR is unchanged.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "01e70f3a44a37a665f17d3c247d81dc608908a72",
-        "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
-      },
+      "status": "Changes requested; agent revision",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The reviewed documentation amendment replaces a dated kernel table with public CI routing, target filters and the maintainer’s current-worker inspection guidance. Agent or distribution names are explicitly distinct from the actual kernel release. The contributor requested a rewrite from the maintainer’s perspective. Revise the documentation proposal; the current draft is not approved. The published PR and unresolved thread remain unchanged.",
       "followup": {
-        "disposition": "Contributor decision pending",
+        "disposition": "Contributor requested revision",
         "owner": "root",
         "sourceHead": "01e70f3a44a37a665f17d3c247d81dc608908a72",
-        "observedAt": "2026-10-13T19:56:48.971156+00:00",
-        "nextAction": "Await the contributor’s decision on this exact published documentation amendment and prepared review response.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "The contributor requested a rewrite from the maintainer’s perspective. Revise the documentation proposal; the current draft is not approved.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72",
           "https://github.com/google/gvisor/pull/15439#discussion_r4212422885"
         ]
+      },
+      "contributorChangesRequested": {
+        "head": "01e70f3a44a37a665f17d3c247d81dc608908a72",
+        "url": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
       }
     },
     {
@@ -6614,20 +6588,15 @@
       "title": "Exercise example network modes with a listener",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T20:47:40.801722+00:00",
-      "summary": "The reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The contributor is deciding whether to open this independent PR; no upstream PR exists.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
-        "url": "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The reviewed example-test correction connects to a listener in the test process: host networking must reach it and isolated networking must not. Deliberately forcing either wrong mode fails the corresponding case, while the original two tests incorrectly accepted forced host networking. The final AMD64 suite and both-CPU analyzers pass. The contributor approved this exact source for an independent PR; no upstream PR has been opened yet.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor decision pending",
+        "owner": "external_sweeps",
+        "disposition": "Contributor-approved; delivery queued",
         "sourceHead": "9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
-        "observedAt": "2026-10-13T20:47:40.801722+00:00",
-        "nextAction": "Await the contributor’s decision on opening this exact reviewed network-test correction.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9fd9b5eb4357a33ccd7d8094841e021b10c780b7",
           "https://app.buildbuddy.io/invocation/b44c4c5e-cac5-4eb1-a60d-1830683b1bbb"
@@ -6643,20 +6612,15 @@
       "title": "testing: propagate repeated benchmark failures",
       "group": "runtime",
       "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T22:12:25.629104+00:00",
-      "summary": "The Go fix preserves failure propagation from later benchmark count/CPU repetitions to the original benchmark. Before/after validation reproduces the incorrect native exit 0/PASS after a real failure, then verifies exit 1/FAIL with the fix. The full testing and test2json package checks pass, with one intentional fuzz seed skip retained. The contributor is deciding whether to upload this exact source as a new Gerrit change; no Gerrit change has been uploaded for this proposal. The independent containerd upload failure and incomplete Nginx pilot remain separate.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
-        "url": "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43"
-      },
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The Go fix preserves failure propagation from later benchmark count/CPU repetitions to the original benchmark. Before/after validation reproduces the incorrect native exit 0/PASS after a real failure, then verifies exit 1/FAIL with the fix. The full testing and test2json package checks pass, with one intentional fuzz seed skip retained. The contributor approved this exact source for Gerrit delivery; no Gerrit change has been uploaded for this proposal yet. The independent containerd upload failure and incomplete Nginx pilot remain separate.",
       "followup": {
-        "owner": "restore_integration_review",
-        "disposition": "Qualified Go proposal awaiting contributor decision",
+        "owner": "root",
+        "disposition": "Contributor-approved; delivery queued",
         "sourceHead": "621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
-        "observedAt": "2026-10-13T22:12:25.629104+00:00",
-        "nextAction": "Await the contributor’s decision on uploading this exact fix to Go Gerrit.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Deliver the approved fix through Go Gerrit using the existing source and validation packet.",
         "evidence": [
           "https://github.com/tamird/go/commit/621ffc2af4ec0ba6a1d5dc12631ff6b5f6701c43",
           "https://app.buildbuddy.io/invocation/82c9cdb4-a740-4d11-bd23-cb92f07f20a3",
@@ -6673,24 +6637,19 @@
       "title": "Group checksum trials by size and alignment",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-13T23:50:00.547196+00:00",
-      "summary": "The qualified checksum-test change groups the same 675,000 valid comparisons into 180 subtests instead of 900,000. Both CPU suites and analyzers pass; independently reviewed log/XML reports shrink from about 259.5 MB to 506,553 bytes per CPU (99.8%). The contributor is deciding whether to open this exact public proposal upstream; no upstream PR has been opened.",
+      "status": "Approved; delivery queued",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The qualified checksum-test change groups the same 675,000 valid comparisons into 180 subtests instead of 900,000. Both CPU suites and analyzers pass; independently reviewed log/XML reports shrink from about 259.5 MB to 506,553 bytes per CPU (99.8%). The contributor approved this exact public proposal for upstream delivery; no upstream PR has been opened yet.",
       "followup": {
-        "owner": "root",
-        "disposition": "Qualified proposal awaiting contributor decision",
+        "owner": "external_sweeps",
+        "disposition": "Contributor-approved; delivery queued",
         "sourceHead": "e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
-        "observedAt": "2026-10-13T23:50:00.547196+00:00",
-        "nextAction": "Await the contributor decision on opening this exact source as a standalone upstream PR.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "Refresh the independent base while preserving the approved patch and open the standalone gVisor PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
           "https://app.buildbuddy.io/invocation/6d46817e-da0a-4034-9d06-04392b770d26"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "e57aaf56529c36065ae54d7a053b6f7990e4f4fb",
-        "url": "https://github.com/tamird/gvisor/commit/e57aaf56529c36065ae54d7a053b6f7990e4f4fb"
       }
     },
     {
@@ -6702,24 +6661,23 @@
       "title": "Correct pinring teardown timing",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc",
-      "status": "Contributor review pending",
-      "updatedAt": "2026-10-14T04:02:36.266694+00:00",
-      "summary": "The standalone correction is patch- and message-identical to the qualified pinring timing fix. All four privileged named cases and both CPU analyzers passed on the preserved qualification source. The contributor is reviewing whether to open this independent upstream PR using its commit message; no upstream PR exists and no dependency is recorded. The qualification does not establish a speedup or explain the original ARM latency result.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "a34bac7751984f777eae03eb1d8234844580c5dc",
-        "url": "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc"
-      },
+      "status": "Changes requested; agent revision",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The standalone correction is patch- and message-identical to the qualified pinring timing fix. All four privileged named cases and both CPU analyzers passed on the preserved qualification source. The contributor requested a revision to use deferred cleanup. Revise the proposal and preserve its independently qualified behavior before asking for review again. No upstream PR exists and no dependency is recorded. The qualification does not establish a speedup or explain the original ARM latency result.",
       "followup": {
         "owner": "root",
-        "disposition": "Qualified standalone proposal awaiting contributor decision",
+        "disposition": "Contributor requested revision",
         "sourceHead": "a34bac7751984f777eae03eb1d8234844580c5dc",
-        "observedAt": "2026-10-14T04:02:36.266694+00:00",
-        "nextAction": "Await the contributor decision on opening this exact standalone correction upstream using its commit message.",
+        "observedAt": "2026-10-14T04:59:30.036233+00:00",
+        "nextAction": "The contributor requested a revision to use deferred cleanup. Revise the proposal and preserve its independently qualified behavior before asking for review again.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc",
           "https://github.com/tamird/gvisor/commit/4c3ad453e186dddacd7b88e6d4ae2b79a281f495"
         ]
+      },
+      "contributorChangesRequested": {
+        "head": "a34bac7751984f777eae03eb1d8234844580c5dc",
+        "url": "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc"
       }
     }
   ],
@@ -8144,7 +8102,7 @@
       "to": "pr:15562",
       "type": "includes",
       "role": "proposed_update",
-      "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR is unchanged.",
+      "reason": "Historical amendment is covered by the regenerated import #15687; its contributor-decision request is withdrawn and the branch is retained as evidence.",
       "evidence": "https://github.com/tamird/gvisor/commit/d1f84723ff6c82f67c843dd3454f9e2af04a6d30"
     },
     {
@@ -8152,7 +8110,7 @@
       "to": "pr:15669",
       "type": "includes",
       "role": "proposed_update",
-      "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR is unchanged.",
+      "reason": "Separate qualified amendment is contributor-approved; the published PR remains unchanged until delivery is verified.",
       "evidence": "https://github.com/tamird/gvisor/commit/69ca892cd3f85379eb68541836396453310188aa"
     },
     {
@@ -8167,7 +8125,7 @@
       "to": "pr:15730",
       "type": "includes",
       "role": "proposed_update",
-      "reason": "Separate qualified amendment awaiting the contributor’s decision; the published PR and unresolved feedback are unchanged.",
+      "reason": "Separate qualified amendment is contributor-approved; the published PR remains unchanged until delivery is verified.",
       "evidence": "https://github.com/tamird/gvisor/commit/fd737bf7a231d864418e95edff2e3191efc07c2c"
     },
     {
@@ -8175,7 +8133,7 @@
       "to": "pr:15439",
       "type": "includes",
       "role": "proposed_update",
-      "reason": "Separate reviewed documentation amendment awaiting the contributor’s decision; the published PR is unchanged.",
+      "reason": "The contributor requested a rewrite of this documentation proposal; the published PR remains unchanged.",
       "evidence": "https://github.com/tamird/gvisor/commit/01e70f3a44a37a665f17d3c247d81dc608908a72"
     }
   ],
@@ -8997,8 +8955,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-14T04:02:36.266694+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. First-Load allocation reductions are observed, alongside increased initialization allocation counts. Each cold timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. First-Load allocation reductions are observed, alongside increased initialization allocation counts. Each cold timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and first-use cost checks. The control-message cold observation uses 96 more bytes with the same 102 allocations; initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single cold observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9434,7 +9392,7 @@
           ]
         },
         {
-          "text": "The fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted. Complete correctness and first-use cost checks for the narrower owner-lookup revision e444abe2e; it is public and under validation, with no measured result yet. Preserve the closed 5401bbaba restore slowdown and its worker-confounding limit; process-local warm behavior alone cannot justify a fresh-sentry design. The qualified Go benchmark-status fix still awaits the existing contributor decision on Gerrit upload.",
+          "text": "The fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.",
           "evidence": [
             {
               "label": "Public metadata-ownership source",
@@ -9449,9 +9407,18 @@
               "url": "https://github.com/tamird/gvisor/commit/e444abe2e94d4def79a67636d343ebc9417d37e0"
             }
           ]
+        },
+        {
+          "text": "The narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and first-use cost checks. The control-message cold observation uses 96 more bytes with the same 102 allocations; initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single cold observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted. Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The Go benchmark-status fix is now contributor-approved for Gerrit delivery.",
+          "evidence": [
+            {
+              "label": "Public owner-lookup revision",
+              "url": "https://github.com/tamird/gvisor/commit/e444abe2e94d4def79a67636d343ebc9417d37e0"
+            }
+          ]
         }
       ],
-      "nextStep": "Complete correctness and first-use cost checks for the narrower owner-lookup revision e444abe2e; it is public and under validation, with no measured result yet. Preserve the closed 5401bbaba restore slowdown and its worker-confounding limit; process-local warm behavior alone cannot justify a fresh-sentry design. The qualified Go benchmark-status fix still awaits the existing contributor decision on Gerrit upload.",
+      "nextStep": "Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The Go benchmark-status fix is now contributor-approved for Gerrit delivery.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -9820,8 +9787,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-14T04:02:36.266694+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. First-Load allocation reductions are observed, alongside increased initialization allocation counts. Each cold timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.",
+      "updatedAt": "2026-10-14T04:59:30.036233+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. First-Load allocation reductions are observed, alongside increased initialization allocation counts. Each cold timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and first-use cost checks. The control-message cold observation uses 96 more bytes with the same 102 allocations; initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single cold observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
@@ -10385,7 +10352,7 @@
           ]
         },
         {
-          "text": "The fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted. Complete correctness and first-use cost checks for the narrower owner-lookup revision e444abe2e; it is public and under validation, with no measured result yet. Preserve the closed 5401bbaba restore slowdown and its worker-confounding limit; process-local warm behavior alone cannot justify a fresh-sentry design. The qualified Go benchmark-status fix still awaits the existing contributor decision on Gerrit upload.",
+          "text": "The fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.",
           "evidence": [
             {
               "label": "Public metadata-ownership source",
@@ -10400,9 +10367,18 @@
               "url": "https://github.com/tamird/gvisor/commit/e444abe2e94d4def79a67636d343ebc9417d37e0"
             }
           ]
+        },
+        {
+          "text": "The narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and first-use cost checks. The control-message cold observation uses 96 more bytes with the same 102 allocations; initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single cold observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted. Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The Go benchmark-status fix is now contributor-approved for Gerrit delivery.",
+          "evidence": [
+            {
+              "label": "Public owner-lookup revision",
+              "url": "https://github.com/tamird/gvisor/commit/e444abe2e94d4def79a67636d343ebc9417d37e0"
+            }
+          ]
         }
       ],
-      "nextStep": "Complete correctness and first-use cost checks for the narrower owner-lookup revision e444abe2e; it is public and under validation, with no measured result yet. Preserve the closed 5401bbaba restore slowdown and its worker-confounding limit; process-local warm behavior alone cannot justify a fresh-sentry design. The qualified Go benchmark-status fix still awaits the existing contributor decision on Gerrit upload.",
+      "nextStep": "Continue investigating the measured parsing and dispatch costs. The thin typed-entry design is deferred on evidence and complexity, not contributor authorization: isolated reflection time is small and shape/dictionary cost is unmeasured. Byte-reader work is in progress without a compiled or runtime result. Preserve the closed 5401bbaba whole-restore slowdown and its worker-confounding limit. The Go benchmark-status fix is now contributor-approved for Gerrit delivery.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
