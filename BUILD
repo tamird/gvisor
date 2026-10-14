@@ -368,14 +368,16 @@ genrule(
         "go.mod",
         "go.sum",
         "//runsc:go_export_sources",
+        "//runsc/cmd/sentry:go_export_sources",
         "//shim:go_export_sources",
         "//tools/checklocks/cmd/checklocks:go_export_sources",
         "//webhook:go_export_sources",
     ],
     outs = ["go_export.zip"],
     cmd = "$(execpath //tools/go_export:assemble) --gopath $(execpath :gopath) --output $@ --go-mod $(execpath go.mod) " +
-          "$(execpath AUTHORS) $(execpath LICENSE) $(execpath go.mod) $(execpath go.sum) " +
-          "$(execpaths //runsc:go_export_sources) $(execpaths //shim:go_export_sources) " +
+          "$(execpath AUTHORS) $(execpath LICENSE) $(execpath go.sum) " +
+          "$(execpaths //runsc:go_export_sources) $(execpaths //runsc/cmd/sentry:go_export_sources) " +
+          "$(execpaths //shim:go_export_sources) " +
           "$(execpaths //tools/checklocks/cmd/checklocks:go_export_sources) $(execpaths //webhook:go_export_sources)",
     tools = ["//tools/go_export:assemble"],
     visibility = ["//visibility:public"],

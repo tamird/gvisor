@@ -102,6 +102,7 @@ func assemble(gopath, goMod string, extraFiles []string, output io.Writer) error
 		}
 		files[filepath.ToSlash(name)] = content
 	}
+	files["go.mod"] = data
 	files["README.md"] = []byte(readme)
 
 	out := zip.NewWriter(output)
