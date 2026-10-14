@@ -140,7 +140,7 @@ func (v Value) frame() *valueFrame {
 
 func (v Value) scalarBits() uint64 {
 	if frame := v.frame(); frame != nil {
-		return frame.nodes[v.bits].a
+		return frame.node(int(v.bits)).a
 	}
 	return v.bits
 }
@@ -153,7 +153,7 @@ func (v Value) Valid() bool {
 // Kind returns the encoded kind. v must be valid.
 func (v Value) Kind() Kind {
 	if frame := v.frame(); frame != nil {
-		return frame.nodes[v.bits].kind
+		return frame.node(int(v.bits)).kind
 	}
 	return (*valueHeader)(v.payload).kind
 }
@@ -204,7 +204,7 @@ func (v Value) Complex() complex128 {
 		return complex128(complex(re, im))
 	case KindComplex128:
 		if frame := v.frame(); frame != nil {
-			node := frame.nodes[v.bits]
+			node := frame.node(int(v.bits))
 			return complex(math.Float64frombits(node.a), math.Float64frombits(node.b))
 		}
 		return complex(math.Float64frombits(v.bits), math.Float64frombits((*complexValue)(v.payload).imaginary))
@@ -217,7 +217,7 @@ func (v Value) Complex() complex128 {
 func (v Value) Text() string {
 	v.require(KindString)
 	if frame := v.frame(); frame != nil {
-		return frame.strings[frame.nodes[v.bits].a]
+		return frame.strings[frame.node(int(v.bits)).a]
 	}
 	return (*stringValue)(v.payload).value
 }
@@ -249,7 +249,7 @@ func (v Value) Slice() Slice {
 // Len returns the length of an Array, Map, or MultipleObjects value.
 func (v Value) Len() int {
 	if frame := v.frame(); frame != nil {
-		node := frame.nodes[v.bits]
+		node := frame.node(int(v.bits))
 		switch node.kind {
 		case KindArray, KindMap, KindMultipleObjects:
 			return int(node.b)
@@ -270,7 +270,7 @@ func (v Value) Len() int {
 // Element returns an Array or MultipleObjects element.
 func (v Value) Element(i int) Value {
 	if frame := v.frame(); frame != nil {
-		node := frame.nodes[v.bits]
+		node := frame.node(int(v.bits))
 		switch node.kind {
 		case KindArray, KindMultipleObjects:
 			if i < 0 || uint64(i) >= node.b {
@@ -293,7 +293,7 @@ func (v Value) Element(i int) Value {
 func (v Value) Entry(i int) (Value, Value) {
 	v.require(KindMap)
 	if frame := v.frame(); frame != nil {
-		node := frame.nodes[v.bits]
+		node := frame.node(int(v.bits))
 		if i < 0 || uint64(i) >= node.b {
 			panic("wire entry index out of range")
 		}
@@ -312,7 +312,7 @@ func (v Value) StructType() TypeID {
 
 func (v Value) fieldBody() Value {
 	if frame := v.frame(); frame != nil {
-		return frameValue(frame, int(frame.nodes[v.bits].b))
+		return frameValue(frame, int(frame.node(int(v.bits)).b))
 	}
 	return (*structValue)(v.payload).fields
 }
@@ -392,7 +392,7 @@ func (v Value) Own() Value {
 		return v
 	}
 	frame := v.frame()
-	node := frame.nodes[v.bits]
+	node := frame.node(int(v.bits))
 	switch node.kind {
 	case KindBool, KindInt, KindUint, KindFloat32, KindFloat64,
 		KindComplex64, KindNil, KindNoObjects:
@@ -447,10 +447,10 @@ func (v Value) Own() Value {
 	case KindType:
 		p := &typeValue{valueHeader: valueHeader{KindType}} // Escapes: owned schema payload.
 		p.typ.Name = frame.strings[node.a]
-		fields := frame.nodes[node.b]
+		fields := frame.node(int(node.b))
 		p.typ.Fields = make([]string, int(fields.b)) // Escapes: owned schema field headers.
 		for i := range p.typ.Fields {
-			p.typ.Fields[i] = frame.strings[frame.nodes[int(fields.a)+i].a]
+			p.typ.Fields[i] = frame.strings[frame.node(int(fields.a)+i).a]
 		}
 		return Value{payload: unsafe.Pointer(p)}
 	default:

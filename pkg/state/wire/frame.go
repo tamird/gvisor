@@ -16,6 +16,7 @@ package wire
 
 import (
 	"fmt"
+	"math/bits"
 
 	"gvisor.dev/gvisor/pkg/gohacks"
 )
@@ -32,7 +33,7 @@ type frameNode struct {
 
 type valueFrame struct {
 	valueHeader
-	nodes   []frameNode
+	nodes   frameNodes
 	strings []string
 }
 
@@ -52,7 +53,7 @@ type ValueBuffer struct {
 func (b *ValueBuffer) Load(r *Reader) Value {
 	clear(b.frame.strings)
 	b.frame.strings = b.frame.strings[:0]
-	b.frame.nodes = b.frame.nodes[:0]
+	b.frame.nodes.length = 0
 	b.frame.kind = frameKind
 	index := b.frame.reserve(1)
 	b.frame.loadValue(r, index)
@@ -62,16 +63,57 @@ func (b *ValueBuffer) Load(r *Reader) Value {
 // Release drops all backing storage. In particular, retaining a Source must
 // not retain a Load's largest unrelated temporary frame through decodeState.
 func (b *ValueBuffer) Release() {
-	b.frame.nodes = nil
+	b.frame.nodes = frameNodes{}
 	b.frame.strings = nil
 }
 
+// frameNodes grows without copying existing nodes. Block sizes are 4, 8,
+// 16, ...; the small first block avoids reserving a large page for tiny values.
+// Only the block headers move when their slice grows. Logical indices remain
+// stable, including when a reserved child range crosses block boundaries.
+type frameNodes struct {
+	blocks   [][]frameNode
+	length   int
+	capacity int
+}
+
+func (n *frameNodes) at(index int) *frameNode {
+	if uint(index) >= uint(n.length) {
+		panic("decoded node index out of bounds")
+	}
+	// Add in the unsigned domain: a valid index near MaxInt must not wrap.
+	x := uint(index) + 4
+	shift := bits.Len(x) - 1
+	return &n.blocks[shift-2][int(x-(uint(1)<<shift))]
+}
+
+func (f *valueFrame) node(index int) frameNode {
+	return *f.nodes.at(index)
+}
+
+func (f *valueFrame) setNode(index int, node frameNode) {
+	*f.nodes.at(index) = node
+}
+
+// reserve returns uninitialized slots. Every parser path assigns a complete
+// frameNode before reading a slot or returning the parsed value, so reused
+// pointer-free storage needs no clearing.
 func (f *valueFrame) reserve(count uint64) int {
-	if count > uint64(int(^uint(0)>>1)-len(f.nodes)) {
+	n := &f.nodes
+	const maxInt = int(^uint(0) >> 1)
+	if count > uint64(maxInt-n.length) {
 		panic("decoded value is too large")
 	}
-	first := len(f.nodes)
-	f.nodes = append(f.nodes, make([]frameNode, int(count))...) // Escapes: temporary decoded nodes.
+	first := n.length
+	end := first + int(count)
+	for n.capacity < end {
+		// The final block may be shorter so capacity stays representable.
+		size := min(uint(n.capacity)+4, uint(maxInt-n.capacity))
+		block := make([]frameNode, int(size)) // Escapes: temporary decoded nodes.
+		n.blocks = append(n.blocks, block)    // Escapes: temporary block index.
+		n.capacity += int(size)
+	}
+	n.length = end
 	return first
 }
 
@@ -115,7 +157,7 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 	case KindSlice:
 		length, capacity := loadUint(r), loadUint(r)
 		bounds := f.reserve(1)
-		f.nodes[bounds] = frameNode{a: uint64(length), b: uint64(capacity)}
+		f.setNode(bounds, frameNode{a: uint64(length), b: uint64(capacity)})
 		ref := f.reserve(1)
 		f.loadReference(r, ref)
 		node.a, node.b = uint64(bounds), uint64(ref)
@@ -125,7 +167,7 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		node.a, node.b = uint64(first), count
 		if count != 0 {
 			f.loadValue(r, first)
-			childKind := f.nodes[first].kind
+			childKind := f.node(first).kind
 			for i := 1; i < int(count); i++ {
 				f.loadPayload(r, first+i, childKind)
 			}
@@ -140,7 +182,7 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		if count != 0 {
 			f.loadValue(r, first)
 			f.loadValue(r, first+1)
-			keyKind, valueKind := f.nodes[first].kind, f.nodes[first+1].kind
+			keyKind, valueKind := f.node(first).kind, f.node(first+1).kind
 			for i := 1; i < int(count); i++ {
 				f.loadPayload(r, first+2*i, keyKind)
 				f.loadPayload(r, first+2*i+1, valueKind)
@@ -169,18 +211,17 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		count := uint64(loadUint(r))
 		fields := f.reserve(1)
 		first := f.reserve(count)
-		f.nodes[fields] = frameNode{a: uint64(first), b: count}
+		f.setNode(fields, frameNode{a: uint64(first), b: count})
 		node.b = uint64(fields)
 		for i := 0; i < int(count); i++ {
 			name := string(loadString(r))
-			f.nodes[first+i] = frameNode{a: f.text(name)}
+			f.setNode(first+i, frameNode{a: f.text(name)})
 		}
 	default:
 		panic(fmt.Errorf("unknown header: %d", kind)) // Escapes: error formatting.
 	}
-	// Recursive parsing may have grown nodes. Do not retain an element pointer
-	// across those calls.
-	f.nodes[index] = node
+	// Publish the completed node after its recursive payload has been parsed.
+	f.setNode(index, node)
 }
 
 func (f *valueFrame) loadReference(r *Reader, index int) {
@@ -194,19 +235,19 @@ func (f *valueFrame) loadReference(r *Reader, index int) {
 			if dot >= 0 {
 				// Preserve Index's existing narrowing, independently of the
 				// full-width reference root and type metadata.
-				f.nodes[first+i] = frameNode{a: uint64(Index(dot))}
+				f.setNode(first+i, frameNode{a: uint64(Index(dot))})
 				continue
 			}
 			data := make([]byte, -dot) // Escapes: independently owned field name.
 			readFull(r, data)
 			name := gohacks.StringFromImmutableBytes(data)
-			f.nodes[first+i] = frameNode{kind: 1, a: f.text(name)}
+			f.setNode(first+i, frameNode{kind: 1, a: f.text(name)})
 		}
 		typ := f.loadType(r)
-		f.nodes[metadata] = frameNode{kind: Kind(count), a: uint64(first), b: uint64(typ)}
+		f.setNode(metadata, frameNode{kind: Kind(count), a: uint64(first), b: uint64(typ)})
 		node.b = uint64(metadata) + 1 // Zero denotes the pathless reference.
 	}
-	f.nodes[index] = node
+	f.setNode(index, node)
 }
 
 // loadType is the sole TypeSpec grammar. The tag belongs to the separate
@@ -230,6 +271,6 @@ func (f *valueFrame) loadType(r *Reader) int {
 	default:
 		panic(fmt.Errorf("unknown header: %d", header)) // Escapes: error formatting.
 	}
-	f.nodes[index] = node
+	f.setNode(index, node)
 	return index
 }

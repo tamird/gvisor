@@ -40,11 +40,11 @@ func (r ReferenceView) Root() Uint { return Uint(r.value.scalarBits()) }
 // Dots returns the number of interior-pointer steps.
 func (r ReferenceView) Dots() int {
 	if frame := r.value.frame(); frame != nil {
-		metadata := frame.nodes[r.value.bits].b
+		metadata := frame.node(int(r.value.bits)).b
 		if metadata == 0 {
 			return 0
 		}
-		return int(frame.nodes[metadata-1].kind)
+		return int(frame.node(int(metadata - 1)).kind)
 	}
 	return len(r.value.Reference().Dots)
 }
@@ -52,11 +52,11 @@ func (r ReferenceView) Dots() int {
 // Dot returns a path step in the original reverse order.
 func (r ReferenceView) Dot(i int) PathElement {
 	if frame := r.value.frame(); frame != nil {
-		metadata := frame.nodes[r.value.bits].b
-		if metadata == 0 || i < 0 || uint64(i) >= uint64(frame.nodes[metadata-1].kind) {
+		metadata := frame.node(int(r.value.bits)).b
+		if metadata == 0 || i < 0 || uint64(i) >= uint64(frame.node(int(metadata-1)).kind) {
 			panic("wire path index out of range")
 		}
-		dot := frame.nodes[int(frame.nodes[metadata-1].a)+i]
+		dot := frame.node(int(frame.node(int(metadata-1)).a) + i)
 		if dot.kind != 0 {
 			return PathElement{Name: frame.strings[dot.a], Field: true}
 		}
@@ -75,11 +75,11 @@ func (r ReferenceView) Dot(i int) PathElement {
 // Type returns the enclosing type specification, if this reference has Dots.
 func (r ReferenceView) Type() TypeView {
 	if frame := r.value.frame(); frame != nil {
-		metadata := frame.nodes[r.value.bits].b
+		metadata := frame.node(int(r.value.bits)).b
 		if metadata == 0 {
 			return TypeView{}
 		}
-		return TypeView{frame: frame, index: int(frame.nodes[metadata-1].b)}
+		return TypeView{frame: frame, index: int(frame.node(int(metadata - 1)).b)}
 	}
 	return TypeView{owned: r.value.Reference().Type}
 }
@@ -117,8 +117,8 @@ type SliceView struct {
 func (v Value) SliceView() SliceView {
 	v.require(KindSlice)
 	if frame := v.frame(); frame != nil {
-		node := frame.nodes[v.bits]
-		bounds := frame.nodes[node.a]
+		node := frame.node(int(v.bits))
+		bounds := frame.node(int(node.a))
 		return SliceView{Length: Uint(bounds.a), Capacity: Uint(bounds.b), Ref: frameValue(frame, int(node.b)).ReferenceView()}
 	}
 	return v.ownedSliceView()
@@ -151,7 +151,7 @@ type TypeView struct {
 // Kind returns the type-specification kind. The view must be valid.
 func (v TypeView) Kind() TypeKind {
 	if v.frame != nil {
-		return TypeKind(v.frame.nodes[v.index].kind)
+		return TypeKind(v.frame.node(v.index).kind)
 	}
 	switch v.owned.(type) {
 	case TypeID:
@@ -177,7 +177,7 @@ func (v TypeView) ID() TypeID {
 		panic("type specification is not a concrete ID")
 	}
 	if v.frame != nil {
-		return TypeID(v.frame.nodes[v.index].a)
+		return TypeID(v.frame.node(v.index).a)
 	}
 	return v.owned.(TypeID)
 }
@@ -188,7 +188,7 @@ func (v TypeView) Count() Uint {
 		panic("type specification is not an array")
 	}
 	if v.frame != nil {
-		return Uint(v.frame.nodes[v.index].a)
+		return Uint(v.frame.node(v.index).a)
 	}
 	return v.owned.(*TypeSpecArray).Count
 }
@@ -202,7 +202,7 @@ func (v TypeView) Element() TypeView {
 		panic("type specification has no element")
 	}
 	if v.frame != nil {
-		node := v.frame.nodes[v.index]
+		node := v.frame.node(v.index)
 		index := node.a
 		if kind == TypeArrayKind {
 			index = node.b
@@ -227,7 +227,7 @@ func (v TypeView) Map() (TypeView, TypeView) {
 		panic("type specification is not a map")
 	}
 	if v.frame != nil {
-		node := v.frame.nodes[v.index]
+		node := v.frame.node(v.index)
 		return TypeView{frame: v.frame, index: int(node.a)}, TypeView{frame: v.frame, index: int(node.b)}
 	}
 	typ := v.owned.(*TypeSpecMap)
@@ -268,7 +268,7 @@ func (v TypeView) materialize() TypeSpec {
 func (v Value) InterfaceView() (TypeView, Value) {
 	v.require(KindInterface)
 	if frame := v.frame(); frame != nil {
-		node := frame.nodes[v.bits]
+		node := frame.node(int(v.bits))
 		return TypeView{frame: frame, index: int(node.a)}, frameValue(frame, int(node.b))
 	}
 	typ, value := v.Interface()

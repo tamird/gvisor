@@ -77,6 +77,19 @@ func TestValueBufferOwnership(t *testing.T) {
 		&Ref{Root: 7, Dots: []Dot{Index(257), &field}, Type: &TypeSpecArray{Count: 8, Type: TypeID(3)}},
 		&Ref{Root: 9, Dots: []Dot{Index(0)}, Type: &TypeSpecPointer{Type: TypeID(4)}},
 	}}
+	// Many recursive children force storage growth after reserving the array's
+	// element range. Their logical indices must survive every growth boundary.
+	for i := range 257 {
+		want.Contents = append(want.Contents, &Ref{
+			Root: Uint(i + 100),
+			Dots: []Dot{Index(i * 3), &field},
+			Type: &TypeSpecPointer{Type: TypeID(4)},
+		})
+	}
+	reuse := &Array{Contents: make([]Object, 257)}
+	for i := range reuse.Contents {
+		reuse.Contents[i] = Uint(i & 1)
+	}
 	parent := Struct{TypeID: 1}
 	parent.Alloc(3)
 	text := String("independent string")
@@ -85,6 +98,7 @@ func TestValueBufferOwnership(t *testing.T) {
 	w := Writer{Writer: &buf}
 	Save(&w, &parent)
 	Save(&w, &Array{Contents: []Object{&text, &text, &text}})
+	Save(&w, reuse)
 	Save(&w, Uint(29))
 	r := Reader{Reader: &buf}
 	var values ValueBuffer
@@ -94,6 +108,17 @@ func TestValueBufferOwnership(t *testing.T) {
 	// Reuse both node and string storage, then release the entire parser.
 	// Only the selected subtree and independently owned string remain usable.
 	values.Load(&r)
+	// Grow the logical record again after a short one, reusing storage that
+	// previously held reference metadata for ordinary scalar values.
+	reused := values.Load(&r)
+	if got, want := reused.Len(), len(reuse.Contents); got != want {
+		t.Fatalf("reused length = %d, want %d", got, want)
+	}
+	for i := range reuse.Contents {
+		if got, want := reused.Element(i).Uint(), uint64(i&1); got != want {
+			t.Fatalf("reused element %d = %d, want %d", i, got, want)
+		}
+	}
 	if got, want := values.Load(&r).Uint(), uint64(29); got != want {
 		t.Fatalf("following value = %d, want %d", got, want)
 	}
