@@ -143,7 +143,7 @@ func (t *Task) FatalSignalPending() bool {
 		return false
 	}
 	mask := linux.SignalSet(t.signalMask.Load())
-	if (linux.SignalSet(t.pendingSignals.pendingSet.Load())|linux.SignalSet(t.tg.pendingSignals.pendingSet.Load()))&^mask == 0 {
+	if t.PendingSignals()&^mask == 0 {
 		return false
 	}
 	t.tg.signalHandlers.mu.Lock()
