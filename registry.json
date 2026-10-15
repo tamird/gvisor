@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T02:17:06.917668+00:00",
+    "updatedAt": "2026-10-15T02:35:31.915029+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7024,23 +7024,29 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/tcp-rack-min-rtt",
-      "head": "ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
+      "head": "7e371d8acc44a23b419a84618471efe9ffc51c42",
       "title": "Age RACK path RTT measurements",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
-      "status": "Remote validation failed; investigating",
-      "updatedAt": "2026-10-15T02:17:06.917668+00:00",
-      "summary": "Use eligible handshake and ACK samples for a five-minute path minimum, separately from RACK delivery timing. Independent source review passed. The first before/after validation ended unsuccessfully; its original outputs are being inspected before assigning a cause.",
+      "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
+      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor review is pending; throughput and memory-layout effects have not been measured.",
       "followup": {
-        "owner": "syscall_validation",
-        "disposition": "Remote validation failed; investigating",
-        "sourceHead": "ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
-        "observedAt": "2026-10-15T02:17:06.917668+00:00",
-        "nextAction": "Classify the first remote failure and correct its owning source or validation method.",
+        "owner": "root",
+        "disposition": "Qualified correction; contributor decision pending",
+        "sourceHead": "7e371d8acc44a23b419a84618471efe9ffc51c42",
+        "observedAt": "2026-10-15T02:35:31.915029+00:00",
+        "nextAction": "Review the exact one-commit proposal. Open its upstream PR after contributor approval and the separate loss-probe correction lands.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
-          "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3"
+          "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
+          "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3",
+          "https://app.buildbuddy.io/invocation/919b6f41-c170-40bb-a409-a03631978ff1"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "7e371d8acc44a23b419a84618471efe9ffc51c42",
+        "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42"
       }
     },
     {
@@ -7052,19 +7058,24 @@
       "title": "Wait on Docker exec output before polling",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
-      "status": "Remote validation in progress",
-      "updatedAt": "2026-10-15T02:17:06.917668+00:00",
-      "summary": "Drain output before checking process status, retaining the existing completion guard and closing the stream on cancellation. Independent source review passed; the focused cancellation test, existing output/error cases and owning analyzers are running remotely.",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
+      "summary": "Read Docker exec output before checking status, avoiding the existing 500 ms polling delay for short commands and removing the output-reader goroutine. Early stream closure still waits for process completion; cancellation closes the hijacked connection. Both-architecture package and analyzer checks and four focused Docker integration cases pass. The parent job failed during report collection because its Python lacked str.removesuffix; the original reports were recovered and independently verified without rerunning tests. Contributor review is pending. No measured latency improvement is claimed.",
       "followup": {
-        "owner": "restore_integration_review",
-        "disposition": "Remote validation in progress",
+        "owner": "root",
+        "disposition": "Qualified correction; contributor decision pending",
         "sourceHead": "2c52512424d99b24af49038a72fac53069e20c8b",
-        "observedAt": "2026-10-15T02:17:06.917668+00:00",
-        "nextAction": "Verify the focused Docker, package and analyzer results before requesting contributor review.",
+        "observedAt": "2026-10-15T02:35:31.915029+00:00",
+        "nextAction": "Review the exact independent proposal and decide whether to open its upstream PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
           "https://app.buildbuddy.io/invocation/d6ae3a42-8ff7-4070-bd3e-03fd3e1cf9d5"
         ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "2c52512424d99b24af49038a72fac53069e20c8b",
+        "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b"
       }
     }
   ],
@@ -8592,8 +8603,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T02:17:06.917668+00:00",
-      "summary": "The independent loss-probe RTT correction is qualified and awaiting contributor review. The separate minimum-RTT proposal now applies a five-minute filter to eligible handshake and ACK samples, while retaining separate RACK delivery timing. Independent source review passed. Its first remote before/after run failed; original outputs are being inspected before assigning a cause.",
+      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
+      "summary": "The packet-level investigation found two RTT defects beyond congestion-window accounting: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections now have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The minimum-RTT change is one commit atop the separate loss-probe correction; both await contributor review. These results establish the tested recovery behavior, not a new throughput measurement.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9130,9 +9141,26 @@
               "url": "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5"
             }
           ]
+        },
+        {
+          "text": "The minimum-RTT correction now passes the complete selected ACK histories on both architectures, including sustained longer-path/reordered-original delivery and low-path return. The first run’s two fixture failures came from an unintended 20 ms loss probe before their 50 ms ACK. The corrected fixtures ACK at 15 ms and 30 ms and require zero retransmissions; a focused continuation passes. Unchanged private TCP/RACK and analyzer results remain applicable, including the existing DSACK skip. Independent source and original-result reviews are complete. The final one-commit tree is identical to the tested source. The filter adds fixed sender state and two fields per segment; exact layout and throughput effects remain unmeasured.",
+          "evidence": [
+            {
+              "label": "Final minimum-RTT correction",
+              "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42"
+            },
+            {
+              "label": "Original run, including fixture failures and retained coverage",
+              "url": "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3"
+            },
+            {
+              "label": "Corrected packet fixtures and analyzer continuation",
+              "url": "https://app.buildbuddy.io/invocation/919b6f41-c170-40bb-a409-a03631978ff1"
+            }
+          ]
         }
       ],
-      "nextStep": "Classify and resolve the first minimum-RTT validation failure, then verify the real ACK histories on both architectures. Contributor review of the independent loss-probe correction remains pending.",
+      "nextStep": "Obtain contributor decisions for the two qualified RTT corrections, land the independent Karn fix before its minimum-RTT dependent, and continue broader congestion-control experiments after integration.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9464,8 +9492,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T01:53:52.217568+00:00",
-      "summary": "The simpler decoded-frame candidate passes correctness, ownership, race and allocation-guard checks and improves the large synthetic Load fixture. The whole-restore comparison now completes all 24 operations on one worker. Original and candidate RestoreNginx medians are 871.3 ms and 880.6 ms; the four process-group medians vary substantially, so this does not establish an overall restore speedup. The job failed only while generating its report; a report-only run of pinned benchstat succeeded using the identical saved rows. No measurement was repeated. Existing restore logs are being inspected to identify the state-decoding share before the next performance experiment.",
+      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
+      "summary": "The unified decoded-frame candidate improves the large synthetic Load fixture, but the 24-operation whole-restore comparison does not establish an overall speedup: medians were 871.3 ms before and 880.6 ms after. Existing logs place kernel loading around 23–27 ms, within overlapping restore and command timers. A separate Docker exec simplification removes output-reader bookkeeping and avoids polling before output completion; its focused checks pass and contributor review is pending. The next state experiment profiles the current large-state Load fixture to locate the remaining parser, reflection and allocation costs.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10093,9 +10121,26 @@
               "url": "https://app.buildbuddy.io/invocation/dd6acfa8-7f43-4d29-b047-8e7934656a74"
             }
           ]
+        },
+        {
+          "text": "Existing whole-restore logs place kernel loading around 23–27 ms, including statistics formatting; broader timers overlap and cannot be added. Source inspection found a separate 500 ms polling interval in Docker exec readiness. The proposed simplification reads output before inspecting process status and closes the stream on cancellation. Package/analyzer checks and the four focused integration cases pass. Original report collection failed on an unavailable Python method; the same run’s reports were recovered and authenticated without rerunning tests. This qualifies behavior, not a measured latency improvement.",
+          "evidence": [
+            {
+              "label": "Original restore phase timing",
+              "url": "https://app.buildbuddy.io/invocation/c0483574-e876-471d-883a-4b2accd8cd04"
+            },
+            {
+              "label": "Docker exec proposal",
+              "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b"
+            },
+            {
+              "label": "Focused checks; report collection failed",
+              "url": "https://app.buildbuddy.io/invocation/d6ae3a42-8ff7-4070-bd3e-03fd3e1cf9d5"
+            }
+          ]
         }
       ],
-      "nextStep": "Use existing restore timing or profiles to identify where state decoding contributes to whole-restore cost, then choose a representative performance experiment. Preserve the fixed comparison and its group-level variability.",
+      "nextStep": "Profile the qualified current large-state Load fixture with the existing CPU/allocation tools. Use those results to choose the next architectural change; preserve the whole-restore comparison and its variability.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
