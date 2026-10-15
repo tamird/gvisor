@@ -537,6 +537,9 @@ func TestMinimumRTTACKHistory(t *testing.T) {
 }
 
 func TestMinimumRTTPartialACK(t *testing.T) {
+	// Two outstanding packets schedule PTO at twice the initial 10ms SRTT.
+	// Deliver the first ACK before that probe makes its timing ambiguous.
+	const sampleRTT = 15 * time.Millisecond
 	for _, crossing := range []bool{false, true} {
 		name := "one_original"
 		if crossing {
@@ -559,14 +562,20 @@ func TestMinimumRTTPartialACK(t *testing.T) {
 			} else {
 				h.send(h.mss)
 			}
-			h.clock.Advance(50 * time.Millisecond)
+			h.clock.Advance(sampleRTT)
 			st := h.ack(start+advance, 0)
-			if got, want := st.RACKState.ReoWnd, 12500*time.Microsecond; got != want {
+			if got, want := h.c.Stack().Stats().TCP.Retransmits.Value(), uint64(0); got != want {
+				t.Fatalf("retransmissions before partial ACK = %d, want %d", got, want)
+			}
+			if got, want := st.RACKState.ReoWnd, sampleRTT/4; got != want {
 				t.Fatalf("partial ACK reorder window = %v, want %v", got, want)
 			}
-			h.clock.Advance(50 * time.Millisecond)
+			h.clock.Advance(sampleRTT)
 			st = h.ack(h.sent, 0)
-			if got, want := st.RACKState.ReoWnd, 12500*time.Microsecond; got != want {
+			if got, want := h.c.Stack().Stats().TCP.Retransmits.Value(), uint64(0); got != want {
+				t.Fatalf("retransmissions before remaining ACK = %d, want %d", got, want)
+			}
+			if got, want := st.RACKState.ReoWnd, sampleRTT/4; got != want {
 				t.Fatalf("remaining ACK reorder window = %v, want %v", got, want)
 			}
 		})
@@ -604,14 +613,23 @@ func TestMinimumRTTInterveningACK(t *testing.T) {
 	start := h.sent
 	h.send(1)
 	h.send(1)
-	h.clock.Advance(50 * time.Millisecond)
+	// ACK before the two-packet PTO at 20ms; the remaining packet then gets
+	// the single-packet delayed-ACK allowance for its probe timeout.
+	const ackInterval = 15 * time.Millisecond
+	h.clock.Advance(ackInterval)
 	st := h.ack(start+1, 0)
+	if got, want := h.c.Stack().Stats().TCP.Retransmits.Value(), uint64(0); got != want {
+		t.Fatalf("retransmissions before first ACK = %d, want %d", got, want)
+	}
 	if got, want := st.RACKState.ReoWnd, 2500*time.Microsecond; got != want {
 		t.Fatalf("first runt reorder window = %v, want %v", got, want)
 	}
-	h.clock.Advance(50 * time.Millisecond)
+	h.clock.Advance(ackInterval)
 	st = h.ack(h.sent, 0)
-	if got, want := st.RACKState.ReoWnd, min(25*time.Millisecond, st.RTTState.SRTT); got != want {
+	if got, want := h.c.Stack().Stats().TCP.Retransmits.Value(), uint64(0); got != want {
+		t.Fatalf("retransmissions before second ACK = %d, want %d", got, want)
+	}
+	if got, want := st.RACKState.ReoWnd, ackInterval/2; got != want {
 		t.Fatalf("second runt reorder window = %v, want %v", got, want)
 	}
 }
