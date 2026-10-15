@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T11:33:37.259170+00:00",
+    "updatedAt": "2026-10-15T11:49:35.973089+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7092,8 +7092,8 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T11:33:37.259170+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. Benchmarks show faster Save and slower Load in several fixtures. The per-Load type correction passes six normal/race suites; an analyzer naming issue and a nil-receiver allocation edge are being corrected before performance and startup measurements. Nogo source ordering (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T11:49:35.973089+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. Benchmarks show faster Save and slower Load in several fixtures. The profiled type-lookup correction completed its normal, race, analyzer and production-build phases; performance and startup comparisons follow. Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
@@ -9534,8 +9534,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T11:33:37.259170+00:00",
-      "summary": "The complete rewrite has mixed benchmark results: several Save gains and Load regressions. Profiles identify repeated type resolution. The first correction passed four normal suites and two race suites; analyzers found a receiver-name mismatch. Further review found a nil-receiver allocation edge, now being simplified at the schema-reading boundary. Performance and startup measurements remain pending.",
+      "updatedAt": "2026-10-15T11:49:35.973089+00:00",
+      "summary": "The complete rewrite has several Save gains and Load regressions. Profiles identified repeated type resolution. A correction now shares per-Load type information and keeps ordinary registration cheap. Its normal, race, analyzer and production-build phases completed successfully; original outputs are being verified before the fixed performance and startup comparisons.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10327,24 +10327,28 @@
           ]
         },
         {
-          "text": "Four CPU/allocation profiles reused the exact benchmark binaries from the matched comparison. In the rewrite, decodeState.plan accounts for 18.06% of cumulative sampled CPU in control-message Load and 24.60% in UDP Load; restoreType accounts for 13.98% and 22.83%, respectively. These overlapping costs point to repeated type resolution. The per-Load correction passed six normal/race suites, but requires an analyzer naming fix and a reviewed allocation-order correction before performance testing. The fixed 12-pair comparison remains the timing evidence.",
+          "text": "Profiles of the matched benchmark binaries attribute 18.06% of cumulative sampled CPU in control-message Load and 24.60% in UDP Load to decodeState.plan. restoreType accounts for 13.98% and 22.83%; those costs overlap. The correction shares type information within each Load and obtains allocation functions while reading schemas, avoiding metadata calls on nil receivers. All corrected validation phases completed successfully. The original fixed comparison remains the timing evidence until the new measurements finish.",
           "evidence": [
             {
               "label": "Completed restore profiles; independently verified originals",
               "url": "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41"
             },
             {
-              "label": "Published per-Load correction",
-              "url": "https://github.com/tamird/gvisor/commit/f059680e2"
-            },
-            {
               "label": "Six suites passed; analyzer failure stopped production builds",
               "url": "https://app.buildbuddy.io/invocation/852d5a9a-b0bc-4dcf-bd75-fdeae4ace65b"
+            },
+            {
+              "label": "Corrected per-Load type ownership",
+              "url": "https://github.com/tamird/gvisor/commit/d5f5350e1"
+            },
+            {
+              "label": "Completed corrected validation; original outputs being verified",
+              "url": "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13"
             }
           ]
         }
       ],
-      "nextStep": "Validate the allocation correction, complete analyzers and production builds, then repeat the paired benchmarks and matched release startup measurements before contributor review.",
+      "nextStep": "Verify the completed validation outputs, then run the fixed package comparison and separate matched CLI startup measurements. Keep sandbox startup as a further qualification requirement.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -12661,9 +12665,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T11:33:37.259170+00:00",
-      "summary": "The old x86 guest configurations reproduce all four missing netfilter options; ARM passes. The first validation stopped because Bazel changed the checked-in lockfile. The corrected test and kernel builds are now running with the repository CI policy that rejects lockfile updates.",
-      "nextStep": "Run the corrected configuration test and both kernel builds, retaining lockfile diagnostics. Reuse the GitHub Actions KVM bridge for runtime qualification; keep upstream source support distinct from hosted deployment.",
+      "updatedAt": "2026-10-15T11:49:35.973089+00:00",
+      "summary": "The old x86 guest configurations reproduce all four missing netfilter options. Validation uncovered a runner mistake: overriding BuildBuddy’s BLAKE3 setting changed Bazel’s extension-lock hashes. The corrected test and both kernel builds are running with the repository setting restored.",
+      "nextStep": "Finish the config test and kernel builds, then submit the focused BuildBuddy PR. Continue runtime qualification through the existing GitHub Actions KVM bridge.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12678,12 +12682,16 @@
           "url": "https://github.com/tamird/buildbuddy/commit/42c327ab1"
         },
         {
-          "label": "Remote configuration regression and kernel builds",
+          "label": "Old configurations reproduce missing options; later lockfile check failed",
           "url": "https://app.buildbuddy.io/invocation/7ae8dc66-d653-4778-94ab-a8bc82aefd6c"
         },
         {
-          "label": "Remaining test and kernel builds with CI lockfile policy",
+          "label": "Lockfile rejection before execution; validation digest override diagnosed",
           "url": "https://app.buildbuddy.io/invocation/9ddd8d9e-a4ce-45d7-bc25-0fd9c4ae2c64"
+        },
+        {
+          "label": "Canonical-digest validation in progress",
+          "url": "https://app.buildbuddy.io/invocation/a270c325-1759-4c74-8135-dc4e2f5ced42"
         }
       ],
       "findings": [
