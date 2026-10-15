@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T03:40:24.547723+00:00",
+    "updatedAt": "2026-10-15T04:08:24.314987+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9508,8 +9508,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T03:18:40.793589+00:00",
-      "summary": "The unified decoded-frame candidate improves the large synthetic Load fixture, but the 24-operation whole-restore comparison does not establish an overall speedup: medians were 871.3 ms before and 880.6 ms after. Profiling attributes about 73% of sampled allocation bytes to frame storage growth and 16% to dependency callbacks. A subsequent type-description sharing experiment passes correctness checks but does not reduce allocated bytes in the checked fixture: both versions grow the backing slice to the same capacity. That experiment will not advance. Work continues on the frame representation and storage policy. The separate Docker exec simplification has passed its focused checks and awaits contributor review.",
+      "updatedAt": "2026-10-15T04:08:24.314987+00:00",
+      "summary": "The common restore engine uses generated field metadata and typed storage assignments to avoid repeated reflection for ordinary fields; one frame parser validates the wire input. The latest storage revision keeps validated byte tags separately from full-width operands. In twelve balanced before/after pairs, the large decoding fixture used 19.6% fewer allocated bytes and 3.18% less time; the small fixture used 7.29% fewer bytes with no detected timing change. Both needed more allocation events. The measured source is now frozen while the complete architecture is reconciled with current upstream and existing PRs. The earlier whole-restore comparison and unsuccessful type-description sharing experiment remain recorded below.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10180,9 +10180,26 @@
               "url": "https://app.buildbuddy.io/invocation/8775d334-217c-4aea-8682-10b2b2e75abb"
             }
           ]
+        },
+        {
+          "text": "Separating byte tags from full-width frame operands reduces backing-storage size while preserving the single parser, full-record validation and reference paths. Both-architecture correctness and analyzer checks pass, including malformed tags and long paths. All 48 fixed measured rows are retained. The large fixture improves from 487.6 to 472.1 microseconds (benchstat p<.001); the small fixture changes from 11.15 to 11.13 microseconds (p=.701). Allocated bytes fall in both fixtures, while allocation counts rise. Production executable lengths are unchanged; AMD64 text grows by 320 bytes and ARM64 text is unchanged. This comparison isolates the storage revision within the candidate decoder; the complete rewrite still needs an integrated review.",
+          "evidence": [
+            {
+              "label": "Split-tag storage candidate",
+              "url": "https://github.com/tamird/gvisor/commit/19e981ae97c791620c9e9cd3d3c1e240fb2e4c60"
+            },
+            {
+              "label": "Correctness, guards and first-use allocation checks",
+              "url": "https://app.buildbuddy.io/invocation/8d074ae2-5726-4827-a9ed-249fd387fee9"
+            },
+            {
+              "label": "Fixed 12-pair storage comparison",
+              "url": "https://app.buildbuddy.io/invocation/da5eaa5c-31df-4b21-9584-5f4b58dacc4f"
+            }
+          ]
         }
       ],
-      "nextStep": "Examine the frame representation and existing growth policy for a simpler reduction in intermediate storage. Preserve complete-record validation before custom loaders, reference identity and callback ordering. Do not tune the benchmark or capacity thresholds to make the discarded sharing experiment appear beneficial.",
+      "nextStep": "Prepare one coherent architecture proposal against current upstream: identify merged foundations and actual prerequisites, show the production and generator changes separately from tests and benchmarks, explain remaining reflection, and identify the old paths this design removes. Retain the measured storage tradeoff without adding another timing campaign.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10579,6 +10596,18 @@
         {
           "label": "Correctness, guards and allocation-cost observations",
           "url": "https://app.buildbuddy.io/invocation/8775d334-217c-4aea-8682-10b2b2e75abb"
+        },
+        {
+          "label": "Split-tag storage candidate",
+          "url": "https://github.com/tamird/gvisor/commit/19e981ae97c791620c9e9cd3d3c1e240fb2e4c60"
+        },
+        {
+          "label": "Correctness, guards and first-use allocation checks",
+          "url": "https://app.buildbuddy.io/invocation/8d074ae2-5726-4827-a9ed-249fd387fee9"
+        },
+        {
+          "label": "Fixed 12-pair storage comparison",
+          "url": "https://app.buildbuddy.io/invocation/da5eaa5c-31df-4b21-9584-5f4b58dacc4f"
         }
       ],
       "comparisons": [
@@ -10611,6 +10640,62 @@
             {
               "label": "Successful report-only recovery from unchanged rows",
               "url": "https://app.buildbuddy.io/invocation/dd6acfa8-7f43-4d29-b047-8e7934656a74"
+            }
+          ]
+        },
+        {
+          "title": "Split-tag storage comparison",
+          "description": "Same decoder and fixtures before and after separating frame tags from full-width operands.",
+          "columns": [
+            "Measurement",
+            "Before",
+            "After"
+          ],
+          "rows": [
+            [
+              "Control-message decoding",
+              "11.15 µs",
+              "11.13 µs"
+            ],
+            [
+              "Control-message allocated bytes",
+              "5,928 B",
+              "5,496 B"
+            ],
+            [
+              "Control-message allocations",
+              "94",
+              "97"
+            ],
+            [
+              "Large adoption decoding",
+              "487.6 µs",
+              "472.1 µs"
+            ],
+            [
+              "Large adoption allocated bytes",
+              "365,016 B",
+              "293,345 B"
+            ],
+            [
+              "Large adoption allocations",
+              "71",
+              "75"
+            ]
+          ],
+          "note": "Twelve balanced before/after pairs on one AMD64 worker; fixed warmed fixtures and all 48 rows retained. Benchstat uses its standard unpaired comparison: control p=.701, adoption p<.001. The earlier whole-restore measurement remains separate.",
+          "evidence": [
+            {
+              "label": "Split-tag storage candidate",
+              "url": "https://github.com/tamird/gvisor/commit/19e981ae97c791620c9e9cd3d3c1e240fb2e4c60"
+            },
+            {
+              "label": "Correctness, guards and first-use allocation checks",
+              "url": "https://app.buildbuddy.io/invocation/8d074ae2-5726-4827-a9ed-249fd387fee9"
+            },
+            {
+              "label": "Fixed 12-pair storage comparison",
+              "url": "https://app.buildbuddy.io/invocation/da5eaa5c-31df-4b21-9584-5f4b58dacc4f"
             }
           ]
         }
