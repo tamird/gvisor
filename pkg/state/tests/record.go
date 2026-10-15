@@ -142,7 +142,7 @@ func (r *composedRecord) StateLoad(_ context.Context, s state.Source) {
 
 // +stateify savable
 type ordinaryStateReceiver struct {
-	value int64
+	value int
 }
 
 func (state *ordinaryStateReceiver) beforeSave() {}

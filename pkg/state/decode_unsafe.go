@@ -20,6 +20,19 @@ import (
 	"unsafe"
 )
 
+// LoadInto restores a generated field through its actual Go pointer type.
+// Slot reconciliation and wait ordering belong to the Source; the containing
+// receiver's type may differ when a manual or identtype loader forwards it.
+func LoadInto[T any](s Source, slot int, ptr *T, wait bool) {
+	encoded := s.internal.field(slot)
+	ds := s.internal.ds
+	target := restoreDestination{plan: ds.plan(reflect.TypeFor[T]()), pointer: unsafe.Pointer(ptr)}
+	ds.restoreValue(s.internal.ods, target, encoded)
+	if wait {
+		ds.waitObject(s.internal.ods, encoded, nil)
+	}
+}
+
 // reflectValueRWAddr is equivalent to obj.Addr(), except that the returned
 // reflect.Value is usable in assignments even if obj was obtained by the use
 // of unexported struct fields.
