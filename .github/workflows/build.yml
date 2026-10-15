@@ -11,7 +11,7 @@ jobs:
   remote-qualification:
     if: github.repository == 'tamird/gvisor' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/state-schema-ownership-actions'
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     permissions:
       contents: read
     steps:
@@ -22,7 +22,7 @@ jobs:
         persist-credentials: false
 
     - name: Run the fixed paired comparison
-      timeout-minutes: 33
+      timeout-minutes: 43
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}

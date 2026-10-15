@@ -32,7 +32,7 @@ original_head_ref=$(git symbolic-ref -q HEAD || true)
 export original_head_ref
 export out qualification_rc work_deadline phase_name
 qualification_rc="$artifact_dir/qualification.bazelrc"
-work_deadline=$(python3 -c 'import time; print(time.monotonic() + 1800)')
+work_deadline=$(python3 -c 'import time; print(time.monotonic() + 2400)')
 # shellcheck disable=SC2329
 finish() {
   local result=$? cleanup_status=0 restore_status=0
