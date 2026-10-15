@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-14T23:57:57.880182+00:00",
-  "registryDate": "2026-10-14T23:55:56.416922+00:00",
+  "registryDate": "2026-10-15T00:12:18.972729+00:00",
   "prs": [
     {
       "number": 12470,
@@ -90974,7 +90974,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T23:55:56.416922+00:00"
+        "observedAt": "2026-10-15T00:12:18.972729+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -90983,7 +90983,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T23:55:56.416922+00:00"
+        "observedAt": "2026-10-15T00:12:18.972729+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -90992,7 +90992,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-14T23:55:56.416922+00:00"
+        "observedAt": "2026-10-15T00:12:18.972729+00:00"
       }
     },
     "branch:review/pinring-teardown-timing": {
@@ -91001,7 +91001,7 @@
         "since": "2026-10-14T21:54:35.871162+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-14T23:55:56.416922+00:00"
+        "observedAt": "2026-10-15T00:12:18.972729+00:00"
       }
     },
     "branch:review/checksum-report-comment": {
@@ -91010,7 +91010,16 @@
         "since": "2026-10-14T22:23:22.330360+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-14T23:55:56.416922+00:00"
+        "observedAt": "2026-10-15T00:12:18.972729+00:00"
+      }
+    },
+    "branch:fixes/nft-fib-presence": {
+      "contributor-review": {
+        "scope": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+        "since": "2026-10-15T00:12:18.972729+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-15T00:12:18.972729+00:00"
       }
     }
   },
