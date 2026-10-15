@@ -324,8 +324,9 @@ func (ds *decodeState) register(r wire.ReferenceView, typ reflect.Type) any {
 	if r.Dots() != 0 {
 		typ = ds.findType(r.Type())
 	}
-	pointer := allocateObject(typ)
-	ods := ds.addObject(id, pointer, ds.plan(typ))
+	plan := ds.types.plan(typ)
+	pointer := plan.newObject()
+	ods := ds.addObject(id, pointer, plan)
 	if encoded, ok := ds.deferred[id]; ok {
 		delete(ds.deferred, id)
 		ds.restoreValue(ods, ods.destination(), encoded)
@@ -408,9 +409,9 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, target restoreDestin
 	}
 	defer ds.stats.done()
 	mode := LoadCustom
-	registered := source.internal.rte.registered
-	if registered != nil && registered.typ == typ {
-		mode = registered.loadMode
+	plan := source.internal.rte.plan
+	if plan.typ == typ {
+		mode = plan.loadMode
 	}
 	if !obj.IsValid() {
 		obj = target.value()
@@ -462,7 +463,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// decode normally. In order to avoid issues with setting value-types,
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
-	pointer := allocateObject(typ)
+	pointer := ds.types.plan(typ).newObject()
 	defer obj.Set(reflect.ValueOf(pointer).Elem())
 	ds.restoreValue(ods, ds.pointerDestination(reflect.ValueOf(pointer)), value)
 }
@@ -525,7 +526,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 	if pointer.Type().Name() != "" {
 		pointer = pointer.Convert(reflect.PointerTo(pointer.Type().Elem()))
 	}
-	_ = ds.addObject(1, pointer.Interface(), ds.plan(pointer.Type().Elem()))
+	_ = ds.addObject(1, pointer.Interface(), ds.types.plan(pointer.Type().Elem()))
 
 	// Read the number of objects.
 	numObjects, object, err := ReadHeader(&ds.r)

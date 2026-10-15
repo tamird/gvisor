@@ -30,7 +30,7 @@ func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestin
 	}
 	var element *restorePlan
 	if length != 0 && target.directArray() {
-		element = ds.elementPlan(target.plan)
+		element = ds.types.plan(target.plan.typ.Elem())
 	}
 	for i := 0; i < encoded.Len(); i++ {
 		value := encoded.Element(i)
