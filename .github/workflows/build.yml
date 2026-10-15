@@ -1,162 +1,101 @@
-name: CI
+name: State schema performance
 
 "on":
-  push:
-    branches:
-      - "*"
   workflow_dispatch:
-    inputs:
-      lanes:
-        description: Space-separated qualification lanes
-        type: string
-        default: smoke
-        required: true
-      architecture:
-        description: Target architecture selection
-        type: choice
-        options: [amd64, arm64, all]
-        default: amd64
-      execution:
-        description: Run tests on BuildBuddy or this Actions runner
-        type: choice
-        options: [remote, local]
-        default: remote
-      clock_source:
-        description: Explicit runtime clock source for qualification
-        type: choice
-        options: [calibrated, reference]
-        default: calibrated
-      local_test_requirements:
-        description: Comma-separated requirements missing from remote workers for hybrid lanes
-        type: string
-        default: namespace
-      syscall_bucket:
-        description: Optional hash15 bucket (0..14) for local syscall lanes
-        type: string
-      targets:
-        description: Optional build/test labels, or one continuous benchmark label
-        type: string
-      header_base:
-        description: Full comparison commit SHA for license-headers
-        type: string
-      cos_catalog_gzip_base64:
-        description: Gzip/base64-encoded complete gcloud COS image catalog
-        type: string
-      cos_catalog_sha256:
-        description: SHA256 of the uncompressed COS catalog
-        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ contains(fromJSON('["build","test","benchmarks"]'), inputs.lanes) && inputs.targets || '' }}-${{ inputs.clock_source }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (!startsWith(github.ref, 'refs/heads/qualification/') && github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid'))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-    - name: bazel
-      run: |
-        export DEBIAN_FRONTEND=noninteractive
-        sudo -E apt update && sudo -E apt install -y make
-
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-    - name: build
-      run: |
-          mkdir -p bin
-          make copy TARGETS=runsc DESTINATION=bin/
-
-    - name: Upload runsc
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-      with:
-          name: runsc
-          path: bin/runsc
-
   remote-qualification:
-    if: github.repository == 'tamird/gvisor' && (github.ref == 'refs/heads/rbe-qualification-upstream-refresh' || ((startsWith(github.ref, 'refs/heads/qualification/') || github.ref == 'refs/heads/rbe-actions-kvm-syscalls' || github.ref == 'refs/heads/rbe-actions-amd64-syscalls' || github.ref == 'refs/heads/rbe-actions-arm64-resume' || github.ref == 'refs/heads/rbe-actions-benchmark-partitions' || github.ref == 'refs/heads/rbe-actions-docker-network' || github.ref == 'refs/heads/rbe-actions-arm64-docker' || github.ref == 'refs/heads/rbe-actions-arm64-images' || github.ref == 'refs/heads/rbe-actions-plugin-network' || github.ref == 'refs/heads/rbe-actions-nftables' || github.ref == 'refs/heads/rbe-actions-kvm-startup' || github.ref == 'refs/heads/rbe-unit-mixed-hybrid' || github.ref == 'refs/heads/diagnostics/unit-mixed-continuation') && github.event_name == 'workflow_dispatch'))
-    runs-on: ${{ inputs.execution == 'local' && (inputs.architecture == 'arm64' || inputs.architecture == 'all' && inputs.lanes == 'unit') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: ${{ inputs.execution == 'local' && inputs.architecture == 'all' && inputs.lanes == 'unit' && 155 || inputs.execution == 'local' && inputs.lanes == 'container-v1' && 155 || inputs.execution == 'remote' && (contains(fromJSON('["build","test"]'), inputs.lanes) || inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes)) && 155 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 95 || inputs.execution == 'local' && contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 75 || (inputs.execution == 'local' && inputs.lanes != 'unit' && inputs.lanes != 'container-v1-pilot' && inputs.lanes != 'syscalls' && inputs.lanes != 'syscalls-resume' && inputs.lanes != 'syscalls-kvm' && inputs.lanes != 'syscalls-rc-pilot' && inputs.lanes != 'docker' && inputs.lanes != 'plugin-network' && inputs.lanes != 'nftables' && inputs.lanes != 'moby' && inputs.lanes != 'kvm' && 15 || 50) }}
+    if: github.repository == 'tamird/gvisor' && github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/qualification/state-schema-ownership-actions'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
     permissions:
       contents: read
-    env:
-      QUALIFICATION_COMMIT: ${{ github.sha }}
-      QUALIFICATION_EXECUTION: ${{ github.event_name == 'push' && 'remote' || inputs.execution == 'remote' && (contains(fromJSON('["build","test"]'), inputs.lanes) || inputs.architecture == 'arm64' && contains(fromJSON('["syscalls-64k","syscalls-rc"]'), inputs.lanes)) && 'remote-actions' || inputs.execution }}
-      QUALIFICATION_CLOCK_SOURCE: ${{ github.event_name == 'push' && 'calibrated' || inputs.clock_source }}
-      QUALIFICATION_LOCAL_TEST_REQUIREMENTS: ${{ inputs.local_test_requirements }}
-      QUALIFICATION_LANES: ${{ github.event_name == 'push' && 'smoke' || inputs.lanes }}
-      QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
-      QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
-      QUALIFICATION_TARGETS: ${{ inputs.targets }}
-      QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
-      QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
-      QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
     steps:
-    - name: Check the Remote Bazel credential
-      shell: bash
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: ': "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"'
-
-    - name: Checkout the triggering commit
+    - name: Checkout the triggering method commit
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: ${{ github.sha }}
         persist-credentials: false
 
-    - name: Download the pinned BuildBuddy CLI
-      if: env.QUALIFICATION_EXECUTION == 'remote'
-      shell: bash
-      run: |
-        curl --fail --silent --show-error --location --max-time 120 \
-          https://github.com/buildbuddy-io/bazel/releases/download/5.0.488/bazel-5.0.488-linux-x86_64 \
-          --output "$RUNNER_TEMP/bb"
-        printf '%s  %s\n' \
-          f0d85b1514f784dc25705dd3bbeeaa1e603b5449f721c26add0245198f03e7cb \
-          "$RUNNER_TEMP/bb" | sha256sum --check --strict
-        chmod +x "$RUNNER_TEMP/bb"
-
-    - name: Qualify on Remote Bazel
-      if: env.QUALIFICATION_EXECUTION == 'remote'
+    - name: Run the fixed paired comparison
+      timeout-minutes: 33
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-        GIT_REPO_DEFAULT_BRANCH: master
-        REMOTE_TIMEOUT: ${{ github.event_name == 'workflow_dispatch' && '45m' || '15m' }}
       run: |
-        exec "$RUNNER_TEMP/bb" remote \
-          --run_from_commit="$GITHUB_SHA" \
-          --os=linux --arch=amd64 \
-          --runner_exec_properties=EstimatedCPU=4 \
-          --runner_exec_properties=EstimatedMemory=16GB \
-          --runner_exec_properties=EstimatedFreeDiskBytes=40GB \
-          --env="QUALIFICATION_COMMIT=$GITHUB_SHA" \
-          --env="QUALIFICATION_LANES=$QUALIFICATION_LANES" \
-          --env="QUALIFICATION_ARCH=$QUALIFICATION_ARCH" \
-          --env="QUALIFICATION_CLOCK_SOURCE=$QUALIFICATION_CLOCK_SOURCE" \
-          --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
-          --env="QUALIFICATION_TARGETS=$QUALIFICATION_TARGETS" \
-          --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
-          --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
-          --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \
-          --timeout="$REMOTE_TIMEOUT" --disable_retry \
-          --script='bash test/rbe/actions.sh'
+        set -euo pipefail
+        : "${BUILDBUDDY_API_KEY:?Configure the BUILDBUDDY_API_KEY repository secret}"
+        export BUILDBUDDY_ARTIFACTS_DIRECTORY="$RUNNER_TEMP/qualification"
+        mkdir -p "$BUILDBUDDY_ARTIFACTS_DIRECTORY"
+        method="$RUNNER_TEMP/state-schema-performance.sh"
+        export STATE_PERFORMANCE_CREDENTIAL_RC
+        STATE_PERFORMANCE_CREDENTIAL_RC=$(mktemp "$RUNNER_TEMP/state-schema-credential.XXXXXX")
+        finish() {
+          local result=$? cleanup_status=0
+          trap - EXIT
+          rm -f -- "$STATE_PERFORMANCE_CREDENTIAL_RC" "$method" || cleanup_status=$?
+          printf '%d\n' "$result" > "$BUILDBUDDY_ARTIFACTS_DIRECTORY/workflow-primary-exit.txt" || cleanup_status=1
+          printf '%d\n' "$cleanup_status" > "$BUILDBUDDY_ARTIFACTS_DIRECTORY/workflow-cleanup-exit.txt" || cleanup_status=1
+          if (( result == 0 && cleanup_status != 0 )); then result=$cleanup_status; fi
+          exit "$result"
+        }
+        trap finish EXIT
+        test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+        cp test/rbe/state_schema_performance.sh "$method"
+        cp "$method" "$BUILDBUDDY_ARTIFACTS_DIRECTORY/method.sh"
+        cp .github/workflows/build.yml "$BUILDBUDDY_ARTIFACTS_DIRECTORY/workflow.yml"
+        python3 - <<'PY'
+        import hashlib
+        import json
+        import os
+        from pathlib import Path
 
-    - name: Coordinate qualification on Actions
-      if: env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions'
-      timeout-minutes: ${{ inputs.execution == 'local' && inputs.architecture == 'all' && inputs.lanes == 'unit' && 145 || inputs.execution == 'local' && inputs.lanes == 'container-v1' && 150 || env.QUALIFICATION_EXECUTION == 'remote-actions' && 145 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'container-v1-pilot' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
-      shell: bash
-      env:
-        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: bash test/rbe/actions.sh
+        root = Path(os.environ['BUILDBUDDY_ARTIFACTS_DIRECTORY'])
+        keys = ('GITHUB_SERVER_URL', 'GITHUB_REPOSITORY', 'GITHUB_SHA', 'GITHUB_REF',
+                'GITHUB_RUN_ID', 'GITHUB_RUN_ATTEMPT', 'RUNNER_OS', 'RUNNER_ARCH',
+                'ImageOS', 'ImageVersion')
+        record = {key: os.environ.get(key) for key in keys}
+        record['measuredSource'] = 'fc2b6b435b97fed95b4c41fd5c39a535f2dee6e2'
+        record['beforeSource'] = '6212e4f7b92d3090be49c21a376f1e53b7e79ce5'
+        record['methodSHA256'] = hashlib.sha256((root / 'method.sh').read_bytes()).hexdigest()
+        record['workflowSHA256'] = hashlib.sha256((root / 'workflow.yml').read_bytes()).hexdigest()
+        (root / 'actions-identity.json').write_text(json.dumps(record, indent=2) + '\n')
+        PY
+        # Keep workflow changes outside the measured 48-path source comparison.
+        measured_source=fc2b6b435b97fed95b4c41fd5c39a535f2dee6e2
+        if ! git cat-file -e "$measured_source^{commit}" 2>/dev/null; then
+          timeout --signal=TERM --kill-after=5s 60s git fetch --no-tags --depth=1 origin "$measured_source"
+        fi
+        timeout --signal=TERM --kill-after=5s 30s git checkout --detach "$measured_source"
+        test "$(git rev-parse HEAD)" = "$measured_source"
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(<images/default/bazelversion)
+        command -v bazelisk
+        # Use the canonical Actions RBE endpoints and operation-scoped secret.
+        # This RC is never copied into the artifact directory.
+        {
+          printf '%s\n' \
+            'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
+            'build:buildbuddy_remote_executor --bes_results_url=https://app.buildbuddy.io/invocation/'
+          printf 'build:buildbuddy_remote_executor --build_metadata=COMMIT_SHA=%s\n' "$measured_source"
+          printf 'build:buildbuddy_remote_executor --build_metadata=REPO_URL=%s/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY"
+          printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
+          printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$STATE_PERFORMANCE_CREDENTIAL_RC"
+        unset BUILDBUDDY_API_KEY
+        bash "$method"
 
-    - name: Retain qualification placement and host facts
-      if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
+    - name: Retain original comparison evidence
+      if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
-        name: qualification-${{ inputs.architecture }}
+        name: state-schema-performance-${{ github.run_id }}-${{ github.run_attempt }}
         path: ${{ runner.temp }}/qualification
         if-no-files-found: error
