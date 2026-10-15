@@ -42,6 +42,7 @@ type valueFrame struct {
 	nodes   []frameData
 	tags    []uint8
 	strings []string
+	schemas []*typeValue
 }
 
 // ValueBuffer reuses temporary storage for completely parsed values. A value
@@ -60,6 +61,8 @@ type ValueBuffer struct {
 func (b *ValueBuffer) Load(r *Reader) Value {
 	clear(b.frame.strings)
 	b.frame.strings = b.frame.strings[:0]
+	clear(b.frame.schemas)
+	b.frame.schemas = b.frame.schemas[:0]
 	b.frame.nodes = b.frame.nodes[:0]
 	b.frame.tags = b.frame.tags[:0]
 	b.frame.kind = frameKind
@@ -74,6 +77,7 @@ func (b *ValueBuffer) Release() {
 	b.frame.nodes = nil
 	b.frame.tags = nil
 	b.frame.strings = nil
+	b.frame.schemas = nil
 }
 
 // reserve returns uninitialized slots. Every parser path assigns a complete
@@ -199,17 +203,17 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		f.loadValue(r, value)
 		node.b = uint64(value)
 	case KindType:
-		name := string(loadString(r))
-		node.a = f.text(name)
-		count := uint64(loadUint(r))
-		fields := f.reserve(1)
-		first := f.reserve(count)
-		f.setNode(fields, frameNode{a: uint64(first), b: count})
-		node.b = uint64(fields)
-		for i := 0; i < int(count); i++ {
-			name := string(loadString(r))
-			f.setNode(first+i, frameNode{a: f.text(name)})
+		// Schemas outlive individual records in the decode type database.
+		// Parse into their retained representation instead of duplicating
+		// each field in temporary nodes and string headers first.
+		schema := &typeValue{valueHeader: valueHeader{KindType}} // Escapes: owned schema payload.
+		schema.typ.Name = string(loadString(r))
+		schema.typ.Fields = make([]string, loadUint(r)) // Escapes: owned schema field headers.
+		for i := range schema.typ.Fields {
+			schema.typ.Fields[i] = string(loadString(r))
 		}
+		node.a = uint64(len(f.schemas))
+		f.schemas = append(f.schemas, schema) // Escapes: parsed schema references.
 	default:
 		panic(fmt.Errorf("unknown header: %d", kind)) // Escapes: error formatting.
 	}

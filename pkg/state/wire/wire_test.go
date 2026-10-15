@@ -143,6 +143,51 @@ func TestValueBufferOwnership(t *testing.T) {
 	}
 }
 
+func TestValueBufferSchemaOwnership(t *testing.T) {
+	schemas := []*Type{
+		{Name: "first", Fields: []string{"left", "right"}},
+		{Name: "empty", Fields: []string{}},
+		{Name: "last", Fields: []string{"value"}},
+	}
+	var saved bytes.Buffer
+	writer := Writer{Writer: &saved}
+	array := &Array{}
+	for _, schema := range schemas {
+		array.Contents = append(array.Contents, schema)
+	}
+	Save(&writer, array)
+	var values ValueBuffer
+	defer values.Release()
+	parsed := values.Load(&Reader{Reader: &saved})
+	retained := parsed.Element(0).Type()
+	owned := parsed.Own()
+
+	// A later record may parse a complete nested schema before failing.
+	// It must not return that partial record or overwrite retained metadata.
+	Save(&writer, array)
+	data := saved.Bytes()
+	func() {
+		defer func() {
+			if got, want := recover(), io.EOF; got != want {
+				t.Errorf("truncated schema panic = %v, want %v", got, want)
+			}
+		}()
+		values.Load(&Reader{Reader: bytes.NewReader(data[:len(data)-1])})
+	}()
+	saved.Reset()
+	Save(&writer, &Type{Name: "replacement", Fields: []string{"other"}})
+	values.Load(&Reader{Reader: &saved})
+	values.Release()
+	if got, want := retained, schemas[0]; !reflect.DeepEqual(got, want) {
+		t.Errorf("retained schema = %+v, want %+v", got, want)
+	}
+	for i, schema := range schemas {
+		if got, want := owned.Element(i).Type(), schema; !reflect.DeepEqual(got, want) {
+			t.Errorf("owned schema %d = %+v, want %+v", i, got, want)
+		}
+	}
+}
+
 // BenchmarkUintSave benchmarks saving a Uint. This benchmark is important
 // because almost all types in this package boil down to Uints. So
 // Uint.save() performance is critical for checkpoint performance.
