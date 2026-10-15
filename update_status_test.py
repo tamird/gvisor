@@ -156,5 +156,34 @@ class CollectorHistoryTest(unittest.TestCase):
                 self.assertFalse((self.root / ".github-status.json.tmp").exists())
 
 
+class ScopedApprovalTest(unittest.TestCase):
+    def test_scoped_detail_retains_approval_and_force_push_boundary(self) -> None:
+        pr = raw_pr(7)
+        pr["reviewDecision"] = "APPROVED"
+        pr["headHistory"]["nodes"] = [{"createdAt": LATER, "afterCommit": {"oid": pr["headRefOid"]}}]
+        review = {"id": "review-7", "url": pr["url"] + "#pullrequestreview-7", "body": "",
+                  "state": "APPROVED", "submittedAt": LATER, "updatedAt": LATER,
+                  "author": {"login": "reviewer", "__typename": "User"},
+                  "commit": {"oid": pr["headRefOid"]}}
+        pr["reviews"]["nodes"] = [review]
+
+        def graphql(query: str) -> dict:
+            response = copy.deepcopy(pr)
+            # Return only requested history, as the service does. A detail-only
+            # query must still retrieve the evidence used to judge approval.
+            if "headHistory:timelineItems" not in query:
+                response.pop("headHistory")
+            return {"repository": {"p7": response}}
+
+        with mock.patch.object(updater, "graphql", side_effect=graphql):
+            for submitted, expected in [(LATER, "APPROVED"), (OLD, "REVIEW_REQUIRED")]:
+                with self.subTest(submitted=submitted):
+                    review["submittedAt"] = submitted
+                    result = updater.normalize(updater.fetch_numbers([7], timeline=False)[7])
+                    self.assertEqual(result["headHistoryComplete"], True)
+                    self.assertEqual(result["headIntroducedAt"], LATER)
+                    self.assertEqual(result["reviewDecision"], expected)
+
+
 if __name__ == "__main__":
     unittest.main()

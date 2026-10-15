@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T22:59:48.554319+00:00",
+    "updatedAt": "2026-10-15T23:40:28.474328+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -447,14 +447,14 @@
       "group": "release",
       "status": "open",
       "reviewDecision": "APPROVED",
-      "updatedAt": "2026-10-09T20:02:43.526698+00:00",
-      "summary": "The patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval.",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "The patch-preserving rebase includes the landed shared-workflow correction. After the new-head notification, Etienne submitted a new approval of this exact head. This is a new review, distinct from the older reassociated approval. Its matching import #15396 closed without merging on October 15 at 23:22 UTC; the source PR remains open.",
       "followup": {
         "disposition": "Fresh current-head review received after rebase",
         "owner": "external_sweeps",
         "sourceHead": "095d18339ac91354d4df0d6d2d768743bac905a4",
         "reviewedAt": "2026-10-09T20:00:43.517313+00:00",
-        "nextAction": "Observe current-head CI and matching import progress.",
+        "nextAction": "Observe the open source PR and any subsequent import activity. The prior matching import #15396 closed unmerged; that does not establish source closure or landing.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15111#pullrequestreview-5474692022",
           "https://github.com/google/gvisor/pull/15111#issuecomment-6088101788",
@@ -7064,18 +7064,19 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
       "status": "Approved; awaiting prerequisite",
-      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
-      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor approved the correction. Upstream submission awaits the separate Karn correction; throughput and memory-layout effects have not been measured.",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor approved the correction. Upstream submission awaits the separate Karn correction; the fixed throughput comparison is running, with layout evidence to be checked from its artifacts.",
       "followup": {
         "owner": "syscall_validation",
         "disposition": "Contributor approved; prerequisite outstanding",
         "sourceHead": "7e371d8acc44a23b419a84618471efe9ffc51c42",
         "observedAt": "2026-10-15T07:39:50.082755+00:00",
-        "nextAction": "Open the upstream PR after the separate Karn correction lands.",
+        "nextAction": "Verify the running fixed benchmark and layout evidence. Open the upstream PR after the separate Karn correction lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
           "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3",
-          "https://app.buildbuddy.io/invocation/919b6f41-c170-40bb-a409-a03631978ff1"
+          "https://app.buildbuddy.io/invocation/919b6f41-c170-40bb-a409-a03631978ff1",
+          "https://github.com/tamird/gvisor/actions/runs/38823560866"
         ]
       }
     },
@@ -7114,14 +7115,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T12:53:55.889065+00:00",
-      "summary": "Generate typed snapshots and restore them through one object graph. The corrected rewrite passes correctness checks but still slows four Load fixtures, including control messages by 75.81% and queued UDP packets by 15.24%. Profiling identified repeated type planning; the next revision removes that machinery and targets the measured initialization and executable growth. It is under source review. Nogo source ordering (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "This retained earlier rewrite generated typed snapshots and restored them through one object graph. Its measured Load regressions led to the subsequent schema-ownership experiment. The current experiment is on the separate review/state-schema-ownership branch and remains under investigation after its complete fixed comparison; this branch identity and its historical evidence are preserved. Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
         "observedAt": "2026-10-15T12:24:31.479528+00:00",
-        "nextAction": "Use the frozen profiles to remove remaining type/destination overhead and generated code growth, then repeat the fixed package comparison. Whole-checkpoint and sandbox-startup measurements follow only after the regressions are addressed.",
+        "nextAction": "Continue the separate schema-ownership investigation; retain this earlier proposal and its evidence without transferring newer results onto its head.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -7140,7 +7141,8 @@
           "https://app.buildbuddy.io/invocation/0c3eed95-3eb1-4e5b-9149-0d3fe7611e4b",
           "https://app.buildbuddy.io/invocation/6f57c8e3-102a-4cfa-8754-86cdcd5f5ca5",
           "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13",
-          "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9"
+          "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9",
+          "https://github.com/tamird/gvisor/commit/d702e924375d756788a304c01b887fb833c30243"
         ]
       }
     },
@@ -7170,6 +7172,36 @@
         "evidence": [
           "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa"
         ]
+      }
+    },
+    {
+      "id": "branch:fixes/gofer-cgo-rule-init",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/gofer-cgo-rule-init",
+      "head": "78abb01a0ac542aa97f49168b3af698ff1025392",
+      "title": "Build gofer cgo filters only when needed",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/78abb01a0ac542aa97f49168b3af698ff1025392",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "Construct gofer cgo seccomp rules only when generating a filter with CgoEnabled, following the sentry approach. This avoids eager rule construction in pure-Go binaries and when a precompiled filter is used. Existing config tests and analyzers pass on both architectures, with source and original-output reviews complete. A matched pure-Go AMD64 initialization trace on the qualification branch removes 648 bytes and seven allocations; that branch includes a separate musl clone rule, so this is not a standalone latency measurement. Contributor review of the published correction is requested.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Contributor review requested",
+        "sourceHead": "78abb01a0ac542aa97f49168b3af698ff1025392",
+        "observedAt": "2026-10-15T23:40:28.474328+00:00",
+        "nextAction": "Await contributor review before opening the upstream PR. No latency or plugin-runtime benefit is claimed.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/78abb01a0ac542aa97f49168b3af698ff1025392",
+          "https://app.buildbuddy.io/invocation/5d536afd-488e-4a57-bd93-47d7fd760d24",
+          "https://github.com/tamird/gvisor/commit/a940a8807cf212ab6436aac25544f4aeba18ec55"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "78abb01a0ac542aa97f49168b3af698ff1025392",
+        "url": "https://github.com/tamird/gvisor/commit/78abb01a0ac542aa97f49168b3af698ff1025392"
       }
     }
   ],
@@ -8699,8 +8731,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T22:32:55.534469+00:00",
-      "summary": "The packet-level investigation found two RTT defects beyond congestion-window accounting: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections now have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both corrections: the Karn loss-probe fix is published as #15819, and the minimum-RTT correction awaits that prerequisite’s merge. These results establish the tested recovery behavior, not a new throughput measurement.",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: the Karn correction is published as #15819, and the minimum-RTT correction awaits its merge. A fixed two-host Upload/Download comparison is now running with Karn in both versions. No throughput or layout result is available yet.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9254,9 +9286,34 @@
               "url": "https://app.buildbuddy.io/invocation/919b6f41-c170-40bb-a409-a03631978ff1"
             }
           ]
+        },
+        {
+          "text": "The third benchmark submission is running on the reviewed matched sources, with twelve balanced pairs per host and opposite starting orders on two hosts. Both versions include Karn; their production difference is the approved minimum-RTT correction. The existing Upload/Download fixture reports bandwidth as the primary metric. The first attempt stopped before Bazel because optional caller inputs were unset; the second failed to load the missing reporting-tool repository. Neither produced benchmark samples. The third corrects those setup contracts and preserves the fixed cohort. No recovery-benefit, throughput or memory-layout conclusion is available yet.",
+          "evidence": [
+            {
+              "label": "Current fixed RACK comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38823560866"
+            },
+            {
+              "label": "First setup failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38821514105"
+            },
+            {
+              "label": "Second setup failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38822070646"
+            },
+            {
+              "label": "Matched candidate",
+              "url": "https://github.com/tamird/gvisor/commit/957b44880d503f148f32e054cbbbba1329484eaf"
+            },
+            {
+              "label": "Matched control with Karn",
+              "url": "https://github.com/tamird/gvisor/commit/dbb142b3f91ca82700f14b3620d689a67203d078"
+            }
+          ]
         }
       ],
-      "nextStep": "After the current kernel validation, compare the approved minimum-RTT change with the existing benchmarks, keeping the Karn correction in both versions, and inspect actual sender/segment layouts. Upstream submission waits for #15819 to land; the performance investigation can proceed before that merge.",
+      "nextStep": "Verify the fixed two-host comparison and actual sender/segment layouts from retained artifacts. Keep the two setup failures separate. Upstream submission of the minimum-RTT correction still waits for #15819 to land.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9588,8 +9645,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T22:59:48.554319+00:00",
-      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Both hosted performance attempts ended with provider stream failures. The first Actions campaign reached its 30-minute work deadline after 244 of 268 planned processes; it remains incomplete. The unchanged full comparison is now running with a 40-minute work budget. No new timing or allocation result is available. The preceding design improved UDP Save time by 25.95% but increased control-message Load time by 33.65% and allocated 61.94% more bytes. Its CLI and container-startup comparisons found no statistically significant timing difference, while production binaries grew by about 4 MB. These earlier results remain separate from the current correction.",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Its complete fixed comparison now has verified source, native and numerical evidence for all 268 processes. UDP Save is 26.69% faster, but control-message Load is 26.88% slower and allocates 41.35% more bytes; pointer Load, map Save and UDP Load also regress. The proposal remains under investigation. Both provider failures and the incomplete 244-process Actions attempt remain separate. Earlier CLI and sandbox measurements apply to the preceding design, not this correction.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10475,9 +10532,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/38820518177"
             }
           ]
+        },
+        {
+          "text": "The Actions campaign with a 40-minute work budget completed all 268 processes: 240 measured rows, 20 warmups and eight separate first-use observations. All source, generated-code, compiler/archive and native-output joins and the numerical review are closed. In twelve observations per version, UDP Save improves 26.69%; control-message Load regresses 26.88%, pointer Load 5.28%, map Save 4.82% and UDP Load 2.68%. Control-message Load allocates 6,536 versus 4,624 bytes (+41.35%) despite fewer allocations. These package results do not establish startup or whole-checkpoint benefit. The schema-ownership proposal remains experimental.",
+          "evidence": [
+            {
+              "label": "Complete fixed comparison",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38820518177"
+            },
+            {
+              "label": "Current standalone schema-ownership proposal",
+              "url": "https://github.com/tamird/gvisor/commit/d702e924375d756788a304c01b887fb833c30243"
+            },
+            {
+              "label": "Measured qualification source",
+              "url": "https://github.com/tamird/gvisor/commit/fc2b6b435b97fed95b4c41fd5c39a535f2dee6e2"
+            }
+          ]
         }
       ],
-      "nextStep": "Complete and independently verify the full fixed comparison under its revised budget. Retain both provider failures and the incomplete first Actions campaign separately; do not pool partial samples across runs.",
+      "nextStep": "Investigate the confirmed control-message, pointer and UDP Load regressions, map Save regression and first-use allocation costs before proposing adoption. Keep the complete comparison separate from the earlier incomplete runs; do not infer startup or whole-checkpoint benefit from package measurements.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -13248,8 +13322,8 @@
       "title": "Runtime startup performance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
-      "summary": "The current netip and state migrations completed separate fixed Linux AMD64 CLI startup comparisons; neither found a statistically significant timing difference. The matched sandbox comparison also completed all 288 container starts across twelve balanced blocks, with no detected timing difference for either migration. These results do not establish equal startup cost. Netip leaves executable lengths unchanged; the preceding state rewrite adds about 4 MB.",
+      "updatedAt": "2026-10-15T23:40:28.474328+00:00",
+      "summary": "The current netip and state migrations completed separate fixed Linux AMD64 CLI startup comparisons; neither found a statistically significant timing difference. The matched sandbox comparison also completed all 288 container starts across twelve balanced blocks, with no detected timing difference for either migration. These results do not establish equal startup cost. Netip leaves executable lengths unchanged; the preceding state rewrite adds about 4 MB. A separate gofer correction now builds cgo filter rules only when needed; its configuration checks and initialization traces are verified, and contributor review is requested.",
       "findings": [
         {
           "text": "The netip migration adds three binary-codec registrations and changes header initialization. Both comparison arms include the cheaper non-race registration from #15814. The fixed method measures 12 balanced pairs of 64 fresh runsc --version processes on one worker, with separate initialization traces and matching AMD64/ARM64 builds. CLI measurements do not substitute for sandbox startup.",
@@ -13294,9 +13368,22 @@
               "url": "https://app.buildbuddy.io/invocation/96970fb0-5048-406d-be10-e12e3867b77a"
             }
           ]
+        },
+        {
+          "text": "The gofer eagerly constructed cgo seccomp rules during package initialization, including for pure-Go binaries and precompiled-filter hits. The independent correction constructs a fresh rule set only when generating CgoEnabled rules. Existing config tests and analyzers pass on both architectures, with original-output and source-to-binary verification complete. A matched pure-Go AMD64 trace on the qualification branch removes 648 bytes and seven allocations; executable lengths are unchanged. This branch includes the separate musl clone rule, so those counts are not a standalone result. The check supplies no latency or plugin-runtime measurement. Contributor review of the standalone correction is now requested.",
+          "evidence": [
+            {
+              "label": "Independent gofer correction",
+              "url": "https://github.com/tamird/gvisor/commit/78abb01a0ac542aa97f49168b3af698ff1025392"
+            },
+            {
+              "label": "Accepted config and initialization check",
+              "url": "https://app.buildbuddy.io/invocation/5d536afd-488e-4a57-bd93-47d7fd760d24"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the completed CLI and sandbox measurements when assessing these proposals. Keep initialization allocations, executable size and nondetected timing differences distinct; no additional startup run is queued.",
+      "nextStep": "Await contributor review of the independently qualified gofer correction. Its observed initialization allocations remain distinct from latency measurements and the completed CLI/sandbox comparisons.",
       "evidence": [
         {
           "label": "Netip measurement branch",

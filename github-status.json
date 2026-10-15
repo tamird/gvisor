@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-15T23:20:51.336167+00:00",
-  "registryDate": "2026-10-15T22:59:48.554319+00:00",
+  "registryDate": "2026-10-15T23:40:28.474328+00:00",
   "prs": [
     {
       "number": 12470,
@@ -17279,7 +17279,7 @@
       ],
       "reviewRequestsComplete": true,
       "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-15T23:19:58.803333+00:00",
+      "mergeabilityCheckedAt": "2026-10-15T23:40:28.440577+00:00",
       "mergeState": "UNKNOWN",
       "labels": [
         "ready to pull"
@@ -17593,7 +17593,7 @@
       "reviewDecision": "APPROVED",
       "approvedHead": "095d18339ac91354d4df0d6d2d768743bac905a4",
       "approvedAt": "2026-10-09T19:49:58Z",
-      "checkedAt": "2026-10-15T23:20:51.336167+00:00",
+      "checkedAt": "2026-10-15T23:40:28.440577+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "095d18339ac91354d4df0d6d2d768743bac905a4",
@@ -17606,19 +17606,19 @@
           "number": 15396,
           "title": "Propagate failures from source lint tools",
           "url": "https://github.com/google/gvisor/pull/15396",
-          "status": "open",
+          "status": "closed",
           "ref": "test/cl992760450",
           "head": "79c8039ddb5c5a52cbc19ee799d05cd0102c2471",
           "base": "2834ad887551f6fc02e07eea006df2ac40c0d988",
           "headCommittedAt": "2026-10-09T20:03:15Z",
-          "headHistoryComplete": false,
-          "headIntroducedAt": null,
+          "headHistoryComplete": true,
+          "headIntroducedAt": "2026-10-09T20:03:21Z",
           "headOwner": "google",
           "headRepo": "google/gvisor",
-          "updatedAt": "2026-10-09T20:03:34Z",
+          "updatedAt": "2026-10-15T23:23:01Z",
           "createdAt": "2026-10-06T20:40:12Z",
           "mergedAt": null,
-          "closedAt": null,
+          "closedAt": "2026-10-15T23:22:58Z",
           "githubReviewDecision": null,
           "reviewsComplete": true,
           "reviewRequests": [
@@ -17637,7 +17637,7 @@
           ],
           "reviewRequestsComplete": true,
           "mergeable": "UNKNOWN",
-          "mergeabilityCheckedAt": "2026-10-15T23:20:25.142185+00:00",
+          "mergeabilityCheckedAt": "2026-10-15T23:40:28.440818+00:00",
           "mergeState": "UNKNOWN",
           "labels": [
             "exported"
@@ -17821,7 +17821,7 @@
           "reviewDecision": null,
           "approvedHead": null,
           "approvedAt": null,
-          "checkedAt": "2026-10-15T23:20:51.336167+00:00",
+          "checkedAt": "2026-10-15T23:40:28.440818+00:00",
           "mergeabilityObservation": {
             "state": "MERGEABLE",
             "head": "79c8039ddb5c5a52cbc19ee799d05cd0102c2471",
@@ -90826,12 +90826,12 @@
       }
     },
     "pr:15111": {
-      "importing": {
-        "scope": "15396:79c8039ddb5c5a52cbc19ee799d05cd0102c2471",
-        "since": "2026-10-09T20:12:40.895923+00:00",
+      "awaiting-import": {
+        "scope": "095d18339ac91354d4df0d6d2d768743bac905a4",
+        "since": "2026-10-15T23:40:28.440577+00:00",
         "basis": "observed",
-        "qualifier": "#15396: open, validation checks passed, mergeability unknown",
-        "observedAt": "2026-10-15T23:20:51.336167+00:00"
+        "qualifier": "Validation checks passed",
+        "observedAt": "2026-10-15T23:40:28.440577+00:00"
       }
     },
     "pr:15114": {
@@ -92458,6 +92458,15 @@
         "basis": "observed",
         "qualifier": null,
         "observedAt": "2026-10-15T22:59:48.554319+00:00"
+      }
+    },
+    "branch:fixes/gofer-cgo-rule-init": {
+      "contributor-review": {
+        "scope": "78abb01a0ac542aa97f49168b3af698ff1025392",
+        "since": "2026-10-15T23:40:28.474328+00:00",
+        "basis": "observed",
+        "qualifier": null,
+        "observedAt": "2026-10-15T23:40:28.474328+00:00"
       }
     }
   },

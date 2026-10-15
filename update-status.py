@@ -35,6 +35,9 @@ FIELDS = """
 number title url state isDraft headRefName headRefOid baseRefOid updatedAt createdAt mergedAt closedAt
 headRepository { nameWithOwner owner { login } } repository { nameWithOwner }
 author { login } reviewDecision mergeable mergeStateStatus
+headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
+  nodes { ... on HeadRefForcePushedEvent { createdAt afterCommit { oid } } }
+}
 labels(first:100) { nodes { name } pageInfo { hasNextPage } }
 comments(last:100) { pageInfo { hasPreviousPage } nodes {
   id url body createdAt updatedAt author { login __typename }
@@ -58,9 +61,6 @@ timelineItems(last:100,itemTypes:[CROSS_REFERENCED_EVENT]) {
   nodes { ... on CrossReferencedEvent { source {
     ... on PullRequest { number url body author { login } repository { nameWithOwner } }
   } } }
-}
-headHistory:timelineItems(last:1,itemTypes:[HEAD_REF_FORCE_PUSHED_EVENT]) {
-  nodes { ... on HeadRefForcePushedEvent { createdAt afterCommit { oid } } }
 }
 """
 
