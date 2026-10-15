@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T14:04:06.332328+00:00",
+    "updatedAt": "2026-10-15T14:43:12.872143+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9538,8 +9538,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T14:04:06.332328+00:00",
-      "summary": "The revised design removes the per-Load plan map and generated allocation wrappers while retaining typed scalar assignments and the shared object graph. Its normal state tests pass on AMD64 and ARM64, and its race tests pass. An analyzer failure in generated receiver names has a targeted correction under validation. Performance comparisons will follow correctness qualification; the earlier measured Load regressions remain the baseline to improve.",
+      "updatedAt": "2026-10-15T14:43:12.872143+00:00",
+      "summary": "The revised design removes the per-Load plan map and generated allocation wrappers while retaining typed scalar assignments and the shared object graph. Its normal state tests pass on AMD64 and ARM64, and its race tests pass. The generated receiver-name correction passes its analyzers and both production builds. Review found one remaining receiver/type-name collision in forwarded metadata; a small correction is being validated before performance measurements. The earlier measured Load regressions remain the baseline to improve.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10361,7 +10361,7 @@
           ]
         }
       ],
-      "nextStep": "Finish analyzer and production-link validation, then run the fixed package and startup comparisons against the same baseline. Measure sandbox startup separately before proposing adoption.",
+      "nextStep": "Validate the forwarding-receiver correction, then run the fixed package and startup comparisons against the same baseline. Measure sandbox startup separately before proposing adoption.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -12833,9 +12833,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T14:04:06.332328+00:00",
-      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both are now config-only changes: the existing tests are preserved, and the qualified Linux 5.15/6.1 config bytes are unchanged. Authenticated remote compilation succeeds. Boot validation has not run yet because an inherited test-selection filter excluded the explicit kernel output targets; that invocation is being corrected.",
-      "nextStep": "Complete the existing Firecracker boot test with both freshly built kernels, then exercise the affected runtime features. Follow upstream review and hosted deployment separately.",
+      "updatedAt": "2026-10-15T14:43:12.872143+00:00",
+      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both are now config-only changes: the existing tests are preserved, and the qualified Linux 5.15/6.1 config bytes are unchanged. The authenticated Firecracker test build succeeds with the qualified kernels as cached dependencies. Boot validation has not run yet because an inherited test-selection filter excluded the explicit kernel output targets; that invocation is being corrected.",
+      "nextStep": "Complete the existing Firecracker boot test with both qualified kernels, then exercise the affected runtime features. Follow upstream review and hosted deployment separately.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
