@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T12:53:55.889065+00:00",
+    "updatedAt": "2026-10-15T14:04:06.332328+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9538,8 +9538,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T12:53:55.889065+00:00",
-      "summary": "The corrected unified rewrite passes its normal, race and analyzer checks and both production builds, but four Load benchmarks still regress. Control-message Load is 75.81% slower and queued UDP Load 15.24% slower. CLI timing is inconclusive, while initialization allocations and executable size increase. The rewrite remains under active design revision.",
+      "updatedAt": "2026-10-15T14:04:06.332328+00:00",
+      "summary": "The revised design removes the per-Load plan map and generated allocation wrappers while retaining typed scalar assignments and the shared object graph. Its normal state tests pass on AMD64 and ARM64, and its race tests pass. An analyzer failure in generated receiver names has a targeted correction under validation. Performance comparisons will follow correctness qualification; the earlier measured Load regressions remain the baseline to improve.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10352,7 +10352,7 @@
           ]
         },
         {
-          "text": "Profiles of the exact corrected benchmark binaries attribute 23.20% of sampled cumulative control-message Load CPU and 12.13% of UDP Load CPU to the per-Load plan machinery. The next revision removes that map and its allocated entries, restores the smaller registration table, and uses typed assignments for generated scalar fields. It is under source review; no speedup is established for that revision.",
+          "text": "Profiles of the exact prior benchmark binaries attribute 23.20% of sampled cumulative control-message Load CPU and 12.13% of UDP Load CPU to the per-Load plan machinery. The new revision removes that map and its allocated entries, restores the smaller registration table, and uses typed assignments for generated scalar fields. Normal state tests on both architectures and race tests pass. Generated receiver naming still needs its analyzer correction qualified; there is no new speedup measurement.",
           "evidence": [
             {
               "label": "Verified corrected-binary CPU and allocation profiles",
@@ -10361,7 +10361,7 @@
           ]
         }
       ],
-      "nextStep": "Remove the per-Load plan map and generated allocation wrappers while preserving static scalar types and the existing object graph. Review promoted-method and Source-lifetime semantics before remote qualification, then repeat the fixed package comparison and startup checks.",
+      "nextStep": "Finish analyzer and production-link validation, then run the fixed package and startup comparisons against the same baseline. Measure sandbox startup separately before proposing adoption.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -12664,8 +12664,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-13T12:53:55.610351+00:00",
-      "summary": "The current update preserves independent observation clocks for contributor decisions, terminal status and browser conflict checks. Same-head observations retain their first seen time; an unknown mergeability response does not erase a known conflict or refresh checks. The original collector recovered with its existing query/request bounds. The current complete API snapshot is collected separately from the event watcher. Remote Linux checks and desktop/mobile browser evidence cover the clock changes. Earlier GitHub schedule gaps remain unexplained; no competing publisher was introduced. The published maintainer handoff groups current source/import observations into six disjoint attention lists with copy-per-group, copy-all and shareable links. Exact Copybara import errors are distinct from feedback or public import-check failures, and missing internal visibility stays explicit. Ten remote client cases and a real desktop/mobile Chromium check cover copying, clipboard denial and stale-copy invalidation.",
+      "updatedAt": "2026-10-15T14:04:06.332328+00:00",
+      "summary": "Refresh now recovers when a site update lands during GitHub collection. It fetches the new revision and recollects before publishing, with at most three attempts. A deliberate concurrent README update reproduced the original rejected push; the next attempt succeeded, and the deployed snapshot matches the published bytes. Existing observation clocks, attention filters and last-good-data handling are unchanged.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -12735,6 +12735,23 @@
             {
               "label": "Current dated GitHub snapshot",
               "url": "https://tamird.github.io/gvisor/github-status.json"
+            }
+          ]
+        },
+        {
+          "text": "The October 15 scheduled refresh collected successfully but lost a publication race to a metadata update. Workflow acffb2cb5 now recollects on the latest site revision after a confirmed concurrent update. The validation run reproduced that race and published on its second attempt; Pages deployed the new snapshot while preserving the README update. Authentication or transport failure against an unchanged remote head still fails the job.",
+          "evidence": [
+            {
+              "label": "Original publication race",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38738014460"
+            },
+            {
+              "label": "Workflow correction",
+              "url": "https://github.com/tamird/gvisor/commit/acffb2cb54fc0d25ea5fbed4a18557554b1d66c1"
+            },
+            {
+              "label": "Successful deliberate-race validation",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38741047481"
             }
           ]
         }
@@ -12816,9 +12833,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T12:53:55.889065+00:00",
-      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both fixes reproduce the missing options on the old configurations and pass corrected capability checks and Linux 5.15/6.1 kernel builds. Boot validation and hosted publication remain outstanding.",
-      "nextStep": "Boot the freshly built kernels using BuildBuddy’s existing Firecracker test through GitHub Actions, then validate the affected runtime features. Follow both PRs and preserve the combined capability checks when either merges.",
+      "updatedAt": "2026-10-15T14:04:06.332328+00:00",
+      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both are now config-only changes: the existing tests are preserved, and the qualified Linux 5.15/6.1 config bytes are unchanged. Authenticated remote compilation succeeds. Boot validation has not run yet because an inherited test-selection filter excluded the explicit kernel output targets; that invocation is being corrected.",
+      "nextStep": "Complete the existing Firecracker boot test with both freshly built kernels, then exercise the affected runtime features. Follow upstream review and hosted deployment separately.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12902,6 +12919,23 @@
             {
               "label": "Linux driver configuration",
               "url": "https://github.com/torvalds/linux/blob/v6.1/drivers/vhost/Kconfig"
+            }
+          ]
+        },
+        {
+          "text": "The contributor questioned literal config assertions added to the existing test. Both PRs now preserve that test unchanged. Netfilter head b30b67e0c and vhost-net head 48d964b37 retain exactly the previously compiled configuration bytes. The authenticated Actions build succeeded, but its artifact check found no explicit kernel outputs because tests-bare also sets a build-tag filter. No boot or runtime-feature pass is claimed.",
+          "evidence": [
+            {
+              "label": "Config-only netfilter correction",
+              "url": "https://github.com/tamird/buildbuddy/commit/b30b67e0cb4d00d388a45e0c6daeadab3aefcbc6"
+            },
+            {
+              "label": "Config-only vhost-net correction",
+              "url": "https://github.com/tamird/buildbuddy/commit/48d964b376a34742bc51ec0ae50ea05dc4d327d7"
+            },
+            {
+              "label": "Authenticated build and output-selection failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38744484329"
             }
           ]
         }
