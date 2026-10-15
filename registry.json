@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T10:51:40.331426+00:00",
+    "updatedAt": "2026-10-15T11:07:23.219016+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7092,14 +7092,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T10:30:48.577028+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. The selected correctness, race, analyzer and both-architecture production builds pass. Independently verified benchmarks show faster Save in several fixtures and slower Load in several fixtures. Profiling and startup measurements are required before contributor review. The separate Nogo source-order correction (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T11:07:23.219016+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. Selected correctness, race, analyzer and both-architecture production builds pass. Benchmarks show faster Save and slower Load in several fixtures. Profiles identify repeated type resolution; a correction now shares that work within each Load and avoids eager startup schemas. Its tests and performance measurements remain pending. Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
-        "observedAt": "2026-10-15T10:30:48.577028+00:00",
-        "nextAction": "Profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
+        "observedAt": "2026-10-15T11:07:23.219016+00:00",
+        "nextAction": "Validate the type-resolution correction, repeat the paired performance comparison, and measure release startup against cheap type registration before contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -7111,7 +7111,8 @@
           "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
           "https://github.com/tamird/gvisor/commit/a8d9a9a06c400e51cae8bce654b1e110f4a916f2",
           "https://app.buildbuddy.io/invocation/9c5c7d76-efb7-4981-b4d1-8866351f4b8a",
-          "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a"
+          "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a",
+          "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41"
         ]
       }
     }
@@ -12650,9 +12651,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T10:34:36.362925+00:00",
-      "summary": "BuildBuddy has invited upstream PRs. The first source change will enable missing inet/IPv6 FIB, xtables mark and CT features in the existing x86 guest kernels, with coverage in the existing kernel configuration test.",
-      "nextStep": "Apply the prepared correction to the completed BuildBuddy checkout, publish a validation branch, and run remote configuration checks and kernel builds. Validate the resulting kernels with the existing GitHub Actions KVM bridge and BuildBuddy Firecracker fixture; hosted publication remains a BuildBuddy deployment step.",
+      "updatedAt": "2026-10-15T11:07:23.219016+00:00",
+      "summary": "The first BuildBuddy source change enables missing inet/IPv6 FIB, xtables mark and CT features in the x86 guest kernels. Its validation branch is published; remote regression tests and both kernel builds are running.",
+      "nextStep": "Verify the configuration regression and kernel builds, then boot the resulting kernels through the existing GitHub Actions KVM bridge and BuildBuddy Firecracker fixture before upstream submission.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12661,6 +12662,14 @@
         {
           "label": "Earlier accepted guest-kernel configuration change",
           "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13526"
+        },
+        {
+          "label": "Published kernel configuration correction",
+          "url": "https://github.com/tamird/buildbuddy/commit/42c327ab1"
+        },
+        {
+          "label": "Remote configuration regression and kernel builds",
+          "url": "https://app.buildbuddy.io/invocation/7ae8dc66-d653-4778-94ab-a8bc82aefd6c"
         }
       ],
       "findings": [
