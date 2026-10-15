@@ -131,6 +131,80 @@ func TestValueBufferOwnership(t *testing.T) {
 	}
 }
 
+func TestValueBufferTypeMetadata(t *testing.T) {
+	// Repeated references to the same root need not encode the same type.
+	// Only structurally identical metadata may share temporary storage.
+	array := &TypeSpecArray{Count: ^Uint(0), Type: &TypeSpecPointer{Type: TypeID(4)}}
+	first := &TypeSpecMap{Key: TypeID(3), Value: array}
+	types := []TypeSpec{
+		first,
+		first,
+		&TypeSpecMap{Key: TypeID(5), Value: array},
+		&TypeSpecMap{Key: TypeID(5), Value: &TypeSpecArray{Count: ^Uint(0) - 1, Type: array.Type}},
+		&TypeSpecMap{Key: TypeID(5), Value: &TypeSpecSlice{Type: array.Type}},
+		TypeSpecNil{},
+		TypeID(1<<63 | 3),
+		TypeID(1<<63 | 3),
+	}
+	want := &Array{}
+	for i, typ := range types {
+		want.Contents = append(want.Contents, &Ref{Root: 7, Dots: []Dot{Index(i)}, Type: typ})
+	}
+	var buf bytes.Buffer
+	w := Writer{Writer: &buf}
+	Save(&w, want)
+	// The next record begins with a different kind of type metadata. Its
+	// candidate must not refer to nodes from the preceding record.
+	next := &Interface{Type: &TypeSpecPointer{Type: TypeID(9)}, Value: Uint(17)}
+	Save(&w, next)
+	Save(&w, want)
+	r := Reader{Reader: &buf}
+	var values ValueBuffer
+	borrowed := values.Load(&r)
+	owned := borrowed.Own()
+	if got, want := materialize(owned), Object(want); !reflect.DeepEqual(got, want) {
+		t.Fatalf("reference metadata = %#v, want %#v", got, want)
+	}
+	// Owned TypeSpecs keep their existing independent mutable representation,
+	// even when the parser shared immutable nodes between references.
+	owned.Element(0).Reference().Type.(*TypeSpecMap).Key = TypeID(99)
+	for name, value := range map[string]Value{"borrowed": borrowed.Element(0), "other owned": owned.Element(1)} {
+		if got, want := value.Reference().Type, TypeSpec(first); !reflect.DeepEqual(got, want) {
+			t.Errorf("%s type after mutation = %#v, want %#v", name, got, want)
+		}
+	}
+	if got, want := materialize(values.Load(&r)), Object(next); !reflect.DeepEqual(got, want) {
+		t.Fatalf("following interface = %#v, want %#v", got, want)
+	}
+	values.Release()
+	if got, want := materialize(values.Load(&r)), Object(want); !reflect.DeepEqual(got, want) {
+		t.Fatalf("metadata after Release = %#v, want %#v", got, want)
+	}
+	if got, want := owned.Element(1).Reference().Type, TypeSpec(first); !reflect.DeepEqual(got, want) {
+		t.Errorf("owned metadata after reuse = %#v, want %#v", got, want)
+	}
+}
+
+func TestValueBufferTruncatedRepeatedType(t *testing.T) {
+	typ := &TypeSpecPointer{Type: TypeID(3)}
+	var buf bytes.Buffer
+	w := Writer{Writer: &buf}
+	Save(&w, &Array{Contents: []Object{
+		&Ref{Root: 7, Dots: []Dot{Index(0)}, Type: typ},
+		&Ref{Root: 7, Dots: []Dot{Index(1)}, Type: typ},
+	}})
+	// A preceding matching TypeSpec does not make any later operand optional.
+	data := buf.Bytes()
+	r := Reader{Reader: bytes.NewReader(data[:len(data)-1])}
+	defer func() {
+		if got, want := recover(), error(io.EOF); got != want {
+			t.Errorf("truncated repeated type panic = %v, want %v", got, want)
+		}
+	}()
+	var values ValueBuffer
+	values.Load(&r)
+}
+
 // BenchmarkUintSave benchmarks saving a Uint. This benchmark is important
 // because almost all types in this package boil down to Uints. So
 // Uint.save() performance is critical for checkpoint performance.

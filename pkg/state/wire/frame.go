@@ -35,6 +35,10 @@ type valueFrame struct {
 	valueHeader
 	nodes   []frameNode
 	strings []string
+
+	// lastType is the preceding complete TypeSpec's root, or -1. Repeated
+	// interior references can share immutable type nodes within one record.
+	lastType int
 }
 
 // ValueBuffer reuses temporary storage for completely parsed values. A value
@@ -54,6 +58,7 @@ func (b *ValueBuffer) Load(r *Reader) Value {
 	clear(b.frame.strings)
 	b.frame.strings = b.frame.strings[:0]
 	b.frame.nodes = b.frame.nodes[:0]
+	b.frame.lastType = -1
 	b.frame.kind = frameKind
 	index := b.frame.reserve(1)
 	b.frame.loadValue(r, index)
@@ -65,6 +70,7 @@ func (b *ValueBuffer) Load(r *Reader) Value {
 func (b *ValueBuffer) Release() {
 	b.frame.nodes = nil
 	b.frame.strings = nil
+	b.frame.lastType = -1
 }
 
 // reserve returns uninitialized slots. Every parser path assigns a complete
@@ -224,27 +230,59 @@ func (f *valueFrame) loadReference(r *Reader, index int) {
 	f.nodes[index] = node
 }
 
-// loadType is the sole TypeSpec grammar. The tag belongs to the separate
-// TypeSpec namespace, not to the data-value namespace.
+// loadType retains only the preceding complete TypeSpec as a reuse candidate.
+// Parsing still consumes and validates every byte, without resolving types or
+// registering objects before the entire record is valid.
 func (f *valueFrame) loadType(r *Reader) int {
-	index := f.reserve(1)
+	index := f.loadTypeNode(r, f.lastType)
+	f.lastType = index
+	return index
+}
+
+// loadTypeNode is the sole TypeSpec grammar. Matching immutable nodes can be
+// shared; differing operands retain their own nodes. The tag belongs to the
+// TypeSpec namespace, not to the data-value namespace.
+func (f *valueFrame) loadTypeNode(r *Reader, previous int) int {
 	header := loadUint(r)
 	node := frameNode{kind: Kind(header)}
+	var old frameNode
+	if previous >= 0 {
+		// Copy before recursion, which can grow nodes and move its backing.
+		old = f.nodes[previous]
+		if old.kind != node.kind {
+			previous = -1
+		}
+	}
+	first, second := -1, -1
+	if previous >= 0 {
+		switch header {
+		case typeSpecPointer, typeSpecSlice:
+			first = int(old.a)
+		case typeSpecArray:
+			first = int(old.b)
+		case typeSpecMap:
+			first, second = int(old.a), int(old.b)
+		}
+	}
 	switch header {
 	case typeSpecTypeID:
 		node.a = uint64(loadUint(r))
 	case typeSpecPointer, typeSpecSlice:
-		node.a = uint64(f.loadType(r))
+		node.a = uint64(f.loadTypeNode(r, first))
 	case typeSpecArray:
 		node.a = uint64(loadUint(r))
-		node.b = uint64(f.loadType(r))
+		node.b = uint64(f.loadTypeNode(r, first))
 	case typeSpecMap:
-		node.a = uint64(f.loadType(r))
-		node.b = uint64(f.loadType(r))
+		node.a = uint64(f.loadTypeNode(r, first))
+		node.b = uint64(f.loadTypeNode(r, second))
 	case typeSpecNil:
 	default:
 		panic(fmt.Errorf("unknown header: %d", header)) // Escapes: error formatting.
 	}
+	if previous >= 0 && node == old {
+		return previous
+	}
+	index := f.reserve(1)
 	f.nodes[index] = node
 	return index
 }
