@@ -4,6 +4,7 @@ name: CI
   push:
     branches:
       - "*"
+      - "qualification/buildbuddy-kernel-boot-auth"
   workflow_dispatch:
     inputs:
       lanes:
@@ -159,4 +160,63 @@ jobs:
       with:
         name: qualification-${{ inputs.architecture }}
         path: ${{ runner.temp }}/qualification
+        if-no-files-found: error
+
+  buildbuddy-kernel-boot:
+    if: github.repository == 'tamird/gvisor' && github.event_name == 'push' && github.ref == 'refs/heads/qualification/buildbuddy-kernel-boot-auth'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      QUALIFICATION_COMMIT: 19fc6ccde932d68cb2faa9ef180bafdd3b8f8da0
+    steps:
+    - name: Checkout exact BuildBuddy diagnostic source
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        repository: tamird/buildbuddy
+        ref: ${{ env.QUALIFICATION_COMMIT }}
+        persist-credentials: false
+
+    - name: Prepare existing local Firecracker requirements
+      run: |
+        sudo -n apt-get update
+        sudo -n apt-get install -y iproute2 iptables e2fsprogs fuse3 zstd
+        sudo -n modprobe fuse
+        test -c /dev/kvm
+        test -c /dev/fuse
+        command -v bazelisk
+
+    - name: Build remotely and boot both kernels locally
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: |
+        set -euo pipefail
+        : "${BUILDBUDDY_API_KEY:?Configure the existing BUILDBUDDY_API_KEY secret}"
+        umask 077
+        QUALIFICATION_CREDENTIAL_RC=$(mktemp "$RUNNER_TEMP/buildbuddy-private.XXXXXX")
+        export QUALIFICATION_CREDENTIAL_RC
+        cleanup() {
+          local status=$?
+          if ! rm -f "$QUALIFICATION_CREDENTIAL_RC"; then
+            if (( status == 0 )); then status=1; fi
+          fi
+          exit "$status"
+        }
+        trap cleanup EXIT
+        {
+          printf 'common --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+          printf 'common --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
+        } > "$QUALIFICATION_CREDENTIAL_RC"
+        unset BUILDBUDDY_API_KEY
+        sudo --preserve-env=PATH,RUNNER_TEMP,QUALIFICATION_COMMIT,QUALIFICATION_CREDENTIAL_RC \
+          bash enterprise/vmsupport/kernel/boot-validation.sh
+
+    - name: Retain original validation evidence
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: buildbuddy-guest-kernel-boot
+        path: ${{ runner.temp }}/qualification/evidence.tar.gz
         if-no-files-found: error
