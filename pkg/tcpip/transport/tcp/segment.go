@@ -79,6 +79,12 @@ type segment struct {
 	xmitTime  tcpip.MonotonicTime
 	xmitCount uint32
 
+	// These describe the original transmission, including after a partial
+	// ACK, retransmission, or split. They identify a lone, wholly ACKed runt
+	// without maintaining another delivery history.
+	deliveryGeneration  uint64
+	originalPayloadSize int
+
 	// acked indicates if the segment has already been SACKed.
 	acked bool
 
@@ -161,6 +167,8 @@ func (s *segment) clone() *segment {
 	t.rcvdTime = s.rcvdTime
 	t.xmitTime = s.xmitTime
 	t.xmitCount = s.xmitCount
+	t.deliveryGeneration = s.deliveryGeneration
+	t.originalPayloadSize = s.originalPayloadSize
 	t.ep = s.ep
 	t.qFlags = s.qFlags
 	t.dataMemSize = s.dataMemSize
