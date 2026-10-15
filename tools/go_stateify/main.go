@@ -224,7 +224,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 		initCalls = append(initCalls, fmt.Sprintf("%s%s((*%s)(nil))", statePrefix, register, name))
 	}
 
-	emitMetadata := func(name string) bool {
+	emitMetadata := func(name, recv string) bool {
 		if records == nil {
 			return false
 		}
@@ -238,12 +238,19 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			mode = records.restore.noWaitValue
 		}
 		capture := "nil"
+		metadataRecv := ""
 		if record != nil {
 			capture = record.factory
 		} else if forward != "" {
-			capture = fmt.Sprintf("%sForwardRecord((*%s)(%s))", statePrefix, forward, records.saveReceiver)
+			metadataRecv = recv
+			if statePrefix == recv+"." || typeUsesName(forward, recv) || recv == "true" || recv == "false" {
+				metadataRecv = records.saveReceiver
+			}
+			capture = fmt.Sprintf("%sForwardRecord((*%s)(%s))", statePrefix, forward, metadataRecv)
 		}
-		fmt.Fprintf(outputFile, "func (%s *%s) StateMetadata() %sTypeMetadata {\n", records.saveReceiver, name, statePrefix)
+		// Ordinary metadata does not use the receiver. Forwarding retains the
+		// owning type's receiver name, subject to the same scope constraints.
+		fmt.Fprintf(outputFile, "func (%s *%s) StateMetadata() %sTypeMetadata {\n", metadataRecv, name, statePrefix)
 		fmt.Fprintf(outputFile, " return %sTypeMetadata{Owner: (*%s)(nil), NewRecord: %s, LoadGenerated: %s}\n}\n\n", statePrefix, name, capture, mode)
 		return true
 	}
@@ -473,7 +480,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 
 			// Add to our registration.
-			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name))
+			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name, recv))
 
 		case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
 			maybeEmitImports()
@@ -519,7 +526,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 
 			// See above.
-			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name))
+			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name, recv))
 		}
 	}
 
