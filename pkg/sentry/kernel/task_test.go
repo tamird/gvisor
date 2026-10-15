@@ -132,7 +132,7 @@ type pullFullStateErrorPlatform struct {
 
 func (*pullFullStateErrorPlatform) SupportsAddressSpaceIO() bool { return false }
 
-func (*pullFullStateErrorPlatform) NewAddressSpace() (platform.AddressSpace, error) {
+func (*pullFullStateErrorPlatform) NewAddressSpace(platform.AddressSpaceOptions) (platform.AddressSpace, error) {
 	return &pullFullStateErrorAddressSpace{}, nil
 }
 
