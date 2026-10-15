@@ -18,7 +18,6 @@ package pretty
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"gvisor.dev/gvisor/pkg/state"
@@ -30,27 +29,24 @@ type printer struct {
 	typeSpecs map[string]*wire.Type
 }
 
-func (p *printer) formatRef(x *wire.Ref, graph uint64) string {
-	baseRef := fmt.Sprintf("g%dr%d", graph, x.Root)
+func (p *printer) formatRef(x wire.ReferenceView, graph uint64) string {
+	baseRef := fmt.Sprintf("g%dr%d", graph, x.Root())
 	fullRef := baseRef
-	if len(x.Dots) > 0 {
-		// See wire.Ref; Type valid if Dots non-zero.
-		typ, _ := p.formatType(x.Type, graph)
+	if x.Dots() > 0 {
+		typ, _ := p.formatType(x.Type(), graph)
 		var buf strings.Builder
 		buf.WriteString("(*")
 		buf.WriteString(typ)
 		buf.WriteString(")(")
 		buf.WriteString(baseRef)
 		buf.WriteString(")")
-		for _, component := range x.Dots {
-			switch v := component.(type) {
-			case *wire.FieldName:
+		for i := 0; i < x.Dots(); i++ {
+			component := x.Dot(i)
+			if component.Field {
 				buf.WriteString(".")
-				buf.WriteString(string(*v))
-			case wire.Index:
-				fmt.Fprintf(&buf, "[%d]", v)
-			default:
-				panic(fmt.Sprintf("unreachable: switch should be exhaustive, unhandled case %v", reflect.TypeOf(component)))
+				buf.WriteString(component.Name)
+			} else {
+				fmt.Fprintf(&buf, "[%d]", component.Index)
 			}
 		}
 		fullRef = buf.String()
@@ -61,55 +57,64 @@ func (p *printer) formatRef(x *wire.Ref, graph uint64) string {
 	return fullRef
 }
 
-func (p *printer) formatType(t wire.TypeSpec, graph uint64) (string, bool) {
-	switch x := t.(type) {
-	case wire.TypeID:
-		tag := fmt.Sprintf("g%dt%d", graph, x)
-		desc := tag
-		if spec, ok := p.typeSpecs[tag]; ok {
-			desc += fmt.Sprintf("=%s", spec.Name)
-		} else {
-			desc += "!missing-type-spec"
-		}
-		if p.html {
-			return fmt.Sprintf("<a href=\"#%s\">%s</a>", tag, desc), true
-		}
-		return desc, true
-	case wire.TypeSpecNil:
-		return "", false // Only nil type.
-	case *wire.TypeSpecPointer:
-		element, _ := p.formatType(x.Type, graph)
+func (p *printer) formatTypeID(id wire.TypeID, graph uint64) (string, bool) {
+	tag := fmt.Sprintf("g%dt%d", graph, id)
+	desc := tag
+	if spec, ok := p.typeSpecs[tag]; ok {
+		desc += fmt.Sprintf("=%s", spec.Name)
+	} else {
+		desc += "!missing-type-spec"
+	}
+	if p.html {
+		return fmt.Sprintf("<a href=\"#%s\">%s</a>", tag, desc), true
+	}
+	return desc, true
+}
+
+func (p *printer) formatType(t wire.TypeView, graph uint64) (string, bool) {
+	switch t.Kind() {
+	case wire.TypeIDKind:
+		return p.formatTypeID(t.ID(), graph)
+	case wire.TypeNilKind:
+		return "", false
+	case wire.TypePointerKind:
+		element, _ := p.formatType(t.Element(), graph)
 		return fmt.Sprintf("(*%s)", element), true
-	case *wire.TypeSpecArray:
-		element, _ := p.formatType(x.Type, graph)
-		return fmt.Sprintf("[%d](%s)", x.Count, element), true
-	case *wire.TypeSpecSlice:
-		element, _ := p.formatType(x.Type, graph)
+	case wire.TypeArrayKind:
+		element, _ := p.formatType(t.Element(), graph)
+		return fmt.Sprintf("[%d](%s)", t.Count(), element), true
+	case wire.TypeSliceKind:
+		element, _ := p.formatType(t.Element(), graph)
 		return fmt.Sprintf("([]%s)", element), true
-	case *wire.TypeSpecMap:
-		key, _ := p.formatType(x.Key, graph)
-		value, _ := p.formatType(x.Value, graph)
+	case wire.TypeMapKind:
+		keyType, valueType := t.Map()
+		key, _ := p.formatType(keyType, graph)
+		value, _ := p.formatType(valueType, graph)
 		return fmt.Sprintf("(map[%s]%s)", key, value), true
 	default:
-		panic(fmt.Sprintf("unreachable: unknown type %T", t))
+		panic(fmt.Sprintf("unreachable: unknown type %v", t.Kind()))
 	}
 }
 
 // format formats a single object, for pretty-printing. It also returns whether
 // the value is a non-zero value.
-func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, bool) {
-	switch x := encoded.(type) {
-	case wire.Nil:
+func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, bool) {
+	x := encoded
+	switch x.Kind() {
+	case wire.KindNil:
 		return "nil", false
-	case *wire.String:
-		return fmt.Sprintf("%q", *x), *x != ""
-	case *wire.Complex64:
-		return fmt.Sprintf("%f+%fi", real(*x), imag(*x)), *x != 0.0
-	case *wire.Complex128:
-		return fmt.Sprintf("%f+%fi", real(*x), imag(*x)), *x != 0.0
-	case *wire.Ref:
-		return p.formatRef(x, graph), x.Root != 0
-	case *wire.Type:
+	case wire.KindNoObjects:
+		return "{}", false
+	case wire.KindString:
+		return fmt.Sprintf("%q", x.Text()), x.Text() != ""
+	case wire.KindComplex64, wire.KindComplex128:
+		value := x.Complex()
+		return fmt.Sprintf("%f+%fi", real(value), imag(value)), value != 0
+	case wire.KindRef:
+		ref := x.ReferenceView()
+		return p.formatRef(ref, graph), ref.Root() != 0
+	case wire.KindType:
+		x := x.Type()
 		tabs := "\n" + strings.Repeat("\t", depth)
 		items := make([]string, 0, len(x.Fields)+2)
 		items = append(items, fmt.Sprintf("type %s {", x.Name))
@@ -118,18 +123,19 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, 
 		}
 		items = append(items, "}")
 		return strings.Join(items, tabs), true // No zero value.
-	case *wire.Slice:
-		return fmt.Sprintf("%s{len:%d,cap:%d}", p.formatRef(&x.Ref, graph), x.Length, x.Capacity), x.Capacity != 0
-	case *wire.Array:
-		if len(x.Contents) == 0 {
+	case wire.KindSlice:
+		slice := x.SliceView()
+		return fmt.Sprintf("%s{len:%d,cap:%d}", p.formatRef(slice.Ref, graph), slice.Length, slice.Capacity), slice.Capacity != 0
+	case wire.KindArray, wire.KindMultipleObjects:
+		if x.Len() == 0 {
 			return "[]", false
 		}
-		items := make([]string, 0, len(x.Contents)+2)
+		items := make([]string, 0, x.Len()+2)
 		zeros := make([]string, 0) // used to eliminate zero entries.
 		items = append(items, "[")
 		tabs := "\n" + strings.Repeat("\t", depth)
-		for i := 0; i < len(x.Contents); i++ {
-			item, ok := p.format(graph, depth+1, x.Contents[i])
+		for i := 0; i < x.Len(); i++ {
+			item, ok := p.format(graph, depth+1, x.Element(i))
 			if !ok {
 				zeros = append(zeros, fmt.Sprintf("\t%s,", item))
 				continue
@@ -144,11 +150,11 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, 
 			items = append(items, fmt.Sprintf("\t... (%d zeros),", len(zeros)))
 		}
 		items = append(items, "]")
-		return strings.Join(items, tabs), len(zeros) < len(x.Contents)
-	case *wire.Struct:
-		tag := fmt.Sprintf("g%dt%d", graph, x.TypeID)
+		return strings.Join(items, tabs), len(zeros) < x.Len()
+	case wire.KindStruct:
+		tag := fmt.Sprintf("g%dt%d", graph, x.StructType())
 		spec := p.typeSpecs[tag]
-		typ, _ := p.formatType(x.TypeID, graph)
+		typ, _ := p.formatTypeID(x.StructType(), graph)
 		if x.Fields() == 0 {
 			return fmt.Sprintf("struct[%s]{}", typ), false
 		}
@@ -163,39 +169,52 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Object) (string, 
 			} else {
 				name = fmt.Sprintf("%d", i)
 			}
-			element, ok := p.format(graph, depth+1, *x.Field(i))
+			element, ok := p.format(graph, depth+1, x.Field(i))
 			allZero = allZero && !ok
 			items = append(items, fmt.Sprintf("\t%s: %s,", name, element))
 		}
 		items = append(items, "}")
 		return strings.Join(items, tabs), !allZero
-	case *wire.Map:
-		if len(x.Keys) == 0 {
+	case wire.KindMap:
+		if x.Len() == 0 {
 			return "map{}", false
 		}
-		items := make([]string, 0, len(x.Keys)+2)
+		items := make([]string, 0, x.Len()+2)
 		items = append(items, "map{")
 		tabs := "\n" + strings.Repeat("\t", depth)
-		for i := 0; i < len(x.Keys); i++ {
-			key, _ := p.format(graph, depth+1, x.Keys[i])
-			value, _ := p.format(graph, depth+1, x.Values[i])
+		for i := 0; i < x.Len(); i++ {
+			keyValue, entryValue := x.Entry(i)
+			key, _ := p.format(graph, depth+1, keyValue)
+			value, _ := p.format(graph, depth+1, entryValue)
 			items = append(items, fmt.Sprintf("\t%s: %s,", key, value))
 		}
 		items = append(items, "}")
 		return strings.Join(items, tabs), true
-	case *wire.Interface:
-		typ, typOk := p.formatType(x.Type, graph)
-		element, elementOk := p.format(graph, depth+1, x.Value)
+	case wire.KindInterface:
+		typeView, value := x.InterfaceView()
+		typ, typOk := p.formatType(typeView, graph)
+		element, elementOk := p.format(graph, depth+1, value)
 		return fmt.Sprintf("interface[%s]{%s}", typ, element), typOk || elementOk
+	case wire.KindBool:
+		return fmt.Sprintf("%v", x.Bool()), true
+	case wire.KindInt:
+		return fmt.Sprintf("%v", x.Int()), true
+	case wire.KindUint:
+		return fmt.Sprintf("%v", x.Uint()), true
+	case wire.KindFloat32:
+		return fmt.Sprintf("%v", float32(x.Float())), true
+	case wire.KindFloat64:
+		return fmt.Sprintf("%v", x.Float()), true
 	default:
-		// Must be a primitive; use reflection.
-		return fmt.Sprintf("%v", encoded), true
+		panic(fmt.Sprintf("unreachable: unknown value kind %v", x.Kind()))
 	}
 }
 
 // printStream is the basic print implementation.
 func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 	wr := wire.Reader{Reader: r}
+	var values wire.ValueBuffer
+	defer values.Release()
 
 	// current graph ID.
 	var graph uint64
@@ -245,7 +264,7 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 		// etc. and just print the raw structures.
 		type objectAndID struct {
 			id  uint64
-			obj wire.Object
+			obj wire.Value
 		}
 		var (
 			tid     uint64 = 1
@@ -253,9 +272,10 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 		)
 		for i := uint64(0); i < length; {
 			// Unmarshal either a type object or object ID.
-			encoded := wire.Load(&wr)
-			switch we := encoded.(type) {
-			case *wire.Type:
+			encoded := values.Load(&wr)
+			switch encoded.Kind() {
+			case wire.KindType:
+				we := encoded.Type()
 				str, _ := p.format(graph, 0, encoded)
 				tag := fmt.Sprintf("g%dt%d", graph, tid)
 				p.typeSpecs[tag] = we
@@ -267,11 +287,12 @@ func (p *printer) printStream(w io.Writer, r io.Reader) (err error) {
 					return err
 				}
 				tid++
-			case wire.Uint:
+			case wire.KindUint:
 				// Unmarshal the actual object.
+				id := encoded.Uint()
 				objects = append(objects, objectAndID{
-					id:  uint64(we),
-					obj: wire.Load(&wr),
+					id:  id,
+					obj: values.Load(&wr).Own(),
 				})
 				i++
 			default:
