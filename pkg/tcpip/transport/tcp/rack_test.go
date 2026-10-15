@@ -322,3 +322,130 @@ func TestRACKZeroClockResolutionPreservesLossBoundary(t *testing.T) {
 		t.Fatalf("detectLoss at zero-resolution boundary got %d losses, want 1", got)
 	}
 }
+
+// TestRACKPathChange records loss decisions with an old short-path sample.
+// It is a diagnostic of the current global minimum, not an estimator change.
+// The sustained history exceeds Linux's default 300-second minimum window;
+// the transient and delayed-ACK histories are followed by a fresh low sample.
+// Linux selects eligible samples in ACK accounting. RACK.update has no such
+// classification, so the delayed-ACK case describes input timing only.
+func TestRACKPathChange(t *testing.T) {
+	for _, test := range []struct {
+		name           string
+		historySamples int
+		historyRTT     time.Duration
+		historyGap     time.Duration
+		ackDelay       time.Duration
+		probeRTT       time.Duration
+		originalRTT    time.Duration
+		wantLost       bool
+	}{
+		{
+			name: "sustained_longer_path", historySamples: 6,
+			historyRTT: 100 * time.Millisecond, historyGap: time.Minute,
+			probeRTT: 100 * time.Millisecond, originalRTT: 110 * time.Millisecond,
+			wantLost: true,
+		},
+		{
+			name: "unchanged_path", historySamples: 6,
+			historyRTT: 10 * time.Millisecond, historyGap: time.Minute,
+			probeRTT: 10 * time.Millisecond, originalRTT: 12 * time.Millisecond,
+		},
+		{
+			name: "temporary_high_sample_then_low", historySamples: 1,
+			historyRTT: 100 * time.Millisecond,
+			probeRTT:   10 * time.Millisecond, originalRTT: 12 * time.Millisecond,
+		},
+		{
+			name: "delayed_runt_ack_history_then_low", historySamples: 6,
+			historyRTT: 10 * time.Millisecond, historyGap: time.Minute,
+			ackDelay: 90 * time.Millisecond,
+			probeRTT: 10 * time.Millisecond, originalRTT: 12 * time.Millisecond,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clock := faketime.NewManualClock()
+			ctx := newRACKTestContext(clock, testClockResolution)
+			defer ctx.cleanup()
+			ctx.snd.ep.mu.Lock()
+			defer ctx.snd.ep.mu.Unlock()
+			if test.ackDelay != 0 {
+				// addSegment has a one-byte payload. Make each history packet
+				// a lone runt, consistent with the modeled receiver ACK delay.
+				ctx.snd.ep.scoreboard = NewSACKScoreboard(2, 0)
+			}
+
+			// Establish the old 10ms minimum, then retire each history packet
+			// after its original ACK. No history packet remains outstanding.
+			var seq seqnum.Value
+			for i := 0; i <= test.historySamples; i++ {
+				rtt := 10 * time.Millisecond
+				if i != 0 {
+					clock.Advance(test.historyGap)
+					rtt = test.historyRTT + test.ackDelay
+				}
+				seg := ctx.addSegment(seq, clock.NowMonotonic())
+				seq++
+				clock.Advance(rtt)
+				ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+				ctx.snd.updateRTO(rtt)
+				ctx.snd.rc.update(seg, ack)
+				ctx.snd.rc.detectReorder(seg)
+				ctx.snd.rc.updateRACKReorderWindow()
+				ctx.snd.writeList.Remove(seg)
+				ack.DecRef()
+			}
+
+			// SACK the newer packet while the original older packet is still
+			// in flight. Its modeled delivery below requires no retransmit.
+			start := clock.NowMonotonic()
+			older := ctx.addSegment(seq, start)
+			clock.Advance(time.Millisecond)
+			newer := ctx.addSegment(seq+1, clock.NowMonotonic())
+			clock.Advance(test.probeRTT)
+			ack := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+			defer ack.DecRef()
+			ctx.snd.ep.scoreboard.Insert(newer.sackBlock())
+			ctx.snd.updateRTO(test.probeRTT)
+			ctx.snd.rc.update(newer, ack)
+			ctx.snd.rc.detectReorder(newer)
+			ctx.snd.rc.updateRACKReorderWindow()
+			if got := ctx.snd.rc.detectLoss(ack.rcvdTime); got != 0 {
+				t.Fatalf("detectLoss at newer ACK = %d, want 0", got)
+			}
+			if !ctx.snd.reorderTimer.enabled() {
+				t.Fatal("reorder timer not armed for outstanding original")
+			}
+			target := ctx.snd.reorderTimer.target
+			delivery := start.Add(test.originalRTT)
+			check := delivery.Add(-time.Nanosecond)
+			if target.Before(delivery) {
+				check = target
+			}
+			clock.Advance(check.Sub(clock.NowMonotonic()))
+			lost := ctx.snd.rc.detectLoss(clock.NowMonotonic())
+			t.Logf("minRTT=%v RTT=%v ReoWnd=%v timer=%v original_ack=%v lost_before_original=%t",
+				ctx.snd.rc.minRTT, ctx.snd.rc.RTT, ctx.snd.rc.ReoWnd,
+				target.Sub(start), test.originalRTT, older.lost)
+			want := 0
+			if test.wantLost {
+				want = 1
+			}
+			if lost != want || older.lost != test.wantLost {
+				t.Fatalf("detectLoss=%d, original lost=%t; want %d, %t", lost, older.lost, want, test.wantLost)
+			}
+
+			// Acknowledge the unretransmitted original at the modeled arrival.
+			// The sustained case has already declared it lost. This exercises
+			// RACK classification, not the sender retransmission/recovery path.
+			clock.Advance(delivery.Sub(clock.NowMonotonic()))
+			lateACK := newOutgoingSegment(stack.TransportEndpointID{}, clock, buffer.Buffer{}, 0)
+			defer lateACK.DecRef()
+			ctx.snd.rc.update(older, lateACK)
+			ctx.snd.rc.detectReorder(older)
+			if older.xmitCount != 1 || !ctx.snd.rc.Reord {
+				t.Fatalf("original xmitCount=%d, reordering observed=%t; want 1, true", older.xmitCount, ctx.snd.rc.Reord)
+			}
+		})
+	}
+}
