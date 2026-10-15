@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T10:34:36.362925+00:00",
+    "updatedAt": "2026-10-15T10:51:40.331426+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9531,8 +9531,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T10:30:48.577028+00:00",
-      "summary": "The complete rewrite passes the selected correctness, race, analyzer and production-build checks. Independent benchmark verification confirms faster Save in several fixtures but slower Load in several fixtures, despite fewer allocations. The owner is profiling those regressions. Startup and whole-checkpoint measurements remain outstanding. The proposal depends on #15648.",
+      "updatedAt": "2026-10-15T10:51:40.331426+00:00",
+      "summary": "The complete rewrite passes the selected correctness, race, analyzer and production-build checks. Matched benchmarks show faster Save in several fixtures but slower Load. Profiles identify repeated type resolution as a substantial restore cost; the owner is consolidating that work. Startup and whole-checkpoint measurements remain outstanding. The proposal depends on #15648.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10281,12 +10281,17 @@
           ]
         },
         {
-          "text": "Startup performance is an explicit requirement. PR #15814 reports about 0.3 ms per runsc invocation saved by keeping ordinary type registration cheap; this is the PR author’s measurement. The complete rewrite must measure release CLI startup separately from first restore and checkpoint throughput. The broader audit also flags netip’s three binary registrations, the external-buffer savedView registration, and changed compiler/linker outputs. Earlier prototype or throughput results do not establish startup cost for these changes. Source inspection of the unified proposal finds per-registration descriptor allocation, Kind/Size computation, non-race reverse-map entries, 17 primitive descriptors, and generated forwarding closures. Record factories are retained at initialization but are not invoked then. MAIN will compare runsc --version/inittrace and the existing StartupEmpty benchmark; no startup result is available yet.",
+          "text": "Startup performance is an explicit requirement. PR #15814 reports about 0.3 ms saved per runsc invocation by keeping non-race registration cheap. The complete rewrite adds per-type descriptors, Kind/Size work, reverse-map entries and 17 primitive descriptors at initialization. Generated record factories are retained but not called then. MAIN will measure release CLI startup and the existing StartupEmpty benchmark separately from first restore and checkpoint throughput. No production startup result is available yet.",
           "evidence": [
             {
               "label": "Registration startup cost and race-only verification proposal",
               "url": "https://github.com/google/gvisor/pull/15814"
-            },
+            }
+          ]
+        },
+        {
+          "text": "The broader startup audit flags netip’s three binary registrations, the external-buffer savedView registration, compiler/linker changes, six added lock pairs in VFS.Init, four in Kernel.Init, and CGO fsgofer rule construction. These are measurement candidates, not demonstrated regressions. The GPU ABI map remains explicitly initialized; the OOM-score liveness check runs only after EACCES.",
+          "evidence": [
             {
               "label": "Netip migration",
               "url": "https://github.com/google/gvisor/pull/15730"
@@ -10294,6 +10299,18 @@
             {
               "label": "External buffer storage",
               "url": "https://github.com/google/gvisor/pull/15443"
+            },
+            {
+              "label": "VFS initialization guards",
+              "url": "https://github.com/google/gvisor/pull/14343"
+            },
+            {
+              "label": "Kernel initialization guards",
+              "url": "https://github.com/google/gvisor/pull/14345"
+            },
+            {
+              "label": "CGO thread filter",
+              "url": "https://github.com/google/gvisor/pull/15498"
             }
           ]
         },
@@ -10305,9 +10322,18 @@
               "url": "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a"
             }
           ]
+        },
+        {
+          "text": "Four CPU/allocation profiles reused the exact benchmark binaries from the matched comparison. In the rewrite, decodeState.plan accounts for 18.06% of cumulative sampled CPU in control-message Load and 24.60% in UDP Load; restoreType accounts for 13.98% and 22.83%, respectively. These overlapping costs point to repeated type resolution in the common restore path. The owner is consolidating that work before further performance comparisons. These single-process profiles diagnose the regression; the fixed 12-pair comparison remains the timing evidence.",
+          "evidence": [
+            {
+              "label": "Completed restore profiles; independently verified originals",
+              "url": "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41"
+            }
+          ]
         }
       ],
-      "nextStep": "Profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
+      "nextStep": "Remove repeated type resolution from the common restore path, recheck the affected benchmarks, and measure startup against cheap type registration before requesting contributor review.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
