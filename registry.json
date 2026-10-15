@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T02:00:55.114469+00:00",
+    "updatedAt": "2026-10-15T02:17:06.917668+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7018,6 +7018,54 @@
         "head": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
         "url": "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7"
       }
+    },
+    {
+      "id": "branch:fixes/tcp-rack-min-rtt",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/tcp-rack-min-rtt",
+      "head": "ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
+      "title": "Age RACK path RTT measurements",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
+      "status": "Remote validation failed; investigating",
+      "updatedAt": "2026-10-15T02:17:06.917668+00:00",
+      "summary": "Use eligible handshake and ACK samples for a five-minute path minimum, separately from RACK delivery timing. Independent source review passed. The first before/after validation ended unsuccessfully; its original outputs are being inspected before assigning a cause.",
+      "followup": {
+        "owner": "syscall_validation",
+        "disposition": "Remote validation failed; investigating",
+        "sourceHead": "ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
+        "observedAt": "2026-10-15T02:17:06.917668+00:00",
+        "nextAction": "Classify the first remote failure and correct its owning source or validation method.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68",
+          "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3"
+        ]
+      }
+    },
+    {
+      "id": "branch:fixes/docker-exec-output-wait",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/docker-exec-output-wait",
+      "head": "2c52512424d99b24af49038a72fac53069e20c8b",
+      "title": "Wait on Docker exec output before polling",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
+      "status": "Remote validation in progress",
+      "updatedAt": "2026-10-15T02:17:06.917668+00:00",
+      "summary": "Drain output before checking process status, retaining the existing completion guard and closing the stream on cancellation. Independent source review passed; the focused cancellation test, existing output/error cases and owning analyzers are running remotely.",
+      "followup": {
+        "owner": "restore_integration_review",
+        "disposition": "Remote validation in progress",
+        "sourceHead": "2c52512424d99b24af49038a72fac53069e20c8b",
+        "observedAt": "2026-10-15T02:17:06.917668+00:00",
+        "nextAction": "Verify the focused Docker, package and analyzer results before requesting contributor review.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
+          "https://app.buildbuddy.io/invocation/d6ae3a42-8ff7-4070-bd3e-03fd3e1cf9d5"
+        ]
+      }
     }
   ],
   "edges": [
@@ -8527,6 +8575,15 @@
       "type": "blocked_by",
       "reason": "The current import e6d1f4369 fails the same native nftables fixture: Linux rejects its oifname-exists clause. This is shared CI breakage, not a source dependency of the IPv6 change.",
       "evidence": "https://buildkite.com/gvisor/pipeline/builds/50822"
+    },
+    {
+      "from": "branch:fixes/tcp-retransmission-rtt",
+      "to": "branch:fixes/tcp-rack-min-rtt",
+      "type": "depends_on",
+      "reason": "Minimum-RTT sampling relies on the shared loss-probe retransmission invalidation.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68"
+      ]
     }
   ],
   "investigations": [
@@ -8535,8 +8592,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T01:37:30.819178+00:00",
-      "summary": "Packet-level diagnostics confirm stale-minimum RACK loss classification after sustained RTT growth and expose a separate RTT-sampling bug: a loss-probe retransmission lets an ambiguous ACK change SRTT without timestamps. The independent correction moves the existing Karn guard to the shared retransmission path. Both architectures reproduce the old failure and pass the corrected ACK/RACK suites and analyzers. That correction is awaiting contributor review. Minimum-RTT aging is being designed separately around validated handshake and data-ACK samples; modeled delayed ACKs remain an explicit limitation.",
+      "updatedAt": "2026-10-15T02:17:06.917668+00:00",
+      "summary": "The independent loss-probe RTT correction is qualified and awaiting contributor review. The separate minimum-RTT proposal now applies a five-minute filter to eligible handshake and ACK samples, while retaining separate RACK delivery timing. Independent source review passed. Its first remote before/after run failed; original outputs are being inspected before assigning a cause.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9075,7 +9132,7 @@
           ]
         }
       ],
-      "nextStep": "Obtain contributor review of the independent loss-probe RTT correction. Design and validate minimum-RTT aging using eligible RTT samples while preserving separate RACK delivery timing.",
+      "nextStep": "Classify and resolve the first minimum-RTT validation failure, then verify the real ACK histories on both architectures. Contributor review of the independent loss-probe correction remains pending.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
