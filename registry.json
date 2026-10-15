@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T22:22:06.651889+00:00",
+    "updatedAt": "2026-10-15T22:32:55.534469+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -8669,8 +8669,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
-      "summary": "The packet-level investigation found two RTT defects beyond congestion-window accounting: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections now have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The minimum-RTT change is one commit atop the separate loss-probe correction; both await contributor review. These results establish the tested recovery behavior, not a new throughput measurement.",
+      "updatedAt": "2026-10-15T22:32:55.534469+00:00",
+      "summary": "The packet-level investigation found two RTT defects beyond congestion-window accounting: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections now have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both corrections: the Karn loss-probe fix is published as #15819, and the minimum-RTT correction awaits that prerequisite’s merge. These results establish the tested recovery behavior, not a new throughput measurement.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9226,7 +9226,7 @@
           ]
         }
       ],
-      "nextStep": "Obtain contributor decisions for the two qualified RTT corrections, land the independent Karn fix before its minimum-RTT dependent, and continue broader congestion-control experiments after integration.",
+      "nextStep": "After the current kernel validation, compare the approved minimum-RTT change with the existing benchmarks, keeping the Karn correction in both versions, and inspect actual sender/segment layouts. Upstream submission waits for #15819 to land; the performance investigation can proceed before that merge.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
