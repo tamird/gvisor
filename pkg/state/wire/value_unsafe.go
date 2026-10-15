@@ -153,7 +153,7 @@ func (v Value) Valid() bool {
 // Kind returns the encoded kind. v must be valid.
 func (v Value) Kind() Kind {
 	if frame := v.frame(); frame != nil {
-		return frame.nodes[v.bits].kind
+		return Kind(frame.tags[v.bits])
 	}
 	return (*valueHeader)(v.payload).kind
 }
@@ -250,7 +250,7 @@ func (v Value) Slice() Slice {
 func (v Value) Len() int {
 	if frame := v.frame(); frame != nil {
 		node := frame.nodes[v.bits]
-		switch node.kind {
+		switch Kind(frame.tags[v.bits]) {
 		case KindArray, KindMap, KindMultipleObjects:
 			return int(node.b)
 		default:
@@ -271,7 +271,7 @@ func (v Value) Len() int {
 func (v Value) Element(i int) Value {
 	if frame := v.frame(); frame != nil {
 		node := frame.nodes[v.bits]
-		switch node.kind {
+		switch Kind(frame.tags[v.bits]) {
 		case KindArray, KindMultipleObjects:
 			if i < 0 || uint64(i) >= node.b {
 				panic("wire element index out of range")
@@ -393,16 +393,17 @@ func (v Value) Own() Value {
 	}
 	frame := v.frame()
 	node := frame.nodes[v.bits]
-	switch node.kind {
+	kind := Kind(frame.tags[v.bits])
+	switch kind {
 	case KindBool, KindInt, KindUint, KindFloat32, KindFloat64,
 		KindComplex64, KindNil, KindNoObjects:
-		return scalarValue(node.kind, node.a)
+		return scalarValue(kind, node.a)
 	case KindComplex128:
-		p := &complexValue{valueHeader: valueHeader{node.kind}, imaginary: node.b} // Escapes: owned complex payload.
+		p := &complexValue{valueHeader: valueHeader{kind}, imaginary: node.b} // Escapes: owned complex payload.
 		return Value{bits: node.a, payload: unsafe.Pointer(p)}
 	case KindString:
 		value := v.Text()
-		p := &stringValue{valueHeader: valueHeader{node.kind}, value: value} // Escapes: owned string payload.
+		p := &stringValue{valueHeader: valueHeader{kind}, value: value} // Escapes: owned string payload.
 		return Value{payload: unsafe.Pointer(p)}
 	case KindRef:
 		ref := v.ReferenceView().materialize()
@@ -417,8 +418,8 @@ func (v Value) Own() Value {
 		p := &sliceValue{valueHeader: valueHeader{KindSlice}, capacity: slice.Capacity, ref: ref} // Escapes: owned slice payload.
 		return Value{bits: uint64(slice.Length), payload: unsafe.Pointer(p)}
 	case KindArray, KindMultipleObjects:
-		p := &arrayValue{valueHeader: valueHeader{node.kind}} // Escapes: owned collection payload.
-		if count := v.Len(); count != 0 || node.kind == KindMultipleObjects {
+		p := &arrayValue{valueHeader: valueHeader{kind}} // Escapes: owned collection payload.
+		if count := v.Len(); count != 0 || kind == KindMultipleObjects {
 			p.values = make([]Value, count) // Escapes: owned collection elements.
 			for i := range p.values {
 				p.values[i] = v.Element(i).Own()

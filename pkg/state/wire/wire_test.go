@@ -58,17 +58,29 @@ func TestLoadObjectForms(t *testing.T) {
 }
 
 func TestLoadUnknownWideTag(t *testing.T) {
-	var buf bytes.Buffer
-	w := Writer{Writer: &buf}
-	tag := Uint(1<<63) | typeInt
-	tag.save(&w)
-	Int(17).save(&w)
-	defer func() {
-		if got, want := fmt.Sprint(recover()), fmt.Sprintf("unknown header: %d", tag); got != want {
-			t.Errorf("Load panic = %q, want %q", got, want)
-		}
-	}()
-	Load(&Reader{Reader: &buf})
+	for _, test := range []struct {
+		name string
+		tag  Uint
+	}{
+		{"value", Uint(1<<63) | typeInt},
+		{"type", Uint(1<<63) | typeSpecNil},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			w := Writer{Writer: &buf}
+			if test.name == "type" {
+				typeInterface.save(&w)
+			}
+			test.tag.save(&w)
+			Save(&w, Int(17))
+			defer func() {
+				if got, want := fmt.Sprint(recover()), fmt.Sprintf("unknown header: %d", test.tag); got != want {
+					t.Errorf("Load panic = %q, want %q", got, want)
+				}
+			}()
+			Load(&Reader{Reader: &buf})
+		})
+	}
 }
 
 func TestValueBufferOwnership(t *testing.T) {
@@ -99,6 +111,21 @@ func TestValueBufferOwnership(t *testing.T) {
 	Save(&w, &parent)
 	Save(&w, &Array{Contents: []Object{&text, &text, &text}})
 	Save(&w, reuse)
+	// A path count is an operand, not a byte tag. Reusing the same slots for
+	// index steps must also replace the previous field-name tags with zero.
+	path := &Ref{
+		Root: ^Uint(0),
+		Dots: make([]Dot, 257),
+		Type: &TypeSpecArray{Count: ^Uint(0), Type: TypeID(1<<63 | 3)},
+	}
+	for i := range path.Dots {
+		path.Dots[i] = &field
+	}
+	Save(&w, path)
+	for i := range path.Dots {
+		path.Dots[i] = Index(i)
+	}
+	Save(&w, path)
 	Save(&w, Uint(29))
 	r := Reader{Reader: &buf}
 	var values ValueBuffer
@@ -118,6 +145,18 @@ func TestValueBufferOwnership(t *testing.T) {
 		if got, want := reused.Element(i).Uint(), uint64(i&1); got != want {
 			t.Fatalf("reused element %d = %d, want %d", i, got, want)
 		}
+	}
+	fields := values.Load(&r).ReferenceView()
+	if got, want := fields.Dots(), len(path.Dots); got != want {
+		t.Fatalf("path length = %d, want %d", got, want)
+	}
+	for i := range path.Dots {
+		if got, want := fields.Dot(i), (PathElement{Name: string(field), Field: true}); got != want {
+			t.Fatalf("field step %d = %+v, want %+v", i, got, want)
+		}
+	}
+	if got, want := materialize(values.Load(&r)), Object(path); !reflect.DeepEqual(got, want) {
+		t.Fatalf("reused index path = %#v, want %#v", got, want)
 	}
 	if got, want := values.Load(&r).Uint(), uint64(29); got != want {
 		t.Fatalf("following value = %d, want %d", got, want)

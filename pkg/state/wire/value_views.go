@@ -44,7 +44,7 @@ func (r ReferenceView) Dots() int {
 		if metadata == 0 {
 			return 0
 		}
-		return int(frame.nodes[metadata-1].kind)
+		return int(frame.nodes[metadata-1].a)
 	}
 	return len(r.value.Reference().Dots)
 }
@@ -53,11 +53,12 @@ func (r ReferenceView) Dots() int {
 func (r ReferenceView) Dot(i int) PathElement {
 	if frame := r.value.frame(); frame != nil {
 		metadata := frame.nodes[r.value.bits].b
-		if metadata == 0 || i < 0 || uint64(i) >= uint64(frame.nodes[metadata-1].kind) {
+		if metadata == 0 || i < 0 || uint64(i) >= frame.nodes[metadata-1].a {
 			panic("wire path index out of range")
 		}
-		dot := frame.nodes[int(frame.nodes[metadata-1].a)+i]
-		if dot.kind != 0 {
+		index := int(metadata) + i
+		dot := frame.nodes[index]
+		if frame.tags[index] != 0 {
 			return PathElement{Name: frame.strings[dot.a], Field: true}
 		}
 		return PathElement{Index: Index(dot.a)}
@@ -151,7 +152,7 @@ type TypeView struct {
 // Kind returns the type-specification kind. The view must be valid.
 func (v TypeView) Kind() TypeKind {
 	if v.frame != nil {
-		return TypeKind(v.frame.nodes[v.index].kind)
+		return TypeKind(v.frame.tags[v.index])
 	}
 	switch v.owned.(type) {
 	case TypeID:

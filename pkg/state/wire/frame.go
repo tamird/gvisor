@@ -31,9 +31,16 @@ type frameNode struct {
 	a, b uint64
 }
 
+// frameData keeps full-width operands without padding each validated byte tag
+// to a machine word. Tags and data have matching logical indices and lengths.
+type frameData struct {
+	a, b uint64
+}
+
 type valueFrame struct {
 	valueHeader
-	nodes   []frameNode
+	nodes   []frameData
+	tags    []uint8
 	strings []string
 }
 
@@ -54,6 +61,7 @@ func (b *ValueBuffer) Load(r *Reader) Value {
 	clear(b.frame.strings)
 	b.frame.strings = b.frame.strings[:0]
 	b.frame.nodes = b.frame.nodes[:0]
+	b.frame.tags = b.frame.tags[:0]
 	b.frame.kind = frameKind
 	index := b.frame.reserve(1)
 	b.frame.loadValue(r, index)
@@ -64,6 +72,7 @@ func (b *ValueBuffer) Load(r *Reader) Value {
 // not retain a Load's largest unrelated temporary frame through decodeState.
 func (b *ValueBuffer) Release() {
 	b.frame.nodes = nil
+	b.frame.tags = nil
 	b.frame.strings = nil
 }
 
@@ -77,17 +86,28 @@ func (f *valueFrame) reserve(count uint64) int {
 	}
 	first := len(f.nodes)
 	end := first + int(count)
-	if end > cap(f.nodes) {
+	available := min(cap(f.nodes), cap(f.tags))
+	if end > available {
 		// Reserve at least twice the capacity to limit repeated copying of
 		// large records. Values retain indices across backing allocations.
 		capacity := end
-		if cap(f.nodes) <= maxInt/2 {
-			capacity = max(capacity, 2*cap(f.nodes))
+		if available <= maxInt/2 {
+			capacity = max(capacity, 2*available)
 		}
 		f.nodes = slices.Grow(f.nodes, capacity-first) // Escapes: temporary decoded nodes.
+		f.tags = slices.Grow(f.tags, capacity-first)   // Escapes: temporary decoded tags.
 	}
 	f.nodes = f.nodes[:end]
+	f.tags = f.tags[:end]
 	return first
+}
+
+// setNode publishes both operands and the tag, including zero-tag auxiliary
+// nodes. Wire tags must have passed the full-width grammar switch before this
+// narrowing; operands and public Kind values keep their original widths.
+func (f *valueFrame) setNode(index int, node frameNode) {
+	f.nodes[index] = frameData{a: node.a, b: node.b}
+	f.tags[index] = uint8(node.kind)
 }
 
 func (f *valueFrame) text(value string) uint64 {
@@ -130,7 +150,7 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 	case KindSlice:
 		length, capacity := loadUint(r), loadUint(r)
 		bounds := f.reserve(1)
-		f.nodes[bounds] = frameNode{a: uint64(length), b: uint64(capacity)}
+		f.setNode(bounds, frameNode{a: uint64(length), b: uint64(capacity)})
 		ref := f.reserve(1)
 		f.loadReference(r, ref)
 		node.a, node.b = uint64(bounds), uint64(ref)
@@ -140,7 +160,7 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		node.a, node.b = uint64(first), count
 		if count != 0 {
 			f.loadValue(r, first)
-			childKind := f.nodes[first].kind
+			childKind := Kind(f.tags[first])
 			for i := 1; i < int(count); i++ {
 				f.loadPayload(r, first+i, childKind)
 			}
@@ -155,7 +175,7 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		if count != 0 {
 			f.loadValue(r, first)
 			f.loadValue(r, first+1)
-			keyKind, valueKind := f.nodes[first].kind, f.nodes[first+1].kind
+			keyKind, valueKind := Kind(f.tags[first]), Kind(f.tags[first+1])
 			for i := 1; i < int(count); i++ {
 				f.loadPayload(r, first+2*i, keyKind)
 				f.loadPayload(r, first+2*i+1, valueKind)
@@ -184,18 +204,18 @@ func (f *valueFrame) loadPayload(r *Reader, index int, kind Kind) {
 		count := uint64(loadUint(r))
 		fields := f.reserve(1)
 		first := f.reserve(count)
-		f.nodes[fields] = frameNode{a: uint64(first), b: count}
+		f.setNode(fields, frameNode{a: uint64(first), b: count})
 		node.b = uint64(fields)
 		for i := 0; i < int(count); i++ {
 			name := string(loadString(r))
-			f.nodes[first+i] = frameNode{a: f.text(name)}
+			f.setNode(first+i, frameNode{a: f.text(name)})
 		}
 	default:
 		panic(fmt.Errorf("unknown header: %d", kind)) // Escapes: error formatting.
 	}
 	// Recursive parsing may have grown nodes. Do not retain an element pointer
 	// across those calls.
-	f.nodes[index] = node
+	f.setNode(index, node)
 }
 
 func (f *valueFrame) loadReference(r *Reader, index int) {
@@ -209,19 +229,21 @@ func (f *valueFrame) loadReference(r *Reader, index int) {
 			if dot >= 0 {
 				// Preserve Index's existing narrowing, independently of the
 				// full-width reference root and type metadata.
-				f.nodes[first+i] = frameNode{a: uint64(Index(dot))}
+				f.setNode(first+i, frameNode{a: uint64(Index(dot))})
 				continue
 			}
 			data := make([]byte, -dot) // Escapes: independently owned field name.
 			readFull(r, data)
 			name := gohacks.StringFromImmutableBytes(data)
-			f.nodes[first+i] = frameNode{kind: 1, a: f.text(name)}
+			f.setNode(first+i, frameNode{kind: 1, a: f.text(name)})
 		}
 		typ := f.loadType(r)
-		f.nodes[metadata] = frameNode{kind: Kind(count), a: uint64(first), b: uint64(typ)}
+		// Dots immediately follow metadata, so its index also locates the
+		// path. Keep the full-width count in an operand, not in the tag.
+		f.setNode(metadata, frameNode{a: count, b: uint64(typ)})
 		node.b = uint64(metadata) + 1 // Zero denotes the pathless reference.
 	}
-	f.nodes[index] = node
+	f.setNode(index, node)
 }
 
 // loadType is the sole TypeSpec grammar. The tag belongs to the separate
@@ -245,6 +267,6 @@ func (f *valueFrame) loadType(r *Reader) int {
 	default:
 		panic(fmt.Errorf("unknown header: %d", header)) // Escapes: error formatting.
 	}
-	f.nodes[index] = node
+	f.setNode(index, node)
 	return index
 }
