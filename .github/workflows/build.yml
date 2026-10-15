@@ -4,7 +4,7 @@ name: CI
   push:
     branches:
       - "*"
-      - "qualification/buildbuddy-kernel-features"
+      - "qualification/buildbuddy-kernel-features-v2"
   workflow_dispatch:
     inputs:
       lanes:
@@ -163,13 +163,13 @@ jobs:
         if-no-files-found: error
 
   buildbuddy-kernel-boot:
-    if: github.repository == 'tamird/gvisor' && github.event_name == 'push' && github.ref == 'refs/heads/qualification/buildbuddy-kernel-features'
+    if: github.repository == 'tamird/gvisor' && github.event_name == 'push' && github.ref == 'refs/heads/qualification/buildbuddy-kernel-features-v2'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     permissions:
       contents: read
     env:
-      QUALIFICATION_COMMIT: 7b114572332da4423710ca957683b9d3cb9c2d48
+      QUALIFICATION_COMMIT: e7d41a3b8ce5a2a1bae272cae91bbc6e766db58e
     steps:
     - name: Checkout exact BuildBuddy diagnostic source
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
