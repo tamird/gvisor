@@ -19,10 +19,9 @@ startup --host_jvm_args=-Dbazel.DigestFunction=SHA256
 # Python interpreter to bootstrap it.
 build --@rules_python//python/config_settings:bootstrap_impl=script
 
-# Build with C++17.
-# com_google_protobuf is compiled with a few warnings.
-build --cxxopt=-std=c++17 --cxxopt=-Wno-error=maybe-uninitialized
-build --host_cxxopt=-std=c++17 --host_cxxopt=-Wno-error=maybe-uninitialized
+# Build C with GNU17 and C++ with C++17.
+build --conlyopt=-std=gnu17 --cxxopt=-std=c++17
+build --host_conlyopt=-std=gnu17 --host_cxxopt=-std=c++17
 
 # Display the current git revision in the info block.
 build --stamp --workspace_status_command tools/workspace_status.sh
@@ -51,15 +50,31 @@ build:syscalls-arm64-64k --test_tag_filters=-allsave,runsc_systrap
 build:syscalls-arm64-64k --//tools/bazeldefs:page_size=64k
 
 # Set flags for x86_64.
-build:x86_64 --crosstool_top=@crosstool//:toolchains
 build:x86_64 --cpu=k8
 build:x86_64 --platforms=//tools/bazeldefs:linux_amd64
 
 # Set flags for aarch64.
-build:aarch64 --crosstool_top=@crosstool//:toolchains
 build:aarch64 --cpu=aarch64
 build:aarch64 --platforms=//tools/bazeldefs:linux_arm64
 
 # Use prebuilt protoc to speed up builds.
 common --@com_google_protobuf//bazel/toolchains:prefer_prebuilt_protoc
 common --incompatible_enable_proto_toolchain_resolution=true
+
+# BuildBuddy's hosted coordinator supplies this configuration and authentication.
+# Both compilation and test actions execute remotely; the execution platform
+# owns the runtime image so per-test properties retain its image and architecture.
+build:rbe-common --config=buildbuddy_remote_executor
+# Keep remote workers fed independently of the coordinator's CPU count.
+build:rbe-common --jobs=400
+build:rbe-common --define=rbe=true
+build:rbe-common --spawn_strategy=remote
+build:rbe-common --noremote_local_fallback
+build:rbe-common --remote_cache_compression
+test:rbe-common --strategy=TestRunner=remote
+
+build:rbe --config=rbe-common
+# Architecture-specific generators may need the other native CPU even when
+# the requested build or test lane selects only one target architecture.
+build:rbe --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+build:rbe --host_platform=//tools/bazeldefs:rbe_linux_amd64
