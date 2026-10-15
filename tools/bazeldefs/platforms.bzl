@@ -1,4 +1,28 @@
-"""List of platforms."""
+"""Platforms and remote syscall test requirements."""
+
+def syscall_test_exec_properties(platform):
+    """Returns defaults for remote syscall test execution.
+
+    Args:
+      platform: Native or runsc platform used by the test runner.
+
+    Returns:
+      Test-runner properties; compilation keeps the execution platform's defaults.
+    """
+    properties = {}
+
+    # KVM and slimvm need separate worker contracts.
+    if platform in ("native", "ptrace", "systrap"):
+        properties = {
+            "test.dockerUser": "root",
+            # Firecracker otherwise boots with ipv6.disable=1.
+            "test.network-enable-ipv6": "true",
+            "test.workload-isolation-type": "firecracker",
+        }
+    return select({
+        Label("//tools/bazeldefs:rbe"): properties,
+        "//conditions:default": {},
+    })
 
 # Platform to associated tags.
 platforms = {
