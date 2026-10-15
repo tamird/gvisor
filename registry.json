@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T09:10:54.016796+00:00",
+    "updatedAt": "2026-10-15T09:55:23.956752+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -12527,6 +12527,57 @@
         {
           "label": "Published provider investigation and evidence limits",
           "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789"
+        }
+      ]
+    },
+    {
+      "id": "investigation:buildbuddy-upstream-fixes",
+      "title": "BuildBuddy fixes for gVisor qualification",
+      "status": "active",
+      "owner": "FIFTH (Codex)",
+      "updatedAt": "2026-10-15T09:55:23.956752+00:00",
+      "summary": "BuildBuddy has invited upstream PRs. The first source change will enable missing inet/IPv6 FIB, xtables mark and CT features in the existing x86 guest kernels, with coverage in the existing kernel configuration test.",
+      "nextStep": "Use the contributor’s in-progress BuildBuddy clone when complete, implement the config correction, and run the existing remote Bazel checks and kernel builds. Hosted kernel publication remains a BuildBuddy deployment step.",
+      "evidence": [
+        {
+          "label": "Missing hosted kernel features and recorded failures",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13523"
+        },
+        {
+          "label": "Earlier accepted guest-kernel configuration change",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13526"
+        }
+      ],
+      "findings": [
+        {
+          "text": "The current x86 5.15 and 6.1 configurations already provide the dependencies for NFT_FIB_IPV6, NFT_FIB_INET, NETFILTER_XT_MARK and NETFILTER_XT_TARGET_CT. The ARM 5.10 configuration has a different networking feature set and is outside this first change. Successful config checks or compilation alone will not establish deployed runtime support.",
+          "evidence": [
+            {
+              "label": "Existing kernel source and build targets",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/tree/a8f7ebb8a/enterprise/vmsupport/kernel"
+            }
+          ]
+        },
+        {
+          "text": "ARM64 Firecracker remains a hosted-capacity request. The lost Triton execution has no established code-level cause, so it does not yet justify a lease patch. The earlier output-buffer and TUN-permission reports are closed and will not be duplicated.",
+          "evidence": [
+            {
+              "label": "ARM64 capacity response",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13603"
+            },
+            {
+              "label": "Unresolved execution report",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13789"
+            },
+            {
+              "label": "Closed output-buffer report",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13542"
+            },
+            {
+              "label": "Closed TUN-permission report",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13540"
+            }
+          ]
         }
       ]
     }
