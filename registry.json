@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T11:49:35.973089+00:00",
+    "updatedAt": "2026-10-15T12:24:31.479528+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5609,14 +5609,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
       "status": "Contributor changes requested",
-      "updatedAt": "2026-10-15T06:11:35.630937+00:00",
-      "summary": "The unified replacement at 1387b2abb passes its selected tests, analyzers and both production builds; its performance comparison is being prepared. This component proposal and its original measurements are retained until that replacement is qualified.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
+      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "summary": "The unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
       "followup": {
         "disposition": "Contributor revision requested",
         "owner": "restore_integration_review",
         "sourceHead": "3b13f133c033512ce901163cfe33eebd80a49965",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Complete the unified replacement’s performance comparison before retiring this component proposal. No contributor decision is pending on this old design.",
+        "nextAction": "Reassess retirement after the unified replacement resolves its measured Load regressions. No contributor decision is pending on this old design.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
           "https://app.buildbuddy.io/invocation/463669e5-4701-4d87-b24e-ec1d8813428a",
@@ -5852,14 +5852,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
       "status": "Contributor changes requested",
-      "updatedAt": "2026-10-15T06:11:35.630937+00:00",
-      "summary": "The unified replacement at 1387b2abb passes its selected tests, analyzers and both production builds; its performance comparison is being prepared. This component proposal and its original measurements are retained until that replacement is qualified.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
+      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "summary": "The unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
       "followup": {
         "disposition": "Contributor revision requested",
         "owner": "restore_integration_review",
         "sourceHead": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Complete the unified replacement’s performance comparison before retiring this component proposal. No contributor decision is pending on this old design.",
+        "nextAction": "Reassess retirement after the unified replacement resolves its measured Load regressions. No contributor decision is pending on this old design.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
           "https://app.buildbuddy.io/invocation/f66a74d9-0e0e-489b-a515-c0e8d690bfd0",
@@ -5887,14 +5887,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
       "status": "Contributor changes requested",
-      "updatedAt": "2026-10-15T06:11:35.630937+00:00",
-      "summary": "The unified replacement at 1387b2abb passes its selected tests, analyzers and both production builds; its performance comparison is being prepared. This component proposal and its original measurements are retained until that replacement is qualified.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "summary": "The unified replacement passes its selected correctness checks, but its corrected performance comparison still has four Load regressions. This component proposal and its original measurements are retained while that replacement is revised; no contributor decision is pending on the old design.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "disposition": "Contributor revision requested",
         "owner": "restore_integration_review",
         "sourceHead": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Complete the unified replacement’s performance comparison before retiring this component proposal. No contributor decision is pending on this old design.",
+        "nextAction": "Reassess retirement after the unified replacement resolves its measured Load regressions. No contributor decision is pending on this old design.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
           "https://app.buildbuddy.io/invocation/5b1e64cd-0b69-414c-9f46-85f618ed6d95",
@@ -7092,14 +7092,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T11:49:35.973089+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. Benchmarks show faster Save and slower Load in several fixtures. The profiled type-lookup correction completed its normal, race, analyzer and production-build phases; performance and startup comparisons follow. Nogo source ordering (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. The corrected rewrite passes correctness checks but still slows four Load fixtures, including control messages by 75.81% and queued UDP packets by 15.24%. It also increases executable size. Further simplification and profiling are underway before contributor review; Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
-        "observedAt": "2026-10-15T11:33:37.259170+00:00",
-        "nextAction": "Validate the allocation correction, complete analyzers and production builds, then repeat the paired benchmarks and matched release startup measurements before contributor review.",
+        "observedAt": "2026-10-15T12:24:31.479528+00:00",
+        "nextAction": "Use the frozen profiles to remove remaining type/destination overhead and generated code growth, then repeat the fixed package comparison. Whole-checkpoint and sandbox-startup measurements follow only after the regressions are addressed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -7114,7 +7114,11 @@
           "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a",
           "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41",
           "https://github.com/tamird/gvisor/commit/f059680e2",
-          "https://app.buildbuddy.io/invocation/852d5a9a-b0bc-4dcf-bd75-fdeae4ace65b"
+          "https://app.buildbuddy.io/invocation/852d5a9a-b0bc-4dcf-bd75-fdeae4ace65b",
+          "https://app.buildbuddy.io/invocation/0c3eed95-3eb1-4e5b-9149-0d3fe7611e4b",
+          "https://app.buildbuddy.io/invocation/6f57c8e3-102a-4cfa-8754-86cdcd5f5ca5",
+          "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13",
+          "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9"
         ]
       }
     }
@@ -9534,8 +9538,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T11:49:35.973089+00:00",
-      "summary": "The complete rewrite has several Save gains and Load regressions. Profiles identified repeated type resolution. A correction now shares per-Load type information and keeps ordinary registration cheap. Its normal, race, analyzer and production-build phases completed successfully; original outputs are being verified before the fixed performance and startup comparisons.",
+      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "summary": "The corrected unified rewrite passes its normal, race and analyzer checks and both production builds, but four Load benchmarks still regress. Control-message Load is 75.81% slower and queued UDP Load 15.24% slower. CLI timing is inconclusive, while initialization allocations and executable size increase. The rewrite remains under active design revision.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10327,7 +10331,7 @@
           ]
         },
         {
-          "text": "Profiles of the matched benchmark binaries attribute 18.06% of cumulative sampled CPU in control-message Load and 24.60% in UDP Load to decodeState.plan. restoreType accounts for 13.98% and 22.83%; those costs overlap. The correction shares type information within each Load and obtains allocation functions while reading schemas, avoiding metadata calls on nil receivers. All corrected validation phases completed successfully. The original fixed comparison remains the timing evidence until the new measurements finish.",
+          "text": "The first profiles identified repeated type resolution. Sharing type information within each Load and avoiding metadata calls on nil receivers fixes the compatibility edge, with all corrected validation checks passing. The new fixed comparison still has four Load regressions, so this correction does not qualify the rewrite for promotion.",
           "evidence": [
             {
               "label": "Completed restore profiles; independently verified originals",
@@ -10342,13 +10346,13 @@
               "url": "https://github.com/tamird/gvisor/commit/d5f5350e1"
             },
             {
-              "label": "Completed corrected validation; original outputs being verified",
+              "label": "Corrected rewrite passes tests, race checks, analyzers and production builds",
               "url": "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13"
             }
           ]
         }
       ],
-      "nextStep": "Verify the completed validation outputs, then run the fixed package comparison and separate matched CLI startup measurements. Keep sandbox startup as a further qualification requirement.",
+      "nextStep": "Profile the frozen corrected binaries and simplify destination/type handling and generated functions. Recheck the fixed package benchmarks before whole-checkpoint and sandbox-startup qualification.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10781,6 +10785,22 @@
         {
           "label": "Corrected qualification source",
           "url": "https://github.com/tamird/gvisor/commit/8619b8fc156d7173e1697f3bf31fc172bbbfd6fb"
+        },
+        {
+          "label": "Corrected rewrite: verified fixed package comparison",
+          "url": "https://app.buildbuddy.io/invocation/0c3eed95-3eb1-4e5b-9149-0d3fe7611e4b"
+        },
+        {
+          "label": "Matched CLI startup and complete executable comparison",
+          "url": "https://app.buildbuddy.io/invocation/6f57c8e3-102a-4cfa-8754-86cdcd5f5ca5"
+        },
+        {
+          "label": "Corrected rewrite passes tests, race checks, analyzers and production builds",
+          "url": "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13"
+        },
+        {
+          "label": "Measured per-Load ownership correction",
+          "url": "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9"
         }
       ],
       "comparisons": [
@@ -10948,6 +10968,128 @@
             {
               "label": "Verified package comparison and original benchmark output",
               "url": "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a"
+            }
+          ]
+        },
+        {
+          "title": "Corrected rewrite: matched Save/Load measurements",
+          "description": "Linux AMD64, one worker and selected CPU, GOMAXPROCS=1. Twelve fixed balanced pairs per fixture. Baseline 6212e4f7b includes the cheap-registration change; candidate ae162e43c adds the corrected unified rewrite. Warmed medians.",
+          "columns": [
+            "Operation",
+            "Before",
+            "After",
+            "Change"
+          ],
+          "rows": [
+            [
+              "Control-message Save",
+              "8.016 µs",
+              "7.248 µs",
+              "−9.58%"
+            ],
+            [
+              "Control-message Load",
+              "8.303 µs",
+              "14.598 µs",
+              "+75.81%"
+            ],
+            [
+              "UDP receive queue Save (32 packets)",
+              "580.7 µs",
+              "440.4 µs",
+              "−24.15%"
+            ],
+            [
+              "UDP receive queue Load (32 packets)",
+              "523.2 µs",
+              "602.9 µs",
+              "+15.24%"
+            ],
+            [
+              "Pointer graph Save",
+              "932.7 µs",
+              "904.3 µs",
+              "−3.05%"
+            ],
+            [
+              "Pointer graph Load",
+              "594.1 µs",
+              "625.8 µs",
+              "+5.34%"
+            ],
+            [
+              "Map Save",
+              "158.4 µs",
+              "159.1 µs",
+              "No detected change (p=.114)"
+            ],
+            [
+              "Map Load",
+              "376.4 µs",
+              "410.0 µs",
+              "+8.92%"
+            ],
+            [
+              "Adoption Save",
+              "1.135 ms",
+              "1.101 ms",
+              "−2.99%"
+            ],
+            [
+              "Adoption Load",
+              "459.4 µs",
+              "439.7 µs",
+              "−4.29%"
+            ]
+          ],
+          "note": "All listed changes have p<.001; wire sizes are unchanged. Control-message Load increases from 4,624 B/113 allocations to 9,944 B/126 allocations. UDP Load includes releasing the previously restored buffers. These regressions block promotion.",
+          "evidence": [
+            {
+              "label": "Corrected rewrite: verified fixed package comparison",
+              "url": "https://app.buildbuddy.io/invocation/0c3eed95-3eb1-4e5b-9149-0d3fe7611e4b"
+            }
+          ]
+        },
+        {
+          "title": "Corrected rewrite: startup and executable cost",
+          "description": "Same source arms, toolchain and worker settings. CLI timing uses twelve balanced batches of 64 fresh processes per arm on one CPU.",
+          "columns": [
+            "Measurement",
+            "Before",
+            "After"
+          ],
+          "rows": [
+            [
+              "runsc --version median batch mean",
+              "8.071 ms",
+              "8.850 ms"
+            ],
+            [
+              "All reported package-init allocated bytes",
+              "1,271,472 B",
+              "1,373,216 B"
+            ],
+            [
+              "All reported package-init allocations",
+              "10,295",
+              "10,297"
+            ],
+            [
+              "AMD64 runsc executable",
+              "36,090,016 B",
+              "41,160,864 B"
+            ],
+            [
+              "ARM64 runsc executable",
+              "33,751,200 B",
+              "38,535,328 B"
+            ]
+          ],
+          "note": "CLI timing p=.291 does not resolve a slowdown. Hashing warms the page cache; wall time includes process launch/wait. Most file growth is function metadata and text; files contain no DWARF. File length is not resident memory. Sandbox startup remains unmeasured.",
+          "evidence": [
+            {
+              "label": "Matched CLI startup and complete executable comparison",
+              "url": "https://app.buildbuddy.io/invocation/6f57c8e3-102a-4cfa-8754-86cdcd5f5ca5"
             }
           ]
         }
@@ -12665,9 +12807,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T11:49:35.973089+00:00",
-      "summary": "The old x86 guest configurations reproduce all four missing netfilter options. Validation uncovered a runner mistake: overriding BuildBuddy’s BLAKE3 setting changed Bazel’s extension-lock hashes. The corrected test and both kernel builds are running with the repository setting restored.",
-      "nextStep": "Finish the config test and kernel builds, then submit the focused BuildBuddy PR. Continue runtime qualification through the existing GitHub Actions KVM bridge.",
+      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "summary": "BuildBuddy PR #13802 enables the missing x86 guest netfilter options. The old configurations reproduce the missing features; the corrected capability test and both Linux 5.15/6.1 kernel builds pass. Boot validation and hosted publication remain separate. An independent vhost-net configuration fix is next.",
+      "nextStep": "Boot the freshly built kernels through the existing GitHub Actions KVM bridge and validate the runtime features. Prepare the separate vhost-net fix and follow #13802 review/CI.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12690,8 +12832,16 @@
           "url": "https://app.buildbuddy.io/invocation/9ddd8d9e-a4ce-45d7-bc25-0fd9c4ae2c64"
         },
         {
-          "label": "Canonical-digest validation in progress",
+          "label": "Cancelled validation: remote concurrency was incorrectly limited to two actions",
           "url": "https://app.buildbuddy.io/invocation/a270c325-1759-4c74-8135-dc4e2f5ced42"
+        },
+        {
+          "label": "Open BuildBuddy netfilter PR",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13802"
+        },
+        {
+          "label": "Verified corrected config test and both kernel builds",
+          "url": "https://app.buildbuddy.io/invocation/65b922e3-e465-4120-8303-76ebee5111d8"
         }
       ],
       "findings": [
