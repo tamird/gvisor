@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+    "updatedAt": "2026-10-15T12:53:55.889065+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7092,8 +7092,8 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. The corrected rewrite passes correctness checks but still slows four Load fixtures, including control messages by 75.81% and queued UDP packets by 15.24%. It also increases executable size. Further simplification and profiling are underway before contributor review; Nogo source ordering (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T12:53:55.889065+00:00",
+      "summary": "Generate typed snapshots and restore them through one object graph. The corrected rewrite passes correctness checks but still slows four Load fixtures, including control messages by 75.81% and queued UDP packets by 15.24%. Profiling identified repeated type planning; the next revision removes that machinery and targets the measured initialization and executable growth. It is under source review. Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
@@ -9538,7 +9538,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
+      "updatedAt": "2026-10-15T12:53:55.889065+00:00",
       "summary": "The corrected unified rewrite passes its normal, race and analyzer checks and both production builds, but four Load benchmarks still regress. Control-message Load is 75.81% slower and queued UDP Load 15.24% slower. CLI timing is inconclusive, while initialization allocations and executable size increase. The rewrite remains under active design revision.",
       "findings": [
         {
@@ -10350,9 +10350,18 @@
               "url": "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13"
             }
           ]
+        },
+        {
+          "text": "Profiles of the exact corrected benchmark binaries attribute 23.20% of sampled cumulative control-message Load CPU and 12.13% of UDP Load CPU to the per-Load plan machinery. The next revision removes that map and its allocated entries, restores the smaller registration table, and uses typed assignments for generated scalar fields. It is under source review; no speedup is established for that revision.",
+          "evidence": [
+            {
+              "label": "Verified corrected-binary CPU and allocation profiles",
+              "url": "https://app.buildbuddy.io/invocation/2b2223d2-15c4-4b23-9d93-ed6c25115105"
+            }
+          ]
         }
       ],
-      "nextStep": "Profile the frozen corrected binaries and simplify destination/type handling and generated functions. Recheck the fixed package benchmarks before whole-checkpoint and sandbox-startup qualification.",
+      "nextStep": "Remove the per-Load plan map and generated allocation wrappers while preserving static scalar types and the existing object graph. Review promoted-method and Source-lifetime semantics before remote qualification, then repeat the fixed package comparison and startup checks.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -12807,9 +12816,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T12:24:31.479528+00:00",
-      "summary": "BuildBuddy PR #13802 enables the missing x86 guest netfilter options. The old configurations reproduce the missing features; the corrected capability test and both Linux 5.15/6.1 kernel builds pass. Boot validation and hosted publication remain separate. An independent vhost-net configuration fix is next.",
-      "nextStep": "Boot the freshly built kernels through the existing GitHub Actions KVM bridge and validate the runtime features. Prepare the separate vhost-net fix and follow #13802 review/CI.",
+      "updatedAt": "2026-10-15T12:53:55.889065+00:00",
+      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both fixes reproduce the missing options on the old configurations and pass corrected capability checks and Linux 5.15/6.1 kernel builds. Boot validation and hosted publication remain outstanding.",
+      "nextStep": "Boot the freshly built kernels using BuildBuddy’s existing Firecracker test through GitHub Actions, then validate the affected runtime features. Follow both PRs and preserve the combined capability checks when either merges.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12842,6 +12851,14 @@
         {
           "label": "Verified corrected config test and both kernel builds",
           "url": "https://app.buildbuddy.io/invocation/65b922e3-e465-4120-8303-76ebee5111d8"
+        },
+        {
+          "label": "Open BuildBuddy vhost-net PR",
+          "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803"
+        },
+        {
+          "label": "Verified vhost before/after checks and both kernel builds",
+          "url": "https://app.buildbuddy.io/invocation/6e2ce328-5404-4eb7-8248-9e611baeb19a"
         }
       ],
       "findings": [
@@ -12872,6 +12889,19 @@
             {
               "label": "Closed TUN-permission report",
               "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13540"
+            }
+          ]
+        },
+        {
+          "text": "The x86 configurations disabled VHOST_NET despite providing its NET, EVENTFD and TUN prerequisites. Enabling the driver also selects VHOST and VHOST_IOTLB. Both newly compiled kernels contain its device registration and ioctl implementations. Boot and functional ioctl execution are still pending; the hosted deployment has not been verified.",
+          "evidence": [
+            {
+              "label": "Independent vhost-net correction",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803"
+            },
+            {
+              "label": "Linux driver configuration",
+              "url": "https://github.com/torvalds/linux/blob/v6.1/drivers/vhost/Kconfig"
             }
           ]
         }
