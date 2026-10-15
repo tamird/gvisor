@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T10:17:59.605630+00:00",
+    "updatedAt": "2026-10-15T10:34:36.362925+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7092,14 +7092,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T10:17:59.605630+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. The selected correctness, race, analyzer and both-architecture production builds pass. The first matched package benchmark reduction shows faster Save in several fixtures and slower Load in several fixtures; independent result review is in progress. Profiling and startup measurements are required before contributor review. The separate Nogo source-order correction (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T10:30:48.577028+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. The selected correctness, race, analyzer and both-architecture production builds pass. Independently verified benchmarks show faster Save in several fixtures and slower Load in several fixtures. Profiling and startup measurements are required before contributor review. The separate Nogo source-order correction (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
-        "observedAt": "2026-10-15T10:17:59.605630+00:00",
-        "nextAction": "Verify the completed benchmark results, profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
+        "observedAt": "2026-10-15T10:30:48.577028+00:00",
+        "nextAction": "Profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -9531,8 +9531,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T10:17:59.605630+00:00",
-      "summary": "The complete rewrite passes the selected correctness, race, analyzer and production-build checks. Its first matched package comparison shows faster Save in several fixtures but slower Load in several fixtures. The owner is investigating those regressions; independent result review is in progress. Startup and whole-checkpoint measurements remain outstanding. The proposal depends on #15648.",
+      "updatedAt": "2026-10-15T10:30:48.577028+00:00",
+      "summary": "The complete rewrite passes the selected correctness, race, analyzer and production-build checks. Independent benchmark verification confirms faster Save in several fixtures but slower Load in several fixtures, despite fewer allocations. The owner is profiling those regressions. Startup and whole-checkpoint measurements remain outstanding. The proposal depends on #15648.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10298,7 +10298,7 @@
           ]
         },
         {
-          "text": "The fixed package comparison completed successfully with 12 balanced pairs per fixture. The first reduction shows Save improvements alongside Load regressions in the control-message, UDP, pointer and map fixtures. Original measurements are retained for independent review; lower allocation counts alone do not establish faster restoration. The owner will profile the regressing path before another whole-checkpoint comparison. These results belong to the complete rewrite, separately from the earlier prototypes.",
+          "text": "The complete-source package comparison is independently verified: 12 fixed balanced pairs per fixture, with source and actual benchmark binaries checked. Save improves for UDP, control messages, pointers and adoption. Load regresses for control messages, UDP, pointers and maps; allocation reductions do not offset those timing regressions. The owner is profiling the control-message and UDP Load cases. Test-process state initialization also increases from 3,032 B/13 allocations to 3,976 B/32 allocations; actual runsc startup remains to be measured.",
           "evidence": [
             {
               "label": "Completed matched package comparison",
@@ -10307,7 +10307,7 @@
           ]
         }
       ],
-      "nextStep": "Verify the completed benchmark results, profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
+      "nextStep": "Profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10828,6 +10828,85 @@
             {
               "label": "Fixed 12-pair storage comparison",
               "url": "https://app.buildbuddy.io/invocation/da5eaa5c-31df-4b21-9584-5f4b58dacc4f"
+            }
+          ]
+        },
+        {
+          "title": "Complete rewrite: matched Save/Load measurements",
+          "description": "Linux AMD64, one worker and one selected CPU, GOMAXPROCS=1. Twelve fixed balanced before/after pairs per fixture, identical benchmarks and toolchains. Baseline d5f35d249; complete rewrite 803c3f653. Values are warmed medians.",
+          "columns": [
+            "Operation",
+            "Before",
+            "After",
+            "Change"
+          ],
+          "rows": [
+            [
+              "Control-message Save",
+              "7.690 µs",
+              "6.555 µs",
+              "−14.76%"
+            ],
+            [
+              "Control-message Load",
+              "7.787 µs",
+              "12.718 µs",
+              "+63.31%"
+            ],
+            [
+              "UDP receive queue Save (32 packets)",
+              "598.5 µs",
+              "449.7 µs",
+              "−24.86%"
+            ],
+            [
+              "UDP receive queue Load (32 packets)",
+              "536.1 µs",
+              "715.7 µs",
+              "+33.51%"
+            ],
+            [
+              "Pointer graph Save",
+              "965.6 µs",
+              "887.8 µs",
+              "−8.06%"
+            ],
+            [
+              "Pointer graph Load",
+              "607.9 µs",
+              "716.3 µs",
+              "+17.83%"
+            ],
+            [
+              "Map Save",
+              "158.6 µs",
+              "159.4 µs",
+              "No detected change (p=.630)"
+            ],
+            [
+              "Map Load",
+              "382.8 µs",
+              "454.7 µs",
+              "+18.78%"
+            ],
+            [
+              "Adoption Save",
+              "1.147 ms",
+              "1.110 ms",
+              "−3.23%"
+            ],
+            [
+              "Adoption Load",
+              "464.8 µs",
+              "470.6 µs",
+              "No detected change (p=.160)"
+            ]
+          ],
+          "note": "Benchstat reports p<.001 for the listed changes except adoption Save (p=.006). Wire sizes are unchanged. UDP covers the receive-list subtree; its Load operation also releases previously restored buffers. Release-binary startup and whole-checkpoint measurements remain outstanding.",
+          "evidence": [
+            {
+              "label": "Verified package comparison and original benchmark output",
+              "url": "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a"
             }
           ]
         }
@@ -12545,9 +12624,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T09:55:23.956752+00:00",
+      "updatedAt": "2026-10-15T10:34:36.362925+00:00",
       "summary": "BuildBuddy has invited upstream PRs. The first source change will enable missing inet/IPv6 FIB, xtables mark and CT features in the existing x86 guest kernels, with coverage in the existing kernel configuration test.",
-      "nextStep": "Use the contributor’s in-progress BuildBuddy clone when complete, implement the config correction, and run the existing remote Bazel checks and kernel builds. Hosted kernel publication remains a BuildBuddy deployment step.",
+      "nextStep": "Apply the prepared correction to the completed BuildBuddy checkout, publish a validation branch, and run remote configuration checks and kernel builds. Validate the resulting kernels with the existing GitHub Actions KVM bridge and BuildBuddy Firecracker fixture; hosted publication remains a BuildBuddy deployment step.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
