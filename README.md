@@ -64,11 +64,15 @@ then review and commit the resulting
 `github-status.json` with those changes. The browser requires matching registry
 dates and falls back honestly during a partial deployment. This is
 a public-data update, not a build. The script needs Python 3.10+ and `gh`; it
-never reads or writes credentials. Its GraphQL queries fetch the author's open
-PRs, previously discovered/tracked closed PRs, and linked capacity issues.
-Previously discovered PR identities stay in the snapshot after closure, so a
-promoted branch does not reappear. One measured update fetched
-81 original PRs and ten verified import PRs in 21 requests. PR detail
+never reads or writes credentials. A complete repository-wide open-PR inventory
+discovers new author PRs and reopening of any tracked source or import. Detail
+queries refresh open PRs, previously active PRs whose closure needs confirming,
+newly tracked PRs, and their active or newly discovered imports. Known active
+imports are refreshed even when their source PR is closed. Linked capacity
+issues are also refreshed. Terminal history remains in the snapshot with its
+original per-record observation times, so a promoted branch does not reappear
+and old reviews or checks do not acquire a fresh timestamp. Reopened records
+receive full detail queries again. PR detail
 queries use batches of eight to limit the combined check, review and timeline
 payload. There is a 48-attempt ceiling, including retries, and a 200-open-PR bound.
 Failed queries report the GitHub CLI diagnostic and leave the previous snapshot
@@ -80,7 +84,7 @@ newer merge or close time. Contributor decisions use the registry observation.
 These clocks preserve first-observed dates across metadata-only updates without
 advancing the full GitHub snapshot or claiming fresh review-thread evidence.
 Older records without `observedAt` retain the full-snapshot clock. Run the clock
-and classification checks with `python3 -m unittest work_states_test` and
+and classification checks with `python3 -m unittest work_states_test update_status_test` and
 `node --test app_test.mjs`.
 
 The updater owns the complete GitHub status/attribute snapshot. Each PR records its exact

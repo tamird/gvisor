@@ -218,17 +218,57 @@ def fetch_numbers(numbers: list[int], timeline: bool) -> dict[int, dict]:
     return result
 
 
-def import_source(candidate: dict, original: dict) -> str | None:
+def import_source(candidate: dict, source_url: str, head_owner: str | None, head_ref: str) -> str | None:
     if candidate.get("repository", {}).get("nameWithOwner") != REPO or (candidate.get("author") or {}).get("login") != "copybara-service":
         return None
-    head_owner = (original["headRepository"] or {}).get("owner", {}).get("login")
-    footer = re.compile(r"FUTURE_COPYBARA_INTEGRATE_REVIEW=" + re.escape(original["url"])
-                        + " from " + re.escape(f"{head_owner}:{original['headRefName']}")
+    footer = re.compile(r"FUTURE_COPYBARA_INTEGRATE_REVIEW=" + re.escape(source_url)
+                        + " from " + re.escape(f"{head_owner}:{head_ref}")
                         + r" ([0-9a-f]{40})")
     heads = {match[1] for line in candidate["body"].splitlines() if (match := footer.fullmatch(line.strip()))}
     if len(heads) > 1:
         raise RuntimeError(f"Import #{candidate['number']} contains ambiguous source revisions")
     return next(iter(heads), None)
+
+
+def open_inventory() -> dict[int, str | None]:
+    """Discover new author PRs and reopened tracked sources/imports together."""
+    owner, name = REPO.split("/")
+    cursor = None
+    numbers = {}
+    total = None
+    while True:
+        query = """query($owner:String!,$name:String!,$after:String) {
+          repository(owner:$owner,name:$name) {
+            pullRequests(states:OPEN,first:100,after:$after) {
+              totalCount pageInfo { hasNextPage endCursor }
+              nodes { number author { login } }
+            }
+          }
+        }"""
+        found = graphql(query, {"owner": owner, "name": name, "after": cursor})["repository"]["pullRequests"]
+        if total is not None and total != found["totalCount"]:
+            raise RuntimeError("Open PR inventory changed during retrieval")
+        total = found["totalCount"]
+        for item in found["nodes"]:
+            if item["number"] in numbers:
+                raise RuntimeError("Duplicate open PR in paginated inventory")
+            numbers[item["number"]] = (item["author"] or {}).get("login")
+        if not found["pageInfo"]["hasNextPage"]:
+            break
+        next_cursor = found["pageInfo"]["endCursor"]
+        if not next_cursor or next_cursor == cursor:
+            raise RuntimeError("Open PR inventory did not advance")
+        cursor = next_cursor
+    if len(numbers) != total:
+        raise RuntimeError("Open PR inventory is incomplete")
+    if sum(author == OWNER for author in numbers.values()) > 200:
+        raise RuntimeError("Author's open PR inventory exceeds the documented 200-PR bound")
+    return numbers
+
+
+def needs_refresh(number: int, previous: dict[int, dict], open_numbers: dict[int, str | None]) -> bool:
+    """Terminal history keeps its observation time until its PR reopens."""
+    return number in open_numbers or previous.get(number, {}).get("status") not in {"closed", "merged"}
 
 
 def recheck_unknown_mergeability(prs: list[dict]) -> dict[str, object]:
@@ -265,58 +305,42 @@ def recheck_unknown_mergeability(prs: list[dict]) -> dict[str, object]:
 
 
 def main() -> None:
-    # Search only the public author's open PRs; retained closed PRs are fetched
-    # individually in small GraphQL batches. No per-PR REST request loop.
     numbers = {node["number"] for node in REGISTRY["nodes"]
                if node["type"] == "pr" and node["repo"] == REPO}
     output = ROOT / "github-status.json"
     previous = {}
     if output.exists():
         previous = json.loads(output.read_text())
-        if previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER:
-            numbers.update(pr["number"] for pr in previous["prs"] if isinstance(pr.get("number"), int))
-        else:
+        if not (previous.get("schema") == 1 and previous.get("repo") == REPO and previous.get("owner") == OWNER):
             previous = {}
-    cursor = None
-    open_numbers = set()
-    total = None
-    for _ in range(2):
-        query = """query($q:String!,$after:String) {
-          search(query:$q,type:ISSUE,first:100,after:$after) {
-            issueCount pageInfo { hasNextPage endCursor }
-            nodes { ... on PullRequest { number } }
-          }
-        }"""
-        found = graphql(query, {"q": f"repo:{REPO} is:pr is:open author:{OWNER}", "after": cursor})["search"]
-        if found["issueCount"] > 200:
-            raise RuntimeError("Open PR inventory exceeds the documented 200-PR bound")
-        if total is not None and total != found["issueCount"]:
-            raise RuntimeError("Open PR inventory changed during retrieval")
-        total = found["issueCount"]
-        for item in found["nodes"]:
-            if item["number"] in open_numbers:
-                raise RuntimeError("Duplicate open PR in paginated search")
-            open_numbers.add(item["number"])
-        if not found["pageInfo"]["hasNextPage"]:
-            break
-        cursor = found["pageInfo"]["endCursor"]
-    else:
-        raise RuntimeError("Open PR inventory is incomplete")
-    if len(open_numbers) != total:
-        raise RuntimeError("Open PR inventory is incomplete")
-    numbers.update(open_numbers)
-    originals = fetch_numbers(sorted(numbers), timeline=True)
-    relations = {}
+    prior_sources = {pr["number"]: pr for pr in previous.get("prs", [])}
+    prior_imports = {pr["number"]: pr for source in prior_sources.values() for pr in source.get("imports", [])}
+    numbers.update(prior_sources)
+    open_numbers = open_inventory()
+    numbers.update(number for number, author in open_numbers.items() if author == OWNER)
+    originals = fetch_numbers(sorted(number for number in numbers
+                                     if needs_refresh(number, prior_sources, open_numbers)), timeline=True)
+    relations = {number: {pr["number"]: pr["sourceHead"]
+                          for pr in prior_sources.get(number, {}).get("imports", [])}
+                 for number in numbers}
+    timeline_relations = {}
+    changed_relations = set()
     for number, pr in originals.items():
-        # A bot-authored import must explicitly name this original PR and its
-        # exact head owner/ref. A differing SHA is a verified but stale import.
         matches = {}
         for event in pr["timelineItems"]["nodes"]:
             candidate = event.get("source", {})
-            if head := import_source(candidate, pr):
+            head_owner = (pr["headRepository"] or {}).get("owner", {}).get("login")
+            if head := import_source(candidate, pr["url"], head_owner, pr["headRefName"]):
                 matches[candidate["number"]] = head
-        relations[number] = matches
-    imported = fetch_numbers(sorted({number for matches in relations.values() for number in matches}), timeline=False)
+        timeline_relations[number] = matches
+        changed_relations.update(other for other, head in matches.items() if relations[number].get(other) != head)
+        relations[number].update(matches)
+    # Historical associations stay visible. An active or reopened import still
+    # gets a full observation even when its original source PR is terminal.
+    import_numbers = {other for matches in relations.values() for other in matches}
+    imported = fetch_numbers(sorted(other for other in import_numbers
+                                    if needs_refresh(other, prior_imports, open_numbers) or other in changed_relations),
+                             timeline=False)
     issue_fields = []
     issue_ids = {}
     for index, node in enumerate(REGISTRY["nodes"]):
@@ -336,32 +360,46 @@ def main() -> None:
     # Finish every required fetch before spending the remaining request budget
     # on GitHub's optional asynchronous mergeability recalculation.
     mergeability_recheck = recheck_unknown_mergeability([*originals.values(), *imported.values()])
-    prs = []
-    for number, pr in originals.items():
-        for other, head in relations[number].items():
-            if import_source(imported[other], pr) != head:
-                raise RuntimeError(f"Import #{other} source footer changed during retrieval")
-        item = normalize(pr)
-        item["importsComplete"] = not pr["timelineItems"]["pageInfo"]["hasPreviousPage"]
-        item["imports"] = [{**normalize(imported[other]), "sourceHead": head,
-                            "matchesSourceHead": head == pr["headRefOid"],
-                            "relationshipEvidence": imported[other]["url"]}
-                           for other, head in relations[number].items()]
-        prs.append(item)
-    # A merge can occur while these bounded requests are in flight. Stamp the
-    # completed observation, so its exact transition never appears in the future.
+    # A merge can occur while these bounded requests are in flight. Stamp only
+    # fresh detail observations; terminal history keeps its original clock.
     checked_at = datetime.now(timezone.utc).isoformat()
-    prior_prs = {pr["number"]: pr for source in previous.get("prs", [])
-                 for pr in (source, *source.get("imports", []))}
-    for source in prs:
-        for item in (source, *source["imports"]):
-            item["checkedAt"] = checked_at
-            item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(item["number"], {}), item["mergeabilityCheckedAt"])
+    prior_prs = {**prior_sources, **prior_imports}
+    refreshed = {}
+    for number, raw in {**originals, **imported}.items():
+        item = normalize(raw)
+        item["checkedAt"] = checked_at
+        item["mergeabilityObservation"] = remember_mergeability(item, prior_prs.get(number, {}), item["mergeabilityCheckedAt"])
+        refreshed[number] = item
+    prs = []
+    for number in sorted(numbers):
+        item = dict(refreshed[number] if number in originals else prior_sources[number])
+        item.setdefault("checkedAt", previous.get("checkedAt"))
+        if number in originals:
+            item["importsComplete"] = not originals[number]["timelineItems"]["pageInfo"]["hasPreviousPage"]
+        imports = []
+        for other, head in sorted(relations[number].items()):
+            if other in imported:
+                actual = import_source(imported[other], item["url"], item.get("headOwner"), item["ref"])
+                expected = timeline_relations.get(number, {}).get(other)
+                if actual is None or (expected is not None and actual != expected):
+                    raise RuntimeError(f"Import #{other} source footer changed during retrieval")
+                head = actual
+                linked = dict(refreshed[other])
+            else:
+                linked = dict(prior_imports[other])
+                linked.setdefault("checkedAt", previous.get("checkedAt"))
+            linked.update(sourceHead=head, matchesSourceHead=head == item["head"], relationshipEvidence=linked["url"])
+            imports.append(linked)
+        item["imports"] = imports
+        prs.append(item)
     snapshot = {"schema": 1, "repo": REPO, "owner": OWNER, "checkedAt": checked_at,
                 "registryDate": REGISTRY["meta"]["updatedAt"], "prs": prs, "issues": issues,
                 "workStates": record_states(prs, REGISTRY, previous, checked_at),
                 "limits": {"requests": requests, "graphqlCost": query_cost, "graphqlRemaining": rate_remaining,
-                           "nestedPageSize": 100, "maxOpenPRs": 200, "mergeabilityRecheck": mergeability_recheck}}
+                           "nestedPageSize": 100, "maxOpenPRs": 200, "openInventoryTotal": len(open_numbers),
+                           "retainedSources": len(numbers) - len(originals),
+                           "retainedImports": len(import_numbers) - len(imported),
+                           "mergeabilityRecheck": mergeability_recheck}}
     temporary = ROOT / ".github-status.json.tmp"
     temporary.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n")
     # Run the same validator used by the browser before publishing any bytes.
@@ -371,9 +409,12 @@ def main() -> None:
         temporary.unlink()
         raise RuntimeError(f"Client metadata validation failed: {validation.stderr.strip()}")
     temporary.replace(output)
-    print(f"Updated {len(prs)} PRs and {len(imported)} verified import PRs in {requests} GitHub requests ({query_cost} GraphQL points).")
+    print(f"Retained {len(prs)} PRs and {len(import_numbers)} verified imports; refreshed "
+          f"{len(originals)} PRs and {len(imported)} imports in {requests} GitHub requests ({query_cost} GraphQL points).")
     for source in prs:
         for pr in (source, *source["imports"]):
+            if pr["number"] not in refreshed:
+                continue
             changes = changed_feedback(pr, prior_prs.get(pr["number"], {}))
             if changes or not pr["feedback"]["complete"]:
                 print(json.dumps({"number": pr["number"], "url": pr["url"], "head": pr["head"],
