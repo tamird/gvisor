@@ -201,6 +201,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # Eight original 900-second shards need two hours before setup/capture.
         container-v1) qualification_seconds=8400 ;;
         container-v1-pilot) qualification_seconds=1200 ;;
+        benchmarks)
+          if [[ ${RACK_BENCHMARK_HOST:-} =~ ^[01]$ ]]; then
+            qualification_seconds=6000
+          fi
+          ;;
       esac
     fi
     if (( qualification_seconds > 0 )); then
@@ -233,9 +238,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           continue
         fi
         if [[ $argument == build || $argument == test ]]; then
-          evidence=(
-            "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
-          )
+          if [[ -n ${QUALIFICATION_PHASE:-} ]]; then
+            [[ $QUALIFICATION_PHASE =~ ^[a-z0-9-]+$ ]] || return 2
+            evidence=("--execution_log_compact_file=$RUNNER_TEMP/qualification/iperf/$QUALIFICATION_PHASE.binpb")
+          else
+            evidence=(
+              "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
+            )
+          fi
         fi
         if [[ $qualification_retain_reports == true && ( $argument == build || $argument == test ) ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.

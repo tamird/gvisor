@@ -4,6 +4,7 @@ name: CI
   push:
     branches:
       - "*"
+      - "diagnostics/tcp-rack-min-rtt-after"
   workflow_dispatch:
     inputs:
       lanes:
@@ -52,7 +53,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (!startsWith(github.ref, 'refs/heads/qualification/') && github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid'))
+    if: github.event_name == 'push' && (github.repository != 'tamird/gvisor' || (!startsWith(github.ref, 'refs/heads/diagnostics/tcp-rack-min-rtt-') && !startsWith(github.ref, 'refs/heads/qualification/') && github.ref != 'refs/heads/rbe-qualification-upstream-refresh' && github.ref != 'refs/heads/rbe-actions-kvm-syscalls' && github.ref != 'refs/heads/rbe-actions-amd64-syscalls' && github.ref != 'refs/heads/rbe-actions-arm64-resume' && github.ref != 'refs/heads/rbe-actions-benchmark-partitions' && github.ref != 'refs/heads/rbe-actions-docker-network' && github.ref != 'refs/heads/rbe-actions-arm64-docker' && github.ref != 'refs/heads/rbe-actions-arm64-images' && github.ref != 'refs/heads/rbe-actions-plugin-network' && github.ref != 'refs/heads/rbe-actions-nftables' && github.ref != 'refs/heads/rbe-actions-kvm-startup' && github.ref != 'refs/heads/rbe-unit-mixed-hybrid'))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -158,5 +159,44 @@ jobs:
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: qualification-${{ inputs.architecture }}
+        path: ${{ runner.temp }}/qualification
+        if-no-files-found: error
+
+  rack-min-rtt-performance:
+    if: github.repository == 'tamird/gvisor' && github.ref == 'refs/heads/diagnostics/tcp-rack-min-rtt-after' && github.event_name == 'push'
+    strategy:
+      fail-fast: false
+      matrix:
+        sample_host: [0, 1]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 110
+    permissions:
+      contents: read
+    env:
+      RACK_BENCHMARK_HOST: ${{ matrix.sample_host }}
+      QUALIFICATION_COMMIT: ${{ github.sha }}
+      QUALIFICATION_EXECUTION: local
+      QUALIFICATION_CLOCK_SOURCE: calibrated
+      QUALIFICATION_LANES: benchmarks
+      QUALIFICATION_ARCH: amd64
+      QUALIFICATION_TARGETS: //test/benchmarks/network:iperf_test_continuous_systrap_owned
+    steps:
+    - name: Checkout the exact comparison
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ github.sha }}
+        fetch-depth: 3
+        persist-credentials: false
+    - name: Run the fixed paired comparison
+      timeout-minutes: 105
+      shell: bash
+      env:
+        BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
+      run: bash test/rbe/actions.sh
+    - name: Retain original comparison evidence
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: rack-min-rtt-performance-${{ matrix.sample_host }}
         path: ${{ runner.temp }}/qualification
         if-no-files-found: error
