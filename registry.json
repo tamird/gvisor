@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T01:37:30.819178+00:00",
+    "updatedAt": "2026-10-15T02:00:55.114469+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9407,8 +9407,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T01:37:30.819178+00:00",
-      "summary": "The simpler decoded-frame candidate removes block/inline storage machinery and passes correctness, ownership, race and allocation-guard checks. In twelve balanced pairs against the previous contiguous parser, large synthetic Load takes 19% less time, allocates 36.85% fewer bytes and uses 71 rather than 74 allocations. A whole-restore comparison against the original architecture failed during control startup before the candidate ran. Six subsequent instrumented control operations passed without reproducing the stall. The fixed ABBA comparison is now running with failure-time task capture on both sources and the original readiness deadline; no whole-restore performance result is available yet.",
+      "updatedAt": "2026-10-15T01:53:52.217568+00:00",
+      "summary": "The simpler decoded-frame candidate passes correctness, ownership, race and allocation-guard checks and improves the large synthetic Load fixture. The whole-restore comparison now completes all 24 operations on one worker. Original and candidate RestoreNginx medians are 871.3 ms and 880.6 ms; the four process-group medians vary substantially, so this does not establish an overall restore speedup. The job failed only while generating its report; a report-only run of pinned benchstat succeeded using the identical saved rows. No measurement was repeated. Existing restore logs are being inspected to identify the state-decoding share before the next performance experiment.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10012,7 +10012,7 @@
           ]
         },
         {
-          "text": "A fixed ABBA×6 comparison is running with identical failure-time task capture in both sources. The 23-file state/generator change is byte-identical to the original comparison; readiness deadlines, resources and release layouts are unchanged. Corrected report grouping was checked against retained outputs before submission. No candidate result or comparative performance conclusion is claimed while the run is active.",
+          "text": "All 24 original restores complete successfully in fixed before/after/after/before order, six operations per process. Both sources compile and their release executables match the original comparison; the 23-file state/generator delta is unchanged. Independent review verifies 787 original files, 252 Git objects, 24 distinct checkpoint/restore IDs and all native/XML/cleanup results. The parent failed only because the wrapper placed Bazel logging flags after the program separator, causing benchstat to read a nonexistent input. Missing report capture correctly failed the job. The failure-only startup diagnostic hook was not entered.",
           "evidence": [
             {
               "label": "Instrumented fixed whole-restore comparison",
@@ -10023,9 +10023,22 @@
               "url": "https://github.com/tamird/gvisor/commit/4e9b79b6ecdea36ad029d630d7102995f395e723"
             }
           ]
+        },
+        {
+          "text": "The report-only recovery runs the pinned benchstat on byte-identical original inputs, with no benchmark rerun. RestoreNginx medians are 871.3 ms before and 880.6 ms after (p=.378, 12 rows per arm). The four process medians are 916.204, 878.287, 891.927 and 843.028 ms in ABBA order. Those four groups are the ordering units; twelve rows per arm are not twelve independent runs. The result provides whole-kernel restore compatibility evidence but does not establish a performance improvement. The original parent/report failure remains recorded.",
+          "evidence": [
+            {
+              "label": "Original 24 completed restores; report stage failed",
+              "url": "https://app.buildbuddy.io/invocation/c0483574-e876-471d-883a-4b2accd8cd04"
+            },
+            {
+              "label": "Successful report-only recovery from unchanged rows",
+              "url": "https://app.buildbuddy.io/invocation/dd6acfa8-7f43-4d29-b047-8e7934656a74"
+            }
+          ]
         }
       ],
-      "nextStep": "Verify the fixed instrumented ABBA comparison, including startup failures, original outputs, runtime source identities and paired restore measurements.",
+      "nextStep": "Use existing restore timing or profiles to identify where state decoding contributes to whole-restore cost, then choose a representative performance experiment. Preserve the fixed comparison and its group-level variability.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10400,8 +10413,46 @@
           "url": "https://app.buildbuddy.io/invocation/53a9dfe0-a960-4030-b7d2-8d39aeb772d7"
         },
         {
-          "label": "Active instrumented whole-restore comparison",
+          "label": "Completed whole-restore comparison; original report failure retained",
           "url": "https://app.buildbuddy.io/invocation/c0483574-e876-471d-883a-4b2accd8cd04"
+        },
+        {
+          "label": "Recovered benchstat report from original measured rows",
+          "url": "https://app.buildbuddy.io/invocation/dd6acfa8-7f43-4d29-b047-8e7934656a74"
+        }
+      ],
+      "comparisons": [
+        {
+          "title": "Whole RestoreNginx comparison",
+          "description": "Original architecture versus contiguous decoded-frame candidate, one AMD64 worker.",
+          "columns": [
+            "Measurement",
+            "Original",
+            "Candidate"
+          ],
+          "rows": [
+            [
+              "RestoreNginx median",
+              "871.3 ms",
+              "880.6 ms"
+            ],
+            [
+              "Process-group medians",
+              "916.204 / 843.028 ms",
+              "878.287 / 891.927 ms"
+            ]
+          ],
+          "note": "One worker, four ABBA process groups, six restores each. Row-level benchstat p=.378; group-level time variation prevents a general speedup claim.",
+          "evidence": [
+            {
+              "label": "Original 24 completed restores; report stage failed",
+              "url": "https://app.buildbuddy.io/invocation/c0483574-e876-471d-883a-4b2accd8cd04"
+            },
+            {
+              "label": "Successful report-only recovery from unchanged rows",
+              "url": "https://app.buildbuddy.io/invocation/dd6acfa8-7f43-4d29-b047-8e7934656a74"
+            }
+          ]
         }
       ]
     },
