@@ -101,7 +101,7 @@ type encodeState struct {
 	// encodings of those structs. This is necessary to avoid duplicate calls
 	// to SaverLoader.StateSave() that may result in multiple calls to
 	// Sink.SaveValue() for a given field, resulting in object duplication.
-	encodedStructs map[reflect.Value]*wire.Record
+	encodedStructs map[reflect.Value]*wire.Struct
 
 	// binaryBuf holds temporary BinaryAppender output. Each saved value is
 	// copied into an immutable string before this buffer is reused.
@@ -502,7 +502,7 @@ type objectEncoder struct {
 	es *encodeState
 
 	// encoded is the encoded struct.
-	encoded *wire.Record
+	encoded *wire.Struct
 }
 
 // save is called by the public methods on Sink.
@@ -511,16 +511,15 @@ func (oe *objectEncoder) save(slot int, obj reflect.Value) {
 	oe.es.encodeObject(obj, encodeDefault, fieldValue)
 }
 
-// emptyStructRecord is immutable and has no generated saver or references.
-var emptyStructRecord = wire.NewSlotRecord(0, 0)
-
 // encodeStruct encodes a composite object.
 func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	if s, ok := es.encodedStructs[obj]; ok {
 		*dest = s
 		return
 	}
-	key := obj
+	s := &wire.Struct{}
+	*dest = s
+	es.encodedStructs[obj] = s
 
 	// Ensure that the obj is addressable. There are two cases when it is
 	// not. First, is when this is dispatched via SaveValue. Second, when
@@ -538,14 +537,14 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		if obj.NumField() == 0 {
 			// Allow unregistered anonymous, empty structs. This
 			// will just return success without ever invoking the
-			// passed function. The shared empty record is never changed.
+			// passed function. This uses the immutable EmptyStruct
+			// variable to prevent an allocation in this case.
 			//
 			// Note that this mechanism does *not* work for
 			// interfaces in general. So you can't dispatch
 			// non-registered empty structs via interfaces because
 			// then they can't be restored.
-			*dest = emptyStructRecord
-			es.encodedStructs[key] = emptyStructRecord
+			s.Alloc(0)
 			return
 		}
 		// We need a SaverLoader for struct types.
@@ -557,9 +556,8 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	}
 
 	// Invoke the provided saver.
-	s := te.newRecord(wire.TypeID(te.ID), len(te.Fields))
-	*dest = s
-	es.encodedStructs[key] = s
+	s.TypeID = wire.TypeID(te.ID)
+	s.Alloc(len(te.Fields))
 	oe := objectEncoder{
 		es:      es,
 		encoded: s,
@@ -576,10 +574,6 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 
 // encodeArray encodes an array.
 func (es *encodeState) encodeArray(obj reflect.Value, dest *wire.Object) {
-	if captured, ok := es.captureArray(obj); ok {
-		*dest = captured
-		return
-	}
 	l := obj.Len()
 	a := &wire.Array{
 		Contents: make([]wire.Object, l),

@@ -66,15 +66,12 @@ go_library(
     srcs = [
         "addr_range.go",
         "addr_set.go",
-        "capture.go",
         "decode.go",
         "decode_unsafe.go",
         "deferred_list.go",
         "encode.go",
         "encode_unsafe.go",
         "ods_list.go",
-        "restore.go",
-        "restore_collections.go",
         "state.go",
         "state_norace.go",
         "state_race.go",
@@ -98,5 +95,4 @@ go_test(
     size = "small",
     srcs = ["types_test.go"],
     embed = [":state"],
-    deps = ["//pkg/state/wire"],
 )
