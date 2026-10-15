@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T01:05:10.236469+00:00",
+    "updatedAt": "2026-10-15T01:12:47.240415+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -8506,8 +8506,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T00:50:27.551053+00:00",
-      "summary": "The RACK path-change diagnostic reproduces stale-minimum loss classification: after sustained RTT growth from 10 to 100 ms, RACK marks the modeled original packet lost at 103.5 ms, before its ACK at 110 ms. Three controls avoid premature loss. Both architectures and analyzers pass, and independent result review is complete. The next packet-level tests will establish sample eligibility during delayed ACKs, idle periods and retransmissions before selecting an aging policy. This diagnostic does not establish a throughput effect or explain the earlier sender-sharing result. The separate RACK packet-fixture proposal remains held behind Nagle/GSO and #15635.",
+      "updatedAt": "2026-10-15T01:12:47.240415+00:00",
+      "summary": "The RACK path-change diagnostic reproduces stale-minimum loss classification: after sustained RTT growth from 10 to 100 ms, RACK marks the modeled original packet lost at 103.5 ms, before its ACK at 110 ms. Three controls avoid premature loss. Both architectures and analyzers pass, and independent result review is complete. The packet-level ACK run has completed; original-result review is checking delayed ACKs, idle periods and retransmissions before an aging policy is selected. This diagnostic does not establish a throughput effect or explain the earlier sender-sharing result. The separate RACK packet-fixture proposal remains held behind Nagle/GSO and #15635.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9018,9 +9018,22 @@
               "url": "https://www.rfc-editor.org/rfc/rfc8985.html#section-6.2"
             }
           ]
+        },
+        {
+          "text": "BuildBuddy reports successful completion of the actual ACK-accounting diagnostic 6b8664d1 at qualification cf05b1908, based on public diagnostic d41fec771. It drives five ACK histories, four retransmission/timestamp cases, and an actual SACK/timer/wire-retransmission recovery sequence on both architectures. Source and bounded-method reviews passed; original-result verification is continuing. The lone-runt delay is a modeled receiver input, not an observed delayed-ACK policy. No production estimator is changed.",
+          "evidence": [
+            {
+              "label": "Actual ACK diagnostic source",
+              "url": "https://github.com/tamird/gvisor/commit/d41fec7710ee004f4a584cc833a6327a2b908e56"
+            },
+            {
+              "label": "ACK diagnostic validation",
+              "url": "https://app.buildbuddy.io/invocation/6b8664d1-5c5c-4a1a-903c-0f45ae438bfc"
+            }
+          ]
         }
       ],
-      "nextStep": "Use the existing packet/ACK-accounting fixtures to distinguish sustained path changes from delayed ACKs, transient samples and retransmission ambiguity. Reuse or consolidate existing RTT ownership where appropriate before choosing a bounded recent-minimum policy. Keep the held RACK fixture and Nagle/GSO delivery separate.",
+      "nextStep": "Verify the actual ACK histories, packet retransmission and recovery results before selecting a minimum-RTT aging policy. Preserve retransmission ambiguity and modeled receiver-delay limitations.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9348,8 +9361,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T01:05:10.236469+00:00",
-      "summary": "The simpler decoded-frame candidate uses one contiguous node slice with indexed views, removing the block/inline storage machinery. Its correctness, ownership, race and allocation-guard qualification passes. In twelve balanced pairs against the previous contiguous parser, large synthetic Load takes 19.00% less time, allocates 36.85% fewer bytes and uses 71 rather than 74 allocations. The control-message timing has no detected change (p=.089), with unchanged allocation costs. Executable file sizes are unchanged. Independent original-result review is complete. This supports retaining the simpler candidate for the next whole-restore comparison; it does not yet establish the entire architecture's benefit over the original design.",
+      "updatedAt": "2026-10-15T01:12:47.240415+00:00",
+      "summary": "The simpler decoded-frame candidate uses one contiguous node slice with indexed views, removing the block/inline storage machinery. Its correctness, ownership, race and allocation-guard qualification passes. In twelve balanced pairs against the previous contiguous parser, large synthetic Load takes 19.00% less time, allocates 36.85% fewer bytes and uses 71 rather than 74 allocations. The control-message timing has no detected change (p=.089), with unchanged allocation costs. Executable file sizes are unchanged. Independent original-result review is complete. This supports retaining the simpler candidate for the next whole-restore comparison; it does not yet establish the entire architecture's benefit over the original design. The same-worker restore comparison stopped at a control startup failure before the candidate ran; that failure is being diagnosed without changing the readiness deadline.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9931,7 +9944,7 @@
           ]
         },
         {
-          "text": "The same-worker RestoreNginx comparison is running as ac021284. The original architecture at 3aa3a761c and candidate 2d57232d8 differ only in state/generator sources; non-state sources, toolchains and images match. One unchanged benchmark executable uses both complete release layouts, including their Sentry sidecars, in before/after/after/before order with six restores per process. Source, method and wrapper-lifecycle reviews passed. Results are pending.",
+          "text": "The same-worker RestoreNginx comparison ac021284 failed in the control process before the candidate ran. One of six initial Nginx startups hit the existing five-second readiness deadline before checkpointing; five completed restores. The process returned zero and printed PASS despite XML failures, which the wrapper correctly rejected. The original architecture and candidate differ only in state/generator sources, with matching toolchains, images and complete release layouts. All advertised outputs are retained. Timestamp-order warnings also occur in successful groups and do not establish a cause. No comparative performance result is claimed.",
           "evidence": [
             {
               "label": "Same-worker restore comparison",
@@ -9940,7 +9953,7 @@
           ]
         }
       ],
-      "nextStep": "Collect the same-worker RestoreNginx comparison and verify each native exit, restore/boot witness and actual runtime input. Report the four process groups as ordering units; do not treat their repeated rows as independent workers.",
+      "nextStep": "Diagnose the control startup failure with the existing five-second deadline and capture task state before cleanup. Correct scratch report/container-name handling against the retained original outputs before another comparison.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
