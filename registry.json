@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T04:08:24.314987+00:00",
+    "updatedAt": "2026-10-15T04:50:30.411788+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -5609,17 +5609,19 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
       "status": "Contributor changes requested",
-      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
-      "summary": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
+      "updatedAt": "2026-10-15T04:50:30.411788+00:00",
+      "summary": "A unified replacement is now published at 99112fcf1 and undergoing fresh remote validation. This component proposal and its original measurements are retained until that replacement is qualified.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.\n\nThe exact standalone proposal captures primitive arrays in owned typed storage while preserving the existing wire grammar. Source, 11-target correctness and independent current-package numeric reviews are closed. In 12 balanced pairs on one Linux AMD64 worker with Go 1.27.1, UDP Save time fell 11.51% and allocated bytes fell 21.31%, with unchanged allocation count and wire size. Map Load rose 0.59%; source-specific controls and limits remain visible in the state investigation. ",
       "followup": {
         "disposition": "Contributor revision requested",
         "owner": "restore_integration_review",
         "sourceHead": "3b13f133c033512ce901163cfe33eebd80a49965",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The recorded measurements remain evidence; publication is held for that design revision.",
+        "nextAction": "Validate the unified replacement at 99112fcf1; retire this component proposal only after the replacement preserves its required behavior. No contributor decision is pending on this old design.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/3b13f133c033512ce901163cfe33eebd80a49965",
-          "https://app.buildbuddy.io/invocation/463669e5-4701-4d87-b24e-ec1d8813428a"
+          "https://app.buildbuddy.io/invocation/463669e5-4701-4d87-b24e-ec1d8813428a",
+          "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
+          "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5"
         ]
       },
       "contributorChangesRequested": {
@@ -5848,20 +5850,22 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
       "status": "Contributor changes requested",
-      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
-      "summary": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
+      "updatedAt": "2026-10-15T04:50:30.411788+00:00",
+      "summary": "A unified replacement is now published at 99112fcf1 and undergoing fresh remote validation. This component proposal and its original measurements are retained until that replacement is qualified.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.\n\nThe independent generated-record proposal uses ordinary StateSave/Sink and the existing graph and wire format. The former 7f73b15af question was held after a hook receiver named state shadowed generated state.BeginSnapshot calls. The old generator now has an exact compile-failure witness; all five corrected owners pass, including the new state_package0 fixture on both CPUs, UDP and two analyzers. The UDP correctness executable is byte-identical across the naming fix. Earlier source-specific twelve-pair results remain UDP Save time -10.21%, bytes -6.27% and 832 fewer allocations, with identical wire size; pointer Save/Load rose 1.03%/3.37%, and UDP executable size grew 5.85%. Observed initialization was unchanged. No new timing experiment or final-tree timing claim is made. Primitive arrays and the rejected concrete-header experiment remain separate. No upstream PR exists.",
       "followup": {
         "disposition": "Contributor revision requested",
         "owner": "restore_integration_review",
         "sourceHead": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. The naming correction and recorded measurements remain evidence; publication is held for that design revision.",
+        "nextAction": "Validate the unified replacement at 99112fcf1; retire this component proposal only after the replacement preserves its required behavior. No contributor decision is pending on this old design.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
           "https://app.buildbuddy.io/invocation/f66a74d9-0e0e-489b-a515-c0e8d690bfd0",
           "https://github.com/tamird/gvisor/commit/7f73b15af9625a24f69763b10d37d51aecf1c341",
           "https://app.buildbuddy.io/invocation/40e4f2ab-6a85-417f-be9f-295c7c116534",
-          "https://app.buildbuddy.io/invocation/47fa61fb-2004-459d-9db1-0a2b845fa510"
+          "https://app.buildbuddy.io/invocation/47fa61fb-2004-459d-9db1-0a2b845fa510",
+          "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
+          "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5"
         ]
       },
       "contributorChangesRequested": {
@@ -5879,18 +5883,20 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
       "status": "Contributor changes requested",
-      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
-      "summary": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
+      "updatedAt": "2026-10-15T04:50:30.411788+00:00",
+      "summary": "A unified replacement is now published at 99112fcf1 and undergoing fresh remote validation. This component proposal and its original measurements are retained until that replacement is qualified.\n\nThe user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.\n\nThe independent master-based proposal captures addressable pointer arrays in one owned reference slice while retaining the existing graph resolver and wire format. Fourteen-owner compatibility and the eight-owner final refinement are closed, with baseline/candidate byte and digest equality. The balanced twelve-block three-arm comparison reports Slice Save time -28.30%, allocated bytes -18.43%, and allocations 1,067 to 43 versus master. UDP timing is nonsignificant; Map Load is -2.05% without a decoder-cause claim. State/UDP executables grow 4,096/8,192 bytes; observed UDP initialization is unchanged. Three final-code kernel restores pass, with the baseline reused from a separate invocation; this is compatibility only. The earlier significant UDP regression remains a separate cohort. No upstream PR exists.",
       "followup": {
         "disposition": "Contributor revision requested",
         "owner": "restore_integration_review",
         "sourceHead": "103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
         "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "The user requested reassessment of added reflection machinery, overlap between the state proposals, and whether they should form a coherent replacement instead of parallel paths. Recorded compatibility and performance evidence remains available; publication is held for that design revision.",
+        "nextAction": "Validate the unified replacement at 99112fcf1; retire this component proposal only after the replacement preserves its required behavior. No contributor decision is pending on this old design.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/103f5c36fd8d7364cf149f025261ad8f4e9b4e52",
           "https://app.buildbuddy.io/invocation/5b1e64cd-0b69-414c-9f46-85f618ed6d95",
-          "https://app.buildbuddy.io/invocation/ff0d8ec2-b87d-4494-a52c-08eef59288c7"
+          "https://app.buildbuddy.io/invocation/ff0d8ec2-b87d-4494-a52c-08eef59288c7",
+          "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
+          "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5"
         ]
       },
       "contributorChangesRequested": {
@@ -7092,6 +7098,32 @@
         "status": "pending",
         "head": "2c52512424d99b24af49038a72fac53069e20c8b",
         "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b"
+      }
+    },
+    {
+      "id": "branch:review/state-unified-restore",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/state-unified-restore",
+      "head": "99112fcf15cce94cb133de2222740b806a437b48",
+      "title": "Unify generated state capture and restore",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
+      "status": "Remote validation in progress",
+      "updatedAt": "2026-10-15T04:50:30.411788+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine, preserving type information that the previous Save/Load interface discarded. One parser reads complete wire records; the proposal removes the field-layout cache and the old wire reader, and migrates their maintained users. Reflection remains for dynamic types, maps, slices and manual compatibility. The separate Nogo source-order correction (#15648) is required. Both source reviews pass; fresh correctness, race, analyzer and production runsc compilation checks are running. This source has no new performance result. Earlier experiments and their measured tradeoffs remain in the state investigation; the three component proposals are retained until this replacement is qualified.",
+      "followup": {
+        "disposition": "Remote validation in progress",
+        "owner": "restore_integration_review",
+        "sourceHead": "99112fcf15cce94cb133de2222740b806a437b48",
+        "observedAt": "2026-10-15T04:50:30.411788+00:00",
+        "nextAction": "Inspect the fresh correctness, race, analyzer and production-build results before presenting the unified proposal for contributor review. Qualify performance on this source separately from earlier experiments.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
+          "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
+          "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5",
+          "https://github.com/google/gvisor/pull/15648"
+        ]
       }
     }
   ],
@@ -8611,6 +8643,16 @@
       "evidence": [
         "https://github.com/tamird/gvisor/commit/ad8fa7bc4c81260ede57bcf3f00bdec7256b9d68"
       ]
+    },
+    {
+      "from": "pr:15648",
+      "to": "branch:review/state-unified-restore",
+      "type": "depends_on",
+      "reason": "Generated Save/Load methods require Nogo to use compiler source order so imported method facts attach to the correct methods. The separate source-order correction is included unchanged as the proposal prerequisite.",
+      "evidence": [
+        "https://github.com/google/gvisor/pull/15648",
+        "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48"
+      ]
     }
   ],
   "investigations": [
@@ -9508,8 +9550,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T04:08:24.314987+00:00",
-      "summary": "The common restore engine uses generated field metadata and typed storage assignments to avoid repeated reflection for ordinary fields; one frame parser validates the wire input. The latest storage revision keeps validated byte tags separately from full-width operands. In twelve balanced before/after pairs, the large decoding fixture used 19.6% fewer allocated bytes and 3.18% less time; the small fixture used 7.29% fewer bytes with no detected timing change. Both needed more allocation events. The measured source is now frozen while the complete architecture is reconciled with current upstream and existing PRs. The earlier whole-restore comparison and unsuccessful type-description sharing experiment remain recorded below.",
+      "updatedAt": "2026-10-15T04:50:30.411788+00:00",
+      "summary": "The unified proposal preserves field types through generated Save/Load methods: typed snapshots feed one encoder, and actual field pointers feed one restore engine. It removes the field-layout cache and duplicate wire reader. Both source reviews pass; fresh correctness, race, analyzer and production builds are running on BuildBuddy. The proposal depends on #15648 and has no new performance result. Earlier measurements, including the split-tag storage improvement and its added allocation events, remain attached to their experimental sources below.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10197,9 +10239,30 @@
               "url": "https://app.buildbuddy.io/invocation/da5eaa5c-31df-4b21-9584-5f4b58dacc4f"
             }
           ]
+        },
+        {
+          "text": "The unified proposal at 99112fcf1 replaces the three separate capture proposals with one generator/runtime design. Generated LoadInto calls carry field pointers directly, eliminating the field-layout cache; maintained wire consumers now use the complete-record parser. Current upstream map optimizations are preserved. Source review corrected receiver-name shadowing, a test counter and pretty-printer field-list handling. The fresh qualification run is in progress, so earlier experimental benchmark results do not measure this source.",
+          "evidence": [
+            {
+              "label": "Unified proposal",
+              "url": "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48"
+            },
+            {
+              "label": "Fresh qualification run",
+              "url": "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5"
+            },
+            {
+              "label": "Qualification source",
+              "url": "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385"
+            },
+            {
+              "label": "Nogo source-order prerequisite",
+              "url": "https://github.com/google/gvisor/pull/15648"
+            }
+          ]
         }
       ],
-      "nextStep": "Prepare one coherent architecture proposal against current upstream: identify merged foundations and actual prerequisites, show the production and generator changes separately from tests and benchmarks, explain remaining reflection, and identify the old paths this design removes. Retain the measured storage tradeoff without adding another timing campaign.",
+      "nextStep": "Review the fresh AMD64/ARM64 correctness, AMD64 race, analyzer and production-build results for the unified proposal, then measure its performance against the appropriate upstream baseline before requesting contributor review.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10608,6 +10671,22 @@
         {
           "label": "Fixed 12-pair storage comparison",
           "url": "https://app.buildbuddy.io/invocation/da5eaa5c-31df-4b21-9584-5f4b58dacc4f"
+        },
+        {
+          "label": "Unified proposal",
+          "url": "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48"
+        },
+        {
+          "label": "Fresh qualification run",
+          "url": "https://app.buildbuddy.io/invocation/bd47410a-3fdc-4ce4-ad1b-5b50505e76f5"
+        },
+        {
+          "label": "Qualification source",
+          "url": "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385"
+        },
+        {
+          "label": "Nogo source-order prerequisite",
+          "url": "https://github.com/google/gvisor/pull/15648"
         }
       ],
       "comparisons": [
