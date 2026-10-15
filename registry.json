@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T15:27:46.978169+00:00",
+    "updatedAt": "2026-10-15T15:40:16.634922+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9538,8 +9538,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T15:27:46.978169+00:00",
-      "summary": "The revised design removes the per-Load plan map and generated allocation wrappers while retaining typed scalar assignments and the shared object graph. Normal state tests on AMD64 and ARM64, race tests, the affected analyzers and both production builds pass, including the forwarding receiver/type-name regression. Fixed package and startup comparisons are running against the same control; the earlier measured Load regressions remain the baseline to improve.",
+      "updatedAt": "2026-10-15T15:40:16.634922+00:00",
+      "summary": "The revised design passes its semantic, race, analyzer and production checks. Its fixed comparison improves UDP Save time by 25.95%, but control-message Load still takes 33.65% more time and allocates 61.94% more bytes. CLI startup timing remains inconclusive, and production binaries grow by about 4 MB. The remaining Load cost is being profiled before further design changes.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10359,9 +10359,18 @@
               "url": "https://app.buildbuddy.io/invocation/2b2223d2-15c4-4b23-9d93-ed6c25115105"
             }
           ]
+        },
+        {
+          "text": "The current fixed comparison at 9f5230971 includes 12 balanced pairs for ten benchmark leaves. UDP Save time decreases 25.95%, while control-message Load increases 33.65%; both have p<.001. The other eight timing differences are not detected in this run. Several allocation counts fall substantially, but control-message Load allocates 2,864 more bytes per operation. Source, native outputs, raw process records and numeric reductions are independently verified. The earlier per-Load plan was removed, so its old profile cannot explain the remaining regression.",
+          "evidence": [
+            {
+              "label": "Current fixed package comparison",
+              "url": "https://app.buildbuddy.io/invocation/a64c238f-2960-4e45-bac6-d15629cafca4"
+            }
+          ]
         }
       ],
-      "nextStep": "Verify the fixed package and CLI startup comparisons, then measure sandbox startup separately before proposing adoption.",
+      "nextStep": "Locate the remaining control-message Load allocations using the exact measured binaries, then simplify their owning mechanism. Prepare the existing sandbox-startup benchmark as a separate matched comparison.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -11111,6 +11120,77 @@
             {
               "label": "Matched CLI startup and complete executable comparison",
               "url": "https://app.buildbuddy.io/invocation/6f57c8e3-102a-4cfa-8754-86cdcd5f5ca5"
+            }
+          ]
+        },
+        {
+          "title": "Current direct-field restoration versus the shared control",
+          "description": "Exact source 9f5230971 versus 6212e4f7b. Package measurements use 12 balanced pairs per leaf; the separate Linux AMD64 CLI measurement uses 12 paired batches of 64 fresh processes.",
+          "columns": [
+            "Measure",
+            "Before",
+            "After",
+            "Result"
+          ],
+          "rows": [
+            [
+              "UDP Save time",
+              "603.0 µs",
+              "446.5 µs",
+              "−25.95%; p<.001"
+            ],
+            [
+              "Control-message Load time",
+              "8.921 µs",
+              "11.923 µs",
+              "+33.65%; p<.001"
+            ],
+            [
+              "Control-message Load bytes",
+              "4,624 B",
+              "7,488 B",
+              "+61.94%"
+            ],
+            [
+              "Control-message Load allocations",
+              "113",
+              "102",
+              "−9.73%"
+            ],
+            [
+              "UDP Load allocations",
+              "3,853",
+              "796",
+              "−79.34%"
+            ],
+            [
+              "runsc --version batch mean median",
+              "6.483 ms",
+              "6.816 ms",
+              "Inconclusive; p=.198"
+            ],
+            [
+              "AMD64 executable length",
+              "36,090,016 B",
+              "40,132,768 B",
+              "+4,042,752 B"
+            ],
+            [
+              "ARM64 executable length",
+              "33,751,200 B",
+              "37,617,824 B",
+              "+3,866,624 B"
+            ]
+          ],
+          "note": "All ten package wire sizes are unchanged. Eight package timing differences were not detected; this is not equivalence. Separate single-process initialization traces show +304 B and +6 allocations overall. ARM64 has build and executable evidence, not a CLI timing result. The design remains experimental.",
+          "evidence": [
+            {
+              "label": "Verified package comparison",
+              "url": "https://app.buildbuddy.io/invocation/a64c238f-2960-4e45-bac6-d15629cafca4"
+            },
+            {
+              "label": "Verified CLI startup comparison",
+              "url": "https://app.buildbuddy.io/invocation/0bcbb672-1f11-4845-9932-6e42a2c41d59"
             }
           ]
         }
@@ -12845,9 +12925,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T15:27:46.978169+00:00",
-      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both preserve the existing tests. The netfilter-config kernels now pass the existing Firecracker command test on Linux 5.15 and 6.1, with the exact source-built kernel outputs verified. The combined guest networking probe is running; hosted deployment remains separate.",
-      "nextStep": "Verify the combined diagnostic guest’s IPv4/IPv6 FIB, legacy mark/CT rules and vhost owner/reset ioctls. Keep the two upstream PRs independent and follow hosted deployment separately.",
+      "updatedAt": "2026-10-15T15:40:16.634922+00:00",
+      "summary": "Both proposed netfilter kernels pass the existing Firecracker boot test. The combined feature probe also exercises vhost feature/owner/reset ioctls successfully on Linux 5.15, then fails because the diagnostic installed a FIB rule at an unsupported hook. The diagnostic is being corrected; no hosted deployment or Linux 6.1 feature result is claimed.",
+      "nextStep": "Move the diagnostic FIB rule to the supported prerouting hook and retain independent feature/kernel failures. Re-run that bounded diagnostic after source review; the two upstream configuration PRs stay independent.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12963,6 +13043,19 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/38752188277"
             }
           ]
+        },
+        {
+          "text": "The 5.15 guest reports vhost features 0x33d008000 and completes owner/reset/reacquire. nft 1.0.9 and legacy iptables 1.8.10 are present. FIB rule installation then fails with EOPNOTSUPP: Linux 5.15 permits this output-interface lookup only at prerouting, but the diagnostic used input. Packet counters and the gated 6.1 phase did not run. This is a diagnostic-hook defect, not evidence that the proposed kernel configuration lacks FIB support.",
+          "evidence": [
+            {
+              "label": "Retained failed feature probe",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38760225662"
+            },
+            {
+              "label": "Linux 5.15 FIB hook validation",
+              "url": "https://github.com/torvalds/linux/blob/v5.15/net/netfilter/nft_fib.c#L25-L56"
+            }
+          ]
         }
       ]
     },
@@ -12971,8 +13064,8 @@
       "title": "Runtime startup performance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T15:27:46.978169+00:00",
-      "summary": "The current netip migration completes the fixed CLI startup comparison, but the timing remains inconclusive: 8.398 ms before and 8.034 ms after (p=.887; 12 paired batches). Both production binary sizes are unchanged. The state rewrite has a separate comparison running; sandbox-startup measurements remain to be done.",
+      "updatedAt": "2026-10-15T15:40:16.634922+00:00",
+      "summary": "The current netip and state migrations completed separate fixed Linux AMD64 CLI startup comparisons; both timing results are inconclusive. Netip leaves both executable lengths unchanged, while the state rewrite adds about 4 MB. A matched sandbox-startup comparison using the existing benchmark is being prepared.",
       "findings": [
         {
           "text": "The netip migration adds three binary-codec registrations and changes header initialization. Both comparison arms include the cheaper non-race registration from #15814. The fixed method measures 12 balanced pairs of 64 fresh runsc --version processes on one worker, with separate initialization traces and matching AMD64/ARM64 builds. CLI measurements do not substitute for sandbox startup.",
@@ -12997,6 +13090,15 @@
             {
               "label": "Completed source-bound netip startup comparison",
               "url": "https://app.buildbuddy.io/invocation/ea0cd3cf-d9d5-4f38-a395-1400a3cc43b0"
+            }
+          ]
+        },
+        {
+          "text": "The state rewrite’s separate CLI measurement gives 6.483 ms before and 6.816 ms after (p=.198, 12 paired batches), with no established timing effect. AMD64 and ARM64 executable lengths increase by 4,042,752 and 3,866,624 bytes. Separate initialization traces show +304 B and +6 allocations overall. Sandbox startup will use the existing BenchmarkStartupEmpty with exact source-built releases; no sandbox timing result is available yet.",
+          "evidence": [
+            {
+              "label": "Verified state CLI comparison",
+              "url": "https://app.buildbuddy.io/invocation/0bcbb672-1f11-4845-9932-6e42a2c41d59"
             }
           ]
         }
