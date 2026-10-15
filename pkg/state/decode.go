@@ -65,10 +65,6 @@ type objectDecodeState struct {
 	// It is published before its parsed body is restored and never replaced.
 	pointer any
 
-	// plan describes this allocation's actual type. Every arrival uses the
-	// same restore engine; later references cannot replace its storage.
-	plan *restorePlan
-
 	// blockedBy is the number of dependencies this object has.
 	blockedBy int
 
@@ -298,11 +294,10 @@ func (ds *decodeState) growObjectsByID(id objectID) {
 	}
 }
 
-func (ds *decodeState) addObject(id objectID, pointer any, plan *restorePlan) *objectDecodeState {
+func (ds *decodeState) addObject(id objectID, pointer any) *objectDecodeState {
 	ods := &objectDecodeState{
 		id:      id,
 		pointer: pointer,
-		plan:    plan,
 	}
 	ods.pendingEntry.ods = ods
 	ods.leafEntry.ods = ods
@@ -314,7 +309,7 @@ func (ds *decodeState) addObject(id objectID, pointer any, plan *restorePlan) *o
 }
 
 // register publishes the enclosing allocation before restoring a deferred
-// body. Dots always chooses the actual enclosing type, never the child's plan.
+// body. Dots always chooses the actual enclosing type, never the child's type.
 func (ds *decodeState) register(r wire.ReferenceView, typ reflect.Type) any {
 	id := objectID(r.Root())
 	ds.growObjectsByID(id)
@@ -324,9 +319,8 @@ func (ds *decodeState) register(r wire.ReferenceView, typ reflect.Type) any {
 	if r.Dots() != 0 {
 		typ = ds.findType(r.Type())
 	}
-	plan := ds.types.plan(typ)
-	pointer := plan.newObject()
-	ods := ds.addObject(id, pointer, plan)
+	pointer := reflect.New(typ).Interface()
+	ods := ds.addObject(id, pointer)
 	if encoded, ok := ds.deferred[id]; ok {
 		delete(ds.deferred, id)
 		ds.restoreValue(ods, ods.destination(), encoded)
@@ -397,8 +391,8 @@ func (ds *decodeState) structSource(ods *objectDecodeState, typ reflect.Type, en
 func (ds *decodeState) decodeStruct(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
 	var obj reflect.Value
 	var typ reflect.Type
-	if target.writable() && target.plan.kind == reflect.Struct {
-		typ = target.plan.typ
+	if target.writable() && target.typ.Kind() == reflect.Struct {
+		typ = target.typ
 	} else {
 		obj = target.value()
 		typ = obj.Type() // Preserve invalid/read-only destination behavior.
@@ -408,17 +402,17 @@ func (ds *decodeState) decodeStruct(ods *objectDecodeState, target restoreDestin
 		return
 	}
 	defer ds.stats.done()
-	mode := LoadCustom
-	plan := source.internal.rte.plan
-	if plan.typ == typ {
-		mode = plan.loadMode
-	}
 	if !obj.IsValid() {
 		obj = target.value()
 	}
 	switch value := obj.Addr().Interface().(type) {
 	case SaverLoader:
-		if mode == LoadCustom {
+		rte := source.internal.rte
+		if rte.LocalType == typ && !rte.metadataChecked {
+			rte.metadataChecked = true
+			rte.generated = generatedMetadata(value, rte.Name, typ).LoadGenerated
+		}
+		if rte.LocalType != typ || !rte.generated {
 			// A handwritten or forwarding loader may retain Source. An
 			// already owned Source keeps its original shared children.
 			source.internal.encoded = encoded.Own()
@@ -463,7 +457,7 @@ func (ds *decodeState) decodeInterface(ods *objectDecodeState, obj reflect.Value
 	// decode normally. In order to avoid issues with setting value-types,
 	// we create a new non-interface version of this object. We will then
 	// set the interface object to be equal to whatever we decode.
-	pointer := ds.types.plan(typ).newObject()
+	pointer := reflect.New(typ).Interface()
 	defer obj.Set(reflect.ValueOf(pointer).Elem())
 	ds.restoreValue(ods, ds.pointerDestination(reflect.ValueOf(pointer)), value)
 }
@@ -526,7 +520,7 @@ func (ds *decodeState) Load(pointer reflect.Value) {
 	if pointer.Type().Name() != "" {
 		pointer = pointer.Convert(reflect.PointerTo(pointer.Type().Elem()))
 	}
-	_ = ds.addObject(1, pointer.Interface(), ds.types.plan(pointer.Type().Elem()))
+	_ = ds.addObject(1, pointer.Interface())
 
 	// Read the number of objects.
 	numObjects, object, err := ReadHeader(&ds.r)

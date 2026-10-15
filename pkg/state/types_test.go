@@ -72,7 +72,8 @@ type lazyRegistered struct {
 	value int64
 }
 
-var lazyNames, lazyFields, lazyAllocations int
+var lazyNames, lazyFields, lazyMetadata int
+var lazyGenerated bool
 
 func (*lazyRegistered) StateTypeName() string {
 	lazyNames++
@@ -87,12 +88,15 @@ func (*lazyRegistered) StateFields() []string {
 func (l *lazyRegistered) StateSave(s Sink) { s.Save(0, &l.value) }
 
 func (l *lazyRegistered) StateLoad(_ context.Context, s Source) {
-	LoadInto(s, 0, &l.value, false)
+	LoadInt(s, 0, &l.value, false)
 }
 
-func allocateLazyRegistered(typ reflect.Type) any {
-	lazyAllocations++
-	return NewObject[lazyRegistered](typ)
+func (l *lazyRegistered) StateMetadata() TypeMetadata {
+	if l == nil {
+		panic("metadata requires an actual receiver")
+	}
+	lazyMetadata++
+	return TypeMetadata{Owner: (*lazyRegistered)(nil), LoadGenerated: lazyGenerated}
 }
 
 func TestLazyRegistration(t *testing.T) {
@@ -106,7 +110,8 @@ func TestLazyRegistration(t *testing.T) {
 				delete(globalTypeDatabase, "state.lazyRegistered")
 				delete(reverseTypeDatabase, reflect.TypeFor[lazyRegistered]())
 			})
-			lazyNames, lazyFields, lazyAllocations = 0, 0, 0
+			lazyNames, lazyFields, lazyMetadata = 0, 0, 0
+			lazyGenerated = generated
 			// Describing a destination before registration must neither call
 			// its metadata on nil wire data nor cache a global fallback.
 			var buf bytes.Buffer
@@ -127,7 +132,7 @@ func TestLazyRegistration(t *testing.T) {
 				t.Fatalf("nil Load called metadata: names=%d fields=%d, want zero", lazyNames, lazyFields)
 			}
 			if generated {
-				RegisterGenerated((*lazyRegistered)(nil), nil, allocateLazyRegistered, LoadGenerated)
+				RegisterGenerated((*lazyRegistered)(nil))
 			} else {
 				Register((*lazyRegistered)(nil))
 			}
@@ -138,8 +143,8 @@ func TestLazyRegistration(t *testing.T) {
 			if got, want := lazyFields, wantFields; got != want {
 				t.Fatalf("registration StateFields calls = %d, want %d", got, want)
 			}
-			if got, want := lazyAllocations, 0; got != want {
-				t.Fatalf("registration allocations = %d, want %d", got, want)
+			if got, want := lazyMetadata, 0; got != want {
+				t.Fatalf("registration metadata calls = %d, want %d", got, want)
 			}
 			// A new Load must use the registration even if an earlier Load
 			// saw this type before registration. Both references share one
@@ -156,12 +161,12 @@ func TestLazyRegistration(t *testing.T) {
 			if restored[0] == nil || restored[0] != restored[1] || restored[0] == &value || restored[0].value != value.value {
 				t.Fatalf("Load = %v, want two aliases of a new value %d", restored, value.value)
 			}
-			wantAllocations := 0
+			wantMetadata := 0
 			if generated {
-				wantAllocations = 1
+				wantMetadata = 2
 			}
-			if got, want := lazyAllocations, wantAllocations; got != want {
-				t.Errorf("Load factory calls = %d, want %d", got, want)
+			if got, want := lazyMetadata, wantMetadata; got != want {
+				t.Errorf("Save/Load metadata calls = %d, want %d", got, want)
 			}
 		})
 	}

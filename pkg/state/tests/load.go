@@ -29,12 +29,16 @@ type genericContainer struct {
 // StateLoad, rather than only through the manual Source adapter.
 // +stateify savable
 type restoreLegacyFields struct {
-	integer int64
-	text    string
-	slice   []int64
-	pointer *int64
-	array   [2]int64
-	mapping map[int]int64
+	integer       int64
+	text          string
+	slice         []int64
+	pointer       *int64
+	array         [2]int64
+	mapping       map[int]int64
+	signed        int8
+	unsigned      uint8
+	narrowFloat   float32
+	narrowComplex complex64
 }
 
 // +stateify savable
@@ -83,14 +87,19 @@ func (b *badCycleStruct) afterLoad(context.Context) {
 // be fully parsed before StateLoad runs.
 // +stateify type
 type replayLoadStruct struct {
-	first    int64
-	second   string
-	omitted  int64
-	source   state.Source `state:"nosave"`
-	repeated int64        `state:"nosave"`
-	after    string       `state:"nosave"`
-	calls    int          `state:"nosave"`
+	// Metadata must not be invoked through this nil intermediate pointer.
+	// Nor may its inherited method classify this manual loader as generated.
+	*replayLoadMiddle `state:"nosave"`
+	first             int64
+	second            string
+	omitted           int64
+	source            state.Source `state:"nosave"`
+	repeated          int64        `state:"nosave"`
+	after             string       `state:"nosave"`
+	calls             int          `state:"nosave"`
 }
+
+type replayLoadMiddle struct{ afterLoadStruct }
 
 func (r *replayLoadStruct) StateSave(s state.Sink) {
 	s.Save(0, &r.first)

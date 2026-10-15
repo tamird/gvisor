@@ -20,19 +20,6 @@ import (
 	"unsafe"
 )
 
-// LoadInto restores a generated field through its actual Go pointer type.
-// Slot reconciliation and wait ordering belong to the Source; the containing
-// receiver's type may differ when a manual or identtype loader forwards it.
-func LoadInto[T any](s Source, slot int, ptr *T, wait bool) {
-	encoded := s.internal.field(slot)
-	ds := s.internal.ds
-	target := restoreDestination{plan: ds.types.plan(reflect.TypeFor[T]()), pointer: unsafe.Pointer(ptr)}
-	ds.restoreValue(s.internal.ods, target, encoded)
-	if wait {
-		ds.waitObject(s.internal.ods, encoded, nil)
-	}
-}
-
 // reflectValueRWAddr is equivalent to obj.Addr(), except that the returned
 // reflect.Value is usable in assignments even if obj was obtained by the use
 // of unexported struct fields.
@@ -62,38 +49,39 @@ func reflectValueRWSlice3(arr reflect.Value, i, j, k int) reflect.Value {
 // A reflected token is retained only when its read-only/addressability flags
 // matter. Reconstructing such values with NewAt would erase those flags.
 type restoreDestination struct {
-	plan      *restorePlan
+	typ       reflect.Type
 	pointer   unsafe.Pointer
 	reflected reflect.Value
 }
 
 func (ods *objectDecodeState) destination() restoreDestination {
-	return restoreDestination{plan: ods.plan, pointer: reflect.ValueOf(ods.pointer).UnsafePointer()}
+	pointer := reflect.ValueOf(ods.pointer)
+	return restoreDestination{typ: pointer.Type().Elem(), pointer: pointer.UnsafePointer()}
 }
 
 func (ds *decodeState) destination(value reflect.Value) restoreDestination {
 	if !value.IsValid() {
 		return restoreDestination{}
 	}
-	plan := ds.types.plan(value.Type())
+	typ := value.Type()
 	if !value.CanAddr() || !value.CanSet() {
-		return restoreDestination{plan: plan, reflected: value}
+		return restoreDestination{typ: typ, reflected: value}
 	}
-	return restoreDestination{plan: plan, pointer: unsafe.Pointer(value.UnsafeAddr())}
+	return restoreDestination{typ: typ, pointer: unsafe.Pointer(value.UnsafeAddr())}
 }
 
 func (ds *decodeState) pointerDestination(pointer reflect.Value) restoreDestination {
 	if pointer.Kind() != reflect.Pointer {
 		return ds.destination(pointer.Elem())
 	}
-	return restoreDestination{plan: ds.types.plan(pointer.Type().Elem()), pointer: pointer.UnsafePointer()}
+	return restoreDestination{typ: pointer.Type().Elem(), pointer: pointer.UnsafePointer()}
 }
 
 func (target restoreDestination) value() reflect.Value {
-	if target.reflected.IsValid() || target.plan == nil {
+	if target.reflected.IsValid() || target.typ == nil {
 		return target.reflected
 	}
-	return reflect.NewAt(target.plan.typ, target.pointer).Elem()
+	return reflect.NewAt(target.typ, target.pointer).Elem()
 }
 
 func (target restoreDestination) writable() bool {
@@ -102,17 +90,17 @@ func (target restoreDestination) writable() bool {
 
 // field requires an in-range offset within target's actual allocation.
 // Its caller derives offsets from an array's element size and checked index. Zero-sized elements retain the same valid pointer.
-func (target restoreDestination) field(plan *restorePlan, offset uintptr) restoreDestination {
-	return restoreDestination{plan: plan, pointer: unsafe.Add(target.pointer, offset)}
+func (target restoreDestination) field(typ reflect.Type, offset uintptr) restoreDestination {
+	return restoreDestination{typ: typ, pointer: unsafe.Add(target.pointer, offset)}
 }
 
 func (target restoreDestination) directArray() bool {
-	return target.writable() && target.plan.kind == reflect.Array
+	return target.writable() && target.typ.Kind() == reflect.Array
 }
 
 func (target restoreDestination) length() int {
 	if target.directArray() {
-		return target.plan.typ.Len()
+		return target.typ.Len()
 	}
 	// In particular, a nil *[0]T has no actual array view: do not use its
 	// type's zero length to turn the old invalid-value error into success.
@@ -120,7 +108,7 @@ func (target restoreDestination) length() int {
 }
 
 func (target restoreDestination) storeBool(value bool) {
-	if target.writable() && target.plan.kind == reflect.Bool {
+	if target.writable() && target.typ.Kind() == reflect.Bool {
 		*(*bool)(target.pointer) = value
 		return
 	}
@@ -128,7 +116,7 @@ func (target restoreDestination) storeBool(value bool) {
 }
 
 func (target restoreDestination) storeString(value string) {
-	if target.writable() && target.plan.kind == reflect.String {
+	if target.writable() && target.typ.Kind() == reflect.String {
 		// An ordinary typed string assignment retains the write barrier.
 		*(*string)(target.pointer) = value
 		return
@@ -137,7 +125,7 @@ func (target restoreDestination) storeString(value string) {
 }
 
 func (target restoreDestination) storePointer(pointer reflect.Value) {
-	if target.writable() && target.plan.kind == reflect.Pointer && pointer.Type().AssignableTo(target.plan.typ) {
+	if target.writable() && target.typ.Kind() == reflect.Pointer && pointer.Type().AssignableTo(target.typ) {
 		// This is a pointer assignment, not an integer/header copy. The
 		// compiler emits its ordinary GC write barrier for the actual slot.
 		*(*unsafe.Pointer)(target.pointer) = pointer.UnsafePointer()
@@ -148,7 +136,7 @@ func (target restoreDestination) storePointer(pointer reflect.Value) {
 
 func (target restoreDestination) storeInt(value int64) int64 {
 	if target.writable() {
-		switch target.plan.kind {
+		switch target.typ.Kind() {
 		case reflect.Int:
 			stored := int(value)
 			*(*int)(target.pointer) = stored
@@ -178,7 +166,7 @@ func (target restoreDestination) storeInt(value int64) int64 {
 
 func (target restoreDestination) storeUint(value uint64) uint64 {
 	if target.writable() {
-		switch target.plan.kind {
+		switch target.typ.Kind() {
 		case reflect.Uint:
 			stored := uint(value)
 			*(*uint)(target.pointer) = stored
@@ -212,7 +200,7 @@ func (target restoreDestination) storeUint(value uint64) uint64 {
 
 func (target restoreDestination) storeFloat(value float64) float64 {
 	if target.writable() {
-		switch target.plan.kind {
+		switch target.typ.Kind() {
 		case reflect.Float32:
 			stored := float32(value)
 			*(*float32)(target.pointer) = stored
@@ -230,7 +218,7 @@ func (target restoreDestination) storeFloat(value float64) float64 {
 
 func (target restoreDestination) storeComplex(value complex128) complex128 {
 	if target.writable() {
-		switch target.plan.kind {
+		switch target.typ.Kind() {
 		case reflect.Complex64:
 			stored := complex64(value)
 			*(*complex64)(target.pointer) = stored

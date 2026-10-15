@@ -45,7 +45,7 @@ func InitRecord(r *Record, id TypeID, count int, fields RecordFields) *Record {
 	return r
 }
 
-// RecordValue returns the capture storage selected by the registered factory.
+// RecordValue returns the capture storage selected for this record.
 // Keeping the exact type check here prevents a saver promoted from an embedded
 // type from interpreting another type's record as its own.
 func RecordValue[T any](r *Record) *T {

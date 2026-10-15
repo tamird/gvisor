@@ -20,53 +20,74 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// Allocate creates zero storage for the exact registered graph object type.
-// The returned pointer is published before any deferred body is restored.
-type Allocate func(reflect.Type) any
+// Generated scalar fields retain their static type through assignment. The
+// Value accessors and truncation checks are shared with restoreValue. A scalar
+// has no graph dependency; other encodings, including nil and interfaces,
+// return to the ordinary Source path with its original wait semantics.
 
-// NewObject allocates the exact T represented by its registration.
-func NewObject[T any](_ reflect.Type) any { return new(T) }
-
-// LoadMode describes the exact StateLoad implementation emitted by stateify.
-// Handwritten, promoted and forwarding methods must use LoadCustom.
-type LoadMode uint8
-
-const (
-	// LoadCustom receives an owned Source that it may retain.
-	LoadCustom LoadMode = iota
-	// LoadGenerated is an exact native generated method. Its custom callbacks
-	// capture typed storage, receiver and context, never Source itself.
-	LoadGenerated
-)
-
-// restorePlan owns the operations for one actual Go type during a Load.
-// Reading a wire schema supplies registered operations; describing or allocating
-// a destination must not invoke its metadata before reading its body.
-type restorePlan struct {
-	typ      reflect.Type
-	kind     reflect.Kind
-	size     uintptr
-	allocate Allocate
-	loadMode LoadMode
+// LoadBool restores a generated boolean field.
+func LoadBool[T ~bool](s Source, slot int, ptr *T, wait bool) {
+	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindBool {
+		*ptr = T(encoded.Bool())
+		return
+	}
+	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
 }
 
-func (tbd *typeDecodeDatabase) plan(typ reflect.Type) *restorePlan {
-	if plan := tbd.plans[typ]; plan != nil {
-		return plan
+// LoadInt restores a generated signed integer field, rejecting truncation.
+func LoadInt[T ~int | ~int8 | ~int16 | ~int32 | ~int64](s Source, slot int, ptr *T, wait bool) {
+	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindInt {
+		value := encoded.Int()
+		*ptr = T(value)
+		checkInt(value, int64(*ptr))
+		return
 	}
-	if tbd.plans == nil {
-		tbd.plans = make(map[reflect.Type]*restorePlan)
-	}
-	plan := &restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
-	tbd.plans[typ] = plan
-	return plan
+	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
 }
 
-func (plan *restorePlan) newObject() any {
-	if plan.allocate != nil {
-		return plan.allocate(plan.typ)
+// LoadUint restores a generated unsigned integer field, rejecting truncation.
+func LoadUint[T ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr](s Source, slot int, ptr *T, wait bool) {
+	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindUint {
+		value := encoded.Uint()
+		*ptr = T(value)
+		checkUint(value, uint64(*ptr))
+		return
 	}
-	return reflect.New(plan.typ).Interface()
+	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
+}
+
+// LoadFloat restores a generated floating-point field with the ordinary NaN
+// and truncation rules.
+func LoadFloat[T ~float32 | ~float64](s Source, slot int, ptr *T, wait bool) {
+	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindFloat32 || encoded.Kind() == wire.KindFloat64 {
+		value := encoded.Float()
+		*ptr = T(value)
+		checkFloat(value, float64(*ptr))
+		return
+	}
+	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
+}
+
+// LoadComplex restores a generated complex field with the ordinary NaN and
+// truncation rules for both components.
+func LoadComplex[T ~complex64 | ~complex128](s Source, slot int, ptr *T, wait bool) {
+	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindComplex64 || encoded.Kind() == wire.KindComplex128 {
+		value := encoded.Complex()
+		*ptr = T(value)
+		checkComplex(value, complex128(*ptr))
+		return
+	}
+	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
+}
+
+// LoadString restores a generated string field through an ordinary typed
+// assignment, including the Go write barrier.
+func LoadString[T ~string](s Source, slot int, ptr *T, wait bool) {
+	if encoded := dataValue(s.internal.field(slot)); encoded.Kind() == wire.KindString {
+		*ptr = T(encoded.Text())
+		return
+	}
+	s.internal.load(slot, reflect.ValueOf(ptr), wait, nil)
 }
 
 // dataValue preserves nil-interface delegation before any address or view is
@@ -134,15 +155,15 @@ func (ds *decodeState) restoreReference(target restoreDestination, ref wire.Refe
 	if objectID(ref.Root()) == 0 {
 		return
 	}
-	if target.plan == nil {
+	if target.typ == nil {
 		target.value().Type() // Preserve the invalid destination error.
 	}
-	if target.plan.kind == reflect.Map {
-		object := walkChild(ref, reflect.ValueOf(ds.register(ref, target.plan.typ)).Elem())
+	if target.typ.Kind() == reflect.Map {
+		object := walkChild(ref, reflect.ValueOf(ds.register(ref, target.typ)).Elem())
 		assignMap(target.value(), object)
 		return
 	}
-	pointer := reflect.ValueOf(ds.register(ref, target.plan.typ.Elem()))
+	pointer := reflect.ValueOf(ds.register(ref, target.typ.Elem()))
 	if ref.Dots() != 0 {
 		pointer = reflectValueRWAddr(walkChild(ref, pointer.Elem()))
 	}

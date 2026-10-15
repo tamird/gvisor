@@ -19,20 +19,19 @@ import (
 	"go/ast"
 	"go/token"
 	"go/types"
-	"strconv"
 )
 
-// restoreSet records exact type allocation and generated-loader lifetime.
-// The generated field expressions are checked by the ordinary Go compiler.
+// restoreSet selects shared typed scalar operations from compiler-owned field
+// types. Containers and references retain Source.Load's common graph engine.
 type restoreSet struct {
-	registered  map[string]struct{}
 	modes       map[string]string
+	fields      map[string]map[string]string
 	waitValue   string
 	noWaitValue string
 }
 
 func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, group *groupModel) (*restoreSet, error) {
-	r := &restoreSet{registered: make(map[string]struct{}), modes: make(map[string]string), waitValue: "true", noWaitValue: "false"}
+	r := &restoreSet{modes: make(map[string]string), fields: make(map[string]map[string]string), waitValue: "true", noWaitValue: "false"}
 	// A package or import may shadow the predeclared boolean identifier.
 	if _, value := info.Scopes[file].LookupParent("true", token.NoPos); value != types.Universe.Lookup("true") {
 		r.waitValue = "0 == 0"
@@ -40,44 +39,50 @@ func checkedRestores(file *ast.File, info *types.Info, pkg *types.Package, group
 	if _, value := info.Scopes[file].LookupParent("false", token.NoPos); value != types.Universe.Lookup("false") {
 		r.noWaitValue = "0 != 0"
 	}
-	if len(group.types) == 0 {
-		return r, nil
-	}
-	statePackage := pkg
-	for _, spec := range file.Imports {
-		path, err := strconv.Unquote(spec.Path.Value)
-		if err != nil {
-			return nil, err
-		}
-		if path == statePkg {
-			statePackage = info.Implicits[spec].(*types.PkgName).Imported()
-		}
-	}
-	object := statePackage.Scope().Lookup("SaverLoader")
-	if object == nil {
-		return nil, fmt.Errorf("no checked state.SaverLoader interface")
-	}
-	loader := object.Type().Underlying().(*types.Interface)
 	for _, model := range group.types {
-		name := model.spec.Name.Name
-		owner, ok := pkg.Scope().Lookup(name).(*types.TypeName)
-		if !ok {
-			return nil, fmt.Errorf("no checked restore type %s", name)
-		}
-		_, structural := owner.Type().Underlying().(*types.Struct)
-		if structural && types.Implements(types.NewPointer(owner.Type()), loader) {
-			r.registered[name] = struct{}{}
-		}
 		if !model.save {
 			continue
 		}
 		if _, native := model.spec.Type.(*ast.StructType); !native {
 			continue
 		}
+		name := model.spec.Name.Name
+		owner, ok := pkg.Scope().Lookup(name).(*types.TypeName)
+		if !ok {
+			return nil, fmt.Errorf("no checked restore type %s", name)
+		}
 		// Only this exact native generated method has the borrowing contract.
-		// Identtype forwarding, promoted methods and handwritten loaders may
-		// expose Source, even when their ordinary field layouts look similar.
-		r.modes[name] = "LoadGenerated"
+		// Identtype forwarding and handwritten loaders may expose Source.
+		r.modes[name] = r.waitValue
+		fields := make(map[string]string)
+		for _, field := range model.fields {
+			if field.kind != fieldNormal && field.kind != fieldWait {
+				continue
+			}
+			member, _, _ := types.LookupFieldOrMethod(types.NewPointer(owner.Type()), true, pkg, field.name)
+			if member == nil {
+				return nil, fmt.Errorf("%s has no checked field %s", name, field.name)
+			}
+			basic, ok := member.Type().Underlying().(*types.Basic)
+			if !ok {
+				continue
+			}
+			switch basic.Kind() {
+			case types.Bool:
+				fields[field.name] = "LoadBool"
+			case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
+				fields[field.name] = "LoadInt"
+			case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
+				fields[field.name] = "LoadUint"
+			case types.Float32, types.Float64:
+				fields[field.name] = "LoadFloat"
+			case types.Complex64, types.Complex128:
+				fields[field.name] = "LoadComplex"
+			case types.String:
+				fields[field.name] = "LoadString"
+			}
+		}
+		r.fields[name] = fields
 	}
 	return r, nil
 }

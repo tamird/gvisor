@@ -21,7 +21,7 @@ import (
 )
 
 // Record returns the captured fields owned by this generated saver. Usually
-// its exact registered constructor allocated them before StateSave. Forwarding
+// its exact receiver metadata selected a constructor before StateSave. Forwarding
 // from a manual saver instead adapts these fields into that saver's slots.
 // The saver must capture values now, not retain live fields for emission.
 func Record[T any, P interface {
@@ -31,22 +31,19 @@ func Record[T any, P interface {
 	return wire.CaptureRecordValue[T, P](s.internal.encoded, count)
 }
 
-// ForwardRecord preserves the capture layout of an identtype's declared
-// underlying type. Resolution is deferred until saving, after all package
-// registrations have completed; init ordering within a package is irrelevant.
+// ForwardRecord resolves an identtype's capture layout on the actual converted
+// receiver. It retains exact registration and promoted-method checks, without
+// constructing a closure during package initialization.
 func ForwardRecord(owner Type) func(wire.TypeID, int) *wire.Record {
-	name := owner.StateTypeName()
 	typ := reflect.TypeOf(owner).Elem()
-	return func(id wire.TypeID, count int) *wire.Record {
-		registered, ok := globalTypeDatabase[name]
-		if !ok || registered.typ != typ {
-			Failf("forwarded record type %s is not registered as %v", name, typ)
-		}
-		if registered.newRecord == nil {
-			return wire.NewSlotRecord(id, count)
-		}
-		return registered.newRecord(id, count)
+	name := owner.StateTypeName()
+	if registered, _ := registeredType(name); registered != typ {
+		Failf("forwarded record type %s is not registered as %v", name, typ)
 	}
+	if factory := generatedMetadata(owner, name, typ).NewRecord; factory != nil {
+		return factory
+	}
+	return wire.NewSlotRecord
 }
 
 // Capture saves a graph-bearing child into a stable field of the record. This
