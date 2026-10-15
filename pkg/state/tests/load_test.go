@@ -82,8 +82,8 @@ func TestGeneratedLegacyFields(t *testing.T) {
 		{"unsigned_overflow", 7, wire.Uint(256), restoreLegacyFields{}, restoreLegacyFields{}, true},
 		{"float_exact", 8, wire.Float64(1.25), restoreLegacyFields{}, restoreLegacyFields{narrowFloat: 1.25}, false},
 		{"float_truncation", 8, wire.Float64(1 + 1e-10), restoreLegacyFields{}, restoreLegacyFields{}, true},
-		{"complex_exact", 9, wire.Complex128(1 + 2i), restoreLegacyFields{}, restoreLegacyFields{narrowComplex: 1 + 2i}, false},
-		{"complex_truncation", 9, wire.Complex128(complex(1, 1+1e-10)), restoreLegacyFields{}, restoreLegacyFields{}, true},
+		{"complex_exact", 9, new(wire.Complex128(1 + 2i)), restoreLegacyFields{}, restoreLegacyFields{narrowComplex: 1 + 2i}, false},
+		{"complex_truncation", 9, new(wire.Complex128(complex(1, 1+1e-10))), restoreLegacyFields{}, restoreLegacyFields{}, true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			var saved bytes.Buffer
