@@ -96,7 +96,7 @@ func Save(ctx context.Context, w io.Writer, rootPtr any) (Stats, error) {
 		types:          makeTypeEncodeDatabase(),
 		zeroValues:     make(map[reflect.Type]*objectEncodeState),
 		pending:        make(map[objectID]*objectEncodeState),
-		encodedStructs: make(map[reflect.Value]*wire.Struct),
+		encodedStructs: make(map[reflect.Value]*wire.Record),
 	}
 
 	// Perform the encoding.
@@ -113,12 +113,12 @@ func Load(ctx context.Context, r io.Reader, rootPtr any) (Stats, error) {
 		ctx:      ctx,
 		r:        wire.Reader{Reader: r},
 		types:    makeTypeDecodeDatabase(),
-		deferred: make(map[objectID]wire.Object),
+		deferred: make(map[objectID]wire.Value),
 	}
 
 	// Attempt our decode.
 	err := safely(func() {
-		ds.Load(reflect.ValueOf(rootPtr).Elem())
+		ds.Load(reflect.ValueOf(rootPtr))
 	})
 	return ds.stats, err
 }
@@ -200,8 +200,9 @@ type Type interface {
 
 	// StateFields returns information about the type.
 	//
-	// Fields is the set of fields for the object. Calls to Sink.Save and
-	// Source.Load must be made in-order with respect to these fields.
+	// Fields defines stable local slots for the object. Save and Load calls
+	// identify fields by these slots; custom values and reconciled wire schemas
+	// may use a different processing order.
 	//
 	// The field list must be stable for the type.
 	StateFields() []string

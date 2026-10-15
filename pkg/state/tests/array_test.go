@@ -15,11 +15,30 @@
 package tests
 
 import (
+	"bytes"
+	"context"
+	"fmt"
+	"math"
 	"reflect"
+	"strings"
 	"testing"
+
+	"gvisor.dev/gvisor/pkg/state"
+	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
 var allArrayPrimitives = []any{
+	[0]*int{},
+	[0]uint64{},
+	[2]int64{-1 << 63, 1<<63 - 1},
+	[2]uint64{0, ^uint64(0)},
+	[2]arraySigned{-7, 11},
+	[2]arrayUnsigned{0, ^arrayUnsigned(0)},
+	[2]arrayString{"", "owned"},
+	[2]float32{0, -1.5},
+	[2]float64{math.Copysign(0, -1), math.Inf(1)},
+	[2]complex64{0, 1.25 - 3i},
+	[2]complex128{complex(math.Copysign(0, -1), 0), 2 - 5i},
 	[1]bool{},
 	[1]bool{true},
 	[2]bool{false, true},
@@ -134,4 +153,320 @@ func TestSliceContainers(t *testing.T) {
 		slicePtrContainer{v: &fullSlice},
 		slicePtrContainer{v: &unusedCapacitySlice},
 	})
+}
+
+func TestArraySnapshotTiming(t *testing.T) {
+	first := &arraySnapshotSource{values: [2]uint64{7, 11}}
+	original := system{v1: first, v2: &arraySnapshotMutator{target: first}}
+	var encoded bytes.Buffer
+	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := first.values[0], uint64(99); got != want {
+		t.Fatalf("later hook mutation = %d, want %d", got, want)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+		t.Fatal(err)
+	}
+	child := loaded.v1.(*arraySnapshotSource)
+	if got, want := child.values, ([2]uint64{7, 11}); got != want {
+		t.Errorf("captured array = %v, want %v", got, want)
+	}
+	if got, want := loaded.v2.(*arraySnapshotMutator).target, child; got != want {
+		t.Errorf("shared target = %p, want %p", got, want)
+	}
+}
+
+func TestArrayLateParent(t *testing.T) {
+	backing := [2][2]uint64{{7, 11}, {13, 17}}
+	// Encode the interior array first. Later slice discovery clears the unused
+	// capacity and reparents that object under the complete backing array.
+	// The containing array must be captured anew after the clearing.
+	original := system{v1: &backing[1], v2: &arrayTailDiscovery{values: backing[:1]}}
+	var encoded bytes.Buffer
+	if _, err := state.Save(t.Context(), &encoded, &original); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := backing[1], ([2]uint64{}); got != want {
+		t.Fatalf("cleared backing tail = %v, want %v", got, want)
+	}
+	var loaded system
+	if _, err := state.Load(t.Context(), &encoded, &loaded); err != nil {
+		t.Fatal(err)
+	}
+	child := loaded.v1.(*[2]uint64)
+	parent := loaded.v2.(*arrayTailDiscovery).values
+	if got, want := cap(parent), 2; got != want {
+		t.Fatalf("backing capacity = %d, want %d", got, want)
+	}
+	if got, want := child, &parent[:2][1]; got != want {
+		t.Errorf("interior array = %p, want %p", got, want)
+	}
+	if got, want := *child, ([2]uint64{}); got != want {
+		t.Errorf("recaptured tail = %v, want %v", got, want)
+	}
+}
+
+func TestPrimitiveArrayFloatEncoding(t *testing.T) {
+	positiveSignal := math.Float32frombits(0x7f800001)
+	negativeSignal := math.Float32frombits(0xff800001)
+	quiet := math.Float32frombits(0x7fc00042)
+	negativeZero := math.Float32frombits(0x80000000)
+	for _, test := range []struct {
+		name  string
+		value arrayFloatEncoding
+	}{
+		{"float32", arrayFloatEncoding{floats: [4]float32{positiveSignal, negativeSignal, quiet, negativeZero}}},
+		{"complex64", arrayFloatEncoding{complexes: [2]complex64{complex(positiveSignal, negativeSignal), complex(negativeZero, quiet)}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var captured, reflected bytes.Buffer
+			if _, err := state.Save(t.Context(), &captured, &test.value); err != nil {
+				t.Fatal(err)
+			}
+			test.value.byValue = true
+			if _, err := state.Save(t.Context(), &reflected, &test.value); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := captured.Bytes(), reflected.Bytes(); !bytes.Equal(got, want) {
+				t.Errorf("addressable array encoding = %x, want existing value encoding %x", got, want)
+			}
+		})
+	}
+}
+
+func TestArrayRetainedLoadReceivers(t *testing.T) {
+	for _, first := range []string{"slice", "dynamic", "interior", "pointer_dynamic", "pointer_interior"} {
+		for _, deferred := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/deferred=%t", first, deferred), func(t *testing.T) {
+				backing := [3]countedMapWord{{value: 7}, {value: 11}, {value: 13}}
+				pointers := [3]*countedMapWord{&backing[0], &backing[1], nil}
+				original := countedArrayContainer{
+					values: backing[:2], pointers: pointers[:2],
+					zeros: make([]registeredMapStruct, 2),
+				}
+				switch first {
+				case "dynamic":
+					original.first = original.values
+				case "interior":
+					original.first = &backing[1]
+				case "pointer_dynamic":
+					original.first = original.pointers
+				case "pointer_interior":
+					original.first = &pointers[1]
+				}
+				var receivers mapReceiverCensus
+				ctx := context.WithValue(t.Context(), mapReceiverKey{}, &receivers)
+				var encoded bytes.Buffer
+				if _, err := state.Save(ctx, &encoded, &original); err != nil {
+					t.Fatal(err)
+				}
+				if deferred {
+					reverseObjectBodies(t, &encoded)
+				}
+				var restored countedArrayContainer
+				if _, err := state.Load(ctx, &encoded, &restored); err != nil {
+					t.Fatal(err)
+				}
+				if got, want := restored, original; !reflect.DeepEqual(got, want) {
+					t.Fatalf("restored arrays = %+v, want %+v", got, want)
+				}
+				if got, want := cap(restored.values), 3; got != want {
+					t.Fatalf("value capacity = %d, want %d", got, want)
+				}
+				if got, want := cap(restored.pointers), 3; got != want {
+					t.Fatalf("pointer capacity = %d, want %d", got, want)
+				}
+				values := restored.values[:3]
+				if got, want := len(receivers.loaded), 3; got != want {
+					t.Fatalf("Load receivers = %d, want %d", got, want)
+				}
+				seen := make(map[*countedMapWord]struct{})
+				for _, receiver := range receivers.loaded {
+					if _, ok := seen[receiver]; ok {
+						t.Fatalf("reused Load receiver %p", receiver)
+					}
+					seen[receiver] = struct{}{}
+				}
+				for i := range values {
+					if _, ok := seen[&values[i]]; !ok {
+						t.Errorf("Load did not use backing element %d at %p", i, &values[i])
+					}
+				}
+				for i, pointer := range restored.pointers {
+					if got, want := pointer, &values[i]; got != want {
+						t.Errorf("pointer %d = %p, want %p", i, got, want)
+					}
+				}
+				if got, want := values[2].value, uint64(0); got != want {
+					t.Errorf("cleared tail = %d, want %d", got, want)
+				}
+				if got, want := restored.pointers[:3][2], (*countedMapWord)(nil); got != want {
+					t.Errorf("pointer tail = %p, want %p", got, want)
+				}
+				for _, receiver := range receivers.loaded {
+					if receiver == &values[1] {
+						receiver.value = 29
+					}
+				}
+				if got, want := restored.pointers[1].value, uint64(29); got != want {
+					t.Errorf("receiver mutation = %d, want %d", got, want)
+				}
+				switch first {
+				case "dynamic":
+					if got, want := &restored.first.([]countedMapWord)[1], &values[1]; got != want {
+						t.Errorf("dynamic array alias = %p, want %p", got, want)
+					}
+				case "interior":
+					if got, want := restored.first.(*countedMapWord), &values[1]; got != want {
+						t.Errorf("interior alias = %p, want %p", got, want)
+					}
+				case "pointer_dynamic":
+					if got, want := &restored.first.([]*countedMapWord)[1], &restored.pointers[1]; got != want {
+						t.Errorf("dynamic pointer array alias = %p, want %p", got, want)
+					}
+				case "pointer_interior":
+					if got, want := restored.first.(**countedMapWord), &restored.pointers[1]; got != want {
+						t.Errorf("pointer interior alias = %p, want %p", got, want)
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestArrayRegistrationAfterEarlyLoad(t *testing.T) {
+	if earlyArrayError != nil {
+		t.Fatal(earlyArrayError)
+	}
+	expected := [2]countedMapWord{{value: 7}, {value: 11}}
+	if got, want := earlyArrayValues, expected; got != want {
+		t.Errorf("early array = %v, want %v", got, want)
+	}
+	loaded, err := loadZeroReferenceArray()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := loaded, expected; got != want {
+		t.Errorf("registered array = %v, want %v", got, want)
+	}
+}
+
+// TestArrayLiveSliceHeader covers the generated and manual/dynamic entries to
+// the same legacy Array-to-slice operation. A first hook changes the actual
+// header, so a captured []T view would restore the wrong second receiver.
+func TestArrayLiveSliceHeader(t *testing.T) {
+	for _, generated := range []bool{false, true} {
+		for _, shrink := range []bool{false, true} {
+			t.Run(fmt.Sprintf("generated=%t/shrink=%t", generated, shrink), func(t *testing.T) {
+				values := [2]arraySliceLoadWord{{value: 7}, {value: 11}}
+				var encoded bytes.Buffer
+				var saved any = &values
+				if generated {
+					saved = &arraySliceLoad{values: values[:]}
+				}
+				if _, err := state.Save(t.Context(), &encoded, saved); err != nil {
+					t.Fatal(err)
+				}
+				backing := [2]arraySliceLoadWord{}
+				replacement := [2]arraySliceLoadWord{{value: 101}, {value: 103}}
+				loaded := arraySliceLoad{values: backing[:]}
+				load := arraySliceLoadState{target: &loaded.values, replacement: replacement[:]}
+				if shrink {
+					load.replacement = load.replacement[:1]
+				}
+				ctx := context.WithValue(t.Context(), arraySliceLoadKey{}, &load)
+				var target any = &loaded.values
+				if generated {
+					target = &loaded
+				}
+				_, err := state.Load(ctx, &encoded, target)
+				if shrink {
+					if err == nil || !strings.Contains(err.Error(), "slice index out of range") {
+						t.Fatalf("Load error = %v, want slice index out of range", err)
+					}
+					if got, want := len(load.receivers), 1; got != want {
+						t.Fatalf("Load receivers = %d, want %d", got, want)
+					}
+				} else {
+					if err != nil {
+						t.Fatal(err)
+					}
+					if got, want := len(load.receivers), 2; got != want {
+						t.Fatalf("Load receivers = %d, want %d", got, want)
+					}
+					if got, want := load.receivers[1], &replacement[1]; got != want {
+						t.Errorf("second receiver = %p, want %p", got, want)
+					}
+					if got, want := replacement[1].value, uint64(11); got != want {
+						t.Errorf("replacement value = %d, want %d", got, want)
+					}
+				}
+				if got, want := load.receivers[0], &backing[0]; got != want {
+					t.Errorf("first receiver = %p, want %p", got, want)
+				}
+				if got, want := loaded.values, load.replacement; !reflect.DeepEqual(got, want) {
+					t.Errorf("header after hook = %v, want %v", got, want)
+				}
+				if got, want := backing[0].value, uint64(7); got != want {
+					t.Errorf("first store = %d, want %d", got, want)
+				}
+				if got, want := backing[1].value, uint64(0); got != want {
+					t.Errorf("old second slot = %d, want %d", got, want)
+				}
+			})
+		}
+	}
+}
+
+func TestEarlyLoadFields(t *testing.T) {
+	loaded, err := loadEarlyFields()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := earlyLoadFields{value: 29, text: "before registration"}
+	if got, want := loaded, want; got != want {
+		t.Errorf("registered loaded fields = %+v, want %+v", got, want)
+	}
+	if stateRaceEnabled {
+		if earlyFieldsError == nil {
+			t.Fatal("early Save/Load succeeded without race-mode registration")
+		}
+		return
+	}
+	if earlyFieldsError != nil {
+		t.Fatal(earlyFieldsError)
+	}
+	if got, want := earlyFieldsValue, want; got != want {
+		t.Errorf("early loaded fields = %+v, want %+v", got, want)
+	}
+}
+
+func TestNilEmptyArrayDestination(t *testing.T) {
+	// Save compresses a zero array to Nil. Emit both valid wire operations
+	// explicitly: Nil needs no storage, but Array still needs an array view.
+	for _, test := range []struct {
+		name    string
+		value   wire.Object
+		wantErr bool
+	}{
+		{name: "nil", value: wire.Nil{}},
+		{name: "array", value: &wire.Array{}, wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var encoded bytes.Buffer
+			writer := wire.Writer{Writer: &encoded}
+			if err := state.WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, test.value)
+			var target *[0]int
+			_, err := state.Load(t.Context(), &encoded, target)
+			if got, want := err != nil, test.wantErr; got != want {
+				t.Errorf("Load error = %v (failed %t), want failed %t", err, got, want)
+			}
+		})
+	}
 }
