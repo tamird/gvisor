@@ -8,10 +8,12 @@ package(
     licenses = ["notice"],
 )
 
-# Shared by ordinary and namespace-dependent remote test actions.
+# Keep the coordinator and workers on the same GNU toolchain for the
+# matched GCC/LLVM startup comparison.
 _RBE_EXEC_PROPERTIES = {
     "OSFamily": "linux",
-    "container-image": "docker://docker.io/library/ubuntu@sha256:b8b6ee6aa931ecd9d0d952abc34dc0e5f7c6a30c6bb71b079fe399fde0329c02",
+    "container-image": "docker://docker.io/library/buildpack-deps@sha256:b22578185ebfdbd9a4050f697638b9c9696b70616d9b01bddfa79145db2b6dfd",
+    "dockerUser": "root",
     "workload-isolation-type": "oci",
 }
 
