@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T00:50:27.551053+00:00",
+    "updatedAt": "2026-10-15T01:05:10.236469+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6790,14 +6790,14 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15770",
       "status": "open",
-      "updatedAt": "2026-10-15T00:27:22.098671+00:00",
-      "summary": "The current import e6d1f4369 fails the native nftables FIB fixture in Buildkite 50822. The original log confirms runc execution and Linux rejecting the same invalid oifname-exists clause. At the 00:29 UTC observation, 59 jobs had passed, the Nftables job had failed and two unit jobs were still running; the pipeline was not terminal. The visible GitHub and internal checks had passed.\n\nIts preceding import head d63585383 failed the native nftables FIB fixture in Buildkite 50817: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nIndependent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "updatedAt": "2026-10-15T01:05:10.236469+00:00",
+      "summary": "The current import e6d1f4369 fails the native nftables FIB fixture in Buildkite 50822. The original log confirms runc execution and Linux rejecting the same invalid oifname-exists clause. The final pipeline census is 61 passed steps, one failed and 45 ignored, with none running; it finished at 00:53 UTC. The sole failed step is the inspected native nftables fixture. The visible GitHub and internal checks had passed.\n\nIts preceding import head d63585383 failed the native nftables FIB fixture in Buildkite 50817: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nIndependent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
         "disposition": "Shared public CI correction qualified",
         "owner": "root",
         "sourceHead": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
-        "observedAt": "2026-10-15T00:29:39+00:00",
-        "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
+        "observedAt": "2026-10-15T01:05:10.236469+00:00",
+        "nextAction": "Deliver the independent nftables correction after contributor review; the final import failure is fully diagnosed.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
@@ -9348,7 +9348,7 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T00:50:27.551053+00:00",
+      "updatedAt": "2026-10-15T01:05:10.236469+00:00",
       "summary": "The simpler decoded-frame candidate uses one contiguous node slice with indexed views, removing the block/inline storage machinery. Its correctness, ownership, race and allocation-guard qualification passes. In twelve balanced pairs against the previous contiguous parser, large synthetic Load takes 19.00% less time, allocates 36.85% fewer bytes and uses 71 rather than 74 allocations. The control-message timing has no detected change (p=.089), with unchanged allocation costs. Executable file sizes are unchanged. Independent original-result review is complete. This supports retaining the simpler candidate for the next whole-restore comparison; it does not yet establish the entire architecture's benefit over the original design.",
       "findings": [
         {
@@ -9929,9 +9929,18 @@
               "url": "https://github.com/tamird/gvisor/commit/9f5def3bd68fcc427bd7837994f509d37e3be0e9"
             }
           ]
+        },
+        {
+          "text": "The same-worker RestoreNginx comparison is running as ac021284. The original architecture at 3aa3a761c and candidate 2d57232d8 differ only in state/generator sources; non-state sources, toolchains and images match. One unchanged benchmark executable uses both complete release layouts, including their Sentry sidecars, in before/after/after/before order with six restores per process. Source, method and wrapper-lifecycle reviews passed. Results are pending.",
+          "evidence": [
+            {
+              "label": "Same-worker restore comparison",
+              "url": "https://app.buildbuddy.io/invocation/ac021284-fff6-4063-bfda-2793dd24d412"
+            }
+          ]
         }
       ],
-      "nextStep": "Prepare a same-worker comparison through the existing RestoreNginx benchmark, with two declared runtimes and matching non-state inputs. Verify source comparability, balanced ordering and actual restore/boot results before submitting it. No further samples of the closed microbenchmark are planned.",
+      "nextStep": "Collect the same-worker RestoreNginx comparison and verify each native exit, restore/boot witness and actual runtime input. Report the four process groups as ordering units; do not treat their repeated rows as independent workers.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
