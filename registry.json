@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T15:40:16.634922+00:00",
+    "updatedAt": "2026-10-15T20:50:11.432764+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1580,10 +1580,10 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13523",
       "group": "rbe",
       "status": "open",
-      "summary": "The complete issue and all ten comments were refreshed on October 11. Issue #13523 remains open and unchanged since October 2. The latest provider reply, from September 28, says a kernel-pinning execution property will be investigated; their preceding reply enabled the supported Linux 6.1 guest for the organization. No later comment announces a newer selectable kernel, documented pool or selection property. The three later comments are Tamir’s unanswered requests. This thread does not establish any new deployed kernel or backport state, so it supplies no basis to change current routing or credit a PTY fix.\n\nEarlier diagnostic and request evidence, retained historically:\n\nFork-only PTY diagnostic source d192897ea1d6c4824a53e4b17cbe08485736d606 reproduces a byte-content failure in one of ten actual uncached native executions on root AMD64 Firecracker. Parent a18978ca-2314-4eed-9c22-ff94b34fcab7 remains FAILED after 78.365 seconds; nine executions pass and one fails the original six-byte remainder read after its 4,095-byte prefix succeeds. The failed helper reports ETIMEDOUT with no partial remainder consumed. Canonical FIONREAD is zero; after clearing only ICANON, FIONREAD is six and one verified nonblocking read returns six M bytes (4d4d4d4d4d4d), instead of five M bytes plus newline. Sealed outcome 9c37631c613d and independent peer be3572228fa7 bind all 148 saved files, 24 source blobs plus commit, all ten Action/Command/input-tree/log/XML joins, and the failed worker Linux 6.1.0 September 28 17:40:53 build log. This supports content corruption consistent with Linux b19ab7ee2 lookahead duplication/loss. Recovery can advance delivery; exact corruption timing, deployed backport state and sole causal patch remain unproved. Nine passes are nonreproductions, not a fix or full PTY qualification. At that point a conditional provider draft was prepared; the complete current issue thread contains no posted follow-up from that draft.\n\nEarlier kernel and capacity evidence: Supported worker-kernel selection remains unresolved; issue #13523 is open with no new provider resolution. Source-only review of the retained failed core run finds ten non-FIB netfilter validation failures consistent with older Linux behavior and dual-stack native/hostnet reservation failures matching Linux fix d9ba9934285514f1f95d96326a82398a22dc77f2. The failed execution's kernel build/configuration/backports remain unknown, so these are source/failure-pattern matches, not verified deployed-patch attribution. Nine FIB cases retain an unresolved module/configuration boundary. All original outcomes remain FAILED; no new job, expectation weakening or source fix was introduced. Session-keyring expectations have a separately validated fix; PTY and timestamp failures remain unresolved. A bounded source review also maps nine inet FIB ENOENT results and native mark-revision-1/CT-revision-0 ENOENT failures to options absent from the published Linux 6.1 config: NFT_FIB_IPV6, NFT_FIB_INET, NETFILTER_XT_MARK and NETFILTER_XT_TARGET_CT. Their existing Linux 6.1 implementations and prerequisite settings are verified, but exact deployed configuration and a worker with the requested settings remain unverified. The user authorized the independently reviewed follow-up, and tamird posted it at 2026-10-02 13:44:22 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5953753295. The exact published text was read back. Provider response and deployment remain pending; no worker with the requested settings has been tested. A separate FIN_WAIT2 native IPv4 diagnostic is independently closed FAILED (outcome 94843223bb98, peer 6f65181caa98; actual child https://app.buildbuddy.io/invocation/d308b93f-0031-4f02-9efb-659b8f18e076). Its wildcard bind returns EADDRINUSE while the original specific-address bind succeeds, and the exact FIN_WAIT2 tuple with a positive timer survives all three snapshots, without another owner of the client port. The original case assertion fails in 3 ms. This supports the address-index omission fixed by upstream Linux 936a192f9, while the deployed worker source and backports remain unknown. The user approved the additional follow-up, and tamird posted it at 2026-10-02 16:38:40 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5956862042. The exact posted text was read back; provider response and deployment remain pending. No retry or qualification pass is claimed. The fresh October 2 worker pass at 875ecfbe6 repeats the 29 native failures, with 566 passes and 15 skips. Fourteen actual guests report Linux 6.1.0, September 28 build identity and identical recorded kernel notes; exact source/backports remain unknown. The original IPv4 FIN_WAIT2 case passes in 5,001 ms without tuple snapshots, so the retained lookup differential is unresolved. No provider reply establishes deployment. Kernel coverage distinguishes documented Linux requirements from native syscall expectations. Actual October 2 AMD64 Firecracker workers report Linux 6.1.0 with the September 28 build identity and retained kernel notes; this is an observed worker, not an immutable selected kernel. ARM64 Firecracker has no verified execution capacity or qualified guest kernel. Public master builds 49266 and 49276 on October 2 identify Linux 6.8.0-1069-gcp in both ordinary AMD64/ARM64 pools and Linux 7.3.0-070300rc3-generic in both RC pools. Complete public logs record HOST_KERNEL from the source-owned uname -r producer. AMD64 selects native and gVisor targets; ARM64 selects gVisor ptrace/systrap targets, without native ARM oracle coverage. This dated inventory is not an immutable worker configuration. Corresponding ordinary and moving RC kernels remain unqualified on RBE; observed RBE Linux 6.1 does not establish public-pool kernel parity. A pinned userspace image does not pin the kernel or establish kernel cache identity. Reports must retain actual kernel release/build and available configuration evidence with uncached results for each covered environment. No new 5.16 minimum or additional LTS matrix is inferred from the checksum test.",
+      "summary": "October 15: BuildBuddy incorporated our netfilter configuration fix into #13810 and announced planned Tuesday-afternoon deployment. The proposed Linux 5.15 and 6.1 kernels pass IPv4/IPv6 CT, mark and FIB packet checks in the isolated diagnostic. Updated hosted-worker behavior remains unverified. See https://github.com/buildbuddy-io/buildbuddy/pull/13802#issuecomment-6199198524 and https://github.com/buildbuddy-io/buildbuddy/pull/13810.\n\nEarlier observations and unresolved kernel issues:\n\nThe complete issue and all ten comments were refreshed on October 11. Issue #13523 remains open and unchanged since October 2. The latest provider reply, from September 28, says a kernel-pinning execution property will be investigated; their preceding reply enabled the supported Linux 6.1 guest for the organization. No later comment announces a newer selectable kernel, documented pool or selection property. The three later comments are Tamir’s unanswered requests. This thread does not establish any new deployed kernel or backport state, so it supplies no basis to change current routing or credit a PTY fix.\n\nEarlier diagnostic and request evidence, retained historically:\n\nFork-only PTY diagnostic source d192897ea1d6c4824a53e4b17cbe08485736d606 reproduces a byte-content failure in one of ten actual uncached native executions on root AMD64 Firecracker. Parent a18978ca-2314-4eed-9c22-ff94b34fcab7 remains FAILED after 78.365 seconds; nine executions pass and one fails the original six-byte remainder read after its 4,095-byte prefix succeeds. The failed helper reports ETIMEDOUT with no partial remainder consumed. Canonical FIONREAD is zero; after clearing only ICANON, FIONREAD is six and one verified nonblocking read returns six M bytes (4d4d4d4d4d4d), instead of five M bytes plus newline. Sealed outcome 9c37631c613d and independent peer be3572228fa7 bind all 148 saved files, 24 source blobs plus commit, all ten Action/Command/input-tree/log/XML joins, and the failed worker Linux 6.1.0 September 28 17:40:53 build log. This supports content corruption consistent with Linux b19ab7ee2 lookahead duplication/loss. Recovery can advance delivery; exact corruption timing, deployed backport state and sole causal patch remain unproved. Nine passes are nonreproductions, not a fix or full PTY qualification. At that point a conditional provider draft was prepared; the complete current issue thread contains no posted follow-up from that draft.\n\nEarlier kernel and capacity evidence: Supported worker-kernel selection remains unresolved; issue #13523 is open with no new provider resolution. Source-only review of the retained failed core run finds ten non-FIB netfilter validation failures consistent with older Linux behavior and dual-stack native/hostnet reservation failures matching Linux fix d9ba9934285514f1f95d96326a82398a22dc77f2. The failed execution's kernel build/configuration/backports remain unknown, so these are source/failure-pattern matches, not verified deployed-patch attribution. Nine FIB cases retain an unresolved module/configuration boundary. All original outcomes remain FAILED; no new job, expectation weakening or source fix was introduced. Session-keyring expectations have a separately validated fix; PTY and timestamp failures remain unresolved. A bounded source review also maps nine inet FIB ENOENT results and native mark-revision-1/CT-revision-0 ENOENT failures to options absent from the published Linux 6.1 config: NFT_FIB_IPV6, NFT_FIB_INET, NETFILTER_XT_MARK and NETFILTER_XT_TARGET_CT. Their existing Linux 6.1 implementations and prerequisite settings are verified, but exact deployed configuration and a worker with the requested settings remain unverified. The user authorized the independently reviewed follow-up, and tamird posted it at 2026-10-02 13:44:22 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5953753295. The exact published text was read back. Provider response and deployment remain pending; no worker with the requested settings has been tested. A separate FIN_WAIT2 native IPv4 diagnostic is independently closed FAILED (outcome 94843223bb98, peer 6f65181caa98; actual child https://app.buildbuddy.io/invocation/d308b93f-0031-4f02-9efb-659b8f18e076). Its wildcard bind returns EADDRINUSE while the original specific-address bind succeeds, and the exact FIN_WAIT2 tuple with a positive timer survives all three snapshots, without another owner of the client port. The original case assertion fails in 3 ms. This supports the address-index omission fixed by upstream Linux 936a192f9, while the deployed worker source and backports remain unknown. The user approved the additional follow-up, and tamird posted it at 2026-10-02 16:38:40 UTC: https://github.com/buildbuddy-io/buildbuddy/issues/13523#issuecomment-5956862042. The exact posted text was read back; provider response and deployment remain pending. No retry or qualification pass is claimed. The fresh October 2 worker pass at 875ecfbe6 repeats the 29 native failures, with 566 passes and 15 skips. Fourteen actual guests report Linux 6.1.0, September 28 build identity and identical recorded kernel notes; exact source/backports remain unknown. The original IPv4 FIN_WAIT2 case passes in 5,001 ms without tuple snapshots, so the retained lookup differential is unresolved. No provider reply establishes deployment. Kernel coverage distinguishes documented Linux requirements from native syscall expectations. Actual October 2 AMD64 Firecracker workers report Linux 6.1.0 with the September 28 build identity and retained kernel notes; this is an observed worker, not an immutable selected kernel. ARM64 Firecracker has no verified execution capacity or qualified guest kernel. Public master builds 49266 and 49276 on October 2 identify Linux 6.8.0-1069-gcp in both ordinary AMD64/ARM64 pools and Linux 7.3.0-070300rc3-generic in both RC pools. Complete public logs record HOST_KERNEL from the source-owned uname -r producer. AMD64 selects native and gVisor targets; ARM64 selects gVisor ptrace/systrap targets, without native ARM oracle coverage. This dated inventory is not an immutable worker configuration. Corresponding ordinary and moving RC kernels remain unqualified on RBE; observed RBE Linux 6.1 does not establish public-pool kernel parity. A pinned userspace image does not pin the kernel or establish kernel cache identity. Reports must retain actual kernel release/build and available configuration evidence with uncached results for each covered environment. No new 5.16 minimum or additional LTS matrix is inferred from the checksum test.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13523,
-      "updatedAt": "2026-10-11T03:01:50.656929+00:00"
+      "updatedAt": "2026-10-15T20:41:26.641824+00:00"
     },
     {
       "id": "external:kvm",
@@ -1638,10 +1638,10 @@
       "url": "https://github.com/buildbuddy-io/buildbuddy/issues/13604",
       "group": "rbe",
       "status": "unavailable",
-      "summary": "The hosted provider issue remains unresolved and informational. The demonstrated Actions bridge closes the plugin dependency for qualification; no separate hosted-Firecracker execution obligation remains for this slice.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nEarlier Actions failures remain retained. Original Actions 37577490135 reaches InitPluginStack, then fails during StartRoot with EOF and during cleanup with EBUSY. Diagnostic Actions 37579603622 also fails without an identified exact cause. The third diagnostic, Actions 37582034686 at 0c26f5ccc, also fails (BuildBuddy 5f689b0f, 361.879 seconds). Its kernel-log capture succeeds with empty stderr and zero matching records; that does not exclude seccomp or OOM. The sentry’s exact exit status and cause remain unknown. The fourth disposable diagnostic, Actions 37584930281 at 7d50a0bbb, has terminated with an earlier plugin PreInit failure. Its exact Sentry pidfd reports SIGKILL, but the primary timeline includes an explicit cleanup kill for that same sandbox; this does not reproduce or explain the original StartRoot failure. Independent saved-result review is closed (root peer 4e2fc860429f). A kernel audit also records a clone seccomp kill in a runsc process, but its mapping to the namespace processes remains unresolved. The captured Sentry SIGKILL follows explicit cleanup and does not establish the cause of the original StartRoot failure. The diagnostic deliberately extends parking/ring lifetime during its finite HUP observation and provides no maintained plugin-runtime credit. These observations do not establish a BuildBuddy worker deployment or resolve the hosted vhost-net capacity issue.\n\nRetained hosted-worker evidence: root AMD64 Firecracker workers report /dev/vhost-net ENOENT. Plugin build remains qualified. Full-timeout parent fd60587c-a016-4a8d-bf79-91b593c6c701 executes one uncached TestConnectToSelf and fails network initialization with bad file descriptor; its same-action log also records absent vhost-net/KVM devices and Linux 6.1 September 28 identity. Action/Command equality and the original 900-second timeout are verified. Both observations are established, but the exact failing call and sole causation are not traced. No provider deployment reply or hosted Firecracker plugin runtime pass is claimed.",
+      "summary": "October 15: the proposed Linux 5.15 and 6.1 configurations pass vhost feature discovery and owner/reset/reacquire on the built kernels. BuildBuddy PR #13803 remains open. Virtqueue traffic and hosted deployment are not established by this diagnostic.\n\nThe hosted provider issue remains unresolved and informational. The demonstrated Actions bridge closes the plugin dependency for qualification; no separate hosted-Firecracker execution obligation remains for this slice.\n\nThe maintained Actions plugin-network slice now passes at source c555a370b in Actions 37592197370 (Bazel child 9ee167a0, 395.118 seconds). Both original uncached Docker owners retain 900-second limits and exit zero including private daemon and outer cleanup. TestConnectToSelf executes and passes; the selected image owner has zero cases and receives no image-case runtime credit. Production filter logs bind successful InitPluginStack and StartRoot, the normal cgo filter fallback with both exact clone rules, and gofer exit zero. Outcome 125977ccbfe2 and independent saved peer 155b330fd25c bind 126 retained files, fifty source records, nineteen outputs and remote AMD64 GoLink inputs. Thirteen fresh compiler/link spawns and 11,402 cache hits are recorded, with no local compiler. Full boot and gofer configuration suites also pass on actual AMD64 and ARM64 workers, and both owning Nogo checks pass both CPUs (unit peer 1f861d436179). This closes the maintained Actions selection, not general plugin coverage or hosted Firecracker device support.\n\nEarlier Actions failures remain retained. Original Actions 37577490135 reaches InitPluginStack, then fails during StartRoot with EOF and during cleanup with EBUSY. Diagnostic Actions 37579603622 also fails without an identified exact cause. The third diagnostic, Actions 37582034686 at 0c26f5ccc, also fails (BuildBuddy 5f689b0f, 361.879 seconds). Its kernel-log capture succeeds with empty stderr and zero matching records; that does not exclude seccomp or OOM. The sentry’s exact exit status and cause remain unknown. The fourth disposable diagnostic, Actions 37584930281 at 7d50a0bbb, has terminated with an earlier plugin PreInit failure. Its exact Sentry pidfd reports SIGKILL, but the primary timeline includes an explicit cleanup kill for that same sandbox; this does not reproduce or explain the original StartRoot failure. Independent saved-result review is closed (root peer 4e2fc860429f). A kernel audit also records a clone seccomp kill in a runsc process, but its mapping to the namespace processes remains unresolved. The captured Sentry SIGKILL follows explicit cleanup and does not establish the cause of the original StartRoot failure. The diagnostic deliberately extends parking/ring lifetime during its finite HUP observation and provides no maintained plugin-runtime credit. These observations do not establish a BuildBuddy worker deployment or resolve the hosted vhost-net capacity issue.\n\nRetained hosted-worker evidence: root AMD64 Firecracker workers report /dev/vhost-net ENOENT. Plugin build remains qualified. Full-timeout parent fd60587c-a016-4a8d-bf79-91b593c6c701 executes one uncached TestConnectToSelf and fails network initialization with bad file descriptor; its same-action log also records absent vhost-net/KVM devices and Linux 6.1 September 28 identity. Action/Command equality and the original 900-second timeout are verified. Both observations are established, but the exact failing call and sole causation are not traced. No provider deployment reply or hosted Firecracker plugin runtime pass is claimed.",
       "repo": "buildbuddy-io/buildbuddy",
       "number": 13604,
-      "updatedAt": "2026-10-07T08:35:21.745964+00:00"
+      "updatedAt": "2026-10-15T20:41:26.641824+00:00"
     },
     {
       "id": "pr:15159",
@@ -1722,10 +1722,10 @@
       "url": "https://github.com/google/gvisor/pull/15161",
       "group": "runtime",
       "status": "open",
-      "summary": "The user-approved correction is published at 27c59aad4, and the approved reply to Etienne is posted. Current source checks pass. Native Linux may report EFAULT after a cgroup hook while the test still verifies full length, complete words and the untouched tail; gVisor must succeed. The controlled Linux 6.1.0 probe and all three complete netlink owners passed. Both canonical formatters passed after formatting-only continuation; the first formatter failure remains retained. The reviewer’s own worker configuration is not inferred from the reproduction. Contributor approval is fulfilled; fresh maintainer review remains outstanding.",
+      "summary": "Current import #15764 failed while downloading bats-core: HTTP 504 before compilation. The workflow also posts its go tests failure for that generation failure. The source/import patches are identical; no author code fix is indicated. The attempted rerun returned HTTP 403 requiring repository admin rights. A maintainer needs to rerun the failed generate job.\n\nThe user-approved correction is published at 27c59aad4, and the approved reply to Etienne is posted. Current source checks pass. Native Linux may report EFAULT after a cgroup hook while the test still verifies full length, complete words and the untouched tail; gVisor must succeed. The controlled Linux 6.1.0 probe and all three complete netlink owners passed. Both canonical formatters passed after formatting-only continuation; the first formatter failure remains retained. The reviewer’s own worker configuration is not inferred from the reproduction. Contributor approval is fulfilled; fresh maintainer review remains outstanding.",
       "number": 15161,
       "reviewDecision": "CHANGES_REQUESTED",
-      "updatedAt": "2026-10-10T18:38:04.777493+00:00",
+      "updatedAt": "2026-10-15T20:48:43.663537+00:00",
       "followup": {
         "disposition": "Approved correction and reply delivered; fresh review awaited",
         "owner": "external_sweeps",
@@ -1742,7 +1742,26 @@
           "https://github.com/google/gvisor/pull/15265"
         ]
       },
-      "head": "27c59aad4a40770fd7710d719937b98d14038ca3"
+      "head": "27c59aad4a40770fd7710d719937b98d14038ca3",
+      "ciRecovery": {
+        "kind": "dependency-download-retry-denied",
+        "sourceHead": "27c59aad4a40770fd7710d719937b98d14038ca3",
+        "importNumber": 15764,
+        "importHead": "8364190e4ad9df09af928285395a8beece6faea0",
+        "workflowRun": 38786476145,
+        "job": 116599642050,
+        "jobURL": "https://github.com/google/gvisor/actions/runs/38786476145/job/116599642050",
+        "checkId": "CR_kwDOB9IlXs8AAAAbJeFXwg",
+        "checkName": "generate",
+        "statuses": [
+          {
+            "id": "SC_kwDOB9IlXs8AAAANJSOVCA",
+            "name": "go tests"
+          }
+        ],
+        "httpStatus": 403,
+        "observedAt": "2026-10-15T20:46:48.629210+00:00"
+      }
     },
     {
       "id": "pr:15156",
@@ -9538,8 +9557,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T15:40:16.634922+00:00",
-      "summary": "The revised design passes its semantic, race, analyzer and production checks. Its fixed comparison improves UDP Save time by 25.95%, but control-message Load still takes 33.65% more time and allocates 61.94% more bytes. CLI startup timing remains inconclusive, and production binaries grow by about 4 MB. The remaining Load cost is being profiled before further design changes.",
+      "updatedAt": "2026-10-15T20:50:11.432764+00:00",
+      "summary": "The revised design passes its semantic, race, analyzer and production checks. Its fixed comparison improves UDP Save time by 25.95%, but control-message Load still takes 33.65% more time and allocates 61.94% more bytes. CLI startup timing remains inconclusive, and production binaries grow by about 4 MB. Profiles identify duplicated schema storage; the separate container-startup comparison has completed, with no detected timing difference in its fixed sample.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10368,9 +10387,27 @@
               "url": "https://app.buildbuddy.io/invocation/a64c238f-2960-4e45-bac6-d15629cafca4"
             }
           ]
+        },
+        {
+          "text": "Profiles of the exact measured Control Load binaries identify schema name and field storage being allocated in the decoded frame and again when materialized for the type database. Other frame growth also contributes, so this does not explain the entire regression. Original profiles, CPU placement and native executable identities are verified. The proposed correction will make schema ownership explicit at the parser boundary.",
+          "evidence": [
+            {
+              "label": "Exact measured-binary Control Load profiles",
+              "url": "https://app.buildbuddy.io/invocation/8f383e69-ef02-4540-ad3d-414278a7388a"
+            }
+          ]
+        },
+        {
+          "text": "The existing StartupEmpty benchmark completed all 288 container starts across 12 balanced blocks on one worker. Median process means are 288.4 ms for the baseline, 296.1 ms for netip and 299.6 ms for the state rewrite. Benchstat detects neither difference (p=.590 and .887); this does not establish equal startup cost. Raw child logs, release selections, daemon cleanup, source-to-compiler-to-execution records and numeric reduction are independently verified.",
+          "evidence": [
+            {
+              "label": "Three-arm container-startup comparison",
+              "url": "https://app.buildbuddy.io/invocation/96970fb0-5048-406d-be10-e12e3867b77a"
+            }
+          ]
         }
       ],
-      "nextStep": "Locate the remaining control-message Load allocations using the exact measured binaries, then simplify their owning mechanism. Prepare the existing sandbox-startup benchmark as a separate matched comparison.",
+      "nextStep": "Validate the parser change that gives schema metadata one owner, then measure the resulting cost. The completed fixed container-startup comparison found no detected timing difference; it does not establish equal startup cost.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10831,6 +10868,14 @@
         {
           "label": "Separate fixed CLI startup comparison",
           "url": "https://app.buildbuddy.io/invocation/0bcbb672-1f11-4845-9932-6e42a2c41d59"
+        },
+        {
+          "label": "Exact measured-binary Control Load profiles",
+          "url": "https://app.buildbuddy.io/invocation/8f383e69-ef02-4540-ad3d-414278a7388a"
+        },
+        {
+          "label": "Three-arm container-startup comparison",
+          "url": "https://app.buildbuddy.io/invocation/96970fb0-5048-406d-be10-e12e3867b77a"
         }
       ],
       "comparisons": [
@@ -12925,9 +12970,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T15:40:16.634922+00:00",
-      "summary": "Both proposed netfilter kernels pass the existing Firecracker boot test. The combined feature probe also exercises vhost feature/owner/reset ioctls successfully on Linux 5.15, then fails because the diagnostic installed a FIB rule at an unsupported hook. The diagnostic is being corrected; no hosted deployment or Linux 6.1 feature result is claimed.",
-      "nextStep": "Move the diagnostic FIB rule to the supported prerouting hook and retain independent feature/kernel failures. Re-run that bounded diagnostic after source review; the two upstream configuration PRs stay independent.",
+      "updatedAt": "2026-10-15T20:41:26.641824+00:00",
+      "summary": "Both Linux 5.15 and 6.1 kernels pass all seven diagnostic feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy has incorporated the netfilter commit into #13810 and announced planned Tuesday-afternoon deployment. The separate vhost PR remains open; hosted deployment is not yet verified.",
+      "nextStep": "Track #13810 deployment and #13803 review, then check the affected gVisor tests on an actual updated hosted worker. Keep the successful diagnostic kernels distinct from the deployed worker kernel.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12972,6 +13017,10 @@
         {
           "label": "Combined guest netfilter and vhost feature probe",
           "url": "https://github.com/tamird/gvisor/actions/runs/38760225662"
+        },
+        {
+          "label": "Verified two-kernel feature run",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38763177061"
         }
       ],
       "findings": [
@@ -13054,6 +13103,28 @@
             {
               "label": "Linux 5.15 FIB hook validation",
               "url": "https://github.com/torvalds/linux/blob/v5.15/net/netfilter/nft_fib.c#L25-L56"
+            }
+          ]
+        },
+        {
+          "text": "The corrected diagnostic passes all seven checks on each kernel. Both guests deliver the exact UDP payload and report one packet at each CT, mark and FIB rule; vhost feature discovery and owner/reset/reacquire also pass. Original reports, complete kernel images and source-to-execution records are independently verified. Earlier hook and artifact-transfer failures remain retained. This checks the exercised packet paths and vhost controls, not vhost virtqueues or hosted deployment.",
+          "evidence": [
+            {
+              "label": "Verified two-kernel feature run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38763177061"
+            }
+          ]
+        },
+        {
+          "text": "BuildBuddy closed #13802 after incorporating its netfilter commit into #13810. Brandon says it should go live Tuesday afternoon. This is an announced deployment plan; no updated hosted worker has been verified. The contributor has already acknowledged the update.",
+          "evidence": [
+            {
+              "label": "Provider adoption and deployment plan",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13802#issuecomment-6199198524"
+            },
+            {
+              "label": "Provider kernel update",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13810"
             }
           ]
         }
