@@ -278,6 +278,7 @@ var primitiveTypeDatabase = map[string]reflect.Type{}
 // TypeMetadata describes generated capture and loader lifetime on an actual
 // receiver explicitly registered by the generator. Owner identifies the
 // method's declared receiver. Registration and allocation never call it.
+// Consumers retain only the constructor or mode, not the Owner type witness.
 type TypeMetadata struct {
 	Owner         Type
 	NewRecord     func(wire.TypeID, int) *wire.Record

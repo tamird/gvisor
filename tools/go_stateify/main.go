@@ -238,6 +238,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			mode = records.restore.noWaitValue
 		}
 		capture := "nil"
+		owner := fmt.Sprintf("(*%s)(nil)", name)
 		metadataRecv := ""
 		if record != nil {
 			capture = record.factory
@@ -247,11 +248,14 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 				metadataRecv = records.saveReceiver
 			}
 			capture = fmt.Sprintf("%sForwardRecord((*%s)(%s))", statePrefix, forward, metadataRecv)
+			// The receiver may shadow its own type name. Its actual pointer
+			// supplies the same owner type without another type expression.
+			owner = metadataRecv
 		}
 		// Ordinary metadata does not use the receiver. Forwarding retains the
 		// owning type's receiver name, subject to the same scope constraints.
 		fmt.Fprintf(outputFile, "func (%s *%s) StateMetadata() %sTypeMetadata {\n", metadataRecv, name, statePrefix)
-		fmt.Fprintf(outputFile, " return %sTypeMetadata{Owner: (*%s)(nil), NewRecord: %s, LoadGenerated: %s}\n}\n\n", statePrefix, name, capture, mode)
+		fmt.Fprintf(outputFile, " return %sTypeMetadata{Owner: %s, NewRecord: %s, LoadGenerated: %s}\n}\n\n", statePrefix, owner, capture, mode)
 		return true
 	}
 
