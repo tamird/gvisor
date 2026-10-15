@@ -211,6 +211,10 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   **Proposed updates** links open the exact public candidate; its return link
   opens the live PR. These use the existing nonblocking `includes` edge type
   with `role: proposed_update`; older clients show them as inclusion links.
+  Both detail views offer **Copy range-diff**, using the published PR head
+  from the GitHub snapshot and the exact proposed head. The command is also
+  selectable for manual copying. It disappears when the heads match or
+  either head is unavailable; a snapshot refresh updates the published head.
   They do not contribute to dependency chains or blocker counts. The proposal
   filter derives from branch status locally, preserving the published state
   enum for already-open clients; proposal age is explicitly unknown.

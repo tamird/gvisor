@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-15T07:32:08.954347+00:00",
-  "registryDate": "2026-10-15T06:11:35.630937+00:00",
+  "registryDate": "2026-10-15T07:39:50.082755+00:00",
   "prs": [
     {
       "number": 12470,
@@ -90925,7 +90925,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
+        "observedAt": "2026-10-15T07:39:50.082755+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -90934,7 +90934,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
+        "observedAt": "2026-10-15T07:39:50.082755+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -90943,61 +90943,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
-      }
-    },
-    "branch:review/pinring-teardown-timing": {
-      "contributor-review": {
-        "scope": "971719ac3c3cf88b3e73ee7a82573ab4e362444b",
-        "since": "2026-10-14T21:54:35.871162+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
-      }
-    },
-    "branch:review/checksum-report-comment": {
-      "contributor-review": {
-        "scope": "974fc3e8db2da5a93c204d7ce44974ca92dd070e",
-        "since": "2026-10-14T22:23:22.330360+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
-      }
-    },
-    "branch:fixes/nft-fib-presence": {
-      "contributor-review": {
-        "scope": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
-        "since": "2026-10-15T00:12:18.972729+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
-      }
-    },
-    "branch:fixes/tcp-retransmission-rtt": {
-      "contributor-review": {
-        "scope": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
-        "since": "2026-10-15T01:37:30.819178+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
-      }
-    },
-    "branch:fixes/tcp-rack-min-rtt": {
-      "contributor-review": {
-        "scope": "7e371d8acc44a23b419a84618471efe9ffc51c42",
-        "since": "2026-10-15T02:35:31.915029+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
-      }
-    },
-    "branch:fixes/docker-exec-output-wait": {
-      "contributor-review": {
-        "scope": "2c52512424d99b24af49038a72fac53069e20c8b",
-        "since": "2026-10-15T02:35:31.915029+00:00",
-        "basis": "observed",
-        "qualifier": null,
-        "observedAt": "2026-10-15T06:11:35.630937+00:00"
+        "observedAt": "2026-10-15T07:39:50.082755+00:00"
       }
     }
   },

@@ -925,6 +925,29 @@ function drawTable(nodes) {
     }
   }
 }
+function appendRangeDiff(parent, edge, nodes) {
+  if (edge.role !== "proposed_update") return;
+  const proposal = nodes.get(edge.from), pr = nodes.get(edge.to)?.github;
+  const oldHead = pr?.head, newHead = proposal?.head;
+  if (![oldHead, newHead].every(head => /^[a-f0-9]{40}$/.test(head)) || oldHead === newHead) return;
+  const command = `git range-diff ${oldHead}...${newHead}`;
+  const group = element("div", "range-diff");
+  const input = element("input", "range-diff-command");
+  input.type = "text"; input.readOnly = true; input.value = command;
+  input.setAttribute("aria-label", "Git range-diff command");
+  const message = element("span", "detail-meta"); message.setAttribute("role", "status");
+  const copy = button("Copy range-diff", async () => {
+    try {
+      await navigator.clipboard.writeText(command);
+      message.textContent = "Copied.";
+    } catch {
+      input.focus(); input.select();
+      message.textContent = "Clipboard unavailable. Select and copy the command above.";
+    }
+  });
+  group.append(element("p", "", `Published ${oldHead.slice(0, 9)} → proposed ${newHead.slice(0, 9)} · snapshot ${date(pr.checkedAt)}`), input, copy, message);
+  parent.append(group);
+}
 function drawDetails() {
   if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
   const details = $("details"), nodes = nodeMap(), node = nodes.get(selected); details.replaceChildren(); details.hidden = !node;
@@ -963,6 +986,7 @@ function drawDetails() {
       const relation = element("div", "relation");
       const sourceLabel = edge.role === "proposed_update" ? (other === "from" ? "Open proposed update ↗" : "Open live PR ↗") : "↗";
       relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link(sourceLabel, target.url, "relation-source"), element("p", "", edge.reason));
+      appendRangeDiff(relation, edge, nodes);
       if (resolved(target)) relation.append(element("p", "", `Resolved: ${target.status}`));
       for (const [index, url] of (Array.isArray(edge.evidence) ? edge.evidence : [edge.evidence]).filter(Boolean).entries()) relation.append(link(`Evidence${index ? " " + (index + 1) : ""} ↗`, url, "evidence-link"));
       section.append(relation);

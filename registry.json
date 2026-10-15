@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T06:11:35.630937+00:00",
+    "updatedAt": "2026-10-15T07:39:50.082755+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6733,15 +6733,15 @@
       "title": "Correct pinring teardown timing",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/971719ac3c3cf88b3e73ee7a82573ab4e362444b",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-14T21:54:35.871162+00:00",
-      "summary": "The EOF-handshake revision at 971719ac3 removes both byte signals while retaining the intended teardown timing boundary. Child setup failures are still rejected through Wait. Focused privileged, ordinary-skip and analyzer checks are independently closed on the exact integration file. The contributor is reviewing this revised proposal; no upstream PR or approval is claimed.",
+      "status": "Approved; publishing",
+      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
+      "summary": "The EOF-handshake revision at 971719ac3 removes both byte signals while retaining the intended teardown timing boundary. Child setup failures are still rejected through Wait. Focused privileged, ordinary-skip and analyzer checks are independently closed on the exact integration file. Contributor approved the EOF revision; upstream publication is in progress.",
       "followup": {
-        "owner": "root",
-        "disposition": "EOF revision qualified; contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor approved; delivery in progress",
         "sourceHead": "971719ac3c3cf88b3e73ee7a82573ab4e362444b",
-        "observedAt": "2026-10-14T21:54:35.871162+00:00",
-        "nextAction": "Review the exact EOF revision and decide whether to open its upstream PR. Earlier requested changes and qualifications remain historical.",
+        "observedAt": "2026-10-15T07:39:50.082755+00:00",
+        "nextAction": "Verify the current base and publish the approved standalone PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/a34bac7751984f777eae03eb1d8234844580c5dc",
           "https://github.com/tamird/gvisor/commit/4c3ad453e186dddacd7b88e6d4ae2b79a281f495",
@@ -6749,11 +6749,6 @@
           "https://github.com/tamird/gvisor/commit/6541c99536042416bbe20eb793f1c58edd23368d",
           "https://github.com/tamird/gvisor/commit/971719ac3c3cf88b3e73ee7a82573ab4e362444b"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "971719ac3c3cf88b3e73ee7a82573ab4e362444b",
-        "url": "https://github.com/tamird/gvisor/commit/971719ac3c3cf88b3e73ee7a82573ab4e362444b"
       }
     },
     {
@@ -6913,20 +6908,15 @@
       "title": "Remove historical checksum test comment",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e",
-      "status": "Contributor decision requested",
-      "updatedAt": "2026-10-14T22:23:22.330360+00:00",
-      "summary": "Proposed amendment to #15768 removes the two historical source-comment lines identified by Etienne. The checksum test code and commit message are unchanged; the proposal is rebased onto current master. The published PR still has its previous head.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "974fc3e8db2da5a93c204d7ce44974ca92dd070e",
-        "url": "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e"
-      },
+      "status": "Approved; publishing",
+      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
+      "summary": "Proposed amendment to #15768 removes the two historical source-comment lines identified by Etienne. The checksum test code and commit message are unchanged; the proposal is rebased onto current master. The published PR still has its previous head. Contributor approved publication and the review reply.",
       "followup": {
-        "owner": "root",
-        "disposition": "Comment-only correction ready; publication and reply decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor approved; delivery in progress",
         "sourceHead": "974fc3e8db2da5a93c204d7ce44974ca92dd070e",
-        "observedAt": "2026-10-14T22:23:22.330360+00:00",
-        "nextAction": "Publish the amendment and reply to Etienne if authorized. No test rerun is needed for the comment deletion.",
+        "observedAt": "2026-10-15T07:39:50.082755+00:00",
+        "nextAction": "Publish the approved amendment and reply to Etienne.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/974fc3e8db2da5a93c204d7ce44974ca92dd070e",
           "https://github.com/google/gvisor/pull/15768#discussion_r4276737393"
@@ -6942,15 +6932,15 @@
       "title": "Match Linux nftables FIB presence results",
       "group": "tests",
       "url": "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
-      "status": "Contributor review requested",
-      "summary": "The standalone correction removes the invalid oifname-exists clause, restricts presence queries to outgoing-interface indices, clears their complete 32-bit register and zero-pads interface names. Corrected package and analyzer checks pass on both CPUs; original gVisor IPv4/IPv6 runtime cases pass. The native reference passes on Linux 6.17.0-1022-azure with FIB modules. The padding parent retains a report-capture failure; missing XML was recovered from its original actions. Independent result review is complete. The standalone package files match the tested composition; the fixture retains master’s surrounding harness and removes the same invalid clause. Final source/message review passes. The exact combined commit is awaiting contributor review before an upstream PR is opened.",
-      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
+      "status": "Approved; publishing",
+      "summary": "The standalone correction removes the invalid oifname-exists clause, restricts presence queries to outgoing-interface indices, clears their complete 32-bit register and zero-pads interface names. Corrected package and analyzer checks pass on both CPUs; original gVisor IPv4/IPv6 runtime cases pass. The native reference passes on Linux 6.17.0-1022-azure with FIB modules. The padding parent retains a report-capture failure; missing XML was recovered from its original actions. Independent result review is complete. The standalone package files match the tested composition; the fixture retains master’s surrounding harness and removes the same invalid clause. Final source/message review passes. Contributor approved the combined correction; upstream publication is in progress.",
+      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
       "followup": {
-        "owner": "root",
-        "disposition": "Qualified correction; contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor approved; delivery in progress",
         "sourceHead": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
-        "observedAt": "2026-10-14T23:55:56.416922+00:00",
-        "nextAction": "Review the exact combined correction and decide whether to open its standalone upstream PR.",
+        "observedAt": "2026-10-15T07:39:50.082755+00:00",
+        "nextAction": "Verify the current base and publish the approved standalone PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/9b8c1371b17f51b561ed95e1287238c6ea6b274b",
           "https://github.com/torvalds/linux/commit/ab185e0c4fb82dfba6fb86f8271e06f931d9c64c",
@@ -6961,11 +6951,6 @@
           "https://app.buildbuddy.io/invocation/9cedd785-fd8b-441c-9987-4da3892954f0",
           "https://github.com/tamird/gvisor/actions/runs/38654426088"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
-        "url": "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
       }
     },
     {
@@ -7027,24 +7012,19 @@
       "title": "Reject ambiguous loss-probe RTT samples",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-15T01:37:30.819178+00:00",
-      "summary": "Tail loss probes bypassed RTT measurement invalidation, so ambiguous ACKs changed SRTT and RTO. Move the existing Karn guard into the shared retransmission path. Packet regressions fail before the fix and pass afterward on both architectures; full ACK/RACK suites and analyzers pass, retaining the existing DSACK skip. Independent source and original-result reviews are complete. Contributor review is pending before opening an upstream PR.",
+      "status": "Approved; publishing",
+      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
+      "summary": "Tail loss probes bypassed RTT measurement invalidation, so ambiguous ACKs changed SRTT and RTO. Move the existing Karn guard into the shared retransmission path. Packet regressions fail before the fix and pass afterward on both architectures; full ACK/RACK suites and analyzers pass, retaining the existing DSACK skip. Independent source and original-result reviews are complete. Contributor approved the correction; upstream publication is in progress.",
       "followup": {
-        "owner": "root",
-        "disposition": "Qualified correction; contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor approved; delivery in progress",
         "sourceHead": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
-        "observedAt": "2026-10-15T01:37:30.819178+00:00",
-        "nextAction": "Review the exact correction and decide whether to open its independent upstream PR.",
+        "observedAt": "2026-10-15T07:39:50.082755+00:00",
+        "nextAction": "Verify the current base and publish the approved standalone PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
           "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
-        "url": "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7"
       }
     },
     {
@@ -7056,25 +7036,20 @@
       "title": "Age RACK path RTT measurements",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
-      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor review is pending; throughput and memory-layout effects have not been measured.",
+      "status": "Approved; awaiting prerequisite",
+      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
+      "summary": "Age RACK’s path RTT estimate using eligible ACK and handshake samples and a five-minute window. The lifetime minimum could cause premature retransmission after a sustained longer path. Both-architecture packet regressions fail before the correction and pass afterward; affected TCP/RACK suites and analyzers pass. The existing DSACK skip remains. Initial packet fixtures crossed the loss-probe deadline; their timing was corrected and the original failures retained. The final one-commit proposal preserves the tested source and depends on the separate Karn correction. Contributor approved the correction. Upstream submission awaits the separate Karn correction; throughput and memory-layout effects have not been measured.",
       "followup": {
-        "owner": "root",
-        "disposition": "Qualified correction; contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor approved; prerequisite outstanding",
         "sourceHead": "7e371d8acc44a23b419a84618471efe9ffc51c42",
-        "observedAt": "2026-10-15T02:35:31.915029+00:00",
-        "nextAction": "Review the exact one-commit proposal. Open its upstream PR after contributor approval and the separate loss-probe correction lands.",
+        "observedAt": "2026-10-15T07:39:50.082755+00:00",
+        "nextAction": "Open the upstream PR after the separate Karn correction lands.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
           "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3",
           "https://app.buildbuddy.io/invocation/919b6f41-c170-40bb-a409-a03631978ff1"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "7e371d8acc44a23b419a84618471efe9ffc51c42",
-        "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42"
       }
     },
     {
@@ -7086,24 +7061,19 @@
       "title": "Wait on Docker exec output before polling",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
-      "summary": "Read Docker exec output before checking status, avoiding the existing 500 ms polling delay for short commands and removing the output-reader goroutine. Early stream closure still waits for process completion; cancellation closes the hijacked connection. Both-architecture package and analyzer checks and four focused Docker integration cases pass. The parent job failed during report collection because its Python lacked str.removesuffix; the original reports were recovered and independently verified without rerunning tests. Contributor review is pending. No measured latency improvement is claimed.",
+      "status": "Approved; publishing",
+      "updatedAt": "2026-10-15T07:39:50.082755+00:00",
+      "summary": "Read Docker exec output before checking status, avoiding the existing 500 ms polling delay for short commands and removing the output-reader goroutine. Early stream closure still waits for process completion; cancellation closes the hijacked connection. Both-architecture package and analyzer checks and four focused Docker integration cases pass. The parent job failed during report collection because its Python lacked str.removesuffix; the original reports were recovered and independently verified without rerunning tests. Contributor approved the correction; upstream publication is in progress. No measured latency improvement is claimed.",
       "followup": {
-        "owner": "root",
-        "disposition": "Qualified correction; contributor decision pending",
+        "owner": "syscall_validation",
+        "disposition": "Contributor approved; delivery in progress",
         "sourceHead": "2c52512424d99b24af49038a72fac53069e20c8b",
-        "observedAt": "2026-10-15T02:35:31.915029+00:00",
-        "nextAction": "Review the exact independent proposal and decide whether to open its upstream PR.",
+        "observedAt": "2026-10-15T07:39:50.082755+00:00",
+        "nextAction": "Verify the current base and publish the approved standalone PR.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
           "https://app.buildbuddy.io/invocation/d6ae3a42-8ff7-4070-bd3e-03fd3e1cf9d5"
         ]
-      },
-      "contributorReview": {
-        "status": "pending",
-        "head": "2c52512424d99b24af49038a72fac53069e20c8b",
-        "url": "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b"
       }
     },
     {
