@@ -167,6 +167,32 @@ func TestLazyRegistration(t *testing.T) {
 	}
 }
 
+// Promoting Type through a value field requires a non-nil outer receiver.
+// A Nil body must not call those methods even when allocating a new object.
+type promotedMetadata struct{ lazyRegistered }
+
+func TestNilReferencedObject(t *testing.T) {
+	var buf bytes.Buffer
+	writer := wire.Writer{Writer: &buf}
+	if err := WriteHeader(&writer, 2, true); err != nil {
+		t.Fatal(err)
+	}
+	wire.Save(&writer, wire.Uint(1))
+	wire.Save(&writer, &wire.Ref{Root: 2})
+	wire.Save(&writer, wire.Uint(2))
+	wire.Save(&writer, wire.Nil{})
+	var restored *promotedMetadata
+	if _, err := Load(t.Context(), &buf, &restored); err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if restored == nil {
+		t.Fatal("Load left the nonzero reference nil")
+	}
+	if got, want := restored.value, int64(0); got != want {
+		t.Errorf("Load value = %d, want %d", got, want)
+	}
+}
+
 type duplicateFieldType struct{ value int64 }
 
 func (*duplicateFieldType) StateTypeName() string { return "state.duplicateFieldType" }

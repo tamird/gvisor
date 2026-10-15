@@ -152,6 +152,14 @@ func (tdb *typeEncodeDatabase) Lookup(typ reflect.Type) (*typeEntry, bool) {
 // Register adds a typeID entry.
 func (tbd *typeDecodeDatabase) Register(typ *wire.Type) {
 	tbd.pending = append(tbd.pending, typ)
+	// The wire name already identifies the exact registration. Cache its
+	// operations without invoking metadata on a possibly promoted receiver;
+	// a referenced object's body may be Nil and require no reconciliation.
+	if registered, ok := globalTypeDatabase[typ.Name]; ok {
+		plan := tbd.plan(registered.typ)
+		plan.allocate = registered.allocate
+		plan.loadMode = registered.loadMode
+	}
 }
 
 // LookupName looks up the type name by ID.
@@ -227,7 +235,6 @@ func (tbd *typeDecodeDatabase) Lookup(id typeID, typ reflect.Type) *reconciledTy
 			id, name, fields, pending.Name, pending.Fields)
 	}
 	plan := tbd.plan(typ)
-	plan.resolveRegistration(name)
 	rte := &reconciledTypeEntry{
 		Type:      info,
 		LocalType: typ,
