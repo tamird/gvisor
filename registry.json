@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T01:12:47.240415+00:00",
+    "updatedAt": "2026-10-15T01:37:30.819178+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6989,6 +6989,35 @@
           "https://github.com/torvalds/linux/blob/ab185e0c4/net/netfilter/nft_fib.c#L21-L26"
         ]
       }
+    },
+    {
+      "id": "branch:fixes/tcp-retransmission-rtt",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/tcp-retransmission-rtt",
+      "head": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
+      "title": "Reject ambiguous loss-probe RTT samples",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-15T01:37:30.819178+00:00",
+      "summary": "Tail loss probes bypassed RTT measurement invalidation, so ambiguous ACKs changed SRTT and RTO. Move the existing Karn guard into the shared retransmission path. Packet regressions fail before the fix and pass afterward on both architectures; full ACK/RACK suites and analyzers pass, retaining the existing DSACK skip. Independent source and original-result reviews are complete. Contributor review is pending before opening an upstream PR.",
+      "followup": {
+        "owner": "root",
+        "disposition": "Qualified correction; contributor decision pending",
+        "sourceHead": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
+        "observedAt": "2026-10-15T01:37:30.819178+00:00",
+        "nextAction": "Review the exact correction and decide whether to open its independent upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
+          "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5"
+        ]
+      },
+      "contributorReview": {
+        "status": "pending",
+        "head": "0a7803613914ae15c0101e5d557a6f3e2c3a83f7",
+        "url": "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7"
+      }
     }
   ],
   "edges": [
@@ -8506,8 +8535,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T01:12:47.240415+00:00",
-      "summary": "The RACK path-change diagnostic reproduces stale-minimum loss classification: after sustained RTT growth from 10 to 100 ms, RACK marks the modeled original packet lost at 103.5 ms, before its ACK at 110 ms. Three controls avoid premature loss. Both architectures and analyzers pass, and independent result review is complete. The packet-level ACK run has completed; original-result review is checking delayed ACKs, idle periods and retransmissions before an aging policy is selected. This diagnostic does not establish a throughput effect or explain the earlier sender-sharing result. The separate RACK packet-fixture proposal remains held behind Nagle/GSO and #15635.",
+      "updatedAt": "2026-10-15T01:37:30.819178+00:00",
+      "summary": "Packet-level diagnostics confirm stale-minimum RACK loss classification after sustained RTT growth and expose a separate RTT-sampling bug: a loss-probe retransmission lets an ambiguous ACK change SRTT without timestamps. The independent correction moves the existing Karn guard to the shared retransmission path. Both architectures reproduce the old failure and pass the corrected ACK/RACK suites and analyzers. That correction is awaiting contributor review. Minimum-RTT aging is being designed separately around validated handshake and data-ACK samples; modeled delayed ACKs remain an explicit limitation.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9020,7 +9049,7 @@
           ]
         },
         {
-          "text": "BuildBuddy reports successful completion of the actual ACK-accounting diagnostic 6b8664d1 at qualification cf05b1908, based on public diagnostic d41fec771. It drives five ACK histories, four retransmission/timestamp cases, and an actual SACK/timer/wire-retransmission recovery sequence on both architectures. Source and bounded-method reviews passed; original-result verification is continuing. The lone-runt delay is a modeled receiver input, not an observed delayed-ACK policy. No production estimator is changed.",
+          "text": "Independent review of all 59 original files and 29 source bodies closes the actual ACK-accounting diagnostic on both architectures. Six 100 ms samples after a 10 ms seed leave a 2.5 ms reordering window; the SACK/timer path retransmits before the modeled original ACK at 110 ms. No-timestamp ACKs after a tail loss probe also change SRTT from 10 ms to 15 ms or 9.375 ms, exposing a separate Karn violation. The lone-runt receiver delay is modeled, not an observed receiver policy.",
           "evidence": [
             {
               "label": "Actual ACK diagnostic source",
@@ -9031,9 +9060,22 @@
               "url": "https://app.buildbuddy.io/invocation/6b8664d1-5c5c-4a1a-903c-0f45ae438bfc"
             }
           ]
+        },
+        {
+          "text": "The standalone loss-probe RTT correction moves measurement invalidation from resendSegment into sendSegment’s retransmission branch. Identical packet fixtures fail against the original production code only for ambiguous no-timestamp ACKs. Corrected ACK and RACK suites and owning analyzers pass on AMD64 and ARM64; the existing DSACK skip remains. Timestamp-identified samples and later new-data samples remain eligible. Original outputs and compiled-source identities were independently reviewed. The final message-only amendment preserves the executed source.",
+          "evidence": [
+            {
+              "label": "Loss-probe RTT correction awaiting contributor review",
+              "url": "https://github.com/tamird/gvisor/commit/0a7803613914ae15c0101e5d557a6f3e2c3a83f7"
+            },
+            {
+              "label": "Failing-before and corrected regression validation",
+              "url": "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5"
+            }
+          ]
         }
       ],
-      "nextStep": "Verify the actual ACK histories, packet retransmission and recovery results before selecting a minimum-RTT aging policy. Preserve retransmission ambiguity and modeled receiver-delay limitations.",
+      "nextStep": "Obtain contributor review of the independent loss-probe RTT correction. Design and validate minimum-RTT aging using eligible RTT samples while preserving separate RACK delivery timing.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9102,6 +9144,10 @@
         {
           "label": "Runner expected-exit policy",
           "url": "https://github.com/tamird/gvisor/blob/f47c93525/test/packetimpact/runner/main.go#L192"
+        },
+        {
+          "label": "Qualified loss-probe RTT correction",
+          "url": "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5"
         }
       ],
       "comparisons": [
@@ -9361,8 +9407,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T01:12:47.240415+00:00",
-      "summary": "The simpler decoded-frame candidate uses one contiguous node slice with indexed views, removing the block/inline storage machinery. Its correctness, ownership, race and allocation-guard qualification passes. In twelve balanced pairs against the previous contiguous parser, large synthetic Load takes 19.00% less time, allocates 36.85% fewer bytes and uses 71 rather than 74 allocations. The control-message timing has no detected change (p=.089), with unchanged allocation costs. Executable file sizes are unchanged. Independent original-result review is complete. This supports retaining the simpler candidate for the next whole-restore comparison; it does not yet establish the entire architecture's benefit over the original design. The same-worker restore comparison stopped at a control startup failure before the candidate ran; that failure is being diagnosed without changing the readiness deadline.",
+      "updatedAt": "2026-10-15T01:37:30.819178+00:00",
+      "summary": "The simpler decoded-frame candidate removes block/inline storage machinery and passes correctness, ownership, race and allocation-guard checks. In twelve balanced pairs against the previous contiguous parser, large synthetic Load takes 19% less time, allocates 36.85% fewer bytes and uses 71 rather than 74 allocations. A whole-restore comparison against the original architecture failed during control startup before the candidate ran. Six subsequent instrumented control operations passed without reproducing the stall. The fixed ABBA comparison is now running with failure-time task capture on both sources and the original readiness deadline; no whole-restore performance result is available yet.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9951,9 +9997,35 @@
               "url": "https://app.buildbuddy.io/invocation/ac021284-fff6-4063-bfda-2793dd24d412"
             }
           ]
+        },
+        {
+          "text": "All six instrumented control starts, checkpoints and restores pass with the existing five-second readiness deadline. The failure-only diagnostic hook never runs, so this does not identify the earlier startup cause or validate stack capture in a failure. The seven release executables are unchanged from the failed control comparison; original logs, XML and compile/link identities are independently verified.",
+          "evidence": [
+            {
+              "label": "Six passing instrumented control operations",
+              "url": "https://app.buildbuddy.io/invocation/53a9dfe0-a960-4030-b7d2-8d39aeb772d7"
+            },
+            {
+              "label": "Control with failure-time task capture",
+              "url": "https://github.com/tamird/gvisor/commit/4ffd7329b20485d2000250a70cbfbd5e1ccd2fd1"
+            }
+          ]
+        },
+        {
+          "text": "A fixed ABBA×6 comparison is running with identical failure-time task capture in both sources. The 23-file state/generator change is byte-identical to the original comparison; readiness deadlines, resources and release layouts are unchanged. Corrected report grouping was checked against retained outputs before submission. No candidate result or comparative performance conclusion is claimed while the run is active.",
+          "evidence": [
+            {
+              "label": "Instrumented fixed whole-restore comparison",
+              "url": "https://app.buildbuddy.io/invocation/c0483574-e876-471d-883a-4b2accd8cd04"
+            },
+            {
+              "label": "Instrumented candidate source",
+              "url": "https://github.com/tamird/gvisor/commit/4e9b79b6ecdea36ad029d630d7102995f395e723"
+            }
+          ]
         }
       ],
-      "nextStep": "Diagnose the control startup failure with the existing five-second deadline and capture task state before cleanup. Correct scratch report/container-name handling against the retained original outputs before another comparison.",
+      "nextStep": "Verify the fixed instrumented ABBA comparison, including startup failures, original outputs, runtime source identities and paired restore measurements.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10322,6 +10394,14 @@
         {
           "label": "Stable-block candidate",
           "url": "https://github.com/tamird/gvisor/commit/4bb1684e642e36629ca16c9f5edf6a4f6876d2d7"
+        },
+        {
+          "label": "Closed control startup diagnostic",
+          "url": "https://app.buildbuddy.io/invocation/53a9dfe0-a960-4030-b7d2-8d39aeb772d7"
+        },
+        {
+          "label": "Active instrumented whole-restore comparison",
+          "url": "https://app.buildbuddy.io/invocation/c0483574-e876-471d-883a-4b2accd8cd04"
         }
       ]
     },
