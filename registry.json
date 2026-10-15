@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T02:35:31.915029+00:00",
+    "updatedAt": "2026-10-15T02:52:47.576141+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9492,8 +9492,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T02:35:31.915029+00:00",
-      "summary": "The unified decoded-frame candidate improves the large synthetic Load fixture, but the 24-operation whole-restore comparison does not establish an overall speedup: medians were 871.3 ms before and 880.6 ms after. Existing logs place kernel loading around 23–27 ms, within overlapping restore and command timers. A separate Docker exec simplification removes output-reader bookkeeping and avoids polling before output completion; its focused checks pass and contributor review is pending. The next state experiment profiles the current large-state Load fixture to locate the remaining parser, reflection and allocation costs.",
+      "updatedAt": "2026-10-15T02:52:47.576141+00:00",
+      "summary": "The unified decoded-frame candidate improves the large synthetic Load fixture, but the 24-operation whole-restore comparison does not establish an overall speedup: medians were 871.3 ms before and 880.6 ms after. The completed profile of the current large-state Load fixture attributes about 73% of sampled allocation bytes to frame storage growth and 16% to dependency callbacks. The next decoder design will avoid retaining redundant intermediate type descriptions while preserving validation before custom loaders run. The separate Docker exec simplification has passed its focused checks and awaits contributor review.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10138,9 +10138,22 @@
               "url": "https://app.buildbuddy.io/invocation/d6ae3a42-8ff7-4070-bd3e-03fd3e1cf9d5"
             }
           ]
+        },
+        {
+          "text": "The five-second large-state Load profile completed successfully with 530 CPU samples. Frame storage growth accounts for approximately 72.75% of sampled allocation bytes, dependency callbacks for 16.35%, and destination allocation for 7.47%. The current statistics sampler accounts for 13.77% of cumulative CPU samples. Independent review verified the raw profiles, original reports and exact qualified executable. These are sampled process-wide costs for this synthetic graph, including setup and calibration; cumulative CPU costs overlap. Source inspection identifies repeated TypeSpec trees that registration ignores when the referenced root already exists. The design work must remove that storage without calling custom loaders before the complete record has been validated.",
+          "evidence": [
+            {
+              "label": "Completed CPU and allocation profile",
+              "url": "https://app.buildbuddy.io/invocation/4ab1829a-6a28-4a48-ae37-cc40ac765f8b"
+            },
+            {
+              "label": "Exact profiled source",
+              "url": "https://github.com/tamird/gvisor/commit/2d57232d88c0e5091781917823d4e9ed408ad1a6"
+            }
+          ]
         }
       ],
-      "nextStep": "Profile the qualified current large-state Load fixture with the existing CPU/allocation tools. Use those results to choose the next architectural change; preserve the whole-restore comparison and its variability.",
+      "nextStep": "Reduce redundant reference-type storage without moving registration or custom loader calls ahead of complete-record validation. Review reference identity, forward references and callback ordering before measuring the resulting structural change.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10521,6 +10534,14 @@
         {
           "label": "Recovered benchstat report from original measured rows",
           "url": "https://app.buildbuddy.io/invocation/dd6acfa8-7f43-4d29-b047-8e7934656a74"
+        },
+        {
+          "label": "Completed CPU and allocation profile",
+          "url": "https://app.buildbuddy.io/invocation/4ab1829a-6a28-4a48-ae37-cc40ac765f8b"
+        },
+        {
+          "label": "Exact profiled source",
+          "url": "https://github.com/tamird/gvisor/commit/2d57232d88c0e5091781917823d4e9ed408ad1a6"
         }
       ],
       "comparisons": [
