@@ -214,10 +214,6 @@ owners retain their portable environment skips. The KVM lane separately
 selects the pinring VM-release and boot-posture KVM cases. A skipped required
 case remains unqualified even when its owner exits successfully.
 
-ARM64 KVM remains an outstanding qualification requirement. Its separate
-guest checks pass pinring VM teardown, but boot-posture still times out;
-those experimental routes are not part of the qualification entry point.
-
 The ordinary AMD64 syscall phase uses the public `syscalls-amd64` profile,
 leaving KVM and Nogo to their dedicated lanes. Its root namespace frontends
 normally invoke the Docker fixture for private PID, cgroup, mount and network
