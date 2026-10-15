@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"gvisor.dev/gvisor/pkg/state/wire"
@@ -64,6 +65,132 @@ func TestBinaryErrors(t *testing.T) {
 	}
 	if _, err := Load(t.Context(), &buf, &binaryFailure{}); !errors.Is(err, errBinary) {
 		t.Fatalf("Load = %v, want %v", err, errBinary)
+	}
+}
+
+type lazyRegistered struct {
+	value int64
+}
+
+var lazyNames, lazyFields, lazyAllocations int
+
+func (*lazyRegistered) StateTypeName() string {
+	lazyNames++
+	return "state.lazyRegistered"
+}
+
+func (*lazyRegistered) StateFields() []string {
+	lazyFields++
+	return []string{"value"}
+}
+
+func (l *lazyRegistered) StateSave(s Sink) { s.Save(0, &l.value) }
+
+func (l *lazyRegistered) StateLoad(_ context.Context, s Source) {
+	LoadInto(s, 0, &l.value, false)
+}
+
+func allocateLazyRegistered(typ reflect.Type) any {
+	lazyAllocations++
+	return NewObject[lazyRegistered](typ)
+}
+
+func TestLazyRegistration(t *testing.T) {
+	for _, generated := range []bool{false, true} {
+		name := "manual"
+		if generated {
+			name = "generated"
+		}
+		t.Run(name, func(t *testing.T) {
+			t.Cleanup(func() {
+				delete(globalTypeDatabase, "state.lazyRegistered")
+				delete(reverseTypeDatabase, reflect.TypeFor[lazyRegistered]())
+			})
+			lazyNames, lazyFields, lazyAllocations = 0, 0, 0
+			// Describing a destination before registration must neither call
+			// its metadata on nil wire data nor cache a global fallback.
+			var buf bytes.Buffer
+			writer := wire.Writer{Writer: &buf}
+			if err := WriteHeader(&writer, 1, true); err != nil {
+				t.Fatal(err)
+			}
+			wire.Save(&writer, wire.Uint(1))
+			wire.Save(&writer, wire.Nil{})
+			value := lazyRegistered{value: 17}
+			if _, err := Load(t.Context(), &buf, &value); err != nil {
+				t.Fatal(err)
+			}
+			if got, want := value.value, int64(17); got != want {
+				t.Errorf("nil Load value = %d, want %d", got, want)
+			}
+			if lazyNames != 0 || lazyFields != 0 {
+				t.Fatalf("nil Load called metadata: names=%d fields=%d, want zero", lazyNames, lazyFields)
+			}
+			if generated {
+				RegisterGenerated((*lazyRegistered)(nil), nil, allocateLazyRegistered, LoadGenerated)
+			} else {
+				Register((*lazyRegistered)(nil))
+			}
+			wantFields := 0
+			if raceEnabled {
+				wantFields = 1
+			}
+			if got, want := lazyFields, wantFields; got != want {
+				t.Fatalf("registration StateFields calls = %d, want %d", got, want)
+			}
+			if got, want := lazyAllocations, 0; got != want {
+				t.Fatalf("registration allocations = %d, want %d", got, want)
+			}
+			// A new Load must use the registration even if an earlier Load
+			// saw this type before registration. Both references share one
+			// allocation and exercise the exact registered loader.
+			buf.Reset()
+			original := [2]*lazyRegistered{&value, &value}
+			if _, err := Save(t.Context(), &buf, &original); err != nil {
+				t.Fatal(err)
+			}
+			var restored [2]*lazyRegistered
+			if _, err := Load(t.Context(), &buf, &restored); err != nil {
+				t.Fatal(err)
+			}
+			if restored[0] == nil || restored[0] != restored[1] || restored[0] == &value || restored[0].value != value.value {
+				t.Fatalf("Load = %v, want two aliases of a new value %d", restored, value.value)
+			}
+			wantAllocations := 0
+			if generated {
+				wantAllocations = 1
+			}
+			if got, want := lazyAllocations, wantAllocations; got != want {
+				t.Errorf("Load factory calls = %d, want %d", got, want)
+			}
+		})
+	}
+}
+
+type duplicateFieldType struct{ value int64 }
+
+func (*duplicateFieldType) StateTypeName() string { return "state.duplicateFieldType" }
+func (*duplicateFieldType) StateFields() []string { return []string{"value", "value"} }
+func (d *duplicateFieldType) StateSave(s Sink)    { s.Save(0, &d.value) }
+func (d *duplicateFieldType) StateLoad(_ context.Context, s Source) {
+	s.Load(0, &d.value)
+}
+
+func TestRegistrationValidation(t *testing.T) {
+	t.Cleanup(func() {
+		delete(globalTypeDatabase, "state.duplicateFieldType")
+		delete(reverseTypeDatabase, reflect.TypeFor[duplicateFieldType]())
+	})
+	err := safely(func() { Register((*duplicateFieldType)(nil)) })
+	if !raceEnabled {
+		if err != nil {
+			t.Fatalf("registration validated fields eagerly: %v", err)
+		}
+		var buf bytes.Buffer
+		_, err = Save(t.Context(), &buf, &duplicateFieldType{})
+	}
+	if err == nil || !strings.Contains(err.Error(), "duplicate field") {
+		t.Fatalf("validation = %v, want duplicate field error", err)
 	}
 }
 

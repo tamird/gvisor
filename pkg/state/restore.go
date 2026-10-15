@@ -39,59 +39,57 @@ const (
 	LoadGenerated
 )
 
-// restorePlan describes one actual Go type. Registered types own their plans;
-// other types are scoped to a Load.
+// restorePlan owns the operations for one actual Go type during a Load.
+// Registration is resolved only when allocating or reconciling an object;
+// describing a destination must not invoke its metadata before reading wire data.
 type restorePlan struct {
-	typ  reflect.Type
-	kind reflect.Kind
-	size uintptr
+	typ                  reflect.Type
+	kind                 reflect.Kind
+	size                 uintptr
+	allocate             Allocate
+	loadMode             LoadMode
+	registrationResolved bool
 }
 
-func newRestorePlan(typ reflect.Type) restorePlan {
-	return restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
-}
-
-func (ds *decodeState) plan(typ reflect.Type) *restorePlan {
-	if registered, ok := restoreType(typ); ok {
-		return &registered.restorePlan
-	}
-	return ds.localPlan(typ)
-}
-
-// localPlan owns unregistered and runtime-length types for this Load.
-func (ds *decodeState) localPlan(typ reflect.Type) *restorePlan {
-	if plan := ds.types.plans[typ]; plan != nil {
+func (tdb *typeDecodeDatabase) plan(typ reflect.Type) *restorePlan {
+	if plan := tdb.plans[typ]; plan != nil {
 		return plan
 	}
-	if ds.types.plans == nil {
-		ds.types.plans = make(map[reflect.Type]*restorePlan)
+	if tdb.plans == nil {
+		tdb.plans = make(map[reflect.Type]*restorePlan)
 	}
-	plan := newRestorePlan(typ)
-	ds.types.plans[typ] = &plan
-	return &plan
+	plan := &restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
+	tdb.plans[typ] = plan
+	return plan
 }
 
-func (ds *decodeState) elementPlan(plan *restorePlan) *restorePlan {
-	return ds.plan(plan.typ.Elem())
+func (plan *restorePlan) resolveRegistration(name string) {
+	if plan.registrationResolved {
+		return
+	}
+	if registered, ok := globalTypeDatabase[name]; ok && registered.typ == plan.typ {
+		plan.allocate = registered.allocate
+		plan.loadMode = registered.loadMode
+	}
+	plan.registrationResolved = true
 }
 
-func restoreType(typ reflect.Type) (*registeredType, bool) {
-	if entry, ok := reverseTypeDatabase[typ]; ok {
-		if registered, ok := globalTypeDatabase[entry.info.Name]; ok && registered.typ == typ {
-			return registered, true
+func (plan *restorePlan) newObject() any {
+	if !plan.registrationResolved {
+		// Foreign codecs do not implement Type. Ordinary generated and manual
+		// registrations expose their name without constructing a field schema.
+		if info, ok := reverseTypeDatabase[plan.typ]; ok {
+			plan.resolveRegistration(info.Name)
+		} else if value, ok := reflect.Zero(reflect.PointerTo(plan.typ)).Interface().(Type); ok {
+			plan.resolveRegistration(value.StateTypeName())
+		} else {
+			plan.registrationResolved = true
 		}
 	}
-	if registered, ok := primitiveTypeDatabase[typ.Name()]; ok && registered.typ == typ {
-		return registered, true
+	if plan.allocate != nil {
+		return plan.allocate(plan.typ)
 	}
-	return nil, false
-}
-
-func allocateObject(typ reflect.Type) any {
-	if registered, ok := restoreType(typ); ok && registered.allocate != nil {
-		return registered.allocate(typ)
-	}
-	return reflect.New(typ).Interface()
+	return reflect.New(plan.typ).Interface()
 }
 
 // dataValue preserves nil-interface delegation before any address or view is

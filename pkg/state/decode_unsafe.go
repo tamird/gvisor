@@ -26,7 +26,7 @@ import (
 func LoadInto[T any](s Source, slot int, ptr *T, wait bool) {
 	encoded := s.internal.field(slot)
 	ds := s.internal.ds
-	target := restoreDestination{plan: ds.plan(reflect.TypeFor[T]()), pointer: unsafe.Pointer(ptr)}
+	target := restoreDestination{plan: ds.types.plan(reflect.TypeFor[T]()), pointer: unsafe.Pointer(ptr)}
 	ds.restoreValue(s.internal.ods, target, encoded)
 	if wait {
 		ds.waitObject(s.internal.ods, encoded, nil)
@@ -75,7 +75,7 @@ func (ds *decodeState) destination(value reflect.Value) restoreDestination {
 	if !value.IsValid() {
 		return restoreDestination{}
 	}
-	plan := ds.plan(value.Type())
+	plan := ds.types.plan(value.Type())
 	if !value.CanAddr() || !value.CanSet() {
 		return restoreDestination{plan: plan, reflected: value}
 	}
@@ -86,7 +86,7 @@ func (ds *decodeState) pointerDestination(pointer reflect.Value) restoreDestinat
 	if pointer.Kind() != reflect.Pointer {
 		return ds.destination(pointer.Elem())
 	}
-	return restoreDestination{plan: ds.plan(pointer.Type().Elem()), pointer: pointer.UnsafePointer()}
+	return restoreDestination{plan: ds.types.plan(pointer.Type().Elem()), pointer: pointer.UnsafePointer()}
 }
 
 func (target restoreDestination) value() reflect.Value {
