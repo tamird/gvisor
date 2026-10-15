@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T22:32:55.534469+00:00",
+    "updatedAt": "2026-10-15T22:59:48.554319+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1167,22 +1167,23 @@
       "group": "analysis",
       "status": "open",
       "reviewDecision": "",
-      "updatedAt": "2026-10-07T03:54:47.497375+00:00",
-      "summary": "All visible checks pass at the published head in the 03:52 snapshot. Current mergeability is UNKNOWN; earlier MERGEABLE readback is historical.\n\nThe contributor-approved narrowed kernel change is published at de2a5dd01af28c23dedcaf2e934ec808f8051c55. It is ready for review, with the exact reviewed description and matching local/fork/tracking refs; publication receipt 1ede380a067d records OPEN/MERGEABLE after the older snapshot. It declares existing TaskSet, signal and atomic ownership, and fixes the exposed parent-death-signal locking, signal-error lock reacquisition and exit-status read.\n\nThe prior exact production source passed 68 XML entries and 26 roots normally and with the race detector. A narrow cgroup checker annotation continuation passes the two owning Nogo targets with both CPU analyses and original 300-second timeouts. Outcome 9d72abf63c65 and independent saved peer retain the original failed parent, two actual uncached AMD64 OCI analyzer actions and BEP-bound XML. No ARM runtime, 64K or full-repository result is claimed.",
+      "updatedAt": "2026-10-15T22:59:48.554319+00:00",
+      "summary": "The approved kernel-locking change is rebased and published at db1650842. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. Existing reviewer requests are preserved, and no approval was invalidated.\n\nThe current source passed the selected kernel, race and analyzer qualification. The rebase preserves upstream signal handling and the proposal’s TaskSet, signal and atomic ownership checks, parent-death-signal locking, signal-error lock reacquisition and exit-status read. No full-repository or ARM runtime result is claimed.",
       "followup": {
-        "disposition": "approved narrowed change delivered; tracking CI and review",
+        "disposition": "Rebased approved change delivered; maintainer review pending",
         "owner": "external_sweeps",
-        "nextAction": "Track exact published-head CI and human review; the older broad draft is no longer the current scope.",
+        "nextAction": "Follow existing maintainer review requests and subsequent exact-head CI or import changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/14345#issuecomment-5390710874",
-          "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55"
+          "https://github.com/tamird/gvisor/commit/de2a5dd01af28c23dedcaf2e934ec808f8051c55",
+          "https://github.com/tamird/gvisor/commit/db1650842d9b3e403f4b4cd9f16a79fb39e7363a"
         ],
-        "reviewedAt": "2026-10-08T00:44:30.969242+00:00",
-        "sourceHead": "de2a5dd01af28c23dedcaf2e934ec808f8051c55",
+        "reviewedAt": "2026-10-15T22:59:23.496825+00:00",
+        "sourceHead": "db1650842d9b3e403f4b4cd9f16a79fb39e7363a",
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
       },
-      "head": "de2a5dd01af28c23dedcaf2e934ec808f8051c55"
+      "head": "db1650842d9b3e403f4b4cd9f16a79fb39e7363a"
     },
     {
       "id": "pr:14343",
@@ -5835,26 +5836,27 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "proc-key-quota-fixture",
-      "head": "c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
+      "head": "e126584712c09b084d572c938f16cf2c5ea389d3",
       "title": "Isolate and restore proc key-quota tests",
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15645",
       "status": "open",
-      "updatedAt": "2026-10-11T10:37:21.117870+00:00",
-      "summary": "The approved current master-based proposal is published as PR #15645 at c27d4b7d8. All three key-limit cases move to one unsharded exclusive-if-local target. Mutating cases restore and verify the captured host quota after ordinary assertion failures; native reads respect the configured positive limit and gVisor retains its default assertion. The C++ body matches qualified f47c93525 with its direct capability header. Earlier native before/after evidence and the historical 76c9cc22a/6eefb3624 lineage are retained; this current approval supersedes the earlier pending proposal.",
+      "updatedAt": "2026-10-15T22:59:48.554319+00:00",
+      "summary": "The approved quota-isolation change is rebased and published at e12658471. The 22:59 UTC detail read reports it mergeable, with eight successful checks and four conditional skips. These are public check statuses, not inspected test-case results. The initial rebased head failed clang-format because of one extra blank line; the final amendment removes that whitespace without changing the qualified fixture behavior. Existing reviewer requests are preserved.\n\nThe rebase moves the upstream CanSetMaxKeys helper with its callers into the isolated quota target. Mutating cases restore and verify the captured host quota after ordinary assertion failures; native reads respect the configured positive limit and gVisor retains its default assertion. Current kernel, race and analyzer qualification is closed, with the earlier failure and source lineage retained.",
       "followup": {
-        "disposition": "Approved change delivered; maintainer review pending",
+        "disposition": "Rebased approved change delivered; maintainer review pending",
         "owner": "external_sweeps",
-        "sourceHead": "c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
-        "reviewedAt": "2026-10-11T10:37:21.117870+00:00",
-        "nextAction": "Observe exact-head CI, maintainer feedback and import status through the existing finite sweep. Contributor approval is fulfilled; no merge is authorized.",
+        "sourceHead": "e126584712c09b084d572c938f16cf2c5ea389d3",
+        "reviewedAt": "2026-10-15T22:59:23.497598+00:00",
+        "nextAction": "Follow existing maintainer review requests and subsequent exact-head CI or import changes.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15645",
           "https://github.com/tamird/gvisor/commit/c27d4b7d8d13f2e86ff74b2198147f1c9d5a0e4f",
           "https://github.com/tamird/gvisor/commit/6eefb362409eed980ff3149036feb85cf56d9a6a",
           "https://github.com/tamird/gvisor/commit/76c9cc22a7c8417c3e7d8fd74f744504548c58f9",
           "https://github.com/tamird/gvisor/actions/runs/37770125989",
-          "https://github.com/tamird/gvisor/commit/f47c93525a7229e32d4325fef15a8ba051641217"
+          "https://github.com/tamird/gvisor/commit/f47c93525a7229e32d4325fef15a8ba051641217",
+          "https://github.com/tamird/gvisor/commit/e126584712c09b084d572c938f16cf2c5ea389d3"
         ],
         "reviewDecision": null,
         "mergeable": "MERGEABLE"
@@ -7139,6 +7141,34 @@
           "https://app.buildbuddy.io/invocation/6f57c8e3-102a-4cfa-8754-86cdcd5f5ca5",
           "https://app.buildbuddy.io/invocation/5974c23c-f43e-45aa-8b84-c689c9f95e13",
           "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9"
+        ]
+      }
+    },
+    {
+      "id": "branch:fixes/iperf-client-metrics",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/iperf-client-metrics",
+      "head": "eebbf58262c97c1a3ab8703c851db029367678aa",
+      "title": "Capture iperf metrics from the client",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa",
+      "status": "Contributor review requested",
+      "updatedAt": "2026-10-15T22:59:48.554319+00:00",
+      "summary": "The single-connection benchmark read the server logs for both labels, duplicating server metrics and omitting client metrics. The one-line correction reads the client container logs for the client series, matching the multi-connection benchmark. Two independent source reviews passed; no new runtime result is claimed. This is an independent fixture correction, with no production dependency from the RACK change.",
+      "contributorReview": {
+        "status": "pending",
+        "head": "eebbf58262c97c1a3ab8703c851db029367678aa",
+        "url": "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa"
+      },
+      "followup": {
+        "owner": "root",
+        "disposition": "Contributor review requested",
+        "sourceHead": "eebbf58262c97c1a3ab8703c851db029367678aa",
+        "observedAt": "2026-10-15T22:59:48.554319+00:00",
+        "nextAction": "Await contributor review of the published correction before opening an upstream PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa"
         ]
       }
     }
@@ -9558,8 +9588,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T22:22:06.651889+00:00",
-      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Both hosted performance attempts ended with provider stream failures. The same fixed comparison is now running with an Actions coordinator and remote compilation; no new timing or allocation result is available. The preceding design improved UDP Save time by 25.95% but increased control-message Load time by 33.65% and allocated 61.94% more bytes. Its CLI and container-startup comparisons found no detected timing difference, while production binaries grew by about 4 MB. These earlier results remain separate from the current correction.",
+      "updatedAt": "2026-10-15T22:59:48.554319+00:00",
+      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Both hosted performance attempts ended with provider stream failures. The first Actions campaign reached its 30-minute work deadline after 244 of 268 planned processes; it remains incomplete. The unchanged full comparison is now running with a 40-minute work budget. No new timing or allocation result is available. The preceding design improved UDP Save time by 25.95% but increased control-message Load time by 33.65% and allocated 61.94% more bytes. Its CLI and container-startup comparisons found no statistically significant timing difference, while production binaries grew by about 4 MB. These earlier results remain separate from the current correction.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10421,7 +10451,7 @@
           ]
         },
         {
-          "text": "Both hosted performance attempts ended with the provider error “stream closed with task still claimed” before a complete result could be recovered. Neither supplies a performance result or usable worker execution timestamps, so no lease duration or cause is inferred. The same fixed comparison is now running under an Actions coordinator with remote compilation. Its worker environment differs; partial observations from the earlier attempts will not be combined with it.",
+          "text": "Both hosted performance attempts ended with the provider error “stream closed with task still claimed” before a complete result could be recovered. Neither supplies a performance result or usable worker execution timestamps, so no lease duration or cause is inferred. The comparison moved to an Actions coordinator with remote compilation; its worker environment differs, so earlier partial observations are not combined with it.",
           "evidence": [
             {
               "label": "Incomplete original performance attempt",
@@ -10430,15 +10460,24 @@
             {
               "label": "Second incomplete hosted performance attempt",
               "url": "https://app.buildbuddy.io/invocation/7f9c1dfc-0a05-46ec-bf07-75195d8c23c2"
+            }
+          ]
+        },
+        {
+          "text": "The first Actions campaign reached its 30-minute work deadline with primary exit 124 and successful cleanup. It retained 244 passing process reports; 24 planned processes never ran. No partial benchmark timings were reduced. The same 268-process campaign was accepted again with a 40-minute work budget, 43-minute step and 45-minute job limit. Sources, sample order and measurement flags are unchanged; no result is available yet.",
+          "evidence": [
+            {
+              "label": "Incomplete 30-minute Actions campaign",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38816281394"
             },
             {
-              "label": "Fixed comparison on the Actions coordinator",
-              "url": "https://github.com/tamird/gvisor/actions/runs/38816281394"
+              "label": "Same fixed comparison with revised work budget",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38820518177"
             }
           ]
         }
       ],
-      "nextStep": "Complete and independently verify the fixed Actions comparison. Retain both incomplete hosted attempts separately, without pooling samples across workers or inferring performance from correctness alone.",
+      "nextStep": "Complete and independently verify the full fixed comparison under its revised budget. Retain both provider failures and the incomplete first Actions campaign separately; do not pool partial samples across runs.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
