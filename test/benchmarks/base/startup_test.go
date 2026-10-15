@@ -17,7 +17,10 @@ package startup_test
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -248,6 +251,51 @@ func waitUntilHostServing(ctx context.Context, server *dockerutil.Container, por
 	return nil
 }
 
+// logStartupFailure collects only the failed container's state before cleanup.
+// Its separate deadline does not extend the readiness check.
+func logStartupFailure(ctx context.Context, b *testing.B, server *dockerutil.Container) {
+	b.Helper()
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	b.Logf("Startup diagnostic for container %s", server.ID())
+	if pid, err := server.SandboxPid(ctx); err != nil || pid <= 0 {
+		b.Logf("Cannot find sandbox PID: pid=%d, err=%v", pid, err)
+	} else if tasks, err := os.OpenRoot(fmt.Sprintf("/proc/%d/task", pid)); err != nil {
+		b.Logf("Cannot open sandbox tasks: %v", err)
+	} else {
+		defer tasks.Close()
+		entries, err := fs.ReadDir(tasks.FS(), ".")
+		if err != nil {
+			b.Logf("Cannot list sandbox tasks: %v", err)
+		}
+		for _, task := range entries {
+			for _, name := range []string{"status", "schedstat", "wchan", "syscall", "stack"} {
+				if ctx.Err() != nil {
+					b.Logf("Sandbox task snapshot deadline: %v", ctx.Err())
+					return
+				}
+				path := filepath.Join(task.Name(), name)
+				data, err := tasks.ReadFile(path)
+				b.Logf("Sandbox PID %d task %s (err=%v):\n%s", pid, path, err, data)
+			}
+		}
+	}
+	runtime, err := dockerutil.RuntimePath()
+	if err != nil {
+		b.Logf("Cannot find runtime: %v", err)
+		return
+	}
+	root, err := server.RootDirectory()
+	if err != nil {
+		b.Logf("Cannot find runtime root: %v", err)
+		return
+	}
+	cmd := exec.CommandContext(ctx, runtime, "--root="+root, "debug", "--stacks", "--ps", server.ID())
+	cmd.WaitDelay = time.Second
+	output, err := cmd.CombinedOutput()
+	b.Logf("Startup runtime diagnostic %q (err=%v):\n%s", cmd.Args, err, output)
+}
+
 func spawnServerWorkloadAndWait(ctx context.Context, b *testing.B, client harness.Machine, name string, port int) *dockerutil.Container {
 	server := client.GetContainer(ctx, b)
 
@@ -265,6 +313,7 @@ func spawnServerWorkloadAndWait(ctx context.Context, b *testing.B, client harnes
 		b.Fatalf("failed to spawn %s: %v", name, err)
 	}
 	if err := waitUntilHostServing(ctx, server, port); err != nil {
+		logStartupFailure(ctx, b, server)
 		logs, _ := server.Logs(ctx)
 		server.CleanUp(ctx)
 		b.Fatalf("failed to wait for %s serving: %v\nServer logs:\n%s", name, err, logs)
