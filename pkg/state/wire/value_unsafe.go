@@ -358,11 +358,12 @@ func (v Value) Interface() (TypeSpec, Value) {
 	return p.typ, p.value
 }
 
-// Type returns read-only schema metadata for a Type value.
+// Type returns read-only schema metadata for a Type value. The schema owns its
+// storage independently of the ValueBuffer that parsed it.
 func (v Value) Type() *Type {
 	v.require(KindType)
-	if v.frame() != nil {
-		return v.Own().Type()
+	if frame := v.frame(); frame != nil {
+		return &frame.schemas[frame.nodes[v.bits].a].typ
 	}
 	return &(*typeValue)(v.payload).typ
 }
@@ -435,14 +436,7 @@ func (v Value) Own() Value {
 		p := &interfaceValue{valueHeader: valueHeader{KindInterface}, typ: ownedType, value: value} // Escapes: owned interface payload.
 		return Value{payload: unsafe.Pointer(p)}
 	case KindType:
-		p := &typeValue{valueHeader: valueHeader{KindType}} // Escapes: owned schema payload.
-		p.typ.Name = frame.strings[node.a]
-		fields := frame.nodes[node.b]
-		p.typ.Fields = make([]string, int(fields.b)) // Escapes: owned schema field headers.
-		for i := range p.typ.Fields {
-			p.typ.Fields[i] = frame.strings[frame.nodes[int(fields.a)+i].a]
-		}
-		return Value{payload: unsafe.Pointer(p)}
+		return Value{payload: unsafe.Pointer(frame.schemas[node.a])}
 	default:
 		panic("invalid parsed value")
 	}

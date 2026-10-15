@@ -17,6 +17,7 @@ package tests
 import (
 	"bytes"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -209,15 +210,44 @@ func TestValidateBeforeLoadHook(t *testing.T) {
 	if _, err := state.Save(t.Context(), &saved, &original); err != nil {
 		t.Fatal(err)
 	}
-	// Truncating the unclaimed final field must prevent the hook entirely,
-	// even though both fields it loads precede the invalid bytes.
-	data := saved.Bytes()
-	var restored replayLoadStruct
-	if _, err := state.Load(t.Context(), bytes.NewReader(data[:len(data)-1]), &restored); err == nil {
-		t.Fatal("Load accepted a truncated unclaimed field")
+	var schemaField bytes.Buffer
+	writer := wire.Writer{Writer: &schemaField}
+	if err := state.WriteHeader(&writer, 1, true); err != nil {
+		t.Fatal(err)
 	}
-	if got, want := restored.calls, 0; got != want {
-		t.Errorf("StateLoad calls before validation = %d, want %d", got, want)
+	wire.Save(&writer, &wire.Type{Name: original.StateTypeName(), Fields: []string{"first", "second", "omitted"}})
+	wire.Save(&writer, wire.Uint(1))
+	value := wire.Struct{TypeID: 1}
+	value.Alloc(3)
+	text := wire.String(original.second)
+	*value.Field(0), *value.Field(1) = wire.Int(original.first), &text
+	*value.Field(2) = &wire.Type{Name: "unclaimed", Fields: []string{"field"}}
+	wire.Save(&writer, &value)
+	for _, test := range []struct {
+		name string
+		data []byte
+	}{
+		{"integer", saved.Bytes()},
+		{"schema", schemaField.Bytes()},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var restored replayLoadStruct
+			if _, err := state.Load(t.Context(), bytes.NewReader(test.data), &restored); err != nil {
+				t.Fatalf("Load complete record: %v", err)
+			}
+			if got, want := restored.calls, 1; got != want {
+				t.Errorf("StateLoad calls for complete record = %d, want %d", got, want)
+			}
+			// Truncating the unclaimed final field must prevent the hook
+			// entirely, even though both loaded fields precede it.
+			restored = replayLoadStruct{}
+			if _, err := state.Load(t.Context(), bytes.NewReader(test.data[:len(test.data)-1]), &restored); err == nil {
+				t.Fatal("Load accepted a truncated unclaimed field")
+			}
+			if got, want := restored.calls, 0; got != want {
+				t.Errorf("StateLoad calls before validation = %d, want %d", got, want)
+			}
+		})
 	}
 }
 
@@ -242,7 +272,10 @@ func TestConcurrentFieldLayouts(t *testing.T) {
 	if schemaValue.Kind() != wire.KindType {
 		t.Fatal("Save did not emit a type schema")
 	}
-	schema := schemaValue.Type()
+	parsedSchema := schemaValue.Type()
+	// The parsed metadata is read-only. Build the writer's schema explicitly
+	// before mutating field order, preserving the original parsed value.
+	schema := &wire.Type{Name: parsedSchema.Name, Fields: slices.Clone(parsedSchema.Fields)}
 	if got, want := schema.Fields, []string{"first", "second", "text", "next"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("schema fields = %v, want %v", got, want)
 	}
