@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T00:12:18.972729+00:00",
+    "updatedAt": "2026-10-15T00:30:46.506470+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -6790,13 +6790,13 @@
       "group": "tests",
       "url": "https://github.com/google/gvisor/pull/15770",
       "status": "open",
-      "updatedAt": "2026-10-14T23:55:56.416922+00:00",
-      "summary": "The import regenerated again at e6d1f4369; pipeline 50822 and the other checks are pending.\n\nIts preceding import head d63585383 failed the native nftables FIB fixture in Buildkite 50817: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nIndependent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
+      "updatedAt": "2026-10-15T00:27:22.098671+00:00",
+      "summary": "The current import e6d1f4369 fails the native nftables FIB fixture in Buildkite 50822. The original log confirms runc execution and Linux rejecting the same invalid oifname-exists clause. At the 00:29 UTC observation, 59 jobs had passed, the Nftables job had failed and two unit jobs were still running; the pipeline was not terminal. The visible GitHub and internal checks had passed.\n\nIts preceding import head d63585383 failed the native nftables FIB fixture in Buildkite 50817: Linux rejects the invalid oifname-exists clause. Independent correction 009a6cac4 now passes the affected Linux/gVisor checks and both-architecture package/analyzer checks. Contributor review is pending before upstream submission. The failure is shared integration breakage, not attributed to this PR’s source change.\n\nIndependent precursor restores the original IPv6 fixture address after an earlier conversion accidentally extended it from sixteen to nineteen bytes. Both-architecture IP suites pass. The old test also passed with the wrong address, so no failing-before sensitivity claim is made. The approved patch and commit message are preserved in independent PR #15770 at a5193ff58. Current-head public CI and maintainer review are tracked separately from the preceding qualification.",
       "followup": {
         "disposition": "Shared public CI correction qualified",
         "owner": "root",
         "sourceHead": "a5193ff58dca8614f018a3736a2f11d07bb63a8d",
-        "observedAt": "2026-10-14T23:55:56.416922+00:00",
+        "observedAt": "2026-10-15T00:29:39+00:00",
         "nextAction": "Deliver the independent nftables correction after contributor review; follow the import’s current checks.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/fe347b769dc4d5e9f3ff5d941b722a11dd37cd50",
@@ -6938,6 +6938,56 @@
         "status": "pending",
         "head": "009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
         "url": "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798"
+      }
+    },
+    {
+      "id": "branch:review/tcp-rack-packet-fixture",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "review/tcp-rack-packet-fixture",
+      "head": "fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
+      "title": "Exercise RACK with complete TCP segments",
+      "group": "tests",
+      "url": "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
+      "status": "Held for Nagle/GSO correction",
+      "summary": "The packet test now uses the negotiated MSS, verifies complete retransmitted payloads and registers cleanup as resources are acquired. It removes the expected-failure marker and corrects the RACK comments. The retained combined run passed all six Linux and six Netstack cases; extraction onto current master has not been rebuilt. Enabling the test also requires the separate Nagle/GSO correction, which depends on #15635. No contributor decision has been requested for this held proposal.",
+      "updatedAt": "2026-10-15T00:27:22.098671+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Held for Nagle/GSO correction",
+        "sourceHead": "fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
+        "observedAt": "2026-10-15T00:27:22.098671+00:00",
+        "nextAction": "After the Nagle/GSO prerequisite lands, refresh this tested patch and request contributor review before opening its PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97",
+          "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4",
+          "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba"
+        ]
+      }
+    },
+    {
+      "id": "branch:fixes/nft-fib-attribute-policy",
+      "type": "branch",
+      "repo": "tamird/gvisor",
+      "ref": "fixes/nft-fib-attribute-policy",
+      "head": "7f84642711b199ca89be629ddc832804d5039d3c",
+      "title": "Validate FIB attributes by netlink ID",
+      "group": "runtime",
+      "url": "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
+      "status": "Held for FIB regression fixture",
+      "summary": "The FIB attribute policy used positions starting at zero, although netlink attribute IDs start at one. Flags escaped the mask check, and register 257 could be accepted as register 1. This correction keys the policy by attribute ID and validates the full register value before narrowing. The failing-before cases, both corrected package suites and analyzers, and IPv4/IPv6 runtime checks are verified. It extends the regression table introduced by the presence fix and remains held behind that prerequisite. No contributor decision has been requested for this follow-up.",
+      "updatedAt": "2026-10-15T00:27:22.098671+00:00",
+      "followup": {
+        "owner": "root",
+        "disposition": "Held for FIB regression fixture",
+        "sourceHead": "7f84642711b199ca89be629ddc832804d5039d3c",
+        "observedAt": "2026-10-15T00:27:22.098671+00:00",
+        "nextAction": "After the presence correction lands, retain the qualified policy/test patch and request contributor review before opening its PR.",
+        "evidence": [
+          "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c",
+          "https://app.buildbuddy.io/invocation/3cb3ddab-5b91-4622-b809-afbb3270ac65",
+          "https://github.com/torvalds/linux/blob/ab185e0c4/net/netfilter/nft_fib.c#L21-L26"
+        ]
       }
     }
   ],
@@ -8421,6 +8471,33 @@
       "reason": "The current public import fails the shared native nftables fixture. This correction removes the invalid rule and repairs gVisor result storage; the PR does not depend on its source changes.",
       "evidence": "https://buildkite.com/gvisor/pipeline/builds/50815",
       "type": "blocked_by"
+    },
+    {
+      "from": "branch:tcp-nagle-gso",
+      "to": "branch:review/tcp-rack-packet-fixture",
+      "type": "depends_on",
+      "reason": "Enabling the RACK packet test requires the Nagle/GSO sender correction; retain the expected-failure marker until that runtime prerequisite lands.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6",
+        "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97"
+      ]
+    },
+    {
+      "from": "branch:fixes/nft-fib-presence",
+      "to": "branch:fixes/nft-fib-attribute-policy",
+      "type": "depends_on",
+      "reason": "The policy correction extends the same netlink regression table introduced by the presence fix. Land the fixture first to avoid duplicate tests and conflicting proposals.",
+      "evidence": [
+        "https://github.com/tamird/gvisor/commit/009a6cac4cf6b0cea0395d01ac2bda894d7c7798",
+        "https://github.com/tamird/gvisor/commit/7f84642711b199ca89be629ddc832804d5039d3c"
+      ]
+    },
+    {
+      "from": "branch:fixes/nft-fib-presence",
+      "to": "pr:15770",
+      "type": "blocked_by",
+      "reason": "The current import e6d1f4369 fails the same native nftables fixture: Linux rejects its oifname-exists clause. This is shared CI breakage, not a source dependency of the IPv6 change.",
+      "evidence": "https://buildkite.com/gvisor/pipeline/builds/50822"
     }
   ],
   "investigations": [
@@ -8429,8 +8506,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T00:12:18.972729+00:00",
-      "summary": "The final RACK fixture evidence remains available as future netstack work. PR #15666 has merged, but no separately approved standalone RACK extraction exists. The retained combined qualification passed six Linux and six Netstack RACK cases; packet evidence and internal-clock uncertainty remain explicit. The separate contributor-approved Nagle/GSO proposal at 1c68399f1 still depends on unmerged PR #15635. The retained sender-owner CPU profiles and standard decoder are now independently reconciled. Their sparse whole-client samples do not identify a CPU bottleneck or the cause of the sharing gap.",
+      "updatedAt": "2026-10-15T00:30:46.506470+00:00",
+      "summary": "The RACK packet-fixture correction is now available as a separate branch, held behind the contributor-approved Nagle/GSO correction and its #15635 prerequisite. Its retained combined qualification passed six Linux and six Netstack cases. The next investigation uses the existing manual-clock tests to assess how the lifetime minimum RTT handles sustained path changes, with unchanged-path, temporary-spike and delayed-ACK controls. No defect or connection to the earlier sharing measurements has been established for that hypothesis. The retained sender-owner profiles do not identify a CPU bottleneck or explain the sharing gap.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -8907,13 +8984,26 @@
               "url": "https://app.buildbuddy.io/invocation/82940fa9-7739-4f6d-b219-ec7e9448ceba"
             },
             {
-              "label": "Standalone Nagle proposal awaiting contributor review",
+              "label": "Contributor-approved Nagle proposal",
               "url": "https://github.com/tamird/gvisor/commit/1c68399f13aa2e1e4c07a4ca474a31cb88e7b4f6"
+            }
+          ]
+        },
+        {
+          "text": "The RACK fixture is extracted at fbf0f19b1 without changing the qualified packet-test body. It derives payload size from the negotiated MSS, checks complete retransmissions, acquires cleanup immediately and allows the delayed retransmission ACK to settle. The production RACK changes are comments only. Removing the expected-failure marker depends on the separate Nagle/GSO runtime correction; no fresh standalone execution is claimed.",
+          "evidence": [
+            {
+              "label": "Held RACK fixture proposal",
+              "url": "https://github.com/tamird/gvisor/commit/fbf0f19b1fa1fc9a3a03954e83cae801f0b53e97"
+            },
+            {
+              "label": "Combined Linux and Netstack packet validation",
+              "url": "https://app.buildbuddy.io/invocation/fc902df4-f642-448e-95c1-adf3f93818e4"
             }
           ]
         }
       ],
-      "nextStep": "The syscall-validation owner is reassessing the retained RACK extraction and sharing evidence to choose the next justified netstack change. Follow #15635 for the separately approved Nagle delivery. The retained profiles are already reconciled; no repeated profile run is needed.",
+      "nextStep": "Exercise sustained path changes through the existing RACK manual-clock update, reordering-window and loss-detection path. Compare unchanged paths, temporary RTT spikes and delayed-ACK histories before choosing any estimator change. Follow #15635 and the Nagle/GSO correction for the held packet-fixture proposal.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9241,8 +9331,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T00:12:18.972729+00:00",
-      "summary": "The decoded-frame experiments reduce allocation bytes for large values, but their fixed timing comparisons remain mixed. The latest inline candidate takes 11.38% longer for control-message Load and 9.22% less time for the large synthetic adoption fixture. Independent reviews of all original measurements and executed sources are complete. Neither block nor inline storage has been adopted. Source review establishes that views retain frame indices, so stable node addresses are unnecessary. The next candidate returns to one contiguous node slice and changes only reservation and reuse, removing the block and inline storage machinery.",
+      "updatedAt": "2026-10-15T00:30:46.506470+00:00",
+      "summary": "The simpler decoded-frame candidate uses one contiguous node slice with indexed views. It removes the block/inline storage machinery and changes reservation and reuse. Its correctness, ownership, race and allocation-guard checks pass on the qualified remote graph. One measured large Load allocates 365,872 bytes and 88 objects, down from 578,864 bytes and 91 objects; three smaller fixtures have unchanged costs. Both test executables and AMD64/ARM64 runsc retain their file sizes. These single observations establish allocation costs, not a timing improvement. The next comparison uses the same two workloads and twelve balanced pairs. Earlier block/inline timing results remain mixed and neither design was adopted.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -9792,9 +9882,22 @@
               "url": "https://github.com/tamird/gvisor/commit/790792633a42f930b8c85deb0a3af04e30c2e372"
             }
           ]
+        },
+        {
+          "text": "Contiguous reservation source 2d57232d8 passes the twelve-phase remote qualification. Both normal architectures and the race checks retain the ownership cases; three full state suites match all thirteen serialized streams. Six injected allocation diagnostics are detected and the restored sources pass. Four current one-operation cost rows match the original logs: three small costs are unchanged, and large adoption falls from 578,864 to 365,872 bytes and from 91 to 88 allocations. All four executable file sizes are unchanged; code sections shrink by 1,632 bytes on AMD64 and 2,048 on ARM64. Independent runtime, input and cost review is complete. Timing remains unmeasured for this revision.",
+          "evidence": [
+            {
+              "label": "Contiguous reservation candidate",
+              "url": "https://github.com/tamird/gvisor/commit/2d57232d88c0e5091781917823d4e9ed408ad1a6"
+            },
+            {
+              "label": "Completed correctness and cost qualification",
+              "url": "https://app.buildbuddy.io/invocation/0586b0c4-34d3-41d9-be34-8d6caa2e5931"
+            }
+          ]
         }
       ],
-      "nextStep": "Qualify the simpler contiguous-storage candidate using the existing ownership, parser, race and allocation-guard cases, then compare the same two workloads in twelve balanced pairs if those checks pass. No contributor authorization is pending for this experimental work.",
+      "nextStep": "Run the reviewed fixed twelve-pair comparison of contiguous reservation candidate 2d57232d8 against control 9f5def3bd. Keep the two workload results separate and retain the closed correctness and allocation evidence. No contributor authorization is pending for this experimental work.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10171,8 +10274,8 @@
       "title": "pkg/state: reflection CPU and allocation profiles",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T00:12:18.972729+00:00",
-      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. Single measured-Load allocation reductions are observed, alongside increased initialization allocation counts. The adoption fixture uses Save-only setup, but ControlMessageDecoding performs an untimed validation Load before measurement; its row is not a first-use layout cost. Each timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and single measured-Load cost checks. The control-message observation uses 96 more bytes with the same 102 allocations after an untimed validation Load; it is not a first-use layout cost. Initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single measured-load observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.\n\nThe byte-reader comparison is independently closed. On the deterministic synthetic pointer/slice graph through the real uncompressed statefile reader, twelve fixed balanced pairs show no detected time benefit (median 766,202.5 to 760,387 ns, p=.198), 16 additional bytes per operation and unchanged 4,953 allocations per operation. All twenty-six native processes exited successfully, with twenty-four measured rows; the original parent failure and XML reporter errors remain recorded. These saved measurements were authenticated without rerunning benchmarks. This is not a whole-kernel restore or fresh-sentry startup measurement. The byte-reader revision remains unpromoted.\n\nThe decoded-frame architecture uses one parser and generated restoration methods. Both stable-block and inline candidates pass their selected correctness checks, but their fixed comparisons are mixed: faster large synthetic Load and slower control-message Load. All original results are independently reviewed; neither candidate is adopted. Source review found no need for stable node addresses, so current work returns to contiguous indexed storage with a smaller reservation change. The design investigation contains the measurements and next experiment.",
+      "updatedAt": "2026-10-15T00:30:46.506470+00:00",
+      "summary": "The completed pointer experiments remain unpromoted: the first coherent-pointer comparison had five timing regressions, two gains and twelve nonsignificant results; the enclosing-pointer comparison had three regressions, four gains and twelve nonsignificant results. Earlier helper, map-registration and reader experiments remain separate evidence.\n\nThe generated restore successor is now implemented and independently correctness-qualified. It uses one authoritative graph pointer and a static restoration callback, shared map/array ordering, typed destination operations and exact registered-type callback selection. Four corrected full suites plus eighteen retained owners and two production links pass; thirteen serialized streams match across four groups. Original shared-fixture construction failures remain recorded. Runtime-sized slice backing retains the existing reflection boundary.\n\nIts fixed comparison is mixed and unpromoted: five Load timing gains, two adoption slowdowns and twelve nonsignificant timings across 52 actions and 456 rows. Load allocations fall, while the state and UDP test executables grow 19.54% and 25.48%. The separate RestoreEmpty pilot passes all six save/load iterations, with overlapping Load ranges and a 21.50% larger runsc; three CPUID-warmed operations per arm are descriptive, not a significance or cold-start result.\n\nA separate two-line shared-envelope consolidation at b941f2f056 passes six owners and four matched executable checks. It reduces runsc by 1,634,304 bytes on AMD64 and 1,507,328 bytes on ARM64 relative to the measured successor. Timing was not rerun, so this size result does not remove the earlier performance limitations. A further shared-struct helper at 2831e4a8e2 passes six owners and three groups of thirteen matching streams. Its matched executables shrink again relative to b941: runsc by 1,814,528 bytes on AMD64 and 1,507,328 bytes on ARM64. The subsequent fixed shared-struct comparison is independently closed and still mixed: nine timing gains, three regressions and seven nonsignificant results. Focused captured/uncaptured adoption profiles are also closed. Array restoration occupies 42.58% and 46.08% cumulative CPU in the candidate profiles, including nested restoration, statistics and waits; those overlapping sampled totals do not identify reflection alone as the cause or predict a speedup. No successor is proposed for adoption.\n\nThe runtime-array revision at e0515a1d8b has a fully reviewed fixed comparison against coherent control 225fdf9301. It shows five Load timing gains, a 3.54% UDP Save regression (p=.039), and thirteen nonsignificant timings. Captured and uncaptured adoption Load medians rise 2.62% and 3.45%, respectively, without statistical significance; that does not establish equivalence. The state and UDP test executables grow 50.24% and 59.79%. This revision remains unpromoted.\n\nThe shared array-loop/view revision at 173993df1f passed six test/analyzer owners and three groups of thirteen matching streams. Its state and UDP test executables are 8,573,088 and 8,994,976 bytes, down 5.42% and 5.87% from e051. Its original production-link deadline is retained separately from the completed link continuation. The subsequent shared-pointer helper at fffd29842d6d passed the focused correctness checks and production links. Its runsc executables are 54,141,088 bytes on AMD64 and 50,790,560 bytes on ARM64. The AMD64 executable remains 37.23% larger than the retained coherent control (39,452,832 bytes); the production comparison has a recorded version-stamp input difference and is not a byte-attribution or startup claim.\n\nThe shared-pointer fixed comparison 8ae794ca is independently closed: seven timing gains, five regressions and seven nonsignificant results. Captured and uncaptured adoption Load regress 4.60% and 6.91%; state and UDP test executables remain 38.29% and 46.16% larger than the matched coherent control. This mixed result remains unpromoted.\n\nThe earlier shared-pointer idle-Nginx restore pilot remains independently confirmed incomplete: each arm produced two one-iteration observations, then the third restore failed during Docker/containerd checkpoint upload. The four observed rows do not complete the required six-row pilot. Native exit status, BEP and parent status incorrectly reported success despite benchmark failure text and XML failures; the original discrepancy is retained. It supplies no complete end-to-end comparison or adoption claim.\n\nThe data-plan successor at 221124de7 is independently correctness-qualified. Its fixed comparison has seven timing regressions, one gain and eleven nonsignificant results, and remains unpromoted. State/UDP test executables grow 2.64%/2.81%; matched runsc files grow 2.41% on AMD64 and 2.48% on ARM64. Reviewed diagnostic profiles identify per-Load metadata construction and recurring dispatch/parsing costs without proving causal effect sizes. A separate Nginx pilot completes three actual restores per arm; overlapping small-sample timings do not establish a performance improvement.\n\nThe metadata-ownership revision at 5401bbaba is independently qualified for the selected correctness and race checks, with three groups of thirteen streams matching the prior data-plan source. Single measured-Load allocation reductions are observed, alongside increased initialization allocation counts. The adoption fixture uses Save-only setup, but ControlMessageDecoding performs an untimed validation Load before measurement; its row is not a first-use layout cost. Each timing has only one observation, so these measurements do not establish a timing improvement. Production executable sizes are unchanged from 221124de7 and remain about 2.4% larger than the coherent control. The candidate remains unpromoted.\n\nThe fixed idle-Nginx comparison of metadata-ownership source 5401bbaba against coherent control 3aa3a761c is independently closed: all twenty-four actual checkpoint-and-restore operations completed, twelve per arm, each starting a fresh sentry. Median observed time rises from 0.876 seconds to 1.157 seconds (31.98%). The measurement includes restore and port-presence detection, not HTTP readiness or populated traffic. Repetitions share one worker per arm, so worker effects remain uncontrolled and the difference cannot be attributed solely to code. The candidate remains unpromoted.\n\nThe narrower owner-lookup revision at e444abe2e is independently closed for ten fresh correctness/analyzer owners and single measured-Load cost checks. The control-message observation uses 96 more bytes with the same 102 allocations after an untimed validation Load; it is not a first-use layout cost. Initialization totals are unchanged. Test executable file lengths are unchanged, with text sections 192 bytes larger. Single measured-load observations and the closed diagnostic profiles do not establish a latency improvement; the candidate remains experimental and unpromoted.\n\nThe byte-reader comparison is independently closed. On the deterministic synthetic pointer/slice graph through the real uncompressed statefile reader, twelve fixed balanced pairs show no detected time benefit (median 766,202.5 to 760,387 ns, p=.198), 16 additional bytes per operation and unchanged 4,953 allocations per operation. All twenty-six native processes exited successfully, with twenty-four measured rows; the original parent failure and XML reporter errors remain recorded. These saved measurements were authenticated without rerunning benchmarks. This is not a whole-kernel restore or fresh-sentry startup measurement. The byte-reader revision remains unpromoted.\n\nThe decoded-frame architecture uses one parser and generated restoration methods. Both stable-block and inline candidates have mixed timing results and remain unadopted. The simpler contiguous indexed-storage revision now passes its correctness and cost qualification: large-Load allocation cost falls, the three small controls are unchanged, and executable file sizes are unchanged. The design investigation contains the original measurements and the planned fixed timing comparison.",
       "findings": [
         {
           "text": "Map reflection was the strongest measured reflection opportunity. In sampled allocation-object profiles, reflect.unsafe_New accounted for 51.12% flat in Map Load and 25.41% flat in Map Save. Map Save also spent 25.13% cumulative CPU in MapKeys and 15.24% in MapIndex; cumulative entries overlap and must not be added.",
