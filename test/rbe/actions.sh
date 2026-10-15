@@ -69,7 +69,9 @@ GVISOR_DOCKER_NETWORK=
 qualification_private=
 cleanup() {
   local status=$?
-  rm -f -- "${temporary_files[@]}"
+  if ! rm -f -- "${temporary_files[@]}"; then
+    if (( status == 0 )); then status=1; fi
+  fi
   if [[ -n $qualification_private ]] && ! rm -rf -- "$qualification_private"; then
     if (( status == 0 )); then status=1; fi
   fi
@@ -201,6 +203,11 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         # Eight original 900-second shards need two hours before setup/capture.
         container-v1) qualification_seconds=8400 ;;
         container-v1-pilot) qualification_seconds=1200 ;;
+        benchmarks)
+          if [[ ${RACK_BENCHMARK_HOST:-} =~ ^[01]$ ]]; then
+            qualification_seconds=6000
+          fi
+          ;;
       esac
     fi
     if (( qualification_seconds > 0 )); then
@@ -233,9 +240,14 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
           continue
         fi
         if [[ $argument == build || $argument == test ]]; then
-          evidence=(
-            "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
-          )
+          if [[ -n ${QUALIFICATION_PHASE:-} ]]; then
+            [[ $QUALIFICATION_PHASE =~ ^[a-z0-9-]+$ ]] || return 2
+            evidence=("--execution_log_compact_file=$RUNNER_TEMP/qualification/iperf/$QUALIFICATION_PHASE.binpb")
+          else
+            evidence=(
+              "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
+            )
+          fi
         fi
         if [[ $qualification_retain_reports == true && ( $argument == build || $argument == test ) ]]; then
           # Keep raw parsed options out of the uploaded artifact directory.
@@ -411,7 +423,7 @@ GUEST_EVENTS
   *) printf 'Unknown qualification execution mode.\n' >&2; exit 2 ;;
 esac
 
-if [[ -n $QUALIFICATION_HEADER_BASE ]]; then
+if [[ -n ${QUALIFICATION_HEADER_BASE:-} ]]; then
   if [[ ! $QUALIFICATION_HEADER_BASE =~ ^[0-9a-f]{40}$ ]]; then
     printf 'Supply the full header comparison commit SHA.\n' >&2
     exit 2
@@ -426,8 +438,8 @@ if [[ -n $QUALIFICATION_HEADER_BASE ]]; then
   options+=("--header-base=$QUALIFICATION_HEADER_BASE")
 fi
 
-if [[ -n $QUALIFICATION_COS_GZIP_BASE64 || -n $QUALIFICATION_COS_SHA256 ]]; then
-  if [[ -z $QUALIFICATION_COS_GZIP_BASE64 || ! $QUALIFICATION_COS_SHA256 =~ ^[0-9a-f]{64}$ ]]; then
+if [[ -n ${QUALIFICATION_COS_GZIP_BASE64:-} || -n ${QUALIFICATION_COS_SHA256:-} ]]; then
+  if [[ -z ${QUALIFICATION_COS_GZIP_BASE64:-} || ! ${QUALIFICATION_COS_SHA256:-} =~ ^[0-9a-f]{64}$ ]]; then
     printf 'Supply both a gzip/base64 COS catalog and its uncompressed SHA256.\n' >&2
     exit 2
   fi
