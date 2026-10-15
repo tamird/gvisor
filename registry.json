@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T20:50:11.432764+00:00",
+    "updatedAt": "2026-10-15T21:59:12.602926+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4054,26 +4054,27 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcpip-netip-core",
-      "head": "080bd49c2aba00bd6840083edec54786c5a863eb",
+      "head": "50b6766a62177f9bf594f536737497f62dbbf810",
       "title": "Use netip types throughout the network stack",
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-14T11:06:01.686863+00:00",
-      "summary": "The contributor-approved guard amendment is delivered in PR #15730 at 080bd49c2. Both inline responses were posted together and both threads are resolved. Length and family checks preserve zero-value filter wildcards. Independent fixture cleanups are now PRs #15770 and #15771; the separate state-registration split remains held under the contributor’s preference. The existing benchstat description is unchanged.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; current c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
+      "summary": "The approved netip guards are delivered in PR #15730, now rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub directly reports the new head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
         "owner": "external_sweeps",
-        "disposition": "Delivered; awaiting maintainer review",
-        "sourceHead": "080bd49c2aba00bd6840083edec54786c5a863eb",
-        "nextAction": "Follow maintainer review of the delivered guards and independent fixture PRs #15770/#15771. The registration split stays held; no contributor decision remains for these delivered patches.",
+        "disposition": "Rebased and delivered; awaiting maintainer review",
+        "sourceHead": "50b6766a62177f9bf594f536737497f62dbbf810",
+        "nextAction": "Follow current-head checks and maintainer review of the delivered guard amendment. The independent IPv6 fixture cleanup #15770 has merged; the registration split remains held.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158",
-          "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb"
+          "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb",
+          "https://github.com/tamird/gvisor/commit/50b6766a62177f9bf594f536737497f62dbbf810"
         ],
-        "observedAt": "2026-10-14T11:06:01.686863+00:00"
+        "observedAt": "2026-10-15T21:59:12.602926+00:00"
       },
       "evidence": [
         {
@@ -9557,8 +9558,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T20:50:11.432764+00:00",
-      "summary": "The revised design passes its semantic, race, analyzer and production checks. Its fixed comparison improves UDP Save time by 25.95%, but control-message Load still takes 33.65% more time and allocates 61.94% more bytes. CLI startup timing remains inconclusive, and production binaries grow by about 4 MB. Profiles identify duplicated schema storage; the separate container-startup comparison has completed, with no detected timing difference in its fixed sample.",
+      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
+      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Its fixed performance comparison is being retried after a provider stream failure left the first attempt incomplete; no new timing or allocation result is available. The preceding design improved UDP Save time by 25.95% but increased control-message Load time by 33.65% and allocated 61.94% more bytes. Its CLI and container-startup comparisons found no detected timing difference, while production binaries grew by about 4 MB. These earlier results remain separate from the current correction.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10405,9 +10406,35 @@
               "url": "https://app.buildbuddy.io/invocation/96970fb0-5048-406d-be10-e12e3867b77a"
             }
           ]
+        },
+        {
+          "text": "The schema-ownership correction at d702e9243 passed 20 unit, race and analyzer targets plus AMD64 and ARM64 production builds. The production builds completed in a separate continuation. The original production-duration failure remains recorded. This establishes the selected correctness and build coverage, not a performance improvement.",
+          "evidence": [
+            {
+              "label": "Schema-ownership proposal",
+              "url": "https://github.com/tamird/gvisor/commit/d702e924375d756788a304c01b887fb833c30243"
+            },
+            {
+              "label": "Completed production continuation",
+              "url": "https://app.buildbuddy.io/invocation/9188f994-8048-4947-b447-0fcbb7dcc006"
+            }
+          ]
+        },
+        {
+          "text": "The first fixed performance attempt ended with the provider error “stream closed with task still claimed” before a complete result could be recovered. One unchanged retry is running. Partial original observations are retained separately and will not be combined with the retry; no current timing or allocation result is claimed.",
+          "evidence": [
+            {
+              "label": "Incomplete original performance attempt",
+              "url": "https://app.buildbuddy.io/invocation/bfc3a20e-973f-4711-b898-2b775f540dfc"
+            },
+            {
+              "label": "Unchanged performance retry",
+              "url": "https://app.buildbuddy.io/invocation/7f9c1dfc-0a05-46ec-bf07-75195d8c23c2"
+            }
+          ]
         }
       ],
-      "nextStep": "Validate the parser change that gives schema metadata one owner, then measure the resulting cost. The completed fixed container-startup comparison found no detected timing difference; it does not establish equal startup cost.",
+      "nextStep": "Complete and independently verify the unchanged schema-ownership performance comparison. Preserve the incomplete first attempt separately; do not combine its partial samples with the retry or infer a benefit from correctness alone.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -12801,8 +12828,8 @@
       "title": "Scheduled tracker refresh reliability",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T14:04:06.332328+00:00",
-      "summary": "Refresh now recovers when a site update lands during GitHub collection. It fetches the new revision and recollects before publishing, with at most three attempts. A deliberate concurrent README update reproduced the original rejected push; the next attempt succeeded, and the deployed snapshot matches the published bytes. Existing observation clocks, attention filters and last-good-data handling are unchanged.",
+      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
+      "summary": "The refresh repair is verified end to end. The collector now reuses closed and merged PR history with its original observation times while refreshing active, new and reopened records. The live refresh retained 206 sources and 158 imports, refreshed 75 sources and 22 imports, and used 20 requests under the unchanged 48-request cap. All six served assets match the published revision. The earlier bounded publication-race recovery remains in place.",
       "findings": [
         {
           "text": "At the 11 October schedule audit, the default-branch workflow was configured for minutes 18 and 48 of each UTC hour. The latest scheduled run observed by that audit was created at 01:01:30 UTC on 11 October and completed the 01:03:14 snapshot in status-only commit 560dd0edb. That newer automated snapshot was preserved before the curated update. Five earlier scheduled runs succeeded on 10 October, created at 01:18, 07:45, 13:59, 18:39 and 22:00 UTC. Successful execution is established, but the observed multi-hour gaps before event creation do not demonstrate regular 30-minute cadence. Their cause remains unexplained.",
@@ -12891,9 +12918,26 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/38741047481"
             }
           ]
+        },
+        {
+          "text": "The request-limit failure came from repeatedly fetching terminal source and import history. The corrected collector uses a complete open-PR inventory to discover reopening, confirms closures of previously active records, and refreshes known active imports even under terminal sources. Thirty Python regression cases run before snapshot collection in Actions. The successful live run used 20 requests and preserved 131 terminal-source observation clocks; historical terminal details do not acquire a fresh timestamp.",
+          "evidence": [
+            {
+              "label": "Original request-limit failure",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38802994823"
+            },
+            {
+              "label": "Collector correction",
+              "url": "https://github.com/tamird/gvisor/commit/a7c261714d49878a8e8711402328fc0549105129"
+            },
+            {
+              "label": "Successful live regression and refresh",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38811438587"
+            }
+          ]
         }
       ],
-      "nextStep": "Keep the existing API-backed collector and ordinary event watcher. Preserve last-good data and per-field freshness if a collection fails.",
+      "nextStep": "Keep the existing scheduled collector and finite event watcher. Preserve historical observation times and last-good data when collection fails; no replacement scheduler is needed.",
       "evidence": [
         {
           "label": "Published maintainer handoff",
@@ -12970,9 +13014,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T20:41:26.641824+00:00",
-      "summary": "Both Linux 5.15 and 6.1 kernels pass all seven diagnostic feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy has incorporated the netfilter commit into #13810 and announced planned Tuesday-afternoon deployment. The separate vhost PR remains open; hosted deployment is not yet verified.",
-      "nextStep": "Track #13810 deployment and #13803 review, then check the affected gVisor tests on an actual updated hosted worker. Keep the successful diagnostic kernels distinct from the deployed worker kernel.",
+      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
+      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated the netfilter change into merged PR #13810 and announced planned Tuesday-afternoon deployment; hosted deployment is not yet verified. The vhost PR #13803 remains open. The requested removal of the duplicated kernel-config test is published separately as PR #13814.",
+      "nextStep": "Follow review of #13803 and #13814 and verify #13810 deployment before checking affected gVisor tests on an updated hosted worker. Keep diagnostic-kernel results separate from deployed worker capabilities.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12999,7 +13043,7 @@
           "url": "https://app.buildbuddy.io/invocation/a270c325-1759-4c74-8135-dc4e2f5ced42"
         },
         {
-          "label": "Open BuildBuddy netfilter PR",
+          "label": "Netfilter PR incorporated into #13810",
           "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13802"
         },
         {
@@ -13127,6 +13171,19 @@
               "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13810"
             }
           ]
+        },
+        {
+          "text": "PR #13814 removes the duplicated guest-kernel configuration test and both targets that ran it. The test repeated selected configuration strings without checking the resulting kernel or exercising its features. The requested reviewer notification is posted. Its first observation has thirteen queued checks and three Darwin checks requiring an approving review; those gates are not executed test failures.",
+          "evidence": [
+            {
+              "label": "Published duplicated-test cleanup",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13814"
+            },
+            {
+              "label": "Requested reviewer notification",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13814#issuecomment-6202679111"
+            }
+          ]
         }
       ]
     },
@@ -13135,8 +13192,8 @@
       "title": "Runtime startup performance",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-15T15:40:16.634922+00:00",
-      "summary": "The current netip and state migrations completed separate fixed Linux AMD64 CLI startup comparisons; both timing results are inconclusive. Netip leaves both executable lengths unchanged, while the state rewrite adds about 4 MB. A matched sandbox-startup comparison using the existing benchmark is being prepared.",
+      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
+      "summary": "The current netip and state migrations completed separate fixed Linux AMD64 CLI startup comparisons; neither found a statistically significant timing difference. The matched sandbox comparison also completed all 288 container starts across twelve balanced blocks, with no detected timing difference for either migration. These results do not establish equal startup cost. Netip leaves executable lengths unchanged; the preceding state rewrite adds about 4 MB.",
       "findings": [
         {
           "text": "The netip migration adds three binary-codec registrations and changes header initialization. Both comparison arms include the cheaper non-race registration from #15814. The fixed method measures 12 balanced pairs of 64 fresh runsc --version processes on one worker, with separate initialization traces and matching AMD64/ARM64 builds. CLI measurements do not substitute for sandbox startup.",
@@ -13165,16 +13222,25 @@
           ]
         },
         {
-          "text": "The state rewrite’s separate CLI measurement gives 6.483 ms before and 6.816 ms after (p=.198, 12 paired batches), with no established timing effect. AMD64 and ARM64 executable lengths increase by 4,042,752 and 3,866,624 bytes. Separate initialization traces show +304 B and +6 allocations overall. Sandbox startup will use the existing BenchmarkStartupEmpty with exact source-built releases; no sandbox timing result is available yet.",
+          "text": "The state rewrite’s separate CLI measurement gives 6.483 ms before and 6.816 ms after (p=.198, 12 paired batches), with no established timing effect. AMD64 and ARM64 executable lengths increase by 4,042,752 and 3,866,624 bytes. Separate initialization traces show +304 B and +6 allocations overall. The separate sandbox comparison is now complete and is recorded below.",
           "evidence": [
             {
               "label": "Verified state CLI comparison",
               "url": "https://app.buildbuddy.io/invocation/0bcbb672-1f11-4845-9932-6e42a2c41d59"
             }
           ]
+        },
+        {
+          "text": "The existing StartupEmpty benchmark completed 288 container starts in twelve balanced blocks on one Linux AMD64 worker. Median process means are 288.4 ms for the baseline, 296.1 ms for netip and 299.6 ms for the state rewrite. Neither difference is detected (p=.590 and .887). Source-built release inputs, actual child outputs and private-daemon cleanup are independently verified. The result measures this startup fixture and does not establish equivalence or cold-machine startup cost.",
+          "evidence": [
+            {
+              "label": "Verified three-arm sandbox-startup comparison",
+              "url": "https://app.buildbuddy.io/invocation/96970fb0-5048-406d-be10-e12e3867b77a"
+            }
+          ]
         }
       ],
-      "nextStep": "Measure affected sandbox-initialization paths with the existing startup benchmark. Keep toolchain and CGO variants separate; the CLI result establishes neither an improvement nor equivalence.",
+      "nextStep": "Use the completed CLI and sandbox measurements when assessing these proposals. Keep initialization allocations, executable size and nondetected timing differences distinct; no additional startup run is queued.",
       "evidence": [
         {
           "label": "Netip measurement branch",
