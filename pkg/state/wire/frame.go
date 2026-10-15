@@ -16,6 +16,7 @@ package wire
 
 import (
 	"fmt"
+	"slices"
 
 	"gvisor.dev/gvisor/pkg/gohacks"
 )
@@ -66,12 +67,26 @@ func (b *ValueBuffer) Release() {
 	b.frame.strings = nil
 }
 
+// reserve returns uninitialized slots. Every parser path assigns a complete
+// frameNode before reading a slot or returning the parsed value, so reused
+// pointer-free storage needs no clearing.
 func (f *valueFrame) reserve(count uint64) int {
-	if count > uint64(int(^uint(0)>>1)-len(f.nodes)) {
+	const maxInt = int(^uint(0) >> 1)
+	if count > uint64(maxInt-len(f.nodes)) {
 		panic("decoded value is too large")
 	}
 	first := len(f.nodes)
-	f.nodes = append(f.nodes, make([]frameNode, int(count))...) // Escapes: temporary decoded nodes.
+	end := first + int(count)
+	if end > cap(f.nodes) {
+		// Reserve at least twice the capacity to limit repeated copying of
+		// large records. Values retain indices across backing allocations.
+		capacity := end
+		if cap(f.nodes) <= maxInt/2 {
+			capacity = max(capacity, 2*cap(f.nodes))
+		}
+		f.nodes = slices.Grow(f.nodes, capacity-first) // Escapes: temporary decoded nodes.
+	}
+	f.nodes = f.nodes[:end]
 	return first
 }
 
