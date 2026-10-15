@@ -28,15 +28,15 @@ func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestin
 	if encoded.Len() != length {
 		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
 	}
-	var element *restorePlan
+	var element reflect.Type
 	if length != 0 && target.directArray() {
-		element = ds.types.plan(target.plan.typ.Elem())
+		element = target.typ.Elem()
 	}
 	for i := 0; i < encoded.Len(); i++ {
 		value := encoded.Element(i)
 		var child restoreDestination
 		if element != nil {
-			child = target.field(element, uintptr(i)*element.size)
+			child = target.field(element, uintptr(i)*element.Size())
 		} else {
 			child = ds.destination(target.value().Index(i))
 		}

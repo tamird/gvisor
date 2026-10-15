@@ -556,6 +556,21 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 		es.pendingTypes = append(es.pendingTypes, te.Type)
 	}
 
+	// Resolve capture once, on a real receiver. A promoted metadata method
+	// must not reinterpret another type's record as its own.
+	value := obj.Addr().Interface()
+	if te.newRecord == nil {
+		te.newRecord = wire.NewSlotRecord
+		if registered, _ := registeredType(te.Name); registered == obj.Type() {
+			if factory := generatedMetadata(value, te.Name, obj.Type()).NewRecord; factory != nil {
+				te.newRecord = factory
+			} else if _, saver := value.(SaverLoader); !saver {
+				if _, binary := value.(binaryObject); binary {
+					te.newRecord = newBinaryRecord
+				}
+			}
+		}
+	}
 	// Invoke the provided saver.
 	s := te.newRecord(wire.TypeID(te.ID), len(te.Fields))
 	*dest = s
@@ -566,7 +581,7 @@ func (es *encodeState) encodeStruct(obj reflect.Value, dest *wire.Object) {
 	}
 	es.stats.start(te.ID)
 	defer es.stats.done()
-	switch value := obj.Addr().Interface().(type) {
+	switch value := value.(type) {
 	case SaverLoader:
 		value.StateSave(Sink{internal: oe})
 	case binaryObject:

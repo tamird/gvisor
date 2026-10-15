@@ -147,7 +147,7 @@ type ordinaryStateReceiver struct {
 
 func (state *ordinaryStateReceiver) beforeSave() {}
 
-// Typed LoadInto calls introduce boolean arguments in the receiver's scope.
+// Typed scalar load calls introduce boolean arguments in the receiver's scope.
 // +stateify savable
 type falseLoadReceiver struct{ value int }
 

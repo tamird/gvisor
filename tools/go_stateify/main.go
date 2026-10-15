@@ -216,28 +216,36 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 	var initCalls []string
 
 	// Common closures.
-	emitRegister := func(name string) {
-		if records != nil {
-			if _, ok := records.restore.registered[name]; ok {
-				capture := "nil"
-				if record := records.types[name]; record != nil {
-					capture = record.factory
-				} else if forward := records.forward[name]; forward != "" {
-					capture = fmt.Sprintf("%sForwardRecord((*%s)(nil))", statePrefix, forward)
-				}
-				mode := records.restore.modes[name]
-				if mode == "" {
-					mode = "LoadCustom"
-				}
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %s, %sNewObject[%s], %s%s)", statePrefix, name, capture, statePrefix, name, statePrefix, mode))
-				return
-			}
-			if forward := records.forward[name]; forward != "" {
-				initCalls = append(initCalls, fmt.Sprintf("%sRegisterGenerated((*%s)(nil), %sForwardRecord((*%s)(nil)), nil, %sLoadCustom)", statePrefix, name, statePrefix, forward, statePrefix))
-				return
-			}
+	emitRegister := func(name string, generated bool) {
+		register := "Register"
+		if generated {
+			register = "RegisterGenerated"
 		}
-		initCalls = append(initCalls, fmt.Sprintf("%sRegister((*%s)(nil))", statePrefix, name))
+		initCalls = append(initCalls, fmt.Sprintf("%s%s((*%s)(nil))", statePrefix, register, name))
+	}
+
+	emitMetadata := func(name string) bool {
+		if records == nil {
+			return false
+		}
+		record := records.types[name]
+		forward := records.forward[name]
+		mode := records.restore.modes[name]
+		if record == nil && forward == "" && mode == "" {
+			return false
+		}
+		if mode == "" {
+			mode = records.restore.noWaitValue
+		}
+		capture := "nil"
+		if record != nil {
+			capture = record.factory
+		} else if forward != "" {
+			capture = fmt.Sprintf("%sForwardRecord((*%s)(%s))", statePrefix, forward, records.saveReceiver)
+		}
+		fmt.Fprintf(outputFile, "func (%s *%s) StateMetadata() %sTypeMetadata {\n", records.saveReceiver, name, statePrefix)
+		fmt.Fprintf(outputFile, " return %sTypeMetadata{Owner: (*%s)(nil), NewRecord: %s, LoadGenerated: %s}\n}\n\n", statePrefix, name, capture, mode)
+		return true
 	}
 
 	// Automated warning.
@@ -305,7 +313,13 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			if records != nil {
 				// Typed field calls and their wait arguments must not be
 				// shadowed by the receiver.
-				if statePrefix == recv+"." || statePrefix == "" && recv == "LoadInto" || recv == "true" || recv == "false" {
+				shadowed := statePrefix == recv+"." || recv == "true" || recv == "false"
+				if statePrefix == "" {
+					for _, helper := range records.restore.fields[ts.Name.Name] {
+						shadowed = shadowed || recv == helper
+					}
+				}
+				if shadowed {
 					loadRecv = records.saveReceiver
 				}
 				// Custom value type spellings also occur in this method.
@@ -436,7 +450,15 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 						if field.kind == fieldWait {
 							wait = records.restore.waitValue
 						}
-						fmt.Fprintf(outputFile, " %sLoadInto(stateSourceObject, %d, &%s.%s, %s)\n", statePrefix, field.slot, loadRecv, field.name, wait)
+						if helper := records.restore.fields[ts.Name.Name][field.name]; helper != "" {
+							fmt.Fprintf(outputFile, " %s%s(stateSourceObject, %d, &%s.%s, %s)\n", statePrefix, helper, field.slot, loadRecv, field.name, wait)
+						} else {
+							method := "Load"
+							if field.kind == fieldWait {
+								method = "LoadWait"
+							}
+							fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, field.slot, loadRecv, field.name)
+						}
 					}
 					model.scan(scanFunctions{value: emitLoadValue})
 					if hasAfterLoad {
@@ -451,7 +473,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 
 			// Add to our registration.
-			emitRegister(ts.Name.Name)
+			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name))
 
 		case *ast.Ident, *ast.SelectorExpr, *ast.ArrayType:
 			maybeEmitImports()
@@ -497,7 +519,7 @@ func render(outputFile io.Writer, names []string, group *groupModel, records *re
 			}
 
 			// See above.
-			emitRegister(ts.Name.Name)
+			emitRegister(ts.Name.Name, emitMetadata(ts.Name.Name))
 		}
 	}
 
