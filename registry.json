@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T11:07:23.219016+00:00",
+    "updatedAt": "2026-10-15T11:33:37.259170+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7092,14 +7092,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
       "status": "Investigating Load regressions",
-      "updatedAt": "2026-10-15T11:07:23.219016+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. Selected correctness, race, analyzer and both-architecture production builds pass. Benchmarks show faster Save and slower Load in several fixtures. Profiles identify repeated type resolution; a correction now shares that work within each Load and avoids eager startup schemas. Its tests and performance measurements remain pending. Nogo source ordering (#15648) remains a prerequisite.",
+      "updatedAt": "2026-10-15T11:33:37.259170+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. Benchmarks show faster Save and slower Load in several fixtures. The per-Load type correction passes six normal/race suites; an analyzer naming issue and a nil-receiver allocation edge are being corrected before performance and startup measurements. Nogo source ordering (#15648) remains a prerequisite.",
       "followup": {
         "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
-        "observedAt": "2026-10-15T11:07:23.219016+00:00",
-        "nextAction": "Validate the type-resolution correction, repeat the paired performance comparison, and measure release startup against cheap type registration before contributor review.",
+        "observedAt": "2026-10-15T11:33:37.259170+00:00",
+        "nextAction": "Validate the allocation correction, complete analyzers and production builds, then repeat the paired benchmarks and matched release startup measurements before contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -7112,7 +7112,9 @@
           "https://github.com/tamird/gvisor/commit/a8d9a9a06c400e51cae8bce654b1e110f4a916f2",
           "https://app.buildbuddy.io/invocation/9c5c7d76-efb7-4981-b4d1-8866351f4b8a",
           "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a",
-          "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41"
+          "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41",
+          "https://github.com/tamird/gvisor/commit/f059680e2",
+          "https://app.buildbuddy.io/invocation/852d5a9a-b0bc-4dcf-bd75-fdeae4ace65b"
         ]
       }
     }
@@ -9532,8 +9534,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T10:51:40.331426+00:00",
-      "summary": "The complete rewrite passes the selected correctness, race, analyzer and production-build checks. Matched benchmarks show faster Save in several fixtures but slower Load. Profiles identify repeated type resolution as a substantial restore cost; the owner is consolidating that work. Startup and whole-checkpoint measurements remain outstanding. The proposal depends on #15648.",
+      "updatedAt": "2026-10-15T11:33:37.259170+00:00",
+      "summary": "The complete rewrite has mixed benchmark results: several Save gains and Load regressions. Profiles identify repeated type resolution. The first correction passed four normal suites and two race suites; analyzers found a receiver-name mismatch. Further review found a nil-receiver allocation edge, now being simplified at the schema-reading boundary. Performance and startup measurements remain pending.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10325,16 +10327,24 @@
           ]
         },
         {
-          "text": "Four CPU/allocation profiles reused the exact benchmark binaries from the matched comparison. In the rewrite, decodeState.plan accounts for 18.06% of cumulative sampled CPU in control-message Load and 24.60% in UDP Load; restoreType accounts for 13.98% and 22.83%, respectively. These overlapping costs point to repeated type resolution in the common restore path. The owner is consolidating that work before further performance comparisons. These single-process profiles diagnose the regression; the fixed 12-pair comparison remains the timing evidence.",
+          "text": "Four CPU/allocation profiles reused the exact benchmark binaries from the matched comparison. In the rewrite, decodeState.plan accounts for 18.06% of cumulative sampled CPU in control-message Load and 24.60% in UDP Load; restoreType accounts for 13.98% and 22.83%, respectively. These overlapping costs point to repeated type resolution. The per-Load correction passed six normal/race suites, but requires an analyzer naming fix and a reviewed allocation-order correction before performance testing. The fixed 12-pair comparison remains the timing evidence.",
           "evidence": [
             {
               "label": "Completed restore profiles; independently verified originals",
               "url": "https://app.buildbuddy.io/invocation/a5ebc6f8-dd0c-47f5-84ce-8403e044ec41"
+            },
+            {
+              "label": "Published per-Load correction",
+              "url": "https://github.com/tamird/gvisor/commit/f059680e2"
+            },
+            {
+              "label": "Six suites passed; analyzer failure stopped production builds",
+              "url": "https://app.buildbuddy.io/invocation/852d5a9a-b0bc-4dcf-bd75-fdeae4ace65b"
             }
           ]
         }
       ],
-      "nextStep": "Remove repeated type resolution from the common restore path, recheck the affected benchmarks, and measure startup against cheap type registration before requesting contributor review.",
+      "nextStep": "Validate the allocation correction, complete analyzers and production builds, then repeat the paired benchmarks and matched release startup measurements before contributor review.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -12651,9 +12661,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T11:07:23.219016+00:00",
-      "summary": "The first BuildBuddy source change enables missing inet/IPv6 FIB, xtables mark and CT features in the x86 guest kernels. Its validation branch is published; remote regression tests and both kernel builds are running.",
-      "nextStep": "Verify the configuration regression and kernel builds, then boot the resulting kernels through the existing GitHub Actions KVM bridge and BuildBuddy Firecracker fixture before upstream submission.",
+      "updatedAt": "2026-10-15T11:33:37.259170+00:00",
+      "summary": "The old x86 guest configurations reproduce all four missing netfilter options; ARM passes. The first validation stopped because Bazel changed the checked-in lockfile. The corrected test and kernel builds are now running with the repository CI policy that rejects lockfile updates.",
+      "nextStep": "Run the corrected configuration test and both kernel builds, retaining lockfile diagnostics. Reuse the GitHub Actions KVM bridge for runtime qualification; keep upstream source support distinct from hosted deployment.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12670,6 +12680,10 @@
         {
           "label": "Remote configuration regression and kernel builds",
           "url": "https://app.buildbuddy.io/invocation/7ae8dc66-d653-4778-94ab-a8bc82aefd6c"
+        },
+        {
+          "label": "Remaining test and kernel builds with CI lockfile policy",
+          "url": "https://app.buildbuddy.io/invocation/9ddd8d9e-a4ce-45d7-bc25-0fd9c4ae2c64"
         }
       ],
       "findings": [
