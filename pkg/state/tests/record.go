@@ -100,6 +100,12 @@ func (state *statePackageReceiver) loadObject(_ context.Context, value []state.T
 // +stateify identtype
 type forwardedRecord recordParent
 
+// The receiver deliberately shadows its own type name. Generated forwarding
+// metadata must preserve this spelling without using the type in its body.
+func (forwardedRecord *forwardedRecord) recordValue() int {
+	return forwardedRecord.value
+}
+
 // +stateify savable
 type recordParent struct {
 	value int
