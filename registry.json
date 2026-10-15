@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T09:55:23.956752+00:00",
+    "updatedAt": "2026-10-15T10:17:59.605630+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7091,15 +7091,15 @@
       "title": "Unify generated state capture and restore",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
-      "status": "Preparing performance comparison",
-      "updatedAt": "2026-10-15T06:11:35.630937+00:00",
-      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine, preserving type information through Save/Load. One complete-record parser replaces the old wire reader; the field-layout cache is removed. Reflection remains for dynamic types, maps, slices and manual compatibility. The selected state suites, race tests and analyzer checks pass. Both AMD64 and ARM64 production builds also pass, with independent verification from the source through generated code and linked runsc binaries. The separate Nogo source-order correction (#15648) is required. Matched benchmarks of the complete rewrite are being prepared; earlier prototype measurements retain their original source identities.",
+      "status": "Investigating Load regressions",
+      "updatedAt": "2026-10-15T10:17:59.605630+00:00",
+      "summary": "Generate typed snapshots and pass actual field pointers into one restore engine. The selected correctness, race, analyzer and both-architecture production builds pass. The first matched package benchmark reduction shows faster Save in several fixtures and slower Load in several fixtures; independent result review is in progress. Profiling and startup measurements are required before contributor review. The separate Nogo source-order correction (#15648) remains a prerequisite.",
       "followup": {
-        "disposition": "Preparing performance comparison",
+        "disposition": "Investigating Load regressions",
         "owner": "restore_integration_review",
         "sourceHead": "1387b2abb94ef4ef1735c701740477b2b56038e1",
-        "observedAt": "2026-10-15T06:11:35.630937+00:00",
-        "nextAction": "Measure the complete rewrite against the same upstream baseline and fixtures, including the whole-checkpoint workload, before requesting contributor review.",
+        "observedAt": "2026-10-15T10:17:59.605630+00:00",
+        "nextAction": "Verify the completed benchmark results, profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/99112fcf15cce94cb133de2222740b806a437b48",
           "https://github.com/tamird/gvisor/commit/a23209811df264b53bf608162e3fdf7e8b5c3385",
@@ -7110,7 +7110,8 @@
           "https://app.buildbuddy.io/invocation/a83e56da-3c82-40ae-9086-ff087f606383",
           "https://github.com/tamird/gvisor/commit/1387b2abb94ef4ef1735c701740477b2b56038e1",
           "https://github.com/tamird/gvisor/commit/a8d9a9a06c400e51cae8bce654b1e110f4a916f2",
-          "https://app.buildbuddy.io/invocation/9c5c7d76-efb7-4981-b4d1-8866351f4b8a"
+          "https://app.buildbuddy.io/invocation/9c5c7d76-efb7-4981-b4d1-8866351f4b8a",
+          "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a"
         ]
       }
     }
@@ -9530,8 +9531,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T08:29:07.319276+00:00",
-      "summary": "The unified proposal carries field types through generated Save/Load methods and removes the field-layout cache and duplicate wire reader. The selected state suites, race tests, analyzers and both architecture production builds pass independent verification. Matched complete-source performance measurements are being prepared, including the existing whole-checkpoint workload. The proposal depends on #15648. Earlier measurements retain their original experimental source identities.",
+      "updatedAt": "2026-10-15T10:17:59.605630+00:00",
+      "summary": "The complete rewrite passes the selected correctness, race, analyzer and production-build checks. Its first matched package comparison shows faster Save in several fixtures but slower Load in several fixtures. The owner is investigating those regressions; independent result review is in progress. Startup and whole-checkpoint measurements remain outstanding. The proposal depends on #15648.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10295,9 +10296,18 @@
               "url": "https://github.com/google/gvisor/pull/15443"
             }
           ]
+        },
+        {
+          "text": "The fixed package comparison completed successfully with 12 balanced pairs per fixture. The first reduction shows Save improvements alongside Load regressions in the control-message, UDP, pointer and map fixtures. Original measurements are retained for independent review; lower allocation counts alone do not establish faster restoration. The owner will profile the regressing path before another whole-checkpoint comparison. These results belong to the complete rewrite, separately from the earlier prototypes.",
+          "evidence": [
+            {
+              "label": "Completed matched package comparison",
+              "url": "https://app.buildbuddy.io/invocation/72df6056-7235-4bff-b659-748a68f5e77a"
+            }
+          ]
         }
       ],
-      "nextStep": "Audit registration and generated metadata against the startup requirement, and measure the complete rewrite with matched CLI startup, codec and whole-checkpoint workloads before contributor review.",
+      "nextStep": "Verify the completed benchmark results, profile and correct the Load regressions, and measure startup against cheap type registration before requesting contributor review.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
