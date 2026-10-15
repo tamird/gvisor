@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T21:59:12.602926+00:00",
+    "updatedAt": "2026-10-15T22:22:06.651889+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9558,8 +9558,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
-      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Its fixed performance comparison is being retried after a provider stream failure left the first attempt incomplete; no new timing or allocation result is available. The preceding design improved UDP Save time by 25.95% but increased control-message Load time by 33.65% and allocated 61.94% more bytes. Its CLI and container-startup comparisons found no detected timing difference, while production binaries grew by about 4 MB. These earlier results remain separate from the current correction.",
+      "updatedAt": "2026-10-15T22:22:06.651889+00:00",
+      "summary": "The schema-ownership correction passes its semantic, race, analyzer and both production-build checks. Both hosted performance attempts ended with provider stream failures. The same fixed comparison is now running with an Actions coordinator and remote compilation; no new timing or allocation result is available. The preceding design improved UDP Save time by 25.95% but increased control-message Load time by 33.65% and allocated 61.94% more bytes. Its CLI and container-startup comparisons found no detected timing difference, while production binaries grew by about 4 MB. These earlier results remain separate from the current correction.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10421,20 +10421,24 @@
           ]
         },
         {
-          "text": "The first fixed performance attempt ended with the provider error “stream closed with task still claimed” before a complete result could be recovered. One unchanged retry is running. Partial original observations are retained separately and will not be combined with the retry; no current timing or allocation result is claimed.",
+          "text": "Both hosted performance attempts ended with the provider error “stream closed with task still claimed” before a complete result could be recovered. Neither supplies a performance result or usable worker execution timestamps, so no lease duration or cause is inferred. The same fixed comparison is now running under an Actions coordinator with remote compilation. Its worker environment differs; partial observations from the earlier attempts will not be combined with it.",
           "evidence": [
             {
               "label": "Incomplete original performance attempt",
               "url": "https://app.buildbuddy.io/invocation/bfc3a20e-973f-4711-b898-2b775f540dfc"
             },
             {
-              "label": "Unchanged performance retry",
+              "label": "Second incomplete hosted performance attempt",
               "url": "https://app.buildbuddy.io/invocation/7f9c1dfc-0a05-46ec-bf07-75195d8c23c2"
+            },
+            {
+              "label": "Fixed comparison on the Actions coordinator",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38816281394"
             }
           ]
         }
       ],
-      "nextStep": "Complete and independently verify the unchanged schema-ownership performance comparison. Preserve the incomplete first attempt separately; do not combine its partial samples with the retry or infer a benefit from correctness alone.",
+      "nextStep": "Complete and independently verify the fixed Actions comparison. Retain both incomplete hosted attempts separately, without pooling samples across workers or inferring performance from correctness alone.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -13014,9 +13018,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T21:59:12.602926+00:00",
-      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated the netfilter change into merged PR #13810 and announced planned Tuesday-afternoon deployment; hosted deployment is not yet verified. The vhost PR #13803 remains open. The requested removal of the duplicated kernel-config test is published separately as PR #13814.",
-      "nextStep": "Follow review of #13803 and #13814 and verify #13810 deployment before checking affected gVisor tests on an updated hosted worker. Keep diagnostic-kernel results separate from deployed worker capabilities.",
+      "updatedAt": "2026-10-15T22:22:06.651889+00:00",
+      "summary": "Both Linux 5.15 and 6.1 diagnostic kernels pass all seven feature checks: vhost control operations and IPv4/IPv6 CT, mark and FIB packet handling. BuildBuddy incorporated the netfilter change into merged PR #13810 and announced planned Tuesday-afternoon deployment. Brandon has also accepted the vhost changes for a follow-up after his 6.18 kernel upgrade, including the new kernel upload and dependency update. Hosted deployment and affected gVisor runtime behavior remain unverified. The duplicated-test cleanup is published separately as PR #13814.",
+      "nextStep": "Follow the provider’s 6.18 upgrade and promised vhost/kernel-upload follow-up, plus review of #13814. Verify the actual deployed worker before claiming the affected gVisor tests pass; no additional acknowledgment or reviewer ping is pending.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -13182,6 +13186,19 @@
             {
               "label": "Requested reviewer notification",
               "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13814#issuecomment-6202679111"
+            }
+          ]
+        },
+        {
+          "text": "Brandon says his 6.18 upgrade conflicts with #13803 and that, after it lands, he will send a follow-up containing the vhost changes and deps.bzl update for the new kernel upload. The contributor has already acknowledged this handoff. PR #13803 remains open; the comment is a provider plan, not evidence that the changes are merged or deployed.",
+          "evidence": [
+            {
+              "label": "Provider accepts the vhost follow-up",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203357276"
+            },
+            {
+              "label": "Contributor acknowledgment already posted",
+              "url": "https://github.com/buildbuddy-io/buildbuddy/pull/13803#issuecomment-6203437303"
             }
           ]
         }
