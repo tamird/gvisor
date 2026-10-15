@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-15T14:43:12.872143+00:00",
+    "updatedAt": "2026-10-15T15:27:46.978169+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -9538,8 +9538,8 @@
       "title": "pkg/state: code generation and generics design",
       "status": "active",
       "owner": "MAIN (Codex)",
-      "updatedAt": "2026-10-15T14:43:12.872143+00:00",
-      "summary": "The revised design removes the per-Load plan map and generated allocation wrappers while retaining typed scalar assignments and the shared object graph. Its normal state tests pass on AMD64 and ARM64, and its race tests pass. The generated receiver-name correction passes its analyzers and both production builds. Review found one remaining receiver/type-name collision in forwarded metadata; a small correction is being validated before performance measurements. The earlier measured Load regressions remain the baseline to improve.",
+      "updatedAt": "2026-10-15T15:27:46.978169+00:00",
+      "summary": "The revised design removes the per-Load plan map and generated allocation wrappers while retaining typed scalar assignments and the shared object graph. Normal state tests on AMD64 and ARM64, race tests, the affected analyzers and both production builds pass, including the forwarding receiver/type-name regression. Fixed package and startup comparisons are running against the same control; the earlier measured Load regressions remain the baseline to improve.",
       "findings": [
         {
           "text": "The current generator emits Save/Load calls with addresses of statically known fields. Sink.Save and Source.Load then accept any and reconstruct reflect.Values. The prototype will retain that known type information in generated field operations while sharing the existing wire/type/identity/wait graph. AST spelling alone is insufficient for imported, aliased or shadowed types; the generator needs a sound type proof or a compatible dynamic fallback.",
@@ -10352,7 +10352,7 @@
           ]
         },
         {
-          "text": "Profiles of the exact prior benchmark binaries attribute 23.20% of sampled cumulative control-message Load CPU and 12.13% of UDP Load CPU to the per-Load plan machinery. The new revision removes that map and its allocated entries, restores the smaller registration table, and uses typed assignments for generated scalar fields. Normal state tests on both architectures and race tests pass. Generated receiver naming still needs its analyzer correction qualified; there is no new speedup measurement.",
+          "text": "Profiles of the exact prior benchmark binaries attribute 23.20% of sampled cumulative control-message Load CPU and 12.13% of UDP Load CPU to the per-Load plan machinery. The new revision removes that map and its allocated entries, restores the smaller registration table, and uses typed assignments for generated scalar fields. Normal state tests on both architectures and race tests pass. The receiver-name and forwarding corrections now pass the affected semantic, race, analyzer and production checks; there is no new speedup measurement.",
           "evidence": [
             {
               "label": "Verified corrected-binary CPU and allocation profiles",
@@ -10361,7 +10361,7 @@
           ]
         }
       ],
-      "nextStep": "Validate the forwarding-receiver correction, then run the fixed package and startup comparisons against the same baseline. Measure sandbox startup separately before proposing adoption.",
+      "nextStep": "Verify the fixed package and CLI startup comparisons, then measure sandbox startup separately before proposing adoption.",
       "evidence": [
         {
           "label": "Qualified shared-struct source",
@@ -10810,6 +10810,18 @@
         {
           "label": "Measured per-Load ownership correction",
           "url": "https://github.com/tamird/gvisor/commit/d5f5350e1de2657ce3b61ff140a9d8ba31cff1e9"
+        },
+        {
+          "label": "Verified forwarding regression, analyzers and production builds",
+          "url": "https://app.buildbuddy.io/invocation/86ef985b-cb23-4dee-b017-160e1259108d"
+        },
+        {
+          "label": "Fixed package comparison",
+          "url": "https://app.buildbuddy.io/invocation/a64c238f-2960-4e45-bac6-d15629cafca4"
+        },
+        {
+          "label": "Separate fixed CLI startup comparison",
+          "url": "https://app.buildbuddy.io/invocation/0bcbb672-1f11-4845-9932-6e42a2c41d59"
         }
       ],
       "comparisons": [
@@ -12833,9 +12845,9 @@
       "title": "BuildBuddy fixes for gVisor qualification",
       "status": "active",
       "owner": "FIFTH (Codex)",
-      "updatedAt": "2026-10-15T14:43:12.872143+00:00",
-      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both are now config-only changes: the existing tests are preserved, and the qualified Linux 5.15/6.1 config bytes are unchanged. The authenticated Firecracker test build succeeds with the qualified kernels as cached dependencies. Boot validation has not run yet because an inherited test-selection filter excluded the explicit kernel output targets; that invocation is being corrected.",
-      "nextStep": "Complete the existing Firecracker boot test with both qualified kernels, then exercise the affected runtime features. Follow upstream review and hosted deployment separately.",
+      "updatedAt": "2026-10-15T15:27:46.978169+00:00",
+      "summary": "BuildBuddy PRs #13802 and #13803 enable the missing x86 guest netfilter and vhost-net features. Both preserve the existing tests. The netfilter-config kernels now pass the existing Firecracker command test on Linux 5.15 and 6.1, with the exact source-built kernel outputs verified. The combined guest networking probe is running; hosted deployment remains separate.",
+      "nextStep": "Verify the combined diagnostic guest’s IPv4/IPv6 FIB, legacy mark/CT rules and vhost owner/reset ioctls. Keep the two upstream PRs independent and follow hosted deployment separately.",
       "evidence": [
         {
           "label": "Missing hosted kernel features and recorded failures",
@@ -12876,6 +12888,10 @@
         {
           "label": "Verified vhost before/after checks and both kernel builds",
           "url": "https://app.buildbuddy.io/invocation/6e2ce328-5404-4eb7-8248-9e611baeb19a"
+        },
+        {
+          "label": "Combined guest netfilter and vhost feature probe",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38760225662"
         }
       ],
       "findings": [
@@ -12923,7 +12939,7 @@
           ]
         },
         {
-          "text": "The contributor questioned literal config assertions added to the existing test. Both PRs now preserve that test unchanged. Netfilter head b30b67e0c and vhost-net head 48d964b37 retain exactly the previously compiled configuration bytes. The authenticated Actions build succeeded, but its artifact check found no explicit kernel outputs because tests-bare also sets a build-tag filter. No boot or runtime-feature pass is claimed.",
+          "text": "The contributor questioned literal config assertions added to the existing test. Both PRs now preserve that test unchanged. Netfilter head b30b67e0c and vhost-net head 48d964b37 retain exactly the previously compiled configuration bytes. The first authenticated Actions build succeeded, but its artifact check found no explicit kernel outputs because tests-bare also sets a build-tag filter. That first run supplied no boot or runtime-feature result; the corrected boot result follows.",
           "evidence": [
             {
               "label": "Config-only netfilter correction",
@@ -12938,6 +12954,58 @@
               "url": "https://github.com/tamird/gvisor/actions/runs/38744484329"
             }
           ]
+        },
+        {
+          "text": "The corrected authenticated Actions run boots both qualified netfilter kernels and executes TestFirecrackerRunSimple successfully. The two TestRunner executions are fresh; compilation reused authenticated remote-cache results. Original reports and kernel/source bindings are verified. This checks kernel boot and command execution; packet rules, vhost ioctls and hosted deployment still need their own checks.",
+          "evidence": [
+            {
+              "label": "Verified two-kernel Firecracker run",
+              "url": "https://github.com/tamird/gvisor/actions/runs/38752188277"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "investigation:runtime-startup",
+      "title": "Runtime startup performance",
+      "status": "active",
+      "owner": "Codex",
+      "updatedAt": "2026-10-15T15:27:46.978169+00:00",
+      "summary": "The current netip migration completes the fixed CLI startup comparison, but the timing remains inconclusive: 8.398 ms before and 8.034 ms after (p=.887; 12 paired batches). Both production binary sizes are unchanged. The state rewrite has a separate comparison running; sandbox-startup measurements remain to be done.",
+      "findings": [
+        {
+          "text": "The netip migration adds three binary-codec registrations and changes header initialization. Both comparison arms include the cheaper non-race registration from #15814. The fixed method measures 12 balanced pairs of 64 fresh runsc --version processes on one worker, with separate initialization traces and matching AMD64/ARM64 builds. CLI measurements do not substitute for sandbox startup.",
+          "evidence": [
+            {
+              "label": "Current netip proposal",
+              "url": "https://github.com/google/gvisor/pull/15730"
+            },
+            {
+              "label": "Cheap registration prerequisite",
+              "url": "https://github.com/google/gvisor/pull/15814"
+            },
+            {
+              "label": "Fixed netip startup comparison",
+              "url": "https://app.buildbuddy.io/invocation/ea0cd3cf-d9d5-4f38-a395-1400a3cc43b0"
+            }
+          ]
+        },
+        {
+          "text": "All 1,536 timed CLI invocations completed. Twelve balanced batch means per arm give 8.398 ms before versus 8.034 ms after, with wide variation and no established timing effect. The AMD64 and ARM64 executable lengths are unchanged. Separate single-process initialization traces show 152 additional allocated bytes and seven additional allocations overall, including 104 bytes and six allocations in pkg/state. These traces are outside the timing samples.",
+          "evidence": [
+            {
+              "label": "Completed source-bound netip startup comparison",
+              "url": "https://app.buildbuddy.io/invocation/ea0cd3cf-d9d5-4f38-a395-1400a3cc43b0"
+            }
+          ]
+        }
+      ],
+      "nextStep": "Measure affected sandbox-initialization paths with the existing startup benchmark. Keep toolchain and CGO variants separate; the CLI result establishes neither an improvement nor equivalence.",
+      "evidence": [
+        {
+          "label": "Netip measurement branch",
+          "url": "https://github.com/tamird/gvisor/tree/diagnostics/netip-startup-current"
         }
       ]
     }
