@@ -40,52 +40,29 @@ const (
 )
 
 // restorePlan owns the operations for one actual Go type during a Load.
-// Registration is resolved only when allocating or reconciling an object;
-// describing a destination must not invoke its metadata before reading wire data.
+// Reading a wire schema supplies registered operations; describing or allocating
+// a destination must not invoke its metadata before reading its body.
 type restorePlan struct {
-	typ                  reflect.Type
-	kind                 reflect.Kind
-	size                 uintptr
-	allocate             Allocate
-	loadMode             LoadMode
-	registrationResolved bool
+	typ      reflect.Type
+	kind     reflect.Kind
+	size     uintptr
+	allocate Allocate
+	loadMode LoadMode
 }
 
-func (tdb *typeDecodeDatabase) plan(typ reflect.Type) *restorePlan {
-	if plan := tdb.plans[typ]; plan != nil {
+func (tbd *typeDecodeDatabase) plan(typ reflect.Type) *restorePlan {
+	if plan := tbd.plans[typ]; plan != nil {
 		return plan
 	}
-	if tdb.plans == nil {
-		tdb.plans = make(map[reflect.Type]*restorePlan)
+	if tbd.plans == nil {
+		tbd.plans = make(map[reflect.Type]*restorePlan)
 	}
 	plan := &restorePlan{typ: typ, kind: typ.Kind(), size: typ.Size()}
-	tdb.plans[typ] = plan
+	tbd.plans[typ] = plan
 	return plan
 }
 
-func (plan *restorePlan) resolveRegistration(name string) {
-	if plan.registrationResolved {
-		return
-	}
-	if registered, ok := globalTypeDatabase[name]; ok && registered.typ == plan.typ {
-		plan.allocate = registered.allocate
-		plan.loadMode = registered.loadMode
-	}
-	plan.registrationResolved = true
-}
-
 func (plan *restorePlan) newObject() any {
-	if !plan.registrationResolved {
-		// Foreign codecs do not implement Type. Ordinary generated and manual
-		// registrations expose their name without constructing a field schema.
-		if info, ok := reverseTypeDatabase[plan.typ]; ok {
-			plan.resolveRegistration(info.Name)
-		} else if value, ok := reflect.Zero(reflect.PointerTo(plan.typ)).Interface().(Type); ok {
-			plan.resolveRegistration(value.StateTypeName())
-		} else {
-			plan.registrationResolved = true
-		}
-	}
 	if plan.allocate != nil {
 		return plan.allocate(plan.typ)
 	}
