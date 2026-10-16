@@ -47,7 +47,9 @@ name: CI
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ contains(fromJSON('["build","test","benchmarks"]'), inputs.lanes) && inputs.targets || '' }}-${{ inputs.clock_source }}
+  # Explicit target lists can exceed GitHub's concurrency-key length limit.
+  # Keep those runs independent; different selections must not cancel each other.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.architecture }}-${{ inputs.execution }}-${{ inputs.lanes }}-${{ inputs.syscall_bucket }}-${{ contains(fromJSON('["build","test","benchmarks"]'), inputs.lanes) && github.run_id || '' }}-${{ inputs.clock_source }}
   cancel-in-progress: true
 
 jobs:
