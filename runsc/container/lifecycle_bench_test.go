@@ -201,7 +201,9 @@ func startSleepingContainer(b *testing.B, conf *config.Config) (*Container, func
 		b.Fatalf("Start: %v", err)
 	}
 	return cont, func() {
-		cont.Destroy()
+		if err := cont.Destroy(); err != nil {
+			b.Errorf("Destroy: %v", err)
+		}
 		cleanup()
 	}
 }
