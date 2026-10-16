@@ -5037,7 +5037,7 @@ find $dir -type l -o -type f | sort | xargs cat | md5sum`), 0755); err != nil {
 		}
 		resultImages = append(resultImages, erofsImageInfo{
 			name:    i.name,
-			options: strings.Join(i.options, " "),
+			options: i.options,
 			path:    imagePath,
 		})
 	}

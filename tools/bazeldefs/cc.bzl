@@ -57,6 +57,7 @@ cc_binary = _cc_binary
 cc_proto_library = _cc_proto_library
 cc_linker = "@llvm//tools:ld.lld"
 cc_objcopy = "@llvm//tools:llvm-objcopy"
+cc_objdump = "@llvm//tools:llvm-objdump"
 cc_nm = "@llvm//tools:llvm-nm"
 gtest = "@com_google_googletest//:gtest"
 gbenchmark = "@com_google_benchmark//:benchmark"

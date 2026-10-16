@@ -67,9 +67,24 @@ fi
 temporary_files=()
 GVISOR_DOCKER_NETWORK=
 qualification_private=
+qualification_workspace=$PWD
+qualification_artifacts=
 cleanup() {
   local status=$?
-  rm -f -- "${temporary_files[@]}"
+  trap - EXIT
+  # Preserve dependency resolution output even on failure or interruption.
+  # A dirty lock remains a source-integrity failure; it is never restored here.
+  if [[ -n $qualification_artifacts ]]; then
+    local capture_status=0
+    cp -- "$qualification_workspace/MODULE.bazel.lock" "$qualification_artifacts/MODULE.bazel.lock" || capture_status=1
+    sha256sum "$qualification_artifacts/MODULE.bazel.lock" > "$qualification_artifacts/MODULE.bazel.lock.sha256" || capture_status=1
+    git -C "$qualification_workspace" diff --binary --full-index HEAD -- MODULE.bazel.lock > "$qualification_artifacts/MODULE.bazel.lock.diff" || capture_status=1
+    printf '%s\n' "$capture_status" > "$qualification_artifacts/lock-capture-exit" || capture_status=1
+    if (( status == 0 && capture_status != 0 )); then status=$capture_status; fi
+  fi
+  if ! rm -f -- "${temporary_files[@]}"; then
+    if (( status == 0 )); then status=1; fi
+  fi
   if [[ -n $qualification_private ]] && ! rm -rf -- "$qualification_private"; then
     if (( status == 0 )); then status=1; fi
   fi
@@ -210,6 +225,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
     mkdir -p "$RUNNER_TEMP/qualification"
+    qualification_artifacts=$RUNNER_TEMP/qualification
     if [[ $qualification_retain_reports == true ]]; then
       # Root cannot replace runner-owned files in sticky /tmp with Linux
       # protected_regular enabled. Keep raw events in a private parent owned

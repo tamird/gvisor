@@ -27,7 +27,7 @@ import (
 // offset startOff.
 func disasmARM64(t *testing.T, buf []byte, startOff, endOff int) []string {
 	t.Helper()
-	return disasmBytes(t, "aarch64", buf, startOff, endOff)
+	return disasmBytes(t, "elf64-littleaarch64", buf, startOff, endOff)
 }
 
 // TestMatchARM64CounterRead verifies against objdump disassembly that

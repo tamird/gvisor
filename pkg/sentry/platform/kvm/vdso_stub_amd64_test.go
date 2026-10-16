@@ -27,7 +27,7 @@ import (
 // image offset startOff.
 func disasmAMD64(t *testing.T, buf []byte, startOff, endOff int) []string {
 	t.Helper()
-	return disasmBytes(t, "i386:x86-64", buf, startOff, endOff)
+	return disasmBytes(t, "elf64-x86-64", buf, startOff, endOff)
 }
 
 // TestMatchAMD64RDTSCOrderedSite verifies against objdump disassembly that
