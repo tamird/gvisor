@@ -263,9 +263,25 @@ class QualificationReportTest(unittest.TestCase):
         self.assertEqual(report.bundle(self.evidence, 0, 0, output)["status"], "INCOMPLETE")
 
     def test_empty_bundle_never_passes(self) -> None:
-        value = report.bundle(self.evidence, 0, 0, self.root / "bundle.tar.gz")
+        value = report.bundle(self.evidence, 19, 0, self.root / "bundle.tar.gz")
         self.assertEqual(value["status"], "INCOMPLETE")
         self.assertEqual(value["invocations"], [])
+        self.assertEqual((value["native_exit"], value["runner_exit"]), (None, 19))
+
+    def test_bundle_distinguishes_reporting_and_coordinator_failure(self) -> None:
+        invocation = self.fixture()
+        (invocation / "capture-exit").write_text("1\n")
+        self.capture(invocation)
+        self.verdict(invocation)
+        output = self.root / "bundle.tar.gz"
+        value = report.bundle(self.evidence, 1, 0, output)
+        self.assertEqual((value["status"], value["native_exit"], value["runner_exit"]), ("INCOMPLETE", 0, 1))
+        self.assertEqual(value["coordinator_failed"], False)
+        (invocation / "capture-exit").write_text("0\n")
+        self.verdict(invocation)
+        value = report.bundle(self.evidence, 17, 0, output)
+        self.assertEqual((value["status"], value["native_exit"], value["runner_exit"]), ("FAIL", 0, 17))
+        self.assertEqual(value["coordinator_failed"], True)
 
 
 if __name__ == "__main__":

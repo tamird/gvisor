@@ -450,8 +450,8 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
             "execution_to_verdict_seconds": (now - datetime.datetime.fromisoformat(string(info["execution_finished_at"]))).total_seconds()}
 
 
-def bundle(directory: Path, native_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
-    """Publish one aggregate verdict and archive; preserve a known native exit."""
+def bundle(directory: Path, runner_exit: int, capture_exit: int, output: Path) -> dict[str, object]:
+    """Keep original command exits distinct from the enclosing runner's exit."""
     rows = []
     errors = []
     for invocation in sorted(directory.rglob("invocation-*")):
@@ -468,8 +468,25 @@ def bundle(directory: Path, native_exit: int, capture_exit: int, output: Path) -
     if len(sources) != 1:
         errors.append("Invocation sources are absent or inconsistent")
     verdicts = [mapping(row["verdict"]) for row in rows]
-    status = "FAIL" if native_exit or any(row.get("status") == "FAIL" for row in verdicts) else "INCOMPLETE" if capture_exit or errors or any(row.get("status") != "PASS" for row in verdicts) else "PASS"
+    native_exits = []
+    for row in rows:
+        try:
+            native_exits.append({"invocation": row["path"], "exit": number(mapping(row["verdict"]).get("native_exit"))})
+        except ValueError as error:
+            errors.append(str(error))
+    native_exit = next((number(row["exit"]) for row in native_exits if row["exit"] != 0), 0) if native_exits else None
+    coordinator_failed = False
+    if native_exit or any(row.get("status") == "FAIL" for row in verdicts):
+        status = "FAIL"
+    elif capture_exit or errors or any(row.get("status") != "PASS" for row in verdicts):
+        status = "INCOMPLETE"
+    elif runner_exit:
+        status = "FAIL"
+        coordinator_failed = True
+    else:
+        status = "PASS"
     result = {"schema_version": 1, "status": status, "sources": sorted(sources), "native_exit": native_exit,
+              "native_exits": native_exits, "runner_exit": runner_exit, "coordinator_failed": coordinator_failed,
               "capture_exit": capture_exit, "invocations": rows, "errors": errors,
               "expected": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("expected", []))],
               "executed": [{"invocation": row["path"], **mapping(item)} for row in rows for item in sequence(mapping(row["verdict"]).get("executed", []))],
@@ -509,7 +526,7 @@ def main() -> int:
     pack = commands.add_parser("bundle")
     for name in ("directory", "output"):
         pack.add_argument("--" + name, type=Path, required=True)
-    for name in ("native-exit", "capture-exit"):
+    for name in ("runner-exit", "capture-exit"):
         pack.add_argument("--" + name, type=int, required=True)
     args = parser.parse_args()
     if args.command == "capture":
@@ -520,8 +537,8 @@ def main() -> int:
                          args.expected_targets, tuple(args.expected_analysis))
         write_json(args.output, result)
         return number(result["native_exit"]) or int(result["status"] != "PASS")
-    result = bundle(args.directory, args.native_exit, args.capture_exit, args.output)
-    return args.native_exit or int(result["status"] != "PASS")
+    result = bundle(args.directory, args.runner_exit, args.capture_exit, args.output)
+    return number(result["native_exit"]) if result["native_exit"] else args.runner_exit or int(result["status"] != "PASS")
 
 
 if __name__ == "__main__":
