@@ -15,6 +15,19 @@
 
 # The selected machine determines whether the host needs KVM device access.
 set -euo pipefail
+# These timestamps share only the host's monotonic boot clock. Guest kernel
+# uptime has a different origin and must not be subtracted from these values.
+host_phase() {
+  local uptime _ record
+  # Diagnostic writes must not replace the payload or signal exit status.
+  read -r uptime _ < /proc/uptime || return 0
+  printf -v record 'host_uptime_seconds=%s phase=%s status=%s outer_test_timeout_seconds=%s' \
+    "$uptime" "$1" "${2:--}" "${TEST_TIMEOUT:-unset}"
+  printf '%s\n' "$record" >> "${TEST_UNDECLARED_OUTPUTS_DIR}/host-phases.log" || true
+  # The common report bundle always retains test.log, including passing runs.
+  printf '%s\n' "$record" || true
+}
+host_phase launcher_start
 host_archive="$(realpath "$1")"
 kernel="$(realpath "$2")"
 initramfs="$(realpath "$3")"
@@ -58,6 +71,7 @@ scratch="$(mktemp -d "${TEST_TMPDIR}/tcg.XXXXXX")"
 result="${TEST_UNDECLARED_OUTPUTS_DIR}/guest"
 mkdir -p "$scratch/host" "$scratch/input" "$result"
 "$tar_tool" -xf "$host_archive" -C "$scratch/host" --no-same-owner
+host_phase host_tools_ready
 host="$scratch/host"
 if [[ "$machine" == amd64_kvm ]]; then
   # Ubuntu's use-fixed-data-path.patch makes firmware defaults absolute.
@@ -73,8 +87,10 @@ host_tool() { "$loader" --inhibit-cache --library-path "$libraries" "$host/$1" "
 # itself is read-only as well; the writable export contains only test outputs.
 cp "$payload_archive" "$scratch/input/payload.tar"
 cp "$test_setup" "$scratch/input/test-setup.sh"
+host_phase payload_copy_ready
 host_tool usr/bin/truncate -s "${guest_scratch_gib}G" "$scratch/scratch.ext4"
 MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "$scratch/scratch.ext4"
+host_phase scratch_ready
 {
   printf '#!/bin/bash\nset -uo pipefail\n'
   for assignment in "${guest_env[@]}"; do
@@ -117,6 +133,7 @@ MKE2FS_CONFIG="$host/etc/mke2fs.conf" host_tool sbin/mke2fs -q -t ext4 -F -m 0 "
   if (( $# )); then printf ' %q' "$@"; fi
   printf '\n'
 } > "$scratch/input/launch.sh"
+host_phase launch_ready
 qemu_pid=""
 cleanup() {
   local status=$?
@@ -125,10 +142,12 @@ cleanup() {
   trap '' TERM INT
   trap - EXIT
   set +e
+  host_phase cleanup_start "$status"
   if [[ -n "$qemu_pid" ]]; then
     # Reap the writer before inspecting its disk, even if it is unresponsive.
     kill -KILL "$qemu_pid" 2>/dev/null || true
     wait "$qemu_pid" 2>/dev/null || true
+    host_phase cleanup_qemu_reaped
   fi
   if [[ "$status" != 0 && ! -f "$result/exit_status" ]]; then
     local recovery="${TEST_UNDECLARED_OUTPUTS_DIR}/guest-recovery"
@@ -158,13 +177,17 @@ cleanup() {
         "$scratch/scratch.ext4"
     ) > "$recovery/debugfs.log" 2>&1
     printf '%s\n' "$?" > "$recovery/debugfs_exit_status"
+    host_phase recovery_complete
   fi
+  host_phase scratch_remove_start
   rm -rf "$scratch"
+  host_phase scratch_remove_return "$?"
+  host_phase launcher_return "$status"
   exit "$status"
 }
 trap cleanup EXIT
-trap 'exit 143' TERM
-trap 'exit 130' INT
+trap 'host_phase signal_TERM 143; exit 143' TERM
+trap 'host_phase signal_INT 130; exit 130' INT
 # ARM TCG supplies its source-built emulator. Guest preparation, recovery,
 # shared libraries and firmware use the existing declared host archive.
 emulator_path="${guest_emulator:-$host/usr/bin/$emulator}"
@@ -184,17 +207,22 @@ QEMU_MODULE_DIR="$host/usr/lib/x86_64-linux-gnu/qemu" \
   -fsdev "local,id=result,path=$result,security_model=none" \
   -device virtio-9p-pci,fsdev=result,mount_tag=result &
 qemu_pid=$!
+host_phase qemu_started
 qemu_status=0
 wait "$qemu_pid" || qemu_status=$?
 qemu_pid=""
+host_phase qemu_wait_return "$qemu_status"
 cat "${TEST_UNDECLARED_OUTPUTS_DIR}/console.log"
+host_phase console_copied
 if [[ -n "${TEST_SHARD_STATUS_FILE:-}" && -f "$result/shard_status" ]]; then
   touch "$TEST_SHARD_STATUS_FILE"
 fi
 if [[ -f "$result/test.xml" ]]; then cp "$result/test.xml" "$XML_OUTPUT_FILE"; fi
+host_phase reports_copied
 [[ "$qemu_status" == 0 ]] || exit "$qemu_status"
 [[ -f "$result/exit_status" ]] || { echo 'Guest did not report a completed test' >&2; exit 1; }
 read -r status < "$result/exit_status"
 [[ "$status" =~ ^[0-9]+$ && "$status" -le 255 ]] || exit 1
 [[ "$status" != 0 || -s "$result/test.xml" ]] || { echo 'Passing guest omitted test XML' >&2; exit 1; }
+host_phase guest_status_read "$status"
 exit "$status"
