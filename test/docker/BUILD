@@ -422,3 +422,22 @@ source_image_archive(
     image = "runtimes/php8.5.11",
     tags = ["manual"],
 )
+
+source_image_archive(
+    name = "nodejs_sni_source_amd64",
+    testonly = True,
+    architecture = "x86_64",
+    archive_exec_properties = SOURCE_ARCHIVE_EXEC_PROPERTIES,
+    exec_compatible_with = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+    exec_properties = docker_test_exec_properties(
+        exec_group = "",
+        free_disk = "40GB",
+        memory = "8GB",
+        start_daemon = True,
+    ),
+    image = "runtimes/nodejs22.2.0",
+    tags = ["manual"],
+)

@@ -28,8 +28,9 @@ _RUNTIMES = {
         # The pinned large-Blob test holds a 2GiB buffer and a Blob; its
         # sandbox was OOM-killed with the default 4GB VM budget.
         memory = "8GB",
-        partitions = 10,
-        shard_count = most_shards,
+        partitions = 1,
+        shard_count = 1,
+        source_archive = "//test/docker:nodejs_sni_source_amd64",
     ),
     "php8.5.11": dict(
         exclude_file = "exclude/php8.5.11.csv",

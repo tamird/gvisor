@@ -127,3 +127,8 @@ common --incompatible_enable_proto_toolchain_resolution=true
 # override; test.* properties continue to select isolated runtime fixtures.
 build:rbe-matrix --config=rbe-common
 build:rbe-matrix --extra_execution_platforms=//tools/bazeldefs:rbe_linux_amd64,//tools/bazeldefs:rbe_linux_arm64
+
+# This diagnostic selects the existing CA test in both filesystem modes.
+test --test_env=RUNTIME_TESTS_FILTER=internet/test-tls-add-ca-cert.js
+test --test_timeout=600
+test --nocache_test_results
