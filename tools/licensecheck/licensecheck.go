@@ -49,6 +49,7 @@ import (
 	"time"
 
 	"archive/zip"
+
 	"golang.org/x/mod/modfile"
 	"golang.org/x/mod/module"
 	"golang.org/x/mod/semver"
