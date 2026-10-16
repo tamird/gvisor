@@ -30,118 +30,11 @@ func CheckCaptureFields(s Sink, count int) {
 	}
 }
 
-// Keep scalar field stores out of line. Inlining their slot selection, zero
-// elision, boxing and write barriers duplicates this code in every generated
-// saver. The shared calls trade that code size for call overhead.
-
 // CaptureNil overwrites a generated field with the ordinary zero encoding.
 //
 //go:noinline
 func CaptureNil(s Sink, slot int) {
 	*s.internal.field(slot) = wire.Nil{}
-}
-
-// Generated scalar captures own both field selection and the typed store.
-// Ordinary zero fields are elided; values nested inside interfaces and arrays
-// retain their complete representation through the shared graph encoder.
-
-// CaptureInt snapshots a signed integer field with zero elision.
-//
-//go:noinline
-func CaptureInt(s Sink, slot int, value wire.Int) {
-	dest := s.internal.field(slot)
-	if value == 0 {
-		*dest = wire.Nil{}
-	} else {
-		*dest = value
-	}
-}
-
-// CaptureString snapshots a string field with zero elision.
-//
-//go:noinline
-func CaptureString(s Sink, slot int, value wire.String) {
-	dest := s.internal.field(slot)
-	if value == "" {
-		*dest = wire.Nil{}
-	} else {
-		*dest = &value
-	}
-}
-
-// CaptureUint snapshots an unsigned integer field with zero elision.
-//
-//go:noinline
-func CaptureUint(s Sink, slot int, value wire.Uint) {
-	dest := s.internal.field(slot)
-	if value == 0 {
-		*dest = wire.Nil{}
-	} else {
-		*dest = value
-	}
-}
-
-// CaptureBool snapshots a boolean field with zero elision.
-//
-//go:noinline
-func CaptureBool(s Sink, slot int, value wire.Bool) {
-	dest := s.internal.field(slot)
-	if !value {
-		*dest = wire.Nil{}
-	} else {
-		*dest = value
-	}
-}
-
-// CaptureFloat32 preserves the promotion and narrowing boundary used by
-// reflective capture, including signaling NaNs.
-//
-//go:noinline
-func CaptureFloat32(s Sink, slot int, value wire.Float64) {
-	dest := s.internal.field(slot)
-	if value == 0 {
-		*dest = wire.Nil{}
-	} else {
-		*dest = wire.Float32(value)
-	}
-}
-
-// CaptureFloat64 snapshots a floating-point field with zero elision.
-//
-//go:noinline
-func CaptureFloat64(s Sink, slot int, value wire.Float64) {
-	dest := s.internal.field(slot)
-	if value == 0 {
-		*dest = wire.Nil{}
-	} else {
-		*dest = value
-	}
-}
-
-// CaptureComplex64 preserves the promotion and narrowing boundary used by
-// reflective capture, including signaling NaNs.
-//
-//go:noinline
-func CaptureComplex64(s Sink, slot int, value wire.Complex128) {
-	dest := s.internal.field(slot)
-	if value == 0 {
-		*dest = wire.Nil{}
-	} else {
-		narrow := wire.Complex64(value)
-		*dest = &narrow
-	}
-}
-
-// CaptureComplex128 snapshots a complex field with zero elision.
-//
-//go:noinline
-func CaptureComplex128(s Sink, slot int, value wire.Complex128) {
-	dest := s.internal.field(slot)
-	if value == 0 {
-		*dest = wire.Nil{}
-	} else {
-		*dest = &value
-	}
 }
 
 // CapturePointer captures a non-nil pointer in an owned reference cell. The

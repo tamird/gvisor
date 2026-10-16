@@ -243,9 +243,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 		if statePkg != "" {
 			fmt.Fprintf(outputFile, "	\"%s\"\n", statePkg)
 		}
-		if captures != nil && len(captures.types) != 0 {
-			fmt.Fprintf(outputFile, " %s \"gvisor.dev/gvisor/pkg/state/wire\"\n", captures.wireAlias)
-		}
 		if imports != "" {
 			for _, i := range strings.Split(imports, ",") {
 				fmt.Fprintf(outputFile, "	\"%s\"\n", i)
@@ -283,17 +280,6 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 			}
 			loadRecv := recv
 			if captures != nil {
-				// Typed field calls and their wait arguments must not be
-				// shadowed by the receiver.
-				shadowed := statePrefix == recv+"." || recv == "true" || recv == "false"
-				if statePrefix == "" {
-					for _, helper := range captures.restore.fields[ts.Name.Name] {
-						shadowed = shadowed || recv == helper
-					}
-				}
-				if shadowed {
-					loadRecv = captures.saveReceiver
-				}
 				// Custom value type spellings also occur in this method.
 				for _, field := range model.fields {
 					if field.kind == fieldValue && typeUsesName(field.valueType, recv) {
@@ -314,8 +300,8 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 				if statePrefix == "" {
 					shadowed = shadowed || recv == "CheckCaptureFields" || recv == "CaptureNil"
 					if capture := captures.types[ts.Name.Name]; capture != nil {
-						for _, field := range capture.fields {
-							shadowed = shadowed || recv == field.helper
+						for _, helper := range capture.fields {
+							shadowed = shadowed || recv == helper
 						}
 					}
 				}
@@ -422,19 +408,11 @@ func render(outputFile io.Writer, names []string, group *groupModel, captures *c
 						if field.kind != fieldNormal && field.kind != fieldWait {
 							continue
 						}
-						wait := captures.restore.noWaitValue
+						method := "Load"
 						if field.kind == fieldWait {
-							wait = captures.restore.waitValue
+							method = "LoadWait"
 						}
-						if helper := captures.restore.fields[ts.Name.Name][field.name]; helper != "" {
-							fmt.Fprintf(outputFile, " %s%s(stateSourceObject, %d, &%s.%s, %s)\n", statePrefix, helper, field.slot, loadRecv, field.name, wait)
-						} else {
-							method := "Load"
-							if field.kind == fieldWait {
-								method = "LoadWait"
-							}
-							fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, field.slot, loadRecv, field.name)
-						}
+						fmt.Fprintf(outputFile, " stateSourceObject.%s(%d, &%s.%s)\n", method, field.slot, loadRecv, field.name)
 					}
 					model.scan(scanFunctions{value: emitLoadValue})
 					if hasAfterLoad {

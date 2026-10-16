@@ -87,7 +87,7 @@ func (*lazyRegistered) StateFields() []string {
 func (l *lazyRegistered) StateSave(s Sink) { s.Save(0, &l.value) }
 
 func (l *lazyRegistered) StateLoad(_ context.Context, s Source) {
-	LoadInt(s, 0, &l.value, false)
+	s.Load(0, &l.value)
 }
 
 func TestLazyRegistration(t *testing.T) {

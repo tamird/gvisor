@@ -303,7 +303,7 @@ func (es *encodeState) saveBinary(value binaryObject, name string, s Sink) {
 	// the full graph is encoded. Strings also decode inline, so map keys are
 	// complete when restoreMap inserts them into the restored map.
 	CheckCaptureFields(s, 1)
-	CaptureString(s, 0, wire.String(data))
+	s.SaveValue(0, string(data))
 }
 
 func loadBinary(value binaryObject, name string, s Source) {

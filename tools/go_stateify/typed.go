@@ -63,80 +63,49 @@ type sourceGroup struct {
 	Output  string
 }
 
-// captureSet selects typed stores into shared wire.Object fields. The checked
-// types also select Load's scalar helpers; neither direction needs a per-type
-// capture layout or a factory.
+// captureSet selects shared graph operations from checked field types. Scalar
+// fields use the same Sink and Source operations as manually written methods.
 type captureSet struct {
-	wireAlias    string
 	saveReceiver string
 	pointerLocal string
 	types        map[string]*captureType
-	restore      *restoreSet
 }
 
 type captureType struct {
-	fields []fieldEncoding
+	fields []string
 }
 
-// fieldEncoding selects a scalar conversion or a shared graph operation from
-// the compiler-owned type, without re-reading live fields during serialization.
-type fieldEncoding struct {
-	scalar string
-	helper string
-}
-
-func encodingFor(t types.Type, customValue bool) fieldEncoding {
-	if b, ok := t.Underlying().(*types.Basic); ok {
-		switch b.Kind() {
-		case types.Bool:
-			return fieldEncoding{"Bool", "CaptureBool"}
-		case types.Int, types.Int8, types.Int16, types.Int32, types.Int64:
-			return fieldEncoding{"Int", "CaptureInt"}
-		case types.Uint, types.Uint8, types.Uint16, types.Uint32, types.Uint64, types.Uintptr:
-			return fieldEncoding{"Uint", "CaptureUint"}
-		case types.String:
-			return fieldEncoding{"String", "CaptureString"}
-		case types.Float32:
-			return fieldEncoding{"Float64", "CaptureFloat32"}
-		case types.Float64:
-			return fieldEncoding{"Float64", "CaptureFloat64"}
-		case types.Complex64:
-			return fieldEncoding{"Complex128", "CaptureComplex64"}
-		case types.Complex128:
-			return fieldEncoding{"Complex128", "CaptureComplex128"}
-		}
-	}
+// encodingFor selects graph captures; an empty helper uses Sink.Save/SaveValue.
+func encodingFor(t types.Type, customValue bool) string {
 	switch t.Underlying().(type) {
 	case *types.Pointer:
-		return fieldEncoding{helper: "CapturePointer"}
+		return "CapturePointer"
 	case *types.Map:
 		if customValue {
-			return fieldEncoding{helper: "CaptureMapValue"}
+			return "CaptureMapValue"
 		}
-		return fieldEncoding{helper: "CaptureMap"}
+		return "CaptureMap"
 	case *types.Interface:
 		if !customValue {
-			return fieldEncoding{helper: "CaptureInterface"}
+			return "CaptureInterface"
 		}
 	}
-	return fieldEncoding{}
+	return ""
 }
 
 func (c *captureType) capture(w io.Writer, captures *captureSet, statePrefix string, slot int, expression string, value bool) {
-	f := c.fields[slot]
-	if f.scalar != "" {
-		fmt.Fprintf(w, " %s%s(stateSinkObject, %d, %s.%s(%s))\n", statePrefix, f.helper, slot, captures.wireAlias, f.scalar, expression)
-	} else if f.helper == "CapturePointer" {
+	helper := c.fields[slot]
+	if helper == "CapturePointer" {
 		// Evaluate a custom value once and keep the ordinary nil field unboxed.
 		fmt.Fprintf(w, " if %s := %s; %s != nil {\n", captures.pointerLocal, expression, captures.pointerLocal)
 		fmt.Fprintf(w, " %sCapturePointer(stateSinkObject, %d, %s)\n", statePrefix, slot, captures.pointerLocal)
 		fmt.Fprintf(w, " } else { %sCaptureNil(stateSinkObject, %d) }\n", statePrefix, slot)
-	} else if f.helper != "" {
+	} else if helper != "" {
 		address := ""
-		if f.helper == "CaptureMap" || f.helper == "CaptureInterface" {
+		if helper == "CaptureMap" || helper == "CaptureInterface" {
 			address = "&"
 		}
-		fmt.Fprintf(w, " %s%s(stateSinkObject, %d, %s%s)\n", statePrefix, f.helper, slot, address, expression)
+		fmt.Fprintf(w, " %s%s(stateSinkObject, %d, %s%s)\n", statePrefix, helper, slot, address, expression)
 	} else if value {
 		fmt.Fprintf(w, " stateSinkObject.SaveValue(%d, %s)\n", slot, expression)
 	} else {
@@ -359,7 +328,6 @@ func checkedCaptures(file *ast.File, info *types.Info, pkg *types.Package, model
 		names[name] = struct{}{}
 	}
 	captures := &captureSet{
-		wireAlias:    unusedName("statewire", names),
 		saveReceiver: unusedName("stateObject", names),
 		types:        make(map[string]*captureType),
 		pointerLocal: unusedName("statePointer", names),
@@ -409,11 +377,6 @@ func checkedCaptures(file *ast.File, info *types.Info, pkg *types.Package, model
 			capture.fields = append(capture.fields, encodingFor(types.Unalias(valueType), field.kind == fieldValue))
 		}
 		captures.types[name] = capture
-	}
-	var err error
-	captures.restore, err = checkedRestores(file, info, pkg, model)
-	if err != nil {
-		return nil, err
 	}
 	return captures, nil
 }
