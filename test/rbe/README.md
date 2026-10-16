@@ -99,10 +99,12 @@ Select their `_amd64` or `_arm64` frontends so the existing declared root or
 nonroot identity reaches the matching Actions runner. Compilation remains on
 RBE, while the ordinary local-test bound and report retention apply.
 
-The explicit `test` lane accepts an optional `test_filter`, forwarded as one
-Bazel `--test_filter` argument. Direct callers use `--test-filter=REGEX`.
-Record the selected cases when reporting a filtered result; named full-profile
-lanes reject this option and retain their complete selection.
+The `test` and `container-v1` lanes accept an optional `test_filter`, forwarded
+as one Bazel `--test_filter` argument. Direct callers use `--test-filter=REGEX`.
+Use `container-v1` for its existing root coordinator and KVM guest; the explicit
+test lane does not grant that guest device access. Record the selected cases
+when reporting a filtered result. Other named profiles reject this option,
+and omitting it preserves the complete lane selection.
 
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested

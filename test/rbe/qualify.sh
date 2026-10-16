@@ -181,8 +181,8 @@ if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $#
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
   exit 2
 fi
-if [[ -n $test_filter && ( $# != 1 || ${1:-} != test ) ]]; then
-  printf 'A test filter requires the explicit test lane.\n' >&2
+if [[ -n $test_filter && ( $# != 1 || ( ${1:-} != test && ${1:-} != container-v1 ) ) ]]; then
+  printf 'A test filter requires the explicit test or container-v1 lane.\n' >&2
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
@@ -752,6 +752,9 @@ run_platform_matrix() (
   set -e
   local selection_dir lane command=build include_unit=false include_syscalls=false include_checkpoints=false include_nogo=false include_public_profiles=false explicit_unit=false
   local -a options=() targets=() verification_options=() unit_selection_options=()
+  if [[ -n $test_filter ]]; then
+    options+=("--test_filter=$test_filter")
+  fi
   selection_dir=$(mktemp -d)
   trap 'rm -rf "$selection_dir"' EXIT
   : > "$selection_dir/targets"

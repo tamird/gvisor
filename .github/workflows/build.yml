@@ -37,7 +37,7 @@ name: CI
         description: Optional build/test labels, or one continuous benchmark label
         type: string
       test_filter:
-        description: Optional Bazel test filter for the explicit test lane
+        description: Optional Bazel test filter for the test or container-v1 lane
         type: string
       header_base:
         description: Full comparison commit SHA for license-headers

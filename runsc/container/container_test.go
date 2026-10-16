@@ -4849,7 +4849,10 @@ var erofsToolsRoot = sync.OnceValues(func() (string, error) {
 		return "", err
 	}
 	erofsToolsDir = root
-	cmd := exec.Command(tar, "-xf", archive, "-C", root, "--no-same-owner")
+	// The tools, loader, libraries, and licenses are all under /usr. The
+	// package archive also contains legacy root aliases that conflict with
+	// directories from other packages; this fixture needs no root filesystem.
+	cmd := exec.Command(tar, "-xf", archive, "-C", root, "--no-same-owner", "./usr")
 	cmd.Env = append(os.Environ(), config.Env...)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return "", fmt.Errorf("extracting EROFS tools: %w, output: %s", err, out)
@@ -4871,7 +4874,7 @@ func erofsTool(name string) (string, error) {
 	case "mkfs.erofs":
 		toolPath = "usr/bin/mkfs.erofs"
 	case "busybox":
-		toolPath = "bin/busybox"
+		toolPath = "usr/bin/busybox"
 	default:
 		return "", fmt.Errorf("unknown EROFS tool %q", name)
 	}
@@ -4916,9 +4919,9 @@ func createImageEROFS(image, source string, options ...string) error {
 		}
 		// mkfs uses its declared loader and library closure without changing the
 		// environment of the other container tests or their child processes.
-		libPath := filepath.Join(root, "lib", triple) + ":" + filepath.Join(root, "usr/lib", triple)
+		libPath := filepath.Join(root, "usr/lib", triple)
 		args = append([]string{"--inhibit-cache", "--library-path", libPath, mkfs}, args...)
-		cmd = exec.Command(filepath.Join(root, "lib", triple, loader), args...)
+		cmd = exec.Command(filepath.Join(root, "usr/lib", triple, loader), args...)
 	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("exec: %v, err: %v, out: %s", cmd.Args, err, out)
