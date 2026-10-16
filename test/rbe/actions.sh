@@ -192,13 +192,18 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
       printf 'build:buildbuddy_remote_executor --build_metadata=BRANCH_NAME=%s\n' "$GITHUB_REF_NAME"
       printf 'build:buildbuddy_remote_executor --remote_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
       printf 'build:buildbuddy_remote_executor --bes_header=x-buildbuddy-api-key=%s\n' "$BUILDBUDDY_API_KEY"
-      if [[ $qualification_full_unit == true ]]; then
-        # The mixed-architecture graph exhausted the coordinator's JVM heap.
+      if [[ $qualification_full_unit == true || $QUALIFICATION_EXECUTION == remote-actions ]]; then
+        # Broad graphs need space beyond their roughly 4-GiB retained heap.
         # On this 16-GiB runner, give Bazel 8 GiB and local actions 4 GiB,
         # leaving the remainder for native overhead and the operating system.
         printf '%s\n' \
           'startup --host_jvm_args=-Xmx8g' \
           'build:buildbuddy_remote_executor --local_resources=memory=4096'
+      fi
+      if [[ $QUALIFICATION_EXECUTION == remote-actions ]]; then
+        # Reuse shared input trees when preparing remote actions. Keep Bazel's
+        # bounded cache size and CPU-sized preparation limit.
+        printf '%s\n' 'build:buildbuddy_remote_executor --experimental_remote_merkle_tree_cache'
       fi
       if [[ $qualification_retain_reports == true ]]; then
         printf '%s\n' \
@@ -263,6 +268,8 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
         if [[ $argument == build || $argument == test ]]; then
           evidence=(
             "--execution_log_compact_file=$(mktemp "$RUNNER_TEMP/qualification/execution-XXXXXX.binpb")"
+            # Retain the profile even if its remote upload is interrupted.
+            "--profile=$(mktemp "$RUNNER_TEMP/qualification/profile-XXXXXX.json.gz")"
           )
         fi
         if [[ $qualification_retain_reports == true && ( $argument == build || $argument == test ) ]]; then
