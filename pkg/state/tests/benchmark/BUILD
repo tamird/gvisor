@@ -32,7 +32,7 @@ go_test(
         srcs = ["bench_test.go"],
         architectures = [],
         args = [
-            "-test.run=^$",
+            "-test.run=^$$",
             "-test.bench=" + benchmark,
             "-test.benchtime=1x",
             "-test.benchmem",
@@ -52,9 +52,9 @@ go_test(
         ],
     )
     for name, benchmark in [
-        ("empty", "^BenchmarkFirstRestore$/^empty$"),
-        ("ordinary", "^BenchmarkFirstRestore$/^ordinary$"),
-        ("adoption", "^BenchmarkDecoding$/^adopt_captured$/^state$"),
-        ("control_save", "^BenchmarkControlMessageEncoding$"),
+        ("empty", "^BenchmarkFirstRestore$$/^empty$$"),
+        ("ordinary", "^BenchmarkFirstRestore$$/^ordinary$$"),
+        ("adoption", "^BenchmarkDecoding$$/^adopt_captured$$/^state$$"),
+        ("control_save", "^BenchmarkControlMessageEncoding$$"),
     ]
 ]
