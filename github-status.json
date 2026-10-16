@@ -3,7 +3,7 @@
   "repo": "google/gvisor",
   "owner": "tamird",
   "checkedAt": "2026-10-16T18:53:16.930313+00:00",
-  "registryDate": "2026-10-16T18:39:11.185330+00:00",
+  "registryDate": "2026-10-16T19:13:47.515572+00:00",
   "prs": [
     {
       "number": 12470,
@@ -45381,9 +45381,9 @@
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-16T18:52:40.124472+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "CONFLICTING",
+      "mergeabilityCheckedAt": "2026-10-16T19:13:47.512336+00:00",
+      "mergeState": "DIRTY",
       "labels": [],
       "labelsComplete": true,
       "threads": {
@@ -45537,15 +45537,15 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-16T18:53:16.930313+00:00",
+      "checkedAt": "2026-10-16T19:13:47.512336+00:00",
       "mergeabilityObservation": {
         "state": "CONFLICTING",
         "head": "34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8",
         "base": "fd123c19d333102bd7d04122b121fd483adcdda9",
-        "checkedAt": "2026-10-16T16:43:16.772561+00:00"
+        "checkedAt": "2026-10-16T19:13:47.512336+00:00"
       },
-      "importsComplete": true,
-      "imports": []
+      "imports": [],
+      "importsComplete": true
     },
     {
       "number": 15330,
@@ -79849,7 +79849,7 @@
       "headIntroducedAt": null,
       "headOwner": "tamird",
       "headRepo": "tamird/gvisor",
-      "updatedAt": "2026-10-10T18:42:15Z",
+      "updatedAt": "2026-10-16T19:06:50Z",
       "createdAt": "2026-10-10T18:36:58Z",
       "mergedAt": null,
       "closedAt": null,
@@ -79859,26 +79859,56 @@
         {
           "__typename": "User",
           "login": "milantracy"
-        },
-        {
-          "__typename": "User",
-          "login": "nybidari"
         }
       ],
       "reviewRequestsComplete": true,
-      "mergeable": "UNKNOWN",
-      "mergeabilityCheckedAt": "2026-10-16T18:52:48.991001+00:00",
-      "mergeState": "UNKNOWN",
+      "mergeable": "MERGEABLE",
+      "mergeabilityCheckedAt": "2026-10-16T19:13:47.512768+00:00",
+      "mergeState": "BLOCKED",
       "labels": [],
       "labelsComplete": true,
       "threads": {
-        "unresolved": 0,
-        "total": 0,
+        "unresolved": 1,
+        "total": 1,
         "complete": true
       },
       "feedback": {
         "complete": true,
-        "items": []
+        "items": [
+          {
+            "kind": "review",
+            "id": "PRR_kwDOB9IlXs8AAAABSvQf-g",
+            "url": "https://github.com/google/gvisor/pull/15635#pullrequestreview-5552480250",
+            "body": "",
+            "state": "COMMENTED",
+            "submittedAt": "2026-10-16T19:06:50Z",
+            "updatedAt": "2026-10-16T19:06:50Z",
+            "author": {
+              "login": "nybidari",
+              "__typename": "User"
+            },
+            "commit": {
+              "oid": "f11e5adf8bacbe06e040f0b372570203903c4f9a"
+            }
+          },
+          {
+            "kind": "inline",
+            "threadId": "PRRT_kwDOB9IlXs6tVy2l",
+            "isResolved": false,
+            "isOutdated": false,
+            "path": "pkg/tcpip/stack/packet_buffer.go",
+            "line": 320,
+            "id": "PRRC_kwDOB9IlXs8AAAABADM9mg",
+            "url": "https://github.com/google/gvisor/pull/15635#discussion_r4298325402",
+            "body": "Instead of adding this method, can we defer releasing the view to handle the leak in error cases. Something like:\n\n```\nview := pkt.ToView()\nok := false\ndefer func() {\n\tif !ok {\n\t\tview.Release()\n\t}\n}()\n....\nchecker.IPv4(c.t, view, checker.SrcAddr(StackAddr), checker.DstAddr(TestAddr))\nok = true\nreturn view\n```",
+            "createdAt": "2026-10-16T19:06:50Z",
+            "updatedAt": "2026-10-16T19:06:50Z",
+            "author": {
+              "login": "nybidari",
+              "__typename": "User"
+            }
+          }
+        ]
       },
       "checks": {
         "state": "SUCCESS",
@@ -80044,15 +80074,15 @@
       "reviewDecision": null,
       "approvedHead": null,
       "approvedAt": null,
-      "checkedAt": "2026-10-16T18:53:16.930313+00:00",
+      "checkedAt": "2026-10-16T19:13:47.512768+00:00",
       "mergeabilityObservation": {
         "state": "MERGEABLE",
         "head": "f11e5adf8bacbe06e040f0b372570203903c4f9a",
         "base": "309599c1ec020ad52c82b7b6657acba73888e367",
-        "checkedAt": "2026-10-16T17:40:51.349537+00:00"
+        "checkedAt": "2026-10-16T19:13:47.512768+00:00"
       },
-      "importsComplete": true,
-      "imports": []
+      "imports": [],
+      "importsComplete": true
     },
     {
       "number": 15642,
@@ -93855,15 +93885,15 @@
         "scope": "34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8",
         "since": "2026-10-16T15:12:49.961187+00:00",
         "basis": "observed",
-        "qualifier": "Last observed conflict at 2026-10-16T16:43:16.772561+00:00; GitHub is recomputing current mergeability",
-        "observedAt": "2026-10-16T18:53:16.930313+00:00"
+        "qualifier": null,
+        "observedAt": "2026-10-16T19:13:47.512336+00:00"
       },
       "maintainer-review": {
         "scope": "34f0facf9e5b6de03fa2713ca66b2a04bf26ecd8",
         "since": "2026-10-16T07:32:28.619478+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-16T18:53:16.930313+00:00"
+        "observedAt": "2026-10-16T19:13:47.512336+00:00"
       }
     },
     "pr:15330": {
@@ -94568,7 +94598,7 @@
         "since": "2026-10-10T18:41:09.345191+00:00",
         "basis": "observed",
         "qualifier": null,
-        "observedAt": "2026-10-16T18:53:16.930313+00:00"
+        "observedAt": "2026-10-16T19:13:47.512768+00:00"
       }
     },
     "pr:15642": {
@@ -94872,7 +94902,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-16T18:39:11.185330+00:00"
+        "observedAt": "2026-10-16T19:13:47.515572+00:00"
       }
     },
     "branch:review/state-generated-records": {
@@ -94881,7 +94911,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-16T18:39:11.185330+00:00"
+        "observedAt": "2026-10-16T19:13:47.515572+00:00"
       }
     },
     "branch:review/state-reference-arrays": {
@@ -94890,7 +94920,7 @@
         "since": "2026-10-11T11:02:10.885519+00:00",
         "basis": "observed",
         "qualifier": "Contributor",
-        "observedAt": "2026-10-16T18:39:11.185330+00:00"
+        "observedAt": "2026-10-16T19:13:47.515572+00:00"
       }
     }
   },
