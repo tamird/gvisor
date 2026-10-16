@@ -425,8 +425,18 @@ test('review-level holds and incomplete discussion remain unknown instead of aut
 test('a confirmed conflict takes priority over opaque import progress', () => {
   const node = attentionNode(15337);
   node.github.checks.contexts = [serviceStatus('import/copybara', 'SUCCESS')];
+  const context = client(); context.nodeInput = node;
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).text', context), 'Unknown');
+  assert.equal(vm.runInContext('checkInfo(nodeInput.github).passed', context), false);
   assert.deepEqual(idsFor(node), ['maintainer-unknown']);
   assert.equal(reasonsFor(node)[0].title, 'Import succeeded; no public PR');
+  node.github.checks.complete = false;
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+  node.github.checks.complete = true;
+  node.github.checks.contexts.push(serviceStatus('public-test', 'UNKNOWN'));
+  node.github.checks.total++;
+  assert.deepEqual(idsFor(node), ['agent-refresh']);
+  node.github.checks.contexts.pop(); node.github.checks.total--;
   node.github.mergeable = 'CONFLICTING';
   assert.deepEqual(idsFor(node), ['author-conflicts']);
   node.github.mergeable = 'UNKNOWN';

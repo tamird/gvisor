@@ -240,8 +240,8 @@ function attentionReasons(node, owner) {
     add("maintainer-internal-feedback", `${internalImportFailures.join(". ")}. Ask for the current Copybara check status.`);
   if (pr.mergeable === "UNKNOWN" || active.some(item => item.mergeable === "UNKNOWN"))
     add("agent-refresh", "GitHub has not computed current mergeability for the source or a matching import. Refresh its public evidence; any previously observed same-head conflict remains actionable.");
-  if (review.incomplete || !completeChecks(pr) || checkInfo(pr).tone === "unknown"
-      || active.some(item => !completeChecks(item) || checkInfo(item).tone === "unknown")
+  if (review.incomplete || [pr, ...active].some(item => !completeChecks(item)
+      || checkInfo(item).tone === "unknown" && validationChecks(item).length > 0)
       || decision === "APPROVED" && (!pr.importsComplete || pr.labelsComplete !== true))
     add("agent-refresh", "Current public review, checks, labels or import-link evidence is incomplete. The agent needs to refresh or investigate it; known actions remain listed.");
   if (checkInfo(pr).tone === "bad" && !publicFailures.length && !importStatus && !feedbackStatus)
