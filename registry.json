@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T07:34:24.921541+00:00",
+    "updatedAt": "2026-10-16T08:08:00.509658+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -4048,28 +4048,29 @@
       "type": "pr",
       "repo": "google/gvisor",
       "ref": "tcpip-netip-core",
-      "head": "50b6766a62177f9bf594f536737497f62dbbf810",
+      "head": "39b9cc707c614c80f1a399661d28e892dda61a6c",
       "title": "Use netip types throughout the network stack",
       "url": "https://github.com/google/gvisor/pull/15730",
       "group": "runtime",
       "status": "open",
-      "updatedAt": "2026-10-16T07:34:24.921541+00:00",
-      "summary": "The current head 50b6766a6 has an upstream conflict. The agent owns the rebase, preserving the reviewed invalid-address guards and existing benchmark description. Zach’s earlier changes-requested review remains; both prior inline threads are resolved, with no new incoming feedback.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, now rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub directly reports the new head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
+      "updatedAt": "2026-10-16T08:08:00.509658+00:00",
+      "summary": "The upstream conflict is resolved in delivered head 39b9cc707, a single commit on a0c9c3477. The rebase changes only the already-merged prefix fixture adaptation; the final executable fixture lines and reviewed invalid-address guards are preserved. The benchmark description remains unchanged. GitHub reports the current head mergeable. Zach’s earlier changes-requested review remains, both prior inline threads are resolved, and the existing reviewer requests are retained. No prior approval was invalidated.\n\nEarlier delivery context:\n\nThe approved netip guards are delivered in PR #15730, then rebased to 50b6766a6 after the IPv6 fixture cleanup landed as #15770. The final guard and fixture bodies are unchanged; the description removes only the obsolete claim that this PR fixes the old malformed fixture. Both earlier inline replies and resolutions remain recorded. GitHub reported that head mergeable. Zach’s earlier changes-requested review remains; no new approval or reviewer request is claimed.\n\nEarlier source and qualification record:\n\nThe contributor-approved migration is delivered as PR #15730 after codec #15476 landed. The source-preserving rebase is a104e0bb553; then c10df898b36 adds only the canonical Gazelle deletion of an unused test dependency. The earlier Gazelle failure remains historical. Current GitHub checks and maintainer feedback are shown from the API snapshot.\n\nIndependent qualification covers 30 native unit owners and 842 analyzer owners across the original run and its affected continuation. Two fork-only test fixtures needed netip API adaptation; the original build failures and separate package-download interruption remain recorded. This does not repeat the earlier SA1019 qualification or establish full public-CI coverage.\n\nThe PR description now includes the original per-runner throughput benchstat tables, with 30 samples per version and operation. Host effects differ and do not establish a general throughput gain. Historical microbenchmarks retain the adverse address-copy and map-lookup costs. The description edit changed no code or commit.",
       "followup": {
-        "owner": "root",
-        "disposition": "Current upstream conflict requires agent work",
-        "sourceHead": "50b6766a62177f9bf594f536737497f62dbbf810",
-        "nextAction": "Resolve the upstream conflict while preserving the reviewed netip guards, accepted fixture changes and benchmark description; independently review the amendment before publication.",
+        "owner": "external_sweeps",
+        "disposition": "Await maintainer review and current-head CI",
+        "sourceHead": "39b9cc707c614c80f1a399661d28e892dda61a6c",
+        "nextAction": "Observe current-head CI and maintainer feedback; retain the existing reviewer requests and resolved guard discussions.",
         "evidence": [
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107595",
           "https://github.com/google/gvisor/pull/15730#discussion_r4262107608",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6151745162",
           "https://github.com/google/gvisor/pull/15730#issuecomment-6154775158",
           "https://github.com/tamird/gvisor/commit/080bd49c2aba00bd6840083edec54786c5a863eb",
-          "https://github.com/tamird/gvisor/commit/50b6766a62177f9bf594f536737497f62dbbf810"
+          "https://github.com/tamird/gvisor/commit/50b6766a62177f9bf594f536737497f62dbbf810",
+          "https://github.com/tamird/gvisor/commit/39b9cc707c614c80f1a399661d28e892dda61a6c"
         ],
-        "observedAt": "2026-10-16T07:32:28.619478+00:00",
-        "mergeable": "CONFLICTING"
+        "observedAt": "2026-10-16T08:08:00.478676+00:00",
+        "mergeable": "MERGEABLE"
       },
       "evidence": [
         {
@@ -5020,8 +5021,8 @@
       "group": "rbe",
       "url": "https://github.com/tamird/gvisor/commit/27e04f934c909ee4196d7ec06aacd14e23e2cd85",
       "status": "Upstream refresh needs fixes",
-      "summary": "Canonical qualification/current-upstream-refresh remains at 27e04f934. The separate upstream refresh at 1b07cd6c9 failed its mixed-unit run: 690 owners passed, seven failed and five build targets were blocked. AMD64 normal and race release-smoke cases passed. ARM64 normal smoke passed, but the job was cancelled while compiling race dependencies, so the race case did not run. The refreshed source has not been adopted into the canonical refs.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
-      "updatedAt": "2026-10-16T06:36:32.035368+00:00",
+      "summary": "Canonical qualification/current-upstream-refresh remains at 27e04f934. The separate upstream refresh at 1b07cd6c9 failed its mixed-unit run: 690 owners passed, seven failed and five build targets were blocked. AMD64 normal and race release-smoke cases passed. ARM64 normal smoke passed, but the job was cancelled while compiling race dependencies, so the race case did not run. The refreshed source has not been adopted into the canonical refs.\n\nA separate generated-source export at 95949353b passed all six target-platform compilation cases in Actions 38866870348. The Linux AMD64 case compiled the full exported module with CGO; the five other target platforms compiled the selected portable packages without CGO. All six compilations ran freshly on remote Linux workers. This establishes compilation portability, not runtime execution on those target operating systems, and does not promote the canonical refs.\n\nAt e5b875d03, the three established qualification refs advanced together after independent review of the nftables FIB presence, padding and attribute-policy corrections. All four affected files match the qualified composition: the before-fix validation cases fail, both corrected 595-case package suites and analyzers pass, and the original gVisor IPv4/IPv6 cases pass. The native FIB reference passes on Linux 6.17.0-1022-azure. Original parent report-capture failures remain recorded; the missing XML was recovered from the original actions. The standalone presence correction is published as #15816.\n\nThe normal ARM64 launcher also passed KVM entry, VM release, boot posture and all four uname cases: four fresh actions and ten XML entries, without skips. QEMU uses its software CPU identity; KVM guests enable EL2 and the ordinary syscall guest does not. Independent review binds the source, executables, launcher settings and results. This closes the selected ARM64 KVM cohort.\n\nThe preceding complete mixed-unit profile at 74061d8f8 passed all 687 owners, with 707 results and 80 retained skipped-case identities. Later focused environment checks cover the formerly unavailable cases; those results are tied to their respective sources. The full ARM64 64 KiB and release-candidate profiles remain qualified at 8c6d014fb (661 and 919 owners). These cumulative results are not a new all-lane run at the latest canonical head.\n\nThe qualified Go export, native image conversion, Stable Diffusion source build/load, namespace bridges and cleanup fixes remain included. Fresh Triton source production/conversion/loading and GPU hardware execution remain open. BuildBuddy #13789 tracks the interrupted Triton execution; no capable GPU worker is established. Earlier physical-CPU diagnostics explain the software-CPU selection but do not uniquely identify a Linux defect.",
+      "updatedAt": "2026-10-16T08:08:00.509658+00:00",
       "followup": {
         "owner": "root",
         "disposition": "Upstream refresh failures require agent work",
@@ -5146,6 +5147,10 @@
         {
           "label": "Passed ARM64 normal smoke; race unrun after cancellation",
           "url": "https://github.com/tamird/gvisor/actions/runs/38857042112"
+        },
+        {
+          "label": "Passed six-platform generated-source compilation",
+          "url": "https://github.com/tamird/gvisor/actions/runs/38866870348"
         }
       ]
     },
