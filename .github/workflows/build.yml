@@ -36,6 +36,9 @@ name: CI
       targets:
         description: Optional build/test labels, or one continuous benchmark label
         type: string
+      test_filter:
+        description: Optional Bazel test filter for the explicit test lane
+        type: string
       header_base:
         description: Full comparison commit SHA for license-headers
         type: string
@@ -91,6 +94,7 @@ jobs:
       QUALIFICATION_ARCH: ${{ github.event_name == 'push' && 'amd64' || inputs.architecture }}
       QUALIFICATION_SYSCALL_BUCKET: ${{ inputs.syscall_bucket }}
       QUALIFICATION_TARGETS: ${{ inputs.targets }}
+      QUALIFICATION_TEST_FILTER: ${{ inputs.test_filter }}
       QUALIFICATION_HEADER_BASE: ${{ inputs.header_base }}
       QUALIFICATION_COS_GZIP_BASE64: ${{ inputs.cos_catalog_gzip_base64 }}
       QUALIFICATION_COS_SHA256: ${{ inputs.cos_catalog_sha256 }}
@@ -139,6 +143,7 @@ jobs:
           --env="QUALIFICATION_CLOCK_SOURCE=$QUALIFICATION_CLOCK_SOURCE" \
           --env="QUALIFICATION_SYSCALL_BUCKET=$QUALIFICATION_SYSCALL_BUCKET" \
           --env="QUALIFICATION_TARGETS=$QUALIFICATION_TARGETS" \
+          --env="QUALIFICATION_TEST_FILTER=$QUALIFICATION_TEST_FILTER" \
           --env="QUALIFICATION_HEADER_BASE=$QUALIFICATION_HEADER_BASE" \
           --env="QUALIFICATION_COS_GZIP_BASE64=$QUALIFICATION_COS_GZIP_BASE64" \
           --env="QUALIFICATION_COS_SHA256=$QUALIFICATION_COS_SHA256" \

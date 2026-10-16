@@ -99,6 +99,11 @@ Select their `_amd64` or `_arm64` frontends so the existing declared root or
 nonroot identity reaches the matching Actions runner. Compilation remains on
 RBE, while the ordinary local-test bound and report retention apply.
 
+The explicit `test` lane accepts an optional `test_filter`, forwarded as one
+Bazel `--test_filter` argument. Direct callers use `--test-filter=REGEX`.
+Record the selected cases when reporting a filtered result; named full-profile
+lanes reject this option and retain their complete selection.
+
 For `license-headers`, supply the full comparison SHA as `header_base`. The
 remote coordinator fetches complete history for that commit and the tested
 commit before qualification. For `cos-metadata` or the full `amd64` profile,

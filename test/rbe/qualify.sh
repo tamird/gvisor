@@ -24,7 +24,7 @@ usage() {
   cat <<'USAGE'
 Usage: test/rbe/qualify.sh --header-base=REV amd64
        test/rbe/qualify.sh --build-target=LABEL [--build-target=LABEL ...] build
-       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] test
+       test/rbe/qualify.sh --test-target=LABEL [--test-target=LABEL ...] [--test-filter=REGEX] test
        test/rbe/qualify.sh [--arch=amd64|arm64|all] [--test-execution=remote|local] [--clock-source=calibrated|reference] [--syscall-bucket=0..14] [--benchmark-target=LABEL] [--header-base=REV] LANE [LANE ...]
        test/rbe/qualify.sh --list
 
@@ -104,6 +104,7 @@ syscall_bucket=
 benchmark_target=
 build_targets=()
 test_targets=()
+test_filter=
 header_options=()
 header_base=
 while (( $# > 0 )) && [[ $1 == --* ]]; do
@@ -116,6 +117,7 @@ while (( $# > 0 )) && [[ $1 == --* ]]; do
     --benchmark-target=*) benchmark_target=${1#--benchmark-target=} ;;
     --build-target=*) build_targets+=("${1#--build-target=}") ;;
     --test-target=*) test_targets+=("${1#--test-target=}") ;;
+    --test-filter=*) test_filter=${1#--test-filter=} ;;
     --header-base=*) header_base=${1#--header-base=} ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
@@ -177,6 +179,10 @@ if [[ -n $syscall_bucket ]]; then
 fi
 if [[ -n $benchmark_target && ( $arch != amd64 || $test_execution != local || $# != 1 || ${1:-} != benchmarks ) ]]; then
   printf 'A benchmark target requires local AMD64 benchmarks.\n' >&2
+  exit 2
+fi
+if [[ -n $test_filter && ( $# != 1 || ${1:-} != test ) ]]; then
+  printf 'A test filter requires the explicit test lane.\n' >&2
   exit 2
 fi
 if (( ${#build_targets[@]} + ${#test_targets[@]} )) || [[ ${1:-} == build || ${1:-} == test ]]; then
@@ -1045,6 +1051,9 @@ run_lane() (
     test)
       targets=("${test_targets[@]}")
       options=(--test_env=GO_TEST_WRAP_TESTV=1)
+      if [[ -n $test_filter ]]; then
+        options+=("--test_filter=$test_filter")
+      fi
       if [[ $test_execution == local ]]; then
         # Architecture frontends retain the existing root/nobody test identity;
         # only TestRunners are local. Compilation remains on the RBE platform.

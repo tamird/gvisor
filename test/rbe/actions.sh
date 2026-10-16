@@ -39,6 +39,9 @@ options=("--arch=$QUALIFICATION_ARCH" "--clock-source=${QUALIFICATION_CLOCK_SOUR
 if [[ -n ${QUALIFICATION_SYSCALL_BUCKET:-} ]]; then
   options+=("--syscall-bucket=$QUALIFICATION_SYSCALL_BUCKET")
 fi
+if [[ -n ${QUALIFICATION_TEST_FILTER:-} ]]; then
+  options+=("--test-filter=$QUALIFICATION_TEST_FILTER")
+fi
 if [[ -n ${QUALIFICATION_TARGETS:-} ]]; then
   if [[ $QUALIFICATION_TARGETS == *$'\n'* ]]; then
     printf 'Supply target labels on one line.\n' >&2
