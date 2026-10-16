@@ -145,13 +145,56 @@ jobs:
           --timeout="$REMOTE_TIMEOUT" --disable_retry \
           --script='bash test/rbe/actions.sh'
 
-    - name: Coordinate qualification on Actions
+    - name: Resolve the governance lock on Linux ARM64
       if: env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions'
       timeout-minutes: ${{ inputs.execution == 'local' && inputs.architecture == 'all' && inputs.lanes == 'unit' && 145 || inputs.execution == 'local' && inputs.lanes == 'container-v1' && 150 || env.QUALIFICATION_EXECUTION == 'remote-actions' && 145 || inputs.execution == 'local' && contains(fromJSON('["container","syscalls","syscalls-resume","syscalls-kvm","syscalls-rc"]'), inputs.lanes) && 90 || contains(fromJSON('["benchmarks","cpu-images","gpu-images","language-goferfs"]'), inputs.lanes) && 70 || ((inputs.lanes == 'unit' || inputs.lanes == 'container-v1-pilot' || inputs.lanes == 'syscalls' || inputs.lanes == 'syscalls-resume' || inputs.lanes == 'syscalls-kvm' || inputs.lanes == 'syscalls-rc-pilot' || inputs.lanes == 'docker' || inputs.lanes == 'plugin-network' || inputs.lanes == 'nftables' || inputs.lanes == 'moby' || inputs.lanes == 'kvm') && 45 || 15) }}
       shell: bash
       env:
         BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
-      run: bash test/rbe/actions.sh
+      run: |
+        set -euo pipefail
+        [[ $(uname -s) == Linux && $(uname -m) == aarch64 ]]
+        [[ $QUALIFICATION_LANES == build && $QUALIFICATION_ARCH == arm64 && $QUALIFICATION_EXECUTION == local ]]
+        [[ $(git rev-parse HEAD) == "$QUALIFICATION_COMMIT" ]]
+        [[ -z $(git status --porcelain --untracked-files=no) ]]
+        out=$RUNNER_TEMP/qualification
+        mkdir -p "$out"
+        finish() {
+          local status=$? capture_status=0
+          trap - EXIT
+          set +e
+          cp -- MODULE.bazel.lock "$out/MODULE.bazel.lock.after" || capture_status=1
+          sha256sum "$out/MODULE.bazel.lock.before" "$out/MODULE.bazel.lock.after" > "$out/lock-sha256.txt" || capture_status=1
+          git diff --binary --full-index HEAD > "$out/generated-source.patch" || capture_status=1
+          git diff --name-only HEAD > "$out/generated-paths.txt" || capture_status=1
+          while IFS= read -r path; do
+            if [[ $path != MODULE.bazel.lock ]]; then capture_status=1; fi
+          done < "$out/generated-paths.txt"
+          git status --porcelain --untracked-files=no > "$out/source-after.txt" || capture_status=1
+          git rev-parse HEAD > "$out/final-head.txt" || capture_status=1
+          [[ $(cat "$out/final-head.txt") == "$QUALIFICATION_COMMIT" ]] || capture_status=1
+          printf '%s\n' "$status" > "$out/native-exit.txt" || capture_status=1
+          printf '%s\n' "$capture_status" > "$out/capture-exit.txt" || capture_status=1
+          if (( status == 0 )); then status=$capture_status; fi
+          exit "$status"
+        }
+        trap finish EXIT
+        cp -- MODULE.bazel.lock "$out/MODULE.bazel.lock.before"
+        git cat-file -p HEAD > "$out/commit.txt"
+        git status --porcelain --untracked-files=no > "$out/source-before.txt"
+        for file in MODULE.bazel .bazelrc images/default/bazelversion governance/tools/maintainers/repositories.bzl governance/areas.yaml; do
+          cp -- "$file" "$out/${file//\//_}.source"
+        done
+        uname -a > "$out/host.txt"
+        export USE_BAZEL_VERSION
+        USE_BAZEL_VERSION=$(<images/default/bazelversion)
+        timeout --signal=TERM --kill-after=5s 120s bazelisk --version > "$out/bazel-version.txt"
+        printf '%s\n' query --lockfile_mode=update --output=label 'deps(//:governance-regen)' > "$out/arguments.txt"
+        # Repository resolution runs on this ARM64 coordinator; no build/test actions
+        # or maintainers-file updates are requested by this dependency query.
+        timeout --signal=INT --kill-after=30s 600s bazelisk query \
+          --lockfile_mode=update --output=label 'deps(//:governance-regen)' \
+          > "$out/query-stdout.txt" 2> "$out/query-stderr.txt"
 
     - name: Retain qualification placement and host facts
       if: always() && (env.QUALIFICATION_EXECUTION == 'local' || env.QUALIFICATION_EXECUTION == 'remote-actions')
