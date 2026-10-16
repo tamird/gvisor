@@ -25,10 +25,13 @@ import (
 	"time"
 
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/cleanup"
 	"gvisor.dev/gvisor/pkg/log"
+	"gvisor.dev/gvisor/pkg/state/statefile"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
+	"gvisor.dev/gvisor/runsc/sandbox"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
 
@@ -200,6 +203,129 @@ func startSleepingContainer(b *testing.B, conf *config.Config) (*Container, func
 	return cont, func() {
 		cont.Destroy()
 		cleanup()
+	}
+}
+
+// checkSleepingContainer verifies the workload outside the measured interval.
+func checkSleepingContainer(b *testing.B, cont *Container) {
+	b.Helper()
+	procs, err := cont.Processes()
+	if err != nil {
+		b.Fatalf("Processes: %v", err)
+	}
+	if got, want := len(procs), 1; got != want {
+		b.Fatalf("process count got %d, want %d", got, want)
+	}
+	if procs[0].PID != 1 || procs[0].Cmd != "sleep" {
+		b.Fatalf("process got %+v, want sleep with PID 1", *procs[0])
+	}
+}
+
+// BenchmarkOCICheckpoint measures the synchronous checkpoint call for a running
+// sleeping container. Container setup and teardown are outside the interval.
+func BenchmarkOCICheckpoint(b *testing.B) {
+	for _, bc := range benchmarkConfigs(b) {
+		b.Run(bc.name, func(b *testing.B) {
+			b.StopTimer()
+			b.ResetTimer()
+			var samples []time.Duration
+			for i := 0; i < b.N; i++ {
+				func() {
+					cont, cleanup := startSleepingContainer(b, bc.conf)
+					defer cleanup()
+					checkSleepingContainer(b, cont)
+					dir, err := os.MkdirTemp(testutil.TmpDir(), "checkpoint-benchmark")
+					if err != nil {
+						b.Fatalf("MkdirTemp: %v", err)
+					}
+					defer os.RemoveAll(dir)
+					if err := os.Chmod(dir, 0777); err != nil {
+						b.Fatalf("Chmod: %v", err)
+					}
+					elapsed := testutil.Measure(b, func() {
+						err = cont.Checkpoint(bc.conf, dir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelFlateBestSpeed})
+					})
+					if err != nil {
+						b.Fatalf("Checkpoint: %v", err)
+					}
+					samples = append(samples, elapsed)
+				}()
+			}
+			testutil.ReportPercentiles(b, samples)
+		})
+	}
+}
+
+// BenchmarkOCIRestore measures creation and synchronous restore of a sleeping
+// container. Producing the checkpoint, checking the restored process, and
+// destroying containers are outside the interval.
+func BenchmarkOCIRestore(b *testing.B) {
+	for _, bc := range benchmarkConfigs(b) {
+		b.Run(bc.name, func(b *testing.B) {
+			b.StopTimer()
+			b.ResetTimer()
+			var samples []time.Duration
+			for i := 0; i < b.N; i++ {
+				func() {
+					spec := testutil.NewSpecWithArgs("sleep", "100")
+					_, bundleDir, cleanFiles, err := testutil.SetupContainer(spec, bc.conf)
+					if err != nil {
+						b.Fatalf("SetupContainer: %v", err)
+					}
+					defer cleanFiles()
+					args := Args{ID: testutil.RandomContainerID(), Spec: spec, BundleDir: bundleDir}
+					cont, err := New(bc.conf, args)
+					if err != nil {
+						b.Fatalf("New: %v", err)
+					}
+					cleanContainer := cleanup.Make(func() {
+						if err := cont.Destroy(); err != nil {
+							b.Errorf("Destroy checkpointed container: %v", err)
+						}
+					})
+					defer cleanContainer.Clean()
+					if err := cont.Start(bc.conf); err != nil {
+						b.Fatalf("Start: %v", err)
+					}
+					checkSleepingContainer(b, cont)
+					dir, err := os.MkdirTemp(testutil.TmpDir(), "restore-benchmark")
+					if err != nil {
+						b.Fatalf("MkdirTemp: %v", err)
+					}
+					defer os.RemoveAll(dir)
+					if err := os.Chmod(dir, 0777); err != nil {
+						b.Fatalf("Chmod: %v", err)
+					}
+					if err := cont.Checkpoint(bc.conf, dir, sandbox.CheckpointOpts{Compression: statefile.CompressionLevelFlateBestSpeed}); err != nil {
+						b.Fatalf("Checkpoint: %v", err)
+					}
+					if err := cont.Destroy(); err != nil {
+						b.Fatalf("Destroy checkpointed container: %v", err)
+					}
+					cleanContainer.Release()
+					var restored *Container
+					defer func() {
+						if restored != nil {
+							if err := restored.Destroy(); err != nil {
+								b.Errorf("Destroy restored container: %v", err)
+							}
+						}
+					}()
+					elapsed := testutil.Measure(b, func() {
+						if restored, err = New(bc.conf, args); err != nil {
+							return
+						}
+						err = restored.Restore(bc.conf, dir, false /* direct */, false /* background */, nil /* networkArgs */)
+					})
+					if err != nil {
+						b.Fatalf("Restore: %v", err)
+					}
+					checkSleepingContainer(b, restored)
+					samples = append(samples, elapsed)
+				}()
+			}
+			testutil.ReportPercentiles(b, samples)
+		})
 	}
 }
 

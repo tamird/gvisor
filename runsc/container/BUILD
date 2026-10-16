@@ -192,10 +192,13 @@ _LIFECYCLE_BENCHMARK_DATA = [
 ]
 
 _LIFECYCLE_BENCHMARK_DEPS = [
+    "//pkg/cleanup",
     "//pkg/log",
+    "//pkg/state/statefile",
     "//pkg/test/testutil",
     "//runsc/config",
     "//runsc/flag",
+    "//runsc/sandbox",
     "//runsc/specutils",
     "@org_golang_x_sys//unix:go_default_library",
 ]
