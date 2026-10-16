@@ -23,17 +23,16 @@ import (
 // restoreArray owns length checks, traversal and element waits. Actual arrays
 // use direct storage; legacy slice destinations reread their live header at
 // each Index, including when a previous element's loader replaced that header.
-func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
+func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestination, encoded []wire.Value) {
 	length := target.length()
-	if encoded.Len() != length {
-		Failf("mismatching array length expect=%d, actual=%d", length, encoded.Len())
+	if len(encoded) != length {
+		Failf("mismatching array length expect=%d, actual=%d", length, len(encoded))
 	}
 	var element reflect.Type
 	if length != 0 && target.directArray() {
 		element = target.typ.Elem()
 	}
-	for i := 0; i < encoded.Len(); i++ {
-		value := encoded.Element(i)
+	for i, value := range encoded {
 		var child restoreDestination
 		if element != nil {
 			child = target.field(element, uintptr(i)*element.Size())
@@ -48,19 +47,18 @@ func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestin
 // restoreMap keeps fresh typed cells and Go's map insertion semantics at the
 // shared boundary. Both cells exist before hooks; waits precede insertion,
 // which reads the live map header. Nonzero-sized cells are never reused.
-func (ds *decodeState) restoreMap(ods *objectDecodeState, target restoreDestination, encoded wire.Value) {
+func (ds *decodeState) restoreMap(ods *objectDecodeState, target restoreDestination, encoded []wire.MapEntry) {
 	object := target.value()
 	if object.IsNil() {
 		object.Set(reflect.MakeMap(object.Type()))
 	}
-	for i := 0; i < encoded.Len(); i++ {
-		key, value := encoded.Entry(i)
+	for _, entry := range encoded {
 		keyCell := reflect.New(object.Type().Key()).Elem()
 		valueCell := reflect.New(object.Type().Elem()).Elem()
-		ds.restoreValue(ods, ds.destination(keyCell), key)
-		ds.restoreValue(ods, ds.destination(valueCell), value)
-		ds.waitObject(ods, key, nil)
-		ds.waitObject(ods, value, nil)
+		ds.restoreValue(ods, ds.destination(keyCell), entry.Key)
+		ds.restoreValue(ods, ds.destination(valueCell), entry.Value)
+		ds.waitObject(ods, entry.Key, nil)
+		ds.waitObject(ods, entry.Value, nil)
 		object.SetMapIndex(keyCell, valueCell)
 	}
 }

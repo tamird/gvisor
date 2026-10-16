@@ -128,15 +128,16 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 		slice := x.Slice()
 		return fmt.Sprintf("%s{len:%d,cap:%d}", p.formatRef(slice.Ref, graph), slice.Length, slice.Capacity), slice.Capacity != 0
 	case wire.KindArray, wire.KindMultipleObjects:
-		if x.Len() == 0 {
+		values := x.Array()
+		if len(values) == 0 {
 			return "[]", false
 		}
-		items := make([]string, 0, x.Len()+2)
+		items := make([]string, 0, len(values)+2)
 		zeros := make([]string, 0) // used to eliminate zero entries.
 		items = append(items, "[")
 		tabs := "\n" + strings.Repeat("\t", depth)
-		for i := 0; i < x.Len(); i++ {
-			item, ok := p.format(graph, depth+1, x.Element(i))
+		for _, value := range values {
+			item, ok := p.format(graph, depth+1, value)
 			if !ok {
 				zeros = append(zeros, fmt.Sprintf("\t%s,", item))
 				continue
@@ -151,7 +152,7 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 			items = append(items, fmt.Sprintf("\t... (%d zeros),", len(zeros)))
 		}
 		items = append(items, "]")
-		return strings.Join(items, tabs), len(zeros) < x.Len()
+		return strings.Join(items, tabs), len(zeros) < len(values)
 	case wire.KindStruct:
 		tag := fmt.Sprintf("g%dt%d", graph, x.StructType())
 		spec := p.typeSpecs[tag]
@@ -177,16 +178,16 @@ func (p *printer) format(graph uint64, depth int, encoded wire.Value) (string, b
 		items = append(items, "}")
 		return strings.Join(items, tabs), !allZero
 	case wire.KindMap:
-		if x.Len() == 0 {
+		entries := x.Map()
+		if len(entries) == 0 {
 			return "map{}", false
 		}
-		items := make([]string, 0, x.Len()+2)
+		items := make([]string, 0, len(entries)+2)
 		items = append(items, "map{")
 		tabs := "\n" + strings.Repeat("\t", depth)
-		for i := 0; i < x.Len(); i++ {
-			keyValue, entryValue := x.Entry(i)
-			key, _ := p.format(graph, depth+1, keyValue)
-			value, _ := p.format(graph, depth+1, entryValue)
+		for _, entry := range entries {
+			key, _ := p.format(graph, depth+1, entry.Key)
+			value, _ := p.format(graph, depth+1, entry.Value)
 			items = append(items, fmt.Sprintf("\t%s: %s,", key, value))
 		}
 		items = append(items, "}")

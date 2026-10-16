@@ -137,9 +137,9 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 			ds.assignSlice(target.value(), slice)
 		}
 	case wire.KindArray:
-		ds.restoreArray(ods, target, encoded)
+		ds.restoreArray(ods, target, encoded.Array())
 	case wire.KindMap:
-		ds.restoreMap(ods, target, encoded)
+		ds.restoreMap(ods, target, encoded.Map())
 	case wire.KindStruct:
 		ds.decodeStruct(ods, target, encoded)
 	case wire.KindInterface:

@@ -92,13 +92,14 @@ type arrayValue struct {
 	values []Value
 }
 
-type valuePair struct {
-	key, value Value
+// MapEntry is one parsed map entry. Entries retain their wire order.
+type MapEntry struct {
+	Key, Value Value
 }
 
 type mapValue struct {
 	valueHeader
-	entries []valuePair
+	entries []MapEntry
 }
 
 type structValue struct {
@@ -211,33 +212,22 @@ func (v Value) Slice() Slice {
 	return Slice{Length: Uint(v.bits), Capacity: p.capacity, Ref: p.ref.Reference()}
 }
 
-// Len returns the length of an Array, Map, or MultipleObjects value.
-func (v Value) Len() int {
+// Array returns the read-only elements of an Array or MultipleObjects value.
+// The slice and its children remain valid independently of the reader.
+func (v Value) Array() []Value {
 	switch v.Kind() {
 	case KindArray, KindMultipleObjects:
-		return len((*arrayValue)(v.payload).values)
-	case KindMap:
-		return len((*mapValue)(v.payload).entries)
-	default:
-		panic("wire value is not a collection")
-	}
-}
-
-// Element returns an Array or MultipleObjects element.
-func (v Value) Element(i int) Value {
-	switch v.Kind() {
-	case KindArray, KindMultipleObjects:
-		return (*arrayValue)(v.payload).values[i]
+		return (*arrayValue)(v.payload).values
 	default:
 		panic("wire value is not an array")
 	}
 }
 
-// Entry returns a Map's key and value in their encoded order.
-func (v Value) Entry(i int) (Value, Value) {
+// Map returns a Map's read-only entries in their encoded order.
+// The slice and its keys and values remain valid independently of the reader.
+func (v Value) Map() []MapEntry {
 	v.require(KindMap)
-	entry := (*mapValue)(v.payload).entries[i]
-	return entry.key, entry.value
+	return (*mapValue)(v.payload).entries
 }
 
 // StructType returns a Struct's wire type ID.
@@ -259,7 +249,7 @@ func (v Value) Fields() int {
 	case KindNoObjects:
 		return 0
 	case KindMultipleObjects:
-		return body.Len()
+		return len(body.Array())
 	default:
 		return 1
 	}
@@ -274,7 +264,7 @@ func (v Value) Field(i int) Value {
 	case KindNoObjects:
 		panic("Field called inappropriately, wrong Alloc?")
 	case KindMultipleObjects:
-		return body.Element(i)
+		return body.Array()[i]
 	default:
 		return body
 	}

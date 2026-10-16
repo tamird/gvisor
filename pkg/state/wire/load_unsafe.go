@@ -84,14 +84,14 @@ func loadPayload(r *Reader, kind Kind) Value {
 		count := loadUint(r)
 		p := &mapValue{valueHeader: valueHeader{kind}} // Escapes: owned map payload.
 		if count != 0 {
-			p.entries = make([]valuePair, count) // Escapes: owned entries; make checks the full-width count.
+			p.entries = make([]MapEntry, count) // Escapes: owned entries; make checks the full-width count.
 			for i := range p.entries {
 				if i == 0 {
-					p.entries[i] = valuePair{key: Load(r), value: Load(r)}
+					p.entries[i] = MapEntry{Key: Load(r), Value: Load(r)}
 				} else {
-					p.entries[i] = valuePair{
-						key:   loadPayload(r, p.entries[0].key.Kind()),
-						value: loadPayload(r, p.entries[0].value.Kind()),
+					p.entries[i] = MapEntry{
+						Key:   loadPayload(r, p.entries[0].Key.Kind()),
+						Value: loadPayload(r, p.entries[0].Value.Kind()),
 					}
 				}
 			}
