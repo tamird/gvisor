@@ -38,6 +38,32 @@ var (
 	llvmText string
 )
 
+func TestAuditedExtensionRepos(t *testing.T) {
+	// Bazel 8.8.1 JsonOutputFormatter uses ModuleExtensionId.toString() for
+	// these keys. The isolated apt key matches container_apt's lock record.
+	graph, err := parseModGraph(`{
+  "extensionUsages": [
+    {"key": "@@rules_distroless+//apt:extensions.bzl%apt", "used_repos": ["release_tools"]},
+    {"key": "@@rules_distroless+//apt:extensions.bzl%apt%<root>+container_apt", "used_repos": ["container_test_tools"]},
+    {"key": "@@gazelle+//:extensions.bzl%go_deps", "used_repos": ["go_dependency"]},
+    {"key": "@@rules_python+//python/extensions:pip.bzl%pip", "used_repos": ["python_packages"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules http_archive", "used_repos": ["archive"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules http_file", "used_repos": ["file"]},
+    {"key": "@@//:MODULE.bazel%_repo_rules module_proxy", "used_repos": ["proxy"]},
+    {"key": "@@rules_go+//go:extensions.bzl%go_sdk", "used_repos": ["go_sdk"]},
+    {"key": "@@rules_go+//go:extensions.bzl%go_sdk%<root>+apt", "used_repos": ["isolated_sdk"]}
+  ]
+}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := graph.auditedRepos()
+	want := []string{"release_tools", "container_test_tools", "go_dependency", "python_packages", "archive", "file", "proxy"}
+	if !slices.Equal(got, want) {
+		t.Fatalf("audited repositories = %v, want %v", got, want)
+	}
+}
+
 func TestParseGitRefs(t *testing.T) {
 	const (
 		first  = "1111111111111111111111111111111111111111"
