@@ -42,6 +42,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/test/testutil"
 	"gvisor.dev/gvisor/pkg/unet"
+	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/flag"
 	"gvisor.dev/gvisor/runsc/fsgofer"
@@ -669,14 +670,14 @@ func TestNetworkConfig(t *testing.T) {
 		l.ctrl.manager.startResultChan <- nil
 	}()
 
-	args := &CreateLinksAndRoutesArgs{
-		LoopbackLinks: []LoopbackLink{
+	args := &sentryapi.CreateLinksAndRoutesArgs{
+		LoopbackLinks: []sentryapi.LoopbackLink{
 			{
 				Name: "lo",
 				Addresses: []netip.Prefix{
 					netip.MustParsePrefix("127.0.0.1/8"),
 				},
-				Routes: []Route{
+				Routes: []sentryapi.Route{
 					{
 						Destination: netip.MustParsePrefix("127.0.0.0/8"),
 					},
@@ -687,7 +688,7 @@ func TestNetworkConfig(t *testing.T) {
 	if err := l.ctrl.manager.SetNetworkArgs(args, nil); err != nil {
 		t.Errorf("error calling SetNetworkConfig: %v", err)
 	}
-	var networkArgs CreateLinksAndRoutesArgs
+	var networkArgs sentryapi.CreateLinksAndRoutesArgs
 	if err := l.ctrl.manager.GetNetworkConfig(nil, &networkArgs); err != nil {
 		t.Errorf("error calling NetworkConfig: %v", err)
 	}

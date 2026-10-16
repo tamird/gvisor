@@ -35,7 +35,7 @@ import (
 	"gvisor.dev/gvisor/pkg/sentry/kernel"
 	"gvisor.dev/gvisor/pkg/sync"
 	"gvisor.dev/gvisor/pkg/test/testutil"
-	"gvisor.dev/gvisor/runsc/boot"
+	"gvisor.dev/gvisor/runsc/boot/sentryapi"
 	"gvisor.dev/gvisor/runsc/config"
 	"gvisor.dev/gvisor/runsc/specutils"
 )
@@ -446,18 +446,31 @@ func setupTestRootDir(t *testing.T, conf *config.Config) string {
 	return rootDir
 }
 
-// startNoRootContainerSandbox boots a sandbox with no root container,
-// registering its teardown with t.Cleanup.
-func startNoRootContainerSandbox(t *testing.T, conf *config.Config, sbID string) *Container {
-	t.Helper()
-
-	sbSpec := &specs.Spec{
+// noRootContainerSandboxSpec returns the spec of a sandbox with no root
+// container.
+func noRootContainerSandboxSpec() *specs.Spec {
+	return &specs.Spec{
 		Version: specs.Version,
 		Annotations: map[string]string{
 			specutils.ContainerdContainerTypeAnnotation: specutils.ContainerdContainerTypeSandbox,
 		},
 	}
-	return startNoRootContainerSandboxWithSpec(t, conf, sbID, sbSpec)
+}
+
+// noRootContainerSubSpec returns the spec of a container running args in
+// sandbox sbID.
+func noRootContainerSubSpec(sbID string, args ...string) *specs.Spec {
+	spec := testutil.NewSpecWithArgs(args...)
+	spec.Annotations[specutils.ContainerdContainerTypeAnnotation] = specutils.ContainerdContainerTypeContainer
+	spec.Annotations[specutils.ContainerdSandboxIDAnnotation] = sbID
+	return spec
+}
+
+// startNoRootContainerSandbox boots a sandbox with no root container,
+// registering its teardown with t.Cleanup.
+func startNoRootContainerSandbox(t *testing.T, conf *config.Config, sbID string) *Container {
+	t.Helper()
+	return startNoRootContainerSandboxWithSpec(t, conf, sbID, noRootContainerSandboxSpec())
 }
 
 // startNoRootContainerSandboxWithSpec is startNoRootContainerSandbox with a
@@ -502,9 +515,7 @@ func startNoRootContainerSub(t *testing.T, conf *config.Config, sbID string, pid
 func startNoRootContainerSubWithArgs(t *testing.T, conf *config.Config, sbID string, pidnsPath *string, args ...string) *Container {
 	t.Helper()
 
-	spec := testutil.NewSpecWithArgs(args...)
-	spec.Annotations[specutils.ContainerdContainerTypeAnnotation] = specutils.ContainerdContainerTypeContainer
-	spec.Annotations[specutils.ContainerdSandboxIDAnnotation] = sbID
+	spec := noRootContainerSubSpec(sbID, args...)
 	if pidnsPath != nil {
 		spec.Linux = &specs.Linux{
 			Namespaces: []specs.LinuxNamespace{
@@ -512,6 +523,13 @@ func startNoRootContainerSubWithArgs(t *testing.T, conf *config.Config, sbID str
 			},
 		}
 	}
+	return startNoRootContainerSubWithSpec(t, conf, spec)
+}
+
+// startNoRootContainerSubWithSpec creates and starts a container from spec.
+func startNoRootContainerSubWithSpec(t *testing.T, conf *config.Config, spec *specs.Spec) *Container {
+	t.Helper()
+
 	bundle, cleanupBundle, err := testutil.SetupBundleDir(spec)
 	if err != nil {
 		t.Fatalf("error setting up container bundle: %v", err)
@@ -853,11 +871,11 @@ func createSharedMount(mount specs.Mount, name string, pod ...*specs.Spec) {
 		share = "pod"
 	}
 	for _, spec := range pod {
-		spec.Annotations[boot.MountPrefix+name+".source"] = mount.Source
-		spec.Annotations[boot.MountPrefix+name+".type"] = "tmpfs"
-		spec.Annotations[boot.MountPrefix+name+".share"] = share
+		spec.Annotations[sentryapi.MountPrefix+name+".source"] = mount.Source
+		spec.Annotations[sentryapi.MountPrefix+name+".type"] = "tmpfs"
+		spec.Annotations[sentryapi.MountPrefix+name+".share"] = share
 		if len(mount.Options) > 0 {
-			spec.Annotations[boot.MountPrefix+name+".options"] = strings.Join(mount.Options, ",")
+			spec.Annotations[sentryapi.MountPrefix+name+".options"] = strings.Join(mount.Options, ",")
 		}
 	}
 }
@@ -2519,7 +2537,7 @@ func TestMultiContainerSharedBindMount(t *testing.T) {
 				}
 
 				// Check that the filestore file is created and is not empty.
-				filestoreFile := boot.SelfFilestorePath(sourceDir, containers[0].sandboxID())
+				filestoreFile := sentryapi.SelfFilestorePath(sourceDir, containers[0].sandboxID())
 				var stat unix.Stat_t
 				if err := unix.Stat(filestoreFile, &stat); err != nil {
 					t.Fatalf("unix.Stat(%q) failed for submount filestore: %v", filestoreFile, err)
@@ -3453,7 +3471,7 @@ func TestMultiContainerOverlayLeaks(t *testing.T) {
 		}
 
 		// Stat filestoreFile to see its usage. It should have been cleaned up.
-		filestoreFile := boot.SelfFilestorePath(s.Root.Path, sandboxID)
+		filestoreFile := sentryapi.SelfFilestorePath(s.Root.Path, sandboxID)
 		var stat unix.Stat_t
 		if err := unix.Stat(filestoreFile, &stat); err != nil {
 			t.Errorf("unix.Stat(%q) failed for rootfs filestore: %v", filestoreFile, err)
