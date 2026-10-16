@@ -101,6 +101,59 @@ class QualificationReportTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "timezone-aware"):
             report.timestamp("2026-10-16T17:39:09")
 
+    def test_filtered_save_keeps_build_only_test_roots(self) -> None:
+        invocation = self.fixture("filtered-save")
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl")
+        self.assertEqual(value["status"], "PASS", value)
+        self.assertEqual(value["errors"], [])
+        self.assertEqual(value["missing"], [])
+        self.assertEqual(len(value["expected"]), 1)
+        self.assertEqual(len(value["executed"]), 1)
+
+    def test_filtered_save_rejects_unexpected_execution(self) -> None:
+        invocation = self.fixture("filtered-save")
+        events = self.events(invocation)
+        selected = (invocation / "expected.txt").read_text().strip()
+        extra = "//test/syscalls:32bit_test_native"
+        result = next(event for event in events if "testResult" in event)
+        summary = next(event for event in events if "testSummary" in event)
+        unexpected = json.loads(json.dumps([result, summary]).replace(selected, extra))
+        for event in events:
+            if event.get("id", {}).get("targetCompleted", {}).get("label") == extra:
+                event["children"] = [row["id"] for row in unexpected]
+        self.write_events(invocation, unexpected + events)
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl")
+        self.assertEqual(value["status"], "INCOMPLETE", value)
+        self.assertIn("Results or summaries belong to an unexpected configuration", value["errors"])
+
+    def test_filtered_save_requires_selected_owner(self) -> None:
+        invocation = self.fixture("filtered-save")
+        selected = (invocation / "expected.txt").read_text().strip()
+        self.write_events(invocation, [event for event in self.events(invocation)
+                                       if not any(identity.get("label") == selected
+                                                  for identity in event["id"].values())])
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl")
+        self.assertEqual(value["status"], "INCOMPLETE", value)
+        self.assertEqual({row["label"] for row in value["missing"]}, {selected})
+        self.assertTrue(any("Configured owners differ" in error for error in value["errors"]), value)
+
+    def test_filtered_save_preserves_build_only_failure(self) -> None:
+        invocation = self.fixture("filtered-save")
+        events = self.events(invocation)
+        extra = "//test/syscalls:32bit_test_native"
+        for event in events:
+            if event.get("id", {}).get("targetCompleted", {}).get("label") == extra:
+                event["completed"]["success"] = False
+        self.write_events(invocation, events)
+        (invocation / "native-exit.txt").write_text("1\n")
+        self.assertEqual(self.capture(invocation)["errors"], [])
+        value = self.verdict(invocation, analysis=invocation / "expected-analysis.jsonl")
+        self.assertEqual((value["status"], value["native_exit"]), ("FAIL", 1))
+        self.assertEqual([row["label"] for row in value["failures"]], [extra])
+
     def test_retained_test_no_build_preflight(self) -> None:
         events = FIXTURES / "analysis-no-build/events.jsonl"
         value = report.preflight(events, 1, "test")

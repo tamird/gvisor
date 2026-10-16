@@ -361,7 +361,7 @@ export -f qualification_bazel
 bazel() {
   local argument command_kind="" result=0 capture_status=0 verdict_status=0 preflight_status=0 analysis_only=false
   local directory raw_events expected_events="" index
-  local -a capture_prefix=() verdict_options=() command_args=("$@") target_args=()
+  local -a capture_prefix=() verdict_options=() command_args=("$@") target_args=() selection_options=()
   for argument in "$@"; do
     case "$argument" in
       --nobuild|--nobuild=true|--build=false) analysis_only=true ;;
@@ -401,7 +401,10 @@ bazel() {
   # so a truncated result stream cannot silently lose selected owners.
   if [[ $analysis_only == false ]]; then
     expected_events=$(mktemp "$qualification_private/expected-XXXXXX.json")
-    qualification_bazel "${command_args[@]}" --nobuild \
+    # Test filters otherwise leave build-only roots in the analysis result.
+    # Keep those builds in the actual command, but not the expected test set.
+    if [[ $command_kind == test ]]; then selection_options=(--build_tests_only); fi
+    qualification_bazel "${command_args[@]}" --nobuild "${selection_options[@]}" \
       "--build_event_json_file=$expected_events" --build_event_json_file_path_conversion=false \
       "${target_args[@]}" || result=$?
     printf '%s\n' "$result" > "$directory/preflight-exit.txt" || capture_status=1

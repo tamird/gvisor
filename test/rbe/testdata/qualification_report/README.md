@@ -6,7 +6,7 @@ body hashes, projection rule, and retained log offsets. XML is unchanged. BEP
 report URIs are relocated by the test; summary URI lists are omitted because the
 capture owner uses each `testResult`'s original reports.
 
-* `pass`: run 38934559463, one native exec owner, all 49 named cases passing.
+* `pass`: run 38934559463, one native exec owner, 45 passing cases and four skips.
 * `fail`: run 38941203981, shard 8 of the container systrap owner. Its 64 XML
   entries include a fixture-creation failure. The original eight-shard
   announcement/summary remains, deliberately making the other seven shards
@@ -23,6 +23,11 @@ capture owner uses each `testResult`'s original reports.
   events and native exit 1. Both configured owners finish through `NO_BUILD`,
   with no analysis failure or execution. The test checks this complete pattern
   and rejects missing owners, other aborts, and unrelated nonzero exits.
+* `filtered-save`: invocation e1d9f7dd-28c6-4cab-a212-9cb84868a94a built
+  `32bit_test_native` but its `save_restore` filter executed only
+  `32bit_test_runsc_systrap_directfs_save`. Both remain in the actual BEP.
+  Expected analysis is projected to the selected owner for this regression;
+  it is not evidence of running the corrected `--build_tests_only` preflight.
 
 Other tests deliberately mutate these inputs to exercise source/configuration
 mismatches, missing results, report corruption, resumable capture, wrapper errors,

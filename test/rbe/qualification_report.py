@@ -407,8 +407,12 @@ def verdict(events: Path, manifest: Path, context: Path, expected_targets: Path 
         errors.append("Expected labels absent from configured invocation")
     if not expected:
         errors.append("No expected configured owners")
-    if configured != expected:
-        errors.append(f"Configured owners differ from expected: {sorted(configured ^ expected)}")
+    # A test command may also build test rules excluded by its execution
+    # filters. Independent test-only analysis owns selection; results and
+    # summaries below must still belong to that exact set of configurations.
+    different = expected - configured if info["command_kind"] == "test" else configured ^ expected
+    if different:
+        errors.append(f"Configured owners differ from expected: {sorted(different)}")
     if not finished:
         errors.append("Missing invocation finish event")
     accepted_analysis_exit = False
