@@ -79,6 +79,11 @@ cleanup() {
     cp -- "$qualification_workspace/MODULE.bazel.lock" "$qualification_artifacts/MODULE.bazel.lock" || capture_status=1
     sha256sum "$qualification_artifacts/MODULE.bazel.lock" > "$qualification_artifacts/MODULE.bazel.lock.sha256" || capture_status=1
     git -C "$qualification_workspace" diff --binary --full-index HEAD -- MODULE.bazel.lock > "$qualification_artifacts/MODULE.bazel.lock.diff" || capture_status=1
+    cmp -- "$qualification_artifacts/MODULE.bazel.lock.before" "$qualification_artifacts/MODULE.bazel.lock" || capture_status=1
+    git -C "$qualification_workspace" rev-parse HEAD > "$qualification_artifacts/final-head.txt" || capture_status=1
+    [[ $(cat "$qualification_artifacts/final-head.txt") == "$QUALIFICATION_COMMIT" ]] || capture_status=1
+    git -C "$qualification_workspace" status --porcelain --untracked-files=no > "$qualification_artifacts/source-after.txt" || capture_status=1
+    [[ ! -s "$qualification_artifacts/source-after.txt" ]] || capture_status=1
     printf '%s\n' "$capture_status" > "$qualification_artifacts/lock-capture-exit" || capture_status=1
     if (( status == 0 && capture_status != 0 )); then status=$capture_status; fi
   fi
@@ -102,6 +107,14 @@ trap cleanup EXIT
 case "${QUALIFICATION_EXECUTION:-remote}" in
   remote) ;;
   local|remote-actions)
+    # Capture the checked dependency input before any Bazel command, and retain
+    # both original bodies through the existing all-exit cleanup boundary.
+    mkdir -p "$RUNNER_TEMP/qualification"
+    qualification_artifacts=$RUNNER_TEMP/qualification
+    cp -- "$qualification_workspace/MODULE.bazel.lock" "$qualification_artifacts/MODULE.bazel.lock.before"
+    sha256sum "$qualification_artifacts/MODULE.bazel.lock.before" > "$qualification_artifacts/MODULE.bazel.lock.before.sha256"
+    git status --porcelain --untracked-files=no > "$qualification_artifacts/source-before.txt"
+    [[ ! -s "$qualification_artifacts/source-before.txt" ]]
     if [[ $QUALIFICATION_EXECUTION == local ]]; then
       options+=(--test-execution=local)
       case "${lanes[*]}" in
@@ -167,6 +180,7 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     fi
     {
       printf '%s\n' \
+        'common --lockfile_mode=error' \
         'build:buildbuddy_remote_executor --remote_executor=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --remote_cache=grpcs://remote.buildbuddy.io' \
         'build:buildbuddy_remote_executor --bes_backend=grpcs://remote.buildbuddy.io' \
@@ -224,8 +238,6 @@ case "${QUALIFICATION_EXECUTION:-remote}" in
     fi
     unset BUILDBUDDY_API_KEY
     # Capture spawn placement without including the credential RC in artifacts.
-    mkdir -p "$RUNNER_TEMP/qualification"
-    qualification_artifacts=$RUNNER_TEMP/qualification
     if [[ $qualification_retain_reports == true ]]; then
       # Root cannot replace runner-owned files in sticky /tmp with Linux
       # protected_regular enabled. Keep raw events in a private parent owned
