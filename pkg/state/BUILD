@@ -100,3 +100,16 @@ go_test(
     embed = [":state"],
     deps = ["//pkg/state/wire"],
 )
+
+# Composition-only race owner; same sources and dependencies as the suite above.
+go_test(
+    name = "state_test_slice_diagnostic_race",
+    size = "small",
+    srcs = ["types_test.go"],
+    architectures = [],
+    embed = [":state"],
+    nogo = False,
+    race = "on",
+    tags = ["manual"],
+    deps = ["//pkg/state/wire"],
+)
