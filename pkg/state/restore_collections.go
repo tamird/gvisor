@@ -20,26 +20,16 @@ import (
 	"gvisor.dev/gvisor/pkg/state/wire"
 )
 
-// restoreArray owns length checks, traversal and element waits. Actual arrays
-// use direct storage; legacy slice destinations reread their live header at
-// each Index, including when a previous element's loader replaced that header.
-func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestination, encoded []wire.Object) {
-	length := target.length()
+// restoreArray owns length checks, traversal and element waits. Index reads
+// the live destination at each step, including when an earlier loader replaces
+// a slice destination's header.
+func (ds *decodeState) restoreArray(ods *objectDecodeState, target reflect.Value, encoded []wire.Object) {
+	length := target.Len()
 	if len(encoded) != length {
 		Failf("mismatching array length expect=%d, actual=%d", length, len(encoded))
 	}
-	var element reflect.Type
-	if length != 0 && target.directArray() {
-		element = target.typ.Elem()
-	}
 	for i, value := range encoded {
-		var child restoreDestination
-		if element != nil {
-			child = target.field(element, uintptr(i)*element.Size())
-		} else {
-			child = ds.destination(target.value().Index(i))
-		}
-		ds.restoreValue(ods, child, value)
+		ds.restoreValue(ods, target.Index(i), value)
 		ds.waitObject(ods, value, nil)
 	}
 }
@@ -47,8 +37,7 @@ func (ds *decodeState) restoreArray(ods *objectDecodeState, target restoreDestin
 // restoreMap keeps fresh typed cells and Go's map insertion semantics at the
 // shared boundary. Both cells exist before hooks; waits precede insertion,
 // which reads the live map header. Nonzero-sized cells are never reused.
-func (ds *decodeState) restoreMap(ods *objectDecodeState, target restoreDestination, encoded *wire.Map) {
-	object := target.value()
+func (ds *decodeState) restoreMap(ods *objectDecodeState, object reflect.Value, encoded *wire.Map) {
 	if object.IsNil() {
 		object.Set(reflect.MakeMap(object.Type()))
 	}
@@ -56,8 +45,8 @@ func (ds *decodeState) restoreMap(ods *objectDecodeState, target restoreDestinat
 		value := encoded.Values[i]
 		keyCell := reflect.New(object.Type().Key()).Elem()
 		valueCell := reflect.New(object.Type().Elem()).Elem()
-		ds.restoreValue(ods, ds.destination(keyCell), key)
-		ds.restoreValue(ods, ds.destination(valueCell), value)
+		ds.restoreValue(ods, keyCell, key)
+		ds.restoreValue(ods, valueCell, value)
 		ds.waitObject(ods, key, nil)
 		ds.waitObject(ods, value, nil)
 		object.SetMapIndex(keyCell, valueCell)

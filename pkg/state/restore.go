@@ -115,31 +115,35 @@ func dataValue(value wire.Object) wire.Object {
 
 // restoreValue owns every encoded-kind operation, for generated fields,
 // manual Source calls, graph objects and dynamic interface/map storage alike.
-func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestination, encoded wire.Object) {
+func (ds *decodeState) restoreValue(ods *objectDecodeState, target reflect.Value, encoded wire.Object) {
 	switch value := dataValue(encoded).(type) {
 	case wire.Nil:
 		return
 	case *wire.Ref:
 		ds.restoreReference(target, value)
 	case wire.Bool:
-		target.storeBool(bool(value))
+		target.SetBool(bool(value))
 	case wire.Int:
-		checkInt(int64(value), target.storeInt(int64(value)))
+		target.SetInt(int64(value))
+		checkInt(int64(value), target.Int())
 	case wire.Uint:
-		checkUint(uint64(value), target.storeUint(uint64(value)))
+		target.SetUint(uint64(value))
+		checkUint(uint64(value), target.Uint())
 	case wire.Float32:
-		target.storeFloat(float64(value))
+		target.SetFloat(float64(value))
 	case wire.Float64:
-		checkFloat(float64(value), target.storeFloat(float64(value)))
+		target.SetFloat(float64(value))
+		checkFloat(float64(value), target.Float())
 	case *wire.Complex64:
-		target.storeComplex(complex128(*value))
+		target.SetComplex(complex128(*value))
 	case *wire.Complex128:
-		checkComplex(complex128(*value), target.storeComplex(complex128(*value)))
+		target.SetComplex(complex128(*value))
+		checkComplex(complex128(*value), target.Complex())
 	case *wire.String:
-		target.storeString(string(*value))
+		target.SetString(string(*value))
 	case *wire.Slice:
 		if objectID(value.Ref.Root) != 0 {
-			ds.assignSlice(target.value(), value)
+			ds.assignSlice(target, value)
 		}
 	case *wire.Array:
 		ds.restoreArray(ods, target, value.Contents)
@@ -148,34 +152,31 @@ func (ds *decodeState) restoreValue(ods *objectDecodeState, target restoreDestin
 	case *wire.Struct:
 		ds.decodeStruct(ods, target, value)
 	case *wire.Interface:
-		ds.decodeInterface(ods, target.value(), value)
+		ds.decodeInterface(ods, target, value)
 	default:
-		Failf("unknown object %#v for %q", encoded, target.value().Type().Name())
+		Failf("unknown object %#v for %q", encoded, target.Type().Name())
 	}
 }
 
-// restoreReference retains register/Dots/assignment order. Only ordinary
-// pointer stores bypass reflect.Set; maps retain actual source flags and type.
-func (ds *decodeState) restoreReference(target restoreDestination, ref *wire.Ref) {
+// restoreReference retains register/Dots/assignment order and the destination's
+// reflected assignment rules. Interior pointers alone need writable addresses.
+func (ds *decodeState) restoreReference(target reflect.Value, ref *wire.Ref) {
 	if objectID(ref.Root) == 0 {
 		return
 	}
-	if target.typ == nil {
-		target.value().Type() // Preserve the invalid destination error.
-	}
-	if target.typ.Kind() == reflect.Map {
-		object := walkChild(ref, reflect.ValueOf(ds.register(ref, target.typ)).Elem())
-		assignMap(target.value(), object)
+	if target.Kind() == reflect.Map {
+		object := walkChild(ref, ds.register(ref, target.Type()))
+		assignMap(target, object)
 		return
 	}
-	pointer := reflect.ValueOf(ds.register(ref, target.typ.Elem()))
+	object := ds.register(ref, target.Type().Elem())
+	var pointer reflect.Value
 	if len(ref.Dots) != 0 {
-		pointer = reflectValueRWAddr(walkChild(ref, pointer.Elem()))
+		pointer = reflectValueRWAddr(walkChild(ref, object))
+	} else {
+		pointer = object.Addr()
 	}
-	if pointer.IsNil() {
-		Failf("reference %d has no object storage", ref.Root)
-	}
-	target.storePointer(pointer)
+	target.Set(pointer)
 }
 
 func checkInt(value, stored int64) {
