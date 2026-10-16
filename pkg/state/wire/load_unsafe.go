@@ -134,8 +134,8 @@ func loadReference(r *Reader) Value {
 		} else {
 			data := make([]byte, -dot) // Escapes: independently owned field name.
 			readFull(r, data)
-			name := FieldName(gohacks.StringFromImmutableBytes(data))
-			p.dots[i] = &name // Escapes: owned field-name interface.
+			name := FieldName(gohacks.StringFromImmutableBytes(data)) // Escapes: owned field-name interface.
+			p.dots[i] = &name
 		}
 	}
 	p.typ = loadType(r)
