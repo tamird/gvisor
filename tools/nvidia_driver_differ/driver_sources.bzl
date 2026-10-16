@@ -34,4 +34,5 @@ DRIVER_SOURCES = {
     "620.32.00": None,  # No matching tag in the successful public Git advertisement.
     "620.47.00": None,  # No matching tag in the successful public Git advertisement.
     "620.51.00": None,  # No matching tag in the successful public Git advertisement.
+    "620.51.03": None,  # No matching tag in the successful public Git advertisement.
 }
