@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T09:27:09.355086+00:00",
+    "updatedAt": "2026-10-16T09:59:12.905019+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -7149,14 +7149,14 @@
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
       "status": "superseded",
-      "updatedAt": "2026-10-16T03:46:42.415921+00:00",
-      "summary": "Historical contributor-approved proposal at 7e371d8ac. The compact production amendment is now published separately for contributor review; this branch and its original approval remain unchanged. The earlier fixed comparison found a conditional upload regression and larger heap classes. Keep that evidence separate from the compact cohort.",
+      "updatedAt": "2026-10-16T09:59:12.905019+00:00",
+      "summary": "Historical contributor-approved proposal at 7e371d8ac. The compact production amendment is now published separately and contributor-approved; this branch and its original approval remain unchanged. The earlier fixed comparison found a conditional upload regression and larger heap classes. Keep that evidence separate from the compact cohort.",
       "followup": {
         "owner": "syscall_validation",
-        "disposition": "Historical approval; compact amendment awaits review",
+        "disposition": "Historical approval; approved compact amendment supersedes it",
         "sourceHead": "7e371d8acc44a23b419a84618471efe9ffc51c42",
-        "observedAt": "2026-10-16T03:46:42.415921+00:00",
-        "nextAction": "Review the separate compact amendment at ca492fef9. Compare the single commits with git range-diff 7e371d8acc^! ca492fef9^!; upstream submission still requires #15819.",
+        "observedAt": "2026-10-16T09:59:12.905019+00:00",
+        "nextAction": "Use the approved compact amendment ca492fef9 after #15819 lands. Compare the preserved single commits with git range-diff 7e371d8acc^! ca492fef9^!.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
           "https://app.buildbuddy.io/invocation/75876c79-972a-4af8-98cc-45ebfc6400e3",
@@ -7314,20 +7314,15 @@
       "title": "Age RACK measurements with compact metadata",
       "group": "runtime",
       "url": "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d",
-      "status": "Contributor review requested",
-      "updatedAt": "2026-10-16T03:46:42.415921+00:00",
-      "summary": "The compact amendment preserves the reviewed path-minimum correction while replacing stored original payload size with a trim flag and reducing sender padding. Selected unit, packet and analyzer checks pass; matched layouts restore the baseline segment and sender heap classes. The new fixed comparison is independently verified, and neither aggregate confidence interval excludes zero. This does not establish equivalence or recovery benefit on lossy or changing paths. The earlier approved proposal remains unchanged. Compare the single commits with git range-diff 7e371d8acc^! ca492fef9^!.",
-      "contributorReview": {
-        "status": "pending",
-        "head": "ca492fef95e67b769f0369c68e18a7edb28e1f2d",
-        "url": "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d"
-      },
+      "status": "Contributor approved; waiting for #15819",
+      "updatedAt": "2026-10-16T09:59:12.905019+00:00",
+      "summary": "The compact amendment preserves the reviewed path-minimum correction while replacing stored original payload size with a trim flag and reducing sender padding. Selected unit, packet and analyzer checks pass; matched layouts restore the baseline segment and sender heap classes. The new fixed comparison is independently verified, and neither aggregate confidence interval excludes zero. This does not establish equivalence or recovery benefit on lossy or changing paths. The earlier approved proposal remains unchanged. Compare the single commits with git range-diff 7e371d8acc^! ca492fef9^!. The contributor approved this exact compact amendment after reviewing its range-diff. Upstream submission waits for #15819 to land.",
       "followup": {
-        "owner": "syscall_validation",
-        "disposition": "Contributor review requested; Karn prerequisite remains",
+        "owner": "external_sweeps",
+        "disposition": "Contributor approved; Karn prerequisite remains",
         "sourceHead": "ca492fef95e67b769f0369c68e18a7edb28e1f2d",
-        "observedAt": "2026-10-16T03:46:42.415921+00:00",
-        "nextAction": "Await contributor review of this amendment and #15819 landing before opening the upstream PR. Single-commit comparison: git range-diff 7e371d8acc^! ca492fef9^!.",
+        "observedAt": "2026-10-16T09:59:12.905019+00:00",
+        "nextAction": "Follow #15819 landing before upstream submission. The contributor approved ca492fef9; the original-to-compact range-diff remains available.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d",
           "https://github.com/tamird/gvisor/commit/7e371d8acc44a23b419a84618471efe9ffc51c42",
@@ -8903,7 +8898,7 @@
       "from": "branch:fixes/tcp-retransmission-rtt",
       "to": "branch:review/tcp-rack-min-rtt-compact",
       "type": "depends_on",
-      "reason": "The compact path-minimum correction is based on the Karn loss-probe RTT repair (#15819); upstream submission awaits that prerequisite and contributor review.",
+      "reason": "The contributor-approved compact path-minimum correction is based on the Karn loss-probe RTT repair (#15819); upstream submission awaits that prerequisite landing.",
       "evidence": [
         "https://github.com/google/gvisor/pull/15819",
         "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d"
@@ -8916,8 +8911,8 @@
       "title": "CUBIC recovery and congestion-control testing",
       "status": "active",
       "owner": "Codex",
-      "updatedAt": "2026-10-16T03:46:42.415921+00:00",
-      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The compact amendment at ca492fef9 is now awaiting contributor review, with #15819 still required.",
+      "updatedAt": "2026-10-16T09:59:12.905019+00:00",
+      "summary": "The packet-level investigation found two RTT defects: loss probes admitted ambiguous samples, and RACK retained its lifetime minimum after the path grew longer. Both corrections have passing before/after packet regressions and affected unit/analyzer checks on AMD64 and ARM64. The contributor approved both: Karn is published as #15819, and the minimum-RTT correction awaits its merge. The first fixed two-host comparison shows a conditional 1.48% upload-throughput regression; download is inconclusive. The compact diagnostic representation now passes its selected unit, packet and analyzer checks. Actual layouts on both CPUs restore the inferred segment and sender heap slots to 256 and 896 bytes. The new fixed compact comparison completed all 52 processes and 96 measured bandwidth rows. Its equal-host aggregate intervals include zero for both Upload (+1.40%, 95% interval −0.0103% to +2.76%) and Download (+0.83%, −1.07% to +2.55%). Neither aggregate confidence interval excludes zero; this does not establish equivalence. The earlier upload regression remains a separate cohort; no historical samples are pooled. The approved source remains unchanged. The contributor approved compact amendment ca492fef9 after its exact range-diff; #15819 remains the upstream-submission prerequisite.",
       "findings": [
         {
           "text": "Isolated production-controller regressions reproduce two recovery behaviors: after a loss reduces the congestion window from 1000 to 700, ACKs covering 700 segments over 100 ms leave it at 700 for batch sizes 1, 2 and 10. With an aged epoch, one ACK instead moves it from 700 to 776. These are controller-arithmetic observations, not an end-to-end network reproduction.",
@@ -9540,7 +9535,7 @@
           ]
         }
       ],
-      "nextStep": "Await contributor review of compact amendment ca492fef9 and the #15819 prerequisite before upstream submission. Compare it with the earlier approved single commit using git range-diff 7e371d8acc^! ca492fef9^!. The original approval does not cover the amendment, and the measured aggregate intervals do not establish equivalence or recovery benefit on lossy or changing paths.",
+      "nextStep": "Follow #15819 landing, then submit the contributor-approved compact amendment ca492fef9 upstream. Compare it with the earlier approved single commit using git range-diff 7e371d8acc^! ca492fef9^!. Neither aggregate confidence interval excludes zero; the experiment does not establish equivalence or recovery benefit on lossy or changing paths.",
       "evidence": [
         {
           "label": "Accepted RACK fixture validation",
@@ -9615,7 +9610,7 @@
           "url": "https://app.buildbuddy.io/invocation/45723bf4-7cd8-4cdd-a590-247b6a6320e5"
         },
         {
-          "label": "Compact RACK amendment awaiting contributor review",
+          "label": "Contributor-approved compact RACK amendment",
           "url": "https://github.com/tamird/gvisor/commit/ca492fef95e67b769f0369c68e18a7edb28e1f2d"
         }
       ],
