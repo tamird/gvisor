@@ -223,6 +223,15 @@ these classifications in `work_states.py`, and the UI consumes its snapshot:
   from the GitHub snapshot and the exact proposed head. The command is also
   selectable for manual copying. It disappears when the heads match or
   either head is unavailable; a snapshot refresh updates the published head.
+  Refinements without a PR use the same copy control in their detail view.
+  Record `refinement.before` and `refinement.after` with exact `head` values;
+  the comparison is shown only while `after.head` matches the node head.
+  Each revision denotes one commit
+  (`head^!`) unless an explicit `base` defines its complete `base..head` range.
+  These ranges compare the previously reviewed proposal with its replacement,
+  independently of intervening base changes. A PR node suppresses its own
+  retained comparison when the observed head differs. A branch proposal keeps
+  its earlier-proposal comparison even when the destination PR advances.
   They do not contribute to dependency chains or blocker counts. The proposal
   filter derives from branch status locally, preserving the published state
   enum for already-open clients; proposal age is explicitly unknown.

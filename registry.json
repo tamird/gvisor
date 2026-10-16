@@ -1,7 +1,7 @@
 {
   "meta": {
     "title": "gVisor contribution map",
-    "updatedAt": "2026-10-16T08:38:54.132876+00:00",
+    "updatedAt": "2026-10-16T09:27:09.355086+00:00",
     "repo": "google/gvisor",
     "owner": "tamird",
     "scope": "All open upstream PRs by tamird, plus selected pending implementation branches and external capacity blockers. Diagnostic and obsolete validation branches are omitted.",
@@ -1327,16 +1327,16 @@
       "url": "https://github.com/google/gvisor/pull/15153",
       "group": "bazel",
       "status": "open",
-      "summary": "Root refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The public threads remain unresolved; no reply or source change was submitted.",
+      "summary": "Root refreshed this change onto current master. The exact published head is c80d6b6ab; current CI and mergeability are reported in the snapshot. The temporary conflict delimiter in the first rebase was corrected in the final source. The three current Gemini findings were inspected against the actual caller and dependency contracts. No actionable current source defect was established: the log helper has one serial test-only caller, the pinned frame callback respects the existing bound, and the toolchain guard agrees with downstream compiler selection. The contributor approved replies explaining the inspected caller and dependency contracts. All three replies were submitted on October 16; the threads remain open for reviewer responses and the source head is unchanged.",
       "number": 15153,
       "reviewDecision": null,
-      "updatedAt": "2026-10-14T21:54:35.871162+00:00",
+      "updatedAt": "2026-10-16T09:09:45.847153+00:00",
       "followup": {
-        "disposition": "Bot findings inspected; no current source change warranted",
+        "disposition": "Replies delivered; awaiting reviewer responses",
         "owner": "external_sweeps",
-        "nextAction": "Retain the unresolved public thread state and the agent assessment. Follow new maintainer feedback and exact-head checks; no public reply or source change is authorized by the bot findings alone.",
+        "nextAction": "Follow reviewer responses in the three open threads and current-head checks. The source assessment is complete; it did not itself satisfy the response obligation.",
         "sourceHead": "c80d6b6aba23932cfb6fb201fc5ff0ece40bd6c2",
-        "reviewedAt": "2026-10-10T14:31:51.129671+00:00",
+        "reviewedAt": "2026-10-16T08:57:33Z",
         "reviewDecision": null,
         "mergeable": "MERGEABLE",
         "evidence": [
@@ -1344,9 +1344,10 @@
           "https://github.com/tamird/gvisor/commit/2e46e8773c00fc18281a742b610013832861fe2d",
           "https://github.com/google/gvisor/pull/15153#discussion_r4273607204",
           "https://github.com/google/gvisor/pull/15153#discussion_r4273607214",
-          "https://github.com/google/gvisor/pull/15153#discussion_r4273607224"
+          "https://github.com/google/gvisor/pull/15153#discussion_r4273607224",
+          "https://github.com/google/gvisor/pull/15153#pullrequestreview-5545359598"
         ],
-        "observedAt": "2026-10-14T21:54:35.871162+00:00"
+        "observedAt": "2026-10-16T09:09:45.847153+00:00"
       },
       "head": "c80d6b6aba23932cfb6fb201fc5ff0ece40bd6c2"
     },
@@ -2005,7 +2006,15 @@
         ],
         "reviewedAt": "2026-10-08T17:47:18.703051+00:00"
       },
-      "head": "2f58cb2f952bbba32c6b6ac82574d9a0e01cc3f1"
+      "head": "2f58cb2f952bbba32c6b6ac82574d9a0e01cc3f1",
+      "refinement": {
+        "before": {
+          "head": "db96625d0fe205dc995fac088db5069adda92c73"
+        },
+        "after": {
+          "head": "2f58cb2f952bbba32c6b6ac82574d9a0e01cc3f1"
+        }
+      }
     },
     {
       "id": "branch:rbe-source-image-archives",
@@ -5924,6 +5933,14 @@
       "contributorChangesRequested": {
         "head": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0",
         "url": "https://github.com/tamird/gvisor/commit/0a75760e8301a0a06b9464d6d4bd19ae027f33c0"
+      },
+      "refinement": {
+        "before": {
+          "head": "7f73b15af9625a24f69763b10d37d51aecf1c341"
+        },
+        "after": {
+          "head": "0a75760e8301a0a06b9464d6d4bd19ae027f33c0"
+        }
       }
     },
     {
@@ -6327,6 +6344,14 @@
           "https://app.buildbuddy.io/invocation/0810fe99-202d-4737-b27b-e8a59e279d4e"
         ],
         "observedAt": "2026-10-14T00:54:58.248716+00:00"
+      },
+      "refinement": {
+        "before": {
+          "head": "8e5b2f0a49567887aab386c4e60873849d1bdf07"
+        },
+        "after": {
+          "head": "e3adde51d95af96f5880c866bfcc8986d1a4e65c"
+        }
       }
     },
     {
@@ -6384,6 +6409,14 @@
           "https://github.com/tamird/gvisor/commit/62b68fd8b397112f4d4de7964a488801d20b73ae"
         ],
         "observedAt": "2026-10-14T11:41:43.692401+00:00"
+      },
+      "refinement": {
+        "before": {
+          "head": "a8a75954ed3dccb1d82ef25ddf6b64813615f351"
+        },
+        "after": {
+          "head": "62b68fd8b397112f4d4de7964a488801d20b73ae"
+        }
       }
     },
     {
@@ -6694,6 +6727,14 @@
           "https://github.com/tamird/gvisor/commit/ab15420244eab07ae10f962c442a1f4414fcd046",
           "https://github.com/tamird/gvisor/commit/c4f2d7b2e65e1ab707d69d6fcef679216a6e146e"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "1e01fb220b0a4c1aac5b0fb9d1dc097aa36dbe6b"
+        },
+        "after": {
+          "head": "c4f2d7b2e65e1ab707d69d6fcef679216a6e146e"
+        }
       }
     },
     {
@@ -6799,6 +6840,14 @@
           "https://github.com/tamird/gvisor/commit/971719ac3c3cf88b3e73ee7a82573ab4e362444b",
           "https://github.com/google/gvisor/pull/15818"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "6541c99536042416bbe20eb793f1c58edd23368d"
+        },
+        "after": {
+          "head": "49ad4e7a22f10d57b9b893f700ce8aec6b7632fd"
+        }
       }
     },
     {
@@ -6974,6 +7023,14 @@
           "https://github.com/google/gvisor/pull/15768",
           "https://github.com/google/gvisor/pull/15768#discussion_r4281070678"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "1add4163ce20b373d8b150af2e285884582be210"
+        },
+        "after": {
+          "head": "974fc3e8db2da5a93c204d7ce44974ca92dd070e"
+        }
       }
     },
     {
@@ -7113,24 +7170,32 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/docker-exec-output-wait",
-      "head": "1661941f976860c7e3793ef1605672048e2dd60e",
+      "head": "0b31c2215dd68e5e093815de15ec24e8956335f5",
       "title": "Wait on Docker exec output before polling",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/1661941f976860c7e3793ef1605672048e2dd60e",
+      "url": "https://github.com/tamird/gvisor/commit/0b31c2215dd68e5e093815de15ec24e8956335f5",
       "status": "Published as #15817",
-      "updatedAt": "2026-10-15T09:10:19.456801+00:00",
-      "summary": "Published as #15817 at 1661941f9. Read Docker exec output before checking status, avoiding the existing 500 ms polling delay for short commands and removing the output-reader goroutine. Early stream closure still waits for process completion; cancellation closes the hijacked connection. Both-architecture package and analyzer checks and four focused Docker integration cases pass. The parent job failed during report collection because its Python lacked str.removesuffix; the original reports were recovered and independently verified without rerunning tests.  No measured latency improvement is claimed.",
+      "updatedAt": "2026-10-16T09:09:45.847153+00:00",
+      "summary": "Published as #15817; the current amendment describes lifecycle behavior without temporal wording. Read Docker exec output before checking status, avoiding the existing 500 ms polling delay for short commands and removing the output-reader goroutine. Early stream closure still waits for process completion; cancellation closes the hijacked connection. Both-architecture package and analyzer checks and four focused Docker integration cases pass. The parent job failed during report collection because its Python lacked str.removesuffix; the original reports were recovered and independently verified without rerunning tests.  No measured latency improvement is claimed.",
       "followup": {
         "owner": "external_sweeps",
         "disposition": "Delivered; follow public checks and review",
-        "sourceHead": "1661941f976860c7e3793ef1605672048e2dd60e",
-        "observedAt": "2026-10-15T09:10:19.456801+00:00",
+        "sourceHead": "0b31c2215dd68e5e093815de15ec24e8956335f5",
+        "observedAt": "2026-10-16T09:09:45.847153+00:00",
         "nextAction": "Follow the actual checks, review feedback and merge state of #15817.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/2c52512424d99b24af49038a72fac53069e20c8b",
           "https://app.buildbuddy.io/invocation/d6ae3a42-8ff7-4070-bd3e-03fd3e1cf9d5",
           "https://github.com/google/gvisor/pull/15817"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "1661941f976860c7e3793ef1605672048e2dd60e"
+        },
+        "after": {
+          "head": "0b31c2215dd68e5e093815de15ec24e8956335f5"
+        }
       }
     },
     {
@@ -7179,22 +7244,31 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/iperf-client-metrics",
-      "head": "eebbf58262c97c1a3ab8703c851db029367678aa",
+      "head": "bfdd9b1f0bddb0437bfd703df21ccf84e27a93b9",
       "title": "Capture iperf metrics from the client",
       "group": "tests",
-      "url": "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa",
-      "status": "Contributor approved; upstream delivery in progress",
-      "updatedAt": "2026-10-16T08:38:54.132876+00:00",
+      "url": "https://github.com/tamird/gvisor/commit/bfdd9b1f0bddb0437bfd703df21ccf84e27a93b9",
+      "status": "Published as #15858",
+      "updatedAt": "2026-10-16T09:09:45.847153+00:00",
       "summary": "The single-connection benchmark read the server logs for both labels, duplicating server metrics and omitting client metrics. The one-line correction reads the client container logs for the client series, matching the multi-connection benchmark. Two independent source reviews passed; no new runtime result is claimed. This is an independent fixture correction, with no production dependency from the RACK change.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor approval received; root owns upstream delivery",
-        "sourceHead": "eebbf58262c97c1a3ab8703c851db029367678aa",
-        "observedAt": "2026-10-16T08:38:54.132876+00:00",
-        "nextAction": "Publish the contributor-approved correction upstream using the existing delivery workflow.",
+        "owner": "external_sweeps",
+        "disposition": "Delivered; follow public checks and review",
+        "sourceHead": "bfdd9b1f0bddb0437bfd703df21ccf84e27a93b9",
+        "observedAt": "2026-10-16T09:09:45.847153+00:00",
+        "nextAction": "Follow current-head checks and reviewer feedback on #15858.",
         "evidence": [
-          "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa"
+          "https://github.com/tamird/gvisor/commit/eebbf58262c97c1a3ab8703c851db029367678aa",
+          "https://github.com/google/gvisor/pull/15858"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "eebbf58262c97c1a3ab8703c851db029367678aa"
+        },
+        "after": {
+          "head": "bfdd9b1f0bddb0437bfd703df21ccf84e27a93b9"
+        }
       }
     },
     {
@@ -7202,24 +7276,33 @@
       "type": "branch",
       "repo": "tamird/gvisor",
       "ref": "fixes/gofer-cgo-rule-init",
-      "head": "78abb01a0ac542aa97f49168b3af698ff1025392",
+      "head": "d99ab14c22a8dfbdd9028de5b724e67fe2169f28",
       "title": "Build gofer cgo filters only when needed",
       "group": "runtime",
-      "url": "https://github.com/tamird/gvisor/commit/78abb01a0ac542aa97f49168b3af698ff1025392",
-      "status": "Contributor approved; upstream delivery in progress",
-      "updatedAt": "2026-10-16T08:38:54.132876+00:00",
-      "summary": "Construct gofer cgo seccomp rules only when generating a filter with CgoEnabled, following the sentry approach. This avoids eager rule construction in pure-Go binaries and when a precompiled filter is used. Existing config tests and analyzers pass on both architectures, with source and original-output reviews complete. A matched pure-Go AMD64 initialization trace on the qualification branch removes 648 bytes and seven allocations; that branch includes a separate musl clone rule, so this is not a standalone latency measurement. The contributor approved this exact proposal; upstream delivery is in progress.",
+      "url": "https://github.com/tamird/gvisor/commit/d99ab14c22a8dfbdd9028de5b724e67fe2169f28",
+      "status": "Published as #15859",
+      "updatedAt": "2026-10-16T09:09:45.847153+00:00",
+      "summary": "Construct gofer cgo seccomp rules only when generating a filter with CgoEnabled, following the sentry approach. This avoids eager rule construction in pure-Go binaries and when a precompiled filter is used. Existing config tests and analyzers pass on both architectures, with source and original-output reviews complete. A matched pure-Go AMD64 initialization trace on the qualification branch removes 648 bytes and seven allocations; that branch includes a separate musl clone rule, so this is not a standalone latency measurement. The contributor-approved correction is published upstream.",
       "followup": {
-        "owner": "root",
-        "disposition": "Contributor approval received; root owns upstream delivery",
-        "sourceHead": "78abb01a0ac542aa97f49168b3af698ff1025392",
-        "observedAt": "2026-10-16T08:38:54.132876+00:00",
-        "nextAction": "Publish the contributor-approved correction upstream using the existing delivery workflow.",
+        "owner": "external_sweeps",
+        "disposition": "Delivered; follow public checks and review",
+        "sourceHead": "d99ab14c22a8dfbdd9028de5b724e67fe2169f28",
+        "observedAt": "2026-10-16T09:09:45.847153+00:00",
+        "nextAction": "Follow current-head checks and reviewer feedback on #15859.",
         "evidence": [
           "https://github.com/tamird/gvisor/commit/78abb01a0ac542aa97f49168b3af698ff1025392",
           "https://app.buildbuddy.io/invocation/5d536afd-488e-4a57-bd93-47d7fd760d24",
-          "https://github.com/tamird/gvisor/commit/a940a8807cf212ab6436aac25544f4aeba18ec55"
+          "https://github.com/tamird/gvisor/commit/a940a8807cf212ab6436aac25544f4aeba18ec55",
+          "https://github.com/google/gvisor/pull/15859"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "78abb01a0ac542aa97f49168b3af698ff1025392"
+        },
+        "after": {
+          "head": "d99ab14c22a8dfbdd9028de5b724e67fe2169f28"
+        }
       }
     },
     {
@@ -7251,6 +7334,58 @@
           "https://github.com/google/gvisor/pull/15819",
           "https://github.com/tamird/gvisor/actions/runs/38839701028"
         ]
+      },
+      "refinement": {
+        "before": {
+          "head": "7e371d8acc44a23b419a84618471efe9ffc51c42"
+        },
+        "after": {
+          "head": "ca492fef95e67b769f0369c68e18a7edb28e1f2d"
+        }
+      }
+    },
+    {
+      "id": "pr:15858",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15858,
+      "ref": "fixes/iperf-client-metrics",
+      "head": "bfdd9b1f0bddb0437bfd703df21ccf84e27a93b9",
+      "title": "Collect iperf metrics from the client",
+      "url": "https://github.com/google/gvisor/pull/15858",
+      "group": "tests",
+      "status": "open",
+      "summary": "The single-connection benchmark read the server logs for both labels, duplicating server metrics and omitting client metrics. The one-line correction reads the client container logs for the client series, matching the multi-connection benchmark. Two independent source reviews passed; no new runtime result is claimed. This is an independent fixture correction, with no production dependency from the RACK change.",
+      "updatedAt": "2026-10-16T09:09:45.847153+00:00",
+      "refinement": {
+        "before": {
+          "head": "eebbf58262c97c1a3ab8703c851db029367678aa"
+        },
+        "after": {
+          "head": "bfdd9b1f0bddb0437bfd703df21ccf84e27a93b9"
+        }
+      }
+    },
+    {
+      "id": "pr:15859",
+      "type": "pr",
+      "repo": "google/gvisor",
+      "number": 15859,
+      "ref": "fixes/gofer-cgo-rule-init",
+      "head": "d99ab14c22a8dfbdd9028de5b724e67fe2169f28",
+      "title": "Build gofer cgo filters only when needed",
+      "url": "https://github.com/google/gvisor/pull/15859",
+      "group": "runtime",
+      "status": "open",
+      "summary": "Construct gofer cgo seccomp rules only when generating a filter with CgoEnabled, following the sentry approach. This avoids eager rule construction in pure-Go binaries and when a precompiled filter is used. Existing config tests and analyzers pass on both architectures, with source and original-output reviews complete. A matched pure-Go AMD64 initialization trace on the qualification branch removes 648 bytes and seven allocations; that branch includes a separate musl clone rule, so this is not a standalone latency measurement. The contributor-approved correction is published upstream.",
+      "updatedAt": "2026-10-16T09:09:45.847153+00:00",
+      "refinement": {
+        "before": {
+          "head": "78abb01a0ac542aa97f49168b3af698ff1025392"
+        },
+        "after": {
+          "head": "d99ab14c22a8dfbdd9028de5b724e67fe2169f28"
+        }
       }
     }
   ],

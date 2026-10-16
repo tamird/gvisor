@@ -925,12 +925,17 @@ function drawTable(nodes) {
     }
   }
 }
-function appendRangeDiff(parent, edge, nodes) {
-  if (edge.role !== "proposed_update") return;
-  const proposal = nodes.get(edge.from), pr = nodes.get(edge.to)?.github;
-  const oldHead = pr?.head, newHead = proposal?.head;
-  if (![oldHead, newHead].every(head => /^[a-f0-9]{40}$/.test(head)) || oldHead === newHead) return;
-  const command = `git range-diff ${oldHead}...${newHead}`;
+function refinementComparison(node) {
+  const revision = node.refinement;
+  if (!revision || revision.after.head !== node.head ||
+      node.github && node.github.head !== revision.after.head) return null;
+  const range = ({ head, base }) => base ? `${base}..${head}` : `${head}^!`;
+  return {
+    command: `git range-diff ${range(revision.before)} ${range(revision.after)}`,
+    description: `Earlier revision ${revision.before.head.slice(0, 9)} → current revision ${revision.after.head.slice(0, 9)}`,
+  };
+}
+function appendRangeDiffCommand(parent, { command, description }) {
   const group = element("div", "range-diff");
   const input = element("input", "range-diff-command");
   input.type = "text"; input.readOnly = true; input.value = command;
@@ -945,8 +950,20 @@ function appendRangeDiff(parent, edge, nodes) {
       message.textContent = "Clipboard unavailable. Select and copy the command above.";
     }
   });
-  group.append(element("p", "", `Published ${oldHead.slice(0, 9)} → proposed ${newHead.slice(0, 9)} · snapshot ${date(pr.checkedAt)}`), input, copy, message);
+  group.append(element("p", "", description), input, copy, message);
   parent.append(group);
+}
+function appendRangeDiff(parent, edge, nodes) {
+  if (edge.role !== "proposed_update") return;
+  const proposal = nodes.get(edge.from), pr = nodes.get(edge.to)?.github;
+  const comparison = proposal && refinementComparison(proposal);
+  if (comparison) { appendRangeDiffCommand(parent, comparison); return; }
+  const oldHead = pr?.head, newHead = proposal?.head;
+  if (![oldHead, newHead].every(head => /^[a-f0-9]{40}$/.test(head)) || oldHead === newHead) return;
+  appendRangeDiffCommand(parent, {
+    command: `git range-diff ${oldHead}...${newHead}`,
+    description: `Published ${oldHead.slice(0, 9)} → proposed ${newHead.slice(0, 9)} · snapshot ${date(pr.checkedAt)}`,
+  });
 }
 function drawDetails() {
   if (view === "investigations") { $("details").replaceChildren(); $("details").hidden = true; return; }
@@ -958,6 +975,8 @@ function drawDetails() {
   // Service-owned attributes lead PR details; curated notes remain available
   // separately without obscuring the current head, checks, or conflict refresh.
   appendAttributes(details, node);
+  const refinement = refinementComparison(node);
+  if (refinement) appendRangeDiffCommand(details, refinement);
   const reach = impact(node.id);
   details.append(element("p", "detail-impact", `${reach.prs} downstream open PRs · ${reach.direct} direct`));
   if (node.summary) {
@@ -986,7 +1005,7 @@ function drawDetails() {
       const relation = element("div", "relation");
       const sourceLabel = edge.role === "proposed_update" ? (other === "from" ? "Open proposed update ↗" : "Open live PR ↗") : "↗";
       relation.append(button(`${label(target)} · ${target.title}`, () => select(target.id)), link(sourceLabel, target.url, "relation-source"), element("p", "", edge.reason));
-      appendRangeDiff(relation, edge, nodes);
+      if (!refinement || node.id !== edge.from) appendRangeDiff(relation, edge, nodes);
       if (resolved(target)) relation.append(element("p", "", `Resolved: ${target.status}`));
       for (const [index, url] of (Array.isArray(edge.evidence) ? edge.evidence : [edge.evidence]).filter(Boolean).entries()) relation.append(link(`Evidence${index ? " " + (index + 1) : ""} ↗`, url, "evidence-link"));
       section.append(relation);
@@ -1122,6 +1141,9 @@ function applyLive(snapshot, nextRegistry = registry) {
       workStates: stateRecords(snapshot, { ...existing, id, type: "pr", github: pr }), github: pr.head ? pr : existing?.github };
     if (branch && ["open", "draft", "merged"].includes(pr.status)) {
       aliases.set(branch.id, id); node.promotedFrom = branch.ref; node.summary ||= branch.summary;
+      if (!node.refinement && branch.refinement?.after.head === pr.head) {
+        node.refinement = branch.refinement; node.head = pr.head;
+      }
     }
     if (existing) Object.assign(existing, node); else { nodes.push(node); ids.set(id, node); }
   }
@@ -1149,6 +1171,12 @@ function validateRegistry(candidate) {
   if (!candidate?.meta || !Number.isFinite(Date.parse(candidate.meta.updatedAt)) ||
       !Array.isArray(candidate.nodes) || !Array.isArray(candidate.edges) || !Array.isArray(candidate.groups)) throw new Error("Invalid work registry");
   for (const node of candidate.nodes) {
+    const refinement = node.refinement;
+    if (refinement !== undefined && (!refinement || !["branch", "pr"].includes(node.type) ||
+        ![refinement.before, refinement.after].every(revision => revision && /^[a-f0-9]{40}$/.test(revision.head) &&
+          (revision.base === undefined || /^[a-f0-9]{40}$/.test(revision.base) && revision.base !== revision.head)) ||
+        refinement.before.head === refinement.after.head))
+      throw new Error("Invalid refinement comparison");
     const proposalRepo = node.type === "branch" && typeof node.repo === "string"
       && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(node.repo) && node.repo.split("/")[0] === candidate.meta.owner ? node.repo : null;
     const decision = node.contributorReview;

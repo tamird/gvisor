@@ -14,6 +14,63 @@ function client() {
   return context;
 }
 
+test('branch refinements render and copy the reviewed commit ranges without a PR', async () => {
+  const context = client();
+  const before = '7e371d8acc44a23b419a84618471efe9ffc51c42';
+  const after = 'ca492fef95e67b769f0369c68e18a7edb28e1f2d';
+  const node = { id: 'branch:compact', type: 'branch', repo: 'tamird/gvisor', head: after,
+    refinement: { before: { head: before }, after: { head: after } } };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  context.nodeInput = node;
+  vm.runInContext('validateRegistry(registryInput)', context);
+  const createElement = tag => ({ tag, children: [], attributes: {}, listeners: {},
+    append(...children) { this.children.push(...children); },
+    setAttribute(name, value) { this.attributes[name] = value; },
+    addEventListener(name, callback) { this.listeners[name] = callback; },
+    focus() { this.focused = true; }, select() { this.selected = true; } });
+  context.document = { createElement };
+  context.parentInput = createElement('section');
+  let copied;
+  context.navigator = { clipboard: { writeText: async value => { copied = value; } } };
+  vm.runInContext('appendRangeDiffCommand(parentInput, refinementComparison(nodeInput))', context);
+  const [description, input, copy, message] = context.parentInput.children[0].children;
+  const expected = `git range-diff ${before}^! ${after}^!`;
+  assert.match(description.textContent, /Earlier revision 7e371d8ac → current revision ca492fef9/);
+  assert.equal(input.value, expected);
+  assert.equal(input.readOnly, true);
+  await copy.listeners.click();
+  assert.equal(copied, expected);
+  assert.equal(message.textContent, 'Copied.');
+  context.navigator.clipboard.writeText = async () => { throw Error('Denied'); };
+  await copy.listeners.click();
+  assert.equal(input.focused, true);
+  assert.equal(input.selected, true);
+  assert.match(message.textContent, /Select and copy/);
+  node.refinement.before.base = 'a'.repeat(40);
+  node.refinement.after.base = 'b'.repeat(40);
+  assert.equal(vm.runInContext('refinementComparison(nodeInput).command', context),
+    `git range-diff ${'a'.repeat(40)}..${before} ${'b'.repeat(40)}..${after}`);
+  node.github = { head: 'c'.repeat(40) };
+  assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
+});
+
+test('refinement metadata rejects malformed ranges but tolerates a newer node head', () => {
+  const context = client(), before = 'a'.repeat(40), after = 'b'.repeat(40);
+  const node = { id: 'branch:proposal', type: 'branch', repo: 'tamird/gvisor', head: after };
+  context.registryInput = { ...context.registryInput, nodes: [node], edges: [], groups: [] };
+  for (const refinement of [null, {}, { before: { head: before }, after: { head: before } },
+    { before: { head: before, base: before }, after: { head: after } },
+    { before: { head: before, base: 'HEAD; echo unsafe' }, after: { head: after } }]) {
+    node.refinement = refinement;
+    assert.throws(() => vm.runInContext('validateRegistry(registryInput)', context), /Invalid refinement comparison/);
+  }
+  node.refinement = { before: { head: before }, after: { head: after } };
+  node.head = 'c'.repeat(40);
+  context.nodeInput = node;
+  vm.runInContext('validateRegistry(registryInput)', context);
+  assert.equal(vm.runInContext('refinementComparison(nodeInput)', context), null);
+});
+
 test('new contributor observation survives an older full snapshot and controls age', () => {
   const context = client();
   const record = { scope: 'a'.repeat(40), basis: 'observed', since: '2026-10-12T14:41:00Z', observedAt: '2026-10-12T18:05:00Z' };
