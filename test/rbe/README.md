@@ -76,6 +76,39 @@ can be resumed with `qualification_report.py capture` using the same inputs;
 copies matching the previous manifest are reused. The report tool does not
 rerun tests.
 
+Benchmark-only Go runs use an explicit opt-in, rather than named-test coverage.
+For `actions.sh` with the explicit `test` lane, set
+`QUALIFICATION_BENCHMARK_MANIFEST` to a JSON file and select the exact owner
+labels with `QUALIFICATION_TARGETS`. For example:
+
+```json
+{
+  "arguments": ["-test.run=^$", "-test.bench=^BenchmarkGateClose$",
+                "-test.v=false", "-test.benchtime=1x", "-test.benchmem",
+                "-test.count=1", "-test.cpu=1"],
+  "owners": {
+    "//pkg/sync:sync_test": [
+      {"name": "BenchmarkGateClose", "count": 1, "iterations": 1,
+       "units": ["ns/op", "B/op", "allocs/op"]}
+    ]
+  }
+}
+```
+
+The manifest is validated and retained before Bazel starts. Its quoted arguments
+apply identically to independent selection and execution. Every selected owner
+must have expectations: `name` is the exact output name, including any CPU
+suffix; `count` is the number of rows per attempt; `units` is the exact set of
+metrics. Optional `iterations` checks fixed-iteration runs. Numeric values are
+retained without a performance comparison or significance claim.
+
+Benchmark mode requires successful native/BEP outcomes, unchanged source,
+complete attempts and matching original output ending in `PASS`. XML errors
+remain failures. `-test.v=false` overrides rules_go's injected test verbosity:
+benchmark RUN markers otherwise become unfinished XML testcases. An empty XML
+suite is expected here, and benchmark observations are reported separately;
+ordinary test mode still requires executed named cases for every owner.
+
 ## GitHub Actions frontend
 
 Use `qualification/current-upstream-refresh` on `tamird/gvisor` for the
